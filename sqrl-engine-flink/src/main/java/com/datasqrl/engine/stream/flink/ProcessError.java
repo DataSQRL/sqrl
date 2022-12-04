@@ -15,13 +15,13 @@ import java.util.List;
 @EqualsAndHashCode
 public class ProcessError<Input> implements Serializable {
 
-    private List<String> errors;
-    private Input input;
+  private List<String> errors;
+  private Input input;
 
-    public static <Input> ProcessError<Input> of(ErrorCollector errors, Input input) {
-        List<String> errorMsgs = new ArrayList<>();
-        errors.forEach(e -> errorMsgs.add(e.toString()));
-        return new ProcessError(errorMsgs, input);
-    }
+  public static <Input> ProcessError<Input> of(ErrorCollector errors, Input input) {
+    List<String> errorMsgs = new ArrayList<>();
+    errors.forEach(e -> errorMsgs.add(e.toString()));
+    return new ProcessError(errorMsgs, input);
+  }
 
 }

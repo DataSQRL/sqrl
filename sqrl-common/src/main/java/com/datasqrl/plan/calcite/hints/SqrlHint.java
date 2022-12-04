@@ -11,48 +11,50 @@ import java.util.Optional;
 
 public interface SqrlHint {
 
-    RelHint getHint();
+  RelHint getHint();
 
-    String getHintName();
+  String getHintName();
 
-    default RelNode addHint(Hintable node) {
-        return node.attachHints(List.of(getHint()));
+  default RelNode addHint(Hintable node) {
+    return node.attachHints(List.of(getHint()));
+  }
+
+  default RelBuilder addTo(RelBuilder relBuilder) {
+    return relBuilder.hints(getHint());
+  }
+
+  static <H extends SqrlHint> Optional<H> fromRel(RelNode node,
+      SqrlHint.Constructor<H> hintConstructor) {
+    if (node instanceof Hintable) {
+      return ((Hintable) node).getHints().stream()
+          .filter(h -> hintConstructor.validName(h.hintName))
+          .filter(
+              h -> h.inheritPath.isEmpty()) //we only want the hint on that particular join, not inherited ones
+          .findFirst().map(hintConstructor::fromHint);
     }
+    return Optional.empty();
+  }
 
-    default RelBuilder addTo(RelBuilder relBuilder) {
-        return relBuilder.hints(getHint());
-    }
+  static SqrlHint of(@NonNull final String name) {
+    return new SqrlHint() {
+      @Override
+      public RelHint getHint() {
+        return RelHint.builder(name).build();
+      }
 
-    static<H extends SqrlHint> Optional<H> fromRel(RelNode node, SqrlHint.Constructor<H> hintConstructor) {
-        if (node instanceof Hintable) {
-            return ((Hintable)node).getHints().stream()
-                    .filter(h -> hintConstructor.validName(h.hintName))
-                    .filter(h -> h.inheritPath.isEmpty()) //we only want the hint on that particular join, not inherited ones
-                    .findFirst().map(hintConstructor::fromHint);
-        }
-        return Optional.empty();
-    }
+      @Override
+      public String getHintName() {
+        return name;
+      }
+    };
+  }
 
-    static SqrlHint of(@NonNull final String name) {
-        return new SqrlHint() {
-            @Override
-            public RelHint getHint() {
-                return RelHint.builder(name).build();
-            }
+  public interface Constructor<H extends SqrlHint> {
 
-            @Override
-            public String getHintName() {
-                return name;
-            }
-        };
-    }
+    boolean validName(String name);
 
-    public interface Constructor<H extends SqrlHint> {
+    H fromHint(RelHint hint);
 
-        boolean validName(String name);
-
-        H fromHint(RelHint hint);
-
-    }
+  }
 
 }

@@ -25,7 +25,9 @@ public interface SchemaAdjustmentSettings extends Serializable {
   }
 
   default int maxCastingTypeDistance() {
-    if (!castDataType()) return 0;
+    if (!castDataType()) {
+      return 0;
+    }
     return 10;
   }
 
@@ -34,7 +36,9 @@ public interface SchemaAdjustmentSettings extends Serializable {
   }
 
   default int maxForceCastingTypeDistance() {
-    if (!forceCastDataType()) return maxCastingTypeDistance();
+    if (!forceCastDataType()) {
+      return maxCastingTypeDistance();
+    }
     return Integer.MAX_VALUE;
   }
 

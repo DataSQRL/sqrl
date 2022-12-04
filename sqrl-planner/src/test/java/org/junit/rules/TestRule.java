@@ -1,4 +1,5 @@
 package org.junit.rules;
+
 /*
  * testcontainers has a hard dependency on JUnit4, which we would like to avoid, migrating to
  * JUnit5 (aka junit jupiter). Until testcontainers updates their package to remove this dependency,
@@ -9,4 +10,5 @@ package org.junit.rules;
  */
 @SuppressWarnings("unused")
 public interface TestRule {
+
 }

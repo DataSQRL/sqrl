@@ -53,8 +53,7 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 @Getter
 public class AnalyzeStatement implements
     SqrlJoinDeclarationVisitor<Context, Context>,
-    SqrlJoinTermVisitor<Context, Context>
-{
+    SqrlJoinTermVisitor<Context, Context> {
 
   private final SqrlCalciteSchema schema;
   private final List<String> assignmentPath;
@@ -72,6 +71,7 @@ public class AnalyzeStatement implements
 
   @Value
   public static class Analysis {
+
     private SqrlCalciteSchema schema;
     private List<String> assignmentPath;
     private Optional<SqlIdentifier> selfIdentifier;
@@ -90,7 +90,8 @@ public class AnalyzeStatement implements
     this(schema, assignmentPath, false, context);
   }
 
-  public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath, boolean allowSystemFields,
+  public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath,
+      boolean allowSystemFields,
       Optional<SQRLTable> context) {
     this.schema = schema;
     this.assignmentPath = assignmentPath;
@@ -131,12 +132,13 @@ public class AnalyzeStatement implements
       case UNION:
         return visitSetOperation((SqlCall) node, context);
       case JOIN:
-        return visitJoin((SqlJoin)node, context);
+        return visitJoin((SqlJoin) node, context);
       case JOIN_DECLARATION:
         SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
         return spec.accept(this, context);
       default:
-        throw new SqrlAstException(ErrorCode.GENERIC_ERROR, node.getParserPosition(), "unknown ast node");
+        throw new SqrlAstException(ErrorCode.GENERIC_ERROR, node.getParserPosition(),
+            "unknown ast node");
     }
   }
 
@@ -159,8 +161,8 @@ public class AnalyzeStatement implements
 
     final Context finalContext = relContext;
 
-    node.getOrderList().ifPresent(order-> order.getList()
-        .forEach(o->visitExpr(o, finalContext, true)));
+    node.getOrderList().ifPresent(order -> order.getList()
+        .forEach(o -> visitExpr(o, finalContext, true)));
 
     return relContext;
   }
@@ -173,7 +175,7 @@ public class AnalyzeStatement implements
       final Context relContext = combine(visit(rel, ctx), ctx);
       ctx = relContext;
       Optional<SqlNode> condition = Optional.ofNullable(node.getConditions().get(i));
-      condition.ifPresent(c->visitExpr(c, relContext, false));
+      condition.ifPresent(c -> visitExpr(c, relContext, false));
     }
 
     return ctx;
@@ -200,7 +202,8 @@ public class AnalyzeStatement implements
 
     mayNeedAlias.put(id, alias); //node may be replaced by aliased relation
 
-    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+    if (id.names.size() == 1 && id.names.get(0)
+        .equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
       mayNeedAlias.remove(id);
     }
 
@@ -209,11 +212,10 @@ public class AnalyzeStatement implements
   }
 
 
-
   private List<RelationField> toFields(List<String> names) {
     return names.stream()
         //create anonymous column
-        .map(f->new RelationField(new Column(Name.system(f), Name.system(f), 0, true,
+        .map(f -> new RelationField(new Column(Name.system(f), Name.system(f), 0, true,
             new BasicSqlType(TypeFactory.getTypeSystem(), SqlTypeName.ANY)), null))
         .collect(Collectors.toList());
   }
@@ -221,13 +223,14 @@ public class AnalyzeStatement implements
 
   private List<RelationField> aliasFields(List<RelationField> accessibleFields, String alias) {
     return accessibleFields.stream()
-        .map(f->new RelationField(f.getField(), alias))
+        .map(f -> new RelationField(f.getField(), alias))
         .collect(Collectors.toList());
   }
 
   int i = 0;
+
   private String generateInaccessibleAlias() {
-    return "_x"+ (++i);
+    return "_x" + (++i);
   }
 
 
@@ -249,7 +252,6 @@ public class AnalyzeStatement implements
       return relativeTable;
     }
 
-
     //FROM Orders.entries
     Optional<ResolvedTable> table = resolveSchema(id);
     if (table.isPresent()) {
@@ -259,9 +261,11 @@ public class AnalyzeStatement implements
   }
 
   private Optional<ResolvedTable> resolveSelfTable(SqlIdentifier id, Context context) {
-    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
-      return Optional.of(new SingleTable(ReservedName.SELF_IDENTIFIER.getCanonical(), this.context.get(),
-          this.context.get().getFields().getAccessibleFields()));
+    if (id.names.size() == 1 && id.names.get(0)
+        .equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+      return Optional.of(
+          new SingleTable(ReservedName.SELF_IDENTIFIER.getCanonical(), this.context.get(),
+              this.context.get().getFields().getAccessibleFields()));
     }
 
     return Optional.empty();
@@ -273,7 +277,7 @@ public class AnalyzeStatement implements
     }
     Optional<RelativeResolvedTable> path = context.resolveTablePath(id.names);
 
-    return path.map(p->p);
+    return path.map(p -> p);
   }
 
   private Optional<ResolvedTable> resolveSchema(SqlIdentifier id) {
@@ -288,19 +292,20 @@ public class AnalyzeStatement implements
       // SELF tables are usually anchored on a virtual table so we
       // don't have to expand the relationship.
       if (baseTable.get() instanceof SQRLTable) {
-        base = Optional.of((SQRLTable)baseTable.get());
+        base = Optional.of((SQRLTable) baseTable.get());
       } else if (baseTable.get() instanceof VirtualRelationalTable) {
-        base = Optional.of(((VirtualRelationalTable)baseTable.get()).getSqrlTable());
+        base = Optional.of(((VirtualRelationalTable) baseTable.get()).getSqrlTable());
         Preconditions.checkState(id.names.size() == 1);
         //Virtual tables exposes all fields to the analyzer
-        return Optional.of(new VirtualResolvedTable(id.names.get(0), (VirtualRelationalTable)baseTable.get()));
+        return Optional.of(
+            new VirtualResolvedTable(id.names.get(0), (VirtualRelationalTable) baseTable.get()));
       }
     }
 
     //Also check self but anchor it to a fixed table
     if (base.isEmpty()
         && id.names.get(0).equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
-      base = selfIdentifier.flatMap(i->resolveSchema(i)).map(t->t.getToTable());
+      base = selfIdentifier.flatMap(i -> resolveSchema(i)).map(t -> t.getToTable());
     }
 
     if (base.isEmpty()) {
@@ -318,11 +323,10 @@ public class AnalyzeStatement implements
       List<Field> fields = base.get().walkField(id.names.subList(1, id.names.size()));
       if (fields.get(fields.size() - 1) instanceof Relationship) {
         return Optional.of(new AbsoluteResolvedTable(fields.stream()
-            .map(e->(Relationship)e)
+            .map(e -> (Relationship) e)
             .collect(Collectors.toList())));
       }
     }
-
 
     return Optional.empty();
   }
@@ -331,7 +335,8 @@ public class AnalyzeStatement implements
     List<Field> fields = new ArrayList<>();
     for (RelDataTypeField f : vt.getRowType().getFieldList()) {
       if (vt.getSqrlTable().getField(Name.system(f.getName())).isEmpty()) {
-        fields.add(new Column(Name.system(f.getName()), Name.system(f.getName()), 0, false, f.getType()));
+        fields.add(
+            new Column(Name.system(f.getName()), Name.system(f.getName()), 0, false, f.getType()));
       }
     }
 
@@ -341,6 +346,7 @@ public class AnalyzeStatement implements
 
   @Value
   class VirtualResolvedTable extends ResolvedTable {
+
     String name;
     VirtualRelationalTable vt;
 
@@ -355,14 +361,16 @@ public class AnalyzeStatement implements
 
     public List<RelationField> getAccessibleFields() {
       return vt.getRowType().getFieldList().stream()
-          .map(f->new RelationField(
+          .map(f -> new RelationField(
               new Column(Name.system(f.getName()), Name.system(f.getName()), 0, false, f.getType()),
               null))
           .collect(Collectors.toList());
     }
   }
+
   @Value
   class SingleTable extends ResolvedTable {
+
     String name;
     SQRLTable table;
     List<Field> fields;
@@ -378,13 +386,14 @@ public class AnalyzeStatement implements
 
     public List<RelationField> getAccessibleFields() {
       return fields.stream()
-          .map(f->new RelationField(f, null))
+          .map(f -> new RelationField(f, null))
           .collect(Collectors.toList());
     }
   }
 
   @Value
   public static class RelativeResolvedTable extends ResolvedTable {
+
     String alias;
     List<Relationship> fields;
 
@@ -395,7 +404,7 @@ public class AnalyzeStatement implements
 
     public List<RelationField> getAccessibleFields() {
       return getToTable().getFields().getAccessibleFields().stream()
-          .map(f->new RelationField(f, null))
+          .map(f -> new RelationField(f, null))
           .collect(Collectors.toList());
     }
   }
@@ -403,6 +412,7 @@ public class AnalyzeStatement implements
 
   @Value
   class AbsoluteResolvedTable extends ResolvedTable {
+
     List<Relationship> fields;
 
     @Override
@@ -416,7 +426,7 @@ public class AnalyzeStatement implements
 
     public List<RelationField> getAccessibleFields() {
       return getToTable().getFields().getAccessibleFields().stream()
-          .map(f->new RelationField(f, null))
+          .map(f -> new RelationField(f, null))
           .collect(Collectors.toList());
     }
   }
@@ -455,7 +465,7 @@ public class AnalyzeStatement implements
     if (node.getCondition() != null) {
       visitExpr(node.getCondition(), context1, false);
     }
-    
+
     return context1;
   }
 
@@ -473,7 +483,6 @@ public class AnalyzeStatement implements
 
     Context rel = visit(node.getOperandList().get(0), context);
     mayNeedAlias.remove(node.getOperandList().get(0));
-
 
     tableAlias.put(node.getOperandList().get(0), alias);
     return rel.aliasIdentifiers(alias);
@@ -517,7 +526,7 @@ public class AnalyzeStatement implements
           List<SqlIdentifier> star = resolveStar(identifier, context);
           expandedSelect.addAll(star);
           star.stream()
-                  .forEach(n->visitExpr(n, context, false));
+              .forEach(n -> visitExpr(n, context, false));
 
           continue;
         }
@@ -536,7 +545,8 @@ public class AnalyzeStatement implements
     List<String> selectNames = extractNames(selectList);
     List<SqlNode> selectExpressions = stripAs(selectList);
     List<SqlNode> list = select.getGroup().getList();
-    outer: for (int j = 0; j < list.size(); j++) {
+    outer:
+    for (int j = 0; j < list.size(); j++) {
       SqlNode groupItem = list.get(j);
       if (groupItem instanceof SqlLiteral &&
           ((SqlLiteral) groupItem).getTypeName() == SqlTypeName.BIGINT) {
@@ -565,7 +575,7 @@ public class AnalyzeStatement implements
     }
 
     groupByExpression.stream()
-        .forEach(expr->visitExpr(expr, context, true));
+        .forEach(expr -> visitExpr(expr, context, true));
 
     this.groupByExpressions.put(select.getGroup(), groupByExpression);
     //walk group by and pair with select list.
@@ -573,13 +583,13 @@ public class AnalyzeStatement implements
 
   private List<SqlNode> stripAs(List<SqlNode> selectList) {
     return selectList.stream()
-        .map(s-> SqlUtil.stripAs(s))
+        .map(s -> SqlUtil.stripAs(s))
         .collect(Collectors.toList());
   }
 
   private List<String> extractNames(List<SqlNode> selectList) {
     return IntStream.range(0, selectList.size())
-        .mapToObj(i-> SqlValidatorUtil.getAlias(selectList.get(i), i))
+        .mapToObj(i -> SqlValidatorUtil.getAlias(selectList.get(i), i))
         .collect(Collectors.toList());
   }
 
@@ -595,7 +605,8 @@ public class AnalyzeStatement implements
     List<String> selectNames = extractNames(select.getSelectList().getList());
     List<SqlNode> selectExpressions = stripAs(select.getSelectList().getList());
     List<SqlNode> list = select.getOrderList().getList();
-    outer: for (int j = 0; j < list.size(); j++) {
+    outer:
+    for (int j = 0; j < list.size(); j++) {
       SqlNode orderItemCall = list.get(j);
       SqlNode orderItem = orderItemCall.getKind() == SqlKind.DESCENDING
           ? ((SqlCall) orderItemCall).getOperandList().get(0)
@@ -630,9 +641,11 @@ public class AnalyzeStatement implements
 
   @Value
   public static class RelationField {
+
     //todo parser position
     Field field;
     String alias;
+
     public SqlIdentifier toIdentifier() {
       return new SqlIdentifier(List.of(alias, field.getName().getCanonical()),
           SqlParserPos.ZERO);
@@ -643,13 +656,15 @@ public class AnalyzeStatement implements
     }
     //etc
   }
+
   private void visitWhere(SqlNode where, Context context) {
     visitExpr(where, context, true);
   }
 
   public void visitExpr(SqlNode expr, Context context, boolean allowPaths) {
 
-    AnalyzeExpression analyzeExpression = new AnalyzeExpression(allowPaths, context, allowSystemFields, this);
+    AnalyzeExpression analyzeExpression = new AnalyzeExpression(allowPaths, context,
+        allowSystemFields, this);
     expr.accept(analyzeExpression);
     expressions.putAll(analyzeExpression.getResolvedFields());
   }
@@ -669,7 +684,7 @@ public class AnalyzeStatement implements
 
     public Context aliasIdentifiers(String alias) {
       List<RelationField> fieldList = fields.stream()
-          .map(f->f.withAlias(alias))
+          .map(f -> f.withAlias(alias))
           .collect(Collectors.toList());
 
       //return all fields but with new aliased
@@ -678,18 +693,18 @@ public class AnalyzeStatement implements
 
     public List<SqlIdentifier> resolvePrefixScalars(String prefix) {
       return fields.stream()
-          .filter(f->f.alias.equalsIgnoreCase(prefix))
-          .filter(f->f.field instanceof Column)
-          .filter(f->f.field.isVisible())
-          .map(f-> f.toIdentifier())
+          .filter(f -> f.alias.equalsIgnoreCase(prefix))
+          .filter(f -> f.field instanceof Column)
+          .filter(f -> f.field.isVisible())
+          .map(f -> f.toIdentifier())
           .collect(Collectors.toList());
     }
 
     public List<SqlIdentifier> resolveAllScalars() {
       return fields.stream()
-          .filter(f->f.field instanceof Column)
-          .filter(f->f.field.isVisible())
-          .map(f-> f.toIdentifier())
+          .filter(f -> f.field instanceof Column)
+          .filter(f -> f.field.isVisible())
+          .map(f -> f.toIdentifier())
           .collect(Collectors.toList());
     }
 
@@ -702,7 +717,7 @@ public class AnalyzeStatement implements
       Optional<RelationField> base = Optional.empty();
       for (RelationField field : this.fields) {
         if (field.alias.equalsIgnoreCase(path.get(0)) &&
-          field.field.getName().getCanonical().equalsIgnoreCase(path.get(1))) {
+            field.field.getName().getCanonical().equalsIgnoreCase(path.get(1))) {
           if (!(field.field instanceof Relationship)) {
             return Optional.empty();
           }
@@ -719,13 +734,13 @@ public class AnalyzeStatement implements
       List<Relationship> rels = new ArrayList<>();
       rels.add(rel);
       for (int i = 2; i < path.size(); i++) {
-        Optional<Field> field = rels.get(rels.size()-1).getToTable().getField(Name.system(path.get(i)));
+        Optional<Field> field = rels.get(rels.size() - 1).getToTable()
+            .getField(Name.system(path.get(i)));
         if (field.isEmpty() || !(field.get() instanceof Relationship)) {
           throw new RuntimeException("Could not table resolve at: " + path);
         }
         rels.add((Relationship) field.get());
       }
-
 
       return Optional.of(new RelativeResolvedTable(base.get().alias, rels));
     }
@@ -736,7 +751,7 @@ public class AnalyzeStatement implements
       if (names.size() > 1) {
         for (RelationField field : this.fields) {
           if (field.getAlias().equalsIgnoreCase(names.get(0)) &&
-            field.getField().getName().getCanonical().equalsIgnoreCase(names.get(1))
+              field.getField().getName().getCanonical().equalsIgnoreCase(names.get(1))
           ) {
             //found a field, walk or fail
             return walkRemaining(field, names.subList(2, names.size()));
@@ -758,14 +773,15 @@ public class AnalyzeStatement implements
     }
 
 
-    private Optional<ResolvedTableField> walkRemaining(RelationField field, ImmutableList<String> subList) {
+    private Optional<ResolvedTableField> walkRemaining(RelationField field,
+        ImmutableList<String> subList) {
       List<Field> remainingFields = new ArrayList<>();
       remainingFields.add(field.field);
 
       for (int j = 0; j < subList.size(); j++) {
         String name = subList.get(j);
         Field cur = remainingFields.get(remainingFields.size() - 1);
-        if (!(cur instanceof Relationship) && j != subList.size() - 1)  {
+        if (!(cur instanceof Relationship) && j != subList.size() - 1) {
           return Optional.empty();
         }
         Relationship rel = (Relationship) cur;
@@ -781,6 +797,7 @@ public class AnalyzeStatement implements
   }
 
   public static class ResolvedTableField {
+
     @Getter
     String alias;
     @Getter
@@ -795,7 +812,7 @@ public class AnalyzeStatement implements
     private SqlIdentifier createAliasedIdentifier(SqlIdentifier original) {
       List<String> names = new ArrayList<>();
       names.add(alias);
-      path.stream().map(f->f.getName().getDisplay())
+      path.stream().map(f -> f.getName().getDisplay())
           .forEach(names::add);
 
       return new SqlIdentifier(names, original.getParserPosition());
@@ -805,7 +822,7 @@ public class AnalyzeStatement implements
       if (identifier == null) {
         this.identifier = createAliasedIdentifier(original);
       }
-     return identifier;
+      return identifier;
     }
 
     public SqlNode getShadowedIdentifier(SqlIdentifier original) {
@@ -813,7 +830,7 @@ public class AnalyzeStatement implements
       names.add(alias);
       Preconditions.checkState(path.size() == 1);
       Preconditions.checkState(path.get(0) instanceof Column);
-      names.add(((Column)path.get(0)).getShadowedName().getDisplay());
+      names.add(((Column) path.get(0)).getShadowedName().getDisplay());
 
       return new SqlIdentifier(names, original.getParserPosition());
     }

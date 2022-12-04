@@ -11,23 +11,24 @@ import java.util.Optional;
 
 public interface DataSystemDiscovery {
 
-    /**
-     * The name of the dataset produced by this data source if discoverable from the configuration
-     *
-     * @return name of dataset
-     */
-    @NonNull Optional<String> getDefaultName();
+  /**
+   * The name of the dataset produced by this data source if discoverable from the configuration
+   *
+   * @return name of dataset
+   */
+  @NonNull Optional<String> getDefaultName();
 
-    boolean requiresFormat(ExternalDataType type);
+  boolean requiresFormat(ExternalDataType type);
 
-    default Collection<TableConfig> discoverSources(@NonNull DataSystemConfig config,
-                                            @NonNull ErrorCollector errors) {
-        return Collections.EMPTY_LIST;
-    }
+  default Collection<TableConfig> discoverSources(@NonNull DataSystemConfig config,
+      @NonNull ErrorCollector errors) {
+    return Collections.EMPTY_LIST;
+  }
 
-    default Optional<TableConfig> discoverSink(@NonNull Name sinkName, @NonNull DataSystemConfig config,
-                                               @NonNull ErrorCollector errors) {
-        return Optional.empty();
-    }
+  default Optional<TableConfig> discoverSink(@NonNull Name sinkName,
+      @NonNull DataSystemConfig config,
+      @NonNull ErrorCollector errors) {
+    return Optional.empty();
+  }
 
 }

@@ -14,12 +14,12 @@ public class BasicTypeManager {
 
   //TODO: replace by discovery pattern so that new datatype can be registered
   public static final BasicType[] ALL_TYPES = {
-          BooleanType.INSTANCE,
-          DateTimeType.INSTANCE,
-          IntegerType.INSTANCE, FloatType.INSTANCE,
-          IntervalType.INSTANCE,
-          StringType.INSTANCE,
-          UuidType.INSTANCE
+      BooleanType.INSTANCE,
+      DateTimeType.INSTANCE,
+      IntegerType.INSTANCE, FloatType.INSTANCE,
+      IntervalType.INSTANCE,
+      StringType.INSTANCE,
+      UuidType.INSTANCE
   };
 
   public static final Map<Class, BasicType> JAVA_TO_TYPE = Arrays.stream(ALL_TYPES).flatMap(t -> {
@@ -32,20 +32,21 @@ public class BasicTypeManager {
       .collect(Collectors.toUnmodifiableMap(t -> t.getName().trim().toLowerCase(Locale.ENGLISH),
           Function.identity()));
 
-  public static final Map<Pair<BasicType,BasicType>, Pair<BasicType,Integer>> TYPE_COMBINATION_MATRIX = computeTypeCombinationMatrix();
+  public static final Map<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> TYPE_COMBINATION_MATRIX = computeTypeCombinationMatrix();
 
-  private static Map<Pair<BasicType,BasicType>, Pair<BasicType,Integer>> computeTypeCombinationMatrix() {
-    ImmutableMap.Builder<Pair<BasicType,BasicType>, Pair<BasicType,Integer>> map = new ImmutableMap.Builder();
+  private static Map<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> computeTypeCombinationMatrix() {
+    ImmutableMap.Builder<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> map = new ImmutableMap.Builder();
     for (BasicType smaller : ALL_TYPES) {
       for (BasicType larger : ALL_TYPES) {
-        if (smaller.compareTo(larger)<0) {
+        if (smaller.compareTo(larger) < 0) {
           //See what the distances are from casting directly from one type to the other
           BasicType combinedType = null;
           int combinedDistance = Integer.MAX_VALUE;
           Optional<Integer> smaller2Larger = larger.conversion().getTypeDistance(smaller);
           Optional<Integer> larger2Smaller = smaller.conversion().getTypeDistance(larger);
           if (smaller2Larger.isPresent() || larger2Smaller.isPresent()) {
-            if (smaller2Larger.orElse(Integer.MAX_VALUE) < larger2Smaller.orElse(Integer.MAX_VALUE)) {
+            if (smaller2Larger.orElse(Integer.MAX_VALUE) < larger2Smaller.orElse(
+                Integer.MAX_VALUE)) {
               combinedType = larger;
               combinedDistance = smaller2Larger.get();
             } else {
@@ -55,42 +56,54 @@ public class BasicTypeManager {
           }
           //and compare to casting to a third type (for all types)
           for (BasicType third : ALL_TYPES) {
-            if (third == smaller || third == larger) continue;
+            if (third == smaller || third == larger) {
+              continue;
+            }
             Optional<Integer> ds = third.conversion().getTypeDistance(smaller),
-                            dl = third.conversion().getTypeDistance(larger);
-            Optional<Integer> dist = ds.flatMap(d1 -> dl.map(d2 -> Math.max(d1,d2)));
+                dl = third.conversion().getTypeDistance(larger);
+            Optional<Integer> dist = ds.flatMap(d1 -> dl.map(d2 -> Math.max(d1, d2)));
             if (dist.orElse(Integer.MAX_VALUE) < combinedDistance) {
               combinedType = third;
               combinedDistance = dist.get();
             }
           }
-          Preconditions.checkArgument(combinedType!=null && combinedDistance<Integer.MAX_VALUE);
-          map.put(Pair.of(smaller,larger),Pair.of(combinedType,combinedDistance));
+          Preconditions.checkArgument(combinedType != null && combinedDistance < Integer.MAX_VALUE);
+          map.put(Pair.of(smaller, larger), Pair.of(combinedType, combinedDistance));
         }
       }
     }
     return map.build();
   }
 
-  public static Optional<BasicType> combine(@NonNull BasicType t1, @NonNull BasicType t2, int maxTypeDistance) {
-    Pair<BasicType,BasicType> key;
+  public static Optional<BasicType> combine(@NonNull BasicType t1, @NonNull BasicType t2,
+      int maxTypeDistance) {
+    Pair<BasicType, BasicType> key;
     int comp = t1.compareTo(t2);
-    if (comp == 0) return Optional.of(t1);
-    else if (comp<0) key = Pair.of(t1,t2);
-    else key = Pair.of(t2,t1);
+    if (comp == 0) {
+      return Optional.of(t1);
+    } else if (comp < 0) {
+      key = Pair.of(t1, t2);
+    } else {
+      key = Pair.of(t2, t1);
+    }
 
-    Pair<BasicType,Integer> combination = TYPE_COMBINATION_MATRIX.get(key);
-    assert combination!=null; //Otherwise the pre-computation is flawed since we can always cast to string
-    if (combination.getValue()<=maxTypeDistance) return Optional.of(combination.getKey());
+    Pair<BasicType, Integer> combination = TYPE_COMBINATION_MATRIX.get(key);
+    assert combination
+        != null; //Otherwise the pre-computation is flawed since we can always cast to string
+    if (combination.getValue() <= maxTypeDistance) {
+      return Optional.of(combination.getKey());
+    }
     return Optional.empty();
   }
 
   public static BasicType combineForced(@NonNull BasicType t1, @NonNull BasicType t2) {
-    return combine(t1,t2,Integer.MAX_VALUE).get();
+    return combine(t1, t2, Integer.MAX_VALUE).get();
   }
 
   public static Optional<Integer> typeCastingDistance(BasicType fromType, BasicType toType) {
-    if (fromType.getClass().equals(toType.getClass())) return Optional.of(0);
+    if (fromType.getClass().equals(toType.getClass())) {
+      return Optional.of(0);
+    }
     return toType.conversion().getTypeDistance(fromType);
   }
 

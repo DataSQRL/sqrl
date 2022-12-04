@@ -6,12 +6,11 @@ import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 /**
- * Represents a partial join
- * e.g.
- * JOIN X ON y
+ * Represents a partial join e.g. JOIN X ON y
  */
 @Getter
 public class UnboundJoin extends SqlCall {
+
   SqlNode relation;
   Optional<SqlNode> condition;
 

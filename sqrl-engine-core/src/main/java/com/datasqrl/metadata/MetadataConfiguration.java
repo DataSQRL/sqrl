@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MetadataConfiguration {
 
-    String engineType;
+  String engineType;
 
 }

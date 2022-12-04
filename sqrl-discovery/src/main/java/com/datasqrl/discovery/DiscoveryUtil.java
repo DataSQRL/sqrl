@@ -10,15 +10,15 @@ import java.nio.file.Path;
 
 public class DiscoveryUtil {
 
-    public static DataSystemConfig.DataSystemConfigBuilder getDirectorySystemConfig(Path dir) {
-        Preconditions.checkArgument(Files.isDirectory(dir));
-        DirectoryDataSystemConfig.Discovery.DiscoveryBuilder systemBuilder = DirectoryDataSystemConfig.Discovery.builder()
-                .uri(dir.toUri().getPath());
-        DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-        builder.datadiscovery(systemBuilder.build());
-        builder.type(ExternalDataType.SOURCE);
-        builder.name(dir.getFileName().toString());
-        return builder;
-    }
+  public static DataSystemConfig.DataSystemConfigBuilder getDirectorySystemConfig(Path dir) {
+    Preconditions.checkArgument(Files.isDirectory(dir));
+    DirectoryDataSystemConfig.Discovery.DiscoveryBuilder systemBuilder = DirectoryDataSystemConfig.Discovery.builder()
+        .uri(dir.toUri().getPath());
+    DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
+    builder.datadiscovery(systemBuilder.build());
+    builder.type(ExternalDataType.SOURCE);
+    builder.name(dir.getFileName().toString());
+    return builder;
+  }
 
 }

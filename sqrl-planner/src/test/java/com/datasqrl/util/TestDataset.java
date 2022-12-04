@@ -14,39 +14,40 @@ import java.util.stream.Stream;
 
 public interface TestDataset {
 
-    String getName();
+  String getName();
 
-    Path getDataDirectory();
+  Path getDataDirectory();
 
-    default String getFilePartPattern() {
-        return null;
-    }
+  default String getFilePartPattern() {
+    return null;
+  }
 
-    Set<String> getTables();
+  Set<String> getTables();
 
-    default int getNumTables() {
-        return getTables().size();
-    }
+  default int getNumTables() {
+    return getTables().size();
+  }
 
-    default Path getRootPackageDirectory() {
-        return getDataDirectory();
-    }
+  default Path getRootPackageDirectory() {
+    return getDataDirectory();
+  }
 
     /*
     === STATIC METHODS ===
      */
 
-    static List<TestDataset> getAll() {
-        return List.of(Retail.INSTANCE, Nutshop.INSTANCE);
-    }
+  static List<TestDataset> getAll() {
+    return List.of(Retail.INSTANCE, Nutshop.INSTANCE);
+  }
 
-    class AllProvider implements ArgumentsProvider {
+  class AllProvider implements ArgumentsProvider {
 
-        @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
-            return ArgumentProvider.of(getAll());
-        }
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
+        throws Exception {
+      return ArgumentProvider.of(getAll());
     }
+  }
 
 
 }

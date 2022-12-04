@@ -13,29 +13,34 @@ import java.util.List;
  */
 public class ExpressionReducer {
 
-    private final org.apache.flink.table.planner.codegen.ExpressionReducer reducer =
-            new org.apache.flink.table.planner.codegen.ExpressionReducer(TableConfig.getDefault(), true);
+  private final org.apache.flink.table.planner.codegen.ExpressionReducer reducer =
+      new org.apache.flink.table.planner.codegen.ExpressionReducer(TableConfig.getDefault(), true);
 
-    List<RexNode> reduce(RexBuilder rexBuilder, List<RexNode> original) {
-        ArrayList<RexNode> reduced = new ArrayList<>();
-        reducer.reduce(rexBuilder, original, reduced);
-        assert reduced.size()==original.size();
-        return reduced;
-    }
+  List<RexNode> reduce(RexBuilder rexBuilder, List<RexNode> original) {
+    ArrayList<RexNode> reduced = new ArrayList<>();
+    reducer.reduce(rexBuilder, original, reduced);
+    assert reduced.size() == original.size();
+    return reduced;
+  }
 
-    long[] reduce2Long(RexBuilder rexBuilder, List<RexNode> original) {
-        long[] longs = new long[original.size()];
-        List<RexNode> reduced = reduce(rexBuilder,original);
-        for (int i = 0; i < reduced.size(); i++) {
-            RexNode reduce = reduced.get(i);
-            if (!(reduce instanceof RexLiteral)) throw new IllegalArgumentException(
-                    String.format("Expression [%s] could not be reduced to literal, got: %s",original.get(i),reduce));
-            Object value = ((RexLiteral)reduce).getValue2();
-            if (!(value instanceof Number)) throw new IllegalArgumentException(
-                    String.format("Value of reduced literal [%s] is not a number: %s",reduce,value));
-            longs[i] = ((Number) value).longValue();
-        }
-        return longs;
+  long[] reduce2Long(RexBuilder rexBuilder, List<RexNode> original) {
+    long[] longs = new long[original.size()];
+    List<RexNode> reduced = reduce(rexBuilder, original);
+    for (int i = 0; i < reduced.size(); i++) {
+      RexNode reduce = reduced.get(i);
+      if (!(reduce instanceof RexLiteral)) {
+        throw new IllegalArgumentException(
+            String.format("Expression [%s] could not be reduced to literal, got: %s",
+                original.get(i), reduce));
+      }
+      Object value = ((RexLiteral) reduce).getValue2();
+      if (!(value instanceof Number)) {
+        throw new IllegalArgumentException(
+            String.format("Value of reduced literal [%s] is not a number: %s", reduce, value));
+      }
+      longs[i] = ((Number) value).longValue();
     }
+    return longs;
+  }
 
 }

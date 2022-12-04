@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 public class CompilerCli implements Runnable {
+
   @Parameters(index = "0", description = "Base directory")
   private Optional<Path> buildDir = Optional.empty();
 
@@ -24,7 +25,7 @@ public class CompilerCli implements Runnable {
 
   @SneakyThrows
   public void run() {
-    Path buildPath = buildDir.map(e->e.resolve("build"))
+    Path buildPath = buildDir.map(e -> e.resolve("build"))
         .orElseGet(() -> Path.of("./build"));
 
     Compiler compiler = new Compiler();

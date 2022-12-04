@@ -16,39 +16,39 @@ import java.util.stream.Stream;
 
 public abstract class AbstractLoader implements Loader {
 
-    protected final Deserializer deserialize = new Deserializer();
+  protected final Deserializer deserialize = new Deserializer();
 
-    public static Path namepath2Path(Path basePath, NamePath path) {
-        Path filePath = basePath;
-        for (int i = 0; i < path.getNames().length; i++) {
-            Name name = path.getNames()[i];
-            filePath = filePath.resolve(name.getCanonical());
-        }
-        return filePath;
+  public static Path namepath2Path(Path basePath, NamePath path) {
+    Path filePath = basePath;
+    for (int i = 0; i < path.getNames().length; i++) {
+      Name name = path.getNames()[i];
+      filePath = filePath.resolve(name.getCanonical());
     }
+    return filePath;
+  }
 
-    @Override
-    public Collection<Name> loadAll(LoaderContext ctx, NamePath basePath) {
-        return getAllFilesInPath(namepath2Path(ctx.getPackagePath(),basePath)).stream()
-                .map(p -> loadsFile(p))
-                .filter(Optional::isPresent)
-                .map(name -> {
-                    Name resovledName = Name.system(name.get());
-                    Preconditions.checkArgument(resovledName.getCanonical().equals(name.get()));
-                    boolean loaded =  load(ctx,basePath.concat(resovledName),Optional.empty());
-                    Preconditions.checkArgument(loaded);
-                    return resovledName;
-                })
-                .collect(Collectors.toSet());
-    }
+  @Override
+  public Collection<Name> loadAll(LoaderContext ctx, NamePath basePath) {
+    return getAllFilesInPath(namepath2Path(ctx.getPackagePath(), basePath)).stream()
+        .map(p -> loadsFile(p))
+        .filter(Optional::isPresent)
+        .map(name -> {
+          Name resovledName = Name.system(name.get());
+          Preconditions.checkArgument(resovledName.getCanonical().equals(name.get()));
+          boolean loaded = load(ctx, basePath.concat(resovledName), Optional.empty());
+          Preconditions.checkArgument(loaded);
+          return resovledName;
+        })
+        .collect(Collectors.toSet());
+  }
 
-    public static Set<Path> getAllFilesInPath(Path directory) {
-        try (Stream<Path> files = Files.list(directory)) {
-            return files.filter(Files::isRegularFile)
-                    .collect(Collectors.toSet());
-        } catch (IOException e) {
-            return Collections.EMPTY_SET;
-        }
+  public static Set<Path> getAllFilesInPath(Path directory) {
+    try (Stream<Path> files = Files.list(directory)) {
+      return files.filter(Files::isRegularFile)
+          .collect(Collectors.toSet());
+    } catch (IOException e) {
+      return Collections.EMPTY_SET;
     }
+  }
 
 }

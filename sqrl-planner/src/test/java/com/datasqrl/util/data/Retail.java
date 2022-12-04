@@ -29,12 +29,12 @@ public class Retail implements TestDataset {
             "orders", "entries", "totals", "customerorderstats").build(),
         RetailScriptNames.FULL,
         TestScript.of(this, BASE_PATH.resolve("c360-full.sqrl"),
-            "orders", "entries", "customer", "category", "product", "total", "order_again",
-            "_spending_by_month_category", "favorite_categories",
-            "order_stats", "newcustomerpromotion")
-                .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("c360-full-graphqlv1"),
-                        BASE_PATH.resolve("c360-full-graphqlv2")))
-                .build(),
+                "orders", "entries", "customer", "category", "product", "total", "order_again",
+                "_spending_by_month_category", "favorite_categories",
+                "order_stats", "newcustomerpromotion")
+            .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("c360-full-graphqlv1"),
+                BASE_PATH.resolve("c360-full-graphqlv2")))
+            .build(),
         RetailScriptNames.RECOMMEND,
         TestScript.of(this, BASE_PATH.resolve("c360-recommend.sqrl"),
             "orders", "entries", "customer", "category", "product", "total",
@@ -78,8 +78,8 @@ public class Retail implements TestDataset {
     return getName();
   }
 
-    public enum RetailScriptNames {
-        ORDER_STATS, FULL, RECOMMEND
-    }
+  public enum RetailScriptNames {
+    ORDER_STATS, FULL, RECOMMEND
+  }
 
 }

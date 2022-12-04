@@ -2,10 +2,10 @@ package com.datasqrl.io;
 
 public interface DataSystemConnector {
 
-    boolean hasSourceTimestamp();
+  boolean hasSourceTimestamp();
 
-    default boolean requiresFormat(ExternalDataType type) {
-        return true;
-    }
+  default boolean requiresFormat(ExternalDataType type) {
+    return true;
+  }
 
 }

@@ -25,106 +25,108 @@ import java.util.Map;
 
 public abstract class AbstractCommand implements Runnable {
 
-    public static final Path DEFAULT_PACKAGE = Path.of("package.json");
-    public static final String DEFAULT_DB_NAME = "datasqrl";
+  public static final Path DEFAULT_PACKAGE = Path.of("package.json");
+  public static final String DEFAULT_DB_NAME = "datasqrl";
 
-    @CommandLine.ParentCommand
-    protected RootCommand root;
+  @CommandLine.ParentCommand
+  protected RootCommand root;
 
-    protected JDBCConnectionProvider jdbcConnection;
+  protected JDBCConnectionProvider jdbcConnection;
 
 
-    @SneakyThrows
-    public void run() {
-        ErrorCollector collector = ErrorCollector.root();
-        try {
-            runCommand(collector);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println(ErrorPrinter.prettyPrint(collector));
+  @SneakyThrows
+  public void run() {
+    ErrorCollector collector = ErrorCollector.root();
+    try {
+      runCommand(collector);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    System.out.println(ErrorPrinter.prettyPrint(collector));
+  }
+
+  protected abstract void runCommand(ErrorCollector errors) throws Exception;
+
+  public List<Path> findPackageFiles() {
+    if (root.packageFiles.isEmpty()) {
+      if (Files.isRegularFile(DEFAULT_PACKAGE)) {
+        return List.of(DEFAULT_PACKAGE);
+      }
+    }
+    return root.packageFiles;
+  }
+
+  public List<Path> getPackageFilesWithDefault(boolean execute) throws IOException {
+    List<Path> packageFiles = findPackageFiles();
+    GlobalEngineConfiguration engineConfig = new GlobalEngineConfiguration();
+    if (!packageFiles.isEmpty()) {
+      engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
+          GlobalEngineConfiguration.class);
+    }
+    if (engineConfig.getEngines() == null || engineConfig.getEngines().isEmpty()) {
+      packageFiles = new ArrayList<>(packageFiles);
+      packageFiles.add(writeDefaultEngineConfig(execute));
+    } else {
+      //Extract JDBC engine
+      JDBCEngineConfiguration jdbcConfig = Iterables.getOnlyElement(
+          Iterables.filter(engineConfig.getEngines(), JDBCEngineConfiguration.class));
+      jdbcConnection = jdbcConfig.getConnectionProvider();
+    }
+    return packageFiles;
+  }
+
+  @SneakyThrows
+  private Path writeDefaultEngineConfig(boolean execute) {
+    JDBCEngineConfiguration jdbcEngineConfiguration;
+    if (execute) {
+      PostgreSQLContainer postgreSQLContainer = startPostgres();
+      jdbcEngineConfiguration = JDBCEngineConfiguration.builder()
+          .dbURL(postgreSQLContainer.getJdbcUrl())
+          .host(postgreSQLContainer.getHost())
+          .user(postgreSQLContainer.getUsername())
+          .port(postgreSQLContainer.getMappedPort(5432))
+          .dialect(Dialect.POSTGRES)
+          .password(postgreSQLContainer.getPassword())
+          .database(postgreSQLContainer.getDatabaseName())
+          .driverName(postgreSQLContainer.getDriverClassName())
+          .build();
+      jdbcConnection = jdbcEngineConfiguration.getConnectionProvider();
+    } else {
+      jdbcEngineConfiguration = JDBCEngineConfiguration.builder()
+          .dbURL("invalid")
+          .dialect(Dialect.POSTGRES)
+          .database(DEFAULT_DB_NAME)
+          .user("")
+          .password("")
+          .build();
     }
 
-    protected abstract void runCommand(ErrorCollector errors) throws Exception;
+    FlinkEngineConfiguration flinkEngineConfiguration =
+        FlinkEngineConfiguration.builder()
+            .savepoint(false)
+            .build();
 
-    public List<Path> findPackageFiles() {
-        if (root.packageFiles.isEmpty()) {
-            if (Files.isRegularFile(DEFAULT_PACKAGE)) {
-                return List.of(DEFAULT_PACKAGE);
-            }
-        }
-        return root.packageFiles;
-    }
+    Path enginesFile = Files.createTempFile(root.rootDir, "package-engines", ".json");
+    File file = enginesFile.toFile();
+    file.deleteOnExit();
 
-    public List<Path> getPackageFilesWithDefault(boolean execute) throws IOException {
-        List<Path> packageFiles = findPackageFiles();
-        GlobalEngineConfiguration engineConfig = new GlobalEngineConfiguration();
-        if (!packageFiles.isEmpty()) {
-            engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,GlobalEngineConfiguration.class);
-        }
-        if (engineConfig.getEngines()==null || engineConfig.getEngines().isEmpty()) {
-            packageFiles = new ArrayList<>(packageFiles);
-            packageFiles.add(writeDefaultEngineConfig(execute));
-        } else {
-            //Extract JDBC engine
-            JDBCEngineConfiguration jdbcConfig = Iterables.getOnlyElement(Iterables.filter(engineConfig.getEngines(),JDBCEngineConfiguration.class));
-            jdbcConnection = jdbcConfig.getConnectionProvider();
-        }
-        return packageFiles;
-    }
+    ObjectMapper mapper = new ObjectMapper();
+    String enginesConf = mapper.writerWithDefaultPrettyPrinter()
+        .writeValueAsString(Map.of(GlobalEngineConfiguration.ENGINES_PROPERTY,
+            List.of(flinkEngineConfiguration
+                , jdbcEngineConfiguration
+            )));
 
-    @SneakyThrows
-    private Path writeDefaultEngineConfig(boolean execute) {
-        JDBCEngineConfiguration jdbcEngineConfiguration;
-        if (execute) {
-            PostgreSQLContainer postgreSQLContainer = startPostgres();
-            jdbcEngineConfiguration = JDBCEngineConfiguration.builder()
-                    .dbURL(postgreSQLContainer.getJdbcUrl())
-                    .host(postgreSQLContainer.getHost())
-                    .user(postgreSQLContainer.getUsername())
-                    .port(postgreSQLContainer.getMappedPort(5432))
-                    .dialect(Dialect.POSTGRES)
-                    .password(postgreSQLContainer.getPassword())
-                    .database(postgreSQLContainer.getDatabaseName())
-                    .driverName(postgreSQLContainer.getDriverClassName())
-                    .build();
-            jdbcConnection = jdbcEngineConfiguration.getConnectionProvider();
-        } else {
-            jdbcEngineConfiguration = JDBCEngineConfiguration.builder()
-                    .dbURL("invalid")
-                    .dialect(Dialect.POSTGRES)
-                    .database(DEFAULT_DB_NAME)
-                    .user("")
-                    .password("")
-                    .build();
-        }
+    Files.write(enginesFile, enginesConf.getBytes(StandardCharsets.UTF_8));
+    return enginesFile;
+  }
 
-        FlinkEngineConfiguration flinkEngineConfiguration =
-                FlinkEngineConfiguration.builder()
-                        .savepoint(false)
-                        .build();
-
-        Path enginesFile = Files.createTempFile(root.rootDir,"package-engines", ".json");
-        File file = enginesFile.toFile();
-        file.deleteOnExit();
-
-        ObjectMapper mapper = new ObjectMapper();
-        String enginesConf = mapper.writerWithDefaultPrettyPrinter()
-                .writeValueAsString(Map.of(GlobalEngineConfiguration.ENGINES_PROPERTY,
-                        List.of(flinkEngineConfiguration
-                                , jdbcEngineConfiguration
-                        )));
-
-        Files.write(enginesFile, enginesConf.getBytes(StandardCharsets.UTF_8));
-        return enginesFile;
-    }
-
-    private PostgreSQLContainer startPostgres() {
-        DockerImageName image = DockerImageName.parse("postgres:14.2");
-        PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer(image)
-                .withDatabaseName(DEFAULT_DB_NAME);
-        postgreSQLContainer.start();
-        return postgreSQLContainer;
-    }
+  private PostgreSQLContainer startPostgres() {
+    DockerImageName image = DockerImageName.parse("postgres:14.2");
+    PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer(image)
+        .withDatabaseName(DEFAULT_DB_NAME);
+    postgreSQLContainer.start();
+    return postgreSQLContainer;
+  }
 
 }

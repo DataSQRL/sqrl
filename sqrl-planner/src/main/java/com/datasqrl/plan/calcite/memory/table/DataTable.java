@@ -25,6 +25,7 @@ import org.apache.calcite.schema.impl.AbstractTableQueryable;
 
 @AllArgsConstructor
 public class DataTable extends AbstractTable implements QueryableTable {
+
   private final List<RelDataTypeField> header;
   private final Collection<Object[]> elements;
 
@@ -36,13 +37,15 @@ public class DataTable extends AbstractTable implements QueryableTable {
     return builder.build();
   }
 
-  /** Returns an enumerable over a given projection of the fields. */
+  /**
+   * Returns an enumerable over a given projection of the fields.
+   */
   @SuppressWarnings("unused")
   public Enumerable<Object> project(DataContext context) {
     return new AbstractEnumerable<>() {
       @Override
       public Enumerator<Object> enumerator() {
-       return toEnumerator(elements);
+        return toEnumerator(elements);
       }
     };
   }
@@ -60,7 +63,8 @@ public class DataTable extends AbstractTable implements QueryableTable {
       String tableName) {
     return new AbstractTableQueryable<>(queryProvider, schema, this,
         tableName) {
-      @Override public Enumerator<T> enumerator() {
+      @Override
+      public Enumerator<T> enumerator() {
         return toEnumerator(elements);
       }
     };

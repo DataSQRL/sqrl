@@ -13,47 +13,48 @@ import java.util.Optional;
 
 public interface ExecutionStage {
 
-    default String getName() {
-        return getEngine().getName();
-    }
+  default String getName() {
+    return getEngine().getName();
+  }
 
-    default boolean supportsAll(Collection<EngineCapability> capabilities) {
-        return capabilities.stream().allMatch(this::supports);
-    }
+  default boolean supportsAll(Collection<EngineCapability> capabilities) {
+    return capabilities.stream().allMatch(this::supports);
+  }
 
-    boolean supports(EngineCapability capability);
+  boolean supports(EngineCapability capability);
 
-    ExecutionEngine getEngine();
+  ExecutionEngine getEngine();
 
-    default boolean isWrite() {
-        return getEngine().getType().isWrite();
-    }
+  default boolean isWrite() {
+    return getEngine().getType().isWrite();
+  }
 
-    default boolean isRead() {
-        return getEngine().getType().isRead();
-    }
+  default boolean isRead() {
+    return getEngine().getType().isRead();
+  }
 
-    /**
-     *
-     * @param from
-     * @return Whether going from the given stage to this one crosses the materialization boundary
-     */
-    default boolean isMaterialize(ExecutionStage from) {
-        return from.isWrite() && isRead();
-    }
+  /**
+   * @param from
+   * @return Whether going from the given stage to this one crosses the materialization boundary
+   */
+  default boolean isMaterialize(ExecutionStage from) {
+    return from.isWrite() && isRead();
+  }
 
-    /**
-     * We currently make the simplifying assumption that an {@link ExecutionPipeline} has a tree structure.
-     * To generalize this to a DAG structure (e.g. to support multiple database engines) we need to make
-     * significant changes to the LPConverter and DAGPlanner. See also {@link ExecutionPipeline#getStage(ExecutionEngine.Type)}.
-     *
-     * @return Next execution stage in this pipeline
-     */
-    Optional<ExecutionStage> nextStage();
+  /**
+   * We currently make the simplifying assumption that an {@link ExecutionPipeline} has a tree
+   * structure. To generalize this to a DAG structure (e.g. to support multiple database engines) we
+   * need to make significant changes to the LPConverter and DAGPlanner. See also
+   * {@link ExecutionPipeline#getStage(ExecutionEngine.Type)}.
+   *
+   * @return Next execution stage in this pipeline
+   */
+  Optional<ExecutionStage> nextStage();
 
-    ExecutionResult execute(EnginePhysicalPlan plan);
+  ExecutionResult execute(EnginePhysicalPlan plan);
 
-    EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder);
+  EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+      RelBuilder relBuilder);
 
 
 }

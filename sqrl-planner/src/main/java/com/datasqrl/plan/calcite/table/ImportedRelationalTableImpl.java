@@ -10,24 +10,26 @@ import org.apache.calcite.rel.type.RelDataType;
 import java.util.List;
 
 @Value
-public class ImportedRelationalTableImpl extends SourceRelationalTableImpl implements ImportedRelationalTable {
+public class ImportedRelationalTableImpl extends SourceRelationalTableImpl implements
+    ImportedRelationalTable {
 
-    TableSource tableSource;
-    RelDataType baseRowType;
+  TableSource tableSource;
+  RelDataType baseRowType;
 
-    public ImportedRelationalTableImpl(@NonNull Name nameId, RelDataType baseRowType, TableSource tableSource) {
-        super(nameId);
-        this.baseRowType = baseRowType;
-        this.tableSource = tableSource;
-    }
+  public ImportedRelationalTableImpl(@NonNull Name nameId, RelDataType baseRowType,
+      TableSource tableSource) {
+    super(nameId);
+    this.baseRowType = baseRowType;
+    this.tableSource = tableSource;
+  }
 
-    @Override
-    public RelDataType getRowType() {
-        return baseRowType;
-    }
+  @Override
+  public RelDataType getRowType() {
+    return baseRowType;
+  }
 
-    @Override
-    public List<String> getPrimaryKeyNames() {
-        return List.of(ReservedName.UUID.getCanonical());
-    }
+  @Override
+  public List<String> getPrimaryKeyNames() {
+    return List.of(ReservedName.UUID.getCanonical());
+  }
 }

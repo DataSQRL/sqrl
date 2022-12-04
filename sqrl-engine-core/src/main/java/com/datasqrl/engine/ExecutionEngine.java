@@ -14,40 +14,42 @@ import java.util.List;
  */
 public interface ExecutionEngine {
 
-    public enum Type {
-        STREAM, DATABASE, SERVER;
+  public enum Type {
+    STREAM, DATABASE, SERVER;
 
-        public boolean isWrite() {
-            return this==STREAM;
-        }
-        public boolean isRead() {
-            return this==DATABASE || this==SERVER;
-        }
+    public boolean isWrite() {
+      return this == STREAM;
     }
 
-    boolean supports(EngineCapability capability);
-
-    Type getType();
-
-    String getName();
-
-    ExecutionResult execute(EnginePhysicalPlan plan);
-
-    EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder);
-
-    @AllArgsConstructor
-    @Getter
-    public static abstract class Base implements ExecutionEngine {
-
-        protected final @NonNull String name;
-        protected final @NonNull Type type;
-        protected final @NonNull EnumSet<EngineCapability> capabilities;
-
-        @Override
-        public boolean supports(EngineCapability capability) {
-            return capabilities.contains(capability);
-        }
-
+    public boolean isRead() {
+      return this == DATABASE || this == SERVER;
     }
+  }
+
+  boolean supports(EngineCapability capability);
+
+  Type getType();
+
+  String getName();
+
+  ExecutionResult execute(EnginePhysicalPlan plan);
+
+  EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+      RelBuilder relBuilder);
+
+  @AllArgsConstructor
+  @Getter
+  public static abstract class Base implements ExecutionEngine {
+
+    protected final @NonNull String name;
+    protected final @NonNull Type type;
+    protected final @NonNull EnumSet<EngineCapability> capabilities;
+
+    @Override
+    public boolean supports(EngineCapability capability) {
+      return capabilities.contains(capability);
+    }
+
+  }
 
 }

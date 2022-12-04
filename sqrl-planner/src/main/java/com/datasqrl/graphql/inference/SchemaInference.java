@@ -46,7 +46,8 @@ public class SchemaInference {
   public SchemaInference(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder) {
     this.registry = (new SchemaParser()).parse(gqlSchema);
     this.schema = schema;
-    RootGraphqlModel.RootGraphqlModelBuilder root = RootGraphqlModel.builder().schema(StringSchema.builder().schema(gqlSchema).build());
+    RootGraphqlModel.RootGraphqlModelBuilder root = RootGraphqlModel.builder()
+        .schema(StringSchema.builder().schema(gqlSchema).build());
     this.root = root;
     this.relBuilder = relBuilder;
   }
@@ -59,7 +60,7 @@ public class SchemaInference {
 
     InferredQuery query = registry.getType("Query")
         .map(q -> resolveQueries((ObjectTypeDefinition) q))
-        .orElseThrow(()->new RuntimeException("Must have a query type"));
+        .orElseThrow(() -> new RuntimeException("Must have a query type"));
 
     Optional<InferredRootObject> mutation = registry.getType("Mutation")
         .map(m -> resolveMutations((ObjectTypeDefinition) m));
@@ -102,7 +103,7 @@ public class SchemaInference {
     TypeDefinition typeDef = unwrapObjectType(fieldDefinition.getType());
 
     if (typeDef instanceof ObjectTypeDefinition) {
-      ObjectTypeDefinition obj = (ObjectTypeDefinition)typeDef;
+      ObjectTypeDefinition obj = (ObjectTypeDefinition) typeDef;
       Preconditions.checkState(visitedObj.get(obj) == null || visitedObj.get(obj) == table,
           "Cannot redefine a type to point to a different SQRL table. Use an interface instead.");
       visitedObj.put(obj, table);
@@ -121,8 +122,8 @@ public class SchemaInference {
         getInvalidFields(typeDef, table), typeDef.getName());
 
     return typeDef.getFieldDefinitions().stream()
-        .filter(f->!visited.contains(f))
-        .map(f->walk(f, table.getField(Name.system(f.getName())).get(), fields, typeDef))
+        .filter(f -> !visited.contains(f))
+        .map(f -> walk(f, table.getField(Name.system(f.getName())).get(), fields, typeDef))
         .collect(Collectors.toList());
   }
 
@@ -130,7 +131,7 @@ public class SchemaInference {
       List<InferredField> fields, ObjectTypeDefinition parent) {
     visited.add(fieldDefinition);
     if (field instanceof Relationship) {
-      return walkRel(fieldDefinition, (Relationship)field, fields, parent);
+      return walkRel(fieldDefinition, (Relationship) field, fields, parent);
     } else {
       return walkScalar(fieldDefinition, (Column) field, parent);
     }
@@ -138,8 +139,9 @@ public class SchemaInference {
 
   private InferredField walkRel(FieldDefinition fieldDefinition, Relationship relationship,
       List<InferredField> fields, ObjectTypeDefinition parent) {
-    return new NestedField(relationship, inferObjectField(fieldDefinition, relationship.getToTable(),
-        fields, parent));
+    return new NestedField(relationship,
+        inferObjectField(fieldDefinition, relationship.getToTable(),
+            fields, parent));
   }
 
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,
@@ -152,11 +154,12 @@ public class SchemaInference {
 
   private boolean checkType(ObjectTypeDefinition typeDef, SQRLTable table) {
     return typeDef.getFieldDefinitions().stream()
-        .anyMatch(f->table.getField(Name.system(f.getName())).isEmpty());
+        .anyMatch(f -> table.getField(Name.system(f.getName())).isEmpty());
   }
+
   private List<String> getInvalidFields(ObjectTypeDefinition typeDef, SQRLTable table) {
     return typeDef.getFieldDefinitions().stream()
-        .filter(f->table.getField(Name.system(f.getName())).isEmpty())
+        .filter(f -> table.getField(Name.system(f.getName())).isEmpty())
         .map(FieldDefinition::getName)
         .collect(Collectors.toList());
   }

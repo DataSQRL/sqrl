@@ -8,8 +8,8 @@ import java.util.Optional;
 
 public interface Exporter {
 
-    boolean usesFile(Path file);
+  boolean usesFile(Path file);
 
-    Optional<TableSink> export(LoaderContext ctx, NamePath fullPath);
+  Optional<TableSink> export(LoaderContext ctx, NamePath fullPath);
 
 }

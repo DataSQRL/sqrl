@@ -19,7 +19,6 @@ public class SqlValidatorUtil {
     Properties p = new Properties();
     p.put(CalciteConnectionProperty.CASE_SENSITIVE.name(), false);
 
-
     SqlValidator validator = new FlinkCalciteSqlValidator(
         PlannerFactory.getOperatorTable(envFunctions),
         new SqrlCalciteCatalogReader(schema, List.of(), TypeFactory.getTypeFactory(),
@@ -27,7 +26,7 @@ public class SqlValidatorUtil {
                 "false")),
         TypeFactory.getTypeFactory(),
         sqlValidatorConfig
-        );
+    );
     return validator;
   }
 }

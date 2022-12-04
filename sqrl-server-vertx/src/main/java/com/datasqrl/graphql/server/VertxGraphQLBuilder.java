@@ -65,8 +65,7 @@ public class VertxGraphQLBuilder implements
     GraphQLArgumentWrapperVisitor<Set<FixedArgument>, Object>,
     QueryBaseVisitor<ResolvedQuery, VertxContext>,
     ResolvedQueryVisitor<Void, QueryExecutionContext>,
-    ParameterHandlerVisitor<Object, QueryExecutionContext>
-{
+    ParameterHandlerVisitor<Object, QueryExecutionContext> {
 
   @Override
   public TypeDefinitionRegistry visitStringDefinition(StringSchema stringSchema, Object context) {
@@ -88,8 +87,8 @@ public class VertxGraphQLBuilder implements
 
     GraphQLSchema graphQLSchema = new SchemaGenerator()
         .makeExecutableSchema(registry,
-          RuntimeWiring.newRuntimeWiring()
-            .codeRegistry(codeRegistry).build());
+            RuntimeWiring.newRuntimeWiring()
+                .codeRegistry(codeRegistry).build());
 
     return GraphQL.newGraphQL(graphQLSchema).build();
   }
@@ -111,7 +110,7 @@ public class VertxGraphQLBuilder implements
   public DataFetcher<?> visitArgumentLookup(ArgumentLookupCoords coords, VertxContext ctx) {
     //Map ResolvedQuery to precompute as much as possible
     Map<Set<Argument>, ResolvedQuery> lookupMap = coords.getMatchs().stream()
-        .collect(Collectors.toMap(c->c.arguments, c->c.query.accept(this, ctx)));
+        .collect(Collectors.toMap(c -> c.arguments, c -> c.query.accept(this, ctx)));
 
     //Runtime execution, keep this as light as possible
     return VertxDataFetcher.create((env, fut) -> {
@@ -121,7 +120,7 @@ public class VertxGraphQLBuilder implements
 
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
-      if(resolvedQuery == null) {
+      if (resolvedQuery == null) {
         throw new RuntimeException("Could not find query");
       }
 
@@ -174,11 +173,11 @@ public class VertxGraphQLBuilder implements
     //Look at graphql response for list type here
     boolean isList = context.environment.getFieldType().getClass().equals(GraphQLList.class);
 
-    ((PreparedSqrlQueryImpl)pgQuery.getPreparedQueryContainer())
+    ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
         .getPreparedQuery().execute(Tuple.from(paramObj))
         .map(r -> resultMapper(r, isList))
         .onSuccess(context.fut::complete)
-        .onFailure(f->{
+        .onFailure(f -> {
           f.printStackTrace();
           context.fut.fail(f);
         });
@@ -186,7 +185,8 @@ public class VertxGraphQLBuilder implements
   }
 
   @Override
-  public Void visitResolvedPagedPgQuery(ResolvedPagedPgQuery pgQuery, QueryExecutionContext context) {
+  public Void visitResolvedPagedPgQuery(ResolvedPagedPgQuery pgQuery,
+      QueryExecutionContext context) {
     Optional<Integer> limit = Optional.ofNullable(context.getEnvironment().getArgument("limit"));
     Optional<Integer> offset = Optional.ofNullable(context.getEnvironment().getArgument("offset"));
     Object[] paramObj = new Object[pgQuery.query.parameters.size()];
@@ -211,7 +211,7 @@ public class VertxGraphQLBuilder implements
         .execute(Tuple.from(paramObj))
         .map(r -> resultMapper(r, isList))
         .onSuccess(context.fut::complete)
-        .onFailure(f->{
+        .onFailure(f -> {
           f.printStackTrace();
           context.fut.fail(f);
         });
@@ -229,28 +229,32 @@ public class VertxGraphQLBuilder implements
   }
 
   @Override
-  public Object visitSourcePgParameter(SourcePgParameter sourceParameter, QueryExecutionContext context) {
+  public Object visitSourcePgParameter(SourcePgParameter sourceParameter,
+      QueryExecutionContext context) {
     return VertxPropertyDataFetcher.create(sourceParameter.getKey())
         .get(context.getEnvironment());
   }
 
   @Override
-  public Object visitArgumentPgParameter(ArgumentPgParameter argumentParameter, QueryExecutionContext context) {
+  public Object visitArgumentPgParameter(ArgumentPgParameter argumentParameter,
+      QueryExecutionContext context) {
     return context.getArguments().stream()
         .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
         .findFirst()
-        .map(f->f.value)
+        .map(f -> f.value)
         .orElse(null);
   }
 
   @Value
   public static class VertxContext {
+
     SqlClient client;
   }
 
   @AllArgsConstructor
   @Getter
   public static class QueryExecutionContext {
+
     VertxContext vertxContext;
     DataFetchingEnvironment environment;
     Set<FixedArgument> arguments;
@@ -260,6 +264,7 @@ public class VertxGraphQLBuilder implements
   @Value
   public static class PreparedSqrlQueryImpl
       implements PreparedSqrlQuery<PreparedQuery<RowSet<Row>>> {
+
     PreparedQuery<RowSet<Row>> preparedQuery;
   }
 }

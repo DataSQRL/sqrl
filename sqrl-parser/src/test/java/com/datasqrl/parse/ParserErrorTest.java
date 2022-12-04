@@ -13,6 +13,7 @@ import org.junit.jupiter.api.TestInfo;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class ParserErrorTest {
+
   SnapshotTest.Snapshot snapshot;
 
   @BeforeEach

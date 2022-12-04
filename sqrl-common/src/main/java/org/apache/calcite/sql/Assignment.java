@@ -22,7 +22,7 @@ public abstract class Assignment extends SqrlStatement {
 
   @Override
   public void unparse(SqlWriter sqlWriter, int i, int i1) {
-    this.namePath.unparse(sqlWriter, i ,i1);
+    this.namePath.unparse(sqlWriter, i, i1);
     sqlWriter.keyword(":=");
   }
 

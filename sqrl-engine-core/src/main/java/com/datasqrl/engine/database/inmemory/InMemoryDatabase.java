@@ -21,51 +21,53 @@ import static com.datasqrl.engine.EngineCapability.*;
 public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEngine {
 
 
-    public InMemoryDatabase() {
-        super(InMemoryDatabaseConfiguration.ENGINE_NAME, Type.DATABASE, EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
-    }
+  public InMemoryDatabase() {
+    super(InMemoryDatabaseConfiguration.ENGINE_NAME, Type.DATABASE,
+        EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
+  }
 
-    @Override
-    public ExecutionResult execute(EnginePhysicalPlan plan) {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public ExecutionResult execute(EnginePhysicalPlan plan) {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder) {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+      RelBuilder relBuilder) {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public DatabaseConnectionProvider getConnectionProvider() {
-        return new ConnectionProvider();
-    }
+  @Override
+  public DatabaseConnectionProvider getConnectionProvider() {
+    return new ConnectionProvider();
+  }
 
-    private class ConnectionProvider implements DatabaseConnectionProvider {
+  private class ConnectionProvider implements DatabaseConnectionProvider {
 
-    }
+  }
 
-    @Override
-    public IndexSelectorConfig getIndexSelectorConfig() {
-        return new IndexSelectorConfig() {
-            @Override
-            public double getCostImprovementThreshold() {
-                return 0;
-            }
+  @Override
+  public IndexSelectorConfig getIndexSelectorConfig() {
+    return new IndexSelectorConfig() {
+      @Override
+      public double getCostImprovementThreshold() {
+        return 0;
+      }
 
-            @Override
-            public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
-                return EnumSet.noneOf(IndexDefinition.Type.class);
-            }
+      @Override
+      public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
+        return EnumSet.noneOf(IndexDefinition.Type.class);
+      }
 
-            @Override
-            public int maxIndexColumns(IndexDefinition.Type indexType) {
-                return 0;
-            }
+      @Override
+      public int maxIndexColumns(IndexDefinition.Type indexType) {
+        return 0;
+      }
 
-            @Override
-            public double relativeIndexCost(IndexDefinition index) {
-                return 0;
-            }
-        };
-    }
+      @Override
+      public double relativeIndexCost(IndexDefinition index) {
+        return 0;
+      }
+    };
+  }
 }

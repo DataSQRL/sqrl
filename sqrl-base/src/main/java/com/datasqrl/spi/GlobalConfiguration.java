@@ -2,7 +2,7 @@ package com.datasqrl.spi;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@JsonIgnoreProperties(ignoreUnknown=true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface GlobalConfiguration {
 
 }

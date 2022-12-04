@@ -35,7 +35,7 @@ public class ExpandJoinDeclaration {
   AtomicInteger aliasCnt;
 
   public UnboundJoin expand(SqrlJoinDeclarationSpec node) {
-    SqrlJoinPath from = (SqrlJoinPath)node.getRelation();
+    SqrlJoinPath from = (SqrlJoinPath) node.getRelation();
 //    Preconditions.checkState(node.fetch.isEmpty(), "Limit on join declaration tbd");
 
     return expand(convertToBushyTree(from.getRelations(), from.getConditions()));
@@ -73,7 +73,8 @@ public class ExpandJoinDeclaration {
       } else {
         SqlNode existingRight = aliasMapInverse.get(aliases.getKey());
         //todo assure unique
-        String newAlias = "_x" + aliases.getKey() + ReservedName.SELF_IDENTIFIER.getCanonical() + (aliasCnt.incrementAndGet());
+        String newAlias = "_x" + aliases.getKey() + ReservedName.SELF_IDENTIFIER.getCanonical()
+            + (aliasCnt.incrementAndGet());
         aliasMap.put(existingRight, newAlias);
         newAliasMap.put(aliases.getKey(), newAlias);
       }
@@ -89,7 +90,8 @@ public class ExpandJoinDeclaration {
         .map(c -> c.accept(replaceIdentifierAliases))
         .collect(Collectors.toList());
 
-    return new UnboundJoin(SqlParserPos.ZERO, node, Optional.ofNullable(SqlNodeUtil.and(newConditions)));
+    return new UnboundJoin(SqlParserPos.ZERO, node,
+        Optional.ofNullable(SqlNodeUtil.and(newConditions)));
   }
 
 

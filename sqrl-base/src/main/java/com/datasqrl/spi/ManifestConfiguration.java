@@ -13,16 +13,19 @@ import java.util.Optional;
 @Getter
 public class ManifestConfiguration {
 
-    public static final String PROPERTY = "manifest";
+  public static final String PROPERTY = "manifest";
 
-    @NonNull @NotEmpty
-    String main;
-    String graphql;
+  @NonNull @NotEmpty
+  String main;
+  String graphql;
 
-    @JsonIgnore
-    public Optional<String> getOptGraphQL() {
-        if (Strings.isNullOrEmpty(graphql)) return  Optional.empty();
-        else return Optional.of(graphql);
+  @JsonIgnore
+  public Optional<String> getOptGraphQL() {
+    if (Strings.isNullOrEmpty(graphql)) {
+      return Optional.empty();
+    } else {
+      return Optional.of(graphql);
     }
+  }
 
 }

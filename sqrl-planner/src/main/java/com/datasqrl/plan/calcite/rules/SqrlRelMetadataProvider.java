@@ -4,6 +4,7 @@ import org.apache.calcite.rel.metadata.*;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 public class SqrlRelMetadataProvider extends ChainedRelMetadataProvider {
+
   public static final RelMetadataProvider INSTANCE =
       new SqrlRelMetadataProvider();
 

@@ -24,8 +24,8 @@ import lombok.Value;
 import java.util.*;
 
 /**
- * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a {@link
- * FlexibleDatasetSchema} to be used internally.
+ * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a
+ * {@link FlexibleDatasetSchema} to be used internally.
  * <p>
  * A {@link SchemaDefinition} is provided by a user in connection with an SQML script to specify the
  * expected schema of the source datasets consumed by the script.
@@ -68,7 +68,8 @@ public class SchemaImport {
         continue;
       }
       errors = errors.resolve(datasetName);
-      FlexibleDatasetSchema ddschema = new DatasetConverter(defaultCanonicalizer, constraintLookup).convert(dataset, errors);
+      FlexibleDatasetSchema ddschema = new DatasetConverter(defaultCanonicalizer,
+          constraintLookup).convert(dataset, errors);
       result.put(datasetName, ddschema);
     }
     return result;
@@ -80,7 +81,8 @@ public class SchemaImport {
     NameCanonicalizer canonicalizer;
     Lookup constraintLookup;
 
-    public FlexibleDatasetSchema convert(DatasetDefinition dataset, @NonNull ErrorCollector errors) {
+    public FlexibleDatasetSchema convert(DatasetDefinition dataset,
+        @NonNull ErrorCollector errors) {
       FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
       builder.setDescription(SchemaElementDescription.of(dataset.description));
       for (TableDefinition table : dataset.tables) {
@@ -92,7 +94,8 @@ public class SchemaImport {
       return builder.build();
     }
 
-    public Optional<FlexibleDatasetSchema.TableField> convert(TableDefinition table, @NonNull ErrorCollector errors) {
+    public Optional<FlexibleDatasetSchema.TableField> convert(TableDefinition table,
+        @NonNull ErrorCollector errors) {
       FlexibleDatasetSchema.TableField.Builder builder = new FlexibleDatasetSchema.TableField.Builder();
       Optional<Name> nameOpt = convert(table, builder, errors);
       if (nameOpt.isEmpty()) {
@@ -101,7 +104,7 @@ public class SchemaImport {
         errors = errors.resolve(nameOpt.get());
       }
       builder.setPartialSchema(table.partial_schema == null ? TableDefinition.PARTIAL_SCHEMA_DEFAULT
-              : table.partial_schema);
+          : table.partial_schema);
       builder.setConstraints(convertConstraints(table.tests, errors));
       if (table.columns == null || table.columns.isEmpty()) {
         errors.fatal("Table does not have column definitions");
@@ -112,7 +115,7 @@ public class SchemaImport {
     }
 
     private RelationType<FlexibleDatasetSchema.FlexibleField> convert(List<FieldDefinition> columns,
-                                                                      @NonNull ErrorCollector errors) {
+        @NonNull ErrorCollector errors) {
       RelationType.Builder<FlexibleDatasetSchema.FlexibleField> rbuilder = new RelationType.Builder();
       for (FieldDefinition fd : columns) {
         Optional<FlexibleDatasetSchema.FlexibleField> fieldConvert = convert(fd, errors);
@@ -124,7 +127,7 @@ public class SchemaImport {
     }
 
     private Optional<FlexibleDatasetSchema.FlexibleField> convert(FieldDefinition field,
-                                                                  @NonNull ErrorCollector errors) {
+        @NonNull ErrorCollector errors) {
       FlexibleDatasetSchema.FlexibleField.Builder builder = new FlexibleDatasetSchema.FlexibleField.Builder();
       Optional<Name> nameOpt = convert(field, builder, errors);
       if (nameOpt.isEmpty()) {
@@ -137,7 +140,7 @@ public class SchemaImport {
       if (field.mixed != null) {
         if (field.type != null || field.columns != null || field.tests != null) {
           errors.warn(
-                  "When [mixed] types are defined, field level type, column, and test definitions are ignored");
+              "When [mixed] types are defined, field level type, column, and test definitions are ignored");
         }
         if (field.mixed.isEmpty()) {
           errors.fatal("[mixed] type are empty");
@@ -157,7 +160,7 @@ public class SchemaImport {
       final List<FlexibleDatasetSchema.FieldType> types = new ArrayList<>();
       for (Map.Entry<Name, FieldTypeDefinition> entry : ftds.entrySet()) {
         Optional<FlexibleDatasetSchema.FieldType> ft = convert(entry.getKey(), entry.getValue(),
-                errors);
+            errors);
         if (ft.isPresent()) {
           types.add(ft.get());
         }
@@ -167,7 +170,7 @@ public class SchemaImport {
     }
 
     private Optional<FlexibleDatasetSchema.FieldType> convert(Name variant, FieldTypeDefinition ftd,
-                                                              @NonNull ErrorCollector errors) {
+        @NonNull ErrorCollector errors) {
       errors = errors.resolve(variant);
       final Type type;
       final int arrayDepth;
@@ -177,7 +180,7 @@ public class SchemaImport {
           errors.warn("Cannot define columns and type. Type is ignored");
         }
         arrayDepth = ConstraintHelper.getConstraint(constraints, Cardinality.class)
-                .map(c -> c.isSingleton() ? 0 : 1).orElse(1);
+            .map(c -> c.isSingleton() ? 0 : 1).orElse(1);
         type = convert(ftd.getColumns(), errors);
       } else if (!Strings.isNullOrEmpty(ftd.getType())) {
         BasicTypeParse btp = BasicTypeParse.parse(ftd.getType());
@@ -191,10 +194,12 @@ public class SchemaImport {
         errors.fatal("Type definition missing (specify either [type] or [columns])");
         return Optional.empty();
       }
-      return Optional.of(new FlexibleDatasetSchema.FieldType(variant, type, arrayDepth, constraints));
+      return Optional.of(
+          new FlexibleDatasetSchema.FieldType(variant, type, arrayDepth, constraints));
     }
 
-    private List<Constraint> convertConstraints(List<String> tests, @NonNull ErrorCollector errors) {
+    private List<Constraint> convertConstraints(List<String> tests,
+        @NonNull ErrorCollector errors) {
       if (tests == null) {
         return Collections.EMPTY_LIST;
       }
@@ -225,8 +230,8 @@ public class SchemaImport {
     }
 
     private Optional<Name> convert(AbstractElementDefinition element,
-                                   FlexibleDatasetSchema.AbstractField.Builder builder,
-                                   @NonNull ErrorCollector errors) {
+        FlexibleDatasetSchema.AbstractField.Builder builder,
+        @NonNull ErrorCollector errors) {
       final Optional<Name> name = convert(element.name, errors);
       if (name.isPresent()) {
         builder.setName(name.get());
@@ -234,7 +239,7 @@ public class SchemaImport {
       }
       builder.setDescription(SchemaElementDescription.of(element.description));
       builder.setDefault_value(
-              element.default_value); //TODO: Validate that default value has right type
+          element.default_value); //TODO: Validate that default value has right type
       return name;
     }
   }

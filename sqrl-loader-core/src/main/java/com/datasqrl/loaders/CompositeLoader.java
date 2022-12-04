@@ -12,27 +12,31 @@ import java.util.*;
 @Getter
 public class CompositeLoader extends AbstractLoader implements Loader {
 
-    List<Loader> loaders;
+  List<Loader> loaders;
 
-    public CompositeLoader(Loader... loaders) {
-        this(List.of(loaders));
-    }
+  public CompositeLoader(Loader... loaders) {
+    this(List.of(loaders));
+  }
 
-    @Override
-    public Optional<String> loadsFile(Path file) {
-        for (Loader loader : loaders) {
-            Optional<String> result = loader.loadsFile(file);
-            if (result.isPresent()) return result;
-        }
-        return Optional.empty();
+  @Override
+  public Optional<String> loadsFile(Path file) {
+    for (Loader loader : loaders) {
+      Optional<String> result = loader.loadsFile(file);
+      if (result.isPresent()) {
+        return result;
+      }
     }
+    return Optional.empty();
+  }
 
-    @Override
-    public boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias) {
-        for (Loader loader : loaders) {
-            if (loader.load(ctx,fullPath,alias)) return true;
-        }
-        return false;
+  @Override
+  public boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias) {
+    for (Loader loader : loaders) {
+      if (loader.load(ctx, fullPath, alias)) {
+        return true;
+      }
     }
+    return false;
+  }
 
 }

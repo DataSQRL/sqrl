@@ -26,17 +26,16 @@ import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
 
 /**
- * Orders.x := SELECT * FROM Product;
- * ->
- * Orders.x := SELECT * FROM orders$1 AS _ JOIN Product;
- *
- * Does not add self table if one is already present and is properly aliased.
- * Also adds self to expressions.
+ * Orders.x := SELECT * FROM Product; -> Orders.x := SELECT * FROM orders$1 AS _ JOIN Product;
+ * <p>
+ * Does not add self table if one is already present and is properly aliased. Also adds self to
+ * expressions.
  */
 @AllArgsConstructor
 public class AddContextTable
     extends SqlShuttle
     implements SqrlJoinTermVisitor<SqlNode, Object> {
+
   private final boolean hasContext;
 
   @Override
@@ -67,7 +66,8 @@ public class AddContextTable
         return isSelfTable(table);
       case IDENTIFIER:
         SqlIdentifier identifier = (SqlIdentifier) node;
-        if (identifier.names.size() == 1 && identifier.names.get(0).equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+        if (identifier.names.size() == 1 && identifier.names.get(0)
+            .equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
           return true;
         }
     }
@@ -86,7 +86,8 @@ public class AddContextTable
   @Override
   public SqlNode visit(SqlIdentifier id) {
     //Already exists
-    if (id.names.size() == 1 && id.names.get(0).equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+    if (id.names.size() == 1 && id.names.get(0)
+        .equalsIgnoreCase(ReservedName.SELF_IDENTIFIER.getCanonical())) {
       return createSelf();
     }
     return addSelfLeftDeep(id);
@@ -104,7 +105,7 @@ public class AddContextTable
       case JOIN_DECLARATION:
         SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
         SqrlJoinTerm term = spec.getRelation();
-        SqrlJoinTerm newTerm = (SqrlJoinTerm)term.accept(this, null);
+        SqrlJoinTerm newTerm = (SqrlJoinTerm) term.accept(this, null);
         return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
             newTerm,
             spec.orderList,
@@ -116,14 +117,14 @@ public class AddContextTable
         return new SqlOrderBy(order.getParserPosition(),
             order.query.accept(this), order.orderList, order.offset, order.fetch);
       case UNION:
-        SqlBasicCall call = (SqlBasicCall)node;
+        SqlBasicCall call = (SqlBasicCall) node;
         SqlNode[] operands = call.getOperandList().stream()
-            .map(o->o.accept(this))
+            .map(o -> o.accept(this))
             .toArray(SqlNode[]::new);
         return new SqlBasicCall(call.getOperator(), operands, call.getParserPosition());
       case JOIN:
         //walk left deep
-        SqlJoin join2 =(SqlJoin) node;
+        SqlJoin join2 = (SqlJoin) node;
         SqlNode node2 = join2.getLeft();
         SqlNode newLeft = node2.accept(this);
         join2.setLeft(newLeft);
@@ -162,11 +163,12 @@ public class AddContextTable
   }
 
   class ValidateNoReservedAliases extends SqlBasicVisitor<SqlNode> {
+
     @Override
     public SqlNode visit(SqlCall call) {
       switch (call.getKind()) {
         case AS:
-          validateNotReserved((SqlIdentifier)call.getOperandList().get(1));
+          validateNotReserved((SqlIdentifier) call.getOperandList().get(1));
       }
       return super.visit(call);
     }

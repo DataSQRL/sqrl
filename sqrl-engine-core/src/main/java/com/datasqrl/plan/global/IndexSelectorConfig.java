@@ -4,12 +4,12 @@ import java.util.EnumSet;
 
 public interface IndexSelectorConfig {
 
-    double getCostImprovementThreshold();
+  double getCostImprovementThreshold();
 
-    EnumSet<IndexDefinition.Type> supportedIndexTypes();
+  EnumSet<IndexDefinition.Type> supportedIndexTypes();
 
-    int maxIndexColumns(IndexDefinition.Type indexType);
+  int maxIndexColumns(IndexDefinition.Type indexType);
 
-    double relativeIndexCost(IndexDefinition index);
+  double relativeIndexCost(IndexDefinition index);
 
 }

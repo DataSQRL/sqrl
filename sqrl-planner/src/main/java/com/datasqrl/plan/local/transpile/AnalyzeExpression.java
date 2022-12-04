@@ -69,12 +69,13 @@ public class AnalyzeExpression extends SqlBasicVisitor<ExpressionContext> {
           "Could not find field: " + id.names);
     }
     Optional<Field> hasToMany = field.get().path.stream()
-        .filter(f->f instanceof Relationship)
-        .filter(f->((Relationship) f).getMultiplicity() == Multiplicity.MANY)
+        .filter(f -> f instanceof Relationship)
+        .filter(f -> ((Relationship) f).getMultiplicity() == Multiplicity.MANY)
         .findAny();
     if (hasToMany.isPresent()) {
       throw new SqrlAstException(ErrorCode.TO_MANY_PATH_NOT_ALLOWED, id.getParserPosition(),
-          String.format("Field cannot be walked here, has to-many multiplicity: %s", hasToMany.get().getName().getCanonical()));
+          String.format("Field cannot be walked here, has to-many multiplicity: %s",
+              hasToMany.get().getName().getCanonical()));
     }
 
     this.resolvedFields.put(id, field.get());

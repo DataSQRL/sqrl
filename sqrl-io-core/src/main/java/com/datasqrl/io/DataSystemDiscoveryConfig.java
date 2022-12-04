@@ -6,13 +6,13 @@ import lombok.NonNull;
 
 public interface DataSystemDiscoveryConfig extends DataSystemSerializableConfig {
 
-    DataSystemDiscovery initialize(@NonNull ErrorCollector errors);
+  DataSystemDiscovery initialize(@NonNull ErrorCollector errors);
 
-    class Deserializer extends JacksonDeserializer<DataSystemDiscoveryConfig> {
+  class Deserializer extends JacksonDeserializer<DataSystemDiscoveryConfig> {
 
-        public Deserializer() {
-            super(DataSystemDiscoveryConfig.class, TYPE_KEY, DataSystemDiscoveryConfig::getSystemType);
-        }
+    public Deserializer() {
+      super(DataSystemDiscoveryConfig.class, TYPE_KEY, DataSystemDiscoveryConfig::getSystemType);
     }
+  }
 
 }

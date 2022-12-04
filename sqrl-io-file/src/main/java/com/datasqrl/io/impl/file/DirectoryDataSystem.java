@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
+ *
  */
 @Slf4j
 public abstract class DirectoryDataSystem {
@@ -46,7 +47,7 @@ public abstract class DirectoryDataSystem {
         return false;
       }
       //If file has a format, it needs to match
-      if (Strings.isNullOrEmpty(components.getFormat()) || tableConfig.getFormat()==null) {
+      if (Strings.isNullOrEmpty(components.getFormat()) || tableConfig.getFormat() == null) {
         return true;
       } else {
         return tableConfig.getFormat().getFileFormat().matches(components.getFormat());
@@ -55,11 +56,13 @@ public abstract class DirectoryDataSystem {
 
   }
 
-  public static class Discovery extends DirectoryDataSystem.Connector implements DataSystemDiscovery {
+  public static class Discovery extends DirectoryDataSystem.Connector implements
+      DataSystemDiscovery {
 
     final DirectoryDataSystemConfig.Connector connectorConfig;
 
-    public Discovery(FilePath path, Pattern partPattern, DirectoryDataSystemConfig.Connector connectorConfig) {
+    public Discovery(FilePath path, Pattern partPattern,
+        DirectoryDataSystemConfig.Connector connectorConfig) {
       super(path, partPattern);
       this.connectorConfig = connectorConfig;
     }
@@ -71,8 +74,11 @@ public abstract class DirectoryDataSystem {
 
     @Override
     public boolean requiresFormat(ExternalDataType type) {
-      if (type.isSource()) return false;
-      else return true;
+      if (type.isSource()) {
+        return false;
+      } else {
+        return true;
+      }
     }
 
     @Override
@@ -83,7 +89,7 @@ public abstract class DirectoryDataSystem {
     }
 
     private void gatherTables(FilePath directory, Map<Name, TableConfig> tablesByName,
-                              DataSystemConfig config, ErrorCollector errors) {
+        DataSystemConfig config, ErrorCollector errors) {
       try {
         for (FilePath.Status fps : directory.listFiles()) {
           FilePath p = fps.getPath();
@@ -101,7 +107,7 @@ public abstract class DirectoryDataSystem {
               }
               if (ff != null && !format.getFileFormat().equals(ff)) {
                 errors.warn("File [%s] does not match configured format [%s]", p,
-                        format.getFileFormat());
+                    format.getFileFormat());
                 continue;
               }
               TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
@@ -117,10 +123,11 @@ public abstract class DirectoryDataSystem {
               TableConfig otherTbl = tablesByName.get(tblName);
               if (otherTbl == null) {
                 tablesByName.put(tblName, table);
-              } else if (!otherTbl.getFormat().getFileFormat().equals(table.getFormat().getFileFormat())) {
+              } else if (!otherTbl.getFormat().getFileFormat()
+                  .equals(table.getFormat().getFileFormat())) {
                 errors.warn("Table file [%s] does not have the same format [%s] of previously " +
-                                "encountered table [%s]. File will be ignored",
-                        p, otherTbl.getFormat().getFileFormat(), otherTbl.getIdentifier());
+                        "encountered table [%s]. File will be ignored",
+                    p, otherTbl.getFormat().getFileFormat(), otherTbl.getIdentifier());
               }
 
             }
@@ -138,7 +145,7 @@ public abstract class DirectoryDataSystem {
     }
 
     private void gatherTableFiles(FilePath directory, List<FilePath> files,
-                                  TableConfig tableConfig) throws IOException {
+        TableConfig tableConfig) throws IOException {
       for (FilePath.Status fps : directory.listFiles()) {
         FilePath p = fps.getPath();
         if (fps.isDir()) {
@@ -150,7 +157,8 @@ public abstract class DirectoryDataSystem {
     }
 
     @Override
-    public Optional<TableConfig> discoverSink(@NonNull Name sinkName, @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
+    public Optional<TableConfig> discoverSink(@NonNull Name sinkName,
+        @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
       TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
       tblBuilder.type(ExternalDataType.SINK);
       tblBuilder.identifier(sinkName.getCanonical());
@@ -173,7 +181,7 @@ public abstract class DirectoryDataSystem {
           log.error("Could not preview files for table [%s]: %s", table, e);
         }
         return files.stream().map(fp -> getBufferedReader(fp, table))
-                .filter(r -> r != null);
+            .filter(r -> r != null);
       }
 
       private BufferedReader getBufferedReader(FilePath fp, TableConfig config) {

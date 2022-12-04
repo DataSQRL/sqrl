@@ -16,6 +16,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
+
   private Retail example = Retail.INSTANCE;
 
   @BeforeEach
@@ -25,8 +26,9 @@ class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void testC360Inference() {
-    Pair<InferredSchema, List<APIQuery>> result = inferSchemaAndQueries(example.getScript(RetailScriptNames.FULL),
-            Path.of("src/test/resources/c360bundle/schema.full.graphqls"));
+    Pair<InferredSchema, List<APIQuery>> result = inferSchemaAndQueries(
+        example.getScript(RetailScriptNames.FULL),
+        Path.of("src/test/resources/c360bundle/schema.full.graphqls"));
     assertEquals(60, result.getKey().getQuery().getFields().size());
     assertEquals(336, result.getValue().size());
   }

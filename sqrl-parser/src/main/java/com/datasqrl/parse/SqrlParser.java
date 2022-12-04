@@ -43,6 +43,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlStatement;
 
 public class SqrlParser {
+
   private final LexerErrorHandler lexerErrorHandler = new LexerErrorHandler();
   private final ParsingErrorHandler parsingErrorHandler = ParsingErrorHandler.builder()
       .specialRule(SqlBaseParser.RULE_expression, "<expression>")
@@ -146,7 +147,7 @@ public class SqrlParser {
     }
 
     public void noSymbols(String identifier, Token token) {
-      if(identifier.indexOf("$") > 0) {
+      if (identifier.indexOf("$") > 0) {
         throw new ParsingException(
             "identifiers '" + identifier + "' must not contain special token ($).", null,
             token.getLine(),
@@ -155,13 +156,13 @@ public class SqrlParser {
     }
 
     @Override
-    public void exitNonReserved(SqlBaseParser.NonReservedContext context)
-    {
+    public void exitNonReserved(SqlBaseParser.NonReservedContext context) {
       // we can't modify the tree during rule enter/exit event handling unless we're dealing with a terminal.
       // Otherwise, ANTLR gets confused an fires spurious notifications.
       if (!(context.getChild(0) instanceof TerminalNode)) {
         int rule = ((ParserRuleContext) context.getChild(0)).getRuleIndex();
-        throw new AssertionError("nonReserved can only contain tokens. Found nested rule: " + ruleNames.get(rule));
+        throw new AssertionError(
+            "nonReserved can only contain tokens. Found nested rule: " + ruleNames.get(rule));
       }
 
       // replace nonReserved words with IDENT tokens

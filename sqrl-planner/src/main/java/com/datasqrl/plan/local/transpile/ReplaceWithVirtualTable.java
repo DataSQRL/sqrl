@@ -52,7 +52,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
       case UNBOUND_JOIN:
-        UnboundJoin u = (UnboundJoin)call;
+        UnboundJoin u = (UnboundJoin) call;
         return new UnboundJoin(u.getParserPosition(),
             u.getRelation().accept(this),
             u.getCondition()
@@ -60,8 +60,9 @@ public class ReplaceWithVirtualTable extends SqlShuttle
       case JOIN_DECLARATION:
         SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) call;
         SqrlJoinTerm relation = spec.getRelation().accept(this, null);
-        Optional<SqlNodeList> orderList = spec.getOrderList().map(o->(SqlNodeList)o.accept(this));
-        Optional<SqlNodeList> leftJoin = spec.getLeftJoins().map(l->(SqlNodeList) l.accept(this));
+        Optional<SqlNodeList> orderList = spec.getOrderList()
+            .map(o -> (SqlNodeList) o.accept(this));
+        Optional<SqlNodeList> leftJoin = spec.getLeftJoins().map(l -> (SqlNodeList) l.accept(this));
 
         return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
             relation,
@@ -75,7 +76,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle
         if (tbl instanceof SqlIdentifier) {
           ResolvedTable resolved = analysis.getTableIdentifiers().get(tbl);
           if (resolved instanceof RelativeResolvedTable &&
-              ((RelativeResolvedTable)resolved).getFields().get(0).getJoin().isPresent()){
+              ((RelativeResolvedTable) resolved).getFields().get(0).getJoin().isPresent()) {
             return tbl.accept(this);
           }
         }
@@ -144,9 +145,10 @@ public class ReplaceWithVirtualTable extends SqlShuttle
       if (relationship.getJoin().isPresent()) {
         String alias = analysis.tableAlias.get(id);
 
-        ExpandJoinDeclaration expander = new ExpandJoinDeclaration(resolveRel.getAlias(), alias, aliasCnt);
+        ExpandJoinDeclaration expander = new ExpandJoinDeclaration(resolveRel.getAlias(), alias,
+            aliasCnt);
         UnboundJoin pair = expander.expand(relationship.getJoin().get());
-        pair.getCondition().map(c->pullup.push(c));
+        pair.getCondition().map(c -> pullup.push(c));
         return pair.getRelation();
       }
 
@@ -164,7 +166,8 @@ public class ReplaceWithVirtualTable extends SqlShuttle
     return super.visit(id);
   }
 
-  public static SqlNode createCondition(String firstAlias, String alias, SQRLTable from, SQRLTable to) {
+  public static SqlNode createCondition(String firstAlias, String alias, SQRLTable from,
+      SQRLTable to) {
     List<SqlNode> conditions = new ArrayList<>();
     for (int i = 0; i < from.getVt().getPrimaryKeyNames().size()
         && i < to.getVt().getPrimaryKeyNames().size(); i++) {

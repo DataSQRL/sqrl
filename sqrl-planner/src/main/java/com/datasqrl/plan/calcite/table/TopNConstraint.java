@@ -16,73 +16,84 @@ import java.util.stream.Stream;
 @Value
 public class TopNConstraint implements PullupOperator {
 
-    public static TopNConstraint EMPTY = new TopNConstraint(List.of(),false,RelCollations.EMPTY,Optional.empty(), null);
+  public static TopNConstraint EMPTY = new TopNConstraint(List.of(), false, RelCollations.EMPTY,
+      Optional.empty(), null);
 
-    @NonNull List<Integer> partition; //First, we partition in the input relation
-    boolean distinct; //second, we select distinct rows if true [All columns not in the partition indexes are SELECT DISTINCT columns]
-    @NonNull RelCollation collation; //third, we sort it
-    @NonNull Optional<Integer> limit; //fourth, we limit the result
-    TableType inputTableType; //optional table type of the input relation so we can add a hint in case we are stacking temporal state
+  @NonNull List<Integer> partition; //First, we partition in the input relation
+  boolean distinct; //second, we select distinct rows if true [All columns not in the partition indexes are SELECT DISTINCT columns]
+  @NonNull RelCollation collation; //third, we sort it
+  @NonNull Optional<Integer> limit; //fourth, we limit the result
+  TableType inputTableType; //optional table type of the input relation so we can add a hint in case we are stacking temporal state
 
-    public TopNConstraint(List<Integer> partition, boolean distinct, RelCollation collation, Optional<Integer> limit, TableType inputTableType) {
-        this.partition = partition;
-        this.distinct = distinct;
-        this.collation = collation;
-        this.limit = limit;
-        this.inputTableType = inputTableType;
-        Preconditions.checkArgument(isEmpty() || distinct || limit.isPresent());
-    }
+  public TopNConstraint(List<Integer> partition, boolean distinct, RelCollation collation,
+      Optional<Integer> limit, TableType inputTableType) {
+    this.partition = partition;
+    this.distinct = distinct;
+    this.collation = collation;
+    this.limit = limit;
+    this.inputTableType = inputTableType;
+    Preconditions.checkArgument(isEmpty() || distinct || limit.isPresent());
+  }
 
-    public boolean isEmpty() {
-        return !distinct && !hasLimit() && !hasCollation() && !hasPartition();
-    }
+  public boolean isEmpty() {
+    return !distinct && !hasLimit() && !hasCollation() && !hasPartition();
+  }
 
-    public boolean hasPartition() {
-        return !partition.isEmpty();
-    }
+  public boolean hasPartition() {
+    return !partition.isEmpty();
+  }
 
-    public boolean hasCollation() {
-        return !collation.getFieldCollations().isEmpty();
-    }
+  public boolean hasCollation() {
+    return !collation.getFieldCollations().isEmpty();
+  }
 
-    public boolean hasLimit() {
-        return limit.isPresent();
-    }
+  public boolean hasLimit() {
+    return limit.isPresent();
+  }
 
-    public int getLimit() {
-        Preconditions.checkArgument(hasLimit());
-        return limit.get();
-    }
+  public int getLimit() {
+    Preconditions.checkArgument(hasLimit());
+    return limit.get();
+  }
 
-    public TopNConstraint remap(IndexMap map) {
-        if (isEmpty()) return this;
-        RelCollation newCollation = map.map(collation);
-        List<Integer> newPartition = partition.stream().map(i -> map.map(i)).collect(Collectors.toList());
-        return new TopNConstraint(newPartition, distinct, newCollation, limit, inputTableType);
+  public TopNConstraint remap(IndexMap map) {
+    if (isEmpty()) {
+      return this;
     }
-    
-    public List<Integer> getIndexes() {
-        return Stream.concat(collation.getFieldCollations().stream().map(c -> c.getFieldIndex()),
-                partition.stream()).collect(Collectors.toList());
-    }
+    RelCollation newCollation = map.map(collation);
+    List<Integer> newPartition = partition.stream().map(i -> map.map(i))
+        .collect(Collectors.toList());
+    return new TopNConstraint(newPartition, distinct, newCollation, limit, inputTableType);
+  }
 
-    public static TopNConstraint dedupWindowAggregation(List<Integer> partitionByIndexes, int timestampIndex) {
-        RelCollation collation = RelCollations.of(new RelFieldCollation(timestampIndex, RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
-        return new TopNConstraint(partitionByIndexes,false,collation,Optional.of(1), TableType.STREAM);
-    }
+  public List<Integer> getIndexes() {
+    return Stream.concat(collation.getFieldCollations().stream().map(c -> c.getFieldIndex()),
+        partition.stream()).collect(Collectors.toList());
+  }
 
-    public boolean isPrimaryKeyDedup() {
-        return (!distinct && hasLimit() && getLimit()==1) ||
-                (distinct && !hasPartition() && !hasLimit());
-    }
+  public static TopNConstraint dedupWindowAggregation(List<Integer> partitionByIndexes,
+      int timestampIndex) {
+    RelCollation collation = RelCollations.of(
+        new RelFieldCollation(timestampIndex, RelFieldCollation.Direction.DESCENDING,
+            RelFieldCollation.NullDirection.LAST));
+    return new TopNConstraint(partitionByIndexes, false, collation, Optional.of(1),
+        TableType.STREAM);
+  }
 
-    public TableType getTableType() {
-        Preconditions.checkState(inputTableType!=null);
-        if (inputTableType==TableType.STATE) return inputTableType;
-        if (!hasLimit() || (hasPartition() && getLimit()==1)) {
-            return TableType.TEMPORAL_STATE;
-        }
-        return TableType.STATE;
+  public boolean isPrimaryKeyDedup() {
+    return (!distinct && hasLimit() && getLimit() == 1) ||
+        (distinct && !hasPartition() && !hasLimit());
+  }
+
+  public TableType getTableType() {
+    Preconditions.checkState(inputTableType != null);
+    if (inputTableType == TableType.STATE) {
+      return inputTableType;
     }
+    if (!hasLimit() || (hasPartition() && getLimit() == 1)) {
+      return TableType.TEMPORAL_STATE;
+    }
+    return TableType.STATE;
+  }
 
 }

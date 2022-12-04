@@ -31,9 +31,10 @@ public class OptimizedDAG {
     return getQueriesByType(WriteQuery.class);
   }
 
-  public<T extends Query> List<T> getQueriesByType(Class<T> clazz) {
-    return StreamUtil.filterByClass(stagePlans.stream().map(StagePlan::getQueries).flatMap(List::stream),clazz)
-            .collect(Collectors.toList());
+  public <T extends Query> List<T> getQueriesByType(Class<T> clazz) {
+    return StreamUtil.filterByClass(
+            stagePlans.stream().map(StagePlan::getQueries).flatMap(List::stream), clazz)
+        .collect(Collectors.toList());
   }
 
   @Value

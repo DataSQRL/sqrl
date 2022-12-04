@@ -31,8 +31,8 @@ public interface TypeConversion<T> {
   }
 
   /**
-   * Parses the detected type out of this string or map. This method is only called if {@link
-   * #detectType(String)} or {@link #detectType(Map)} returned true.
+   * Parses the detected type out of this string or map. This method is only called if
+   * {@link #detectType(String)} or {@link #detectType(Map)} returned true.
    *
    * @param original
    * @return
@@ -62,18 +62,16 @@ public interface TypeConversion<T> {
   }
 
   /**
-   * If the other type can be cast to this type, this method returns the
-   * distance between the types. This value is positive if it is an up-casting
-   * (i.e. no information is lost but may be compressed) and negative if it is a
-   * down-casting (i.e. information is lost).
-   *
-   * The distance is a measure of how much compression and space expansion (in case
-   * of a positive number) or information loss (in case of a negative number) happens
-   * upon casting to guide the optimizer to pick most "compatible" types, i.e. those
-   * with the shortest distance.
-   *
-   * It is assumed that the type distance between identical types is 0 and this method
-   * should not return a value that contradicts that (but may return empty in that case).
+   * If the other type can be cast to this type, this method returns the distance between the types.
+   * This value is positive if it is an up-casting (i.e. no information is lost but may be
+   * compressed) and negative if it is a down-casting (i.e. information is lost).
+   * <p>
+   * The distance is a measure of how much compression and space expansion (in case of a positive
+   * number) or information loss (in case of a negative number) happens upon casting to guide the
+   * optimizer to pick most "compatible" types, i.e. those with the shortest distance.
+   * <p>
+   * It is assumed that the type distance between identical types is 0 and this method should not
+   * return a value that contradicts that (but may return empty in that case).
    *
    * @param fromType
    * @return

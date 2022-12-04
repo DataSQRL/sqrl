@@ -6,8 +6,8 @@ import com.datasqrl.plan.global.IndexSelectorConfig;
 
 public interface DatabaseEngine extends ExecutionEngine {
 
-    DatabaseConnectionProvider getConnectionProvider();
+  DatabaseConnectionProvider getConnectionProvider();
 
-    IndexSelectorConfig getIndexSelectorConfig();
+  IndexSelectorConfig getIndexSelectorConfig();
 
 }

@@ -8,13 +8,13 @@ import lombok.NonNull;
 
 public interface DatabaseEngineConfiguration extends EngineConfiguration {
 
-    MetadataStoreProvider getMetadataStore();
+  MetadataStoreProvider getMetadataStore();
 
-    @Override
-    DatabaseEngine initialize(@NonNull ErrorCollector errors);
+  @Override
+  DatabaseEngine initialize(@NonNull ErrorCollector errors);
 
-    default ExecutionEngine.Type getEngineType() {
-        return ExecutionEngine.Type.DATABASE;
-    }
+  default ExecutionEngine.Type getEngineType() {
+    return ExecutionEngine.Type.DATABASE;
+  }
 
 }

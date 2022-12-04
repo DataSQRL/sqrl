@@ -34,7 +34,8 @@ public class ImportDefinition extends SqrlStatement {
   public ImportDefinition(SqlParserPos location,
       SqlIdentifier importPath, Optional<SqlIdentifier> alias, Optional<SqlNode> timestamp,
       Optional<SqlIdentifier> timestampAlias) {
-    super(location, transformIdentifier(importPath, alias, timestamp, timestampAlias), Optional.empty());
+    super(location, transformIdentifier(importPath, alias, timestamp, timestampAlias),
+        Optional.empty());
     this.alias = alias;
     this.timestamp = timestamp;
     this.importPath = importPath;
@@ -45,26 +46,29 @@ public class ImportDefinition extends SqrlStatement {
   }
 
   /**
-   * Rearrange the import path to have a valid assignment location for
-   * timestamps.
+   * Rearrange the import path to have a valid assignment location for timestamps.
    */
-  private static SqlIdentifier transformIdentifier(SqlIdentifier importPath, Optional<SqlIdentifier> alias,
+  private static SqlIdentifier transformIdentifier(SqlIdentifier importPath,
+      Optional<SqlIdentifier> alias,
       Optional<SqlNode> timestamp, Optional<SqlIdentifier> timestampAlias) {
-    String tableName = alias.map(e->e.names.get(0)).orElseGet(()->
-        importPath.names.get(importPath.names.size()-1));
+    String tableName = alias.map(e -> e.names.get(0)).orElseGet(() ->
+        importPath.names.get(importPath.names.size() - 1));
     if (timestamp.isPresent() && timestampAlias.isEmpty()) {
       Preconditions.checkState(timestamp.get() instanceof SqlIdentifier,
           "Timestamp must be an identifier or use the AS keyword to define a new column");
-      SqlIdentifier ts = (SqlIdentifier)timestamp.get();
-      Preconditions.checkState(ts.names.size() == 1, "Identifier should not be nested or contain a path");
+      SqlIdentifier ts = (SqlIdentifier) timestamp.get();
+      Preconditions.checkState(ts.names.size() == 1,
+          "Identifier should not be nested or contain a path");
       return new SqlIdentifier(List.of(tableName, ts.names.get(0)), ts.getParserPosition());
     }
 
     SqlIdentifier first = alias
-        .orElse(new SqlIdentifier(importPath.names.subList(0, importPath.names.size()-1), importPath.getParserPosition()));
+        .orElse(new SqlIdentifier(importPath.names.subList(0, importPath.names.size() - 1),
+            importPath.getParserPosition()));
     return timestampAlias
         //Concat the alias to the end if there's an alias
-        .map(ts -> new SqlIdentifier(List.of(tableName, ts.names.get(0)), importPath.getParserPosition()))
+        .map(ts -> new SqlIdentifier(List.of(tableName, ts.names.get(0)),
+            importPath.getParserPosition()))
         .orElse(first);
   }
 

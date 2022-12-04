@@ -11,29 +11,32 @@ import java.util.stream.Collectors;
 @Value
 public class Deduplication implements PullupOperator {
 
-    public static Deduplication EMPTY = new Deduplication(List.of(),-1);
+  public static Deduplication EMPTY = new Deduplication(List.of(), -1);
 
-    final List<Integer> partitionByIndexes;
-    final int timestampIndex;
+  final List<Integer> partitionByIndexes;
+  final int timestampIndex;
 
-    public boolean isEmpty() {
-        return timestampIndex<0;
+  public boolean isEmpty() {
+    return timestampIndex < 0;
+  }
+
+  public boolean hasPartition() {
+    return !partitionByIndexes.isEmpty();
+  }
+
+  public Deduplication remap(IndexMap map) {
+    if (this == EMPTY) {
+      return EMPTY;
     }
+    List<Integer> newPartition = partitionByIndexes.stream().map(i -> map.map(i))
+        .collect(Collectors.toList());
+    int newTimestampIndex = map.map(timestampIndex);
+    return new Deduplication(newPartition, newTimestampIndex);
+  }
 
-    public boolean hasPartition() {
-        return !partitionByIndexes.isEmpty();
-    }
-
-    public Deduplication remap(IndexMap map) {
-        if (this==EMPTY) return EMPTY;
-        List<Integer> newPartition = partitionByIndexes.stream().map(i -> map.map(i)).collect(Collectors.toList());
-        int newTimestampIndex = map.map(timestampIndex);
-        return new Deduplication(newPartition,newTimestampIndex);
-    }
-
-    public RelBuilder addDedup(RelBuilder relBuilder) {
-        RexBuilder rexB = relBuilder.getRexBuilder();
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
+  public RelBuilder addDedup(RelBuilder relBuilder) {
+    RexBuilder rexB = relBuilder.getRexBuilder();
+    throw new UnsupportedOperationException("Not yet implemented");
+  }
 
 }

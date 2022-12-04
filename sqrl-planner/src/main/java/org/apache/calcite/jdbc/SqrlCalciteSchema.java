@@ -27,6 +27,7 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class SqrlCalciteSchema extends SimpleCalciteSchema {
+
   public SqrlCalciteSchema(Schema schema) {
     super(null, schema, "");
   }
@@ -34,8 +35,8 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
   public List<SQRLTable> getRootTables() {
     return getTableNames().stream()
         .map(name -> getTable(name, false).getTable())
-        .filter(t->t instanceof SQRLTable)
-        .map(t->(SQRLTable) t)
+        .filter(t -> t instanceof SQRLTable)
+        .map(t -> (SQRLTable) t)
         .collect(Collectors.toList());
   }
 
@@ -46,10 +47,12 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
 
     while (!iter.isEmpty()) {
       SQRLTable table = iter.pop();
-      if (table == null) continue;
+      if (table == null) {
+        continue;
+      }
       List<SQRLTable> relationships = table.getFields().getAccessibleFields().stream()
-          .filter(f-> f instanceof Relationship)
-          .map(f->((Relationship)f).getToTable())
+          .filter(f -> f instanceof Relationship)
+          .map(f -> ((Relationship) f).getToTable())
           .collect(Collectors.toList());
 
       for (SQRLTable rel : relationships) {
@@ -61,7 +64,7 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
     }
 
     return tables.stream()
-        .filter(f->f != null)
+        .filter(f -> f != null)
         .collect(Collectors.toList());
   }
 }

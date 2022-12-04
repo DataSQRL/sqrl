@@ -7,6 +7,7 @@ import java.util.Optional;
 import lombok.Getter;
 
 public class ErrorEmitter {
+
   protected final Map<Class, ErrorHandler> handlers = new HashMap<>();
 
   @Getter
@@ -23,9 +24,11 @@ public class ErrorEmitter {
   public ErrorEmitter resolve(Name location) {
     return new ErrorEmitter(sourceMap, baseLocation.resolve(location));
   }
+
   public ErrorEmitter resolve(String location) {
     return new ErrorEmitter(sourceMap, baseLocation.resolve(location));
   }
+
   public ErrorEmitter resolveSourceMap(SourceMap sourceMap) {
     return new ErrorEmitter(sourceMap, baseLocation);
   }

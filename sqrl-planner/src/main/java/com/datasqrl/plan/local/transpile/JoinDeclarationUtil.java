@@ -47,9 +47,9 @@ public class JoinDeclarationUtil {
 
     SqlNode tRight = getRightDeepTable(sqlNode);
     if (tRight.getKind() == SqlKind.AS) {
-      tRight = ((SqlCall)tRight).getOperandList().get(0);
+      tRight = ((SqlCall) tRight).getOperandList().get(0);
     }
-    SqlIdentifier identifier = (SqlIdentifier)tRight;
+    SqlIdentifier identifier = (SqlIdentifier) tRight;
     return validator.getCatalogReader().getTable(identifier.names)
         .unwrap(VirtualRelationalTable.class)
         .getSqrlTable();

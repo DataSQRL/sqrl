@@ -11,7 +11,9 @@ public abstract class SqrlJoinTerm extends SqlCall {
   public abstract <R, C> R accept(SqrlJoinTermVisitor<R, C> visitor, C context);
 
   public interface SqrlJoinTermVisitor<R, C> {
+
     R visitJoinPath(SqrlJoinPath sqrlJoinPath, C context);
+
     R visitJoinSetOperation(SqrlJoinSetOperation sqrlJoinSetOperation, C context);
   }
 }

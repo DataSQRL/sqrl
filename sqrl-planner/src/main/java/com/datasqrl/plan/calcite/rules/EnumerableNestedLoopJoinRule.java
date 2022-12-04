@@ -12,50 +12,55 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Additional join rule for Enumerable to make sure that NestedLoopJoin is scored
- * in the cost model since the EnumerableJoinRule will only offer HashJoin as an option
- * for joins with equi-conditions.
- *
+ * Additional join rule for Enumerable to make sure that NestedLoopJoin is scored in the cost model
+ * since the EnumerableJoinRule will only offer HashJoin as an option for joins with
+ * equi-conditions.
+ * <p>
  * Copied from Calcite's EnumerableJoinRule
  */
 public class EnumerableNestedLoopJoinRule extends ConverterRule {
 
-    /** Default configuration. */
-    public static final ConverterRule.Config DEFAULT_CONFIG = Config.INSTANCE
-            .withConversion(LogicalJoin.class, Convention.NONE,
-                    EnumerableConvention.INSTANCE, "EnumerableNestedLoopJoinRule")
-            .withRuleFactory(EnumerableNestedLoopJoinRule::new);
+  /**
+   * Default configuration.
+   */
+  public static final ConverterRule.Config DEFAULT_CONFIG = Config.INSTANCE
+      .withConversion(LogicalJoin.class, Convention.NONE,
+          EnumerableConvention.INSTANCE, "EnumerableNestedLoopJoinRule")
+      .withRuleFactory(EnumerableNestedLoopJoinRule::new);
 
-    public static final RelOptRule INSTANCE =
-            EnumerableNestedLoopJoinRule.DEFAULT_CONFIG.toRule(EnumerableNestedLoopJoinRule.class);
+  public static final RelOptRule INSTANCE =
+      EnumerableNestedLoopJoinRule.DEFAULT_CONFIG.toRule(EnumerableNestedLoopJoinRule.class);
 
-    /** Called from the Config. */
-    protected EnumerableNestedLoopJoinRule(Config config) {
-        super(config);
+  /**
+   * Called from the Config.
+   */
+  protected EnumerableNestedLoopJoinRule(Config config) {
+    super(config);
+  }
+
+  @Override
+  public RelNode convert(RelNode rel) {
+    LogicalJoin join = (LogicalJoin) rel;
+    List<RelNode> newInputs = new ArrayList<>();
+    for (RelNode input : join.getInputs()) {
+      if (!(input.getConvention() instanceof EnumerableConvention)) {
+        input =
+            convert(
+                input,
+                input.getTraitSet()
+                    .replace(EnumerableConvention.INSTANCE));
+      }
+      newInputs.add(input);
     }
+    final RelNode left = newInputs.get(0);
+    final RelNode right = newInputs.get(1);
 
-    @Override public RelNode convert(RelNode rel) {
-        LogicalJoin join = (LogicalJoin) rel;
-        List<RelNode> newInputs = new ArrayList<>();
-        for (RelNode input : join.getInputs()) {
-            if (!(input.getConvention() instanceof EnumerableConvention)) {
-                input =
-                        convert(
-                                input,
-                                input.getTraitSet()
-                                        .replace(EnumerableConvention.INSTANCE));
-            }
-            newInputs.add(input);
-        }
-        final RelNode left = newInputs.get(0);
-        final RelNode right = newInputs.get(1);
-
-        return EnumerableNestedLoopJoin.create(
-                left,
-                right,
-                join.getCondition(),
-                join.getVariablesSet(),
-                join.getJoinType());
-    }
+    return EnumerableNestedLoopJoin.create(
+        left,
+        right,
+        join.getCondition(),
+        join.getVariablesSet(),
+        join.getJoinType());
+  }
 
 }

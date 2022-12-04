@@ -17,37 +17,39 @@ import java.util.List;
 
 import static com.datasqrl.engine.EngineCapability.*;
 
-public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements FlinkStreamEngine {
+public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
+    FlinkStreamEngine {
 
-    public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = EnumSet.of(DENORMALIZE, TEMPORAL_JOIN,
-            TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS);
+  public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = EnumSet.of(DENORMALIZE,
+      TEMPORAL_JOIN,
+      TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS);
 
-    final FlinkEngineConfiguration config;
+  final FlinkEngineConfiguration config;
 
-    public AbstractFlinkStreamEngine(FlinkEngineConfiguration config) {
-        super(FlinkEngineConfiguration.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
-        this.config = config;
-    }
+  public AbstractFlinkStreamEngine(FlinkEngineConfiguration config) {
+    super(FlinkEngineConfiguration.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
+    this.config = config;
+  }
 
-    @Override
-    public ExecutionResult execute(EnginePhysicalPlan plan) {
-        Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
-        FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan)plan;
-        StatementSet statementSet = flinkPlan.getStatementSet();
-        TableResult rslt = statementSet.execute();
-        rslt.print(); //todo: this just forces print to wait for the async
-        return new ExecutionResult.Message(rslt.getJobClient().get()
-                .getJobID().toString());
-    }
+  @Override
+  public ExecutionResult execute(EnginePhysicalPlan plan) {
+    Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
+    FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
+    StatementSet statementSet = flinkPlan.getStatementSet();
+    TableResult rslt = statementSet.execute();
+    rslt.print(); //todo: this just forces print to wait for the async
+    return new ExecutionResult.Message(rslt.getJobClient().get()
+        .getJobID().toString());
+  }
 
-    @Override
-    public FlinkStreamPhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder) {
-        Preconditions.checkArgument(inputs.isEmpty());
-        FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(this).createStreamGraph(plan.getQueries());
-        return streamPlan;
-    }
-
-
+  @Override
+  public FlinkStreamPhysicalPlan plan(OptimizedDAG.StagePlan plan,
+      List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder) {
+    Preconditions.checkArgument(inputs.isEmpty());
+    FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(this).createStreamGraph(
+        plan.getQueries());
+    return streamPlan;
+  }
 
 
 }

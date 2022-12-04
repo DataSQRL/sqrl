@@ -788,7 +788,7 @@ class AstBuilder
     }
     //special case: count()
     if (name.names.size() == 1 && name.names.get(0).equalsIgnoreCase("count")
-      && args.isEmpty()) {
+        && args.isEmpty()) {
       args = List.of(SqlIdentifier.star(SqlParserPos.ZERO));
     }
 
@@ -886,7 +886,7 @@ class AstBuilder
     int sign = Optional.ofNullable(context.sign)
         .map(AstBuilder::getIntervalSign)
         .orElse(1);
-    SqlLiteral expr = (SqlLiteral)visit(context.number());
+    SqlLiteral expr = (SqlLiteral) visit(context.number());
     TimeUnit timeUnit = getIntervalFieldType(
         (Token) context.intervalField().getChild(0).getPayload());
     //YEAR | MONTH | WEEK | DAY | HOUR | MINUTE | SECOND
@@ -926,7 +926,7 @@ class AstBuilder
 //            .divide(BigDecimal.valueOf(1000));
 //        expr = SqlLiteral.createExactNumeric(newValue2.toString(), expr.getParserPosition());
 //        timeUnit = TimeUnit.SECOND;
-      //normalized in sqltorel convert to seconds
+        //normalized in sqltorel convert to seconds
     }
 
     return SqlLiteral.createInterval(sign,
@@ -978,7 +978,8 @@ class AstBuilder
       timestamp = Optional.empty();
     }
 
-    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias, timestamp, timestampAlias);
+    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias,
+        timestamp, timestampAlias);
   }
 
   @Override
@@ -1102,7 +1103,7 @@ class AstBuilder
 
   private TableFunctionArgument toFunctionArg(FunctionArgumentContext ctx) {
     return new TableFunctionArgument(
-        (SqlIdentifier)visit(ctx.name),
+        (SqlIdentifier) visit(ctx.name),
         getType(ctx.typeName)
     );
   }
@@ -1112,13 +1113,15 @@ class AstBuilder
     List<SqlNode> sort = visit(ctx.sortItem(), SqlNode.class);
     Optional<SqlNodeList> sortList = emptyListToEmptyOptional(sort);
 
-    Optional<SqlNumericLiteral> limit = ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL")
-        ? Optional.empty()
-        : Optional.of(SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)));
+    Optional<SqlNumericLiteral> limit =
+        ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL")
+            ? Optional.empty()
+            : Optional.of(
+                SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)));
     SqrlJoinTerm relation = (SqrlJoinTerm) visit(ctx.joinTerm());
 
     Optional<SqlIdentifier> inverse = Optional.ofNullable(ctx.inv)
-        .map(i->(SqlIdentifier) visit(i));
+        .map(i -> (SqlIdentifier) visit(i));
     return new SqrlJoinDeclarationSpec(
         getLocation(ctx),
         relation,
@@ -1142,7 +1145,8 @@ class AstBuilder
   public SqlNode visitStreamAssign(StreamAssignContext ctx) {
 
     SqlNode query = visit(ctx.streamQuery().query());
-    SubscriptionType type = SubscriptionType.valueOf(ctx.streamQuery().subscriptionType().getText());
+    SubscriptionType type = SubscriptionType.valueOf(
+        ctx.streamQuery().subscriptionType().getText());
     return new StreamAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
         getTableArgs(ctx.tableFunction()),
         query,

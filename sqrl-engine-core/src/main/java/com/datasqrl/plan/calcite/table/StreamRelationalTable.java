@@ -5,10 +5,10 @@ import org.apache.calcite.rel.RelNode;
 
 public interface StreamRelationalTable extends SourceRelationalTable {
 
-    UniversalTableBuilder getStreamSchema();
+  UniversalTableBuilder getStreamSchema();
 
-    RelNode getBaseRelation();
+  RelNode getBaseRelation();
 
-    StateChangeType getStateChangeType();
+  StateChangeType getStateChangeType();
 
 }

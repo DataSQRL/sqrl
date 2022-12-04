@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 
 /**
  * A relational table that is defined by the user query in the SQRL script.
- *
+ * <p>
  * This is a physical relation that gets materialized in the write DAG or computed in the read DAG.
  */
 @Getter
@@ -50,11 +50,11 @@ public class QueryRelationalTable extends AbstractRelationalTable {
 
 
   public QueryRelationalTable(@NonNull Name rootTableId, @NonNull TableType type,
-                              RelNode relNode, PullupOperator.Container pullups,
-                              @NonNull TimestampHolder.Base timestamp,
-                              @NonNull int numPrimaryKeys,
-                              @NonNull TableStatistic stats,
-                              @NonNull ExecutionStage execution) {
+      RelNode relNode, PullupOperator.Container pullups,
+      @NonNull TimestampHolder.Base timestamp,
+      @NonNull int numPrimaryKeys,
+      @NonNull TableStatistic stats,
+      @NonNull ExecutionStage execution) {
     super(rootTableId);
     this.type = type;
     this.timestamp = timestamp;
@@ -66,7 +66,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   }
 
   public RelNode getRelNode() {
-    Preconditions.checkState(relNode!=null,"Not yet initialized");
+    Preconditions.checkState(relNode != null, "Not yet initialized");
     return relNode;
   }
 
@@ -79,7 +79,7 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   }
 
   public int addInlinedColumn(AddedColumn.Simple column, Supplier<RelBuilder> relBuilderFactory,
-                               Optional<Integer> timestampScore) {
+      Optional<Integer> timestampScore) {
     int index = getNumColumns();
     this.relNode = column.appendTo(relBuilderFactory.get().push(relNode)).build();
     //Check if this adds a timestamp candidate
@@ -114,8 +114,10 @@ public class QueryRelationalTable extends AbstractRelationalTable {
   }
 
   public Statistic getStatistic() {
-    if (tableStatistic.isUnknown()) return Statistics.UNKNOWN;
-    ImmutableBitSet key = ImmutableBitSet.of(ContiguousSet.closedOpen(0,numPrimaryKeys));
+    if (tableStatistic.isUnknown()) {
+      return Statistics.UNKNOWN;
+    }
+    ImmutableBitSet key = ImmutableBitSet.of(ContiguousSet.closedOpen(0, numPrimaryKeys));
     return Statistics.of(tableStatistic.getRowCount(), List.of(key));
   }
 

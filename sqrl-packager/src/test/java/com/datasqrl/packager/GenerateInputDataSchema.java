@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Test;
 @Disabled
 public class GenerateInputDataSchema extends TestDataSetMonitoringIT {
 
-    @Test
-    public void generateSchema() {
-        generateTableConfigAndSchemaInDataDir(DataSQRL.INSTANCE);
-    }
+  @Test
+  public void generateSchema() {
+    generateTableConfigAndSchemaInDataDir(DataSQRL.INSTANCE);
+  }
 
 
 }

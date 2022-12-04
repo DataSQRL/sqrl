@@ -11,40 +11,40 @@ import java.util.List;
 @Getter
 public class SlidingAggregationHint implements SqrlHint {
 
-    final int timestampIdx;
+  final int timestampIdx;
 
-    final long intervalWidthMs;
-    final long slideWidthMs;
+  final long intervalWidthMs;
+  final long slideWidthMs;
+
+  @Override
+  public RelHint getHint() {
+    return RelHint.builder(HINT_NAME).hintOptions(List.of(String.valueOf(timestampIdx),
+        String.valueOf(intervalWidthMs), String.valueOf(slideWidthMs))).build();
+  }
+
+  public static final String HINT_NAME = SlidingAggregationHint.class.getSimpleName();
+
+  @Override
+  public String getHintName() {
+    return HINT_NAME;
+  }
+
+  public static final Constructor CONSTRUCTOR = new Constructor();
+
+  public static final class Constructor implements SqrlHint.Constructor<SlidingAggregationHint> {
 
     @Override
-    public RelHint getHint() {
-        return RelHint.builder(HINT_NAME).hintOptions(List.of(String.valueOf(timestampIdx),
-                String.valueOf(intervalWidthMs),String.valueOf(slideWidthMs))).build();
+    public boolean validName(String name) {
+      return name.equalsIgnoreCase(HINT_NAME);
     }
-
-    public static final String HINT_NAME = SlidingAggregationHint.class.getSimpleName();
 
     @Override
-    public String getHintName() {
-        return HINT_NAME;
+    public SlidingAggregationHint fromHint(RelHint hint) {
+      List<String> options = hint.listOptions;
+      Preconditions.checkArgument(hint.listOptions.size() == 3, "Invalid hint: %s", hint);
+      return new SlidingAggregationHint(Integer.valueOf(options.get(0)),
+          Long.valueOf(options.get(1)), Long.valueOf(options.get(2)));
     }
-
-    public static final Constructor CONSTRUCTOR = new Constructor();
-
-    public static final class Constructor implements SqrlHint.Constructor<SlidingAggregationHint> {
-
-        @Override
-        public boolean validName(String name) {
-            return name.equalsIgnoreCase(HINT_NAME);
-        }
-
-        @Override
-        public SlidingAggregationHint fromHint(RelHint hint) {
-            List<String> options = hint.listOptions;
-            Preconditions.checkArgument(hint.listOptions.size()==3,"Invalid hint: %s",hint);
-            return new SlidingAggregationHint(Integer.valueOf(options.get(0)),
-                    Long.valueOf(options.get(1)),Long.valueOf(options.get(2)));
-        }
-    }
+  }
 
 }

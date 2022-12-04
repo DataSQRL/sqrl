@@ -44,12 +44,12 @@ public class AddHints {
       case UNION:
         SqlCall call = (SqlCall) node;
         call.getOperandList()
-            .forEach(o->accept(op, o));
+            .forEach(o -> accept(op, o));
         return;
     }
 
     if (!(node instanceof SqlSelect)) {
-      return ;
+      return;
     }
 
     SqlSelect select = (SqlSelect) node;
@@ -79,7 +79,7 @@ public class AddHints {
 
     List<SqlNode> newSelectList = new ArrayList<>();
     //Hint operand lists include hint name so skip first
-    List<SqlNode> operands = ((SqlNodeList)hint.getOperandList().get(1)).getList();
+    List<SqlNode> operands = ((SqlNodeList) hint.getOperandList().get(1)).getList();
     for (int i = 0; i < operands.size(); i++) {
       SqlNode operand = operands.get(i);
       newSelectList.add(operand);
@@ -92,7 +92,7 @@ public class AddHints {
 
     select.setSelectList(new SqlNodeList(newList, SqlParserPos.ZERO));
     CalciteUtil.wrapSelectInProject(select);
-    SqlSelect inner = (SqlSelect)select.getFrom();
+    SqlSelect inner = (SqlSelect) select.getFrom();
     //pull up hints
     select.setHints(inner.getHints());
     inner.setHints(new SqlNodeList(SqlParserPos.ZERO));
@@ -100,16 +100,16 @@ public class AddHints {
 
   private List<SqlNode> removeDuplicates(List<SqlNode> newSelectList, List<SqlNode> items,
       SqlValidatorScope scope) {
-    List<SqlIdentifier> identifiers = newSelectList.stream().filter(f->f instanceof SqlIdentifier)
-        .map(i->scope.fullyQualify((SqlIdentifier) i).identifier)
+    List<SqlIdentifier> identifiers = newSelectList.stream().filter(f -> f instanceof SqlIdentifier)
+        .map(i -> scope.fullyQualify((SqlIdentifier) i).identifier)
         .collect(Collectors.toList());
 
     List<SqlNode> newNodes = new ArrayList<>();
     for (SqlNode item : items) {
       if (item instanceof SqlIdentifier) {
-        Optional<SqlIdentifier> found = identifiers.stream().filter(i->
-            scope.fullyQualify((SqlIdentifier) item).identifier.equalsDeep(i, Litmus.IGNORE))
-                .findAny();
+        Optional<SqlIdentifier> found = identifiers.stream().filter(i ->
+                scope.fullyQualify((SqlIdentifier) item).identifier.equalsDeep(i, Litmus.IGNORE))
+            .findAny();
         if (found.isEmpty()) {
           newNodes.add(item);
         }
@@ -162,7 +162,7 @@ public class AddHints {
 
     CalciteUtil.wrapSelectInProject(select);
 
-    List<SqlNode> innerPPKNodes = context.map(c->getPPKNodes(select)).orElse(List.of());
+    List<SqlNode> innerPPKNodes = context.map(c -> getPPKNodes(select)).orElse(List.of());
     SqlNodeList ppkNode = new SqlNodeList(innerPPKNodes, SqlParserPos.ZERO);
     SqlHint selectDistinctHint = createFnc.apply(ppkNode);
     CalciteUtil.setHint(select, selectDistinctHint);
@@ -170,7 +170,7 @@ public class AddHints {
 
   private List<SqlNode> getPPKNodes(SqlSelect select) {
     return IntStream.range(0, context.get().getPrimaryKeyNames().size())
-        .mapToObj(i-> new SqlIdentifier(List.of(Integer.toString(i)), SqlParserPos.ZERO))
+        .mapToObj(i -> new SqlIdentifier(List.of(Integer.toString(i)), SqlParserPos.ZERO))
         .collect(Collectors.toList());
   }
 

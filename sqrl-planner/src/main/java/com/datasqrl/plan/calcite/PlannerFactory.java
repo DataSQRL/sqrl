@@ -21,6 +21,7 @@ import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 
 @AllArgsConstructor
 public class PlannerFactory {
+
   private final SchemaPlus rootSchema;
 
   public static SqlValidator.Config sqlValidatorConfig = SqlValidator.Config.DEFAULT
@@ -29,8 +30,7 @@ public class PlannerFactory {
       .withColumnReferenceExpansion(true)
       .withTypeCoercionEnabled(true) //must be true to allow null literals
       .withLenientOperatorLookup(false)
-      .withSqlConformance(SqrlConformance.INSTANCE)
-      ;
+      .withSqlConformance(SqrlConformance.INSTANCE);
 
   public static final SqlToRelConverter.Config sqlToRelConverterConfig = SqlToRelConverter
       .config()
@@ -43,6 +43,7 @@ public class PlannerFactory {
   public static SqlOperatorTable getOperatorTable() {
     return getOperatorTable(List.of());
   }
+
   public static SqlOperatorTable getOperatorTable(List<FlinkFnc> envFunctions) {
     return FlinkEnvProxy.getOperatorTable(envFunctions);
   }

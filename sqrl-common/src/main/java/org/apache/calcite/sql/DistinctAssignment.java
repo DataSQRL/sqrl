@@ -14,7 +14,7 @@ public class DistinctAssignment extends Assignment {
   private final SqlNode query;
 
   public DistinctAssignment(SqlParserPos location, SqlIdentifier name, SqlNode table,
-     List<SqlNode> partitionKeys,
+      List<SqlNode> partitionKeys,
       List<SqlNode> order, Optional<SqlNodeList> hints, SqlNode query) {
     super(location, name, hints);
     this.table = table;

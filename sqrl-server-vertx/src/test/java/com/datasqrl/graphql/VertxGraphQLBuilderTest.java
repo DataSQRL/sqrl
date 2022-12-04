@@ -43,10 +43,10 @@ class VertxGraphQLBuilderTest {
   @Container
   private PostgreSQLContainer testDatabase =
       new PostgreSQLContainer(DockerImageName.parse("postgres:14.2"))
-        .withDatabaseName("foo")
-        .withUsername("foo")
-        .withPassword("secret")
-        .withDatabaseName("datasqrl");
+          .withDatabaseName("foo")
+          .withUsername("foo")
+          .withPassword("secret")
+          .withDatabaseName("datasqrl");
 
   static RootGraphqlModel root = RootGraphqlModel.builder()
       .schema(StringSchema.builder().schema(""

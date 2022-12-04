@@ -9,9 +9,8 @@ import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
 
 /**
- * A relational table that is defined by the imported data from a
- * {@link TableSource}.
- *
+ * A relational table that is defined by the imported data from a {@link TableSource}.
+ * <p>
  * This is a phyiscal relation with a schema that captures the input data.
  */
 public class ProxyImportRelationalTable extends ProxySourceRelationalTable {
@@ -19,13 +18,14 @@ public class ProxyImportRelationalTable extends ProxySourceRelationalTable {
   @Getter
   private final ImportedRelationalTableImpl baseTable;
 
-  public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull TimestampHolder.Base timestamp,
-                                    RelNode relNode, ImportedRelationalTableImpl baseTable, ExecutionStage execution,
-                                    TableStatistic tableStatistic) {
+  public ProxyImportRelationalTable(@NonNull Name rootTableId,
+      @NonNull TimestampHolder.Base timestamp,
+      RelNode relNode, ImportedRelationalTableImpl baseTable, ExecutionStage execution,
+      TableStatistic tableStatistic) {
     super(rootTableId, TableType.STREAM, relNode, PullupOperator.Container.EMPTY, timestamp,
-            1,
-            tableStatistic,
-            execution);
+        1,
+        tableStatistic,
+        execution);
     this.baseTable = baseTable;
   }
 

@@ -29,7 +29,7 @@ public class FlinkEngineConfiguration implements EngineConfiguration {
 
   @Override
   public FlinkStreamEngine initialize(@NonNull ErrorCollector errors) {
-    ConfigurationUtil.javaxValidate(this,errors);
+    ConfigurationUtil.javaxValidate(this, errors);
     return new LocalFlinkStreamEngineImpl(this);
   }
 

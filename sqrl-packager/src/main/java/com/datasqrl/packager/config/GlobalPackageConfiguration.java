@@ -17,22 +17,26 @@ import java.util.LinkedHashMap;
 @Getter
 public class GlobalPackageConfiguration implements GlobalConfiguration {
 
-    public static final String DEPENDENCIES_NAME = "dependencies";
+  public static final String DEPENDENCIES_NAME = "dependencies";
 
-    @JsonProperty("package") @Builder.Default @Valid
-    PackageConfiguration pkg = new PackageConfiguration();
+  @JsonProperty("package")
+  @Builder.Default
+  @Valid
+  PackageConfiguration pkg = new PackageConfiguration();
 
-    @JsonProperty(DEPENDENCIES_NAME)
-    @NonNull @Builder.Default @Valid
-    LinkedHashMap<String,Dependency> dependencies = new LinkedHashMap<>();
+  @JsonProperty(DEPENDENCIES_NAME)
+  @NonNull
+  @Builder.Default
+  @Valid
+  LinkedHashMap<String, Dependency> dependencies = new LinkedHashMap<>();
 
-    @Setter
-    @JsonProperty(ManifestConfiguration.PROPERTY)
-    ManifestConfiguration manifest;
+  @Setter
+  @JsonProperty(ManifestConfiguration.PROPERTY)
+  ManifestConfiguration manifest;
 
-    public static GlobalPackageConfiguration readFrom(Path path) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(path.toFile(), GlobalPackageConfiguration.class);
-    }
+  public static GlobalPackageConfiguration readFrom(Path path) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    return mapper.readValue(path.toFile(), GlobalPackageConfiguration.class);
+  }
 
 }

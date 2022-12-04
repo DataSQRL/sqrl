@@ -325,8 +325,10 @@ public class PgSchemaBuilder implements
 
   @Value
   public static class FieldContext {
+
     ObjectTypeDefinition parent;
   }
+
   @Value
   public static class RelPair {
 

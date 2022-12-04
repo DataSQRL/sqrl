@@ -19,29 +19,31 @@ public class ScriptTableDefinition {
   private final Map<SQRLTable, VirtualRelationalTable> shredTableMap;
 
   public ScriptTableDefinition(@NonNull QueryRelationalTable baseTable,
-                               @NonNull Map<SQRLTable, VirtualRelationalTable> shredTableMap) {
+      @NonNull Map<SQRLTable, VirtualRelationalTable> shredTableMap) {
     this.baseTable = baseTable;
     this.shredTableMap = shredTableMap;
   }
 
   public SQRLTable getTable() {
-    return shredTableMap.entrySet().stream().filter(e -> e.getValue().isRoot()).map(Map.Entry::getKey).findFirst().get();
+    return shredTableMap.entrySet().stream().filter(e -> e.getValue().isRoot())
+        .map(Map.Entry::getKey).findFirst().get();
   }
 
   /**
-   * Produces a mapping from SQRL Table fields to the corresponding
-   * fields in Calcite.
-   * Since import tables are generated from a single {@link UniversalTableBuilder}
-   * we can make the simplifying assumption that the names are identical.
+   * Produces a mapping from SQRL Table fields to the corresponding fields in Calcite. Since import
+   * tables are generated from a single {@link UniversalTableBuilder} we can make the simplifying
+   * assumption that the names are identical.
+   *
    * @return
    */
   public Map<Field, String> getFieldNameMap() {
     Map<Field, String> fieldMap = new HashMap<>();
-    shredTableMap.entrySet().stream().forEach( e -> {
+    shredTableMap.entrySet().stream().forEach(e -> {
       e.getKey().getColumns(false).forEach(f -> {
         String fieldName = f.getId().getCanonical();
-        Preconditions.checkArgument(e.getValue().getRowType().getField(fieldName,true, false)!=null);
-        fieldMap.put(f,fieldName);
+        Preconditions.checkArgument(
+            e.getValue().getRowType().getField(fieldName, true, false) != null);
+        fieldMap.put(f, fieldName);
       });
     });
     return fieldMap;

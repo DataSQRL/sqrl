@@ -37,10 +37,12 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
     String schema = generateSchema(script.getScript());
     String filename = script.getScriptPath().getFileName().toString();
-    if (filename.endsWith(".sqrl")) filename = filename.substring(0,filename.length()-5);
+    if (filename.endsWith(".sqrl")) {
+      filename = filename.substring(0, filename.length() - 5);
+    }
     filename += ".schema.graphql";
     Path path = script.getScriptPath().getParent().resolve(filename);
-    Files.writeString(path,schema);
+    Files.writeString(path, schema);
   }
 
   @Test

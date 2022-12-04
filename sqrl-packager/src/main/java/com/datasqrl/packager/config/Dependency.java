@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 public class Dependency {
 
-    String version;
-    String variant;
+  String version;
+  String variant;
 
 }

@@ -20,29 +20,29 @@ import java.util.Set;
 
 public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
 
-    @BeforeEach
-    public void setup(TestInfo testInfo) throws IOException {
-        this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
-    }
+  @BeforeEach
+  public void setup(TestInfo testInfo) throws IOException {
+    this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
+  }
 
-    @SneakyThrows
-    private void scriptTest(TestScript script, boolean removeTimestamps, boolean snapshotData) {
-        initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
-        validateTables(Files.readString(script.getScriptPath()), script.getResultTables(),
-                removeTimestamps?ImmutableSet.copyOf(script.getResultTables()): Set.of(),
-                snapshotData?Set.of():ImmutableSet.copyOf(script.getResultTables()));
-    }
+  @SneakyThrows
+  private void scriptTest(TestScript script, boolean removeTimestamps, boolean snapshotData) {
+    initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
+    validateTables(Files.readString(script.getScriptPath()), script.getResultTables(),
+        removeTimestamps ? ImmutableSet.copyOf(script.getResultTables()) : Set.of(),
+        snapshotData ? Set.of() : ImmutableSet.copyOf(script.getResultTables()));
+  }
 
-    @ParameterizedTest
-    @ArgumentsSource(TestScript.AllScriptsProvider.class)
-    public void fullScriptTest(TestScript script) {
-        scriptTest(script,true, script.dataSnapshot());
-    }
+  @ParameterizedTest
+  @ArgumentsSource(TestScript.AllScriptsProvider.class)
+  public void fullScriptTest(TestScript script) {
+    scriptTest(script, true, script.dataSnapshot());
+  }
 
-    @Test
-    @Disabled
-    public void forDebuggingIndividualUseCases() {
-        scriptTest(Nutshop.MEDIUM.getScripts().get(1), false, false);
-    }
+  @Test
+  @Disabled
+  public void forDebuggingIndividualUseCases() {
+    scriptTest(Nutshop.MEDIUM.getScripts().get(1), false, false);
+  }
 
 }

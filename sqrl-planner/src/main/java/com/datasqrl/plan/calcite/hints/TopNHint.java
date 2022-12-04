@@ -16,48 +16,51 @@ import java.util.stream.Collectors;
 @Getter
 public class TopNHint implements SqrlHint {
 
-    public enum Type {
-        DISTINCT_ON,
-        SELECT_DISTINCT,
-        TOP_N;
+  public enum Type {
+    DISTINCT_ON,
+    SELECT_DISTINCT,
+    TOP_N;
 
-        public boolean matches(String name) {
-            return name.equalsIgnoreCase(toString());
-        }
+    public boolean matches(String name) {
+      return name.equalsIgnoreCase(toString());
     }
+  }
 
-    final Type type;
-    final List<Integer> partition;
+  final Type type;
+  final List<Integer> partition;
+
+  @Override
+  public RelHint getHint() {
+    return RelHint.builder(getHintName())
+        .hintOptions(partition.stream().map(String::valueOf).collect(Collectors.toList())).build();
+  }
+
+  public static SqlHint createSqlHint(Type type, SqlNodeList columns, SqlParserPos pos) {
+    return new SqlHint(pos, new SqlIdentifier(type.toString(), pos), columns,
+        SqlHint.HintOptionFormat.ID_LIST);
+  }
+
+  @Override
+  public String getHintName() {
+    return type.name();
+  }
+
+  public static final Constructor CONSTRUCTOR = new Constructor();
+
+  public static final class Constructor implements SqrlHint.Constructor<TopNHint> {
 
     @Override
-    public RelHint getHint() {
-        return RelHint.builder(getHintName()).hintOptions(partition.stream().map(String::valueOf).collect(Collectors.toList())).build();
-    }
-
-    public static SqlHint createSqlHint(Type type, SqlNodeList columns, SqlParserPos pos) {
-        return new SqlHint(pos, new SqlIdentifier(type.toString(), pos), columns, SqlHint.HintOptionFormat.ID_LIST);
+    public boolean validName(String name) {
+      return Arrays.stream(Type.values()).anyMatch(v -> v.matches(name));
     }
 
     @Override
-    public String getHintName() {
-        return type.name();
+    public TopNHint fromHint(RelHint hint) {
+      Type type = Type.valueOf(hint.hintName);
+      List<Integer> partition = hint.listOptions.stream().map(Integer::parseInt)
+          .collect(Collectors.toList());
+      return new TopNHint(type, partition);
     }
-
-    public static final Constructor CONSTRUCTOR = new Constructor();
-
-    public static final class Constructor implements SqrlHint.Constructor<TopNHint> {
-
-        @Override
-        public boolean validName(String name) {
-            return Arrays.stream(Type.values()).anyMatch(v -> v.matches(name));
-        }
-
-        @Override
-        public TopNHint fromHint(RelHint hint) {
-            Type type = Type.valueOf(hint.hintName);
-            List<Integer> partition = hint.listOptions.stream().map(Integer::parseInt).collect(Collectors.toList());
-            return new TopNHint(type,partition);
-        }
-    }
+  }
 
 }

@@ -8,13 +8,14 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 
 @Getter
 public class SqrlJoinDeclarationSpec extends SqlCall {
+
   public static final SqlSpecialOperator OPERATOR = new Operator() {
     public SqlCall createCall(SqlLiteral functionQualifier, SqlParserPos pos, SqlNode... operands) {
       return new SqrlJoinDeclarationSpec(pos, (SqrlJoinTerm) operands[0],
-          Optional.ofNullable((SqlNodeList)operands[1]),
-          (Optional)Optional.ofNullable(operands[2]),
-          (Optional)Optional.ofNullable(operands[3]),
-          (Optional)Optional.ofNullable(operands[4]));
+          Optional.ofNullable((SqlNodeList) operands[1]),
+          (Optional) Optional.ofNullable(operands[2]),
+          (Optional) Optional.ofNullable(operands[3]),
+          (Optional) Optional.ofNullable(operands[4]));
     }
   };
 
@@ -26,7 +27,8 @@ public class SqrlJoinDeclarationSpec extends SqlCall {
 
   public SqrlJoinDeclarationSpec(SqlParserPos pos, SqrlJoinTerm relation,
       Optional<SqlNodeList> orderList,
-      Optional<SqlNumericLiteral> fetch, Optional<SqlIdentifier> inverse, Optional<SqlNodeList> leftJoins) {
+      Optional<SqlNumericLiteral> fetch, Optional<SqlIdentifier> inverse,
+      Optional<SqlNodeList> leftJoins) {
     super(pos);
     this.relation = relation;
     this.orderList = orderList;
@@ -48,11 +50,12 @@ public class SqrlJoinDeclarationSpec extends SqlCall {
   @Override
   public List<SqlNode> getOperandList() {
     SqlNode[] list = {relation, orderList.orElse(null), fetch.orElse(null), inverse.orElse(null),
-      leftJoins.orElse(null)};
+        leftJoins.orElse(null)};
     return Arrays.asList(list);
   }
 
   private static class Operator extends SqlSpecialOperator {
+
     private Operator() {
       super("JOIN DECLARATION SPEC", SqlKind.OTHER, 0);
     }
@@ -71,6 +74,7 @@ public class SqrlJoinDeclarationSpec extends SqlCall {
   }
 
   public interface SqrlJoinDeclarationVisitor<R, C> {
+
     R visitJoinDeclaration(SqrlJoinDeclarationSpec node, C context);
   }
 }

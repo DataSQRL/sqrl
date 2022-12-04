@@ -23,6 +23,7 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
 public class StdTimeLibraryImpl {
+
   public static final NOW NOW = new NOW();
   public static final EPOCH_TO_TIMESTAMP EPOCH_TO_TIMESTAMP = new EPOCH_TO_TIMESTAMP();
   public static final TIMESTAMP_TO_EPOCH TIMESTAMP_TO_EPOCH = new TIMESTAMP_TO_EPOCH();
@@ -74,6 +75,7 @@ public class StdTimeLibraryImpl {
     public int eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getSecond();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
@@ -85,6 +87,7 @@ public class StdTimeLibraryImpl {
     public int eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getMinute();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
@@ -96,6 +99,7 @@ public class StdTimeLibraryImpl {
     public int eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getHour();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
@@ -108,6 +112,7 @@ public class StdTimeLibraryImpl {
     public int eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfWeek().getValue();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
@@ -119,6 +124,7 @@ public class StdTimeLibraryImpl {
     public int eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfMonth();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
@@ -130,6 +136,7 @@ public class StdTimeLibraryImpl {
     public int eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfYear();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
@@ -141,6 +148,7 @@ public class StdTimeLibraryImpl {
     public int eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getMonthValue();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
@@ -152,6 +160,7 @@ public class StdTimeLibraryImpl {
     public int eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getYear();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
@@ -183,58 +192,74 @@ public class StdTimeLibraryImpl {
   }
 
   public static class ROUND_TO_SECOND extends RoundingFunction {
+
     public ROUND_TO_SECOND() {
       super(ChronoUnit.SECONDS);
     }
+
     public Instant eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)
           .toInstant();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
   }
 
   public static class ROUND_TO_MINUTE extends RoundingFunction {
+
     public ROUND_TO_MINUTE() {
       super(ChronoUnit.MINUTES);
     }
+
     public Instant eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.MINUTES)
           .toInstant();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
   }
 
   public static class ROUND_TO_HOUR extends RoundingFunction {
+
     public ROUND_TO_HOUR() {
       super(ChronoUnit.HOURS);
     }
+
     public Instant eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.HOURS)
           .toInstant();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
   }
 
   public static class ROUND_TO_DAY extends RoundingFunction {
+
     public ROUND_TO_DAY() {
       super(ChronoUnit.DAYS);
     }
+
     public Instant eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
           .toInstant();
     }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
   }
 
@@ -251,7 +276,8 @@ public class StdTimeLibraryImpl {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
   }
 
@@ -268,11 +294,12 @@ public class StdTimeLibraryImpl {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
   }
 
-  public static class AT_ZONE extends ScalarFunction implements TimestampPreservingFunction{
+  public static class AT_ZONE extends ScalarFunction implements TimestampPreservingFunction {
 
     public ZonedDateTime eval(Instant instant, String zoneId) {
       return instant.atZone(ZoneId.of(zoneId));
@@ -302,7 +329,8 @@ public class StdTimeLibraryImpl {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
   }
 
@@ -342,7 +370,9 @@ public class StdTimeLibraryImpl {
     }
   }
 
-  public static class EPOCH_TO_TIMESTAMP extends ScalarFunction implements TimestampPreservingFunction {
+  public static class EPOCH_TO_TIMESTAMP extends ScalarFunction implements
+      TimestampPreservingFunction {
+
     public Instant eval(Long l) {
       return Instant.ofEpochSecond(l.longValue());
     }
@@ -390,7 +420,7 @@ public class StdTimeLibraryImpl {
     if (callContext instanceof AdaptedCallContext) {
       Field privateField = AdaptedCallContext.class.getDeclaredField("originalContext");
       privateField.setAccessible(true);
-      CallContext originalContext = (CallContext)privateField.get(callContext);
+      CallContext originalContext = (CallContext) privateField.get(callContext);
 
       return originalContext
           .getArgumentDataTypes()

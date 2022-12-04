@@ -17,22 +17,31 @@ public class ResultSetPrinter {
   }
 
   @SneakyThrows
-  public static int print(ResultSet resultSet, PrintStream out, Predicate<String> filterColumnsByName,
-                          Predicate<Integer> filterColumnsByType) {
+  public static int print(ResultSet resultSet, PrintStream out,
+      Predicate<String> filterColumnsByName,
+      Predicate<Integer> filterColumnsByType) {
     final ResultSetMetaData metaData = resultSet.getMetaData();
     final int columnCount = metaData.getColumnCount();
     int size = 0;
     while (resultSet.next()) {
-      if (size > 0) out.println();
+      if (size > 0) {
+        out.println();
+      }
       size++;
       int cols = 0;
       for (int i = 1; i <= columnCount; i++) {
-        if (!filterColumnsByName.test(metaData.getColumnName(i))) continue;
-        if (!filterColumnsByType.test(metaData.getColumnType(i))) continue;
-        if (cols++ > 0) out.print(", ");
+        if (!filterColumnsByName.test(metaData.getColumnName(i))) {
+          continue;
+        }
+        if (!filterColumnsByType.test(metaData.getColumnType(i))) {
+          continue;
+        }
+        if (cols++ > 0) {
+          out.print(", ");
+        }
         Object o = resultSet.getObject(i);
         if (o instanceof Float || o instanceof Double) {
-          o = String.format("%.3f",o);
+          o = String.format("%.3f", o);
         }
         out.print(o);
       }
@@ -41,16 +50,16 @@ public class ResultSetPrinter {
   }
 
   public static String toString(ResultSet resultSet, Predicate<String> filterColumnsByName,
-                                Predicate<Integer> filterColumnsByType) {
+      Predicate<Integer> filterColumnsByType) {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     PrintStream ps = new PrintStream(os);
-    print(resultSet,ps,filterColumnsByName,filterColumnsByType);
+    print(resultSet, ps, filterColumnsByName, filterColumnsByType);
     return os.toString(StandardCharsets.UTF_8);
   }
 
   public static String[] toLines(ResultSet resultSet, Predicate<String> filterColumnsByName,
-                                 Predicate<Integer> filterColumnsByType) {
-    return toString(resultSet,filterColumnsByName,filterColumnsByType)
-            .split("\\R");
+      Predicate<Integer> filterColumnsByType) {
+    return toString(resultSet, filterColumnsByName, filterColumnsByType)
+        .split("\\R");
   }
 }

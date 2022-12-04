@@ -28,15 +28,19 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     FlexibleDatasetSchema that = (FlexibleDatasetSchema) o;
-    return Objects.equals(description,that.description) && super.equals(that);
+    return Objects.equals(description, that.description) && super.equals(that);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(description)*17 + super.hashCode();
+    return Objects.hash(description) * 17 + super.hashCode();
   }
 
   @Setter

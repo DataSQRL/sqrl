@@ -59,37 +59,46 @@ public class TableRegisterer extends RelShuttleImpl {
   }
 
   private boolean addSource(SourceRelationalTable table) {
-    if (registeredTables.contains(table.getNameId())) return false;
+    if (registeredTables.contains(table.getNameId())) {
+      return false;
+    }
     registeredTables.add(table.getNameId());
     return true;
   }
 
   private void registerStreamSource(StreamRelationalTable table) {
-    if (!addSource(table)) return;
+    if (!addSource(table)) {
+      return;
+    }
 
     UniversalTableBuilder tblBuilder = table.getStreamSchema();
     RelNode relnode = table.getBaseRelation();
     Table inputTable = makeTable(relnode);
 
-    TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
+    TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.INSTANCE.convertSchema(
+        tblBuilder);
     DataStream<Row> changeStream = tEnv.toChangelogStream(inputTable)
-            .filter(new ChangeFilter(table.getStateChangeType()))
-            .process(new AugmentStream(),typeInformation);
+        .filter(new ChangeFilter(table.getStateChangeType()))
+        .process(new AugmentStream(), typeInformation);
 
     Schema tableSchema = FlinkTableSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
     tEnv.createTemporaryView(table.getNameId(), changeStream, tableSchema);
   }
 
   private void registerImportSource(ImportedRelationalTable table) {
-    if (!addSource(table)) return;
+    if (!addSource(table)) {
+      return;
+    }
     //TODO: if we are reading data in strict mode, we can use table API connectors directly which can be more efficient
     TableSource tableSource = table.getTableSource();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
     //TODO: push down startup timestamp if determined in FlinkPhysicalPlanner
-    StreamHolder<Raw> stream = streamPreparer.getRawInput(tableSource,streamBuilder);
-    SchemaValidator schemaValidator = new SchemaValidator(tableSource.getSchema(), tableSource.getConfiguration().getSchemaAdjustmentSettings(),
-            tableSource.getDigest());
-    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);
+    StreamHolder<Raw> stream = streamPreparer.getRawInput(tableSource, streamBuilder);
+    SchemaValidator schemaValidator = new SchemaValidator(tableSource.getSchema(),
+        tableSource.getConfiguration().getSchemaAdjustmentSettings(),
+        tableSource.getDigest());
+    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
+        "schema", SourceRecord.Named.class);
     streamBuilder.addAsTable(validate, tableSource.getSchema(), table.getNameId());
 
   }
@@ -118,10 +127,14 @@ public class TableRegisterer extends RelShuttleImpl {
     public boolean filter(Row row) throws Exception {
       RowKind kind = row.getKind();
       switch (stateChangeType) {
-        case ADD: return kind==RowKind.INSERT;
-        case UPDATE: return kind==RowKind.UPDATE_AFTER;
-        case DELETE: return kind==RowKind.DELETE;
-        default: throw new UnsupportedOperationException();
+        case ADD:
+          return kind == RowKind.INSERT;
+        case UPDATE:
+          return kind == RowKind.UPDATE_AFTER;
+        case DELETE:
+          return kind == RowKind.DELETE;
+        default:
+          throw new UnsupportedOperationException();
       }
     }
   }
@@ -129,19 +142,20 @@ public class TableRegisterer extends RelShuttleImpl {
   /**
    * Adds uuid, ingest time, and source time to the row
    */
-  private static class AugmentStream extends ProcessFunction<Row,Row> {
+  private static class AugmentStream extends ProcessFunction<Row, Row> {
 
     @Override
-    public void processElement(Row row, ProcessFunction<Row, Row>.Context context, Collector<Row> collector) throws Exception {
+    public void processElement(Row row, ProcessFunction<Row, Row>.Context context,
+        Collector<Row> collector) throws Exception {
       int offset = 2;
-      Object[] data = new Object[row.getArity()+offset];
+      Object[] data = new Object[row.getArity() + offset];
       data[0] = SourceRecord.makeUUID().toString();
       data[1] = Instant.ofEpochMilli(context.timerService().currentProcessingTime()); //ingest time
       //data[2] = Instant.ofEpochMilli(context.timestamp()); //source time //TODO: why is the timestamp not propagated?
       for (int i = 0; i < row.getArity(); i++) {
-        data[i+offset] = row.getField(i);
+        data[i + offset] = row.getField(i);
       }
-      collector.collect(Row.ofKind(RowKind.INSERT,data));
+      collector.collect(Row.ofKind(RowKind.INSERT, data));
     }
   }
 

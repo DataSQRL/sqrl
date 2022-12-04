@@ -50,7 +50,7 @@ public class JDBCEngineConfiguration implements DatabaseEngineConfiguration {
   }
 
   private boolean validate(@NonNull ErrorCollector errors) {
-    ConfigurationUtil.javaxValidate(this,errors);
+    ConfigurationUtil.javaxValidate(this, errors);
     if (Strings.isNullOrEmpty(database) || !validDBName.matcher(database).matches()) {
       errors.fatal("Invalid database name: %s", database);
       return false;
@@ -60,8 +60,11 @@ public class JDBCEngineConfiguration implements DatabaseEngineConfiguration {
 
   @Override
   public JDBCEngine initialize(@NonNull ErrorCollector errors) {
-    if (validate(errors)) return new JDBCEngine(this);
-    else return null;
+    if (validate(errors)) {
+      return new JDBCEngine(this);
+    } else {
+      return null;
+    }
   }
 
   @JsonIgnore
@@ -87,7 +90,7 @@ public class JDBCEngineConfiguration implements DatabaseEngineConfiguration {
     }
 
     return new ConnectionProvider(host, port, url, user,
-            password, driverName, dialect, database);
+        password, driverName, dialect, database);
   }
 
   @Override

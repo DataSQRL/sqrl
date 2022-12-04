@@ -14,9 +14,9 @@ import java.util.regex.Pattern;
 
 /**
  * All jars are loaded on the class path and resolved with java's ServiceLoader.
- *
  */
 public class JavaFunctionLoader extends AbstractLoader {
+
   public static final String FILE_SUFFIX = ".function.json";
   private static final Pattern CONFIG_FILE_PATTERN = Pattern.compile("(.*)\\.function\\.json$");
 
@@ -31,12 +31,14 @@ public class JavaFunctionLoader extends AbstractLoader {
 
   @Override
   public boolean load(LoaderContext ctx, NamePath fullPath, Optional<Name> alias) {
-    NamePath basePath = fullPath.subList(0,fullPath.size()-1);
+    NamePath basePath = fullPath.subList(0, fullPath.size() - 1);
 
     Path baseDir = AbstractLoader.namepath2Path(ctx.getPackagePath(), basePath);
 
     Path path = baseDir.resolve(fullPath.getLast() + FILE_SUFFIX);
-    if (!Files.isRegularFile(path)) return false;
+    if (!Files.isRegularFile(path)) {
+      return false;
+    }
 
     FunctionJson fnc = deserialize.mapJsonFile(path, FunctionJson.class);
     try {
@@ -47,7 +49,8 @@ public class JavaFunctionLoader extends AbstractLoader {
           ));
     } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
              IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(String.format("Could not find or load class name: %s", fnc.classPath), e);
+      throw new RuntimeException(
+          String.format("Could not find or load class name: %s", fnc.classPath), e);
     }
 
     return true;

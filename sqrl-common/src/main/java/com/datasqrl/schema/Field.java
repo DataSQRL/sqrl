@@ -18,13 +18,15 @@ public abstract class Field {
   protected Optional<List<TableFunctionArgument>> tableArguments = Optional.empty();
 
   protected Field(@NonNull Name name, int version) {
-    Preconditions.checkArgument(version>=0);
+    Preconditions.checkArgument(version >= 0);
     this.name = name;
     this.version = version;
   }
 
   public Name getId() {
-    if (version==0) return name;
+    if (version == 0) {
+      return name;
+    }
     return name.suffix(Integer.toString(version));
   }
 

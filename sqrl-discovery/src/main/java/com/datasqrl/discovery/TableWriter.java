@@ -19,30 +19,33 @@ import java.util.Map;
 
 public class TableWriter {
 
-    private final ObjectMapper jsonMapper;
-    private final YAMLMapper yamlMapper;
+  private final ObjectMapper jsonMapper;
+  private final YAMLMapper yamlMapper;
 
-    public TableWriter() {
-        this.jsonMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);;
-        this.yamlMapper = new YAMLMapper();
-        this.yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+  public TableWriter() {
+    this.jsonMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    ;
+    this.yamlMapper = new YAMLMapper();
+    this.yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+  }
+
+  public void writeToFile(@NonNull Path destinationDir, @NonNull List<TableSource> tables)
+      throws IOException {
+    //Write out table configurations
+    for (TableSource table : tables) {
+      Path tableConfigFile = destinationDir.resolve(
+          table.getName().getCanonical() + DataSource.TABLE_FILE_SUFFIX);
+      jsonMapper.writeValue(tableConfigFile.toFile(), table.getConfiguration());
     }
 
-    public void writeToFile(@NonNull Path destinationDir, @NonNull List<TableSource> tables) throws IOException {
-        //Write out table configurations
-        for (TableSource table : tables) {
-            Path tableConfigFile = destinationDir.resolve(table.getName().getCanonical() + DataSource.TABLE_FILE_SUFFIX);
-            jsonMapper.writeValue(tableConfigFile.toFile(), table.getConfiguration());
-        }
+    Name datasetName = tables.get(0).getPath().parent().getLast();
+    FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
 
-        Name datasetName = tables.get(0).getPath().parent().getLast();
-        FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
-
-        //Write out combined schema file
-        SchemaExport export = new SchemaExport();
-        SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
-        Path schemaFile = destinationDir.resolve(DataSource.PACKAGE_SCHEMA_FILE);
-        yamlMapper.writeValue(schemaFile.toFile(),outputSchema);
-    }
+    //Write out combined schema file
+    SchemaExport export = new SchemaExport();
+    SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
+    Path schemaFile = destinationDir.resolve(DataSource.PACKAGE_SCHEMA_FILE);
+    yamlMapper.writeValue(schemaFile.toFile(), outputSchema);
+  }
 
 }

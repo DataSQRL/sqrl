@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class SchemaBuilder {
+
   private final Map<SQRLTable, String> seenSqrlTables = new HashMap<>();
   private final List<ObjectTypeBuilder> objectTypeBuilderList = new ArrayList<>();
 
@@ -118,12 +119,13 @@ public class SchemaBuilder {
         .query(query.build())
         .additionalTypes(
             objectTypeBuilderList.stream()
-              .map(ObjectTypeBuilder::build)
-              .collect(Collectors.toSet()))
+                .map(ObjectTypeBuilder::build)
+                .collect(Collectors.toSet()))
         .build();
   }
 
   class ObjectTypeBuilder {
+
     private final String name;
     public Map<String, GraphQLFieldDefinition> fields = new LinkedHashMap<>();
 
@@ -161,11 +163,13 @@ public class SchemaBuilder {
     private List<GraphQLArgument> buildArgs(SQRLTable toTable) {
       List<GraphQLArgument> args = new ArrayList<>();
       for (Field field : toTable.getFields().getAccessibleFields()) {
-        if (field instanceof Relationship) continue;
+        if (field instanceof Relationship) {
+          continue;
+        }
         if (!field.getName().getCanonical().startsWith("_")) {
           args.add(GraphQLArgument.newArgument()
               .name(field.getName().getDisplay())
-              .type(getInputType(((Column)field).getType()))
+              .type(getInputType(((Column) field).getType()))
               .build());
         }
       }

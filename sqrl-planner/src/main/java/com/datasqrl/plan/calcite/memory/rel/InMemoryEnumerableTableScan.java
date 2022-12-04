@@ -35,11 +35,10 @@ public class InMemoryEnumerableTableScan extends TableScan implements Enumerable
             getRowType(),
             pref.preferArray());
 
-
-      return implementor.result(
-          physType,
-          Blocks.toBlock(
-              Expressions.call(table.getExpression(DataTable.class),
-                  "project", implementor.getRootExpression())));
+    return implementor.result(
+        physType,
+        Blocks.toBlock(
+            Expressions.call(table.getExpression(DataTable.class),
+                "project", implementor.getRootExpression())));
   }
 }

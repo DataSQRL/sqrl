@@ -98,9 +98,9 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   @Override
   public OutputTag<ProcessError> getErrorTag(final String errorName) {
     OutputTag<ProcessError> errorTag = errorTags.get(errorName);
-    if (errorTag==null) {
+    if (errorTag == null) {
       errorTag = new OutputTag<>(
-              FlinkStreamEngine.getFlinkName(ERROR_TAG_PREFIX, errorName)) {
+          FlinkStreamEngine.getFlinkName(ERROR_TAG_PREFIX, errorName)) {
       };
       errorTags.put(errorName, errorTag);
     }
@@ -109,53 +109,62 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
   @Override
   public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream,
-                                                TableInput tableSource,
-                                                TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
-    Preconditions.checkArgument(stream instanceof FlinkStreamHolder && ((FlinkStreamHolder)stream).getBuilder().equals(this));
+      TableInput tableSource,
+      TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
+    Preconditions.checkArgument(
+        stream instanceof FlinkStreamHolder && ((FlinkStreamHolder) stream).getBuilder()
+            .equals(this));
     setJobType(FlinkStreamEngine.JobType.MONITOR);
 
-    DataStream<SourceRecord.Raw> data = ((FlinkStreamHolder)stream).getStream();
+    DataStream<SourceRecord.Raw> data = ((FlinkStreamHolder) stream).getStream();
     final OutputTag<SourceTableStatistics> statsOutput = new OutputTag<>(
-            FlinkStreamEngine.getFlinkName(STATS_NAME_PREFIX, tableSource.qualifiedName())) {
+        FlinkStreamEngine.getFlinkName(STATS_NAME_PREFIX, tableSource.qualifiedName())) {
     };
 
     SingleOutputStreamOperator<SourceRecord.Raw> process = data.keyBy(
-                    FlinkUtilities.getHashPartitioner(defaultParallelism))
-            .process(
-                    new KeyedSourceRecordStatistics(statsOutput, tableSource.getDigest()), TypeInformation.of(SourceRecord.Raw.class));
+            FlinkUtilities.getHashPartitioner(defaultParallelism))
+        .process(
+            new KeyedSourceRecordStatistics(statsOutput, tableSource.getDigest()),
+            TypeInformation.of(SourceRecord.Raw.class));
 //    process.addSink(new PrintSinkFunction<>()); //TODO: persist last 100 for querying
 
     //Process the gathered statistics in the side output
     final int randomKey = FlinkUtilities.generateBalancedKey(defaultParallelism);
     process.getSideOutput(statsOutput)
-            .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
-            .reduce(
-                    new ReduceFunction<SourceTableStatistics>() {
-                      @Override
-                      public SourceTableStatistics reduce(SourceTableStatistics acc,
-                                                          SourceTableStatistics add) throws Exception {
-                        acc.merge(add);
-                        return acc;
-                      }
-                    })
-            .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
+        .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
+        .reduce(
+            new ReduceFunction<SourceTableStatistics>() {
+              @Override
+              public SourceTableStatistics reduce(SourceTableStatistics acc,
+                  SourceTableStatistics add) throws Exception {
+                acc.merge(add);
+                return acc;
+              }
+            })
+        .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
 //                .process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
 //                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
-            .addSink(new SaveTableStatistics(statisticsStoreProvider, tableSource.getDigest()));
-    return new FlinkStreamHolder<>(this,process);
+        .addSink(new SaveTableStatistics(statisticsStoreProvider, tableSource.getDigest()));
+    return new FlinkStreamHolder<>(this, process);
   }
 
   @Override
-  public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName) {
-    Preconditions.checkArgument(stream instanceof FlinkStreamHolder && ((FlinkStreamHolder)stream).getBuilder().equals(this));
-    FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder)stream;
+  public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema,
+      String qualifiedTableName) {
+    Preconditions.checkArgument(
+        stream instanceof FlinkStreamHolder && ((FlinkStreamHolder) stream).getBuilder()
+            .equals(this));
+    FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder) stream;
     UniversalTableBuilder tblBuilder = getUniversalTableBuilder(schema);
 
-    TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
-    SourceRecord2RowMapper<Row> mapper = new SourceRecord2RowMapper(schema, FlinkRowConstructor.INSTANCE);
+    TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.INSTANCE.convertSchema(
+        tblBuilder);
+    SourceRecord2RowMapper<Row> mapper = new SourceRecord2RowMapper(schema,
+        FlinkRowConstructor.INSTANCE);
 
     //TODO: error handling when mapping doesn't work?
-    SingleOutputStreamOperator<Row> rows = flinkStream.getStream().map(r -> mapper.apply(r),typeInformation);
+    SingleOutputStreamOperator<Row> rows = flinkStream.getStream()
+        .map(r -> mapper.apply(r), typeInformation);
     Schema tableSchema = FlinkTableSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
     tableEnvironment.createTemporaryView(qualifiedTableName, rows, tableSchema);
   }
@@ -168,9 +177,10 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
   @Override
   public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
-    Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
+    Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser,
+        "This method only supports text sources");
     DataSystemConnector sourceConnector = table.getConnector();
-    String flinkSourceName = table.getDigest().toString('-',"input");
+    String flinkSourceName = table.getDigest().toString('-', "input");
 
     StreamExecutionEnvironment env = getEnvironment();
     DataStream<TimeAnnotatedRecord<String>> timedSource;
@@ -179,12 +189,14 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
       Duration monitorDuration = null;
 //            if (filesource.getConfiguration().isDiscoverFiles()) monitorDuration = Duration.ofSeconds(10);
-      FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource, table.getConfiguration());
+      FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource,
+          table.getConfiguration());
 
       org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder =
-              org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
-                      new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-                              table.getConfiguration().getCharset()), FilePath.toFlinkPath(filesource.getPath()));
+          org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
+              new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
+                  table.getConfiguration().getCharset()),
+              FilePath.toFlinkPath(filesource.getPath()));
 
       builder.setFileEnumerator(fileEnumerator);
       if (monitorDuration != null) {
@@ -195,7 +207,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 //              stream.assignTimestampsAndWatermarks(WatermarkStrategy.<SourceRecord>forMonotonousTimestamps().withTimestampAssigner((event, timestamp) -> event.getSourceTime().toEpochSecond()));
 
       DataStreamSource<String> textSource = env.fromSource(builder.build(),
-              WatermarkStrategy.noWatermarks(), flinkSourceName);
+          WatermarkStrategy.noWatermarks(), flinkSourceName);
       timedSource = textSource.map(new ToTimedRecord());
 
     } else if (sourceConnector instanceof KafkaDataSystem.Connector) {
@@ -204,35 +216,35 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
       String groupId = flinkSourceName + "-" + getUuid();
 
       KafkaSourceBuilder<TimeAnnotatedRecord<String>> builder = org.apache.flink.connector.kafka.source.KafkaSource.<TimeAnnotatedRecord<String>>builder()
-              .setBootstrapServers(kafkaSource.getServersAsString())
-              .setTopics(topic)
-              .setStartingOffsets(OffsetsInitializer.earliest()) //TODO: work with commits
-              .setGroupId(groupId);
+          .setBootstrapServers(kafkaSource.getServersAsString())
+          .setTopics(topic)
+          .setStartingOffsets(OffsetsInitializer.earliest()) //TODO: work with commits
+          .setGroupId(groupId);
 
       builder.setDeserializer(
-              new KafkaTimeValueDeserializationSchemaWrapper<>(new SimpleStringSchema()));
+          new KafkaTimeValueDeserializationSchemaWrapper<>(new SimpleStringSchema()));
 
       timedSource = env.fromSource(builder.build(),
-              WatermarkStrategy.noWatermarks(), flinkSourceName);
+          WatermarkStrategy.noWatermarks(), flinkSourceName);
 
     } else {
       throw new UnsupportedOperationException("Unrecognized source table type: " + table);
     }
-    return new FlinkStreamHolder<>(this,timedSource);
+    return new FlinkStreamHolder<>(this, timedSource);
   }
 
-  private static class ToTimedRecord implements MapFunction<String,TimeAnnotatedRecord<String>> {
+  private static class ToTimedRecord implements MapFunction<String, TimeAnnotatedRecord<String>> {
 
     @Override
     public TimeAnnotatedRecord<String> map(String s) throws Exception {
-      return  new TimeAnnotatedRecord<>(s, null);
+      return new TimeAnnotatedRecord<>(s, null);
     }
   }
 
   @NoArgsConstructor
   @AllArgsConstructor
   private static class FileEnumeratorProvider implements
-          org.apache.flink.connector.file.src.enumerate.FileEnumerator.Provider {
+      org.apache.flink.connector.file.src.enumerate.FileEnumerator.Provider {
 
     DirectoryDataSystem.Connector directorySource;
     TableConfig table;
@@ -260,7 +272,7 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
 
   static class KafkaTimeValueDeserializationSchemaWrapper<T> implements
-          KafkaRecordDeserializationSchema<TimeAnnotatedRecord<T>> {
+      KafkaRecordDeserializationSchema<TimeAnnotatedRecord<T>> {
 
     private static final long serialVersionUID = 1L;
     private final DeserializationSchema<T> deserializationSchema;
@@ -276,8 +288,8 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
     @Override
     public void deserialize(ConsumerRecord<byte[], byte[]> message,
-                            Collector<TimeAnnotatedRecord<T>> out)
-            throws IOException {
+        Collector<TimeAnnotatedRecord<T>> out)
+        throws IOException {
       T result = deserializationSchema.deserialize(message.value());
       if (result != null) {
         out.collect(new TimeAnnotatedRecord<>(result, Instant.ofEpochSecond(message.timestamp())));

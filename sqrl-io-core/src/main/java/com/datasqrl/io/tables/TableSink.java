@@ -17,8 +17,9 @@ public class TableSink extends AbstractExternalTable {
   private final Optional<FlexibleDatasetSchema.TableField> schema;
 
 
-  public TableSink(@NonNull DataSystemConnector dataset, @NonNull TableConfig configuration, @NonNull NamePath path, @NonNull Name name,
-                   Optional<FlexibleDatasetSchema.TableField> schema) {
+  public TableSink(@NonNull DataSystemConnector dataset, @NonNull TableConfig configuration,
+      @NonNull NamePath path, @NonNull Name name,
+      Optional<FlexibleDatasetSchema.TableField> schema) {
     super(dataset, configuration, path, name);
     this.schema = schema;
   }

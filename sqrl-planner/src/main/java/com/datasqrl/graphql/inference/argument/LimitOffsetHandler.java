@@ -20,7 +20,8 @@ public class LimitOffsetHandler implements ArgumentHandler {
       //No-op rel node, query must be constructed at query time
       Set<Argument> newArgs = new LinkedHashSet<>(args.getArgumentHandlers());
       newArgs.add(VariableArgument.builder().path(context.getArg().getName()).build());
-      ArgumentSet relAndArg = new ArgumentSet(args.getRelNode(), newArgs, args.getArgumentParameters(), true);
+      ArgumentSet relAndArg = new ArgumentSet(args.getRelNode(), newArgs,
+          args.getArgumentParameters(), true);
 
       set.add(relAndArg);
     }

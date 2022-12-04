@@ -25,78 +25,82 @@ import java.util.Properties;
 @Getter
 public abstract class KafkaDataSystemConfig {
 
-    public static final String SYSTEM_TYPE = "kafka";
+  public static final String SYSTEM_TYPE = "kafka";
 
-    @NonNull @NotNull @NotEmpty
-    List<String> servers;
+  @NonNull @NotNull @NotEmpty
+  List<String> servers;
 
-    String topicPrefix;
+  String topicPrefix;
 
-    protected boolean rootInitialize(ErrorCollector errors) {
-        for (String server : servers) {
-            if (Strings.isNullOrEmpty(server)) {
-                errors.fatal("Invalid server configuration: %s", server);
-            }
-        }
-        topicPrefix = Strings.isNullOrEmpty(topicPrefix)?"":topicPrefix;
+  protected boolean rootInitialize(ErrorCollector errors) {
+    for (String server : servers) {
+      if (Strings.isNullOrEmpty(server)) {
+        errors.fatal("Invalid server configuration: %s", server);
+      }
+    }
+    topicPrefix = Strings.isNullOrEmpty(topicPrefix) ? "" : topicPrefix;
 
-        //Check that we can connect to Kafka cluster
-        try (Admin admin = Admin.create(getProperties())) {
-            String clusterId = admin.describeCluster().clusterId().get();
-            if (Strings.isNullOrEmpty(clusterId)) {
-                errors.fatal("Could not connect to Kafka cluster - check configuration");
-                return false;
-            } else {
-                return true;
-            }
-        } catch (Exception e) {
-            errors.fatal("Could not connect to Kafka cluster - check configuration: %s", e);
-            return false;
-        }
+    //Check that we can connect to Kafka cluster
+    try (Admin admin = Admin.create(getProperties())) {
+      String clusterId = admin.describeCluster().clusterId().get();
+      if (Strings.isNullOrEmpty(clusterId)) {
+        errors.fatal("Could not connect to Kafka cluster - check configuration");
+        return false;
+      } else {
+        return true;
+      }
+    } catch (Exception e) {
+      errors.fatal("Could not connect to Kafka cluster - check configuration: %s", e);
+      return false;
+    }
+  }
+
+  public String getSystemType() {
+    return SYSTEM_TYPE;
+  }
+
+  @JsonIgnore
+  protected String getServersAsString() {
+    return String.join(", ", servers);
+  }
+
+  @JsonIgnore
+  protected Properties getProperties() {
+    Properties properties = new Properties();
+    properties.put("bootstrap.servers", getServersAsString());
+    return properties;
+  }
+
+  @SuperBuilder
+  @NoArgsConstructor
+  public static class Connector extends KafkaDataSystemConfig implements DataSystemConnectorConfig {
+
+    private Connector(Discovery discovery) {
+      super(discovery.servers, discovery.topicPrefix);
     }
 
-    public String getSystemType() {
-        return SYSTEM_TYPE;
+    @Override
+    public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
+      if (rootInitialize(errors)) {
+        return new KafkaDataSystem.Connector(getProperties(), topicPrefix);
+      } else {
+        return null;
+      }
     }
 
-    @JsonIgnore
-    protected String getServersAsString() {
-        return String.join(", ", servers);
+  }
+
+  public static class Discovery extends KafkaDataSystemConfig implements DataSystemDiscoveryConfig {
+
+    @Override
+    public DataSystemDiscovery initialize(@NonNull ErrorCollector errors) {
+      if (rootInitialize(errors)) {
+        return new KafkaDataSystem.Discovery(getProperties(), topicPrefix, new Connector(this));
+      } else {
+        return null;
+      }
     }
-
-    @JsonIgnore
-    protected Properties getProperties() {
-        Properties properties = new Properties();
-        properties.put("bootstrap.servers", getServersAsString());
-        return properties;
-    }
-
-    @SuperBuilder
-    @NoArgsConstructor
-    public static class Connector extends KafkaDataSystemConfig implements DataSystemConnectorConfig {
-
-        private Connector(Discovery discovery) {
-            super(discovery.servers,discovery.topicPrefix);
-        }
-
-        @Override
-        public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
-            if (rootInitialize(errors)) {
-                return new KafkaDataSystem.Connector(getProperties(), topicPrefix);
-            } else return null;
-        }
-
-    }
-
-    public static class Discovery extends KafkaDataSystemConfig implements DataSystemDiscoveryConfig {
-
-        @Override
-        public DataSystemDiscovery initialize(@NonNull ErrorCollector errors) {
-            if (rootInitialize(errors)) {
-                return new KafkaDataSystem.Discovery(getProperties(), topicPrefix, new Connector(this));
-            } else return null;
-        }
-    }
+  }
 
 
 }

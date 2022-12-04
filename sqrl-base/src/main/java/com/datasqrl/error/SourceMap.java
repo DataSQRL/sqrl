@@ -4,7 +4,7 @@ public interface SourceMap {
 
   String getSource();
 
-  public class EmptySourceMap implements SourceMap{
+  public class EmptySourceMap implements SourceMap {
 
     @Override
     public String getSource() {

@@ -17,95 +17,104 @@ import java.util.List;
  */
 public class TestRelWriter extends RelWriterImpl {
 
-    public boolean withHints = true;
+  public boolean withHints = true;
 
-    public TestRelWriter(PrintWriter pw) {
-        super(pw, SqlExplainLevel.EXPPLAN_ATTRIBUTES, false);
+  public TestRelWriter(PrintWriter pw) {
+    super(pw, SqlExplainLevel.EXPPLAN_ATTRIBUTES, false);
+  }
+
+  public static String explain(RelNode rel) {
+    StringWriter sw = new StringWriter();
+    TestRelWriter writer = new TestRelWriter(new PrintWriter(sw));
+    rel.explain(writer);
+    return sw.toString();
+  }
+
+  /**
+   * Copied verbatim from {@link RelWriterImpl} and added the marked section of code to print hints
+   *
+   * @param rel
+   * @param values
+   */
+  @Override
+  protected void explain_(RelNode rel,
+      List<Pair<String, Object>> values) {
+    List<RelNode> inputs = rel.getInputs();
+    final RelMetadataQuery mq = rel.getCluster().getMetadataQuery();
+    if (!mq.isVisibleInExplain(rel, detailLevel)) {
+      // render children in place of this, at same level
+      explainInputs(inputs);
+      return;
     }
 
-    public static String explain(RelNode rel) {
-        StringWriter sw = new StringWriter();
-        TestRelWriter writer = new TestRelWriter(new PrintWriter(sw));
-        rel.explain(writer);
-        return sw.toString();
+    StringBuilder s = new StringBuilder();
+    spacer.spaces(s);
+    if (withIdPrefix) {
+      s.append(rel.getId()).append(":");
     }
-
-    /**
-     * Copied verbatim from {@link RelWriterImpl} and added the marked section of code to print hints
-     * @param rel
-     * @param values
-     */
-    @Override
-    protected void explain_(RelNode rel,
-                            List<Pair<String, Object>> values) {
-        List<RelNode> inputs = rel.getInputs();
-        final RelMetadataQuery mq = rel.getCluster().getMetadataQuery();
-        if (!mq.isVisibleInExplain(rel, detailLevel)) {
-            // render children in place of this, at same level
-            explainInputs(inputs);
-            return;
+    s.append(rel.getRelTypeName());
+    if (detailLevel != SqlExplainLevel.NO_ATTRIBUTES) {
+      int j = 0;
+      for (Pair<String, Object> value : values) {
+        if (value.right instanceof RelNode) {
+          continue;
         }
-
-        StringBuilder s = new StringBuilder();
-        spacer.spaces(s);
-        if (withIdPrefix) {
-            s.append(rel.getId()).append(":");
+        if (j++ == 0) {
+          s.append("(");
+        } else {
+          s.append(", ");
         }
-        s.append(rel.getRelTypeName());
-        if (detailLevel != SqlExplainLevel.NO_ATTRIBUTES) {
-            int j = 0;
-            for (Pair<String, Object> value : values) {
-                if (value.right instanceof RelNode) {
-                    continue;
-                }
-                if (j++ == 0) {
-                    s.append("(");
-                } else {
-                    s.append(", ");
-                }
-                s.append(value.left)
-                        .append("=[")
-                        .append(value.right)
-                        .append("]");
-            }
-            if (j > 0) {
-                s.append(")");
-            }
-        }
-        //===== Added this code to print hints ========
-        if (withHints && rel instanceof Hintable) {
-            int j = 0;
-            for (RelHint hint : ((Hintable)rel).getHints()) {
-                if (j++ == 0) s.append(" hints[");
-                else s.append(", ");
-                s.append(hint.hintName);
-                if (!hint.listOptions.isEmpty()) s.append(" options:").append(hint.listOptions);
-            }
-            if (j > 0) s.append("]");
-        }
-        //===== end of added code =====
-
-        switch (detailLevel) {
-            case ALL_ATTRIBUTES:
-                s.append(": rowcount = ")
-                        .append(mq.getRowCount(rel))
-                        .append(", cumulative cost = ")
-                        .append(mq.getCumulativeCost(rel));
-        }
-        pw.println(s);
-        spacer.add(2);
-        explainInputs(inputs);
-        spacer.subtract(2);
-
+        s.append(value.left)
+            .append("=[")
+            .append(value.right)
+            .append("]");
+      }
+      if (j > 0) {
+        s.append(")");
+      }
     }
-
-    /**
-     * Copied verbatim from {@link RelWriterImpl}
-     * @param inputs
-     */
-    private void explainInputs(List<RelNode> inputs) {
-        for (RelNode input : inputs) {
-            input.explain(this);
+    //===== Added this code to print hints ========
+    if (withHints && rel instanceof Hintable) {
+      int j = 0;
+      for (RelHint hint : ((Hintable) rel).getHints()) {
+        if (j++ == 0) {
+          s.append(" hints[");
+        } else {
+          s.append(", ");
         }
+        s.append(hint.hintName);
+        if (!hint.listOptions.isEmpty()) {
+          s.append(" options:").append(hint.listOptions);
+        }
+      }
+      if (j > 0) {
+        s.append("]");
+      }
     }
+    //===== end of added code =====
+
+    switch (detailLevel) {
+      case ALL_ATTRIBUTES:
+        s.append(": rowcount = ")
+            .append(mq.getRowCount(rel))
+            .append(", cumulative cost = ")
+            .append(mq.getCumulativeCost(rel));
+    }
+    pw.println(s);
+    spacer.add(2);
+    explainInputs(inputs);
+    spacer.subtract(2);
+
+  }
+
+  /**
+   * Copied verbatim from {@link RelWriterImpl}
+   *
+   * @param inputs
+   */
+  private void explainInputs(List<RelNode> inputs) {
+    for (RelNode input : inputs) {
+      input.explain(this);
+    }
+  }
 }

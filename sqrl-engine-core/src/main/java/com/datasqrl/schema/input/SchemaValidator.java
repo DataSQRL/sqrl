@@ -43,16 +43,23 @@ public class SchemaValidator implements Serializable {
     this.schemaGenerator = new SchemaGenerator(settings);
   }
 
-  public FunctionWithError<SourceRecord.Raw,SourceRecord.Named> getFunction() {
+  public FunctionWithError<SourceRecord.Raw, SourceRecord.Named> getFunction() {
     return new Function(this);
   }
 
   public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
     //verify meta data
-    if (!record.hasUUID()) errors.fatal("Input record does not have UUID");
-    if (record.getIngestTime()==null) errors.fatal("Input record does not ingest timestamp");
-    if (tableSchema.isHasSourceTimestamp() && record.getSourceTime()==null) errors.fatal("Input record does not source timestamp");
-    Map<Name, Object> result = verifyAndAdjust(record.getData(), tableSchema.getSchema().getFields(), errors);
+    if (!record.hasUUID()) {
+      errors.fatal("Input record does not have UUID");
+    }
+    if (record.getIngestTime() == null) {
+      errors.fatal("Input record does not ingest timestamp");
+    }
+    if (tableSchema.isHasSourceTimestamp() && record.getSourceTime() == null) {
+      errors.fatal("Input record does not source timestamp");
+    }
+    Map<Name, Object> result = verifyAndAdjust(record.getData(),
+        tableSchema.getSchema().getFields(), errors);
     return record.replaceData(result);
   }
 
@@ -77,9 +84,9 @@ public class SchemaValidator implements Serializable {
         if (fieldResult == null && isNonNull(field)) {
           fieldResult = handleNull(field, errors);
         }
-          if (fieldResult != null) {
-              result.put(fieldResult.getKey(), fieldResult.getValue());
-          }
+        if (fieldResult != null) {
+          result.put(fieldResult.getKey(), fieldResult.getValue());
+        }
       }
       visitedFields.add(name);
     }
@@ -88,9 +95,9 @@ public class SchemaValidator implements Serializable {
     for (FlexibleDatasetSchema.FlexibleField field : relationSchema.getFields()) {
       if (!visitedFields.contains(field.getName()) && isNonNull(field)) {
         Pair<Name, Object> fieldResult = handleNull(field, errors);
-          if (fieldResult != null) {
-              result.put(fieldResult.getKey(), fieldResult.getValue());
-          }
+        if (fieldResult != null) {
+          result.put(fieldResult.getKey(), fieldResult.getValue());
+        }
       }
     }
     return result;
@@ -237,15 +244,18 @@ public class SchemaValidator implements Serializable {
   }
 
   @AllArgsConstructor
-  public static class Function implements FunctionWithError<SourceRecord.Raw,SourceRecord.Named> {
+  public static class Function implements FunctionWithError<SourceRecord.Raw, SourceRecord.Named> {
 
     private final SchemaValidator validator;
 
     @Override
-    public Optional<SourceRecord.Named> apply(SourceRecord.Raw raw, Consumer<ErrorCollector> errorCollectorConsumer) {
+    public Optional<SourceRecord.Named> apply(SourceRecord.Raw raw,
+        Consumer<ErrorCollector> errorCollectorConsumer) {
       ErrorCollector errors = ErrorCollector.root();
       SourceRecord.Named result = validator.verifyAndAdjust(raw, errors);
-      if (errors.hasErrors()) errorCollectorConsumer.accept(errors);
+      if (errors.hasErrors()) {
+        errorCollectorConsumer.accept(errors);
+      }
       if (errors.isFatal()) {
         return Optional.empty();
       } else {

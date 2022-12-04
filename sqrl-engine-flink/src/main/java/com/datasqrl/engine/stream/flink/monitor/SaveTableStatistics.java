@@ -16,7 +16,8 @@ public class SaveTableStatistics extends RichSinkFunction<SourceTableStatistics>
 
   private transient TableStatisticsStore store;
 
-  public SaveTableStatistics(TableStatisticsStoreProvider.Encapsulated statisticsStore, AbstractExternalTable.Digest tableDigest) {
+  public SaveTableStatistics(TableStatisticsStoreProvider.Encapsulated statisticsStore,
+      AbstractExternalTable.Digest tableDigest) {
     this.statisticsStore = statisticsStore;
     this.tableDigest = tableDigest;
   }
