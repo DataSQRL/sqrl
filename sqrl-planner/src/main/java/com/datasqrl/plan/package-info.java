@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ */
 /**
  * This module is responsible for planning AST node to logical plan Dags.
  * <p>

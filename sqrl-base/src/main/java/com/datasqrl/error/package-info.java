@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ */
 /**
  * Contains the error handling infrastructure for DataSQRL.
  * <p>

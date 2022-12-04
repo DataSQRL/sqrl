@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ */
 /**
  * This package contains custom javax annotations used by DataSQRL configuration classes for
  * validations that aren't supported by existing javax annotations.

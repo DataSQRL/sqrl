@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ */
 /**
  * The function library is a collection of functions that can be used by Flink, Calcite, Postgres,
  * and Java. Some of these functions can only be used in certain execution environments, and others
