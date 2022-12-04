@@ -60,12 +60,17 @@ public class Packager {
             }
             Files.createDirectories(buildDir);
             Preconditions.checkArgument(config.getManifest()!=null && !Strings.isNullOrEmpty(config.getManifest().getMain()));
-            Path scriptFile = rootDir.resolve(config.getManifest().getMain());
-            copyRelativeFile(scriptFile, rootDir, buildDir);
-            Optional<Path> graphQLSchemaFile = config.getManifest().getOptGraphQL().map(file -> rootDir.resolve(file));
-            if (graphQLSchemaFile.isPresent()) {
-                copyFile(graphQLSchemaFile.get(), buildDir, Path.of(GRAPHQL_SCHEMA_FILE_NAME));
+            Path originalMainFile = rootDir.resolve(config.getManifest().getMain());
+            Path mainFile = copyRelativeFile(originalMainFile, rootDir, buildDir);
+            Optional<Path> originalGraphQLSchemaFile = config.getManifest().getOptGraphQL().map(file -> rootDir.resolve(file));
+            Path graphQLSchemaFile = null;
+            if (originalGraphQLSchemaFile.isPresent()) {
+                graphQLSchemaFile = copyFile(originalGraphQLSchemaFile.get(), buildDir, Path.of(GRAPHQL_SCHEMA_FILE_NAME));
             }
+            ManifestConfiguration manifest = Config.getManifest(buildDir, mainFile, graphQLSchemaFile);
+            JsonNode mappedManifest = getMapper().valueToTree(manifest);
+            ((ObjectNode)packageConfig).set(ManifestConfiguration.PROPERTY, mappedManifest);
+
             //Update dependencies and write out
             Path packageFile = buildDir.resolve(PACKAGE_FILE_NAME);
             getMapper().writeValue(packageFile.toFile(),packageConfig);
@@ -133,16 +138,16 @@ public class Packager {
         }
     }
 
-    public static void copyRelativeFile(Path srcFile, Path srcDir, Path destDir) throws IOException {
-        copyFile(srcFile, destDir, srcDir.relativize(srcFile));
+    public static Path copyRelativeFile(Path srcFile, Path srcDir, Path destDir) throws IOException {
+        return copyFile(srcFile, destDir, srcDir.relativize(srcFile));
     }
 
-    public static void copyFile(Path srcFile, Path destDir, Path relativeDestPath) throws IOException {
+    public static Path copyFile(Path srcFile, Path destDir, Path relativeDestPath) throws IOException {
         Preconditions.checkArgument(Files.isRegularFile(srcFile));
         Path targetPath = destDir.resolve(relativeDestPath);
         Files.createDirectories(targetPath.getParent());
         Files.copy(srcFile, targetPath, StandardCopyOption.REPLACE_EXISTING);
-//            targetPath.toFile().deleteOnExit();
+        return targetPath;
     }
 
 
@@ -208,7 +213,7 @@ public class Packager {
             return new Packager(rootDir, packageConfig, config);
         }
 
-        private static ManifestConfiguration getManifest(Path rootDir, Path mainScript, Path graphQLSchemaFile) {
+        public static ManifestConfiguration getManifest(Path rootDir, Path mainScript, Path graphQLSchemaFile) {
             Preconditions.checkArgument(mainScript!=null || !Files.isRegularFile(mainScript), "Must configure a main script");
             ManifestConfiguration.ManifestConfigurationBuilder builder = ManifestConfiguration.builder();
             builder.main(rootDir.relativize(mainScript).normalize().toString());

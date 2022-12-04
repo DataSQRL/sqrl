@@ -31,18 +31,15 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     private final boolean execute;
 
-    @CommandLine.Parameters(index = "0", description = "Main script")
-    private Path mainScript;
-
-    @CommandLine.Parameters(index = "1", description = "GraphQL schema")
-    private Path graphQLSchema;
+    @CommandLine.Parameters(arity = "1..2", description = "Main script and (optional) GraphQL schema")
+    private Path[] files;
 
     @CommandLine.Option(names = {"-g", "--generate-schema"} ,description = "Generates the graphql "
             + "schema file and exits")
     private boolean generateSchema = false;
 
     @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory")
-    private Path outputDir;
+    private Path outputDir = null;
 
     protected AbstractCompilerCommand(boolean execute) {
         this.execute = execute;
@@ -54,10 +51,11 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         Packager.Config.ConfigBuilder pkgBuilder = Packager.Config.builder();
         pkgBuilder.rootDir(root.rootDir);
         pkgBuilder.packageFiles(packageFiles);
+        Path mainScript = files[0];
         Preconditions.checkArgument(mainScript!=null && Files.isRegularFile(mainScript),"Could not find main script: %s", mainScript);
         pkgBuilder.mainScript(mainScript);
-        if (graphQLSchema!=null) {
-            pkgBuilder.graphQLSchemaFile(graphQLSchema);
+        if (files.length>1) {
+            pkgBuilder.graphQLSchemaFile(files[1]);
             generateSchema = false; //We don't generate schema even if the flag is set
         }
         Packager packager = pkgBuilder.build().getPackager();

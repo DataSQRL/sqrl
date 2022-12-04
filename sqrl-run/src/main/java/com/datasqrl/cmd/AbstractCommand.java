@@ -94,6 +94,8 @@ public abstract class AbstractCommand implements Runnable {
                     .dbURL("invalid")
                     .dialect(Dialect.POSTGRES)
                     .database(DEFAULT_DB_NAME)
+                    .user("")
+                    .password("")
                     .build();
         }
 

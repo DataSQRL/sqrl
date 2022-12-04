@@ -71,7 +71,7 @@ schema.graphqls
   },
   "manifest" : {
     "main" : "c360-full.sqrl",
-    "graphql" : "c360-full-graphqlv1/schema.graphqls"
+    "graphql" : "schema.graphqls"
   },
   "compiler" : {
     "api" : {
@@ -103,7 +103,7 @@ schema.graphqls
   },
   "manifest" : {
     "main" : "c360-full.sqrl",
-    "graphql" : "c360-full-graphqlv1/schema.graphqls"
+    "graphql" : "schema.graphqls"
   },
   "compiler" : {
     "api" : {
@@ -140,7 +140,7 @@ schema.graphqls
   },
   "manifest" : {
     "main" : "c360-full.sqrl",
-    "graphql" : "c360-full-graphqlv1/schema.graphqls"
+    "graphql" : "schema.graphqls"
   },
   "dependencies" : { }
 }
@@ -167,7 +167,7 @@ schema.graphqls
   },
   "manifest" : {
     "main" : "c360-full.sqrl",
-    "graphql" : "c360-full-graphqlv1/schema.graphqls"
+    "graphql" : "schema.graphqls"
   },
   "compiler" : {
     "api" : {
@@ -199,7 +199,7 @@ schema.graphqls
   },
   "manifest" : {
     "main" : "c360-full.sqrl",
-    "graphql" : "c360-full-graphqlv1/schema.graphqls"
+    "graphql" : "schema.graphqls"
   },
   "compiler" : {
     "api" : {

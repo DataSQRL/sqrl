@@ -1,0 +1,5 @@
+>>>output
+customer.table.json
+orders.table.json
+product.table.json
+schema.yml

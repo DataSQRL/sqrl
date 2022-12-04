@@ -1,0 +1,15 @@
+>>>output
+schema.graphqls
+>>>build
+customer360
+customer360/nutshopv2-small.sqrl
+nutshop-medium
+nutshop-medium/orders.table.json
+nutshop-medium/products.table.json
+nutshop-medium/schema.yml
+nutshop-small
+nutshop-small/orders.table.json
+nutshop-small/products.table.json
+nutshop-small/schema.yml
+package.json
+schema.graphqls
