@@ -29,6 +29,7 @@ public class FileUtil {
   }
 
   private static final int DELIMITER_CHAR = 46;
+
   public static Pair<String, String> separateExtension(String fileName) {
     if (Strings.isNullOrEmpty(fileName)) {
       return null;

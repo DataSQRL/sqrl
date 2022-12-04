@@ -22,13 +22,14 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * A relational table that represents the relational equivalent of a {@link com.datasqrl.schema.SQRLTable}.
- *
- * While the SQRLTable represents the logical table that a user defines in an SQRL script, the associated
- * {@link VirtualRelationalTable} represents the relational representation of that same table (i.e. with
- * primary keys, relational data type, etc). The transpiler manages the mapping between the two and updates
- * both according to the script statements. Specifically, relationships on SQRLTables are converted to
- * JOINs between virtual tables.
+ * A relational table that represents the relational equivalent of a
+ * {@link com.datasqrl.schema.SQRLTable}.
+ * <p>
+ * While the SQRLTable represents the logical table that a user defines in an SQRL script, the
+ * associated {@link VirtualRelationalTable} represents the relational representation of that same
+ * table (i.e. with primary keys, relational data type, etc). The transpiler manages the mapping
+ * between the two and updates both according to the script statements. Specifically, relationships
+ * on SQRLTables are converted to JOINs between virtual tables.
  */
 @Getter
 public abstract class VirtualRelationalTable extends AbstractRelationalTable {
@@ -42,9 +43,9 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
   @NonNull
   protected RelDataType rowType;
   /**
-   * The row type of the underlying {@link QueryRelationalTable} at the shredding level of this virtual
-   * table including any nested relations. This is distinct from the rowType of the virtual table
-   * which is padded with parent primary keys and does not contain nested relations.
+   * The row type of the underlying {@link QueryRelationalTable} at the shredding level of this
+   * virtual table including any nested relations. This is distinct from the rowType of the virtual
+   * table which is padded with parent primary keys and does not contain nested relations.
    */
   @NonNull
   protected RelDataType queryRowType;
@@ -54,7 +55,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
   private SQRLTable sqrlTable;
 
   protected VirtualRelationalTable(Name nameId, @NonNull RelDataType rowType,
-                                   @NonNull RelDataType queryRowType, int numLocalPks) {
+      @NonNull RelDataType queryRowType, int numLocalPks) {
     super(nameId);
     this.rowType = rowType;
     this.queryRowType = queryRowType;
@@ -66,11 +67,11 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
   public abstract VirtualRelationalTable.Root getRoot();
 
   public void addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory,
-                        Supplier<RelBuilder> relBuilderFactory, Optional<Integer> timestampScore) {
+      Supplier<RelBuilder> relBuilderFactory, Optional<Integer> timestampScore) {
     if (isRoot() && column instanceof AddedColumn.Simple && addedColumns.isEmpty()) {
       //We can inline this column on the parent table
-      ((VirtualRelationalTable.Root)this).getBase().addInlinedColumn((AddedColumn.Simple) column,
-              relBuilderFactory, timestampScore);
+      ((VirtualRelationalTable.Root) this).getBase().addInlinedColumn((AddedColumn.Simple) column,
+          relBuilderFactory, timestampScore);
     } else {
       addedColumns.add(column);
     }
@@ -91,7 +92,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
     List<String> pkNames = new ArrayList<>(getNumPrimaryKeys());
     List<RelDataTypeField> fields = rowType.getFieldList();
     for (int i = 0; i < getNumPrimaryKeys(); i++) {
-      pkNames.add(i,fields.get(i).getName());
+      pkNames.add(i, fields.get(i).getName());
     }
     return pkNames;
   }
@@ -115,7 +116,8 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
         //TODO: log warning;
         stats = Statistics.UNKNOWN;
       } else {
-        ImmutableBitSet primaryKey = ImmutableBitSet.of(ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
+        ImmutableBitSet primaryKey = ImmutableBitSet.of(
+            ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
         stats = Statistics.of(tblStats.getRowCount(), List.of(primaryKey));
         statistic = stats;
       }
@@ -123,7 +125,6 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
     }
     return statistic;
   }
-
 
 
   public abstract TableStatistic getTableStatistic();
@@ -142,15 +143,15 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
 
 
     public IndexMap mapQueryTable() {
-      Map<Integer,Integer> mapping = new HashMap<>();
+      Map<Integer, Integer> mapping = new HashMap<>();
       int vTablePos = 0;
       for (int i = 0; i < queryRowType.getFieldCount(); i++) {
         RelDataTypeField field = queryRowType.getFieldList().get(i);
         if (!CalciteUtil.isNestedTable(field.getType())) {
-          mapping.put(i,vTablePos++);
+          mapping.put(i, vTablePos++);
         }
       }
-      assert vTablePos==getNumColumns();
+      assert vTablePos == getNumColumns();
       return IndexMap.of(mapping);
     }
 
@@ -191,7 +192,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
     }
 
     public static Child of(Name nameId, @NonNull RelDataType rowType,
-                           @NonNull VirtualRelationalTable parent, @NonNull String shredFieldName) {
+        @NonNull VirtualRelationalTable parent, @NonNull String shredFieldName) {
       RelDataTypeField shredField = parent.getQueryRowType().getField(shredFieldName, true, false);
       Preconditions.checkArgument(shredField != null);
       RelDataType type = shredField.getType();
@@ -221,12 +222,17 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
 
     @Override
     public TableStatistic getTableStatistic() {
-      if (numLocalPks>0) return parent.getTableStatistic().nested();
-      else return parent.getTableStatistic();
+      if (numLocalPks > 0) {
+        return parent.getTableStatistic().nested();
+      } else {
+        return parent.getTableStatistic();
+      }
     }
 
-    public void appendTimestampColumn(@NonNull RelDataTypeField timestampField, @NonNull RelDataTypeFactory typeFactory) {
-      rowType = CalciteUtil.appendField(rowType, timestampField.getName(), timestampField.getType(), typeFactory);
+    public void appendTimestampColumn(@NonNull RelDataTypeField timestampField,
+        @NonNull RelDataTypeFactory typeFactory) {
+      rowType = CalciteUtil.appendField(rowType, timestampField.getName(), timestampField.getType(),
+          typeFactory);
     }
   }
 

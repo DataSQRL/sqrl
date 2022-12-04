@@ -6,6 +6,7 @@ import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 public class SqrlTypeSystem implements RelDataTypeSystem {
+
   public static final SqrlTypeSystem INSTANCE = new SqrlTypeSystem();
 
   public static final int TIMESTAMP_PRECISION = 3;

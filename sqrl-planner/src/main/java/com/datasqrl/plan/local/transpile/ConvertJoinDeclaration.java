@@ -29,10 +29,9 @@ public class ConvertJoinDeclaration extends SqlShuttle {
 
     switch (call.getKind()) {
       case JOIN_DECLARATION:
-        return convertToSelect((SqrlJoinDeclarationSpec)call);
+        return convertToSelect((SqrlJoinDeclarationSpec) call);
 
     }
-
 
     return super.visit(call);
   }
@@ -58,14 +57,17 @@ public class ConvertJoinDeclaration extends SqlShuttle {
     if (context.isPresent()) {
       int cnt = 0;
       for (String pkName : context.get().getPrimaryKeyNames()) {
-        SqlIdentifier i = new SqlIdentifier(List.of(ReservedName.SELF_IDENTIFIER.getCanonical(), pkName), SqlParserPos.ZERO);
-        SqlIdentifier name = new SqlIdentifier(List.of("_ppk_" + Integer.toString(++cnt)), SqlParserPos.ZERO);
+        SqlIdentifier i = new SqlIdentifier(
+            List.of(ReservedName.SELF_IDENTIFIER.getCanonical(), pkName), SqlParserPos.ZERO);
+        SqlIdentifier name = new SqlIdentifier(List.of("_ppk_" + Integer.toString(++cnt)),
+            SqlParserPos.ZERO);
         SqlCall alias = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, i, name);
         projects.add(alias);
       }
     }
 
-    SqlNode star = SqlIdentifier.star(List.of(getAliasName(path.relations.get(path.relations.size() - 1)), "*"),
+    SqlNode star = SqlIdentifier.star(
+        List.of(getAliasName(path.relations.get(path.relations.size() - 1)), "*"),
         SqlParserPos.ZERO, List.of(SqlParserPos.ZERO, SqlParserPos.ZERO));
     projects.add(star);
     SqlSelect select = new SqlSelect(SqlParserPos.ZERO,
@@ -125,7 +127,7 @@ public class ConvertJoinDeclaration extends SqlShuttle {
         relations.get(1),
         JoinConditionType.ON.symbol(SqlParserPos.ZERO),
         conditions.get(1) //todo join both
-      );
+    );
     for (int i = 2; i < relations.size(); i++) {
       join = new SqlJoin(relations.get(0).getParserPosition(),
           join,

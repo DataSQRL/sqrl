@@ -18,16 +18,19 @@ import javax.validation.Valid;
 @Getter
 public class GlobalCompilerConfiguration extends GlobalEngineConfiguration {
 
-    @Builder.Default @NonNull @Valid
-    CompilerConfiguration compiler = new CompilerConfiguration();
+  @Builder.Default
+  @NonNull @Valid
+  CompilerConfiguration compiler = new CompilerConfiguration();
 
-    @Valid
-    @JsonProperty(ManifestConfiguration.PROPERTY)
-    ManifestConfiguration manifest;
+  @Valid
+  @JsonProperty(ManifestConfiguration.PROPERTY)
+  ManifestConfiguration manifest;
 
-    public CompilerConfiguration initializeCompiler(ErrorCollector errors) {
-        if (!ConfigurationUtil.javaxValidate(this,errors)) return null;
-        return compiler;
+  public CompilerConfiguration initializeCompiler(ErrorCollector errors) {
+    if (!ConfigurationUtil.javaxValidate(this, errors)) {
+      return null;
     }
+    return compiler;
+  }
 
 }

@@ -14,31 +14,32 @@ import java.util.Optional;
 @Value
 public class EngineStage implements ExecutionStage {
 
-    ExecutionEngine engine;
-    Optional<ExecutionStage> next;
+  ExecutionEngine engine;
+  Optional<ExecutionStage> next;
 
-    @Override
-    public String getName() {
-        return engine.getName();
-    }
+  @Override
+  public String getName() {
+    return engine.getName();
+  }
 
-    @Override
-    public boolean supports(EngineCapability capability) {
-        return engine.supports(capability);
-    }
+  @Override
+  public boolean supports(EngineCapability capability) {
+    return engine.supports(capability);
+  }
 
-    @Override
-    public Optional<ExecutionStage> nextStage() {
-        return next;
-    }
+  @Override
+  public Optional<ExecutionStage> nextStage() {
+    return next;
+  }
 
-    @Override
-    public ExecutionResult execute(EnginePhysicalPlan plan) {
-        return engine.execute(plan);
-    }
+  @Override
+  public ExecutionResult execute(EnginePhysicalPlan plan) {
+    return engine.execute(plan);
+  }
 
-    @Override
-    public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder) {
-        return engine.plan(plan,inputs,relBuilder);
-    }
+  @Override
+  public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+      RelBuilder relBuilder) {
+    return engine.plan(plan, inputs, relBuilder);
+  }
 }

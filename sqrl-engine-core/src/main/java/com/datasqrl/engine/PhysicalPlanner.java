@@ -19,8 +19,10 @@ public class PhysicalPlanner {
     for (int i = 0; i < plan.getStagePlans().size(); i++) {
       OptimizedDAG.StagePlan stagePlan = plan.getStagePlans().get(i);
       //1. Get all queries that sink into this stage
-      List<OptimizedDAG.StageSink> inputs = StreamUtil.filterByClass(plan.getWriteQueries().stream().map(wq -> wq.getSink()), OptimizedDAG.StageSink.class)
-              .filter(sink -> sink.getStage().equals(stagePlan.getStage())).collect(Collectors.toList());
+      List<OptimizedDAG.StageSink> inputs = StreamUtil.filterByClass(
+              plan.getWriteQueries().stream().map(wq -> wq.getSink()), OptimizedDAG.StageSink.class)
+          .filter(sink -> sink.getStage().equals(stagePlan.getStage()))
+          .collect(Collectors.toList());
       EnginePhysicalPlan physicalPlan = stagePlan.getStage().plan(stagePlan, inputs, relBuilder);
       physicalStages.add(new PhysicalPlan.StagePlan(stagePlan.getStage(), physicalPlan));
     }

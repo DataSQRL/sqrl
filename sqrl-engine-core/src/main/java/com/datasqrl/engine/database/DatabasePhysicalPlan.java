@@ -7,6 +7,6 @@ import java.util.Map;
 
 public interface DatabasePhysicalPlan extends EnginePhysicalPlan {
 
-    Map<APIQuery, QueryTemplate> getQueries();
+  Map<APIQuery, QueryTemplate> getQueries();
 
 }

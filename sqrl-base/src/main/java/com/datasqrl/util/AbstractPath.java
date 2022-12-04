@@ -13,7 +13,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E,P>> implements Iterable<E>, Serializable, Comparable<P> {
+public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<E, P>> implements
+    Iterable<E>, Serializable, Comparable<P> {
 
   protected final E[] elements;
 
@@ -21,7 +22,7 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
     this.elements = elements;
   }
 
-  protected abstract Constructor<E,P> constructor();
+  protected abstract Constructor<E, P> constructor();
 
   public P concat(@NonNull E element) {
     E[] newelements = Arrays.copyOf(elements, elements.length + 1);
@@ -116,13 +117,13 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
   }
 
   public P popFirst() {
-    Preconditions.checkArgument(size()>0);
+    Preconditions.checkArgument(size() > 0);
     E[] newNames = Arrays.copyOfRange(elements, 1, elements.length);
     return constructor().create(newNames);
   }
 
   public P popLast() {
-    Preconditions.checkArgument(size()>0);
+    Preconditions.checkArgument(size() > 0);
     E[] newNames = Arrays.copyOfRange(elements, 0, elements.length - 1);
     return constructor().create(newNames);
   }
@@ -153,7 +154,7 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
     return Arrays.stream(elements);
   }
 
-  protected static abstract class Constructor<E extends Comparable,P extends AbstractPath<E,P>> {
+  protected static abstract class Constructor<E extends Comparable, P extends AbstractPath<E, P>> {
 
     protected abstract P create(@NonNull E... elements);
 
@@ -165,7 +166,7 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
       return create(elements.toArray(createArray(elements.size())));
     }
 
-    public P parse(String path, Function<String,E> parser) {
+    public P parse(String path, Function<String, E> parser) {
       String[] arr = path.split("\\.");
       E[] elements = createArray(arr.length);
       int i = 0;
@@ -175,10 +176,10 @@ public abstract class AbstractPath<E extends Comparable,P extends AbstractPath<E
       return create(elements);
     }
 
-    public<E2> P of(Function<E2,E> converter, @NonNull E2[] elements) {
+    public <E2> P of(Function<E2, E> converter, @NonNull E2[] elements) {
       E[] arr = Arrays.stream(elements)
-              .map(converter)
-              .toArray(this::createArray);
+          .map(converter)
+          .toArray(this::createArray);
       return create(arr);
     }
 

@@ -15,17 +15,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LoaderTest {
 
-    @ParameterizedTest
-    @ArgumentsSource(TestDataset.AllProvider.class)
-    public void testLoadingSources(TestDataset example) {
-        ErrorCollector errors = ErrorCollector.root();
-        DataSource.Loader loader = new DataSource.Loader();
-        for (String tblName : example.getTables()) {
-            Optional<TableSource> table = loader.readTable(example.getRootPackageDirectory(), NamePath.of(example.getName(),tblName), errors);
-            assertFalse(errors.isFatal(), errors.toString());
-            assertTrue(table.isPresent());
-            assertEquals(table.get().getName(),Name.system(tblName));
-        }
+  @ParameterizedTest
+  @ArgumentsSource(TestDataset.AllProvider.class)
+  public void testLoadingSources(TestDataset example) {
+    ErrorCollector errors = ErrorCollector.root();
+    DataSource.Loader loader = new DataSource.Loader();
+    for (String tblName : example.getTables()) {
+      Optional<TableSource> table = loader.readTable(example.getRootPackageDirectory(),
+          NamePath.of(example.getName(), tblName), errors);
+      assertFalse(errors.isFatal(), errors.toString());
+      assertTrue(table.isPresent());
+      assertEquals(table.get().getName(), Name.system(tblName));
     }
+  }
 
 }

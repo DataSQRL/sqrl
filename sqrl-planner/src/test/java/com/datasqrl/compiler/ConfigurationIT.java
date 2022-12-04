@@ -8,12 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ConfigurationIT extends AbstractEngineIT {
 
-    @Test
-    public void testSettings() {
-        initialize(IntegrationTestSettings.getInMemory());
-        assertNotNull(database);
-        assertNotNull(engineSettings);
-    }
+  @Test
+  public void testSettings() {
+    initialize(IntegrationTestSettings.getInMemory());
+    assertNotNull(database);
+    assertNotNull(engineSettings);
+  }
 
 
 }

@@ -43,7 +43,7 @@ public class ErrorPrinter {
     b.append(errorMessage.getMessage())
         .append("\n");
 
-    errorMessage.getErrorCode().map(c->b.append(c.getError()));
+    errorMessage.getErrorCode().map(c -> b.append(c.getError()));
     return b.toString();
   }
 }

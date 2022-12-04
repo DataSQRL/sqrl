@@ -12,7 +12,7 @@ import java.util.Map;
 @Value
 public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
 
-    List<SqlDDLStatement> ddlStatements;
-    Map<APIQuery, QueryTemplate> queries;
+  List<SqlDDLStatement> ddlStatements;
+  Map<APIQuery, QueryTemplate> queries;
 
 }

@@ -14,7 +14,8 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
   private final OutputTag<ProcessError> errorTag;
   private final FunctionWithError<Input, Output> function;
 
-  public MapWithErrorProcess(OutputTag<ProcessError> errorTag, FunctionWithError<Input, Output> function) {
+  public MapWithErrorProcess(OutputTag<ProcessError> errorTag,
+      FunctionWithError<Input, Output> function) {
     this.errorTag = errorTag;
     this.function = function;
   }
@@ -23,11 +24,13 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
   public void processElement(Input input, Context context,
       Collector<Output> out) {
     ErrorHolder errorHolder = new ErrorHolder();
-    Optional<Output> result = function.apply(input,errorHolder);
+    Optional<Output> result = function.apply(input, errorHolder);
     if (errorHolder.hasErrors()) {
       context.output(errorTag, ProcessError.of(errorHolder.errors, input));
     }
-    if (result.isPresent()) out.collect(result.get());
+    if (result.isPresent()) {
+      out.collect(result.get());
+    }
   }
 
   private static class ErrorHolder implements Consumer<ErrorCollector> {
@@ -40,7 +43,7 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
     }
 
     public boolean hasErrors() {
-      return errors!=null && errors.hasErrors();
+      return errors != null && errors.hasErrors();
     }
 
   }

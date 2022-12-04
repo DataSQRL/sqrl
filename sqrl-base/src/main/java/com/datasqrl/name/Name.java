@@ -47,7 +47,7 @@ public interface Name extends Serializable, Comparable<Name> {
 
   default Name append(Name name) {
     return new StandardName(this.getCanonical() + name.getCanonical(),
-            this.getDisplay() + name.getCanonical());
+        this.getDisplay() + name.getCanonical());
   }
 
   default Name suffix(String suffix) {

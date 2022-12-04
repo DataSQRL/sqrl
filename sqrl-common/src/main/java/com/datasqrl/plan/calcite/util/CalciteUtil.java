@@ -57,7 +57,8 @@ public class CalciteUtil {
   }
 
   public static boolean isBasicOrArrayType(RelDataType type) {
-    return type instanceof BasicSqlType || type instanceof IntervalSqlType || type instanceof ArraySqlType;
+    return type instanceof BasicSqlType || type instanceof IntervalSqlType
+        || type instanceof ArraySqlType;
   }
 
   public static boolean hasNesting(RelDataType type) {
@@ -84,15 +85,16 @@ public class CalciteUtil {
   }
 
   public static boolean isTimestamp(RelDataType datatype) {
-    return !datatype.isStruct() && datatype.getSqlTypeName() == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE
-            && !datatype.isNullable();
+    return !datatype.isStruct()
+        && datatype.getSqlTypeName() == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE
+        && !datatype.isNullable();
   }
 
   private static SqlSelect stripOrderBy(SqlNode query) {
     if (query instanceof SqlSelect) {
       return (SqlSelect) query;
     } else if (query instanceof SqlOrderBy) {
-      return (SqlSelect)((SqlOrderBy) query).query;
+      return (SqlSelect) ((SqlOrderBy) query).query;
     }
     return null;
   }
@@ -104,8 +106,10 @@ public class CalciteUtil {
   }
 
   public static List<SqlNode> getHintOptions(SqlHint hint) {
-    SqlNodeList nodeList = (SqlNodeList)hint.getOperandList().get(1);
-    if (nodeList == null) return List.of();
+    SqlNodeList nodeList = (SqlNodeList) hint.getOperandList().get(1);
+    if (nodeList == null) {
+      return List.of();
+    }
     return nodeList.getList();
   }
 
@@ -117,7 +121,8 @@ public class CalciteUtil {
   }
 
 
-  public static boolean selectListExpressionEquals(SqlNode selectItem, SqlNode exp, SqlValidatorScope scope) {
+  public static boolean selectListExpressionEquals(SqlNode selectItem, SqlNode exp,
+      SqlValidatorScope scope) {
 
     switch (selectItem.getKind()) {
       case AS:
@@ -138,16 +143,23 @@ public class CalciteUtil {
   }
 
   public static void prependSelectListNodes(SqlSelect select, List<SqlNode> nodes) {
-    if (nodes.isEmpty()) return;
+    if (nodes.isEmpty()) {
+      return;
+    }
     select.setSelectList(prependToList(select.getSelectList(), nodes));
   }
+
   public static void prependGroupByNodes(SqlSelect select, List<SqlNode> nodes) {
-    if (nodes.isEmpty()) return;
+    if (nodes.isEmpty()) {
+      return;
+    }
     select.setOperand(4, prependToList(select.getGroup(), nodes));
   }
 
   public static void prependOrderByNodes(SqlSelect select, List<SqlNode> nodes) {
-    if (nodes.isEmpty()) return;
+    if (nodes.isEmpty()) {
+      return;
+    }
     select.setOperand(7, prependToList(select.getOrderList(), nodes));
   }
 
@@ -166,7 +178,7 @@ public class CalciteUtil {
   public static List<SqlIdentifier> getColumnNames(SqlSelect select) {
     //Get names from select list directly
     return IntStream.range(0, select.getSelectList().size())
-        .mapToObj(i-> SqlValidatorUtil.getAlias(select.getSelectList().get(i), i))
+        .mapToObj(i -> SqlValidatorUtil.getAlias(select.getSelectList().get(i), i))
         .map(name -> new SqlIdentifier(name, SqlParserPos.ZERO))
         .collect(Collectors.toList());
   }
@@ -185,10 +197,11 @@ public class CalciteUtil {
   }
 
   public static void wrapSelectInProject(SqlSelect select) {
-    SqlSelect innerSelect = (SqlSelect)select.clone(select.getParserPosition());
+    SqlSelect innerSelect = (SqlSelect) select.clone(select.getParserPosition());
 
 //    List<SqlIdentifier> names = CalciteUtil.getColumnNames(select);
-    SqlNodeList columnNames = new SqlNodeList(List.of(SqlIdentifier.STAR), select.getSelectList().getParserPosition());
+    SqlNodeList columnNames = new SqlNodeList(List.of(SqlIdentifier.STAR),
+        select.getSelectList().getParserPosition());
 
     select.setOperand(0, SqlNodeList.EMPTY);
     select.setOperand(1, columnNames);
@@ -275,23 +288,26 @@ public class CalciteUtil {
   }
 
   public static void addIdentityProjection(RelBuilder relBuilder, int numColumns) {
-    addProjection(relBuilder, ContiguousSet.closedOpen(0,numColumns).asList(), null, true);
+    addProjection(relBuilder, ContiguousSet.closedOpen(0, numColumns).asList(), null, true);
   }
 
-  public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx, List<String> fieldNames) {
-    addProjection(relBuilder,selectIdx,fieldNames,false);
+  public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
+      List<String> fieldNames) {
+    addProjection(relBuilder, selectIdx, fieldNames, false);
   }
 
-  public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx, List<String> fieldNames, boolean force) {
+  public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
+      List<String> fieldNames, boolean force) {
     Preconditions.checkArgument(!selectIdx.isEmpty());
-    if (fieldNames==null || fieldNames.isEmpty()) {
-      fieldNames = Collections.nCopies(selectIdx.size(),null);
+    if (fieldNames == null || fieldNames.isEmpty()) {
+      fieldNames = Collections.nCopies(selectIdx.size(), null);
     }
     Preconditions.checkArgument(selectIdx.size() == fieldNames.size());
     List<RexNode> rex = new ArrayList<>(selectIdx.size());
     RelDataType inputType = relBuilder.peek().getRowType();
-    selectIdx.forEach( idx -> rex.add(RexInputRef.of(idx,inputType)));
-    relBuilder.project(rex,fieldNames, force); //Need to force otherwise Calcite eliminates the project
+    selectIdx.forEach(idx -> rex.add(RexInputRef.of(idx, inputType)));
+    relBuilder.project(rex, fieldNames,
+        force); //Need to force otherwise Calcite eliminates the project
   }
 
   @Value
@@ -304,8 +320,9 @@ public class CalciteUtil {
       return this;
     }
 
-    public static RelDataType appendField(@NonNull RelDataType relation, @NonNull String fieldId, @NonNull RelDataType fieldType,
-                                       @NonNull RelDataTypeFactory factory) {
+    public static RelDataType appendField(@NonNull RelDataType relation, @NonNull String fieldId,
+        @NonNull RelDataType fieldType,
+        @NonNull RelDataTypeFactory factory) {
       Preconditions.checkArgument(relation.isStruct());
       RelDataTypeBuilder builder = getRelTypeBuilder(factory);
       builder.addAll(relation.getFieldList());
@@ -329,7 +346,8 @@ public class CalciteUtil {
     }
   }
 
-  public static RelNode applyRexShuttleRecursively(@NonNull RelNode node, @NonNull final RexShuttle rexShuttle) {
+  public static RelNode applyRexShuttleRecursively(@NonNull RelNode node,
+      @NonNull final RexShuttle rexShuttle) {
     return node.accept(new RexShuttleApplier(rexShuttle));
   }
 
@@ -340,13 +358,13 @@ public class CalciteUtil {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-      return super.visitChild(parent.accept(rexShuttle),i,child);
+      return super.visitChild(parent.accept(rexShuttle), i, child);
     }
   }
 
   public static RexNode makeTimeInterval(long interval_ms, RexBuilder rexBuilder) {
     SqlIntervalQualifier sqlIntervalQualifier =
-            new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO);
+        new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO);
     return rexBuilder.makeIntervalLiteral(new BigDecimal(interval_ms), sqlIntervalQualifier);
   }
 

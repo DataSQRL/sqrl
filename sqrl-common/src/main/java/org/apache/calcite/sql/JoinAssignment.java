@@ -14,7 +14,8 @@ public class JoinAssignment extends Assignment {
   private final SqlNode query;
 
   public JoinAssignment(SqlParserPos location,
-      SqlIdentifier name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, Optional<SqlNodeList> hints) {
+      SqlIdentifier name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query,
+      Optional<SqlNodeList> hints) {
     super(location, name, hints);
     this.tableArgs = tableArgs;
     this.query = query;

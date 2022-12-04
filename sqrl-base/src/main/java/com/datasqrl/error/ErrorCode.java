@@ -19,8 +19,7 @@ public enum ErrorCode {
   ORDINAL_NOT_SUPPORTED("E0011.MD"),
   CANNOT_SHADOW_RELATIONSHIP("E0012.MD"),
   TO_MANY_PATH_NOT_ALLOWED("E0013.MD"),
-  NESTED_DISTINCT_ON("E0014.MD")
-  ;
+  NESTED_DISTINCT_ON("E0014.MD");
 
   final String fileName;
 
@@ -31,7 +30,7 @@ public enum ErrorCode {
 
   @SneakyThrows
   public String getError() {
-    return Resources.toString(Resources.getResource("errorCodes/"+fileName),
+    return Resources.toString(Resources.getResource("errorCodes/" + fileName),
         Charset.defaultCharset());
   }
 }

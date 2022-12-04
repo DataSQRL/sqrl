@@ -10,18 +10,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@JsonIgnoreProperties(ignoreUnknown=true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PackageConfiguration {
 
-    String name;
-    String version;
+  String name;
+  String version;
 
-    String variant;
-    String license;
-    String repository;
-    String homepage;
-    String documentation;
-    String readme;
-    String description;
+  String variant;
+  String license;
+  String repository;
+  String homepage;
+  String documentation;
+  String readme;
+  String description;
 
 }

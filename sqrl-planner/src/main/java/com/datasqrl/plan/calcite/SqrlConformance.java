@@ -45,17 +45,17 @@ public class SqrlConformance implements SqlConformance {
   }
 
   /**
-   * In SQL, when the ORDER BY clause is used to sort the result set, the sort order can be defined by either an expression or an alias.
-   * If isSortByAliasObscures is set to true, then when an alias is used to sort the result set, the sort order will be determined by the expression that the alias is based on, not the alias itself.
-   *
+   * In SQL, when the ORDER BY clause is used to sort the result set, the sort order can be defined
+   * by either an expression or an alias. If isSortByAliasObscures is set to true, then when an
+   * alias is used to sort the result set, the sort order will be determined by the expression that
+   * the alias is based on, not the alias itself.
+   * <p>
    * For example, given the following query:
-   *
-   * SELECT col1 AS a, col2 AS b
-   * FROM table
-   * ORDER BY b;
-   *
+   * <p>
+   * SELECT col1 AS a, col2 AS b FROM table ORDER BY b;
+   * <p>
    * If isSortByAliasObscures is set to true, the sort order will be determined by col2, not b.
-   *
+   * <p>
    * If isSortByAliasObscures is set to false, the sort order will be determined by b.
    */
   @Override

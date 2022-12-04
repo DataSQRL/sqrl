@@ -15,8 +15,9 @@ public class Relationship extends Field {
   private final Multiplicity multiplicity;
   private final Optional<SqrlJoinDeclarationSpec> join;
 
-  public Relationship(Name name, int version, SQRLTable fromTable, SQRLTable toTable, JoinType joinType,
-                      Multiplicity multiplicity, Optional<SqrlJoinDeclarationSpec> join) {
+  public Relationship(Name name, int version, SQRLTable fromTable, SQRLTable toTable,
+      JoinType joinType,
+      Multiplicity multiplicity, Optional<SqrlJoinDeclarationSpec> join) {
     super(name, version);
     this.fromTable = fromTable;
     this.toTable = toTable;
@@ -29,7 +30,7 @@ public class Relationship extends Field {
   @Override
   public String toString() {
     return fromTable.getName() + " -> " + toTable.getName()
-            + " [" + joinType + "," + multiplicity + "]";
+        + " [" + joinType + "," + multiplicity + "]";
   }
 
   @Override

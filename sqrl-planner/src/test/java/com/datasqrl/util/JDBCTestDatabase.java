@@ -23,7 +23,7 @@ public class JDBCTestDatabase implements DatabaseHandle {
       Preconditions.checkArgument(hasLocalDbConfig());
       this.properties = PropertiesUtil.properties;
       this.postgreSQLContainer = null;
-    } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES){
+    } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES) {
       DockerImageName image = DockerImageName.parse("postgres:14.2");
       postgreSQLContainer = new PostgreSQLContainer(image)
           .withDatabaseName(TEST_DATABSE_NAME);
@@ -38,7 +38,9 @@ public class JDBCTestDatabase implements DatabaseHandle {
       this.properties.put("db.password", "test");
       this.properties.put("db.url", postgreSQLContainer.getJdbcUrl().substring(0,
           postgreSQLContainer.getJdbcUrl().lastIndexOf("/")));
-    } else throw new UnsupportedOperationException("Not a supported db type: " + dbType);
+    } else {
+      throw new UnsupportedOperationException("Not a supported db type: " + dbType);
+    }
   }
 
   private static boolean hasLocalDbConfig() {
@@ -47,20 +49,20 @@ public class JDBCTestDatabase implements DatabaseHandle {
 
   public JDBCEngineConfiguration getJdbcConfiguration() {
     return JDBCEngineConfiguration.builder()
-        .host((String)properties.get("db.host"))
-        .port((Integer)properties.get("db.port"))
-        .dbURL((String)properties.get("db.url"))
-        .driverName((String)properties.get("db.driverClassName"))
-        .dialect(Dialect.valueOf((String)properties.get("db.dialect")))
-        .user((String)properties.get("db.username"))
-        .password((String)properties.get("db.password"))
+        .host((String) properties.get("db.host"))
+        .port((Integer) properties.get("db.port"))
+        .dbURL((String) properties.get("db.url"))
+        .driverName((String) properties.get("db.driverClassName"))
+        .dialect(Dialect.valueOf((String) properties.get("db.dialect")))
+        .user((String) properties.get("db.username"))
+        .password((String) properties.get("db.password"))
         .database(TEST_DATABSE_NAME)
         .build();
   }
 
   @Override
   public void cleanUp() {
-    if (postgreSQLContainer!=null) {
+    if (postgreSQLContainer != null) {
       postgreSQLContainer.stop();
     }
   }

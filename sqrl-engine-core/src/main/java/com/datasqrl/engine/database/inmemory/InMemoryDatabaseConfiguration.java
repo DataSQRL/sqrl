@@ -9,29 +9,29 @@ import lombok.NonNull;
 
 public class InMemoryDatabaseConfiguration implements DatabaseEngineConfiguration {
 
-    public static final String ENGINE_NAME = "hashmap";
+  public static final String ENGINE_NAME = "hashmap";
+
+  @Override
+  public String getEngineName() {
+    return ENGINE_NAME;
+  }
+
+  @Override
+  public DatabaseEngine initialize(@NonNull ErrorCollector errors) {
+    return new InMemoryDatabase();
+  }
+
+  @Override
+  public MetadataStoreProvider getMetadataStore() {
+    return new StoreProvider();
+  }
+
+  public static class StoreProvider implements MetadataStoreProvider {
 
     @Override
-    public String getEngineName() {
-        return ENGINE_NAME;
+    public MetadataStore openStore() {
+      return new InMemoryMetadataStore();
     }
-
-    @Override
-    public DatabaseEngine initialize(@NonNull ErrorCollector errors) {
-        return new InMemoryDatabase();
-    }
-
-    @Override
-    public MetadataStoreProvider getMetadataStore() {
-        return new StoreProvider();
-    }
-
-    public static class StoreProvider implements MetadataStoreProvider {
-
-        @Override
-        public MetadataStore openStore() {
-            return new InMemoryMetadataStore();
-        }
-    }
+  }
 
 }

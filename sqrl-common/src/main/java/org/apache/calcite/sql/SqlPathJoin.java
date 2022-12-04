@@ -8,7 +8,8 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class SqlPathJoin extends SqlJoin {
 
   public SqlPathJoin(List<String> names, SqlParserPos pos, List<SqlParserPos> componentPositions) {
-    super(pos, createLeft(names, pos, componentPositions), SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+    super(pos, createLeft(names, pos, componentPositions),
+        SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
         JoinType.IMPLICIT.symbol(pos), createRight(names, pos, componentPositions),
         JoinConditionType.NONE.symbol(pos), null);
 //    SqlPathIdentifier r = (SqlPathIdentifier)this.getRight();

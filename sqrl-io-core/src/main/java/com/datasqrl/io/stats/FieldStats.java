@@ -40,9 +40,9 @@ public class FieldStats implements Serializable {
       Iterator<Object> arrIter = array.getLeft().iterator();
       while (arrIter.hasNext()) {
         Object next = arrIter.next();
-          if (next == null) {
-              continue;
-          }
+        if (next == null) {
+          continue;
+        }
         Type elementType;
         if (next instanceof Map) {
           elementType = RelationType.EMPTY;
@@ -53,21 +53,21 @@ public class FieldStats implements Serializable {
         } else {
           //since we flatmapped, this must be a scalar
           elementType = getBasicType(next, errors);
-            if (elementType == null) {
-                return;
-            }
+          if (elementType == null) {
+            return;
+          }
         }
         if (type == null) {
-            type = elementType;
+          type = elementType;
         } else if (!elementType.equals(type)) {
-            if (type instanceof BasicType && elementType instanceof BasicType) {
-                type = BasicTypeManager.combineForced((BasicType) type, (BasicType) elementType);
-            } else {
-                errors.fatal(
-                    "Array contains elements with incompatible types: [%s]. Found [%s] and [%s]",
-                    o,
-                    type, elementType);
-            }
+          if (type instanceof BasicType && elementType instanceof BasicType) {
+            type = BasicTypeManager.combineForced((BasicType) type, (BasicType) elementType);
+          } else {
+            errors.fatal(
+                "Array contains elements with incompatible types: [%s]. Found [%s] and [%s]",
+                o,
+                type, elementType);
+          }
         }
       }
     } else if (o != null) {
@@ -94,9 +94,9 @@ public class FieldStats implements Serializable {
       int numElements = 0;
       while (arrIter.hasNext()) {
         Object next = arrIter.next();
-          if (next == null) {
-              continue;
-          }
+        if (next == null) {
+          continue;
+        }
         if (next instanceof Map) {
           Map map = (Map) next;
           if (numElements == 0) {
@@ -105,24 +105,24 @@ public class FieldStats implements Serializable {
             detectedType = detectFromComposite.apply(map);
           } else if (detectedType != null) {
             BasicType detect2 = detectFromComposite.apply(map);
-              if (detect2 == null || !detect2.equals(detectedType)) {
-                  detectedType = null;
-              }
+            if (detect2 == null || !detect2.equals(detectedType)) {
+              detectedType = null;
+            }
           }
         } else {
           //not an array or map => must be scalar, let's find the common scalar type for all elements
           if (numElements == 0) {
             rawType = getBasicType(next);
             //Try to detect type
-              if (next instanceof String) {
-                  detectedType = detectFromString.apply((String) next);
-              }
+            if (next instanceof String) {
+              detectedType = detectFromString.apply((String) next);
+            }
           } else if (detectedType != null) {
             rawType = BasicTypeManager.combineForced((BasicType) rawType, getBasicType(next));
             BasicType detect2 = detectFromString.apply((String) next);
-              if (detect2 == null || !detect2.equals(detectedType)) {
-                  detectedType = null;
-              }
+            if (detect2 == null || !detect2.equals(detectedType)) {
+              detectedType = null;
+            }
           }
         }
         numElements++;
@@ -159,9 +159,9 @@ public class FieldStats implements Serializable {
         int numElements = 0;
         while (arrIter.hasNext()) {
           Object next = arrIter.next();
-            if (next == null) {
-                continue;
-            }
+          if (next == null) {
+            continue;
+          }
           if (next instanceof Map) {
             fieldStats.addNested((Map) next, canonicalizer);
           }
@@ -170,18 +170,18 @@ public class FieldStats implements Serializable {
         fieldStats.add(numElements);
       } else {
         fieldStats.add();
-          if (o instanceof Map) {
-              fieldStats.addNested((Map) o, canonicalizer);
-          }
+        if (o instanceof Map) {
+          fieldStats.addNested((Map) o, canonicalizer);
+        }
       }
     }
   }
 
   private FieldTypeStats setOrGet(FieldTypeStats stats) {
     FieldTypeStats existing = types.get(stats);
-      if (existing != null) {
-          return existing;
-      }
+    if (existing != null) {
+      return existing;
+    }
     types.put(stats, stats);
     return stats;
   }
@@ -209,32 +209,32 @@ public class FieldStats implements Serializable {
   public static Collection<Object> array2Collection(Object arr) {
     Preconditions.checkArgument(isArray(arr));
     final Collection col;
-      if (arr instanceof Collection) {
-          col = (Collection) arr;
-      } else {
-          col = Arrays.asList((Object[]) arr);
-      }
+    if (arr instanceof Collection) {
+      col = (Collection) arr;
+    } else {
+      col = Arrays.asList((Object[]) arr);
+    }
     return col;
   }
 
   public static Pair<Stream<Object>, Integer> flatMapArray(Object arr) {
-      if (isArray(arr)) {
-          Collection col = array2Collection(arr);
-          if (col.stream().noneMatch(FieldStats::isArray)) {
-              return new ImmutablePair<>(col.stream(), 1);
-          } else {
-              AtomicInteger depth = new AtomicInteger(0);
-              Stream<Pair<Stream<Object>, Integer>> sub = col.stream()
-                  .map(FieldStats::flatMapArray);
-              Stream<Object> res = sub.flatMap(p -> {
-                  depth.getAndAccumulate(p.getRight(), Math::max);
-                  return p.getLeft();
-              });
-              return new ImmutablePair<>(res, depth.get() + 1);
-          }
+    if (isArray(arr)) {
+      Collection col = array2Collection(arr);
+      if (col.stream().noneMatch(FieldStats::isArray)) {
+        return new ImmutablePair<>(col.stream(), 1);
       } else {
-          return new ImmutablePair<>(Stream.of(arr), 0);
+        AtomicInteger depth = new AtomicInteger(0);
+        Stream<Pair<Stream<Object>, Integer>> sub = col.stream()
+            .map(FieldStats::flatMapArray);
+        Stream<Object> res = sub.flatMap(p -> {
+          depth.getAndAccumulate(p.getRight(), Math::max);
+          return p.getLeft();
+        });
+        return new ImmutablePair<>(res, depth.get() + 1);
       }
+    } else {
+      return new ImmutablePair<>(Stream.of(arr), 0);
+    }
   }
 
   public void merge(FieldStats acc) {

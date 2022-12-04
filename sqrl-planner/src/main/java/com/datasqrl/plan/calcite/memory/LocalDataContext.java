@@ -16,10 +16,12 @@ import org.apache.calcite.schema.SchemaPlus;
  */
 @AllArgsConstructor
 public class LocalDataContext implements DataContext {
+
   SchemaPlus schemaPlus;
 
   /**
    * Entry point for code generated procedures
+   *
    * @see InMemoryEnumerableTableScan#implement(EnumerableRelImplementor, Prefer)
    */
   @Override

@@ -17,7 +17,8 @@ public class PhysicalPlanExecutor {
     List<StageResult> results = new ArrayList<>();
     //Need to execute plans backwards so all subsequent stages are ready before stage executes
     for (PhysicalPlan.StagePlan stagePlan : Lists.reverse(physicalPlan.getStagePlans())) {
-      results.add(new StageResult(stagePlan.getStage(), stagePlan.getStage().execute(stagePlan.getPlan())));
+      results.add(
+          new StageResult(stagePlan.getStage(), stagePlan.getStage().execute(stagePlan.getPlan())));
     }
     return new Result(Lists.reverse(results));
   }

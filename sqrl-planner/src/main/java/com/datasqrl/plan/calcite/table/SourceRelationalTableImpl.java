@@ -6,15 +6,16 @@ import lombok.NonNull;
 
 import java.util.List;
 
-public abstract class SourceRelationalTableImpl extends AbstractRelationalTable implements SourceRelationalTable {
+public abstract class SourceRelationalTableImpl extends AbstractRelationalTable implements
+    SourceRelationalTable {
 
-    protected SourceRelationalTableImpl(@NonNull Name nameId) {
-        super(nameId);
-    }
+  protected SourceRelationalTableImpl(@NonNull Name nameId) {
+    super(nameId);
+  }
 
-    @Override
-    public List<String> getPrimaryKeyNames() {
-        return List.of(ReservedName.UUID.getCanonical());
-    }
+  @Override
+  public List<String> getPrimaryKeyNames() {
+    return List.of(ReservedName.UUID.getCanonical());
+  }
 
 }

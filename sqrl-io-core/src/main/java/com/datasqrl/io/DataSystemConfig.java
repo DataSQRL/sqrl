@@ -25,10 +25,14 @@ public class DataSystemConfig extends SharedConfiguration implements Serializabl
   DataSystemDiscoveryConfig datadiscovery;
 
   public DataSystem initialize(ErrorCollector errors) {
-    if (!rootInitialize(errors)) return null;
+    if (!rootInitialize(errors)) {
+      return null;
+    }
     DataSystemDiscovery source = datadiscovery.initialize(errors);
-    if (source == null) return null;
-    if (source.requiresFormat(getType()) && getFormat()==null) {
+    if (source == null) {
+      return null;
+    }
+    if (source.requiresFormat(getType()) && getFormat() == null) {
       errors.fatal("Need to configure a format");
       return null;
     }
@@ -42,7 +46,7 @@ public class DataSystemConfig extends SharedConfiguration implements Serializabl
         return null;
       }
     }
-    return new DataSystem(Name.system(name),source,this);
+    return new DataSystem(Name.system(name), source, this);
   }
 
 }

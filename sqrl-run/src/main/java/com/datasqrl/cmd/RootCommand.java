@@ -7,24 +7,24 @@ import java.util.Collections;
 import java.util.List;
 
 @CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "discover 0.1",
-        subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class})
+    subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class})
 public class RootCommand implements Runnable {
 
-    @CommandLine.Option(names = {"-p", "--package-file"}, description = "Package file")
-    protected List<Path> packageFiles = Collections.EMPTY_LIST;
+  @CommandLine.Option(names = {"-p", "--package-file"}, description = "Package file")
+  protected List<Path> packageFiles = Collections.EMPTY_LIST;
 
-    @Override
-    public void run() {
-        System.out.println("Chose one of the commands: compile, run, or discover");
-    }
+  @Override
+  public void run() {
+    System.out.println("Chose one of the commands: compile, run, or discover");
+  }
 
-    final Path rootDir;
+  final Path rootDir;
 
-    public RootCommand(Path rootDir) {
-        this.rootDir = rootDir;
-    }
+  public RootCommand(Path rootDir) {
+    this.rootDir = rootDir;
+  }
 
-    public RootCommand() {
-        this(Path.of(""));
-    }
+  public RootCommand() {
+    this(Path.of(""));
+  }
 }

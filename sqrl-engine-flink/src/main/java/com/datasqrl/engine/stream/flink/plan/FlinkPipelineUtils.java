@@ -24,7 +24,9 @@ public class FlinkPipelineUtils {
       }
       builder.column(column.getName(), dataType);
     }
-    if (!pks.isEmpty()) builder.primaryKey(pks);
+    if (!pks.isEmpty()) {
+      builder.primaryKey(pks);
+    }
     return builder.build();
   }
 }

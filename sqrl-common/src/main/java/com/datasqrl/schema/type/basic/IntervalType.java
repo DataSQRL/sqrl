@@ -27,10 +27,10 @@ public class IntervalType extends AbstractBasicType<Duration> {
 
     public Duration convert(Object o) {
       if (o instanceof Duration) {
-        return (Duration)o;
+        return (Duration) o;
       }
       if (o instanceof Float || o instanceof Double) {
-        return Duration.ofMillis((long)((Number)o).doubleValue()*1000);
+        return Duration.ofMillis((long) ((Number) o).doubleValue() * 1000);
       } else if (o instanceof Number) {
         return Duration.ofMillis(((Number) o).longValue());
       }

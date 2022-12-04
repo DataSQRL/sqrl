@@ -31,8 +31,8 @@ public abstract class DAGExpansionRule extends RelOptRule {
     public void onMatch(RelOptRuleCall call) {
       LogicalTableScan scan = call.rel(0);
       VirtualRelationalTable vTable = scan.getTable()
-              .unwrap(VirtualRelationalTable.class);
-      Preconditions.checkArgument(vTable!=null);
+          .unwrap(VirtualRelationalTable.class);
+      Preconditions.checkArgument(vTable != null);
       QueryRelationalTable queryTable = vTable.getRoot().getBase();
       if (queryTable.getExecution().isRead()) {
         Preconditions.checkArgument(!CalciteUtil.hasNesting(queryTable.getRowType()));
@@ -48,14 +48,16 @@ public abstract class DAGExpansionRule extends RelOptRule {
     public void onMatch(RelOptRuleCall call) {
       LogicalTableScan scan = call.rel(0);
       VirtualRelationalTable vTable = scan.getTable()
-              .unwrap(VirtualRelationalTable.class);
-      Preconditions.checkArgument(vTable!=null);
+          .unwrap(VirtualRelationalTable.class);
+      Preconditions.checkArgument(vTable != null);
       QueryRelationalTable queryTable = vTable.getRoot().getBase();
       Preconditions.checkArgument(queryTable.getExecution().isWrite());
       if (!vTable.isRoot() && vTable.getRoot().getBase().getTimestamp().hasFixedTimestamp()) {
         RelBuilder relBuilder = getBuilder(scan);
-        relBuilder.scan(vTable.getNameId()); //Update scan since we changed tables in DAG planner to add columns
-        CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount() - 1);
+        relBuilder.scan(
+            vTable.getNameId()); //Update scan since we changed tables in DAG planner to add columns
+        CalciteUtil.addIdentityProjection(relBuilder,
+            relBuilder.peek().getRowType().getFieldCount() - 1);
         call.transformTo(relBuilder.build());
       } //else do nothing; the table is materialized and can be consumed without adjustment
 
@@ -70,13 +72,14 @@ public abstract class DAGExpansionRule extends RelOptRule {
     public void onMatch(RelOptRuleCall call) {
       final LogicalTableScan table = call.rel(0);
       QueryRelationalTable queryTable = table.getTable().unwrap(QueryRelationalTable.class);
-      SourceRelationalTableImpl sourceTable = table.getTable().unwrap(SourceRelationalTableImpl.class);
-      Preconditions.checkArgument(queryTable!=null ^ sourceTable!=null);
-      if (queryTable!=null) {
+      SourceRelationalTableImpl sourceTable = table.getTable()
+          .unwrap(SourceRelationalTableImpl.class);
+      Preconditions.checkArgument(queryTable != null ^ sourceTable != null);
+      if (queryTable != null) {
         RelBuilder relBuilder = getBuilder(table);
         relBuilder.push(queryTable.getRelNode());
         //We might have added additional columns to table so restrict to length of original rowtype
-        CalciteUtil.addIdentityProjection(relBuilder,table.getRowType().getFieldCount());
+        CalciteUtil.addIdentityProjection(relBuilder, table.getRowType().getFieldCount());
         call.transformTo(relBuilder.build());
       }
       if (sourceTable != null) {

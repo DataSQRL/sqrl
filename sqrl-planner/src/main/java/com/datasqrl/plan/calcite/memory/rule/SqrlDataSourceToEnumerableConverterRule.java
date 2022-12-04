@@ -7,7 +7,7 @@ import org.apache.calcite.plan.RelOptRuleCall;
 
 /**
  * Replaces LogicalTableScan with a DataSourceEnumerableTableScan for enumerable data sources.
- *
+ * <p>
  * Converter rules do not change semantics, only change from one calling convention to another.
  */
 public class SqrlDataSourceToEnumerableConverterRule extends RelOptRule {

@@ -17,14 +17,8 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.flink.util.Preconditions;
 
 /**
- *
- * Orders.entries.x := SELECT max(discount) AS bestDiscount
- *                     FROM @;
- * ->
- * Orders.entries.x := SELECT pk, max(discount) AS bestDiscount
- *                     FROM @
- *                     GROUP BY pk;
- *
+ * Orders.entries.x := SELECT max(discount) AS bestDiscount FROM @; -> Orders.entries.x := SELECT
+ * pk, max(discount) AS bestDiscount FROM @ GROUP BY pk;
  */
 public class AddContextFields {
 
@@ -51,12 +45,12 @@ public class AddContextFields {
         return call;
     }
 
-
     if (node instanceof SqlSelect) {
       SqlSelect select = (SqlSelect) node;
       if (!select.isDistinct() &&
           !(context.isPresent()
-              && select.getFetch() != null) || aggregate) { //we add this to the hint instead of these keywords
+              && select.getFetch() != null)
+          || aggregate) { //we add this to the hint instead of these keywords
         rewriteGroup(select);
         rewriteOrder(select);
       }
@@ -82,7 +76,6 @@ public class AddContextFields {
               new SqlIdentifier(List.of("__pk_" + i), SqlParserPos.ZERO)
           ));
     }
-
 
     CalciteUtil.prependSelectListNodes(select, identifiers);
   }
@@ -111,7 +104,8 @@ public class AddContextFields {
     List<SqlNode> identifiers = new ArrayList<>();
     for (String ppk : context.get().getPrimaryKeyNames()) {
       identifiers.add(
-          new SqlIdentifier(List.of(ReservedName.SELF_IDENTIFIER.getCanonical(), ppk), SqlParserPos.ZERO)
+          new SqlIdentifier(List.of(ReservedName.SELF_IDENTIFIER.getCanonical(), ppk),
+              SqlParserPos.ZERO)
       );
     }
 

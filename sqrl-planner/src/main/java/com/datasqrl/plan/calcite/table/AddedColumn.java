@@ -18,50 +18,50 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 public abstract class AddedColumn {
-    @Setter
-    String nameId;
 
-    public abstract RelDataType getDataType();
+  @Setter
+  String nameId;
 
-    public RelDataType appendTo(@NonNull RelDataType base, @NonNull RelDataTypeFactory factory) {
-        return CalciteUtil.appendField(base, nameId, getDataType(), factory);
+  public abstract RelDataType getDataType();
+
+  public RelDataType appendTo(@NonNull RelDataType base, @NonNull RelDataTypeFactory factory) {
+    return CalciteUtil.appendField(base, nameId, getDataType(), factory);
+  }
+
+  public static class Simple extends AddedColumn {
+
+    final RexNode expression;
+
+    public Simple(@NonNull String nameId, @NonNull RexNode expression) {
+      super(nameId);
+      this.expression = expression;
     }
 
-    public static class Simple extends AddedColumn {
-
-        final RexNode expression;
-
-        public Simple(@NonNull String nameId, @NonNull RexNode expression) {
-            super(nameId);
-            this.expression = expression;
-        }
-
-        @Override
-        public RelDataType getDataType() {
-            return expression.getType();
-        }
-
-        public RexNode getExpression(IndexMap indexMap) {
-            return indexMap.map(expression);
-        }
-
-        public RelBuilder appendTo(@NonNull RelBuilder relBuilder) {
-            RelDataType baseType = relBuilder.peek().getRowType();
-            int noBaseFields = baseType.getFieldCount();
-            List<String> fieldNames = new ArrayList<>(noBaseFields+1);
-            List<RexNode> rexNodes = new ArrayList<>(noBaseFields+1);
-            for (int i = 0; i < noBaseFields; i++) {
-                fieldNames.add(i,null); //Calcite will infer name
-                rexNodes.add(i, RexInputRef.of(i,baseType));
-            }
-            fieldNames.add(noBaseFields,nameId);
-            rexNodes.add(expression);
-
-            relBuilder.project(rexNodes,fieldNames);
-            return relBuilder;
-        }
+    @Override
+    public RelDataType getDataType() {
+      return expression.getType();
     }
 
+    public RexNode getExpression(IndexMap indexMap) {
+      return indexMap.map(expression);
+    }
+
+    public RelBuilder appendTo(@NonNull RelBuilder relBuilder) {
+      RelDataType baseType = relBuilder.peek().getRowType();
+      int noBaseFields = baseType.getFieldCount();
+      List<String> fieldNames = new ArrayList<>(noBaseFields + 1);
+      List<RexNode> rexNodes = new ArrayList<>(noBaseFields + 1);
+      for (int i = 0; i < noBaseFields; i++) {
+        fieldNames.add(i, null); //Calcite will infer name
+        rexNodes.add(i, RexInputRef.of(i, baseType));
+      }
+      fieldNames.add(noBaseFields, nameId);
+      rexNodes.add(expression);
+
+      relBuilder.project(rexNodes, fieldNames);
+      return relBuilder;
+    }
+  }
 
 //    public static class Complex extends AddedColumn {
 //

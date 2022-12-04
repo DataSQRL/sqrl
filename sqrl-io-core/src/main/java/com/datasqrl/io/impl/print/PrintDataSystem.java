@@ -20,75 +20,79 @@ import java.util.Optional;
 @Getter
 public abstract class PrintDataSystem {
 
-    public static final String SYSTEM_TYPE = "print";
+  public static final String SYSTEM_TYPE = "print";
 
-    String prefix;
+  String prefix;
 
-    public String getSystemType() {
-        return SYSTEM_TYPE;
+  public String getSystemType() {
+    return SYSTEM_TYPE;
+  }
+
+  private static final PrintDataSystem.Discovery DEFAULT_DISCOVERY = new Discovery();
+  public static final DataSystemConfig DEFAULT_DISCOVERY_CONFIG = DataSystemConfig.builder()
+      .name(SYSTEM_TYPE)
+      .datadiscovery(DEFAULT_DISCOVERY)
+      .type(ExternalDataType.SINK)
+      .format(FileFormat.JSON.getImplementation().getDefaultConfiguration())
+      .build();
+
+  public static Optional<TableConfig> discoverSink(@NonNull Name sinkName,
+      @NonNull ErrorCollector errors) {
+    return DEFAULT_DISCOVERY.discoverSink(sinkName, DEFAULT_DISCOVERY_CONFIG, errors);
+  }
+
+  @SuperBuilder
+  @NoArgsConstructor
+  public static class Connector extends PrintDataSystem implements DataSystemConnectorConfig,
+      DataSystemConnector {
+
+    public Connector(String prefix) {
+      super(prefix);
     }
 
-    private static final PrintDataSystem.Discovery DEFAULT_DISCOVERY = new Discovery();
-    public static final DataSystemConfig DEFAULT_DISCOVERY_CONFIG = DataSystemConfig.builder()
-            .name(SYSTEM_TYPE)
-            .datadiscovery(DEFAULT_DISCOVERY)
-            .type(ExternalDataType.SINK)
-            .format(FileFormat.JSON.getImplementation().getDefaultConfiguration())
-            .build();
-
-    public static Optional<TableConfig> discoverSink(@NonNull Name sinkName, @NonNull ErrorCollector errors) {
-        return DEFAULT_DISCOVERY.discoverSink(sinkName, DEFAULT_DISCOVERY_CONFIG,errors);
+    @Override
+    public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
+      return this;
     }
 
-    @SuperBuilder
-    @NoArgsConstructor
-    public static class Connector extends PrintDataSystem implements DataSystemConnectorConfig, DataSystemConnector {
+    @Override
+    @JsonIgnore
+    public boolean hasSourceTimestamp() {
+      return false;
+    }
+  }
 
-        public Connector(String prefix) {
-            super(prefix);
-        }
+  @SuperBuilder
+  @NoArgsConstructor
+  public static class Discovery extends PrintDataSystem implements DataSystemDiscoveryConfig,
+      DataSystemDiscovery {
 
-        @Override
-        public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
-            return this;
-        }
-
-        @Override
-        @JsonIgnore
-        public boolean hasSourceTimestamp() {
-            return false;
-        }
+    @Override
+    @JsonIgnore
+    public @NonNull Optional<String> getDefaultName() {
+      return Optional.of(SYSTEM_TYPE);
     }
 
-    @SuperBuilder
-    @NoArgsConstructor
-    public static class Discovery extends PrintDataSystem implements DataSystemDiscoveryConfig, DataSystemDiscovery {
-
-        @Override
-        @JsonIgnore
-        public @NonNull Optional<String> getDefaultName() {
-            return Optional.of(SYSTEM_TYPE);
-        }
-
-        @Override
-        public boolean requiresFormat(ExternalDataType type) {
-            return true;
-        }
-
-        @Override
-        public Optional<TableConfig> discoverSink(@NonNull Name sinkName, @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
-            TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
-            tblBuilder.type(ExternalDataType.SINK);
-            tblBuilder.identifier(sinkName.getCanonical());
-            tblBuilder.name(sinkName.getDisplay());
-            tblBuilder.connector(new Connector(prefix));
-            return Optional.of(tblBuilder.build());
-        }
-
-        @Override
-        public DataSystemDiscovery initialize(@NonNull ErrorCollector errors) {
-            return this;
-        }
+    @Override
+    public boolean requiresFormat(ExternalDataType type) {
+      return true;
     }
+
+    @Override
+    public Optional<TableConfig> discoverSink(@NonNull Name sinkName,
+        @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
+      TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
+      tblBuilder.type(ExternalDataType.SINK);
+      tblBuilder.identifier(sinkName.getCanonical());
+      tblBuilder.name(sinkName.getDisplay());
+      tblBuilder.connector(new Connector(prefix));
+      return Optional.of(tblBuilder.build());
+    }
+
+    @Override
+    public DataSystemDiscovery initialize(@NonNull ErrorCollector errors) {
+      return this;
+    }
+  }
 
 }

@@ -17,7 +17,7 @@ public class TimeAnnotatedRecord<R> implements Serializable {
   Instant sourceTime;
 
   public TimeAnnotatedRecord(R record) {
-    this(record,null);
+    this(record, null);
   }
 
   public boolean hasTime() {

@@ -13,20 +13,20 @@ import lombok.NonNull;
 @NoArgsConstructor
 public class InMemoryStreamConfiguration implements EngineConfiguration {
 
-    public static final String ENGINE_NAME = "memStream";
+  public static final String ENGINE_NAME = "memStream";
 
-    @Override
-    public String getEngineName() {
-        return ENGINE_NAME;
-    }
+  @Override
+  public String getEngineName() {
+    return ENGINE_NAME;
+  }
 
-    @Override
-    public ExecutionEngine.Type getEngineType() {
-        return ExecutionEngine.Type.STREAM;
-    }
+  @Override
+  public ExecutionEngine.Type getEngineType() {
+    return ExecutionEngine.Type.STREAM;
+  }
 
-    @Override
-    public InMemStreamEngine initialize(@NonNull ErrorCollector errors) {
-        return new InMemStreamEngine();
-    }
+  @Override
+  public InMemStreamEngine initialize(@NonNull ErrorCollector errors) {
+    return new InMemStreamEngine();
+  }
 }

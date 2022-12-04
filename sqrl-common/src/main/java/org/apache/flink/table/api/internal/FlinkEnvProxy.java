@@ -30,7 +30,7 @@ public class FlinkEnvProxy {
     StdTimeLibraryImpl.fncs.stream()
         .forEach(fn ->
             environment.functionCatalog.registerTemporarySystemFunction(fn.getName(),
-            fn.getFnc(), true));
+                fn.getFnc(), true));
     return environment.functionCatalog;
   }
 

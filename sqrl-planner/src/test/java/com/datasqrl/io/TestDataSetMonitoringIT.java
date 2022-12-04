@@ -33,71 +33,80 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
-    @SneakyThrows
-    @ParameterizedTest
-    @ArgumentsSource(TestDatasetPlusStreamEngine.class)
-    public void testDatasetMonitoring(TestDataset example, IntegrationTestSettings.EnginePair engine) {
-        initialize(IntegrationTestSettings.builder().stream(engine.getStream()).database(engine.getDatabase()).build());
-        SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), example.getName(), engine.getName());
+  @SneakyThrows
+  @ParameterizedTest
+  @ArgumentsSource(TestDatasetPlusStreamEngine.class)
+  public void testDatasetMonitoring(TestDataset example,
+      IntegrationTestSettings.EnginePair engine) {
+    initialize(
+        IntegrationTestSettings.builder().stream(engine.getStream()).database(engine.getDatabase())
+            .build());
+    SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), example.getName(),
+        engine.getName());
 
-        List<TableSource> tables = discoverSchema(example);
-        assertEquals(example.getNumTables(),tables.size());
-        assertEquals(example.getTables(),tables.stream().map(TableSource::getName).map(Name::getCanonical).collect(Collectors.toSet()));
+    List<TableSource> tables = discoverSchema(example);
+    assertEquals(example.getNumTables(), tables.size());
+    assertEquals(example.getTables(),
+        tables.stream().map(TableSource::getName).map(Name::getCanonical)
+            .collect(Collectors.toSet()));
 
-        //Write out table configurations
-        for (TableSource table : tables) {
-            String json = FileTestUtil.writeJson(table.getConfiguration());
-            assertTrue(json.length()>0);
-        }
-
-        Name datasetName = tables.get(0).getPath().parent().getLast();
-        FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
-
-        //Write out combined schema file
-        SchemaExport export = new SchemaExport();
-        SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
-        snapshot.addContent(FileTestUtil.writeYaml(outputSchema),"combined schema");
-        snapshot.createOrValidate();
+    //Write out table configurations
+    for (TableSource table : tables) {
+      String json = FileTestUtil.writeJson(table.getConfiguration());
+      assertTrue(json.length() > 0);
     }
 
-    private List<TableSource> discoverSchema(TestDataset example) {
-        ErrorCollector errors = ErrorCollector.root();
-        DataDiscovery discovery = new DataDiscovery(errors, engineSettings);
-        DataSystemConfig systemConfig = getSystemConfigBuilder(example).build();
-        List<TableSource> sourceTables = discovery.runFullDiscovery(systemConfig);
-        assertFalse(errors.isFatal(), errors.toString());
-        assertEquals(example.getNumTables(), sourceTables.size());
-        return sourceTables;
-    }
+    Name datasetName = tables.get(0).getPath().parent().getLast();
+    FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
 
-    static class TestDatasetPlusStreamEngine implements ArgumentsProvider {
+    //Write out combined schema file
+    SchemaExport export = new SchemaExport();
+    SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
+    snapshot.addContent(FileTestUtil.writeYaml(outputSchema), "combined schema");
+    snapshot.createOrValidate();
+  }
 
-        @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
-            List<IntegrationTestSettings.EnginePair> engines = List.of(
-                    new IntegrationTestSettings.EnginePair(IntegrationTestSettings.DatabaseEngine.INMEMORY, IntegrationTestSettings.StreamEngine.INMEMORY),
-                    new IntegrationTestSettings.EnginePair(IntegrationTestSettings.DatabaseEngine.POSTGRES, IntegrationTestSettings.StreamEngine.FLINK)
-            );
-            return ArgumentProvider.crossProduct(TestDataset.getAll(), engines);
-        }
-    }
+  private List<TableSource> discoverSchema(TestDataset example) {
+    ErrorCollector errors = ErrorCollector.root();
+    DataDiscovery discovery = new DataDiscovery(errors, engineSettings);
+    DataSystemConfig systemConfig = getSystemConfigBuilder(example).build();
+    List<TableSource> sourceTables = discovery.runFullDiscovery(systemConfig);
+    assertFalse(errors.isFatal(), errors.toString());
+    assertEquals(example.getNumTables(), sourceTables.size());
+    return sourceTables;
+  }
 
-    /**
-     * This method is only used to generate schemas for testing purposes and is not a test itself
-     */
-    @Test
-    @Disabled
-    public void generateSchema() {
-        generateTableConfigAndSchemaInDataDir(Retail.INSTANCE);
-    }
+  static class TestDatasetPlusStreamEngine implements ArgumentsProvider {
 
-    @SneakyThrows
-    public void generateTableConfigAndSchemaInDataDir(TestDataset example) {
-        assertTrue(example.getNumTables()>0);
-        initialize(IntegrationTestSettings.getInMemory());
-        List<TableSource> tables = discoverSchema(example);
-        TableWriter writer = new TableWriter();
-        writer.writeToFile(example.getRootPackageDirectory().resolve(example.getName()), tables);
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
+        throws Exception {
+      List<IntegrationTestSettings.EnginePair> engines = List.of(
+          new IntegrationTestSettings.EnginePair(IntegrationTestSettings.DatabaseEngine.INMEMORY,
+              IntegrationTestSettings.StreamEngine.INMEMORY),
+          new IntegrationTestSettings.EnginePair(IntegrationTestSettings.DatabaseEngine.POSTGRES,
+              IntegrationTestSettings.StreamEngine.FLINK)
+      );
+      return ArgumentProvider.crossProduct(TestDataset.getAll(), engines);
     }
+  }
+
+  /**
+   * This method is only used to generate schemas for testing purposes and is not a test itself
+   */
+  @Test
+  @Disabled
+  public void generateSchema() {
+    generateTableConfigAndSchemaInDataDir(Retail.INSTANCE);
+  }
+
+  @SneakyThrows
+  public void generateTableConfigAndSchemaInDataDir(TestDataset example) {
+    assertTrue(example.getNumTables() > 0);
+    initialize(IntegrationTestSettings.getInMemory());
+    List<TableSource> tables = discoverSchema(example);
+    TableWriter writer = new TableWriter();
+    writer.writeToFile(example.getRootPackageDirectory().resolve(example.getName()), tables);
+  }
 
 }

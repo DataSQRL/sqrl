@@ -31,22 +31,25 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
     initialize(IntegrationTestSettings.builder()
             .stream(IntegrationTestSettings.StreamEngine.FLINK)
             .database(IntegrationTestSettings.DatabaseEngine.POSTGRES).build(),
-            example.getRootPackageDirectory());
+        example.getRootPackageDirectory());
   }
 
   @SneakyThrows
   @Test
   public void testFlinkTableAPIIntegration() {
 
-    TableSource tblSource = loadTable(NamePath.of("ecommerce-data","Orders"));
+    TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"));
 
-    LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl(new FlinkEngineConfiguration());
+    LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl(
+        new FlinkEngineConfiguration());
     FlinkStreamEngine.Builder streamBuilder = flink.createJob();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 
-    StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(tblSource,streamBuilder);
-    SchemaValidator schemaValidator = new SchemaValidator(tblSource.getSchema(), SchemaAdjustmentSettings.DEFAULT, tblSource.getDigest());
-    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),"schema", SourceRecord.Named.class);
+    StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(tblSource, streamBuilder);
+    SchemaValidator schemaValidator = new SchemaValidator(tblSource.getSchema(),
+        SchemaAdjustmentSettings.DEFAULT, tblSource.getDigest());
+    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
+        "schema", SourceRecord.Named.class);
     streamBuilder.addAsTable(validate, tblSource.getSchema(), "orders");
 
     StreamTableEnvironment tEnv = streamBuilder.getTableEnvironment();

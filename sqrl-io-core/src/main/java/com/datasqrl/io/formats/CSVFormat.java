@@ -101,7 +101,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
 
   public static class Inferer implements TextLineFormat.ConfigurationInference<Configuration> {
 
-    public static final String[] DELIMITER_CANDIDATES = new String[]{",",";"};
+    public static final String[] DELIMITER_CANDIDATES = new String[]{",", ";"};
 
     private String[] header;
     private String delimiter;
@@ -129,10 +129,10 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
       String line = textInput.readLine();
       if (Strings.isNullOrEmpty(delimiter)) {
         //try to infer delimiter
-        Pair<String,Integer> topScoringDelimiter = Arrays.stream(DELIMITER_CANDIDATES)
-                .map(del -> Pair.of(del, StringUtils.countMatches(line,del)))
-                .sorted((p1, p2) -> -Integer.compare(p1.getValue(),p2.getValue())).findFirst().get();
-        if (topScoringDelimiter.getValue()>0) {
+        Pair<String, Integer> topScoringDelimiter = Arrays.stream(DELIMITER_CANDIDATES)
+            .map(del -> Pair.of(del, StringUtils.countMatches(line, del)))
+            .sorted((p1, p2) -> -Integer.compare(p1.getValue(), p2.getValue())).findFirst().get();
+        if (topScoringDelimiter.getValue() > 0) {
           delimiter = topScoringDelimiter.getKey();
         } else {
           delimiter = DEFAULT_DELIMITER;

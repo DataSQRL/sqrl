@@ -60,7 +60,8 @@ public class Compiler {
         CalciteSchema.createRootSchema(false, false).plus());
 
     Path buildDir = packageFile.getParent();
-    GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packageFile, GlobalCompilerConfiguration.class);
+    GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packageFile,
+        GlobalCompilerConfiguration.class);
     CompilerConfiguration config = globalConfig.initializeCompiler(collector);
     EngineSettings engineSettings = globalConfig.initializeEngines(collector);
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
@@ -68,7 +69,7 @@ public class Compiler {
     Resolve resolve = new Resolve(buildDir);
 
     ManifestConfiguration manifest = globalConfig.getManifest();
-    Preconditions.checkArgument(manifest!=null);
+    Preconditions.checkArgument(manifest != null);
     Path mainScript = buildDir.resolve(manifest.getMain());
     Optional<Path> graphqlSchema = manifest.getOptGraphQL().map(file -> buildDir.resolve(file));
 
@@ -111,7 +112,7 @@ public class Compiler {
     public void writeTo(Path outputDir) throws IOException {
       Preconditions.checkArgument(Files.isDirectory(outputDir));
       Files.writeString(outputDir.resolve(GRAPHQL_SCHEMA_FILE),
-              graphQLSchema, StandardOpenOption.CREATE);
+          graphQLSchema, StandardOpenOption.CREATE);
 
     }
 
@@ -124,7 +125,8 @@ public class Compiler {
     return dagPlanner.plan(relSchema, queries, env.getExports());
   }
 
-  private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root, Map<APIQuery, QueryTemplate> queries) {
+  private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root,
+      Map<APIQuery, QueryTemplate> queries) {
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries);
     root.accept(replaceGraphqlQueries, null);
     return root;

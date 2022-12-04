@@ -18,11 +18,12 @@ public class PhysicalPlan {
   List<StagePlan> stagePlans;
 
   public Map<APIQuery, QueryTemplate> getDatabaseQueries() {
-    return getPlans(DatabasePhysicalPlan.class).flatMap(dbPlan -> dbPlan.getQueries().entrySet().stream())
-            .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue));
+    return getPlans(DatabasePhysicalPlan.class).flatMap(
+            dbPlan -> dbPlan.getQueries().entrySet().stream())
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
-  public<T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
+  public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(StagePlan::getPlan), clazz);
   }
 

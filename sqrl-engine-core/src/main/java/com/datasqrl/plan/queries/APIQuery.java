@@ -6,7 +6,7 @@ import org.apache.calcite.rel.RelNode;
 @Value
 public class APIQuery {
 
-    private final String nameId;
-    private final RelNode relNode;
+  private final String nameId;
+  private final RelNode relNode;
 
 }

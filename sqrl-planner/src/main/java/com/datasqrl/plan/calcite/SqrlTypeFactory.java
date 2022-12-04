@@ -42,7 +42,8 @@ public class SqrlTypeFactory extends JavaTypeFactoryImpl {
     return Charset.forName(ConversionUtil.NATIVE_UTF16_CHARSET_NAME);
   }
 
-  @Override public Type getJavaClass(RelDataType type) {
+  @Override
+  public Type getJavaClass(RelDataType type) {
     if (type instanceof JavaType) {
       JavaType javaType = (JavaType) type;
       return javaType.getJavaClass();

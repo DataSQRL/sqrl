@@ -10,12 +10,9 @@ import org.apache.calcite.tools.RelBuilder;
 
 /**
  * Process flow:
- *
- * Convert Transpiled sqrl to SqlNode
- * Validate SqlNode
- * Convert to rel
- * Execute planner rules via 'transform' method
- *   (Planner rules ordered and indexed in Rules class)
+ * <p>
+ * Convert Transpiled sqrl to SqlNode Validate SqlNode Convert to rel Execute planner rules via
+ * 'transform' method (Planner rules ordered and indexed in Rules class)
  */
 public class Planner extends PlannerImpl {
 
@@ -37,7 +34,8 @@ public class Planner extends PlannerImpl {
   }
 
   public RelBuilder getRelBuilder() {
-    return sqlToRelConverterConfig.getRelBuilderFactory().create(this.getCluster(), createCatalogReader());
+    return sqlToRelConverterConfig.getRelBuilderFactory()
+        .create(this.getCluster(), createCatalogReader());
   }
 
   public SqrlTypeRelDataTypeConverter getTypeConverter() {

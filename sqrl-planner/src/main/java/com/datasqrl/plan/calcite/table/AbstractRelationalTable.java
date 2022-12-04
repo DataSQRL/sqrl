@@ -16,12 +16,13 @@ import org.apache.calcite.schema.impl.AbstractTable;
 
 /**
  * A relational table is a Calcite table that represents a relation in standard relational algebra.
- *
- * This is the base class for all relational tables that the transpiler creates to represent the logical SQRL tables
- * that users import or define in their scripts.
+ * <p>
+ * This is the base class for all relational tables that the transpiler creates to represent the
+ * logical SQRL tables that users import or define in their scripts.
  */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public abstract class AbstractRelationalTable extends AbstractTable implements QueryableTable, TableWithPK {
+public abstract class AbstractRelationalTable extends AbstractTable implements QueryableTable,
+    TableWithPK {
 
   @EqualsAndHashCode.Include
   protected final String nameId;
@@ -35,7 +36,7 @@ public abstract class AbstractRelationalTable extends AbstractTable implements Q
   }
 
   public RelDataTypeField getField(Name nameId) {
-    return getRowType().getField(nameId.getCanonical(),true,false);
+    return getRowType().getField(nameId.getCanonical(), true, false);
   }
 
   public abstract RelDataType getRowType();

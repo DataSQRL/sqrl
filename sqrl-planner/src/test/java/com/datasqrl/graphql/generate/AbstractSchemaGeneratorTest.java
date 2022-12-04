@@ -20,7 +20,7 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    this.snapshot = Snapshot.of(getClass(),testInfo);
+    this.snapshot = Snapshot.of(getClass(), testInfo);
   }
 
   protected String generateSchema(String sqrlScript) {
@@ -30,8 +30,8 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
     GraphQLSchema schema = SchemaGenerator.generate(env.getRelSchema());
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
-            .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
-            .includeDirectives(false);
+        .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
+        .includeDirectives(false);
     String schemaStr = new SchemaPrinter(opts).print(schema);
     return schemaStr;
   }

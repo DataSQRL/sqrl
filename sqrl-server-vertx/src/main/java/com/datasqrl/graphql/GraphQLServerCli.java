@@ -9,6 +9,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class GraphQLServerCli implements Runnable {
+
   @Option(names = {"-l", "--listen"}, description = "Port to listen on", defaultValue = "8888")
   private int port = 8080;
 
@@ -18,7 +19,8 @@ public class GraphQLServerCli implements Runnable {
   @Option(names = {"-c", "--connectionConfig"}, description = "Connection config")
   private Optional<String> connectionConfig = Optional.empty();
 
-  @Option(names = {"-m", "--model"}, description = "The SQRL model definition", defaultValue = "model.conf")
+  @Option(names = {"-m",
+      "--model"}, description = "The SQRL model definition", defaultValue = "model.conf")
   private String modelConfig = "model.conf";
 
   public static void main(String[] args) {

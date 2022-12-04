@@ -22,6 +22,7 @@ public class SchemaInferenceModel {
   @Value
   @ToString
   public static class InferredSchema {
+
     InferredQuery query;
     Optional<InferredRootObject> mutation;
     Optional<InferredRootObject> subscription;
@@ -32,10 +33,12 @@ public class SchemaInferenceModel {
   }
 
   public interface InferredSchemaVisitor<R, C> {
+
     public R visitSchema(InferredSchema schema, C context);
   }
 
   public interface InferredRootObject {
+
     public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context);
   }
 
@@ -55,6 +58,7 @@ public class SchemaInferenceModel {
   @Value
   @ToString
   public static class InferredMutation implements InferredRootObject {
+
     @Override
     public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context) {
       return visitor.visitMutation(this, context);
@@ -64,6 +68,7 @@ public class SchemaInferenceModel {
   @Value
   @ToString
   public static class InferredSubscription implements InferredRootObject {
+
     @Override
     public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context) {
       return visitor.visitSubscription(this, context);
@@ -71,12 +76,16 @@ public class SchemaInferenceModel {
   }
 
   public interface InferredRootObjectVisitor<R, C> {
+
     R visitQuery(InferredQuery rootObject, C context);
+
     R visitMutation(InferredMutation rootObject, C context);
+
     R visitSubscription(InferredSubscription rootObject, C context);
   }
 
   public interface InferredField {
+
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context);
   }
 
@@ -86,6 +95,7 @@ public class SchemaInferenceModel {
 
     Relationship relationship;
     InferredField inferredField;
+
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
       return visitor.visitNestedField(this, context);
@@ -100,6 +110,7 @@ public class SchemaInferenceModel {
     FieldDefinition fieldDefinition;
     //All types must have concrete classes
     List<InferredObjectField> inferredTypes;
+
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
       return visitor.visitInterfaceField(this, context);
@@ -109,10 +120,12 @@ public class SchemaInferenceModel {
   @Value
   @ToString
   public static class InferredObjectField implements InferredField {
+
     ObjectTypeDefinition parent;
     FieldDefinition fieldDefinition;
     ObjectTypeDefinition objectTypeDefinition;
     SQRLTable table;
+
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
       return visitor.visitObjectField(this, context);
@@ -122,6 +135,7 @@ public class SchemaInferenceModel {
   @Value
   @ToString
   public static class InferredComputedField implements InferredField {
+
     //allows new fields like a composite ID field.
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
@@ -136,6 +150,7 @@ public class SchemaInferenceModel {
     FieldDefinition fieldDefinition;
     Column column;
     ObjectTypeDefinition parent;
+
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
       return visitor.visitScalarField(this, context);
@@ -145,6 +160,7 @@ public class SchemaInferenceModel {
   @Value
   @ToString
   public static class InferredPagedField implements InferredField {
+
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
       return visitor.visitPagedField(this, context);
@@ -154,10 +170,15 @@ public class SchemaInferenceModel {
   public interface InferredFieldVisitor<R, C> {
 
     R visitInterfaceField(InferredInterfaceField field, C context);
+
     R visitObjectField(InferredObjectField field, C context);
+
     R visitComputedField(InferredComputedField field, C context);
+
     R visitScalarField(InferredScalarField field, C context);
+
     R visitPagedField(InferredPagedField field, C context);
+
     R visitNestedField(NestedField field, C context);
   }
 

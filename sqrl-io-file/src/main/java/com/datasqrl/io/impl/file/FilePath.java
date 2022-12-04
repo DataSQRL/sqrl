@@ -39,7 +39,6 @@ public class FilePath implements Serializable {
       .map(String::toLowerCase).collect(Collectors.toSet());
 
 
-
   private final Path flinkPath;
 
   public FilePath(@NonNull String uri) {
@@ -77,7 +76,7 @@ public class FilePath implements Serializable {
   }
 
   public FilePath resolve(String sub) {
-    return new FilePath(new Path(this.flinkPath,sub));
+    return new FilePath(new Path(this.flinkPath, sub));
   }
 
   public NameComponents getComponents(Pattern partPattern) {

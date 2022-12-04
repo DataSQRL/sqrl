@@ -10,6 +10,7 @@ import org.apache.calcite.rex.RexNode;
 import javax.annotation.Nullable;
 
 public class SqrlRelMetadataQuery extends RelMetadataQuery {
+
   BuiltInMetadata.RowCount.Handler rowCountHandler;
   BuiltInMetadata.Selectivity.Handler selectivityHandler;
 
@@ -21,7 +22,7 @@ public class SqrlRelMetadataQuery extends RelMetadataQuery {
 
   @Override
   public Double getRowCount(RelNode rel) {
-    for (;;) {
+    for (; ; ) {
       try {
         Double result = rowCountHandler.getRowCount(rel, this);
         return RelMdUtil.validateResult(result);
@@ -33,7 +34,7 @@ public class SqrlRelMetadataQuery extends RelMetadataQuery {
 
   @Override
   public @Nullable Double getSelectivity(RelNode rel, @Nullable RexNode predicate) {
-    for (;;) {
+    for (; ; ) {
       try {
         Double result = selectivityHandler.getSelectivity(rel, this, predicate);
         return RelMdUtil.validatePercentage(result);

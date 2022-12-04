@@ -12,7 +12,8 @@ import java.util.List;
 
 public class MaterializedTableDDLBuilder {
 
-  public List<SqlDDLStatement> createTables(Collection<OptimizedDAG.DatabaseSink> createdTables, boolean drop) {
+  public List<SqlDDLStatement> createTables(Collection<OptimizedDAG.DatabaseSink> createdTables,
+      boolean drop) {
     List<SqlDDLStatement> statements = new ArrayList<>();
     for (OptimizedDAG.DatabaseSink table : createdTables) {
       if (drop) {
@@ -29,7 +30,7 @@ public class MaterializedTableDDLBuilder {
     List<SqlDDLStatement> statements = new ArrayList<>();
     for (IndexDefinition index : indexes) {
       if (drop) {
-        DropIndexDDL dropIndex = new DropIndexDDL(index.getName(),index.getTableId());
+        DropIndexDDL dropIndex = new DropIndexDDL(index.getName(), index.getTableId());
         statements.add(dropIndex);
       }
       statements.add(createIndex(index));

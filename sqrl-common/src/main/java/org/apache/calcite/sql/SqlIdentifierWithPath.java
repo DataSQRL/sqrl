@@ -9,7 +9,8 @@ public class SqlIdentifierWithPath extends SqlIdentifier {
   @Getter
   private final SqlPathIdentifier table;
 
-  public SqlIdentifierWithPath(SqlPathIdentifier table, List<String> names, SqlCollation collation, SqlParserPos pos,
+  public SqlIdentifierWithPath(SqlPathIdentifier table, List<String> names, SqlCollation collation,
+      SqlParserPos pos,
       List<SqlParserPos> componentPositions) {
     super(names, collation, pos, componentPositions);
     this.table = table;

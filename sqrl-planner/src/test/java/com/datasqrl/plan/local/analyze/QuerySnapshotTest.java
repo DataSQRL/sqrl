@@ -26,8 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   public static final String IMPORTS = C360.BASIC.getImports().getScript() + "\n"
-      + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n"
-      ;
+      + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n";
 
   private TestDataset example = Retail.INSTANCE;
 
@@ -41,8 +40,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   public RelNode generate(String init, String sql, boolean nested) {
-      initialize(IntegrationTestSettings.getInMemory(),example.getRootPackageDirectory());
-      SqrlParser parser = new SqrlParser();
+    initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
+    SqrlParser parser = new SqrlParser();
 
     Env env = generate(parser.parse(init + sql));
 

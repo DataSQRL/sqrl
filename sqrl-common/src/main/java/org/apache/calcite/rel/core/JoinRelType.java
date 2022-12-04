@@ -18,8 +18,7 @@ package org.apache.calcite.rel.core;
 
 import java.util.Locale;
 /**
- * Copied from Calcite:
- * - Added temporal join
+ * Copied from Calcite: - Added temporal join
  */
 
 /**
@@ -110,24 +109,24 @@ public enum JoinRelType {
    */
   public JoinRelType swap() {
     switch (this) {
-    case LEFT:
-      return RIGHT;
-    case RIGHT:
-      return LEFT;
-    default:
-      return this;
+      case LEFT:
+        return RIGHT;
+      case RIGHT:
+        return LEFT;
+      default:
+        return this;
     }
   }
 
   /** Returns whether this join type generates nulls on side #{@code i}. */
   public boolean generatesNullsOn(int i) {
     switch (i) {
-    case 0:
-      return generatesNullsOnLeft();
-    case 1:
-      return generatesNullsOnRight();
-    default:
-      throw new IllegalArgumentException("invalid: " + i);
+      case 0:
+        return generatesNullsOnLeft();
+      case 1:
+        return generatesNullsOnRight();
+      default:
+        throw new IllegalArgumentException("invalid: " + i);
     }
   }
 
@@ -135,12 +134,12 @@ public enum JoinRelType {
    * the left. */
   public JoinRelType cancelNullsOnLeft() {
     switch (this) {
-    case RIGHT:
-      return INNER;
-    case FULL:
-      return LEFT;
-    default:
-      return this;
+      case RIGHT:
+        return INNER;
+      case FULL:
+        return LEFT;
+      default:
+        return this;
     }
   }
 
@@ -148,12 +147,12 @@ public enum JoinRelType {
    * the right. */
   public JoinRelType cancelNullsOnRight() {
     switch (this) {
-    case LEFT:
-      return INNER;
-    case FULL:
-      return RIGHT;
-    default:
-      return this;
+      case LEFT:
+        return INNER;
+      case FULL:
+        return RIGHT;
+      default:
+        return this;
     }
   }
 

@@ -29,87 +29,101 @@ import java.util.Optional;
 @Getter
 public class TableConfig extends SharedConfiguration implements Serializable {
 
-    @NonNull @NotNull
-    @Size(min = 3)
-    String name;
-    @OptionalMinString
-    String identifier;
-    @Valid @NonNull @NotNull
-    DataSystemConnectorConfig connector;
+  @NonNull @NotNull
+  @Size(min = 3)
+  String name;
+  @OptionalMinString
+  String identifier;
+  @Valid @NonNull @NotNull
+  DataSystemConnectorConfig connector;
 
-    /**
-     * TODO: make this configurable
-     * @return
-     */
-    @JsonIgnore
-    public SchemaAdjustmentSettings getSchemaAdjustmentSettings() {
-        return SchemaAdjustmentSettings.DEFAULT;
+  /**
+   * TODO: make this configurable
+   *
+   * @return
+   */
+  @JsonIgnore
+  public SchemaAdjustmentSettings getSchemaAdjustmentSettings() {
+    return SchemaAdjustmentSettings.DEFAULT;
+  }
+
+  private DataSystemConnector baseInitialize(ErrorCollector errors, NamePath basePath) {
+    if (!Name.validName(name)) {
+      errors.fatal("Table needs to have valid name: %s", name);
+      return null;
+    }
+    errors = errors.resolve(name);
+    if (!rootInitialize(errors)) {
+      return null;
+    }
+    if (!ConfigurationUtil.javaxValidate(this, errors)) {
+      return null;
     }
 
-    private DataSystemConnector baseInitialize(ErrorCollector errors, NamePath basePath) {
-        if (!Name.validName(name)) {
-            errors.fatal("Table needs to have valid name: %s", name);
-            return null;
-        }
-        errors = errors.resolve(name);
-        if (!rootInitialize(errors)) return null;
-        if (!ConfigurationUtil.javaxValidate(this, errors)) {
-            return null;
-        }
+    if (Strings.isNullOrEmpty(identifier)) {
+      identifier = name;
+    }
+    identifier = getCanonicalizer().getCanonicalizer().getCanonical(identifier);
 
-        if (Strings.isNullOrEmpty(identifier)) {
-            identifier = name;
-        }
-        identifier = getCanonicalizer().getCanonicalizer().getCanonical(identifier);
-
-        if (!format.initialize(errors.resolve("format"))) return null;
-
-        DataSystemConnector connector = this.connector.initialize(errors.resolve(name).resolve("datasource"));
-        if (connector == null) return null;
-        if (connector.requiresFormat(getType()) && getFormat()==null) {
-            errors.fatal("Need to configure a format");
-            return null;
-        }
-        return connector;
+    if (!format.initialize(errors.resolve("format"))) {
+      return null;
     }
 
-    public TableSource initializeSource(ErrorCollector errors, NamePath basePath,
-                                        FlexibleDatasetSchema.TableField schema) {
-        DataSystemConnector connector = baseInitialize(errors,basePath);
-        if (connector==null) return null;
-        Preconditions.checkArgument(getType().isSource());
-        Name tableName = getResolvedName();
-        return new TableSource(connector,this,basePath.concat(tableName), tableName, schema);
+    DataSystemConnector connector = this.connector.initialize(
+        errors.resolve(name).resolve("datasource"));
+    if (connector == null) {
+      return null;
     }
+    if (connector.requiresFormat(getType()) && getFormat() == null) {
+      errors.fatal("Need to configure a format");
+      return null;
+    }
+    return connector;
+  }
 
-    public TableInput initializeInput(ErrorCollector errors, NamePath basePath) {
-        DataSystemConnector connector = baseInitialize(errors,basePath);
-        if (connector==null) return null;
-        Preconditions.checkArgument(getType().isSource());
-        Name tableName = getResolvedName();
-        return new TableInput(connector,this,basePath.concat(tableName), tableName);
+  public TableSource initializeSource(ErrorCollector errors, NamePath basePath,
+      FlexibleDatasetSchema.TableField schema) {
+    DataSystemConnector connector = baseInitialize(errors, basePath);
+    if (connector == null) {
+      return null;
     }
+    Preconditions.checkArgument(getType().isSource());
+    Name tableName = getResolvedName();
+    return new TableSource(connector, this, basePath.concat(tableName), tableName, schema);
+  }
 
-    public TableSink initializeSink(ErrorCollector errors, NamePath basePath,
-                                    Optional<FlexibleDatasetSchema.TableField> schema) {
-        DataSystemConnector connector = baseInitialize(errors,basePath);
-        if (connector==null) return null;
-        Preconditions.checkArgument(getType().isSink());
-        Name tableName = getResolvedName();
-        return new TableSink(connector, this, basePath.concat(tableName), tableName, schema);
+  public TableInput initializeInput(ErrorCollector errors, NamePath basePath) {
+    DataSystemConnector connector = baseInitialize(errors, basePath);
+    if (connector == null) {
+      return null;
     }
+    Preconditions.checkArgument(getType().isSource());
+    Name tableName = getResolvedName();
+    return new TableInput(connector, this, basePath.concat(tableName), tableName);
+  }
 
-    @JsonIgnore
-    public Name getResolvedName() {
-        return Name.of(name,getCanonicalizer().getCanonicalizer());
+  public TableSink initializeSink(ErrorCollector errors, NamePath basePath,
+      Optional<FlexibleDatasetSchema.TableField> schema) {
+    DataSystemConnector connector = baseInitialize(errors, basePath);
+    if (connector == null) {
+      return null;
     }
+    Preconditions.checkArgument(getType().isSink());
+    Name tableName = getResolvedName();
+    return new TableSink(connector, this, basePath.concat(tableName), tableName, schema);
+  }
 
-    public static TableConfigBuilder copy(SharedConfiguration config) {
-        return TableConfig.builder()
-                .type(config.getType())
-                .canonicalizer(config.getCanonicalizer())
-                .charset(config.getCharset())
-                .format(config.getFormat());
-    }
+  @JsonIgnore
+  public Name getResolvedName() {
+    return Name.of(name, getCanonicalizer().getCanonicalizer());
+  }
+
+  public static TableConfigBuilder copy(SharedConfiguration config) {
+    return TableConfig.builder()
+        .type(config.getType())
+        .canonicalizer(config.getCanonicalizer())
+        .charset(config.getCharset())
+        .format(config.getFormat());
+  }
 
 }

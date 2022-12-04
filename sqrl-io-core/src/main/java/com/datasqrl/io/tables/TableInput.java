@@ -8,17 +8,18 @@ import com.datasqrl.name.NamePath;
 
 public class TableInput extends AbstractExternalTable {
 
-    public TableInput(DataSystemConnector dataset, TableConfig configuration, NamePath path, Name name) {
-        super(dataset, configuration, path, name);
-    }
+  public TableInput(DataSystemConnector dataset, TableConfig configuration, NamePath path,
+      Name name) {
+    super(dataset, configuration, path, name);
+  }
 
-    public boolean hasSourceTimestamp() {
-        return connector.hasSourceTimestamp();
-    }
+  public boolean hasSourceTimestamp() {
+    return connector.hasSourceTimestamp();
+  }
 
-    public Format.Parser getParser() {
-        FormatConfiguration format = configuration.getFormat();
-        return format.getImplementation().getParser(format);
-    }
+  public Format.Parser getParser() {
+    FormatConfiguration format = configuration.getFormat();
+    return format.getImplementation().getParser(format);
+  }
 
 }

@@ -21,57 +21,60 @@ import java.util.stream.Stream;
 
 public class FileTestUtil {
 
-    @SneakyThrows
-    public static int countLinesInAllPartFiles(Path path) {
-        int lineCount = 0;
-        for (File file : FileUtils.listFiles(path.toFile(),new RegexFileFilter("^part(.*?)"),
-                DirectoryFileFilter.DIRECTORY)) {
-            try (Stream<String> stream = Files.lines(file.toPath(), StandardCharsets.UTF_8)) {
-                lineCount += stream.count();
-            }
-        }
-        return lineCount;
-    };
-
-    @SneakyThrows
-    public static Collection<Path> getAllFiles(Path dir) {
-        try (Stream<Path> files = Files.walk(dir)) {
-            return files.map(p -> dir.relativize(p)).collect(Collectors.toList());
-        }
+  @SneakyThrows
+  public static int countLinesInAllPartFiles(Path path) {
+    int lineCount = 0;
+    for (File file : FileUtils.listFiles(path.toFile(), new RegexFileFilter("^part(.*?)"),
+        DirectoryFileFilter.DIRECTORY)) {
+      try (Stream<String> stream = Files.lines(file.toPath(), StandardCharsets.UTF_8)) {
+        lineCount += stream.count();
+      }
     }
+    return lineCount;
+  }
 
-    public static String getAllFilesAsString(Path dir) {
-        Collection<String> files = getAllFiles(dir).stream().map(p -> p.toString()).filter(Predicate.not(Strings::isNullOrEmpty))
-                .sorted().collect(Collectors.toList());
-        return String.join("\n",files);
+  ;
+
+  @SneakyThrows
+  public static Collection<Path> getAllFiles(Path dir) {
+    try (Stream<Path> files = Files.walk(dir)) {
+      return files.map(p -> dir.relativize(p)).collect(Collectors.toList());
     }
+  }
 
-    private static final ObjectMapper jsonMapper = new ObjectMapper();
-    private static final YAMLMapper yamlMapper = new YAMLMapper();
+  public static String getAllFilesAsString(Path dir) {
+    Collection<String> files = getAllFiles(dir).stream().map(p -> p.toString())
+        .filter(Predicate.not(Strings::isNullOrEmpty))
+        .sorted().collect(Collectors.toList());
+    return String.join("\n", files);
+  }
 
-    static {
-        jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    }
+  private static final ObjectMapper jsonMapper = new ObjectMapper();
+  private static final YAMLMapper yamlMapper = new YAMLMapper();
 
-    @SneakyThrows
-    public static<T> void writeJson(Path file, T object) {
-        jsonMapper.writeValue(file.toFile(),object);
-    }
+  static {
+    jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+  }
 
-    @SneakyThrows
-    public static<T> String writeJson(T object) {
-        return jsonMapper.writeValueAsString(object);
-    }
+  @SneakyThrows
+  public static <T> void writeJson(Path file, T object) {
+    jsonMapper.writeValue(file.toFile(), object);
+  }
 
-    @SneakyThrows
-    public static<T> void writeYaml(Path file, T object) {
-        yamlMapper.writeValue(file.toFile(),object);
-    }
+  @SneakyThrows
+  public static <T> String writeJson(T object) {
+    return jsonMapper.writeValueAsString(object);
+  }
 
-    @SneakyThrows
-    public static<T> String writeYaml(T object) {
-        return yamlMapper.writeValueAsString(object);
-    }
+  @SneakyThrows
+  public static <T> void writeYaml(Path file, T object) {
+    yamlMapper.writeValue(file.toFile(), object);
+  }
+
+  @SneakyThrows
+  public static <T> String writeYaml(T object) {
+    return yamlMapper.writeValueAsString(object);
+  }
 
 }

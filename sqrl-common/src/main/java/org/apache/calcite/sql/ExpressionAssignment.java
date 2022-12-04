@@ -17,7 +17,8 @@ public class ExpressionAssignment extends Assignment {
   private final SqlNode expression;
 
   public ExpressionAssignment(SqlParserPos location,
-      SqlIdentifier name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression, Optional<SqlNodeList> hints) {
+      SqlIdentifier name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression,
+      Optional<SqlNodeList> hints) {
     super(location, name, hints);
     this.tableArgs = tableArgs;
     this.expression = expression;

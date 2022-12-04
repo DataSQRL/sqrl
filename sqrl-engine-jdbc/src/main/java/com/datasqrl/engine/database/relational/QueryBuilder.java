@@ -31,27 +31,32 @@ public class QueryBuilder {
   private JDBCEngine engine;
   private RexBuilder rexBuilder;
 
-  public Map<APIQuery, QueryTemplate> planQueries(List<? extends OptimizedDAG.Query> databaseQueries) {
+  public Map<APIQuery, QueryTemplate> planQueries(
+      List<? extends OptimizedDAG.Query> databaseQueries) {
     DatabaseConnectionProvider connectionProvider = engine.getConnectionProvider();
     Map<APIQuery, QueryTemplate> resultQueries = new HashMap<>();
     for (OptimizedDAG.Query query : databaseQueries) {
       Preconditions.checkArgument(query instanceof OptimizedDAG.ReadQuery);
-      OptimizedDAG.ReadQuery rquery = (OptimizedDAG.ReadQuery)query;
+      OptimizedDAG.ReadQuery rquery = (OptimizedDAG.ReadQuery) query;
       resultQueries.put(rquery.getQuery(), planQuery(rquery, connectionProvider));
     }
     return resultQueries;
   }
 
-  private QueryTemplate planQuery(OptimizedDAG.ReadQuery query, DatabaseConnectionProvider connectionProvider) {
+  private QueryTemplate planQuery(OptimizedDAG.ReadQuery query,
+      DatabaseConnectionProvider connectionProvider) {
     RelNode relNode = query.getRelNode();
-    relNode = CalciteUtil.applyRexShuttleRecursively(relNode,new FunctionNameRewriter());
+    relNode = CalciteUtil.applyRexShuttleRecursively(relNode, new FunctionNameRewriter());
     return new QueryTemplate(relNode, connectionProvider);
   }
 
   private SqlDialect getCalciteDialect() {
     switch (engine.config.dialect) {
-      case POSTGRES: return PostgresqlSqlDialect.DEFAULT;
-      default: throw new UnsupportedOperationException("Not a supported dialect: " + engine.config.dialect);
+      case POSTGRES:
+        return PostgresqlSqlDialect.DEFAULT;
+      default:
+        throw new UnsupportedOperationException(
+            "Not a supported dialect: " + engine.config.dialect);
     }
   }
 
@@ -72,10 +77,11 @@ public class QueryBuilder {
           operator = SqlStdOperatorTable.CURRENT_TIMESTAMP;
           //clonedOperands = List.of(rexBuilder.makeLiteral)
         } else {
-          throw new UnsupportedOperationException("Function not supported in database: " + operator);
+          throw new UnsupportedOperationException(
+              "Function not supported in database: " + operator);
         }
       }
-      return update[0] ? rexBuilder.makeCall(datatype,operator,clonedOperands) : call;
+      return update[0] ? rexBuilder.makeCall(datatype, operator, clonedOperands) : call;
     }
 
   }

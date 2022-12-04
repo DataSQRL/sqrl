@@ -17,7 +17,9 @@ import lombok.Setter;
 import lombok.Singular;
 
 public class Model {
+
   public interface RootVisitor<R, C> {
+
     R visitRoot(RootGraphqlModel root, C context);
   }
 
@@ -25,6 +27,7 @@ public class Model {
   @Builder
   @NoArgsConstructor
   public static class RootGraphqlModel {
+
     @Singular
     List<Coords> coords;
     Schema schema;
@@ -50,10 +53,12 @@ public class Model {
       @Type(value = StringSchema.class, name = "string")
   })
   public interface Schema {
+
     <R, C> R accept(SchemaVisitor<R, C> visitor, C context);
   }
 
   public interface SchemaVisitor<R, C> {
+
     R visitStringDefinition(StringSchema stringSchema, C context);
   }
 
@@ -62,15 +67,19 @@ public class Model {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class StringSchema implements Schema {
+
     final String type = "string";
     String schema;
+
     public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
       return visitor.visitStringDefinition(this, context);
     }
   }
 
   public interface CoordVisitor<R, C> {
+
     R visitArgumentLookup(ArgumentLookupCoords coords, C context);
+
     R visitFieldLookup(FieldLookupCoords coords, C context);
   }
 
@@ -85,8 +94,10 @@ public class Model {
       @Type(value = ArgumentLookupCoords.class, name = "args")
   })
   public static abstract class Coords {
+
     String parentType;
     String fieldName;
+
     public <R, C> R accept(CoordVisitor<R, C> visitor, C context) {
       return null;
     }
@@ -95,6 +106,7 @@ public class Model {
   @Getter
   @NoArgsConstructor
   public static class FieldLookupCoords extends Coords {
+
     final String type = "field";
     String columnName;
 
@@ -104,13 +116,16 @@ public class Model {
       super(parentType, fieldName);
       this.columnName = columnName;
     }
+
     public <R, C> R accept(CoordVisitor<R, C> visitor, C context) {
       return visitor.visitFieldLookup(this, context);
     }
   }
+
   @Getter
   @NoArgsConstructor
   public static class ArgumentLookupCoords extends Coords {
+
     final String type = "args";
     Set<ArgumentSet> matchs;
 
@@ -120,6 +135,7 @@ public class Model {
       super(parentType, fieldName);
       this.matchs = matchs;
     }
+
     public <R, C> R accept(CoordVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentLookup(this, context);
     }
@@ -131,14 +147,17 @@ public class Model {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class ArgumentSet {
+
     //The may be empty for no-args
     @Singular
     Set<Argument> arguments;
     QueryBase query;
   }
 
-  public interface QueryBaseVisitor<R,C> {
+  public interface QueryBaseVisitor<R, C> {
+
     R visitPgQuery(PgQuery pgQuery, C context);
+
     R visitPagedPgQuery(PagedPgQuery pgQuery, C context);
   }
 
@@ -150,6 +169,7 @@ public class Model {
       @Type(value = PgQuery.class, name = "pgQuery")
   })
   public interface QueryBase {
+
     <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context);
   }
 
@@ -158,6 +178,7 @@ public class Model {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class PgQuery implements QueryBase {
+
     final String type = "pgQuery";
     String sql;
     @Singular
@@ -173,6 +194,7 @@ public class Model {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class PagedPgQuery extends PgQuery {
+
     final String type = "PagedPgQuery";
     String sql;
     @Singular
@@ -193,11 +215,13 @@ public class Model {
       @Type(value = VariableArgument.class, name = "variable")
   })
   public interface Argument {
+
     String getPath();
   }
 
 
   public interface VariableArgumentVisitor<R, C> {
+
     R visitVariableArgument(VariableArgument variableArgument, C context);
   }
 
@@ -206,12 +230,15 @@ public class Model {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class VariableArgument implements Argument {
+
     final String type = "variable";
     String path;
     Object value;
+
     public <R, C> R accept(VariableArgumentVisitor<R, C> visitor, C context) {
       return visitor.visitVariableArgument(this, context);
     }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -241,6 +268,7 @@ public class Model {
   }
 
   public interface FixedArgumentVisitor<R, C> {
+
     R visitFixedArgument(FixedArgument fixedArgument, C context);
   }
 
@@ -249,6 +277,7 @@ public class Model {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class FixedArgument implements Argument {
+
     final String type = "fixed";
 
     String path;
@@ -257,6 +286,7 @@ public class Model {
     public <R, C> R accept(FixedArgumentVisitor<R, C> visitor, C context) {
       return visitor.visitFixedArgument(this, context);
     }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -290,11 +320,14 @@ public class Model {
       @Type(value = ArgumentPgParameter.class, name = "arg")
   })
   public interface PgParameterHandler {
+
     <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context);
   }
 
   public interface ParameterHandlerVisitor<R, C> {
+
     R visitSourcePgParameter(SourcePgParameter sourceParameter, C context);
+
     R visitArgumentPgParameter(ArgumentPgParameter argumentParameter, C context);
   }
 
@@ -303,8 +336,10 @@ public class Model {
   @NoArgsConstructor
   @Builder
   public static class SourcePgParameter implements PgParameterHandler {
+
     final String type = "source";
     String key;
+
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitSourcePgParameter(this, context);
     }
@@ -315,19 +350,24 @@ public class Model {
   @NoArgsConstructor
   @Builder
   public static class ArgumentPgParameter implements PgParameterHandler {
+
     final String type = "arg";
     String path;
+
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentPgParameter(this, context);
     }
   }
 
   public interface ResolvedQueryVisitor<R, C> {
+
     public R visitResolvedPgQuery(ResolvedPgQuery query, C context);
+
     public R visitResolvedPagedPgQuery(ResolvedPagedPgQuery query, C context);
   }
 
   public interface ResolvedQuery {
+
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context);
   }
 
@@ -335,6 +375,7 @@ public class Model {
   @Getter
   @NoArgsConstructor
   public static class ResolvedPgQuery implements ResolvedQuery {
+
     PgQuery query;
     PreparedSqrlQuery preparedQueryContainer;
 
@@ -345,6 +386,7 @@ public class Model {
   }
 
   interface PreparedSqrlQuery<T> {
+
     T getPreparedQuery();
   }
 
@@ -352,7 +394,9 @@ public class Model {
   @Getter
   @NoArgsConstructor
   public static class ResolvedPagedPgQuery implements ResolvedQuery {
+
     PagedPgQuery query;
+
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
       return visitor.visitResolvedPagedPgQuery(this, context);
@@ -375,7 +419,8 @@ public class Model {
     }
   }
 
-  public interface GraphQLArgumentWrapperVisitor <R, C> {
+  public interface GraphQLArgumentWrapperVisitor<R, C> {
+
     R visitArgumentWrapper(GraphQLArgumentWrapper graphQLArgumentWrapper, C context);
   }
 }

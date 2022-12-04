@@ -7,14 +7,14 @@ import java.util.Optional;
 
 public interface SqrlFunction {
 
-    static Optional<SqrlFunction> unwrapSqrlFunction(SqlOperator operator) {
-        if (operator instanceof BridgingSqlFunction) {
-            BridgingSqlFunction flinkFnc = (BridgingSqlFunction)operator;
-            if (flinkFnc.getDefinition() instanceof SqrlFunction) {
-                return Optional.of((SqrlFunction) flinkFnc.getDefinition());
-            }
-        }
-        return Optional.empty();
+  static Optional<SqrlFunction> unwrapSqrlFunction(SqlOperator operator) {
+    if (operator instanceof BridgingSqlFunction) {
+      BridgingSqlFunction flinkFnc = (BridgingSqlFunction) operator;
+      if (flinkFnc.getDefinition() instanceof SqrlFunction) {
+        return Optional.of((SqrlFunction) flinkFnc.getDefinition());
+      }
     }
+    return Optional.empty();
+  }
 
 }

@@ -38,7 +38,7 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
     initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
-    this.snapshot = SnapshotTest.Snapshot.of(getClass(),testInfo);
+    this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
   @AfterEach
@@ -112,6 +112,7 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
     generate(parser.parse("IMPORT ecommerce-data.Product;"
         + "X := SELECT productid FROM Product;"));
   }
+
   @Test
   public void absoluteTest2() {
     generate(parser.parse("IMPORT ecommerce-data.Orders;"
@@ -142,7 +143,7 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
         + "/*+ EXEC(database) */ X := SELECT e.* FROM Orders.entries e;"));
 
     assertFalse(env.getOps().get(0).getStatement().getHints().isEmpty());
-    SqlHint hint = (SqlHint)env.getOps().get(0).getStatement().getHints().get().get(0);
+    SqlHint hint = (SqlHint) env.getOps().get(0).getStatement().getHints().get().get(0);
     assertFalse(hint.getOperandList().isEmpty());
   }
 
@@ -184,7 +185,8 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void importWithTimestamp() {
-    Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;"));
+    Env env1 = generate(
+        parser.parse("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;"));
     SQRLTable sqrlTable = (SQRLTable) env1.getRelSchema().getTable("Customer", false).getTable();
     assertTrue(sqrlTable.getField(Name.system("c_ts")).isPresent(), "Timestamp column missing");
   }
@@ -412,9 +414,9 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   public void intervalTest() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT _ingest_time + INTERVAL 2 YEAR AS x FROM Product;"));
-    LogicalProject project = (LogicalProject)env.getOps().get(0).getRelNode();
-    RexCall call = (RexCall)project.getNamedProjects().get(0).left;
-    RexLiteral rexLiteral = (RexLiteral)call.getOperands().get(1);
+    LogicalProject project = (LogicalProject) env.getOps().get(0).getRelNode();
+    RexCall call = (RexCall) project.getNamedProjects().get(0).left;
+    RexLiteral rexLiteral = (RexLiteral) call.getOperands().get(1);
     assertTrue(rexLiteral.getValue() instanceof BigDecimal);
     assertEquals(BigDecimal.valueOf(24), rexLiteral.getValue());
     assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
@@ -427,9 +429,9 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   public void intervalSecondTest() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT _ingest_time + INTERVAL 2 HOUR AS x FROM Product;"));
-    LogicalProject project = (LogicalProject)env.getOps().get(0).getRelNode();
-    RexCall call = (RexCall)project.getNamedProjects().get(0).left;
-    RexLiteral rexLiteral = (RexLiteral)call.getOperands().get(1);
+    LogicalProject project = (LogicalProject) env.getOps().get(0).getRelNode();
+    RexCall call = (RexCall) project.getNamedProjects().get(0).left;
+    RexLiteral rexLiteral = (RexLiteral) call.getOperands().get(1);
     assertTrue(rexLiteral.getValue() instanceof BigDecimal);
     assertEquals(BigDecimal.valueOf(7200000), rexLiteral.getValue());
     assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
@@ -442,9 +444,9 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   public void intervalSecondTest2() {
     Env env = generate(parser.parse("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT _ingest_time + INTERVAL 60 SECOND AS x FROM Product;"));
-    LogicalProject project = (LogicalProject)env.getOps().get(0).getRelNode();
-    RexCall call = (RexCall)project.getNamedProjects().get(0).left;
-    RexLiteral rexLiteral = (RexLiteral)call.getOperands().get(1);
+    LogicalProject project = (LogicalProject) env.getOps().get(0).getRelNode();
+    RexCall call = (RexCall) project.getNamedProjects().get(0).left;
+    RexLiteral rexLiteral = (RexLiteral) call.getOperands().get(1);
     assertTrue(rexLiteral.getValue() instanceof BigDecimal);
     assertEquals(BigDecimal.valueOf(60000), rexLiteral.getValue());
     assertTrue(rexLiteral.getType() instanceof IntervalSqlType);
@@ -480,7 +482,8 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
             + "  LIMIT 5;"));
 
     assertFalse(((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().isEmpty());
-    assertEquals(1, ((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().get(0).listOptions.size());
+    assertEquals(1,
+        ((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().get(0).listOptions.size());
   }
 
   @Test
@@ -764,7 +767,7 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   @Test
   public void streamTest() {
     Env env1 = generate(parser.parse("IMPORT ecommerce-data.Customer;"
-            + "Y := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;"
+        + "Y := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;"
         + "X := STREAM ON ADD AS SELECT * From Y;"));
 
     assertNotNull(

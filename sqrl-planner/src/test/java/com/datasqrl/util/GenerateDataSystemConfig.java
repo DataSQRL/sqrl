@@ -15,22 +15,23 @@ import java.nio.file.Path;
 
 public class GenerateDataSystemConfig {
 
-    @Test
-    @Disabled
-    @SneakyThrows
-    public void generateConfigFile() {
-        TestDataset testDataset = Retail.INSTANCE;
-        Path output = testDataset.getRootPackageDirectory().resolve("export-data");
-        DataSystemDiscoveryConfig datasystem = DirectoryDataSystemConfig.of(output);
-        DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-        builder.datadiscovery(datasystem);
-        builder.type(ExternalDataType.SINK);
-        builder.name("output");
-        builder.format(FileFormat.JSON.getImplementation().getDefaultConfiguration());
-        DataSystemConfig config = builder.build();
+  @Test
+  @Disabled
+  @SneakyThrows
+  public void generateConfigFile() {
+    TestDataset testDataset = Retail.INSTANCE;
+    Path output = testDataset.getRootPackageDirectory().resolve("export-data");
+    DataSystemDiscoveryConfig datasystem = DirectoryDataSystemConfig.of(output);
+    DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
+    builder.datadiscovery(datasystem);
+    builder.type(ExternalDataType.SINK);
+    builder.name("output");
+    builder.format(FileFormat.JSON.getImplementation().getDefaultConfiguration());
+    DataSystemConfig config = builder.build();
 
-        Path datasystemConfigFile = testDataset.getRootPackageDirectory().resolve("output").resolve(DataSource.DATASYSTEM_FILE);
-        FileTestUtil.writeJson(datasystemConfigFile, config);
-    }
+    Path datasystemConfigFile = testDataset.getRootPackageDirectory().resolve("output")
+        .resolve(DataSource.DATASYSTEM_FILE);
+    FileTestUtil.writeJson(datasystemConfigFile, config);
+  }
 
 }

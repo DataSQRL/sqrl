@@ -16,39 +16,39 @@ import java.util.List;
 @Getter
 public class AbstractExternalTable {
 
-    @NonNull
-    protected final DataSystemConnector connector;
-    @NonNull
-    protected final TableConfig configuration;
-    @EqualsAndHashCode.Include
-    @NonNull
-    protected final NamePath path;
-    @NonNull
-    protected final Name name;
+  @NonNull
+  protected final DataSystemConnector connector;
+  @NonNull
+  protected final TableConfig configuration;
+  @EqualsAndHashCode.Include
+  @NonNull
+  protected final NamePath path;
+  @NonNull
+  protected final Name name;
 
-    public String qualifiedName() {
-        return path.toString();
+  public String qualifiedName() {
+    return path.toString();
+  }
+
+  public Digest getDigest() {
+    return new Digest(path, configuration.getNameCanonicalizer());
+  }
+
+  @Value
+  public static class Digest implements Serializable {
+
+    private final NamePath path;
+    private final NameCanonicalizer canonicalizer;
+
+    public String toString(char delimiter, String... suffixes) {
+      List<String> components = new ArrayList<>();
+      path.stream().map(Name::getCanonical).forEach(components::add);
+      for (String suffix : suffixes) {
+        components.add(suffix);
+      }
+      return String.join(String.valueOf(delimiter), components);
     }
 
-    public Digest getDigest() {
-        return new Digest(path, configuration.getNameCanonicalizer());
-    }
-
-    @Value
-    public static class Digest implements Serializable {
-
-        private final NamePath path;
-        private final NameCanonicalizer canonicalizer;
-
-        public String toString(char delimiter, String... suffixes) {
-            List<String> components = new ArrayList<>();
-            path.stream().map(Name::getCanonical).forEach(components::add);
-            for (String suffix : suffixes) {
-                components.add(suffix);
-            }
-            return String.join(String.valueOf(delimiter), components);
-        }
-
-    }
+  }
 
 }

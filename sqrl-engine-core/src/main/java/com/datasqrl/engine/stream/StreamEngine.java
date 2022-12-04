@@ -19,10 +19,11 @@ public interface StreamEngine extends Closeable, ExecutionEngine {
     StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table);
 
     StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream,
-                                           TableInput tableSource,
-                                           TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider);
+        TableInput tableSource,
+        TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider);
 
-    void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName);
+    void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema,
+        String qualifiedTableName);
 
     Job build();
 

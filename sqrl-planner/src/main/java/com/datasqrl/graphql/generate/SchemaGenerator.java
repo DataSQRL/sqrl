@@ -13,6 +13,7 @@ import org.apache.calcite.jdbc.SqrlCalciteSchema;
  * Creates a default graphql schema based on the SQRL schema
  */
 public class SchemaGenerator {
+
   private final SqrlCalciteSchema schema;
   SchemaBuilder schemaBuilder = new SchemaBuilder();
 

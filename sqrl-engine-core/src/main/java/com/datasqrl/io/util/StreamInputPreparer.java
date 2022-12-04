@@ -7,9 +7,9 @@ import com.datasqrl.engine.stream.StreamHolder;
 
 public interface StreamInputPreparer {
 
-    boolean isRawInput(TableInput table);
+  boolean isRawInput(TableInput table);
 
-    StreamHolder<SourceRecord.Raw> getRawInput(TableInput table, StreamEngine.Builder builder);
+  StreamHolder<SourceRecord.Raw> getRawInput(TableInput table, StreamEngine.Builder builder);
 
 //    void importTable(ImportManager.SourceTableImport tableImport, StreamEngine.Builder builder);
 

@@ -23,15 +23,12 @@ import org.apache.calcite.sql.util.SqlShuttle;
 
 /**
  * Qualifies all identifiers that could be potentially ambiguous during transpilation
- *
- * Orders.entries2 := SELECT *
- *                    FROM @.parent.entries;
- * ->
- * Orders.entries2 := SELECT x1.discount, x1.unit_price, ...
- *                    FROM @.parent.entries AS x1;
+ * <p>
+ * Orders.entries2 := SELECT * FROM @.parent.entries; -> Orders.entries2 := SELECT x1.discount,
+ * x1.unit_price, ... FROM @.parent.entries AS x1;
  */
 public class QualifyIdentifiers extends SqlShuttle
-  implements SqrlJoinTermVisitor<SqrlJoinTerm, Object> {
+    implements SqrlJoinTermVisitor<SqrlJoinTerm, Object> {
 
 
   private final Analysis analysis;
@@ -68,7 +65,7 @@ public class QualifyIdentifiers extends SqlShuttle
 
   private SqlNode rewriteJoinDeclaration(SqrlJoinDeclarationSpec node) {
     SqrlJoinTerm relation = node.getRelation().accept(this, null);
-    Optional<SqlNodeList> orders = node.getOrderList().map(o->(SqlNodeList)expr(o));
+    Optional<SqlNodeList> orders = node.getOrderList().map(o -> (SqlNodeList) expr(o));
 
     return new SqrlJoinDeclarationSpec(
         node.getParserPosition(),
@@ -107,7 +104,8 @@ public class QualifyIdentifiers extends SqlShuttle
     select.setFrom(select.getFrom().accept(this));
 
     List<SqlNode> expandedSelect = analysis.expandedSelect.get(select);
-    SqlNodeList nodeList = new SqlNodeList(expandedSelect, select.getSelectList().getParserPosition());
+    SqlNodeList nodeList = new SqlNodeList(expandedSelect,
+        select.getSelectList().getParserPosition());
     select.setSelectList((SqlNodeList) expr(nodeList));
 
     if (select.getWhere() != null) {
@@ -164,7 +162,7 @@ public class QualifyIdentifiers extends SqlShuttle
       if (analysis.getExpressions().containsKey(id)) {
         return analysis.getExpressions().get(id).getAliasedIdentifier(id);
       }
-      
+
       return super.visit(id);
     }
   }

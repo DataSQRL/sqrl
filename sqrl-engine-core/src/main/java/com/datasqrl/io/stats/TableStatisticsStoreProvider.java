@@ -8,25 +8,25 @@ import java.io.Serializable;
 
 public interface TableStatisticsStoreProvider extends Serializable {
 
-    TableStatisticsStore openStore(MetadataStore metaStore);
+  TableStatisticsStore openStore(MetadataStore metaStore);
 
-    interface Encapsulated extends Serializable {
+  interface Encapsulated extends Serializable {
 
-        TableStatisticsStore openStore();
+    TableStatisticsStore openStore();
 
+  }
+
+  @AllArgsConstructor
+  class EncapsulatedImpl implements Encapsulated {
+
+    private final MetadataStoreProvider metaProvider;
+    private final TableStatisticsStoreProvider statsProvider;
+
+    @Override
+    public TableStatisticsStore openStore() {
+      MetadataStore store = metaProvider.openStore();
+      return statsProvider.openStore(store);
     }
-
-    @AllArgsConstructor
-    class EncapsulatedImpl implements Encapsulated {
-
-        private final MetadataStoreProvider metaProvider;
-        private final TableStatisticsStoreProvider statsProvider;
-
-        @Override
-        public TableStatisticsStore openStore() {
-            MetadataStore store = metaProvider.openStore();
-            return statsProvider.openStore(store);
-        }
-    }
+  }
 
 }

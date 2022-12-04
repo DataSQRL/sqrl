@@ -45,7 +45,7 @@ public class FloatType extends AbstractBasicType<Double> {
         return ((Boolean) o).booleanValue() ? 1.0 : 0.0;
       }
       if (o instanceof Duration) {
-        return ((Duration)o).toMillis()/1000.0;
+        return ((Duration) o).toMillis() / 1000.0;
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }

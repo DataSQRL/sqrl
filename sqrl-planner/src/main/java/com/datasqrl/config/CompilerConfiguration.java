@@ -12,19 +12,21 @@ import javax.validation.constraints.Min;
 @Getter
 public class CompilerConfiguration {
 
-    @NonNull @Valid @Builder.Default
-    APIConfiguration api = new APIConfiguration();
+  @NonNull @Valid
+  @Builder.Default
+  APIConfiguration api = new APIConfiguration();
 
 
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Getter
-    public static class APIConfiguration {
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Getter
+  public static class APIConfiguration {
 
-        @Builder.Default @Min(0) @Max(128)
-        int maxArguments = 5;
+    @Builder.Default
+    @Min(0) @Max(128)
+    int maxArguments = 5;
 
-    }
+  }
 
 }

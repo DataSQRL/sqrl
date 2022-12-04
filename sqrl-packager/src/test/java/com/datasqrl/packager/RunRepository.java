@@ -14,16 +14,19 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class RunRepository extends AbstractQuerySQRLIT {
 
-    @Test
-    public void testQuery(Vertx vertx, VertxTestContext testContext) {
-        fullScriptTest(DataSQRL.INSTANCE.getScript(), DataSQRL.INSTANCE.getGraphQL(), vertx, testContext);
-    }
+  @Test
+  public void testQuery(Vertx vertx, VertxTestContext testContext) {
+    fullScriptTest(DataSQRL.INSTANCE.getScript(), DataSQRL.INSTANCE.getGraphQL(), vertx,
+        testContext);
+  }
 
-    public void fullScriptTest(TestScript script, TestGraphQLSchema graphQLSchema, Vertx vertx, VertxTestContext testContext) {
-        this.vertx = vertx;
-        this.vertxContext = testContext;
-        snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(), graphQLSchema.getName());
-        initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
-        validateSchemaAndQueries(script.getScript(), graphQLSchema.getSchema(), graphQLSchema.getQueries());
-    }
+  public void fullScriptTest(TestScript script, TestGraphQLSchema graphQLSchema, Vertx vertx,
+      VertxTestContext testContext) {
+    this.vertx = vertx;
+    this.vertxContext = testContext;
+    snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(), graphQLSchema.getName());
+    initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
+    validateSchemaAndQueries(script.getScript(), graphQLSchema.getSchema(),
+        graphQLSchema.getQueries());
+  }
 }

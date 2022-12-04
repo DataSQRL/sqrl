@@ -40,240 +40,261 @@ import static com.datasqrl.engine.EngineCapability.*;
 @Slf4j
 public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
 
-    private final AtomicInteger jobIdCounter = new AtomicInteger(0);
-    private final ConcurrentHashMap<String, Job> jobs = new ConcurrentHashMap<>();
+  private final AtomicInteger jobIdCounter = new AtomicInteger(0);
+  private final ConcurrentHashMap<String, Job> jobs = new ConcurrentHashMap<>();
 
-    public InMemStreamEngine() {
-        super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM, EnumSet.of(DENORMALIZE, TEMPORAL_JOIN,
-                TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS));
-    }
+  public InMemStreamEngine() {
+    super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM,
+        EnumSet.of(DENORMALIZE, TEMPORAL_JOIN,
+            TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS));
+  }
+
+  @Override
+  public JobBuilder createJob() {
+    return new JobBuilder();
+  }
+
+  @Override
+  public Optional<? extends Job> getJob(String id) {
+    return Optional.ofNullable(jobs.get(id));
+  }
+
+  @Override
+  public void close() throws IOException {
+    jobs.clear();
+  }
+
+  @Override
+  public ExecutionResult execute(EnginePhysicalPlan plan) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+      RelBuilder relBuilder) {
+    throw new UnsupportedOperationException();
+  }
+
+  public class JobBuilder implements StreamEngine.Builder {
+
+    private final List<Stream> mainStreams = new ArrayList<>();
+    private final List<Stream> sideStreams = new ArrayList<>();
+    private final ErrorHolder errorHolder = new ErrorHolder();
+    private final RecordHolder recordHolder = new RecordHolder();
 
     @Override
-    public JobBuilder createJob() {
-        return new JobBuilder();
-    }
+    public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
+      Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser,
+          "This method only supports text sources");
+      DataSystemConnector source = table.getConnector();
 
-    @Override
-    public Optional<? extends Job> getJob(String id) {
-        return Optional.ofNullable(jobs.get(id));
-    }
-
-    @Override
-    public void close() throws IOException {
-        jobs.clear();
-    }
-
-    @Override
-    public ExecutionResult execute(EnginePhysicalPlan plan) {
+      if (source instanceof DirectoryDataSystem.Connector) {
+        DirectoryDataSystem.Connector filesource = (DirectoryDataSystem.Connector) source;
+        try {
+          Stream<Path> paths = FileStreamUtil.matchingFiles(
+              FilePath.toJavaPath(filesource.getPath()),
+              filesource, table.getConfiguration());
+          return new Holder<>(
+              FileStreamUtil.filesByline(paths).map(s -> new TimeAnnotatedRecord<>(s)));
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      } else {
         throw new UnsupportedOperationException();
+      }
     }
 
     @Override
-    public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder) {
-        throw new UnsupportedOperationException();
+    public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream,
+        TableInput tableSource, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
+      final SourceTableStatistics statistics = new SourceTableStatistics();
+      final TableSource.Digest tableDigest = tableSource.getDigest();
+      StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
+        com.datasqrl.error.ErrorCollector errors = statistics.validate(r, tableDigest);
+        if (errors.hasErrors()) {
+          c.accept(errors);
+        }
+        if (!errors.isFatal()) {
+          statistics.add(r, tableDigest);
+          return Optional.of(r);
+        } else {
+          return Optional.empty();
+        }
+      }, "stats", SourceRecord.Raw.class);
+      sideStreams.add(Stream.of(statistics).map(s -> {
+        try (TableStatisticsStore store = statisticsStoreProvider.openStore()) {
+          store.putTableStatistics(tableDigest.getPath(), s);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        return s;
+      }));
+      return result;
     }
 
-    public class JobBuilder implements StreamEngine.Builder {
-
-        private final List<Stream> mainStreams = new ArrayList<>();
-        private final List<Stream> sideStreams = new ArrayList<>();
-        private final ErrorHolder errorHolder = new ErrorHolder();
-        private final RecordHolder recordHolder = new RecordHolder();
-
-        @Override
-        public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
-            Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser, "This method only supports text sources");
-            DataSystemConnector source = table.getConnector();
-
-            if (source instanceof DirectoryDataSystem.Connector) {
-                DirectoryDataSystem.Connector filesource = (DirectoryDataSystem.Connector)source;
-                try {
-                    Stream<Path> paths = FileStreamUtil.matchingFiles(FilePath.toJavaPath(filesource.getPath()),
-                            filesource, table.getConfiguration());
-                    return new Holder<>(FileStreamUtil.filesByline(paths).map(s -> new TimeAnnotatedRecord<>(s)));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else throw new UnsupportedOperationException();
+    @Override
+    public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema,
+        String qualifiedTableName) {
+      final Consumer<Object[]> records = recordHolder.getCollector(qualifiedTableName);
+      SourceRecord2RowMapper<Object[]> mapper = new SourceRecord2RowMapper(schema,
+          RowConstructor.INSTANCE);
+      ((Holder<SourceRecord.Named>) stream).mapWithError((r, c) -> {
+        try {
+          records.accept(mapper.apply(r));
+          return Optional.of(Boolean.TRUE);
+        } catch (Exception e) {
+          ErrorCollector errors = ErrorCollector.root();
+          errors.fatal(e.toString());
+          c.accept(errors);
+          return Optional.of(Boolean.FALSE);
         }
-
-        @Override
-        public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream, TableInput tableSource, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
-            final SourceTableStatistics statistics = new SourceTableStatistics();
-            final TableSource.Digest tableDigest = tableSource.getDigest();
-            StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
-                com.datasqrl.error.ErrorCollector errors = statistics.validate(r, tableDigest);
-                if (errors.hasErrors()) c.accept(errors);
-                if (!errors.isFatal()) {
-                    statistics.add(r, tableDigest);
-                    return Optional.of(r);
-                } else {
-                    return Optional.empty();
-                }
-            },"stats",SourceRecord.Raw.class);
-            sideStreams.add(Stream.of(statistics).map(s -> {
-                try (TableStatisticsStore store = statisticsStoreProvider.openStore()) {
-                    store.putTableStatistics(tableDigest.getPath(),s);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                return s;
-            }));
-            return result;
-        }
-
-        @Override
-        public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema, String qualifiedTableName) {
-            final Consumer<Object[]> records = recordHolder.getCollector(qualifiedTableName);
-            SourceRecord2RowMapper<Object[]> mapper = new SourceRecord2RowMapper(schema, RowConstructor.INSTANCE);
-            ((Holder<SourceRecord.Named>)stream).mapWithError((r,c) -> {
-                try {
-                    records.accept(mapper.apply(r));
-                    return Optional.of(Boolean.TRUE);
-                } catch (Exception e) {
-                    ErrorCollector errors = ErrorCollector.root();
-                    errors.fatal(e.toString());
-                    c.accept(errors);
-                    return Optional.of(Boolean.FALSE);
-                }
-            },"mapper", Boolean.class).sink();
-        }
-
-        @Override
-        public Job build() {
-            return new Job(mainStreams,sideStreams,errorHolder,recordHolder);
-        }
-
-        public class Holder<T> implements StreamHolder<T> {
-
-            private boolean isClosed = false;
-            @Getter
-            private final Stream<T> stream;
-
-            private Holder(Stream<T> stream) {
-                this.stream = stream;
-            }
-
-            private void checkClosed() {
-                Preconditions.checkArgument(!isClosed, "Only support single pipeline stream");
-            }
-
-            public void close() {
-                isClosed = true;
-            }
-
-            private<R> Holder<R> wrap(Stream<R> newStream) {
-                close();
-                return new Holder<>(newStream);
-            }
-
-            @Override
-            public <R> Holder<R> mapWithError(FunctionWithError<T, R> function, String errorName, Class<R> clazz) {
-                checkClosed();
-                return wrap(stream.flatMap(t -> {
-                    Optional<R> result = function.apply(t, errorHolder.getCollector(errorName));
-                    if (result.isPresent()) return Stream.of(result.get());
-                    else return Stream.empty();
-                }));
-            }
-
-            @Override
-            public void printSink() {
-                checkClosed();
-                wrap(stream.map(r -> {
-                    log.trace("{}", r);
-                    return r;
-                })).sink();
-            }
-
-            private void sink() {
-                checkClosed();
-                close();
-                mainStreams.add(stream);
-            }
-        }
+      }, "mapper", Boolean.class).sink();
     }
 
-    public static class ErrorHolder extends OutputCollector<String, ErrorCollector> {
+    @Override
+    public Job build() {
+      return new Job(mainStreams, sideStreams, errorHolder, recordHolder);
     }
 
-    public static class RecordHolder extends OutputCollector<String, Object[]> {
+    public class Holder<T> implements StreamHolder<T> {
+
+      private boolean isClosed = false;
+      @Getter
+      private final Stream<T> stream;
+
+      private Holder(Stream<T> stream) {
+        this.stream = stream;
+      }
+
+      private void checkClosed() {
+        Preconditions.checkArgument(!isClosed, "Only support single pipeline stream");
+      }
+
+      public void close() {
+        isClosed = true;
+      }
+
+      private <R> Holder<R> wrap(Stream<R> newStream) {
+        close();
+        return new Holder<>(newStream);
+      }
+
+      @Override
+      public <R> Holder<R> mapWithError(FunctionWithError<T, R> function, String errorName,
+          Class<R> clazz) {
+        checkClosed();
+        return wrap(stream.flatMap(t -> {
+          Optional<R> result = function.apply(t, errorHolder.getCollector(errorName));
+          if (result.isPresent()) {
+            return Stream.of(result.get());
+          } else {
+            return Stream.empty();
+          }
+        }));
+      }
+
+      @Override
+      public void printSink() {
+        checkClosed();
+        wrap(stream.map(r -> {
+          log.trace("{}", r);
+          return r;
+        })).sink();
+      }
+
+      private void sink() {
+        checkClosed();
+        close();
+        mainStreams.add(stream);
+      }
+    }
+  }
+
+  public static class ErrorHolder extends OutputCollector<String, ErrorCollector> {
+
+  }
+
+  public static class RecordHolder extends OutputCollector<String, Object[]> {
+
+  }
+
+  public class Job implements StreamEngine.Job {
+
+    private final String id;
+    private Status status;
+
+    private final List<Stream> mainStreams;
+    private final List<Stream> sideStreams;
+    @Getter
+    private final ErrorHolder errorHolder;
+    @Getter
+    private final RecordHolder recordHolder;
+
+    private Job(List<Stream> mainStreams, List<Stream> sideStreams, ErrorHolder errorHolder,
+        RecordHolder recordHolder) {
+      this.mainStreams = mainStreams;
+      this.sideStreams = sideStreams;
+      this.errorHolder = errorHolder;
+      this.recordHolder = recordHolder;
+      id = Integer.toString(jobIdCounter.incrementAndGet());
+      jobs.put(id, this);
+      status = Status.PREPARING;
     }
 
-    public class Job implements StreamEngine.Job {
-
-        private final String id;
-        private Status status;
-
-        private final List<Stream> mainStreams;
-        private final List<Stream> sideStreams;
-        @Getter
-        private final ErrorHolder errorHolder;
-        @Getter
-        private final RecordHolder recordHolder;
-
-        private Job(List<Stream> mainStreams, List<Stream> sideStreams, ErrorHolder errorHolder, RecordHolder recordHolder) {
-            this.mainStreams = mainStreams;
-            this.sideStreams = sideStreams;
-            this.errorHolder = errorHolder;
-            this.recordHolder = recordHolder;
-            id = Integer.toString(jobIdCounter.incrementAndGet());
-            jobs.put(id,this);
-            status = Status.PREPARING;
-        }
-
-        @Override
-        public String getId() {
-            return id;
-        }
-
-        @Override
-        public void execute(String name) {
-            Preconditions.checkArgument(status == Status.PREPARING, "Job has already been executed");
-            try {
-                //Execute main streams first and side streams after
-                for (Stream stream : mainStreams) {
-                    stream.forEach(s -> {});
-                }
-                for (Stream stream : sideStreams) {
-                    stream.forEach(s -> {});
-                }
-                status = Status.COMPLETED;
-            } catch (Throwable e) {
-                System.err.println(e);
-                status = Status.FAILED;
-            }
-        }
-
-        @Override
-        public void cancel() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Status getStatus() {
-            return status;
-        }
+    @Override
+    public String getId() {
+      return id;
     }
 
-    private static class RowConstructor implements SourceRecord2RowMapper.RowConstructor<Object[]> {
-
-        private static final RowConstructor INSTANCE = new RowConstructor();
-
-        @Override
-        public Object[] createRow(Object[] columns) {
-            return columns;
+    @Override
+    public void execute(String name) {
+      Preconditions.checkArgument(status == Status.PREPARING, "Job has already been executed");
+      try {
+        //Execute main streams first and side streams after
+        for (Stream stream : mainStreams) {
+          stream.forEach(s -> {
+          });
         }
-
-        @Override
-        public List createNestedRow(Object[] columns) {
-            return Arrays.asList(columns);
+        for (Stream stream : sideStreams) {
+          stream.forEach(s -> {
+          });
         }
-
-        @Override
-        public List createRowList(Object[] rows) {
-            return Arrays.asList(rows);
-        }
+        status = Status.COMPLETED;
+      } catch (Throwable e) {
+        System.err.println(e);
+        status = Status.FAILED;
+      }
     }
+
+    @Override
+    public void cancel() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Status getStatus() {
+      return status;
+    }
+  }
+
+  private static class RowConstructor implements SourceRecord2RowMapper.RowConstructor<Object[]> {
+
+    private static final RowConstructor INSTANCE = new RowConstructor();
+
+    @Override
+    public Object[] createRow(Object[] columns) {
+      return columns;
+    }
+
+    @Override
+    public List createNestedRow(Object[] columns) {
+      return Arrays.asList(columns);
+    }
+
+    @Override
+    public List createRowList(Object[] rows) {
+      return Arrays.asList(rows);
+    }
+  }
 
 }

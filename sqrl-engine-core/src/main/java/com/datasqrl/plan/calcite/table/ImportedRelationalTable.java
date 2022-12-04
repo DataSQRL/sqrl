@@ -4,6 +4,6 @@ import com.datasqrl.io.tables.TableSource;
 
 public interface ImportedRelationalTable extends SourceRelationalTable {
 
-    TableSource getTableSource();
+  TableSource getTableSource();
 
 }

@@ -18,8 +18,7 @@ package org.apache.calcite.sql;
 
 import java.util.Locale;
 /**
- * Copied from Calcite:
- * - Added temporal join
+ * Copied from Calcite: - Added temporal join
  */
 
 /**

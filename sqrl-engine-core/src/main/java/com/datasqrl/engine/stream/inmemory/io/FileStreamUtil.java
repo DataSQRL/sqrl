@@ -13,32 +13,36 @@ import java.util.stream.Stream;
 
 public class FileStreamUtil {
 
-    public static Stream<String> filesByline(Path... paths) {
-        return filesByline(Arrays.stream(paths));
-    }
+  public static Stream<String> filesByline(Path... paths) {
+    return filesByline(Arrays.stream(paths));
+  }
 
-    public static Stream<String> filesByline(Stream<Path> paths) {
-        Preconditions.checkArgument(paths!=null);
-        return paths.flatMap(p -> {
-            try {
-                return Files.lines(p);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+  public static Stream<String> filesByline(Stream<Path> paths) {
+    Preconditions.checkArgument(paths != null);
+    return paths.flatMap(p -> {
+      try {
+        return Files.lines(p);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  public static Stream<Path> matchingFiles(Path start,
+      DirectoryDataSystem.Connector directorySource,
+      TableConfig table) throws IOException {
+    return Files.find(start, 100,
+        (filePath, fileAttr) -> {
+          if (!fileAttr.isRegularFile()) {
+            return false;
+          }
+          if (fileAttr.size() <= 0) {
+            return false;
+          }
+          return directorySource.isTableFile(FilePath.fromJavaPath(filePath), table);
         });
-    }
 
-    public static Stream<Path> matchingFiles(Path start, DirectoryDataSystem.Connector directorySource,
-            TableConfig table) throws IOException {
-        return Files.find(start,100,
-                (filePath, fileAttr) -> {
-                    if (!fileAttr.isRegularFile()) return false;
-                    if (fileAttr.size()<=0) return false;
-                    return directorySource.isTableFile(FilePath.fromJavaPath(filePath), table);
-                });
-
-    }
-
+  }
 
 
 }

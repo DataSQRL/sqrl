@@ -12,6 +12,7 @@ import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import java.util.function.UnaryOperator;
 
 public class RelToSql {
+
   public static final UnaryOperator<SqlWriterConfig> transform = c ->
       c.withAlwaysUseParentheses(false)
           .withSelectListItemsOnSeparateLines(false)
@@ -20,6 +21,7 @@ public class RelToSql {
           .withQuoteAllIdentifiers(false)
           .withDialect(PostgresqlSqlDialect.DEFAULT)
           .withSelectFolding(null);
+
   public static SqlNode convertToSqlNode(RelNode optimizedNode) {
     RelToSqlConverter converter = new RelToSqlConverter(PostgresqlSqlDialect.DEFAULT);
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
@@ -37,7 +39,7 @@ public class RelToSql {
   public static String toSql(RelDataTypeField field) {
     RelDataType datatype = field.getType();
     Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
-            "Collection column encountered");
+        "Collection column encountered");
     return toSql(field.getName(), getSQLType(datatype), datatype.isNullable());
   }
 

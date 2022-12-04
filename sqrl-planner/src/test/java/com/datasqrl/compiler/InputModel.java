@@ -7,6 +7,7 @@ public class InputModel {
 
   @Value
   public static class DataSource {
+
     String name;
     DataSystemConnectorConfig source;
   }

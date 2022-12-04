@@ -8,10 +8,10 @@ import java.util.Map;
 
 public interface TableStatisticsStore extends Closeable {
 
-    void putTableStatistics(NamePath path, SourceTableStatistics stats);
+  void putTableStatistics(NamePath path, SourceTableStatistics stats);
 
-    SourceTableStatistics getTableStatistics(NamePath path);
+  SourceTableStatistics getTableStatistics(NamePath path);
 
-    Map<Name,SourceTableStatistics> getTablesStatistics(NamePath basePath);
+  Map<Name, SourceTableStatistics> getTablesStatistics(NamePath basePath);
 
 }

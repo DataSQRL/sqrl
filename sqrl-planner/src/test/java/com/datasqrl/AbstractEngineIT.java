@@ -30,10 +30,13 @@ public abstract class AbstractEngineIT {
     database = setup.getLeft();
   }
 
-  protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(TestDataset testDataset) {
+  protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(
+      TestDataset testDataset) {
     DirectoryDataSystemConfig.Discovery.DiscoveryBuilder systemBuilder = DirectoryDataSystemConfig.Discovery.builder()
-            .uri(testDataset.getDataDirectory().toUri().getPath());
-    if (!Strings.isNullOrEmpty(testDataset.getFilePartPattern())) systemBuilder.partPattern(testDataset.getFilePartPattern());
+        .uri(testDataset.getDataDirectory().toUri().getPath());
+    if (!Strings.isNullOrEmpty(testDataset.getFilePartPattern())) {
+      systemBuilder.partPattern(testDataset.getFilePartPattern());
+    }
     DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
     builder.datadiscovery(systemBuilder.build());
     builder.type(ExternalDataType.SOURCE);

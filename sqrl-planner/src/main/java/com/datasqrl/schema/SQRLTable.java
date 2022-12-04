@@ -37,10 +37,9 @@ import org.apache.calcite.sql.TableFunctionArgument;
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
  * either columns or relationships.
- *
+ * <p>
  * Note, that SQRLTables are always flat and hierarchical data is represented as multiple SQRLTables
  * with parent-child relationships between them.
- *
  */
 @Getter
 public class SQRLTable implements Table, org.apache.calcite.schema.Schema, ScannableTable {
@@ -81,7 +80,9 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   public String toString() {
     StringBuilder s = new StringBuilder();
     s.append("Table[path=").append(path).append("]{\n");
-    for (Field f : fields.getAccessibleFields()) s.append("\t").append(f).append("\n");
+    for (Field f : fields.getAccessibleFields()) {
+      s.append("\t").append(f).append("\n");
+    }
     s.append("}");
     return s.toString();
   }
@@ -97,8 +98,9 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public Relationship addRelationship(Name name, SQRLTable toTable, JoinType joinType,
-                                      Multiplicity multiplicity, Optional<SqrlJoinDeclarationSpec> join) {
-    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType, multiplicity,
+      Multiplicity multiplicity, Optional<SqrlJoinDeclarationSpec> join) {
+    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType,
+        multiplicity,
         join);
     fields.addField(rel);
     return rel;
@@ -136,8 +138,9 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
 
   @Override
   public Table getTable(String s) {
-    Optional<SQRLTable> rel = this.getAllRelationships().filter(e->e.getName().getCanonical().equalsIgnoreCase(s))
-        .map(r->r.getToTable())
+    Optional<SQRLTable> rel = this.getAllRelationships()
+        .filter(e -> e.getName().getCanonical().equalsIgnoreCase(s))
+        .map(r -> r.getToTable())
         .findAny();
 
     return rel.orElse(null);
@@ -146,7 +149,8 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   @Override
   public Set<String> getTableNames() {
 
-    return this.getAllRelationships().map(s->s.getName().getDisplay()).collect(Collectors.toSet());
+    return this.getAllRelationships().map(s -> s.getName().getDisplay())
+        .collect(Collectors.toSet());
 //    Set<String> names = this.dataType.getFieldList().stream()
 //        .filter(f->
 //            f.getType() instanceof ArraySqlType || f.getType() instanceof RelRecordType)
@@ -208,7 +212,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public Optional<Field> getField(Name name) {
-    return getField(name,false);
+    return getField(name, false);
   }
 
   public Optional<Field> getField(Name name, boolean fullColumn) {
@@ -229,7 +233,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public Stream<Relationship> getAllRelationships() {
-    return StreamUtil.filterByClass(fields.getFields(true),Relationship.class);
+    return StreamUtil.filterByClass(fields.getFields(true), Relationship.class);
   }
 
 //  public Optional<SQRLTable> getParent() {
@@ -237,11 +241,13 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
 //  }
 
   public Collection<SQRLTable> getChildren() {
-    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD).map(Relationship::getToTable).collect(Collectors.toList());
+    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.CHILD)
+        .map(Relationship::getToTable).collect(Collectors.toList());
   }
 
   public Optional<SQRLTable> getParent() {
-    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.PARENT).map(Relationship::getFromTable).findFirst();
+    return getAllRelationships().filter(r -> r.getJoinType() == JoinType.PARENT)
+        .map(Relationship::getFromTable).findFirst();
   }
 
   public List<Column> getVisibleColumns() {
@@ -249,7 +255,8 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
   }
 
   public List<Column> getColumns(boolean onlyVisible) {
-    return StreamUtil.filterByClass(fields.getFields(onlyVisible),Column.class).collect(Collectors.toList());
+    return StreamUtil.filterByClass(fields.getFields(onlyVisible), Column.class)
+        .collect(Collectors.toList());
   }
 
   public List<Field> walkField(NamePath path) {
@@ -257,6 +264,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
         .map(Name::getCanonical)
         .collect(Collectors.toList()));
   }
+
   public List<Field> walkField(List<String> names) {
     List<Field> fields = new ArrayList<>();
     SQRLTable t = this;

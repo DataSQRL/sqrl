@@ -19,43 +19,44 @@ import java.nio.file.Path;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {
 
-    @AfterEach
-    public void tearDown() {
-        super.tearDown();
-        error = null;
+  @AfterEach
+  public void tearDown() {
+    super.tearDown();
+    error = null;
 
-    }
+  }
 
-    public ErrorCollector error;
-    public SqrlParser parser;
-    public Planner planner;
-    public Resolve resolve;
-    public Session session;
-    public Path rootDir;
+  public ErrorCollector error;
+  public SqrlParser parser;
+  public Planner planner;
+  public Resolve resolve;
+  public Session session;
+  public Path rootDir;
 
 
-    protected void initialize(IntegrationTestSettings settings, Path rootDir) {
-        super.initialize(settings);
-        error = ErrorCollector.root();
+  protected void initialize(IntegrationTestSettings settings, Path rootDir) {
+    super.initialize(settings);
+    error = ErrorCollector.root();
 
-        planner = new PlannerFactory(
-                new SqrlCalciteSchema(CalciteSchema.createRootSchema(false, false).plus()).plus()).createPlanner();
-        Session session = new Session(error, planner, engineSettings.getPipeline());
-        this.session = session;
-        this.parser = new SqrlParser();
-        this.resolve = new Resolve(rootDir);
-        this.rootDir = rootDir;
-    }
+    planner = new PlannerFactory(
+        new SqrlCalciteSchema(
+            CalciteSchema.createRootSchema(false, false).plus()).plus()).createPlanner();
+    Session session = new Session(error, planner, engineSettings.getPipeline());
+    this.session = session;
+    this.parser = new SqrlParser();
+    this.resolve = new Resolve(rootDir);
+    this.rootDir = rootDir;
+  }
 
-    protected TableSource loadTable(NamePath path) {
-        DataSource.Loader loader = new DataSource.Loader();
-        return loader.readTable(rootDir,path,error).get();
-    }
+  protected TableSource loadTable(NamePath path) {
+    DataSource.Loader loader = new DataSource.Loader();
+    return loader.readTable(rootDir, path, error).get();
+  }
 
-    @SneakyThrows
-    protected String loadScript(String name) {
-        Path path = rootDir.resolve(name);
-        return Files.readString(path);
-    }
+  @SneakyThrows
+  protected String loadScript(String name) {
+    Path path = rootDir.resolve(name);
+    return Files.readString(path);
+  }
 
 }

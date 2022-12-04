@@ -47,10 +47,10 @@ public class IntegerType extends AbstractBasicType<Long> {
         return ((Boolean) o).booleanValue() ? 1L : 0L;
       }
       if (o instanceof Duration) {
-        return ((Duration)o).toMillis();
+        return ((Duration) o).toMillis();
       }
       if (o instanceof Instant) {
-        return ((Instant)o).getEpochSecond();
+        return ((Instant) o).getEpochSecond();
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }

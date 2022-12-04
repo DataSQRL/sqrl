@@ -57,7 +57,8 @@ public abstract class KafkaDataSystem {
 
     final KafkaDataSystemConfig.Connector connectorConfig;
 
-    public Discovery(Properties properties, String topicPrefix, KafkaDataSystemConfig.Connector connectorConfig) {
+    public Discovery(Properties properties, String topicPrefix,
+        KafkaDataSystemConfig.Connector connectorConfig) {
       super(properties, topicPrefix);
       this.connectorConfig = connectorConfig;
     }
@@ -83,14 +84,17 @@ public abstract class KafkaDataSystem {
 
     @Override
     public boolean requiresFormat(ExternalDataType type) {
-      if (type.isSource()) return false;
-      else return true;
+      if (type.isSource()) {
+        return false;
+      } else {
+        return true;
+      }
     }
 
 
     @Override
     public Collection<TableConfig> discoverSources(
-            @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
+        @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
       List<TableConfig> tables = new ArrayList<>();
       Set<String> topicNames = Collections.EMPTY_SET;
       try (Admin admin = Admin.create(getProperties(null))) {
@@ -101,37 +105,37 @@ public abstract class KafkaDataSystem {
       FormatConfiguration format = config.getFormat();
       NameCanonicalizer canonicalizer = config.getNameCanonicalizer();
       topicNames.stream().filter(n -> n.startsWith(topicPrefix))
-              .map(n -> n.substring(topicPrefix.length()).trim())
-              .filter(Predicate.not(Strings::isNullOrEmpty))
-              .forEach(name -> {
-                TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
-                tblBuilder.connector(connectorConfig);
+          .map(n -> n.substring(topicPrefix.length()).trim())
+          .filter(Predicate.not(Strings::isNullOrEmpty))
+          .forEach(name -> {
+            TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
+            tblBuilder.connector(connectorConfig);
 
-                if (format != null) {
-                  if (Name.validName(name)) {
-                    tblBuilder.identifier(name).name(name);
-                    tblBuilder.format(format);
-                  } else {
-                    errors.warn("Topic [%s] has an invalid name and is not added as a table", name);
-                  }
-                } else {
-                  //try to infer format from topic name
-                  Pair<String, String> components = FileUtil.separateExtension(name);
-                  FileFormat ff = FileFormat.getFormat(components.getValue());
-                  if (ff != null && Name.validName(components.getKey())) {
-                    tblBuilder.identifier(name).name(components.getKey());
-                    tblBuilder.format(ff.getImplementation().getDefaultConfiguration());
-                  } else {
-                    errors.warn("Could not infer format for topic [%s] and is not added as a table", name);
-                  }
-                  tables.add(tblBuilder.build());
-                }
-              });
+            if (format != null) {
+              if (Name.validName(name)) {
+                tblBuilder.identifier(name).name(name);
+                tblBuilder.format(format);
+              } else {
+                errors.warn("Topic [%s] has an invalid name and is not added as a table", name);
+              }
+            } else {
+              //try to infer format from topic name
+              Pair<String, String> components = FileUtil.separateExtension(name);
+              FileFormat ff = FileFormat.getFormat(components.getValue());
+              if (ff != null && Name.validName(components.getKey())) {
+                tblBuilder.identifier(name).name(components.getKey());
+                tblBuilder.format(ff.getImplementation().getDefaultConfiguration());
+              } else {
+                errors.warn("Could not infer format for topic [%s] and is not added as a table",
+                    name);
+              }
+              tables.add(tblBuilder.build());
+            }
+          });
       return tables;
     }
 
   }
-
 
 
 }

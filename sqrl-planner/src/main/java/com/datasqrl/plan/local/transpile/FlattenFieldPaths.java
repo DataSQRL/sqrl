@@ -30,13 +30,8 @@ import org.apache.calcite.sql.validate.SqlQualified;
 import org.apache.calcite.util.Litmus;
 
 /**
- * Orders.entries.customer = SELECT e.parent.customerid
- *                           FROM @;
- * ->
- * Orders.entries.customer = SELECT __a1.customerid
- *                           FROM @
- *                           LEFT JOIN e.parent AS __a1;
- *
+ * Orders.entries.customer = SELECT e.parent.customerid FROM @; -> Orders.entries.customer = SELECT
+ * __a1.customerid FROM @ LEFT JOIN e.parent AS __a1;
  */
 public class FlattenFieldPaths extends SqlShuttle {
 
@@ -51,12 +46,12 @@ public class FlattenFieldPaths extends SqlShuttle {
     switch (node.getKind()) {
       case JOIN_DECLARATION:
         SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
-        Optional<SqlNodeList> orders = spec.getOrderList().map(o->(SqlNodeList) o.accept(this));
+        Optional<SqlNodeList> orders = spec.getOrderList().map(o -> (SqlNodeList) o.accept(this));
         List<UnboundJoin> leftJoins = this.left.stream()
-            .map(l->  SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+            .map(l -> SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
                 new SqlIdentifier(l.names, SqlParserPos.ZERO),
                 new SqlIdentifier(l.alias, SqlParserPos.ZERO)))
-            .map(l->new UnboundJoin(SqlParserPos.ZERO, l, Optional.empty()))
+            .map(l -> new UnboundJoin(SqlParserPos.ZERO, l, Optional.empty()))
             .collect(Collectors.toList());
         return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
             spec.relation,

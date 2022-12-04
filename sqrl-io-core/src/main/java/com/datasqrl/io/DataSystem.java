@@ -25,10 +25,11 @@ public class DataSystem implements Serializable {
   }
 
   public Collection<TableConfig> discoverTables(ErrorCollector errors) {
-    return datasource.discoverSources(config,errors);
+    return datasource.discoverSources(config, errors);
   }
 
-  public Optional<TableConfig> discoverSink(@NonNull Name sinkName, @NonNull ErrorCollector errors) {
+  public Optional<TableConfig> discoverSink(@NonNull Name sinkName,
+      @NonNull ErrorCollector errors) {
     return datasource.discoverSink(sinkName, config, errors);
   }
 

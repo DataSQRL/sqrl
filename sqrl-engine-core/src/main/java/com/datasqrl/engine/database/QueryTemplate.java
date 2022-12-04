@@ -7,8 +7,8 @@ import org.apache.calcite.rel.RelNode;
 @Value
 public class QueryTemplate {
 
-    RelNode relNode;
-    DatabaseConnectionProvider dbConnection;
-    //TODO: add parameters
+  RelNode relNode;
+  DatabaseConnectionProvider dbConnection;
+  //TODO: add parameters
 
 }

@@ -12,31 +12,31 @@ import java.util.List;
 public class SqrlRelMdSelectivity extends RelMdSelectivity
     implements BuiltInMetadata.Selectivity.Handler {
 
-    public static final RelMetadataProvider SOURCE =
-            ReflectiveRelMetadataProvider.reflectiveSource(
-                    BuiltInMethod.SELECTIVITY.method, new SqrlRelMdSelectivity());
+  public static final RelMetadataProvider SOURCE =
+      ReflectiveRelMetadataProvider.reflectiveSource(
+          BuiltInMethod.SELECTIVITY.method, new SqrlRelMdSelectivity());
 
-    @Override
-    public Double getSelectivity(Join rel, RelMetadataQuery mq, RexNode predicate) {
-        return super.getSelectivity(rel, mq, predicate);
+  @Override
+  public Double getSelectivity(Join rel, RelMetadataQuery mq, RexNode predicate) {
+    return super.getSelectivity(rel, mq, predicate);
+  }
+
+
+  public static Double getSelectivity(VirtualRelationalTable table,
+      List<IndexCall.IndexColumn> constraints) {
+    //TODO: use actual selectivity statistics from table
+    double selectivity = 1.0d;
+    for (IndexCall.IndexColumn col : constraints) {
+      switch (col.getType()) {
+        case EQUALITY:
+          selectivity *= 0.1;
+          break;
+        case COMPARISON:
+          selectivity *= 0.4;
+          break;
+      }
     }
-
-
-
-    public static Double getSelectivity(VirtualRelationalTable table, List<IndexCall.IndexColumn> constraints) {
-        //TODO: use actual selectivity statistics from table
-        double selectivity = 1.0d;
-        for (IndexCall.IndexColumn col : constraints) {
-            switch (col.getType()) {
-                case EQUALITY:
-                    selectivity *= 0.1;
-                    break;
-                case COMPARISON:
-                    selectivity *= 0.4;
-                    break;
-            }
-        }
-        return selectivity;
-    }
+    return selectivity;
+  }
 
 }

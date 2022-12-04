@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Test;
 @Disabled
 public class GenerateGraphQLSchema extends SchemaGeneratorUseCaseTest {
 
-    @Test
-    public void writeSchemaFile() {
-        produceSchemaFile(DataSQRL.INSTANCE.getScript());
-    }
+  @Test
+  public void writeSchemaFile() {
+    produceSchemaFile(DataSQRL.INSTANCE.getScript());
+  }
 
 
 }

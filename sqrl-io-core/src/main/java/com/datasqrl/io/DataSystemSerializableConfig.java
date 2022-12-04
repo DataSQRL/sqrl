@@ -7,8 +7,8 @@ import java.io.Serializable;
 @JsonIgnoreProperties(value = "systemType", allowGetters = true)
 public interface DataSystemSerializableConfig extends Serializable {
 
-    String TYPE_KEY = "systemType";
+  String TYPE_KEY = "systemType";
 
-    String getSystemType();
+  String getSystemType();
 
 }

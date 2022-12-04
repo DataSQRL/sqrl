@@ -58,8 +58,12 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     RelationType<?> that = (RelationType<?>) o;
     return fieldsOrderedByName().equals(that.fieldsOrderedByName());
   }
@@ -71,7 +75,7 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
 
   private List<F> fieldsOrderedByName() {
     List<F> ordered = new ArrayList<>(fields);
-    ordered.sort((a,b) -> a.getName().compareTo(b.getName()));
+    ordered.sort((a, b) -> a.getName().compareTo(b.getName()));
     return ordered;
   }
 

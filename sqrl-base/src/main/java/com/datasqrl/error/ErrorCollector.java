@@ -68,7 +68,8 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
     if (!errLoc.hasPrefix()) {
       //Adjust relative location
       ErrorLocation newloc = errorEmitter.getBaseLocation().append(errLoc);
-      err = new ErrorMessage.Implementation(err.getErrorCode(), err.getMessage(), newloc, err.getSeverity(),
+      err = new ErrorMessage.Implementation(err.getErrorCode(), err.getMessage(), newloc,
+          err.getSeverity(),
           errorEmitter.getSourceMap());
     }
     addInternal(err);
