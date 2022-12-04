@@ -23,6 +23,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-loader-table</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-flink</artifactId>
     </dependency>
     <dependency>

@@ -55,11 +55,11 @@ public class DataDiscovery {
         return tables;
     }
 
-    public void monitorTables(List<TableInput> tables) {
+    public StreamEngine.Job monitorTables(List<TableInput> tables) {
         try (TableStatisticsStore store = statsStore.openStore()) {
         } catch (IOException e) {
             errors.fatal("Could not open statistics store");
-
+            return null;
         }
         StreamEngine.Builder streamBuilder = streamEngine.createJob();
         for (TableInput table : tables) {
@@ -69,6 +69,7 @@ public class DataDiscovery {
         }
         StreamEngine.Job job = streamBuilder.build();
         job.execute("monitoring["+tables.size()+"]"+tables.hashCode());
+        return job;
     }
 
 
@@ -98,6 +99,17 @@ public class DataDiscovery {
 
         }
         return resultTables;
+    }
+
+    public List<TableSource> runFullDiscovery(DataSystemConfig discoveryConfig) {
+        List<TableInput> inputTables = discoverTables(discoveryConfig);
+        if (inputTables==null || inputTables.isEmpty()) return List.of();
+        StreamEngine.Job monitorJob = monitorTables(inputTables);
+        if (monitorJob==null) return List.of();
+        //TODO: figure out how to wait on job completion
+        List<TableSource> sourceTables = discoverSchema(inputTables);
+        return sourceTables;
+
     }
 
     public static FlexibleDatasetSchema combineSchema(List<TableSource> tables) {
