@@ -54,6 +54,18 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-jdbc</artifactId>
     </dependency>
+    <dependency>
+      <artifactId>sqrl-common</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-planner</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

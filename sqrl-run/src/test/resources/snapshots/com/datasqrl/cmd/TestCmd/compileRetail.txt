@@ -1,0 +1,14 @@
+>>>output
+schema.graphqls
+>>>build
+c360
+c360-full.sqrl
+c360/schema.yml
+ecommerce-data
+ecommerce-data/customer.table.json
+ecommerce-data/orders.table.json
+ecommerce-data/product.table.json
+ecommerce-data/schema.yml
+output
+output/datasystem.json
+package.json

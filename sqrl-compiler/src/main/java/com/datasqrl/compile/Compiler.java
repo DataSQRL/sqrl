@@ -138,7 +138,8 @@ public class Compiler {
 
   @SneakyThrows
   public String inferOrGetSchema(Env env, Optional<Path> graphqlSchema) {
-    if (graphqlSchema.map(s -> s.toFile().exists()).orElse(false)) {
+    if (graphqlSchema.isPresent()) {
+      Preconditions.checkArgument(Files.isRegularFile(graphqlSchema.get()));
       return Files.readString(graphqlSchema.get());
     }
     GraphQLSchema schema = SchemaGenerator.generate(env.getRelSchema());
