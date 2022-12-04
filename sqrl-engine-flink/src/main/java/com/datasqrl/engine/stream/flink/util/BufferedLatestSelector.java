@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ */
 package com.datasqrl.engine.stream.flink.util;
 
 import org.apache.flink.api.common.state.ValueState;

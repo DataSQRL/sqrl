@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ */
 import java.io.*;
 import java.util.regex.*;
 import java.util.*;

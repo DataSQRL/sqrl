@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ */
 /**
  * The schema package in SQRL is more like a schema header rather than a full schema. A schema
  * header is like a blueprint for a building. It defines the minimum amount of information needed to
