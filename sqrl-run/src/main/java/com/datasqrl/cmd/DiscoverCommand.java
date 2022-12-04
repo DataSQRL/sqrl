@@ -28,7 +28,6 @@ public class DiscoverCommand extends AbstractCommand {
     @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory")
     private Path outputDir = null;
 
-
     @Override
     protected void runCommand(ErrorCollector errors) throws IOException {
         DataSystemConfig discoveryConfig;

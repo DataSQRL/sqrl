@@ -157,6 +157,7 @@ public class Packager {
     @Value
     public static class Config {
 
+        Path rootDir;
         Path mainScript;
         Path graphQLSchemaFile;
         @Builder.Default @NonNull
@@ -176,16 +177,16 @@ public class Packager {
                 }
             }
             ObjectMapper mapper = getMapper();
-            Path rootDir;
+            Path rootDir = this.rootDir;
             JsonNode packageConfig;
             GlobalPackageConfiguration config;
             if (packageFiles.isEmpty()) {
                 Preconditions.checkArgument(mainScript!=null, "Must provide either a main script or package file");
-                rootDir = mainScript.getParent();
+                if (rootDir==null) rootDir = mainScript.getParent();
                 config = GlobalPackageConfiguration.builder().manifest(getManifest(rootDir,mainScript,graphQLSchemaFile)).build();
                 packageConfig = mapper.valueToTree(config);
             } else {
-                rootDir = packageFiles.get(0).getParent();
+                if (rootDir==null) rootDir = packageFiles.get(0).getParent();
                 JsonNode basePackage = mapper.readValue(packageFiles.get(0).toFile(), JsonNode.class);
                 for (int i = 1; i < packageFiles.size(); i++) {
                     basePackage = mapper.readerForUpdating(basePackage).readValue(packageFiles.get(i).toFile());

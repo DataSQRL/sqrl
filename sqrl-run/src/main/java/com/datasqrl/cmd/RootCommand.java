@@ -17,4 +17,14 @@ public class RootCommand implements Runnable {
     public void run() {
         System.out.println("Chose one of the commands: compile, run, or discover");
     }
+
+    final Path rootDir;
+
+    public RootCommand(Path rootDir) {
+        this.rootDir = rootDir;
+    }
+
+    public RootCommand() {
+        this(Path.of(""));
+    }
 }
