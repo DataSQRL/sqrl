@@ -51,7 +51,7 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   @Test
   @Disabled
   public void writeSchemaFile() {
-    produceSchemaFile(Nutshop.INSTANCE.getScripts().get(1));
+    produceSchemaFile(Nutshop.INSTANCE.getScripts().get(0));
   }
 
 }

@@ -23,13 +23,18 @@ import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.commons.math3.util.Precision;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.datasqrl.plan.calcite.OptimizationStage.READ_QUERY_OPTIMIZATION;
 
 @AllArgsConstructor
 public class IndexSelector {
+
+  private static final double EPSILON = 0.00001d;
 
   private final Planner planner;
   private final IndexSelectorConfig config;
@@ -54,6 +59,22 @@ public class IndexSelector {
   }
 
   private Map<IndexDefinition, Double> optimizeIndexes(VirtualRelationalTable table,
+                                                       Collection<IndexCall> indexes) {
+    //Check how many unique column combinations we have on this table
+    Set<Set<Integer>> columnIndexSets = indexes.stream().map(idx -> idx.getColumnIndexes()).collect(Collectors.toSet());
+    if (columnIndexSets.size()>config.maxIndexColumnSets()) {
+      //Generate individual indexes so the database can combine them on-demand at query time
+      Set<Integer> indexedColumns = columnIndexSets.stream().flatMap(s -> s.stream()).collect(Collectors.toSet());
+      IndexDefinition.Type genericType = config.getPreferredGenericIndexType();
+      return indexedColumns.stream().map(
+              col -> new IndexDefinition(table.getNameId(), List.of(col), table.getRowType().getFieldNames(), genericType)
+      ).collect(Collectors.toMap(Function.identity(),x -> 0.0));
+    } else {
+      return optimizeIndexesWithCostMinimization(table, indexes);
+    }
+  }
+
+  private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(VirtualRelationalTable table,
       Collection<IndexCall> indexes) {
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
     //The baseline cost is the cost of doing the lookup with the primary key index
@@ -82,9 +103,8 @@ public class IndexSelector {
           costs.put(call, newcost);
         });
         double total = total(costs);
-        if (total < beforeTotal && (total < bestTotal ||
-            (total == bestTotal && relativeIndexCost(candidate) < relativeIndexCost(
-                bestCandidate)))) {
+        if (total < beforeTotal && (total + EPSILON < bestTotal ||
+            (Precision.equals(total,bestTotal, 2*EPSILON) && costLess(candidate,bestCandidate)))) {
           bestCandidate = candidate;
           bestCosts = costs;
           bestTotal = total;
@@ -101,6 +121,24 @@ public class IndexSelector {
       }
     }
     return optIndexes;
+  }
+
+  private boolean costLess(IndexDefinition candidate, IndexDefinition bestCandidate) {
+    double cost = config.relativeIndexCost(candidate);
+    double bestcost = config.relativeIndexCost(bestCandidate);
+    if (cost + EPSILON < bestcost) return true;
+    else if (Precision.equals(cost,bestcost,2*EPSILON)) {
+      //Make index selection deterministic by prefering smaller columns
+      return orderingScore(candidate) < orderingScore(bestCandidate);
+    } else return false;
+  }
+
+  private int orderingScore(IndexDefinition candidate) {
+    int score = 0;
+    for (Integer column : candidate.getColumns()) {
+      score = score*2 + column;
+    }
+    return score;
   }
 
   private double relativeIndexCost(IndexDefinition index) {
@@ -177,7 +215,7 @@ public class IndexSelector {
     for (int col : columns) {
       eps = eps * 2 + col;
     }
-    return eps * 1e-10;
+    return eps * 1e-5;
   }
 
   class IndexFinder extends RelVisitor {

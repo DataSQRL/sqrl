@@ -21,7 +21,7 @@ public class IndexSelectionUseCaseTest extends AbstractSchemaInferenceModelTest 
         graphQLSchema.getName());
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
     String result = selectIndexes(script, graphQLSchema.getSchemaPath()).entrySet().stream()
-        .map(e -> e.getKey().getName() + " - " + e.getValue()).sorted()
+        .map(e -> String.format("%s - %.3f",e.getKey().getName(),e.getValue())).sorted()
         .collect(Collectors.joining(System.lineSeparator()));
     snapshot.addContent(result);
     snapshot.createOrValidate();

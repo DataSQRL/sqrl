@@ -1,1 +1,1 @@
-product$16_hash_c5 - 900.0
+product$16_hash_c5 - 900.000
