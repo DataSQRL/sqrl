@@ -1,9 +1,9 @@
 # DataSQRL
 
-DataSQRL is a development environment for building data services from streaming, static, or external data sources. The DataSQLR compiler generates optimal data pipelines from the data transformations expressed in SQRL and the API specification of the data service. *"Structured Query and Reaction Language"* (SQRL) is a development language that simplifies and extends SQL with reactive and streaming concepts, relationships, and explicit data dependencies.
+DataSQRL is a development environment for building data services from streaming, static, or external data sources. The DataSQRL compiler generates optimal data pipelines from the data transformations expressed in SQRL and the API specification of the data service. *"Structured Query and Reaction Language"* (SQRL) is a development language that simplifies and extends SQL with reactive and streaming concepts, relationships, and explicit data dependencies.
 
 > **Warning**
-> This preview release of DataSQRL is intended for experimental use and feedback. Do not use DataSQLR in production yet.
+> This preview release of DataSQRL is intended for experimental use and feedback. Do not use DataSQRL in production yet.
 
 ## Quickstart
 
@@ -127,7 +127,7 @@ DataSQRL is currently a working prototype that is not intended for production us
 - DataSQRL has a pluggable infrastructure for "execution engines" (i.e. the data systems that comprise the data infrastructure DataSQRL compiles against) but currently it supports only [Apache Flink](https://flink.apache.org/) as a streaming engine, [PostgreSQL](https://www.postgresql.org/) as a database engine, and [Vert.x](https://vertx.io/) as a server engine.
 - DataSQRL has a pluggable infrastructure for data sources and sinks (i.e. the locations it ingests data from and writes data to) but currently supports only local and remote filesystems and [Apache Kafka](https://kafka.apache.org/).
 - DataSQRL has a pluggable infrastructure for data formats but currently only supports json and csv formats.
-- The GraphQL schema parser is currently limited in the kinds of transformations that it allows to the GraphQL schema file. Currently, the names need to map exactly onto those defined in the script.
+- The GraphQL schema parser is currently limited in the kinds of transformations that it allows to the GraphQL schema file. Currently, field names need to map exactly onto those defined in the script.
 - The DataSQRL planner has some inefficiencies in handling nested data, limited self-join elimination, and limited temporal join support.
 - The DataSQRL optimizer currently uses a trivial cost model and does not yet produce optimal results.
 - DataSQRL has limited error handling, observability, and monitoring support.
