@@ -11,9 +11,12 @@ DataSQRL is a development environment for building data services from streaming,
 
 - Clone the DataSQRL repository (hit the green *Code* button at the top)
 - Run `mvn clean package -DskipTests` in the `sqrl` folder of the cloned repository on your hard drive (you need mvn 3.6+ and Java JDK 11+). We will refer to this folder as `[SQRL-PATH]` in the following.
-- Execute `sqrl-run/target/datasqrl.sh -h` which prints out the help for the `datasqrl` command. We will refer to this command as `[CMD-PATH]/datasqrl.sh` in the following.
+- Execute `sqrl-run/datasqrl.sh -h` which prints out the help for the `datasqrl` command. We will refer to this command as `[CMD-PATH]/datasqrl.sh` in the following.
 
-Note: Running the DataSQRL compiler requires Java 11. 
+Note: Running the DataSQRL compiler requires Java 11. You may have to set your `JAVA_HOME` in order to use Java 11 explicitly either in front of the command or in your environment. For example, on MAC you would run:
+```
+JAVA_HOME=`/usr/libexec/java_home -v11` sqrl-run/datasqrl.sh -h
+```
 
 ### Step 2: Build a Data Artifact
 
@@ -47,11 +50,25 @@ Customers.purchases := JOIN Orders ON Orders.customerid = @.id ORDER BY Orders.t
 /* and a relationship from Orders to Products */
 Orders.items.product := JOIN Products ON Products.id = @.productid;
 ```
-- Run `[CMD-PATH]/datasqrl.sh run myscript.sqrl -s` 
+- Run `[CMD-PATH]/datasqrl.sh run myscript.sqrl -g` 
 
-This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to 
+This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to []().
 
 For a full example of SQRL scripts for our Nutshop, check out the [annotated SQRL example](sqrl-examples/nutshop/customer360/nutshopv1-small.sqrl) or the [extended SQRL example](sqrl-examples/nutshop/customer360/nutshopv2-small.sqrl)
+
+### Step 4: Customize GraphQL API
+
+When we run the `compile` or `run` command with the `-g` flag, DataSQRL writes the generated GraphQL schema for the resulting API in the file `schema.graphqls`. We can modify the GraphQL schema to adjust the API to our needs.
+
+DataSQRL generates a very flexible API. Let's trim that down to only the access points that we need. Change the file `schema.graphqls` to contain the following:
+```graphql
+
+```
+
+- Save the `schema.graphqls` file.
+- Run `[CMD-PATH]/datasqrl.sh run myscript.sqrl schema.graphqls`
+
+This time, the compiler generates an updated data pipeline to produce our custom API. You can inspect the results by navigating your browser to []().
 
 ## Key Contributions
 

@@ -54,22 +54,32 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
     return new IndexSelectorConfig() {
       @Override
       public double getCostImprovementThreshold() {
-        return 0;
+        return 0.95;
+      }
+
+      @Override
+      public int maxIndexColumnSets() {
+        return 100;
       }
 
       @Override
       public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
-        return EnumSet.noneOf(IndexDefinition.Type.class);
+        return EnumSet.of(IndexDefinition.Type.HASH, IndexDefinition.Type.BTREE);
       }
 
       @Override
       public int maxIndexColumns(IndexDefinition.Type indexType) {
-        return 0;
+        switch (indexType) {
+          case HASH:
+            return 1;
+          default:
+            return 6;
+        }
       }
 
       @Override
       public double relativeIndexCost(IndexDefinition index) {
-        return 0;
+        return 1;
       }
     };
   }

@@ -32,6 +32,11 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   int maxIndexColumns = MAX_INDEX_COLUMNS;
 
   @Override
+  public int maxIndexColumnSets() {
+    return 100;
+  }
+
+  @Override
   public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
     switch (dialect) {
       case POSTGRES:

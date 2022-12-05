@@ -101,6 +101,10 @@ public class IndexCall {
     return indexColumns.values();
   }
 
+  public Set<Integer> getColumnIndexes() {
+    return indexColumns.keySet();
+  }
+
   @Override
   public String toString() {
     return table.getNameId() +

@@ -1,0 +1,6 @@
+{
+Products ( id: 10) {
+    id
+    name
+    type
+}}
