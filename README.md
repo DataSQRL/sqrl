@@ -52,7 +52,7 @@ Orders.items.product := JOIN Products ON Products.id = @.productid;
 ```
 - Run `[SQRL-PATH]/sqrl-run/datasqrl.sh run myscript.sqrl -g` 
 
-This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to []().
+This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) and run GraphQL queries against the API. Hit `CTRL-C` to terminate the data pipeline when you are done. 
 
 For a full example of SQRL scripts for our Nutshop, check out the [annotated SQRL example](sqrl-examples/nutshop/customer360/nutshopv1-small.sqrl) or the [extended SQRL example](sqrl-examples/nutshop/customer360/nutshopv2-small.sqrl)
 
@@ -62,13 +62,47 @@ When we run the `compile` or `run` command with the `-g` flag, DataSQRL writes t
 
 DataSQRL generates a very flexible API. Let's trim that down to only the access points that we need. Change the file `schema.graphqls` to contain the following:
 ```graphql
+type Customers {
+  id: Int
+  purchases(time: Int): [orders]
+}
 
+type Products {
+  id: Int
+  name: String
+  sizing: String
+  weight_in_gram: Int
+  type: String
+  category: String
+}
+
+type orders {
+  id: Int
+  customerid: Int
+  time: Int
+  items: [items]
+  timestamp: String
+}
+
+type items {
+  productid: Int
+  quantity: Int
+  unit_price: Float
+  discount: Float
+  product: Products
+}
+
+type Query {
+  Customers(id: Int): [Customers]
+  orders(id: Int!): [orders]
+  Products: [Products]
+}
 ```
 
 - Save the `schema.graphqls` file.
 - Run `[SQRL-PATH]/sqrl-run/datasqrl.sh run myscript.sqrl schema.graphqls`
 
-This time, the compiler generates an updated data pipeline to produce our custom API. You can inspect the results by navigating your browser to []().
+This time, the compiler generates an updated data pipeline to produce our custom API. You can inspect the results by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/).
 
 ## Key Contributions
 
@@ -93,6 +127,7 @@ DataSQRL is currently a working prototype that is not intended for production us
 - DataSQRL has a pluggable infrastructure for "execution engines" (i.e. the data systems that comprise the data infrastructure DataSQRL compiles against) but currently it supports only [Apache Flink](https://flink.apache.org/) as a streaming engine, [PostgreSQL](https://www.postgresql.org/) as a database engine, and [Vert.x](https://vertx.io/) as a server engine.
 - DataSQRL has a pluggable infrastructure for data sources and sinks (i.e. the locations it ingests data from and writes data to) but currently supports only local and remote filesystems and [Apache Kafka](https://kafka.apache.org/).
 - DataSQRL has a pluggable infrastructure for data formats but currently only supports json and csv formats.
+- The GraphQL schema parser is currently limited in the kinds of transformations that it allows to the GraphQL schema file. Currently, the names need to map exactly onto those defined in the script.
 - The DataSQRL planner has some inefficiencies in handling nested data, limited self-join elimination, and limited temporal join support.
 - The DataSQRL optimizer currently uses a trivial cost model and does not yet produce optimal results.
 - DataSQRL has limited error handling, observability, and monitoring support.
