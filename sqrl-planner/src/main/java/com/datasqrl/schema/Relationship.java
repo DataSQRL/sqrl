@@ -4,6 +4,7 @@
 package com.datasqrl.schema;
 
 import com.datasqrl.name.Name;
+import com.datasqrl.schema.SQRLTable.SqrlTableVisitor;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import lombok.Getter;
@@ -45,4 +46,7 @@ public class Relationship extends Field {
     PARENT, CHILD, JOIN
   }
 
+  public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
+    return ((SqrlFieldVisitor<R, C>)visitor).visit(this, context);
+  }
 }

@@ -57,10 +57,14 @@ public class FieldList {
   }
 
   public List<Field> getAccessibleFields() {
-    Map<Name, Field> fieldsByName = getFields(true)
+    return getAccessibleFields(true);
+  }
+
+  public List<Field> getAccessibleFields(boolean onlyVisible) {
+    Map<Name, Field> fieldsByName = getFields(onlyVisible)
         .collect(Collectors.toMap(Field::getName, Function.identity(),
             BinaryOperator.maxBy(Comparator.comparing(Field::getVersion))));
-    return getFields(true).filter(f -> fieldsByName.get(f.getName()).equals(f))
+    return getFields(onlyVisible).filter(f -> fieldsByName.get(f.getName()).equals(f))
         .collect(Collectors.toList());
   }
 

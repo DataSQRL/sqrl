@@ -112,6 +112,11 @@ public class UniversalTableBuilder {
     public FieldKind getKind() {
       return FieldKind.COLUMN;
     }
+
+    @Override
+    public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
+      return null;
+    }
   }
 
   @Getter
@@ -130,6 +135,11 @@ public class UniversalTableBuilder {
     @Override
     public FieldKind getKind() {
       return FieldKind.RELATIONSHIP;
+    }
+
+    @Override
+    public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
+      return null;
     }
   }
 

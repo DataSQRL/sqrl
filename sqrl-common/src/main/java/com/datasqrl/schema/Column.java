@@ -33,4 +33,7 @@ public class Column extends Field {
     return FieldKind.COLUMN;
   }
 
+  public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
+  }
 }

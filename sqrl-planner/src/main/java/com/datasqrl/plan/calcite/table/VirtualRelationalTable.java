@@ -8,6 +8,7 @@ import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.calcite.util.IndexMap;
 import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.schema.TableVisitor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import lombok.Getter;
@@ -178,6 +179,13 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
       return base.getTableStatistic();
     }
 
+    public <R, C> R accept(RootVirtualTableVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
+    }
+
+    public interface RootVirtualTableVisitor<R, C> extends TableVisitor<R, C> {
+      R visit(Root table, C context);
+    }
   }
 
   @Getter
@@ -236,6 +244,13 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
         @NonNull RelDataTypeFactory typeFactory) {
       rowType = CalciteUtil.appendField(rowType, timestampField.getName(), timestampField.getType(),
           typeFactory);
+    }
+
+    public <R, C> R accept(ChildVirtualTableVisitor<R, C> visitor, C context) {
+      return visitor.visit(this, context);
+    }
+    public interface ChildVirtualTableVisitor<R, C> extends TableVisitor<R, C> {
+      R visit(Child table, C context);
     }
   }
 

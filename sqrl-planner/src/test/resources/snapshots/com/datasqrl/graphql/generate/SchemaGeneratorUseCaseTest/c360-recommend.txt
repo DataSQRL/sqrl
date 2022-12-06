@@ -1,82 +1,54 @@
 type Category {
-  name: String
-  products(productid: Int, name: String, description: String, category: String, updatetime: String): [Product]
+  name: String!
+  products(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
 }
 
 type Customer {
-  customerid: Int
-  email: String
-  name: String
-  lastupdated: Int
-  updatetime: String
-  orders(id: Int, customerid: Int, time: String): [orders]
+  customerid: Int!
+  email: String!
+  name: String!
+  lastupdated: Int!
+  updatetime: String!
+  orders(id: Int, customerid: Int, time: String): [orders!]
 }
 
 type Product {
-  productid: Int
-  name: String
-  description: String
-  category: String
-  updatetime: String
-  _sales_by_hour(hour: String, quantity: Int, num_orders: Int): [_sales_by_hour]
-  _sales_24h(total: Int, num: Int): _sales_24h
-  _sales_72h(total: Int, num: Int): _sales_72h
-  _sales_trend(increase: Float): [_sales_trend]
+  productid: Int!
+  name: String!
+  description: String!
+  category: String!
+  updatetime: String!
 }
 
 type Query {
-  Category(name: String): [Category]
-  Customer(customerid: Int, email: String, name: String, lastupdated: Int, updatetime: String): [Customer]
-  orders(id: Int, customerid: Int, time: String): [orders]
-  Product(productid: Int, name: String, description: String, category: String, updatetime: String): [Product]
-}
-
-type _sales_24h {
-  total: Int
-  num: Int
-  parent(productid: Int, name: String, description: String, category: String, updatetime: String): Product!
-}
-
-type _sales_72h {
-  total: Int
-  num: Int
-  parent(productid: Int, name: String, description: String, category: String, updatetime: String): Product!
-}
-
-type _sales_by_hour {
-  hour: String
-  quantity: Int
-  num_orders: Int
-  parent(productid: Int, name: String, description: String, category: String, updatetime: String): Product!
-}
-
-type _sales_trend {
-  increase: Float
-  parent(productid: Int, name: String, description: String, category: String, updatetime: String): Product!
+  Category(name: String): [Category!]
+  Customer(customerid: Int, email: String, name: String, lastupdated: Int, updatetime: String): [Customer!]
+  orders(id: Int, customerid: Int, time: String): [orders!]
+  Product(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
 }
 
 type entries {
-  productid: Int
-  quantity: Int
-  unit_price: Float
-  parent(id: Int, customerid: Int, time: String): orders!
-  discount: Float
-  total: Float
-  product(productid: Int, name: String, description: String, category: String, updatetime: String): [Product]
+  productid: Int!
+  quantity: Int!
+  unit_price: Float!
+  parent: orders!
+  discount: Float!
+  total: Float!
+  product(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
 }
 
 type orders {
-  id: Int
-  customerid: Int
-  time: String
-  entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [entries]
-  total(price: Float, discount: Float, num: Int): total
+  id: Int!
+  customerid: Int!
+  time: String!
+  entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [entries!]
+  total: total
 }
 
 type total {
-  price: Float
-  discount: Float
-  num: Int
-  parent(id: Int, customerid: Int, time: String): orders!
+  price: Float!
+  discount: Float!
+  num: Int!
+  parent: orders!
 }
 
