@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.jdbc;
 
+import com.datasqrl.schema.FieldVisitor;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import org.apache.calcite.schema.Schema;
@@ -66,5 +67,9 @@ public class SqrlCalciteSchema extends SimpleCalciteSchema {
     return tables.stream()
         .filter(f -> f != null)
         .collect(Collectors.toList());
+  }
+
+  public <R, C> R accept(CalciteSchemaVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
   }
 }

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.graphql.generate.SchemaGeneratorUtil;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.*;
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.graphql.inference.argument.EqHandler;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
 
 @Getter
@@ -91,14 +93,40 @@ public class SchemaInference {
 
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
-    Optional<SQRLTable> sqrlTable = Optional.ofNullable(
-            schema.getTable(fieldDefinition.getName(), false))
-        .filter(t -> t.getTable() instanceof SQRLTable).map(t -> (SQRLTable) t.getTable());
+    Optional<SQRLTable> sqrlTable = getTableOfType(fieldDefinition.getType(), fieldDefinition.getName());
     Preconditions.checkState(sqrlTable.isPresent(),
         "Could not find associated SQRL type for field {}", fieldDefinition.getName());
     SQRLTable table = sqrlTable.get();
 
     return inferObjectField(fieldDefinition, table, fields, parent);
+  }
+
+  private Optional<SQRLTable> getTableOfType(Type type, String name) {
+    for (SQRLTable table : schema.getRootTables()) {
+      if (isNameEqual(table.getName().getCanonical(), name) &&
+          lookupType(type).filter(t -> structurallyEqual(t, table)).isPresent()) {
+        return Optional.of(table);
+      }
+    }
+    return Optional.empty();
+  }
+
+  private boolean isNameEqual(String canonical, String graphqlName) {
+    String conform = SchemaGeneratorUtil.conformName(canonical);
+
+    return conform.equalsIgnoreCase(Name.system(graphqlName).getCanonical()) ||
+        conform.equalsIgnoreCase(Name.system(stripTrailing(graphqlName)).getCanonical());
+  }
+
+  //Graphql generator may add trailing _ for name collisions
+  private String stripTrailing(String graphqlName) {
+    return StringUtils.stripEnd(graphqlName, "_");
+  }
+
+  private Optional<ObjectTypeDefinition> lookupType(Type type) {
+    Optional<TypeDefinition> t = registry.getType(type);
+    return t.filter(o -> o instanceof ObjectTypeDefinition)
+        .map(o->(ObjectTypeDefinition) o);
   }
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
@@ -121,7 +149,7 @@ public class SchemaInference {
 
   private List<InferredField> walkChildren(ObjectTypeDefinition typeDef, SQRLTable table,
       List<InferredField> fields) {
-    Preconditions.checkState(!checkType(typeDef, table), "Field(s) not allowed [%s] in S5",
+    Preconditions.checkState(structurallyEqual(typeDef, table), "Field(s) not allowed [%s]",
         getInvalidFields(typeDef, table), typeDef.getName());
 
     return typeDef.getFieldDefinitions().stream()
@@ -155,9 +183,9 @@ public class SchemaInference {
     return new InferredScalarField(fieldDefinition, column, parent);
   }
 
-  private boolean checkType(ObjectTypeDefinition typeDef, SQRLTable table) {
+  private boolean structurallyEqual(ObjectTypeDefinition typeDef, SQRLTable table) {
     return typeDef.getFieldDefinitions().stream()
-        .anyMatch(f -> table.getField(Name.system(f.getName())).isEmpty());
+        .allMatch(f -> table.getField(Name.system(f.getName())).isPresent());
   }
 
   private List<String> getInvalidFields(ObjectTypeDefinition typeDef, SQRLTable table) {

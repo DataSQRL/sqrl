@@ -147,7 +147,7 @@ public class Compiler {
       Preconditions.checkArgument(Files.isRegularFile(graphqlSchema.get()));
       return Files.readString(graphqlSchema.get());
     }
-    GraphQLSchema schema = SchemaGenerator.generate(env.getRelSchema());
+    GraphQLSchema schema = new SchemaGenerator().generate(env.getRelSchema());
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)

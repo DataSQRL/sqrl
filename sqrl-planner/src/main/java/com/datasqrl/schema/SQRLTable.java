@@ -3,6 +3,7 @@
  */
 package com.datasqrl.schema;
 
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Root;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
@@ -279,5 +280,12 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
       }
     }
     return fields;
+  }
+
+  public <R, C> R accept(SqrlTableVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
+  }
+  public interface SqrlTableVisitor<R, C> extends TableVisitor<R, C> {
+    R visit(SQRLTable table, C context);
   }
 }

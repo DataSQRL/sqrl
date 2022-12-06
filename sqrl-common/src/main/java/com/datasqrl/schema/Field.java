@@ -43,4 +43,6 @@ public abstract class Field {
   }
 
   public abstract FieldKind getKind();
+
+  public abstract <R, C> R accept(FieldVisitor<R, C> visitor, C context);
 }
