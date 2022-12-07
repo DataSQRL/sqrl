@@ -32,6 +32,11 @@
         <dependency>
             <artifactId>sqrl-planner</artifactId>
             <groupId>com.datasqrl</groupId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <artifactId>sqrl-planner</artifactId>
+            <groupId>com.datasqrl</groupId>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
