@@ -16,26 +16,28 @@ import java.util.Set;
 @AllArgsConstructor
 public class Nutshop implements TestDataset {
 
-  public enum Size {
-    small, medium;
+  public enum Variant {
+    small, medium, compress;
   }
 
   public static final Path BASE_PATH = Path.of("..", "sqrl-examples", "nutshop");
 
-  public static final Nutshop INSTANCE = new Nutshop(Size.small);
+  public static final Nutshop INSTANCE = new Nutshop(Variant.small);
 
-  public static final Nutshop MEDIUM = new Nutshop(Size.medium);
+  public static final Nutshop MEDIUM = new Nutshop(Variant.medium);
 
-  final Size size;
+  public static final Nutshop COMPRESS = new Nutshop(Variant.compress);
+
+  final Variant variant;
 
   @Override
   public String getName() {
-    return "nutshop-" + size.name();
+    return "nutshop-" + variant.name();
   }
 
   @Override
   public Path getDataDirectory() {
-    return BASE_PATH.resolve("data-" + size.name());
+    return BASE_PATH.resolve("data-" + variant.name());
   }
 
   @Override
@@ -50,20 +52,20 @@ public class Nutshop implements TestDataset {
 
   public List<TestScript> getScripts() {
     String[] baseTables;
-    if (size == Size.small) {
+    if (variant == Variant.small) {
       baseTables = new String[]{"orders", "items", "totals", "customers", "products"};
     } else {
       baseTables = new String[]{"products"};
     }
     return List.of(
         TestScript.of(this,
-                BASE_PATH.resolve("customer360").resolve("nutshopv1-" + size.name() + ".sqrl"),
+                BASE_PATH.resolve("customer360").resolve("nutshopv1-" + variant.name() + ".sqrl"),
                 ArrayUtils.concat(baseTables, new String[]{"spending_by_month"})).dataSnapshot(false)
                 .graphQLSchemas(TestGraphQLSchema.Directory.of(
                         BASE_PATH.resolve("customer360").resolve("v1graphql")))
             .build(),
         TestScript.of(this,
-                BASE_PATH.resolve("customer360").resolve("nutshopv2-" + size.name() + ".sqrl"),
+                BASE_PATH.resolve("customer360").resolve("nutshopv2-" + variant.name() + ".sqrl"),
                 ArrayUtils.concat(baseTables, new String[]{"spending_by_month",
                     "past_purchases", "volume_by_day"})).dataSnapshot(false)
             .graphQLSchemas(TestGraphQLSchema.Directory.of(

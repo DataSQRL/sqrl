@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
 
 import java.io.*;
 import java.util.*;
@@ -192,6 +193,10 @@ public abstract class DirectoryDataSystem {
         BufferedReader r = null;
         try {
           in = fp.read();
+          FilePath.NameComponents components = fp.getComponents(partPattern);
+          if (components.hasCompression()) {
+            in = StandardDeCompressors.getDecompressorForExtension(components.getCompression()).create(in);
+          }
           r = new BufferedReader(new InputStreamReader(in, config.getCharsetObject()));
           return r;
         } catch (IOException e) {
