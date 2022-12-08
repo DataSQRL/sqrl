@@ -1,18 +1,24 @@
 {
-  "type" : "SOURCE",
-  "canonicalizer" : "system",
-  "charset" : "UTF-8",
-  "format" : {
-    "formatType" : "csv",
-    "delimiter" : ",",
-    "commentPrefix" : null,
-    "header" : [ "productid", "name", "description", "category" ]
+  "type": "source",
+  "canonicalizer": "system",
+  "charset": "UTF-8",
+  "format": {
+    "formatType": "csv",
+    "delimiter": ",",
+    "commentPrefix": null,
+    "header": [
+      "productid",
+      "name",
+      "description",
+      "category"
+    ]
   },
-  "name" : "product",
-  "identifier" : "product",
-  "connector" : {
-    "uri" : "../sqrl-examples/retail/data/",
-    "partPattern" : "_(\\d+)",
-    "systemType" : "dir"
+  "name": "product",
+  "identifier": "product",
+  "connector": {
+    "directoryURI": "../sqrl-examples/retail/data/",
+    "fileURIs": [],
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
+    "systemType": "dir"
   }
 }

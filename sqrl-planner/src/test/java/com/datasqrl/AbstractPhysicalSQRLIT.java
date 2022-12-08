@@ -4,13 +4,13 @@
 package com.datasqrl;
 
 import com.datasqrl.config.provider.JDBCConnectionProvider;
-import com.datasqrl.io.impl.file.DirectoryDataSystem;
-import com.datasqrl.io.impl.file.FilePath;
-import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.impl.file.FilePath;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.global.DAGPlanner;
@@ -24,20 +24,25 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.lang3.ArrayUtils;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.ResultSet;
-import java.sql.Types;
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
@@ -114,7 +119,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       TableSink sink = export.getSink();
       if (sink.getConnector() instanceof DirectoryDataSystem.Connector) {
         DirectoryDataSystem.Connector connector = (DirectoryDataSystem.Connector) sink.getConnector();
-        FilePath path = connector.getPath().resolve(sink.getConfiguration().getIdentifier());
+        FilePath path = connector.getPathConfig().getDirectory()
+            .resolve(sink.getConfiguration().getIdentifier());
         Path filePath = Paths.get(path.toString());
         snapshot.addContent(String.valueOf(FileTestUtil.countLinesInAllPartFiles(filePath)),
             "export", sink.getConfiguration().getIdentifier());

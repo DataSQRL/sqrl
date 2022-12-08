@@ -4,27 +4,35 @@
 package com.datasqrl.io.impl.file;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.formats.FileFormat;
-import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.formats.FileFormat;
+import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.google.common.base.Strings;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
-
-import java.io.*;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  *
@@ -36,8 +44,8 @@ public abstract class DirectoryDataSystem {
   @Getter
   public static class Connector implements DataSystemConnector, Serializable {
 
-    final FilePath path;
-    final Pattern partPattern;
+    final FilePathConfig pathConfig;
+    final Pattern filenamePattern;
 
     @Override
     public boolean hasSourceTimestamp() {
@@ -45,9 +53,14 @@ public abstract class DirectoryDataSystem {
     }
 
     public boolean isTableFile(FilePath file, TableConfig tableConfig) {
-      FilePath.NameComponents components = file.getComponents(partPattern);
+      Optional<FilePath.NameComponents> componentsOpt = file.getComponents(filenamePattern);
       NameCanonicalizer canonicalizer = tableConfig.getNameCanonicalizer();
-      if (!canonicalizer.getCanonical(components.getName()).equals(tableConfig.getIdentifier())) {
+      if (componentsOpt.isEmpty()) {
+        return false;
+      }
+      FilePath.NameComponents components = componentsOpt.get();
+      if (!canonicalizer.getCanonical(components.getIdentifier())
+          .equals(tableConfig.getIdentifier())) {
         return false;
       }
       //If file has a format, it needs to match
@@ -65,15 +78,19 @@ public abstract class DirectoryDataSystem {
 
     final DirectoryDataSystemConfig.Connector connectorConfig;
 
-    public Discovery(FilePath path, Pattern partPattern,
+    public Discovery(FilePathConfig pathConfig, Pattern filenamePattern,
         DirectoryDataSystemConfig.Connector connectorConfig) {
-      super(path, partPattern);
+      super(pathConfig, filenamePattern);
       this.connectorConfig = connectorConfig;
     }
 
     @Override
     public @NonNull Optional<String> getDefaultName() {
-      return Optional.of(path.getFileName());
+      if (pathConfig.isDirectory()) {
+        return Optional.of(pathConfig.getDirectory().getFileName());
+      } else {
+        return Optional.empty();
+      }
     }
 
     @Override
@@ -88,20 +105,21 @@ public abstract class DirectoryDataSystem {
     @Override
     public Collection<TableConfig> discoverSources(DataSystemConfig config, ErrorCollector errors) {
       Map<Name, TableConfig> tablesByName = new HashMap<>();
-      gatherTables(path, tablesByName, config, errors);
+      gatherTables(pathConfig, tablesByName, config, errors);
       return tablesByName.values();
     }
 
-    private void gatherTables(FilePath directory, Map<Name, TableConfig> tablesByName,
+    private void gatherTables(FilePathConfig pathConfig, Map<Name, TableConfig> tablesByName,
         DataSystemConfig config, ErrorCollector errors) {
       try {
-        for (FilePath.Status fps : directory.listFiles()) {
+        for (FilePath.Status fps : pathConfig.listFiles()) {
           FilePath p = fps.getPath();
           if (fps.isDir()) {
-            gatherTables(p, tablesByName, config, errors);
+            gatherTables(FilePathConfig.ofDirectory(p), tablesByName, config, errors);
           } else {
-            FilePath.NameComponents components = p.getComponents(partPattern);
-            if (Name.validName(components.getName())) {
+            Optional<FilePath.NameComponents> componentsOpt = p.getComponents(filenamePattern);
+            if (componentsOpt.map(c -> Name.validName(c.getIdentifier())).orElse(false)) {
+              FilePath.NameComponents components = componentsOpt.get();
               FormatConfiguration format = config.getFormat();
               FileFormat ff = FileFormat.getFormat(components.getFormat());
               if (format == null && ff != null) {
@@ -115,15 +133,19 @@ public abstract class DirectoryDataSystem {
                 continue;
               }
               TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
-              tblBuilder.identifier(components.getName());
-              tblBuilder.name(components.getName());
+              tblBuilder.identifier(components.getIdentifier());
+              String name = components.getIdentifier();
+              if (Strings.isNullOrEmpty(name)) {
+                name = getDefaultName().get();
+              }
+              tblBuilder.name(name);
               tblBuilder.connector(connectorConfig);
               //infer format if not completely specified
               format.initialize(new InputPreview(tblBuilder.build()), errors.resolve("format"));
               tblBuilder.format(format);
               TableConfig table = tblBuilder.build();
 
-              Name tblName = config.getNameCanonicalizer().name(components.getName());
+              Name tblName = config.getNameCanonicalizer().name(components.getIdentifier());
               TableConfig otherTbl = tablesByName.get(tblName);
               if (otherTbl == null) {
                 tablesByName.put(tblName, table);
@@ -138,22 +160,22 @@ public abstract class DirectoryDataSystem {
           }
         }
       } catch (IOException e) {
-        errors.fatal("Could not read directory [%s] during dataset refresh: %s", directory, e);
+        errors.fatal("Could not read directory [%s] during discovery: %s", pathConfig, e);
       }
     }
 
     public Collection<FilePath> getFilesForTable(TableConfig tableConfig) throws IOException {
       List<FilePath> files = new ArrayList<>();
-      gatherTableFiles(path, files, tableConfig);
+      gatherTableFiles(pathConfig, files, tableConfig);
       return files;
     }
 
-    private void gatherTableFiles(FilePath directory, List<FilePath> files,
+    private void gatherTableFiles(FilePathConfig pathConfig, List<FilePath> files,
         TableConfig tableConfig) throws IOException {
-      for (FilePath.Status fps : directory.listFiles()) {
+      for (FilePath.Status fps : pathConfig.listFiles()) {
         FilePath p = fps.getPath();
         if (fps.isDir()) {
-          gatherTableFiles(p, files, tableConfig);
+          gatherTableFiles(FilePathConfig.ofDirectory(p), files, tableConfig);
         } else if (isTableFile(p, tableConfig)) {
           files.add(p);
         }
@@ -164,7 +186,7 @@ public abstract class DirectoryDataSystem {
     public Optional<TableConfig> discoverSink(@NonNull Name sinkName,
         @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
       TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
-      tblBuilder.type(ExternalDataType.SINK);
+      tblBuilder.type(ExternalDataType.sink);
       tblBuilder.identifier(sinkName.getCanonical());
       tblBuilder.name(sinkName.getDisplay());
       tblBuilder.connector(connectorConfig);
@@ -193,14 +215,10 @@ public abstract class DirectoryDataSystem {
         BufferedReader r = null;
         try {
           in = fp.read();
-          FilePath.NameComponents components = fp.getComponents(partPattern);
-          if (components.hasCompression()) {
-            in = StandardDeCompressors.getDecompressorForExtension(components.getCompression()).create(in);
-          }
           r = new BufferedReader(new InputStreamReader(in, config.getCharsetObject()));
           return r;
         } catch (IOException e) {
-          log.error("Could not read file [%s]: %s", fp, e);
+          log.error("Could not read file [{}]: {}", fp, e);
           try {
             if (in != null) {
               in.close();

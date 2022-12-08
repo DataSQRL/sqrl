@@ -3,17 +3,10 @@
  */
 package com.datasqrl.io.impl.file;
 
+import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.util.FileUtil;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
-import org.apache.flink.core.fs.FileStatus;
-import org.apache.flink.core.fs.FileSystem;
-import org.apache.flink.core.fs.Path;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,10 +15,19 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
+import org.apache.flink.core.fs.FileStatus;
+import org.apache.flink.core.fs.FileSystem;
+import org.apache.flink.core.fs.Path;
 
 /**
  * Represents a file that is identified by a URI.
@@ -40,6 +42,8 @@ public class FilePath implements Serializable {
   private static final Set<String> COMPRESSION_EXTENSIONS = StandardDeCompressors.getCommonSuffixes()
       .stream()
       .map(String::toLowerCase).collect(Collectors.toSet());
+
+  private static final Set<String> URL_SCHEMES = Set.of("http", "https");
 
 
   private final Path flinkPath;
@@ -57,15 +61,33 @@ public class FilePath implements Serializable {
   }
 
   public Status getStatus() throws IOException {
-    FileStatus status = getFileSystem().getFileStatus(flinkPath);
-    if (status == null) {
-      return Status.NOT_EXIST;
+    if (isURL()) {
+      try (InputStream is = flinkPath.toUri().toURL().openStream()) {
+        return new Status(false, is.available(), null, this);
+      } catch (Throwable e) {
+        return Status.NOT_EXIST;
+      }
     } else {
-      return new Status(status);
+      FileStatus status = getFileSystem().getFileStatus(flinkPath);
+      if (status == null) {
+        return Status.NOT_EXIST;
+      } else {
+        return new Status(status);
+      }
     }
   }
 
+  public String getScheme() {
+    return flinkPath.toUri().getScheme();
+  }
+
+  public boolean isURL() {
+    String scheme = getScheme();
+    return !Strings.isNullOrEmpty(scheme) && URL_SCHEMES.contains(getScheme());
+  }
+
   public List<Status> listFiles() throws IOException {
+    Preconditions.checkArgument(!isURL());
     FileStatus[] files = getFileSystem().listStatus(flinkPath);
     return Arrays.stream(files).map(Status::new).collect(Collectors.toList());
   }
@@ -82,34 +104,57 @@ public class FilePath implements Serializable {
     return new FilePath(new Path(this.flinkPath, sub));
   }
 
-  public NameComponents getComponents(Pattern partPattern) {
-    String filename = getFileName();
-    Pair<String, String> ext = FileUtil.separateExtension(filename);
-    filename = ext.getLeft();
-    String format = ext.getRight().toLowerCase();
-    String compression;
-    if (!Strings.isNullOrEmpty(format) && COMPRESSION_EXTENSIONS.contains(format)) {
-      compression = format;
-      ext = FileUtil.separateExtension(filename);
-      filename = ext.getLeft();
-      format = ext.getRight().toLowerCase();
-    } else {
-      compression = "";
+  public Optional<NameComponents> getComponents(Pattern filenamePattern) {
+    String fullName = getFileName();
+    String compression = "", format = "";
+    Pair<String, String> extPair = FileUtil.separateExtension(fullName);
+    String extension = extPair.getRight();
+    if (!Strings.isNullOrEmpty(extension) && COMPRESSION_EXTENSIONS.contains(extension)) {
+      compression = extension;
+      fullName = extPair.getLeft();
+      extPair = FileUtil.separateExtension(fullName);
+      extension = extPair.getRight();
+    }
+    if (!Strings.isNullOrEmpty(extension) && FileFormat.validFormat(extension)) {
+      format = extension;
+      fullName = extPair.getLeft();
     }
     //Match pattern
-    String part = "";
-    if (partPattern != null) {
-      Matcher matcher = partPattern.matcher(filename);
+    String identifier = fullName;
+    if (filenamePattern != null) {
+      Matcher matcher = filenamePattern.matcher(fullName);
       if (matcher.find()) {
-        part = matcher.group(0);
-        filename = filename.substring(0, filename.length() - part.length());
+        if (matcher.groupCount() > 0) {
+          identifier = matcher.group(1);
+          //If we expect an identifier, it cannot be empty
+          if (Strings.isNullOrEmpty(identifier)) {
+            return Optional.empty();
+          }
+        } else {
+          identifier = "";
+        }
+      } else {
+        return Optional.empty();
       }
+    } else if (Strings.isNullOrEmpty(identifier)) {
+      return Optional.empty();
     }
-    return new NameComponents(filename, part, format, compression);
+    return Optional.of(new NameComponents(identifier, fullName, format, compression));
   }
 
   public InputStream read() throws IOException {
-    return getFileSystem().open(flinkPath);
+    InputStream is;
+    if (isURL()) {
+      is = flinkPath.toUri().toURL().openStream();
+    } else {
+      is = getFileSystem().open(flinkPath);
+    }
+    NameComponents components = getComponents(null).get();
+    if (components.hasCompression()) {
+      is = StandardDeCompressors.getDecompressorForExtension(components.getCompression())
+          .create(is);
+    }
+    return is;
   }
 
   public OutputStream write() throws IOException {
@@ -162,14 +207,10 @@ public class FilePath implements Serializable {
   @Value
   public static class NameComponents {
 
-    private final String name;
-    private final String part;
+    private final String identifier;
+    private final String fullName;
     private final String format;
     private final String compression;
-
-    public boolean hasPart() {
-      return !Strings.isNullOrEmpty(part);
-    }
 
     public boolean hasFormat() {
       return !Strings.isNullOrEmpty(format);

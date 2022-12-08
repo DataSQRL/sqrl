@@ -3,6 +3,8 @@
  */
 package com.datasqrl.util.data;
 
+import com.datasqrl.io.DataSystemDiscoveryConfig;
+import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
@@ -33,8 +35,11 @@ public class DataSQRLRepo implements TestDataset {
   }
 
   @Override
-  public String getFilePartPattern() {
-    return "\\.([-_A-Za-z0-9]+)";
+  public DataSystemDiscoveryConfig getDiscoveryConfig() {
+    return DirectoryDataSystemConfig.Discovery.builder()
+            .directoryURI(getDataDirectory().toUri().getPath())
+            .filenamePattern("([^\\.]+?)\\.(?:[-_A-Za-z0-9]+)")
+            .build();
   }
 
   @Override

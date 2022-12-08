@@ -1,15 +1,16 @@
 {
-  "type" : "SOURCE",
-  "canonicalizer" : "system",
-  "charset" : "UTF-8",
-  "format" : {
-    "formatType" : "json"
+  "type": "source",
+  "canonicalizer": "system",
+  "charset": "UTF-8",
+  "format": {
+    "formatType": "json"
   },
-  "name" : "orders",
-  "identifier" : "orders",
-  "connector" : {
-    "uri" : "../sqrl-examples/nutshop/data-medium/",
-    "partPattern" : "_(\\d+)",
-    "systemType" : "dir"
+  "name": "orders",
+  "identifier": "orders",
+  "connector": {
+    "directoryURI": "../sqrl-examples/nutshop/data-medium/",
+    "fileURIs": [],
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
+    "systemType": "dir"
   }
 }

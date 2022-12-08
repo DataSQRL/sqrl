@@ -4,13 +4,13 @@
 package com.datasqrl.io;
 
 public enum ExternalDataType {
-  SOURCE, SINK, SOURCE_AND_SINK;
+  source, sink, source_and_sink;
 
   public boolean isSource() {
-    return this == SOURCE || this == SOURCE_AND_SINK;
+    return this == source || this == source_and_sink;
   }
 
   public boolean isSink() {
-    return this == SINK || this == SOURCE_AND_SINK;
+    return this == sink || this == source_and_sink;
   }
 }

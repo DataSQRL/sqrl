@@ -1,0 +1,8 @@
+query latestPackageByName($pkgName: String!) {
+Package(name: $pkgName) {
+    name
+    latest {
+        version
+        variant
+    }
+}}

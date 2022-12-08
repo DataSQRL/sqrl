@@ -3,18 +3,17 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.loaders.DataSource;
-import com.datasqrl.io.formats.FileFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.DataSystemDiscoveryConfig;
 import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.formats.FileFormat;
+import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.loaders.DataSource;
 import com.datasqrl.util.data.Retail;
+import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import java.nio.file.Path;
 
 public class GenerateDataSystemConfig {
 
@@ -24,10 +23,10 @@ public class GenerateDataSystemConfig {
   public void generateConfigFile() {
     TestDataset testDataset = Retail.INSTANCE;
     Path output = testDataset.getRootPackageDirectory().resolve("export-data");
-    DataSystemDiscoveryConfig datasystem = DirectoryDataSystemConfig.of(output);
+    DataSystemDiscoveryConfig datasystem = DirectoryDataSystemConfig.ofDirectory(output);
     DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
     builder.datadiscovery(datasystem);
-    builder.type(ExternalDataType.SINK);
+    builder.type(ExternalDataType.sink);
     builder.name("output");
     builder.format(FileFormat.JSON.getImplementation().getDefaultConfiguration());
     DataSystemConfig config = builder.build();

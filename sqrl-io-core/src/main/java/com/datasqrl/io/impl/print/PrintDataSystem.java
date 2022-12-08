@@ -4,18 +4,22 @@
 package com.datasqrl.io.impl.print;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.*;
+import com.datasqrl.io.DataSystemConfig;
+import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.DataSystemDiscovery;
+import com.datasqrl.io.DataSystemDiscoveryConfig;
+import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.name.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Optional;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -35,7 +39,7 @@ public abstract class PrintDataSystem {
   public static final DataSystemConfig DEFAULT_DISCOVERY_CONFIG = DataSystemConfig.builder()
       .name(SYSTEM_TYPE)
       .datadiscovery(DEFAULT_DISCOVERY)
-      .type(ExternalDataType.SINK)
+      .type(ExternalDataType.sink)
       .format(FileFormat.JSON.getImplementation().getDefaultConfiguration())
       .build();
 
@@ -85,7 +89,7 @@ public abstract class PrintDataSystem {
     public Optional<TableConfig> discoverSink(@NonNull Name sinkName,
         @NonNull DataSystemConfig config, @NonNull ErrorCollector errors) {
       TableConfig.TableConfigBuilder tblBuilder = TableConfig.copy(config);
-      tblBuilder.type(ExternalDataType.SINK);
+      tblBuilder.type(ExternalDataType.sink);
       tblBuilder.identifier(sinkName.getCanonical());
       tblBuilder.name(sinkName.getDisplay());
       tblBuilder.connector(new Connector(prefix));
