@@ -7,8 +7,8 @@
   },
   "name": "ecommerce-data",
   "datadiscovery": {
-    "uri": "../sqrl-examples/retail/export-data/",
-    "partPattern": "_(\\d+)",
+    "directoryURI": "../sqrl-examples/retail/export-data/",
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
     "systemType": "dir"
   }
 }
