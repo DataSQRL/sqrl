@@ -1,0 +1,34 @@
+type Package {
+  name: String!
+  latest(name: String, version: String, latestStable: Boolean, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String, file: String, hash: String, authorid: String, submissionTime: String): [submission!]
+  versions(name: String, version: String, latestStable: Boolean, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String, file: String, hash: String, authorid: String, submissionTime: String): [submission!]
+}
+
+type Query {
+  Package(name: String): [Package!]
+  submission(name: String, version: String, latestStable: Boolean, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String, file: String, hash: String, authorid: String, submissionTime: String): [submission!]
+}
+
+type files {
+  filename: String!
+  filesize: Int!
+  parent: submission!
+}
+
+type submission {
+  name: String!
+  version: String!
+  latestStable: Boolean!
+  license: String
+  repository: String
+  homepage: String
+  documentation: String
+  readme: String
+  description: String
+  file: String!
+  hash: String!
+  authorid: String!
+  submissionTime: String!
+  files(filename: String, filesize: Int): [files!]
+}
+

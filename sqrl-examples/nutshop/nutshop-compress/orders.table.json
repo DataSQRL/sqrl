@@ -8,9 +8,8 @@
   "name": "orders",
   "identifier": "orders",
   "connector": {
-    "fileURIs": [
-      "../sqrl-examples/nutshop/data-small/orders_part1.json"
-    ],
+    "directoryURI": "../sqrl-examples/nutshop/data-compress/",
+    "fileURIs": [],
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
     "systemType": "dir"
   }

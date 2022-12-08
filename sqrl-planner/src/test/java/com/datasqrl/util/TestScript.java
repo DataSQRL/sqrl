@@ -3,11 +3,11 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.util.data.DataSQRLRepo;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
 import com.google.common.collect.ImmutableList;
-import java.util.ArrayList;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -94,6 +94,7 @@ public interface TestScript {
     return ImmutableList.<TestScript>builder()
         .addAll(Retail.INSTANCE.getTestScripts().values())
         .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
+        .add(DataSQRLRepo.INSTANCE.getScript())
         .build();
   }
 

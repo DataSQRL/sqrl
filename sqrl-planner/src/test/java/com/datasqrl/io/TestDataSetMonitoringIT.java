@@ -3,6 +3,10 @@
  */
 package com.datasqrl.io;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.discovery.DataDiscovery;
@@ -16,8 +20,13 @@ import com.datasqrl.schema.input.external.SchemaExport;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
+import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -26,13 +35,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
@@ -84,13 +86,17 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
-      List<IntegrationTestSettings.EnginePair> engines = List.of(
-          new IntegrationTestSettings.EnginePair(IntegrationTestSettings.DatabaseEngine.INMEMORY,
-              IntegrationTestSettings.StreamEngine.INMEMORY),
-          new IntegrationTestSettings.EnginePair(IntegrationTestSettings.DatabaseEngine.POSTGRES,
-              IntegrationTestSettings.StreamEngine.FLINK)
-      );
-      return ArgumentProvider.crossProduct(TestDataset.getAll(), engines);
+
+      IntegrationTestSettings.EnginePair inmem = new IntegrationTestSettings.EnginePair(
+          IntegrationTestSettings.DatabaseEngine.INMEMORY,
+          IntegrationTestSettings.StreamEngine.INMEMORY),
+          flink = new IntegrationTestSettings.EnginePair(
+              IntegrationTestSettings.DatabaseEngine.POSTGRES,
+              IntegrationTestSettings.StreamEngine.FLINK);
+      List<IntegrationTestSettings.EnginePair> engines = List.of(inmem, flink);
+      return Stream.concat(
+          ArgumentProvider.crossProduct(List.of(Retail.INSTANCE, Nutshop.INSTANCE), engines),
+          Stream.of(Arguments.of(Nutshop.COMPRESS, flink)));
     }
   }
 
@@ -100,13 +106,17 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
   @Test
   @Disabled
   public void generateSchema() {
-    generateTableConfigAndSchemaInDataDir(Retail.INSTANCE);
+//    generateTableConfigAndSchemaInDataDir(Retail.INSTANCE,
+//        IntegrationTestSettings.getInMemory());
+    generateTableConfigAndSchemaInDataDir(Nutshop.URL,
+        IntegrationTestSettings.getFlinkWithDB());
   }
 
   @SneakyThrows
-  public void generateTableConfigAndSchemaInDataDir(TestDataset example) {
+  public void generateTableConfigAndSchemaInDataDir(TestDataset example,
+      IntegrationTestSettings settings) {
     assertTrue(example.getNumTables() > 0);
-    initialize(IntegrationTestSettings.getInMemory());
+    initialize(settings);
     List<TableSource> tables = discoverSchema(example);
     TableWriter writer = new TableWriter();
     writer.writeToFile(example.getRootPackageDirectory().resolve(example.getName()), tables);

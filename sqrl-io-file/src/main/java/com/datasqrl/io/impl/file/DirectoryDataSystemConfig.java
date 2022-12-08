@@ -8,15 +8,18 @@ import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryConfig;
+import com.datasqrl.util.constraints.OptionalMinString;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.regex.Pattern;
+import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -25,29 +28,25 @@ import java.util.regex.Pattern;
 public abstract class DirectoryDataSystemConfig {
 
   public static final String SYSTEM_TYPE = "dir";
-  public static final String DEFAULT_PATTERN = "_(\\d+)";
+  public static final String DEFAULT_FILENAME_PATTERN = "^([^\\.]+?)(?:_part.*)?$";
 
-  @NonNull @NotNull
-  @Size(min = 3)
-  String uri;
+  @OptionalMinString
+  @Builder.Default
+  String directoryURI = "";
+
+  @Builder.Default
+  List<String> fileURIs = List.of();
 
   @Builder.Default
   @NonNull @NotNull
-  String partPattern = DEFAULT_PATTERN;
+  String filenamePattern = DEFAULT_FILENAME_PATTERN;
+
+  @JsonIgnore
+  FilePathConfig filePathConfig;
 
   protected boolean rootInitialize(@NonNull ErrorCollector errors) {
-    FilePath directoryPath = new FilePath(uri);
-    try {
-      FilePath.Status status = directoryPath.getStatus();
-      if (!status.exists() || !status.isDir()) {
-        errors.fatal("URI [%s] is not a directory", uri);
-        return false;
-      }
-    } catch (IOException e) {
-      errors.fatal("URI [%s] is invalid: %s", uri, e);
-      return false;
-    }
-    return true;
+    filePathConfig = FilePathConfig.of(directoryURI, fileURIs, errors);
+    return filePathConfig != null;
   }
 
   public String getSystemType() {
@@ -55,13 +54,15 @@ public abstract class DirectoryDataSystemConfig {
   }
 
   @JsonIgnore
-  protected FilePath getPath() {
-    return new FilePath(uri);
-  }
-
-  @JsonIgnore
-  protected Pattern getPattern() {
-    return Pattern.compile(partPattern + "$");
+  protected Pattern compilerFilenamePattern() {
+    String regex = filenamePattern;
+    if (!regex.startsWith("^")) {
+      regex = "^" + regex;
+    }
+    if (!regex.endsWith("$")) {
+      regex += "$";
+    }
+    return Pattern.compile(regex);
   }
 
   @SuperBuilder
@@ -70,13 +71,13 @@ public abstract class DirectoryDataSystemConfig {
       DataSystemConnectorConfig {
 
     private Connector(Discovery discovery) {
-      super(discovery.uri, discovery.partPattern);
+      super(discovery.directoryURI, discovery.fileURIs, discovery.filenamePattern, null);
     }
 
     @Override
     public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
       if (rootInitialize(errors)) {
-        return new DirectoryDataSystem.Connector(getPath(), getPattern());
+        return new DirectoryDataSystem.Connector(filePathConfig, compilerFilenamePattern());
       } else {
         return null;
       }
@@ -91,7 +92,8 @@ public abstract class DirectoryDataSystemConfig {
     @Override
     public DataSystemDiscovery initialize(@NonNull ErrorCollector errors) {
       if (rootInitialize(errors)) {
-        return new DirectoryDataSystem.Discovery(getPath(), getPattern(), new Connector(this));
+        return new DirectoryDataSystem.Discovery(getFilePathConfig(), compilerFilenamePattern(),
+            new Connector(this));
       } else {
         return null;
       }
@@ -99,9 +101,8 @@ public abstract class DirectoryDataSystemConfig {
 
   }
 
-  public static DataSystemDiscoveryConfig of(Path path) {
-    return Discovery.builder().uri(path.toUri().getPath()).build();
+  public static DataSystemDiscoveryConfig ofDirectory(Path path) {
+    return Discovery.builder().directoryURI(path.toUri().getPath()).build();
   }
-
 
 }

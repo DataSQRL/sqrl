@@ -5,15 +5,16 @@ package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.config.provider.DatabaseConnectionProvider;
 import com.datasqrl.config.provider.JDBCConnectionProvider;
+import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem;
 import com.datasqrl.io.impl.print.PrintDataSystem;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.engine.database.DatabaseEngine;
-import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.table.api.Schema;
@@ -23,8 +24,6 @@ import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
-
-import java.util.List;
 
 @AllArgsConstructor
 public class FlinkPhysicalPlanner {
@@ -89,7 +88,8 @@ public class FlinkPhysicalPlanner {
           TableDescriptor.Builder tblBuilder = TableDescriptor.forConnector("filesystem")
               .schema(tblSchema)
               .option("path",
-                  connector.getPath().resolve(tableSink.getConfiguration().getIdentifier())
+                  connector.getPathConfig().getDirectory()
+                      .resolve(tableSink.getConfiguration().getIdentifier())
                       .toString());
           addFormat(tblBuilder, tableSink.getConfiguration().getFormat());
           sinkDescriptor = tblBuilder.build();

@@ -7,7 +7,31 @@ DROP INDEX IF EXISTS submission$3_hash_c2;
 DROP INDEX IF EXISTS submission$3_hash_c3;
 DROP TABLE IF EXISTS package$6;
 DROP TABLE IF EXISTS submission$3;
->>>query-versions
-{"data":{"Package":[{"versions":[{"version":"1.0.0","file":"8_e-WN-FzfckOREZ85JY6pv6ktQ.zip","hash":"234dfljks3984ujhdwiughe","submissionTime":"2022-05-19T09:16:39.553244Z"}]}]}}
 >>>query-latest
-{"data":{"Package":[{"latest":{"version":"1.0.0","latestStable":true,"description":"Nutshop example data","file":"8_e-WN-FzfckOREZ85JY6pv6ktQ.zip","hash":"234dfljks3984ujhdwiughe","submissionTime":"2022-05-19T09:16:39.553244Z"}}]}}
+{
+  "data" : {
+    "Package" : [ {
+      "latest" : {
+        "version" : "0.1.0",
+        "latestStable" : true,
+        "description" : "Nutshop example data",
+        "file" : "8_e-WN-FzfckOREZ85JY6pv6ktQ.zip",
+        "hash" : "234dfljks3984ujhdwiughe",
+        "submissionTime" : "2022-05-19T09:16:39.553244Z"
+      }
+    } ]
+  }
+}
+>>>query-versions
+{
+  "data" : {
+    "Package" : [ {
+      "versions" : [ {
+        "version" : "0.1.0",
+        "file" : "8_e-WN-FzfckOREZ85JY6pv6ktQ.zip",
+        "hash" : "234dfljks3984ujhdwiughe",
+        "submissionTime" : "2022-05-19T09:16:39.553244Z"
+      } ]
+    } ]
+  }
+}

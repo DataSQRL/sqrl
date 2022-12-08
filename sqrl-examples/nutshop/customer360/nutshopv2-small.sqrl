@@ -1,5 +1,5 @@
-IMPORT nutshop-small.Products;
-IMPORT nutshop-small.Orders TIMESTAMP epoch_to_timestamp(time/1000) AS timestamp;
+IMPORT nutshop-compress.Products;
+IMPORT nutshop-compress.Orders TIMESTAMP epoch_to_timestamp(time/1000) AS timestamp;
 
 Orders.items.discount := coalesce(discount, 0.0);
 Orders.items.total := quantity * unit_price - discount;

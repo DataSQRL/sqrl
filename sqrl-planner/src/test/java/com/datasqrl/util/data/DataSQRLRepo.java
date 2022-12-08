@@ -1,21 +1,23 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.packager;
+package com.datasqrl.util.data;
 
+import com.datasqrl.io.DataSystemDiscoveryConfig;
+import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
-public class DataSQRL implements TestDataset {
+public class DataSQRLRepo implements TestDataset {
 
   public static final Path BASE_PATH = Path.of("..", "sqrl-examples", "datasqrl");
 
-  public static final DataSQRL INSTANCE = new DataSQRL();
-
+  public static final DataSQRLRepo INSTANCE = new DataSQRLRepo();
 
   @Override
   public String getName() {
@@ -33,8 +35,11 @@ public class DataSQRL implements TestDataset {
   }
 
   @Override
-  public String getFilePartPattern() {
-    return "\\.([-_A-Za-z0-9]+)";
+  public DataSystemDiscoveryConfig getDiscoveryConfig() {
+    return DirectoryDataSystemConfig.Discovery.builder()
+            .directoryURI(getDataDirectory().toUri().getPath())
+            .filenamePattern("([^\\.]+?)\\.(?:[-_A-Za-z0-9]+)")
+            .build();
   }
 
   @Override
@@ -44,7 +49,7 @@ public class DataSQRL implements TestDataset {
 
   public TestScript getScript() {
     return TestScript.of(this, BASE_PATH.resolve("repo.sqrl"),
-        "packages", "submissions").build();
+        "package", "submission").graphQLSchemas(List.of(getGraphQL())).build();
   }
 
   public TestGraphQLSchema getGraphQL() {

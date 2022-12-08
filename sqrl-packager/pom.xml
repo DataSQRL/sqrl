@@ -30,6 +30,15 @@
             <artifactId>picocli</artifactId>
         </dependency>
         <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+        <dependency>
+            <artifactId>sqrl-planner</artifactId>
+            <groupId>com.datasqrl</groupId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <artifactId>sqrl-planner</artifactId>
             <groupId>com.datasqrl</groupId>
             <type>test-jar</type>

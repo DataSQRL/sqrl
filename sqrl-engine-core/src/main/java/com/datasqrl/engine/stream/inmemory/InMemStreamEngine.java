@@ -95,7 +95,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
         DirectoryDataSystem.Connector filesource = (DirectoryDataSystem.Connector) source;
         try {
           Stream<Path> paths = FileStreamUtil.matchingFiles(
-              FilePath.toJavaPath(filesource.getPath()),
+              filesource.getPathConfig(),
               filesource, table.getConfiguration());
           return new Holder<>(
               FileStreamUtil.filesByline(paths).map(s -> new TimeAnnotatedRecord<>(s)));

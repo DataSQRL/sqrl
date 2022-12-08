@@ -20,9 +20,8 @@
   "name": "products",
   "identifier": "products",
   "connector": {
-    "fileURIs": [
-      "../sqrl-examples/nutshop/data-small/products.csv"
-    ],
+    "directoryURI": "../sqrl-examples/nutshop/data-compress/",
+    "fileURIs": [],
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
     "systemType": "dir"
   }

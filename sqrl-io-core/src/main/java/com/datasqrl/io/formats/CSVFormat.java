@@ -200,7 +200,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
         delimiter = DEFAULT_DELIMITER;
       }
       if (header == null || header.length == 0) {
-        errors.fatal("Need to specify a header (could not be inferred)");
+        errors.fatal("Need to specify a csv header (could not be inferred)");
         return false;
       }
       return true;

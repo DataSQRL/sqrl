@@ -1,0 +1,25 @@
+>>>submission$3-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], lateststable=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], file=[$11], hash=[$12], authorid=[$13], submissiontime=[$14])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], lateststable=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], file=[$11], hash=[$12], authorid=[$13], submissiontime=[$14], files=[$15])
+    LogicalTableScan(table=[[submission$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[14]]]]) hints[WatermarkHint options:[14]]
+
+>>>package$6-lp-stream
+LogicalProject(name=[$0], submissiontime=[$1])
+  LogicalProject(name=[$2], submissiontime=[$14])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], lateststable=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], file=[$11], hash=[$12], authorid=[$13], submissiontime=[$14], files=[$15])
+      LogicalTableScan(table=[[submission$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[14]]]]) hints[WatermarkHint options:[14]]
+
+>>>package-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(name=[$0], submissiontime=[$1])
+    LogicalTableScan(table=[[package$6]])
+
+>>>submission-lp-database
+LogicalSort(sort0=[$14], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], lateststable=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], file=[$11], hash=[$12], authorid=[$13], submissiontime=[$14])
+    LogicalTableScan(table=[[submission$3]])
+
+>>>package-data
+datasqrl.examples.Nutshop
+>>>submission-data
+datasqrl.examples.Nutshop, 0.1.0, true, Apache-2.0, https://github.com/datasqrl/examples, https://datasqrl.com, https://datasqrl.com/tutorials, README.md, Nutshop example data, 8_e-WN-FzfckOREZ85JY6pv6ktQ.zip, 234dfljks3984ujhdwiughe, 2345xerjk234

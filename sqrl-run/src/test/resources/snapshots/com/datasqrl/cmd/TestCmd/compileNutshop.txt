@@ -3,6 +3,10 @@ schema.graphqls
 >>>build
 customer360
 customer360/nutshopv2-small.sqrl
+nutshop-compress
+nutshop-compress/orders.table.json
+nutshop-compress/products.table.json
+nutshop-compress/schema.yml
 nutshop-medium
 nutshop-medium/orders.table.json
 nutshop-medium/products.table.json
