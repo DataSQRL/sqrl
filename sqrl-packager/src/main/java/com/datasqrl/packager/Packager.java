@@ -115,7 +115,7 @@ public class Packager {
         ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
         ImportExportAnalyzer.Result allResults = Files.find(buildDir, 128, FIND_SQLR_SCRIPT)
             .map(analyzer::analyze).reduce(Result.EMPTY, (r1,r2) -> r1.add(r2));
-        List<NamePath> unloadedDeps = allResults.getUnloadableDependencies(buildDir, loader, exporter);
+        Set<NamePath> unloadedDeps = allResults.getUnloadableDependencies(buildDir, loader, exporter);
         LinkedHashMap<String, Dependency> inferredDependencies = new LinkedHashMap<>();
         for (NamePath unloadedDep : unloadedDeps) {
           Optional<Dependency> optDep = repository.resolveDependency(unloadedDep.toString());
@@ -236,7 +236,7 @@ public class Packager {
     Repository repository;
 
     public Packager getPackager() throws IOException {
-      Preconditions.checkArgument(mainScript == null || Files.isRegularFile(mainScript));
+      Preconditions.checkArgument(mainScript == null || Files.isRegularFile(mainScript), "Not a script file: %s", mainScript);
       Preconditions.checkArgument(
           graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile));
       List<Path> packageFiles = this.packageFiles;

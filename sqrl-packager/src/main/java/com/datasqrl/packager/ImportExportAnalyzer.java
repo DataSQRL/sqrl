@@ -10,7 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.Value;
 import org.apache.calcite.sql.ExportDefinition;
 import org.apache.calcite.sql.ImportDefinition;
@@ -60,8 +62,8 @@ public class ImportExportAnalyzer {
           ListUtils.union(exportPkgs, other.exportPkgs));
     }
 
-    public List<NamePath> getUnloadableDependencies(Path basePath, Loader loader, Exporter exporter) {
-      List<NamePath> unloadable = new ArrayList<>();
+    public Set<NamePath> getUnloadableDependencies(Path basePath, Loader loader, Exporter exporter) {
+      Set<NamePath> unloadable = new HashSet<>();
       importPkgs.stream().filter(np -> !loader.isPackage(basePath, np)).forEach(unloadable::add);
       exportPkgs.stream().filter(np -> !exporter.isPackage(basePath, np)).forEach(unloadable::add);
       return unloadable;

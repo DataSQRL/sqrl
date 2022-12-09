@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -16,6 +17,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @Getter
 @ToString
+@EqualsAndHashCode
 public class Dependency {
 
   String name;

@@ -2,11 +2,11 @@ package com.datasqrl.packager.repository;
 
 import com.datasqrl.packager.FileHash;
 import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.util.FileUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -14,7 +14,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -40,7 +39,7 @@ public class RemoteRepositoryImplementation implements Repository {
 
   @Override
   public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
-    JsonNode result = executeQuery(Query.getLatest, Map.of(
+    JsonNode result = executeQuery(Query.getDependency, Map.of(
         "pkgName", dependency.getName(),
         "version", dependency.getVersion(),
         "variant", dependency.getVariant()));
@@ -50,17 +49,20 @@ public class RemoteRepositoryImplementation implements Repository {
     JsonNode dep = version.get();
     String file = dep.get("file").asText();
     String hash = dep.get("hash").asText();
+    String repoURL = dep.get("repoURL").asText();
+    //TODO (remove): Current hack to fix bug in SQRL
+    repoURL = repoURL.replace("'","");
     Files.createDirectories(targetPath);
 
     Path zipFile = Files.createTempFile(targetPath, "package", ".zip");
-    zipFile.toFile().deleteOnExit();
+    FileUtils.copyURLToFile(
+        new URL(repoURL+file),
+        zipFile.toFile());
     String downloadHash = FileHash.getFor(zipFile);
     Preconditions.checkArgument(downloadHash.equals(hash),"File hash [%s] does not match hash"
-            + "of dowloaded file [%s]", hash, downloadHash);
-    FileUtils.copyURLToFile(
-        new URL(file),
-        zipFile.toFile());
+        + "of dowloaded file [%s]", hash, downloadHash);
     new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
+    Files.deleteIfExists(zipFile);
     return true;
   }
 
@@ -75,7 +77,7 @@ public class RemoteRepositoryImplementation implements Repository {
   private Optional<JsonNode> getPackageField(JsonNode result, String field) {
     JsonNode packages = result.get("Package");
     if (!packages.isArray() || packages.isEmpty()) return Optional.empty();
-    return Optional.of(packages.get(0).get("latest"));
+    return Optional.of(packages.get(0).get(field));
   }
 
   public JsonNode executeQuery(Query query, Map<String,Object> payload) {
@@ -104,8 +106,7 @@ public class RemoteRepositoryImplementation implements Repository {
 
   @SneakyThrows
   private static String loadQuery(String queryFile) {
-    URL url = Resources.getResource(queryFile);
-    return Resources.toString(url, StandardCharsets.UTF_8);
+    return FileUtil.readResource(queryFile);
   }
 
   private enum Query {
