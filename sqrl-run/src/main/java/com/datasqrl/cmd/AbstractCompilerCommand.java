@@ -40,6 +40,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       + "schema file and exits")
   private boolean generateSchema = false;
 
+  @CommandLine.Option(names = {"-p", "--port"}, description = "Port for API server")
+  private int port = 8888;
+
   @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory")
   private Path outputDir = null;
 
@@ -91,7 +94,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     //execute flink
     executePlan(result.getPlan());
     //execute graphql server
-    startGraphQLServer(result.getModel(), jdbcConnection);
+    startGraphQLServer(result.getModel(), port, jdbcConnection);
   }
 
 
@@ -101,12 +104,12 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   @SneakyThrows
-  private void startGraphQLServer(Model.RootGraphqlModel model, JDBCConnectionProvider jdbcConf) {
+  private void startGraphQLServer(Model.RootGraphqlModel model, int port, JDBCConnectionProvider jdbcConf) {
     CompletableFuture future = Vertx.vertx().deployVerticle(new GraphQLServer(
-            model, toPgOptions(jdbcConf), 8888, new PoolOptions()))
+            model, toPgOptions(jdbcConf), port, new PoolOptions()))
         .toCompletionStage()
         .toCompletableFuture();
-    log.info("Server started at: http://localhost:8888/graphiql/");
+    log.info("Server started at: http://localhost:"+port+"/graphiql/");
     future.get();
   }
 

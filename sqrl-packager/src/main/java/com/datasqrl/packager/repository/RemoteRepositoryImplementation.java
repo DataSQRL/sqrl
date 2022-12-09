@@ -24,7 +24,7 @@ import org.apache.commons.io.FileUtils;
 
 public class RemoteRepositoryImplementation implements Repository {
 
-  public static final URI DEFAULT_URI = URI.create("http://localhost:8888/graphql");
+  public static final URI DEFAULT_URI = URI.create("http://localhost:8181/graphql");
 
   private final ObjectMapper mapper = new ObjectMapper();
   private final URI repositoryServerURI;
