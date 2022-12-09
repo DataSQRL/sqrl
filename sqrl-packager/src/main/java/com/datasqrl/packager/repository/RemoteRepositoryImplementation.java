@@ -25,8 +25,18 @@ import org.apache.commons.io.FileUtils;
 
 public class RemoteRepositoryImplementation implements Repository {
 
-  private ObjectMapper mapper = new ObjectMapper();
-  private URI repositoryServerURI = URI.create("http://localhost:8888/graphql");
+  public static final URI DEFAULT_URI = URI.create("http://localhost:8888/graphql");
+
+  private final ObjectMapper mapper = new ObjectMapper();
+  private final URI repositoryServerURI;
+
+  public RemoteRepositoryImplementation(URI repositoryServerURI) {
+    this.repositoryServerURI = repositoryServerURI;
+  }
+
+  public RemoteRepositoryImplementation() {
+    this(DEFAULT_URI);
+  }
 
   @Override
   public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {

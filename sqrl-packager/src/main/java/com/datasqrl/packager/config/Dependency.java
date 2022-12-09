@@ -9,27 +9,28 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@ToString
 public class Dependency {
 
   String name;
   String version;
   String variant;
 
-  public Dependency normalize(String name) {
+  public Dependency normalize(String defaultName) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(this.version));
-    if (!Strings.isNullOrEmpty(this.name)) {
-      name = this.name;
+    if (Strings.isNullOrEmpty(this.name)) {
+      this.name = defaultName;
     }
-    String variant = "";
-    if (!Strings.isNullOrEmpty(this.variant)) {
-      variant = this.variant;
+    if (Strings.isNullOrEmpty(this.variant)) {
+      this.variant = "";
     }
-    return new Dependency(name, this.version, variant);
+    return this;
   }
 
 }

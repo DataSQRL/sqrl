@@ -15,5 +15,9 @@ nutshop-small
 nutshop-small/orders.table.json
 nutshop-small/products.table.json
 nutshop-small/schema.yml
+nutshop-url
+nutshop-url/orders.table.json
+nutshop-url/products.table.json
+nutshop-url/schema.yml
 package.json
 schema.graphqls

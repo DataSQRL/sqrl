@@ -13,6 +13,7 @@ import com.datasqrl.packager.config.GlobalPackageConfiguration;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.util.FileUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,14 +54,15 @@ public class Packager {
   private static final BiPredicate<Path, BasicFileAttributes> FIND_SQLR_SCRIPT = (p,f) ->
       f.isRegularFile() && p.getFileName().toString().toLowerCase().endsWith(".sqrl");
 
-  Repository repository = new RemoteRepositoryImplementation();
+  Repository repository;
   Path rootDir;
   JsonNode packageConfig;
   GlobalPackageConfiguration config;
 
-  private Packager(@NonNull Path rootDir, @NonNull JsonNode packageConfig,
-      @NonNull GlobalPackageConfiguration config) {
+  private Packager(@NonNull Repository repository, @NonNull Path rootDir,
+      @NonNull JsonNode packageConfig, @NonNull GlobalPackageConfiguration config) {
     Preconditions.checkArgument(Files.isDirectory(rootDir));
+    this.repository = repository;
     this.rootDir = rootDir;
     this.packageConfig = packageConfig;
     this.config = config;
@@ -139,7 +141,9 @@ public class Packager {
   }
 
   private boolean retrieveDependency(Path buildDir, NamePath packagePath, Dependency dependency) throws IOException {
-    return repository.retrieveDependency(AbstractLoader.namepath2Path(buildDir, packagePath), dependency);
+    Path targetPath = AbstractLoader.namepath2Path(buildDir, packagePath);
+    Preconditions.checkArgument(FileUtil.isEmptyDirectory(targetPath),"Dependency [%s] conflicts with existing module structure in directory: [%s]", dependency, targetPath);
+    return repository.retrieveDependency(targetPath, dependency);
   }
 
   public void cleanUp() {
@@ -229,6 +233,8 @@ public class Packager {
     @NonNull
     List<Path> packageFiles = List.of();
 
+    Repository repository;
+
     public Packager getPackager() throws IOException {
       Preconditions.checkArgument(mainScript == null || Files.isRegularFile(mainScript));
       Preconditions.checkArgument(
@@ -283,7 +289,11 @@ public class Packager {
         JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
         ((ObjectNode) packageConfig).set(ManifestConfiguration.PROPERTY, mappedManifest);
       }
-      return new Packager(rootDir, packageConfig, config);
+      Repository repository = this.repository;
+      if (repository==null) {
+        repository = new RemoteRepositoryImplementation();
+      }
+      return new Packager(repository, rootDir, packageConfig, config);
     }
 
     public static ManifestConfiguration getManifest(Path rootDir, Path mainScript,
