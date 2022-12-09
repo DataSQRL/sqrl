@@ -111,6 +111,12 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void stringLiteral() {
+    generate(parser.parse("IMPORT ecommerce-data.Product;"
+        + "Product.url := 'test'"));
+  }
+
+  @Test
   public void absoluteTest1() {
     generate(parser.parse("IMPORT ecommerce-data.Product;"
         + "X := SELECT productid FROM Product;"));
