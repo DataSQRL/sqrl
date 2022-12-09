@@ -3,21 +3,29 @@
  */
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.loaders.*;
+import static com.datasqrl.error.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
+import static com.datasqrl.error.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
+import static com.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
+
+import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.error.SourceMapImpl;
-import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.function.builtin.time.FlinkFnc;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.function.builtin.time.FlinkFnc;
+import com.datasqrl.loaders.DynamicExporter;
+import com.datasqrl.loaders.DynamicLoader;
+import com.datasqrl.loaders.Exporter;
+import com.datasqrl.loaders.Loader;
+import com.datasqrl.loaders.LoaderContext;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.calcite.OptimizationStage;
 import com.datasqrl.plan.calcite.SqlValidatorUtil;
 import com.datasqrl.plan.calcite.TypeFactory;
@@ -34,14 +42,35 @@ import com.datasqrl.plan.calcite.table.StateChangeType;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.local.ScriptTableDefinition;
-import com.datasqrl.plan.local.transpile.*;
+import com.datasqrl.plan.local.transpile.AddContextFields;
+import com.datasqrl.plan.local.transpile.AddContextTable;
+import com.datasqrl.plan.local.transpile.AddHints;
+import com.datasqrl.plan.local.transpile.AllowMixedFieldUnions;
+import com.datasqrl.plan.local.transpile.AnalyzeStatement;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
+import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
+import com.datasqrl.plan.local.transpile.FlattenFieldPaths;
+import com.datasqrl.plan.local.transpile.FlattenTablePaths;
+import com.datasqrl.plan.local.transpile.JoinDeclarationUtil;
+import com.datasqrl.plan.local.transpile.QualifyIdentifiers;
+import com.datasqrl.plan.local.transpile.ReplaceWithVirtualTable;
 import com.datasqrl.schema.Field;
-import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
@@ -52,23 +81,30 @@ import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.Assignment;
+import org.apache.calcite.sql.CreateSubscription;
+import org.apache.calcite.sql.DistinctAssignment;
+import org.apache.calcite.sql.ExportDefinition;
+import org.apache.calcite.sql.ExpressionAssignment;
+import org.apache.calcite.sql.ImportDefinition;
+import org.apache.calcite.sql.JoinAssignment;
+import org.apache.calcite.sql.QueryAssignment;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlNumericLiteral;
+import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.SqrlStatement;
+import org.apache.calcite.sql.StreamAssignment;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
-
-import java.nio.file.Path;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import static com.datasqrl.error.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
-import static com.datasqrl.error.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
-import static com.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 
 @Getter
 @Slf4j
@@ -179,7 +215,6 @@ public class Resolve {
 
   void resolveImports(Env env) {
     validateImportInHeader(env);
-
     resolveImportDefinitions(env);
   }
 
@@ -202,7 +237,7 @@ public class Resolve {
     setCurrentNode(env, node);
     NamePath fullPath = toNamePath(env, node.getImportPath());
     Name last = fullPath.getLast();
-    NamePath basePath = fullPath.subList(0, fullPath.size() - 1);
+    NamePath basePath = fullPath.popLast();
     /*
      * Add all files to namespace
      */
@@ -231,10 +266,14 @@ public class Resolve {
   }
 
   private NamePath toNamePath(Env env, SqlIdentifier identifier) {
+    return toNamePath(env.canonicalizer, identifier);
+  }
+
+  public static NamePath toNamePath(NameCanonicalizer canonicalizer, SqlIdentifier identifier) {
     return NamePath.of(identifier.names.stream()
         .map(i -> (i.equals(""))
             ? ReservedName.ALL
-            : env.canonicalizer.name(i)
+            : canonicalizer.name(i)
         )
         .collect(Collectors.toList())
     );

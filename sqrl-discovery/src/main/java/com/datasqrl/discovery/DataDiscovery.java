@@ -4,25 +4,25 @@
 package com.datasqrl.discovery;
 
 import com.datasqrl.config.EngineSettings;
+import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.DataSystem;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.tables.TableInput;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.stats.SchemaGenerator;
 import com.datasqrl.io.stats.SourceTableStatistics;
 import com.datasqrl.io.stats.TableStatisticsStore;
 import com.datasqrl.io.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.metadata.MetadataNamedPersistence;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.engine.stream.StreamEngine;
-import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +69,8 @@ public class DataDiscovery {
     }
     StreamEngine.Builder streamBuilder = streamEngine.createJob();
     for (TableInput table : tables) {
-      StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(table, streamBuilder);
+      StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(table, streamBuilder,
+          ErrorPrefix.INPUT_DATA.resolve(table.getName()));
       stream = streamBuilder.monitor(stream, table, statsStore);
       stream.printSink();
     }

@@ -4,9 +4,9 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.impl.print.PrintDataSystem;
 import com.datasqrl.io.DataSystem;
 import com.datasqrl.io.DataSystemConfig;
+import com.datasqrl.io.impl.print.PrintDataSystem;
 import com.datasqrl.io.tables.AbstractExternalTable;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
@@ -19,14 +19,13 @@ import com.datasqrl.schema.input.external.SchemaDefinition;
 import com.datasqrl.schema.input.external.SchemaImport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import lombok.extern.slf4j.Slf4j;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DataSource {
@@ -100,6 +99,11 @@ public class DataSource {
     private final Deserializer deserialize = new Deserializer();
 
     @Override
+    public boolean isPackage(Path packageBasePath, NamePath fullPath) {
+      return AbstractLoader.isPackagePath(packageBasePath, fullPath);
+    }
+
+    @Override
     public boolean usesFile(Path file) {
       return file.getFileName().toString().endsWith(SCHEMA_FILE_SUFFIX) ||
           file.getFileName().toString().equals(PACKAGE_SCHEMA_FILE) ||
@@ -155,6 +159,11 @@ public class DataSource {
     public boolean usesFile(Path file) {
       return super.usesFile(file) || file.getFileName().toString().endsWith(SCHEMA_FILE_SUFFIX) ||
           file.getFileName().toString().equals(PACKAGE_SCHEMA_FILE);
+    }
+
+    @Override
+    public boolean isPackage(Path packageBasePath, NamePath fullPath) {
+      return AbstractLoader.isPackagePath(packageBasePath,fullPath);
     }
 
     @Override

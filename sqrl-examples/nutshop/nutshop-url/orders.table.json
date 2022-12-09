@@ -1,0 +1,18 @@
+{
+  "type": "source",
+  "canonicalizer": "system",
+  "charset": "UTF-8",
+  "format": {
+    "formatType": "json"
+  },
+  "name": "orders",
+  "identifier": "orders",
+  "connector": {
+    "directoryURI": "",
+    "fileURIs": [
+      "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/orders_part1.json.gz"
+    ],
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
+    "systemType": "dir"
+  }
+}

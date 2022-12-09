@@ -1,6 +1,6 @@
 {
 Package(name: "datasqrl.examples.Nutshop") {
-    versions(version: "0.1.0") {
+    versions(version: "0.1.0", variant: "dev") {
         version
         file
         hash

@@ -1,0 +1,30 @@
+{
+  "type": "source",
+  "canonicalizer": "system",
+  "charset": "UTF-8",
+  "format": {
+    "formatType": "csv",
+    "delimiter": ";",
+    "commentPrefix": null,
+    "header": [
+      "id",
+      "name",
+      "sizing",
+      "weight_in_gram",
+      "type",
+      "category",
+      "usda_id",
+      "updated"
+    ]
+  },
+  "name": "products",
+  "identifier": "products",
+  "connector": {
+    "directoryURI": "",
+    "fileURIs": [
+      "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/products.csv.gz"
+    ],
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
+    "systemType": "dir"
+  }
+}

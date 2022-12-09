@@ -3,10 +3,12 @@
  */
 package com.datasqrl.engine.stream;
 
+import com.datasqrl.error.ErrorLocation;
+
 public interface StreamHolder<T> {
 
   <R> StreamHolder<R> mapWithError(FunctionWithError<T, R> function, String errorName,
-      Class<R> clazz);
+      ErrorLocation errorLocation, Class<R> clazz);
 
   void printSink();
 

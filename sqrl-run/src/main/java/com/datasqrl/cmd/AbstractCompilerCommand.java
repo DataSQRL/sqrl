@@ -15,17 +15,16 @@ import com.google.common.base.Preconditions;
 import io.vertx.core.Vertx;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import picocli.CommandLine;
 
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
@@ -64,8 +63,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
     Packager packager = pkgBuilder.build().getPackager();
     packager.cleanUp();
-    packager.inferDependencies();
-    Path buildPackageFile = packager.populateBuildDir();
+    Path buildPackageFile = packager.populateBuildDir(true);
 
     Compiler compiler = new Compiler();
     Compiler.CompilerResult result = compiler.run(collector, buildPackageFile);

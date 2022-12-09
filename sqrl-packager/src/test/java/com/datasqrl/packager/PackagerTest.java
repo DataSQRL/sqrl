@@ -7,11 +7,6 @@ import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Retail;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +14,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class PackagerTest {
 
@@ -63,8 +62,7 @@ public class PackagerTest {
           builder.packageFiles(List.of(packageFile));
       }
     Packager pkg = builder.build().getPackager();
-    pkg.inferDependencies();
-    pkg.populateBuildDir();
+    pkg.populateBuildDir(true);
     Path buildDir = pkg.getRootDir().resolve(Packager.BUILD_DIR_NAME);
     String[] caseNames = Stream.of(main, graphQl, packageFile)
         .filter(Predicate.not(Objects::isNull)).map(String::valueOf)

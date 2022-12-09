@@ -7,12 +7,16 @@ import com.datasqrl.spi.GlobalConfiguration;
 import com.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.*;
-
-import javax.validation.Valid;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import javax.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Setter;
 
 @Builder
 @AllArgsConstructor
@@ -21,8 +25,9 @@ import java.util.LinkedHashMap;
 public class GlobalPackageConfiguration implements GlobalConfiguration {
 
   public static final String DEPENDENCIES_NAME = "dependencies";
+  public static final String PACKAGE_NAME = "package";
 
-  @JsonProperty("package")
+  @JsonProperty(PACKAGE_NAME)
   @Builder.Default
   @Valid
   PackageConfiguration pkg = new PackageConfiguration();

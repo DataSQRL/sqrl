@@ -36,7 +36,10 @@
         <dependency>
             <artifactId>sqrl-planner</artifactId>
             <groupId>com.datasqrl</groupId>
-            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.lingala.zip4j</groupId>
+            <artifactId>zip4j</artifactId>
         </dependency>
         <dependency>
             <artifactId>sqrl-planner</artifactId>

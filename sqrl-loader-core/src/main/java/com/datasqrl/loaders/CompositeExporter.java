@@ -5,16 +5,25 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.name.NamePath;
-import lombok.AllArgsConstructor;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class CompositeExporter implements Exporter {
 
   List<Exporter> exporters;
+
+  @Override
+  public boolean isPackage(Path packageBasePath, NamePath fullPath) {
+    for (Exporter exporter : exporters) {
+      if (exporter.isPackage(packageBasePath, fullPath)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   @Override
   public boolean usesFile(Path file) {
