@@ -42,8 +42,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 /**
- * Builds the abstract syntax tree for an SQRL script using the classes in
- * {@link com.datasqrl.parse.tree}.
+ * Builds the abstract syntax tree for an SQRL script
  */
 class AstBuilder
     extends SqlBaseBaseVisitor<SqlNode> {
@@ -1212,7 +1211,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitStringLiteral(StringLiteralContext ctx) {
-    return SqlLiteral.createCharString(ctx.getText(), getLocation(ctx));
+    return visit(ctx.string());
   }
 
   private SqlDataTypeSpec getType(TypeContext ctx) {
