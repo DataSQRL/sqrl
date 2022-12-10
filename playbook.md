@@ -5,6 +5,10 @@ and dev poms to your local .m2 folder. Run clean install whenever
 you make dependency changes and are trying to do a maven goal inside
 a maven subdirectory.
 
+## How to build Parser in Intellij
+
+1. Run sqrl-parser > Plugins > antlr4:antlr4
+2. Refresh maven dependencies
 
 ## Helpful commands while developing
 
