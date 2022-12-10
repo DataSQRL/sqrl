@@ -21,8 +21,8 @@ public class SourceTableStatistics implements
     this.relation = new RelationStats();
   }
 
-  public ErrorCollector validate(SourceRecord<String> sourceRecord, TableSource.Digest dataset) {
-    ErrorCollector errors = ErrorCollector.root();
+  public ErrorCollector validate(SourceRecord<String> sourceRecord, TableSource.Digest dataset,
+      ErrorCollector errors) {
     RelationStats.validate(sourceRecord.getData(), errors, dataset.getCanonicalizer());
     return errors;
   }

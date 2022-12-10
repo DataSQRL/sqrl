@@ -3,18 +3,12 @@
  */
 package com.datasqrl.engine.stream.inmemory;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.formats.TextLineFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystem;
-import com.datasqrl.io.impl.file.FilePath;
-import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.tables.TableInput;
-import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.io.stats.SourceTableStatistics;
-import com.datasqrl.io.stats.TableStatisticsStore;
-import com.datasqrl.io.stats.TableStatisticsStoreProvider;
-import com.datasqrl.io.util.TimeAnnotatedRecord;
+import static com.datasqrl.engine.EngineCapability.CUSTOM_FUNCTIONS;
+import static com.datasqrl.engine.EngineCapability.DENORMALIZE;
+import static com.datasqrl.engine.EngineCapability.EXTENDED_FUNCTIONS;
+import static com.datasqrl.engine.EngineCapability.TEMPORAL_JOIN;
+import static com.datasqrl.engine.EngineCapability.TIME_WINDOW_AGGREGATION;
+
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -22,23 +16,38 @@ import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLocation;
+import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.SourceRecord.Named;
+import com.datasqrl.io.formats.TextLineFormat;
+import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.stats.SourceTableStatistics;
+import com.datasqrl.io.stats.TableStatisticsStore;
+import com.datasqrl.io.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.schema.converters.SourceRecord2RowMapper;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.tools.RelBuilder;
-
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-
-import static com.datasqrl.engine.EngineCapability.*;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.tools.RelBuilder;
 
 @Slf4j
 public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
@@ -113,17 +122,15 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
       final SourceTableStatistics statistics = new SourceTableStatistics();
       final TableSource.Digest tableDigest = tableSource.getDigest();
       StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
-        com.datasqrl.error.ErrorCollector errors = statistics.validate(r, tableDigest);
-        if (errors.hasErrors()) {
-          c.accept(errors);
-        }
+        com.datasqrl.error.ErrorCollector errors = c.get();
+        statistics.validate(r, tableDigest, errors);
         if (!errors.isFatal()) {
           statistics.add(r, tableDigest);
           return Optional.of(r);
         } else {
           return Optional.empty();
         }
-      }, "stats", SourceRecord.Raw.class);
+      }, "stats", ErrorPrefix.INPUT_DATA.resolve(tableSource.getName()), SourceRecord.Raw.class);
       sideStreams.add(Stream.of(statistics).map(s -> {
         try (TableStatisticsStore store = statisticsStoreProvider.openStore()) {
           store.putTableStatistics(tableDigest.getPath(), s);
@@ -141,17 +148,16 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
       final Consumer<Object[]> records = recordHolder.getCollector(qualifiedTableName);
       SourceRecord2RowMapper<Object[]> mapper = new SourceRecord2RowMapper(schema,
           RowConstructor.INSTANCE);
-      ((Holder<SourceRecord.Named>) stream).mapWithError((r, c) -> {
+      ((Holder<Named>) stream).mapWithError((r, c) -> {
         try {
           records.accept(mapper.apply(r));
           return Optional.of(Boolean.TRUE);
         } catch (Exception e) {
-          ErrorCollector errors = ErrorCollector.root();
+          ErrorCollector errors = c.get();
           errors.fatal(e.toString());
-          c.accept(errors);
           return Optional.of(Boolean.FALSE);
         }
-      }, "mapper", Boolean.class).sink();
+      }, "mapper", ErrorPrefix.INPUT_DATA.resolve(qualifiedTableName), Boolean.class).sink();
     }
 
     @Override
@@ -184,10 +190,14 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
 
       @Override
       public <R> Holder<R> mapWithError(FunctionWithError<T, R> function, String errorName,
-          Class<R> clazz) {
+          ErrorLocation errorLocation, Class<R> clazz) {
         checkClosed();
         return wrap(stream.flatMap(t -> {
-          Optional<R> result = function.apply(t, errorHolder.getCollector(errorName));
+          ErrorCollector collector = new ErrorCollector(errorLocation);
+          Optional<R> result = function.apply(t, () -> collector);
+          if (collector.hasErrors()) {
+            errorHolder.getCollector(errorName).accept(collector);
+          }
           if (result.isPresent()) {
             return Stream.of(result.get());
           } else {

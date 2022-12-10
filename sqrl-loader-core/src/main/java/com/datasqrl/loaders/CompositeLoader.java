@@ -5,11 +5,11 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.nio.file.Path;
-import java.util.*;
 
 @AllArgsConstructor
 @Getter
@@ -19,6 +19,16 @@ public class CompositeLoader extends AbstractLoader implements Loader {
 
   public CompositeLoader(Loader... loaders) {
     this(List.of(loaders));
+  }
+
+  @Override
+  public boolean isPackage(Path packageBasePath, NamePath fullPath) {
+    for (Loader loader : loaders) {
+      if (loader.isPackage(packageBasePath, fullPath)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

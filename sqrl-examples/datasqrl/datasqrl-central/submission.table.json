@@ -9,8 +9,7 @@
   "identifier": "package",
   "connector": {
     "directoryURI": "../sqrl-examples/datasqrl/data/",
-    "fileURIs": [],
-    "filenamePattern": "([^\\.]+?)\\.(?:[-_A-Za-z0-9]+)",
+    "filenamePattern": "^([^_]+?)_(?:[-_A-Za-z0-9]+)?$",
     "systemType": "dir"
   }
 }

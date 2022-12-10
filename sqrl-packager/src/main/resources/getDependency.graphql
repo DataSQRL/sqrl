@@ -4,5 +4,6 @@ Package(name: $pkgName) {
     versions(version: $version, variant: $variant) {
         file
         hash
+        repoURL
     }
 }}

@@ -8,11 +8,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.Serializable;
 import lombok.NonNull;
 import lombok.Value;
 
 @JsonSerialize(as = ErrorLocation.class)
-public interface ErrorLocation {
+public interface ErrorLocation extends Serializable {
 
   String getPrefix();
 

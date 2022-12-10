@@ -1,7 +1,7 @@
 type Package {
   name: String!
   latest: Submission
-  versions(version: String!): [Submission!]
+  versions(version: String!, variant: String!): [Submission!]
 }
 
 type Query {
@@ -11,6 +11,7 @@ type Query {
 type Submission {
   name: String!
   version: String!
+  variant: String!
   latestStable: Boolean!
   license: String
   repository: String

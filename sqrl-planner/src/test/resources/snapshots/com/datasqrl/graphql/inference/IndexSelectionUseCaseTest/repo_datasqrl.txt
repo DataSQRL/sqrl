@@ -1,2 +1,3 @@
+submission$3_btree_c3c16 - 1890.000
+submission$3_hash_c16 - 900.000
 submission$3_hash_c2 - 1800.000
-submission$3_hash_c3 - 900.000

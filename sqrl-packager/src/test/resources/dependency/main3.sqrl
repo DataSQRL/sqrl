@@ -1,0 +1,5 @@
+IMPORT Nutshop.Products;
+IMPORT Nutshop.Orders;
+
+/* Packager should not actually try to resolve the full script */
+Orders.foo := bar;

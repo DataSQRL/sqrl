@@ -1,5 +1,7 @@
 IMPORT datasqrl-central.Submission TIMESTAMP submissionTime;
 
+Submission.variant := COALESCE(variant, '');
+
 Package := SELECT DISTINCT name FROM Submission;
 
 Package.latest := JOIN Submission s ON @.name = s.name AND s.latestStable = TRUE;

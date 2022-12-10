@@ -3,21 +3,21 @@
  */
 package com.datasqrl.io.util;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.formats.Format;
-import com.datasqrl.io.formats.TextLineFormat;
-import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLocation;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.formats.Format;
+import com.datasqrl.io.formats.TextLineFormat;
+import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-
 import java.time.Instant;
 import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.function.Supplier;
+import lombok.AllArgsConstructor;
 
 public class StreamInputPreparerImpl implements StreamInputPreparer {
 
@@ -30,13 +30,14 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
     return table.getParser() instanceof TextLineFormat.Parser;
   }
 
+  @Override
   public StreamHolder<SourceRecord.Raw> getRawInput(TableInput table,
-      StreamEngine.Builder builder) {
+      StreamEngine.Builder builder, ErrorLocation errorLocation) {
     Preconditions.checkArgument(isRawInput(table), "Not a valid raw input table: " + table);
     Format.Parser parser = table.getParser();
     if (parser instanceof TextLineFormat.Parser) {
       return text2Record(builder.fromTextSource(table),
-          (TextLineFormat.Parser) parser);
+          (TextLineFormat.Parser) parser, errorLocation);
     } else {
       throw new UnsupportedOperationException("Should never happen");
     }
@@ -44,9 +45,9 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
 
   public StreamHolder<SourceRecord.Raw> text2Record(
       StreamHolder<TimeAnnotatedRecord<String>> textSource,
-      TextLineFormat.Parser textparser) {
+      TextLineFormat.Parser textparser, ErrorLocation errorLocation) {
     return textSource.mapWithError(new MapText2Raw(textparser), PARSE_ERROR_TAG,
-        SourceRecord.Raw.class);
+        errorLocation, SourceRecord.Raw.class);
   }
 
   @AllArgsConstructor
@@ -57,7 +58,7 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
 
     @Override
     public Optional<SourceRecord.Raw> apply(TimeAnnotatedRecord<String> t,
-        Consumer<ErrorCollector> errorCollector) {
+        Supplier<ErrorCollector> errorCollector) {
       Format.Parser.Result r = textparser.parse(t.getRecord());
       if (r.isSuccess()) {
         Instant sourceTime = r.getSourceTime();
@@ -66,6 +67,7 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
         }
         return Optional.of(new SourceRecord.Raw(r.getRecord(), sourceTime));
       } else {
+        errorCollector.get().fatal(r.getErrorMsg());
         return Optional.empty();
       }
     }

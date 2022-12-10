@@ -6,11 +6,15 @@ package com.datasqrl.util;
 
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Strings;
+import com.google.common.io.Resources;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
-
-import java.io.IOException;
-import java.nio.file.Path;
 
 public class FileUtil {
 
@@ -20,6 +24,18 @@ public class FileUtil {
 
   public static String removeExtension(Path p) {
     return FilenameUtils.removeExtension(p.getFileName().toString());
+  }
+
+  public static String readResource(String resourceName) throws IOException {
+    URL url = Resources.getResource(resourceName);
+    return Resources.toString(url, StandardCharsets.UTF_8);
+  }
+
+  public static boolean isEmptyDirectory(Path dir) throws IOException {
+    if (!Files.isDirectory(dir)) return true;
+    try (Stream<Path> entries = Files.list(dir)) {
+      return !entries.findFirst().isPresent();
+    }
   }
 
   public static <T> T executeFileRead(Path p, ExecuteFileRead<T> exec, ErrorCollector errors) {

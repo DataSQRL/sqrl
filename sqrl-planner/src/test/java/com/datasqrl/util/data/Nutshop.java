@@ -34,8 +34,8 @@ public class Nutshop implements TestDataset {
     public DataSystemDiscoveryConfig getDiscoveryConfig() {
       return DirectoryDataSystemConfig.Discovery.builder()
           .fileURIs(List.of(
-              "https://raw.githubusercontent.com/DataSQRL/sqrl/main/sqrl-examples/nutshop/data-small/orders_1.json",
-              "https://raw.githubusercontent.com/DataSQRL/sqrl/main/sqrl-examples/nutshop/data-small/products.csv"))
+              "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/orders_part1.json.gz",
+              "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/products.csv.gz"))
           .build();
     }
   };

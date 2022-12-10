@@ -1,0 +1,24 @@
+>>>src/test/resources/dependency/main1.sqrl-dir
+datasqrl
+datasqrl/examples
+datasqrl/examples/nutshop
+datasqrl/examples/nutshop/orders.table.json
+datasqrl/examples/nutshop/package.json
+datasqrl/examples/nutshop/products.table.json
+datasqrl/examples/nutshop/schema.yml
+main1.sqrl
+package.json
+>>>src/test/resources/dependency/main1.sqrl-package
+{
+  "package" : { },
+  "dependencies" : {
+    "datasqrl.examples.Nutshop" : {
+      "name" : "datasqrl.examples.Nutshop",
+      "version" : "0.1.0",
+      "variant" : "dev"
+    }
+  },
+  "manifest" : {
+    "main" : "main1.sqrl"
+  }
+}

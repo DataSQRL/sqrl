@@ -5,11 +5,14 @@ package com.datasqrl.error;
 
 import com.datasqrl.error.SourceMap.EmptySourceMap;
 import com.datasqrl.name.Name;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class ErrorCollector implements Iterable<ErrorMessage> {
 
@@ -27,7 +30,7 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
     this(new ErrorEmitter(new EmptySourceMap(), location), errors);
   }
 
-  private ErrorCollector(@NonNull ErrorLocation location) {
+  public ErrorCollector(@NonNull ErrorLocation location) {
     this(location, new ArrayList<>(5));
   }
 

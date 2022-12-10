@@ -6,7 +6,6 @@ package com.datasqrl.loaders;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.google.common.base.Preconditions;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +27,10 @@ public abstract class AbstractLoader implements Loader {
       filePath = filePath.resolve(name.getCanonical());
     }
     return filePath;
+  }
+
+  public static boolean isPackagePath(Path basePath, NamePath path) {
+    return Files.isDirectory(AbstractLoader.namepath2Path(basePath,path));
   }
 
   @Override

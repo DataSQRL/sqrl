@@ -9,7 +9,7 @@ import lombok.NonNull;
 @JsonSerialize(as = ErrorLocation.class)
 public enum ErrorPrefix implements ErrorLocation {
 
-  ROOT, SOURCE, SINK, ENGINE, SCRIPT, INITIALIZE;
+  ROOT, SOURCE, SINK, ENGINE, SCRIPT, INITIALIZE, INPUT_DATA;
 
   @Override
   public String getPrefix() {

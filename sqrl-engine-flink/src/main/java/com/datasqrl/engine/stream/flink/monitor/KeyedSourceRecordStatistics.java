@@ -3,11 +3,13 @@
  */
 package com.datasqrl.engine.stream.flink.monitor;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.io.stats.SourceTableStatistics;
 import com.datasqrl.engine.stream.flink.util.FlinkUtilities;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.stats.SourceTableStatistics;
+import com.datasqrl.io.tables.TableSource;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -17,8 +19,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class KeyedSourceRecordStatistics extends
@@ -53,7 +53,8 @@ public class KeyedSourceRecordStatistics extends
       //Register an event timer into the far future to trigger when the stream ends
       context.timerService().registerEventTimeTimer(Long.MAX_VALUE);
     }
-    ErrorCollector errors = acc.validate(sourceRecord, tableDigest);
+    ErrorCollector errors = new ErrorCollector(ErrorPrefix.INPUT_DATA);
+    acc.validate(sourceRecord, tableDigest, errors);
     if (errors.isFatal()) {
       //TODO: Record is flawed, put it in sideoutput and issue warning; reuse MapWithErrorProcess
       log.error("Stats Validation Error: {}", errors);

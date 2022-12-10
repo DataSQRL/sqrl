@@ -5,6 +5,7 @@ package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamHolder;
+import com.datasqrl.error.ErrorLocation;
 import lombok.Value;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -20,11 +21,12 @@ public class FlinkStreamHolder<T> implements StreamHolder<T> {
 
   @Override
   public <R> StreamHolder<R> mapWithError(FunctionWithError<T, R> function, String errorName,
-      Class<R> clazz) {
+      ErrorLocation errorLocation, Class<R> clazz) {
     final OutputTag<ProcessError> errorTag = builder.getErrorTag(errorName);
     SingleOutputStreamOperator<R> result = stream.process(
-        new MapWithErrorProcess<>(errorTag, function), TypeInformation.of(clazz));
-    //TODO: result.getSideOutput(errorTag).addSink(Do something with the error)
+        new MapWithErrorProcess<>(errorTag, function, errorLocation), TypeInformation.of(clazz));
+    //TODO: improve error handling
+    result.getSideOutput(errorTag).addSink(new PrintSinkFunction<>());
     return wrap(result);
   }
 

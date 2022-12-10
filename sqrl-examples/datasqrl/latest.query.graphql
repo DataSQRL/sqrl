@@ -2,6 +2,7 @@
 Package(name: "datasqrl.examples.Nutshop") {
     latest {
         version
+        variant
         latestStable
         description
         file

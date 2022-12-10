@@ -14,6 +14,8 @@ datasets:
       type: "STRING"
       tests:
       - "not_null"
+    - name: "variant"
+      type: "STRING"
     - name: "latestStable"
       type: "BOOLEAN"
       tests:

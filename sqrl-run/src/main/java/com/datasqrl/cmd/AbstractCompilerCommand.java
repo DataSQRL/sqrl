@@ -15,17 +15,16 @@ import com.google.common.base.Preconditions;
 import io.vertx.core.Vertx;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import picocli.CommandLine;
 
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
@@ -40,6 +39,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"-g", "--generate-schema"}, description = "Generates the graphql "
       + "schema file and exits")
   private boolean generateSchema = false;
+
+  @CommandLine.Option(names = {"-p", "--port"}, description = "Port for API server")
+  private int port = 8888;
 
   @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory")
   private Path outputDir = null;
@@ -64,8 +66,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
     Packager packager = pkgBuilder.build().getPackager();
     packager.cleanUp();
-    packager.inferDependencies();
-    Path buildPackageFile = packager.populateBuildDir();
+    Path buildPackageFile = packager.populateBuildDir(true);
 
     Compiler compiler = new Compiler();
     Compiler.CompilerResult result = compiler.run(collector, buildPackageFile);
@@ -93,7 +94,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     //execute flink
     executePlan(result.getPlan());
     //execute graphql server
-    startGraphQLServer(result.getModel(), jdbcConnection);
+    startGraphQLServer(result.getModel(), port, jdbcConnection);
   }
 
 
@@ -103,12 +104,12 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   @SneakyThrows
-  private void startGraphQLServer(Model.RootGraphqlModel model, JDBCConnectionProvider jdbcConf) {
+  private void startGraphQLServer(Model.RootGraphqlModel model, int port, JDBCConnectionProvider jdbcConf) {
     CompletableFuture future = Vertx.vertx().deployVerticle(new GraphQLServer(
-            model, toPgOptions(jdbcConf), 8888, new PoolOptions()))
+            model, toPgOptions(jdbcConf), port, new PoolOptions()))
         .toCompletionStage()
         .toCompletableFuture();
-    log.info("Server started at: http://localhost:8888/graphiql/");
+    log.info("Server started at: http://localhost:"+port+"/graphiql/");
     future.get();
   }
 

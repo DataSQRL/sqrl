@@ -1,10 +1,12 @@
 >>>database
+CREATE INDEX IF NOT EXISTS submission$3_btree_c3c16 ON submission$3 USING btree (version,variant$0);
+CREATE INDEX IF NOT EXISTS submission$3_hash_c16 ON submission$3 USING hash (variant$0);
 CREATE INDEX IF NOT EXISTS submission$3_hash_c2 ON submission$3 USING hash (name);
-CREATE INDEX IF NOT EXISTS submission$3_hash_c3 ON submission$3 USING hash (version);
 CREATE TABLE IF NOT EXISTS package$6 (name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));
-CREATE TABLE IF NOT EXISTS submission$3 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,version VARCHAR NOT NULL,lateststable BOOLEAN NOT NULL,license VARCHAR ,repository VARCHAR ,homepage VARCHAR ,documentation VARCHAR ,readme VARCHAR ,description VARCHAR ,file VARCHAR NOT NULL,hash VARCHAR NOT NULL,authorid VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid));
+CREATE TABLE IF NOT EXISTS submission$3 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,version VARCHAR NOT NULL,variant VARCHAR ,lateststable BOOLEAN NOT NULL,license VARCHAR ,repository VARCHAR ,homepage VARCHAR ,documentation VARCHAR ,readme VARCHAR ,description VARCHAR ,file VARCHAR NOT NULL,hash VARCHAR NOT NULL,authorid VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL,variant$0 VARCHAR NOT NULL , PRIMARY KEY (_uuid));
+DROP INDEX IF EXISTS submission$3_btree_c3c16;
+DROP INDEX IF EXISTS submission$3_hash_c16;
 DROP INDEX IF EXISTS submission$3_hash_c2;
-DROP INDEX IF EXISTS submission$3_hash_c3;
 DROP TABLE IF EXISTS package$6;
 DROP TABLE IF EXISTS submission$3;
 >>>query-latest
@@ -13,11 +15,12 @@ DROP TABLE IF EXISTS submission$3;
     "Package" : [ {
       "latest" : {
         "version" : "0.1.0",
+        "variant" : "dev",
         "latestStable" : true,
-        "description" : "Nutshop example data",
-        "file" : "8_e-WN-FzfckOREZ85JY6pv6ktQ.zip",
-        "hash" : "234dfljks3984ujhdwiughe",
-        "submissionTime" : "2022-05-19T09:16:39.553244Z"
+        "description" : "Small Nutshop example data",
+        "file" : "hbG-vCnRyRo62jIMH2LCVw0PE8w.zip",
+        "hash" : "c514baa309a470bf6bb7b43a88dfe70c",
+        "submissionTime" : "2022-12-09T07:06:27.429598Z"
       }
     } ]
   }
@@ -28,9 +31,9 @@ DROP TABLE IF EXISTS submission$3;
     "Package" : [ {
       "versions" : [ {
         "version" : "0.1.0",
-        "file" : "8_e-WN-FzfckOREZ85JY6pv6ktQ.zip",
-        "hash" : "234dfljks3984ujhdwiughe",
-        "submissionTime" : "2022-05-19T09:16:39.553244Z"
+        "file" : "hbG-vCnRyRo62jIMH2LCVw0PE8w.zip",
+        "hash" : "c514baa309a470bf6bb7b43a88dfe70c",
+        "submissionTime" : "2022-12-09T07:06:27.429598Z"
       } ]
     } ]
   }

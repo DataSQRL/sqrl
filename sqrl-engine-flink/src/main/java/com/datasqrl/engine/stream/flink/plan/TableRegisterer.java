@@ -3,22 +3,28 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
+import com.datasqrl.engine.stream.StreamHolder;
+import com.datasqrl.engine.stream.flink.FlinkStreamEngine.Builder;
+import com.datasqrl.engine.stream.flink.schema.FlinkTableSchemaGenerator;
+import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLocation;
+import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Raw;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
-import com.datasqrl.engine.stream.StreamHolder;
-import com.datasqrl.engine.stream.flink.FlinkStreamEngine.Builder;
-import com.datasqrl.engine.stream.flink.schema.FlinkTableSchemaGenerator;
-import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.plan.calcite.table.ImportedRelationalTable;
 import com.datasqrl.plan.calcite.table.SourceRelationalTable;
 import com.datasqrl.plan.calcite.table.StateChangeType;
 import com.datasqrl.plan.calcite.table.StreamRelationalTable;
 import com.datasqrl.schema.UniversalTableBuilder;
 import com.datasqrl.schema.input.SchemaValidator;
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -34,11 +40,6 @@ import org.apache.flink.table.api.internal.FlinkEnvProxy;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
-
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
 
 public class TableRegisterer extends RelShuttleImpl {
 
@@ -96,12 +97,14 @@ public class TableRegisterer extends RelShuttleImpl {
     TableSource tableSource = table.getTableSource();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
     //TODO: push down startup timestamp if determined in FlinkPhysicalPlanner
-    StreamHolder<Raw> stream = streamPreparer.getRawInput(tableSource, streamBuilder);
+    ErrorLocation errorLocation = ErrorPrefix.INPUT_DATA.resolve(tableSource.getName());
+    StreamHolder<Raw> stream = streamPreparer.getRawInput(tableSource, streamBuilder,
+        errorLocation);
     SchemaValidator schemaValidator = new SchemaValidator(tableSource.getSchema(),
         tableSource.getConfiguration().getSchemaAdjustmentSettings(),
         tableSource.getDigest());
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
-        "schema", SourceRecord.Named.class);
+        "schema", errorLocation, SourceRecord.Named.class);
     streamBuilder.addAsTable(validate, tableSource.getSchema(), table.getNameId());
 
   }

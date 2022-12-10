@@ -1,0 +1,73 @@
+---
+version: "1"
+datasets:
+  - name: "nutshop"
+    tables:
+      - name: "orders"
+        partial_schema: false
+        columns:
+          - name: "id"
+            type: "INTEGER"
+            tests:
+              - "not_null"
+          - name: "customerid"
+            type: "INTEGER"
+            tests:
+              - "not_null"
+          - name: "time"
+            type: "INTEGER"
+            tests:
+              - "not_null"
+          - name: "items"
+            columns:
+              - name: "productid"
+                type: "INTEGER"
+                tests:
+                  - "not_null"
+              - name: "quantity"
+                type: "INTEGER"
+                tests:
+                  - "not_null"
+              - name: "unit_price"
+                type: "FLOAT"
+                tests:
+                  - "not_null"
+              - name: "discount"
+                type: "FLOAT"
+            tests:
+              - "not_null"
+      - name: "products"
+        partial_schema: false
+        columns:
+          - name: "id"
+            type: "INTEGER"
+            tests:
+              - "not_null"
+          - name: "name"
+            type: "STRING"
+            tests:
+              - "not_null"
+          - name: "sizing"
+            type: "STRING"
+            tests:
+              - "not_null"
+          - name: "weight_in_gram"
+            type: "INTEGER"
+            tests:
+              - "not_null"
+          - name: "type"
+            type: "STRING"
+            tests:
+              - "not_null"
+          - name: "category"
+            type: "STRING"
+            tests:
+              - "not_null"
+          - name: "usda_id"
+            type: "INTEGER"
+            tests:
+              - "not_null"
+          - name: "updated"
+            type: "DATETIME"
+            tests:
+              - "not_null"

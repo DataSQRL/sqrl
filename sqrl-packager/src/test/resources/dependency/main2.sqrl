@@ -1,0 +1,4 @@
+/* Packager should not actually try to resolve the full script */
+Orders.foo := bar;
+
+EXPORT Orders TO datasqrl.examples.Nutshop.output;

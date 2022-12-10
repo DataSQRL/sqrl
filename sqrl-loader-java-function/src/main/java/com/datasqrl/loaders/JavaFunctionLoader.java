@@ -6,14 +6,13 @@ package com.datasqrl.loaders;
 import com.datasqrl.function.builtin.time.FlinkFnc;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
-import org.apache.flink.table.functions.UserDefinedFunction;
-
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
  * All jars are loaded on the class path and resolved with java's ServiceLoader.
@@ -22,6 +21,11 @@ public class JavaFunctionLoader extends AbstractLoader {
 
   public static final String FILE_SUFFIX = ".function.json";
   private static final Pattern CONFIG_FILE_PATTERN = Pattern.compile("(.*)\\.function\\.json$");
+
+  @Override
+  public boolean isPackage(Path packageBasePath, NamePath fullPath) {
+    return AbstractLoader.isPackagePath(packageBasePath,fullPath);
+  }
 
   @Override
   public Optional<String> loadsFile(Path file) {
