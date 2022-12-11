@@ -1,7 +1,6 @@
 package com.datasqrl.plan.calcite.table;
 
 import com.datasqrl.engine.stream.flink.plan.StreamRelationalTableContext;
-import com.datasqrl.engine.stream.flink.schema.FlinkTableSchemaGenerator;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.schema.UniversalTableBuilder;
@@ -12,26 +11,19 @@ import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
-import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
 
 @Value
-public class StreamTableSchemaStream
-//    implements Schema2Stream<StreamRelationalTableContext>
-{
+public class StreamTableSchemaStream {
   UniversalTableBuilder tblBuilder;
 
   public TypeInformation getTypeInformation() {
-    TypeInformation typeInformation = FlinkTypeInfoSchemaGenerator.INSTANCE.convertSchema(
+    TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator().convertSchema(
         tblBuilder);
     return typeInformation;
-  }
-
-  public Schema getSchema() {
-    return FlinkTableSchemaGenerator.INSTANCE.convertSchema(tblBuilder);
   }
 
   public DataStream convertToStream(StreamTableEnvironment tEnv,

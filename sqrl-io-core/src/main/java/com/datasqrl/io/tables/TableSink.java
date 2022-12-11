@@ -17,12 +17,12 @@ import java.util.Optional;
 @Getter
 public class TableSink extends AbstractExternalTable {
 
-  private final Optional<FlexibleDatasetSchema.TableField> schema;
+  private final Optional<TableSchema> schema;
 
 
   public TableSink(@NonNull DataSystemConnector dataset, @NonNull TableConfig configuration,
       @NonNull NamePath path, @NonNull Name name,
-      Optional<FlexibleDatasetSchema.TableField> schema) {
+      Optional<TableSchema> schema) {
     super(dataset, configuration, path, name);
     this.schema = schema;
   }

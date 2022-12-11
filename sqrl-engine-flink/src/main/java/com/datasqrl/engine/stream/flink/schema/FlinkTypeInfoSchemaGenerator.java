@@ -23,8 +23,6 @@ public class FlinkTypeInfoSchemaGenerator implements
     UniversalTableBuilder.TypeConverter<TypeInformation>,
     UniversalTableBuilder.SchemaConverter<TypeInformation> {
 
-  public static final FlinkTypeInfoSchemaGenerator INSTANCE = new FlinkTypeInfoSchemaGenerator();
-
   @Override
   public TypeInformation convertBasic(RelDataType datatype) {
     if (datatype instanceof BasicSqlType || datatype instanceof IntervalSqlType) {

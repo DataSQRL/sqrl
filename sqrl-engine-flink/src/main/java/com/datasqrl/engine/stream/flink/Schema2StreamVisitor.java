@@ -2,7 +2,6 @@ package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder.SchemaToStreamContext;
 import com.datasqrl.engine.stream.flink.schema.FlinkRowConstructor;
-import com.datasqrl.engine.stream.flink.schema.FlinkTableSchemaGenerator;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.tables.TableSchemaVisitor;
@@ -40,12 +39,13 @@ public class Schema2StreamVisitor implements TableSchemaVisitor<DataStream, Sche
 
   public TypeInformation getTypeInformation(InputTableSchema schema) {
     UniversalTableBuilder tblBuilder = getUniversalTableBuilder(schema);
-    return FlinkTypeInfoSchemaGenerator.INSTANCE.convertSchema(
+    return new FlinkTypeInfoSchemaGenerator().convertSchema(
         tblBuilder);
   }
 
   @Override
   public DataStream accept(JsonTableSchema jsonTableSchema, SchemaToStreamContext context) {
+
     return null;
   }
 }

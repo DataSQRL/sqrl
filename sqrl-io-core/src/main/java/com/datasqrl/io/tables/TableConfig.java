@@ -88,7 +88,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
   }
 
   public TableSource initializeSource(ErrorCollector errors, NamePath basePath,
-      FlexibleDatasetSchema.TableField schema) {
+      TableSchema schema) {
     DataSystemConnector connector = baseInitialize(errors, basePath);
     if (connector == null) {
       return null;
@@ -114,7 +114,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
   }
 
   public TableSink initializeSink(ErrorCollector errors, NamePath basePath,
-      Optional<FlexibleDatasetSchema.TableField> schema) {
+      Optional<TableSchema> schema) {
     DataSystemConnector connector = baseInitialize(errors, basePath);
     if (connector == null) {
       return null;

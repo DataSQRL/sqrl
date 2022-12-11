@@ -4,11 +4,9 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DataSystem;
-import com.datasqrl.io.DataSystemConfig;
-import com.datasqrl.io.impl.print.PrintDataSystem;
 import com.datasqrl.io.tables.AbstractExternalTable;
 import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
@@ -23,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,18 +55,7 @@ public class DataSource {
     }
 
     //Get table schema
-    Optional<FlexibleDatasetSchema.TableField> tableSchema = Optional.empty();
-    if (Files.isRegularFile(tableSchemaPath)) {
-      SchemaDefinition schemaDef = deserialize.mapYAMLFile(tableSchemaPath, SchemaDefinition.class);
-      SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP,
-          tableConfig.getNameCanonicalizer());
-      Map<Name, FlexibleDatasetSchema> schemas = importer.convertImportSchema(schemaDef, errors);
-      Preconditions.checkArgument(schemaDef.datasets.size() == 1);
-      FlexibleDatasetSchema dsSchema = Iterables.getOnlyElement(schemas.values());
-      FlexibleDatasetSchema.TableField tbField = dsSchema.getFieldByName(
-          tableConfig.getResolvedName());
-      tableSchema = Optional.of(tbField);
-    }
+    Optional<TableSchema> tableSchema = resolveSchema(deserialize, tableSchemaPath, tableConfig, errors);
 
     T resultTable;
     if (clazz.equals(TableSource.class)) {
@@ -91,5 +77,23 @@ public class DataSource {
       throw new UnsupportedOperationException("Invalid table clazz: " + clazz);
     }
     return Optional.of(resultTable);
+  }
+
+  private static Optional<TableSchema> resolveSchema(Deserializer deserialize, Path tableSchemaPath,
+      TableConfig tableConfig, ErrorCollector errors) {
+
+    if (Files.isRegularFile(tableSchemaPath)) {
+      SchemaDefinition schemaDef = deserialize.mapYAMLFile(tableSchemaPath, SchemaDefinition.class);
+      SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP,
+          tableConfig.getNameCanonicalizer());
+      Map<Name, FlexibleDatasetSchema> schemas = importer.convertImportSchema(schemaDef, errors);
+      Preconditions.checkArgument(schemaDef.datasets.size() == 1);
+      FlexibleDatasetSchema dsSchema = Iterables.getOnlyElement(schemas.values());
+      FlexibleDatasetSchema.TableField tbField = dsSchema.getFieldByName(
+          tableConfig.getResolvedName());
+      return Optional.of(tbField);
+    }
+
+    return Optional.empty();
   }
 }

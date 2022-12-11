@@ -7,10 +7,13 @@ import com.datasqrl.io.SourceRecord;
 import com.datasqrl.name.Name;
 import com.datasqrl.schema.constraint.ConstraintHelper;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.FlexibleDatasetSchema.FieldType;
+import com.datasqrl.schema.input.FlexibleDatasetSchema.FlexibleField;
 import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.input.FlexibleSchemaHelper;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.datasqrl.schema.input.RelationType;
+import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -46,44 +49,43 @@ public class SourceRecord2RowMapper<R> implements Function<SourceRecord.Named, R
 
   private Object[] constructRows(Map<Name, Object> data,
       RelationType<FlexibleDatasetSchema.FlexibleField> schema) {
-    return getFields(schema)
-        .map(t -> {
-          Name name = t.getLeft();
-          FlexibleDatasetSchema.FieldType ftype = t.getMiddle();
-          if (ftype.getType() instanceof RelationType) {
-            RelationType<FlexibleDatasetSchema.FlexibleField> subType = (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType();
-            if (isSingleton(ftype)) {
-              return rowConstructor.createNestedRow(
-                  constructRows((Map<Name, Object>) data.get(name), subType));
-            } else {
-              int idx = 0;
-              List<Map<Name, Object>> nestedData = (List<Map<Name, Object>>) data.get(name);
-              Object[] rows = new Object[nestedData.size()];
-              for (Map<Name, Object> item : nestedData) {
-                Object[] cols = constructRows(item, subType);
-                //Add index
-                cols = extendCols(cols, 1);
-                cols[0] = Integer.valueOf(idx);
-                rows[idx] = rowConstructor.createNestedRow(cols);
-                idx++;
-              }
-              return rowConstructor.createRowList(rows);
-            }
-          } else {
-            //Data is already correctly prepared by schema validation map-step
-            return data.get(name);
-          }
-        })
-        .toArray();
+    List<Object> objects = new ArrayList<>();
+    for (FlexibleField field : schema.getFields()) {
+      for (FieldType type : field.getTypes()) {
+        objects.add(constructRow(data, field, type));
+      }
+    }
+
+    return objects.toArray();
   }
 
-  private static Stream<Triple<Name, FlexibleDatasetSchema.FieldType, Boolean>> getFields(
-      RelationType<FlexibleDatasetSchema.FlexibleField> relation) {
-    return relation.getFields().stream().flatMap(field -> field.getTypes().stream().map(ftype -> {
-      Name name = FlexibleSchemaHelper.getCombinedName(field, ftype);
-      boolean isMixedType = field.getTypes().size() > 1;
-      return Triple.of(name, ftype, isMixedType);
-    }));
+  private Object constructRow(Map<Name, Object> data, FlexibleField field, FieldType type) {
+    Name name = FlexibleSchemaHelper.getCombinedName(field, type);
+    boolean isMixedType = field.getTypes().size() > 1;
+    if (type.getType() instanceof RelationType) {
+      RelationType<FlexibleDatasetSchema.FlexibleField> subType =
+          (RelationType<FlexibleDatasetSchema.FlexibleField>) type.getType();
+      if (isSingleton(type)) {
+        return rowConstructor.createNestedRow(
+            constructRows((Map<Name, Object>) data.get(name), subType));
+      } else {
+        int idx = 0;
+        List<Map<Name, Object>> nestedData = (List<Map<Name, Object>>) data.get(name);
+        Object[] rows = new Object[nestedData.size()];
+        for (Map<Name, Object> item : nestedData) {
+          Object[] cols = constructRows(item, subType);
+          //Add index
+          cols = extendCols(cols, 1);
+          cols[0] = Integer.valueOf(idx);
+          rows[idx] = rowConstructor.createNestedRow(cols);
+          idx++;
+        }
+        return rowConstructor.createRowList(rows);
+      }
+    } else {
+      //Data is already correctly prepared by schema validation map-step
+      return data.get(name);
+    }
   }
 
   private static boolean isSingleton(FlexibleDatasetSchema.FieldType ftype) {

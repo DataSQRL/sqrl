@@ -7,6 +7,7 @@ import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRe
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.SinkContext;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Raw;
 import com.datasqrl.io.tables.TableSink;
@@ -31,6 +32,7 @@ import java.util.Set;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableDescriptor;
@@ -56,10 +58,12 @@ public class FlinkTableRegistration implements
 
 
     StreamTableSchemaStream schema2Stream = new StreamTableSchemaStream(table.getStreamSchema());
+    Schema schema = new UniversalTable2FlinkSchema().convertSchema(table.getStreamSchema());
+    DataStream stream = schema2Stream.convertToStream(context.getTEnv(),
+      new StreamRelationalTableContext(inputTable, table.getStateChangeType()));
 
-    context.getTEnv().createTemporaryView(table.getNameId(),
-        schema2Stream.convertToStream(context.getTEnv(),
-            new StreamRelationalTableContext(inputTable, table.getStateChangeType())), schema2Stream.getSchema());
+    context.getTEnv().createTemporaryView(table.getNameId(), stream, schema);
+
     return null;
   }
 
@@ -117,7 +121,6 @@ public class FlinkTableRegistration implements
     context.getTEnv().createTemporaryTable(flinkSinkName, sinkDescriptor);
     context.getStreamStatementSet().addInsert(flinkSinkName, tbl);
     return null;
-
   }
 
   @Value

@@ -4,9 +4,7 @@
 package com.datasqrl.engine.stream.flink.schema;
 
 import com.datasqrl.schema.UniversalTableBuilder;
-import com.datasqrl.schema.input.SqrlTypeConverter;
-import com.datasqrl.schema.type.Type;
-import com.datasqrl.schema.type.basic.*;
+import java.util.List;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.BasicSqlType;
@@ -16,14 +14,10 @@ import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.types.DataType;
 
-import java.util.List;
-
 
 @Value
-public class FlinkTableSchemaGenerator implements UniversalTableBuilder.TypeConverter<DataType>,
+public class UniversalTable2FlinkSchema implements UniversalTableBuilder.TypeConverter<DataType>,
     UniversalTableBuilder.SchemaConverter<Schema> {
-
-  public static final FlinkTableSchemaGenerator INSTANCE = new FlinkTableSchemaGenerator();
 
   @Override
   public DataType convertBasic(RelDataType datatype) {

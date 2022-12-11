@@ -7,7 +7,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.TableLoader;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
-import com.datasqrl.engine.stream.flink.schema.FlinkTableSchemaGenerator;
+import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
 import com.datasqrl.schema.constraint.Constraint;
@@ -117,8 +117,8 @@ public class FlexibleSchemaHandlingTest {
       CalciteTableFactory.UTB2RelDataTypeConverter converter = calciteTableFactory.new UTB2RelDataTypeConverter();
       converters.add(new SchemaConverterTestCase(converter));
       //Flink
-      converters.add(new SchemaConverterTestCase(FlinkTypeInfoSchemaGenerator.INSTANCE));
-      converters.add(new SchemaConverterTestCase(FlinkTableSchemaGenerator.INSTANCE));
+      converters.add(new SchemaConverterTestCase(new FlinkTypeInfoSchemaGenerator()));
+      converters.add(new SchemaConverterTestCase(new UniversalTable2FlinkSchema()));
 
       List<InputSchema> schemas = TestDataset.getAll().stream()
           .map(td -> new InputSchema(td.getRootPackageDirectory().resolve(td.getName()),
