@@ -7,6 +7,7 @@ import com.datasqrl.io.SourceRecord;
 import com.datasqrl.name.Name;
 import com.datasqrl.schema.constraint.ConstraintHelper;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.input.FlexibleSchemaHelper;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.datasqrl.schema.input.RelationType;
@@ -22,7 +23,7 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 public class SourceRecord2RowMapper<R> implements Function<SourceRecord.Named, R>, Serializable {
 
-  private final InputTableSchema tableSchema;
+  private final InputTableSchema<TableField> tableSchema;
   private final RowConstructor<R> rowConstructor;
 
   public R apply(SourceRecord.Named sourceRecord) {

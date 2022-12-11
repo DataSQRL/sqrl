@@ -3,8 +3,8 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.loaders.DataSource;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.TableLoader;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.engine.stream.flink.schema.FlinkTableSchemaGenerator;
@@ -85,7 +85,7 @@ public class FlexibleSchemaHandlingTest {
 
   @SneakyThrows
   public FlexibleDatasetSchema getSchema(InputSchema inputSchema) {
-    SchemaDefinition schemaDef = new DataSource.Loader().loadPackageSchema(inputSchema.packageDir);
+    SchemaDefinition schemaDef = new TableLoader().loadPackageSchema(inputSchema.packageDir);
     DatasetDefinition datasetDefinition = schemaDef.datasets.stream()
         .filter(dd -> dd.name.equalsIgnoreCase(inputSchema.name)).findFirst().get();
     SchemaImport.DatasetConverter importer = new SchemaImport.DatasetConverter(

@@ -11,12 +11,14 @@ import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.LocalFlinkStreamEngineImpl;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
-import com.datasqrl.schema.input.SchemaValidator;
+import com.datasqrl.schema.input.DefaultSchemaValidator;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Retail;
 import lombok.SneakyThrows;
@@ -49,10 +51,11 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
     FlinkStreamEngine.Builder streamBuilder = flink.createJob();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 
-    StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(tblSource, streamBuilder,
-        ErrorPrefix.INPUT_DATA);
-    SchemaValidator schemaValidator = new SchemaValidator(tblSource.getSchema(),
-        SchemaAdjustmentSettings.DEFAULT, tblSource.getDigest());
+
+    StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(tblSource, streamBuilder, ErrorPrefix.INPUT_DATA);
+    DefaultSchemaValidator schemaValidator = new DefaultSchemaValidator(tblSource.getSchema(),
+        SchemaAdjustmentSettings.DEFAULT, NameCanonicalizer.SYSTEM,
+        new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT));
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
         "schema", ErrorPrefix.INPUT_DATA, SourceRecord.Named.class);
     streamBuilder.addAsTable(validate, tblSource.getSchema(), "orders");

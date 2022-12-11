@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.calcite;
 
+import com.datasqrl.plan.calcite.memory.rule.SqrlDataSourceToEnumerableConverterRule;
 import com.datasqrl.plan.calcite.rules.DAGExpansionRule;
 import com.datasqrl.plan.calcite.rules.SQRLPrograms;
 import com.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
@@ -96,19 +97,16 @@ public class OptimizationStage {
       Optional.empty());
 
   //Enumerable
-//    public static final OptimizationStage SQRL_ENUMERABLE_HEP = new OptimizationStage("SQRL2Enumerable",
-//            Programs.hep(List.of(new SqrlExpansionRelRule()), false, DefaultRelMetadataProvider.INSTANCE),
-//            Optional.empty());
-//    public static final OptimizationStage STANDARD_ENUMERABLE_RULES = new OptimizationStage("standardEnumerable",
-//            Programs.sequence(
-//                    Programs.subQuery(DefaultRelMetadataProvider.INSTANCE),
-//                    SQRLPrograms.ENUMERABLE_VOLCANO,
-//                    Programs.calc(DefaultRelMetadataProvider.INSTANCE),
-//                    Programs.hep(
-//                            List.of(new SqrlDataSourceToEnumerableConverterRule()), false, DefaultRelMetadataProvider.INSTANCE
-//                    )
-//            ),
-//            Optional.of(EnumerableConvention.INSTANCE));
-//    public static final List<OptimizationStage> ENUMERABLE_STAGES = ImmutableList.of(SQRL_ENUMERABLE_HEP,STANDARD_ENUMERABLE_RULES);
+  public static final OptimizationStage CALCITE_ENGINE = new OptimizationStage("standardEnumerable",
+            Programs.sequence(
+                    Programs.subQuery(DefaultRelMetadataProvider.INSTANCE),
+                    SQRLPrograms.ENUMERABLE_VOLCANO,
+                    Programs.calc(DefaultRelMetadataProvider.INSTANCE),
+                    Programs.hep(
+                            List.of(new SqrlDataSourceToEnumerableConverterRule()), false, DefaultRelMetadataProvider.INSTANCE
+                    )
+            ),
+            Optional.of(EnumerableConvention.INSTANCE));
+
 
 }

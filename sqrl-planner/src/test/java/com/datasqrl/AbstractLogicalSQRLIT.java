@@ -3,9 +3,9 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.loaders.DataSource;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.loaders.TableLoader;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.Planner;
@@ -52,7 +52,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
 
   protected TableSource loadTable(NamePath path) {
-    DataSource.Loader loader = new DataSource.Loader();
+    TableLoader loader = new TableLoader();
     return loader.readTable(rootDir, path, error).get();
   }
 

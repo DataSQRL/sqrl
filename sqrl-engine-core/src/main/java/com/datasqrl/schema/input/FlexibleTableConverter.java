@@ -7,6 +7,7 @@ import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.constraint.Cardinality;
 import com.datasqrl.schema.constraint.ConstraintHelper;
+import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -17,7 +18,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class FlexibleTableConverter {
 
-  private final InputTableSchema tableSchema;
+  private final InputTableSchema<TableField> tableSchema;
   private final Optional<Name> tableAlias;
 
   public FlexibleTableConverter(InputTableSchema tableSchema) {

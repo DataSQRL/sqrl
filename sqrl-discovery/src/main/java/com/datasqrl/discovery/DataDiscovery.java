@@ -11,7 +11,9 @@ import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.DataSystem;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.stats.SchemaGenerator;
+import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.stats.SourceTableStatistics;
 import com.datasqrl.io.stats.TableStatisticsStore;
 import com.datasqrl.io.stats.TableStatisticsStoreProvider;
@@ -22,6 +24,7 @@ import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.metadata.MetadataNamedPersistence;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -90,7 +93,7 @@ public class DataDiscovery {
     try (TableStatisticsStore store = statsStore.openStore()) {
       for (TableInput table : tables) {
         SourceTableStatistics stats = store.getTableStatistics(table.getPath());
-        SchemaGenerator generator = new SchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
+        DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
         FlexibleDatasetSchema.TableField tableField = baseSchema.getFieldByName(table.getName());
         FlexibleDatasetSchema.TableField schema;
         ErrorCollector subErrors = errors.resolve(table.getName());
@@ -134,7 +137,7 @@ public class DataDiscovery {
     FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
     builder.setDescription(baseSchema.getDescription());
     for (TableSource table : tables) {
-      builder.add(table.getSchema().getSchema());
+      builder.add((TableField) table.getSchema().getSchema());
     }
     return builder.build();
   }

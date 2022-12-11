@@ -27,13 +27,13 @@ import java.util.*;
 /**
  * This class is not thread-safe and should be used to merge one schema at a time.
  */
-public class SchemaGenerator implements Serializable {
+public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
 
   private final SchemaAdjustmentSettings settings;
 
   private boolean isComplete;
 
-  public SchemaGenerator(SchemaAdjustmentSettings settings) {
+  public DefaultSchemaGenerator(SchemaAdjustmentSettings settings) {
     this.settings = settings;
   }
 

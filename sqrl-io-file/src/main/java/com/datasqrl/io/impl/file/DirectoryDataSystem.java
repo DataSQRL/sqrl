@@ -52,6 +52,11 @@ public abstract class DirectoryDataSystem {
       return false;
     }
 
+    @Override
+    public String getPrefix() {
+      return "file";
+    }
+
     public boolean isTableFile(FilePath file, TableConfig tableConfig) {
       Optional<FilePath.NameComponents> componentsOpt = file.getComponents(filenamePattern);
       NameCanonicalizer canonicalizer = tableConfig.getNameCanonicalizer();

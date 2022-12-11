@@ -40,6 +40,11 @@ public abstract class KafkaDataSystem {
       return true;
     }
 
+    @Override
+    public String getPrefix() {
+      return "kafka";
+    }
+
     public Properties getProperties(String groupId) {
       Properties copy = new Properties(properties);
       if (!Strings.isNullOrEmpty(groupId)) {

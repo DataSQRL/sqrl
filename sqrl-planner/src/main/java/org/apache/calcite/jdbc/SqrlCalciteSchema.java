@@ -16,7 +16,6 @@
  */
 package org.apache.calcite.jdbc;
 
-import com.datasqrl.schema.FieldVisitor;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import org.apache.calcite.schema.Schema;
@@ -28,6 +27,10 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class SqrlCalciteSchema extends SimpleCalciteSchema {
+
+  public SqrlCalciteSchema() {
+    this(CalciteSchema.createRootSchema(false, false).plus());
+  }
 
   public SqrlCalciteSchema(Schema schema) {
     super(null, schema, "");

@@ -3,6 +3,9 @@
  */
 package com.datasqrl.io.tables;
 
+import com.datasqrl.io.stats.DefaultSchemaGenerator;
+import com.datasqrl.schema.input.DefaultSchemaValidator;
+import com.datasqrl.schema.input.InputTableSchema;
 import com.datasqrl.util.constraints.OptionalMinString;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigurationUtil;
@@ -92,7 +95,12 @@ public class TableConfig extends SharedConfiguration implements Serializable {
     }
     Preconditions.checkArgument(getType().isSource());
     Name tableName = getResolvedName();
-    return new TableSource(connector, this, basePath.concat(tableName), tableName, schema);
+    InputTableSchema inputTableSchema = new InputTableSchema(schema, connector.hasSourceTimestamp());;
+    DefaultSchemaValidator validator = new DefaultSchemaValidator(inputTableSchema,
+        getSchemaAdjustmentSettings(),
+        getNameCanonicalizer(),
+        new DefaultSchemaGenerator(getSchemaAdjustmentSettings()));
+    return new TableSource(connector, this, basePath.concat(tableName), tableName, schema, validator);
   }
 
   public TableInput initializeInput(ErrorCollector errors, NamePath basePath) {

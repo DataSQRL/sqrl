@@ -93,7 +93,8 @@ public class CalciteTableFactory {
         baseRel.getRelNode().getRowType());
     RelDataType rootType = convertTable(rootTable, true, true);
     StreamRelationalTableImpl source = new StreamRelationalTableImpl(getTableId(tableName, "s"),
-        baseRel.getRelNode(), rootType, rootTable, changeType);
+        baseRel.getRelNode(), rootType,
+        rootTable, changeType);
     TableStatistic statistic = TableStatistic.of(baseRel.estimateRowCount());
     ProxyStreamRelationalTable impTable = new ProxyStreamRelationalTable(getTableId(tableName, "q"),
         getTimestampHolder(rootTable),

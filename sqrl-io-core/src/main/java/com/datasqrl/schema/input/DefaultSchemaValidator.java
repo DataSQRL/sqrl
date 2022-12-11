@@ -6,12 +6,16 @@ package com.datasqrl.schema.input;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.stats.FieldStats;
 import com.datasqrl.io.stats.SchemaGenerator;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.io.stats.FieldStats;
+import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.stats.TypeSignature.Simple;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.engine.stream.FunctionWithError;
+import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
 import com.datasqrl.schema.type.basic.StringType;
@@ -33,31 +37,36 @@ import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+
 /**
- * Follows {@link SchemaGenerator} in structure and semantics.
+ * Follows {@link DefaultSchemaGenerator} in structure and semantics.
  */
-public class SchemaValidator implements Serializable {
+public class DefaultSchemaValidator implements SchemaValidator, Serializable {
 
   private final SchemaAdjustmentSettings settings;
-  private final InputTableSchema tableSchema;
+  private final InputTableSchema<TableField> tableSchema;
   private final NameCanonicalizer canonicalizer;
   private final SchemaGenerator schemaGenerator;
 
-  public SchemaValidator(@NonNull InputTableSchema tableSchema,
+  public DefaultSchemaValidator(@NonNull InputTableSchema<TableField> tableSchema,
       @NonNull SchemaAdjustmentSettings settings,
-      @NonNull TableSource.Digest tableDigest) {
+      @NonNull NameCanonicalizer canonicalizer,
+      @NonNull SchemaGenerator schemaGenerator) {
     Preconditions.checkArgument(!tableSchema.getSchema().isPartialSchema());
     this.settings = settings;
     this.tableSchema = tableSchema;
-    this.canonicalizer = tableDigest.getCanonicalizer();
-    this.schemaGenerator = new SchemaGenerator(settings);
+    this.canonicalizer = canonicalizer;
+    this.schemaGenerator = schemaGenerator;
   }
 
   public FunctionWithError<SourceRecord.Raw, SourceRecord.Named> getFunction() {
     return new Function(this);
   }
 
-  public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
+  private SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
     //verify meta data
     if (!record.hasUUID()) {
       errors.fatal("Input record does not have UUID");
@@ -256,7 +265,7 @@ public class SchemaValidator implements Serializable {
   @AllArgsConstructor
   public static class Function implements FunctionWithError<SourceRecord.Raw, SourceRecord.Named> {
 
-    private final SchemaValidator validator;
+    private final DefaultSchemaValidator validator;
 
     @Override
     public Optional<SourceRecord.Named> apply(SourceRecord.Raw raw,

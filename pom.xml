@@ -28,6 +28,7 @@
         <module>sqrl-loader-java-function</module>
         <module>sqrl-loader-table</module>
         <module>sqrl-run</module>
+        <module>sqrl-loader-jsonschema</module>
     </modules>
 
 

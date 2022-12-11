@@ -3,6 +3,8 @@
  */
 package com.datasqrl.schema.input;
 
+import com.datasqrl.io.tables.TableSchema;
+import com.datasqrl.io.tables.TableSchemaVisitor;
 import com.datasqrl.name.Name;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.type.Type;
@@ -95,7 +97,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
   @ToString(callSuper = true)
   @NoArgsConstructor
   @EqualsAndHashCode(callSuper = true)
-  public static class TableField extends AbstractField {
+  public static class TableField extends AbstractField implements TableSchema {
 
     private boolean isPartialSchema;
     @NonNull
@@ -109,6 +111,11 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
       this.isPartialSchema = isPartialSchema;
       this.fields = fields;
       this.constraints = constraints;
+    }
+
+    @Override
+    public <R, C> R accept(TableSchemaVisitor<R, C> visitor, C context) {
+      return visitor.accept(this, context);
     }
 
     @Setter
