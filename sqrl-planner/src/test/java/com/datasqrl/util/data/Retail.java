@@ -37,7 +37,7 @@ public class Retail implements TestDataset {
         TestScript.of(this, BASE_PATH.resolve("c360-full.sqrl"),
                 "orders", "entries", "customer", "category", "product", "total", "order_again",
                 "_spending_by_month_category", "favorite_categories",
-                "order_stats", "newcustomerpromotion")
+                "order_stats")
             .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("c360-full-graphqlv1"),
                 BASE_PATH.resolve("c360-full-graphqlv2")))
             .build());
