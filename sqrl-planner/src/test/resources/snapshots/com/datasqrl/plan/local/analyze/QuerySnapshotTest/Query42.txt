@@ -1,9 +1,0 @@
-Orders.entries.discount := COALESCE(discount, 0.0);
-Orders.entries.total := quantity * unit_price - discount;
-
-LogicalProject(__pk_0=[$0], __pk_1=[$1], EXPR$2=[-(*($3, $4), $6)])
-  LogicalTableScan(table=[[entries$13]])
-
-
-SELECT "id" AS "__pk_0", "_idx" AS "__pk_1", "quantity" * "unit_price" - "discount$0"
-FROM entries$13

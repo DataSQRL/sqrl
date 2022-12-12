@@ -4,6 +4,7 @@
 package com.datasqrl.schema;
 
 import com.datasqrl.name.Name;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -16,6 +17,7 @@ import java.util.stream.Stream;
 
 public class FieldList {
 
+  @Getter
   List<Field> fields = new ArrayList<>();
 
   public int nextVersion(Name name) {

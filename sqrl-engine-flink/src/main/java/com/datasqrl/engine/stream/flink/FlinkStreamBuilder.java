@@ -4,9 +4,9 @@
 package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.engine.stream.StreamHolder;
-import com.datasqrl.engine.stream.flink.monitor.KeyedSourceRecordStatistics;
-import com.datasqrl.engine.stream.flink.monitor.SaveTableStatistics;
-import com.datasqrl.engine.stream.flink.util.FlinkUtilities;
+import com.datasqrl.engine.stream.flink.schema.FlinkRowConstructor;
+import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
+import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.SourceRecord;
@@ -15,11 +15,12 @@ import com.datasqrl.io.impl.file.DirectoryDataSystem;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.impl.kafka.KafkaDataSystem;
-import com.datasqrl.io.stats.SourceTableStatistics;
-import com.datasqrl.io.stats.TableStatisticsStoreProvider;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
+import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.converters.RowConstructor;
+import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -38,7 +39,6 @@ import lombok.Value;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -48,7 +48,6 @@ import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsIni
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
@@ -105,47 +104,6 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   }
 
   @Override
-  public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream,
-      TableInput tableSource,
-      TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
-    Preconditions.checkArgument(
-        stream instanceof FlinkStreamHolder && ((FlinkStreamHolder) stream).getBuilder()
-            .equals(this));
-    setJobType(FlinkStreamEngine.JobType.MONITOR);
-
-    DataStream<SourceRecord.Raw> data = ((FlinkStreamHolder) stream).getStream();
-    final OutputTag<SourceTableStatistics> statsOutput = new OutputTag<>(
-        FlinkStreamEngine.getFlinkName(STATS_NAME_PREFIX, tableSource.qualifiedName())) {
-    };
-
-    SingleOutputStreamOperator<SourceRecord.Raw> process = data.keyBy(
-            FlinkUtilities.getHashPartitioner(defaultParallelism))
-        .process(
-            new KeyedSourceRecordStatistics(statsOutput, tableSource.getDigest()),
-            TypeInformation.of(SourceRecord.Raw.class));
-//    process.addSink(new PrintSinkFunction<>()); //TODO: persist last 100 for querying
-
-    //Process the gathered statistics in the side output
-    final int randomKey = FlinkUtilities.generateBalancedKey(defaultParallelism);
-    process.getSideOutput(statsOutput)
-        .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
-        .reduce(
-            new ReduceFunction<SourceTableStatistics>() {
-              @Override
-              public SourceTableStatistics reduce(SourceTableStatistics acc,
-                  SourceTableStatistics add) throws Exception {
-                acc.merge(add);
-                return acc;
-              }
-            })
-        .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
-//                .process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
-//                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
-        .addSink(new SaveTableStatistics(statisticsStoreProvider, tableSource.getDigest()));
-    return new FlinkStreamHolder<>(this, process);
-  }
-
-  @Override
   public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema,
       String qualifiedTableName) {
     Preconditions.checkArgument(
@@ -154,20 +112,24 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder) stream;
 
     //TODO: error handling when mapping doesn't work?
-
-    Schema flinkSchema = schema.getSchema().accept(new Schema2FlinkSchemaVisitor(),
-        schema);
-    DataStream rows = schema.getSchema().accept(new Schema2StreamVisitor(),
-        new SchemaToStreamContext(tableEnvironment, flinkStream, schema));
+    UniversalTable universalTable = schema.getSchema().createUniversalTable(schema.isHasSourceTimestamp());
+    Schema flinkSchema = new UniversalTable2FlinkSchema().convertSchema(universalTable);
+    TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()
+        .convertSchema(universalTable);
+    RowMapper rowMapper = schema.getSchema().getRowMapper(FlinkRowConstructor.INSTANCE, schema.isHasSourceTimestamp());
+    DataStream rows = flinkStream.getStream()
+          .map(rowMapper::apply, typeInformation);
 
     tableEnvironment.createTemporaryView(qualifiedTableName, rows, flinkSchema);
   }
 
+
   @Value
   public static class SchemaToStreamContext {
     StreamTableEnvironment tEnv;
-    FlinkStreamHolder<SourceRecord.Named> stream;
+    StreamHolder<SourceRecord.Named> stream;
     InputTableSchema schema;
+    RowConstructor rowConstructor;
   }
 
   @Override

@@ -1,6 +1,0 @@
-LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(__pk_0=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10])
-    LogicalJoin(condition=[=($0, $5)], joinType=[default])
-      LogicalTableScan(table=[[orders$3]])
-      LogicalTableScan(table=[[entries$4]])
-

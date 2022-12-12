@@ -6,7 +6,7 @@ package com.datasqrl.plan.calcite.table;
 import com.datasqrl.engine.stream.flink.plan.TableRegistration;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.ReservedName;
-import com.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.schema.UniversalTable;
 import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
@@ -21,12 +21,12 @@ public class StreamRelationalTableImpl extends SourceRelationalTableImpl impleme
   @Setter
   private RelNode baseRelation;
   private final RelDataType streamRowType;
-  private final UniversalTableBuilder streamSchema;
+  private final UniversalTable streamSchema;
   private final StateChangeType stateChangeType;
 
   public StreamRelationalTableImpl(@NonNull Name nameId, RelNode baseRelation,
       RelDataType streamRowType,
-      UniversalTableBuilder streamSchema, StateChangeType stateChangeType) {
+      UniversalTable streamSchema, StateChangeType stateChangeType) {
     super(nameId);
     this.baseRelation = baseRelation;
     this.streamRowType = streamRowType;

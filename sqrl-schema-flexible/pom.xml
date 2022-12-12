@@ -9,7 +9,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>sqrl-loader-table</artifactId>
+  <artifactId>sqrl-schema-flexible</artifactId>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -20,15 +20,8 @@
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-loader-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-schema-flexible</artifactId>
-    </dependency>
   </dependencies>
+
 </project>

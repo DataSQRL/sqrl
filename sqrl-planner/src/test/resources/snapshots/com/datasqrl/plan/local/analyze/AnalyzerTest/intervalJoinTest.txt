@@ -1,5 +1,0 @@
-LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _uuid0=[$6], _ingest_time0=[$7], id=[$8], customerid=[$9], time=[$10])
-  LogicalJoin(condition=[>($7, $1)], joinType=[interval])
-    LogicalTableScan(table=[[product$7]])
-    LogicalTableScan(table=[[orders$3]])
-

@@ -3,7 +3,7 @@ package com.datasqrl.plan.calcite.table;
 import com.datasqrl.engine.stream.flink.plan.StreamRelationalTableContext;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.schema.UniversalTable;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.Value;
@@ -18,7 +18,7 @@ import org.apache.flink.util.Collector;
 
 @Value
 public class StreamTableSchemaStream {
-  UniversalTableBuilder tblBuilder;
+  UniversalTable tblBuilder;
 
   public TypeInformation getTypeInformation() {
     TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator().convertSchema(

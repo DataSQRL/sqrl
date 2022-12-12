@@ -28,7 +28,7 @@
         <module>sqrl-loader-java-function</module>
         <module>sqrl-loader-table</module>
         <module>sqrl-run</module>
-        <module>sqrl-loader-jsonschema</module>
+        <module>sqrl-schema-flexible</module>
     </modules>
 
 
@@ -217,6 +217,12 @@
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <artifactId>sqrl-schema-flexible</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.ongres.scram</groupId>
                 <artifactId>common</artifactId>

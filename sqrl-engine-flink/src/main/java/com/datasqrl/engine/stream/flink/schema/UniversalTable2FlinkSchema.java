@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.stream.flink.schema;
 
-import com.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.schema.UniversalTable;
 import java.util.List;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -16,8 +16,8 @@ import org.apache.flink.table.types.DataType;
 
 
 @Value
-public class UniversalTable2FlinkSchema implements UniversalTableBuilder.TypeConverter<DataType>,
-    UniversalTableBuilder.SchemaConverter<Schema> {
+public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<DataType>,
+    UniversalTable.SchemaConverter<Schema> {
 
   @Override
   public DataType convertBasic(RelDataType datatype) {
@@ -117,7 +117,7 @@ public class UniversalTable2FlinkSchema implements UniversalTableBuilder.TypeCon
   }
 
   @Override
-  public Schema convertSchema(UniversalTableBuilder tblBuilder) {
+  public Schema convertSchema(UniversalTable tblBuilder) {
     Schema.Builder schemaBuilder = Schema.newBuilder();
     for (Pair<String, DataType> column : tblBuilder.convert(this)) {
       schemaBuilder.column(column.getKey(), column.getValue());

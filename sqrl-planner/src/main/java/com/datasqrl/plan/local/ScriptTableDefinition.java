@@ -7,7 +7,7 @@ import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.SQRLTable;
-import com.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -34,7 +34,7 @@ public class ScriptTableDefinition {
 
   /**
    * Produces a mapping from SQRL Table fields to the corresponding fields in Calcite. Since import
-   * tables are generated from a single {@link UniversalTableBuilder} we can make the simplifying
+   * tables are generated from a single {@link UniversalTable} we can make the simplifying
    * assumption that the names are identical.
    *
    * @return

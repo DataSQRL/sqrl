@@ -1,4 +1,0 @@
-[FATAL]
-Invalid function call:
-NOW(INT NOT NULL)
-

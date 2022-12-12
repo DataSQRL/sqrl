@@ -1,3 +1,0 @@
-LogicalProject(x=[+($1, 60000:INTERVAL SECOND)])
-  LogicalTableScan(table=[[product$3]])
-

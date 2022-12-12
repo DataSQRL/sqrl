@@ -30,6 +30,10 @@
       <artifactId>sqrl-engine-flink</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-schema-flexible</artifactId>
+    </dependency>
+    <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
     </dependency>

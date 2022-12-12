@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests the generation of schemas for various consumers based on the central
- * {@link FlexibleDatasetSchema} by way of the {@link UniversalTableBuilder}.
+ * {@link FlexibleDatasetSchema} by way of the {@link UniversalTable}.
  */
 public class FlexibleSchemaHandlingTest {
 
@@ -57,9 +57,9 @@ public class FlexibleSchemaHandlingTest {
       for (boolean hasSourceTimestamp : new boolean[]{true, false}) {
         for (Optional<Name> alias : new Optional[]{Optional.empty(), Optional.of(tableAlias)}) {
           FlexibleTableConverter converter = new FlexibleTableConverter(
-              new InputTableSchema(table, hasSourceTimestamp), alias);
+              table, hasSourceTimestamp, alias);
           FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter();
-          UniversalTableBuilder tblBuilder = converter.apply(utbConverter);
+          UniversalTable tblBuilder = converter.apply(utbConverter);
           if (alias.isPresent()) {
             assertEquals(tblBuilder.getName(), alias.get());
             continue;
@@ -133,10 +133,10 @@ public class FlexibleSchemaHandlingTest {
   @AllArgsConstructor
   static class SchemaConverterTestCase<S> {
 
-    UniversalTableBuilder.SchemaConverter<S> schemaConverter;
+    UniversalTable.SchemaConverter<S> schemaConverter;
     SchemaConverterValidator<S> validator;
 
-    public SchemaConverterTestCase(UniversalTableBuilder.SchemaConverter<S> schemaConverter) {
+    public SchemaConverterTestCase(UniversalTable.SchemaConverter<S> schemaConverter) {
       this(schemaConverter, null);
     }
 

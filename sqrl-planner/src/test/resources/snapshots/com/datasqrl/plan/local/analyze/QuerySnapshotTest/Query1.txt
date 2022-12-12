@@ -1,8 +1,0 @@
-X := SELECT * FROM Product;
-
-LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
-  LogicalTableScan(table=[[product$10]])
-
-
-SELECT *
-FROM product$10

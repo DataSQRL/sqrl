@@ -81,6 +81,7 @@ public class DataSource {
 
   private static Optional<TableSchema> resolveSchema(Deserializer deserialize, Path tableSchemaPath,
       TableConfig tableConfig, ErrorCollector errors) {
+    //todo Resolve
 
     if (Files.isRegularFile(tableSchemaPath)) {
       SchemaDefinition schemaDef = deserialize.mapYAMLFile(tableSchemaPath, SchemaDefinition.class);

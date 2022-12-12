@@ -1,4 +1,0 @@
->>>orders2-lp
-LogicalProject(_uuid=[$0], _ingest_time=[$1], time=[$4])
-  LogicalTableScan(table=[[orders$q$5]])
-

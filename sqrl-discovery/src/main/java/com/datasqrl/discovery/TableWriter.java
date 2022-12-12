@@ -27,7 +27,6 @@ public class TableWriter {
 
   public TableWriter() {
     this.jsonMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-    ;
     this.yamlMapper = new YAMLMapper();
     this.yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
   }

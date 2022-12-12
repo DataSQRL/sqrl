@@ -1,9 +1,0 @@
-Category := SELECT DISTINCT category AS name FROM Product;
-
-
-LogicalProject(name=[$5])
-  LogicalTableScan(table=[[product$10]])
-
-
-SELECT "category" AS "name"
-FROM product$10

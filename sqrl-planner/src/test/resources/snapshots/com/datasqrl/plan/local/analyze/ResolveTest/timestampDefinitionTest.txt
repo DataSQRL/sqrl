@@ -1,3 +1,0 @@
->>>orders-lp
-LogicalValues(tuples=[[]])
-

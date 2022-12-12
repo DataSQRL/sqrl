@@ -1,3 +1,0 @@
->>>countstream-lp
-LogicalValues(tuples=[[]])
-
