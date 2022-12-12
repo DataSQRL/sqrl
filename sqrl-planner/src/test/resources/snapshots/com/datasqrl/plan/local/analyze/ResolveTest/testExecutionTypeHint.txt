@@ -1,0 +1,15 @@
+>>>customeragg1-lp
+LogicalProject(customerid=[$1], num=[$2], _ingest_time=[$0])
+  LogicalAggregate(group=[{1, 2}], num=[COUNT()]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
+    LogicalTableScan(table=[[customer$q$2]])
+
+>>>customeragg2-lp
+LogicalProject(customerid=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
+  LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND))])
+    LogicalTableScan(table=[[customer$3]])
+
+>>>customeragg3-lp
+LogicalProject(customerid=[$1], num=[$2], _ingest_time=[$0])
+  LogicalAggregate(group=[{1, 2}], num=[COUNT()]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
+    LogicalTableScan(table=[[customer$q$2]])
+

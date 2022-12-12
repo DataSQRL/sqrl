@@ -1,0 +1,6 @@
+>>>ordercustomer-lp
+LogicalProject(_uuid=[$0], _uuid0=[$5], id=[$2], name=[$9], customerid=[$3])
+  LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1]]
+    LogicalTableScan(table=[[orders$6]])
+    LogicalTableScan(table=[[customer$3]])
+

@@ -1,0 +1,6 @@
+LogicalAggregate(group=[{0}], cnt=[COUNT()])
+  LogicalProject(__pk_0=[$0])
+    LogicalJoin(condition=[=($0, $5)], joinType=[default])
+      LogicalTableScan(table=[[orders$3]])
+      LogicalTableScan(table=[[entries$4]])
+

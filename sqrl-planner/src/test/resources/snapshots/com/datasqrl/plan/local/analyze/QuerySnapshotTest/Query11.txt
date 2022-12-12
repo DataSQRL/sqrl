@@ -1,0 +1,11 @@
+Orders.o2 := SELECT @.* FROM Orders;
+
+LogicalProject(__pk_0=[$0], id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4])
+  LogicalJoin(condition=[true], joinType=[default])
+    LogicalTableScan(table=[[orders$12]])
+    LogicalTableScan(table=[[orders$12]])
+
+
+SELECT "orders$12"."id" AS "__pk_0", "orders$12"."id", "orders$12"."_uuid", "orders$12"."_ingest_time", "orders$12"."customerid", "orders$12"."time"
+FROM orders$12
+ DEFAULT JOIN orders$12 AS "orders$120" ON TRUE

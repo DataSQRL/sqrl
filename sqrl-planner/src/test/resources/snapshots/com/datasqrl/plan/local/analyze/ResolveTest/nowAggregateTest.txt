@@ -1,0 +1,25 @@
+>>>ordernow1-lp
+LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
+  LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 86400000]]
+    LogicalProject(customer=[$3], bucket=[round_to_day($4)], _uuid=[$0])
+      LogicalTableScan(table=[[orders$q$5]])
+
+>>>ordernow2-lp
+LogicalProject(bucket=[$0], order_count=[$1])
+  LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 4, 86400000]]
+    LogicalProject(bucket=[round_to_day($4)], _uuid=[$0])
+      LogicalTableScan(table=[[orders$q$5]])
+
+>>>ordernow3-lp
+LogicalProject(customer=[$0], order_count=[$2], time=[$1])
+  LogicalAggregate(group=[{3, 4}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[4, 252460800000, 5049216000]]
+    LogicalTableScan(table=[[orders$q$5]])
+
+>>>orderaugment-lp
+LogicalProject(_uuid=[$0], id=[$2], time=[$4], order_count=[$7])
+  LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($3, 1)])
+      LogicalProject(customer=[$0], order_count=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[ordernow3$q$15]])
+

@@ -1,0 +1,46 @@
+>>>orders-hasTimestamp
+(
+  `_uuid` CHAR(36) NOT NULL,
+  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
+  `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` BIGINT NOT NULL,
+  `items` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
+)
+>>>orders
+(
+  `_uuid` CHAR(36) NOT NULL,
+  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` BIGINT NOT NULL,
+  `items` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
+)
+>>>products-hasTimestamp
+(
+  `_uuid` CHAR(36) NOT NULL,
+  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
+  `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
+  `id` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `sizing` STRING NOT NULL,
+  `weight_in_gram` BIGINT NOT NULL,
+  `type` STRING NOT NULL,
+  `category` STRING NOT NULL,
+  `usda_id` BIGINT NOT NULL,
+  `updated` TIMESTAMP_LTZ(3) NOT NULL
+)
+>>>products
+(
+  `_uuid` CHAR(36) NOT NULL,
+  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
+  `id` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `sizing` STRING NOT NULL,
+  `weight_in_gram` BIGINT NOT NULL,
+  `type` STRING NOT NULL,
+  `category` STRING NOT NULL,
+  `usda_id` BIGINT NOT NULL,
+  `updated` TIMESTAMP_LTZ(3) NOT NULL
+)

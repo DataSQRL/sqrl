@@ -1,0 +1,15 @@
+CustomerNames := SELECT *
+FROM Customer
+ORDER BY (CASE
+    WHEN name IS NULL THEN email
+    ELSE name
+END);
+
+LogicalSort(sort0=[$6], dir0=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], EXPR$6=[$4])
+    LogicalTableScan(table=[[customer$3]])
+
+
+SELECT "_uuid", "_ingest_time", "customerid", "email", "name", "lastupdated" AS "lastUpdated", "name"
+FROM customer$3
+ORDER BY 7

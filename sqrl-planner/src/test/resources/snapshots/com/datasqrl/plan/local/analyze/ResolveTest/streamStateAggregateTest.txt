@@ -1,0 +1,5 @@
+>>>agg1-lp
+LogicalProject(customer=[$0], order_count=[$1])
+  LogicalAggregate(group=[{4}], order_count=[COUNT()])
+    LogicalTableScan(table=[[ordercustomer$12]])
+

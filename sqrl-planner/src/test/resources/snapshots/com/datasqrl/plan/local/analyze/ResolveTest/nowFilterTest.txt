@@ -1,0 +1,16 @@
+>>>orderfilter-lp
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+  LogicalTableScan(table=[[orders$q$5]])
+
+>>>orderagg1-lp
+LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
+  LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000]]
+    LogicalProject(customer=[$3], bucket=[round_to_second($4)], _uuid=[$0])
+      LogicalTableScan(table=[[orderfilter$q$11]])
+
+>>>orderagg2-lp
+LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
+  LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000]]
+    LogicalProject(customer=[$3], bucket=[round_to_second($4)], _uuid=[$0])
+      LogicalTableScan(table=[[orders$q$5]])
+

@@ -1,0 +1,34 @@
+Customer.orders := JOIN Orders ON Orders.customerid = @.customerid;
+Orders.entries.product := JOIN Product ON Product.productid = @.productid LIMIT 1;
+Customer.recent_products := SELECT e.productid, e.product.category AS category,
+                                   sum(e.quantity) AS quantity, count(1) AS num_orders
+                            FROM @.orders.entries AS e
+                            WHERE e.parent.time > now() - INTERVAL 2 YEAR
+                            GROUP BY productid, category ORDER BY count(1) DESC, quantity DESC;
+
+
+LogicalSort(sort0=[$0], sort1=[$4], sort2=[$3], dir0=[ASC], dir1=[DESC], dir2=[DESC])
+  LogicalAggregate(group=[{0, 1, 2}], quantity=[SUM($3)], num_orders=[COUNT()])
+    LogicalProject(__pk_0=[$0], productid=[$13], category=[$22], quantity=[$14])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], id=[$6], _uuid0=[$7], _ingest_time0=[$8], customerid0=[$9], time=[$10], id0=[$11], _idx=[$12], productid=[$13], quantity=[$14], unit_price=[$15], discount=[$16], _uuid1=[$17], _ingest_time1=[$18], productid0=[$19], name0=[$20], description=[$21], category=[$22], id1=[CAST($23):BIGINT], _uuid2=[CAST($24):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time2=[CAST($25):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid1=[CAST($26):BIGINT], time0=[CAST($27):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
+        LogicalJoin(condition=[=($11, $23)], joinType=[inner])
+          LogicalJoin(condition=[=($19, $13)], joinType=[left])
+            LogicalJoin(condition=[=($9, $2)], joinType=[default])
+              LogicalTableScan(table=[[customer$3]])
+              LogicalJoin(condition=[=($0, $5)], joinType=[default])
+                LogicalTableScan(table=[[orders$12]])
+                LogicalTableScan(table=[[entries$13]])
+            LogicalTableScan(table=[[product$10]])
+          LogicalFilter(condition=[>($4, -(now(), 24:INTERVAL YEAR))])
+            LogicalTableScan(table=[[orders$12]])
+
+
+SELECT "customer$3"."_uuid" AS "__pk_0", "entries$13"."productid", "product$10"."category", SUM("entries$13"."quantity") AS "quantity", COUNT(*) AS "num_orders"
+FROM customer$3
+ DEFAULT JOIN (orders$12 DEFAULT JOIN entries$13 ON "orders$12"."id" = "entries$13"."id") ON "customer$3"."customerid" = "orders$12"."customerid"
+ LEFT JOIN product$10 ON "entries$13"."productid" = "product$10"."productid"
+ INNER JOIN (SELECT *
+  FROM orders$12
+  WHERE "time" > now() - INTERVAL '2' YEAR) AS "t" ON "entries$13"."id" = "t"."id"
+GROUP BY "customer$3"."_uuid", "entries$13"."productid", "product$10"."category"
+ORDER BY "customer$3"."_uuid", COUNT(*) DESC, SUM("entries$13"."quantity") DESC
