@@ -3,9 +3,9 @@
  */
 package com.datasqrl.compiler;
 
-import com.datasqrl.loaders.DataSource;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.loaders.TableLoader;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.util.TestDataset;
@@ -22,7 +22,7 @@ public class LoaderTest {
   @ArgumentsSource(TestDataset.AllProvider.class)
   public void testLoadingSources(TestDataset example) {
     ErrorCollector errors = ErrorCollector.root();
-    DataSource.Loader loader = new DataSource.Loader();
+    TableLoader loader = new TableLoader();
     for (String tblName : example.getTables()) {
       Optional<TableSource> table = loader.readTable(example.getRootPackageDirectory(),
           NamePath.of(example.getName(), tblName), errors);

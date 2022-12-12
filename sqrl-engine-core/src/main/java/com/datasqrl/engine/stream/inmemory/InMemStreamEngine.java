@@ -24,14 +24,10 @@ import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem;
-import com.datasqrl.io.stats.SourceTableStatistics;
-import com.datasqrl.io.stats.TableStatisticsStore;
-import com.datasqrl.io.stats.TableStatisticsStoreProvider;
 import com.datasqrl.io.tables.TableInput;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.schema.converters.SourceRecord2RowMapper;
+import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -87,6 +83,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
     throw new UnsupportedOperationException();
   }
 
+  @Getter
   public class JobBuilder implements StreamEngine.Builder {
 
     private final List<Stream> mainStreams = new ArrayList<>();
@@ -116,38 +113,13 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
       }
     }
 
-    @Override
-    public StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream,
-        TableInput tableSource, TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider) {
-      final SourceTableStatistics statistics = new SourceTableStatistics();
-      final TableSource.Digest tableDigest = tableSource.getDigest();
-      StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
-        com.datasqrl.error.ErrorCollector errors = c.get();
-        statistics.validate(r, tableDigest, errors);
-        if (!errors.isFatal()) {
-          statistics.add(r, tableDigest);
-          return Optional.of(r);
-        } else {
-          return Optional.empty();
-        }
-      }, "stats", ErrorPrefix.INPUT_DATA.resolve(tableSource.getName()), SourceRecord.Raw.class);
-      sideStreams.add(Stream.of(statistics).map(s -> {
-        try (TableStatisticsStore store = statisticsStoreProvider.openStore()) {
-          store.putTableStatistics(tableDigest.getPath(), s);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        return s;
-      }));
-      return result;
-    }
+
 
     @Override
     public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema,
         String qualifiedTableName) {
       final Consumer<Object[]> records = recordHolder.getCollector(qualifiedTableName);
-      SourceRecord2RowMapper<Object[]> mapper = new SourceRecord2RowMapper(schema,
-          RowConstructor.INSTANCE);
+      RowMapper<Object[]> mapper = schema.getSchema().getRowMapper(InMemRowConstructor.INSTANCE, schema.isHasSourceTimestamp());
       ((Holder<Named>) stream).mapWithError((r, c) -> {
         try {
           records.accept(mapper.apply(r));
@@ -290,9 +262,10 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
     }
   }
 
-  private static class RowConstructor implements SourceRecord2RowMapper.RowConstructor<Object[]> {
+  public static class InMemRowConstructor implements
+      com.datasqrl.schema.converters.RowConstructor<Object[]> {
 
-    private static final RowConstructor INSTANCE = new RowConstructor();
+    private static final InMemRowConstructor INSTANCE = new InMemRowConstructor();
 
     @Override
     public Object[] createRow(Object[] columns) {

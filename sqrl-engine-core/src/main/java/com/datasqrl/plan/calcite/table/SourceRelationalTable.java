@@ -3,8 +3,11 @@
  */
 package com.datasqrl.plan.calcite.table;
 
+import com.datasqrl.engine.stream.flink.plan.TableRegistration;
+
 public interface SourceRelationalTable {
 
   String getNameId();
 
+  <R, C> R accept(TableRegistration<R, C> tableRegistration, C context);
 }

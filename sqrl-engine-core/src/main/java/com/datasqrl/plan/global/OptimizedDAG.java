@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.global;
 
+import com.datasqrl.engine.stream.flink.plan.TableRegistration;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -52,7 +53,7 @@ public class OptimizedDAG {
   }
 
   public interface Query {
-
+    <R, C> R accept(QueryVisitor<R, C> visitor, C context);
   }
 
   public interface StageSink {
@@ -66,13 +67,16 @@ public class OptimizedDAG {
 
     final WriteSink sink;
     final RelNode relNode;
+    public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
+      return visitor.accept(this, context);
+    }
 
   }
 
   public interface WriteSink {
 
     public String getName();
-
+    <R, C> R accept(SinkVisitor<R, C> visitor, C context);
   }
 
   @Value
@@ -94,6 +98,9 @@ public class OptimizedDAG {
     public ExecutionStage getStage() {
       return getDatabaseStage();
     }
+    public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
+      return visitor.accept(this, context);
+    }
   }
 
   @Value
@@ -101,7 +108,9 @@ public class OptimizedDAG {
 
     String name;
     TableSink sink;
-
+    public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
+      return visitor.accept(this, context);
+    }
   }
 
   @Value
@@ -109,7 +118,20 @@ public class OptimizedDAG {
 
     APIQuery query;
     RelNode relNode;
-
+    public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
+      return visitor.accept(this, context);
+    }
   }
 
+  public interface QueryVisitor<R, C> {
+
+    R accept(ReadQuery query, C context);
+    R accept(WriteQuery writeQuery, C context);
+  }
+
+  public interface SinkVisitor<R, C> {
+
+    R accept(ExternalSink externalSink, C context);
+    R accept(DatabaseSink databaseSink, C context);
+  }
 }

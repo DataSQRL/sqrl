@@ -7,7 +7,7 @@ import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
@@ -18,18 +18,18 @@ import java.util.Deque;
 
 @AllArgsConstructor
 public class FlexibleTable2UTBConverter implements
-    FlexibleTableConverter.Visitor<UniversalTableBuilder> {
+    FlexibleTableConverter.Visitor<UniversalTable> {
 
-  private final UniversalTableBuilder.ImportFactory tableFactory;
+  private final UniversalTable.ImportFactory tableFactory;
   private final SqrlTypeRelDataTypeConverter typeConverter;
-  private final Deque<UniversalTableBuilder> stack = new ArrayDeque<>();
+  private final Deque<UniversalTable> stack = new ArrayDeque<>();
 
   public FlexibleTable2UTBConverter() {
     this(new JavaTypeFactoryImpl());
   }
 
   public FlexibleTable2UTBConverter(RelDataTypeFactory typeFactory) {
-    this.tableFactory = new UniversalTableBuilder.ImportFactory(typeFactory, true);
+    this.tableFactory = new UniversalTable.ImportFactory(typeFactory, true);
     this.typeConverter = new SqrlTypeRelDataTypeConverter(typeFactory);
   }
 
@@ -46,22 +46,22 @@ public class FlexibleTable2UTBConverter implements
   }
 
   @Override
-  public UniversalTableBuilder endTable(Name name, NamePath namePath, boolean isNested,
+  public UniversalTable endTable(Name name, NamePath namePath, boolean isNested,
       boolean isSingleton) {
     return stack.removeFirst();
   }
 
   @Override
   public void addField(Name name, Type type, boolean nullable) {
-    UniversalTableBuilder tblBuilder = stack.getFirst();
+    UniversalTable tblBuilder = stack.getFirst();
     tblBuilder.addColumn(name,
         tableFactory.withNullable(type.accept(typeConverter, null), nullable));
   }
 
   @Override
-  public void addField(Name name, UniversalTableBuilder nestedTable, boolean nullable,
+  public void addField(Name name, UniversalTable nestedTable, boolean nullable,
       boolean isSingleton) {
-    UniversalTableBuilder tblBuilder = stack.getFirst();
+    UniversalTable tblBuilder = stack.getFirst();
     Multiplicity multi = Multiplicity.ZERO_ONE;
     if (!isSingleton) {
       multi = Multiplicity.MANY;

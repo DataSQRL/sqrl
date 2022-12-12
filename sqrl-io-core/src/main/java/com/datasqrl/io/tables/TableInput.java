@@ -8,6 +8,7 @@ import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
+import com.datasqrl.schema.input.SchemaValidator;
 
 public class TableInput extends AbstractExternalTable {
 
@@ -25,4 +26,7 @@ public class TableInput extends AbstractExternalTable {
     return format.getImplementation().getParser(format);
   }
 
+  public SchemaValidator getSchemaValidator() {
+    return null;
+  }
 }

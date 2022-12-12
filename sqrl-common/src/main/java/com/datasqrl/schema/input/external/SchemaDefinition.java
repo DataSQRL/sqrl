@@ -3,6 +3,7 @@
  */
 package com.datasqrl.schema.input.external;
 
+import com.datasqrl.util.StringNamedId;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +17,7 @@ public class SchemaDefinition implements Serializable {
   public static SchemaDefinition empty() {
     SchemaDefinition def = new SchemaDefinition();
     def.datasets = Collections.EMPTY_LIST;
-    def.version = SchemaImport.VERSION.getId();
+    def.version = StringNamedId.of("1").getId();
     return def;
   }
 

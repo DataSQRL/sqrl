@@ -16,6 +16,4 @@ public interface StreamInputPreparer {
   StreamHolder<SourceRecord.Raw> getRawInput(TableInput table, StreamEngine.Builder builder,
       ErrorLocation errorLocation);
 
-//    void importTable(ImportManager.SourceTableImport tableImport, StreamEngine.Builder builder);
-
 }

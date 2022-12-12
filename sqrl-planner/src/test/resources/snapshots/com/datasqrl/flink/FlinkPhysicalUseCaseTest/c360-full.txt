@@ -1,8 +1,3 @@
->>>newcustomerpromotion$29-lp-stream
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
-  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
-    LogicalTableScan(table=[[newcustomerpromotion$s$27]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
-
 >>>category$14-lp-stream
 LogicalProject(name=[$0], updatetime=[$1])
   LogicalProject(name=[$5], updatetime=[$6])
@@ -193,11 +188,6 @@ LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(__pk_0=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
     LogicalTableScan(table=[[order_stats$26]])
 
->>>newcustomerpromotion-lp-database
-LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
-    LogicalTableScan(table=[[newcustomerpromotion$29]])
-
 >>>orders-data
 10007140, 1000107
 10007543, 1000101
@@ -251,7 +241,3 @@ Personal Care, 146.82
 120.85, 1
 146.82, 2
 166.5, 1
->>>newcustomerpromotion-data
-1000101, john.mekker@gmail.com, John B. Mekker, 120.85, 1
-1000107, emily.ludies@hotmail.com, Emily F. Ludies, 146.82, 2
-1000121, lalelu@hottunes.org, Michelle Dagnes, 166.5, 1

@@ -8,7 +8,7 @@ import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.UniversalTableBuilder;
+import com.datasqrl.schema.UniversalTable;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -23,7 +23,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class RelDataType2UTBConverter {
 
-  public final UniversalTableBuilder.Factory tableFactory;
+  public final UniversalTable.Factory tableFactory;
   public final NameCanonicalizer canonicalizer;
 
   public RelDataType2UTBConverter(RelDataTypeFactory typeFactory, int numPrimaryKeys,
@@ -31,15 +31,15 @@ public class RelDataType2UTBConverter {
     this(new TableBuilderFactory(typeFactory, numPrimaryKeys), canonicalizer);
   }
 
-  public UniversalTableBuilder convert(@NonNull NamePath path, RelDataType datatype,
+  public UniversalTable convert(@NonNull NamePath path, RelDataType datatype,
       LinkedHashMap<Integer, Name> index2Name) {
     return createBuilder(path, null, datatype, false, index2Name);
   }
 
-  private UniversalTableBuilder createBuilder(@NonNull NamePath path, UniversalTableBuilder parent,
+  private UniversalTable createBuilder(@NonNull NamePath path, UniversalTable parent,
       RelDataType type, boolean isSingleton,
       LinkedHashMap<Integer, Name> index2Name) {
-    UniversalTableBuilder tblBuilder;
+    UniversalTable tblBuilder;
     if (parent == null) {
       tblBuilder = tableFactory.createTable(path.getLast(), path);
     } else {
@@ -60,7 +60,7 @@ public class RelDataType2UTBConverter {
       Optional<Pair<RelDataType, Multiplicity>> nested = getNested(field);
       if (nested.isPresent()) {
         Pair<RelDataType, Multiplicity> rel = nested.get();
-        UniversalTableBuilder child = createBuilder(path.concat(name), tblBuilder,
+        UniversalTable child = createBuilder(path.concat(name), tblBuilder,
             rel.getKey(), rel.getValue() == Multiplicity.MANY, null);
         tblBuilder.addChild(name, child, rel.getValue());
       } else {
@@ -89,7 +89,7 @@ public class RelDataType2UTBConverter {
   }
 
   @Value
-  public static class TableBuilderFactory extends UniversalTableBuilder.AbstractFactory {
+  public static class TableBuilderFactory extends UniversalTable.AbstractFactory {
 
     int numPrimaryKeys;
 
@@ -99,8 +99,8 @@ public class RelDataType2UTBConverter {
     }
 
     @Override
-    public UniversalTableBuilder createTable(@NonNull Name name, @NonNull NamePath path) {
-      return new UniversalTableBuilder(name, path, numPrimaryKeys);
+    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path) {
+      return new UniversalTable(name, path, numPrimaryKeys, false);
     }
   }
 

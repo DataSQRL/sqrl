@@ -3,13 +3,13 @@
  */
 package com.datasqrl.engine.stream.flink.schema;
 
-import com.datasqrl.schema.converters.SourceRecord2RowMapper;
+import com.datasqrl.schema.converters.RowConstructor;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 
 import java.util.Arrays;
 
-public class FlinkRowConstructor implements SourceRecord2RowMapper.RowConstructor<Row> {
+public class FlinkRowConstructor implements RowConstructor<Row> {
 
   public static final FlinkRowConstructor INSTANCE = new FlinkRowConstructor();
 

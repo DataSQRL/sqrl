@@ -4,6 +4,7 @@
 package com.datasqrl.engine.stream.flink.plan;
 
 
+import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRegistrationContext;
 import com.datasqrl.plan.calcite.hints.*;
 import com.datasqrl.plan.calcite.table.SourceRelationalTable;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
@@ -47,20 +48,24 @@ import java.util.stream.Collectors;
  * watermarks and propagating timestamp columns - Expanding temporal joins - Expanding time-based
  * aggregations into Flink window aggregations - Handling interval joins
  * <p>
- * This class is not thread safe. You should construct a new instance for each rewriting or simply
- * use {@link #rewrite(StreamTableEnvironmentImpl, RelNode)}.
+ * This class is not thread safe. You should construct a new instance for each rewriting
  */
 public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   StreamTableEnvironmentImpl tEnv;
+  private final FlinkTableRegistration flinkTableRegistration;
+  private final FlinkTableRegistrationContext context;
   private boolean isTop = true;
 
-  public FlinkPhysicalPlanRewriter(StreamTableEnvironmentImpl tEnv) {
+  public FlinkPhysicalPlanRewriter(StreamTableEnvironmentImpl tEnv,
+      FlinkTableRegistration flinkTableRegistration, FlinkTableRegistrationContext context) {
     this.tEnv = tEnv;
+    this.flinkTableRegistration = flinkTableRegistration;
+    this.context = context;
   }
 
-  public static RelNode rewrite(StreamTableEnvironmentImpl tEnv, RelNode input) {
-    return input.accept(new FlinkPhysicalPlanRewriter(tEnv));
+  public RelNode rewrite(RelNode input) {
+    return input.accept(this);
   }
 
   private FlinkRelBuilder getBuilder() {
@@ -69,7 +74,9 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(TableScan scan) {
+
     SourceRelationalTable t = scan.getTable().unwrap(SourceRelationalTable.class);
+    t.accept(flinkTableRegistration, context);
     String tableName = t.getNameId();
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.scan(tableName);

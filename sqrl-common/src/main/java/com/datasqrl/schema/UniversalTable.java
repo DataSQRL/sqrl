@@ -8,7 +8,6 @@ import com.datasqrl.util.StreamUtil;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
-import com.datasqrl.schema.type.ArrayType;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -25,10 +24,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Getter
-public class UniversalTableBuilder {
+public class UniversalTable {
 
   @Getter
-  final UniversalTableBuilder parent;
+  final UniversalTable parent;
   final FieldList fields = new FieldList();
   @NonNull
   final NamePath path;
@@ -38,15 +37,19 @@ public class UniversalTableBuilder {
   // We make the assumption that primary key columns are always first!
   final int numPrimaryKeys;
 
-  public UniversalTableBuilder(@NonNull Name name, @NonNull NamePath path, int numPrimaryKeys) {
+  final boolean hasSourceTimestamp;
+
+  public UniversalTable(@NonNull Name name, @NonNull NamePath path, int numPrimaryKeys,
+      boolean hasSourceTimestamp) {
+    this.hasSourceTimestamp = hasSourceTimestamp;
     this.parent = null;
     this.numPrimaryKeys = numPrimaryKeys;
     this.name = name;
     this.path = path;
   }
 
-  public UniversalTableBuilder(@NonNull Name name, @NonNull NamePath path,
-      UniversalTableBuilder parent, boolean isSingleton) {
+  public UniversalTable(@NonNull Name name, @NonNull NamePath path,
+      UniversalTable parent, boolean isSingleton, boolean hasSourceTimestamp) {
     this.parent = parent;
     //Add parent primary key columns
     Iterator<Column> parentCols = parent.getColumns(false).iterator();
@@ -57,6 +60,7 @@ public class UniversalTableBuilder {
     this.numPrimaryKeys = parent.numPrimaryKeys + (isSingleton ? 0 : 1);
     this.path = path;
     this.name = name;
+    this.hasSourceTimestamp = hasSourceTimestamp;
   }
 
   public List<Column> getColumns(boolean onlyVisible) {
@@ -86,7 +90,7 @@ public class UniversalTableBuilder {
     fields.addField(new Column(colName, version, type, visible));
   }
 
-  public void addChild(Name name, UniversalTableBuilder child, Multiplicity multiplicity) {
+  public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
     int version = fields.nextVersion(name);
     fields.addField(new ChildRelationship(name, version, child, multiplicity));
   }
@@ -122,10 +126,10 @@ public class UniversalTableBuilder {
   @Getter
   public static class ChildRelationship extends Field {
 
-    final UniversalTableBuilder childTable;
+    final UniversalTable childTable;
     final Multiplicity multiplicity;
 
-    public ChildRelationship(Name name, int version, UniversalTableBuilder childTable,
+    public ChildRelationship(Name name, int version, UniversalTable childTable,
         Multiplicity multiplicity) {
       super(name, version);
       this.childTable = childTable;
@@ -176,7 +180,6 @@ public class UniversalTableBuilder {
   private <T> T convertType(RelDataType type, TypeConverter<T> converter) {
     Optional<RelDataType> subType = CalciteUtil.getArrayElementType(type);
     if (subType.isPresent()) {
-      ArrayType arr = (ArrayType) type;
       return converter.wrapArray(
           converter.nullable(convertType(subType.get(), converter), subType.get().isNullable()));
     } else {
@@ -198,16 +201,16 @@ public class UniversalTableBuilder {
 
   public interface SchemaConverter<S> {
 
-    S convertSchema(UniversalTableBuilder tblBuilder);
+    S convertSchema(UniversalTable tblBuilder);
 
   }
 
   public interface Factory {
 
-    UniversalTableBuilder createTable(@NonNull Name name, @NonNull NamePath path,
-        @NonNull UniversalTableBuilder parent, boolean isSingleton);
+    UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
+        @NonNull UniversalTable parent, boolean isSingleton);
 
-    UniversalTableBuilder createTable(@NonNull Name name, @NonNull NamePath path);
+    UniversalTable createTable(@NonNull Name name, @NonNull NamePath path);
 
   }
 
@@ -219,9 +222,9 @@ public class UniversalTableBuilder {
       this.typeFactory = typeFactory;
     }
 
-    public UniversalTableBuilder createTable(@NonNull Name name, @NonNull NamePath path,
-        @NonNull UniversalTableBuilder parent, boolean isSingleton) {
-      return new UniversalTableBuilder(name, path, parent, isSingleton);
+    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
+        @NonNull UniversalTable parent, boolean isSingleton) {
+      return new UniversalTable(name, path, parent, isSingleton, false);
     }
 
     public RelDataType withNullable(RelDataType type, boolean nullable) {
@@ -241,9 +244,9 @@ public class UniversalTableBuilder {
     }
 
     @Override
-    public UniversalTableBuilder createTable(@NonNull Name name, @NonNull NamePath path,
-        @NonNull UniversalTableBuilder parent, boolean isSingleton) {
-      UniversalTableBuilder tblBuilder = super.createTable(name, path, parent, isSingleton);
+    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
+        @NonNull UniversalTable parent, boolean isSingleton) {
+      UniversalTable tblBuilder = super.createTable(name, path, parent, isSingleton);
       if (!isSingleton && addArrayIndex) {
         tblBuilder.addColumn(ReservedName.ARRAY_IDX,
             withNullable(typeFactory.createSqlType(SqlTypeName.INTEGER), false));
@@ -252,13 +255,13 @@ public class UniversalTableBuilder {
     }
 
     @Override
-    public UniversalTableBuilder createTable(@NonNull Name name, @NonNull NamePath path) {
+    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path) {
       return createTable(name, path, false);
     }
 
-    public UniversalTableBuilder createTable(@NonNull Name name, @NonNull NamePath path,
+    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
         boolean hasSourceTimestamp) {
-      UniversalTableBuilder tblBuilder = new UniversalTableBuilder(name, path, 1);
+      UniversalTable tblBuilder = new UniversalTable(name, path, 1, hasSourceTimestamp);
       tblBuilder.addColumn(ReservedName.UUID,
           withNullable(typeFactory.createSqlType(SqlTypeName.CHAR, 36), false));
       tblBuilder.addColumn(ReservedName.INGEST_TIME,

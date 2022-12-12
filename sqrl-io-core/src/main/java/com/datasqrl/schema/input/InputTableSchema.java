@@ -3,15 +3,14 @@
  */
 package com.datasqrl.schema.input;
 
+import com.datasqrl.io.tables.TableSchema;
+import java.io.Serializable;
 import lombok.Value;
 
-import java.io.Serializable;
-
 @Value
-public class InputTableSchema implements Serializable {
+public class InputTableSchema<T extends TableSchema> implements Serializable {
 
-  private final FlexibleDatasetSchema.TableField schema;
+  private final T schema;
   private final boolean hasSourceTimestamp;
-
 
 }

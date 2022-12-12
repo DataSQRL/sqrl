@@ -26,5 +26,9 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-schema-flexible</artifactId>
+    </dependency>
   </dependencies>
 </project>

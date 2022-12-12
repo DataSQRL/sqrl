@@ -3,10 +3,12 @@
  */
 package com.datasqrl.schema.input;
 
+import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.constraint.Cardinality;
 import com.datasqrl.schema.constraint.ConstraintHelper;
+import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -17,17 +19,14 @@ import java.util.Optional;
 @AllArgsConstructor
 public class FlexibleTableConverter {
 
-  private final InputTableSchema tableSchema;
+  private final TableSchema schema;
+  private final boolean hasSourceTimestamp;
   private final Optional<Name> tableAlias;
 
-  public FlexibleTableConverter(InputTableSchema tableSchema) {
-    this(tableSchema, Optional.empty());
-  }
-
   public <T> T apply(Visitor<T> visitor) {
-    return visitRelation(NamePath.ROOT, tableAlias.orElse(tableSchema.getSchema().getName()),
-        tableSchema.getSchema().getFields(),
-        false, false, tableSchema.isHasSourceTimestamp(), visitor);
+    return visitRelation(NamePath.ROOT, tableAlias.orElse(schema.getName()),
+        ((TableField)schema).getFields(),
+        false, false, hasSourceTimestamp, visitor);
   }
 
   private <T> T visitRelation(NamePath path, Name name,

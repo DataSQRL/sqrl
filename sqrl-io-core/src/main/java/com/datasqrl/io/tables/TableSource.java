@@ -4,11 +4,10 @@
 package com.datasqrl.io.tables;
 
 import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.InputTableSchema;
+import com.datasqrl.schema.input.SchemaValidator;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -20,20 +19,23 @@ import lombok.NonNull;
 public class TableSource extends TableInput {
 
   @NonNull
-  private final FlexibleDatasetSchema.TableField schema;
-  @NonNull
-  @Getter
-  private final TableStatistic statistic;
+  private final TableSchema schema;
+  private final SchemaValidator validator;
 
   public TableSource(DataSystemConnector dataset, TableConfig configuration, NamePath path,
-      Name name,
-      FlexibleDatasetSchema.TableField schema) {
+      Name name, TableSchema schema, SchemaValidator validator) {
     super(dataset, configuration, path, name);
     this.schema = schema;
-    this.statistic = TableStatistic.of(1000); //TODO: extract from schema
+    this.validator = validator;
+//    this.statistic = TableStatistic.of(1000); //TODO: extract from schema
   }
 
   public InputTableSchema getSchema() {
     return new InputTableSchema(schema, connector.hasSourceTimestamp());
+  }
+
+  @Override
+  public SchemaValidator getSchemaValidator() {
+    return validator;
   }
 }

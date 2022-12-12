@@ -22,6 +22,11 @@
             <artifactId>sqrl-common</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-json-schema</artifactId>
+            <version>4.3.5</version>
+        </dependency>
+        <dependency>
             <artifactId>sqrl-common</artifactId>
             <groupId>com.datasqrl</groupId>
             <type>test-jar</type>

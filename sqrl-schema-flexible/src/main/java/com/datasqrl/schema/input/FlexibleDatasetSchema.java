@@ -3,8 +3,17 @@
  */
 package com.datasqrl.schema.input;
 
+import com.datasqrl.engine.stream.flink.RowMapperFactory;
+import com.datasqrl.io.SourceRecord.Named;
+import com.datasqrl.io.stats.DefaultSchemaGenerator;
+import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.name.Name;
+import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.constraint.Constraint;
+import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
+import com.datasqrl.schema.converters.RowConstructor;
+import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.type.Type;
 import lombok.*;
 
@@ -12,6 +21,8 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.types.Row;
 
 @Getter
 @ToString(callSuper = true)
@@ -95,7 +106,7 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
   @ToString(callSuper = true)
   @NoArgsConstructor
   @EqualsAndHashCode(callSuper = true)
-  public static class TableField extends AbstractField {
+  public static class TableField extends AbstractField implements TableSchema {
 
     private boolean isPartialSchema;
     @NonNull
@@ -109,6 +120,30 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
       this.isPartialSchema = isPartialSchema;
       this.fields = fields;
       this.constraints = constraints;
+    }
+
+    @Override
+    public RowMapper getRowMapper(RowConstructor rowConstructor,
+        boolean hasSourceTimestamp) {
+
+      return new FlexibleSchemaRowMapper(this, hasSourceTimestamp,
+          rowConstructor);
+    }
+
+    @Override
+    public SchemaValidator getValidator(TableConfig tableConfig, boolean hasSourceTimestamp) {
+
+      InputTableSchema inputTableSchema = new InputTableSchema(this, hasSourceTimestamp);
+      DefaultSchemaValidator validator = new DefaultSchemaValidator(inputTableSchema,
+          tableConfig.getSchemaAdjustmentSettings(),
+          tableConfig.getNameCanonicalizer(),
+          new DefaultSchemaGenerator(tableConfig.getSchemaAdjustmentSettings()));
+      return validator;
+    }
+
+    @Override
+    public UniversalTable createUniversalTable(boolean hasSourceTimestamp) {
+      return RowMapperFactory.getFlexibleUniversalTableBuilder(this, hasSourceTimestamp);
     }
 
     @Setter

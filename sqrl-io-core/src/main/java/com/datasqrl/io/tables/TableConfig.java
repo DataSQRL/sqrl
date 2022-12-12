@@ -3,29 +3,28 @@
  */
 package com.datasqrl.io.tables;
 
-import com.datasqrl.util.constraints.OptionalMinString;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.ConfigurationUtil;
-import com.datasqrl.io.SharedConfiguration;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.SharedConfiguration;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
+import com.datasqrl.schema.input.SchemaValidator;
+import com.datasqrl.util.ConfigurationUtil;
+import com.datasqrl.util.constraints.OptionalMinString;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.Serializable;
+import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import java.io.Serializable;
-import java.util.Optional;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -85,14 +84,17 @@ public class TableConfig extends SharedConfiguration implements Serializable {
   }
 
   public TableSource initializeSource(ErrorCollector errors, NamePath basePath,
-      FlexibleDatasetSchema.TableField schema) {
+      TableSchema schema) {
     DataSystemConnector connector = baseInitialize(errors, basePath);
     if (connector == null) {
       return null;
     }
     Preconditions.checkArgument(getType().isSource());
     Name tableName = getResolvedName();
-    return new TableSource(connector, this, basePath.concat(tableName), tableName, schema);
+
+    SchemaValidator validator = schema.getValidator(this, connector.hasSourceTimestamp());
+
+    return new TableSource(connector, this, basePath.concat(tableName), tableName, schema, validator);
   }
 
   public TableInput initializeInput(ErrorCollector errors, NamePath basePath) {
@@ -106,7 +108,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
   }
 
   public TableSink initializeSink(ErrorCollector errors, NamePath basePath,
-      Optional<FlexibleDatasetSchema.TableField> schema) {
+      Optional<TableSchema> schema) {
     DataSystemConnector connector = baseInitialize(errors, basePath);
     if (connector == null) {
       return null;

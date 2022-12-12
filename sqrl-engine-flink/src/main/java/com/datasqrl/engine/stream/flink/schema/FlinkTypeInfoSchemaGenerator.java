@@ -3,10 +3,8 @@
  */
 package com.datasqrl.engine.stream.flink.schema;
 
-import com.datasqrl.schema.UniversalTableBuilder;
-import com.datasqrl.schema.input.SqrlTypeConverter;
-import com.datasqrl.schema.type.Type;
-import com.datasqrl.schema.type.basic.*;
+import com.datasqrl.schema.UniversalTable;
+import java.util.List;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.BasicSqlType;
@@ -16,14 +14,10 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 
-import java.util.List;
-
 @Value
 public class FlinkTypeInfoSchemaGenerator implements
-    UniversalTableBuilder.TypeConverter<TypeInformation>,
-    UniversalTableBuilder.SchemaConverter<TypeInformation> {
-
-  public static final FlinkTypeInfoSchemaGenerator INSTANCE = new FlinkTypeInfoSchemaGenerator();
+    UniversalTable.TypeConverter<TypeInformation>,
+    UniversalTable.SchemaConverter<TypeInformation> {
 
   @Override
   public TypeInformation convertBasic(RelDataType datatype) {
@@ -102,58 +96,7 @@ public class FlinkTypeInfoSchemaGenerator implements
   }
 
   @Override
-  public TypeInformation convertSchema(UniversalTableBuilder tblBuilder) {
+  public TypeInformation convertSchema(UniversalTable tblBuilder) {
     return nestedTable(tblBuilder.convert(this));
   }
-
-  public static class SqrlType2TypeInfoConverter implements SqrlTypeConverter<TypeInformation> {
-
-    public static SqrlType2TypeInfoConverter INSTANCE = new SqrlType2TypeInfoConverter();
-
-    @Override
-    public TypeInformation visitType(Type type, Void context) {
-      throw new UnsupportedOperationException("Should not be called");
-    }
-
-    @Override
-    public <J> TypeInformation visitBasicType(AbstractBasicType<J> type, Void context) {
-      throw new UnsupportedOperationException("Basic type is not supported in Table API: " + type);
-    }
-
-    @Override
-    public TypeInformation visitBooleanType(BooleanType type, Void context) {
-      return BasicTypeInfo.BOOLEAN_TYPE_INFO;
-    }
-
-    @Override
-    public TypeInformation visitDateTimeType(DateTimeType type, Void context) {
-      return BasicTypeInfo.INSTANT_TYPE_INFO;
-    }
-
-    @Override
-    public TypeInformation visitFloatType(FloatType type, Void context) {
-      return BasicTypeInfo.DOUBLE_TYPE_INFO;
-    }
-
-    @Override
-    public TypeInformation visitIntegerType(IntegerType type, Void context) {
-      return BasicTypeInfo.LONG_TYPE_INFO;
-    }
-
-    @Override
-    public TypeInformation visitStringType(StringType type, Void context) {
-      return BasicTypeInfo.STRING_TYPE_INFO;
-    }
-
-    @Override
-    public TypeInformation visitUuidType(UuidType type, Void context) {
-      return BasicTypeInfo.STRING_TYPE_INFO;
-    }
-
-    @Override
-    public TypeInformation visitIntervalType(IntervalType type, Void context) {
-      return BasicTypeInfo.LONG_TYPE_INFO;
-    }
-  }
-
 }

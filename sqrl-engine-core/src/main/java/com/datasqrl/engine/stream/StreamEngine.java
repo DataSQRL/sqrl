@@ -3,7 +3,6 @@
  */
 package com.datasqrl.engine.stream;
 
-import com.datasqrl.io.stats.TableStatisticsStoreProvider;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
@@ -20,10 +19,6 @@ public interface StreamEngine extends Closeable, ExecutionEngine {
   interface Builder {
 
     StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table);
-
-    StreamHolder<SourceRecord.Raw> monitor(StreamHolder<SourceRecord.Raw> stream,
-        TableInput tableSource,
-        TableStatisticsStoreProvider.Encapsulated statisticsStoreProvider);
 
     void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema,
         String qualifiedTableName);

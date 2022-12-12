@@ -15,13 +15,6 @@ public class TableStatistic {
 
   private final double rowCount;
 
-  public static TableStatistic from(SourceTableStatistics tableStatistics) {
-    if (tableStatistics.getCount() <= 0) {
-      return UNKNOWN;
-    }
-    return new TableStatistic(tableStatistics.getCount());
-  }
-
   public static TableStatistic of(double rowCount) {
     return new TableStatistic(rowCount);
   }
