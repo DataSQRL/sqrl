@@ -34,6 +34,7 @@ public class TableSource extends TableInput {
     return new InputTableSchema(schema, connector.hasSourceTimestamp());
   }
 
+  @Override
   public SchemaValidator getSchemaValidator() {
     return validator;
   }
