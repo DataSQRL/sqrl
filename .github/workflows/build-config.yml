@@ -31,7 +31,7 @@ jobs:
         --db-instance-identifier test-mysql-instance \
         --db-instance-class db.t4g.micro \
         --engine postgres \
-        --master-username admin \
+        --master-username testuser \
         --master-user-password ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
         --allocated-storage 20 \
         --publicly-accessible
