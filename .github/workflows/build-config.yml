@@ -22,17 +22,17 @@ jobs:
     - name: Configure AWS credentials from Test account
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        role-to-assume: arn:aws:iam::111111111111:role/my-github-actions-role-test
         aws-region: us-east-1
-
+        aws-access-key-id: ${{ test.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ test.AWS_SECRET_ACCESS_KEY }}
     - name: Start RDS
       run: |
         aws rds create-db-instance \
         --db-instance-identifier test-mysql-instance \
-        --db-instance-class db.t3.micro \
-        --engine mysql \
+        --db-instance-class db.t4g.micro \
+        --engine postgres \
         --master-username admin \
-        --master-user-password secret99 \
+        --master-user-password ${{ test.AWS_SECRET_ACCESS_KEY }} \
         --allocated-storage 20 \
         --publicly-accessible
 #    - name: Set up JDK 11
