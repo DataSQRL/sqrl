@@ -32,7 +32,7 @@ jobs:
         --db-instance-class db.t4g.micro \
         --engine postgres \
         --master-username testuser \
-        --master-user-password ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+        --master-user-password testpass1234 \
         --allocated-storage 20 \
         --publicly-accessible
     - name: Compile and run

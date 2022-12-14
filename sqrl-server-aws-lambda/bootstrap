@@ -1,0 +1,2 @@
+#!/bin/sh
+./target/sqrl-server-aws-lambda

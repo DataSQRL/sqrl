@@ -1,0 +1,16 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
+  },
+  "name" : "orders",
+  "identifier" : "orders",
+  "connector" : {
+    "directoryURI" : "/Users/henneberger/sqml/myproject/../sqrl-examples/nutshop/data-small/",
+    "fileURIs" : [ ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "systemType" : "dir"
+  }
+}
