@@ -35,6 +35,24 @@ jobs:
         --master-user-password ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
         --allocated-storage 20 \
         --publicly-accessible
+    - name: Compile and run
+      run: |
+        sqrl compile 
+
+    - name: Deploy
+      run: |
+        aws lambda create-function --function-name CliTestFun 
+        --runtime java8 --region ap-south-1 
+        --role arn:aws:iam::XXXXXXXXXXXX:role/aws-lambda-execution-role 
+        --handler com.example.demo.Search::handleRequest 
+        
+        
+
+    - name: Wait for RDS
+      run: |
+        aws rds wait db-instance-available --db-instance-identifier test-mysql-instance
+
+    - name: Build and deploy
 #    - name: Set up JDK 11
 #      uses: actions/setup-java@v3
 #      with:
