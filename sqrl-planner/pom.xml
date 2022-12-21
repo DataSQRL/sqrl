@@ -64,6 +64,13 @@
       <groupId>com.datasqrl</groupId>
 <!--      <scope>test</scope>-->
     </dependency>
+
+
+    <dependency>
+      <artifactId>sqrl-engine-flink-jdbc</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.ongres.scram</groupId>
       <artifactId>common</artifactId>

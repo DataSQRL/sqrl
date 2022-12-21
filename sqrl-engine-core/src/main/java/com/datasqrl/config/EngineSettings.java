@@ -3,8 +3,6 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.config.provider.DatabaseConnectionProvider;
-import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
@@ -22,13 +20,5 @@ public class EngineSettings {
   @NonNull
   MetadataStoreProvider metadataStoreProvider;
   @NonNull
-  DatabaseConnectionProvider database;
-  @NonNull
   StreamEngine stream;
-
-  public JDBCConnectionProvider getJDBC() {
-    return (JDBCConnectionProvider) getDatabase();
-  }
-
-
 }

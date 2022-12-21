@@ -3,11 +3,13 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.tables.TableSink;
@@ -26,6 +28,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -46,15 +50,19 @@ import org.apache.commons.lang3.ArrayUtils;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
-  public JDBCConnectionProvider jdbc;
   public PhysicalPlanner physicalPlanner;
 
   protected SnapshotTest.Snapshot snapshot;
+  JDBCEngineConfiguration jdbc;
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
     super.initialize(settings, rootDir);
 
-    jdbc = engineSettings.getJDBC();
+    jdbc = engineSettings.getPipeline().getStages().stream()
+      .filter(f->f.getEngine() instanceof JDBCEngine)
+      .map(f->((JDBCEngine) f.getEngine()).getConfig())
+      .findAny()
+      .orElseThrow();
 
     physicalPlanner = new PhysicalPlanner(planner.getRelBuilder());
   }
@@ -91,11 +99,22 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan);
+    //todo: filter out jdbc engine
+    StagePlan db = physicalPlan.getStagePlans().stream()
+        .filter(e-> e.getStage().getEngine() instanceof JDBCEngine)
+        .findAny()
+        .orElseThrow();
+    JDBCEngine dbEngine = (JDBCEngine) db.getStage().getEngine();
+    Connection conn = DriverManager.getConnection(dbEngine.getConfig().getConfig()
+        .getDbURL(), dbEngine.getConfig().getConfig().getUser(),
+        dbEngine.getConfig().getConfig().getPassword());
+
     for (APIQuery query : queries) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
       String sqlQuery = RelToSql.convertToSql(template.getRelNode());
       System.out.println("Executing query: " + sqlQuery);
-      ResultSet resultSet = jdbc.getConnection()
+
+      ResultSet resultSet = conn
           .createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
           .executeQuery(sqlQuery);
       if (tableNoDataSnapshot.contains(query.getNameId())) {

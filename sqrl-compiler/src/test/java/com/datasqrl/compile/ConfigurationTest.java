@@ -31,7 +31,7 @@ public class ConfigurationTest {
     ErrorCollector errors = ErrorCollector.root();
     EngineSettings engineSettings = config.initializeEngines(errors);
     assertNotNull(engineSettings, errors.toString());
-    assertNotNull(engineSettings.getJDBC());
+    assertNotNull(engineSettings.getPipeline());
   }
 
 }

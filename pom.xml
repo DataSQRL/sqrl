@@ -29,6 +29,8 @@
         <module>sqrl-loader-table</module>
         <module>sqrl-run</module>
         <module>sqrl-schema-flexible</module>
+        <module>sqrl-engine-flink-connectors</module>
+        <module>sqrl-io-jdbc</module>
     </modules>
 
 
@@ -222,7 +224,21 @@
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
-
+            <dependency>
+                <artifactId>sqrl-engine-flink-jdbc</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-engine-flink-h2</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-io-jdbc</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.ongres.scram</groupId>
                 <artifactId>common</artifactId>

@@ -4,11 +4,6 @@ CREATE INDEX IF NOT EXISTS submission$3_hash_c16 ON submission$3 USING hash (var
 CREATE INDEX IF NOT EXISTS submission$3_hash_c2 ON submission$3 USING hash (name);
 CREATE TABLE IF NOT EXISTS package$6 (name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));
 CREATE TABLE IF NOT EXISTS submission$3 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,version VARCHAR NOT NULL,variant VARCHAR ,lateststable BOOLEAN NOT NULL,license VARCHAR ,repository VARCHAR ,homepage VARCHAR ,documentation VARCHAR ,readme VARCHAR ,description VARCHAR ,file VARCHAR NOT NULL,hash VARCHAR NOT NULL,authorid VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL,variant$0 VARCHAR NOT NULL , PRIMARY KEY (_uuid));
-DROP INDEX IF EXISTS submission$3_btree_c3c16;
-DROP INDEX IF EXISTS submission$3_hash_c16;
-DROP INDEX IF EXISTS submission$3_hash_c2;
-DROP TABLE IF EXISTS package$6;
-DROP TABLE IF EXISTS submission$3;
 >>>query-latest
 {
   "data" : {

@@ -20,7 +20,10 @@
     <dependency>
       <artifactId>sqrl-planner</artifactId>
       <groupId>com.datasqrl</groupId>
-      <version>0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-engine-flink-jdbc</artifactId>
+      <groupId>com.datasqrl</groupId>
     </dependency>
     <dependency>
       <groupId>info.picocli</groupId>

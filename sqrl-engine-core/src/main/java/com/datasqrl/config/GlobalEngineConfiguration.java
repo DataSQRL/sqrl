@@ -93,7 +93,7 @@ public class GlobalEngineConfiguration implements GlobalConfiguration {
     }
     MetadataStoreProvider metadataStoreProvider = metaOpt.get().getMetadataStore();
     ExecutionPipeline pipeline = new EnginePipeline(db, stream);
-    return new EngineSettings(pipeline, metadataStoreProvider, db.getConnectionProvider(), stream);
+    return new EngineSettings(pipeline, metadataStoreProvider, stream);
   }
 
   public void setDefaultEngines(DatabaseEngineConfiguration db, EngineConfiguration stream) {

@@ -4,17 +4,22 @@
 package com.datasqrl.cmd;
 
 import com.datasqrl.compile.Compiler;
-import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.GraphQLServer;
-import com.datasqrl.graphql.server.Model;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.packager.Packager;
 import com.google.common.base.Preconditions;
 import io.vertx.core.Vertx;
+import io.vertx.jdbcclient.JDBCConnectOptions;
+import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.pgclient.PgPool;
+import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlClient;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -104,18 +109,31 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   @SneakyThrows
-  private void startGraphQLServer(Model.RootGraphqlModel model, int port, JDBCConnectionProvider jdbcConf) {
-    CompletableFuture future = Vertx.vertx().deployVerticle(new GraphQLServer(
-            model, toPgOptions(jdbcConf), port, new PoolOptions()))
+  private void startGraphQLServer(
+      RootGraphqlModel model, int port, JdbcDataSystemConnectorConfig jdbc) {
+    Vertx vertx = Vertx.vertx();
+    SqlClient client;
+    if (jdbc.getDialect().equalsIgnoreCase("postgres")) {
+      client = PgPool.client(vertx, toPgOptions(jdbc), new PgPoolOptions(new PoolOptions()));
+    } else {
+      client = JDBCPool.pool(vertx,
+          new JDBCConnectOptions()
+              .setJdbcUrl(jdbc.getDbURL())
+              .setDatabase(jdbc.getDatabase()),
+          new PoolOptions());
+    }
+
+    CompletableFuture future = vertx.deployVerticle(new GraphQLServer(
+            model, port, client))
         .toCompletionStage()
         .toCompletableFuture();
-    log.info("Server started at: http://localhost:"+port+"/graphiql/");
+    log.info("Server started at: http://localhost:" + port + "/graphiql/");
     future.get();
   }
 
-  private PgConnectOptions toPgOptions(JDBCConnectionProvider jdbcConf) {
+  private PgConnectOptions toPgOptions(JdbcDataSystemConnectorConfig jdbcConf) {
     PgConnectOptions options = new PgConnectOptions();
-    options.setDatabase(jdbcConf.getDatabaseName());
+    options.setDatabase(jdbcConf.getDatabase());
     options.setHost(jdbcConf.getHost());
     options.setPort(jdbcConf.getPort());
     options.setUser(jdbcConf.getUser());
