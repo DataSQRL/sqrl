@@ -9,6 +9,6 @@ LogicalProject(__pk_0=[$0], __pk_1=[$1], id=[$12], discount=[$5])
 
 
 SELECT "entries$13"."id" AS "__pk_0", "entries$13"."_idx" AS "__pk_1", "orders$12"."id", "entries$13"."discount"
-FROM entries$13
- DEFAULT JOIN entries$13 AS "entries$130" ON TRUE
- LEFT JOIN orders$12 ON "entries$13"."id" = "orders$12"."id"
+FROM "entries$13"
+ DEFAULT JOIN "entries$13" AS "entries$130" ON TRUE
+ LEFT JOIN "orders$12" ON "entries$13"."id" = "orders$12"."id"

@@ -78,7 +78,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     executor.execute(physicalPlan);
 
-    CountDownLatch countDownLatch = new CountDownLatch(1);
 
     SqlClient client;
 
@@ -92,15 +91,20 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
           new PoolOptions());
 
     }
-    vertx.deployVerticle(new GraphQLServer(model, 8888, client),
-        vertxContext.succeeding(server -> countDownLatch.countDown()));
-
-    countDownLatch.await(5, TimeUnit.SECONDS);
+    CountDownLatch countDownLatch = new CountDownLatch(1);
+    GraphQLServer server = new GraphQLServer(
+        model, 8888, client);
+    vertx.deployVerticle(server, c->countDownLatch.countDown());
+    countDownLatch.await(10, TimeUnit.SECONDS);
+    if (countDownLatch.getCount() != 0) {
+      throw new RuntimeException();
+    }
 
     for (Map.Entry<String, String> query : queries.entrySet()) {
       HttpResponse<String> response = testQuery(query.getValue());
+      String httpQuery = prettyPrint(response.body());
 
-      snapshot.addContent(prettyPrint(response.body()), "query", query.getKey());
+      snapshot.addContent(httpQuery, "query", query.getKey());
     }
     snapshot.createOrValidate();
     vertxContext.completeNow();
@@ -114,6 +118,12 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     Optional.ofNullable(config.getUser()).map(options::setUser);
     Optional.ofNullable(config.getPassword()).map(options::setPassword);
     return options;
+  }
+
+  @SneakyThrows
+  private String prettyPrintObj(Object body) {
+    return mapper.writerWithDefaultPrettyPrinter()
+        .writeValueAsString(body);
   }
 
   @SneakyThrows

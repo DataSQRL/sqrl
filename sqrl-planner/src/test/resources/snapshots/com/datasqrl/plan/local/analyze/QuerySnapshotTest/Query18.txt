@@ -9,6 +9,6 @@ LogicalProject(__pk_0=[$0], _uuid=[$11], _ingest_time=[$12], productid=[$13], na
 
 
 SELECT "orders$12"."id" AS "__pk_0", "product$10"."_uuid", "product$10"."_ingest_time", "product$10"."productid", "product$10"."name", "product$10"."description", "product$10"."category"
-FROM orders$12
- DEFAULT JOIN entries$13 ON "orders$12"."id" = "entries$13"."id"
- INNER JOIN product$10 ON "entries$13"."productid" = "product$10"."productid"
+FROM "orders$12"
+ DEFAULT JOIN "entries$13" ON "orders$12"."id" = "entries$13"."id"
+ INNER JOIN "product$10" ON "entries$13"."productid" = "product$10"."productid"

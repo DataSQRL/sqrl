@@ -9,6 +9,6 @@ LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=
 
 SELECT *
 FROM (SELECT "customerid", "_uuid", "_ingest_time", "email", "name", "lastupdated" AS "lastUpdated"
-  FROM customer$3
+  FROM "customer$3"
   ORDER BY "_ingest_time" DESC
   FETCH NEXT 1 ROWS ONLY) AS "t0"

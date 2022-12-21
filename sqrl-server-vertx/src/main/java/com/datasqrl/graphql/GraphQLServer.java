@@ -77,17 +77,19 @@ public class GraphQLServer extends AbstractVerticle {
 
     router.route("/graphql").handler(graphQLHandler);
 
-    vertx.createHttpServer().requestHandler(router).listen(port, http -> {
-      if (http.succeeded()) {
-        log.info("HTTP server started on port {}", port);
-      } else {
-        startPromise.fail(http.cause());
-      }
-    });
+    vertx.createHttpServer().requestHandler(router).listen(port)
+        .onFailure((e)-> {
+          log.error("Could not start graphql server", e);
+          startPromise.fail(e);
+        })
+        .onSuccess((s)-> {
+          log.info("HTTP server started on port {}", port);
+          startPromise.complete();
+        });
   }
 
   @SneakyThrows
-  private GraphQL createGraphQL(SqlClient client) {
+  public GraphQL createGraphQL(SqlClient client) {
     GraphQL graphQL = root.accept(
         new VertxGraphQLBuilder(),
         new VertxContext(client));

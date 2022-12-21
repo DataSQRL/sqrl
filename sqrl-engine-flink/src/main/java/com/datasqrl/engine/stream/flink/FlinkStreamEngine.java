@@ -37,15 +37,6 @@ public interface FlinkStreamEngine extends StreamEngine {
   }
 
   FlinkJob createStreamJob(StreamExecutionEnvironment execEnv, JobType type);
-//
-//  static JdbcConnectionOptions getFlinkJDBC(JDBCConnectionProvider jdbc) {
-//    return new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-//        .withUrl(jdbc.getDbURL())
-//        .withDriverName(jdbc.getDriverName())
-//        .withUsername(jdbc.getUser())
-//        .withPassword(jdbc.getPassword())
-//        .build();
-//  }
 
   @AllArgsConstructor
   @Getter

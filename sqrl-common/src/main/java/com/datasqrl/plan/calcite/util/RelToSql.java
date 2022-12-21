@@ -10,9 +10,9 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 import java.util.function.UnaryOperator;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 public class RelToSql {
 
@@ -21,7 +21,7 @@ public class RelToSql {
           .withSelectListItemsOnSeparateLines(false)
           .withUpdateSetListNewline(false)
           .withIndentation(1)
-          .withQuoteAllIdentifiers(false)
+          .withQuoteAllIdentifiers(true)
           .withDialect(PostgresqlSqlDialect.DEFAULT)
           .withSelectFolding(null);
 

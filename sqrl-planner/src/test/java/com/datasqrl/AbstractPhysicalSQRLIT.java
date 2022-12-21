@@ -112,7 +112,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     for (APIQuery query : queries) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
       String sqlQuery = RelToSql.convertToSql(template.getRelNode());
-      System.out.println("Executing query: " + sqlQuery);
+      System.out.println("Executing query for " + query.getNameId() + ": " + sqlQuery);
 
       ResultSet resultSet = conn
           .createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)

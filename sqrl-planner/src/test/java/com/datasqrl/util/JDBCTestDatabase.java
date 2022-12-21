@@ -8,7 +8,10 @@ import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.google.common.base.Preconditions;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.Getter;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -19,13 +22,16 @@ public class JDBCTestDatabase implements DatabaseHandle {
 
   public static final String TEST_DATABASE_NAME = "datasqrl";
   private final JDBCEngineConfiguration config;
+  private final DatabaseEngine dbType;
 
   private PostgreSQLContainer postgreSQLContainer;
 
   public JDBCTestDatabase(IntegrationTestSettings.DatabaseEngine dbType) {
+    this.dbType = dbType;
     if (dbType == DatabaseEngine.H2) {
       config = JDBCEngineConfiguration.builder()
           .config(JdbcDataSystemConnectorConfig.builder()
+              //When the mem db is closed,
               .dbURL("jdbc:h2:mem:test_mem;DB_CLOSE_DELAY=-1")
               .driverName("org.h2.Driver")
               .dialect("h2")
@@ -61,6 +67,15 @@ public class JDBCTestDatabase implements DatabaseHandle {
 
   @Override
   public void cleanUp() {
+    if (dbType == DatabaseEngine.H2) {
+      try {
+        //close after tests to clean up DB_CLOSE_DELAY
+        DriverManager.getConnection(config.getConfig().getDbURL())
+            .createStatement().execute("SHUTDOWN");
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+    }
     if (postgreSQLContainer != null) {
       postgreSQLContainer.stop();
     }

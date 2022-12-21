@@ -73,7 +73,7 @@ public class IntegrationTestSettings {
   }
 
   public static IntegrationTestSettings getFlinkWithDB() {
-    return getFlinkWithDB(DatabaseEngine.POSTGRES);
+    return getFlinkWithDB(DatabaseEngine.H2);
   }
 
   public static IntegrationTestSettings getFlinkWithDB(DatabaseEngine engine) {
