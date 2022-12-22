@@ -26,9 +26,11 @@ public class JDBCTestDatabase implements DatabaseHandle {
   public static final String TEST_DATABASE_NAME = "datasqrl";
   private final JDBCEngineConfiguration config;
   private final DatabaseEngine dbType;
+  private Connection sqliteConn;
 
   private PostgreSQLContainer postgreSQLContainer;
 
+  @SneakyThrows
   public JDBCTestDatabase(IntegrationTestSettings.DatabaseEngine dbType) {
     this.dbType = dbType;
     if (dbType == DatabaseEngine.H2) {
@@ -51,6 +53,8 @@ public class JDBCTestDatabase implements DatabaseHandle {
               .database(TEST_DATABASE_NAME)
               .build())
           .build();
+      //Hold open the connection so the db stays around
+      this.sqliteConn = DriverManager.getConnection(config.getConfig().getDbURL());
     } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES) {
       DockerImageName image = DockerImageName.parse("postgres:14.2");
       postgreSQLContainer = new PostgreSQLContainer(image)
@@ -81,6 +85,9 @@ public class JDBCTestDatabase implements DatabaseHandle {
   @SneakyThrows
   @Override
   public void cleanUp() {
+    if (dbType == DatabaseEngine.SQLITE && sqliteConn != null) {
+      sqliteConn.close();
+    }
     if (dbType == DatabaseEngine.H2) {
       try {
         //close after tests to clean up DB_CLOSE_DELAY
