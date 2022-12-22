@@ -25,7 +25,7 @@
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP_LTZ(3) NOT NULL,
-  `entries` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
+  `entries` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DECIMAL(10, 5) NOT NULL, `discount` DECIMAL(10, 5)> NOT NULL> NOT NULL
 )
 >>>orders
 (
@@ -34,7 +34,7 @@
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP_LTZ(3) NOT NULL,
-  `entries` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
+  `entries` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DECIMAL(10, 5) NOT NULL, `discount` DECIMAL(10, 5)> NOT NULL> NOT NULL
 )
 >>>customer-hasTimestamp
 (

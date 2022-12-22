@@ -29,12 +29,24 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SqliteDialect extends AbstractDialect {
+  private static final long serialVersionUID = 1L;
+  private static final int MAX_TIMESTAMP_PRECISION = 6;
+  private static final int MIN_TIMESTAMP_PRECISION = 1;
+  private static final int MAX_DECIMAL_PRECISION = 1000;
+  private static final int MIN_DECIMAL_PRECISION = 1;
 
   @Override
   public String dialectName() {
     return "sqlite";
   }
 
+  public Optional<AbstractDialect.Range> decimalPrecisionRange() {
+    return Optional.of(Range.of(MIN_DECIMAL_PRECISION, MAX_DECIMAL_PRECISION));
+  }
+
+  public Optional<AbstractDialect.Range> timestampPrecisionRange() {
+    return Optional.of(Range.of(MIN_TIMESTAMP_PRECISION, MAX_TIMESTAMP_PRECISION));
+  }
   @Override
   public Optional<String> defaultDriverName() {
     return Optional.of("org.sqlite.JDBC");
@@ -71,7 +83,6 @@ public class SqliteDialect extends AbstractDialect {
     String upsertSQL =
         getInsertIntoStatement(tableName, fieldNames) + " ON CONFLICT(" + conflictFields
             + ") DO UPDATE SET " + updateClause;
-    System.out.println(upsertSQL);
     return Optional.of(upsertSQL);
   }
 

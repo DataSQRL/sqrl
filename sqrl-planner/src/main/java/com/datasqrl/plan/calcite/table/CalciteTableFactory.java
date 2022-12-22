@@ -213,7 +213,8 @@ public class CalciteTableFactory {
 
     @Override
     public RelDataType wrapArray(RelDataType type) {
-      return typeFactory.createArrayType(type, -1L);
+
+      return typeFactory.createArrayType(type, -1);
     }
 
     @Override

@@ -69,7 +69,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         config.getConfig().getPassword())) {
       for (String dml : dmls) {
         try (Statement stmt = conn.createStatement()) {
-          log.info("Creating: " + dml);
+          log.trace("Creating: " + dml);
           stmt.executeUpdate(dml);
         } catch (SQLException e) {
           throw new RuntimeException("Could not execute SQL query", e);
