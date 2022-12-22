@@ -8,10 +8,12 @@ import com.datasqrl.schema.input.SqrlTypeConverter;
 import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.*;
+import java.math.BigDecimal;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFactoryImpl.JavaType;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.BasicSqlType;
@@ -19,6 +21,7 @@ import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.util.Optional;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 
 @Value
 public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataType> {
@@ -47,7 +50,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
 
   @Override
   public RelDataType visitFloatType(FloatType type, Void context) {
-    return typeFactory.createSqlType(SqlTypeName.DOUBLE);
+    return typeFactory.createSqlType(SqlTypeName.DECIMAL, 10, 5);
   }
 
   @Override

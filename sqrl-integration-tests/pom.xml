@@ -21,22 +21,32 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-compiler</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-discovery</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-flink-jdbc</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-flink-h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-flink-sqlite</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <artifactId>sqrl-common</artifactId>

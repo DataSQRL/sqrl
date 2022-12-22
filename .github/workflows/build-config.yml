@@ -25,7 +25,7 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Build SQRL
-      run: mvn -T 2 -B -U -e clean install --no-transfer-progress
+      run: mvn -B -U -e clean install --no-transfer-progress
 #    - name: Set up Go
 #      uses: actions/setup-go@v3
 #      with:

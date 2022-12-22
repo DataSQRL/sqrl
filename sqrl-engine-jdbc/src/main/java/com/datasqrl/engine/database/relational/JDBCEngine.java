@@ -61,17 +61,19 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   public ExecutionResult execute(EnginePhysicalPlan plan) {
     Preconditions.checkArgument(plan instanceof JDBCPhysicalPlan);
     JDBCPhysicalPlan jdbcPlan = (JDBCPhysicalPlan) plan;
-    String dmls = jdbcPlan.getDdlStatements().stream().map(ddl -> ddl.toSql())
-        .collect(Collectors.joining("\n"));
+    List<String> dmls = jdbcPlan.getDdlStatements().stream().map(ddl -> ddl.toSql())
+        .collect(Collectors.toList());
     try (Connection conn = DriverManager.getConnection(
         config.getConfig().getDbURL(),
         config.getConfig().getUser(),
         config.getConfig().getPassword())) {
-      try (Statement stmt = conn.createStatement()) {
-        log.trace("Creating: " + dmls);
-        stmt.executeUpdate(dmls);
-      } catch (SQLException e) {
-        throw new RuntimeException("Could not execute SQL query", e);
+      for (String dml : dmls) {
+        try (Statement stmt = conn.createStatement()) {
+          log.trace("Creating: " + dml);
+          stmt.executeUpdate(dml);
+        } catch (SQLException e) {
+          throw new RuntimeException("Could not execute SQL query", e);
+        }
       }
     } catch (Exception e) {
       throw new RuntimeException("Could not connect to database", e);

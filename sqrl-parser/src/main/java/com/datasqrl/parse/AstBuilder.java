@@ -852,8 +852,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitDecimalLiteral(DecimalLiteralContext context) {
-    SqlLiteral literal = SqlLiteral.createApproxNumeric(context.getText(), getLocation(context));
-    Preconditions.checkState(literal.getTypeName().equals(SqlTypeName.DOUBLE));
+    SqlLiteral literal = SqlLiteral.createExactNumeric(context.getText(), getLocation(context));
 
     return literal;
   }

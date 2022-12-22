@@ -39,10 +39,9 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
     switch (dialect.toUpperCase()) {
       case "POSTGRES":
-        return EnumSet.of(HASH, BTREE);
       case "MYSQL":
-        return EnumSet.of(HASH, BTREE);
       case "H2":
+      case "SQLITE":
         return EnumSet.of(HASH, BTREE);
       default:
         throw new IllegalStateException(dialect);
@@ -60,8 +59,8 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
             return maxIndexColumns;
         }
       case "MYSQL":
-        return maxIndexColumns;
       case "H2":
+      case "SQLITE":
         return maxIndexColumns;
       default:
         throw new IllegalStateException(dialect);

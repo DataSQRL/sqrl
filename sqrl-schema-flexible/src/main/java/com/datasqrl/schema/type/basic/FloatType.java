@@ -6,11 +6,12 @@ package com.datasqrl.schema.type.basic;
 import com.datasqrl.schema.type.SqrlTypeVisitor;
 import com.google.common.collect.ImmutableSet;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
-public class FloatType extends AbstractBasicType<Double> {
+public class FloatType extends AbstractBasicType<BigDecimal> {
 
   public static final FloatType INSTANCE = new FloatType();
 
@@ -20,16 +21,16 @@ public class FloatType extends AbstractBasicType<Double> {
   }
 
   @Override
-  public TypeConversion<Double> conversion() {
+  public TypeConversion<BigDecimal> conversion() {
     return new Conversion();
   }
 
-  public static class Conversion extends SimpleBasicType.Conversion<Double> {
+  public static class Conversion extends SimpleBasicType.Conversion<BigDecimal> {
 
     private static final Set<Class> FLOAT_CLASSES = ImmutableSet.of(Float.class, Double.class);
 
     public Conversion() {
-      super(Double.class, s -> Double.parseDouble(s));
+      super(BigDecimal.class, s -> new BigDecimal(s));
     }
 
     @Override
@@ -37,18 +38,19 @@ public class FloatType extends AbstractBasicType<Double> {
       return FLOAT_CLASSES;
     }
 
-    public Double convert(Object o) {
+    public BigDecimal convert(Object o) {
       if (o instanceof Double) {
-        return (Double) o;
+        return BigDecimal.valueOf((Double)o);
       }
       if (o instanceof Number) {
-        return ((Number) o).doubleValue();
+        return BigDecimal.valueOf(((Number) o).doubleValue());
       }
       if (o instanceof Boolean) {
-        return ((Boolean) o).booleanValue() ? 1.0 : 0.0;
+        return ((Boolean) o).booleanValue() ? BigDecimal.ONE : BigDecimal.ZERO;
       }
       if (o instanceof Duration) {
-        return ((Duration) o).toMillis() / 1000.0;
+        return BigDecimal.valueOf(((Duration) o).toMillis())
+            .divide(BigDecimal.valueOf(1000.0));
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }

@@ -132,6 +132,7 @@ public interface TestScript {
     }
   }
 
-  public List<DatabaseEngine> jdbcEngines = List.of(DatabaseEngine.H2, DatabaseEngine.POSTGRES);
+  List<DatabaseEngine> jdbcEngines = List.of(DatabaseEngine.H2,
+      DatabaseEngine.POSTGRES, DatabaseEngine.SQLITE);
 
 }

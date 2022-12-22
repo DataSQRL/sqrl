@@ -8,11 +8,14 @@ import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.google.common.base.Preconditions;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -23,9 +26,11 @@ public class JDBCTestDatabase implements DatabaseHandle {
   public static final String TEST_DATABASE_NAME = "datasqrl";
   private final JDBCEngineConfiguration config;
   private final DatabaseEngine dbType;
+  private Connection sqliteConn;
 
   private PostgreSQLContainer postgreSQLContainer;
 
+  @SneakyThrows
   public JDBCTestDatabase(IntegrationTestSettings.DatabaseEngine dbType) {
     this.dbType = dbType;
     if (dbType == DatabaseEngine.H2) {
@@ -38,6 +43,18 @@ public class JDBCTestDatabase implements DatabaseHandle {
               .database(TEST_DATABASE_NAME)
               .build())
           .build();
+    } else if (dbType == DatabaseEngine.SQLITE) {
+      config = JDBCEngineConfiguration.builder()
+          .config(JdbcDataSystemConnectorConfig.builder()
+              //A connection may be leaking somewhere, the inmem doesn't close after test is done
+              .dbURL("jdbc:sqlite:file:test?mode=memory&cache=shared")
+              .driverName("org.sqlite.JDBC")
+              .dialect("sqlite")
+              .database(TEST_DATABASE_NAME)
+              .build())
+          .build();
+      //Hold open the connection so the db stays around
+      this.sqliteConn = DriverManager.getConnection(config.getConfig().getDbURL());
     } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES) {
       DockerImageName image = DockerImageName.parse("postgres:14.2");
       postgreSQLContainer = new PostgreSQLContainer(image)
@@ -65,8 +82,12 @@ public class JDBCTestDatabase implements DatabaseHandle {
     return config;
   }
 
+  @SneakyThrows
   @Override
   public void cleanUp() {
+    if (dbType == DatabaseEngine.SQLITE && sqliteConn != null) {
+      sqliteConn.close();
+    }
     if (dbType == DatabaseEngine.H2) {
       try {
         //close after tests to clean up DB_CLOSE_DELAY

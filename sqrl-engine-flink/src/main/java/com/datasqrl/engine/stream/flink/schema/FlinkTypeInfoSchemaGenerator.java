@@ -40,7 +40,7 @@ public class FlinkTypeInfoSchemaGenerator implements
         case DECIMAL:
         case REAL:
         case DOUBLE:
-          return BasicTypeInfo.DOUBLE_TYPE_INFO;
+          return BasicTypeInfo.BIG_DEC_TYPE_INFO;
         case FLOAT:
           return BasicTypeInfo.FLOAT_TYPE_INFO;
         case DATE:
