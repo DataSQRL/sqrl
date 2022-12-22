@@ -42,7 +42,7 @@ public abstract class DirectoryDataSystem {
 
   @AllArgsConstructor
   @Getter
-  public static class Connector implements DataSystemConnector, Serializable {
+  public static class DirectoryConnector implements DataSystemConnector, Serializable {
 
     final FilePathConfig pathConfig;
     final Pattern filenamePattern;
@@ -78,7 +78,7 @@ public abstract class DirectoryDataSystem {
 
   }
 
-  public static class Discovery extends DirectoryDataSystem.Connector implements
+  public static class Discovery extends DirectoryConnector implements
       DataSystemDiscovery {
 
     final DirectoryDataSystemConfig.Connector connectorConfig;

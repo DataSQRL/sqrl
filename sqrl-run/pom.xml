@@ -35,6 +35,14 @@
       <groupId>com.datasqrl</groupId>
     </dependency>
     <dependency>
+      <artifactId>sqrl-engine-flink-file</artifactId>
+      <groupId>com.datasqrl</groupId>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-engine-flink-print</artifactId>
+      <groupId>com.datasqrl</groupId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-engine-flink-sqlite</artifactId>
       <groupId>com.datasqrl</groupId>
     </dependency>

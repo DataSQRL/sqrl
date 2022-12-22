@@ -3,8 +3,6 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-//import com.datasqrl.config.provider.JDBCConnectionProvider;
-
 import com.datasqrl.engine.stream.StreamEngine;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -14,8 +12,6 @@ import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.OutputTag;
-
-//import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 
 public interface FlinkStreamEngine extends StreamEngine {
 

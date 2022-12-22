@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.plan.global.OptimizedDAG;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,6 +36,8 @@ public interface ExecutionEngine {
 
   String getName();
 
+  DataSystemConnectorConfig getDataSystemConnectorConfig();
+
   ExecutionResult execute(EnginePhysicalPlan plan);
 
   EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
@@ -53,6 +56,10 @@ public interface ExecutionEngine {
       return capabilities.contains(capability);
     }
 
+    @Override
+    public DataSystemConnectorConfig getDataSystemConnectorConfig() {
+      return null;
+    }
   }
 
 }

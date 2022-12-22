@@ -9,6 +9,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
+import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.tools.RelBuilder;

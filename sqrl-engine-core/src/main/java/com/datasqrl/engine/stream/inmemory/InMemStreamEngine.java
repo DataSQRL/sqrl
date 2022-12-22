@@ -23,7 +23,7 @@ import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.formats.TextLineFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.plan.global.OptimizedDAG;
@@ -97,8 +97,8 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
           "This method only supports text sources");
       DataSystemConnector source = table.getConnector();
 
-      if (source instanceof DirectoryDataSystem.Connector) {
-        DirectoryDataSystem.Connector filesource = (DirectoryDataSystem.Connector) source;
+      if (source instanceof DirectoryConnector) {
+        DirectoryConnector filesource = (DirectoryConnector) source;
         try {
           Stream<Path> paths = FileStreamUtil.matchingFiles(
               filesource.getPathConfig(),

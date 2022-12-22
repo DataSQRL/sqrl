@@ -1,27 +1,37 @@
-/*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
- */
-package com.datasqrl;
+package com.datasqrl.io;
 
+import com.datasqrl.config.SinkFactory;
 import com.datasqrl.io.formats.FormatConfiguration;
-import com.datasqrl.io.impl.file.DirectoryDataSystem;
-import com.datasqrl.io.impl.file.DirectoryDataSystem.Connector;
+import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.tables.TableConfig;
-import org.apache.flink.table.api.Schema;
+import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
+import com.datasqrl.plan.global.OptimizedDAG.WriteSink;
 import org.apache.flink.table.api.TableDescriptor;
+import org.apache.flink.table.api.TableDescriptor.Builder;
 
-public class DirectoryDescriptor implements Descriptor<DirectoryDataSystem.Connector> {
+public class FileSinkFactory implements SinkFactory<TableDescriptor.Builder> {
 
   @Override
-  public TableDescriptor create(String name, Schema schema, Connector connector,
-      TableConfig configuration) {
+  public String getEngine() {
+    return "flink";
+  }
+
+  @Override
+  public String getSinkName() {
+    return "file";
+  }
+
+  @Override
+  public Builder create(WriteSink sink, DataSystemConnectorConfig config) {
+    ExternalSink externalSink = (ExternalSink) sink;
+    TableConfig configuration = externalSink.getSink().getConfiguration();
+    DirectoryConnector connector = (DirectoryConnector)externalSink.getSink().getConnector();
     TableDescriptor.Builder tblBuilder = TableDescriptor.forConnector("filesystem")
-        .schema(schema)
         .option("path",
             connector.getPathConfig().getDirectory().resolve(configuration.getIdentifier())
                 .toString());
     addFormat(tblBuilder, configuration.getFormat());
-    return tblBuilder.build();
+    return tblBuilder;
   }
 
   private void addFormat(TableDescriptor.Builder tblBuilder, FormatConfiguration formatConfig) {

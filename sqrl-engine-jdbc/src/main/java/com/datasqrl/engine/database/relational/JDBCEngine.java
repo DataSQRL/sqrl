@@ -6,6 +6,8 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.engine.EngineConfiguration;
 import com.datasqrl.engine.database.relational.dialect.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.dialect.JdbcDDLServiceLoader;
+import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -50,6 +52,11 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
 //        CAPABILITIES_BY_DIALECT.get(configuration.getDialect()));
     this.config = configuration;
+  }
+
+  @Override
+  public DataSystemConnectorConfig getDataSystemConnectorConfig() {
+    return config.getConfig();
   }
 
   @Override

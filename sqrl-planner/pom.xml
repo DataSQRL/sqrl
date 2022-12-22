@@ -67,10 +67,18 @@
     <dependency>
       <artifactId>sqrl-io-file</artifactId>
       <groupId>com.datasqrl</groupId>
-<!--      <scope>test</scope>-->
+      <scope>test</scope>
     </dependency>
-
-
+    <dependency>
+      <artifactId>sqrl-engine-flink-file</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-engine-flink-print</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <artifactId>sqrl-engine-flink-jdbc</artifactId>
       <groupId>com.datasqrl</groupId>

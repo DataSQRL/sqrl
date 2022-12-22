@@ -22,5 +22,8 @@
     <module>sqrl-engine-flink-jdbc</module>
     <module>sqrl-engine-flink-h2</module>
     <module>sqrl-engine-flink-sqlite</module>
+    <module>sqrl-engine-flink-print</module>
+    <module>sqrl-engine-flink-file</module>
+    <module>sqrl-engine-flink-kafka</module>
   </modules>
 </project>

@@ -3,47 +3,39 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.Descriptor;
-import com.datasqrl.DirectoryDescriptor;
-import com.datasqrl.PrintDescriptor;
-import com.datasqrl.Sink;
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SinkServiceLoader;
 import com.datasqrl.engine.stream.flink.plan.FlinkPipelineUtils;
-import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.impl.file.DirectoryDataSystem;
-import com.datasqrl.io.impl.print.PrintDataSystem;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
-import com.datasqrl.plan.global.OptimizedDAG.WriteSink;
-import java.util.HashMap;
-import java.util.Map;
-import lombok.NonNull;
+import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableDescriptor;
 
 public class DescriptorFactory {
-  Map<Class, Descriptor> descriptors = new HashMap<>();
-  public DescriptorFactory() {
-    descriptors.put(PrintDataSystem.Connector.class, new PrintDescriptor());
-    descriptors.put(DirectoryDataSystem.Connector.class, new DirectoryDescriptor());
+  public TableDescriptor createSink(ExternalSink sink, Schema tblSchema) {
+    DataSystemConnectorConfig config = sink.getSink().getConfiguration().getConnector();
+
+    SinkFactory<TableDescriptor.Builder> factory = (new SinkServiceLoader())
+        .load(FlinkEngineConfiguration.ENGINE_NAME,
+            sink.getSink().getConnector().getPrefix())
+        .orElseThrow();
+
+    return factory.create(sink, config)
+        .schema(tblSchema)
+        .build();
   }
 
-  public TableDescriptor createDescriptor(String name, Schema tblSchema, DataSystemConnector connector,
-      @NonNull TableConfig configuration) {
-    return descriptors.get(connector.getClass()).create(name, tblSchema, connector, configuration);
-  }
-
-  public TableDescriptor createDescriptor(EngineSink sink, Schema tblSchema) {
+  public TableDescriptor createSink(EngineSink sink, Schema tblSchema) {
+    DataSystemConnectorConfig config = sink.getStage().getEngine().getDataSystemConnectorConfig();
     SinkFactory<TableDescriptor.Builder> factory = (new SinkServiceLoader())
         .load(FlinkEngineConfiguration.ENGINE_NAME,
             sink.getStage().getName())
           .orElseThrow();
     tblSchema = FlinkPipelineUtils.addPrimaryKey(tblSchema, sink);
 
-    return factory.create(sink)
+    return factory.create(sink, config)
         .schema(tblSchema)
-        .option("table-name", sink.getName())
         .build();
   }
 }

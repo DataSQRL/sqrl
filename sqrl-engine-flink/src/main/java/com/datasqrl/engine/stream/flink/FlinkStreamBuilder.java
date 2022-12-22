@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.stream.flink;
 
+import com.datasqrl.config.SourceServiceLoader;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.schema.FlinkRowConstructor;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
@@ -11,10 +12,9 @@ import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.formats.TextLineFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
-import com.datasqrl.io.impl.kafka.KafkaDataSystem;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
@@ -43,9 +43,6 @@ import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
-import org.apache.flink.connector.kafka.source.KafkaSourceBuilder;
-import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
-import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -53,7 +50,6 @@ import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 @Getter
 //TODO: Do output tags (errors, monitor) need a globally unique name or just local to the job?
@@ -140,142 +136,18 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
     String flinkSourceName = table.getDigest().toString('-', "input");
 
     StreamExecutionEnvironment env = getEnvironment();
-    DataStream<TimeAnnotatedRecord<String>> timedSource;
-
-    if (sourceConnector instanceof DirectoryDataSystem.Connector) {
-      DirectoryDataSystem.Connector filesource = (DirectoryDataSystem.Connector) sourceConnector;
-
-      FilePathConfig pathConfig = filesource.getPathConfig();
-      DataStream<String> textSource;
-      if (pathConfig.isURL()) {
-        Preconditions.checkArgument(!pathConfig.isDirectory());
-        textSource = env.fromCollection(pathConfig.getFiles(filesource, table.getConfiguration())).
-            flatMap(new ReadPathByLine());
-      } else {
-        org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder;
-        if (pathConfig.isDirectory()) {
-          builder = org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
-              new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-                  table.getConfiguration().getCharset()),
-              FilePath.toFlinkPath(pathConfig.getDirectory()));
-          Duration monitorDuration = null;
-          FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource,
-              table.getConfiguration());
-          builder.setFileEnumerator(fileEnumerator);
-          if (monitorDuration != null) {
-            builder.monitorContinuously(Duration.ofSeconds(10));
-          }
-        } else {
-          Path[] inputPaths = pathConfig.getFiles(filesource, table.getConfiguration()).stream()
-              .map(FilePath::toFlinkPath).toArray(size -> new Path[size]);
-          builder = org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
-              new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-                  table.getConfiguration().getCharset()), inputPaths);
-        }
-        textSource = env.fromSource(builder.build(),
-            WatermarkStrategy.noWatermarks(), flinkSourceName);
-      }
-      timedSource = textSource.map(new NoTimedRecord());
-    } else if (sourceConnector instanceof KafkaDataSystem.Connector) {
-      KafkaDataSystem.Connector kafkaSource = (KafkaDataSystem.Connector) sourceConnector;
-      String topic = kafkaSource.getTopicPrefix() + table.getConfiguration().getIdentifier();
-      String groupId = flinkSourceName + "-" + getUuid();
-
-      KafkaSourceBuilder<TimeAnnotatedRecord<String>> builder = org.apache.flink.connector.kafka.source.KafkaSource.<TimeAnnotatedRecord<String>>builder()
-          .setBootstrapServers(kafkaSource.getServersAsString())
-          .setTopics(topic)
-          .setStartingOffsets(OffsetsInitializer.earliest()) //TODO: work with commits
-          .setGroupId(groupId);
-
-      builder.setDeserializer(
-          new KafkaTimeValueDeserializationSchemaWrapper<>(new SimpleStringSchema()));
-
-      timedSource = env.fromSource(builder.build(),
-          WatermarkStrategy.noWatermarks(), flinkSourceName);
-
-    } else {
-      throw new UnsupportedOperationException("Unrecognized source table type: " + table);
-    }
+    DataStream<TimeAnnotatedRecord<String>> timedSource =
+        (DataStream<TimeAnnotatedRecord<String>>)new SourceServiceLoader().load("flink", sourceConnector.getPrefix())
+        .orElseThrow(()->new UnsupportedOperationException("Unrecognized source table type: " + table))
+        .create(sourceConnector, new FlinkSourceFactoryContext(env, flinkSourceName, table, getUuid()));
     return new FlinkStreamHolder<>(this, timedSource);
   }
 
-  private static class NoTimedRecord implements MapFunction<String, TimeAnnotatedRecord<String>> {
+  public static class NoTimedRecord implements MapFunction<String, TimeAnnotatedRecord<String>> {
 
     @Override
     public TimeAnnotatedRecord<String> map(String s) throws Exception {
       return new TimeAnnotatedRecord<>(s, null);
-    }
-  }
-
-  @NoArgsConstructor
-  @AllArgsConstructor
-  private static class FileEnumeratorProvider implements
-      org.apache.flink.connector.file.src.enumerate.FileEnumerator.Provider {
-
-    DirectoryDataSystem.Connector directorySource;
-    TableConfig table;
-
-    @Override
-    public org.apache.flink.connector.file.src.enumerate.FileEnumerator create() {
-      return new NonSplittingRecursiveEnumerator(new FileNameMatcher());
-    }
-
-    private class FileNameMatcher implements Predicate<Path> {
-
-      @Override
-      public boolean test(Path path) {
-        try {
-          if (path.getFileSystem().getFileStatus(path).isDir()) {
-            return true;
-          }
-        } catch (IOException e) {
-          return false;
-        }
-        return directorySource.isTableFile(FilePath.fromFlinkPath(path), table);
-      }
-    }
-  }
-
-
-  static class KafkaTimeValueDeserializationSchemaWrapper<T> implements
-      KafkaRecordDeserializationSchema<TimeAnnotatedRecord<T>> {
-
-    private static final long serialVersionUID = 1L;
-    private final DeserializationSchema<T> deserializationSchema;
-
-    KafkaTimeValueDeserializationSchemaWrapper(DeserializationSchema<T> deserializationSchema) {
-      this.deserializationSchema = deserializationSchema;
-    }
-
-    @Override
-    public void open(DeserializationSchema.InitializationContext context) throws Exception {
-      deserializationSchema.open(context);
-    }
-
-    @Override
-    public void deserialize(ConsumerRecord<byte[], byte[]> message,
-        Collector<TimeAnnotatedRecord<T>> out)
-        throws IOException {
-      T result = deserializationSchema.deserialize(message.value());
-      if (result != null) {
-        out.collect(new TimeAnnotatedRecord<>(result, Instant.ofEpochSecond(message.timestamp())));
-      }
-    }
-
-    @Override
-    public TypeInformation<TimeAnnotatedRecord<T>> getProducedType() {
-      return (TypeInformation) TypeInformation.of(TimeAnnotatedRecord.class);
-      //return deserializationSchema.getProducedType();
-    }
-  }
-
-  private static class ReadPathByLine implements FlatMapFunction<FilePath, String> {
-
-    @Override
-    public void flatMap(FilePath filePath, Collector<String> collector) throws Exception {
-      try (InputStream is = filePath.read()) {
-        FileStreamUtil.readByLine(is).forEach(collector::collect);
-      }
     }
   }
 
