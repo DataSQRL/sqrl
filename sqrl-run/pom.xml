@@ -31,6 +31,14 @@
       <groupId>com.datasqrl</groupId>
     </dependency>
     <dependency>
+      <artifactId>sqrl-engine-flink-h2</artifactId>
+      <groupId>com.datasqrl</groupId>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-engine-flink-sqlite</artifactId>
+      <groupId>com.datasqrl</groupId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-server-vertx</artifactId>
       <groupId>com.datasqrl</groupId>
     </dependency>
