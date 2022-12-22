@@ -29,7 +29,7 @@ public abstract class PrintDataSystem {
 
   public static final String SYSTEM_TYPE = "print";
 
-  String prefix;
+  String prefix = "print";
 
   public String getSystemType() {
     return SYSTEM_TYPE;

@@ -31,6 +31,7 @@
         <module>sqrl-schema-flexible</module>
         <module>sqrl-engine-flink-connectors</module>
         <module>sqrl-io-jdbc</module>
+      <module>sqrl-engine-flink-connectors/sqrl-engine-flink-s3</module>
     </modules>
 
 
@@ -236,6 +237,21 @@
             </dependency>
             <dependency>
                 <artifactId>sqrl-engine-flink-sqlite</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-engine-flink-file</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-engine-flink-kafka</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-engine-flink-print</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>

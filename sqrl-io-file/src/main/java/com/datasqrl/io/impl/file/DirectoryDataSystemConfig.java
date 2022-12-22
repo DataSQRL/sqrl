@@ -8,6 +8,7 @@ import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryConfig;
+import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.util.constraints.OptionalMinString;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.nio.file.Path;
@@ -77,7 +78,7 @@ public abstract class DirectoryDataSystemConfig {
     @Override
     public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
       if (rootInitialize(errors)) {
-        return new DirectoryDataSystem.Connector(filePathConfig, compilerFilenamePattern());
+        return new DirectoryConnector(filePathConfig, compilerFilenamePattern());
       } else {
         return null;
       }

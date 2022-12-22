@@ -29,27 +29,4 @@ public interface EngineConfiguration extends Serializable {
       super(EngineConfiguration.class, TYPE_KEY, EngineConfiguration::getEngineName);
     }
   }
-
-//
-//  enum Type {STREAM, DATABASE}
-//
-//  Type getType();
-//
-//  interface Stream extends EngineConfiguration, StreamEngineProvider {
-//
-//    default Type getType() {
-//      return Type.STREAM;
-//    }
-//
-//  }
-//
-//  interface Database extends EngineConfiguration, DatabaseEngineProvider {
-//
-//    default Type getType() {
-//      return Type.DATABASE;
-//    }
-//
-//  }
-
-
 }

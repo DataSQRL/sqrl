@@ -13,7 +13,6 @@ import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Raw;
-import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
@@ -29,7 +28,6 @@ import com.datasqrl.plan.global.OptimizedDAG.SinkVisitor;
 import com.datasqrl.plan.global.OptimizedDAG.WriteQuery;
 import com.datasqrl.schema.input.SchemaValidator;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Value;
@@ -134,23 +132,14 @@ public class FlinkTableRegistration implements
 
   @Override
   public TableDescriptor accept(ExternalSink sink, SinkContext context) {
-
     DescriptorFactory descriptorFactory = new DescriptorFactory();
-    TableSink tableSink = sink.getSink();
-
-    String name = tableSink.getName().getDisplay();
-    if (!Strings.isNullOrEmpty(tableSink.getConnector().getPrefix())) {
-      name = tableSink.getConnector().getPrefix() + "_" + name;
-    }
-
-    return descriptorFactory.createDescriptor(name, context.getTblSchema(),
-        tableSink.getConnector(), tableSink.getConfiguration());
+    return descriptorFactory.createSink(sink, context.getTblSchema());
   }
 
   @Override
   public TableDescriptor accept(EngineSink sink, SinkContext context) {
     DescriptorFactory descriptorFactory = new DescriptorFactory();
-    return descriptorFactory.createDescriptor(sink, context.getTblSchema());
+    return descriptorFactory.createSink(sink, context.getTblSchema());
   }
 
   @Value

@@ -10,7 +10,7 @@ import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
-import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
@@ -136,8 +136,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     }
     for (Resolve.ResolvedExport export : resolvedDag.getExports()) {
       TableSink sink = export.getSink();
-      if (sink.getConnector() instanceof DirectoryDataSystem.Connector) {
-        DirectoryDataSystem.Connector connector = (DirectoryDataSystem.Connector) sink.getConnector();
+      if (sink.getConnector() instanceof DirectoryConnector) {
+        DirectoryConnector connector = (DirectoryConnector) sink.getConnector();
         FilePath path = connector.getPathConfig().getDirectory()
             .resolve(sink.getConfiguration().getIdentifier());
         Path filePath = Paths.get(path.toString());

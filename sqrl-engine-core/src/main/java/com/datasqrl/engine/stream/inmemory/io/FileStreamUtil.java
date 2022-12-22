@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.stream.inmemory.io;
 
-import com.datasqrl.io.impl.file.DirectoryDataSystem;
+import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.tables.TableConfig;
@@ -40,7 +40,7 @@ public class FileStreamUtil {
   }
 
   public static Stream<Path> matchingFiles(FilePathConfig pathConfig,
-      DirectoryDataSystem.Connector directorySource,
+      DirectoryConnector directorySource,
       TableConfig table) throws IOException {
     if (pathConfig.isDirectory()) {
       return Files.find(FilePath.toJavaPath(pathConfig.getDirectory()), 100,

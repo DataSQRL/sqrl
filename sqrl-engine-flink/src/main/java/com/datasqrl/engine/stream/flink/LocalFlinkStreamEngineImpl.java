@@ -4,6 +4,7 @@
 package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.io.DataSystemConnectorConfig;
 import lombok.NonNull;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -51,6 +52,11 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
   @Override
   public void close() throws IOException {
     jobs.clear();
+  }
+
+  @Override
+  public DataSystemConnectorConfig getDataSystemConnectorConfig() {
+    return null;
   }
 
   class LocalJob extends FlinkJob {
