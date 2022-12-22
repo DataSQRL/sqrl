@@ -31,6 +31,14 @@
       <artifactId>sqrl-server-vertx</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-flink-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-flink-h2</artifactId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>com.datasqrl</groupId>
       <type>test-jar</type>

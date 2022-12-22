@@ -4,14 +4,14 @@
 package com.datasqrl.cmd;
 
 import com.datasqrl.config.GlobalEngineConfiguration;
-import com.datasqrl.config.provider.Dialect;
-import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -34,7 +34,7 @@ public abstract class AbstractCommand implements Runnable {
   @CommandLine.ParentCommand
   protected RootCommand root;
 
-  protected JDBCConnectionProvider jdbcConnection;
+  protected JdbcDataSystemConnectorConfig jdbcConnection;
 
 
   @SneakyThrows
@@ -73,7 +73,7 @@ public abstract class AbstractCommand implements Runnable {
       //Extract JDBC engine
       JDBCEngineConfiguration jdbcConfig = Iterables.getOnlyElement(
           Iterables.filter(engineConfig.getEngines(), JDBCEngineConfiguration.class));
-      jdbcConnection = jdbcConfig.getConnectionProvider();
+      jdbcConnection = jdbcConfig.getConfig();
     }
     return packageFiles;
   }
@@ -84,23 +84,29 @@ public abstract class AbstractCommand implements Runnable {
     if (execute) {
       PostgreSQLContainer postgreSQLContainer = startPostgres();
       jdbcEngineConfiguration = JDBCEngineConfiguration.builder()
-          .dbURL(postgreSQLContainer.getJdbcUrl())
-          .host(postgreSQLContainer.getHost())
-          .user(postgreSQLContainer.getUsername())
-          .port(postgreSQLContainer.getMappedPort(5432))
-          .dialect(Dialect.POSTGRES)
-          .password(postgreSQLContainer.getPassword())
-          .database(postgreSQLContainer.getDatabaseName())
-          .driverName(postgreSQLContainer.getDriverClassName())
+          .config(JdbcDataSystemConnectorConfig.builder()
+              .host(postgreSQLContainer.getHost())
+              .port(postgreSQLContainer.getMappedPort(5432))
+              .dbURL(postgreSQLContainer.getJdbcUrl())
+              .user(postgreSQLContainer.getUsername())
+              .password(postgreSQLContainer.getPassword())
+              .dialect("POSTGRES")
+              .database(postgreSQLContainer.getDatabaseName())
+              .driverName(postgreSQLContainer.getDriverClassName())
+              .build())
           .build();
-      jdbcConnection = jdbcEngineConfiguration.getConnectionProvider();
+      jdbcConnection = jdbcEngineConfiguration.getConfig();
     } else {
       jdbcEngineConfiguration = JDBCEngineConfiguration.builder()
-          .dbURL("invalid")
-          .dialect(Dialect.POSTGRES)
-          .database(DEFAULT_DB_NAME)
-          .user("")
-          .password("")
+          .config(JdbcDataSystemConnectorConfig.builder()
+              .host("localhost")
+              .port(5432)
+            .dbURL("invalid")
+            .dialect("POSTGRES")
+            .database(DEFAULT_DB_NAME)
+            .user(null)
+            .password(null)
+            .build())
           .build();
     }
 

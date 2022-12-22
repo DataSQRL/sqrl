@@ -5,12 +5,16 @@ package com.datasqrl.flink;
 
 import com.datasqrl.AbstractQuerySQRLIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
+import com.datasqrl.flink.connector.jdbc.dialect.h2.H2DialectFactory;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.DataSQRLRepo;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
+import java.util.ServiceLoader;
+import org.apache.flink.connector.jdbc.dialect.JdbcDialectFactory;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,7 +29,8 @@ public class FlinkQueryUseCaseTest extends AbstractQuerySQRLIT {
     this.vertx = vertx;
     this.vertxContext = testContext;
     snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(), graphQLSchema.getName());
-    initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getFlinkWithDB(DatabaseEngine.POSTGRES),
+        script.getRootPackageDirectory());
     validateSchemaAndQueries(script.getScript(), graphQLSchema.getSchema(),
         graphQLSchema.getQueries());
   }

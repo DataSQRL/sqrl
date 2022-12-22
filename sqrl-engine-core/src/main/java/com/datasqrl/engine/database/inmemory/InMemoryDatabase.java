@@ -3,7 +3,6 @@
  */
 package com.datasqrl.engine.database.inmemory;
 
-import com.datasqrl.config.provider.DatabaseConnectionProvider;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -38,15 +37,6 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
   public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
       RelBuilder relBuilder) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public DatabaseConnectionProvider getConnectionProvider() {
-    return new ConnectionProvider();
-  }
-
-  private class ConnectionProvider implements DatabaseConnectionProvider {
-
   }
 
   @Override

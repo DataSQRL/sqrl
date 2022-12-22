@@ -28,7 +28,7 @@ public class IntegrationTestSettings {
 
   public enum StreamEngine {FLINK, INMEMORY}
 
-  public enum DatabaseEngine {INMEMORY, H2, POSTGRES, LOCAL}
+  public enum DatabaseEngine {INMEMORY, H2, POSTGRES}
 
   @Builder.Default
   final StreamEngine stream = StreamEngine.INMEMORY;
@@ -56,7 +56,6 @@ public class IntegrationTestSettings {
         break;
       case H2:
       case POSTGRES:
-      case LOCAL:
         JDBCTestDatabase jdbcDB = new JDBCTestDatabase(getDatabase());
         engines.add(jdbcDB.getJdbcConfiguration());
         database = jdbcDB;
@@ -74,7 +73,11 @@ public class IntegrationTestSettings {
   }
 
   public static IntegrationTestSettings getFlinkWithDB() {
-    return getEngines(StreamEngine.FLINK, DatabaseEngine.POSTGRES);
+    return getFlinkWithDB(DatabaseEngine.H2);
+  }
+
+  public static IntegrationTestSettings getFlinkWithDB(DatabaseEngine engine) {
+    return getEngines(StreamEngine.FLINK, engine);
   }
 
   public static IntegrationTestSettings getEngines(StreamEngine stream, DatabaseEngine database) {

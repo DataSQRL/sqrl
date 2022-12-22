@@ -3,7 +3,6 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.config.provider.Dialect;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import lombok.Builder;
@@ -27,7 +26,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   @Builder.Default
   double costImprovementThreshold = DEFAULT_COST_THRESHOLD;
   @NonNull
-  Dialect dialect;
+  String dialect;
   @Builder.Default
   int maxIndexColumns = MAX_INDEX_COLUMNS;
 
@@ -38,34 +37,34 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
 
   @Override
   public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
-    switch (dialect) {
-      case POSTGRES:
+    switch (dialect.toUpperCase()) {
+      case "POSTGRES":
         return EnumSet.of(HASH, BTREE);
-      case MYSQL:
+      case "MYSQL":
         return EnumSet.of(HASH, BTREE);
-      case H2:
+      case "H2":
         return EnumSet.of(HASH, BTREE);
       default:
-        throw new IllegalStateException(dialect.name());
+        throw new IllegalStateException(dialect);
     }
   }
 
   @Override
   public int maxIndexColumns(IndexDefinition.Type indexType) {
-    switch (dialect) {
-      case POSTGRES:
+    switch (dialect.toUpperCase()) {
+      case "POSTGRES":
         switch (indexType) {
           case HASH:
             return 1;
           default:
             return maxIndexColumns;
         }
-      case MYSQL:
+      case "MYSQL":
         return maxIndexColumns;
-      case H2:
+      case "H2":
         return maxIndexColumns;
       default:
-        throw new IllegalStateException(dialect.name());
+        throw new IllegalStateException(dialect);
     }
   }
 
@@ -81,7 +80,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
     }
   }
 
-  public static IndexSelectorConfigByDialect of(Dialect dialect) {
+  public static IndexSelectorConfigByDialect of(String dialect) {
     return IndexSelectorConfigByDialect.builder().dialect(dialect).build();
   }
 

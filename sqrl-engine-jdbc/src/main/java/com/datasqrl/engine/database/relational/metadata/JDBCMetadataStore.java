@@ -3,9 +3,8 @@
  */
 package com.datasqrl.engine.database.relational.metadata;
 
+import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.metadata.MetadataStore;
-import com.datasqrl.config.provider.Dialect;
-import com.datasqrl.config.provider.JDBCConnectionProvider;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -39,47 +38,49 @@ public class JDBCMetadataStore implements MetadataStore {
   public static final String TABLE_NAME = "metadata";
 
   private final Connection connection;
-  private final Dialect dialect;
+  private final String dialect;
   private final Kryo kryo;
 
-  public JDBCMetadataStore(JDBCConnectionProvider jdbcProvider, Kryo kryo) {
+  public JDBCMetadataStore(JdbcDataSystemConnectorConfig config, Kryo kryo) {
     this.kryo = kryo;
     try {
-      this.connection = jdbcProvider.getConnection();
+      this.connection = DriverManager.getConnection(
+          config.getDbURL(),
+          config.getUser(),
+          config.getPassword()
+      );
     } catch (SQLException e) {
       throw new RuntimeException("Could not execute SQL query", e);
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Could not load database driver", e);
     }
 
     try (Statement stmt = connection.createStatement()) {
-      stmt.executeUpdate(CREATE_TABLE.get(jdbcProvider.getDialect()));
+      stmt.executeUpdate(CREATE_TABLE.get(config.getDialect().toUpperCase()));
     } catch (SQLException e) {
       throw new RuntimeException("Could not execute SQL query", e);
     }
-    dialect = jdbcProvider.getDialect();
+    dialect = config.getDialect();
   }
 
-  public static final Map<Dialect, String> CREATE_TABLE = Map.of(
-      Dialect.H2, "CREATE TABLE IF NOT EXISTS `" + TABLE_NAME + "` (\n" +
+  public static final Map<String, String> CREATE_TABLE = Map.of(
+      "H2", "CREATE TABLE IF NOT EXISTS `" + TABLE_NAME + "` (\n" +
           "key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
           "value BLOB NOT NULL,\n" +
           "PRIMARY KEY (`key`)\n" +
           ");",
-      Dialect.POSTGRES, "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (\n" +
+      "POSTGRES", "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (\n" +
           "key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
           "value bytea NOT NULL,\n" +
           "PRIMARY KEY (key)\n" +
           ");"
   );
 
-  public static final Map<Dialect, String> UPSERT_QUERIES =
+  public static final Map<String, String> UPSERT_QUERIES =
       ImmutableMap.of(
-          Dialect.H2, "MERGE INTO `" + TABLE_NAME + "` " +
+          "H@", "MERGE INTO `" + TABLE_NAME + "` " +
               "KEY ( key ) VALUES ( ?, ? );",
-          Dialect.POSTGRES, "INSERT INTO " + TABLE_NAME + " " +
+          "POSTGRES", "INSERT INTO " + TABLE_NAME + " " +
               "( key, value ) VALUES ( ?, ? ) ON CONFLICT ( key ) DO UPDATE SET value = EXCLUDED.value;",
-          Dialect.MYSQL, "REPLACE INTO `" + TABLE_NAME + "` " +
+          "MYSQL", "REPLACE INTO `" + TABLE_NAME + "` " +
               "( key, value ) VALUES ( ?, ? );"
       );
 
@@ -121,7 +122,7 @@ public class JDBCMetadataStore implements MetadataStore {
   @Override
   public <T> void put(T value, String firstKey, String... moreKeys) {
     String keyStr = getKeyString(firstKey, moreKeys);
-    String query = UPSERT_QUERIES.get(dialect);
+    String query = UPSERT_QUERIES.get(dialect.toUpperCase());
     Preconditions.checkArgument(query != null, "Dialect not supported: %s", dialect);
 
     byte[] data;

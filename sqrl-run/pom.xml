@@ -27,6 +27,10 @@
       <groupId>com.datasqrl</groupId>
     </dependency>
     <dependency>
+      <artifactId>sqrl-engine-flink-jdbc</artifactId>
+      <groupId>com.datasqrl</groupId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-server-vertx</artifactId>
       <groupId>com.datasqrl</groupId>
     </dependency>

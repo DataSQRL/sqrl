@@ -5,7 +5,6 @@ package com.datasqrl.graphql.inference;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.config.provider.Dialect;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.parse.SqrlParser;
@@ -75,7 +74,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports());
 
     IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner(),
-        IndexSelectorConfigByDialect.of(Dialect.POSTGRES));
+        IndexSelectorConfigByDialect.of("POSTGRES"));
     List<IndexCall> allIndexes = new ArrayList<>();
     for (OptimizedDAG.ReadQuery query : dag.getReadQueries()) {
       List<IndexCall> indexCall = indexSelector.getIndexSelection(query);

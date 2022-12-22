@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ */
 package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.engine.stream.StreamEngine;
@@ -18,7 +21,7 @@ import com.datasqrl.plan.calcite.table.ImportedRelationalTable;
 import com.datasqrl.plan.calcite.table.SourceRelationalTable;
 import com.datasqrl.plan.calcite.table.StreamRelationalTable;
 import com.datasqrl.plan.calcite.table.StreamTableSchemaStream;
-import com.datasqrl.plan.global.OptimizedDAG.DatabaseSink;
+import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
 import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
 import com.datasqrl.plan.global.OptimizedDAG.QueryVisitor;
 import com.datasqrl.plan.global.OptimizedDAG.ReadQuery;
@@ -145,8 +148,7 @@ public class FlinkTableRegistration implements
   }
 
   @Override
-  public TableDescriptor accept(DatabaseSink sink, SinkContext context) {
-
+  public TableDescriptor accept(EngineSink sink, SinkContext context) {
     DescriptorFactory descriptorFactory = new DescriptorFactory();
     return descriptorFactory.createDescriptor(sink, context.getTblSchema());
   }

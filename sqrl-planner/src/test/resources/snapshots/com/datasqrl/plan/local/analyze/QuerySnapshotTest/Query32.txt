@@ -6,4 +6,4 @@ LogicalProject(__pk_0=[$0], EXPR$1=[COALESCE($3, $0)])
 
 
 SELECT "id" AS "__pk_0", COALESCE("customerid", "id")
-FROM orders$12
+FROM "orders$12"

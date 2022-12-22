@@ -3,6 +3,7 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.util.data.DataSQRLRepo;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
@@ -116,6 +117,21 @@ public interface TestScript {
           script.getGraphQLSchemas().stream().map(gql -> Arguments.of(script, gql)));
     }
   }
+  public class AllScriptsWithAllEnginesProvider implements ArgumentsProvider {
 
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
+        throws Exception {
+
+      return getAll().stream()
+          .flatMap(script ->
+              script.getGraphQLSchemas().stream()
+                  .flatMap(gql ->
+                          jdbcEngines.stream()
+                                  .map(e -> Arguments.of(script, gql, e))));
+    }
+  }
+
+  public List<DatabaseEngine> jdbcEngines = List.of(DatabaseEngine.H2, DatabaseEngine.POSTGRES);
 
 }

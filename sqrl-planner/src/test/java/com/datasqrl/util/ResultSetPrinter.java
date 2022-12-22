@@ -33,7 +33,7 @@ public class ResultSetPrinter {
       size++;
       int cols = 0;
       for (int i = 1; i <= columnCount; i++) {
-        if (!filterColumnsByName.test(metaData.getColumnName(i))) {
+        if (!filterColumnsByName.test(metaData.getColumnLabel(i))) {
           continue;
         }
         if (!filterColumnsByType.test(metaData.getColumnType(i))) {

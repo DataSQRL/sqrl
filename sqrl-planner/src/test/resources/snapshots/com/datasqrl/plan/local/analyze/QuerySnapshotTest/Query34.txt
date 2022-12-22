@@ -9,5 +9,5 @@ LogicalProject(__pk_0=[$0], __pk_1=[$1], name=[$11])
 
 
 SELECT "entries$13"."id" AS "__pk_0", "entries$13"."_idx" AS "__pk_1", "product$10"."category" AS "name"
-FROM entries$13
- DEFAULT JOIN product$10 ON "entries$13"."productid" = "product$10"."productid"
+FROM "entries$13"
+ DEFAULT JOIN "product$10" ON "entries$13"."productid" = "product$10"."productid"

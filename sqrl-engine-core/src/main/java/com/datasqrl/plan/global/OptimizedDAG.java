@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.stream.flink.plan.TableRegistration;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -81,23 +80,19 @@ public class OptimizedDAG {
 
   @Value
   @AllArgsConstructor
-  public static class DatabaseSink implements WriteSink, StageSink {
+  public static class EngineSink implements WriteSink, StageSink {
 
     final String nameId;
     final int numPrimaryKeys;
     final RelDataType rowType;
     final Optional<Integer> timestampIdx;
-    final ExecutionStage databaseStage;
+    final ExecutionStage stage;
 
     @Override
     public String getName() {
       return getNameId();
     }
 
-    @Override
-    public ExecutionStage getStage() {
-      return getDatabaseStage();
-    }
     public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
@@ -132,6 +127,6 @@ public class OptimizedDAG {
   public interface SinkVisitor<R, C> {
 
     R accept(ExternalSink externalSink, C context);
-    R accept(DatabaseSink databaseSink, C context);
+    R accept(EngineSink engineSink, C context);
   }
 }

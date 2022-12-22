@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
@@ -14,7 +14,7 @@ import java.util.List;
 
 public class FlinkPipelineUtils {
 
-  public static Schema addPrimaryKey(Schema toSchema, OptimizedDAG.DatabaseSink persistTable) {
+  public static Schema addPrimaryKey(Schema toSchema, EngineSink persistTable) {
     Schema.Builder builder = Schema.newBuilder();
     List<String> pks = new ArrayList<>();
     List<UnresolvedColumn> columns = toSchema.getColumns();

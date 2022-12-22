@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.global;
 
+import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.name.Name;
 import com.datasqrl.engine.ExecutionEngine;
@@ -115,7 +116,7 @@ public class DAGPlanner {
       assert dbTable.getRowType().equals(processedRelnode.getRowType()) :
           "Rowtypes do not match: " + dbTable.getRowType() + " vs " + processedRelnode.getRowType();
       writeDAG.add(new OptimizedDAG.WriteQuery(
-          new OptimizedDAG.DatabaseSink(dbTable.getNameId(), dbTable.getNumPrimaryKeys(),
+          new EngineSink(dbTable.getNameId(), dbTable.getNumPrimaryKeys(),
               dbTable.getRowType(), processed.getValue(), databaseStage),
           processed.getKey()));
     }

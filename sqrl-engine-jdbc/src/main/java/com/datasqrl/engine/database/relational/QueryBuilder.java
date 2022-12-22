@@ -3,7 +3,6 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.config.provider.DatabaseConnectionProvider;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.engine.database.QueryTemplate;
@@ -31,36 +30,23 @@ import java.util.Optional;
 @AllArgsConstructor
 public class QueryBuilder {
 
-  private JDBCEngine engine;
   private RexBuilder rexBuilder;
 
   public Map<APIQuery, QueryTemplate> planQueries(
       List<? extends OptimizedDAG.Query> databaseQueries) {
-    DatabaseConnectionProvider connectionProvider = engine.getConnectionProvider();
     Map<APIQuery, QueryTemplate> resultQueries = new HashMap<>();
     for (OptimizedDAG.Query query : databaseQueries) {
       Preconditions.checkArgument(query instanceof OptimizedDAG.ReadQuery);
       OptimizedDAG.ReadQuery rquery = (OptimizedDAG.ReadQuery) query;
-      resultQueries.put(rquery.getQuery(), planQuery(rquery, connectionProvider));
+      resultQueries.put(rquery.getQuery(), planQuery(rquery));
     }
     return resultQueries;
   }
 
-  private QueryTemplate planQuery(OptimizedDAG.ReadQuery query,
-      DatabaseConnectionProvider connectionProvider) {
+  private QueryTemplate planQuery(OptimizedDAG.ReadQuery query) {
     RelNode relNode = query.getRelNode();
     relNode = CalciteUtil.applyRexShuttleRecursively(relNode, new FunctionNameRewriter());
-    return new QueryTemplate(relNode, connectionProvider);
-  }
-
-  private SqlDialect getCalciteDialect() {
-    switch (engine.config.dialect) {
-      case POSTGRES:
-        return PostgresqlSqlDialect.DEFAULT;
-      default:
-        throw new UnsupportedOperationException(
-            "Not a supported dialect: " + engine.config.dialect);
-    }
+    return new QueryTemplate(relNode);
   }
 
   private class FunctionNameRewriter extends RexShuttle {
