@@ -28,7 +28,7 @@ public class IntegrationTestSettings {
 
   public enum StreamEngine {FLINK, INMEMORY}
 
-  public enum DatabaseEngine {INMEMORY, H2, POSTGRES}
+  public enum DatabaseEngine {INMEMORY, H2, POSTGRES, SQLITE}
 
   @Builder.Default
   final StreamEngine stream = StreamEngine.INMEMORY;
@@ -56,9 +56,13 @@ public class IntegrationTestSettings {
         break;
       case H2:
       case POSTGRES:
+      case SQLITE:
         JDBCTestDatabase jdbcDB = new JDBCTestDatabase(getDatabase());
         engines.add(jdbcDB.getJdbcConfiguration());
         database = jdbcDB;
+        break;
+      default:
+        throw new RuntimeException("Could not find db engine");
     }
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.builder().engines(engines)
         .build();
@@ -93,7 +97,5 @@ public class IntegrationTestSettings {
     public String getName() {
       return database.name() + "_" + stream.name();
     }
-
   }
-
 }

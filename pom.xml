@@ -235,6 +235,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <artifactId>sqrl-engine-flink-sqlite</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <artifactId>sqrl-io-jdbc</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>

@@ -1,0 +1,38 @@
+>>>database
+CREATE INDEX IF NOT EXISTS items$7_btree_c0c2c3c4c6c7 ON items$7 ("_uuid","productid","quantity","unit_price","discount$0","total")
+CREATE INDEX IF NOT EXISTS items$7_btree_c0c3c7c2c4 ON items$7 ("_uuid","quantity","total","productid","unit_price")
+CREATE INDEX IF NOT EXISTS items$7_btree_c0c4c6c7c2 ON items$7 ("_uuid","unit_price","discount$0","total","productid")
+CREATE INDEX IF NOT EXISTS items$7_btree_c0c6c3c4c7 ON items$7 ("_uuid","discount$0","quantity","unit_price","total")
+CREATE INDEX IF NOT EXISTS items$7_btree_c0c7c2c6c3 ON items$7 ("_uuid","total","productid","discount$0","quantity")
+CREATE INDEX IF NOT EXISTS orders$6_btree_c2c5c3 ON orders$6 ("id","timestamp","customerid")
+CREATE INDEX IF NOT EXISTS orders$6_btree_c3c2c4c5 ON orders$6 ("customerid","id","time","timestamp")
+CREATE INDEX IF NOT EXISTS orders$6_btree_c4c5c2 ON orders$6 ("time","timestamp","id")
+CREATE INDEX IF NOT EXISTS orders$6_btree_c5c3c4 ON orders$6 ("timestamp","customerid","time")
+CREATE INDEX IF NOT EXISTS orders$6_hash_c2c4 ON orders$6 ("id","time")
+CREATE INDEX IF NOT EXISTS orders$6_hash_c3c4 ON orders$6 ("customerid","time")
+CREATE INDEX IF NOT EXISTS products$11_btree_c0 ON products$11 ("id")
+CREATE INDEX IF NOT EXISTS products$11_btree_c3 ON products$11 ("name")
+CREATE INDEX IF NOT EXISTS products$11_btree_c4 ON products$11 ("sizing")
+CREATE INDEX IF NOT EXISTS products$11_btree_c5 ON products$11 ("weight_in_gram")
+CREATE INDEX IF NOT EXISTS products$11_btree_c6 ON products$11 ("type")
+CREATE INDEX IF NOT EXISTS products$11_btree_c7 ON products$11 ("category")
+CREATE INDEX IF NOT EXISTS products$11_btree_c8 ON products$11 ("usda_id")
+CREATE INDEX IF NOT EXISTS products$11_btree_c9 ON products$11 ("updated")
+CREATE INDEX IF NOT EXISTS spending_by_month$15_btree_c0c2c3 ON spending_by_month$15 ("__pk_0","total_spend","total_savings")
+CREATE INDEX IF NOT EXISTS spending_by_month$15_hash_c0c3 ON spending_by_month$15 ("__pk_0","total_savings")
+CREATE TABLE IF NOT EXISTS "customers$9" ("id" BIGINT NOT NULL,"timestamp" INTEGER NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "items$7" ("_uuid" VARCHAR NOT NULL,"_idx" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"unit_price" DOUBLE NOT NULL,"discount" DOUBLE ,"discount$0" DOUBLE NOT NULL,"total" DOUBLE NOT NULL,"timestamp" INTEGER NOT NULL , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS "orders$6" ("_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" BIGINT NOT NULL,"timestamp" INTEGER NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "products$11" ("id" BIGINT NOT NULL,"_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"name" VARCHAR NOT NULL,"sizing" VARCHAR NOT NULL,"weight_in_gram" BIGINT NOT NULL,"type" VARCHAR NOT NULL,"category" VARCHAR NOT NULL,"usda_id" BIGINT NOT NULL,"updated" INTEGER NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "spending_by_month$15" ("__pk_0" BIGINT NOT NULL,"month" INTEGER NOT NULL,"total_spend" DOUBLE NOT NULL,"total_savings" DOUBLE NOT NULL , PRIMARY KEY ("__pk_0","month"));
+CREATE TABLE IF NOT EXISTS "totals$13" ("__pk_0" VARCHAR NOT NULL,"price" DOUBLE NOT NULL,"savings" DOUBLE NOT NULL,"timestamp" INTEGER NOT NULL , PRIMARY KEY ("__pk_0"));
+>>>query-product
+{
+  "data" : {
+    "Products" : [ {
+      "id" : 10,
+      "name" : "sunflower seed kernels, toasted, with salt added",
+      "type" : "Seeds"
+    } ]
+  }
+}

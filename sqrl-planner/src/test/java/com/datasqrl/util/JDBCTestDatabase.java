@@ -38,6 +38,16 @@ public class JDBCTestDatabase implements DatabaseHandle {
               .database(TEST_DATABASE_NAME)
               .build())
           .build();
+    } else if (dbType == DatabaseEngine.SQLITE) {
+      config = JDBCEngineConfiguration.builder()
+          .config(JdbcDataSystemConnectorConfig.builder()
+              //When the mem db is closed,
+              .dbURL("jdbc:sqlite:memory:test")
+              .driverName("org.sqlite.JDBC")
+              .dialect("sqlite")
+              .database(TEST_DATABASE_NAME)
+              .build())
+          .build();
     } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES) {
       DockerImageName image = DockerImageName.parse("postgres:14.2");
       postgreSQLContainer = new PostgreSQLContainer(image)
