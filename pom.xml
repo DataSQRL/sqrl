@@ -22,7 +22,6 @@
         <module>sqrl-engine-jdbc</module>
         <module>sqrl-discovery</module>
         <module>sqrl-planner</module>
-        <module>sqrl-server-vertx</module>
         <module>sqrl-integration-tests</module>
         <module>sqrl-loader-core</module>
         <module>sqrl-loader-java-function</module>
@@ -31,7 +30,11 @@
         <module>sqrl-schema-flexible</module>
         <module>sqrl-engine-flink-connectors</module>
         <module>sqrl-io-jdbc</module>
-      <module>sqrl-engine-flink-connectors/sqrl-engine-flink-s3</module>
+        <module>sqrl-engine-flink-connectors/sqrl-engine-flink-s3</module>
+        <module>sqrl-engine-http</module>
+        <module>sqrl-engine-http-servers</module>
+        <module>sqrl-engine-http-servers/sqrl-engine-http-vertx</module>
+        <module>sqrl-engine-http-servers/sqrl-engine-http-aws-lambda</module>
     </modules>
 
 
@@ -191,12 +194,17 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-server-core</artifactId>
+                <artifactId>sqrl-engine-http</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-server-vertx</artifactId>
+                <artifactId>sqrl-engine-http-vertx</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-engine-http-aws-lambda</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
@@ -261,6 +269,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-http-vertx</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.ongres.scram</groupId>
                 <artifactId>common</artifactId>
                 <version>${scram.version}</version>
@@ -282,6 +295,11 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-web-graphql</artifactId>
+                <version>${vertx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-sql-client</artifactId>
                 <version>${vertx.version}</version>
             </dependency>
             <dependency>

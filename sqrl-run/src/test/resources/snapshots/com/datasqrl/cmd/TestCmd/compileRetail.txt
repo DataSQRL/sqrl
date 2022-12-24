@@ -1,5 +1,6 @@
 >>>output
-schema.graphqls
+config.json
+model.json
 >>>build
 c360
 c360-full.sqrl

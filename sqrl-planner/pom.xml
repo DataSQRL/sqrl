@@ -35,7 +35,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx</artifactId>
+      <artifactId>sqrl-engine-http-vertx</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>

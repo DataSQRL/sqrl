@@ -71,14 +71,21 @@ public class JDBCMetadataStore implements MetadataStore {
           "key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
           "value bytea NOT NULL,\n" +
           "PRIMARY KEY (key)\n" +
+          ");",
+      "SQLITE", "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (\n" +
+          "key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
+          "value bytea NOT NULL,\n" +
+          "PRIMARY KEY (key)\n" +
           ");"
   );
 
   public static final Map<String, String> UPSERT_QUERIES =
       ImmutableMap.of(
-          "H@", "MERGE INTO `" + TABLE_NAME + "` " +
+          "H2", "MERGE INTO `" + TABLE_NAME + "` " +
               "KEY ( key ) VALUES ( ?, ? );",
           "POSTGRES", "INSERT INTO " + TABLE_NAME + " " +
+              "( key, value ) VALUES ( ?, ? ) ON CONFLICT ( key ) DO UPDATE SET value = EXCLUDED.value;",
+          "SQLITE", "INSERT INTO " + TABLE_NAME + " " +
               "( key, value ) VALUES ( ?, ? ) ON CONFLICT ( key ) DO UPDATE SET value = EXCLUDED.value;",
           "MYSQL", "REPLACE INTO `" + TABLE_NAME + "` " +
               "( key, value ) VALUES ( ?, ? );"
@@ -139,7 +146,7 @@ public class JDBCMetadataStore implements MetadataStore {
 
     try (PreparedStatement pstmt = connection.prepareStatement(query)) {
       pstmt.setString(1, keyStr);
-      pstmt.setBinaryStream(2, new ByteArrayInputStream(data));
+      pstmt.setBytes(2, data);
       pstmt.executeUpdate();
     } catch (SQLException e) {
       throw new RuntimeException("Could not execute SQL query", e);

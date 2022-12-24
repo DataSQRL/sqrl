@@ -1,5 +1,6 @@
 >>>output
-schema.graphqls
+config.json
+model.json
 >>>build
 customer360
 customer360/nutshopv2-small.sqrl
