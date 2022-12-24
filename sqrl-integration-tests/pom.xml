@@ -78,7 +78,7 @@
 
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx-http</artifactId>
+      <artifactId>sqrl-engine-http-vertx</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
