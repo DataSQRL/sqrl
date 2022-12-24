@@ -9,7 +9,7 @@ import picocli.CommandLine;
 public class CompilerCommand extends AbstractCompilerCommand {
 
   protected CompilerCommand() {
-    super(false);
+    super(false, false);
   }
 
 }

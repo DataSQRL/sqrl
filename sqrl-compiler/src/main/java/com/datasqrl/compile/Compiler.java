@@ -7,6 +7,9 @@ import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.GlobalCompilerConfiguration;
 import com.datasqrl.config.GlobalEngineConfiguration;
+import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.PhysicalPlanner;
+import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.generate.SchemaGenerator;
 import com.datasqrl.graphql.inference.PgSchemaBuilder;
@@ -15,9 +18,6 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.PhysicalPlanner;
-import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.PlannerFactory;
 import com.datasqrl.plan.global.DAGPlanner;
@@ -31,6 +31,11 @@ import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -38,18 +43,8 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 @Slf4j
 public class Compiler {
-
-  public static final String GRAPHQL_SCHEMA_FILE = "schema.graphqls";
 
   /**
    * Processes all the files in the build directory and creates the execution artifacts
@@ -110,15 +105,6 @@ public class Compiler {
     RootGraphqlModel model;
     String graphQLSchema;
     PhysicalPlan plan;
-
-
-    public void writeTo(Path outputDir) throws IOException {
-      Preconditions.checkArgument(Files.isDirectory(outputDir));
-      Files.writeString(outputDir.resolve(GRAPHQL_SCHEMA_FILE),
-          graphQLSchema, StandardOpenOption.CREATE);
-
-    }
-
   }
 
   private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {

@@ -30,7 +30,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx</artifactId>
+      <artifactId>sqrl-engine-http-vertx</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -74,6 +74,11 @@
       <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-server-vertx-http</artifactId>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>

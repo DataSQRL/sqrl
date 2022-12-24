@@ -12,6 +12,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.service.PathUtil;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class DiscoverCommand extends AbstractCommand {
       throw new IllegalArgumentException(
           "Need to provide data system configuration or directory as input");
     }
-    List<Path> packageFiles = getPackageFilesWithDefault(true);
+    List<Path> packageFiles = PathUtil.getOrCreateDefaultPackageFiles(root);
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
         GlobalEngineConfiguration.class);
     EngineSettings engineSettings = engineConfig.initializeEngines(errors);

@@ -47,24 +47,12 @@
       <groupId>com.datasqrl</groupId>
     </dependency>
     <dependency>
-      <artifactId>sqrl-server-vertx</artifactId>
+      <artifactId>sqrl-engine-http-vertx</artifactId>
       <groupId>com.datasqrl</groupId>
     </dependency>
     <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>1.17.4</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers</artifactId>
-      <version>1.17.4</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
@@ -73,6 +61,10 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-server-vertx-http</artifactId>
     </dependency>
     <dependency>
       <artifactId>sqrl-common</artifactId>

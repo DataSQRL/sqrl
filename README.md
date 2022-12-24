@@ -50,7 +50,7 @@ Customers.purchases := JOIN Orders ON Orders.customerid = @.id ORDER BY Orders.t
 /* and a relationship from Orders to Products */
 Orders.items.product := JOIN Products ON Products.id = @.productid;
 ```
-- Run `[SQRL-PATH]/sqrl-run/datasqrl.sh run myscript.sqrl -g` 
+- Run `[SQRL-PATH]/sqrl-run/datasqrl.sh run myscript.sqrl` 
 
 This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) and run GraphQL queries against the API. Hit `CTRL-C` to terminate the data pipeline when you are done. 
 
@@ -58,7 +58,7 @@ For a full example of SQRL scripts for our Nutshop, check out the [annotated SQR
 
 ### Step 4: Customize GraphQL API
 
-When we run the `compile` or `run` command with the `-g` flag, DataSQRL writes the generated GraphQL schema for the resulting API in the file `schema.graphqls`. We can modify the GraphQL schema to adjust the API to our needs.
+Run the `compile` command with the `-s` flag and DataSQRL will write the generated GraphQL schema for the resulting API in the file `schema.graphqls`. We can modify the GraphQL schema to adjust the API to our needs.
 
 DataSQRL generates a very flexible API. Let's trim that down to only the access points that we need. Change the file `schema.graphqls` to contain the following:
 ```graphql
