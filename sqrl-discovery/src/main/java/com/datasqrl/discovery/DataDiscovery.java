@@ -192,6 +192,10 @@ public class DataDiscovery {
     try (TableStatisticsStore store = statsStore.openStore()) {
       for (TableInput table : tables) {
         SourceTableStatistics stats = store.getTableStatistics(table.getPath());
+        if (stats == null) {
+          //No data in table
+          continue;
+        }
         DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
         FlexibleDatasetSchema.TableField tableField = baseSchema.getFieldByName(table.getName());
         FlexibleDatasetSchema.TableField schema;

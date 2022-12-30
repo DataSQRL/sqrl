@@ -27,7 +27,7 @@ import org.apache.commons.io.FileUtils;
 
 public class RemoteRepositoryImplementation implements Repository {
 
-  public static final URI DEFAULT_URI = URI.create("http://repo.sqrl.run");
+  public static final URI DEFAULT_URI = URI.create("https://repo.sqrl.run");
 
   private final ObjectMapper mapper = new ObjectMapper();
   private final URI repositoryServerURI;
@@ -87,6 +87,8 @@ public class RemoteRepositoryImplementation implements Repository {
     try {
       HttpClient client = HttpClient.newHttpClient();
       HttpRequest request = HttpRequest.newBuilder()
+          .header("Content-Type", "application/json")
+          .header("Accept", "application/json")
           .POST(HttpRequest.BodyPublishers.ofString(mapper
               .writeValueAsString(
                   Map.of("query", query.getQueryString(), "variables", payload))))

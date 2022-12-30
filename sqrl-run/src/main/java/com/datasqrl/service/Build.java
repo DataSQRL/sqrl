@@ -15,6 +15,6 @@ public class Build {
   public Path build(Packager packager) {
     packager.cleanUp();
 
-    return packager.populateBuildDir(false);
+    return packager.populateBuildDir(true);
   }
 }

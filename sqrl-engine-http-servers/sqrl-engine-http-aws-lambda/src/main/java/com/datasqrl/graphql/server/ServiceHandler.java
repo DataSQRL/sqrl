@@ -8,6 +8,7 @@ import com.datasqrl.graphql.jdbc.GenericJdbcClient;
 import com.datasqrl.graphql.jdbc.JdbcContext;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import java.io.File;
@@ -31,6 +32,7 @@ public class ServiceHandler implements
         Map.class);
     RootGraphqlModel model = mapper.readValue(new File(MODEL_JSON), RootGraphqlModel.class);
 
+    Class.forName("org.h2.Driver");
     Connection connection = DriverManager.getConnection(
         (String)jdbcConfig.get("dbURL"), (String)jdbcConfig.get("user"), (String) jdbcConfig.get("password"));
 
@@ -45,10 +47,18 @@ public class ServiceHandler implements
   public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent apiGatewayV2HTTPEvent,
       Context context) {
 
-    ExecutionResult result = graphQL.execute(apiGatewayV2HTTPEvent.getBody());
+    ObjectMapper mapper1 = new ObjectMapper();
+    Map<String, Object> query =
+        mapper1.readValue(apiGatewayV2HTTPEvent.getBody(), Map.class);
+    ExecutionInput.Builder input = ExecutionInput.newExecutionInput()
+        .query((String)query.get("query"));
+    if (query.get("variables") != null) {
+      input.variables((Map<String,Object>)query.get("variables"));
+    }
+    ExecutionResult result = graphQL.execute(input.build());
 
     return APIGatewayV2HTTPResponse.builder()
-        .withBody(mapper.writeValueAsString(result.getData()))
+        .withBody(mapper.writeValueAsString(result))
         .withStatusCode(200)
         .build();
   }

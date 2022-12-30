@@ -41,9 +41,9 @@ public class PathUtil {
   protected static GlobalEngineConfiguration createDefaultConfig() {
     JDBCEngineConfiguration jdbcEngineConfiguration = JDBCEngineConfiguration.builder()
         .config(JdbcDataSystemConnectorConfig.builder()
-            .dbURL("jdbc:sqlite:file:sqlite.db")
-            .driverName("org.sqlite.JDBC")
-            .dialect("sqlite")
+            .dbURL("jdbc:h2:file:./h2.db")
+            .driverName("org.h2.Driver")
+            .dialect("h2")
             .database("datasqrl")
             .build())
         .build();
