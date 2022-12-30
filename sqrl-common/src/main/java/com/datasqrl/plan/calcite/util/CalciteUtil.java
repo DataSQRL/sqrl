@@ -269,7 +269,7 @@ public class CalciteUtil {
   }
 
   public static RelDataTypeBuilder getRelTypeBuilder(@NonNull RelDataTypeFactory factory) {
-    return new RelDataTypeFieldBuilder(factory.builder().kind(StructKind.FULLY_QUALIFIED));
+    return new RelDataTypeFieldBuilder(factory.builder().kind(StructKind.PEEK_FIELDS_NO_EXPAND));
   }
 
   public static RelDataType appendField(@NonNull RelDataType relation, @NonNull String fieldId,

@@ -64,7 +64,11 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-http-vertx</artifactId>
+      <artifactId>sqrl-schema-flexible</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-schema-jsonschema</artifactId>
     </dependency>
     <dependency>
       <artifactId>sqrl-common</artifactId>

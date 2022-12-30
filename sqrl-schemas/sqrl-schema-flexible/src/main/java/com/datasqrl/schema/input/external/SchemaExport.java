@@ -14,6 +14,7 @@ import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SchemaExport {
@@ -65,14 +66,19 @@ public class SchemaExport {
 
   private List<FieldDefinition> exportColumns(
       RelationType<FlexibleDatasetSchema.FlexibleField> relation) {
-    return relation.getFields().stream().map(f -> export(f)).collect(Collectors.toList());
+    return relation.getFields().stream().map(this::export)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
   }
 
-  private FieldDefinition export(FlexibleDatasetSchema.FlexibleField field) {
+  private Optional<FieldDefinition> export(FlexibleDatasetSchema.FlexibleField field) {
     FieldDefinition fd = new FieldDefinition();
     exportElement(fd, field);
     List<FlexibleDatasetSchema.FieldType> types = field.getTypes();
-    if (types.size() == 1 && types.get(0).getVariantName().equals(SpecialName.SINGLETON)) {
+    if (types.isEmpty()) {
+      return Optional.empty();
+    } else if (types.size() == 1 && types.get(0).getVariantName().equals(SpecialName.SINGLETON)) {
       FieldTypeDefinitionImpl ftd = export(types.get(0));
       fd.type = ftd.type;
       fd.columns = ftd.columns;
@@ -81,7 +87,7 @@ public class SchemaExport {
       fd.mixed = types.stream()
           .collect(Collectors.toMap(ft -> ft.getVariantName().getDisplay(), ft -> export(ft)));
     }
-    return fd;
+    return Optional.of(fd);
   }
 
   private FieldTypeDefinitionImpl export(FlexibleDatasetSchema.FieldType fieldType) {

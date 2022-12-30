@@ -15,6 +15,7 @@ import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
 import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.type.Type;
+import com.google.auto.service.AutoService;
 import lombok.*;
 
 import java.io.Serializable;
@@ -106,8 +107,8 @@ public class FlexibleDatasetSchema extends RelationType<FlexibleDatasetSchema.Ta
   @ToString(callSuper = true)
   @NoArgsConstructor
   @EqualsAndHashCode(callSuper = true)
+  @AutoService(TableSchema.class)
   public static class TableField extends AbstractField implements TableSchema {
-
     private boolean isPartialSchema;
     @NonNull
     private RelationType<FlexibleField> fields;

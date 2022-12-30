@@ -3,13 +3,13 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>sqrl-root</artifactId>
+    <artifactId>sqrl-schemas</artifactId>
     <groupId>com.datasqrl</groupId>
     <version>0.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>sqrl-loader-table</artifactId>
+  <artifactId>sqrl-schema-flexible</artifactId>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -20,11 +20,8 @@
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-loader-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
   </dependencies>
+
 </project>

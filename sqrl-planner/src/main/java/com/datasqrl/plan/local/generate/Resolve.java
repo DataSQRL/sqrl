@@ -312,9 +312,7 @@ public class Resolve {
     for (SqrlStatement q : env.queryOperations) {
       setCurrentNode(env, q);
       planQuery(env, q);
-      if (env.session.errors.hasErrors()) {
-        return;
-      }
+
     }
   }
 

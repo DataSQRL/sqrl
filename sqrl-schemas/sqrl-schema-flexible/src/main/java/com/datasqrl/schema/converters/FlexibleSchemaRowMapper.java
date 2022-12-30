@@ -70,6 +70,9 @@ public class FlexibleSchemaRowMapper<R> implements RowMapper<R>, Serializable {
       } else {
         int idx = 0;
         List<Map<Name, Object>> nestedData = (List<Map<Name, Object>>) data.get(name);
+        if (nestedData == null) {
+          return null;
+        }
         Object[] rows = new Object[nestedData.size()];
         for (Map<Name, Object> item : nestedData) {
           Object[] cols = constructRows(item, subType);

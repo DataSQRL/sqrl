@@ -27,7 +27,6 @@
         <module>sqrl-loader-java-function</module>
         <module>sqrl-loader-table</module>
         <module>sqrl-run</module>
-        <module>sqrl-schema-flexible</module>
         <module>sqrl-engine-flink-connectors</module>
         <module>sqrl-io-jdbc</module>
         <module>sqrl-engine-flink-connectors/sqrl-engine-flink-s3</module>
@@ -35,6 +34,9 @@
         <module>sqrl-engine-http-servers</module>
         <module>sqrl-engine-http-servers/sqrl-engine-http-vertx</module>
         <module>sqrl-engine-http-servers/sqrl-engine-http-aws-lambda</module>
+        <module>sqrl-schemas</module>
+        <module>sqrl-schemas/sqrl-schema-jsonschema</module>
+        <module>sqrl-schemas/sqrl-schema-flexible</module>
     </modules>
 
 
@@ -69,6 +71,7 @@
         <picocli.version>4.7.0</picocli.version>
         <commonscodec.version>1.15</commonscodec.version>
         <zip4j.version>2.11.2</zip4j.version>
+        <snapshots.update>false</snapshots.update>
     </properties>
     <profiles>
         <profile>
@@ -85,6 +88,11 @@
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -229,11 +237,6 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-schema-flexible</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <artifactId>sqrl-engine-flink-jdbc</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
@@ -271,6 +274,21 @@
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-engine-http-vertx</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-schemas</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-schema-flexible</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-schema-jsonschema</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

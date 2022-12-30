@@ -54,16 +54,14 @@ public class Compiler {
   @SneakyThrows
   public CompilerResult run(ErrorCollector collector, Path packageFile) {
     Preconditions.checkArgument(Files.isRegularFile(packageFile));
-    SqrlCalciteSchema schema = new SqrlCalciteSchema(
-        CalciteSchema.createRootSchema(false, false).plus());
 
     Path buildDir = packageFile.getParent();
     GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packageFile,
         GlobalCompilerConfiguration.class);
     CompilerConfiguration config = globalConfig.initializeCompiler(collector);
     EngineSettings engineSettings = globalConfig.initializeEngines(collector);
-    Planner planner = new PlannerFactory(schema.plus()).createPlanner();
-    Session s = new Session(collector, planner, engineSettings.getPipeline());
+
+    Session session = createSession(collector, engineSettings);
     Resolve resolve = new Resolve(buildDir);
 
     ManifestConfiguration manifest = globalConfig.getManifest();
@@ -71,12 +69,12 @@ public class Compiler {
     Path mainScript = buildDir.resolve(manifest.getMain());
     Optional<Path> graphqlSchema = manifest.getOptGraphQL().map(file -> buildDir.resolve(file));
 
-    String str = Files.readString(mainScript);
+    String scriptStr = Files.readString(mainScript);
 
-    ScriptNode ast = SqrlParser.newParser()
-        .parse(str);
+    ScriptNode scriptNode = SqrlParser.newParser()
+        .parse(scriptStr);
 
-    Env env = resolve.planDag(s, ast);
+    Env env = resolve.planDag(session, scriptNode);
 
     String gqlSchema = inferOrGetSchema(env, graphqlSchema);
 
@@ -92,11 +90,44 @@ public class Compiler {
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
     OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), env);
-    PhysicalPlan plan = createPhysicalPlan(dag, env, s);
+    PhysicalPlan plan = createPhysicalPlan(dag, env, session);
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
     return new CompilerResult(root, gqlSchema, plan);
+  }
+
+  private Session createSession(ErrorCollector collector, EngineSettings engineSettings) {
+    SqrlCalciteSchema schema = new SqrlCalciteSchema(
+        CalciteSchema.createRootSchema(false, false).plus());
+    Planner planner = new PlannerFactory(schema.plus()).createPlanner();
+    return new Session(collector, planner, engineSettings.getPipeline());
+  }
+
+  @SneakyThrows
+  public String generateSchema(ErrorCollector collector, Path packageFile) {
+    Preconditions.checkArgument(Files.isRegularFile(packageFile));
+
+    Path buildDir = packageFile.getParent();
+    GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packageFile,
+        GlobalCompilerConfiguration.class);
+    EngineSettings engineSettings = globalConfig.initializeEngines(collector);
+
+    Session session = createSession(collector, engineSettings);
+    Resolve resolve = new Resolve(buildDir);
+
+    ManifestConfiguration manifest = globalConfig.getManifest();
+    Preconditions.checkArgument(manifest != null);
+    Path mainScript = buildDir.resolve(manifest.getMain());
+
+    String scriptStr = Files.readString(mainScript);
+
+    ScriptNode scriptNode = SqrlParser.newParser()
+        .parse(scriptStr);
+
+    Env env = resolve.planDag(session, scriptNode);
+
+    return inferOrGetSchema(env, Optional.empty());
   }
 
   @Value
@@ -128,7 +159,7 @@ public class Compiler {
   }
 
   @SneakyThrows
-  public String inferOrGetSchema(Env env, Optional<Path> graphqlSchema) {
+  public static String inferOrGetSchema(Env env, Optional<Path> graphqlSchema) {
     if (graphqlSchema.isPresent()) {
       Preconditions.checkArgument(Files.isRegularFile(graphqlSchema.get()));
       return Files.readString(graphqlSchema.get());
@@ -138,9 +169,8 @@ public class Compiler {
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
         .includeDirectives(false);
-    String schemaStr = new SchemaPrinter(opts).print(schema);
 
-    return schemaStr;
+    return new SchemaPrinter(opts).print(schema);
   }
 
 }

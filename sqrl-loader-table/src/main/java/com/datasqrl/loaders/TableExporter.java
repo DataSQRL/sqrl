@@ -6,12 +6,15 @@ package com.datasqrl.loaders;
 import com.datasqrl.io.DataSystem;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.impl.print.PrintDataSystem;
+import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
 public class TableExporter extends DataSource implements com.datasqrl.loaders.Exporter {
 
@@ -24,8 +27,13 @@ public class TableExporter extends DataSource implements com.datasqrl.loaders.Ex
 
   @Override
   public boolean usesFile(Path file) {
-    return file.getFileName().toString().endsWith(JSON_SCHEMA_FILE_SUFFIX) ||
-        file.getFileName().toString().equals(PACKAGE_SCHEMA_FILE) ||
+    Optional schemaFile = ServiceLoader.load(TableSchemaFactory.class)
+        .stream()
+        .flatMap(f->f.get().allSuffixes().stream())
+        .filter(s->file.getFileName().toString().endsWith(s))
+        .findAny();
+
+    return schemaFile.isPresent() ||
         file.getFileName().toString().endsWith(TABLE_FILE_SUFFIX) ||
         file.getFileName().toString().equals(DATASYSTEM_FILE);
   }

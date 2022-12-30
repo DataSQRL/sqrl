@@ -5,18 +5,29 @@ package com.datasqrl.cmd;
 
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.Compiler.CompilerResult;
+import com.datasqrl.config.CompilerConfiguration;
+import com.datasqrl.config.EngineSettings;
+import com.datasqrl.config.GlobalCompilerConfiguration;
 import com.datasqrl.config.GlobalEngineConfiguration;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.packager.Packager;
+import com.datasqrl.parse.SqrlParser;
+import com.datasqrl.plan.calcite.Planner;
+import com.datasqrl.plan.calcite.PlannerFactory;
+import com.datasqrl.plan.local.generate.Resolve;
+import com.datasqrl.plan.local.generate.Resolve.Env;
+import com.datasqrl.plan.local.generate.Session;
 import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.service.PathUtil;
 import com.datasqrl.service.Util;
+import com.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,7 +37,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
 import picocli.CommandLine;
 
 @Slf4j
@@ -68,20 +83,21 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     Packager packager = PackagerUtil.create(root.rootDir, files, packageFiles);
     Path buildLoc = build.build(packager);
 
-    Compiler compiler = new Compiler();
-    Compiler.CompilerResult result = compiler.run(collector, buildLoc);
-
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
         GlobalEngineConfiguration.class);
     JdbcDataSystemConnectorConfig jdbc = Util.getJdbcEngine(engineConfig.getEngines());
 
-
     if (generateSchema) {
-      writeSchema(result);
+      Compiler compiler = new Compiler();
+      String gqlSchema = compiler.generateSchema(collector, buildLoc);
+      writeSchema(gqlSchema);
       return;
-    } else {
-      write(result, jdbc);
     }
+
+    Compiler compiler = new Compiler();
+    Compiler.CompilerResult result = compiler.run(collector, buildLoc);
+
+    write(result, jdbc);
 
     Optional<CompletableFuture> fut = Optional.empty();
     if (startGraphql) {
@@ -104,9 +120,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   @SneakyThrows
-  private void writeSchema(CompilerResult result) {
+  private void writeSchema(String schema) {
+    PathUtils.delete(Path.of(Packager.GRAPHQL_SCHEMA_FILE_NAME));
     Files.writeString(Path.of(Packager.GRAPHQL_SCHEMA_FILE_NAME),
-        result.getGraphQLSchema(), StandardOpenOption.CREATE);
+        schema, StandardOpenOption.CREATE);
   }
 
   @SneakyThrows
