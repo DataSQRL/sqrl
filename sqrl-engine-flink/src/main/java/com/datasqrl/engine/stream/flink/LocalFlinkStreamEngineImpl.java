@@ -41,7 +41,7 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
         ));
     env.getConfig().enableObjectReuse();
     //env.getConfig().disableGenericTypes(); TODO: use to ensure efficient serialization
-    env.setRuntimeMode(RuntimeExecutionMode.BATCH);
+    env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
     //            .forEach(e->registerFunc(e, catalog));
 //        FlinkUtilities.enableCheckpointing(env);
     return new FlinkStreamBuilder(this, env);
