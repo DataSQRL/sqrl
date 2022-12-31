@@ -41,7 +41,7 @@ public class FlinkUtilities {
     return new KeySelector<T, Integer>() {
       @Override
       public Integer getKey(T sourceRecord) throws Exception {
-        return sourceRecord.hashCode() % modulus;
+        return sourceRecord.hashCode(); //todo: seems to result in uneven partitions
       }
     };
   }

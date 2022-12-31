@@ -3,7 +3,9 @@
  */
 package com.datasqrl.error;
 
-public interface SourceMap {
+import java.io.Serializable;
+
+public interface SourceMap extends Serializable {
 
   String getSource();
 

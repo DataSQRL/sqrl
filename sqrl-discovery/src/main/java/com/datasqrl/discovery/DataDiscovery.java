@@ -98,7 +98,7 @@ public class DataDiscovery {
           ErrorPrefix.INPUT_DATA.resolve(table.getName()));
       //todo: monitor
       stream = monitor(streamBuilder, stream, table, statsStore);
-      stream.printSink();
+//      stream.printSink();
     }
     StreamEngine.Job job = streamBuilder.build();
     job.execute("monitoring[" + tables.size() + "]" + tables.hashCode());

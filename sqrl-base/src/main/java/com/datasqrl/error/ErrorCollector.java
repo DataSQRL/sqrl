@@ -5,6 +5,7 @@ package com.datasqrl.error;
 
 import com.datasqrl.error.SourceMap.EmptySourceMap;
 import com.datasqrl.name.Name;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 
-public class ErrorCollector implements Iterable<ErrorMessage> {
+public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
 
   @Getter
   private final ErrorEmitter errorEmitter;
@@ -23,7 +24,6 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
   private ErrorCollector(@NonNull ErrorEmitter errorEmitter, @NonNull List<ErrorMessage> errors) {
     this.errorEmitter = errorEmitter;
     this.errors = errors;
-    registerHandlers();
   }
 
   private ErrorCollector(@NonNull ErrorLocation location, @NonNull List<ErrorMessage> errors) {
@@ -32,13 +32,6 @@ public class ErrorCollector implements Iterable<ErrorMessage> {
 
   public ErrorCollector(@NonNull ErrorLocation location) {
     this(location, new ArrayList<>(5));
-  }
-
-  private void registerHandlers() {
-    ServiceLoader<ErrorHandler> serviceLoader = ServiceLoader.load(ErrorHandler.class);
-    for (ErrorHandler handler : serviceLoader) {
-      registerHandler(handler.getHandleClass(), handler);
-    }
   }
 
   public static ErrorCollector root() {

@@ -3,7 +3,9 @@
  */
 package com.datasqrl.error;
 
-public interface ErrorHandler<E extends Exception> {
+import java.io.Serializable;
+
+public interface ErrorHandler<E extends Exception> extends Serializable {
 
   ErrorMessage handle(E e, ErrorEmitter emitter);
 
