@@ -35,7 +35,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "serve", description = "Serves a graphql api")
 public class ServeCommand extends AbstractCommand {
 
-  @CommandLine.Option(names = {"-p", "--port"}, description = "Port for API server")
+  @CommandLine.Option(names = {"--port"}, description = "Port for API server")
   private int port = 8888;
 
   @Override

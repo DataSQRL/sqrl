@@ -32,9 +32,12 @@ import org.apache.calcite.util.Holder;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.api.common.RuntimeExecutionMode;
+import org.apache.flink.configuration.ExecutionOptions;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
+import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.delegation.StreamPlanner;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
@@ -69,7 +72,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   private FlinkRelBuilder getBuilder() {
-    return ((StreamPlanner) tEnv.getPlanner()).getRelBuilder();
+    return ((PlannerBase) tEnv.getPlanner()).getRelBuilder();
   }
 
   @Override
@@ -80,8 +83,11 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     String tableName = t.getNameId();
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.scan(tableName);
-    SqrlHint.fromRel(scan, WatermarkHint.CONSTRUCTOR)
-        .ifPresent(watermark -> addWatermark(relBuilder, watermark.getTimestampIdx()));
+    //todo: why does this not work for batching?
+    if (!tEnv.getConfig().get(ExecutionOptions.RUNTIME_MODE).equals(RuntimeExecutionMode.BATCH)) {
+      SqrlHint.fromRel(scan, WatermarkHint.CONSTRUCTOR)
+          .ifPresent(watermark -> addWatermark(relBuilder, watermark.getTimestampIdx()));
+    }
     return relBuilder.build();
   }
 

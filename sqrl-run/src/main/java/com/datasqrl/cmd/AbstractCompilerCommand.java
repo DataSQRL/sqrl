@@ -64,7 +64,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory")
   private Path outputDir = null;
 
-  @CommandLine.Option(names = {"-p", "--port"}, description = "Port for API server")
+  @CommandLine.Option(names = {"--port"}, description = "Port for API server")
   private int port = 8888;
 
   private final ObjectWriter writer = new ObjectMapper()

@@ -28,6 +28,7 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
         org.apache.flink.configuration.Configuration.fromMap(Map.of(
+            //todo config
                 "taskmanager.memory.network.fraction", "0.3",
                 "taskmanager.memory.network.max", "1gb",
                 "taskmanager.numberOfTaskSlots", "32",
@@ -36,12 +37,11 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
             "table.exec.mini-batch.allow-latency", "5 s",
             "table.exec.mini-batch.size", "5000",
             "rest.flamegraph.enabled", "true"
-
             )
         ));
     env.getConfig().enableObjectReuse();
     //env.getConfig().disableGenericTypes(); TODO: use to ensure efficient serialization
-    env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
+    env.setRuntimeMode(RuntimeExecutionMode.STREAMING); //todo add to config
     //            .forEach(e->registerFunc(e, catalog));
 //        FlinkUtilities.enableCheckpointing(env);
     return new FlinkStreamBuilder(this, env);

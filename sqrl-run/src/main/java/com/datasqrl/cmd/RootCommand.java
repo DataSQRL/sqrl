@@ -9,6 +9,7 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import picocli.CommandLine.ScopeType;
 
 @CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "discover 0.1",
     subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class, ExecuteCommand.class,
@@ -16,7 +17,8 @@ import java.util.List;
 @Getter
 public class RootCommand implements Runnable {
 
-  @CommandLine.Option(names = {"-p", "--package-file"}, description = "Package file")
+  @CommandLine.Option(names = {"-p", "--package-file"}, description = "Package file"
+      , scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.EMPTY_LIST;
 
   @Override
