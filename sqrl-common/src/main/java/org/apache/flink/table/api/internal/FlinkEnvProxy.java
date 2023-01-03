@@ -33,12 +33,13 @@ public class FlinkEnvProxy {
                 fn.getFnc(), true));
     return environment.functionCatalog;
   }
-
+  //todo fix
+  static TableEnvironmentImpl t = TableEnvironmentImpl.create(
+      EnvironmentSettings.inStreamingMode().getConfiguration()
+  );
   public static SqlOperatorTable getOperatorTable(List<FlinkFnc> envFunctions) {
 
-    TableEnvironmentImpl t = TableEnvironmentImpl.create(
-        EnvironmentSettings.inStreamingMode().getConfiguration()
-    );
+
     FunctionCatalog catalog = FlinkEnvProxy.getFunctionCatalog(t);
 
     envFunctions.forEach(fn -> catalog.registerTemporarySystemFunction(fn.getName(),

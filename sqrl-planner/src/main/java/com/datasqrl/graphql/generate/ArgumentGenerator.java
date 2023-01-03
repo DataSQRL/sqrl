@@ -45,7 +45,7 @@ public class ArgumentGenerator implements
             .name(f.getName().getDisplay())
             .type(getInputType(((Column) f).getType()))
             .build())
-        .limit(8)
+        .limit(5)
         .collect(Collectors.toList());
   }
 
