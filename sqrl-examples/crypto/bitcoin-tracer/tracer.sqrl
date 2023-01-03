@@ -19,7 +19,7 @@ Transactions.total_value := total_output + fee;
 */
 Transactions.outputs.self_pay := EXISTS(SELECT f.address FROM @ JOIN @.parent.inputs.`from` f WHERE f.address = @.address);
 
-Transactions.follow-transactions := JOIN @.outputs o ON (o.self-pay is FALSE)
+Transactions.follow-transactions := JOIN @.outputs o ON (o.self-pay = FALSE)
                                     JOIN o.to.sent.parent tx ON (tx.timestamp > @.timestamp)
                                                     AND (tx.timestamp < @.timestamp + INTERVAL 14 DAY)
                                     ORDER BY tx.total_output;

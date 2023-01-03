@@ -198,18 +198,25 @@ class AstBuilder
   private static TimeUnit getIntervalFieldType(Token token) {
     switch (token.getType()) {
       case SqlBaseLexer.YEAR:
+      case SqlBaseLexer.YEARS:
         return TimeUnit.YEAR;
       case SqlBaseLexer.MONTH:
+      case SqlBaseLexer.MONTHS:
         return TimeUnit.MONTH;
       case SqlBaseLexer.DAY:
+      case SqlBaseLexer.DAYS:
         return TimeUnit.DAY;
       case SqlBaseLexer.WEEK:
+      case SqlBaseLexer.WEEKS:
         return TimeUnit.WEEK;
       case SqlBaseLexer.HOUR:
+      case SqlBaseLexer.HOURS:
         return TimeUnit.HOUR;
       case SqlBaseLexer.MINUTE:
+      case SqlBaseLexer.MINUTES:
         return TimeUnit.MINUTE;
       case SqlBaseLexer.SECOND:
+      case SqlBaseLexer.SECONDS:
         return TimeUnit.SECOND;
     }
 
