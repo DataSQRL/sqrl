@@ -1,14 +1,18 @@
-IMPORT bitcoin-data.Transactions;
+IMPORT bitcoin-data.Transactions TIMESTAMP STRING_TO_TIMESTAMP(timestamp, 'MM/dd/yyyy HH:mm:ss') AS ts;
 
-Address := SELECT DISTINCT address FROM Transactions.outputs;
+--TODO needs distinct
+--Address := SELECT DISTINCT address FROM Transactions.outputs;
+Address := SELECT address FROM Transactions.outputs;
 
 Transactions.outputs.to := JOIN Address a ON @.address = a.address ORDER BY @.parent.timestamp INVERSE received;
+Address.received := JOIN Transactions.outputs t ON t.address = @.address;
+
 Transactions.inputs.spent_output := JOIN Transactions t ON t.tx_hash = @.spent_tx
                                     JOIN t.outputs o ON o.index = @.out_index
                                     LIMIT 1;
 Transactions.inputs.`from` := JOIN @.spent_output o
-                            JOIN Address a ON a.address = o.address
-                            ORDER BY @.parent.timestamp LIMIT 1 INVERSE sent;
+                              JOIN Address a ON a.address = o.address
+                              ORDER BY @.parent.timestamp LIMIT 1 INVERSE sent;
 Transactions.inputs.value := @.spent_output.value;
 
 Transactions.total_output := SUM(outputs.value);
@@ -37,7 +41,7 @@ Address.flow_history := SELECT ROUND_TO_DAY(timestamp) as day, SUM(received) as 
 
 Address.activityLevel := SELECT SUM(num_tx) FROM @.flow_history WHERE day >= now() - INTERVAL 14 DAYS;
 
-_TxBreakdown := SELECT o.to.address as receiverAddr, i.from.address as senderAddr, ROUND_TO_MONTH(tx.timestamp) as month,
+_TxBreakdown := SELECT o.to.address AS receiverAddr, i.`from`.address AS senderAddr, ROUND_TO_MONTH(tx.timestamp) AS month,
                         SUM(o.value*i.value/tx.total_value) as total_value
                 FROM Transactions.outputs o JOIN o.parent tx JOIN tx.inputs i
                 GROUP BY receiverAddr, senderAddr, month;

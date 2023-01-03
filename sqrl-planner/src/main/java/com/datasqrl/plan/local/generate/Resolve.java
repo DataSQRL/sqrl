@@ -99,11 +99,13 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StreamAssignment;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.SqlNodePrinter;
 import org.apache.commons.lang3.tuple.Pair;
 
 @Getter
@@ -488,7 +490,7 @@ public class Resolve {
 
     for (Function<Analysis, SqlShuttle> transform : transforms) {
       node = node.accept(transform.apply(currentAnalysis));
-      log.trace("Transformed node: {}", node);
+      log.warn("Transformed node: {}", SqlNodePrinter.printJoin(node));
       currentAnalysis = analyzer.apply(node);
     }
 

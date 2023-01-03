@@ -40,7 +40,8 @@ public abstract class TimestampHolder<C extends TimestampHolder.Candidate> {
   }
 
   public C getBestCandidate() {
-    Preconditions.checkArgument(!candidates.isEmpty());
+    Preconditions.checkArgument(!candidates.isEmpty(),
+        "Could not find timestamp candidate.");
     return candidates.stream().max((a, b) -> Integer.compare(a.getScore(), b.getScore())).get();
   }
 

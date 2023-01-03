@@ -519,16 +519,14 @@ class AstBuilder
 
   @Override
   public SqlNode visitJoinPath(JoinPathContext ctx) {
-    List<SqlNode> relations = ctx.aliasedRelation().stream()
-        .map(this::visit)
-        .collect(toList());
+    List<SqlNode> relations = new ArrayList<>();
     List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < ctx.aliasedRelation().size(); i++) {
-      if (i <= ctx.joinCondition().size() && ctx.joinCondition(i) != null) {
-        conditions.add(ctx.joinCondition(i).booleanExpression().accept(this));
-      } else {
-        conditions.add(null);
-      }
+    for (int i = 0; i < ctx.joinPathCondition().size(); i++) {
+      SqlNode relation = ctx.joinPathCondition(i).aliasedRelation().accept(this);
+      relations.add(relation);
+      SqlNode condition = ctx.joinPathCondition(i).joinCondition() == null ? null :
+          ctx.joinPathCondition(i).joinCondition().booleanExpression().accept(this);
+      conditions.add(condition);
     }
 
     return new SqrlJoinPath(getLocation(ctx),

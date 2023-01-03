@@ -85,8 +85,11 @@ joinSpecification
     ;
 
 joinTerm
-    : (JOIN aliasedRelation (joinCondition)?)+                                          #joinPath
+    : (JOIN joinPathCondition)+                                                         #joinPath
     | left=joinTerm operator=(UNION | INTERSECT | EXCEPT) setQuantifier right=joinTerm  #joinSetOperation
+    ;
+joinPathCondition
+    : aliasedRelation (joinCondition)?
     ;
 
 streamQuery
