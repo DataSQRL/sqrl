@@ -374,12 +374,8 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalSort sort) {
-    throw new UnsupportedOperationException("Sorts are not supported during materialization");
-  }
-
-  @Override
-  protected RelNode visitChildren(RelNode rel) {
-    return super.visitChildren(rel);
+    return sort.getInput().accept(this);
+//    throw new UnsupportedOperationException("Sorts are not supported during materialization");
   }
 
   /*
