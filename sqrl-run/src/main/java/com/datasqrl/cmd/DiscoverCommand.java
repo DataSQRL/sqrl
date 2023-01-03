@@ -42,7 +42,7 @@ public class DiscoverCommand extends AbstractCommand {
       discoveryConfig = DiscoveryUtil.getDirectorySystemConfig(inputFile).build();
     } else {
       throw new IllegalArgumentException(
-          "Need to provide data system configuration or directory as input");
+          "Could not find data system configuration or directory at: " + inputFile);
     }
     List<Path> packageFiles = PathUtil.getOrCreateDefaultPackageFiles(root);
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,

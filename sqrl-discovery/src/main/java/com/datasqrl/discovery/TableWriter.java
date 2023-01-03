@@ -40,6 +40,9 @@ public class TableWriter {
           table.getName().getCanonical() + DataSource.TABLE_FILE_SUFFIX);
       jsonMapper.writeValue(tableConfigFile.toFile(), table.getConfiguration());
     }
+    if (tables.isEmpty()) {
+      throw new RuntimeException("Discovery found no tables.");
+    }
 
     Name datasetName = tables.get(0).getPath().parent().getLast();
     FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);

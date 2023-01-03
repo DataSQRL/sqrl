@@ -779,6 +779,13 @@ class AstBuilder
   }
 
   @Override
+  public SqlNode visitExistsCall(ExistsCallContext context) {
+    SqlNode query = context.query().accept(this);
+
+    return SqlStdOperatorTable.EXISTS.createCall(getLocation(context), query);
+  }
+
+  @Override
   public SqlNode visitFunctionCall(FunctionCallContext context) {
 //    boolean distinct = isDistinct(context.setQuantifier());
     SqlIdentifier name = (SqlIdentifier) context.qualifiedName().accept(this);

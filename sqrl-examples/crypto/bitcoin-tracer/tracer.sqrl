@@ -1,6 +1,4 @@
 IMPORT bitcoin-data.Transactions;
-IMPORT FUNCTION time.roundToDay;
-IMPORT FUNCTION time.roundToMonth;
 
 Address := SELECT DISTINCT address FROM Transactions.outputs;
 
@@ -8,7 +6,7 @@ Transactions.outputs.to := JOIN Address a ON @.address = a.address ORDER BY @.pa
 Transactions.inputs.spent_output := JOIN Transactions t ON t.tx_hash = @.spent_tx
                                     JOIN t.outputs o ON o.index = @.out_index
                                     LIMIT 1;
-Transactions.inputs.from := JOIN @.spent_output o
+Transactions.inputs.`from` := JOIN @.spent_output o
                             JOIN Address a ON a.address = o.address
                             ORDER BY @.parent.timestamp LIMIT 1 INVERSE sent;
 Transactions.inputs.value := @.spent_output.value;
@@ -19,7 +17,7 @@ Transactions.total_value := total_output + fee;
 /* A transaction where an output address is identical to a sent address is a self-pay
    that is commonly used to split a transaction. We want to ignore those for tracing.
 */
-Transactions.outputs.self_pay := (SELECT f.address FROM @ JOIN @.parent.inputs.from f WHERE f.address = @.address) IS NOT EMPTY;
+Transactions.outputs.self_pay := EXISTS(SELECT f.address FROM @ JOIN @.parent.inputs.`from` f WHERE f.address = @.address);
 
 Transactions.follow-transactions := JOIN @.outputs o ON (o.self-pay is FALSE)
                                     JOIN o.to.sent.parent tx ON (tx.timestamp > @.timestamp)
@@ -32,14 +30,14 @@ Address._flow := SELECT parent.timestamp as timestamp, value as received FROM @.
 
 Address.balance := SELECT SUM(received)-SUM(sent) FROM @._flow;
 
-Address.flow_history := SELECT roundToDay(timestamp) as day, SUM(received) as received_total,
+Address.flow_history := SELECT ROUND_TO_DAY(timestamp) as day, SUM(received) as received_total,
                                SUM(sent) as sent_total, COUNT(*) as num_tx
                         FROM @._flow
                         GROUP BY day ORDER BY day DESC;
 
 Address.activityLevel := SELECT SUM(num_tx) FROM @.flow_history WHERE day >= now() - INTERVAL 14 DAYS;
 
-_TxBreakdown := SELECT o.to.address as receiverAddr, i.from.address as senderAddr, roundToMonth(tx.timestamp) as month,
+_TxBreakdown := SELECT o.to.address as receiverAddr, i.from.address as senderAddr, ROUND_TO_MONTH(tx.timestamp) as month,
                         SUM(o.value*i.value/tx.total_value) as total_value
                 FROM Transactions.outputs o JOIN o.parent tx JOIN tx.inputs i
                 GROUP BY receiverAddr, senderAddr, month;

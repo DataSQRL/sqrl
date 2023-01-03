@@ -210,6 +210,7 @@ primaryExpression
     | string                                                                              #stringLiteral
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
     | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall
+    | EXISTS '(' query ')'                                                                #existsCall
     | '(' query ')'                                                                       #subqueryExpression
     | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
