@@ -1181,7 +1181,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitBackQuotedIdentifier(BackQuotedIdentifierContext ctx) {
-    return new SqlIdentifier(List.of(ctx.getText()), null,
+    return new SqlIdentifier(List.of(ctx.getText().substring(1, ctx.getText().length() - 1)), null,
         getLocation(ctx), List.of(getLocation(ctx)));
   }
 

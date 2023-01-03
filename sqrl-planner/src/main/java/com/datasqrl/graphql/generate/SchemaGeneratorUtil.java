@@ -111,7 +111,8 @@ public class SchemaGeneratorUtil {
       case VARCHAR:
         return Scalars.GraphQLString;
       case ARRAY:
-        return GraphQLList.list(getOutputType(type));
+      case MULTISET:
+        return GraphQLList.list(getOutputType(type.getComponentType()));
       case STRUCTURED:
       case ROW:
 //        String name = uniqueName("struct");
@@ -124,7 +125,6 @@ public class SchemaGeneratorUtil {
       case NULL:
       case ANY:
       case SYMBOL:
-      case MULTISET:
       case DISTINCT:
       case MAP:
       case OTHER:

@@ -1,0 +1,51 @@
+IMPORT poetry-data.Star TIMESTAMP STRING_TO_TIMESTAMP(timestamp) AS ts;
+IMPORT poetry-data.Post;
+IMPORT poetry-data.User;
+IMPORT poetry-data.Connect;
+
+Star := DISTINCT Star ON userid, postid ORDER BY ts DESC;
+
+-- Adding relationships between the tables
+Star.post := JOIN Post ON Post.id = @.postid;
+Post.stars := JOIN Star ON Star.postid = @.id;
+
+Star.user := JOIN User ON User.id = @.userid;
+User.stars := JOIN Star ON Star.userid = @.id;
+
+Connect.`from` := JOIN Post ON Post.id = @.frompostid;
+Connect.to := JOIN Post ON Post.id = @.topostid;
+Connect.user := JOIN User ON User.id = @.userid INVERSE connections;
+User.connections := JOIN Connect ON Connect.userid = @.id;
+
+Post.user := JOIN User ON User.id = @.userid;
+User.posts := JOIN Post ON Post.userid = @.id;
+
+Post.connections := JOIN Connect ON (@.id = Connect.frompostid OR @.id = Connect.topostid);
+
+-- Aggregates
+
+Post.num_stars := SELECT COUNT(*) AS cnt FROM @.stars;
+Post.num_connections := SELECT COUNT(*) AS cnt FROM @.connections;
+
+-- We count connections double for activity levels
+Post.recent_activity := (SELECT COUNT(*) FROM @.stars WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1)
+                        + 2*(SELECT COUNT(*) FROM @.connections WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1)
+
+--TODO: Set instead of list for collect
+Post.agg_connections := SELECT CASE WHEN c.frompostid=@.id THEN c.topostid ELSE c.frompostid END AS otherid,
+                               COUNT(*) as count, COLLECT(c.tag) as tags
+                        FROM @ JOIN @.connections c
+                        GROUP BY otherid ORDER BY count;
+Post.agg_connections.other := JOIN Post ON Post.id = @.otherid;
+
+User.num_posts := SELECT COUNT(*) AS cnt FROM @.posts;
+User.num_stars := SELECT SUM(cnt) AS total FROM @.posts.num_stars;
+User.num_connections := SELECT COUNT(*) AS cnt FROM @.connections;
+
+--Need to rework this so we only get notified when a new connection is added, not when a user stars something new
+--CREATE SUBSCRIPTION NewConnections ON ADD AS
+--SELECT u.id as userid, p.id as sourcepostid, c.id as connectionid
+--    FROM User u JOIN u.stared s JOIN s.posts p JOIN p.connections c
+--    WHERE s._ingest_time < c._ingest_time
+
+--NewConnections.connection := JOIN Connect c ON c.id = @.connectionid;

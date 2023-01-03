@@ -103,7 +103,7 @@ public class UniversalTable {
 
     public Column(Name name, int version, RelDataType type, boolean visible) {
       super(name, version);
-      Preconditions.checkArgument(CalciteUtil.isBasicOrArrayType(type));
+//      Preconditions.checkArgument(CalciteUtil.isBasicOrArrayType(type));
       this.type = type;
       this.visible = visible;
     }
