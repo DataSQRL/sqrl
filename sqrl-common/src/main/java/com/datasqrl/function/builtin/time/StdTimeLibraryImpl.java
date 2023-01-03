@@ -9,20 +9,28 @@ import com.datasqrl.function.TimestampPreservingFunction;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.inference.ArgumentCount;
 import org.apache.flink.table.types.inference.CallContext;
+import org.apache.flink.table.types.inference.InputTypeStrategy;
+import org.apache.flink.table.types.inference.Signature;
 import org.apache.flink.table.types.inference.TypeInference;
+import org.apache.flink.table.types.inference.TypeStrategy;
 import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
 public class StdTimeLibraryImpl {
@@ -355,10 +363,64 @@ public class StdTimeLibraryImpl {
       return Instant.parse(s);
     }
 
+    public Instant eval(String s, String format) {
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format, Locale.US);
+      return LocalDateTime.parse(s, formatter)
+          .atZone(ZoneId.systemDefault())
+          .toInstant();
+    }
+
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.STRING());
+      return TypeInference.newBuilder()
+          .inputTypeStrategy(stringToTimestampInputTypeStrategy())
+//          .typedArguments(DataTypes.STRING(), DataTypes.STRING().nullable())
+          .outputTypeStrategy(nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
+          .build();
     }
+  }
+
+  public static InputTypeStrategy stringToTimestampInputTypeStrategy() {
+    return new InputTypeStrategy() {
+
+      @Override
+      public ArgumentCount getArgumentCount() {
+        return new ArgumentCount() {
+          @Override
+          public boolean isValidCount(int count) {
+            return count == 1 || count == 2;
+          }
+
+          @Override
+          public Optional<Integer> getMinCount() {
+            return Optional.of(1);
+          }
+
+          @Override
+          public Optional<Integer> getMaxCount() {
+            return Optional.of(2);
+          }
+        };
+      }
+
+      @Override
+      public Optional<List<DataType>> inferInputTypes(CallContext callContext,
+          boolean throwOnFailure) {
+        if (callContext.getArgumentDataTypes().size() == 1) {
+          return Optional.of(List.of(DataTypes.STRING()));
+        } else if (callContext.getArgumentDataTypes().size() == 2) {
+          return Optional.of(List.of(DataTypes.STRING(), DataTypes.STRING()));
+        }
+
+        return Optional.empty();
+      }
+
+      @Override
+      public List<Signature> getExpectedSignatures(FunctionDefinition definition) {
+        return List.of(Signature.of(Signature.Argument.of("STRING"),
+            Signature.Argument.of("STRING")));
+      }
+    };
   }
 
   public static class TIMESTAMP_TO_EPOCH extends ScalarFunction implements SqrlFunction {
@@ -403,18 +465,22 @@ public class StdTimeLibraryImpl {
     }
   }
 
+  public static TypeStrategy nullPreservingOutputStrategy(DataType outputType) {
+    return callContext -> {
+      DataType type = getFirstArgumentType(callContext);
+
+      if (type.getLogicalType().isNullable()) {
+        return Optional.of(outputType.nullable());
+      }
+
+      return Optional.of(outputType.notNull());
+    };
+  }
+
   public static TypeInference basicNullInference(DataType outputType, DataType inputType) {
     return TypeInference.newBuilder()
         .typedArguments(inputType)
-        .outputTypeStrategy(callContext -> {
-          DataType type = getFirstArgumentType(callContext);
-
-          if (type.getLogicalType().isNullable()) {
-            return Optional.of(outputType.nullable());
-          }
-
-          return Optional.of(outputType.notNull());
-        })
+        .outputTypeStrategy(nullPreservingOutputStrategy(outputType))
         .build();
   }
 
