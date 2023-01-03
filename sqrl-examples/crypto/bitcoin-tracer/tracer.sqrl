@@ -4,7 +4,7 @@ IMPORT bitcoin-data.Transactions TIMESTAMP STRING_TO_TIMESTAMP(timestamp, 'MM/dd
 --Address := SELECT DISTINCT address FROM Transactions.outputs;
 Address := SELECT address FROM Transactions.outputs;
 
-Transactions.outputs.to := JOIN Address a ON @.address = a.address ORDER BY @.parent.timestamp INVERSE received;
+Transactions.outputs.to := JOIN Address a ON @.address = a.address ORDER BY @.parent.timestamp;
 Address.received := JOIN Transactions.outputs t ON t.address = @.address;
 
 Transactions.inputs.spent_output := JOIN Transactions t ON t.tx_hash = @.spent_tx
@@ -12,8 +12,11 @@ Transactions.inputs.spent_output := JOIN Transactions t ON t.tx_hash = @.spent_t
                                     LIMIT 1;
 Transactions.inputs.`from` := JOIN @.spent_output o
                               JOIN Address a ON a.address = o.address
-                              ORDER BY @.parent.timestamp LIMIT 1 INVERSE sent;
+                              ORDER BY @.parent.timestamp LIMIT 1;
+Address.sent := JOIN Transactions.inputs.spent_output o ON @.address = o.address;
+
 --Transactions.inputs.value := @.spent_output.value;
+
 
 --Transactions.total_output := SUM(outputs.value);
 --Transactions.total_value := total_output + fee;
@@ -23,20 +26,21 @@ Transactions.inputs.`from` := JOIN @.spent_output o
 */
 Transactions.outputs.self_pay := EXISTS(SELECT f.address FROM @ JOIN @.parent.inputs.`from` f WHERE f.address = @.address);
 
-Transactions.follow-transactions := JOIN @.outputs o ON (o.self-pay = FALSE)
-                                    JOIN o.to.sent.parent tx ON (tx.timestamp > @.timestamp)
-                                                    AND (tx.timestamp < @.timestamp + INTERVAL 14 DAY)
-                                    ORDER BY tx.total_output;
+Transactions.follow-transactions := JOIN @.outputs o ON (o.self_pay = FALSE)
+                                    JOIN o.to.sent.parent tx ON (tx.ts > @.ts)
+                                                    AND (tx.ts < @.ts + INTERVAL 14 DAY);
+                                    --ORDER BY tx.total_output;
 
-Address._flow := SELECT parent.timestamp as timestamp, value as received FROM @.received
-                UNION ALL
-                SELECT parent.timestamp as timestamp, value as sent FROM @.sent
+Address._flow := SELECT parent.ts as timestamp, value AS received, value AS sent FROM @.received;
+--Address._flow := SELECT parent.timestamp as timestamp, value as received FROM @.received;
+                 --UNION ALL
+                 --SELECT parent.timestamp as timestamp, value as sent FROM @.sent
 
-Address.balance := SELECT SUM(received)-SUM(sent) FROM @._flow;
+Address.balance := SELECT SUM(f.received)-SUM(f.sent) FROM @._flow f;
 
-Address.flow_history := SELECT ROUND_TO_DAY(timestamp) as day, SUM(received) as received_total,
-                               SUM(sent) as sent_total, COUNT(*) as num_tx
-                        FROM @._flow
+Address.flow_history := SELECT ROUND_TO_DAY(f.timestamp) as day, SUM(f.received) as received_total,
+                               SUM(f.sent) as sent_total, COUNT(*) as num_tx
+                        FROM @._flow f
                         GROUP BY day ORDER BY day DESC;
 
 Address.activityLevel := SELECT SUM(num_tx) FROM @.flow_history WHERE day >= now() - INTERVAL 14 DAYS;
