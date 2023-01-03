@@ -13,10 +13,10 @@ Transactions.inputs.spent_output := JOIN Transactions t ON t.tx_hash = @.spent_t
 Transactions.inputs.`from` := JOIN @.spent_output o
                               JOIN Address a ON a.address = o.address
                               ORDER BY @.parent.timestamp LIMIT 1 INVERSE sent;
-Transactions.inputs.value := @.spent_output.value;
+--Transactions.inputs.value := @.spent_output.value;
 
-Transactions.total_output := SUM(outputs.value);
-Transactions.total_value := total_output + fee;
+--Transactions.total_output := SUM(outputs.value);
+--Transactions.total_value := total_output + fee;
 
 /* A transaction where an output address is identical to a sent address is a self-pay
    that is commonly used to split a transaction. We want to ignore those for tracing.

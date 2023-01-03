@@ -290,8 +290,12 @@ public class PlannerImpl implements Planner, ViewExpander {
     final SqlToRelConverter sqlToRelConverter =
         new SqlToRelConverter(this, validator,
             createCatalogReader(), cluster, convertletTable, config);
-    RelRoot root =
-        sqlToRelConverter.convertQuery(validatedSqlNode, false, true);
+    RelRoot root;
+    try {
+      root = sqlToRelConverter.convertQuery(validatedSqlNode, false, true);
+    } catch (AssertionError e) {
+      throw new RuntimeException(e);
+    }
 //    root = root.withRel(sqlToRelConverter.flattenTypes(root.rel, true));
     final RelBuilder relBuilder =
         config.getRelBuilderFactory().create(cluster, null);

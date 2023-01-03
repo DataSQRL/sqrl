@@ -324,6 +324,7 @@ public class Resolve {
   }
 
   private void planOp(Env env, StatementOp op) {
+    System.out.println("Statement: " + op.statement.getNamePath());
     validate(env, op);
     transpile(env, op);
     computeOpKind(env, op);
@@ -563,8 +564,8 @@ public class Resolve {
     RelNode relNode = env.session.planner.rel(op.getQuery()).rel;
 
     //Optimization prepass: TODO: why are we doing this here?
-    relNode = env.session.planner.transform(OptimizationStage.PUSH_FILTER_INTO_JOIN,
-        relNode);
+//    relNode = env.session.planner.transform(OptimizationStage.PUSH_FILTER_INTO_JOIN,
+//        relNode);
 
     op.setRelNode(relNode);
   }
@@ -727,7 +728,7 @@ public class Resolve {
         env.getSession().getPlanner().getRelBuilder().getRexBuilder());
     SQRLTable toTable =
         joinDeclarationUtil.getToTable(op.sqrlValidator,
-            op.query);
+            op.getJoinDeclaration());
     Multiplicity multiplicity = getMultiplicity(env, op);
 
     checkState(table.getField(toNamePath(env, op.statement.getNamePath()).getLast()).isEmpty(),
