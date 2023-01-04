@@ -1,3 +1,0 @@
-LogicalProject(__pk_0=[$0], EXPR$1=[_UTF-16LE'test'])
-  LogicalTableScan(table=[[product$3]])
-

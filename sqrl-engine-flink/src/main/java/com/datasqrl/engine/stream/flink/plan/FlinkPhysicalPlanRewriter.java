@@ -454,16 +454,6 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     }
 
     @Override
-    public RexNode visitOver(RexOver over) {
-      throw new RuntimeException("not supported");
-    }
-
-    @Override
-    public RexWindow visitWindow(RexWindow window) {
-      throw new RuntimeException("not supported");
-    }
-
-    @Override
     public RexNode visitSubQuery(RexSubQuery subQuery) {
       if (subQuery.op == SqlStdOperatorTable.SCALAR_QUERY) {
         return RexSubQuery.scalar(rewriter.rewrite(subQuery.rel));
@@ -478,16 +468,6 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
             (SqlQuantifyOperator)subQuery.op);
       }
 
-      throw new RuntimeException("not supported");
-    }
-
-    @Override
-    public RexNode visitTableInputRef(RexTableInputRef ref) {
-      throw new RuntimeException("not supported");
-    }
-
-    @Override
-    public RexNode visitPatternFieldRef(RexPatternFieldRef fieldRef) {
       throw new RuntimeException("not supported");
     }
 
@@ -509,7 +489,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
     @Override
     public RexNode visitFieldAccess(RexFieldAccess fieldAccess) {
-      throw new RuntimeException("not supported");
+      return super.visitFieldAccess(fieldAccess);
     }
 
     @Override

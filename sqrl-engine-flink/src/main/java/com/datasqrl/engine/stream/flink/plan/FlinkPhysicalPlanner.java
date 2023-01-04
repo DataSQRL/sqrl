@@ -30,9 +30,9 @@ public class FlinkPhysicalPlanner {
     //TODO: push down filters across queries to determine if we can constraint sources by time for efficiency (i.e. only load the subset of the stream that is required)
     StreamStatementSet streamStatementSet = tEnv.createStatementSet();
     FlinkTableRegistration tableRegistration = new FlinkTableRegistration();
-//    for (OptimizedDAG.Query q : streamQueries) {
-      streamQueries.get(3).accept(tableRegistration, new FlinkTableRegistrationContext(tEnv, streamBuilder, streamStatementSet));
-//    }
+    for (OptimizedDAG.Query q : streamQueries) {
+      q.accept(tableRegistration, new FlinkTableRegistrationContext(tEnv, streamBuilder, streamStatementSet));
+    }
     return new FlinkStreamPhysicalPlan(streamStatementSet);
   }
 }

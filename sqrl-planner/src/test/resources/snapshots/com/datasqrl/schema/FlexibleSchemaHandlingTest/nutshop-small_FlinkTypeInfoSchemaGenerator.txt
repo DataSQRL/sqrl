@@ -1,8 +1,0 @@
->>>orders-hasTimestamp
-Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, id: Long, customerid: Long, time: Long, items: ObjectArrayTypeInfo<Row(_idx: Integer, productid: Long, quantity: Long, unit_price: BigDecimal, discount: BigDecimal)>)
->>>orders
-Row(_uuid: String, _ingest_time: Instant, id: Long, customerid: Long, time: Long, items: ObjectArrayTypeInfo<Row(_idx: Integer, productid: Long, quantity: Long, unit_price: BigDecimal, discount: BigDecimal)>)
->>>products-hasTimestamp
-Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, id: Long, name: String, sizing: String, weight_in_gram: Long, type: String, category: String, usda_id: Long, updated: Instant)
->>>products
-Row(_uuid: String, _ingest_time: Instant, id: Long, name: String, sizing: String, weight_in_gram: Long, type: String, category: String, usda_id: Long, updated: Instant)

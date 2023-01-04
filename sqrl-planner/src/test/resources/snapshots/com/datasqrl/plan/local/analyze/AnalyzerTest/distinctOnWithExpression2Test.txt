@@ -1,5 +1,0 @@
-LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4])
-  LogicalSort(sort0=[$4], dir0=[DESC], fetch=[1])
-    LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], customerid=[$3], time=[$4])
-      LogicalTableScan(table=[[orders$3]])
-

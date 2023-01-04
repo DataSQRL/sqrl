@@ -1,8 +1,0 @@
-LogicalAggregate(group=[{0}], EXPR$1=[MIN($1)])
-  LogicalProject(gp=[$11], unit_price=[$9])
-    LogicalJoin(condition=[=($5, $11)], joinType=[left])
-      LogicalJoin(condition=[=($0, $5)], joinType=[default])
-        LogicalTableScan(table=[[orders$3]])
-        LogicalTableScan(table=[[entries$4]])
-      LogicalTableScan(table=[[orders$3]])
-

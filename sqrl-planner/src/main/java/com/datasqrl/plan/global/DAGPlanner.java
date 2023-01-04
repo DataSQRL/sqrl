@@ -114,7 +114,7 @@ public class DAGPlanner {
             planner.getRelBuilder().getTypeFactory());
       }
       assert dbTable.getRowType().equals(processedRelnode.getRowType()) :
-          "Rowtypes do not match: " + dbTable.getRowType() + " vs " + processedRelnode.getRowType();
+          "Rowtypes do not match: \n" + dbTable.getRowType() + "\n vs \n " + processedRelnode.getRowType();
       writeDAG.add(new OptimizedDAG.WriteQuery(
           new EngineSink(dbTable.getNameId(), dbTable.getNumPrimaryKeys(),
               dbTable.getRowType(), processed.getValue(), databaseStage),

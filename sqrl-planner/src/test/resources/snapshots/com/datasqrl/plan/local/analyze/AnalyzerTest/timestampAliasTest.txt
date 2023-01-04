@@ -1,3 +1,0 @@
-LogicalProject(__pk_0=[$0], time=[$4])
-  LogicalTableScan(table=[[o$3]])
-

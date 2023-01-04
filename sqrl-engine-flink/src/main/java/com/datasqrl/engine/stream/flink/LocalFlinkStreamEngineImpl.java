@@ -31,12 +31,8 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
             //todo config
                 "taskmanager.memory.network.fraction", "0.3",
                 "taskmanager.memory.network.max", "1gb",
-                "taskmanager.numberOfTaskSlots", "32",
-                "parallelism.default", "32",
-            "table.exec.mini-batch.enabled", "true",
-            "table.exec.mini-batch.allow-latency", "5 s",
-            "table.exec.mini-batch.size", "5000",
-            "rest.flamegraph.enabled", "true"
+                "taskmanager.numberOfTaskSlots", "8",
+                "parallelism.default", "8"
             )
         ));
     env.getConfig().enableObjectReuse();

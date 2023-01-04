@@ -59,8 +59,6 @@ public class Examples {
           base.resolve("medical/adr/adr-detection.sqrl")).build())
       .add(TestScript.of(base.resolve("environment/monitoring"),
           base.resolve("environment/monitoring/monitoring.sqrl")).build())
-//      .add(TestScript.of(base.resolve("saas/productsavvy"),
-//          base.resolve("saas/productsavvy/savvy.sqrl")).build())
       .add(TestScript.of(base.resolve("logistics/operations"),
           base.resolve("logistics/operations/operations.sqrl")).build())
       .add(TestScript.of(base.resolve("logistics/tracking"),
