@@ -1,0 +1,6 @@
+LogicalUnion(all=[true])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
+    LogicalTableScan(table=[[product$3]])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
+    LogicalTableScan(table=[[product$3]])
+

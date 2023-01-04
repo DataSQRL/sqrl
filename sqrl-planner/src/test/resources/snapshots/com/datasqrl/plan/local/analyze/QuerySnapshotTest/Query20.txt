@@ -1,0 +1,16 @@
+Orders.entries.x := SELECT @.parent.id, @.discount FROM @ AS x WHERE @.parent.id = 1;
+
+LogicalProject(__pk_0=[$0], __pk_1=[$1], id=[$12], discount=[$5])
+  LogicalFilter(condition=[=($12, 1)])
+    LogicalJoin(condition=[=($0, $12)], joinType=[left])
+      LogicalJoin(condition=[true], joinType=[default])
+        LogicalTableScan(table=[[entries$13]])
+        LogicalTableScan(table=[[entries$13]])
+      LogicalTableScan(table=[[orders$12]])
+
+
+SELECT "entries$13"."id" AS "__pk_0", "entries$13"."_idx" AS "__pk_1", "orders$12"."id", "entries$13"."discount"
+FROM "entries$13"
+ DEFAULT JOIN "entries$13" AS "entries$130" ON TRUE
+ LEFT JOIN "orders$12" ON "entries$13"."id" = "orders$12"."id"
+WHERE "orders$12"."id" = 1

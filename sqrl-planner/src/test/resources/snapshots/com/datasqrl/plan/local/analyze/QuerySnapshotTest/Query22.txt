@@ -1,0 +1,12 @@
+Orders.entries.discount := SELECT coalesce(x.discount, 0.0) FROM @ AS x;
+
+
+LogicalProject(__pk_0=[$0], __pk_1=[$1], EXPR$2=[coalesce($11, 0.0:DECIMAL(10, 5))])
+  LogicalJoin(condition=[true], joinType=[default])
+    LogicalTableScan(table=[[entries$13]])
+    LogicalTableScan(table=[[entries$13]])
+
+
+SELECT "entries$13"."id" AS "__pk_0", "entries$13"."_idx" AS "__pk_1", COALESCE("entries$130"."discount", 0.0)
+FROM "entries$13"
+ DEFAULT JOIN "entries$13" AS "entries$130" ON TRUE

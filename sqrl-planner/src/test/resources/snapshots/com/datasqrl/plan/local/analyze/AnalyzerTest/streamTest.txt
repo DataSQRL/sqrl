@@ -1,0 +1,8 @@
+LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5])
+  LogicalSort(sort0=[$2], dir0=[DESC], fetch=[1])
+    LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5])
+      LogicalTableScan(table=[[customer$3]])
+
+LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5])
+  LogicalTableScan(table=[[y$5]])
+

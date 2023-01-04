@@ -1,0 +1,7 @@
+LogicalProject(__pk_0=[$0], EXPR$1=[-($1, 1)])
+  LogicalAggregate(group=[{0}], agg#0=[SUM($1)])
+    LogicalProject(__pk_0=[$0], productid0=[$8])
+      LogicalJoin(condition=[true], joinType=[default])
+        LogicalTableScan(table=[[product$3]])
+        LogicalTableScan(table=[[product$3]])
+

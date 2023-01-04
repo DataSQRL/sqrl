@@ -1,0 +1,11 @@
+LogicalAggregate(group=[{0}], num=[COUNT()], total=[SUM($1)])
+  LogicalProject(__pk_0=[$0], discount=[$10])
+    LogicalJoin(condition=[=($0, $5)], joinType=[default])
+      LogicalTableScan(table=[[orders$3]])
+      LogicalTableScan(table=[[entries$4]])
+
+LogicalProject(id=[$2], customerid=[$3], num=[$6])
+  LogicalJoin(condition=[=($0, $5)], joinType=[left])
+    LogicalTableScan(table=[[orders$3]])
+    LogicalTableScan(table=[[stats$6]])
+
