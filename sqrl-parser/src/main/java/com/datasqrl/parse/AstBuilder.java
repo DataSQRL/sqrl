@@ -794,7 +794,14 @@ class AstBuilder
   public SqlNode visitFunctionCall(FunctionCallContext context) {
 //    boolean distinct = isDistinct(context.setQuantifier());
     SqlIdentifier name = (SqlIdentifier) context.qualifiedName().accept(this);
-    List<SqlNode> args = visit(context.expression(), SqlNode.class);
+    List<SqlNode> args;
+    if (context.expression() != null) {
+      args = visit(context.expression(), SqlNode.class);
+    } else if (context.query() != null){
+      args = List.of(visit(context.query()));
+    } else {
+      throw new RuntimeException("Unknown function ast");
+    }
 
     //special case: count(*)
     if (context.ASTERISK() != null) {

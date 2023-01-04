@@ -214,6 +214,7 @@ primaryExpression
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
     | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall
     | EXISTS '(' query ')'                                                                #existsCall
+    | qualifiedName '(' query ')'                                                         #functionCall
     | '(' query ')'                                                                       #subqueryExpression
     | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
