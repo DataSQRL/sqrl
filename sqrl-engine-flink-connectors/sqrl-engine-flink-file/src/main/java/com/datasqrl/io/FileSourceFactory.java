@@ -74,7 +74,8 @@ public class FileSourceFactory implements
       return ctx.getEnv().fromSource(builder.build(),
           WatermarkStrategy.noWatermarks(), ctx.getFlinkName())
           .map(new NoTimedRecord())
-          .setParallelism(4);//todo config
+//          .setParallelism(4)//todo config
+          ;
     }
   }
 

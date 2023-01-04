@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS total$18 (__pk_0 VARCHAR NOT NULL,price DECIMAL NOT N
   "data" : {
     "Customer" : [ {
       "email" : "john.mekker@gmail.com",
-      "name" : "John B. Mekker",
-      "updatetime" : "2022-04-21T06:44:17Z",
+      "name" : "John Mekker",
+      "updatetime" : "2022-02-21T06:40:49Z",
       "favorite_categories" : [ {
         "category_name" : "Decoration",
         "total" : 120.85
@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS total$18 (__pk_0 VARCHAR NOT NULL,price DECIMAL NOT N
   "data" : {
     "Customer" : [ {
       "email" : "john.mekker@gmail.com",
-      "name" : "John B. Mekker",
-      "updatetime" : "2022-04-21T06:44:17Z",
+      "name" : "John Mekker",
+      "updatetime" : "2022-02-21T06:40:49Z",
       "orders" : [ {
         "id" : 10007543,
         "time" : "2022-05-19T08:29:39.553244Z",

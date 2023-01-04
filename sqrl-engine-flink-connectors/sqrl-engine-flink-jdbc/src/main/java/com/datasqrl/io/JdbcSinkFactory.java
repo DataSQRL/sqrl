@@ -39,8 +39,8 @@ public class JdbcSinkFactory
       TableDescriptor.Builder builder = TableDescriptor.forConnector("jdbc")
           .option(JdbcConnectorOptions.URL, config.getDbURL())
           .option("table-name", sink.getName())
-          .option("sink.buffer-flush.interval", "1000")
-          .option("sink.buffer-flush.max-rows", "100") //todo config
+//          .option("sink.buffer-flush.interval", "1000")
+//          .option("sink.buffer-flush.max-rows", "100") //todo config
         ;
       Optional.ofNullable(config.getDriverName())
           .map(u->builder.option(JdbcConnectorOptions.DRIVER, config.getDriverName()));
