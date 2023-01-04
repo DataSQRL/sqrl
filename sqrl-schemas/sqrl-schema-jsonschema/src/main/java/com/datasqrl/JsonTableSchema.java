@@ -32,7 +32,6 @@ public class JsonTableSchema implements TableSchema {
 
   @Override
   public UniversalTable createUniversalTable(boolean hasSourceTimestamp) {
-
-    return null;
+    throw new RuntimeException("Not yet implemented");
   }
 }

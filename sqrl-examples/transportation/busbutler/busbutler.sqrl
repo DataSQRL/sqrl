@@ -1,10 +1,10 @@
 IMPORT bus-data.*;
 
-IMPORT FUNCTION geo;
+IMPORT geo;
+--TODO: allow interval as column type
+--Routestops.timeoffset := INTERVAL timeoffset_min MINUTE;
 
-Routestops.timeoffset := INTERVAL timeoffset_min MINUTE;
-
-Schedule.stops := SELECT r.stopno, r.stopid, r.stop, s.starttime + r.timeoffset AS scheduledtime
+Schedule.stops := SELECT r.stopno, r.stopid, r.stop, s.starttime AS scheduledtime
                   FROM @ AS s JOIN Routestops AS r ON s.routeid=r.routeid ORDER BY r.stopno ASC;
 
 Schedule.travel := SELECT g.timestamp, g.location

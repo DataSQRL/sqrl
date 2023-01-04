@@ -5,10 +5,12 @@ package com.datasqrl.util;
 
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.util.data.DataSQRLRepo;
+import com.datasqrl.util.data.Examples;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
 import com.google.common.collect.ImmutableList;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -117,6 +119,7 @@ public interface TestScript {
           script.getGraphQLSchemas().stream().map(gql -> Arguments.of(script, gql)));
     }
   }
+
   public class AllScriptsWithAllEnginesProvider implements ArgumentsProvider {
 
     @Override
@@ -129,6 +132,17 @@ public interface TestScript {
                   .flatMap(gql ->
                           jdbcEngines.stream()
                                   .map(e -> Arguments.of(script, gql, e))));
+    }
+  }
+
+  public class ExampleScriptsProvider implements ArgumentsProvider {
+
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
+        throws Exception {
+
+      return Examples.scriptList.stream()
+          .map(script->Arguments.of(script));
     }
   }
 

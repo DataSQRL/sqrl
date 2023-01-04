@@ -1,8 +1,8 @@
 IMPORT sensor-data.*;
 
-IMPORT FUNCTION conv.*;
-IMPORT FUNCTION geo.*;
-IMPORT FUNCTION math.*;
+IMPORT conv.*;
+IMPORT geo.*;
+IMPORT math.*;
 
 
 Sensor.readings := JOIN SensorReading ON SensorReading.sensorid = @.sensorid INVERSE sensor;
@@ -23,7 +23,7 @@ Sensor.num_deviations_last_hour := SELECT COUNT(*) FROM @.readings
                                       WHERE timestamp > now() - INTERVAL 1 HOUR AND
                                       (temp_deviation > 5 OR co2_deviation > 30);
 
-CREATE SUBSCRIPTION WildfireAlert ON ADD AS
+WildfireAlert := STREAM ON ADD AS
 SELECT * FROM Sensor
 WHERE num_deviations_last_hour >= 2;
 
@@ -33,6 +33,6 @@ Sensor.num_deviations_last_month := SELECT COUNT(*) FROM @.readings
       WHERE timestamp > now() - INTERVAL 1 MONTH AND
       (temp_deviation > 7 OR co2_deviation > 70)
 
-CREATE SUBSCRIPTION BrokenSensorAlert ON ADD AS
+BrokenSensorAlert := STREAM ON ADD AS
 SELECT * FROM Sensor
 WHERE num_deviations_last_month >= 10;

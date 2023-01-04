@@ -152,7 +152,7 @@ selectItem
 
 relation
     : left=relation
-      ( CROSS JOIN right=relationPrimary
+      ( CROSS JOIN right=aliasedRelation
       | joinType JOIN rightRelation=aliasedRelation (joinCondition)?
       )                                           #joinRelation
     | aliasedRelation                             #relationDefault
@@ -194,6 +194,7 @@ predicate[ParserRuleContext value]
     | NOT? BETWEEN lower=valueExpression AND upper=valueExpression        #between
     | NOT? IN qualifiedName                                               #inRelation
     | NOT? IN '(' expression (',' expression)* ')'                        #inList
+    | NOT? LIKE pattern=valueExpression                                   #like
     | NOT? IN '(' query ')'                                               #inSubquery
     | IS NOT? NULL                                                        #nullPredicate
     ;

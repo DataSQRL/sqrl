@@ -1,6 +1,6 @@
 IMPORT social-commons.*;
 
-IMPORT FUNCTION time.*;
+IMPORT time.*;
 
 Users.friendship_request_by_week :=
             SELECT time.roundToWeek(requesttimestamp) AS week,
@@ -11,6 +11,6 @@ Users.friendship_request_by_week :=
             ORDER BY week DESC;
 
 
-CREATE SUBSCRIPTION FraudulentUserAlert ON ADD AS
+FraudulentUserAlert := STREAM ON ADD AS
 SELECT parent FROM Users.friendship_request_by_week
 WHERE week > now() - INTERVAL 4 WEEK AND num_rejected > 10 AND reject_ratio > 1;

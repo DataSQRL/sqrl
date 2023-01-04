@@ -1,7 +1,7 @@
 IMPORT order-data.*;
-IMPORT FUNCTION time.roundToDay;
-IMPORT FUNCTION time.roundToHour;
-IMPORT FUNCTION math;
+IMPORT time.roundToDay;
+IMPORT time.roundToHour;
+IMPORT math;
 
 Order := DISTINCT Order ON id ORDER BY time DESC;
 Tenant := SELECT DISTINCT tenant_id AS id FROM Order;

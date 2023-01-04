@@ -31,7 +31,7 @@ Transactions.follow-transactions := JOIN @.outputs o ON (o.self_pay = FALSE)
                                                     AND (tx.ts < @.ts + INTERVAL 14 DAY);
                                     --ORDER BY tx.total_output;
 
-Address._flow := SELECT parent.ts as timestamp, value AS received, value AS sent FROM @.received;
+Address._flow := SELECT parent.ts as timestamp, value AS received, value+1 AS sent FROM @.received;
 --Address._flow := SELECT parent.timestamp as timestamp, value as received FROM @.received;
                  --UNION ALL
                  --SELECT parent.timestamp as timestamp, value as sent FROM @.sent

@@ -52,7 +52,7 @@ Customer.spending_by_month.categories :=
 
 Product._sales_by_hour := SELECT round_to_hour(o.time) as hour, sum(e.quantity) as quantity,
                                 count(1) as num_orders
-                          FROM @ JOIN (Orders o JOIN o.entries e) ON e.productid = @.productid ORDER BY hour DESC;
+                          FROM @ JOIN Orders o JOIN o.entries e ON e.productid = @.productid ORDER BY hour DESC;
 
 Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM @._sales_by_hour LIMIT 24;
 Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM @._sales_by_hour LIMIT 72;
@@ -80,6 +80,6 @@ Customer.favorite_categories.category := JOIN Category ON @.category_name = Cate
 Customer.order_stats := SELECT sum(o.total.price) as total_spend, count(1) as num_orders
                         FROM @.orders o;
 
-CREATE SUBSCRIPTION NewCustomerPromotion ON ADD AS
+NewCustomerPromotion := STREAM ON ADD AS
 SELECT customerid, email, name, total_orders FROM Customer c JOIN c.order_stats o
 WHERE o.total_spend >= 100 OR o.num_orders >=3;

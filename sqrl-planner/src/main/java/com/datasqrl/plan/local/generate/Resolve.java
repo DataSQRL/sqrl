@@ -324,7 +324,6 @@ public class Resolve {
   }
 
   private void planOp(Env env, StatementOp op) {
-    System.out.println("Statement: " + op.statement.getNamePath());
     validate(env, op);
     transpile(env, op);
     computeOpKind(env, op);

@@ -1,7 +1,7 @@
 IMPORT home-data.*;
 
-IMPORT FUNCTION time.*;
-IMPORT FUNCTION vec.*;
+IMPORT time.*;
+IMPORT vec.*;
 
 -- Link entities together
 
@@ -18,9 +18,9 @@ Home.rooms.readings := SELECT time.roundToMin(timestamp, 10) AS time,
                        FROM @.sensors.metrics
                        GROUP BY time ORDER BY time DESC;
 
-Home.rooms.readings.isVacant := (SELECT * FROM @.parent.readings r /* = @.siblings */
+Home.rooms.readings.isVacant := NOT EXISTS(SELECT * FROM @.parent.readings r /* = @.siblings */
                                 WHERE r.time <= @.time AND r.time >= @.time - INTERVAL 30 MINUTE AND
-                                      r.motion IS TRUE) IS EMPTY;
+                                      r.motion = TRUE);
 
 -- We want to synchronize all sensor readings in the house on the most recent shared time
 Home.rooms.most_recent_time := SELECT time FROM @.readings ORDER BY time DESC LIMIT 1;
@@ -45,7 +45,7 @@ Rule.conditions.isActive := (temperature_higher IS NULL OR room.most_recent.temp
 
 Rule.isActive := isActiveTime AND vec.boolAND(conditions.isActive);
 
-CREATE SUBSCRIPTION RuleTriggeredEvent ON ADD AS
+RuleTriggeredEvent := STREAM ON ADD AS
 SELECT uuid() AS eventid, now() AS timestamp, home.homeid, ruleid, action FROM Rule
 WHERE isActive;
 

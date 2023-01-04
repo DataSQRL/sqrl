@@ -1,6 +1,6 @@
 IMPORT telco-data.requests;
 
-IMPORT FUNCTION time.*;
+IMPORT time.*;
 
 -- Define Tower, Content, and Sim entities and link to requests
 
@@ -29,7 +29,7 @@ Sim.tower_transitions := SELECT f.tower_id AS from_id, f.timestamp AS fromtime, 
                          JOIN @.requests t ON (f.timestamp < t.timestamp
                                         AND f.timestamp + INTERVAL 10 MINUTE > t.timestamp)
                          WHERE f.timestamp > NOW() - INTERVAL 1 MONTH AND
-                           (SELECT * FROM @.requests WHERE timestamp > f.timestamp AND timestamp < t.timestamp) IS EMPTY
+                           NOT EXISTS(SELECT * FROM @.requests WHERE timestamp > f.timestamp AND timestamp < t.timestamp)
                          ORDER BY fromtime DESC;
 */
 

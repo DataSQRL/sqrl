@@ -1,6 +1,6 @@
 IMPORT public-api.*;
 
-IMPORT FUNCTION time.*;
+IMPORT time.*;
 
 -- Seller Analytics
 
@@ -32,6 +32,7 @@ Seller.open_auctions_total := SELECT SUM(highest_bid_price) FROM @.auctions
 AuctionsByDay := SELECT ROUND_TO_DAY(end_time) AS day, COUNT(*) AS num_auctions,
                         MAX(highest_bid_price) AS max_price, AVG(highest_bid_price) AS avg_price,
                         AVG(num_bids) AS avg_num_bids, SUM(num_bids) AS total_bids, AVG(duration) AS avg_duration
+                 FROM Auction
                  WHERE end_time > now()
                  GROUP BY day ORDER BY day DESC;
 

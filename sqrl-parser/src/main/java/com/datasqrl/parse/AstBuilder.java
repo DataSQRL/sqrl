@@ -784,6 +784,20 @@ class AstBuilder
   }
 
   @Override
+  public SqlNode visitLike(LikeContext ctx) {
+    SqlNode value = ctx.valueExpression().accept(this);
+    SqlNode pattern = ctx.pattern.accept(this);
+
+    if (ctx.NOT() != null) {
+      return SqlStdOperatorTable.NOT_LIKE
+          .createCall(getLocation(ctx), value, pattern);
+    }
+
+    return SqlStdOperatorTable.LIKE.createCall(getLocation(ctx),
+        value, pattern);
+  }
+
+  @Override
   public SqlNode visitExistsCall(ExistsCallContext context) {
     SqlNode query = context.query().accept(this);
 

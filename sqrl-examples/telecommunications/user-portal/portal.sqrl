@@ -1,6 +1,6 @@
 IMPORT telco-data.requests;
 
-IMPORT FUNCTION time.*;
+IMPORT time.*;
 
 -- Define SIM as an entity and link it to all of its requests
 

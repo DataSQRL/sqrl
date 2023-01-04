@@ -1,6 +1,6 @@
 IMPORT tracking.*;
 
-IMPORT FUNCTION time.*;
+IMPORT time.*;
 
 WarehouseInventory := SELECT location.city + ', ' + location.state AS location,
                              trackingno, shipment.weight
@@ -11,7 +11,7 @@ Warehouse := SELECT location, COUNT(*) AS num_shipments, SUM(weight) AS total_we
              FROM WarehouseInventory
              GROUP BY location;
 
-CREATE SUBSCRIPTION HighInventory ON ADD AS
+HighInventory := STREAM ON ADD AS
 SELECT * FROM Warehouse WHERE num_shipments > 1000 OR total_weight > 25000;
 
 Shipment.first_delivery_time := SELECT timestamp FROM @.events

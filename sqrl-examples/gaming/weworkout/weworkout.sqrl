@@ -1,12 +1,12 @@
 IMPORT exercise-data.*;
 
-IMPORT FUNCTION time;
-IMPORT FUNCTION col;
-IMPORT FUNCTION math;
+IMPORT time;
+IMPORT col;
+IMPORT math;
 
 Challenges.week := time.roundToWeek(time.parse(week_of))
 
-CREATE RELATIONSHIP Membership.team JOIN Team ON @.teamid = Team.teamid INVERSE members;
+Membership.team := JOIN Team ON @.teamid = Team.teamid INVERSE members;
 
 User.exercises := JOIN Exercise ON Exercise.userid = @.userid;
 User.memberships := JOIN Membership ON Membership.userid = @.userid;
@@ -40,8 +40,8 @@ Team.weeklyStats := SELECT week, type,
 
 Team._goalProgress := SELECT w.week, w.type, w.totaldistance ? 0, w.totalrepetitions ? 0,
                                 g.distance AS goaldistance, g.repetitions AS goalrepetitions
-                          FROM @._weeklyStats w
-                          RIGHT JOIN Challenges.goals g ON w.type = g.type AND w.week=g.parent.week
+                          FROM Challenges.goals g
+                          JOIN @._weeklyStats w ON w.type = g.type AND w.week=g.parent.week
                           ORDER BY w.week DESC;
 
 Team._goalProgress.percentage:= (MAX(totaldistance/goaldistance ? 1.0, 1.0) + MAX(totalrepetitions/goalrepetitions ? 1.0, 1.0)) / 2.0;

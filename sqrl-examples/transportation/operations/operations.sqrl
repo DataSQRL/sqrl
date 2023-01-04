@@ -1,6 +1,6 @@
 IMPORT busbutler.*;
 
-IMPORT FUNCTION time;
+IMPORT time;
 
 TodaysOperation := SELECT s.starttime, s.route.label AS route,
                              s.bus.type AS bustype, s.bus.capacity AS buscapacity,

@@ -1,6 +1,6 @@
 IMPORT social-commons.*;
 
-IMPORT FUNCTION time.exp-decay AS timedecay;
+IMPORT time.exp-decay AS timedecay;
 
 Users.friend_recommend := SELECT foaf.userid AS userid, foaf.name AS name, COUNT(*) AS sharedfriends
               FROM @.friends.friend f JOIN f.friends.friend AS foaf

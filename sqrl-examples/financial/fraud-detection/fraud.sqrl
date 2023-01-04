@@ -1,9 +1,9 @@
 IMPORT cc-data.*;
 
 -- Import a purchased dataset table from a public source
-IMPORT PUBLIC marketplace.geo-solutions.coordinate-resolution.USStates;
+IMPORT marketplace.geo-solutions.coordinate-resolution.USStates;
 
-IMPORT FUNCTION time;
+IMPORT time;
 
 -- Resolve coordinates to states for POS
 PoS.location_state := SELECT state FROM USStates
@@ -88,5 +88,5 @@ PoS.fraud_by_week.wow_change := @.fraud_ratio /
                                 (SELECT fraud_ratio FROM @.siblings
                                  WHERE week < @.week ORDER BY week DESC LIMIT 1);
 
-CREATE SUBSCRIPTION FraudIncreaseAlert ON ADD AS
+FraudIncreaseAlert := STREAM ON ADD AS
 SELECT parent FROM PoS.fraud_by_week WHERE wow_change > 1.2 OR fraud_ratio > 0.03;

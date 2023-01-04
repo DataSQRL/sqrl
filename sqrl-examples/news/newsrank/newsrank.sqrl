@@ -1,11 +1,11 @@
 IMPORT data.*;
 
-IMPORT FUNCTION math;
-IMPORT FUNCTION sqml;
+IMPORT math;
+IMPORT sqml;
 
 Vote.user := JOIN User ON User.id = @.userid;
-Vote.latest := (SELECT * FROM Vote WHERE userid = @.userid AND
-                      (commentid = @.commentid OR postid = @.postid) AND timestamp > @.timestamp) IS EMPTY;
+Vote.latest := NOT EXISTS(SELECT * FROM Vote WHERE userid = @.userid AND
+                      (commentid = @.commentid OR postid = @.postid) AND timestamp > @.timestamp);
 Comment.votes := JOIN Vote ON Vote.commentid = @.id AND Vote.latest = TRUE AND Vote.type = 'up';
 Post.votes := JOIN Vote ON Vote.postid = @.id AND Vote.latest = TRUE AND Vote.type = 'up';
 
