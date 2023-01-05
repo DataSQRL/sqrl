@@ -99,4 +99,6 @@ sqrl-cli/datasqrl
 .DS_Store
 
 sqlite.db
+myproject
 deploy
+h2.db.mv.db

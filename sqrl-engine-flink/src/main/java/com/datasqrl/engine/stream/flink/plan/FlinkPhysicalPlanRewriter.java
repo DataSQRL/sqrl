@@ -24,6 +24,7 @@ import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlQuantifyOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -32,10 +33,12 @@ import org.apache.calcite.util.Holder;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.api.common.RuntimeExecutionMode;
+import org.apache.flink.configuration.ExecutionOptions;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
-import org.apache.flink.table.planner.delegation.StreamPlanner;
+import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 import java.math.BigDecimal;
@@ -69,7 +72,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   private FlinkRelBuilder getBuilder() {
-    return ((StreamPlanner) tEnv.getPlanner()).getRelBuilder();
+    return ((PlannerBase) tEnv.getPlanner()).getRelBuilder();
   }
 
   @Override
@@ -80,8 +83,11 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     String tableName = t.getNameId();
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.scan(tableName);
-    SqrlHint.fromRel(scan, WatermarkHint.CONSTRUCTOR)
-        .ifPresent(watermark -> addWatermark(relBuilder, watermark.getTimestampIdx()));
+    //todo: why does this not work for batching?
+    if (!tEnv.getConfig().get(ExecutionOptions.RUNTIME_MODE).equals(RuntimeExecutionMode.BATCH)) {
+      SqrlHint.fromRel(scan, WatermarkHint.CONSTRUCTOR)
+          .ifPresent(watermark -> addWatermark(relBuilder, watermark.getTimestampIdx()));
+    }
     return relBuilder.build();
   }
 
@@ -138,7 +144,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
           rexBuilder.makeFieldAccess(correlVar.get(), temporalHint.getStreamTimestampIdx()));
       CorrelateRexRewriter correlRewriter = new CorrelateRexRewriter(rexBuilder,
           left.getRowType().getFieldList(),
-          correlVar, right.getRowType().getFieldList());
+          correlVar, right.getRowType().getFieldList(), this);
       relBuilder.filter(correlRewriter.rewrite(join.getCondition()));
       Set<Integer> usedLeftFieldIdx = correlRewriter.usedLeftFieldIdx;
       usedLeftFieldIdx.add(temporalHint.getStreamTimestampIdx());
@@ -349,11 +355,6 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @Override
   public RelNode visit(TableFunctionScan scan) {
     throw new UnsupportedOperationException("Not yet supported");
-//    List<RelNode> inputs = scan.getInputs().stream()
-//        .map(this::visit)
-//        .collect(Collectors.toList());
-//    return new LogicalTableFunctionScan(cluster, defaultTrait, inputs, scan.getCall(),
-//        scan.getElementType(), scan.getRowType(), scan.getColumnMappings());
   }
 
   @Override
@@ -370,7 +371,6 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   public RelNode visit(LogicalSort sort) {
     throw new UnsupportedOperationException("Sorts are not supported during materialization");
   }
-
 
   /*
   ====== Rewriting RexNodes
@@ -396,7 +396,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       }
     }
     return node.accept(new RexRewriter(fields,
-        FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder)));
+        FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder), this));
   }
 
   @AllArgsConstructor
@@ -404,6 +404,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
     final List<RelDataTypeField> inputFields;
     final FlinkRexBuilder rexBuilder;
+    FlinkPhysicalPlanRewriter rewriter;
 
     @Override
     public RexNode visitInputRef(RexInputRef ref) {
@@ -445,6 +446,24 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       }
       return literal;
     }
+
+    @Override
+    public RexNode visitSubQuery(RexSubQuery subQuery) {
+      if (subQuery.op == SqlStdOperatorTable.SCALAR_QUERY) {
+        return RexSubQuery.scalar(rewriter.rewrite(subQuery.rel));
+      } else if (subQuery.op == SqlStdOperatorTable.EXISTS) {
+        return RexSubQuery.exists(rewriter.rewrite(subQuery.rel));
+      } else if (subQuery.op == SqlStdOperatorTable.IN) {
+        return RexSubQuery.in(rewriter.rewrite(subQuery.rel), subQuery.operands.stream()
+            .map(e->e.accept(this)).collect(org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList.toImmutableList()));
+      } else if (subQuery.op.getKind() == SqlKind.SOME) {
+        return RexSubQuery.some(rewriter.rewrite(subQuery.rel), subQuery.operands.stream()
+            .map(e->e.accept(this)).collect(org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList.toImmutableList()),
+            (SqlQuantifyOperator)subQuery.op);
+      }
+
+      throw new RuntimeException("not supported");
+    }
   }
 
   private class CorrelateRexRewriter extends RexRewriter {
@@ -456,8 +475,8 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
     public CorrelateRexRewriter(FlinkRexBuilder rexBuilder,
         List<RelDataTypeField> leftFields, Holder<RexCorrelVariable> leftCorrelVar,
-        List<RelDataTypeField> rightFields) {
-      super(List.of(), rexBuilder);
+        List<RelDataTypeField> rightFields, FlinkPhysicalPlanRewriter rewriter) {
+      super(List.of(), rexBuilder, rewriter);
       this.leftFields = leftFields;
       this.leftCorrelVar = leftCorrelVar;
       this.rightFields = rightFields;

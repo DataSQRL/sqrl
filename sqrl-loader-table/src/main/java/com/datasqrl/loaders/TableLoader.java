@@ -4,12 +4,14 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.input.external.SchemaDefinition;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.regex.Matcher;
 
 public class TableLoader extends AbstractLoader {
@@ -25,9 +27,13 @@ public class TableLoader extends AbstractLoader {
 
   @Override
   public boolean usesFile(Path file) {
-    return super.usesFile(file) || file.getFileName().toString().endsWith(
-        DataSource.JSON_SCHEMA_FILE_SUFFIX) ||
-        file.getFileName().toString().equals(DataSource.PACKAGE_SCHEMA_FILE);
+    Optional schemaFile = ServiceLoader.load(TableSchemaFactory.class)
+        .stream()
+        .flatMap(f->f.get().allSuffixes().stream())
+        .filter(s->file.getFileName().toString().endsWith(s))
+        .findAny();
+
+    return super.usesFile(file) || schemaFile.isPresent();
   }
 
   @Override
@@ -38,13 +44,7 @@ public class TableLoader extends AbstractLoader {
   }
 
   public Optional<TableSource> readTable(Path rootDir, NamePath fullPath, ErrorCollector errors) {
-    return DataSource.readTable(rootDir, fullPath, errors, TableSource.class, deserialize);
-  }
-
-
-  public SchemaDefinition loadPackageSchema(Path baseDir) {
-    Path tableSchemaPath = baseDir.resolve(DataSource.PACKAGE_SCHEMA_FILE);
-    return deserialize.mapYAMLFile(tableSchemaPath, SchemaDefinition.class);
+    return new DataSource().readTable(rootDir, fullPath, errors, TableSource.class, deserialize);
   }
 
   @Override

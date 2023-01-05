@@ -33,7 +33,7 @@ public class Relationship extends Field {
 
   @Override
   public String toString() {
-    return fromTable.getName() + " -> " + toTable.getName()
+    return name.getCanonical() + " : " + fromTable.getName() + " -> " + toTable.getName()
         + " [" + joinType + "," + multiplicity + "]";
   }
 

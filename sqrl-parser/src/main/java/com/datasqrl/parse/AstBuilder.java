@@ -198,18 +198,25 @@ class AstBuilder
   private static TimeUnit getIntervalFieldType(Token token) {
     switch (token.getType()) {
       case SqlBaseLexer.YEAR:
+      case SqlBaseLexer.YEARS:
         return TimeUnit.YEAR;
       case SqlBaseLexer.MONTH:
+      case SqlBaseLexer.MONTHS:
         return TimeUnit.MONTH;
       case SqlBaseLexer.DAY:
+      case SqlBaseLexer.DAYS:
         return TimeUnit.DAY;
       case SqlBaseLexer.WEEK:
+      case SqlBaseLexer.WEEKS:
         return TimeUnit.WEEK;
       case SqlBaseLexer.HOUR:
+      case SqlBaseLexer.HOURS:
         return TimeUnit.HOUR;
       case SqlBaseLexer.MINUTE:
+      case SqlBaseLexer.MINUTES:
         return TimeUnit.MINUTE;
       case SqlBaseLexer.SECOND:
+      case SqlBaseLexer.SECONDS:
         return TimeUnit.SECOND;
     }
 
@@ -512,16 +519,14 @@ class AstBuilder
 
   @Override
   public SqlNode visitJoinPath(JoinPathContext ctx) {
-    List<SqlNode> relations = ctx.aliasedRelation().stream()
-        .map(this::visit)
-        .collect(toList());
+    List<SqlNode> relations = new ArrayList<>();
     List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < ctx.aliasedRelation().size(); i++) {
-      if (i <= ctx.joinCondition().size() && ctx.joinCondition(i) != null) {
-        conditions.add(ctx.joinCondition(i).booleanExpression().accept(this));
-      } else {
-        conditions.add(null);
-      }
+    for (int i = 0; i < ctx.joinPathCondition().size(); i++) {
+      SqlNode relation = ctx.joinPathCondition(i).aliasedRelation().accept(this);
+      relations.add(relation);
+      SqlNode condition = ctx.joinPathCondition(i).joinCondition() == null ? null :
+          ctx.joinPathCondition(i).joinCondition().booleanExpression().accept(this);
+      conditions.add(condition);
     }
 
     return new SqrlJoinPath(getLocation(ctx),
@@ -779,10 +784,38 @@ class AstBuilder
   }
 
   @Override
+  public SqlNode visitLike(LikeContext ctx) {
+    SqlNode value = ctx.valueExpression().accept(this);
+    SqlNode pattern = ctx.pattern.accept(this);
+
+    if (ctx.NOT() != null) {
+      return SqlStdOperatorTable.NOT_LIKE
+          .createCall(getLocation(ctx), value, pattern);
+    }
+
+    return SqlStdOperatorTable.LIKE.createCall(getLocation(ctx),
+        value, pattern);
+  }
+
+  @Override
+  public SqlNode visitExistsCall(ExistsCallContext context) {
+    SqlNode query = context.query().accept(this);
+
+    return SqlStdOperatorTable.EXISTS.createCall(getLocation(context), query);
+  }
+
+  @Override
   public SqlNode visitFunctionCall(FunctionCallContext context) {
 //    boolean distinct = isDistinct(context.setQuantifier());
     SqlIdentifier name = (SqlIdentifier) context.qualifiedName().accept(this);
-    List<SqlNode> args = visit(context.expression(), SqlNode.class);
+    List<SqlNode> args;
+    if (context.expression() != null) {
+      args = visit(context.expression(), SqlNode.class);
+    } else if (context.query() != null){
+      args = List.of(visit(context.query()));
+    } else {
+      throw new RuntimeException("Unknown function ast");
+    }
 
     //special case: count(*)
     if (context.ASTERISK() != null) {
@@ -1181,7 +1214,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitBackQuotedIdentifier(BackQuotedIdentifierContext ctx) {
-    return new SqlIdentifier(List.of(ctx.getText()), null,
+    return new SqlIdentifier(List.of(ctx.getText().substring(1, ctx.getText().length() - 1)), null,
         getLocation(ctx), List.of(getLocation(ctx)));
   }
 

@@ -25,6 +25,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
+import org.apache.calcite.sql.type.MultisetSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.AggregatingScope;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -61,7 +62,7 @@ public class CalciteUtil {
 
   public static boolean isBasicOrArrayType(RelDataType type) {
     return type instanceof BasicSqlType || type instanceof IntervalSqlType
-        || type instanceof ArraySqlType;
+        || type instanceof ArraySqlType || type instanceof MultisetSqlType;
   }
 
   public static boolean hasNesting(RelDataType type) {

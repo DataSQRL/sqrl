@@ -14,7 +14,9 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ServiceLoader;
 import java.util.function.Function;
+import lombok.Getter;
 
+@Getter
 public class JacksonDeserializer<T> extends StdDeserializer<T> {
 
   private final String typeKey;

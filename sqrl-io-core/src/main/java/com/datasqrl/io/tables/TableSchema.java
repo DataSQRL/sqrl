@@ -10,7 +10,6 @@ import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.SchemaValidator;
 
 public interface TableSchema {
-
   RowMapper getRowMapper(RowConstructor rowConstructor,
       boolean hasSourceTimestamp);
 

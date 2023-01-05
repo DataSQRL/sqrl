@@ -4,18 +4,18 @@
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
   `productid` BIGINT NOT NULL,
-  `name` STRING NOT NULL,
-  `description` STRING NOT NULL,
-  `category` STRING NOT NULL
+  `name` VARCHAR(32767) NOT NULL,
+  `description` VARCHAR(32767) NOT NULL,
+  `category` VARCHAR(32767) NOT NULL
 )
 >>>product
 (
   `_uuid` CHAR(36) NOT NULL,
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `productid` BIGINT NOT NULL,
-  `name` STRING NOT NULL,
-  `description` STRING NOT NULL,
-  `category` STRING NOT NULL
+  `name` VARCHAR(32767) NOT NULL,
+  `description` VARCHAR(32767) NOT NULL,
+  `category` VARCHAR(32767) NOT NULL
 )
 >>>orders-hasTimestamp
 (
@@ -42,8 +42,8 @@
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `email` STRING NOT NULL,
-  `name` STRING NOT NULL,
+  `email` VARCHAR(32767) NOT NULL,
+  `name` VARCHAR(32767) NOT NULL,
   `lastupdated` BIGINT NOT NULL
 )
 >>>customer
@@ -51,7 +51,7 @@
   `_uuid` CHAR(36) NOT NULL,
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `email` STRING NOT NULL,
-  `name` STRING NOT NULL,
+  `email` VARCHAR(32767) NOT NULL,
+  `name` VARCHAR(32767) NOT NULL,
   `lastupdated` BIGINT NOT NULL
 )

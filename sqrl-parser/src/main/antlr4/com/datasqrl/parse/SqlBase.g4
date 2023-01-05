@@ -85,8 +85,11 @@ joinSpecification
     ;
 
 joinTerm
-    : (JOIN aliasedRelation (joinCondition)?)+                                          #joinPath
+    : (JOIN joinPathCondition)+                                                         #joinPath
     | left=joinTerm operator=(UNION | INTERSECT | EXCEPT) setQuantifier right=joinTerm  #joinSetOperation
+    ;
+joinPathCondition
+    : aliasedRelation (joinCondition)?
     ;
 
 streamQuery
@@ -149,7 +152,7 @@ selectItem
 
 relation
     : left=relation
-      ( CROSS JOIN right=relationPrimary
+      ( CROSS JOIN right=aliasedRelation
       | joinType JOIN rightRelation=aliasedRelation (joinCondition)?
       )                                           #joinRelation
     | aliasedRelation                             #relationDefault
@@ -191,6 +194,7 @@ predicate[ParserRuleContext value]
     | NOT? BETWEEN lower=valueExpression AND upper=valueExpression        #between
     | NOT? IN qualifiedName                                               #inRelation
     | NOT? IN '(' expression (',' expression)* ')'                        #inList
+    | NOT? LIKE pattern=valueExpression                                   #like
     | NOT? IN '(' query ')'                                               #inSubquery
     | IS NOT? NULL                                                        #nullPredicate
     ;
@@ -210,6 +214,8 @@ primaryExpression
     | string                                                                              #stringLiteral
     | qualifiedName '(' ASTERISK ')'                                                      #functionCall
     | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall
+    | EXISTS '(' query ')'                                                                #existsCall
+    | qualifiedName '(' query ')'                                                         #functionCall
     | '(' query ')'                                                                       #subqueryExpression
     | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
     | CAST '(' expression AS type ')'                                                     #cast
@@ -237,6 +243,7 @@ interval
 
 intervalField
     : YEAR | MONTH | WEEK | DAY | HOUR | MINUTE | SECOND
+    | YEARS | MONTHS | WEEKS | DAYS | HOURS | MINUTES | SECONDS
     ;
 
 type
@@ -291,8 +298,10 @@ BETWEEN: 'BETWEEN';
 BY: 'BY';
 CASE: 'CASE';
 CAST: 'CAST';
+CROSS: 'CROSS';
 DATE: 'DATE';
 DAY: 'DAY';
+DAYS: 'DAYS';
 DELETE: 'DELETE';
 DESC: 'DESC';
 DISTINCT: 'DISTINCT';
@@ -308,6 +317,7 @@ FULL: 'FULL';
 GROUP: 'GROUP';
 HAVING: 'HAVING';
 HOUR: 'HOUR';
+HOURS: 'HOURS';
 IF: 'IF';
 IGNORE: 'IGNORE';
 IN: 'IN';
@@ -323,7 +333,9 @@ LIMIT: 'LIMIT';
 LOGICAL: 'LOGICAL';
 MAP: 'MAP';
 MINUTE: 'MINUTE';
+MINUTES: 'MINUTES';
 MONTH: 'MONTH';
+MONTHS: 'MONTHS';
 NOT: 'NOT';
 NULL: 'NULL';
 NULLIF: 'NULLIF';
@@ -334,6 +346,7 @@ ORDER: 'ORDER';
 OUTER: 'OUTER';
 RIGHT: 'RIGHT';
 SECOND: 'SECOND';
+SECONDS: 'SECONDS';
 SELECT: 'SELECT';
 STREAM: 'STREAM';
 TEMPORAL: 'TEMPORAL';
@@ -346,9 +359,11 @@ UNION: 'UNION';
 UPDATE: 'UPDATE';
 USING: 'USING';
 WEEK: 'WEEK';
+WEEKS: 'WEEKS';
 WHEN: 'WHEN';
 WHERE: 'WHERE';
 YEAR: 'YEAR';
+YEARS: 'YEARS';
 IMPORT: 'IMPORT';
 SEMICOLON: ';';
 INVERSE: 'INVERSE';

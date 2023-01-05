@@ -90,6 +90,11 @@ public class SourceRecord<K> implements Serializable {
     public Raw(Map<String, Object> data, Instant sourceTime) {
       super(data, sourceTime);
     }
+
+    @Override
+    public String toString() {
+      return super.toString();
+    }
   }
 
   @NoArgsConstructor

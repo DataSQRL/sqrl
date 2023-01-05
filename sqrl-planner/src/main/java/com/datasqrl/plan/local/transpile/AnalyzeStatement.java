@@ -832,7 +832,8 @@ public class AnalyzeStatement implements
       List<String> names = new ArrayList<>();
       names.add(alias);
       Preconditions.checkState(path.size() == 1);
-      Preconditions.checkState(path.get(0) instanceof Column);
+      Preconditions.checkState(path.get(0) instanceof Column,
+          "Unexpected column type. Expected a column, got: %s", path.get(0));
       names.add(((Column) path.get(0)).getShadowedName().getDisplay());
 
       return new SqlIdentifier(names, original.getParserPosition());

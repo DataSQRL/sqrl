@@ -4,14 +4,16 @@
 package com.datasqrl.error;
 
 import com.datasqrl.name.Name;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import lombok.Getter;
 
-public class ErrorEmitter {
+public class ErrorEmitter implements Serializable {
 
-  protected final Map<Class, ErrorHandler> handlers = new HashMap<>();
+  protected static final Map<Class, ErrorHandler> handlers = loadHandlers();
 
   @Getter
   private final SourceMap sourceMap;
@@ -22,6 +24,15 @@ public class ErrorEmitter {
   public ErrorEmitter(SourceMap sourceMap, ErrorLocation baseLocation) {
     this.sourceMap = sourceMap;
     this.baseLocation = baseLocation;
+  }
+
+  private static Map<Class, ErrorHandler> loadHandlers() {
+    Map<Class, ErrorHandler> handlers = new HashMap<>();
+    ServiceLoader<ErrorHandler> serviceLoader = ServiceLoader.load(ErrorHandler.class);
+    for (ErrorHandler handler : serviceLoader) {
+      handlers.put(handler.getHandleClass(), handler);
+    }
+    return handlers;
   }
 
   public ErrorEmitter resolve(Name location) {

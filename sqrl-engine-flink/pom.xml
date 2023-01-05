@@ -26,6 +26,10 @@
       <artifactId>sqrl-io-file</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-runtime-web</artifactId>
+    </dependency>
+    <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>com.datasqrl</groupId>
       <type>test-jar</type>

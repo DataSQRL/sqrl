@@ -23,11 +23,11 @@
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
   `id` BIGINT NOT NULL,
-  `name` STRING NOT NULL,
-  `sizing` STRING NOT NULL,
+  `name` VARCHAR(32767) NOT NULL,
+  `sizing` VARCHAR(32767) NOT NULL,
   `weight_in_gram` BIGINT NOT NULL,
-  `type` STRING NOT NULL,
-  `category` STRING NOT NULL,
+  `type` VARCHAR(32767) NOT NULL,
+  `category` VARCHAR(32767) NOT NULL,
   `usda_id` BIGINT NOT NULL,
   `updated` TIMESTAMP_LTZ(3) NOT NULL
 )
@@ -36,11 +36,11 @@
   `_uuid` CHAR(36) NOT NULL,
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `id` BIGINT NOT NULL,
-  `name` STRING NOT NULL,
-  `sizing` STRING NOT NULL,
+  `name` VARCHAR(32767) NOT NULL,
+  `sizing` VARCHAR(32767) NOT NULL,
   `weight_in_gram` BIGINT NOT NULL,
-  `type` STRING NOT NULL,
-  `category` STRING NOT NULL,
+  `type` VARCHAR(32767) NOT NULL,
+  `category` VARCHAR(32767) NOT NULL,
   `usda_id` BIGINT NOT NULL,
   `updated` TIMESTAMP_LTZ(3) NOT NULL
 )

@@ -8,7 +8,13 @@ import com.datasqrl.io.impl.InputPreview;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.Map;
 import lombok.*;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -52,6 +58,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     }
 
 
+    @SneakyThrows
     @Override
     public Result parse(@NonNull String line) {
       if (isComment(line, commentPrefix)) {
@@ -60,26 +67,39 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
       if (splitter == null) {
         splitter = getSplitter(delimiter);
       }
-      List<String> parts = splitter.splitToList(line);
-      if (parts.size() > header.length) {
-        return Result.error(
-            String.format("Expected %d items per row but found %d", header.length, parts.size()));
-      }
-      //Skip if line is equal to header
-      boolean isHeader = true;
-      for (int i = 0; i < parts.size(); i++) {
-        if (!parts.get(i).equalsIgnoreCase(header[i])) {
-          isHeader = false;
+      Reader reader = new StringReader(line);
+      try (CSVParser parser = CSVParser.parse(reader, org.apache.commons.csv.CSVFormat.DEFAULT
+          .builder()
+          .setDelimiter(delimiter.charAt(0))
+          .setTrim(true)
+          .build())) {
+        for (CSVRecord parts : parser) {
+
+          if (parts.size() > header.length) {
+            return Result.error(
+                String.format("Expected %d items per row but found %d", header.length,
+                    parts.size()));
+          }
+          //Skip if line is equal to header
+          boolean isHeader = true;
+          for (int i = 0; i < parts.size(); i++) {
+            if (!parts.get(i).equalsIgnoreCase(header[i])) {
+              isHeader = false;
+              break;
+            }
+          }
+          if (isHeader) {
+            return Result.skip();
+          }
+          LinkedHashMap<String, Object> map = new LinkedHashMap<>(parts.size());
+          for (int i = 0; i < parts.size(); i++) {
+            map.put(header[i], parts.get(i));
+          }
+          return Result.success(map);
         }
       }
-      if (isHeader) {
-        return Result.skip();
-      }
-      LinkedHashMap<String, Object> map = new LinkedHashMap<>(parts.size());
-      for (int i = 0; i < parts.size(); i++) {
-        map.put(header[i], parts.get(i));
-      }
-      return Result.success(map);
+
+      return Result.skip();
     }
   }
 

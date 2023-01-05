@@ -99,11 +99,13 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StreamAssignment;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.SqlNodePrinter;
 import org.apache.commons.lang3.tuple.Pair;
 
 @Getter
@@ -312,9 +314,7 @@ public class Resolve {
     for (SqrlStatement q : env.queryOperations) {
       setCurrentNode(env, q);
       planQuery(env, q);
-      if (env.session.errors.hasErrors()) {
-        return;
-      }
+
     }
   }
 
@@ -490,7 +490,6 @@ public class Resolve {
 
     for (Function<Analysis, SqlShuttle> transform : transforms) {
       node = node.accept(transform.apply(currentAnalysis));
-      log.trace("Transformed node: {}", node);
       currentAnalysis = analyzer.apply(node);
     }
 
@@ -561,11 +560,6 @@ public class Resolve {
     env.session.planner.setValidator(op.getQuery(), op.getSqrlValidator());
 
     RelNode relNode = env.session.planner.rel(op.getQuery()).rel;
-
-    //Optimization prepass: TODO: why are we doing this here?
-    relNode = env.session.planner.transform(OptimizationStage.PUSH_FILTER_INTO_JOIN,
-        relNode);
-
     op.setRelNode(relNode);
   }
 
@@ -727,7 +721,7 @@ public class Resolve {
         env.getSession().getPlanner().getRelBuilder().getRexBuilder());
     SQRLTable toTable =
         joinDeclarationUtil.getToTable(op.sqrlValidator,
-            op.query);
+            op.getJoinDeclaration());
     Multiplicity multiplicity = getMultiplicity(env, op);
 
     checkState(table.getField(toNamePath(env, op.statement.getNamePath()).getLast()).isEmpty(),

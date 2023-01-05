@@ -149,11 +149,10 @@ LogicalSort(sort0=[$0], dir0=[ASC])
 
 >>>ordercustomer-data
 10007140, Emily F. Ludies, 1000107
-10007543, John B. Mekker, 1000101
 10007543, John Mekker, 1000101
 10008231, Michelle Dagnes, 1000121
 10008434, Emily F. Ludies, 1000107
 >>>agg1-data
-1000101, 2
+1000101, 1
 1000107, 2
 1000121, 1

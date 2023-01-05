@@ -98,7 +98,7 @@ public class DataDiscovery {
           ErrorPrefix.INPUT_DATA.resolve(table.getName()));
       //todo: monitor
       stream = monitor(streamBuilder, stream, table, statsStore);
-      stream.printSink();
+//      stream.printSink();
     }
     StreamEngine.Job job = streamBuilder.build();
     job.execute("monitoring[" + tables.size() + "]" + tables.hashCode());
@@ -192,6 +192,10 @@ public class DataDiscovery {
     try (TableStatisticsStore store = statsStore.openStore()) {
       for (TableInput table : tables) {
         SourceTableStatistics stats = store.getTableStatistics(table.getPath());
+        if (stats == null) {
+          //No data in table
+          continue;
+        }
         DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
         FlexibleDatasetSchema.TableField tableField = baseSchema.getFieldByName(table.getName());
         FlexibleDatasetSchema.TableField schema;

@@ -1,0 +1,47 @@
+IMPORT data.*;
+
+IMPORT math;
+IMPORT sqml;
+
+Vote.user := JOIN User ON User.id = @.userid;
+Vote.latest := NOT EXISTS(SELECT * FROM Vote WHERE userid = @.userid AND
+                      (commentid = @.commentid OR postid = @.postid) AND timestamp > @.timestamp);
+Comment.votes := JOIN Vote ON Vote.commentid = @.id AND Vote.latest = TRUE AND Vote.type = 'up';
+Post.votes := JOIN Vote ON Vote.postid = @.id AND Vote.latest = TRUE AND Vote.type = 'up';
+
+Comment.flags := JOIN Vote ON Vote.commentid = @.id AND Vote.latest = TRUE AND Vote.type = 'flag';
+Post.flags := JOIN Vote ON Vote.postid = @.id AND Vote.latest = TRUE AND Vote.type = 'flag';
+
+Post.numvotes := SELECT COUNT(*) FROM @.votes LIMIT 1;
+Comment.numvotes := SELECT COUNT(*) FROM @.votes LIMIT 1;
+
+Post.isFlagged := (SELECT COUNT(*) FROM @.flags) > 5;
+Comment.isFlagged := (SELECT COUNT(*) FROM @.flags) > 3;
+
+User.posts := JOIN Post ON Post.userid = @.id INVERSE user;
+User.comments := JOIN Comment ON Comment.userid = @.id INVERSE user;
+
+Vote.userkarma := FROZEN_LOOKUP(@.user.currentKarma); --Looks up the query when event is processed by system
+Vote.karma := math.log10(userkarma);
+
+-- This sets the user assigned karma to a post equal to the current karma of the user which changes over time and so will this value
+User.currentKarma := MAX ((SELECT SUM( math.sqrt(karma)) FROM @.posts.votes)
+            + (SELECT SUM( math.sqrt(karma)) FROM @.comments.votes), MAX(@.starting_karma, 1));
+Post.userKarma := @.user.currentKarma;
+
+/* OR (alternative implementation) */
+
+-- This sets the user assigned karma to the karma of the user at the time of posting
+User.karmaByTime := SELECT timestamp, math.sqrt(karma) AS addKarma FROM @.posts.votes
+                    UNION ALL
+                    SELECT timestamp, math.sqrt(karma) AS addKarma FROM @.comments.votes;
+User.karmaByTime.totalKarma := SELECT SUM(@.siblings.addKarma) AS total FROM @ JOIN @.siblings WHERE @.siblings.timestamp <= @.timestamp;
+
+Post.userKarma := SELECT totalKarma FROM @.user.karmaByTime WHERE timestamp <= @.timestamp ORDER BY timestamp DESC LIMIT 1;
+
+Post.karma := @.userKarma*time.exp-decay(@.timestamp, INTERVAL 2 DAY) +
+              (SELECT karma*time.exp-decay(timestamp, INTERVAL 1 DAY) FROM @.votes);
+
+Newsfeed := SELECT * FROM Post WHERE timestamp > now() - INTERVAL 5 DAY ORDER BY karma DESC;
+
+Comment.karma := SUM(@.votes.karma);

@@ -63,39 +63,39 @@ public class JDBCMetadataStore implements MetadataStore {
 
   public static final Map<String, String> CREATE_TABLE = Map.of(
       "H2", "CREATE TABLE IF NOT EXISTS `" + TABLE_NAME + "` (\n" +
-          "key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
-          "value BLOB NOT NULL,\n" +
-          "PRIMARY KEY (`key`)\n" +
+          "data_key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
+          "data_value BLOB NOT NULL,\n" +
+          "PRIMARY KEY (data_key)\n" +
           ");",
       "POSTGRES", "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (\n" +
-          "key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
-          "value bytea NOT NULL,\n" +
-          "PRIMARY KEY (key)\n" +
+          "data_key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
+          "data_value bytea NOT NULL,\n" +
+          "PRIMARY KEY (data_key)\n" +
           ");",
       "SQLITE", "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (\n" +
-          "key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
-          "value bytea NOT NULL,\n" +
-          "PRIMARY KEY (key)\n" +
+          "data_key VARCHAR(" + MAX_KEY_LENGTH * 2 + ") NOT NULL,\n" + //Multiply by 2 for UTF
+          "data_value bytea NOT NULL,\n" +
+          "PRIMARY KEY (data_key)\n" +
           ");"
   );
 
   public static final Map<String, String> UPSERT_QUERIES =
       ImmutableMap.of(
           "H2", "MERGE INTO `" + TABLE_NAME + "` " +
-              "KEY ( key ) VALUES ( ?, ? );",
+              "KEY ( data_key ) VALUES ( ?, ? );",
           "POSTGRES", "INSERT INTO " + TABLE_NAME + " " +
-              "( key, value ) VALUES ( ?, ? ) ON CONFLICT ( key ) DO UPDATE SET value = EXCLUDED.value;",
+              "( data_key, data_value ) VALUES ( ?, ? ) ON CONFLICT ( data_key ) DO UPDATE SET data_value = EXCLUDED.data_value;",
           "SQLITE", "INSERT INTO " + TABLE_NAME + " " +
-              "( key, value ) VALUES ( ?, ? ) ON CONFLICT ( key ) DO UPDATE SET value = EXCLUDED.value;",
-          "MYSQL", "REPLACE INTO `" + TABLE_NAME + "` " +
-              "( key, value ) VALUES ( ?, ? );"
+              "( data_key, data_value ) VALUES ( ?, ? ) ON CONFLICT ( data_key ) DO UPDATE SET data_value = EXCLUDED.data_value;",
+          "MYSQL", "REPLACE INTO " + TABLE_NAME + " " +
+              "( data_key, data_value ) VALUES ( ?, ? );"
       );
 
-  public static final String GET_VALUE = "SELECT value FROM " + TABLE_NAME + " WHERE key = ?";
+  public static final String GET_VALUE = "SELECT data_value FROM " + TABLE_NAME + " WHERE data_key = ?";
 
-  public static final String DELETE_VALUE = "DELETE FROM " + TABLE_NAME + " WHERE key = ?";
+  public static final String DELETE_VALUE = "DELETE FROM " + TABLE_NAME + " WHERE data_key = ?";
 
-  public static final String KEY_PREFIX = "SELECT key FROM " + TABLE_NAME + " WHERE key LIKE ?";
+  public static final String KEY_PREFIX = "SELECT data_key FROM " + TABLE_NAME + " WHERE data_key LIKE ?";
 
   @Override
   public void close() {

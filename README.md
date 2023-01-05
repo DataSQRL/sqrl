@@ -7,34 +7,12 @@ DataSQRL is a development environment for building data services from streaming,
 
 ## Quickstart
 
-### Step 1: Build and Install DataSQRL
-
-- Clone the DataSQRL repository (hit the green *Code* button at the top)
-- Run `mvn clean package -DskipTests` in the `sqrl` folder of the cloned repository on your hard drive (you need mvn 3.6+ and Java JDK 11+). We will refer to this folder as `[SQRL-PATH]` in the following.
-- Execute `sqrl-run/datasqrl.sh -h` which prints out the help for the `datasqrl` command. 
-
-Note: Running the DataSQRL compiler requires Java 11. You may have to set your `JAVA_HOME` in order to use Java 11 explicitly either in front of the command or in your environment. For example, on MAC you would run:
-```
-JAVA_HOME=`/usr/libexec/java_home -v11` sqrl-run/datasqrl.sh -h
-```
-
-### Step 2: Build a Data Artifact
-
-DataSQRL treats external data sources and sinks like software dependencies that can be imported and managed. To import a data source, we first create a data artifact:
-
-- Create a directory where you want to create your first DataSQRL project: `mkdir myproject; cd myproject`
-- Create a data artifact for the example Nutshop data: `[SQRL-PATH]/sqrl-run/datasqrl.sh discover [SQRL-PATH]/sqrl-examples/nutshop/data-small/ -o nutshop-small`
-
-The `discover` command analyzes a data source and produces a data artifact in the specified output folder (i.e. `nutshop-data`). Try this with your own data.
-
-### Step 3: Create and Run a SQRL Script
-
 - Create a file `myscript.sqrl` and add the following content:
 ```sql
 /* Imports the Products and Orders table from the Nutshop data
    We set an explicit timestamp on the Orders stream table */
-IMPORT nutshop-small.Products;
-IMPORT nutshop-small.Orders TIMESTAMP epoch_to_timestamp(time/1000) AS timestamp;
+IMPORT datasqrl.examples.Nutshop.Products;
+IMPORT datasqrl.examples.Nutshop.Orders TIMESTAMP epoch_to_timestamp(time/1000) AS timestamp;
 
 /* Some order items are missing the discount field - let's clean that up */
 Orders.items.discount := coalesce(discount, 0.0);
@@ -50,13 +28,13 @@ Customers.purchases := JOIN Orders ON Orders.customerid = @.id ORDER BY Orders.t
 /* and a relationship from Orders to Products */
 Orders.items.product := JOIN Products ON Products.id = @.productid;
 ```
-- Run `[SQRL-PATH]/sqrl-run/datasqrl.sh run myscript.sqrl` 
+- Run `docker run -p 8888:8888 -v $PWD:/build datasqrl/datasqrl-cmd run myscript.sqrl` 
 
-This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) and run GraphQL queries against the API. Hit `CTRL-C` to terminate the data pipeline when you are done. 
+This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, H2, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) and run GraphQL queries against the API. Hit `CTRL-C` to terminate the data pipeline when you are done. 
 
 For a full example of SQRL scripts for our Nutshop, check out the [annotated SQRL example](sqrl-examples/nutshop/customer360/nutshopv1-small.sqrl) or the [extended SQRL example](sqrl-examples/nutshop/customer360/nutshopv2-small.sqrl)
 
-### Step 4: Customize GraphQL API
+### (Optional)Step 2: Customize GraphQL API
 
 Run the `compile` command with the `-s` flag and DataSQRL will write the generated GraphQL schema for the resulting API in the file `schema.graphqls`. We can modify the GraphQL schema to adjust the API to our needs.
 
@@ -100,7 +78,7 @@ type Query {
 ```
 
 - Save the `schema.graphqls` file.
-- Run `[SQRL-PATH]/sqrl-run/datasqrl.sh run myscript.sqrl schema.graphqls`
+- Run `docker run -p 8888:8888 -v $PWD:/build datasqrl/datasqrl-cmd run myscript.sqrl schema.graphqls`
 
 This time, the compiler generates an updated data pipeline to produce our custom API. You can inspect the results by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/).
 

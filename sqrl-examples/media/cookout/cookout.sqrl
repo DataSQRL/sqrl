@@ -1,0 +1,79 @@
+IMPORT cookout-data.*;
+
+IMPORT time.*;
+IMPORT col.*;
+IMPORT math.*;
+
+-- Connect the different tables
+
+User.streams := JOIN `Stream` ON `Stream`.userid = @.id INVERSE user;
+`Stream`.reviews := JOIN Review ON Review.streamid = @.id;
+User.reviews := @.streams.reviews
+
+`Stream`.timeline := JOIN StreamEvent ON StreamEvent.streamid = @.id INVERSE `stream`;
+`Stream`._views := JOIN ViewEvent ON ViewEvent.streamid = @.id INVERSE `stream`;
+
+-- Compute stream viewing properties & statistics
+
+`Stream`._lastTimelineEvent := JOIN @.timeline t ORDER BY t.time DESC LIMIT 1;
+`Stream`.isLive := @._lastTimelineEvent.type = 'start'
+                AND @._lastTimelineEvent.time > now() - INTERVAL 2 HOUR;
+
+`Stream`.viewers := SELECT DISTINCT userid FROM @._views;
+`Stream`.viewers._views := JOIN @.parent._views v ON v.userid = @.userid;
+`Stream`.viewers._lastview := JOIN @._views v ORDER BY v.time DESC LIMIT 1;
+`Stream`.viewers.isWatching := @._lastView.type = 'watch'
+                            AND @._lastView.time > now() - INTERVAL 1 MINUTE
+`Stream`.viewers.duration := SUM(_views.duration)
+
+`Stream`.live_stats := SELECT COUNT(*) AS total_viewers,
+                            SUM(iff(isWatching,1,0)) AS current_viewers,
+                            SUM(duration) AS total_duration
+                     FROM @.viewers;
+
+`Stream`.viewers._view_bymin := SELECT time.roundToMin(time) AS min, SUM(duration) AS duration
+                              FROM @._views
+                              GROUP BY min ORDER BY min DESC;
+`Stream`.stats_by_minute := SELECT min, COUNT(*) AS viewers, SUM(duration) AS _totalduration,
+                                 _totalduration/60*viewers AS view_percentage
+                          FROM @.viewers._view_bymin
+                          GROUP BY min ORDER BY min DESC;
+
+-- Compute review statistics
+
+`Stream`.review_stats := SELECT COUNT(*) AS number, AVG(stars) AS avg_stars
+                        FROM @.reviews LIMIT 1;
+User.review_stats := SELECT COUNT(*) AS number, AVG(stars) AS avg_stars
+                        FROM @.reviews LIMIT 1;
+
+-- Recommendation Engine
+
+User.viewed := JOIN `Stream`.viewers v ON v.userid = @.id INVERSE user;
+`Stream`.viewers._decaying_duration := duration * time.exp-decay(parent.scheduled_start, now(), INTERVAL 3 MONTH);
+User._total_decaying_duration := SELECT SUM(_decaying_duration) FROM @.viewed;
+
+`Stream`.viewers._weighted_duration := _decaying_duration / @.user._total_decaying_duration;
+
+User._tag_views := SELECT t.value AS tag, SUM(v._weighted_duration/count(v.parent.tags)) AS duration_score
+                        FROM @.viewed v CROSS JOIN v.parent.tags t
+                        GROUP BY tag;
+
+User._streamer_views := SELECT parent.userid AS streamerid, SUM(_weighted_duration) AS duration_score
+                        FROM @.viewed
+                        GROUP BY streamerid ORDER BY duration_score DESC LIMIT 100;
+
+
+User.stream_recommend := SELECT s.id AS streamid,
+                                sv.duration_score AS _streamer_score
+                         FROM @._streamer_views sv JOIN `Stream` s ON sv.streamerid = s.userid AND
+                                                        (s.scheduled_start > now() OR s.isLive);
+
+User.stream_recommend.`stream` := JOIN `Stream` ON `Stream`.id = @.streamid;
+User.stream_recommend._tag_score := (SELECT 1 - math.product(1-duration_score)
+                                                FROM @.parent._tag_views WHERE tag IN @.`stream`.tags LIMIT 1)
+                                     * (1-math.sigmoid(0.3*col.size(@.`stream`.tags)-5));
+User.stream_recommend.score := _streamer_score * _tag_score;
+
+UserRecommendationIsLive := STREAM ON ADD AS
+SELECT parent.id AS userid, streamid FROM User.stream_recommend
+WHERE `stream`.isLive = TRUE;

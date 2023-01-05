@@ -4,7 +4,6 @@
 package com.datasqrl.plan.calcite;
 
 import org.apache.calcite.plan.RelTraitSet;
-import org.apache.calcite.prepare.PlannerImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -17,7 +16,7 @@ import org.apache.calcite.tools.RelBuilder;
  * Convert Transpiled sqrl to SqlNode Validate SqlNode Convert to rel Execute planner rules via
  * 'transform' method (Planner rules ordered and indexed in Rules class)
  */
-public class Planner extends PlannerImpl {
+public class Planner extends SqrlPlannerImpl {
 
   public Planner(FrameworkConfig config) {
     super(config);

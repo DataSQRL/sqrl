@@ -1,0 +1,28 @@
+IMPORT tracking.*;
+
+IMPORT time.*;
+
+WarehouseInventory := SELECT location.city + ', ' + location.state AS location,
+                             trackingno, shipment.weight
+                      FROM Shipments.last_event
+                      WHERE type = "TRANSIT_CHECKIN";
+
+Warehouse := SELECT location, COUNT(*) AS num_shipments, SUM(weight) AS total_weight
+             FROM WarehouseInventory
+             GROUP BY location;
+
+HighInventory := STREAM ON ADD AS
+SELECT * FROM Warehouse WHERE num_shipments > 1000 OR total_weight > 25000;
+
+Shipment.first_delivery_time := SELECT timestamp FROM @.events
+                           WHERE (type="DELIVERED" OR type="DELIVERY_ATTEMPT")
+                           ORDER BY timestamp ASC LIMIT 1;
+
+DelayedShipments := SELECT * FROM Shipment
+                    WHERE is_delivered = TRUE AND first_delivery_time > expectedArrival;
+
+DelayedShipmentsAnalysis := SELECT time.roundToDay(createdOn) AS startday,
+                              src.city + ', ' + src.state AS startlocation,
+                              COUNT(*) num_shipments, AVG(first_delivery_time-expectedArrival) AS avgdelay
+                            FROM DelayedShipments
+                            GROUP BY starttime, startlocation ORDER BY starttime DESC;

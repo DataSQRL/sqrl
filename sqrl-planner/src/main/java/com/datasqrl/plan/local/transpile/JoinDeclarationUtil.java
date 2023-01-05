@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -18,6 +19,9 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.SqrlJoinPath;
+import org.apache.calcite.sql.SqrlJoinSetOperation;
 import org.apache.calcite.sql.validate.SqlValidator;
 
 @AllArgsConstructor
@@ -26,7 +30,15 @@ public class JoinDeclarationUtil {
   RexBuilder rexBuilder;
 
   public SqlNode getRightDeepTable(SqlNode node) {
-    if (node instanceof SqlSelect) {
+    if (node instanceof SqrlJoinDeclarationSpec) {
+      return getRightDeepTable(((SqrlJoinDeclarationSpec) node).getRelation());
+    } else if (node instanceof SqlBasicCall && ((SqlBasicCall)node).getKind() == SqlKind.AS) {
+      return ((SqlBasicCall) node).getOperandList().get(0);
+    } else if (node instanceof SqrlJoinPath) {
+      return getRightDeepTable(((SqrlJoinPath) node).relations.get(((SqrlJoinPath) node).getRelations().size()-1));
+    } else if (node instanceof SqrlJoinSetOperation) {
+      throw new RuntimeException("not yet implemented");
+    } else if (node instanceof SqlSelect) {
       return getRightDeepTable(((SqlSelect) node).getFrom());
     } else if (node instanceof SqlOrderBy) {
       return getRightDeepTable(((SqlOrderBy) node).query);
@@ -47,11 +59,7 @@ public class JoinDeclarationUtil {
 
   //TOdo remove baked in assumptions
   public SQRLTable getToTable(SqlValidator validator, SqlNode sqlNode) {
-
     SqlNode tRight = getRightDeepTable(sqlNode);
-    if (tRight.getKind() == SqlKind.AS) {
-      tRight = ((SqlCall) tRight).getOperandList().get(0);
-    }
     SqlIdentifier identifier = (SqlIdentifier) tRight;
     return validator.getCatalogReader().getTable(identifier.names)
         .unwrap(VirtualRelationalTable.class)

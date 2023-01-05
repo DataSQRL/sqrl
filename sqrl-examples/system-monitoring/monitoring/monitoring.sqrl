@@ -1,0 +1,60 @@
+IMPORT monitoring-data.Metrics;
+IMPORT monitoring-data.Config;
+
+IMPORT time.roundToMin;
+IMPORT math;
+
+Cluster := SELECT DISTINCT clusterid FROM Config;
+Cluster.configs := JOIN Config ON Config.clusterid = @.clusterid ORDER BY timestamp DESC INVERSE cluster;
+Cluster.nodes := SELECT DISTINCT nodeid FROM @.configs;
+Cluster.nodes.configs := JOIN @.parent.configs c ON c.nodeid = @.nodeid ORDER BY timestamp DESC INVERSE node;
+Cluster.nodes.last_config := JOIN @.configs ORDER BY timestamp DESC LIMIT 1;
+-- A node is active in the cluster if it has not be assigned to a different cluster and has reported in the last 4 hours
+Cluster.nodes.isActive := (SELECT timestamp FROM Config WHERE nodeid = @.nodeid LIMIT 1) = @.last_config.timestamp
+                            AND @.last_config.timestamp > now() - INTERVAL 4 HOUR;
+Cluster.num_db_versions := SELECT COUNT(DISTINCT db_version) FROM @.nodes.last_config;
+
+
+Metrics.config := JOIN Config ON Config.nodeid = @.nodeid AND Config.timestamp <= @.timestamp
+                    ORDER BY Config.timestamp DESC LIMIT 1 INVERSE metrics;
+Cluster.nodes.metrics := JOIN @.configs.metrics m ORDER BY m.timestamp DESC;
+
+Metrics.cpu_load_percent := @.cpu_load / @.config.cores;
+Metrics.memory_load_percent := @.memory_load / @.config.memory_mb;
+Metrics.storage_load_percent := @.storage_load / @.config.storage_mb;
+Metrics.high_load := @.cpu_load_percent > 0.8 OR @.memory_load_percent > 0.9 OR @.storage_load_percent > 0.75
+
+Cluster.nodes.metrics_agg := SELECT roundToMin(timestamp) as time, AVG(cpu_load) as cpu_load,
+                                    AVG(memory_load) as memory_load, MAX(storage_load) as storage_load,
+                                    SUM(tx_throughput) as tx_throughput, SUM(tx_dropped) as tx_dropped,
+                                    AVG(tx_latency.p99_ms) as avg_p99, SUM(iff(high_load, 1, 0)) as num_high_load, COUNT(*) as num_metrics
+                             FROM @.metrics
+                             GROUP BY time ORDER BY time desc;
+Cluster.nodes.metrics_agg.high_load_percent := @.num_high_load/@.num_metrics;
+Cluster.nodes.metrics_agg.tx_dropped_percent := @.tx_dropped / MAX(@.tx_throughput, 1);
+
+Cluster.nodes.high_load_percent_lastHour := SELECT SUM(iff(high_load,1,0)) / COUNT(*) FROM @.metrics
+                                        WHERE time > now() - INTERVAL 1 HOUR LIMIT 1;
+Cluster.nodes.tx_dropped_percent_lastHour := SELECT SUM(tx_dropped) / MAX(SUM(tx_throughput),1) FROM @.metrics
+                                        WHERE time > now() - INTERVAL 1 HOUR LIMIT 1;
+Cluster.nodes.high_p99_percent_lastHour := SELECT SUM(iff(tx_latency.p99_ms>1000,1,0)) / COUNT(*) FROM @.metrics
+                                        WHERE time > now() - INTERVAL 1 HOUR LIMIT 1;
+
+NodeCapacityAlert := STREAM ON ADD AS
+SELECT uuid() as id, now() as timestamp, parent.clusterid as clusterid, nodeid, high_load_percent_lastHour,
+        tx_dropped_percent_lastHour, high_p99_percent_lastHour, metrics_agg
+FROM Cluster.nodes WHERE high_load_percent_lastHour > 0.05;
+
+NodePerformanceAlert := STREAM ON ADD AS
+SELECT uuid() as id, now() as timestamp, parent.clusterid as clusterid, nodeid, high_load_percent_lastHour,
+        tx_dropped_percent_lastHour, high_p99_percent_lastHour, metrics_agg
+FROM Cluster.nodes WHERE tx_dropped_percent_lastHour > 0.005 OR high_p99_percent_lastHour > 0.01;
+
+Cluster.nodes.tx_throughput_lastHour := SELECT SUM(tx_throughput) FROM @.metrics
+                                        WHERE time > now() - INTERVAL 1 HOUR LIMIT 1;
+Cluster.num_nodes := COUNT(@.nodes);
+Cluster.throughput_deviation := math.stdDeviation(@.nodes.tx_throughput_lastHour) / AVG(@.nodes.tx_throughput_lastHour)
+
+ClusterImbalanceAlert := STREAM ON ADD AS
+SELECT uuid() as id, now() as timestamp, clusterid, num_nodes, throughput_deviation, nodes
+FROM Cluster WHERE num_nodes > 2 AND throughput_deviation > 0.1;

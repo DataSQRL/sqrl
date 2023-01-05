@@ -1,18 +1,16 @@
 Orders.entries.x := SELECT @.parent.id, @.discount FROM @ AS x WHERE @.parent.id = 1;
 
 LogicalProject(__pk_0=[$0], __pk_1=[$1], id=[$12], discount=[$5])
-  LogicalProject(id=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], id0=[$6], _idx0=[$7], productid0=[$8], quantity0=[$9], unit_price0=[$10], discount0=[$11], id1=[CAST($12):BIGINT], _uuid=[CAST($13):CHAR(36) CHARACTER SET "UTF-16LE"], _ingest_time=[CAST($14):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], customerid=[CAST($15):BIGINT], time=[CAST($16):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
-    LogicalJoin(condition=[=($0, $12)], joinType=[inner])
+  LogicalFilter(condition=[=($12, 1)])
+    LogicalJoin(condition=[=($0, $12)], joinType=[left])
       LogicalJoin(condition=[true], joinType=[default])
         LogicalTableScan(table=[[entries$13]])
         LogicalTableScan(table=[[entries$13]])
-      LogicalFilter(condition=[=($0, 1)])
-        LogicalTableScan(table=[[orders$12]])
+      LogicalTableScan(table=[[orders$12]])
 
 
-SELECT "entries$13"."id" AS "__pk_0", "entries$13"."_idx" AS "__pk_1", CAST("t"."id" AS BIGINT) AS "id", "entries$13"."discount"
+SELECT "entries$13"."id" AS "__pk_0", "entries$13"."_idx" AS "__pk_1", "orders$12"."id", "entries$13"."discount"
 FROM "entries$13"
  DEFAULT JOIN "entries$13" AS "entries$130" ON TRUE
- INNER JOIN (SELECT *
-  FROM "orders$12"
-  WHERE "id" = 1) AS "t" ON "entries$13"."id" = "t"."id"
+ LEFT JOIN "orders$12" ON "entries$13"."id" = "orders$12"."id"
+WHERE "orders$12"."id" = 1

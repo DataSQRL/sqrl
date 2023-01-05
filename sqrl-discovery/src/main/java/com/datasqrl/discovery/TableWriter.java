@@ -7,6 +7,7 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.DataSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.schema.input.external.SchemaDefinition;
 import com.datasqrl.schema.input.external.SchemaExport;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,6 +40,9 @@ public class TableWriter {
           table.getName().getCanonical() + DataSource.TABLE_FILE_SUFFIX);
       jsonMapper.writeValue(tableConfigFile.toFile(), table.getConfiguration());
     }
+    if (tables.isEmpty()) {
+      throw new RuntimeException("Discovery found no tables.");
+    }
 
     Name datasetName = tables.get(0).getPath().parent().getLast();
     FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
@@ -46,7 +50,7 @@ public class TableWriter {
     //Write out combined schema file
     SchemaExport export = new SchemaExport();
     SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
-    Path schemaFile = destinationDir.resolve(DataSource.PACKAGE_SCHEMA_FILE);
+    Path schemaFile = destinationDir.resolve(FlexibleTableSchemaFactory.PACKAGE_SCHEMA_FILE);
     yamlMapper.writeValue(schemaFile.toFile(), outputSchema);
   }
 

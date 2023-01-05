@@ -13,3 +13,10 @@ a maven subdirectory.
 ## Helpful commands while developing
 
 `mvn -Dmaven.test.skip compile jar:test-jar install`
+
+### Maven
+-DskipTests=true and not -Dmaven.test.skip=true
+
+skipTests will build the test jars which is required for downstream module pom resolution
+
+Add the -T parameter for more threads. Modules can compile in parallel.

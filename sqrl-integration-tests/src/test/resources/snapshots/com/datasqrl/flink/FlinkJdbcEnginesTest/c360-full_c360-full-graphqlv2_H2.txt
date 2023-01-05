@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS "product$16" ("productid" BIGINT NOT NULL,"_uuid" CHA
   "data" : {
     "Customer" : [ {
       "email" : "john.mekker@gmail.com",
-      "name" : "John B. Mekker"
+      "name" : "John Mekker"
     } ]
   }
 }

@@ -1,0 +1,40 @@
+IMPORT adr-data.*;
+
+IMPORT FUNCTON vec;
+
+Patient.prescriptions := JOIN Prescriptions ON @.id = Prescriptions.patient_id INVERSE patient;
+
+Patient.activeIngredients := SELECT p.order_no as prescription_no, di.ingredient as ingredient,
+                                    p.dosage*di.fraction as dosage
+                             FROM @.prescriptions p JOIN DrugIngredients di on p.drug_id = di.drug_ref
+                             WHERE p.`end` > now() - INTERVAL 14 DAY and p.start < now + INTERVAL 2 DAY;
+
+Patient.activeIngredients.prescription := JOIN Prescriptions ON Prescriptions.order_no = @.prescription_no;
+
+Patient.history := JOIN MedicalHistory on @.ssn=MedicalHistory.patient_ssn;
+
+Patient.conditions := (SELECT code, date, `diagnosis` AS source, identifier AS reference FROM @.diagnosis)
+                      UNION ALL
+                      (SELECT code, occured_on as date, `history` as source, record_id as reference FROM @.history);
+
+Patient.adrs := SELECT DISTINCT reference FROM ADRTemplate;
+Patient.adrs.template := JOIN ADRTemplate ON ADRTemplate.reference = @.reference;
+
+Patient.adrs.active_ingredients := SELECT ai.ingredient as ingredient, SUM(dosage) AS total_dosage, MIN(ti.min_dosage) AS min_dosage,
+                                          (total_dosage >= min_dosage) AS exceeds_dosage
+                                   FROM @.parent.activeIngredients ai JOIN @.template.ingredients ti ON ai.ingredient = ti.ingredient
+                                   GROUP BY ingredient;
+Patient.adrs.active_ingredients.source := JOIN @.parent.parent.activeIngredients ai ON ai.ingredient = @.ingredient;
+Patient.adrs.all_ingredients := (SELECT COUNT(*) FROM @.active_ingredients WHERE exceeds_dosage = TRUE) = COUNT(template.ingredients);
+
+Patient.adrs.active_preconditions := SELECT pc.code AS diagnosis, COUNT(*) as num
+                                   FROM @.parent.conditions pc JOIN @.template.preconditions tc ON pc.code = tc.diagnosis
+                                   WHERE tc.max_duration IS NULL OR (pc.date >= now()-tc.max_duration)
+                                   GROUP BY diagnosis;
+Patient.adrs.active_preconditions.source := JOIN @.parent.conditions pc ON pc.code = @.diagnosis;
+Patient.adrs.all_preconditions := COUNT(active_preconditions) = COUNT(template.ingredients);
+
+Patient.adrs.is_active := all_ingredients AND all_preconditions;
+
+Adr_alert := STREAM ON ADD AS
+SELECT uid() as id, now() as timestamp, parent.id AS patient_id, reference FROM Patient.adrs;
