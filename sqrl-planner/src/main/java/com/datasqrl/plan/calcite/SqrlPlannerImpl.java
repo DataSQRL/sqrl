@@ -14,11 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.calcite.prepare;
+package com.datasqrl.plan.calcite;
 
 import com.datasqrl.SqrlCalciteCatalogReader;
-import com.datasqrl.plan.calcite.PlannerFactory;
-import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.rules.EnumerableNestedLoopJoinRule;
 import com.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.calcite.rules.SqrlRelMetadataQuery;
@@ -32,6 +30,7 @@ import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.plan.*;
 import org.apache.calcite.plan.RelOptTable.ViewExpander;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
+import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -52,6 +51,7 @@ import org.apache.calcite.sql2rel.RelDecorrelator;
 import org.apache.calcite.sql2rel.SqlRexConvertletTable;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.tools.*;
+import org.apache.calcite.tools.Planner;
 import org.apache.calcite.util.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
@@ -76,7 +76,7 @@ import static java.util.Objects.requireNonNull;
  * Implementation of {@link org.apache.calcite.tools.Planner}.
  */
 @Getter
-public class PlannerImpl implements Planner, ViewExpander {
+public class SqrlPlannerImpl implements Planner, ViewExpander {
 
   protected final SqlOperatorTable operatorTable;
   protected final ImmutableList<Program> programs;
@@ -118,7 +118,7 @@ public class PlannerImpl implements Planner, ViewExpander {
    * {@link org.apache.calcite.tools.Frameworks#getPlanner} instead.
    */
   @SuppressWarnings("method.invocation.invalid")
-  public PlannerImpl(FrameworkConfig config) {
+  public SqrlPlannerImpl(FrameworkConfig config) {
     this.costFactory = config.getCostFactory();
     this.defaultSchema = config.getDefaultSchema();
     this.operatorTable = config.getOperatorTable();
@@ -291,11 +291,7 @@ public class PlannerImpl implements Planner, ViewExpander {
         new SqlToRelConverter(this, validator,
             createCatalogReader(), cluster, convertletTable, config);
     RelRoot root;
-    try {
-      root = sqlToRelConverter.convertQuery(validatedSqlNode, false, true);
-    } catch (AssertionError e) {
-      throw new RuntimeException(e);
-    }
+    root = sqlToRelConverter.convertQuery(validatedSqlNode, false, true);
 //    root = root.withRel(sqlToRelConverter.flattenTypes(root.rel, true));
     final RelBuilder relBuilder =
         config.getRelBuilderFactory().create(cluster, null);
@@ -308,7 +304,7 @@ public class PlannerImpl implements Planner, ViewExpander {
   // CHECKSTYLE: IGNORE 2
 
   /**
-   * @deprecated Now {@link PlannerImpl} implements {@link ViewExpander} directly.
+   * @deprecated Now {@link SqrlPlannerImpl} implements {@link ViewExpander} directly.
    */
   @Deprecated // to be removed before 2.0
   public class ViewExpanderImpl implements ViewExpander {
@@ -319,7 +315,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     @Override
     public RelRoot expandView(RelDataType rowType, String queryString,
         List<String> schemaPath, @Nullable List<String> viewPath) {
-      return PlannerImpl.this.expandView(rowType, queryString, schemaPath,
+      return SqrlPlannerImpl.this.expandView(rowType, queryString, schemaPath,
           viewPath);
     }
   }
@@ -422,20 +418,20 @@ public class PlannerImpl implements Planner, ViewExpander {
   protected enum State {
     STATE_0_CLOSED {
       @Override
-      void from(PlannerImpl planner) {
+      void from(SqrlPlannerImpl planner) {
         planner.close();
       }
     },
     STATE_1_RESET {
       @Override
-      void from(PlannerImpl planner) {
+      void from(SqrlPlannerImpl planner) {
         planner.ensure(STATE_0_CLOSED);
         planner.reset();
       }
     },
     STATE_2_READY {
       @Override
-      void from(PlannerImpl planner) {
+      void from(SqrlPlannerImpl planner) {
         STATE_1_RESET.from(planner);
         planner.ready();
       }
@@ -447,7 +443,7 @@ public class PlannerImpl implements Planner, ViewExpander {
     /**
      * Moves planner's state to this state. This must be a higher state.
      */
-    void from(PlannerImpl planner) {
+    void from(SqrlPlannerImpl planner) {
       throw new IllegalArgumentException("cannot move from " + planner.state
           + " to " + this);
     }

@@ -355,11 +355,6 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @Override
   public RelNode visit(TableFunctionScan scan) {
     throw new UnsupportedOperationException("Not yet supported");
-//    List<RelNode> inputs = scan.getInputs().stream()
-//        .map(this::visit)
-//        .collect(Collectors.toList());
-//    return new LogicalTableFunctionScan(cluster, defaultTrait, inputs, scan.getCall(),
-//        scan.getElementType(), scan.getRowType(), scan.getColumnMappings());
   }
 
   @Override
@@ -374,8 +369,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(LogicalSort sort) {
-    return sort.getInput().accept(this);
-//    throw new UnsupportedOperationException("Sorts are not supported during materialization");
+    throw new UnsupportedOperationException("Sorts are not supported during materialization");
   }
 
   /*
@@ -468,42 +462,6 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
             (SqlQuantifyOperator)subQuery.op);
       }
 
-      throw new RuntimeException("not supported");
-    }
-
-    @Override
-    protected RexNode[] visitArray(RexNode[] exprs, boolean[] update) {
-      return super.visitArray(exprs, update);
-    }
-
-    @Override
-    protected List<RexNode> visitList(List<? extends RexNode> exprs, boolean[] update) {
-      return super.visitList(exprs, update);
-    }
-
-    @Override
-    protected List<RexFieldCollation> visitFieldCollations(List<RexFieldCollation> collations,
-        boolean[] update) {
-      return super.visitFieldCollations(collations, update);
-    }
-
-    @Override
-    public RexNode visitFieldAccess(RexFieldAccess fieldAccess) {
-      return super.visitFieldAccess(fieldAccess);
-    }
-
-    @Override
-    public RexNode visitLocalRef(RexLocalRef localRef) {
-      throw new RuntimeException("not supported");
-    }
-
-    @Override
-    public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
-      throw new RuntimeException("not supported");
-    }
-
-    @Override
-    public RexNode visitRangeRef(RexRangeRef rangeRef) {
       throw new RuntimeException("not supported");
     }
   }

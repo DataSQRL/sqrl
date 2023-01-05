@@ -18,24 +18,24 @@ HourTraffic := SELECT ROUND_TO_HOUR(ts) AS time, srcIP, srcPort, destIP, destPor
                  GROUP BY ROUND_TO_HOUR(ts), srcIP, srcPort, destIP, destPort
                  ORDER BY ROUND_TO_HOUR(ts) DESC;
 
-Instance :=  --SELECT DISTINCT srcIP AS ip FROM Traffic
-             --UNION DISTINCT
+Instance :=  SELECT DISTINCT srcIP AS ip FROM Traffic
+             UNION DISTINCT
              SELECT DISTINCT destIP AS ip FROM Traffic;
 
-Instance.minuteTraffic := --SELECT destIP AS otherIP, srcPort AS port, destPort AS otherPort,
-                          --      time, total_len, num_packets, 'out' AS direction
-                          --FROM MinuteTraffic WHERE srcIP = @.ip
-                          --UNION ALL
+Instance.minuteTraffic := SELECT destIP AS otherIP, srcPort AS port, destPort AS otherPort,
+                                time, total_len, num_packets, 'out' AS direction
+                          FROM MinuteTraffic WHERE srcIP = @.ip
+                          UNION ALL
                           SELECT srcIP AS otherIP, srcPort AS otherPort, destPort AS port,
                                 time, total_len, num_packets, 'in' AS direction
                           FROM MinuteTraffic WHERE destIP = @.ip;
 Instance.minuteTraffic.otherInstance := JOIN Instance ON Instance.ip = @.otherIP;
 
 
-Instance.hourTraffic := --SELECT destIP AS otherIP, srcPort AS port, destPort AS otherPort,
-                         --     time, total_len, num_packets, 'out' AS direction
-                         -- FROM HourTraffic WHERE srcIP = @.ip
-                         -- UNION ALL
+Instance.hourTraffic := SELECT destIP AS otherIP, srcPort AS port, destPort AS otherPort,
+                              time, total_len, num_packets, 'out' AS direction
+                          FROM HourTraffic WHERE srcIP = @.ip
+                          UNION ALL
                           SELECT srcIP AS otherIP, srcPort AS otherPort, destPort AS port,
                                 time, total_len, num_packets, 'in' AS direction
                           FROM HourTraffic WHERE destIP = @.ip;
@@ -47,7 +47,7 @@ SystemMembership.valid_to := SELECT m._ingest_time
                               WHERE m._ingest_time > @._ingest_time
                               ORDER BY m._ingest_time ASC
                               LIMIT 1;
---SystemMembership.valid_to := @.valid_to._ingest_time ? timefct.MAX_TIME();
+SystemMembership.valid_to := @.valid_to._ingest_time ? timefct.MAX_TIME();
 
 System.membersOverTime := JOIN SystemMembership s ON s.systemid = @.systemid;
 SystemMembership.instance := JOIN Instance ON Instance.ip = @.ip;

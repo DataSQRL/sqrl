@@ -1,8 +1,6 @@
 IMPORT bitcoin-data.Transactions TIMESTAMP STRING_TO_TIMESTAMP(timestamp, 'MM/dd/yyyy HH:mm:ss') AS ts;
 
---TODO needs distinct
---Address := SELECT DISTINCT address FROM Transactions.outputs;
-Address := SELECT address FROM Transactions.outputs;
+Address := SELECT DISTINCT address FROM Transactions.outputs;
 
 Transactions.outputs.to := JOIN Address a ON @.address = a.address ORDER BY @.parent.timestamp;
 Address.received := JOIN Transactions.outputs t ON t.address = @.address;
@@ -15,11 +13,11 @@ Transactions.inputs.`from` := JOIN @.spent_output o
                               ORDER BY @.parent.timestamp LIMIT 1;
 Address.sent := JOIN Transactions.inputs.spent_output o ON @.address = o.address;
 
---Transactions.inputs.value := @.spent_output.value;
+Transactions.inputs.value := @.spent_output.value;
 
 
---Transactions.total_output := SUM(outputs.value);
---Transactions.total_value := total_output + fee;
+Transactions.total_output := SUM(outputs.value);
+Transactions.total_value := total_output + fee;
 
 /* A transaction where an output address is identical to a sent address is a self-pay
    that is commonly used to split a transaction. We want to ignore those for tracing.
@@ -31,10 +29,9 @@ Transactions.follow-transactions := JOIN @.outputs o ON (o.self_pay = FALSE)
                                                     AND (tx.ts < @.ts + INTERVAL 14 DAY);
                                     --ORDER BY tx.total_output;
 
-Address._flow := SELECT parent.ts as timestamp, value AS received, value+1 AS sent FROM @.received;
---Address._flow := SELECT parent.timestamp as timestamp, value as received FROM @.received;
-                 --UNION ALL
-                 --SELECT parent.timestamp as timestamp, value as sent FROM @.sent
+Address._flow := SELECT parent.timestamp as timestamp, value as received FROM @.received;
+                 UNION ALL
+                 SELECT parent.timestamp as timestamp, value as sent FROM @.sent
 
 Address.balance := SELECT SUM(f.received)-SUM(f.sent) FROM @._flow f;
 

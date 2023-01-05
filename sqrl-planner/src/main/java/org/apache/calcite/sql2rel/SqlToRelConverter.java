@@ -461,14 +461,14 @@ public class SqlToRelConverter {
 
     if (!RelOptUtil.equal("validated row type", validatedRowType,
         "converted row type", convertedRowType, Litmus.IGNORE)) {
-//      throw new AssertionError("Conversion to relational algebra failed to "
-//          + "preserve datatypes:\n"
-//          + "validated type:\n"
-//          + validatedRowType.getFullTypeString()
-//          + "\nconverted type:\n"
-//          + convertedRowType.getFullTypeString()
-//          + "\nrel:\n"
-//          + RelOptUtil.toString(result));
+      throw new AssertionError("Conversion to relational algebra failed to "
+          + "preserve datatypes:\n"
+          + "validated type:\n"
+          + validatedRowType.getFullTypeString()
+          + "\nconverted type:\n"
+          + convertedRowType.getFullTypeString()
+          + "\nrel:\n"
+          + RelOptUtil.toString(result));
     }
   }
 

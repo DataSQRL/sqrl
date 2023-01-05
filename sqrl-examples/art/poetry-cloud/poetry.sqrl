@@ -30,10 +30,8 @@ Post.num_connections := SELECT COUNT(*) AS cnt FROM @.connections;
 -- We count connections double for activity levels
 Post._star_count := SELECT COUNT(*) AS cnt FROM @.stars WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1;
 Post._connection_count := SELECT COUNT(*) AS cnt FROM @.connections WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1;
--- Todo: Complex columns
---Post.recent_activity := _star_count.cnt + 2*_connection_count.cnt;
---Post.recent_activity := (SELECT COUNT(*) AS cnt FROM @.stars WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1)
---                        + 2*(SELECT COUNT(*) FROM @.connections WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1)
+Post.recent_activity := (SELECT COUNT(*) AS cnt FROM @.stars WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1)
+                        + 2*(SELECT COUNT(*) FROM @.connections WHERE timestamp > now() - INTERVAL 24 HOUR LIMIT 1)
 
 --TODO: Set instead of list for collect
 Post.agg_connections := SELECT CASE WHEN c.frompostid=@.id THEN c.topostid ELSE c.frompostid END AS otherid,

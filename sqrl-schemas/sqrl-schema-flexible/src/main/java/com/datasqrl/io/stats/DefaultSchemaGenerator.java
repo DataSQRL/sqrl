@@ -105,9 +105,6 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
          This provides a defensive approach (i.e. we don't force type combination on detected types) with user friendliness
          in cases where the detected type is obvious.
        */
-      if ((!statTypes.isEmpty() && !isComplete) != true) {
-        return List.of();
-      }
       Preconditions.checkArgument(!statTypes.isEmpty() && !isComplete);
       FlexibleDatasetSchema.FieldType result = null;
       List<Constraint> constraints =

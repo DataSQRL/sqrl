@@ -13,8 +13,7 @@ import lombok.Getter;
 
 public class ErrorEmitter implements Serializable {
 
-  static boolean loadedHandlers = false;
-  protected static final Map<Class, ErrorHandler> handlers = new HashMap<>();
+  protected static final Map<Class, ErrorHandler> handlers = loadHandlers();
 
   @Getter
   private final SourceMap sourceMap;
@@ -25,17 +24,15 @@ public class ErrorEmitter implements Serializable {
   public ErrorEmitter(SourceMap sourceMap, ErrorLocation baseLocation) {
     this.sourceMap = sourceMap;
     this.baseLocation = baseLocation;
-    registerHandlers();
   }
 
-  private static void registerHandlers() {
-    if (!loadedHandlers) {
-      loadedHandlers=true;
-      ServiceLoader<ErrorHandler> serviceLoader = ServiceLoader.load(ErrorHandler.class);
-      for (ErrorHandler handler : serviceLoader) {
-        handlers.put(handler.getHandleClass(), handler);
-      }
+  private static Map<Class, ErrorHandler> loadHandlers() {
+    Map<Class, ErrorHandler> handlers = new HashMap<>();
+    ServiceLoader<ErrorHandler> serviceLoader = ServiceLoader.load(ErrorHandler.class);
+    for (ErrorHandler handler : serviceLoader) {
+      handlers.put(handler.getHandleClass(), handler);
     }
+    return handlers;
   }
 
   public ErrorEmitter resolve(Name location) {

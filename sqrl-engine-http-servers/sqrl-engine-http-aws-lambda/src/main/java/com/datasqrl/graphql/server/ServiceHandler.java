@@ -32,7 +32,6 @@ public class ServiceHandler implements
         Map.class);
     RootGraphqlModel model = mapper.readValue(new File(MODEL_JSON), RootGraphqlModel.class);
 
-    Class.forName("org.h2.Driver");
     Connection connection = DriverManager.getConnection(
         (String)jdbcConfig.get("dbURL"), (String)jdbcConfig.get("user"), (String) jdbcConfig.get("password"));
 
@@ -47,9 +46,8 @@ public class ServiceHandler implements
   public APIGatewayV2HTTPResponse handleRequest(APIGatewayV2HTTPEvent apiGatewayV2HTTPEvent,
       Context context) {
 
-    ObjectMapper mapper1 = new ObjectMapper();
     Map<String, Object> query =
-        mapper1.readValue(apiGatewayV2HTTPEvent.getBody(), Map.class);
+        mapper.readValue(apiGatewayV2HTTPEvent.getBody(), Map.class);
     ExecutionInput.Builder input = ExecutionInput.newExecutionInput()
         .query((String)query.get("query"));
     if (query.get("variables") != null) {

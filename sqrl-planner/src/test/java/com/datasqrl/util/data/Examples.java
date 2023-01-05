@@ -10,7 +10,9 @@ public class Examples {
   static final Path base = Path.of("..", "sqrl-examples");
   public static List<TestScript> scriptList = ImmutableList.<TestScript>builder()
       .add(TestScript.of(base.resolve("crypto/bitcoin-tracer"),
-          base.resolve("crypto/bitcoin-tracer/tracer.sqrl")).build())
+              base.resolve("crypto/bitcoin-tracer/tracer.sqrl"))
+          .resultTables(List.of("transactions"))
+          .build())
       .add(TestScript.of(base.resolve("gaming/weworkout"),
           base.resolve("gaming/weworkout/weworkout.sqrl")).build())
       .add(TestScript.of(base.resolve("transportation/operations"),
@@ -28,7 +30,9 @@ public class Examples {
       .add(TestScript.of(base.resolve("financial/fraud-detection"),
           base.resolve("financial/fraud-detection/fraud.sqrl")).build())
       .add(TestScript.of(base.resolve("art/poetry-cloud"),
-          base.resolve("art/poetry-cloud/poetry.sqrl")).build())
+              base.resolve("art/poetry-cloud/poetry.sqrl"))
+          .resultTables(List.of("star", "post", "user", "connect", "newconnections"))
+          .build())
       .add(TestScript.of(base.resolve("location/visitor-guide"),
           base.resolve("location/visitor-guide/guide.sqrl")).build())
       .add(TestScript.of(base.resolve("retail"),

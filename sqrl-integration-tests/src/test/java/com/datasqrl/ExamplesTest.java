@@ -12,11 +12,10 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
   @ParameterizedTest
   @ArgumentsSource(TestScript.ExampleScriptsProvider.class)
   public void test(TestScript script) {
-    //1. Run discovery
-    //2.
     initialize(IntegrationTestSettings.getFlinkWithDB(DatabaseEngine.H2),
         script.getRootPackageDirectory());
-    validateTables(script.getScript(), "connect");
+    validateTables(script.getScript(), script.getResultTables()
+        .toArray(new String[0]));
 
     System.out.println(script);
   }

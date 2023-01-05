@@ -70,6 +70,7 @@ public class FlexibleSchemaRowMapper<R> implements RowMapper<R>, Serializable {
       } else {
         int idx = 0;
         List<Map<Name, Object>> nestedData = (List<Map<Name, Object>>) data.get(name);
+        //no nested data
         if (nestedData == null) {
           return null;
         }

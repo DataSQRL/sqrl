@@ -28,12 +28,12 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
         org.apache.flink.configuration.Configuration.fromMap(Map.of(
-            //todo config
+                //todo config
                 "taskmanager.memory.network.fraction", "0.3",
                 "taskmanager.memory.network.max", "1gb",
                 "taskmanager.numberOfTaskSlots", "1",
                 "parallelism.default", "1",
-            "rest.flamegraph.enabled", "true"
+                "rest.flamegraph.enabled", "true"
             )
         ));
     env.getConfig().enableObjectReuse();

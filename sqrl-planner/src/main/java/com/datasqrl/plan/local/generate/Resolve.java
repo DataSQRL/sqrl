@@ -490,7 +490,6 @@ public class Resolve {
 
     for (Function<Analysis, SqlShuttle> transform : transforms) {
       node = node.accept(transform.apply(currentAnalysis));
-      log.trace("Transformed node: {}", SqlNodePrinter.printJoin(node));
       currentAnalysis = analyzer.apply(node);
     }
 
@@ -561,11 +560,6 @@ public class Resolve {
     env.session.planner.setValidator(op.getQuery(), op.getSqrlValidator());
 
     RelNode relNode = env.session.planner.rel(op.getQuery()).rel;
-
-    //Optimization prepass: TODO: why are we doing this here?
-//    relNode = env.session.planner.transform(OptimizationStage.PUSH_FILTER_INTO_JOIN,
-//        relNode);
-
     op.setRelNode(relNode);
   }
 
