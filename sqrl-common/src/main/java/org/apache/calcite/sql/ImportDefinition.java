@@ -63,7 +63,10 @@ public class ImportDefinition extends SqrlStatement {
     }
 
     SqlIdentifier first = alias
-        .orElse(new SqlIdentifier(importPath.names.subList(0, importPath.names.size() - 1),
+        .orElse(
+            new SqlIdentifier(importPath.names.size() == 1
+                ? List.of(importPath.names.get(0))
+                : importPath.names.subList(0, importPath.names.size() - 1),
             importPath.getParserPosition()));
     return timestampAlias
         //Concat the alias to the end if there's an alias
