@@ -17,7 +17,7 @@ public class Examples {
       .add(TestScript.of(base.resolve("crypto/bitcoin-tracer"),
               base.resolve("crypto/bitcoin-tracer/tracer.sqrl"))
           .resultTables(List.of("transactions"))
-          .dataDir(base.resolve("bitcoin-data"))
+          .dataDir(base.resolve("crypto/bitcoin-data"))
           .build())
       .add(TestScript.of(base.resolve("cybersecurity/intrusion"),
           base.resolve("cybersecurity/intrusion/intrusion.sqrl"))
@@ -25,18 +25,19 @@ public class Examples {
           .resultTables(List.of("traffic", "system-membership", "system", "minutetraffic", "hourtraffic",
               "instance", "outlieralert"))
           .build())
-      .add(TestScript.of(base.resolve("datasqrl"),
-              base.resolve("datasqrl/repo.sqrl"))
+      .add(TestScript.of(base.resolve("datasqrl/repo"),
+              base.resolve("datasqrl/repo/repo.sqrl"))
+          .dataDir(base.resolve("datasqrl/datasqrl-central"))
           .resultTable("submission")
           .resultTable("package").build())
       .add(TestScript.of(base.resolve("ecommerce/public-api"),
           base.resolve("ecommerce/public-api/api.sqrl"))
-          .dataDir(base.resolve("auction-data"))
+          .dataDir(base.resolve("ecommerce/auction-data"))
           .resultTables(List.of("auction", "user", "bid", "category"))
           .build())
       .add(TestScript.of(base.resolve("ecommerce/internal-analytics"),
           base.resolve("ecommerce/internal-analytics/analytics.sqrl"))
-          .dataDir(base.resolve("auction-data"))
+          .dataDir(base.resolve("ecommerce/auction-data"))
           .resultTables(List.of("auction", "user", "bid", "category", "seller", "auctionsbyday", "highpriceauctions", "newusermonitoring"))
           .build())
       .add(TestScript.of(base.resolve("environment/monitoring"),

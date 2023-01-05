@@ -47,6 +47,8 @@ public interface TestScript {
     return true;
   }
 
+  List<Path> getDataDirs();
+
   @Value
   @Builder
   static class Impl implements TestScript {
