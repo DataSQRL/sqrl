@@ -89,7 +89,7 @@ tables:
     description: The sequence of stops that makes up a bus route
     source:
       - type: file
-        name: routestops.json
+        name: routestops.csv.json
     tests:
       - unique_combination_of_columns:
           combination_of_columns:
@@ -121,7 +121,7 @@ tables:
     description: The scheduled bus route runs
     source:
       - type: file
-        name: schedule.json
+        name: schedule.csv
     columns:
       - name: scheduleid
         tests:
@@ -148,7 +148,7 @@ tables:
     description: Users following a particular bus schedule and stop
     source:
       - type: file
-        name: schedulefollows.json
+        name: schedulefollows.csv
     columns:
       - name: followid
         tests:
