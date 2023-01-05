@@ -1,4 +1,6 @@
-IMPORT cc-data.*;
+IMPORT cc-data.Transactions AS Transaction;
+IMPORT cc-data.Merchant;
+IMPORT cc-data.PoS;
 
 -- Import a purchased dataset table from a public source
 IMPORT marketplace.geo-solutions.coordinate-resolution.USStates;

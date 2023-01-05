@@ -1,4 +1,4 @@
-IMPORT funtown-data.Location;
+IMPORT funtown-data.Location AS Locations;
 IMPORT funtown-data.Tracking;
 IMPORT math;
 
