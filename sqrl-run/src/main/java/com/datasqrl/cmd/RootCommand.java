@@ -3,16 +3,15 @@
  */
 package com.datasqrl.cmd;
 
-import lombok.Getter;
-import picocli.CommandLine;
-
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
 @CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "discover 0.1",
-    subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class, ExecuteCommand.class,
+    subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class, PopulateCommand.class,
         ServeCommand.class})
 @Getter
 public class RootCommand implements Runnable {
