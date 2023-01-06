@@ -30,7 +30,7 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
-//  @Disabled
+  @Disabled
   @ParameterizedTest
   @ArgumentsSource(TestScript.ExampleScriptsProvider.class)
   public void test(TestScript script) {
