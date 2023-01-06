@@ -1,6 +1,6 @@
 IMPORT adr-data.*;
 
-IMPORT FUNCTON vec;
+IMPORT vec;
 
 Patient.prescriptions := JOIN Prescriptions ON @.id = Prescriptions.patient_id INVERSE patient;
 

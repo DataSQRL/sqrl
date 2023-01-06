@@ -14,7 +14,7 @@ User.stars := JOIN Star ON Star.userid = @.id;
 
 Connect.`from` := JOIN Post ON Post.id = @.frompostid;
 Connect.to := JOIN Post ON Post.id = @.topostid;
-Connect.user := JOIN User ON User.id = @.userid INVERSE connections;
+Connect.user := JOIN User ON User.id = @.userid;
 User.connections := JOIN Connect ON Connect.userid = @.id;
 
 Post.user := JOIN User ON User.id = @.userid;

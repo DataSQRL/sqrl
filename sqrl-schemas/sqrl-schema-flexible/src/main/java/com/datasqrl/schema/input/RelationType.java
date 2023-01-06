@@ -39,13 +39,13 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
    * @return
    */
   //TODO: Should be optional
-  public F getFieldByName(Name name) {
+  public Optional<F> getFieldByName(Name name) {
     if (fieldsByName == null) {
       fieldsByName = fields.stream().collect(
           Collectors.toUnmodifiableMap(t -> t.getName(), Function.identity(),
               (v1, v2) -> v2));
     }
-    return fieldsByName.get(name);
+    return Optional.ofNullable(fieldsByName.get(name));
   }
 
   public void add(F field) {

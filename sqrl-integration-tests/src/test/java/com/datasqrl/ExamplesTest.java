@@ -56,7 +56,7 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
     DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
     builder.datadiscovery(DirectoryDataSystemConfig.ofDirectory(dataDir));
     builder.type(ExternalDataType.source);
-    builder.name(script.getName());
+    builder.name(dataDir.getFileName().toString());
 
     DataSystemConfig systemConfig = builder.build();
     List<TableSource> sourceTables = discovery.runFullDiscovery(systemConfig);

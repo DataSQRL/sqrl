@@ -2,11 +2,15 @@ IMPORT auction-data.*;
 
 -- Let's establish the relationships in the data
 
-Auction.bids := JOIN Bid ON Bid.auction_id = @.id INVERSE auction;
-Auction.category := JOIN Category ON Category.id = @.category_id INVERSE auctions;
-Auction.seller := JOIN User ON User.id = @.seller_id INVERSE auctions;
+Auction.bids := JOIN Bid ON Bid.auction_id = @.id;
+Bid.auction := JOIN Auction ON @.auction_id = Auction.id;
+Auction.category := JOIN Category ON Category.id = @.category_id;
+Category.auctions := JOIN Auction ON Auction.category_id = @.id;
+Auction.seller := JOIN User ON User.id = @.seller_id;
+User.auctions := JOIN Auction ON Auction.seller_id = @.id;
 
-User.bids := JOIN Bid ON Bid.bidder_id = @.id INVERSE bidder;
+User.bids := JOIN Bid ON Bid.bidder_id = @.id;
+Bid.bidder := JOIN User ON User.id = @.bidder_id;
 
 -- Annotate Auction with additional data
 

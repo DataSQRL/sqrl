@@ -197,13 +197,13 @@ public class DataDiscovery {
           continue;
         }
         DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
-        FlexibleDatasetSchema.TableField tableField = baseSchema.getFieldByName(table.getName());
+        Optional<FlexibleDatasetSchema.TableField> tableField = baseSchema.getFieldByName(table.getName());
         FlexibleDatasetSchema.TableField schema;
         ErrorCollector subErrors = errors.resolve(table.getName());
-        if (tableField == null) {
+        if (tableField.isEmpty()) {
           schema = generator.mergeSchema(stats, table.getName(), subErrors);
         } else {
-          schema = generator.mergeSchema(stats, tableField, subErrors);
+          schema = generator.mergeSchema(stats, tableField.get(), subErrors);
         }
         TableSource tblSource = table.getConfiguration()
             .initializeSource(errors, table.getPath().parent(), schema);

@@ -64,6 +64,7 @@ public class DataSource {
     } else {
       throw new UnsupportedOperationException("Invalid table clazz: " + clazz);
     }
+    System.out.println(errors.getAll());
     return Optional.of(resultTable);
   }
 
