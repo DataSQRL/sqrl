@@ -5,7 +5,7 @@ package com.datasqrl.cmd;
 
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "compile", description = "Compiles an SQRL script")
+@CommandLine.Command(name = "compile", description = "Compiles an SQRL script and produces all build artifacts")
 public class CompilerCommand extends AbstractCompilerCommand {
 
   protected CompilerCommand() {

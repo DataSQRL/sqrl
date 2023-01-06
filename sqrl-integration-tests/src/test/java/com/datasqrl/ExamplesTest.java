@@ -1,24 +1,26 @@
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.discovery.DataDiscovery;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
+import com.datasqrl.util.data.Examples;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -39,11 +41,23 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
 
     discover(script);
 
-    validateTables(script.getScript(), script.getResultTables()
+    try {
+      validateTables(script.getScript(), script.getResultTables()
         .toArray(new String[0]));
+    } catch (Exception e) {
+      System.err.println(ErrorPrinter.prettyPrint(error));
+      throw e;
+    }
 
     System.out.println(script);
   }
+
+  @Disabled
+  @Test
+  public void testSingle() {
+    test(Examples.scriptList.get(4));
+  }
+
 
   private void discover(TestScript script) {
     for (Path dataDir : script.getDataDirs()) {

@@ -5,7 +5,7 @@ package com.datasqrl.cmd;
 
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "run", description = "Runs an SQRL script")
+@CommandLine.Command(name = "run", description = "Compiles a SQRL script and runs the entire generated data pipeline")
 public class RunCommand extends AbstractCompilerCommand {
 
   protected RunCommand() {
