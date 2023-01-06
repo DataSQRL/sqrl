@@ -31,7 +31,6 @@ public abstract class DirectoryDataSystemConfig {
   public static final String SYSTEM_TYPE = "dir";
   public static final String DEFAULT_FILENAME_PATTERN = "^([^\\.]+?)(?:_part.*)?$";
 
-  @OptionalMinString
   @Builder.Default
   String directoryURI = "";
 

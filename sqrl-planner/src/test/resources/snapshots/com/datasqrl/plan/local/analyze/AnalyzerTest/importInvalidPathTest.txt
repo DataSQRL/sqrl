@@ -1,3 +1,0 @@
-[FATAL]
-Invalid location provided
-

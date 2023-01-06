@@ -1,9 +1,7 @@
 IMPORT social-commons.*;
 
-IMPORT time.*;
-
 Users.friendship_request_by_week :=
-            SELECT time.roundToWeek(requesttimestamp) AS week,
+            SELECT ROUND_TO_WEEK(requesttimestamp) AS week,
                     COUNT(accepttimestamp) AS num_accepted, COUNT(rejecttimestamp) AS num_rejected,
                     num_rejected / iff(num_accepted > 0, num_accepted, 1) AS reject_ratio
             FROM Friendships

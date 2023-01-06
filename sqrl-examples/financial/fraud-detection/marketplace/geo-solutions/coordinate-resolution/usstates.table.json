@@ -1,0 +1,19 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "state", "abbreviation"]
+  },
+  "name" : "usstates",
+  "identifier" : "usstates",
+  "connector" : {
+    "directoryURI" : ".",
+    "fileURIs" : [ ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "systemType" : "dir"
+  }
+}

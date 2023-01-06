@@ -1,9 +1,7 @@
 IMPORT platform-data.*;
 
-IMPORT geo;
-IMPORT time;
-
-Platform.status := JOIN Platformstatus ps ON ps.prn = @.prn ORDER BY ps.timestamp DESC INVERSE platform;
+Platform.status := JOIN Platformstatus ps ON ps.prn = @.prn ORDER BY ps.timestamp DESC;
+Platformstatus.platform := JOIN Platform ON @.prn = Platform.prn;
 
 Platform.lastStatus := JOIN @.status s ORDER BY s.timestamp DESC LIMIT 1;
 Platform.isReporting := @.lastStatus.timestamp > now() - INTERVAL 1 MINUTE;
@@ -12,11 +10,13 @@ Platform.isHealthy := CASE
                       WHEN @.type LIKE 'Abrams%' THEN EXISTS(SELECT * FROM @.lastStatus.measurements m WHERE m.type='online-systems' AND m.value > 85)
                       END;
 
-Platform.tracking := JOIN PlatformTracking pt ON pt.prn = @.prn ORDER BY pt.timestamp DESC INVERSE platform;
+Platform.tracking := JOIN PlatformTracking pt ON pt.prn = @.prn ORDER BY pt.timestamp DESC;
+PlatformTracking.platform := JOIN Platform ON @.prn = Platform.prn;
 Platform.lastTracking := JOIN @.tracking t ORDER BY t.timestamp DESC LIMIT 1;
 
 Platoon := SELECT DISTINCT platoonId FROM Platform;
-Platform.platoon := JOIN Platoon ON Platoon.platoonId = @.platoonId LIMIT 1 INVERSE platforms;
+Platform.platoon := JOIN Platoon ON Platoon.platoonId = @.platoonId LIMIT 1;
+Platoon.platforms := JOIN Platform ON @.platoonId = Platform.platoonId;
 
 Platoon.overview := SELECT category, COUNT(*) AS number, SUM(iff(isReporting, 1, 0)) AS num_reporting, num_reporting/number AS percent_reporting,
                            SUM(iff(isHealthy, 1, 0)) AS num_healthy, num_healthy/number AS percent_healthy

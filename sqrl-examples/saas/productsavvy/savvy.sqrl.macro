@@ -1,7 +1,4 @@
 IMPORT order-data.*;
-IMPORT time.roundToDay;
-IMPORT time.roundToHour;
-IMPORT math;
 
 Order := DISTINCT Order ON id ORDER BY time DESC;
 Tenant := SELECT DISTINCT tenant_id AS id FROM Order;
@@ -56,7 +53,8 @@ Category.volumeBy{{period[name]}} := JOIN _CategoryVolume{{period[name]}} cv ON 
 
 Tenant.categories := SELECT DISTINCT category_id FROM @._categoryVolumeDay;
 Tenant.categories.global_category := JOIN Category ON Category.id = @.category_id;
-Tenant.categories.products := JOIN @.parent.products p ON @.category_id = p.category_id INVERSE category;
+Tenant.categories.products := JOIN @.parent.products p ON @.category_id = p.category_id;
+Tenant.products.category := JOIN @.parent.categories c ON c.category_id = @.category_id;
 Tenant.categories.volumeByHour := JOIN @.parent._categoryVolumeHour cv ON cv.category_id = @.category_id;
 Tenant.categories.volumeByDay := JOIN @.parent._categoryVolumeDay cv ON cv.category_id = @.category_id;
 

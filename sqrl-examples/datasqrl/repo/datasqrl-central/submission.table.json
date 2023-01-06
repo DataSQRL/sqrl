@@ -1,0 +1,16 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
+  },
+  "name" : "submission",
+  "identifier" : "submission",
+  "connector" : {
+    "directoryURI" : "../sqrl-examples/datasqrl/datasqrl-central/",
+    "fileURIs" : [ ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "systemType" : "dir"
+  }
+}

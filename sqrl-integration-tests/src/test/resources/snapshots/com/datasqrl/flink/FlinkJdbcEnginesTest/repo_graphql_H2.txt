@@ -1,0 +1,35 @@
+>>>database
+CREATE INDEX IF NOT EXISTS "submission$3_btree_c3c17" ON "submission$3" USING btree ("version","variant$0");
+CREATE INDEX IF NOT EXISTS "submission$3_hash_c17" ON "submission$3" USING hash ("variant$0");
+CREATE INDEX IF NOT EXISTS "submission$3_hash_c2" ON "submission$3" USING hash ("name");
+CREATE TABLE IF NOT EXISTS "package$6" ("name" CHARACTER VARYING NOT NULL,"submissiontime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
+CREATE TABLE IF NOT EXISTS "submission$3" ("_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"name" CHARACTER VARYING NOT NULL,"version" CHARACTER VARYING NOT NULL,"variant" CHARACTER VARYING NOT NULL,"license" CHARACTER VARYING NOT NULL,"repository" CHARACTER VARYING NOT NULL,"homepage" CHARACTER VARYING NOT NULL,"documentation" CHARACTER VARYING NOT NULL,"readme" CHARACTER VARYING NOT NULL,"description" CHARACTER VARYING NOT NULL,"lateststable" BOOLEAN NOT NULL,"uniqueid" CHARACTER VARYING NOT NULL,"file" CHARACTER VARYING NOT NULL,"hash" CHARACTER VARYING NOT NULL,"authorid" CHARACTER VARYING NOT NULL,"submissiontime" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"variant$0" CHARACTER VARYING NOT NULL , PRIMARY KEY ("_uuid"));
+>>>query-latest
+{
+  "data" : {
+    "Package" : [ {
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev",
+        "latestStable" : true,
+        "description" : "Small Nutshop example data",
+        "file" : "hbG-vCnRyRo62jIMH2LCVw0PE8w.zip",
+        "hash" : "c514baa309a470bf6bb7b43a88dfe70c",
+        "submissionTime" : "2022-12-08T23:06:27.429598-08:00"
+      }
+    } ]
+  }
+}
+>>>query-versions
+{
+  "data" : {
+    "Package" : [ {
+      "versions" : [ {
+        "version" : "0.1.0",
+        "file" : "hbG-vCnRyRo62jIMH2LCVw0PE8w.zip",
+        "hash" : "c514baa309a470bf6bb7b43a88dfe70c",
+        "submissionTime" : "2022-12-08T23:06:27.429598-08:00"
+      } ]
+    } ]
+  }
+}

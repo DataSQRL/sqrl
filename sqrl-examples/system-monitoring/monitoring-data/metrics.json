@@ -7,12 +7,11 @@
     "storage_load": 1868389,
     "tx_throughput": 1535,
     "tx_dropped": 1,
-    "tx_latency":
-    {
-      "average_ms": 74.1
-      "p50_ms": 102.5
-      "p95_ms": 250.4
-      "p99_ms": 833.7
+    "tx_latency": {
+      "average_ms": 74.1,
+      "p50_ms": 102.5,
+      "p95_ms": 250.4,
+      "p99_ms": 833.7,
       "p99.9_ms": 1852.0
     }
   },
@@ -24,13 +23,12 @@
     "storage_load": 1869541,
     "tx_throughput": 1235,
     "tx_dropped": 0,
-    "tx_latency":
-    {
-      "average_ms": 71.0
-      "p50_ms": 101.1
-      "p95_ms": 210.4
-      "p99_ms": 740.6
+    "tx_latency": {
+      "average_ms": 71.0,
+      "p50_ms": 101.1,
+      "p95_ms": 210.4,
+      "p99_ms": 740.6,
       "p99.9_ms": 1205.5
     }
-  },
+  }
 ]

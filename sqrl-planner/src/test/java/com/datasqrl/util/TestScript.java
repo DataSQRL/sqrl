@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
+import lombok.Singular;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -46,6 +47,8 @@ public interface TestScript {
     return true;
   }
 
+  List<Path> getDataDirs();
+
   @Value
   @Builder
   static class Impl implements TestScript {
@@ -57,6 +60,7 @@ public interface TestScript {
     @NonNull
     final Path scriptPath;
     @NonNull
+    @Singular
     final List<String> resultTables;
     @Builder.Default
     final boolean dataSnapshot = true;
@@ -64,6 +68,8 @@ public interface TestScript {
     @NonNull
     final List<TestGraphQLSchema> graphQLSchemas = List.of();
 
+    @Singular
+    final List<Path> dataDirs;
     @Override
     public String toString() {
       return name;

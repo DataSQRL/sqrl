@@ -3,49 +3,56 @@
     "userid": 104534349,
     "timestamp": 1623323608,
     "type": "running",
-    "distance": 15400
+    "distance": 15400,
+    "repetitions": 1
   },
   {
     "userid": 104534349,
     "timestamp": 1623295608,
     "type": "swimming",
-    "distance":  2000
+    "distance": 2000,
+    "repetitions": 1
   },
   {
     "userid": 104534349,
     "timestamp": 1623244608,
     "type": "swimming",
-    "distance": 2000
+    "distance": 2000,
+    "repetitions": 1
   },
   {
     "userid": 104534349,
     "timestamp": 1623195608,
     "type": "running",
-    "distance": 10000
+    "distance": 10000,
+    "repetitions": 1
   },
-
   {
     "userid": 234023410,
     "timestamp": 1623353608,
     "type": "biking",
-    "distance": 80000
+    "distance": 80000,
+    "repetitions": 1
   },
   {
     "userid": 234023410,
     "timestamp": 1623276545,
     "type": "running",
-    "distance": 18500
+    "distance": 18500,
+    "repetitions": 1
   },
   {
     "userid": 234023410,
     "timestamp": 1623255971,
     "type": "biking",
-    "distance": 70000
+    "distance": 70000,
+    "repetitions": 1
   },
   {
     "userid": 234023410,
     "timestamp": 1623185349,
     "type": "biking",
-    "distance": 40000
-  },
+    "distance": 40000,
+    "repetitions": 1
+  }
 ]

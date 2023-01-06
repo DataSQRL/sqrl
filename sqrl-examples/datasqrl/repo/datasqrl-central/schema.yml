@@ -16,22 +16,40 @@ datasets:
       - "not_null"
     - name: "variant"
       type: "STRING"
+      tests:
+      - "not_null"
+    - name: "license"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "repository"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "homepage"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "documentation"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "readme"
+      type: "STRING"
+      tests:
+      - "not_null"
+    - name: "description"
+      type: "STRING"
+      tests:
+      - "not_null"
     - name: "latestStable"
       type: "BOOLEAN"
       tests:
-        - "not_null"
-    - name: "license"
+      - "not_null"
+    - name: "uniqueId"
       type: "STRING"
-    - name: "repository"
-      type: "STRING"
-    - name: "homepage"
-      type: "STRING"
-    - name: "documentation"
-      type: "STRING"
-    - name: "readme"
-      type: "STRING"
-    - name: "description"
-      type: "STRING"
+      tests:
+      - "not_null"
     - name: "file"
       type: "STRING"
       tests:
@@ -58,3 +76,5 @@ datasets:
         type: "INTEGER"
         tests:
         - "not_null"
+      tests:
+      - "not_null"

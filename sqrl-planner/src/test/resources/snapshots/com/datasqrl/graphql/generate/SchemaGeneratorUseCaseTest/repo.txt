@@ -1,12 +1,12 @@
 type Package {
   name: String!
-  latest(name: String, version: String, latestStable: Boolean, license: String, repository: String, homepage: String, documentation: String, readme: String): [submission!]
-  versions(name: String, version: String, latestStable: Boolean, license: String, repository: String, homepage: String, documentation: String, readme: String): [submission!]
+  latest(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [submission!]
+  versions(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [submission!]
 }
 
 type Query {
   Package(name: String): [Package!]
-  submission(name: String, version: String, latestStable: Boolean, license: String, repository: String, homepage: String, documentation: String, readme: String): [submission!]
+  submission(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [submission!]
 }
 
 type files {
@@ -18,13 +18,14 @@ type files {
 type submission {
   name: String!
   version: String!
+  license: String!
+  repository: String!
+  homepage: String!
+  documentation: String!
+  readme: String!
+  description: String!
   latestStable: Boolean!
-  license: String
-  repository: String
-  homepage: String
-  documentation: String
-  readme: String
-  description: String
+  uniqueId: String!
   file: String!
   hash: String!
   authorid: String!

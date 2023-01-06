@@ -1,7 +1,7 @@
 [
   {
     "nodeid": "199.213.31.202",
-    "timestamp": "2021-04-01 02:00:10"
+    "timestamp": "2021-04-01 02:00:10",
     "clusterid": 544521,
     "cores": 8,
     "memory_mb": 65536,
@@ -10,7 +10,7 @@
   },
   {
     "nodeid": "199.213.31.204",
-    "timestamp": "2021-04-01 02:00:04"
+    "timestamp": "2021-04-01 02:00:04",
     "clusterid": 544521,
     "cores": 8,
     "memory_mb": 65536,
@@ -19,13 +19,11 @@
   },
   {
     "nodeid": "199.213.31.203",
-    "timestamp": "2021-04-01 02:00:01"
+    "timestamp": "2021-04-01 02:00:01",
     "clusterid": 544521,
     "cores": 4,
     "memory_mb": 65536,
     "storage_mb": 1048576,
     "db_version": "12.7"
   }
-
-
 ]

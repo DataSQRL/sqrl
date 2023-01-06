@@ -46,8 +46,8 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
     Map<Name, FlexibleDatasetSchema> schemas = importer.convertImportSchema(schemaDef, errors);
     Preconditions.checkArgument(schemaDef.datasets.size() == 1);
     FlexibleDatasetSchema dsSchema = Iterables.getOnlyElement(schemas.values());
-    FlexibleDatasetSchema.TableField tbField = dsSchema.getFieldByName(
+    Optional<FlexibleDatasetSchema.TableField> tbField = dsSchema.getFieldByName(
         tableConfig.getResolvedName());
-    return Optional.of(tbField);
+    return tbField.map(f->f);
   }
 }

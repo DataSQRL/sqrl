@@ -1,6 +1,4 @@
-IMPORT telco-data.requests;
-
-IMPORT time.*;
+IMPORT telco-data.requests TIMESTAMP EPOCH_TO_TIMESTAMP(timestamp) AS ts;
 
 -- Define Tower, Content, and Sim entities and link to requests
 
@@ -15,22 +13,22 @@ Content.requests := JOIN Requests ON Requests.uri = @.uri;
    likely-to-be-accessed content there
 */
 Sim := SELECT DISTINCT sim_id AS uid FROM Requests;
-Sim.requests := SELECT *, rank() AS _rank FROM Requests WHERE Requests.sim_id = @.uid ORDER BY timestamp ASC;
-Sim.tower_transitions := SELECT f.tower_id AS from_id, f.timestamp AS fromtime, t.tower_id AS to_id, t.timestamp AS totime
+Sim.requests := SELECT *, rank() AS _rank FROM Requests WHERE Requests.sim_id = @.uid ORDER BY ts ASC;
+Sim.tower_transitions := SELECT f.tower_id AS from_id, f.ts AS fromtime, t.tower_id AS to_id, t.ts AS totime
                          FROM @.requests f
                          JOIN @.requests t ON (t._rank = f._rank+1
-                                        AND f.timestamp + INTERVAL 10 MINUTE > t.timestamp)
-                         WHERE f.timestamp > NOW() - INTERVAL 1 MONTH AND from_id != to_id
-                         ORDER BY fromtime DESC;
+                                        AND f.ts + INTERVAL 10 MINUTE > t.ts)
+                         WHERE f.ts > NOW() - INTERVAL 1 MONTH AND f.tower_id != t.tower_id
+                         ORDER BY f.ts DESC;
 
 /* Replacing this old query that requires a nested query which is harder to read
-Sim.tower_transitions := SELECT f.tower_id AS from_id, f.timestamp AS fromtime, t.tower_id AS to_id, t.timestamp AS totime
+Sim.tower_transitions := SELECT f.tower_id AS from_id, f.ts AS fromtime, t.tower_id AS to_id, t.ts AS totime
                          FROM @.requests f
-                         JOIN @.requests t ON (f.timestamp < t.timestamp
-                                        AND f.timestamp + INTERVAL 10 MINUTE > t.timestamp)
-                         WHERE f.timestamp > NOW() - INTERVAL 1 MONTH AND
-                           NOT EXISTS(SELECT * FROM @.requests WHERE timestamp > f.timestamp AND timestamp < t.timestamp)
-                         ORDER BY fromtime DESC;
+                         JOIN @.requests t ON (f.ts < t.ts
+                                        AND f.ts + INTERVAL 10 MINUTE > t.ts)
+                         WHERE f.ts > NOW() - INTERVAL 1 MONTH AND
+                           NOT EXISTS(SELECT * FROM @.requests WHERE ts > f.ts AND ts < t.ts)
+                         ORDER BY f.ts DESC;
 */
 
 TowerTransitions := SELECT from_id, to_id, COUNT(*) AS num_transitions FROM Sim.tower_transitions
@@ -45,18 +43,18 @@ Tower.frequent_incoming := SELECT from_id AS fromtower_id, num_transitions/@.tot
 
 -- Determine which content is frequently co-accessed within a short period of time
 
-Sim.content_coaccess := SELECT f.uri AS starturi, f.timestamp AS starttime, t.uri AS afteruri, t.timestamp AS aftertime
+Sim.content_coaccess := SELECT f.uri AS starturi, f.ts AS starttime, t.uri AS afteruri, t.ts AS aftertime
                          FROM @.requests f
                          JOIN @.requests t ON (f._rank < t._rank AND f._rank + 5 > t._rank
-                                        AND f.timestamp + INTERVAL 3 MINUTE > t.timestamp)
-                         WHERE f.timestamp > NOW() - INTERVAL 3 MONTH
-                         ORDER BY starttime DESC;
+                                        AND f.ts + INTERVAL 3 MINUTE > t.ts)
+                         WHERE f.ts > NOW() - INTERVAL 3 MONTH
+                         ORDER BY f.ts DESC;
 
 ContentCoAccess := SELECT starturi, afteruri, COUNT(*) AS num_coaccess FROM Sim.content_coaccess
                    GROUP BY starturi, afteruri HAVING num_coaccess > 25;
 
 Content.coaccess := JOIN ContentCoAccess ON ContentCoAccess.starturi = @.uri;
-Content.total_access := SELECT COUNT(*) FROM @.requests WHERE timestamp > NOW() - INTERVAL 3 MONTH LIMIT 1;
+Content.total_access := SELECT COUNT(*) FROM @.requests WHERE ts > NOW() - INTERVAL 3 MONTH LIMIT 1;
 
 Content.frequent_coaccess := SELECT afteruri, num_coaccess/@.total_access AS percentage FROM @.coaccess
                              WHERE percentage > 0.02
@@ -67,7 +65,7 @@ Content.frequent_coaccess := SELECT afteruri, num_coaccess/@.total_access AS per
 Tower.frequent_incoming.from_tower := JOIN Tower ON Tower.tower_id = @.from_id;
 
 Tower._popular_content := SELECT uri, COUNT(*) AS frequency FROM @.requests
-                         WHERE timestamp > now() - INTERVAL 5 MINUTE
+                         WHERE ts > now() - INTERVAL 5 MINUTE
                          GROUP BY uri;
 
 Tower._popular_ngh_content := SELECT p.uri AS uri, SUM(p.frequency*i.percentage) AS frequency

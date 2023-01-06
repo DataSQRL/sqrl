@@ -1,17 +1,16 @@
 IMPORT cookout-data.*;
 
-IMPORT time.*;
-IMPORT col.*;
-IMPORT math.*;
-
 -- Connect the different tables
 
-User.streams := JOIN `Stream` ON `Stream`.userid = @.id INVERSE user;
+User.streams := JOIN `Stream` ON `Stream`.userid = @.id;
+`Stream`.user := JOIN User ON @.userid = User.id;
 `Stream`.reviews := JOIN Review ON Review.streamid = @.id;
 User.reviews := @.streams.reviews
 
-`Stream`.timeline := JOIN StreamEvent ON StreamEvent.streamid = @.id INVERSE `stream`;
-`Stream`._views := JOIN ViewEvent ON ViewEvent.streamid = @.id INVERSE `stream`;
+`Stream`.timeline := JOIN StreamEvent ON StreamEvent.streamid = @.id;
+StreamEvent.`stream` := JOIN `Stream` ON @.streamid = `Stream`.id;
+`Stream`._views := JOIN ViewEvent ON ViewEvent.streamid = @.id;
+ViewEvent.`stream` := JOIN `Stream` ON @.streamid = `Stream`.id;
 
 -- Compute stream viewing properties & statistics
 
@@ -31,7 +30,7 @@ User.reviews := @.streams.reviews
                             SUM(duration) AS total_duration
                      FROM @.viewers;
 
-`Stream`.viewers._view_bymin := SELECT time.roundToMin(time) AS min, SUM(duration) AS duration
+`Stream`.viewers._view_bymin := SELECT ROUND_TO_MINUTE(time) AS min, SUM(duration) AS duration
                               FROM @._views
                               GROUP BY min ORDER BY min DESC;
 `Stream`.stats_by_minute := SELECT min, COUNT(*) AS viewers, SUM(duration) AS _totalduration,
@@ -48,7 +47,8 @@ User.review_stats := SELECT COUNT(*) AS number, AVG(stars) AS avg_stars
 
 -- Recommendation Engine
 
-User.viewed := JOIN `Stream`.viewers v ON v.userid = @.id INVERSE user;
+User.viewed := JOIN `Stream`.viewers v ON v.userid = @.id;
+`Stream`.viewers.user := JOIN User ON @.userid = User.id;
 `Stream`.viewers._decaying_duration := duration * time.exp-decay(parent.scheduled_start, now(), INTERVAL 3 MONTH);
 User._total_decaying_duration := SELECT SUM(_decaying_duration) FROM @.viewed;
 

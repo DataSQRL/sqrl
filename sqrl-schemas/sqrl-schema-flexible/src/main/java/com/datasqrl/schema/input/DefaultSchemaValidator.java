@@ -90,18 +90,18 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
     for (Map.Entry<String, Object> entry : relationData.entrySet()) {
       Name name = Name.of(entry.getKey(), canonicalizer);
       Object data = entry.getValue();
-      FlexibleDatasetSchema.FlexibleField field = relationSchema.getFieldByName(name);
-      if (field == null) {
+      Optional<FlexibleDatasetSchema.FlexibleField> field = relationSchema.getFieldByName(name);
+      if (field.isEmpty()) {
         if (!settings.dropFields()) {
           errors.fatal("Field is not defined in schema: %s", field);
         }
       } else {
         Pair<Name, Object> fieldResult = null;
         if (data != null) {
-          fieldResult = verifyAndAdjust(data, field, errors.resolve(name));
+          fieldResult = verifyAndAdjust(data, field.get(), errors.resolve(name));
         }
-        if (fieldResult == null && isNonNull(field)) {
-          fieldResult = handleNull(field, errors);
+        if (fieldResult == null && isNonNull(field.get())) {
+          fieldResult = handleNull(field.get(), errors);
         }
         if (fieldResult != null) {
           result.put(fieldResult.getKey(), fieldResult.getValue());

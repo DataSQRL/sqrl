@@ -5,6 +5,7 @@ import com.datasqrl.config.SourceServiceLoader.SourceFactoryContext;
 import com.datasqrl.engine.stream.flink.FlinkSourceFactoryContext;
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder.NoTimedRecord;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
@@ -20,6 +21,7 @@ import lombok.NoArgsConstructor;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
+import org.apache.flink.connector.file.src.reader.StreamFormat;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.util.Collector;
@@ -52,9 +54,16 @@ public class FileSourceFactory implements
     } else {
       org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder;
       if (pathConfig.isDirectory()) {
+        StreamFormat<String> format;
+        if (ctx.getTable().getConfiguration().getFormat().getFileFormat() == FileFormat.JSON) {
+          format = new JsonInputFormat(ctx.getTable().getConfiguration().getCharset());
+        } else {
+          format = new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
+              ctx.getTable().getConfiguration().getCharset());
+        }
+
         builder = org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
-            new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-                ctx.getTable().getConfiguration().getCharset()),
+            format,
             FilePath.toFlinkPath(pathConfig.getDirectory()));
         Duration monitorDuration = null;
         FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource,

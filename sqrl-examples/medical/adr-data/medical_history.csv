@@ -1,1 +1,2 @@
-record_id, patient_ssn, code, relation, occured_on
+record_id, patient_ssn, code, relation, occurred_on
+1, 222-22-2222, 0, false, "12/12/2022"

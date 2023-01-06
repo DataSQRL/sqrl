@@ -55,7 +55,7 @@ public class SnapshotTest {
     String fileName;
     StringBuilder content;
 
-    public static Snapshot of(@NonNull Class testClass, @NonNull TestInfo testInfo,
+    public static Snapshot of(@NonNull String name, @NonNull TestInfo testInfo,
         String content) {
       String fileName = testInfo.getDisplayName();
       Matcher matcher = PARAMETRIZED_TEST.matcher(fileName);
@@ -69,7 +69,7 @@ public class SnapshotTest {
       if (!Strings.isNullOrEmpty(content)) {
         c.append(content);
       }
-      return new Snapshot(testClass.getName(), fileName, c);
+      return new Snapshot(name, fileName, c);
     }
 
     public static Snapshot of(@NonNull Class testClass, @NonNull String... testParameters) {
@@ -79,7 +79,7 @@ public class SnapshotTest {
     }
 
     public static Snapshot of(@NonNull Class testClass, @NonNull TestInfo testInfo) {
-      return of(testClass, testInfo, null);
+      return of(testClass.getName(), testInfo, null);
     }
 
     public String getContent() {
