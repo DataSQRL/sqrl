@@ -1,4 +1,4 @@
-IMPORT telco-data.requests;
+IMPORT telco-data.requests TIMESTAMP EPOCH_TO_TIMESTAMP(timestamp) AS timestamp;
 
 -- Define SIM as an entity and link it to all of its requests
 

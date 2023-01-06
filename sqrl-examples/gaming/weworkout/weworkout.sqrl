@@ -1,6 +1,6 @@
 IMPORT exercise-data.*;
 
-Challenges.week := ROUND_TO_WEEK(STRING_TO_TIMESTAMP(week_of, "MM/dd/yy"))
+Challenges.week := ROUND_TO_WEEK(STRING_TO_TIMESTAMP(week_of, 'MM/dd/yy'))
 
 Membership.team := JOIN Team ON @.teamid = Team.teamid;
 Team.members := JOIN Membership ON Membership.teamid = @.teamid;

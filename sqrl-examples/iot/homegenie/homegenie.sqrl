@@ -1,4 +1,7 @@
-IMPORT home-data.*;
+IMPORT home-data.Home;
+IMPORT home-data.Rule;
+IMPORT home-data.Sensor;
+IMPORT home-data.Sensor-metrics AS SensorMetrics;
 
 -- Link entities together
 

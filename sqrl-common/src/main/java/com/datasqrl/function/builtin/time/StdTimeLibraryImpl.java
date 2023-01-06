@@ -45,6 +45,7 @@ public class StdTimeLibraryImpl {
   public static final ROUND_TO_SECOND ROUND_TO_SECOND = new ROUND_TO_SECOND();
   public static final ROUND_TO_MINUTE ROUND_TO_MINUTE = new ROUND_TO_MINUTE();
   public static final ROUND_TO_HOUR ROUND_TO_HOUR = new ROUND_TO_HOUR();
+  public static final ROUND_TO_WEEK ROUND_TO_WEEK = new ROUND_TO_WEEK();
   public static final ROUND_TO_DAY ROUND_TO_DAY = new ROUND_TO_DAY();
   public static final ROUND_TO_MONTH ROUND_TO_MONTH = new ROUND_TO_MONTH();
   public static final ROUND_TO_YEAR ROUND_TO_YEAR = new ROUND_TO_YEAR();
@@ -69,6 +70,7 @@ public class StdTimeLibraryImpl {
       new FlinkFnc(ROUND_TO_MINUTE.class.getSimpleName(), ROUND_TO_MINUTE),
       new FlinkFnc(ROUND_TO_HOUR.class.getSimpleName(), ROUND_TO_HOUR),
       new FlinkFnc(ROUND_TO_DAY.class.getSimpleName(), ROUND_TO_DAY),
+      new FlinkFnc(ROUND_TO_WEEK.class.getSimpleName(), ROUND_TO_WEEK),
       new FlinkFnc(ROUND_TO_MONTH.class.getSimpleName(), ROUND_TO_MONTH),
       new FlinkFnc(ROUND_TO_YEAR.class.getSimpleName(), ROUND_TO_YEAR),
       new FlinkFnc(GET_SECOND.class.getSimpleName(), GET_SECOND),
@@ -265,6 +267,25 @@ public class StdTimeLibraryImpl {
     public Instant eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
           .toInstant();
+    }
+
+    @Override
+    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+    }
+  }
+
+  public static class ROUND_TO_WEEK extends RoundingFunction {
+
+    public ROUND_TO_WEEK() {
+      super(ChronoUnit.MONTHS);
+    }
+
+    public Instant eval(Instant instant) {
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
+          .with(TemporalAdjusters.firstDayOfMonth())
+          .truncatedTo(ChronoUnit.WEEKS).toInstant();
     }
 
     @Override

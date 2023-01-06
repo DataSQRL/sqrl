@@ -1,7 +1,7 @@
 IMPORT data.*;
 
 Vote.user := JOIN User ON User.id = @.userid;
-Vote.latest := NOT EXISTS(SELECT * FROM Vote WHERE userid = @.userid AND
+Vote.latest := NOT EXISTS(SELECT * FROM Vote WHERE Vote.userid = @.userid AND
                       (commentid = @.commentid OR postid = @.postid) AND timestamp > @.timestamp);
 Comment.votes := JOIN Vote ON Vote.commentid = @.id AND Vote.latest = TRUE AND Vote.type = 'up';
 Post.votes := JOIN Vote ON Vote.postid = @.id AND Vote.latest = TRUE AND Vote.type = 'up';
@@ -25,8 +25,8 @@ Vote.userkarma := FROZEN_LOOKUP(@.user.currentKarma); --Looks up the query when 
 Vote.karma := math.log10(userkarma);
 
 -- This sets the user assigned karma to a post equal to the current karma of the user which changes over time and so will this value
-User.currentKarma := MAX ((SELECT SUM( math.sqrt(karma)) FROM @.posts.votes)
-            + (SELECT SUM( math.sqrt(karma)) FROM @.comments.votes), MAX(@.starting_karma, 1));
+User.currentKarma := MAX((SELECT SUM(math.sqrt(karma)) FROM @.posts.votes)
+            + (SELECT SUM(math.sqrt(karma)) FROM @.comments.votes), MAX(@.starting_karma, 1));
 Post.userKarma := @.user.currentKarma;
 
 /* OR (alternative implementation) */

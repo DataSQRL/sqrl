@@ -1,1 +1,2 @@
 order_no, patient_id, provider_id, prescribed_on, start, end, drug_id, dosage
+1,1543329,0,"12/12/2022","12/12/2022",,1,1 tablet
