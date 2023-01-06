@@ -1,8 +1,5 @@
 IMPORT data.*;
 
-IMPORT math;
-IMPORT sqml;
-
 Vote.user := JOIN User ON User.id = @.userid;
 Vote.latest := NOT EXISTS(SELECT * FROM Vote WHERE userid = @.userid AND
                       (commentid = @.commentid OR postid = @.postid) AND timestamp > @.timestamp);

@@ -1,10 +1,5 @@
 IMPORT sensor-data.*;
 
-IMPORT conv.*;
-IMPORT geo.*;
-IMPORT math.*;
-
-
 Sensor.readings := JOIN SensorReading ON SensorReading.sensorid = @.sensorid;
 SensorReading.sensor := JOIN Sensor ON @.sensorid = Sensor.sensorid;
 -- Link sensors to neighboring sensors that are less than 20km away

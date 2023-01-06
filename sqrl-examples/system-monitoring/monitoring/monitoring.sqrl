@@ -1,7 +1,7 @@
 IMPORT monitoring-data.Metrics;
 IMPORT monitoring-data.Config;
 
-IMPORT time.roundToMin;
+IMPORT ROUND_TO_MINUTE;
 IMPORT math;
 
 Cluster := SELECT DISTINCT clusterid FROM Config;

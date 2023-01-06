@@ -1,7 +1,5 @@
 IMPORT telco-data.requests;
 
-IMPORT time.*;
-
 -- Define Tower, Content, and Sim entities and link to requests
 
 Tower := SELECT DISTINCT tower_id AS tower_id FROM Requests;

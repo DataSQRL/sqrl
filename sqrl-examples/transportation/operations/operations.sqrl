@@ -1,7 +1,5 @@
 IMPORT busbutler.*;
 
-IMPORT time;
-
 TodaysOperation := SELECT s.starttime, s.route.label AS route,
                              s.bus.type AS bustype, s.bus.capacity AS buscapacity,
                              s.currentlocation AS location,
@@ -11,7 +9,7 @@ TodaysOperation := SELECT s.starttime, s.route.label AS route,
                       WHERE s.starttime > now() - INTERVAL 12 HOUR
                         AND s.starttime < now() + INTERVAL 24 HOUR;
 
-OperationsByDay := SELECT time.roundToDay(s.starttime) AS day,
+OperationsByDay := SELECT ROUND_TO_DAY(s.starttime) AS day,
                         AVG(s.currentdelay) AS avgdelay,
                         COUNT(*) AS noschedules,
                         AVG(s.nofollowers) AS avgfollowers,

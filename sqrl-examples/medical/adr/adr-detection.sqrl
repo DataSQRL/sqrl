@@ -1,7 +1,5 @@
 IMPORT adr-data.*;
 
-IMPORT vec;
-
 Patient.prescriptions := JOIN Prescriptions ON @.id = Prescriptions.patient_id;
 Prescriptions.patient := JOIN Patient ON Patient.id = @.patient_id;
 

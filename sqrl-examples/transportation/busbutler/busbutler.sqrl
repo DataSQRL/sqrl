@@ -1,6 +1,5 @@
 IMPORT bus-data.*;
 
-IMPORT geo;
 --TODO: allow interval as column type
 --Routestops.timeoffset := INTERVAL timeoffset_min MINUTE;
 

@@ -1,6 +1,5 @@
 IMPORT funtown-data.Location AS Locations;
 IMPORT funtown-data.Tracking;
-IMPORT math;
 
 Location := DISTINCT Location ON id ORDER BY timestamp DESC;
 

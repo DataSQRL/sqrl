@@ -1,8 +1,5 @@
 IMPORT home-data.*;
 
-IMPORT time.*;
-IMPORT vec.*;
-
 -- Link entities together
 
 Sensor.metrics := JOIN SensorMetrics ON SensorMetrics.sensorid = @.sensorid;
@@ -15,7 +12,7 @@ Rule.home := JOIN Home ON @.homeid = Home.homeid;
 Home.rooms := SELECT DISTINCT room AS name FROM @.sensors;
 Home.rooms.sensors := JOIN @.parent.sensors s ON s.room = @.name;
 
-Home.rooms.readings := SELECT time.roundToMin(timestamp, 10) AS time,
+Home.rooms.readings := SELECT ROUND_TO_MINUTE(timestamp, 10) AS time,
                               AVG(temperature) AS temperature, AVG(pm25) AS pm25,
                               vec.boolOR(motion) AS motion
                        FROM @.sensors.metrics

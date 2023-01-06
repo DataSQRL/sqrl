@@ -1,7 +1,5 @@
 IMPORT public-api.*;
 
-IMPORT time.*;
-
 -- Seller Analytics
 
 Seller := SELECT * FROM User WHERE num_auctions > 0;

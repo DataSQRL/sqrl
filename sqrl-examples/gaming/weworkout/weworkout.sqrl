@@ -1,10 +1,6 @@
 IMPORT exercise-data.*;
 
-IMPORT time;
-IMPORT col;
-IMPORT math;
-
-Challenges.week := time.roundToWeek(time.parse(week_of))
+Challenges.week := ROUND_TO_WEEK(STRING_TO_TIMESTAMP(week_of, "MM/dd/yy"))
 
 Membership.team := JOIN Team ON @.teamid = Team.teamid;
 Team.members := JOIN Membership ON Membership.teamid = @.teamid;
@@ -13,19 +9,19 @@ User.exercises := JOIN Exercise ON Exercise.userid = @.userid;
 User.memberships := JOIN Membership ON Membership.userid = @.userid;
 User.team := JOIN @.memberships m JOIN m.team ORDER BY m.joinedAt DESC LIMIT 1;
 
-User.weeklyStats := SELECT time.roundToWeek(e.timestamp, @.timezone) AS week, e.type,
+User.weeklyStats := SELECT ROUND_TO_WEEK(e.timestamp, @.timezone) AS week, e.type,
                            SUM(e.distance ? 0) AS totaldistance,
                            SUM(e.repetitions ? 0) AS totalrepetitions
                     FROM @.exercises AS e
                     GROUP BY week, type ORDER BY week DESC;
 
-User.monthlyStats := SELECT time.roundToMonth(w.week) AS month, w.type,
+User.monthlyStats := SELECT ROUND_TO_MONTH(w.week) AS month, w.type,
                            SUM(w.totaldistance) AS totaldistance,
                            SUM(w.totalrepetitions) AS totalrepetitions
                     FROM @.exercises AS w
                     GROUP BY month, type ORDER BY month DESC;
 
-Team.exercises := SELECT e.timestamp, e.userid, e.type, time.roundToWeek(e.timestamp, u.timezone) AS week,
+Team.exercises := SELECT e.timestamp, e.userid, e.type, ROUND_TO_WEEK(e.timestamp, u.timezone) AS week,
                     e.distance ? 0 AS distance, e.repetitions ? 0 AS repetitions
                   FROM @.members AS m JOIN Exercise AS e ON m.userid=e.userid
                     JOIN User u ON m.userid=u.userid

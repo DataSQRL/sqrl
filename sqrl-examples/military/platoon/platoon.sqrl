@@ -1,8 +1,5 @@
 IMPORT platform-data.*;
 
-IMPORT geo;
-IMPORT time;
-
 Platform.status := JOIN Platformstatus ps ON ps.prn = @.prn ORDER BY ps.timestamp DESC;
 Platformstatus.platform := JOIN Platform ON @.prn = Platform.prn;
 
