@@ -424,8 +424,7 @@ public class AnnotatedLP implements RelHolder {
 
   public double estimateRowCount() {
     final RelMetadataQuery mq = relNode.getCluster().getMetadataQuery();
-    return 1;
-//    return mq.getRowCount(relNode);
+    return mq.getRowCount(relNode);
   }
 
 
