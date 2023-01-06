@@ -3,10 +3,15 @@
  */
 package com.datasqrl.io.util;
 
-import lombok.*;
-
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,6 +30,18 @@ public class TimeAnnotatedRecord<R> implements Serializable {
 
   public boolean hasTime() {
     return sourceTime != null;
+  }
+
+  @Override
+  public String toString() {
+    String result;
+    if (record instanceof String) {
+      result = "\"" + record + "\"";
+    } else {
+      result = String.valueOf(record);
+    }
+    if (hasTime()) result+= "@"+String.valueOf(sourceTime);
+    return result;
   }
 
 }

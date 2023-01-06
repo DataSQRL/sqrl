@@ -55,7 +55,9 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
   @Disabled
   @Test
   public void testSingle() {
-    test(Examples.scriptList.get(4));
+    TestScript script = Examples.scriptList.get(0);
+    System.out.println("Running Example: " + script.getName());
+    test(script);
   }
 
 

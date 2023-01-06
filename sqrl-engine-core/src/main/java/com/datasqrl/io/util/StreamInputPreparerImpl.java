@@ -67,7 +67,10 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
         }
         return Optional.of(new SourceRecord.Raw(r.getRecord(), sourceTime));
       } else {
-        errorCollector.get().fatal(r.getErrorMsg());
+        assert r.isError() || r.isSkip();
+        if (r.isError()) {
+          errorCollector.get().fatal(r.getErrorMsg());
+        }
         return Optional.empty();
       }
     }
