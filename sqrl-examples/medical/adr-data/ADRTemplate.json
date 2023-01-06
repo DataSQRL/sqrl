@@ -3,15 +3,13 @@
     "reference": 4234221,
     "name": "penecilin no.1",
     "severity": "severe",
-    "ingredients":
-    [
+    "ingredients": [
       {
         "ingredient": "x",
         "min_dosage": 50
       }
     ],
-    "preconditions":
-    [
+    "preconditions": [
       {
         "diagnosis": "xxx",
         "max_duration": "5 days"

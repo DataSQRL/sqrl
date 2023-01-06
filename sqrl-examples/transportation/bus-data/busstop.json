@@ -1,16 +1,18 @@
-[{
-  "stopid": 26860,
-  "name": "Fremont Ave N & N 34th St",
-  "location": {
-    "lat": 47.65002102795886,
-    "long": -122.34965420650676
+[
+  {
+    "stopid": 26860,
+    "name": "Fremont Ave N & N 34th St",
+    "location": {
+      "lat": 47.65002102795886,
+      "long": -122.34965420650676
+    }
+  },
+  {
+    "stopid": 26870,
+    "name": "N 35th St & Troll Ave N",
+    "location": {
+      "lat": 47.65002819491029,
+      "long": -122.34700512857873
+    }
   }
-},
-{
-  "stopid": 26870,
-  "name": "N 35th St & Troll Ave N",
-  "location": {
-    "lat": 47.65002819491029,
-    "long": -122.34700512857873
-  }
-}]
+]

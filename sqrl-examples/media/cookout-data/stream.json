@@ -5,7 +5,11 @@
     "scheduled_start": "2021-07-01 18:30:00",
     "scheduled_end": "2021-07-01 19:30:00",
     "title": "Making Spaetzle from Scratch",
-    "tags": ["German", "Noodle", "Main"]
+    "tags": [
+      "German",
+      "Noodle",
+      "Main"
+    ]
   },
   {
     "id": 10009452,
@@ -13,14 +17,21 @@
     "scheduled_start": "2021-07-02 18:45:00",
     "scheduled_end": "2021-07-02 19:30:00",
     "title": "Apfelstrudel to Perfection",
-    "tags": ["Desert", "German"]
+    "tags": [
+      "Desert",
+      "German"
+    ]
   },
   {
     "id": 10009942,
     "userid": 34234995,
     "scheduled_start": "2021-07-02 19:00:00",
-    "scheduled_end": "2021-07-02 20:30:00",,
+    "scheduled_end": "2021-07-02 20:30:00",
     "title": "The most delicious Pretzel",
-    "tags": ["German", "Bread", "Appetizer"]
+    "tags": [
+      "German",
+      "Bread",
+      "Appetizer"
+    ]
   }
 ]

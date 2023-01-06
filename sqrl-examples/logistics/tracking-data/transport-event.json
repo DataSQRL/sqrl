@@ -4,10 +4,9 @@
     "trackingno": 6011360655759936,
     "type": "RECEIVED",
     "timestamp": "2021-06-30T15:34:27+00:00",
-    "location":
-    {
-        "state": "CA",
-        "city": "San Francisco",
+    "location": {
+      "state": "CA",
+      "city": "San Francisco"
     }
   },
   {
@@ -15,10 +14,9 @@
     "trackingno": 6011360655759936,
     "type": "TRANSIT_CHECKIN",
     "timestamp": "2021-06-30T19:15:39+00:00",
-    "location":
-    {
-        "state": "CA",
-        "city": "Oakland",
+    "location": {
+      "state": "CA",
+      "city": "Oakland"
     }
   },
   {
@@ -26,10 +24,9 @@
     "trackingno": 6011360655759936,
     "type": "TRANSIT_CHECKOUT",
     "timestamp": "2021-07-01T02:05:11+00:00",
-    "location":
-    {
-        "state": "CA",
-        "city": "Oakland",
+    "location": {
+      "state": "CA",
+      "city": "Oakland"
     }
   },
   {
@@ -37,10 +34,9 @@
     "trackingno": 6011360655759936,
     "type": "TRANSIT_CHECKIN",
     "timestamp": "2021-07-01T12:05:27+00:00",
-    "location":
-    {
-        "state": "OR",
-        "city": "Salem",
+    "location": {
+      "state": "OR",
+      "city": "Salem"
     }
   },
   {
@@ -48,10 +44,9 @@
     "trackingno": 6011360655759936,
     "type": "TRANSIT_CHECKOUT",
     "timestamp": "2021-07-02T03:55:35+00:00",
-    "location":
-    {
-        "state": "OR",
-        "city": "Salem",
+    "location": {
+      "state": "OR",
+      "city": "Salem"
     }
   },
   {
@@ -59,10 +54,9 @@
     "trackingno": 6011360655759936,
     "type": "TRANSIT_CHECKIN",
     "timestamp": "2021-07-02T15:07:19+00:00",
-    "location":
-    {
-        "state": "WA",
-        "city": "Tacoma",
+    "location": {
+      "state": "WA",
+      "city": "Tacoma"
     }
   },
   {
@@ -70,10 +64,9 @@
     "trackingno": 6011360655759936,
     "type": "OUT_FOR_DELIVERY",
     "timestamp": "2021-07-03T06:12:48+00:00",
-    "location":
-    {
-        "state": "WA",
-        "city": "Tacoma",
+    "location": {
+      "state": "WA",
+      "city": "Tacoma"
     }
   },
   {
@@ -81,10 +74,9 @@
     "trackingno": 6011360655759936,
     "type": "DELIVERY_ATTEMPT",
     "timestamp": "2021-07-03T14:22:51+00:00",
-    "location":
-    {
-        "state": "WA",
-        "city": "SEATTLE",
+    "location": {
+      "state": "WA",
+      "city": "SEATTLE"
     }
   },
   {
@@ -92,10 +84,9 @@
     "trackingno": 6011360655759936,
     "type": "TRANSIT_CHECKIN",
     "timestamp": "2021-07-03T18:48:10+00:00",
-    "location":
-    {
-        "state": "WA",
-        "city": "KENT",
+    "location": {
+      "state": "WA",
+      "city": "KENT"
     }
   },
   {
@@ -103,10 +94,9 @@
     "trackingno": 6011360655759936,
     "type": "OUT_FOR_DELIVERY",
     "timestamp": "2021-07-04T06:25:03+00:00",
-    "location":
-    {
-        "state": "WA",
-        "city": "KENT",
+    "location": {
+      "state": "WA",
+      "city": "KENT"
     }
   },
   {
@@ -114,10 +104,9 @@
     "trackingno": 6011360655759936,
     "type": "DELIVERED",
     "timestamp": "2021-07-04T11:41:34+00:00",
-    "location":
-    {
-        "state": "WA",
-        "city": "SEATTLE",
+    "location": {
+      "state": "WA",
+      "city": "SEATTLE"
     }
   }
 ]

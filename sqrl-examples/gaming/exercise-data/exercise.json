@@ -9,7 +9,7 @@
     "userid": 104534349,
     "timestamp": 1623295608,
     "type": "swimming",
-    "distance":  2000
+    "distance": 2000
   },
   {
     "userid": 104534349,
@@ -23,7 +23,6 @@
     "type": "running",
     "distance": 10000
   },
-
   {
     "userid": 234023410,
     "timestamp": 1623353608,
@@ -47,5 +46,5 @@
     "timestamp": 1623185349,
     "type": "biking",
     "distance": 40000
-  },
+  }
 ]

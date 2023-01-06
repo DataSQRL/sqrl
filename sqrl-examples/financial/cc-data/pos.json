@@ -1,26 +1,28 @@
-[{
-  "pos_id": 85592124,
-  "merchant_id": 255434,
-  "registered_on": 1561934067,
-  "online": false,
-  "location": {
-    "lat": 47.649920218648,
-    "long":  -122.35094196777263
+[
+  {
+    "pos_id": 85592124,
+    "merchant_id": 255434,
+    "registered_on": 1561934067,
+    "online": false,
+    "location": {
+      "lat": 47.649920218648,
+      "long": -122.35094196777263
+    }
+  },
+  {
+    "pos_id": 74432931,
+    "merchant_id": 311443,
+    "registered_on": 1519259521,
+    "online": true
+  },
+  {
+    "pos_id": 44538314,
+    "merchant_id": 255434,
+    "registered_on": 1481934067,
+    "online": false,
+    "location": {
+      "lat": 47.66182793715274,
+      "long": -122.37557454632062
+    }
   }
-},
-{
-  "pos_id": 74432931,
-  "merchant_id": 311443,
-  "registered_on": 1519259521,
-  "online": true,
-},
-{
-  "pos_id": 44538314,
-  "merchant_id": 255434,
-  "registered_on": 1481934067,
-  "online": false,
-  "location": {
-    "lat": 47.66182793715274,
-    "long":   -122.37557454632062
-  }
-}]
+]
