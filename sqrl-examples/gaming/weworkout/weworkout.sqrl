@@ -6,7 +6,8 @@ IMPORT math;
 
 Challenges.week := time.roundToWeek(time.parse(week_of))
 
-Membership.team := JOIN Team ON @.teamid = Team.teamid INVERSE members;
+Membership.team := JOIN Team ON @.teamid = Team.teamid;
+Team.members := JOIN Membership ON Membership.teamid = @.teamid;
 
 User.exercises := JOIN Exercise ON Exercise.userid = @.userid;
 User.memberships := JOIN Membership ON Membership.userid = @.userid;

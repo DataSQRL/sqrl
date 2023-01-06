@@ -47,5 +47,9 @@ _TxBreakdown := SELECT o.to.address AS receiverAddr, i.`from`.address AS senderA
                 FROM Transactions.outputs o JOIN o.parent tx JOIN tx.inputs i
                 GROUP BY receiverAddr, senderAddr, month;
 
-Address.receivedFrom := JOIN _TxBreakdown ON _TxBreakdown.receiverAddr = @.address ORDER BY month DESC, total_value DESC INVERSE receiver;
-Address.sentTo := JOIN _TxBreakdown ON _TxBreakdown.senderAddr = @.address ORDER BY month DESC, total_value DESC INVERSE sender;
+Address.receivedFrom := JOIN _TxBreakdown ON _TxBreakdown.receiverAddr = @.address
+                        ORDER BY month DESC, total_value DESC;
+_TxBreakdown.receiver := JOIN Address ON @.receiverAddr = Address.address;
+Address.sentTo := JOIN _TxBreakdown ON _TxBreakdown.senderAddr = @.address
+                  ORDER BY month DESC, total_value DESC;
+_TxBreakdown.sender := JOIN Address ON @.senderAddr = Address.address;

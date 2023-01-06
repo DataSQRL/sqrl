@@ -18,8 +18,11 @@ Comment.numvotes := SELECT COUNT(*) FROM @.votes LIMIT 1;
 Post.isFlagged := (SELECT COUNT(*) FROM @.flags) > 5;
 Comment.isFlagged := (SELECT COUNT(*) FROM @.flags) > 3;
 
-User.posts := JOIN Post ON Post.userid = @.id INVERSE user;
-User.comments := JOIN Comment ON Comment.userid = @.id INVERSE user;
+User.posts := JOIN Post ON Post.userid = @.id;
+Post.user := JOIN User ON @.userid = User.id;
+
+User.comments := JOIN Comment ON Comment.userid = @.id;
+Comment.user := JOIN User ON @.userid = User.id;
 
 Vote.userkarma := FROZEN_LOOKUP(@.user.currentKarma); --Looks up the query when event is processed by system
 Vote.karma := math.log10(userkarma);

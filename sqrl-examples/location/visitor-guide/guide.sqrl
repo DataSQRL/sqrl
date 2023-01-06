@@ -8,7 +8,8 @@ Tracking.location := JOIN Location ON @.location IN Location.geo_boundary LIMIT 
 
 Visitor := SELECT DISTINCT visitor_id FROM Tracking;
 Visitor.track := JOIN Tracking ON Tracking.visitor_id = @.visitor_id
-                      ORDER BY timestamp DESC INVERSE visitor;
+                      ORDER BY timestamp DESC;
+Tracking.visitor := JOIN Visitor ON @.visitor_id = Visitor.visitor_id;
 Visitor.current := JOIN @.track ORDER BY timestamp DESC LIMIT 1;
 
 /* Count how many visitors are at a given location. Ignore old geo trackings

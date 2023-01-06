@@ -5,9 +5,12 @@ IMPORT vec.*;
 
 -- Link entities together
 
-Sensor.metrics := JOIN SensorMetrics ON SensorMetrics.sensorid = @.sensorid INVERSE sensor;
-Home.sensors := JOIN Sensor ON Sensor.homeid = @.homeid INVERSE home;
-Home.rules := JOIN Rule ON Rule.homeid = @.homeid INVERSE home;
+Sensor.metrics := JOIN SensorMetrics ON SensorMetrics.sensorid = @.sensorid;
+SensorMetrics.sensor := JOIN Sensor ON @.sensorid = Sensor.sensorid;
+Home.sensors := JOIN Sensor ON Sensor.homeid = @.homeid;
+Sensor.home := JOIN Home ON @.homeid = Home.homeid;
+Home.rules := JOIN Rule ON Rule.homeid = @.homeid;
+Rule.home := JOIN Home ON @.homeid = Home.homeid;
 
 Home.rooms := SELECT DISTINCT room AS name FROM @.sensors;
 Home.rooms.sensors := JOIN @.parent.sensors s ON s.room = @.name;
@@ -49,5 +52,7 @@ RuleTriggeredEvent := STREAM ON ADD AS
 SELECT uuid() AS eventid, now() AS timestamp, home.homeid, ruleid, action FROM Rule
 WHERE isActive;
 
-Home.triggeredRules := JOIN RuleTriggeredEvent ON RuleTriggered.homeid = @.homeid INVERSE home;
-RuleTriggeredEvent.rule := JOIN Rule ON Rule.ruleid = @.ruleid INVERSE triggerEvents;
+Home.triggeredRules := JOIN RuleTriggeredEvent ON RuleTriggered.homeid = @.homeid;
+RuleTriggeredEvent.home := JOIN Home ON @.homeid = Home.homeid;
+RuleTriggeredEvent.rule := JOIN Rule ON Rule.ruleid = @.ruleid;
+Rule.triggeredEvents := JOIN RuleTriggeredEvent ON @.ruleid = RuleTriggeredEvent.ruleid;

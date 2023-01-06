@@ -5,9 +5,12 @@ IMPORT time.roundToMin;
 IMPORT math;
 
 Cluster := SELECT DISTINCT clusterid FROM Config;
-Cluster.configs := JOIN Config ON Config.clusterid = @.clusterid ORDER BY timestamp DESC INVERSE cluster;
+Cluster.configs := JOIN Config ON Config.clusterid = @.clusterid ORDER BY timestamp DESC;
+Config.cluster := JOIN Cluster ON @.clusterid = Cluster.clusterid;
 Cluster.nodes := SELECT DISTINCT nodeid FROM @.configs;
-Cluster.nodes.configs := JOIN @.parent.configs c ON c.nodeid = @.nodeid ORDER BY timestamp DESC INVERSE node;
+Cluster.nodes.configs := JOIN @.parent.configs c ON c.nodeid = @.nodeid ORDER BY timestamp DESC;
+Configs.node := JOIN @.cluster.nodes n ON @.nodeid = n.nodeid;
+
 Cluster.nodes.last_config := JOIN @.configs ORDER BY timestamp DESC LIMIT 1;
 -- A node is active in the cluster if it has not be assigned to a different cluster and has reported in the last 4 hours
 Cluster.nodes.isActive := (SELECT timestamp FROM Config WHERE nodeid = @.nodeid LIMIT 1) = @.last_config.timestamp
@@ -16,7 +19,8 @@ Cluster.num_db_versions := SELECT COUNT(DISTINCT db_version) FROM @.nodes.last_c
 
 
 Metrics.config := JOIN Config ON Config.nodeid = @.nodeid AND Config.timestamp <= @.timestamp
-                    ORDER BY Config.timestamp DESC LIMIT 1 INVERSE metrics;
+                    ORDER BY Config.timestamp DESC LIMIT 1;
+Config.metrics := JOIN Metrics ON @.nodeid = Metrics.nodeid AND Metrics.timestamp <= @.timestamp;
 Cluster.nodes.metrics := JOIN @.configs.metrics m ORDER BY m.timestamp DESC;
 
 Metrics.cpu_load_percent := @.cpu_load / @.config.cores;

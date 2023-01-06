@@ -2,7 +2,8 @@ IMPORT adr-data.*;
 
 IMPORT vec;
 
-Patient.prescriptions := JOIN Prescriptions ON @.id = Prescriptions.patient_id INVERSE patient;
+Patient.prescriptions := JOIN Prescriptions ON @.id = Prescriptions.patient_id;
+Prescriptions.patient := JOIN Patient ON Patient.id = @.patient_id;
 
 Patient.activeIngredients := SELECT p.order_no as prescription_no, di.ingredient as ingredient,
                                     p.dosage*di.fraction as dosage
