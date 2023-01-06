@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class DataSQRLRepo implements TestDataset {
 
-  public static final Path BASE_PATH = Path.of("..", "sqrl-examples", "datasqrl");
+  public static final Path BASE_PATH = Path.of("..", "sqrl-examples", "datasqrl", "repo");
 
   public static final DataSQRLRepo INSTANCE = new DataSQRLRepo();
 
@@ -53,6 +53,6 @@ public class DataSQRLRepo implements TestDataset {
   }
 
   public TestGraphQLSchema getGraphQL() {
-    return new TestGraphQLSchema.Directory(BASE_PATH);
+    return new TestGraphQLSchema.Directory(BASE_PATH.resolve("graphql"));
   }
 }

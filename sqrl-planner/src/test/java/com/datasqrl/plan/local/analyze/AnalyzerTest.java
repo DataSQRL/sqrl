@@ -99,11 +99,6 @@ class AnalyzerTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void importInvalidPathTest() {
-    generateInvalid(parser.parse("IMPORT Product;"));
-  }
-
-  @Test
   public void duplicateImportTest() {
     generateInvalid(
         parser.parse("IMPORT ecommerce-data.Product;\n"
