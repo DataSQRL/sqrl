@@ -71,7 +71,7 @@ public class Compiler {
     if (debug) debugger = compilerConfig.getDebug().getDebugger();
 
     Optional<TableSink> errorSink = new DynamicExporter().export(new Implementation(buildDir, collector),
-        NamePath.of(compilerConfig.getErrorSink()));
+        NamePath.parse(compilerConfig.getErrorSink()));
     collector.checkFatal(errorSink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
         "Cannot resolve table sink: %s", compilerConfig.getErrorSink());
 
