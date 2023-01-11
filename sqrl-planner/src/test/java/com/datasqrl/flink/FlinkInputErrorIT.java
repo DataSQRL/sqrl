@@ -5,19 +5,14 @@ package com.datasqrl.flink;
 
 import com.datasqrl.AbstractPhysicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.plan.local.generate.DebuggerConfig;
+import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
-import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Retail;
-import com.datasqrl.util.data.Retail.RetailScriptNames;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
@@ -26,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
+class FlinkInputErrorIT extends AbstractPhysicalSQRLIT {
 
   private Retail example = Retail.INSTANCE;
   private Path outputPath = example.getRootPackageDirectory().resolve("export-data");
@@ -34,6 +29,7 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
+    this.closeSnapshotOnValidate = false;
     if (!Files.isDirectory(outputPath)) {
       Files.createDirectory(outputPath);
     }
@@ -49,30 +45,19 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
   }
 
   @Test
-  public void debugC3602OutputTest() {
+  public void brokenRetailDataTest() {
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
-          .debugger(DebuggerConfig.of(NamePath.of("output"),null))
+        .errorSink(NamePath.of("output","errors"))
         .build(),
         example.getRootPackageDirectory());
-    TestScript script = example.getScript(RetailScriptNames.FULL);
-    validateTables(script.getScript(),"favorite_categories", "order_stats",
-        "NewCustomerPromotion", "order_again", "total");
-  }
+    validateTables("IMPORT ecommerce-broken.*;","customer", "orders",
+        "product");
+    Path errorPath = outputPath.resolve("errors");
+    List<String> errors = FileTestUtil.collectAllPartFilesByLine(errorPath);
+    String errorText = errors.stream().sorted().collect(Collectors.joining("\n"));
 
-  @Test
-  public void debugC3602OutputSelectTablesTest() {
-    initialize(IntegrationTestSettings.getFlinkWithDBConfig()
-            .debugger(DebuggerConfig.of(NamePath.of("output"),
-                toName("order_stats", "NewCustomerPromotion", "order_again", "total")))
-            .build(),
-        example.getRootPackageDirectory());
-    TestScript script = example.getScript(RetailScriptNames.FULL);
-    validateTables(script.getScript(),"favorite_categories");
-  }
-
-  public static Set<Name> toName(String... tables) {
-    Preconditions.checkArgument(tables!=null && tables.length>0);
-    return Arrays.stream(tables).map(Name::system).collect(Collectors.toSet());
+    snapshot.addContent(errorText,"input-errors");
+    snapshot.createOrValidate();
   }
 
 }

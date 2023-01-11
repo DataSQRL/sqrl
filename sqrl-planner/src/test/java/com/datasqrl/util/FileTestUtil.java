@@ -8,35 +8,48 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Strings;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public class FileTestUtil {
 
   @SneakyThrows
-  public static int countLinesInAllPartFiles(Path path) {
-    int lineCount = 0;
+  public static long countLinesInAllPartFiles(Path path) {
+    AtomicLong lineCount = new AtomicLong(0);
+    applyAllPartFileLines(path, lineStream -> lineCount.addAndGet(lineStream.count()));
+    return lineCount.get();
+  }
+
+  @SneakyThrows
+  public static List<String> collectAllPartFilesByLine(Path path) {
+    List<String> result = new ArrayList<>();
+    applyAllPartFileLines(path, lineStream -> lineStream.forEach(result::add));
+    return result;
+  }
+
+  @SneakyThrows
+  public static void applyAllPartFileLines(Path path, Consumer<Stream<String>> consumer) {
     for (File file : FileUtils.listFiles(path.toFile(), new RegexFileFilter("^part(.*?)"),
         DirectoryFileFilter.DIRECTORY)) {
       try (Stream<String> stream = Files.lines(file.toPath(), StandardCharsets.UTF_8)) {
-        lineCount += stream.count();
+        consumer.accept(stream);
       }
     }
-    return lineCount;
   }
-
-  ;
 
   @SneakyThrows
   public static Collection<Path> getAllFiles(Path dir) {

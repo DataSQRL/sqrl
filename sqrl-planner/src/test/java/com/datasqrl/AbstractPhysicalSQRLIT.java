@@ -52,9 +52,10 @@ import org.apache.commons.lang3.ArrayUtils;
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   public PhysicalPlanner physicalPlanner;
+  JDBCEngineConfiguration jdbc;
 
   protected SnapshotTest.Snapshot snapshot;
-  JDBCEngineConfiguration jdbc;
+  protected boolean closeSnapshotOnValidate = true;
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
     super.initialize(settings, rootDir);
@@ -146,7 +147,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
             "export", sink.getConfiguration().getIdentifier());
       }
     }
-    snapshot.createOrValidate();
+    if (closeSnapshotOnValidate) snapshot.createOrValidate();
   }
 
   private void addContent(OptimizedDAG dag, String... caseNames) {
