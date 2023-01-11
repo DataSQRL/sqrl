@@ -24,11 +24,16 @@ public class ErrorPrinter {
         .collect(Collectors.joining("\n"));
   }
 
+  public static String getHead(ErrorMessage errorMessage) {
+    return String.format("[%s] %s\n", errorMessage.getSeverity(), errorMessage.getMessage());
+  }
+
+
   public static String prettyPrint(ErrorMessage errorMessage) {
     ErrorLocation location = errorMessage.getLocation();
     StringBuilder b = new StringBuilder();
     //print error severity and message
-    b.append(String.format("[%s] %s\n", errorMessage.getSeverity(), errorMessage.getMessage()));
+    b.append(getHead(errorMessage));
     //print error location
     String fileLocation = (location.hasPrefix()?String.format("%s:",location.getPrefix().toLowerCase()):"") +
         location.getPath();
@@ -38,7 +43,7 @@ public class ErrorPrinter {
       b.append(":\n");
     }
 
-    boolean addSeperator = false;
+    boolean addSeparator = false;
     if (location.hasFile()) {
       //print previous 2 lines
       //print line
@@ -58,21 +63,27 @@ public class ErrorPrinter {
         b.append("v\n");
         String codeSnippet = location.getSourceMap().getRange(new FileRange(fileRange.getFromLine(),1,
             fileRange.getToLine(), fileRange.getToOffset()));
-        b.append(codeSnippet);
-        addSeperator = true;
+        b.append(codeSnippet).append("\n");
+        addSeparator = true;
       }
     }
     //print error description (context)
-    ErrorLabel label = errorMessage.getErrorLabel();
-    String errorDescription = label.getErrorDescription();
-    if (!Strings.isNullOrEmpty(errorDescription)) {
-      if (addSeperator) b.append("--\n");
-      b.append(errorDescription);
-    }
+    b.append(getErrorDescription(errorMessage, addSeparator));
     //print error code (if not generic)
 //    if (label!=ErrorLabel.GENERIC) {
 //      b.append("[").append(label.getLabel()).append("]");
 //    }
     return b.toString();
+  }
+
+  public static String getErrorDescription(ErrorMessage errorMessage, boolean addSeparator) {
+    ErrorLabel label = errorMessage.getErrorLabel();
+    String result = label.getErrorDescription();
+    if (!Strings.isNullOrEmpty(result)) {
+      if (addSeparator) result = "--\n" + result;
+      return result;
+    } else {
+      return "";
+    }
   }
 }

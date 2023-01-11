@@ -13,6 +13,7 @@ import com.datasqrl.engine.database.inmemory.InMemoryMetadataStore;
 import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
 import com.datasqrl.engine.stream.inmemory.InMemoryStreamConfiguration;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.JDBCTestDatabase;
@@ -36,6 +37,8 @@ public class IntegrationTestSettings {
   final DatabaseEngine database = DatabaseEngine.INMEMORY;
   @Builder.Default
   final DebuggerConfig debugger = DebuggerConfig.NONE;
+  @Builder.Default
+  final NamePath errorSink = NamePath.of("print","errors");
 
   Pair<DatabaseHandle, EngineSettings> getSqrlSettings() {
 

@@ -4,14 +4,14 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.OptimizedDAG;
+import java.util.EnumSet;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.tools.RelBuilder;
-
-import java.util.EnumSet;
-import java.util.List;
 
 /**
  * Describes a physical execution engine and it's capabilities.
@@ -41,7 +41,7 @@ public interface ExecutionEngine {
   ExecutionResult execute(EnginePhysicalPlan plan);
 
   EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
-      RelBuilder relBuilder);
+      RelBuilder relBuilder, TableSink errorSink);
 
   @AllArgsConstructor
   @Getter

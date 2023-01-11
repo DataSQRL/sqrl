@@ -7,8 +7,8 @@ import static com.datasqrl.engine.stream.flink.FlinkStreamBuilder.STATS_NAME_PRE
 
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.engine.stream.StreamEngine;
-import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.StreamEngine.Builder;
+import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.FlinkStreamHolder;
@@ -23,13 +23,11 @@ import com.datasqrl.io.DataSystem;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Raw;
-import com.datasqrl.io.stats.TableStatisticsStoreProvider.Encapsulated;
-import com.datasqrl.io.tables.TableInput;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.stats.SourceTableStatistics;
 import com.datasqrl.io.stats.TableStatisticsStore;
 import com.datasqrl.io.stats.TableStatisticsStoreProvider;
+import com.datasqrl.io.stats.TableStatisticsStoreProvider.Encapsulated;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
@@ -39,7 +37,6 @@ import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
-
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -131,7 +128,7 @@ public class DataDiscovery {
       } else {
         return Optional.empty();
       }
-    }, "stats", ErrorPrefix.INPUT_DATA.resolve(tableSource.getName()), SourceRecord.Raw.class);
+    }, ErrorPrefix.INPUT_DATA.resolve(tableSource.getName()), SourceRecord.Raw.class);
     builder.getSideStreams().add(Stream.of(statistics).map(s -> {
       try (TableStatisticsStore store = statisticsStoreProvider.openStore()) {
         store.putTableStatistics(tableDigest.getPath(), s);

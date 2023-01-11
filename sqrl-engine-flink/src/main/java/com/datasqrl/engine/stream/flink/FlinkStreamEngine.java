@@ -4,11 +4,15 @@
 package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRegistrationContext;
+import com.datasqrl.io.tables.TableSink;
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.OutputTag;
@@ -21,14 +25,28 @@ public interface FlinkStreamEngine extends StreamEngine {
 
     StreamExecutionEnvironment getEnvironment();
 
+    FlinkTableRegistrationContext getContext();
+
     StreamTableEnvironment getTableEnvironment();
 
-    OutputTag<ProcessError> getErrorTag(final String errorName);
+    Optional<DataStream<InputError>> getErrorStream();
+
+    ErrorHandler getErrorHandler();
+
+    void setErrorSink(TableSink errorSink);
 
     void setJobType(JobType jobType);
 
     @Override
     FlinkJob build();
+
+  }
+
+  interface ErrorHandler {
+
+    OutputTag<InputError> getTag();
+
+    void registerErrorStream(DataStream<InputError> errorStream);
 
   }
 

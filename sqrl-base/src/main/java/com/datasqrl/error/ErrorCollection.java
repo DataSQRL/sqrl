@@ -41,7 +41,7 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
     addInternal(err);
   }
 
-  protected void addAll(@NonNull ErrorCollection other, ErrorLocation baseLocation) {
+  public void addAll(@NonNull ErrorCollection other, ErrorLocation baseLocation) {
     if (other == null || other.isEmpty()) return;
     other.stream().forEach(err -> add(err, baseLocation));
   }

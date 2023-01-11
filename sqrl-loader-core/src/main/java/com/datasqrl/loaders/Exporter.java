@@ -14,6 +14,6 @@ public interface Exporter {
 
   boolean usesFile(Path file);
 
-  Optional<TableSink> export(LoaderContext ctx, NamePath fullPath);
+  Optional<TableSink> export(ExporterContext ctx, NamePath fullPath);
 
 }

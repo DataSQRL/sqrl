@@ -5,54 +5,44 @@ package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.config.SourceServiceLoader;
 import com.datasqrl.engine.stream.StreamHolder;
+import com.datasqrl.engine.stream.flink.FlinkStreamEngine.ErrorHandler;
+import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRegistrationContext;
 import com.datasqrl.engine.stream.flink.schema.FlinkRowConstructor;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
-import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.formats.TextLineFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
-import com.datasqrl.io.impl.file.FilePath;
-import com.datasqrl.io.impl.file.FilePathConfig;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Predicate;
-import lombok.AllArgsConstructor;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.Value;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.functions.FlatMapFunction;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.serialization.DeserializationSchema;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
-import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.util.Collector;
+import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.util.OutputTag;
 
 @Getter
-//TODO: Do output tags (errors, monitor) need a globally unique name or just local to the job?
+@Slf4j
 public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
   public static final int DEFAULT_PARALLELISM = 16;
@@ -60,21 +50,51 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
 
   private final FlinkStreamEngine engine;
   private final StreamExecutionEnvironment environment;
-  private final StreamTableEnvironment tableEnvironment;
+  private final StreamTableEnvironmentImpl tableEnvironment;
+  private final StreamStatementSet streamStatementSet;
   private final UUID uuid;
   private final int defaultParallelism = DEFAULT_PARALLELISM;
   private FlinkStreamEngine.JobType jobType;
 
-  public static final String ERROR_TAG_PREFIX = "error";
-  private Map<String, OutputTag<ProcessError>> errorTags = new HashMap<>();
+  public static final String ERROR_TAG_PREFIX = "_errors";
+
+  private final List<DataStream<InputError>> errorStreams = new ArrayList<>();
+  @Setter
+  private TableSink errorSink = null;
 
 
   public FlinkStreamBuilder(FlinkStreamEngine engine, StreamExecutionEnvironment environment) {
     this.engine = engine;
     this.environment = environment;
-    this.tableEnvironment = StreamTableEnvironment.create(environment);
+    this.tableEnvironment = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(environment);
+    this.streamStatementSet = tableEnvironment.createStatementSet();
 
     this.uuid = UUID.randomUUID();
+  }
+
+  @Override
+  public FlinkTableRegistrationContext getContext() {
+    return new FlinkTableRegistrationContext(tableEnvironment, this, streamStatementSet);
+  }
+
+  @Override
+  public ErrorHandler getErrorHandler() {
+    return new ErrorHandler() {
+
+      final AtomicInteger counter = new AtomicInteger(0);
+
+      @Override
+      public OutputTag<InputError> getTag() {
+        return new OutputTag<>(
+            FlinkStreamEngine.getFlinkName(ERROR_TAG_PREFIX, String.valueOf(counter.incrementAndGet()))) {
+        };
+      }
+
+      @Override
+      public void registerErrorStream(DataStream<InputError> errorStream) {
+        errorStreams.add(errorStream);
+      }
+    };
   }
 
   @Override
@@ -83,20 +103,22 @@ public class FlinkStreamBuilder implements FlinkStreamEngine.Builder {
   }
 
   @Override
-  public FlinkStreamEngine.FlinkJob build() {
-    return engine.createStreamJob(environment, jobType);
+  public Optional<DataStream<InputError>> getErrorStream() {
+    if (errorStreams.size()>0) {
+      DataStream<InputError> combinedStream = errorStreams.get(0);
+      if (errorStreams.size() > 1) {
+        combinedStream = combinedStream.union(
+            errorStreams.subList(1, errorStreams.size()).toArray(size -> new DataStream[size]));
+      }
+      return Optional.of(combinedStream);
+    } else return Optional.empty();
   }
 
   @Override
-  public OutputTag<ProcessError> getErrorTag(final String errorName) {
-    OutputTag<ProcessError> errorTag = errorTags.get(errorName);
-    if (errorTag == null) {
-      errorTag = new OutputTag<>(
-          FlinkStreamEngine.getFlinkName(ERROR_TAG_PREFIX, errorName)) {
-      };
-      errorTags.put(errorName, errorTag);
-    }
-    return errorTag;
+  public FlinkStreamEngine.FlinkJob build() {
+    //Process errors
+    getErrorStream().ifPresent(errStream -> errStream.print());
+    return engine.createStreamJob(environment, jobType);
   }
 
   @Override

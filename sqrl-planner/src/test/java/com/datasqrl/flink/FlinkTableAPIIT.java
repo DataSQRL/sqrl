@@ -8,7 +8,6 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
-import com.datasqrl.engine.stream.flink.LocalFlinkStreamEngineImpl;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
@@ -17,8 +16,8 @@ import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.schema.input.DefaultSchemaValidator;
+import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Retail;
 import lombok.SneakyThrows;
@@ -46,8 +45,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 
     TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"));
 
-    LocalFlinkStreamEngineImpl flink = new LocalFlinkStreamEngineImpl(
-        new FlinkEngineConfiguration());
+    FlinkStreamEngine flink = FlinkEngineConfiguration.builder().build().initialize(error);
     FlinkStreamEngine.Builder streamBuilder = flink.createJob();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 
@@ -57,7 +55,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
         SchemaAdjustmentSettings.DEFAULT, NameCanonicalizer.SYSTEM,
         new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT));
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
-        "schema", ErrorPrefix.INPUT_DATA, SourceRecord.Named.class);
+        ErrorPrefix.INPUT_DATA, SourceRecord.Named.class);
     streamBuilder.addAsTable(validate, tblSource.getSchema(), "orders");
 
     StreamTableEnvironment tEnv = streamBuilder.getTableEnvironment();

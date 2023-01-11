@@ -7,7 +7,7 @@ import com.datasqrl.error.ErrorLocation;
 
 public interface StreamHolder<T> {
 
-  <R> StreamHolder<R> mapWithError(FunctionWithError<T, R> function, String errorName,
+  <R> StreamHolder<R> mapWithError(FunctionWithError<T, R> function,
       ErrorLocation errorLocation, Class<R> clazz);
 
   void printSink();

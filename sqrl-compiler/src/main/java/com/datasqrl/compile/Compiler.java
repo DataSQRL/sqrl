@@ -10,6 +10,7 @@ import com.datasqrl.config.GlobalEngineConfiguration;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.generate.SchemaGenerator;
 import com.datasqrl.graphql.inference.PgSchemaBuilder;
@@ -17,6 +18,10 @@ import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.loaders.DynamicExporter;
+import com.datasqrl.loaders.ExporterContext.Implementation;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.PlannerFactory;
@@ -65,6 +70,12 @@ public class Compiler {
     DebuggerConfig debugger = DebuggerConfig.NONE;
     if (debug) debugger = compilerConfig.getDebug().getDebugger();
 
+    Optional<TableSink> errorSink = new DynamicExporter().export(new Implementation(buildDir, collector),
+        NamePath.of(compilerConfig.getErrorSink()));
+    collector.checkFatal(errorSink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
+        "Cannot resolve table sink: %s", compilerConfig.getErrorSink());
+
+
     Session session = createSession(collector, engineSettings, debugger);
     Resolve resolve = new Resolve(buildDir);
 
@@ -95,7 +106,7 @@ public class Compiler {
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
     OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), env);
-    PhysicalPlan plan = createPhysicalPlan(dag, env, session);
+    PhysicalPlan plan = createPhysicalPlan(dag, env, session, errorSink.get());
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
@@ -159,8 +170,8 @@ public class Compiler {
     return root;
   }
 
-  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s) {
-    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getPlanner().getRelBuilder());
+  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s, TableSink errorSink) {
+    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getPlanner().getRelBuilder(), errorSink);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     return physicalPlan;
   }

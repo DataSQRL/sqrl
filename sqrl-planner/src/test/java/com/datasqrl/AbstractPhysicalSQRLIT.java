@@ -13,6 +13,8 @@ import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.loaders.DynamicExporter;
+import com.datasqrl.loaders.ExporterContext.Implementation;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.global.DAGPlanner;
@@ -63,7 +65,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       .findAny()
       .orElseThrow();
 
-    physicalPlanner = new PhysicalPlanner(planner.getRelBuilder());
+    TableSink errorSink = new DynamicExporter().export(new Implementation(rootDir, error),settings.getErrorSink()).get();
+    physicalPlanner = new PhysicalPlanner(planner.getRelBuilder(), errorSink);
   }
 
 

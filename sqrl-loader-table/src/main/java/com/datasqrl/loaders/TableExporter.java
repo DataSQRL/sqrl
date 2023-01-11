@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.stream.Collectors;
 
 public class TableExporter extends DataSource implements com.datasqrl.loaders.Exporter {
 
@@ -39,7 +38,7 @@ public class TableExporter extends DataSource implements com.datasqrl.loaders.Ex
   }
 
   @Override
-  public Optional<TableSink> export(LoaderContext ctx, NamePath fullPath) {
+  public Optional<TableSink> export(ExporterContext ctx, NamePath fullPath) {
     Optional<TableSink> sink = readTable(ctx.getPackagePath(), fullPath, ctx.getErrorCollector(),
         TableSink.class, deserialize);
     if (sink.isEmpty()) {

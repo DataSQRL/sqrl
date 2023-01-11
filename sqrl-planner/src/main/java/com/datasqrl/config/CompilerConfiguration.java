@@ -35,6 +35,10 @@ public class CompilerConfiguration {
   @Builder.Default
   DebugConfiguration debug = new DebugConfiguration();
 
+  @NonNull @NotEmpty
+  @Builder.Default
+  String errorSink = "print.errors";
+
   @Builder
   @NoArgsConstructor
   @AllArgsConstructor
