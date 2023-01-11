@@ -3,24 +3,24 @@
  */
 package com.datasqrl;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.GlobalEngineConfiguration;
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.engine.EngineConfiguration;
 import com.datasqrl.engine.database.inmemory.InMemoryDatabaseConfiguration;
 import com.datasqrl.engine.database.inmemory.InMemoryMetadataStore;
 import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
 import com.datasqrl.engine.stream.inmemory.InMemoryStreamConfiguration;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.JDBCTestDatabase;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Value
 @Builder
@@ -34,6 +34,8 @@ public class IntegrationTestSettings {
   final StreamEngine stream = StreamEngine.INMEMORY;
   @Builder.Default
   final DatabaseEngine database = DatabaseEngine.INMEMORY;
+  @Builder.Default
+  final DebuggerConfig debugger = DebuggerConfig.NONE;
 
   Pair<DatabaseHandle, EngineSettings> getSqrlSettings() {
 
@@ -77,15 +79,23 @@ public class IntegrationTestSettings {
   }
 
   public static IntegrationTestSettings getFlinkWithDB() {
-    return getFlinkWithDB(DatabaseEngine.H2);
+    return getEngines(StreamEngine.FLINK, DatabaseEngine.H2).build();
+  }
+
+  public static IntegrationTestSettings.IntegrationTestSettingsBuilder getFlinkWithDBConfig() {
+    return getEngines(StreamEngine.FLINK, DatabaseEngine.H2);
   }
 
   public static IntegrationTestSettings getFlinkWithDB(DatabaseEngine engine) {
-    return getEngines(StreamEngine.FLINK, engine);
+    return getEngines(StreamEngine.FLINK, engine).build();
   }
 
-  public static IntegrationTestSettings getEngines(StreamEngine stream, DatabaseEngine database) {
-    return IntegrationTestSettings.builder().stream(stream).database(database).build();
+  public static IntegrationTestSettings.IntegrationTestSettingsBuilder getEngines(StreamEngine stream, DatabaseEngine database) {
+    return IntegrationTestSettings.builder().stream(stream).database(database);
+  }
+
+  public static IntegrationTestSettings getDatabaseOnly(DatabaseEngine database) {
+    return getEngines(IntegrationTestSettings.StreamEngine.INMEMORY, database).build();
   }
 
   @Value

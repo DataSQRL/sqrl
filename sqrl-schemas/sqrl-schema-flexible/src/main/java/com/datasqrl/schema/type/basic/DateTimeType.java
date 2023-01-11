@@ -5,7 +5,11 @@ package com.datasqrl.schema.type.basic;
 
 import com.datasqrl.schema.type.SqrlTypeVisitor;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class DateTimeType extends AbstractBasicType<Instant> {
 
@@ -25,12 +29,34 @@ public class DateTimeType extends AbstractBasicType<Instant> {
     return Conversion.INSTANCE;
   }
 
+  private static class StringParser implements Function<String,Instant> {
+
+    DateTimeFormatter[] formatters = {
+        DateTimeFormatter.ISO_INSTANT,
+        DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.systemDefault()),
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS]").withZone(
+            ZoneId.systemDefault())
+    };
+
+    @Override
+    public Instant apply(String s) {
+      for (DateTimeFormatter formatter : formatters) {
+        try {
+          return formatter.parse(s, Instant::from);
+        } catch (DateTimeParseException e) {
+          //try next formatter
+        }
+      }
+      throw new IllegalArgumentException();
+    }
+  }
+
   public static class Conversion extends SimpleBasicType.Conversion<Instant> {
 
     private static final Conversion INSTANCE = new Conversion();
 
     public Conversion() {
-      super(Instant.class, s -> Instant.parse(s));
+      super(Instant.class, new StringParser());
     }
 
     @Override

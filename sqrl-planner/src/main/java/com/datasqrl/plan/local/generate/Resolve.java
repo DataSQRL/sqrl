@@ -5,20 +5,20 @@ package com.datasqrl.plan.local.generate;
 
 import static com.datasqrl.error.ErrorCode.IMPORT_CANNOT_BE_ALIASED;
 import static com.datasqrl.error.ErrorCode.IMPORT_STAR_CANNOT_HAVE_TIMESTAMP;
+import static com.datasqrl.error.ErrorLabel.GENERIC;
 import static com.datasqrl.plan.local.generate.Resolve.OpKind.IMPORT_TIMESTAMP;
 
+import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.error.SourceMapImpl;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.function.builtin.time.FlinkFnc;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.DynamicExporter;
 import com.datasqrl.loaders.DynamicLoader;
-import com.datasqrl.loaders.Exporter;
 import com.datasqrl.loaders.Loader;
 import com.datasqrl.loaders.LoaderContext;
 import com.datasqrl.name.Name;
@@ -99,13 +99,11 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StreamAssignment;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.util.SqlNodePrinter;
 import org.apache.commons.lang3.tuple.Pair;
 
 @Getter
@@ -142,6 +140,7 @@ public class Resolve {
 
     //Updated while processing each node
     SqlNode currentNode = null;
+    ErrorCollector baseErrors;
     ErrorCollector errors;
 
     List<FlinkFnc> resolvedFunctions = new ArrayList<>();
@@ -176,30 +175,28 @@ public class Resolve {
     }
   }
 
-  public Env planDag(Session session, ScriptNode script) {
-    Env env = createEnv(session, script, script.getOriginalScript());
+  public Env planDag(Session session, ScriptNode script, ErrorCollector errors) {
+    Env env = createEnv(session, script, errors);
 
     try {
       resolveImports(env);
       mapOperations(env);
       planQueries(env);
+      debug(env);
       return env;
     } catch (Exception e) {
-      env.errors.handle(e);
-      throw e;
+      throw env.errors.handle(e);
     }
   }
 
-  public Env createEnv(Session session, ScriptNode script, String originalScript) {
+  public Env createEnv(Session session, ScriptNode script, ErrorCollector errors) {
     // All operations are applied to this env
     return new Env(
         session.planner.getDefaultSchema().unwrap(SqrlCalciteSchema.class),
         session,
         script,
         basePath,
-        session.getErrors()
-            .fromPrefix(ErrorPrefix.SCRIPT)
-            .sourceMap(new SourceMapImpl(originalScript))
+        errors
     );
   }
 
@@ -250,16 +247,17 @@ public class Resolve {
           () -> "Alias `" + node.getAlias().get().names.get(0) + "` cannot be used here.");
 
       checkState(node.getTimestamp().isEmpty(), IMPORT_STAR_CANNOT_HAVE_TIMESTAMP,
-          () -> node.getTimestamp().get().getParserPosition(),
+          node.getTimestamp().get()::getParserPosition,
           () -> "Cannot use timestamp with import star");
 
       Collection<Name> loaded = env.getLoader().loadAll(context, basePath);
-      Preconditions.checkState(!loaded.isEmpty(),
-          "Import [%s] is not a package or package is empty", basePath);
+      checkState(!loaded.isEmpty(), GENERIC, node.getImportPath()::getParserPosition,
+          () -> String.format("Import [%s] is not a package or package is empty", basePath));
     } else {
       boolean loaded = env.getLoader().load(context, fullPath, node.getAlias()
           .map(a -> toNamePath(env, a).getFirst()));
-      Preconditions.checkState(loaded, "Could not import: %s", fullPath);
+      checkState(loaded, GENERIC, node.getImportPath()::getParserPosition,
+          () -> String.format("Could not resolve import [%s]", fullPath));
     }
   }
 
@@ -283,7 +281,7 @@ public class Resolve {
 
   private void setCurrentNode(Env env, SqrlStatement node) {
     env.currentNode = node;
-    env.errors = env.errors.resolve(pathToString(node.getNamePath()));
+    env.errors.atFile(SqrlAstException.toRange(node.getParserPosition()));
   }
 
   public void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
@@ -410,23 +408,15 @@ public class Resolve {
       ExportDefinition export = (ExportDefinition) statement;
       Optional<SQRLTable> tableOpt = resolveTable(env, toNamePath(env, export.getTablePath()),
           false);
-      Optional<TableSink> sink = env.getExporter()
-          .export(new LoaderContextImpl(env), toNamePath(env, export.getSinkPath()));
-      checkState(tableOpt.isPresent(), ErrorCode.MISSING_DEST_TABLE, export::getParserPosition,
+      checkState(tableOpt.isPresent(), ErrorCode.MISSING_DEST_TABLE, export.getTablePath()::getParserPosition,
           () -> String.format("Could not find table path: %s", export.getTablePath()));
-      Preconditions.checkArgument(sink.isPresent());
       SQRLTable table = tableOpt.get();
-      Preconditions.checkArgument(table.getVt().getRoot().getBase().getExecution().isWrite());
-      RelBuilder relBuilder = env.getSession().getPlanner().getRelBuilder()
-          .scan(table.getVt().getNameId());
-      List<RexNode> selects = new ArrayList<>();
-      List<String> fieldNames = new ArrayList<>();
-      table.getVisibleColumns().stream().forEach(c -> {
-        selects.add(relBuilder.field(c.getShadowedName().getCanonical()));
-        fieldNames.add(c.getName().getDisplay());
-      });
-      relBuilder.project(selects, fieldNames);
-      env.exports.add(new ResolvedExport(table.getVt(), relBuilder.build(), sink.get()));
+      checkState(table.getVt().getRoot().getBase().getExecution().isWrite(),
+          ErrorCode.READ_TABLE_CANNOT_BE_EXPORTED, export.getTablePath()::getParserPosition,
+          () -> String.format("Table [%s] is not be exported because it is not computed in-stream", table.getPath()));
+      NamePath sinkPath = toNamePath(env, export.getSinkPath());
+      exportTable(table, sinkPath, env,
+          env.errors.atFile(SqrlAstException.toLocation(export.getSinkPath().getParserPosition())));
       return Optional.empty();
     } else {
       throw fatal(env, "Unrecognized assignment type: " + statement.getClass());
@@ -435,6 +425,37 @@ public class Resolve {
     StatementOp op = new StatementOp(statement, sqlNode, statementKind);
     env.ops.add(op);
     return Optional.of(op);
+  }
+
+  private void exportTable(SQRLTable table, NamePath sinkPath, Env env, ErrorCollector errors) {
+    Preconditions.checkArgument(table.getVt().getRoot().getBase().getExecution().isWrite());
+    Optional<TableSink> sink = env.getExporter().export(new LoaderContextImpl(env), sinkPath);
+    errors.checkFatal(sink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
+        "Cannot resolve table sink: %s", sinkPath);
+    RelBuilder relBuilder = env.getSession().getPlanner().getRelBuilder()
+        .scan(table.getVt().getNameId());
+    List<RexNode> selects = new ArrayList<>();
+    List<String> fieldNames = new ArrayList<>();
+    table.getVisibleColumns().stream().forEach(c -> {
+      selects.add(relBuilder.field(c.getShadowedName().getCanonical()));
+      fieldNames.add(c.getName().getDisplay());
+    });
+    relBuilder.project(selects, fieldNames);
+    env.exports.add(new ResolvedExport(table.getVt(), relBuilder.build(), sink.get()));
+  }
+
+  private void debug(Env env) {
+    DebuggerConfig debugger = env.session.getDebugger();
+    if (debugger.isEnabled()) {
+      for (Map.Entry<SQRLTable, VirtualRelationalTable> tableEntry : env.tableMap.entrySet()) {
+        VirtualRelationalTable vt = tableEntry.getValue();
+        SQRLTable st = tableEntry.getKey();
+        if (vt.getRoot().getBase().getExecution().isWrite() && debugger.debugTable(st.getName())) {
+          exportTable(st, debugger.getSinkBasePath().concat(Name.system(vt.getNameId())), env,
+              env.errors.withLocation(CompilerConfiguration.DebugConfiguration.getLocation()));
+        }
+      }
+    }
   }
 
   private SqlNode transformExpressionToQuery(Env env, SqrlStatement statement, SqlNode sqlNode) {
@@ -633,7 +654,7 @@ public class Resolve {
         break;
       case JOIN:
         Optional<SQRLTable> tbl = getContext(env, op.getStatement());
-        checkState(tbl.isPresent(), ErrorCode.GENERIC_ERROR, op.statement,
+        checkState(tbl.isPresent(), ErrorLabel.GENERIC, op.statement,
             "Root JOIN declarations are not yet supported");
 
         updateJoinMapping(env, op);
@@ -826,33 +847,33 @@ public class Resolve {
     return context.map(c -> env.getTableMap().get(c));
   }
 
-  public void checkState(boolean check, ErrorCode code, SqlNode node) {
-    checkState(check, code, node::getParserPosition, () -> "");
+  public void checkState(boolean check, ErrorLabel label, SqlNode node) {
+    checkState(check, label, node::getParserPosition, () -> "");
   }
 
-  public void checkState(boolean check, ErrorCode code, SqlNode node, String message) {
-    checkState(check, code, node::getParserPosition, () -> message);
+  public void checkState(boolean check, ErrorLabel label, SqlNode node, String message) {
+    checkState(check, label, node::getParserPosition, () -> message);
   }
 
-  public void checkState(boolean check, ErrorCode code,
+  public void checkState(boolean check, ErrorLabel label,
       Supplier<SqlParserPos> pos, Supplier<String> message) {
     if (!check) {
-      throw createAstException(code, pos, message);
+      throw createAstException(label, pos, message);
     }
   }
 
-  public RuntimeException createAstException(ErrorCode code, Supplier<SqlParserPos> pos,
+  public RuntimeException createAstException(ErrorLabel label, Supplier<SqlParserPos> pos,
       Supplier<String> message) {
-    return new SqrlAstException(code, pos.get(), message.get());
+    return new SqrlAstException(label, pos.get(), message.get());
   }
 
   private RuntimeException fatal(Env env, String message) {
-    return createAstException(ErrorCode.GENERIC_ERROR,
+    return createAstException(ErrorCode.GENERIC,
         () -> env.getCurrentNode().getParserPosition(), () -> message);
   }
 
   private RuntimeException unsupportedOperation(Env env, String message) {
-    return createAstException(ErrorCode.GENERIC_ERROR,
+    return createAstException(ErrorCode.GENERIC,
         () -> env.getCurrentNode().getParserPosition(), () -> message);
   }
 

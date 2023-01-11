@@ -3,13 +3,13 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.PhysicalPlanExecutor;
+import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
-import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.PhysicalPlanExecutor;
-import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
@@ -26,12 +26,6 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
-import java.util.Optional;
-import lombok.SneakyThrows;
-import org.apache.calcite.sql.ScriptNode;
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.extension.ExtendWith;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -39,9 +33,13 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
 public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
@@ -54,8 +52,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   @SneakyThrows
   protected void validateSchemaAndQueries(String script, String schema,
       Map<String, String> queries) {
-    ScriptNode node = parse(script);
-    Resolve.Env resolvedDag = resolve.planDag(session, node);
+    Resolve.Env resolvedDag = plan(script);
     DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
 
     Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = AbstractSchemaInferenceModelTest.getModelAndQueries(

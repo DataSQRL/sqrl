@@ -45,7 +45,6 @@ import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.lang3.ArrayUtils;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
@@ -80,8 +79,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   @SneakyThrows
   protected void validateTables(String script, Collection<String> queryTables,
       Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
-    ScriptNode node = parse(script);
-    Resolve.Env resolvedDag = resolve.planDag(session, node);
+    Resolve.Env resolvedDag = plan(script);
     DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
@@ -158,9 +156,5 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   protected static final Predicate<Integer> filterOutTimestampColumn =
       type -> type != Types.TIMESTAMP_WITH_TIMEZONE && type != Types.TIMESTAMP;
 
-
-  protected ScriptNode parse(String query) {
-    return parser.parse(query);
-  }
 
 }

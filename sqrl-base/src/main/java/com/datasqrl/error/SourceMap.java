@@ -3,11 +3,14 @@
  */
 package com.datasqrl.error;
 
+import com.datasqrl.error.ErrorLocation.FileRange;
 import java.io.Serializable;
 
 public interface SourceMap extends Serializable {
 
   String getSource();
+
+  String getRange(FileRange range);
 
   public class EmptySourceMap implements SourceMap {
 
@@ -15,5 +18,12 @@ public interface SourceMap extends Serializable {
     public String getSource() {
       return "";
     }
+
+    @Override
+    public String getRange(FileRange range) {
+      return "";
+    }
+
+
   }
 }

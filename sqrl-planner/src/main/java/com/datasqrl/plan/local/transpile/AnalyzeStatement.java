@@ -4,10 +4,11 @@
 package com.datasqrl.plan.local.transpile;
 
 import com.datasqrl.error.ErrorCode;
-import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Context;
@@ -140,7 +141,7 @@ public class AnalyzeStatement implements
         SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
         return spec.accept(this, context);
       default:
-        throw new SqrlAstException(ErrorCode.GENERIC_ERROR, node.getParserPosition(),
+        throw new SqrlAstException(ErrorLabel.GENERIC, node.getParserPosition(),
             "unknown ast node");
     }
   }

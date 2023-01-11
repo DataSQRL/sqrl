@@ -3,10 +3,14 @@
  */
 package com.datasqrl.compiler;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.metadata.MetadataStore;
 import com.google.common.collect.ImmutableSet;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -19,18 +23,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 public class MetadataStoreTestIT extends AbstractEngineIT {
 
   MetadataStore meta = null;
 
   public void setup(IntegrationTestSettings.DatabaseEngine database) {
-    initialize(IntegrationTestSettings.getEngines(IntegrationTestSettings.StreamEngine.INMEMORY,
-        database));
+    initialize(IntegrationTestSettings.getDatabaseOnly(database));
     meta = engineSettings.getMetadataStoreProvider().openStore();
   }
 

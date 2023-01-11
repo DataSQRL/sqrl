@@ -22,6 +22,7 @@ import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.PlannerFactory;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.local.generate.Resolve.Env;
 import com.datasqrl.plan.local.generate.Session;
@@ -52,16 +53,19 @@ public class Compiler {
    * @return
    */
   @SneakyThrows
-  public CompilerResult run(ErrorCollector collector, Path packageFile) {
+  public CompilerResult run(ErrorCollector collector, Path packageFile, boolean debug) {
     Preconditions.checkArgument(Files.isRegularFile(packageFile));
 
     Path buildDir = packageFile.getParent();
     GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packageFile,
         GlobalCompilerConfiguration.class);
-    CompilerConfiguration config = globalConfig.initializeCompiler(collector);
+    CompilerConfiguration compilerConfig = globalConfig.initializeCompiler(collector);
     EngineSettings engineSettings = globalConfig.initializeEngines(collector);
 
-    Session session = createSession(collector, engineSettings);
+    DebuggerConfig debugger = DebuggerConfig.NONE;
+    if (debug) debugger = compilerConfig.getDebug().getDebugger();
+
+    Session session = createSession(collector, engineSettings, debugger);
     Resolve resolve = new Resolve(buildDir);
 
     ManifestConfiguration manifest = globalConfig.getManifest();
@@ -71,10 +75,11 @@ public class Compiler {
 
     String scriptStr = Files.readString(mainScript);
 
+    ErrorCollector scriptErrors = collector.withFile(mainScript, scriptStr);
     ScriptNode scriptNode = SqrlParser.newParser()
-        .parse(scriptStr);
+        .parse(scriptStr, scriptErrors);
 
-    Env env = resolve.planDag(session, scriptNode);
+    Env env = resolve.planDag(session, scriptNode, scriptErrors);
 
     String gqlSchema = inferOrGetSchema(env, graphqlSchema);
 
@@ -97,11 +102,12 @@ public class Compiler {
     return new CompilerResult(root, gqlSchema, plan);
   }
 
-  private Session createSession(ErrorCollector collector, EngineSettings engineSettings) {
+  private Session createSession(ErrorCollector collector, EngineSettings engineSettings,
+      DebuggerConfig debugger) {
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
-    return new Session(collector, planner, engineSettings.getPipeline());
+    return new Session(collector, planner, engineSettings.getPipeline(), debugger);
   }
 
   @SneakyThrows
@@ -113,7 +119,7 @@ public class Compiler {
         GlobalCompilerConfiguration.class);
     EngineSettings engineSettings = globalConfig.initializeEngines(collector);
 
-    Session session = createSession(collector, engineSettings);
+    Session session = createSession(collector, engineSettings, DebuggerConfig.NONE);
     Resolve resolve = new Resolve(buildDir);
 
     ManifestConfiguration manifest = globalConfig.getManifest();
@@ -121,11 +127,12 @@ public class Compiler {
     Path mainScript = buildDir.resolve(manifest.getMain());
 
     String scriptStr = Files.readString(mainScript);
+    ErrorCollector scriptErrors = collector.withFile(mainScript, scriptStr);
 
     ScriptNode scriptNode = SqrlParser.newParser()
-        .parse(scriptStr);
+        .parse(scriptStr, scriptErrors);
 
-    Env env = resolve.planDag(session, scriptNode);
+    Env env = resolve.planDag(session, scriptNode, scriptErrors);
 
     return inferOrGetSchema(env, Optional.empty());
   }

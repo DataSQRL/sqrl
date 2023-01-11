@@ -5,29 +5,18 @@ package com.datasqrl.cmd;
 
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.Compiler.CompilerResult;
-import com.datasqrl.config.CompilerConfiguration;
-import com.datasqrl.config.EngineSettings;
-import com.datasqrl.config.GlobalCompilerConfiguration;
 import com.datasqrl.config.GlobalEngineConfiguration;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.plan.calcite.Planner;
-import com.datasqrl.plan.calcite.PlannerFactory;
-import com.datasqrl.plan.local.generate.Resolve;
-import com.datasqrl.plan.local.generate.Resolve.Env;
-import com.datasqrl.plan.local.generate.Session;
 import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.service.PathUtil;
 import com.datasqrl.service.Util;
-import com.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,9 +26,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
 import picocli.CommandLine;
@@ -58,8 +44,12 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   private Path[] files;
 
   @CommandLine.Option(names = {"-s", "--schema"}, description = "Generates the graphql "
-      + "schema file and exits")
+      + "schema file")
   private boolean generateSchema = false;
+
+  @CommandLine.Option(names = {"-d", "--debug"}, description = "Outputs table changestream to configured sink for debugging")
+  private boolean debug = false;
+
 
   @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory")
   private Path outputDir = null;
@@ -80,7 +70,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     List<Path> packageFiles = PathUtil.getOrCreateDefaultPackageFiles(root);
 
     Build build = new Build(collector);
-    Packager packager = PackagerUtil.create(root.rootDir, files, packageFiles);
+    Packager packager = PackagerUtil.create(root.rootDir, files, packageFiles, collector);
     Path buildLoc = build.build(packager);
 
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
@@ -95,7 +85,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     Compiler compiler = new Compiler();
-    Compiler.CompilerResult result = compiler.run(collector, buildLoc);
+    Compiler.CompilerResult result = compiler.run(collector, buildLoc, debug);
 
     write(result, jdbc);
 

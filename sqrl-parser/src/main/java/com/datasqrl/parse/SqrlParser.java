@@ -16,16 +16,12 @@
  */
 package com.datasqrl.parse;
 
-import static java.lang.String.format;
-
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
 import com.datasqrl.parse.SqlBaseParser.BetweenContext;
 import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
-import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import lombok.Value;
@@ -65,10 +61,14 @@ public class SqrlParser {
     return new SqrlParser();
   }
 
-  public ScriptNode parse(String sql) {
-    ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
-    scriptNode.setOriginalScript(sql);
-    return scriptNode;
+  public ScriptNode parse(String sql, ErrorCollector errors) {
+    try {
+      ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
+      scriptNode.setOriginalScript(sql);
+      return scriptNode;
+    } catch (Exception e) {
+      throw errors.handle(e);
+    }
   }
 
   public SqrlStatement parseStatement(String sql) {

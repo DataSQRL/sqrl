@@ -5,6 +5,7 @@ package com.datasqrl.packager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.config.ConfigurationTest;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.repository.Repository;
@@ -110,7 +111,7 @@ public class PackagerTest {
     if (repository != null) {
       builder.repository(repository);
     }
-    Packager pkg = builder.build().getPackager();
+    Packager pkg = builder.build().getPackager(ErrorCollector.root());
     pkg.cleanUp();
     pkg.populateBuildDir(true);
     Path buildDir = pkg.getRootDir().resolve(Packager.BUILD_DIR_NAME);

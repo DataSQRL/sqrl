@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.local.transpile;
 
-import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.google.common.collect.Maps;
@@ -77,7 +77,7 @@ public class AllowMixedFieldUnions extends SqlShuttle {
             .forEach(names::add);
         return;
     }
-    throw new SqrlAstException(ErrorCode.GENERIC_ERROR, node.getParserPosition(),
+    throw new SqrlAstException(ErrorLabel.GENERIC, node.getParserPosition(),
         "unknown nested union field");
   }
 
@@ -109,7 +109,7 @@ public class AllowMixedFieldUnions extends SqlShuttle {
           );
       }
 
-      throw new SqrlAstException(ErrorCode.GENERIC_ERROR, call.getParserPosition(),
+      throw new SqrlAstException(ErrorLabel.GENERIC, call.getParserPosition(),
           "Unknown node type");
     }
 

@@ -3,12 +3,14 @@
  */
 package com.datasqrl.packager;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.Exporter;
 import com.datasqrl.loaders.Loader;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.local.generate.Resolve;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -29,11 +31,13 @@ public class ImportExportAnalyzer {
   NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM;
   SqrlParser parser = new SqrlParser();
 
-  public Result analyze(Path sqrlScript) {
+  public Result analyze(Path sqrlScript, ErrorCollector errors) {
     try {
-      return analyze(parser.parse(Files.readString(sqrlScript)));
-    } catch (Throwable e) {
-      throw new IllegalArgumentException(String.format("Could not parse script: [%s]",sqrlScript),e);
+      String scriptContent = Files.readString(sqrlScript);
+      errors = errors.withFile(sqrlScript, scriptContent);
+      return analyze(parser.parse(scriptContent, errors));
+    } catch (IOException e) {
+      throw errors.handle(e);
     }
   }
 
