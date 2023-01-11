@@ -140,7 +140,6 @@ public class Resolve {
 
     //Updated while processing each node
     SqlNode currentNode = null;
-    ErrorCollector baseErrors;
     ErrorCollector errors;
 
     List<FlinkFnc> resolvedFunctions = new ArrayList<>();
@@ -247,7 +246,7 @@ public class Resolve {
           () -> "Alias `" + node.getAlias().get().names.get(0) + "` cannot be used here.");
 
       checkState(node.getTimestamp().isEmpty(), IMPORT_STAR_CANNOT_HAVE_TIMESTAMP,
-          node.getTimestamp().get()::getParserPosition,
+          () -> node.getTimestamp().get().getParserPosition(),
           () -> "Cannot use timestamp with import star");
 
       Collection<Name> loaded = env.getLoader().loadAll(context, basePath);
@@ -281,7 +280,7 @@ public class Resolve {
 
   private void setCurrentNode(Env env, SqrlStatement node) {
     env.currentNode = node;
-    env.errors.atFile(SqrlAstException.toRange(node.getParserPosition()));
+    env.errors = env.errors.atFile(SqrlAstException.toRange(node.getParserPosition()));
   }
 
   public void registerScriptTable(Env env, ScriptTableDefinition tblDef) {
@@ -446,15 +445,26 @@ public class Resolve {
 
   private void debug(Env env) {
     DebuggerConfig debugger = env.session.getDebugger();
+    ErrorCollector errors = env.errors.withLocation(CompilerConfiguration.DebugConfiguration.getLocation());
     if (debugger.isEnabled()) {
-      for (Map.Entry<SQRLTable, VirtualRelationalTable> tableEntry : env.tableMap.entrySet()) {
+      env.tableMap.entrySet().stream() //Ensure stable order of exported tables
+          .sorted((e1,e2) -> e1.getValue().getNameId().compareTo(e2.getValue().getNameId()))
+          .forEach(tableEntry -> {
         VirtualRelationalTable vt = tableEntry.getValue();
         SQRLTable st = tableEntry.getKey();
-        if (vt.getRoot().getBase().getExecution().isWrite() && debugger.debugTable(st.getName())) {
-          exportTable(st, debugger.getSinkBasePath().concat(Name.system(vt.getNameId())), env,
-              env.errors.withLocation(CompilerConfiguration.DebugConfiguration.getLocation()));
+        if (vt.isRoot() && debugger.debugTable(st.getName())) {
+          QueryRelationalTable bt = vt.getRoot().getBase();
+          if (bt.getExecution().isWrite()) {
+            NamePath sinkPath = debugger.getSinkBasePath().concat(Name.system(vt.getNameId()));
+            Optional<TableSink> sink = env.getExporter().export(new LoaderContextImpl(env), sinkPath);
+            errors.checkFatal(sink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
+                "Cannot resolve table sink: %s", sinkPath);
+            RelBuilder relBuilder = env.getSession().getPlanner().getRelBuilder()
+                .scan(vt.getNameId());
+            env.exports.add(new ResolvedExport(vt, relBuilder.build(), sink.get()));
+          }
         }
-      }
+      });
     }
   }
 

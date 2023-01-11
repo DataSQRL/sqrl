@@ -1,7 +1,9 @@
-[FATAL]
+[FATAL] 
+in script:test.sqrl [3:1]:
+IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
-^  
+^
 Cannot shadow a relationship field.
 
 Erroneous code example:

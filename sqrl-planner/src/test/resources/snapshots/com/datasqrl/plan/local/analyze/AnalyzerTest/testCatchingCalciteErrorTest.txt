@@ -1,6 +1,7 @@
-[FATAL]
+[FATAL] Could not find grouping key: name
+in script:test.sqrl [1:91]:
 IMPORT ecommerce-data.Product;X := SELECT productid, SUM(productid) FROM Product GROUP BY name
-------------------------------------------------------------------------------------------^  Could not find grouping key: name
+------------------------------------------------------------------------------------------^
 Could not find field when trying to resolve expression.
 
 Erroneous code example:

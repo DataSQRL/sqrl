@@ -1,6 +1,7 @@
-[FATAL]
+[FATAL] Alias `ecommerce` cannot be used here.
+in script:test.sqrl [1:28]:
 IMPORT ecommerce-data.* AS ecommerce;
----------------------------^  Alias `ecommerce` cannot be used here.
+---------------------------^
 IMPORT cannot be aliased for star (*) imports.
 
 Erroneous code example:

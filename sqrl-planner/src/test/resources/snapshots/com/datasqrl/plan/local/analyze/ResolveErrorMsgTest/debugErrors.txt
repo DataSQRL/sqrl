@@ -1,7 +1,6 @@
 >>>wrong-sink
 [FATAL] Cannot resolve table sink: missing.customer$3
-in config:compiler/debug
---
+in config:compiler/debug:
 The sink used in an `EXPORT` statement or for debugging cannot
 be found.
 

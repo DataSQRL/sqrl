@@ -41,15 +41,15 @@ public class SqrlAstException extends RuntimeException {
 
   //TODO: This is temporary until parser positions are fixed
   private static SqlParserPos check(SqlParserPos pos) {
-    if (pos.getLineNum()<1 || pos.getEndLineNum()<1 ||
-        pos.getColumnNum()<1 || pos.getEndColumnNum()<1) {
-      log.error("Invalid parser position: " + pos);
-      return new SqlParserPos(Math.max(1,pos.getLineNum()),
-          Math.max(1,pos.getColumnNum()),
-          Math.max(1,pos.getEndLineNum()),
-          Math.max(1,pos.getEndColumnNum()));
-    } else return pos;
-
+//    if (pos.getLineNum()<1 || pos.getEndLineNum()<1 ||
+//        pos.getColumnNum()<1 || pos.getEndColumnNum()<1) {
+//      log.error("Invalid parser position: " + pos);
+//      return new SqlParserPos(Math.max(1,pos.getLineNum()),
+//          Math.max(1,pos.getColumnNum()),
+//          Math.max(1,pos.getEndLineNum()),
+//          Math.max(1,pos.getEndColumnNum()));
+//    } else return pos;
+    return new SqlParserPos(pos.getLineNum(),pos.getColumnNum()+1,pos.getEndLineNum(), pos.getEndColumnNum()+1);
   }
 
 }

@@ -38,6 +38,7 @@ public class ErrorPrinter {
       b.append(":\n");
     }
 
+    boolean addSeperator = false;
     if (location.hasFile()) {
       //print previous 2 lines
       //print line
@@ -58,13 +59,15 @@ public class ErrorPrinter {
         String codeSnippet = location.getSourceMap().getRange(new FileRange(fileRange.getFromLine(),1,
             fileRange.getToLine(), fileRange.getToOffset()));
         b.append(codeSnippet);
+        addSeperator = true;
       }
     }
     //print error description (context)
     ErrorLabel label = errorMessage.getErrorLabel();
     String errorDescription = label.getErrorDescription();
     if (!Strings.isNullOrEmpty(errorDescription)) {
-      b.append("--\n").append(errorDescription);
+      if (addSeperator) b.append("--\n");
+      b.append(errorDescription);
     }
     //print error code (if not generic)
 //    if (label!=ErrorLabel.GENERIC) {

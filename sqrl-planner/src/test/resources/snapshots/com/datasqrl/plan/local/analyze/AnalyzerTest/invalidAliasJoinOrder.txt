@@ -1,6 +1,7 @@
-[FATAL]
+[FATAL] Could not find table: [o]
+in script:test.sqrl [1:63]:
 IMPORT ecommerce-data.Orders;X := SELECT * From Orders o JOIN o;
---------------------------------------------------------------^  Could not find table: [o]
+--------------------------------------------------------------^
 Table path cannot be found.
 
 Erroneous code example:

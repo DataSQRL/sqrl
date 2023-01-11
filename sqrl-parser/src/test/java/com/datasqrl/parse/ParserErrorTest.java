@@ -5,6 +5,7 @@ package com.datasqrl.parse;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.util.SnapshotTest;
@@ -69,7 +70,7 @@ public class ParserErrorTest {
     try {
       ScriptNode n = parser.parse(str, errorCollector);
       fail();
-    } catch (ParsingException e) {
+    } catch (CollectedException e) {
       //Do nothing, error should be collected
     }
 

@@ -1,3 +1,6 @@
-[FATAL]
-null
+[FATAL] null
+in script:test.sqrl [2:1]:
+IMPORT ecommerce-data.Product;
+Product.productCopy := JOIN Product;Product.productCopy := JOIN Product;
+^
 

@@ -77,7 +77,7 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
       fail("Should throw exception");
     } catch (Exception e) {
       snapshot.addContent(ErrorPrinter.prettyPrint(error), caseName);
-      e.printStackTrace();
+//      e.printStackTrace();
     }
 
 

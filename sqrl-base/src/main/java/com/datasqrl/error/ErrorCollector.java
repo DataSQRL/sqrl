@@ -131,12 +131,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public RuntimeException handle(Exception e) {
-    getCatcher().handle(e);
-    if (e instanceof RuntimeException) {
-      return (RuntimeException) e;
-    } else {
-      return new RuntimeException("Encountered error",e);
-    }
+    return getCatcher().handle(e);
   }
 
   /*
@@ -155,7 +150,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     ErrorMessage errorMessage = new Implementation(label, ErrorMessage.getMessage(msg,args), location, Severity.FATAL);
     addInternal(errorMessage);
     if (abortOnFatal) {
-      throw errorMessage.asException();
+      throw new CollectedException(errorMessage.asException());
     }
   }
 

@@ -1,5 +1,7 @@
 package com.datasqrl.error;
 
+import com.datasqrl.error.ErrorMessage.Implementation;
+import com.datasqrl.error.ErrorMessage.Severity;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,9 +31,17 @@ public class ErrorCatcher implements Serializable {
     return handlers;
   }
 
-  public void handle(Exception e) {
+  public CollectedException handle(Exception e) {
+    if (e instanceof CollectedException) return (CollectedException) e; //has already been handled
     Optional<ErrorHandler> handler = Optional.ofNullable(handlers.get(e.getClass()));
-    handler.map(h -> h.handle(e, baseLocation)).ifPresent(errors::addInternal);
+    ErrorMessage msg;
+    if (handler.isPresent()) {
+      msg = handler.get().handle(e, baseLocation);
+    } else {
+      msg = new Implementation(ErrorLabel.GENERIC, e.getMessage(), baseLocation, Severity.FATAL);
+    }
+    errors.addInternal(msg);
+    return new CollectedException(e);
   }
 
 
