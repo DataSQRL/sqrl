@@ -1,7 +1,8 @@
-[FATAL]
+[FATAL] Could not find field: [Product, productid]
+in script:test.sqrl [2:22]:
 IMPORT ecommerce-data.Product;
 Product.total := SUM(Product.productid);
----------------------^  Could not find field: [Product, productid]
+---------------------^
 Could not find field when trying to resolve expression.
 
 Erroneous code example:

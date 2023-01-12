@@ -3,17 +3,17 @@
  */
 package com.datasqrl.parse;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.error.SourceMapImpl;
 import com.datasqrl.util.SnapshotTest;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class ParserErrorTest {
 
@@ -61,17 +61,17 @@ public class ParserErrorTest {
 
   public void handle(String str) {
     ErrorCollector errorCollector = ErrorCollector.root()
-        .sourceMap(new SourceMapImpl(str));
+        .withSource(str);
 
-    errorCollector.registerHandler(ParsingException.class, new ParsingExceptionHandler());
+//    errorCollector.registerHandler(ParsingException.class, new ParsingExceptionHandler());
 
     SqrlParser parser = SqrlParser.newParser();
 
     try {
-      ScriptNode n = parser.parse(str);
+      ScriptNode n = parser.parse(str, errorCollector);
       fail();
-    } catch (ParsingException e) {
-      errorCollector.handle(e);
+    } catch (CollectedException e) {
+      //Do nothing, error should be collected
     }
 
     snapshot.addContent(ErrorPrinter.prettyPrint(errorCollector));

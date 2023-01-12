@@ -1,6 +1,7 @@
-[FATAL]
+[FATAL] Cannot use timestamp with import star
+in script:test.sqrl [1:35]:
 IMPORT ecommerce-data.* TIMESTAMP _ingest_time AS c_ts;
-----------------------------------^  Cannot use timestamp with import star
+----------------------------------^
 IMPORT star (*) cannot have a timestamp.
 
 Erroneous code example:

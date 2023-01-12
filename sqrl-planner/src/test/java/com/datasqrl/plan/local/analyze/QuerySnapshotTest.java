@@ -6,24 +6,21 @@ package com.datasqrl.plan.local.analyze;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.local.generate.Resolve.Env;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.C360;
 import com.datasqrl.util.data.Retail;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.ScriptNode;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.RelNode;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 
 @Slf4j
 class QuerySnapshotTest extends AbstractLogicalSQRLIT {
@@ -38,16 +35,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     error = ErrorCollector.root();
   }
 
-  private Env generate(ScriptNode node) {
-    return resolve.planDag(session, node);
-  }
-
   public RelNode generate(String init, String sql, boolean nested) {
     initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
-    SqrlParser parser = new SqrlParser();
-
-    Env env = generate(parser.parse(init + sql));
-
+    Env env = plan(init + sql);
     return env.getOps().get(env.getOps().size() - 1).getRelNode();
   }
 

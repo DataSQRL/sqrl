@@ -5,6 +5,11 @@ model.json
 c360
 c360-full.sqrl
 c360/schema.yml
+ecommerce-broken
+ecommerce-broken/customer.table.json
+ecommerce-broken/orders.table.json
+ecommerce-broken/product.table.json
+ecommerce-broken/schema.yml
 ecommerce-data
 ecommerce-data/customer.table.json
 ecommerce-data/orders.table.json

@@ -3,19 +3,21 @@
  */
 package com.datasqrl.engine.database.inmemory;
 
+import static com.datasqrl.engine.EngineCapability.GLOBAL_SORT;
+import static com.datasqrl.engine.EngineCapability.MULTI_RANK;
+import static com.datasqrl.engine.EngineCapability.NOW;
+
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.OptimizedDAG;
-import org.apache.calcite.tools.RelBuilder;
-
 import java.util.EnumSet;
 import java.util.List;
-
-import static com.datasqrl.engine.EngineCapability.*;
+import org.apache.calcite.tools.RelBuilder;
 
 /**
  * Just a stub for now - not yet functional
@@ -35,7 +37,7 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
 
   @Override
   public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
-      RelBuilder relBuilder) {
+      RelBuilder relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }
 

@@ -8,17 +8,16 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Set;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Set;
 
 class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
@@ -37,6 +36,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @AfterEach
   @SneakyThrows
   public void cleanupDirectory() {
+    //Contents written to exportPath are validated in validateTables()
     if (Files.isDirectory(exportPath)) {
       FileUtils.deleteDirectory(exportPath.toFile());
     }

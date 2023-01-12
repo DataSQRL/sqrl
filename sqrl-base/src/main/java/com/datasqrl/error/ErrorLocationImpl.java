@@ -15,27 +15,35 @@ import lombok.Value;
 class ErrorLocationImpl implements ErrorLocation {
 
   private final String prefix;
+  @NonNull
   private final String[] names;
-  private final FileLocation file;
+  private final SourceMap sourceMap;
+  private final FileRange file;
 
-  private ErrorLocationImpl(String prefix, FileLocation file, @NonNull String... names) {
+  private ErrorLocationImpl(String prefix, SourceMap sourceMap, FileRange file, @NonNull String... names) {
+    Preconditions.checkArgument(file==null || sourceMap!=null);
     this.prefix = prefix;
     this.names = names;
+    this.sourceMap = sourceMap;
     this.file = file;
   }
 
+  /*
+   -- These methods are used by ErrorPrefix --
+   */
+
   public static ErrorLocation of(String prefix, @NonNull String loc) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(loc), "Invalid location provided");
-    return new ErrorLocationImpl(prefix, null, loc);
+    return new ErrorLocationImpl(prefix, null, null, loc);
   }
 
   public static ErrorLocation of(String prefix, @NonNull ErrorLocation other) {
     Preconditions.checkArgument(!other.hasPrefix());
-    return new ErrorLocationImpl(prefix, other.getFile(), other.getPathArray());
+    return new ErrorLocationImpl(prefix, other.getSourceMap(), other.getFile(), other.getPathArray());
   }
 
-  public static ErrorLocation of(String prefix, @NonNull ErrorLocation.FileLocation file) {
-    return new ErrorLocationImpl(prefix, file);
+  public static ErrorLocation of(String prefix, @NonNull SourceMap sourceMap) {
+    return new ErrorLocationImpl(prefix, sourceMap, null);
   }
 
   @Override
@@ -44,7 +52,7 @@ class ErrorLocationImpl implements ErrorLocation {
     String[] othNames = other.getPathArray();
     String[] newnames = Arrays.copyOf(names, names.length + othNames.length);
     System.arraycopy(othNames, 0, newnames, names.length, othNames.length);
-    return new ErrorLocationImpl(this.prefix, other.getFile(), newnames);
+    return new ErrorLocationImpl(this.prefix, other.getSourceMap(), other.getFile(), newnames);
   }
 
   @Override
@@ -57,13 +65,13 @@ class ErrorLocationImpl implements ErrorLocation {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(loc), "Invalid location provided");
     String[] newnames = Arrays.copyOf(names, names.length + 1);
     newnames[names.length] = loc;
-    return new ErrorLocationImpl(prefix, file, newnames);
+    return new ErrorLocationImpl(prefix, sourceMap, file, newnames);
   }
 
   @Override
-  public ErrorLocation atFile(@NonNull ErrorLocation.FileLocation file) {
-    Preconditions.checkArgument(!hasFile());
-    return new ErrorLocationImpl(prefix, file, names);
+  public ErrorLocation atFile(@NonNull ErrorLocation.FileRange file) {
+    Preconditions.checkArgument(sourceMap!=null);
+    return new ErrorLocationImpl(prefix, sourceMap, file, names);
   }
 
   @Override
@@ -72,6 +80,13 @@ class ErrorLocationImpl implements ErrorLocation {
       return "";
     }
     return String.join("/", names);
+  }
+
+  @Override
+  public ErrorLocation withSourceMap(SourceMap map) {
+    Preconditions.checkArgument(sourceMap==null);
+    Preconditions.checkArgument(!hasFile());
+    return new ErrorLocationImpl(prefix, map, null, names);
   }
 
   @Override
@@ -85,7 +100,7 @@ class ErrorLocationImpl implements ErrorLocation {
       }
     }
     if (file != null) {
-      result += "@" + file.getLine() + ":" + file.getOffset();
+      result += "@" + file.toString();
     }
     return result;
   }

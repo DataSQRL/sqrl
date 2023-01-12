@@ -6,19 +6,19 @@ package com.datasqrl;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.TableLoader;
-import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.name.NamePath;
+import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.PlannerFactory;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.local.generate.Session;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {
 
@@ -44,7 +44,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     planner = new PlannerFactory(
         new SqrlCalciteSchema(
             CalciteSchema.createRootSchema(false, false).plus()).plus()).createPlanner();
-    Session session = new Session(error, planner, engineSettings.getPipeline());
+    Session session = new Session(error, planner, engineSettings.getPipeline(), settings.getDebugger());
     this.session = session;
     this.parser = new SqrlParser();
     this.resolve = new Resolve(rootDir);
@@ -60,6 +60,12 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   protected String loadScript(String name) {
     Path path = rootDir.resolve(name);
     return Files.readString(path);
+  }
+
+  protected Resolve.Env plan(String script) {
+    ErrorCollector scriptError = error.withFile("test.sqrl", script);
+    ScriptNode node = parser.parse(script, scriptError);
+    return resolve.planDag(session, node, scriptError);
   }
 
 }

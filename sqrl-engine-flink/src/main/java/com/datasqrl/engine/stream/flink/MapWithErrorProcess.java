@@ -16,11 +16,11 @@ import org.apache.flink.util.OutputTag;
 @Slf4j
 public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, Output> {
 
-  private final OutputTag<ProcessError> errorTag;
+  private final OutputTag<InputError> errorTag;
   private final FunctionWithError<Input, Output> function;
   private final ErrorLocation errorLocation;
 
-  public MapWithErrorProcess(OutputTag<ProcessError> errorTag,
+  public MapWithErrorProcess(OutputTag<InputError> errorTag,
       FunctionWithError<Input, Output> function, ErrorLocation errorLocation) {
     this.errorTag = errorTag;
     this.function = function;
@@ -31,17 +31,27 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
   public void processElement(Input input, Context context,
       Collector<Output> out) {
     ErrorHolder errorHolder = new ErrorHolder(errorLocation);
-    Optional<Output> result = function.apply(input, errorHolder);
+    Optional<Output> result = Optional.empty();
+    try {
+      result = function.apply(input, errorHolder);
+    } catch (Exception e) {
+      errorHolder.errors.handle(e);
+    }
     if (errorHolder.hasErrors()) {
-      ProcessError perr = ProcessError.of(errorHolder.errors, input);
-      context.output(errorTag, perr);
-      log.error(perr.toString());
+      InputError inputErr = InputError.of(errorHolder.errors, input);
+      context.output(errorTag, inputErr);
+      inputErr.printToLog(log);
     }
     if (result.isPresent()) {
       out.collect(result.get());
     }
   }
 
+  /**
+   * This class is a proxy in front of ErrorCollector which lazily initializes it
+   * in order to avoid creating an {@link com.datasqrl.error.ErrorCollection} for
+   * every processed record which would be a significant overhead.
+   */
   private static class ErrorHolder implements Supplier<ErrorCollector> {
 
     private final ErrorLocation location;
@@ -56,8 +66,10 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
     }
 
     @Override
-    public ErrorCollector get() {
-      errors = new ErrorCollector(location);
+    public synchronized ErrorCollector get() {
+      if (errors==null) {
+        errors = new ErrorCollector(location);
+      }
       return errors;
     }
   }

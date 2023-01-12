@@ -3,121 +3,113 @@
  */
 package com.datasqrl.error;
 
-import com.datasqrl.error.SourceMap.EmptySourceMap;
+import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.error.ErrorLocation.FileRange;
+import com.datasqrl.error.ErrorMessage.Implementation;
+import com.datasqrl.error.ErrorMessage.Severity;
 import com.datasqrl.name.Name;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.nio.file.Path;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 
+/**
+ * Proxy class for {@link ErrorLocation} and {@link ErrorCollection} for usability.
+ */
 public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
 
-  @Getter
-  private final ErrorEmitter errorEmitter;
-  private final List<ErrorMessage> errors;
+  private static final boolean DEFAULT_ABORT_ON_FATAL = true;
 
-  private ErrorCollector(@NonNull ErrorEmitter errorEmitter, @NonNull List<ErrorMessage> errors) {
-    this.errorEmitter = errorEmitter;
+  @Getter
+  private final ErrorLocation location;
+  private final ErrorCollection errors;
+  private final boolean abortOnFatal;
+
+  /*
+  ==== CONSTRUCTORS ====
+   */
+
+  private ErrorCollector(ErrorLocation location, ErrorCollection errors, boolean abortOnFatal) {
+    this.location = location;
     this.errors = errors;
+    this.abortOnFatal = abortOnFatal;
   }
 
-  private ErrorCollector(@NonNull ErrorLocation location, @NonNull List<ErrorMessage> errors) {
-    this(new ErrorEmitter(new EmptySourceMap(), location), errors);
+  public ErrorCollector(ErrorLocation location, ErrorCollection errors) {
+    this(location, errors, DEFAULT_ABORT_ON_FATAL);
   }
 
   public ErrorCollector(@NonNull ErrorLocation location) {
-    this(location, new ArrayList<>(5));
+    this(location, new ErrorCollection());
   }
 
   public static ErrorCollector root() {
     return new ErrorCollector(ErrorPrefix.ROOT);
   }
 
-  public void registerHandler(Class clazz, ErrorHandler handler) {
-    errorEmitter.handlers.put(clazz, handler);
-  }
-
   public ErrorCollector fromPrefix(@NonNull ErrorPrefix prefix) {
-    return new ErrorCollector(prefix, errors);
+    return new ErrorCollector(prefix, errors, abortOnFatal);
   }
 
-  public ErrorCollector sourceMap(SourceMap sourceMap) {
-    return new ErrorCollector(errorEmitter.resolveSourceMap(sourceMap), errors);
+  public ErrorCollector abortOnFatal(boolean abortOnFatal) {
+    return new ErrorCollector(location, errors, abortOnFatal);
   }
 
-  public ErrorCollector resolve(String location) {
-    return new ErrorCollector(errorEmitter.resolve(location), errors);
+  /*
+  ==== Proxies ErrorLocation for convenience ====
+   */
+
+  public ErrorLocation getLocation() {
+    return location;
   }
 
-  public ErrorCollector resolve(Name location) {
-    return new ErrorCollector(errorEmitter.resolve(location), errors);
+  public ErrorCollector withSource(SourceMap sourceMap) {
+    return new ErrorCollector(location.withSourceMap(sourceMap), errors, abortOnFatal);
   }
 
-  protected void addInternal(@NonNull ErrorMessage error) {
-    errors.add(error);
+  public ErrorCollector withSource(String sourceContent) {
+    return withSource(new SourceMapImpl(sourceContent));
   }
 
-  protected void add(@NonNull ErrorMessage err) {
-    ErrorLocation errLoc = err.getLocation();
-    if (!errLoc.hasPrefix()) {
-      //Adjust relative location
-      ErrorLocation newloc = errorEmitter.getBaseLocation().append(errLoc);
-      err = new ErrorMessage.Implementation(err.getErrorCode(), err.getMessage(), newloc,
-          err.getSeverity(),
-          errorEmitter.getSourceMap());
-    }
-    addInternal(err);
+  public ErrorCollector resolve(String sub) {
+    return new ErrorCollector(location.resolve(sub), errors, abortOnFatal);
   }
 
-  protected void addAll(ErrorCollector other) {
-    if (other == null) {
-      return;
-    }
-    for (ErrorMessage err : other) {
-      add(err);
-    }
+  public ErrorCollector resolve(Name sub) {
+    return new ErrorCollector(location.resolve(sub), errors, abortOnFatal);
   }
+
+  public ErrorCollector atFile(FileRange file) {
+    return new ErrorCollector(location.atFile(file), errors, abortOnFatal);
+  }
+
+  public ErrorCollector atFile(FileLocation file) {
+    return new ErrorCollector(location.atFile(file), errors, abortOnFatal);
+  }
+
+  public ErrorCollector withLocation(ErrorLocation location) {
+    return new ErrorCollector(location, errors, abortOnFatal);
+  }
+
+  public ErrorCollector withFile(Path file, String scriptContent) {
+    return withFile(file.getFileName().toString(),scriptContent);
+  }
+
+  public ErrorCollector withFile(String filename, String scriptContent) {
+    return withLocation(ErrorPrefix.SCRIPT.resolve(filename)).withSource(scriptContent);
+  }
+
+  /*
+  ==== Proxies ErrorCollection for convenience ====
+   */
 
   public boolean hasErrors() {
-    return !errors.isEmpty();
+    return errors.hasErrors();
   }
 
   public boolean isFatal() {
-    return errors.stream().anyMatch(ErrorMessage::isFatal);
-  }
-
-  public boolean isSuccess() {
-    return !isFatal();
-  }
-
-  public void fatal(String msg, Object... args) {
-    addInternal(errorEmitter.fatal(msg, args));
-  }
-
-  public void fatal(int line, int offset, String msg, Object... args) {
-    addInternal(errorEmitter.fatal(line, offset, msg, args));
-  }
-
-  public void warn(String msg, Object... args) {
-    addInternal(errorEmitter.warn(msg, args));
-  }
-
-  public void warn(int line, int offset, String msg, Object... args) {
-    addInternal(errorEmitter.warn(line, offset, msg, args));
-  }
-
-
-  public void notice(String msg, Object... args) {
-    addInternal(errorEmitter.notice(msg, args));
-  }
-
-  public void notice(int line, int offset, String msg, Object... args) {
-    addInternal(errorEmitter.notice(line, offset, msg, args));
+    return errors.isFatal();
   }
 
   @Override
@@ -125,44 +117,71 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     return errors.iterator();
   }
 
-  public String combineMessages(ErrorMessage.Severity minSeverity, String prefix,
-      String delimiter) {
-    String suffix = "";
-    if (errors != null) {
-      suffix = errors.stream().filter(m -> m.getSeverity().compareTo(minSeverity) >= 0)
-          .map(ErrorMessage::toString)
-          .collect(Collectors.joining(delimiter));
-    }
-    return prefix + suffix;
-  }
-
   @Override
   public String toString() {
-    return combineMessages(ErrorMessage.Severity.NOTICE, "", "\n");
+    return errors.toString();
   }
 
-  public List<ErrorMessage> getAll() {
-    return new ArrayList<>(errors);
+  public ErrorCollection getErrors() {
+    return errors;
   }
 
-//  public void log() {
-//    for (ErrorMessage message : errors) {
-//      if (message.isNotice()) {
-//        log.info(message.toStringNoSeverity());
-//      } else if (message.isWarning()) {
-//        log.warn(message.toStringNoSeverity());
-//      } else if (message.isFatal()) {
-//        log.error(message.toStringNoSeverity());
-//      } else {
-//        throw new UnsupportedOperationException("Unexpected severity: " + message.getSeverity());
-//      }
-//    }
-//  }
-
-  public void handle(Exception e) {
-    Optional<ErrorMessage> handler = errorEmitter.handle(e);
-    handler.ifPresentOrElse(
-        this::add,
-        () -> fatal(e.getMessage()));
+  public ErrorCatcher getCatcher() {
+    return new ErrorCatcher(location, errors);
   }
+
+  public RuntimeException handle(Exception e) {
+    return getCatcher().handle(e);
+  }
+
+  /*
+  ==== Factory methods for creating errors ====
+   */
+
+  protected void addInternal(@NonNull ErrorMessage error) {
+    errors.addInternal(error);
+  }
+
+  public void fatal(String msg, Object... args) {
+    fatal(ErrorLabel.GENERIC,msg,args);
+  }
+
+  public void fatal(ErrorLabel label, String msg, Object... args) {
+    ErrorMessage errorMessage = new Implementation(label, ErrorMessage.getMessage(msg,args), location, Severity.FATAL);
+    addInternal(errorMessage);
+    if (abortOnFatal) {
+      throw new CollectedException(errorMessage.asException());
+    }
+  }
+
+  public void checkFatal(boolean condition, String msg, Object... args) {
+    if (!condition) {
+      fatal(ErrorLabel.GENERIC,msg,args);
+    }
+  }
+
+  public void checkFatal(boolean condition, ErrorLabel label, String msg, Object... args) {
+    if (!condition) {
+      fatal(label,msg,args);
+    }
+  }
+
+  public void warn(String msg, Object... args) {
+    warn(ErrorLabel.GENERIC, msg, args);
+  }
+
+  public void warn(ErrorLabel label, String msg, Object... args) {
+    ErrorMessage errorMessage = new Implementation(label, ErrorMessage.getMessage(msg,args), location, Severity.WARN);
+    addInternal(errorMessage);
+  }
+
+  public void notice(String msg, Object... args) {
+    notice(ErrorLabel.GENERIC,msg,args);
+  }
+
+  public void notice(ErrorLabel label, String msg, Object... args) {
+    ErrorMessage errorMessage = new Implementation(label, ErrorMessage.getMessage(msg,args), location, Severity.NOTICE);
+    addInternal(errorMessage);
+  }
+
 }

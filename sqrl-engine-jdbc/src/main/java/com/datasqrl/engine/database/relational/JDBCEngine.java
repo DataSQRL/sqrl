@@ -3,35 +3,37 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.engine.EngineConfiguration;
-import com.datasqrl.engine.database.relational.dialect.JdbcDDLFactory;
-import com.datasqrl.engine.database.relational.dialect.JdbcDDLServiceLoader;
-import com.datasqrl.io.DataSystemConnectorConfig;
-import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
-import com.datasqrl.util.StreamUtil;
+import static com.datasqrl.engine.EngineCapability.GLOBAL_SORT;
+import static com.datasqrl.engine.EngineCapability.MULTI_RANK;
+import static com.datasqrl.engine.EngineCapability.NOW;
+
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.engine.database.relational.dialect.JdbcDDLFactory;
+import com.datasqrl.engine.database.relational.dialect.JdbcDDLServiceLoader;
+import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
+import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.tools.RelBuilder;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.datasqrl.engine.EngineCapability.*;
 
 @Slf4j
 public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
@@ -91,7 +93,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 
   @Override
   public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
-      RelBuilder relBuilder) {
+      RelBuilder relBuilder, TableSink errorSink) {
 
     JdbcDDLFactory factory =
         (new JdbcDDLServiceLoader()).load(config.getConfig().getDialect())

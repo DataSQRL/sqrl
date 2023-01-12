@@ -16,15 +16,18 @@ import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.error.ErrorCollection;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.schema.converters.RowMapper;
@@ -79,7 +82,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
 
   @Override
   public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
-      RelBuilder relBuilder) {
+      RelBuilder relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }
 
@@ -88,7 +91,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
 
     private final List<Stream> mainStreams = new ArrayList<>();
     private final List<Stream> sideStreams = new ArrayList<>();
-    private final ErrorHolder errorHolder = new ErrorHolder();
+    private final ErrorCollection errorHolder = new ErrorCollection();
     private final RecordHolder recordHolder = new RecordHolder();
 
     @Override
@@ -129,7 +132,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
           errors.fatal(e.toString());
           return Optional.of(Boolean.FALSE);
         }
-      }, "mapper", ErrorPrefix.INPUT_DATA.resolve(qualifiedTableName), Boolean.class).sink();
+      }, ErrorPrefix.INPUT_DATA.resolve(qualifiedTableName), Boolean.class).sink();
     }
 
     @Override
@@ -161,14 +164,19 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
       }
 
       @Override
-      public <R> Holder<R> mapWithError(FunctionWithError<T, R> function, String errorName,
+      public <R> Holder<R> mapWithError(FunctionWithError<T, R> function,
           ErrorLocation errorLocation, Class<R> clazz) {
         checkClosed();
         return wrap(stream.flatMap(t -> {
           ErrorCollector collector = new ErrorCollector(errorLocation);
-          Optional<R> result = function.apply(t, () -> collector);
+          Optional<R> result = Optional.empty();
+          try {
+            result = function.apply(t, () -> collector);
+          } catch (Exception e) {
+            collector.handle(e);
+          }
           if (collector.hasErrors()) {
-            errorHolder.getCollector(errorName).accept(collector);
+            errorHolder.addAll(collector.getErrors(), null);
           }
           if (result.isPresent()) {
             return Stream.of(result.get());
@@ -195,10 +203,6 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
     }
   }
 
-  public static class ErrorHolder extends OutputCollector<String, ErrorCollector> {
-
-  }
-
   public static class RecordHolder extends OutputCollector<String, Object[]> {
 
   }
@@ -211,11 +215,11 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
     private final List<Stream> mainStreams;
     private final List<Stream> sideStreams;
     @Getter
-    private final ErrorHolder errorHolder;
+    private final ErrorCollection errorHolder;
     @Getter
     private final RecordHolder recordHolder;
 
-    private Job(List<Stream> mainStreams, List<Stream> sideStreams, ErrorHolder errorHolder,
+    private Job(List<Stream> mainStreams, List<Stream> sideStreams, ErrorCollection errorHolder,
         RecordHolder recordHolder) {
       this.mainStreams = mainStreams;
       this.sideStreams = sideStreams;
@@ -248,6 +252,9 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
       } catch (Throwable e) {
         System.err.println(e);
         status = Status.FAILED;
+      }
+      if (errorHolder.hasErrors()) {
+        errorHolder.stream().map(ErrorPrinter::prettyPrint).forEach(System.out::println);
       }
     }
 

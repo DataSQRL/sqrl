@@ -5,7 +5,6 @@ package com.datasqrl.error;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
-import java.util.Optional;
 import lombok.Getter;
 
 public interface ErrorMessage {
@@ -16,9 +15,7 @@ public interface ErrorMessage {
 
   ErrorLocation getLocation();
 
-  SourceMap getSourceMap();
-
-  Optional<ErrorCode> getErrorCode();
+  ErrorLabel getErrorLabel();
 
   @JsonIgnore
   default boolean isFatal() {
@@ -44,6 +41,11 @@ public interface ErrorMessage {
     return loc + getMessage();
   }
 
+  @JsonIgnore
+  default RuntimeException asException() {
+    return getErrorLabel().toException().apply(getMessage());
+  }
+
   enum Severity {
     NOTICE, WARN, FATAL
   }
@@ -51,24 +53,21 @@ public interface ErrorMessage {
   @Getter
   class Implementation implements ErrorMessage {
 
-    private final Optional<ErrorCode> errorCode;
+    private final ErrorLabel errorLabel;
     private final String message;
     private final ErrorLocation location;
     private final Severity severity;
-    private final SourceMap sourceMap;
 
-    public Implementation(String message, ErrorLocation location, Severity severity,
-        SourceMap sourceMap) {
-      this(Optional.empty(), message, location, severity, sourceMap);
+    public Implementation(String message, ErrorLocation location, Severity severity) {
+      this(ErrorLabel.GENERIC, message, location, severity);
     }
 
-    public Implementation(Optional<ErrorCode> errorCode, String message, ErrorLocation location,
-        Severity severity, SourceMap sourceMap) {
-      this.errorCode = errorCode;
+    public Implementation(ErrorLabel errorLabel, String message, ErrorLocation location,
+        Severity severity) {
+      this.errorLabel = errorLabel;
       this.message = message;
       this.location = location;
       this.severity = severity;
-      this.sourceMap = sourceMap;
     }
 
     @Override
@@ -76,6 +75,13 @@ public interface ErrorMessage {
       return "[" + severity + "] " + toStringNoSeverity();
     }
 
+  }
+
+  static String getMessage(String msgTemplate, Object... args) {
+    if (args == null || args.length == 0) {
+      return msgTemplate;
+    }
+    return String.format(msgTemplate, args);
   }
 
 }

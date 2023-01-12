@@ -9,7 +9,7 @@ import lombok.NonNull;
 @JsonSerialize(as = ErrorLocation.class)
 public enum ErrorPrefix implements ErrorLocation {
 
-  ROOT, SOURCE, SINK, ENGINE, SCRIPT, INITIALIZE, INPUT_DATA;
+  ROOT, SCRIPT, CONFIG, INPUT_DATA;
 
   @Override
   public String getPrefix() {
@@ -32,7 +32,17 @@ public enum ErrorPrefix implements ErrorLocation {
   }
 
   @Override
-  public FileLocation getFile() {
+  public ErrorLocation withSourceMap(SourceMap map) {
+    return ErrorLocationImpl.of(getPrefix(), map);
+  }
+
+  @Override
+  public SourceMap getSourceMap() {
+    return null;
+  }
+
+  @Override
+  public FileRange getFile() {
     return null;
   }
 
@@ -47,8 +57,8 @@ public enum ErrorPrefix implements ErrorLocation {
   }
 
   @Override
-  public ErrorLocation atFile(@NonNull ErrorLocation.FileLocation file) {
-    return ErrorLocationImpl.of(getPrefix(), file);
+  public ErrorLocation atFile(@NonNull ErrorLocation.FileRange file) {
+    throw new IllegalArgumentException("Need to set source map first");
   }
 
   @Override

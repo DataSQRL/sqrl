@@ -10,6 +10,7 @@ import com.datasqrl.config.GlobalEngineConfiguration;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.generate.SchemaGenerator;
 import com.datasqrl.graphql.inference.PgSchemaBuilder;
@@ -17,11 +18,16 @@ import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.loaders.DynamicExporter;
+import com.datasqrl.loaders.ExporterContext.Implementation;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.PlannerFactory;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.local.generate.Resolve.Env;
 import com.datasqrl.plan.local.generate.Session;
@@ -52,16 +58,25 @@ public class Compiler {
    * @return
    */
   @SneakyThrows
-  public CompilerResult run(ErrorCollector collector, Path packageFile) {
+  public CompilerResult run(ErrorCollector collector, Path packageFile, boolean debug) {
     Preconditions.checkArgument(Files.isRegularFile(packageFile));
 
     Path buildDir = packageFile.getParent();
     GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packageFile,
         GlobalCompilerConfiguration.class);
-    CompilerConfiguration config = globalConfig.initializeCompiler(collector);
+    CompilerConfiguration compilerConfig = globalConfig.initializeCompiler(collector);
     EngineSettings engineSettings = globalConfig.initializeEngines(collector);
 
-    Session session = createSession(collector, engineSettings);
+    DebuggerConfig debugger = DebuggerConfig.NONE;
+    if (debug) debugger = compilerConfig.getDebug().getDebugger();
+
+    Optional<TableSink> errorSink = new DynamicExporter().export(new Implementation(buildDir, collector),
+        NamePath.parse(compilerConfig.getErrorSink()));
+    collector.checkFatal(errorSink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
+        "Cannot resolve table sink: %s", compilerConfig.getErrorSink());
+
+
+    Session session = createSession(collector, engineSettings, debugger);
     Resolve resolve = new Resolve(buildDir);
 
     ManifestConfiguration manifest = globalConfig.getManifest();
@@ -71,10 +86,11 @@ public class Compiler {
 
     String scriptStr = Files.readString(mainScript);
 
+    ErrorCollector scriptErrors = collector.withFile(mainScript, scriptStr);
     ScriptNode scriptNode = SqrlParser.newParser()
-        .parse(scriptStr);
+        .parse(scriptStr, scriptErrors);
 
-    Env env = resolve.planDag(session, scriptNode);
+    Env env = resolve.planDag(session, scriptNode, scriptErrors);
 
     String gqlSchema = inferOrGetSchema(env, graphqlSchema);
 
@@ -90,18 +106,19 @@ public class Compiler {
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
     OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), env);
-    PhysicalPlan plan = createPhysicalPlan(dag, env, session);
+    PhysicalPlan plan = createPhysicalPlan(dag, env, session, errorSink.get());
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
     return new CompilerResult(root, gqlSchema, plan);
   }
 
-  private Session createSession(ErrorCollector collector, EngineSettings engineSettings) {
+  private Session createSession(ErrorCollector collector, EngineSettings engineSettings,
+      DebuggerConfig debugger) {
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
     Planner planner = new PlannerFactory(schema.plus()).createPlanner();
-    return new Session(collector, planner, engineSettings.getPipeline());
+    return new Session(collector, planner, engineSettings.getPipeline(), debugger);
   }
 
   @SneakyThrows
@@ -113,7 +130,7 @@ public class Compiler {
         GlobalCompilerConfiguration.class);
     EngineSettings engineSettings = globalConfig.initializeEngines(collector);
 
-    Session session = createSession(collector, engineSettings);
+    Session session = createSession(collector, engineSettings, DebuggerConfig.NONE);
     Resolve resolve = new Resolve(buildDir);
 
     ManifestConfiguration manifest = globalConfig.getManifest();
@@ -121,11 +138,12 @@ public class Compiler {
     Path mainScript = buildDir.resolve(manifest.getMain());
 
     String scriptStr = Files.readString(mainScript);
+    ErrorCollector scriptErrors = collector.withFile(mainScript, scriptStr);
 
     ScriptNode scriptNode = SqrlParser.newParser()
-        .parse(scriptStr);
+        .parse(scriptStr, scriptErrors);
 
-    Env env = resolve.planDag(session, scriptNode);
+    Env env = resolve.planDag(session, scriptNode, scriptErrors);
 
     return inferOrGetSchema(env, Optional.empty());
   }
@@ -152,8 +170,8 @@ public class Compiler {
     return root;
   }
 
-  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s) {
-    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getPlanner().getRelBuilder());
+  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s, TableSink errorSink) {
+    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getPlanner().getRelBuilder(), errorSink);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     return physicalPlan;
   }

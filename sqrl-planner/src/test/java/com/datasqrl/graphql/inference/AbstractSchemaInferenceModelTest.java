@@ -5,23 +5,25 @@ package com.datasqrl.graphql.inference;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
-import com.datasqrl.plan.global.*;
+import com.datasqrl.plan.global.DAGPlanner;
+import com.datasqrl.plan.global.IndexCall;
+import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.global.IndexSelector;
+import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.generate.Resolve.Env;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.TestScript;
-import lombok.SneakyThrows;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
@@ -32,8 +34,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
       Path schemaPath) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
     String schemaStr = Files.readString(schemaPath);
-    env = resolve.planDag(session, SqrlParser.newParser()
-        .parse(script.getScript()));
+    env = plan(script.getScript());
     Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(env,
         schemaStr);
     return Pair.of(result.getLeft(), result.getRight());

@@ -18,7 +18,18 @@ import com.datasqrl.plan.calcite.util.IndexMap;
 import com.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
-import lombok.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.ToString;
+import lombok.Value;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
@@ -34,8 +45,6 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
-
-import java.util.*;
 
 @Value
 @AllArgsConstructor
@@ -425,6 +434,7 @@ public class AnnotatedLP implements RelHolder {
   public double estimateRowCount() {
     final RelMetadataQuery mq = relNode.getCluster().getMetadataQuery();
     return mq.getRowCount(relNode);
+    //return 1.0d;
   }
 
 

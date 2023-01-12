@@ -36,7 +36,7 @@ public class CompositeExporter implements Exporter {
   }
 
   @Override
-  public Optional<TableSink> export(LoaderContext ctx, NamePath fullPath) {
+  public Optional<TableSink> export(ExporterContext ctx, NamePath fullPath) {
     for (Exporter exporter : exporters) {
       Optional<TableSink> result = exporter.export(ctx, fullPath);
       if (result.isPresent()) {

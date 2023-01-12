@@ -46,8 +46,7 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
   public StreamHolder<SourceRecord.Raw> text2Record(
       StreamHolder<TimeAnnotatedRecord<String>> textSource,
       TextLineFormat.Parser textparser, ErrorLocation errorLocation) {
-    return textSource.mapWithError(new MapText2Raw(textparser), PARSE_ERROR_TAG,
-        errorLocation, SourceRecord.Raw.class);
+    return textSource.mapWithError(new MapText2Raw(textparser), errorLocation, SourceRecord.Raw.class);
   }
 
   @AllArgsConstructor
@@ -67,7 +66,10 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
         }
         return Optional.of(new SourceRecord.Raw(r.getRecord(), sourceTime));
       } else {
-        errorCollector.get().fatal(r.getErrorMsg());
+        assert r.isError() || r.isSkip();
+        if (r.isError()) {
+          errorCollector.get().fatal(r.getErrorMsg());
+        }
         return Optional.empty();
       }
     }

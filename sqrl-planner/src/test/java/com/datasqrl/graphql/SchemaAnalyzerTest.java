@@ -10,14 +10,13 @@ import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.local.generate.Resolve.Env;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Disabled
 class SchemaAnalyzerTest extends AbstractLogicalSQRLIT {
@@ -33,9 +32,10 @@ class SchemaAnalyzerTest extends AbstractLogicalSQRLIT {
   @Test
   @Disabled
   public void test() {
+    //TODO: This is broken (see #plan()). Fix or remove test
     Resolve resolve = new Resolve(DIR_BASE);
-    ScriptNode node = parser.parse("starwars.sqrl");
-    Env env2 = resolve.planDag(session, node);
+    ScriptNode node = parser.parse("starwars.sqrl",error);
+    Env env2 = resolve.planDag(session, node, error);
 
     String gql = Files.readString(Path.of("../sqrl-examples/starwars")
         .resolve("starwars.graphql"));

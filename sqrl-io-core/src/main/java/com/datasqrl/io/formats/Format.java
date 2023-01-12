@@ -45,6 +45,10 @@ public interface Format<C extends FormatConfiguration> {
         return type == Type.SUCCESS;
       }
 
+      public boolean isError() { return type == Type.ERROR; }
+
+      public boolean isSkip() { return type == Type.SKIP; }
+
       public boolean hasTime() {
         return sourceTime != null;
       }

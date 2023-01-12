@@ -7,12 +7,12 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.OptimizedDAG;
-import org.apache.calcite.tools.RelBuilder;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.apache.calcite.tools.RelBuilder;
 
 public interface ExecutionStage {
 
@@ -57,7 +57,7 @@ public interface ExecutionStage {
   ExecutionResult execute(EnginePhysicalPlan plan);
 
   EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
-      RelBuilder relBuilder);
+      RelBuilder relBuilder, TableSink errorSink);
 
 
 }

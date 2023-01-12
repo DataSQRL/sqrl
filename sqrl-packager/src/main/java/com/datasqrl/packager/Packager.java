@@ -3,6 +3,7 @@
  */
 package com.datasqrl.packager;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.AbstractLoader;
 import com.datasqrl.loaders.DynamicExporter;
 import com.datasqrl.loaders.DynamicLoader;
@@ -58,14 +59,17 @@ public class Packager {
   Path rootDir;
   JsonNode packageConfig;
   GlobalPackageConfiguration config;
+  ErrorCollector errors;
 
   private Packager(@NonNull Repository repository, @NonNull Path rootDir,
-      @NonNull JsonNode packageConfig, @NonNull GlobalPackageConfiguration config) {
+      @NonNull JsonNode packageConfig, @NonNull GlobalPackageConfiguration config,
+      @NonNull ErrorCollector errors) {
     Preconditions.checkArgument(Files.isDirectory(rootDir));
     this.repository = repository;
     this.rootDir = rootDir;
     this.packageConfig = packageConfig;
     this.config = config;
+    this.errors = errors;
   }
 
   public Path populateBuildDir(boolean inferDependencies) {
@@ -74,9 +78,8 @@ public class Packager {
       try {
         Files.deleteIfExists(buildDir);
       } catch (DirectoryNotEmptyException e) {
-        throw new IllegalStateException(String.format(
-            "Build directory [%s] already exists and is non-empty. Check and empty directory before running command again",
-            buildDir));
+        errors.fatal("Build directory [%s] already exists and is non-empty. Check and empty directory before running command again",
+            buildDir);
       }
       Files.createDirectories(buildDir);
       Preconditions.checkArgument(
@@ -107,14 +110,14 @@ public class Packager {
       for (Map.Entry<String,Dependency> entry : dependencies.entrySet()) {
         NamePath pkgPath = NamePath.parse(entry.getKey());
         if (!retrieveDependency(buildDir, pkgPath, entry.getValue().normalize(entry.getKey()))) {
-          throw new IllegalArgumentException("Could not retrieve dependency: " + pkgPath);
+          errors.fatal("Could not retrieve dependency: %s", pkgPath);
         }
       };
 
       if (inferDependencies) {
         ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
         ImportExportAnalyzer.Result allResults = Files.find(buildDir, 128, FIND_SQLR_SCRIPT)
-            .map(analyzer::analyze).reduce(Result.EMPTY, (r1,r2) -> r1.add(r2));
+            .map(script -> analyzer.analyze(script, errors)).reduce(Result.EMPTY, (r1,r2) -> r1.add(r2));
         Set<NamePath> unloadedDeps = allResults.getUnloadableDependencies(buildDir, loader, exporter);
         LinkedHashMap<String, Dependency> inferredDependencies = new LinkedHashMap<>();
         for (NamePath unloadedDep : unloadedDeps) {
@@ -124,7 +127,7 @@ public class Packager {
             inferredDependencies.put(unloadedDep.toString(), optDep.get());
             success = retrieveDependency(buildDir, unloadedDep, optDep.get());
           }
-          Preconditions.checkArgument(success, "Could not infer dependency: %s", unloadedDep);
+          errors.checkFatal(success, "Could not infer dependency: %s", unloadedDep);
         }
         //TODO: should we write out the inferred dependencies separately in the root-dir as well?
         dependencies.putAll(inferredDependencies);
@@ -136,7 +139,8 @@ public class Packager {
       getMapper().writeValue(packageFile.toFile(), packageConfig);
       return packageFile;
     } catch (IOException e) {
-      throw new IllegalStateException("Could not read or write files on local file-system", e);
+      errors.fatal("Could not read or write files on local file-system: %s", e);
+      return null;
     }
   }
 
@@ -235,10 +239,9 @@ public class Packager {
 
     Repository repository;
 
-    public Packager getPackager() throws IOException {
-      Preconditions.checkArgument(mainScript == null || Files.isRegularFile(mainScript), "Not a script file: %s", mainScript);
-      Preconditions.checkArgument(
-          graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile));
+    public Packager getPackager(ErrorCollector errors) throws IOException {
+      errors.checkFatal(mainScript == null || Files.isRegularFile(mainScript), "Not a script file: %s", mainScript);
+      errors.checkFatal(graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile), "Not a schema file: %s", graphQLSchemaFile);
       List<Path> packageFiles = this.packageFiles;
       if (packageFiles.isEmpty()) {
         //Try to find it in the directory of the main script
@@ -254,7 +257,7 @@ public class Packager {
       JsonNode packageConfig;
       GlobalPackageConfiguration config;
       if (packageFiles.isEmpty()) {
-        Preconditions.checkArgument(mainScript != null,
+        errors.checkFatal(mainScript != null,
             "Must provide either a main script or package file");
         if (rootDir == null) {
           rootDir = mainScript.getParent();
@@ -293,7 +296,7 @@ public class Packager {
       if (repository==null) {
         repository = new RemoteRepositoryImplementation();
       }
-      return new Packager(repository, rootDir, packageConfig, config);
+      return new Packager(repository, rootDir, packageConfig, config, errors);
     }
 
     public static ManifestConfiguration getManifest(Path rootDir, Path mainScript,

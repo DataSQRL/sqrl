@@ -3,22 +3,37 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
-import com.datasqrl.util.StreamUtil;
-import com.datasqrl.name.Name;
+import static com.datasqrl.plan.calcite.OptimizationStage.READ_DAG_STITCHING;
+import static com.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_STITCHING;
+
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.Planner;
 import com.datasqrl.plan.calcite.hints.WatermarkHint;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
 import com.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import com.datasqrl.plan.calcite.table.*;
+import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
+import com.datasqrl.plan.calcite.table.ProxySourceRelationalTable;
+import com.datasqrl.plan.calcite.table.QueryRelationalTable;
+import com.datasqrl.plan.calcite.table.StreamRelationalTableImpl;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
@@ -30,13 +45,6 @@ import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import static com.datasqrl.plan.calcite.OptimizationStage.READ_DAG_STITCHING;
-import static com.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_STITCHING;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of

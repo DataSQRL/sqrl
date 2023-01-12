@@ -1,0 +1,29 @@
+>>>import
+[FATAL] Could not resolve import [ecommerce-data.Customerrr]
+in script:test.sqrl [1:8]:
+IMPORT ecommerce-data.Customerrr
+-------^
+
+>>>export
+[FATAL] Could not resolve import [ecommerce-data.Customerrr]
+in script:test.sqrl [1:8]:
+IMPORT ecommerce-data.Customerrr
+-------^
+
+[FATAL] Cannot resolve table sink: outputt.customer
+in script:test.sqrl [2:20]:
+IMPORT ecommerce-data.Customer;
+EXPORT Customer TO outputt.customer;
+-------------------^
+The sink used in an `EXPORT` statement or for debugging cannot
+be found.
+
+The sink name is either misspelled or the sink does not exist.
+If the sink does not exist, you can define a sink locally, declare
+it as a dependency, or use the `print` sink to print the output
+to stdout.
+
+For example:
+```
+EXPORT MyTable TO print.mytable;
+```

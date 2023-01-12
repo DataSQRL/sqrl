@@ -1,0 +1,16 @@
+{
+  "type": "source",
+  "canonicalizer": "system",
+  "charset": "UTF-8",
+  "format": {
+    "formatType": "json"
+  },
+  "name": "orders",
+  "identifier": "orders",
+  "connector": {
+    "directoryURI": "../sqrl-examples/retail/broken-data/",
+    "fileURIs": [],
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
+    "systemType": "dir"
+  }
+}

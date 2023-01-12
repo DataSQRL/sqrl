@@ -5,14 +5,13 @@ package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.io.DataSystemConnectorConfig;
-import lombok.NonNull;
-import org.apache.flink.api.common.RuntimeExecutionMode;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.NonNull;
+import org.apache.flink.api.common.RuntimeExecutionMode;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
@@ -24,8 +23,6 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
   @Override
   public FlinkStreamBuilder createJob() {
-
-
     StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
         org.apache.flink.configuration.Configuration.fromMap(Map.of(
                 //todo config

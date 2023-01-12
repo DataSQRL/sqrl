@@ -4,12 +4,10 @@
 package com.datasqrl.schema.type.basic;
 
 import com.datasqrl.error.ErrorCollector;
-import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-
 import lombok.NonNull;
 
 public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
@@ -51,8 +49,6 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
         return true;
       } catch (IllegalArgumentException e) {
         return false;
-      } catch (DateTimeParseException e) {
-        return false;
       } catch (Exception e) {
         return false;
       }
@@ -64,8 +60,6 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
           J result = stringParser.apply((String) original);
           return Optional.of(result);
         } catch (IllegalArgumentException e) {
-          errors.fatal("Could not parse value [%s] to data type [%s]", original, clazz);
-        } catch (DateTimeParseException e) {
           errors.fatal("Could not parse value [%s] to data type [%s]", original, clazz);
         }
         return Optional.empty();

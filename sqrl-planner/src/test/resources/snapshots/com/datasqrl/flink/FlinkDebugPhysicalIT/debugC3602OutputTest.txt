@@ -1,0 +1,307 @@
+>>>newcustomerpromotion$29-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
+    LogicalTableScan(table=[[newcustomerpromotion$s$27]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>total$18-lp-stream
+LogicalProject(__pk_0=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
+  LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
+    LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0.0:DECIMAL(10, 5))], $f12=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
+        LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+            LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+          Uncollect
+            LogicalProject($f0=[$cor1.entries])
+              LogicalValues(tuples=[[{ 0 }]])
+
+>>>order_stats$26-lp-stream
+LogicalProject(__pk_0=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
+  LogicalProject(__pk_0=[$6], total_spend=[SUM($15) IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+    LogicalJoin(condition=[AND(=($0, $14), =($18, $4))], joinType=[left]) hints[IntervalJoin]
+      LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+          LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+        LogicalFilter(condition=[=($7, 1)])
+          LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                LogicalTableScan(table=[[customer$i$1]])
+      LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
+        LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0.0:DECIMAL(10, 5))], $f12=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
+            LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+                LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+              Uncollect
+                LogicalProject($f0=[$cor1.entries])
+                  LogicalValues(tuples=[[{ 0 }]])
+
+>>>favorite_categories$24-lp-stream
+LogicalProject(__pk_0=[$0], category_name=[$1], total=[$2], month=[$3])
+  LogicalProject(__pk_0=[$2], category_name=[$1], total=[$3], month=[$0])
+    LogicalAggregate(group=[{1, 2, 5}], total=[SUM($3)]) hints[SlidingAggregationHint options:[1, 31536000000, 630720000]]
+      LogicalJoin(condition=[=($5, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
+        LogicalProject(__pk_0=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
+          LogicalAggregate(group=[{0, 1, 2}], total=[SUM($3)], savings=[SUM($4)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 2629746000]]
+            LogicalProject(__pk_0=[$6], month=[round_to_month($4)], category=[$26], total=[$20], discount$0=[$19], _uuid=[$0], _idx=[$14])
+              LogicalJoin(condition=[=($21, $15)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+                LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], customerid0=[$6], _uuid0=[$7], _ingest_time0=[$8], email=[$9], name=[$10], lastupdated=[$11], updatetime=[$12], $f7=[$13], _idx=[$14], productid=[$15], quantity=[$16], unit_price=[$17], discount=[$18], $f19=[coalesce($18, 0.0:DECIMAL(10, 5))], $f20=[-(*($16, $17), coalesce($18, 0.0:DECIMAL(10, 5)))])
+                  LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                    LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+                        LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+                      LogicalFilter(condition=[=($7, 1)])
+                        LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                          LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+                            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                              LogicalTableScan(table=[[customer$i$1]])
+                    Uncollect
+                      LogicalProject($f0=[$cor5.entries])
+                        LogicalValues(tuples=[[{ 0 }]])
+                LogicalFilter(condition=[=($7, 1)])
+                  LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                    LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+                        LogicalTableScan(table=[[product$i$4]])
+        LogicalFilter(condition=[=($7, 1)])
+          LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                LogicalTableScan(table=[[customer$i$1]])
+
+>>>order_again$20-lp-stream
+LogicalProject(__pk_0=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
+  LogicalProject(__pk_0=[$6], productid=[$15], quantity=[SUM($16) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], most_recent=[MAX($4) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+    LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+      LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+          LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+        LogicalFilter(condition=[=($7, 1)])
+          LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                LogicalTableScan(table=[[customer$i$1]])
+      Uncollect
+        LogicalProject($f0=[$cor3.entries])
+          LogicalValues(tuples=[[{ 0 }]])
+
+>>>_spending_by_month_category$22$1-lp-stream
+LogicalProject(__pk_0=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
+  LogicalProject(__pk_0=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
+    LogicalAggregate(group=[{0, 1, 2}], total=[SUM($3)], savings=[SUM($4)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 2629746000]]
+      LogicalProject(__pk_0=[$6], month=[round_to_month($4)], category=[$26], total=[$20], discount$0=[$19], _uuid=[$0], _idx=[$14])
+        LogicalJoin(condition=[=($21, $15)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], customerid0=[$6], _uuid0=[$7], _ingest_time0=[$8], email=[$9], name=[$10], lastupdated=[$11], updatetime=[$12], $f7=[$13], _idx=[$14], productid=[$15], quantity=[$16], unit_price=[$17], discount=[$18], $f19=[coalesce($18, 0.0:DECIMAL(10, 5))], $f20=[-(*($16, $17), coalesce($18, 0.0:DECIMAL(10, 5)))])
+            LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+              LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+                LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+                  LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+                LogicalFilter(condition=[=($7, 1)])
+                  LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                    LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                        LogicalTableScan(table=[[customer$i$1]])
+              Uncollect
+                LogicalProject($f0=[$cor5.entries])
+                  LogicalValues(tuples=[[{ 0 }]])
+          LogicalFilter(condition=[=($7, 1)])
+            LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+              LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
+                LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+                  LogicalTableScan(table=[[product$i$4]])
+
+>>>category$14$2-lp-stream
+LogicalProject(name=[$0], updatetime=[$1])
+  LogicalProject(name=[$5], updatetime=[$6])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+      LogicalTableScan(table=[[product$i$4]])
+
+>>>customer$12$3-lp-stream
+LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+  LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+      LogicalTableScan(table=[[customer$i$1]])
+
+>>>customer$3$4-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+    LogicalTableScan(table=[[customer$i$1]])
+
+>>>favorite_categories$24$5-lp-stream
+LogicalProject(__pk_0=[$0], category_name=[$1], total=[$2], month=[$3])
+  LogicalProject(__pk_0=[$2], category_name=[$1], total=[$3], month=[$0])
+    LogicalAggregate(group=[{1, 2, 5}], total=[SUM($3)]) hints[SlidingAggregationHint options:[1, 31536000000, 630720000]]
+      LogicalJoin(condition=[=($5, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
+        LogicalProject(__pk_0=[$0], month=[$1], category=[$2], total=[$3], savings=[$4])
+          LogicalAggregate(group=[{0, 1, 2}], total=[SUM($3)], savings=[SUM($4)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 2629746000]]
+            LogicalProject(__pk_0=[$6], month=[round_to_month($4)], category=[$26], total=[$20], discount$0=[$19], _uuid=[$0], _idx=[$14])
+              LogicalJoin(condition=[=($21, $15)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+                LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], customerid0=[$6], _uuid0=[$7], _ingest_time0=[$8], email=[$9], name=[$10], lastupdated=[$11], updatetime=[$12], $f7=[$13], _idx=[$14], productid=[$15], quantity=[$16], unit_price=[$17], discount=[$18], $f19=[coalesce($18, 0.0:DECIMAL(10, 5))], $f20=[-(*($16, $17), coalesce($18, 0.0:DECIMAL(10, 5)))])
+                  LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                    LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+                        LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+                      LogicalFilter(condition=[=($7, 1)])
+                        LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                          LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+                            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                              LogicalTableScan(table=[[customer$i$1]])
+                    Uncollect
+                      LogicalProject($f0=[$cor5.entries])
+                        LogicalValues(tuples=[[{ 0 }]])
+                LogicalFilter(condition=[=($7, 1)])
+                  LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                    LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+                        LogicalTableScan(table=[[product$i$4]])
+        LogicalFilter(condition=[=($7, 1)])
+          LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                LogicalTableScan(table=[[customer$i$1]])
+
+>>>newcustomerpromotion$29$6-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
+    LogicalTableScan(table=[[newcustomerpromotion$s$27]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>order_again$20$7-lp-stream
+LogicalProject(__pk_0=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
+  LogicalProject(__pk_0=[$6], productid=[$15], quantity=[SUM($16) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], most_recent=[MAX($4) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+    LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+      LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+          LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+        LogicalFilter(condition=[=($7, 1)])
+          LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                LogicalTableScan(table=[[customer$i$1]])
+      Uncollect
+        LogicalProject($f0=[$cor3.entries])
+          LogicalValues(tuples=[[{ 0 }]])
+
+>>>order_stats$26$8-lp-stream
+LogicalProject(__pk_0=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
+  LogicalProject(__pk_0=[$6], total_spend=[SUM($15) IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+    LogicalJoin(condition=[AND(=($0, $14), =($18, $4))], joinType=[left]) hints[IntervalJoin]
+      LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+          LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+        LogicalFilter(condition=[=($7, 1)])
+          LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+                LogicalTableScan(table=[[customer$i$1]])
+      LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
+        LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0.0:DECIMAL(10, 5))], $f12=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
+            LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+                LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+              Uncollect
+                LogicalProject($f0=[$cor1.entries])
+                  LogicalValues(tuples=[[{ 0 }]])
+
+>>>orders$9$9-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+    LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>product$16$10-lp-stream
+LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6])
+  LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+      LogicalTableScan(table=[[product$i$4]])
+
+>>>product$6$11-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+    LogicalTableScan(table=[[product$i$4]])
+
+>>>total$18$12-lp-stream
+LogicalProject(__pk_0=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
+  LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
+    LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0.0:DECIMAL(10, 5))], $f12=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
+        LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+            LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+          Uncollect
+            LogicalProject($f0=[$cor1.entries])
+              LogicalValues(tuples=[[{ 0 }]])
+
+>>>favorite_categories-lp-database
+LogicalSort(sort0=[$0], sort1=[$2], sort2=[$1], dir0=[ASC], dir1=[ASC], dir2=[ASC])
+  LogicalProject(__pk_0=[$0], category_name=[$1], total=[$2], month=[$3])
+    LogicalTableScan(table=[[favorite_categories$24]])
+
+>>>order_stats-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(__pk_0=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
+    LogicalTableScan(table=[[order_stats$26]])
+
+>>>NewCustomerPromotion-lp-database
+LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
+    LogicalTableScan(table=[[newcustomerpromotion$29]])
+
+>>>order_again-lp-database
+LogicalSort(sort0=[$0], sort1=[$4], sort2=[$2], sort3=[$1], dir0=[ASC], dir1=[DESC], dir2=[DESC], dir3=[ASC])
+  LogicalProject(__pk_0=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
+    LogicalTableScan(table=[[order_again$20]])
+
+>>>total-lp-database
+LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(__pk_0=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
+    LogicalTableScan(table=[[total$18]])
+
+>>>favorite_categories-data
+Decoration, 120.85, 2023-05-28T21:23:59.999-07:00
+House & Garden, 166.5, 2023-05-28T21:23:59.999-07:00
+Personal Care, 146.82, 2023-05-28T21:23:59.999-07:00
+>>>order_stats-data
+120.85, 1, 2022-05-19T01:29:39.553-07:00
+146.82, 2, 2022-05-19T02:28:39.553-07:00
+166.5, 1, 2022-05-19T02:16:39.553-07:00
+>>>NewCustomerPromotion-data
+1000101, john.mekker@gmail.com, John Mekker, 120.85, 1
+1000107, emily.ludies@hotmail.com, Emily F. Ludies, 146.82, 2
+1000121, lalelu@hottunes.org, Michelle Dagnes, 166.5, 1
+>>>order_again-data
+1332, 8, 1, 2022-05-19T02:28:39.553-07:00, 2022-05-19T02:28:39.553-07:00
+3225, 1, 1, 2022-05-19T02:16:39.553-07:00, 2022-05-19T02:16:39.553-07:00
+3571, 2, 2, 2022-05-19T02:28:39.553-07:00, 2022-05-19T02:28:39.553-07:00
+7235, 1, 1, 2022-05-19T01:29:39.553-07:00, 2022-05-19T01:29:39.553-07:00
+7552, 3, 1, 2022-05-19T02:16:39.553-07:00, 2022-05-19T02:16:39.553-07:00
+8757, 2, 1, 2022-05-19T01:29:39.553-07:00, 2022-05-19T01:29:39.553-07:00
+>>>total-data
+104.87, 5, 2, 2022-05-19T02:28:39.553-07:00
+120.85, 11.5, 2, 2022-05-19T01:29:39.553-07:00
+166.5, 15, 2, 2022-05-19T02:16:39.553-07:00
+41.95, 0, 1, 2022-05-19T01:45:39.553-07:00
+>>>export-_spending_by_month_category$22
+3
+>>>export-category$14
+6
+>>>export-customer$12
+4
+>>>export-customer$3
+4
+>>>export-favorite_categories$24
+150
+>>>export-newcustomerpromotion$29
+3
+>>>export-order_again$20
+7
+>>>export-order_stats$26
+4
+>>>export-orders$9
+4
+>>>export-product$16
+6
+>>>export-product$6
+6
+>>>export-total$18
+4

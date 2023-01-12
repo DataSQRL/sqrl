@@ -1,4 +1,7 @@
-[FATAL]
-Invalid function call:
+[FATAL] Invalid function call:
 NOW(INT NOT NULL)
+in script:test.sqrl [2:1]:
+IMPORT ecommerce-data.Product;
+Product.test := NOW(100);
+^
 

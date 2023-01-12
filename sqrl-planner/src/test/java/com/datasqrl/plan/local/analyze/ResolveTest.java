@@ -3,10 +3,14 @@
  */
 package com.datasqrl.plan.local.analyze;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.name.Name;
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
 import com.datasqrl.plan.calcite.table.PullupOperator;
@@ -18,12 +22,16 @@ import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestRelWriter;
 import com.datasqrl.util.data.Retail;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.compress.utils.Sets;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -31,21 +39,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 public class ResolveTest extends AbstractLogicalSQRLIT {
 
   private final Retail example = Retail.INSTANCE;
   private Path exportPath = example.getRootPackageDirectory().resolve("export-data");
 
   private Resolve.Env resolvedDag = null;
-  private SnapshotTest.Snapshot snapshot;
+  protected SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
@@ -474,16 +474,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   @SneakyThrows
-  private Resolve.Env process(String query) {
-    ScriptNode node = parse(query);
-    resolvedDag = resolve.planDag(session, node);
+  protected Resolve.Env process(String query) {
+    resolvedDag = plan(query);
     return resolvedDag;
   }
-
-  private ScriptNode parse(String query) {
-    return parser.parse(query);
-  }
-
 
   private void validateQueryTable(String name, TableType tableType, ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys) {

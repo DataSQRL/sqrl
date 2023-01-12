@@ -3,16 +3,21 @@
  */
 package com.datasqrl.parse;
 
-import com.datasqrl.error.ErrorEmitter;
 import com.datasqrl.error.ErrorHandler;
+import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.error.ErrorLocation;
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.error.ErrorMessage;
+import com.datasqrl.error.ErrorMessage.Implementation;
+import com.datasqrl.error.ErrorMessage.Severity;
 
 public class ParsingExceptionHandler implements ErrorHandler<ParsingException> {
 
   @Override
-  public ErrorMessage handle(ParsingException e, ErrorEmitter emitter) {
-    return emitter.fatal(e.getLineNumber(), e.getColumnNumber(), e.getErrorMessage(),
-        e.getCause());
+  public ErrorMessage handle(ParsingException e, ErrorLocation baseLocation) {
+    return new Implementation(ErrorLabel.GENERIC, e.getErrorMessage(),
+        baseLocation.atFile(new FileLocation(e.getLineNumber(), e.getColumnNumber()))
+        , Severity.FATAL);
   }
 
   @Override

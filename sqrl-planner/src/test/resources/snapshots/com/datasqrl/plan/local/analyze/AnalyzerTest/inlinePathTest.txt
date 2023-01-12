@@ -1,7 +1,9 @@
-[FATAL]
+[FATAL] Field cannot be walked here, has to-many multiplicity: joindeclaration
+in script:test.sqrl [3:22]:
+IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON true;
 NewProduct := SELECT joinDeclaration.productid FROM Product;
----------------------^  Field cannot be walked here, has to-many multiplicity: joindeclaration
+---------------------^
 To-many path not allowed in field path in this location.
 
 Erroneous code example:

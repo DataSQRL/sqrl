@@ -1,0 +1,24 @@
+{
+  "type": "source",
+  "canonicalizer": "system",
+  "charset": "UTF-8",
+  "format": {
+    "formatType": "csv",
+    "delimiter": ",",
+    "commentPrefix": null,
+    "header": [
+      "productid",
+      "name",
+      "description",
+      "category"
+    ]
+  },
+  "name": "product",
+  "identifier": "product",
+  "connector": {
+    "directoryURI": "../sqrl-examples/retail/broken-data/",
+    "fileURIs": [],
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
+    "systemType": "dir"
+  }
+}

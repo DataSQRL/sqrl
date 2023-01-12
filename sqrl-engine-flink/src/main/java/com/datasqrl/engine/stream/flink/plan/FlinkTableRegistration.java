@@ -6,11 +6,14 @@ package com.datasqrl.engine.stream.flink.plan;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.DescriptorFactory;
+import com.datasqrl.engine.stream.flink.InputError;
+import com.datasqrl.engine.stream.flink.InputError.InputErrorMessage;
+import com.datasqrl.engine.stream.flink.InputError.Map2InputErrorMessage;
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRegistrationContext;
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.SinkContext;
+import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Raw;
 import com.datasqrl.io.tables.TableSource;
@@ -82,7 +85,7 @@ public class FlinkTableRegistration implements
     StreamHolder<Raw> stream = streamPreparer.getRawInput(tableSource, context.getBuilder(), errorLocation);
     SchemaValidator schemaValidator = tableSource.getSchemaValidator();
     StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
-        "schema", errorLocation, SourceRecord.Named.class);
+        errorLocation, SourceRecord.Named.class);
     context.getBuilder().addAsTable(validate, tableSource.getSchema(), table.getNameId());
 
     return null;
@@ -122,6 +125,18 @@ public class FlinkTableRegistration implements
     context.getTEnv().createTemporaryTable(flinkSinkName, sinkDescriptor);
     context.getStreamStatementSet().addInsert(flinkSinkName, tbl);
     return null;
+  }
+
+  public static final String ERROR_SINK_NAME = "errors_internal_sink";
+
+  public void registerErrors(DataStream<InputError> errorStream, ExternalSink errorSink,
+      FlinkTableRegistrationContext context) {
+    DataStream<InputErrorMessage> errorMessages = errorStream.flatMap(new Map2InputErrorMessage());
+    Schema errorTableSchema = InputError.InputErrorMessage.getTableSchema();
+    Table errorTable = context.getTEnv().fromDataStream(errorMessages, errorTableSchema);
+    TableDescriptor sinkDescriptor = new DescriptorFactory().createSink(errorSink, errorTableSchema);
+    context.getTEnv().createTemporaryTable(ERROR_SINK_NAME, sinkDescriptor);
+    context.getStreamStatementSet().addInsert(ERROR_SINK_NAME, errorTable);
   }
 
   @Value

@@ -7,12 +7,12 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.OptimizedDAG;
-import lombok.Value;
-import org.apache.calcite.tools.RelBuilder;
-
 import java.util.List;
 import java.util.Optional;
+import lombok.Value;
+import org.apache.calcite.tools.RelBuilder;
 
 @Value
 public class EngineStage implements ExecutionStage {
@@ -42,7 +42,7 @@ public class EngineStage implements ExecutionStage {
 
   @Override
   public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
-      RelBuilder relBuilder) {
-    return engine.plan(plan, inputs, relBuilder);
+      RelBuilder relBuilder, TableSink errorSink) {
+    return engine.plan(plan, inputs, relBuilder, errorSink);
   }
 }

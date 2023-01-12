@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 public interface ErrorHandler<E extends Exception> extends Serializable {
 
-  ErrorMessage handle(E e, ErrorEmitter emitter);
+  ErrorMessage handle(E e, ErrorLocation baseLocation);
 
   Class getHandleClass();
 }

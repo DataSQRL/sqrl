@@ -3,23 +3,26 @@
  */
 package com.datasqrl.engine.stream.flink;
 
+import static com.datasqrl.engine.EngineCapability.CUSTOM_FUNCTIONS;
+import static com.datasqrl.engine.EngineCapability.DENORMALIZE;
+import static com.datasqrl.engine.EngineCapability.EXTENDED_FUNCTIONS;
+import static com.datasqrl.engine.EngineCapability.TEMPORAL_JOIN;
+import static com.datasqrl.engine.EngineCapability.TIME_WINDOW_AGGREGATION;
+
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
-import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;
+import java.util.EnumSet;
+import java.util.List;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
-
-import java.util.EnumSet;
-import java.util.List;
-
-import static com.datasqrl.engine.EngineCapability.*;
 
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
     FlinkStreamEngine {
@@ -48,10 +51,10 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
 
   @Override
   public FlinkStreamPhysicalPlan plan(OptimizedDAG.StagePlan plan,
-      List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder) {
+      List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(this).createStreamGraph(
-        plan.getQueries());
+        plan.getQueries(), errorSink);
     return streamPlan;
   }
 

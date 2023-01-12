@@ -1,4 +1,4 @@
-[FATAL]
+[FATAL] identifiers '`x$0`' must not contain special token ($).
 Test.example := SELECT * FROM `x$0`;
--------------------------------^  identifiers '`x$0`' must not contain special token ($).
+------------------------------^
 

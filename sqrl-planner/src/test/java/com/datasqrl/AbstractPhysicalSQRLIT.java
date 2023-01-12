@@ -13,6 +13,8 @@ import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.loaders.DynamicExporter;
+import com.datasqrl.loaders.ExporterContext.Implementation;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.global.DAGPlanner;
@@ -45,15 +47,15 @@ import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.ScriptNode;
 import org.apache.commons.lang3.ArrayUtils;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   public PhysicalPlanner physicalPlanner;
+  JDBCEngineConfiguration jdbc;
 
   protected SnapshotTest.Snapshot snapshot;
-  JDBCEngineConfiguration jdbc;
+  protected boolean closeSnapshotOnValidate = true;
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
     super.initialize(settings, rootDir);
@@ -64,7 +66,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       .findAny()
       .orElseThrow();
 
-    physicalPlanner = new PhysicalPlanner(planner.getRelBuilder());
+    TableSink errorSink = new DynamicExporter().export(new Implementation(rootDir, error),settings.getErrorSink()).get();
+    physicalPlanner = new PhysicalPlanner(planner.getRelBuilder(), errorSink);
   }
 
 
@@ -80,8 +83,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   @SneakyThrows
   protected void validateTables(String script, Collection<String> queryTables,
       Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
-    ScriptNode node = parse(script);
-    Resolve.Env resolvedDag = resolve.planDag(session, node);
+    Resolve.Env resolvedDag = plan(script);
     DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
@@ -145,7 +147,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
             "export", sink.getConfiguration().getIdentifier());
       }
     }
-    snapshot.createOrValidate();
+    if (closeSnapshotOnValidate) snapshot.createOrValidate();
   }
 
   private void addContent(OptimizedDAG dag, String... caseNames) {
@@ -158,9 +160,5 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   protected static final Predicate<Integer> filterOutTimestampColumn =
       type -> type != Types.TIMESTAMP_WITH_TIMEZONE && type != Types.TIMESTAMP;
 
-
-  protected ScriptNode parse(String query) {
-    return parser.parse(query);
-  }
 
 }

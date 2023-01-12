@@ -13,6 +13,7 @@ import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableDescriptor;
 
 public class DescriptorFactory {
+
   public TableDescriptor createSink(ExternalSink sink, Schema tblSchema) {
     DataSystemConnectorConfig config = sink.getSink().getConfiguration().getConnector();
 
@@ -28,14 +29,16 @@ public class DescriptorFactory {
 
   public TableDescriptor createSink(EngineSink sink, Schema tblSchema) {
     DataSystemConnectorConfig config = sink.getStage().getEngine().getDataSystemConnectorConfig();
+    tblSchema = FlinkPipelineUtils.addPrimaryKey(tblSchema, sink);
+
     SinkFactory<TableDescriptor.Builder> factory = (new SinkServiceLoader())
         .load(FlinkEngineConfiguration.ENGINE_NAME,
             sink.getStage().getName())
           .orElseThrow();
-    tblSchema = FlinkPipelineUtils.addPrimaryKey(tblSchema, sink);
 
     return factory.create(sink, config)
         .schema(tblSchema)
         .build();
   }
+
 }
