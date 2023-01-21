@@ -3,7 +3,6 @@ package com.datasqrl.io;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.SourceServiceLoader.SourceFactoryContext;
 import com.datasqrl.engine.stream.flink.FlinkSourceFactoryContext;
-import com.datasqrl.engine.stream.flink.FlinkStreamBuilder.NoTimedRecord;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
 import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
@@ -20,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
 import org.apache.flink.connector.file.src.reader.StreamFormat;
 import org.apache.flink.core.fs.Path;
@@ -114,6 +114,14 @@ public class FileSourceFactory implements
         }
         return directorySource.isTableFile(FilePath.fromFlinkPath(path), table);
       }
+    }
+  }
+
+  public static class NoTimedRecord implements MapFunction<String, TimeAnnotatedRecord<String>> {
+
+    @Override
+    public TimeAnnotatedRecord<String> map(String s) throws Exception {
+      return new TimeAnnotatedRecord<>(s, null);
     }
   }
 

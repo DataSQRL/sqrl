@@ -3,7 +3,8 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
-import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
+import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
+import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRegistrationContext;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.OptimizedDAG;
@@ -16,11 +17,11 @@ import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
 @AllArgsConstructor
 public class FlinkPhysicalPlanner {
 
-  private final FlinkStreamEngine streamEngine;
+  private final AbstractFlinkStreamEngine streamEngine;
 
   public FlinkStreamPhysicalPlan createStreamGraph(
       List<? extends OptimizedDAG.Query> streamQueries, TableSink errorSink) {
-    final FlinkStreamEngine.Builder streamBuilder = streamEngine.createJob();
+    final FlinkStreamBuilder streamBuilder = streamEngine.createJob();
     final FlinkTableRegistrationContext regContext = streamBuilder.getContext();
 
     regContext.getTEnv().getConfig()
@@ -32,7 +33,7 @@ public class FlinkPhysicalPlanner {
     for (OptimizedDAG.Query q : streamQueries) {
       q.accept(tableRegistration, regContext);
     }
-    streamBuilder.getErrorStream().ifPresent(errorStream -> tableRegistration.registerErrors(
+    streamBuilder.getErrorHandler().getErrorStream().ifPresent(errorStream -> tableRegistration.registerErrors(
         errorStream, new ExternalSink("_errors", errorSink), regContext));
     return new FlinkStreamPhysicalPlan(regContext.getStreamStatementSet());
   }

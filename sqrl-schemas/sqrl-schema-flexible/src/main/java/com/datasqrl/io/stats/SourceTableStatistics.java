@@ -3,6 +3,7 @@
  */
 package com.datasqrl.io.stats;
 
+import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.TableSource;
@@ -13,7 +14,8 @@ import lombok.ToString;
 
 @ToString
 public class SourceTableStatistics implements
-    Accumulator<SourceRecord<String>, SourceTableStatistics, TableSource.Digest> {
+    Accumulator<SourceRecord<String>, SourceTableStatistics, TableSource.Digest>,
+    DataMonitor.Metric<SourceTableStatistics> {
 
   final RelationStats relation;
 

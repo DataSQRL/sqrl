@@ -6,8 +6,9 @@ package com.datasqrl.flink;
 import com.datasqrl.AbstractPhysicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.engine.stream.StreamHolder;
+import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
-import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
+import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
@@ -45,8 +46,8 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 
     TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"));
 
-    FlinkStreamEngine flink = FlinkEngineConfiguration.builder().build().initialize(error);
-    FlinkStreamEngine.Builder streamBuilder = flink.createJob();
+    AbstractFlinkStreamEngine flink = FlinkEngineConfiguration.builder().build().initialize(error);
+    FlinkStreamBuilder streamBuilder = flink.createJob();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 
 
@@ -72,7 +73,6 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
         + "");
     tEnv.toChangelogStream(tableNest).print();
 
-    streamBuilder.setJobType(FlinkStreamEngine.JobType.SCRIPT);
     streamBuilder.build().execute("test");
   }
 }

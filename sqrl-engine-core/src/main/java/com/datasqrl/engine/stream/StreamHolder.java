@@ -10,6 +10,4 @@ public interface StreamHolder<T> {
   <R> StreamHolder<R> mapWithError(FunctionWithError<T, R> function,
       ErrorLocation errorLocation, Class<R> clazz);
 
-  void printSink();
-
 }

@@ -15,44 +15,37 @@ import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
+import com.datasqrl.engine.stream.inmemory.InMemStreamEngine.JobBuilder.Sink;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.engine.stream.monitor.DataMonitor;
+import com.datasqrl.engine.stream.monitor.MetricStore;
+import com.datasqrl.engine.stream.monitor.MetricStore.Provider;
 import com.datasqrl.error.ErrorCollection;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation;
-import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.schema.converters.RowMapper;
-import com.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.tools.RelBuilder;
 
 @Slf4j
 public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
-
-  private final AtomicInteger jobIdCounter = new AtomicInteger(0);
-  private final ConcurrentHashMap<String, Job> jobs = new ConcurrentHashMap<>();
 
   public InMemStreamEngine() {
     super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM,
@@ -61,18 +54,12 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
   }
 
   @Override
-  public JobBuilder createJob() {
+  public JobBuilder createDataMonitor() {
     return new JobBuilder();
   }
 
   @Override
-  public Optional<? extends Job> getJob(String id) {
-    return Optional.ofNullable(jobs.get(id));
-  }
-
-  @Override
   public void close() throws IOException {
-    jobs.clear();
   }
 
   @Override
@@ -87,12 +74,10 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
   }
 
   @Getter
-  public class JobBuilder implements StreamEngine.Builder {
+  public class JobBuilder implements DataMonitor {
 
-    private final List<Stream> mainStreams = new ArrayList<>();
-    private final List<Stream> sideStreams = new ArrayList<>();
+    private final List<Sink> sinks = new ArrayList<>();
     private final ErrorCollection errorHolder = new ErrorCollection();
-    private final RecordHolder recordHolder = new RecordHolder();
 
     @Override
     public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
@@ -116,28 +101,24 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
       }
     }
 
-
-
     @Override
-    public void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema,
-        String qualifiedTableName) {
-      final Consumer<Object[]> records = recordHolder.getCollector(qualifiedTableName);
-      RowMapper<Object[]> mapper = schema.getSchema().getRowMapper(InMemRowConstructor.INSTANCE, schema.isHasSourceTimestamp());
-      ((Holder<Named>) stream).mapWithError((r, c) -> {
-        try {
-          records.accept(mapper.apply(r));
-          return Optional.of(Boolean.TRUE);
-        } catch (Exception e) {
-          ErrorCollector errors = c.get();
-          errors.fatal(e.toString());
-          return Optional.of(Boolean.FALSE);
-        }
-      }, ErrorPrefix.INPUT_DATA.resolve(qualifiedTableName), Boolean.class).sink();
+    public <M extends Metric<M>> void monitorTable(TableInput tableSource, StreamHolder<M> stream,
+        Provider<M> storeProvider) {
+      Preconditions.checkArgument(stream instanceof Holder);
+      Holder<M> metrics = (Holder<M>) stream;
+      metrics.close();
+      sinks.add(new Sink(metrics.stream, storeProvider));
+    }
+
+    @Value
+    public class Sink<M extends Metric<M>> {
+      Stream<M> stream;
+      Provider<M> storeProvider;
     }
 
     @Override
     public Job build() {
-      return new Job(mainStreams, sideStreams, errorHolder, recordHolder);
+      return new InMemStreamEngine.Job(sinks, errorHolder);
     }
 
     public class Holder<T> implements StreamHolder<T> {
@@ -185,67 +166,38 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
           }
         }));
       }
-
-      @Override
-      public void printSink() {
-        checkClosed();
-        wrap(stream.map(r -> {
-          log.trace("{}", r);
-          return r;
-        })).sink();
-      }
-
-      private void sink() {
-        checkClosed();
-        close();
-        mainStreams.add(stream);
-      }
     }
   }
 
-  public static class RecordHolder extends OutputCollector<String, Object[]> {
+  public class Job implements DataMonitor.Job {
 
-  }
-
-  public class Job implements StreamEngine.Job {
-
-    private final String id;
     private Status status;
 
-    private final List<Stream> mainStreams;
-    private final List<Stream> sideStreams;
+    private final List<Sink> sinks;
     @Getter
     private final ErrorCollection errorHolder;
-    @Getter
-    private final RecordHolder recordHolder;
 
-    private Job(List<Stream> mainStreams, List<Stream> sideStreams, ErrorCollection errorHolder,
-        RecordHolder recordHolder) {
-      this.mainStreams = mainStreams;
-      this.sideStreams = sideStreams;
+    private Job(List<Sink> sinks, ErrorCollection errorHolder) {
+      this.sinks = sinks;
       this.errorHolder = errorHolder;
-      this.recordHolder = recordHolder;
-      id = Integer.toString(jobIdCounter.incrementAndGet());
-      jobs.put(id, this);
       status = Status.PREPARING;
-    }
-
-    @Override
-    public String getId() {
-      return id;
     }
 
     @Override
     public void execute(String name) {
       Preconditions.checkArgument(status == Status.PREPARING, "Job has already been executed");
       try {
-        //Execute main streams first and side streams after
-        for (Stream stream : mainStreams) {
-          stream.forEach(s -> {
-          });
-        }
-        for (Stream stream : sideStreams) {
-          stream.forEach(s -> {
+        //Reduce all streams and write to store
+        for (Sink<?> sink : sinks) {
+          sink.stream.reduce((stat1, stat2) -> {
+            stat1.merge(stat2);
+            return stat1;
+          }).ifPresent(stat -> {
+            try (MetricStore store = sink.storeProvider.open()) {
+              store.put(stat);
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
           });
         }
         status = Status.COMPLETED;
@@ -266,27 +218,6 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
     @Override
     public Status getStatus() {
       return status;
-    }
-  }
-
-  public static class InMemRowConstructor implements
-      com.datasqrl.schema.converters.RowConstructor<Object[]> {
-
-    private static final InMemRowConstructor INSTANCE = new InMemRowConstructor();
-
-    @Override
-    public Object[] createRow(Object[] columns) {
-      return columns;
-    }
-
-    @Override
-    public List createNestedRow(Object[] columns) {
-      return Arrays.asList(columns);
-    }
-
-    @Override
-    public List createRowList(Object[] rows) {
-      return Arrays.asList(rows);
     }
   }
 

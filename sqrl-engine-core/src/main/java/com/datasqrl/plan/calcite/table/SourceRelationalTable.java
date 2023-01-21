@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.engine.stream.flink.plan.TableRegistration;
+import com.datasqrl.engine.stream.plan.TableRegistration;
 
 public interface SourceRelationalTable {
 
