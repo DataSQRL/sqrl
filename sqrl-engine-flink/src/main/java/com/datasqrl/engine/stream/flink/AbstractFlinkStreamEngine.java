@@ -4,6 +4,7 @@
 package com.datasqrl.engine.stream.flink;
 
 import static com.datasqrl.engine.EngineCapability.CUSTOM_FUNCTIONS;
+import static com.datasqrl.engine.EngineCapability.DATA_MONITORING;
 import static com.datasqrl.engine.EngineCapability.DENORMALIZE;
 import static com.datasqrl.engine.EngineCapability.EXTENDED_FUNCTIONS;
 import static com.datasqrl.engine.EngineCapability.TEMPORAL_JOIN;
@@ -32,7 +33,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
 
   public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = EnumSet.of(DENORMALIZE,
       TEMPORAL_JOIN,
-      TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS);
+      TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS, DATA_MONITORING);
 
   final FlinkEngineConfiguration config;
 

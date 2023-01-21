@@ -4,6 +4,7 @@
 package com.datasqrl.engine.stream.inmemory;
 
 import static com.datasqrl.engine.EngineCapability.CUSTOM_FUNCTIONS;
+import static com.datasqrl.engine.EngineCapability.DATA_MONITORING;
 import static com.datasqrl.engine.EngineCapability.DENORMALIZE;
 import static com.datasqrl.engine.EngineCapability.EXTENDED_FUNCTIONS;
 import static com.datasqrl.engine.EngineCapability.TEMPORAL_JOIN;
@@ -50,7 +51,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
   public InMemStreamEngine() {
     super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM,
         EnumSet.of(DENORMALIZE, TEMPORAL_JOIN,
-            TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS));
+            TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS, DATA_MONITORING));
   }
 
   @Override
