@@ -6,23 +6,23 @@ package com.datasqrl.io.formats;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.impl.InputPreview;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import java.io.Reader;
-import java.io.StringReader;
-import java.util.Map;
-import lombok.*;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.ToString;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
 
@@ -46,8 +46,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     private String[] header;
     private String delimiter;
     private String commentPrefix;
-
-    private transient Splitter splitter;
+    private org.apache.commons.csv.CSVFormat format;
 
     public CSVFormatParser(Configuration config) {
       Preconditions.checkArgument(config.header != null && config.header.length > 0);
@@ -55,6 +54,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
       this.header = config.header;
       this.delimiter = config.delimiter;
       this.commentPrefix = config.commentPrefix;
+      this.format = getDefaultFormat(delimiter);
     }
 
 
@@ -64,17 +64,8 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
       if (isComment(line, commentPrefix)) {
         return Result.skip();
       }
-      if (splitter == null) {
-        splitter = getSplitter(delimiter);
-      }
-      Reader reader = new StringReader(line);
-      try (CSVParser parser = CSVParser.parse(reader, org.apache.commons.csv.CSVFormat.DEFAULT
-          .builder()
-          .setDelimiter(delimiter.charAt(0))
-          .setTrim(true)
-          .build())) {
+      try (CSVParser parser = CSVParser.parse(line, format)) {
         for (CSVRecord parts : parser) {
-
           if (parts.size() > header.length) {
             return Result.error(
                 String.format("Expected %d items per row but found %d", header.length,
@@ -103,9 +94,12 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     }
   }
 
-  private static Splitter getSplitter(String delimiter) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(delimiter));
-    return Splitter.on(delimiter).trimResults();
+  private static org.apache.commons.csv.CSVFormat getDefaultFormat(String delimiter) {
+    return org.apache.commons.csv.CSVFormat.DEFAULT
+        .builder()
+        .setDelimiter(delimiter.charAt(0))
+        .setTrim(true)
+        .build();
   }
 
   private static boolean isComment(String line, String commentPrefix) {
@@ -129,7 +123,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     private String[] header;
     private String delimiter;
 
-    private transient Splitter splitter;
+    private transient org.apache.commons.csv.CSVFormat format;
 
     public Inferer(String delimiter) {
       this.delimiter = delimiter;
@@ -162,21 +156,23 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
         }
       }
 
-      if (splitter == null) {
-        splitter = getSplitter(delimiter);
+      if (format == null) {
+        format = getDefaultFormat(delimiter);
       }
 
-      List<String> h = splitter.splitToList(line);
-      if (!h.isEmpty()) {
-        //verify all header elements are proper strings
-        boolean allProper = true;
-        for (String s : h) {
-          if (s.isEmpty() || !Character.isLetter(s.charAt(0))) {
-            allProper = false;
+      try (CSVParser parser = CSVParser.parse(line, format)) {
+        Optional<CSVRecord> first = parser.stream().findFirst();
+        if (first.isPresent()) {
+          //verify all header elements are proper strings
+          boolean allProper = true;
+          for (String s : first.get()) {
+            if (s.isEmpty() || !Character.isLetter(s.charAt(0))) {
+              allProper = false;
+            }
           }
-        }
-        if (allProper) {
-          header = h.toArray(new String[h.size()]);
+          if (allProper) {
+            header = first.get().stream().toArray(size -> new String[size]);
+          }
         }
       }
       if (header == null) {
