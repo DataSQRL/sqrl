@@ -134,7 +134,6 @@ public class DataDiscovery {
     } else {
       monitorJob.execute("discovery");
     }
-    //TODO: figure out how to wait on job completion
     List<TableSource> sourceTables = discoverSchema(inputTables);
     return sourceTables;
 
