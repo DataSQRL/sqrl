@@ -3,6 +3,7 @@ package com.datasqrl.engine.stream.monitor;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.StreamSourceProvider;
 import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.util.Metric;
 
 public interface DataMonitor extends StreamSourceProvider {
 
@@ -10,12 +11,6 @@ public interface DataMonitor extends StreamSourceProvider {
       MetricStore.Provider<M> storeProvider);
 
   Job build();
-
-  interface Metric<M extends Metric> {
-
-    void merge(M other);
-
-  }
 
   interface Job {
 

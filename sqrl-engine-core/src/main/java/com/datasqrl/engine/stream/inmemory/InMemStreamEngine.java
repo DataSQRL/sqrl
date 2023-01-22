@@ -30,6 +30,7 @@ import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.util.Metric;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;

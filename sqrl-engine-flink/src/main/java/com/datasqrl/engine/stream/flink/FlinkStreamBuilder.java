@@ -17,6 +17,7 @@ import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.io.util.Metric;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.RowMapper;

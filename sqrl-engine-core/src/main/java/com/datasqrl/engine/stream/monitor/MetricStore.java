@@ -1,6 +1,6 @@
 package com.datasqrl.engine.stream.monitor;
 
-import com.datasqrl.engine.stream.monitor.DataMonitor.Metric;
+import com.datasqrl.io.util.Metric;
 import java.io.Closeable;
 import java.io.Serializable;
 

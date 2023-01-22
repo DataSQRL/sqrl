@@ -1,11 +1,11 @@
 package com.datasqrl.engine.stream.flink.monitor;
 
-import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.MetricStore;
+import com.datasqrl.io.util.Metric;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
-public class SaveMetricsSink<M extends DataMonitor.Metric<M>> extends RichSinkFunction<M> {
+public class SaveMetricsSink<M extends Metric<M>> extends RichSinkFunction<M> {
 
   private final MetricStore.Provider<M> storeProvider;
 
