@@ -87,7 +87,6 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
 
-      //TODO: in-mem broken, fix me
       IntegrationTestSettings.EnginePair inmem = new IntegrationTestSettings.EnginePair(
           IntegrationTestSettings.DatabaseEngine.INMEMORY,
           IntegrationTestSettings.StreamEngine.INMEMORY);
@@ -96,7 +95,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
               IntegrationTestSettings.DatabaseEngine.POSTGRES,
               IntegrationTestSettings.StreamEngine.FLINK);
 
-      List<IntegrationTestSettings.EnginePair> engines = List.of(flink);
+      List<IntegrationTestSettings.EnginePair> engines = List.of(inmem, flink);
       return Stream.concat(
           ArgumentProvider.crossProduct(List.of(Retail.INSTANCE, Nutshop.INSTANCE), engines),
           Stream.of(Arguments.of(Nutshop.COMPRESS, flink)));

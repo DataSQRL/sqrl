@@ -3,36 +3,25 @@
  */
 package com.datasqrl.discovery;
 
-import static com.datasqrl.engine.stream.flink.FlinkStreamBuilder.STATS_NAME_PREFIX;
-
 import com.datasqrl.config.EngineSettings;
+import com.datasqrl.discovery.store.MetricStoreProvider;
+import com.datasqrl.discovery.store.TableStatisticsStore;
+import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.stream.StreamEngine;
-import com.datasqrl.engine.stream.StreamEngine.Builder;
 import com.datasqrl.engine.stream.StreamHolder;
-import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
-import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
-import com.datasqrl.engine.stream.flink.FlinkStreamHolder;
-import com.datasqrl.engine.stream.flink.monitor.KeyedSourceRecordStatistics;
-import com.datasqrl.engine.stream.flink.monitor.SaveTableStatistics;
-import com.datasqrl.engine.stream.flink.util.FlinkUtilities;
-import com.datasqrl.engine.stream.inmemory.InMemStreamEngine;
-import com.datasqrl.engine.stream.inmemory.InMemStreamEngine.JobBuilder;
+import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.DataSystem;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.SourceRecord.Raw;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.stats.SourceTableStatistics;
-import com.datasqrl.io.stats.TableStatisticsStore;
-import com.datasqrl.io.stats.TableStatisticsStoreProvider;
-import com.datasqrl.io.stats.TableStatisticsStoreProvider.Encapsulated;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
-import com.datasqrl.metadata.MetadataNamedPersistence;
+import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
@@ -43,29 +32,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
-import org.apache.flink.util.OutputTag;
 
 public class DataDiscovery {
 
   private final ErrorCollector errors;
   private final EngineSettings settings;
   private final StreamEngine streamEngine;
-  private final TableStatisticsStoreProvider.Encapsulated statsStore;
+  private final MetadataStoreProvider metadataStoreProvider;
   private final StreamInputPreparer streamPreparer;
 
   public DataDiscovery(ErrorCollector errors, EngineSettings settings) {
     this.errors = errors;
     this.settings = settings;
     streamEngine = settings.getStream();
-    statsStore = new TableStatisticsStoreProvider.EncapsulatedImpl(
-        settings.getMetadataStoreProvider(),
-        new MetadataNamedPersistence.TableStatsProvider());
+    Preconditions.checkArgument(streamEngine.supports(EngineCapability.DATA_MONITORING));
+    this.metadataStoreProvider = settings.getMetadataStoreProvider();
     streamPreparer = new StreamInputPreparerImpl();
+  }
+
+  private TableStatisticsStore openStore() throws IOException {
+    return MetricStoreProvider.getStatsStore(metadataStoreProvider);
   }
 
   public List<TableInput> discoverTables(DataSystemConfig discoveryConfig) {
@@ -83,100 +69,24 @@ public class DataDiscovery {
     return tables;
   }
 
-  public StreamEngine.Job monitorTables(List<TableInput> tables) {
-    try (TableStatisticsStore store = statsStore.openStore()) {
+  public DataMonitor.Job monitorTables(List<TableInput> tables) {
+    try (TableStatisticsStore store = openStore()) {
     } catch (IOException e) {
       errors.fatal("Could not open statistics store");
       return null;
     }
-    StreamEngine.Builder streamBuilder = streamEngine.createJob();
+
+    DataMonitor dataMonitor = streamEngine.createDataMonitor();
     for (TableInput table : tables) {
-      StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(table, streamBuilder,
+      StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(table, dataMonitor,
           ErrorPrefix.INPUT_DATA.resolve(table.getName()));
-      //todo: monitor
-      stream = monitor(streamBuilder, stream, table, statsStore);
-//      stream.printSink();
+      StreamHolder<SourceTableStatistics> stats = stream.mapWithError(new ComputeMetrics(table.getDigest()),
+          ErrorPrefix.INPUT_DATA.resolve(table.getName()), SourceTableStatistics.class);
+      dataMonitor.monitorTable(table, stats, new MetricStoreProvider(metadataStoreProvider,
+          table.getDigest().getPath()));
     }
-    StreamEngine.Job job = streamBuilder.build();
-    job.execute("monitoring[" + tables.size() + "]" + tables.hashCode());
+    DataMonitor.Job job = dataMonitor.build();
     return job;
-  }
-
-  private StreamHolder<Raw> monitor(Builder streamBuilder, StreamHolder<Raw> stream,
-      TableInput tableSource, Encapsulated statisticsStoreProvider) {
-    if (streamBuilder instanceof InMemStreamEngine.JobBuilder) {
-      InMemStreamEngine.JobBuilder builder = (InMemStreamEngine.JobBuilder) streamBuilder;
-      return monitorInMem(builder, stream, tableSource, statisticsStoreProvider);
-    } else if (streamBuilder instanceof FlinkStreamBuilder) {
-      FlinkStreamBuilder builder = (FlinkStreamBuilder) streamBuilder;
-      return monitorFlink(builder, stream, tableSource, statisticsStoreProvider);
-    } else {
-      throw new RuntimeException("Unknown engine type");
-    }
-  }
-
-  private StreamHolder<Raw> monitorInMem(JobBuilder builder, StreamHolder<Raw> stream,
-      TableInput tableSource, Encapsulated statisticsStoreProvider) {
-    final SourceTableStatistics statistics = new SourceTableStatistics();
-    final TableSource.Digest tableDigest = tableSource.getDigest();
-    StreamHolder<SourceRecord.Raw> result = stream.mapWithError((r, c) -> {
-      com.datasqrl.error.ErrorCollector errors = c.get();
-      statistics.validate(r, tableDigest, errors);
-      if (!errors.isFatal()) {
-        statistics.add(r, tableDigest);
-        return Optional.of(r);
-      } else {
-        return Optional.empty();
-      }
-    }, ErrorPrefix.INPUT_DATA.resolve(tableSource.getName()), SourceRecord.Raw.class);
-    builder.getSideStreams().add(Stream.of(statistics).map(s -> {
-      try (TableStatisticsStore store = statisticsStoreProvider.openStore()) {
-        store.putTableStatistics(tableDigest.getPath(), s);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      return s;
-    }));
-    return result;
-  }
-
-  public StreamHolder<SourceRecord.Raw> monitorFlink(FlinkStreamBuilder builder,
-      StreamHolder<Raw> stream,
-      TableInput tableSource,
-      Encapsulated statisticsStoreProvider) {
-    Preconditions.checkArgument(stream instanceof FlinkStreamHolder);
-    builder.setJobType(FlinkStreamEngine.JobType.MONITOR);
-
-    DataStream<Raw> data = ((FlinkStreamHolder) stream).getStream();
-    final OutputTag<SourceTableStatistics> statsOutput = new OutputTag<>(
-        FlinkStreamEngine.getFlinkName(STATS_NAME_PREFIX, tableSource.qualifiedName())) {
-    };
-
-    SingleOutputStreamOperator<Raw> process = data.keyBy(
-            FlinkUtilities.getHashPartitioner(builder.getDefaultParallelism()))
-        .process(
-            new KeyedSourceRecordStatistics(statsOutput, tableSource.getDigest()),
-            TypeInformation.of(SourceRecord.Raw.class));
-//    process.addSink(new PrintSinkFunction<>()); //TODO: persist last 100 for querying
-
-    //Process the gathered statistics in the side output
-    final int randomKey = FlinkUtilities.generateBalancedKey(builder.getDefaultParallelism());
-    process.getSideOutput(statsOutput)
-        .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
-        .reduce(
-            new ReduceFunction<SourceTableStatistics>() {
-              @Override
-              public SourceTableStatistics reduce(SourceTableStatistics acc,
-                  SourceTableStatistics add) throws Exception {
-                acc.merge(add);
-                return acc;
-              }
-            })
-        .keyBy(FlinkUtilities.getSingleKeySelector(randomKey))
-//                .process(new BufferedLatestSelector(getFlinkName(STATS_NAME_PREFIX, sourceTable),
-//                        500, SourceTableStatistics.Accumulator.class), TypeInformation.of(SourceTableStatistics.Accumulator.class))
-        .addSink(new SaveTableStatistics(statisticsStoreProvider, tableSource.getDigest()));
-    return new FlinkStreamHolder<>(builder, process);
   }
 
   public List<TableSource> discoverSchema(List<TableInput> tables) {
@@ -186,7 +96,7 @@ public class DataDiscovery {
   public List<TableSource> discoverSchema(List<TableInput> tables,
       FlexibleDatasetSchema baseSchema) {
     List<TableSource> resultTables = new ArrayList<>();
-    try (TableStatisticsStore store = statsStore.openStore()) {
+    try (TableStatisticsStore store = openStore()) {
       for (TableInput table : tables) {
         SourceTableStatistics stats = store.getTableStatistics(table.getPath());
         if (stats == null) {
@@ -218,11 +128,12 @@ public class DataDiscovery {
     if (inputTables == null || inputTables.isEmpty()) {
       return List.of();
     }
-    StreamEngine.Job monitorJob = monitorTables(inputTables);
+    DataMonitor.Job monitorJob = monitorTables(inputTables);
     if (monitorJob == null) {
       return List.of();
+    } else {
+      monitorJob.execute("discovery");
     }
-    //TODO: figure out how to wait on job completion
     List<TableSource> sourceTables = discoverSchema(inputTables);
     return sourceTables;
 

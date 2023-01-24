@@ -3,11 +3,15 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.ConfigurationUtil;
 import com.datasqrl.engine.EngineConfiguration;
 import com.datasqrl.engine.ExecutionEngine;
-import lombok.*;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.ConfigurationUtil;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Builder
 @Getter
@@ -31,7 +35,7 @@ public class FlinkEngineConfiguration implements EngineConfiguration {
   }
 
   @Override
-  public FlinkStreamEngine initialize(@NonNull ErrorCollector errors) {
+  public AbstractFlinkStreamEngine initialize(@NonNull ErrorCollector errors) {
     ConfigurationUtil.javaxValidate(this, errors);
     return new LocalFlinkStreamEngineImpl(this);
   }

@@ -4,8 +4,8 @@
 package com.datasqrl.io.util;
 
 import com.datasqrl.engine.stream.FunctionWithError;
-import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
+import com.datasqrl.engine.stream.StreamSourceProvider;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.io.SourceRecord;
@@ -32,7 +32,7 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
 
   @Override
   public StreamHolder<SourceRecord.Raw> getRawInput(TableInput table,
-      StreamEngine.Builder builder, ErrorLocation errorLocation) {
+      StreamSourceProvider builder, ErrorLocation errorLocation) {
     Preconditions.checkArgument(isRawInput(table), "Not a valid raw input table: " + table);
     Format.Parser parser = table.getParser();
     if (parser instanceof TextLineFormat.Parser) {

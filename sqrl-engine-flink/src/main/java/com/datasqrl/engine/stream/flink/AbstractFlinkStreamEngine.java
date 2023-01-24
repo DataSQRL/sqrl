@@ -4,6 +4,7 @@
 package com.datasqrl.engine.stream.flink;
 
 import static com.datasqrl.engine.EngineCapability.CUSTOM_FUNCTIONS;
+import static com.datasqrl.engine.EngineCapability.DATA_MONITORING;
 import static com.datasqrl.engine.EngineCapability.DENORMALIZE;
 import static com.datasqrl.engine.EngineCapability.EXTENDED_FUNCTIONS;
 import static com.datasqrl.engine.EngineCapability.TEMPORAL_JOIN;
@@ -13,11 +14,14 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
+import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import org.apache.calcite.tools.RelBuilder;
@@ -25,11 +29,11 @@ import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
 
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
-    FlinkStreamEngine {
+    StreamEngine {
 
   public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = EnumSet.of(DENORMALIZE,
       TEMPORAL_JOIN,
-      TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS);
+      TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS, DATA_MONITORING);
 
   final FlinkEngineConfiguration config;
 
@@ -58,5 +62,16 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     return streamPlan;
   }
 
+  public abstract FlinkStreamBuilder createJob();
+
+  @Override
+  public DataMonitor createDataMonitor() {
+    return createJob();
+  }
+
+  @Override
+  public void close() throws IOException {
+//    jobs.clear();
+  }
 
 }

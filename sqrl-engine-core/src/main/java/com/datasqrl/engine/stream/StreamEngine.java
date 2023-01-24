@@ -3,44 +3,20 @@
  */
 package com.datasqrl.engine.stream;
 
-import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.tables.TableInput;
-import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.schema.input.InputTableSchema;
-
+import com.datasqrl.engine.stream.monitor.DataMonitor;
 import java.io.Closeable;
-import java.util.Optional;
 
 public interface StreamEngine extends Closeable, ExecutionEngine {
 
-  Builder createJob();
-
-  interface Builder {
-
-    StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table);
-
-    void addAsTable(StreamHolder<SourceRecord.Named> stream, InputTableSchema schema,
-        String qualifiedTableName);
-
-    Job build();
-
-  }
-
-  Optional<? extends Job> getJob(String id);
-
-  interface Job {
-
-    String getId();
-
-    void execute(String name);
-
-    void cancel();
-
-    Status getStatus();
-
-    enum Status {PREPARING, RUNNING, COMPLETED, FAILED}
-
+  /**
+   * This method must be implemented if the engine supports {@link com.datasqrl.engine.EngineCapability#DATA_MONITORING}
+   * otherwise it can be ignored.
+   *
+   * @return
+   */
+  default DataMonitor createDataMonitor() {
+    throw new UnsupportedOperationException("Capability not supported by engine");
   }
 
 }

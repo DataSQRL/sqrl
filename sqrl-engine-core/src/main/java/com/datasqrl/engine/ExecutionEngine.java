@@ -36,6 +36,11 @@ public interface ExecutionEngine {
 
   String getName();
 
+  /**
+   * Returns the {@link DataSystemConnectorConfig} for this engine so it can
+   * be used as a sink by a previous stage in the pipeline.
+   * @return
+   */
   DataSystemConnectorConfig getDataSystemConnectorConfig();
 
   ExecutionResult execute(EnginePhysicalPlan plan);
@@ -58,7 +63,7 @@ public interface ExecutionEngine {
 
     @Override
     public DataSystemConnectorConfig getDataSystemConnectorConfig() {
-      return null;
+      throw new UnsupportedOperationException("Not a sink");
     }
   }
 

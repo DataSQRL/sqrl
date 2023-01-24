@@ -3,15 +3,16 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
-import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.DescriptorFactory;
+import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.engine.stream.flink.InputError;
 import com.datasqrl.engine.stream.flink.InputError.InputErrorMessage;
 import com.datasqrl.engine.stream.flink.InputError.Map2InputErrorMessage;
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRegistrationContext;
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.SinkContext;
 import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
+import com.datasqrl.engine.stream.plan.TableRegistration;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
@@ -161,7 +162,7 @@ public class FlinkTableRegistration implements
   public static class FlinkTableRegistrationContext implements TableRegistrationContext {
 
     StreamTableEnvironmentImpl tEnv;
-    StreamEngine.Builder builder;
+    FlinkStreamBuilder builder;
     StreamStatementSet streamStatementSet;
   }
 }

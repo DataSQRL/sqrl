@@ -3,25 +3,16 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.engine.stream.StreamEngine;
-import com.datasqrl.io.DataSystemConnectorConfig;
-import java.io.IOException;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import lombok.NonNull;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
-  private final ConcurrentHashMap<String, LocalJob> jobs = new ConcurrentHashMap<>();
-
   public LocalFlinkStreamEngineImpl(FlinkEngineConfiguration config) {
     super(config);
   }
 
-  @Override
   public FlinkStreamBuilder createJob() {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
         org.apache.flink.configuration.Configuration.fromMap(Map.of(
@@ -41,40 +32,6 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
     return new FlinkStreamBuilder(this, env);
   }
 
-  @Override
-  public FlinkJob createStreamJob(@NonNull StreamExecutionEnvironment execEnv,
-      @NonNull JobType type) {
-    return new LocalJob(execEnv, type);
-  }
 
-  @Override
-  public Optional<StreamEngine.Job> getJob(String id) {
-    StreamEngine.Job job = jobs.get(id);
-    return Optional.ofNullable(job);
-  }
 
-  @Override
-  public void close() throws IOException {
-    jobs.clear();
-  }
-
-  @Override
-  public DataSystemConnectorConfig getDataSystemConnectorConfig() {
-    return null;
-  }
-
-  class LocalJob extends FlinkJob {
-
-    protected LocalJob(StreamExecutionEnvironment execEnv, JobType type) {
-      super(execEnv, type);
-    }
-
-    @Override
-    public void execute(String name) {
-      super.execute(name);
-      if (status != Status.FAILED) {
-        jobs.put(getId(), this);
-      }
-    }
-  }
 }
