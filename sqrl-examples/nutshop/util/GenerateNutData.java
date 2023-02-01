@@ -40,7 +40,7 @@ public class GenerateNutData {
   };
 
   static final String productsFilename = "products.csv";
-  static final String ordersFilenamePrefix = "orders_";
+  static final String ordersFilenamePrefix = "orders_part";
   static final String ordersFilenameSuffix = ".json";
 
   static final long orderNoStart = 150000000l;
@@ -51,6 +51,7 @@ public class GenerateNutData {
   static final double discountLikelihood = 0.4;
   static final double maxDiscountPercentage = 0.5;
   static final double minDiscountPercentage = 0.05;
+  static final boolean useEpochForOrders = false;
 
 
   public static int sampleCustomerId(int numCustomers) {
@@ -144,7 +145,11 @@ public class GenerateNutData {
           }
           entries.add(new Order.Entry(p.id, quantity, unitPrice, discount));
         }
-        long timestamp = baseTime + rand.nextInt(millisPerDay);
+        long epochMillis = baseTime + rand.nextInt(millisPerDay);
+        Comparable timestamp = Long.valueOf(epochMillis);
+        if (!useEpochForOrders) {
+          timestamp = Instant.ofEpochMilli(epochMillis);
+        }
         orders.add(new Order(sampleCustomerId(numCustomers), timestamp, entries));
       }
 
@@ -174,7 +179,7 @@ public class GenerateNutData {
 
   public static void writeOrdersToFile(List<Order> orders, int fileNo) {
     String ordersFilename = ordersFilenamePrefix + fileNo + ordersFilenameSuffix;
-    orders.sort((Order o1, Order o2) -> Long.compare(o1.timestamp, o2.timestamp));
+    orders.sort((Order o1, Order o2) -> o1.timestamp.compareTo(o2.timestamp));
 //        writeToFile(orders,ordersFilename,"[","]");
     writeToFile(orders, ordersFilename, null, null);
   }
@@ -217,10 +222,10 @@ public class GenerateNutData {
 
     public final long id;
     public final int customerid;
-    public final long timestamp;
+    public final Comparable timestamp;
     public final List<Entry> entries;
 
-    public Order(int customerid, long timestamp, List<Entry> entries) {
+    public Order(int customerid, Comparable timestamp, List<Entry> entries) {
       this.id = ++counter;
       this.customerid = customerid;
       this.timestamp = timestamp;
@@ -228,7 +233,8 @@ public class GenerateNutData {
     }
 
     public String toString() {
-      return String.format("{\"id\": %d, \"customerid\": %d, \"time\": %d, \"items\": [%s] }", id,
+      String timestampPattern = (timestamp instanceof Number)?"%d":"\"%s\"";
+      return String.format("{\"id\": %d, \"customerid\": %d, \"time\": "+timestampPattern+", \"items\": [%s] }", id,
           customerid, timestamp,
           String.join(",", entries.stream().map(e -> e.toString()).collect(Collectors.toList())));
     }
