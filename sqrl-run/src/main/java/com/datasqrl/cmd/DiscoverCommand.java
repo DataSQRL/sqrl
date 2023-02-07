@@ -52,7 +52,7 @@ public class DiscoverCommand extends AbstractCommand {
       throw new IllegalArgumentException(
           "Could not find data system configuration or directory at: " + inputFile);
     }
-    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root, errors);
+    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
         GlobalEngineConfiguration.class);
     EngineSettings engineSettings = engineConfig.initializeEngines(errors);

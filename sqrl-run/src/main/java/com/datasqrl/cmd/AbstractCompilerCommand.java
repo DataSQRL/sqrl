@@ -57,7 +57,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
 
   @CommandLine.Option(names = {"-t", "--target"}, description = "Target directory for deployment artifacts")
-  private Path deployDir = DEFAULT_DEPLOY_DIR;
+  private Path targetDir = DEFAULT_DEPLOY_DIR;
 
   @CommandLine.Option(names = {"-p","--port"}, description = "Port for API server")
   private int port = 8888;
@@ -76,7 +76,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   @SneakyThrows
   public void runCommand(ErrorCollector collector) throws IOException {
-    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root, collector);
+    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
 
     Build build = new Build(collector);
     Packager packager = PackagerUtil.create(root.rootDir, files, packageFiles, collector);
@@ -127,7 +127,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   @SneakyThrows
   private void write(CompilerResult result, JdbcDataSystemConnectorConfig jdbc) {
-    Path outputDir = root.rootDir.resolve(deployDir);
+    Path outputDir = targetDir;
     if (Files.isDirectory(outputDir)) {
       FileUtils.cleanDirectory(outputDir.toFile());
     } else {

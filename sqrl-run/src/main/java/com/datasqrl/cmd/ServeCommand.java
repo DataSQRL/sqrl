@@ -29,7 +29,7 @@ public class ServeCommand extends AbstractCommand {
   @Override
   protected void runCommand(ErrorCollector errors) throws Exception {
     //Get jdbc config from package.json
-    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root, errors);
+    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
         GlobalEngineConfiguration.class);
 

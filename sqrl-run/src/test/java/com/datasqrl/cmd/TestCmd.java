@@ -8,16 +8,17 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import picocli.CommandLine;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class TestCmd {
 
@@ -70,7 +71,7 @@ public class TestCmd {
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
         script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
-        "-o", OUTPUT_DIR.toString(),
+        "-t", OUTPUT_DIR.toString(),
         "--noinfer");
     createSnapshot();
   }
@@ -83,7 +84,7 @@ public class TestCmd {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
-        "-o", OUTPUT_DIR.toString(),
+        "-t", OUTPUT_DIR.toString(),
         "--noinfer");
     createSnapshot();
   }
