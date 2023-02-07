@@ -1,0 +1,16 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
+  },
+  "name" : "orders",
+  "identifier" : "orders",
+  "connector" : {
+    "directoryURI" : "",
+    "fileURIs" : [ "https://github.com/DataSQRL/sqrl/raw/651b944d4597865cf020c8fb8b73aca18aa1c3ca/sqrl-examples/quickstart/data/orders_part1.json.gz", "https://github.com/DataSQRL/sqrl/raw/651b944d4597865cf020c8fb8b73aca18aa1c3ca/sqrl-examples/quickstart/data/products.csv.gz" ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "systemType" : "dir"
+  }
+}

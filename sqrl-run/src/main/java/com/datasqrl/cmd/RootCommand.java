@@ -3,12 +3,13 @@
  */
 package com.datasqrl.cmd;
 
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
+
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 
 @CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "discover 0.1",
     subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class, PopulateCommand.class,
@@ -16,13 +17,13 @@ import picocli.CommandLine.ScopeType;
 @Getter
 public class RootCommand implements Runnable {
 
-  @CommandLine.Option(names = {"-p", "--package-file"}, description = "Package file"
+  @CommandLine.Option(names = {"-m", "--manifest"}, description = "Package manifest file(s)"
       , scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.EMPTY_LIST;
 
   @Override
   public void run() {
-    System.out.println("Choose one of the commands: compile, run, or discover");
+    CommandLine.usage(this, System.out);
   }
 
   final Path rootDir;

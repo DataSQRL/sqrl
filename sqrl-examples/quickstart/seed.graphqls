@@ -1,0 +1,25 @@
+type Query {
+  Customers(id: Int!): Customers
+}
+
+type Customers {
+  id: Int
+  purchases: [Orders]
+  spending_by_month(month: String): [spending_by_month]
+}
+
+type spending_by_month {
+  month: String
+  total_spend: Float
+  total_savings: Float
+}
+...
+
+
+type orders {
+  id: Int
+  customerid: Int
+  time: Int
+  timestamp: String
+}
+

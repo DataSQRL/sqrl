@@ -3,9 +3,6 @@
  */
 package com.datasqrl.cmd;
 
-import static picocli.CommandLine.Command;
-import static picocli.CommandLine.Parameters;
-
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.GlobalEngineConfiguration;
 import com.datasqrl.discovery.DataDiscovery;
@@ -18,25 +15,29 @@ import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.Deserializer;
-import com.datasqrl.service.PathUtil;
+import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Stopwatch;
+import picocli.CommandLine;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import picocli.CommandLine;
 
-@Command(name = "discover", description = "Discovers the schema of a given data system or files in a directory")
+import static picocli.CommandLine.Command;
+import static picocli.CommandLine.Parameters;
+
+@Command(name = "discover", description = "Discovers and defines data source or sink from data system configuration")
 public class DiscoverCommand extends AbstractCommand {
 
-  @Parameters(index = "0", description = "Data system configuration or directory")
+  @Parameters(index = "0", description = "Data system configuration or data directory")
   private Path inputFile;
 
-  @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory")
+  @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory for data source/sink configuration and schema")
   private Path outputDir = null;
 
-  @CommandLine.Option(names = {"-l", "--limit"}, description = "Limit the amount of time (in seconds) for running discovery")
+  @CommandLine.Option(names = {"-l", "--limit"}, description = "Maximum amount of time (in seconds) for running data discovery")
   private long maxExecutionTimeSec = Long.MAX_VALUE;
 
   @Override
@@ -51,7 +52,7 @@ public class DiscoverCommand extends AbstractCommand {
       throw new IllegalArgumentException(
           "Could not find data system configuration or directory at: " + inputFile);
     }
-    List<Path> packageFiles = PathUtil.getOrCreateDefaultPackageFiles(root);
+    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root, errors);
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
         GlobalEngineConfiguration.class);
     EngineSettings engineSettings = engineConfig.initializeEngines(errors);
