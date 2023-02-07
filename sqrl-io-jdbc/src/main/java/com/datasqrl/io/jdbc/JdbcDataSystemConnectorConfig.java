@@ -7,20 +7,17 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.util.constraints.OptionalMinString;
-import java.util.Optional;
+import lombok.*;
+
 import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class JdbcDataSystemConnectorConfig implements DataSystemConnectorConfig {
+
+  public static final String SYSTEM_TYPE = "jdbc";
 
   String host;
   Integer port;
@@ -42,6 +39,6 @@ public class JdbcDataSystemConnectorConfig implements DataSystemConnectorConfig 
 
   @Override
   public String getSystemType() {
-    return "jdbc";
+    return SYSTEM_TYPE;
   }
 }

@@ -16,14 +16,14 @@ public class PrintSinkFactory implements SinkFactory<TableDescriptor.Builder> {
   }
 
   @Override
-  public String getSinkName() {
-    return "print";
+  public String getSinkType() {
+    return PrintDataSystem.SYSTEM_TYPE;
   }
 
   @Override
   public Builder create(WriteSink sink, DataSystemConnectorConfig config) {
     OptimizedDAG.ExternalSink externalSink = (OptimizedDAG.ExternalSink) sink;
-    TableConfig tblConfig = externalSink.getSink().getConfiguration();
+    TableConfig tblConfig = externalSink.getTableSink().getConfiguration();
     assert config instanceof PrintDataSystem.Connector;
     PrintDataSystem.Connector printConfig = (PrintDataSystem.Connector) config;
     String identifier = printConfig.getPrefix() + tblConfig.getName();

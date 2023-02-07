@@ -6,6 +6,7 @@ import com.datasqrl.engine.stream.flink.FlinkSourceFactoryContext;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
 import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
+import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.tables.TableConfig;
@@ -37,7 +38,7 @@ public class FileSourceFactory implements
 
   @Override
   public String getSourceName() {
-    return "file";
+    return DirectoryDataSystemConfig.SYSTEM_TYPE;
   }
 
   @Override

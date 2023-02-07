@@ -14,25 +14,16 @@ import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.google.common.base.Strings;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.*;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  *
@@ -53,8 +44,8 @@ public abstract class DirectoryDataSystem {
     }
 
     @Override
-    public String getPrefix() {
-      return "file";
+    public String getSystemType() {
+      return DirectoryDataSystemConfig.SYSTEM_TYPE;
     }
 
     public boolean isTableFile(FilePath file, TableConfig tableConfig) {

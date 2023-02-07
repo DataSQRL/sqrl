@@ -11,5 +11,5 @@ public interface DataSystemConnector {
     return true;
   }
 
-  String getPrefix();
+  String getSystemType();
 }

@@ -4,20 +4,13 @@
 package com.datasqrl.io;
 
 import com.datasqrl.config.SinkFactory;
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.database.relational.JDBCEngine;
-import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
-import com.datasqrl.engine.pipeline.EngineStage;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
-import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
-import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
-import com.datasqrl.plan.global.OptimizedDAG.SinkVisitor;
 import com.datasqrl.plan.global.OptimizedDAG.WriteSink;
-import java.util.Optional;
 import org.apache.flink.connector.jdbc.table.JdbcConnectorOptions;
 import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.TableDescriptor.Builder;
+
+import java.util.Optional;
 
 public class JdbcSinkFactory
     implements SinkFactory<Builder> {
@@ -28,8 +21,8 @@ public class JdbcSinkFactory
   }
 
   @Override
-  public String getSinkName() {
-    return "jdbc";
+  public String getSinkType() {
+    return JdbcDataSystemConnectorConfig.SYSTEM_TYPE;
   }
 
   @Override

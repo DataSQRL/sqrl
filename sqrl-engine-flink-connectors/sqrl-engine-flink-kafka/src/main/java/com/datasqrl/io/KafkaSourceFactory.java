@@ -4,6 +4,7 @@ import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.SourceServiceLoader.SourceFactoryContext;
 import com.datasqrl.engine.stream.flink.FlinkSourceFactoryContext;
 import com.datasqrl.io.impl.kafka.KafkaDataSystem;
+import com.datasqrl.io.impl.kafka.KafkaDataSystemConfig;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
@@ -21,7 +22,7 @@ public class KafkaSourceFactory implements
 
   @Override
   public String getSourceName() {
-    return "file";
+    return KafkaDataSystemConfig.SYSTEM_TYPE;
   }
 
   @Override

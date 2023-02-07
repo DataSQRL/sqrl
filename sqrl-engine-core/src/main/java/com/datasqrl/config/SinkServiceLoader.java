@@ -8,11 +8,11 @@ import java.util.ServiceLoader;
 
 public class SinkServiceLoader {
 
-  public Optional<SinkFactory> load(String engine, String sink) {
+  public Optional<SinkFactory> load(String engineName, String sinkType) {
     ServiceLoader<SinkFactory> sinkFactories = ServiceLoader.load(SinkFactory.class);
     for (SinkFactory factory : sinkFactories) {
-      if (factory.getEngine().equalsIgnoreCase(engine)
-          && factory.getSinkName().equalsIgnoreCase(sink)) {
+      if (factory.getEngine().equalsIgnoreCase(engineName)
+          && factory.getSinkType().equalsIgnoreCase(sinkType)) {
         return Optional.of(factory);
       }
     }

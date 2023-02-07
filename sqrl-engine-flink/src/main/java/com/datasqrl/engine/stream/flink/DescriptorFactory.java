@@ -15,11 +15,11 @@ import org.apache.flink.table.api.TableDescriptor;
 public class DescriptorFactory {
 
   public TableDescriptor createSink(ExternalSink sink, Schema tblSchema) {
-    DataSystemConnectorConfig config = sink.getSink().getConfiguration().getConnector();
+    DataSystemConnectorConfig config = sink.getTableSink().getConfiguration().getConnector();
 
     SinkFactory<TableDescriptor.Builder> factory = (new SinkServiceLoader())
         .load(FlinkEngineConfiguration.ENGINE_NAME,
-            sink.getSink().getConnector().getPrefix())
+            sink.getTableSink().getConnector().getSystemType())
         .orElseThrow();
 
     return factory.create(sink, config)
