@@ -1,0 +1,18 @@
+>>>newproduct$q$8
+LogicalProject(_uuid=[$0], _uuid0=[$6], _uuid00=[$11], _idx=[$12], customerid=[$20])
+  LogicalJoin(condition=[=($11, $17)], joinType=[left])
+    LogicalJoin(condition=[=($2, $13)], joinType=[inner])
+      LogicalTableScan(table=[[product$7]])
+      LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+        LogicalTableScan(table=[[orders$3]])
+        LogicalTableScan(table=[[entries$4]])
+    LogicalTableScan(table=[[orders$3]])
+
+>>>orders$q$2
+LogicalValues(tuples=[[]])
+
+>>>product$q$6
+LogicalValues(tuples=[[]])
+
+>>>join-declaration-orders_entries
+JOIN PATH ON ("product$7" AS "@") ON ("orders$3" AS "_g2" DEFAULT JOIN "entries$4" AS "e" ON "_g2"."_uuid" = "e"."_uuid") USING "@"."productid" = "e"."productid"

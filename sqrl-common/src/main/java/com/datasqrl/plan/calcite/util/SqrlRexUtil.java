@@ -46,27 +46,26 @@ public class SqrlRexUtil {
     this(rexBuilder.getTypeFactory());
   }
 
-
-  public static SqlOperator getSqrlOperator(String name) {
-    List<SqlOperator> ops = new ArrayList<>();
-    SqlOperatorTable opTable = FlinkEnvProxy.getOperatorTable(List.of());
-    opTable.lookupOperatorOverloads(
-        new SqlIdentifier(name, SqlParserPos.ZERO),
-        SqlFunctionCategory.USER_DEFINED_FUNCTION,
-        SqlSyntax.FUNCTION,
-        ops,
-        SqlNameMatchers.withCaseSensitive(false)
-    );
-
-    for (SqlOperator op : ops) {
-      if (op instanceof BridgingSqlFunction && ((BridgingSqlFunction) op).getDefinition()
-          instanceof SqrlFunction) {
-        return op;
-      }
-    }
-
-    return null;
-  }
+//
+//  public static SqlOperator getSqrlOperator(SqrlFunctionCatalog catalog, String name) {
+//    List<SqlOperator> ops = new ArrayList<>();
+//    catalog.lookupOperatorOverloads(
+//        new SqlIdentifier(name, SqlParserPos.ZERO),
+//        SqlFunctionCategory.USER_DEFINED_FUNCTION,
+//        SqlSyntax.FUNCTION,
+//        ops,
+//        SqlNameMatchers.withCaseSensitive(false)
+//    );
+////
+////    for (SqlOperator op : ops) {
+////      if (op instanceof BridgingSqlFunction && ((BridgingSqlFunction) op).getDefinition()
+////          instanceof SqrlFunction) {
+////        return op;
+////      }
+////    }
+//
+//    return ops.get(0);
+//  }
 
   public RexBuilder getBuilder() {
     return rexBuilder;

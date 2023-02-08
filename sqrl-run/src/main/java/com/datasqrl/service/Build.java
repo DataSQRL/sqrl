@@ -12,9 +12,9 @@ public class Build {
   ErrorCollector collector;
 
   @SneakyThrows
-  public Path build(Packager packager) {
+  public Path build(Packager packager, boolean inferDependencies) {
     packager.cleanUp();
 
-    return packager.populateBuildDir(true);
+    return packager.populateBuildDir(inferDependencies);
   }
 }

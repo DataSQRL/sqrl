@@ -77,6 +77,7 @@ public class Retail implements TestDataset {
     builder.append("IMPORT ecommerce-data.Customer");
     builder.append("IMPORT ecommerce-data.Orders");
     builder.append("IMPORT ecommerce-data.Product");
+    builder.append("IMPORT time.*");
     return builder;
   }
 

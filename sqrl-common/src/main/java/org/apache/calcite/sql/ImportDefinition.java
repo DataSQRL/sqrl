@@ -13,9 +13,13 @@
  */
 package org.apache.calcite.sql;
 
+import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.name.NamePath;
+import com.datasqrl.name.ReservedName;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlVisitor;
@@ -32,9 +36,9 @@ public class ImportDefinition extends SqrlStatement {
   private final Optional<SqlIdentifier> timestampAlias;
 
   public ImportDefinition(SqlParserPos location,
-      SqlIdentifier importPath, Optional<SqlIdentifier> alias, Optional<SqlNode> timestamp,
+      SqlIdentifier importPath, NamePath namePath, Optional<SqlIdentifier> alias, Optional<SqlNode> timestamp,
       Optional<SqlIdentifier> timestampAlias) {
-    super(location, transformIdentifier(importPath, alias, timestamp, timestampAlias),
+    super(location, transformIdentifier(importPath, alias, timestamp, timestampAlias), namePath,
         Optional.empty());
     this.alias = alias;
     this.timestamp = timestamp;
@@ -99,5 +103,10 @@ public class ImportDefinition extends SqrlStatement {
   @Override
   public boolean equalsDeep(SqlNode sqlNode, Litmus litmus) {
     return false;
+  }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
   }
 }

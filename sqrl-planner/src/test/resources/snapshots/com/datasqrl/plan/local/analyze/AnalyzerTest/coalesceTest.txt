@@ -1,3 +1,0 @@
-LogicalProject(__pk_0=[$0], __pk_1=[$1], EXPR$2=[CASE(IS NOT NULL($5), CAST($5):DECIMAL(10, 5) NOT NULL, 0.0:DECIMAL(10, 5))])
-  LogicalTableScan(table=[[entries$4]])
-

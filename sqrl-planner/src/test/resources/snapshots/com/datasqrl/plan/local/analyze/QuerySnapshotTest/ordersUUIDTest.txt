@@ -1,0 +1,15 @@
+>>>customer$q$2
+LogicalValues(tuples=[[]])
+
+>>>o2$q$11
+LogicalProject(__pk_0=[$0], _uuid=[$5], _ingest_time=[$6], id=[$7], customerid=[$8], time=[$9])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[orders$6]])
+    LogicalTableScan(table=[[orders$6]])
+
+>>>orders$q$5
+LogicalValues(tuples=[[]])
+
+>>>product$q$9
+LogicalValues(tuples=[[]])
+

@@ -1,5 +1,6 @@
 package org.apache.calcite.sql;
 
+import com.datasqrl.name.NamePath;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -14,8 +15,8 @@ public class ExportDefinition extends SqrlStatement {
   protected final SqlIdentifier tablePath;
   protected final SqlIdentifier sinkPath;
 
-  public ExportDefinition(SqlParserPos location, SqlIdentifier tablePath, SqlIdentifier sinkPath) {
-    super(location, tablePath, Optional.empty());
+  public ExportDefinition(SqlParserPos location, SqlIdentifier tablePath, NamePath namePath, SqlIdentifier sinkPath) {
+    super(location, tablePath, namePath, Optional.empty());
     this.tablePath = tablePath;
     this.sinkPath = sinkPath;
   }
@@ -44,5 +45,10 @@ public class ExportDefinition extends SqrlStatement {
   @Override
   public boolean equalsDeep(SqlNode sqlNode, Litmus litmus) {
     return false;
+  }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
   }
 }

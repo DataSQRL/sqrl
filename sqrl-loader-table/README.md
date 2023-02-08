@@ -1,1 +1,0 @@
-DataSQRL loader for importing external data as tables with schema.

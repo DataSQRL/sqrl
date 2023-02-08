@@ -1,0 +1,17 @@
+>>>customer$q$2
+LogicalValues(tuples=[[]])
+
+>>>dproduct$q$11
+LogicalProject(__pk_0=[$0], __pk_1=[$1], unit_price=[$4], category=[$11], name=[$9])
+  LogicalJoin(condition=[=($8, $2)], joinType=[left])
+    LogicalTableScan(table=[[entries$7]])
+    LogicalTableScan(table=[[product$10]])
+
+>>>orders$q$5
+LogicalValues(tuples=[[]])
+
+>>>product$q$9
+LogicalValues(tuples=[[]])
+
+>>>join-declaration-product
+JOIN PATH ON ("entries$7" AS "@") ON ("product$10" AS "Product") USING "Product"."productid" = "@"."productid" FETCH 1

@@ -1,3 +1,1 @@
-submission$3_btree_c3c17 - 1890.000
-submission$3_hash_c17 - 900.000
-submission$3_hash_c2 - 1800.000
+

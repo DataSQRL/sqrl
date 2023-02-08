@@ -49,7 +49,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
     return SchemaAdjustmentSettings.DEFAULT;
   }
 
-  private DataSystemConnector baseInitialize(ErrorCollector errors, NamePath basePath) {
+  private DataSystemConnector baseInitialize(ErrorCollector errors) {
     if (!Name.validName(name)) {
       errors.fatal("Table needs to have valid name: %s", name);
       return null;
@@ -85,7 +85,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
 
   public TableSource initializeSource(ErrorCollector errors, NamePath basePath,
       TableSchema schema) {
-    DataSystemConnector connector = baseInitialize(errors, basePath);
+    DataSystemConnector connector = baseInitialize(errors);
     if (connector == null) {
       return null;
     }
@@ -98,7 +98,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
   }
 
   public TableInput initializeInput(ErrorCollector errors, NamePath basePath) {
-    DataSystemConnector connector = baseInitialize(errors, basePath);
+    DataSystemConnector connector = baseInitialize(errors);
     if (connector == null) {
       return null;
     }
@@ -109,7 +109,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
 
   public TableSink initializeSink(ErrorCollector errors, NamePath basePath,
       Optional<TableSchema> schema) {
-    DataSystemConnector connector = baseInitialize(errors, basePath);
+    DataSystemConnector connector = baseInitialize(errors);
     if (connector == null) {
       return null;
     }

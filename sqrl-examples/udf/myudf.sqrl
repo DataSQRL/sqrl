@@ -1,0 +1,8 @@
+IMPORT data.Products;
+-- In prod, copy the jar into a sensibly named folder. In this example
+-- we'll use the folder that maven automatically creates for simplicity.
+-- The path is folder/functions
+IMPORT myjavafunction.target.MyScalarFunction;
+
+MyTable := SELECT MyScalarFunction(id, id)
+           FROM Products;--todo (VALUES (1, 1), (1, 2), (2, 2)) AS tbl (a, b);

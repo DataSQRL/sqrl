@@ -13,7 +13,8 @@ import com.datasqrl.plan.global.IndexCall;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.local.generate.Resolve.Env;
+import com.datasqrl.plan.local.generate.FlinkNamespace;
+import com.datasqrl.plan.local.generate.Session;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.TestScript;
 import java.nio.file.Files;
@@ -27,32 +28,40 @@ import org.apache.commons.lang3.tuple.Triple;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
-  private Env env;
+  private FlinkNamespace ns;
+
+  public AbstractSchemaInferenceModelTest(FlinkNamespace ns) {
+    this.ns = ns;
+  }
+
+  public AbstractSchemaInferenceModelTest() {
+  }
 
   @SneakyThrows
   public Pair<InferredSchema, List<APIQuery>> inferSchemaAndQueries(TestScript script,
       Path schemaPath) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
     String schemaStr = Files.readString(schemaPath);
-    env = plan(script.getScript());
-    Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(env,
+    ns = plan(script.getScript());
+    Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(
+        session,
         schemaStr);
     return Pair.of(result.getLeft(), result.getRight());
   }
 
-  private static Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> inferSchemaModelQueries(
-      Env env, String schemaStr) {
+  private Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> inferSchemaModelQueries(
+      Session session, String schemaStr) {
     //Inference
-    SchemaInference inference = new SchemaInference(schemaStr, env.getRelSchema(),
-        env.getSession().getPlanner()
-            .getRelBuilder());
+    SchemaInference inference = new SchemaInference(schemaStr, session.getSchema(),
+        session.createRelBuilder());
     InferredSchema inferredSchema = inference.accept();
 
     //Build queries
     PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(schemaStr,
-        env.getRelSchema(),
-        env.getSession().getPlanner().getRelBuilder(),
-        env.getSession().getPlanner());
+        session.getSchema(),
+        session.createRelBuilder(),
+        session,
+        ns.getOperatorTable());
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
@@ -60,21 +69,21 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     return Triple.of(inferredSchema, root, queries);
   }
 
-  public static Pair<RootGraphqlModel, List<APIQuery>> getModelAndQueries(Env env,
+  public Pair<RootGraphqlModel, List<APIQuery>> getModelAndQueries(Session session,
       String schemaStr) {
-    Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(env,
-        schemaStr);
+    Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(
+        session, schemaStr);
     return Pair.of(result.getMiddle(), result.getRight());
   }
 
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
     List<APIQuery> queries = inferSchemaAndQueries(script, schemaPath).getValue();
     /// plan dag
-    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner(),
-        env.getSession().getPipeline());
-    OptimizedDAG dag = dagPlanner.plan(env.getRelSchema(), queries, env.getExports());
+    DAGPlanner dagPlanner = new DAGPlanner(ns.createRelBuilder(), session.getRelPlanner(),
+        session.getPipeline());
+    OptimizedDAG dag = dagPlanner.plan(session.getSchema(), queries, ns.getExports(), ns.getJars());
 
-    IndexSelector indexSelector = new IndexSelector(env.getSession().getPlanner(),
+    IndexSelector indexSelector = new IndexSelector(session.getRelPlanner(),
         IndexSelectorConfigByDialect.of("POSTGRES"));
     List<IndexCall> allIndexes = new ArrayList<>();
     for (OptimizedDAG.ReadQuery query : dag.getReadQueries()) {

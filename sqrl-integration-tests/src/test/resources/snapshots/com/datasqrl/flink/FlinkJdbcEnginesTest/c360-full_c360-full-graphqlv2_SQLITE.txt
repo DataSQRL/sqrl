@@ -1,5 +1,4 @@
 >>>database
-CREATE INDEX IF NOT EXISTS product$16_hash_c5 ON product$16 ("category")
 CREATE TABLE IF NOT EXISTS "category$14" ("name" VARCHAR NOT NULL,"updatetime" INTEGER NOT NULL , PRIMARY KEY ("name"));
 CREATE TABLE IF NOT EXISTS "customer$12" ("customerid" BIGINT NOT NULL,"_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"email" VARCHAR NOT NULL,"name" VARCHAR NOT NULL,"lastupdated" BIGINT NOT NULL,"updatetime" INTEGER NOT NULL , PRIMARY KEY ("customerid"));
 CREATE TABLE IF NOT EXISTS "favorite_categories$24" ("__pk_0" BIGINT NOT NULL,"category_name" VARCHAR NOT NULL,"total" NUMERIC NOT NULL,"month" INTEGER NOT NULL , PRIMARY KEY ("__pk_0","category_name"));

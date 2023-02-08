@@ -1,6 +1,0 @@
-[FATAL] Distinct on statement not valid
-in script:test.sqrl [2:1]:
-IMPORT ecommerce-data.Product;
-Product := DISTINCT Product ON productid;
-^
-

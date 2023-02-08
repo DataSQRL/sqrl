@@ -1,7 +1,10 @@
+IMPORT time.now;
+
 IMPORT poetry-data.Star;
 IMPORT poetry-data.Post;
 IMPORT poetry-data.User;
 IMPORT poetry-data.Connect;
+
 
 -- Adding relationships between the tables
 Star.post := JOIN Post ON Post.id = @.postid;
@@ -22,7 +25,7 @@ Post.connections := JOIN Connect ON (@.id = Connect.frompostid OR @.id = Connect
 
 -- Aggregates
 
-Post.stars_stats := SELECT COUNT(*) AS total, MAX(ts) AS most_recent FROM @.stars;
+Post.stars_stats := SELECT COUNT(*) AS total, MAX(timestamp) AS most_recent FROM @.stars;
 Post.connection_stats := SELECT COUNT(*) AS total FROM @.connections;
 
 -- We count connections double for activity levels

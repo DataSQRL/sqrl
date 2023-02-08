@@ -1,5 +1,6 @@
 package org.apache.calcite.sql;
 
+import com.datasqrl.name.NamePath;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,10 +14,10 @@ public class StreamAssignment extends QueryAssignment {
   private final SqlNode query;
   private final SubscriptionType type;
 
-  public StreamAssignment(SqlParserPos location, SqlIdentifier namePath,
+  public StreamAssignment(SqlParserPos location, SqlIdentifier identifier, NamePath namePath,
       Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, SubscriptionType type,
       Optional<SqlNodeList> hints) {
-    super(location, namePath, tableArgs, query, hints);
+    super(location, identifier, namePath, tableArgs, query, hints);
     this.tableArgs = tableArgs;
     this.query = query;
     this.type = type;
@@ -42,5 +43,10 @@ public class StreamAssignment extends QueryAssignment {
   @Override
   public void unparse(SqlWriter sqlWriter, int i, int i1) {
     super.unparse(sqlWriter, i, i1);
+  }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
   }
 }

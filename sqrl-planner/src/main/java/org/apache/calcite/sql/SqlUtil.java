@@ -371,14 +371,10 @@ public abstract class SqlUtil {
       boolean asFunctionID) {
     final boolean isUnquotedSimple = identifier.isSimple()
         && !identifier.getParserPosition().isQuoted();
-    final SqlOperator operator = isUnquotedSimple
-        ? SqlValidatorUtil.lookupSqlFunctionByID(
-            FlinkEnvProxy.getOperatorTable(List.of()), identifier, null)
-        : null;
     boolean unparsedAsFunc = false;
     final SqlWriter.Frame frame =
         writer.startList(SqlWriter.FrameTypeEnum.IDENTIFIER);
-    if (isUnquotedSimple && operator != null) {
+    if (isUnquotedSimple && asFunctionID) {
       // Unparse conditions:
       // 1. If the identifier is quoted or is component, unparse as normal.
       // 2. If the identifier comes from a sql function, lookup in the
@@ -389,8 +385,8 @@ public abstract class SqlUtil {
       // look up in the standard sql operator table to see if it is a function
       // with empty argument list, e.g. LOCALTIME, we should not quote
       // such identifier cause quoted `LOCALTIME` always represents a sql identifier.
-      if (asFunctionID
-          || operator.getSyntax() == SqlSyntax.FUNCTION_ID) {
+      //todo SQLR: this function needs the catalog usually, and that's hard
+      if (asFunctionID) {
         writer.keyword(identifier.getSimple());
         unparsedAsFunc = true;
       }

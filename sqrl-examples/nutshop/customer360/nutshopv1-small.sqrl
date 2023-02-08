@@ -1,3 +1,4 @@
+IMPORT time.*;
 /* Imports the Products and Orders table from the Nutshop data
    We set an explicit timestamp on the Orders stream table */
 IMPORT nutshop-small.Products;

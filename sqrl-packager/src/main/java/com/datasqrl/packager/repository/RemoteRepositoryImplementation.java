@@ -46,27 +46,57 @@ public class RemoteRepositoryImplementation implements Repository {
         "pkgName", dependency.getName(),
         "version", dependency.getVersion(),
         "variant", dependency.getVariant()));
-    Optional<JsonNode> version = getPackageField(result, "versions").filter(n -> n.isArray() && !n.isEmpty())
+    return getDependencyVersion(result)
+        .map(dep -> downloadDependency(targetPath, dep))
+        .orElse(false);
+  }
+
+  // Gets the first dependency version from a retrieved package
+  private Optional<JsonNode> getDependencyVersion(JsonNode result) {
+    return getPackageField(result, "versions")
+        .filter(n -> n.isArray() && !n.isEmpty())
         .map(n -> n.get(0));
-    if (version.isEmpty()) return false;
-    JsonNode dep = version.get();
+  }
+
+  // Downloads the given Dependency to the specified Path
+  private boolean downloadDependency(Path targetPath, JsonNode dep) {
     String file = dep.get("file").asText();
     String hash = dep.get("hash").asText();
     String repoURL = dep.get("repoURL").asText();
     //TODO (remove): Current hack to fix bug in SQRL
     repoURL = repoURL.replace("'","");
-    Files.createDirectories(targetPath);
 
-    Path zipFile = Files.createTempFile(targetPath, "package", ".zip");
-    FileUtils.copyURLToFile(
-        new URL(repoURL+file),
-        zipFile.toFile());
-    String downloadHash = FileHash.getFor(zipFile);
-    Preconditions.checkArgument(downloadHash.equals(hash),"File hash [%s] does not match hash"
-        + "of dowloaded file [%s]", hash, downloadHash);
-    new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
-    Files.deleteIfExists(zipFile);
-    return true;
+    try {
+      // Create target directory
+      Files.createDirectories(targetPath);
+
+      // Create a temporary file for the zip file
+      Path zipFile = Files.createTempFile(targetPath, "package", ".zip");
+
+      // Copy the zip file from the repoURL to the temporary file
+      FileUtils.copyURLToFile(
+          new URL(repoURL+file),
+          zipFile.toFile());
+
+      // Get the hash for the downloaded file
+      String downloadHash = FileHash.getFor(zipFile);
+
+      // Ensure the hashes match
+      Preconditions.checkArgument(downloadHash.equals(hash),"File hash [%s] does not match hash"
+          + "of dowloaded file [%s]", hash, downloadHash);
+
+      // Extract the zip file
+      new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
+
+      // Delete the temporary file
+      Files.deleteIfExists(zipFile);
+
+      // Return true if the download was successful
+      return true;
+    } catch (Exception e) {
+      // Return false if the download fails
+      return false;
+    }
   }
 
   @Override

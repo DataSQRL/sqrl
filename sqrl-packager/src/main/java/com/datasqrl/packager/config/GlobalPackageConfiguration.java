@@ -36,10 +36,11 @@ public class GlobalPackageConfiguration implements GlobalConfiguration {
   @NonNull
   @Builder.Default
   @Valid
+  @Setter
   LinkedHashMap<String, Dependency> dependencies = new LinkedHashMap<>();
 
   @Setter
-  @JsonProperty(ManifestConfiguration.PROPERTY)
+  @JsonProperty(ManifestConfiguration.MANIFEST)
   ManifestConfiguration manifest;
 
   public static GlobalPackageConfiguration readFrom(Path path) throws IOException {

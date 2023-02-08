@@ -16,8 +16,13 @@
  */
 package com.datasqrl.parse;
 
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.name.NamePath;
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.google.common.base.Preconditions;
+import java.util.stream.Collectors;
 import org.apache.calcite.sql.TableFunctionArgument;
 import java.util.Locale;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -1011,8 +1016,14 @@ class AstBuilder
     } else {
       timestamp = Optional.empty();
     }
-
-    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), alias,
+    NamePath namePath = NamePath.of(getNamePath(ctx.qualifiedName()).names.stream()
+        .map(i -> (i.equals(""))
+            ? ReservedName.ALL
+            : NameCanonicalizer.SYSTEM.name(i)
+        )
+        .collect(Collectors.toList())
+    );
+    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), namePath, alias,
         timestamp, timestampAlias);
   }
 
@@ -1024,7 +1035,8 @@ class AstBuilder
   @Override
   public SqlNode visitExportDefinition(ExportDefinitionContext ctx) {
     return new ExportDefinition(getLocation(ctx),
-        getNamePath(ctx.qualifiedName(0)), getNamePath(ctx.qualifiedName(1)));
+        getNamePath(ctx.qualifiedName(0)), toNamePath(getNamePath(ctx.qualifiedName(0))),
+        getNamePath(ctx.qualifiedName(1)));
   }
 
   @Override
@@ -1055,35 +1067,15 @@ class AstBuilder
       sort = List.of(SqlStdOperatorTable.DESC.createCall(getLocation(ctx.orderExpr), order));
     }
 
-    SqlParserPos loc = getLocation(ctx);
-    SqlNode query =
-        new SqlSelect(
-            loc,
-            null,
-            new SqlNodeList(List.of(SqlIdentifier.star(loc)), loc),
-            aliasedName,
-            null,
-            null,
-            null,
-            null,
-            new SqlNodeList(sort, getLocation(ctx)),
-            null,
-            SqlLiteral.createExactNumeric("1", getLocation(ctx)),
-            new SqlNodeList(List.of(new SqlHint(loc,
-                new SqlIdentifier("DISTINCT_ON", loc),
-                new SqlNodeList(pk, loc),
-                HintOptionFormat.ID_LIST
-            )), loc)
-        );
-
     return new DistinctAssignment(
         getLocation(ctx),
         namePath,
+        toNamePath(namePath),
         aliasedName,
         pk,
         sort,
         emptyListToEmptyOptional(getHints(ctx.hint())),
-        query
+        null
     );
   }
 
@@ -1119,9 +1111,16 @@ class AstBuilder
     SqlNode join = visit(ctx.joinSpecification());
 
     return new JoinAssignment(getLocation(ctx), name,
+        toNamePath(name),
         getTableArgs(ctx.tableFunction()),
         join,
         emptyListToEmptyOptional(getHints(ctx.hint())));
+  }
+
+  private NamePath toNamePath(SqlIdentifier name) {
+    return NamePath.of(name.names.stream()
+        .map(e-> Name.system(e)) //todo: canonicalize
+        .collect(toList()));
   }
 
   private Optional<List<TableFunctionArgument>> getTableArgs(TableFunctionContext ctx) {
@@ -1170,6 +1169,7 @@ class AstBuilder
   public SqlNode visitQueryAssign(QueryAssignContext ctx) {
     SqlNode query = visit(ctx.query());
     return new QueryAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
+        toNamePath(getNamePath(ctx.qualifiedName())),
         getTableArgs(ctx.tableFunction()),
         query,
         emptyListToEmptyOptional(getHints(ctx.hint())));
@@ -1182,6 +1182,7 @@ class AstBuilder
     SubscriptionType type = SubscriptionType.valueOf(
         ctx.streamQuery().subscriptionType().getText());
     return new StreamAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
+        toNamePath(getNamePath(ctx.qualifiedName())),
         getTableArgs(ctx.tableFunction()),
         query,
         type,
@@ -1207,6 +1208,7 @@ class AstBuilder
     SqlIdentifier name = getNamePath(ctx.qualifiedName());
     SqlNode expr = visit(ctx.expression());
     return new ExpressionAssignment(getLocation(ctx), name,
+        toNamePath(name),
         getTableArgs(ctx.tableFunction()),
         expr,
         emptyListToEmptyOptional(getHints(ctx.hint())));

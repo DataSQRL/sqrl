@@ -44,7 +44,8 @@ public class TimestampAnalysis {
     if (operator.getKind().equals(SqlKind.CAST)) {
       return true;
     }
-    Optional<TimestampPreservingFunction> fnc = SqrlFunction.unwrapSqrlFunction(operator)
+    Optional<TimestampPreservingFunction> fnc = Optional.of(operator)
+        .flatMap(f->SqrlFunction.unwrapSqrlFunction(operator))
         .filter(op -> op instanceof TimestampPreservingFunction)
         .map(op -> (TimestampPreservingFunction) op)
         .filter(TimestampPreservingFunction::isTimestampPreserving);

@@ -6,6 +6,13 @@ package com.datasqrl.function.builtin.time;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
+import com.datasqrl.loaders.SqrlModule;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
+import com.datasqrl.plan.calcite.TypeFactory;
+import com.datasqrl.plan.local.generate.FlinkUdfNsObject;
+import com.datasqrl.plan.local.generate.NamespaceObject;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -19,8 +26,23 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.type.OperandTypes;
+import org.apache.calcite.sql.type.SqlOperandTypeChecker;
+import org.apache.calcite.sql.type.SqlOperandTypeInference;
+import org.apache.calcite.sql.type.SqlReturnTypeInference;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.type.SqrlExplicitOperandTypeInference;
 import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.internal.FlinkEnvProxy;
+import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.ScalarFunction;
@@ -33,8 +55,10 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategy;
 import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
-public class StdTimeLibraryImpl {
+@Getter
+public class StdTimeLibraryImpl implements SqrlModule {
 
+  //
   public static final NOW NOW = new NOW();
   public static final EPOCH_TO_TIMESTAMP EPOCH_TO_TIMESTAMP = new EPOCH_TO_TIMESTAMP();
   public static final TIMESTAMP_TO_EPOCH TIMESTAMP_TO_EPOCH = new TIMESTAMP_TO_EPOCH();
@@ -58,30 +82,57 @@ public class StdTimeLibraryImpl {
   public static final GET_MONTH GET_MONTH = new GET_MONTH();
   public static final GET_YEAR GET_YEAR = new GET_YEAR();
 
-  public static final List<FlinkFnc> fncs = List.of(
-      new FlinkFnc(NOW.class.getSimpleName(), NOW),
-      new FlinkFnc(EPOCH_TO_TIMESTAMP.class.getSimpleName(), EPOCH_TO_TIMESTAMP),
-      new FlinkFnc(TIMESTAMP_TO_EPOCH.class.getSimpleName(), TIMESTAMP_TO_EPOCH),
-      new FlinkFnc(STRING_TO_TIMESTAMP.class.getSimpleName(), STRING_TO_TIMESTAMP),
-      new FlinkFnc(TIMESTAMP_TO_STRING.class.getSimpleName(), TIMESTAMP_TO_STRING),
-      new FlinkFnc(TO_UTC.class.getSimpleName(), TO_UTC),
-      new FlinkFnc(AT_ZONE.class.getSimpleName(), AT_ZONE),
-      new FlinkFnc(ROUND_TO_SECOND.class.getSimpleName(), ROUND_TO_SECOND),
-      new FlinkFnc(ROUND_TO_MINUTE.class.getSimpleName(), ROUND_TO_MINUTE),
-      new FlinkFnc(ROUND_TO_HOUR.class.getSimpleName(), ROUND_TO_HOUR),
-      new FlinkFnc(ROUND_TO_DAY.class.getSimpleName(), ROUND_TO_DAY),
-      new FlinkFnc(ROUND_TO_WEEK.class.getSimpleName(), ROUND_TO_WEEK),
-      new FlinkFnc(ROUND_TO_MONTH.class.getSimpleName(), ROUND_TO_MONTH),
-      new FlinkFnc(ROUND_TO_YEAR.class.getSimpleName(), ROUND_TO_YEAR),
-      new FlinkFnc(GET_SECOND.class.getSimpleName(), GET_SECOND),
-      new FlinkFnc(GET_MINUTE.class.getSimpleName(), GET_MINUTE),
-      new FlinkFnc(GET_HOUR.class.getSimpleName(), GET_HOUR),
-      new FlinkFnc(GET_DAY_OF_WEEK.class.getSimpleName(), GET_DAY_OF_WEEK),
-      new FlinkFnc(GET_DAY_OF_MONTH.class.getSimpleName(), GET_DAY_OF_MONTH),
-      new FlinkFnc(GET_DAY_OF_YEAR.class.getSimpleName(), GET_DAY_OF_YEAR),
-      new FlinkFnc(GET_MONTH.class.getSimpleName(), GET_MONTH),
-      new FlinkFnc(GET_YEAR.class.getSimpleName(), GET_YEAR)
+  static RelDataTypeFactory sqrlTypeFactory = TypeFactory.getTypeFactory();
+
+  //  @Override
+  public NamePath getPath() {
+    return NamePath.of("time");
+  }
+
+  public SqlOperator lookupFunction(String name) {
+
+    return null;
+  }
+
+  public final List<ScalarFunction> functions = List.of(
+//      NOW,
+      EPOCH_TO_TIMESTAMP,
+      TIMESTAMP_TO_EPOCH,
+      STRING_TO_TIMESTAMP,
+      TIMESTAMP_TO_STRING,
+      TO_UTC,
+      AT_ZONE,
+      ROUND_TO_SECOND,
+      ROUND_TO_MINUTE,
+      ROUND_TO_HOUR,
+      ROUND_TO_DAY,
+      ROUND_TO_WEEK,
+      ROUND_TO_MONTH,
+      ROUND_TO_YEAR,
+      GET_SECOND,
+      GET_MINUTE,
+      GET_HOUR,
+      GET_DAY_OF_WEEK,
+      GET_DAY_OF_MONTH,
+      GET_DAY_OF_YEAR,
+      GET_MONTH,
+      GET_YEAR
   );
+  List<NamespaceObject> nsObjects = getFunctions().stream()
+      .map(f -> new FlinkUdfNsObject(Name.system(f.getClass().getSimpleName()), f, Optional.empty()))
+      .collect(Collectors.toList());
+
+  @Override
+  public Optional<NamespaceObject> getNamespaceObject(Name name) {
+    return getNamespaceObjects().stream()
+        .filter(f -> f.getName().equals(name))
+        .findAny();
+  }
+
+  @Override
+  public List<NamespaceObject> getNamespaceObjects() {
+    return nsObjects;
+  }
 
   public static class GET_SECOND extends ScalarFunction implements SqrlFunction {
 
@@ -93,6 +144,22 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+//
+//    @Override
+//    public SqlReturnTypeInference getReturnTypeInference() {
+//      return nullPreservingReturnType(sqrlTypeFactory.createSqlType(SqlTypeName.INTEGER));
+//    }
+//
+//    @Override
+//    public SqlOperandTypeInference getOperandTypeInference() {
+//      return new SqrlExplicitOperandTypeInference(
+//          List.of(sqrlTypeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
+//    }
+//
+//    @Override
+//    public SqlOperandTypeChecker getOperandTypeChecker() {
+//      return OperandTypes.COMPARABLE_ORDERED;
+//    }
   }
 
   public static class GET_MINUTE extends ScalarFunction implements SqrlFunction {
@@ -105,6 +172,22 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
+//    @Override
+//    public SqlReturnTypeInference getReturnTypeInference() {
+//      return nullPreservingReturnType(sqrlTypeFactory.createSqlType(SqlTypeName.INTEGER));
+//    }
+//
+//    @Override
+//    public SqlOperandTypeInference getOperandTypeInference() {
+//      return new SqrlExplicitOperandTypeInference(
+//          List.of(sqrlTypeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
+//    }
+//
+//    @Override
+//    public SqlOperandTypeChecker getOperandTypeChecker() {
+//      return OperandTypes.COMPARABLE_ORDERED;
+//    }
   }
 
   public static class GET_HOUR extends ScalarFunction implements SqrlFunction {
@@ -117,7 +200,6 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
-
   }
 
   public static class GET_DAY_OF_WEEK extends ScalarFunction implements SqrlFunction {
@@ -130,6 +212,7 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
   }
 
   public static class GET_DAY_OF_MONTH extends ScalarFunction implements SqrlFunction {
@@ -142,6 +225,7 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
   }
 
   public static class GET_DAY_OF_YEAR extends ScalarFunction implements SqrlFunction {
@@ -154,6 +238,7 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
   }
 
   public static class GET_MONTH extends ScalarFunction implements SqrlFunction {
@@ -166,6 +251,7 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
   }
 
   public static class GET_YEAR extends ScalarFunction implements SqrlFunction {
@@ -178,9 +264,11 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
   }
 
-  public static class RoundingFunction extends ScalarFunction implements SqrlTimeTumbleFunction {
+  public abstract static class RoundingFunction extends ScalarFunction implements SqrlFunction,
+      SqrlTimeTumbleFunction {
 
     private final ChronoUnit timeUnit;
 
@@ -220,6 +308,7 @@ public class StdTimeLibraryImpl {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
   }
 
   public static class ROUND_TO_MINUTE extends RoundingFunction {
@@ -238,6 +327,7 @@ public class StdTimeLibraryImpl {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
   }
 
   public static class ROUND_TO_HOUR extends RoundingFunction {
@@ -256,6 +346,7 @@ public class StdTimeLibraryImpl {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
   }
 
   public static class ROUND_TO_DAY extends RoundingFunction {
@@ -274,6 +365,8 @@ public class StdTimeLibraryImpl {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
+
   }
 
   public static class ROUND_TO_WEEK extends RoundingFunction {
@@ -293,6 +386,8 @@ public class StdTimeLibraryImpl {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
+
   }
 
   public static class ROUND_TO_MONTH extends RoundingFunction {
@@ -311,6 +406,8 @@ public class StdTimeLibraryImpl {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
+
   }
 
   public static class ROUND_TO_YEAR extends RoundingFunction {
@@ -329,9 +426,12 @@ public class StdTimeLibraryImpl {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
+
   }
 
-  public static class AT_ZONE extends ScalarFunction implements TimestampPreservingFunction {
+  public static class AT_ZONE extends ScalarFunction implements SqrlFunction,
+      TimestampPreservingFunction {
 
     public ZonedDateTime eval(Instant instant, String zoneId) {
       return instant.atZone(ZoneId.of(zoneId));
@@ -351,9 +451,12 @@ public class StdTimeLibraryImpl {
           })
           .build();
     }
+
+
   }
 
-  public static class TO_UTC extends ScalarFunction implements TimestampPreservingFunction {
+  public static class TO_UTC extends ScalarFunction implements SqrlFunction,
+      TimestampPreservingFunction {
 
     public Instant eval(ZonedDateTime zonedDateTime) {
       return zonedDateTime.toInstant();
@@ -364,6 +467,8 @@ public class StdTimeLibraryImpl {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
+
   }
 
   public static class TIMESTAMP_TO_STRING extends ScalarFunction implements SqrlFunction {
@@ -376,6 +481,8 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.STRING(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
+
   }
 
   public static class STRING_TO_TIMESTAMP extends ScalarFunction implements SqrlFunction {
@@ -396,9 +503,12 @@ public class StdTimeLibraryImpl {
       return TypeInference.newBuilder()
           .inputTypeStrategy(stringToTimestampInputTypeStrategy())
 //          .typedArguments(DataTypes.STRING(), DataTypes.STRING().nullable())
-          .outputTypeStrategy(nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
+          .outputTypeStrategy(
+              nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
           .build();
     }
+
+
   }
 
   public static InputTypeStrategy stringToTimestampInputTypeStrategy() {
@@ -454,14 +564,17 @@ public class StdTimeLibraryImpl {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.BIGINT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
+
+
   }
 
-  public static class EPOCH_TO_TIMESTAMP extends ScalarFunction implements
+  public static class EPOCH_TO_TIMESTAMP extends ScalarFunction implements SqrlFunction,
       TimestampPreservingFunction {
 
     public Instant eval(Long l) {
       return Instant.ofEpochSecond(l.longValue());
     }
+
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
@@ -469,22 +582,43 @@ public class StdTimeLibraryImpl {
     }
   }
 
+//
+//  public class SqrlScalarTimeFunction extends SqlFunction {
+//
+//    private final SqlTypeName typeName;
+//
+//    protected SqrlScalarTimeFunction(String name, SqlTypeName typeName) {
+//      super(name, SqlKind.OTHER_FUNCTION, (SqlReturnTypeInference)null, (SqlOperandTypeInference)null,
+//          OperandTypes.or(new SqlSingleOperandTypeChecker[]{OperandTypes.POSITIVE_INTEGER_LITERAL, OperandTypes.NILADIC}),
+//          SqlFunctionCategory.TIMEDATE);
+//      this.typeName = typeName;
+//    }
+//  }
+//
+//  @AllArgsConstructor
+//  public class Sqrl2FlinkFunctionMapper {
+//    RelOptCluster cluster;
+//
+//    public BridgingSqlFunction map(SqlFunction fnc) {
+//      UserDefinedFunction udf = UserDefinedFunctionHelper.instantiateFunction(fnc.getClass());
+//
+//      ContextResolvedFunction contextResolvedFunction = ContextResolvedFunction.temporary(
+//          FunctionIdentifier.of(fnc.getName()),
+//          udf);
+//
+//      return BridgingSqlFunction.of(cluster, contextResolvedFunction);
+//    }
+//
+//  }
+
   public static class NOW extends ScalarFunction implements SqrlFunction {
 
     public Instant eval() {
       return Instant.now();
     }
 
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return TypeInference.newBuilder()
-          .typedArguments()
-          .outputTypeStrategy(callContext -> {
-            return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull());
-          })
-          .build();
-    }
   }
+
 
   public static TypeStrategy nullPreservingOutputStrategy(DataType outputType) {
     return callContext -> {

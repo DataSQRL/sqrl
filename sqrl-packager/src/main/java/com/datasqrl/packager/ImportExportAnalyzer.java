@@ -3,9 +3,9 @@
  */
 package com.datasqrl.packager;
 
+import static com.datasqrl.plan.local.generate.AbstractStatementResolver.toNamePath;
+
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.Exporter;
-import com.datasqrl.loaders.Loader;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
@@ -13,17 +13,14 @@ import com.datasqrl.plan.local.generate.Resolve;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.Value;
 import org.apache.calcite.sql.ExportDefinition;
 import org.apache.calcite.sql.ImportDefinition;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.commons.collections.ListUtils;
+import org.apache.commons.collections4.SetUtils;
 
 
 public class ImportExportAnalyzer {
@@ -35,22 +32,31 @@ public class ImportExportAnalyzer {
     try {
       String scriptContent = Files.readString(sqrlScript);
       errors = errors.withFile(sqrlScript, scriptContent);
-      return analyze(parser.parse(scriptContent, errors));
+      ScriptNode node;
+      try {
+        node = parser.parse(scriptContent, errors);
+      } catch (Exception e) {
+        errors.warn("Could not compile SQRL script %s", sqrlScript);
+        return Result.EMPTY;
+      }
+
+      return analyze(node);
     } catch (IOException e) {
       throw errors.handle(e);
     }
   }
 
   private Result analyze(ScriptNode scriptNode) {
-    List<NamePath> importPkgs = new ArrayList(), exportPkgs = new ArrayList<>();
+    Set<NamePath> importPkgs = new LinkedHashSet<>();
+    Set<NamePath> exportPkgs = new LinkedHashSet<>();
     for (SqlNode statement : scriptNode.getStatements()) {
       if (statement instanceof ImportDefinition) {
         ImportDefinition impDef = (ImportDefinition) statement;
-        importPkgs.add(Resolve.toNamePath(canonicalizer, impDef.getImportPath()).popLast());
+        importPkgs.add(toNamePath(canonicalizer, impDef.getImportPath()).popLast());
       }
       if (statement instanceof ExportDefinition) {
         ExportDefinition expDef = (ExportDefinition) statement;
-        exportPkgs.add(Resolve.toNamePath(canonicalizer, expDef.getSinkPath()).popLast());
+        exportPkgs.add(toNamePath(canonicalizer, expDef.getSinkPath()).popLast());
       }
     }
     return new Result(importPkgs, exportPkgs);
@@ -59,22 +65,26 @@ public class ImportExportAnalyzer {
   @Value
   public static class Result {
 
-    public static final Result EMPTY = new Result(Collections.emptyList(), Collections.emptyList());
+    public static final Result EMPTY = new Result(new LinkedHashSet<>(), new LinkedHashSet<>());
 
-    List<NamePath> importPkgs;
-    List<NamePath> exportPkgs;
+    Set<NamePath> importPkgs;
+    Set<NamePath> exportPkgs;
 
     public Result add(Result other) {
-      return new Result(ListUtils.union(importPkgs,other.importPkgs),
-          ListUtils.union(exportPkgs, other.exportPkgs));
+      return new Result(SetUtils.union(importPkgs,other.importPkgs),
+          SetUtils.union(exportPkgs, other.exportPkgs));
     }
 
-    public Set<NamePath> getUnloadableDependencies(Path basePath, Loader loader, Exporter exporter) {
-      Set<NamePath> unloadable = new HashSet<>();
-      importPkgs.stream().filter(np -> !loader.isPackage(basePath, np)).forEach(unloadable::add);
-      exportPkgs.stream().filter(np -> !exporter.isPackage(basePath, np)).forEach(unloadable::add);
-      return unloadable;
+    public Set<NamePath> getPkgs() {
+      return SetUtils.union(importPkgs, exportPkgs);
     }
+//
+//    public Set<NamePath> getUnloadableDependencies(Path basePath, Loader loader, Exporter exporter) {
+//      Set<NamePath> unloadable = new HashSet<>();
+//      importPkgs.stream().filter(np -> !loader.isPackage(basePath, np)).forEach(unloadable::add);
+//      exportPkgs.stream().filter(np -> !exporter.isPackage(basePath, np)).forEach(unloadable::add);
+//      return unloadable;
+//    }
 
   }
 

@@ -26,7 +26,7 @@ public class GlobalCompilerConfiguration extends GlobalEngineConfiguration {
   CompilerConfiguration compiler = new CompilerConfiguration();
 
   @Valid
-  @JsonProperty(ManifestConfiguration.PROPERTY)
+  @JsonProperty(ManifestConfiguration.MANIFEST)
   ManifestConfiguration manifest;
 
   public CompilerConfiguration initializeCompiler(ErrorCollector errors) {

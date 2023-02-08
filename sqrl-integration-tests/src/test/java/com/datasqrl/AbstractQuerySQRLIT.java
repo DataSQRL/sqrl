@@ -13,7 +13,7 @@ import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.local.generate.Resolve;
+import com.datasqrl.plan.local.generate.FlinkNamespace;
 import com.datasqrl.plan.queries.APIQuery;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
@@ -52,14 +52,16 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   @SneakyThrows
   protected void validateSchemaAndQueries(String script, String schema,
       Map<String, String> queries) {
-    Resolve.Env resolvedDag = plan(script);
-    DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
+    FlinkNamespace ns = plan(script);
+    DAGPlanner dagPlanner = new DAGPlanner(ns.createRelBuilder(), session.getRelPlanner(),
+        session.getPipeline());
 
-    Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = AbstractSchemaInferenceModelTest.getModelAndQueries(
-        resolvedDag, schema);
+    AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
+    Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = t
+        .getModelAndQueries(session, schema);
 
-    OptimizedDAG dag = dagPlanner.plan(resolvedDag.getRelSchema(), modelAndQueries.getRight(),
-        resolvedDag.getExports());
+    OptimizedDAG dag = dagPlanner.plan(session.getSchema(), modelAndQueries.getRight(),
+        ns.getExports(), ns.getJars());
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
 

@@ -16,7 +16,7 @@ import java.util.Optional;
 @Getter
 public class ManifestConfiguration {
 
-  public static final String PROPERTY = "manifest";
+  public static final String MANIFEST = "manifest";
 
   @NonNull @NotEmpty
   String main;
@@ -24,11 +24,8 @@ public class ManifestConfiguration {
 
   @JsonIgnore
   public Optional<String> getOptGraphQL() {
-    if (Strings.isNullOrEmpty(graphql)) {
-      return Optional.empty();
-    } else {
-      return Optional.of(graphql);
-    }
+    return Optional.ofNullable(graphql)
+        .filter(gql -> !gql.isEmpty());
   }
 
 }

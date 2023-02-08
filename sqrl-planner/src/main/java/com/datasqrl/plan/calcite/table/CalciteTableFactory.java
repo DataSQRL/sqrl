@@ -109,7 +109,7 @@ public class CalciteTableFactory {
   }
 
   public ScriptTableDefinition defineTable(NamePath tablePath, AnnotatedLP rel,
-      List<Name> fieldNames, Optional<Pair<SQRLTable, VirtualRelationalTable>> parentPair) {
+      List<Name> fieldNames, Optional<SQRLTable> parentTable) {
     ContinuousIndexMap selectMap = rel.getSelect();
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
@@ -128,8 +128,8 @@ public class CalciteTableFactory {
     UniversalTable rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
         baseTable.getNumPrimaryKeys(), index2Name);
 
-    Optional<Pair<SQRLTable, Multiplicity>> parent = parentPair.map(pp ->
-        Pair.of(pp.getLeft(), pp.getRight().getNumPrimaryKeys() == baseTable.getNumPrimaryKeys() ?
+    Optional<Pair<SQRLTable, Multiplicity>> parent = parentTable.map(pp ->
+        Pair.of(pp, pp.getVt().getNumPrimaryKeys() == baseTable.getNumPrimaryKeys() ?
             Multiplicity.ZERO_ONE : Multiplicity.MANY)
     );
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable,

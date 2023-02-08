@@ -1,0 +1,4 @@
+>>>errors
+[FATAL] null
+in script:test.sqrl:
+

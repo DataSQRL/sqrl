@@ -4,6 +4,8 @@
 package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.engine.stream.StreamPhysicalPlan;
+import java.net.URL;
+import java.util.Set;
 import lombok.Value;
 import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 
@@ -11,5 +13,7 @@ import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
 
   StreamStatementSet statementSet;
+
+  Set<URL> jars;
 
 }

@@ -1,0 +1,10 @@
+>>>customer$q$2
+LogicalValues(tuples=[[]])
+
+>>>x$q$7
+LogicalValues(tuples=[[]])
+
+>>>y$q$4
+LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5])
+  LogicalTableScan(table=[[customer$q$2]])
+

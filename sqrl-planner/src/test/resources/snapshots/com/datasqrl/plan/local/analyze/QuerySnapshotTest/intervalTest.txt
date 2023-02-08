@@ -1,0 +1,7 @@
+>>>product$q$2
+LogicalValues(tuples=[[]])
+
+>>>product2$q$4
+LogicalProject(_uuid=[$0], x=[+($1, 24:INTERVAL YEAR)], _ingest_time=[$1])
+  LogicalTableScan(table=[[product$q$2]])
+

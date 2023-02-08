@@ -1,3 +1,5 @@
+IMPORT time.round_to_hour;
+IMPORT time.epoch_to_timestamp;
 IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) AS updateTime;
 IMPORT ecommerce-data.Product TIMESTAMP _ingest_time - INTERVAL 1 YEAR AS updateTime;
 IMPORT ecommerce-data.Orders;

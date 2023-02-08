@@ -1,3 +1,0 @@
-LogicalProject(__pk_0=[$0], __pk_1=[$1], discount=[$5])
-  LogicalTableScan(table=[[entries$4]])
-

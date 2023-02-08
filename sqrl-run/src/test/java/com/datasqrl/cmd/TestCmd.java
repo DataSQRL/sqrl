@@ -70,7 +70,8 @@ public class TestCmd {
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
         script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
-        "-o", OUTPUT_DIR.toString());
+        "-o", OUTPUT_DIR.toString(),
+        "--noinfer");
     createSnapshot();
   }
 
@@ -82,7 +83,8 @@ public class TestCmd {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
-        "-o", OUTPUT_DIR.toString());
+        "-o", OUTPUT_DIR.toString(),
+        "--noinfer");
     createSnapshot();
   }
 

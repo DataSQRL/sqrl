@@ -1,0 +1,11 @@
+>>>customer$q$2
+LogicalValues(tuples=[[]])
+
+>>>orders$q$5
+LogicalValues(tuples=[[]])
+
+>>>product$q$9
+LogicalValues(tuples=[[]])
+
+>>>join-declaration-product
+JOIN PATH ON ("entries$7" AS "@") ON ("product$10" AS "Product") USING "Product"."productid" = "@"."productid" FETCH 1

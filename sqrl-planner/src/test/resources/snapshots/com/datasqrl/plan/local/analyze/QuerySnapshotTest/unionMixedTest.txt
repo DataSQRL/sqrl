@@ -1,0 +1,11 @@
+>>>product$q$2
+LogicalValues(tuples=[[]])
+
+>>>product2$q$4
+LogicalProject(_uuid=[$0], productid=[$1], name=[$2], category=[$3], description=[$4], _timestamp=[$5])
+  LogicalUnion(all=[true])
+    LogicalProject(_uuid=[$0], productid=[$2], name=[$3], category=[$5], description=[null:NULL], _timestamp=[$1])
+      LogicalTableScan(table=[[product$q$2]])
+    LogicalProject(_uuid=[$0], productid=[$2], name=[null:NULL], category=[null:NULL], description=[$4], _timestamp=[$1])
+      LogicalTableScan(table=[[product$q$2]])
+

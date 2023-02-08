@@ -1,8 +1,0 @@
-X := SELECT * FROM Customer;
-
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5])
-  LogicalTableScan(table=[[customer$3]])
-
-
-SELECT "_uuid", "_ingest_time", "customerid", "email", "name", "lastupdated" AS "lastUpdated"
-FROM "customer$3"

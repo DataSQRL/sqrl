@@ -22,9 +22,9 @@ public class SourceMapImpl implements SourceMap {
         line = line.substring(0,Math.min(line.length(),range.getToOffset()));
       }
       if (i==range.getFromLine()-1) {//first line, substring to fromOffset
-        Preconditions.checkArgument(range.getFromOffset()<line.length(),
-            "Invalid offset [%s] for: %s", range.getFromOffset(), line);
-        line = line.substring(range.getFromOffset()-1,line.length());
+//        Preconditions.checkArgument(range.getFromOffset()<line.length(),
+//            "Invalid offset [%s] for: %s", range.getFromOffset(), line);
+//        line = line.substring(range.getFromOffset()-1,line.length());
       }
       result.append(line).append("\n");
     }

@@ -7,6 +7,8 @@ import com.datasqrl.util.StreamUtil;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.queries.APIQuery;
+import java.net.URL;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -48,6 +50,8 @@ public class OptimizedDAG {
     @NonNull
     List<? extends Query> queries;
     Collection<IndexDefinition> indexDefinitions;
+
+    Set<URL> jars;
 
   }
 
@@ -103,6 +107,12 @@ public class OptimizedDAG {
 
     String name;
     TableSink sink;
+
+    public ExternalSink(String name, TableSink sink) {
+      this.name = name;
+      this.sink = sink;
+    }
+
     public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }

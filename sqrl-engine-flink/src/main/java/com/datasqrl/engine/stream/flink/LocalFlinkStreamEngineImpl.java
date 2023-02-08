@@ -21,17 +21,14 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
                 "taskmanager.memory.network.max", "1gb",
                 "taskmanager.numberOfTaskSlots", "1",
                 "parallelism.default", "1",
-                "rest.flamegraph.enabled", "true"
+                "rest.flamegraph.enabled", "false"
             )
         ));
     env.getConfig().enableObjectReuse();
     //env.getConfig().disableGenericTypes(); TODO: use to ensure efficient serialization
     env.setRuntimeMode(RuntimeExecutionMode.STREAMING); //todo add to config
-    //            .forEach(e->registerFunc(e, catalog));
 //        FlinkUtilities.enableCheckpointing(env);
+
     return new FlinkStreamBuilder(this, env);
   }
-
-
-
 }

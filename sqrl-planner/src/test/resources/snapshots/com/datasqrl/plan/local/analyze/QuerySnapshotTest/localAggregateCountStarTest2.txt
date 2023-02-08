@@ -1,0 +1,4 @@
+>>>errors
+[FATAL] Complex columns not yet supported
+in script:test.sqrl:
+

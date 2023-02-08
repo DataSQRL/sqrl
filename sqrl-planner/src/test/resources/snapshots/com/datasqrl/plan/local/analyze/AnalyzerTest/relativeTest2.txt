@@ -1,5 +1,0 @@
-LogicalProject(__pk_0=[$0], discount=[$10])
-  LogicalJoin(condition=[=($0, $5)], joinType=[default])
-    LogicalTableScan(table=[[orders$3]])
-    LogicalTableScan(table=[[entries$4]])
-

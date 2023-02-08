@@ -2,9 +2,7 @@
 config.json
 model.json
 >>>build
-c360
 c360-full.sqrl
-c360/schema.yml
 ecommerce-broken
 ecommerce-broken/customer.table.json
 ecommerce-broken/orders.table.json

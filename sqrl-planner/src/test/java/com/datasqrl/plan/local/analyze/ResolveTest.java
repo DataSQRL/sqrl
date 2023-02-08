@@ -17,7 +17,7 @@ import com.datasqrl.plan.calcite.table.PullupOperator;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.plan.calcite.table.TableType;
 import com.datasqrl.plan.calcite.table.TimestampHolder;
-import com.datasqrl.plan.local.generate.Resolve;
+import com.datasqrl.plan.local.generate.FlinkNamespace;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestRelWriter;
@@ -44,7 +44,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private final Retail example = Retail.INSTANCE;
   private Path exportPath = example.getRootPackageDirectory().resolve("export-data");
 
-  private Resolve.Env resolvedDag = null;
+  private FlinkNamespace ns = null;
   protected SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
@@ -89,6 +89,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void timestampColumnDefinition() {
     String script = ScriptBuilder.of("IMPORT ecommerce-data.Customer",
+        "IMPORT time.*",
         "Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)",
         "Customer.month := ROUND_TO_MONTH(ROUND_TO_MONTH(timestamp))",
         "CustomerCopy := SELECT timestamp, month FROM Customer");
@@ -102,14 +103,14 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void timestampExpressionTest() {
     process(
-        "IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS timestamp;\n");
+        "IMPORT time.*; IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS timestamp;\n");
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.fixed(6));
   }
 
   @Test
   public void timestampDefinitionTest() {
-    process("IMPORT ecommerce-data.Orders TIMESTAMP \"time\";\n");
+    process("IMPORT ecommerce-data.Orders TIMESTAMP time;\n");
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(4));
   }
@@ -130,7 +131,6 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void selfJoinSubqueryTest() {
     ScriptBuilder builder = imports();
-//    builder.add("IMPORT ecommerce-data.Orders;\n");
     builder.add("Orders2 := SELECT o2._uuid FROM Orders o2 "
         + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
     process(builder.toString());
@@ -155,6 +155,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void nestedAggregationAndSelfJoinTest() {
     String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
         "IMPORT ecommerce-data.Customer",
+        "IMPORT time.*",
         "Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC",
         "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e",
         "OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t",
@@ -220,7 +221,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void tableTemporalJoinWithTimeFilterTest() {
     ScriptBuilder builder = imports();
-    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC");
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC");
     builder.add("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC");
     builder.add("Customer.orders := JOIN Orders ON Orders.customerid = @.customerid");
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid");
@@ -253,7 +254,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void streamTimeAggregateTest() {
     ScriptBuilder builder = imports();
     builder.add(
-        "Ordertime1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "Ordertime1 := SELECT o.customerid as customer, round_to_second(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     process(builder.toString());
     validateQueryTable("ordertime1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1));
@@ -474,9 +475,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   @SneakyThrows
-  protected Resolve.Env process(String query) {
-    resolvedDag = plan(query);
-    return resolvedDag;
+  protected void process(String query) {
+    plan(query);
   }
 
   private void validateQueryTable(String name, TableType tableType, ExecutionEngine.Type execType,
@@ -495,7 +495,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
       ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys, TimestampTest timestampTest,
       PullupTest pullupTest) {
-    CalciteSchema relSchema = resolvedDag.getRelSchema();
+    CalciteSchema relSchema = session.getSchema();
     QueryRelationalTable table = getLatestTable(relSchema, tableName,
         QueryRelationalTable.class).get();
     snapshot.addContent(TestRelWriter.explain(table.getRelNode()), tableName, "lp");
@@ -513,7 +513,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
     return relSchema.getTableNames().stream().filter(s -> s.indexOf(Name.NAME_DELIMITER) != -1)
         .filter(s -> s.substring(0, s.indexOf(Name.NAME_DELIMITER)).equals(normalizedName))
-        .filter(s -> tableClass.isInstance(relSchema.getTable(s, true).getTable()))
+        .filter(s ->
+            tableClass.isInstance(relSchema.getTable(s, true).getTable()))
         //Get most recently added table
         .sorted((a, b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),
             CalciteTableFactory.getTableOrdinal(b)))
