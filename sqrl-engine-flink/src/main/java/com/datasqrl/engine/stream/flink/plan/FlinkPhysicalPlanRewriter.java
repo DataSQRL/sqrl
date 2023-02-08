@@ -72,7 +72,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   private FlinkRelBuilder getBuilder() {
-    return ((PlannerBase) tEnv.getPlanner()).getRelBuilder();
+    return ((PlannerBase) tEnv.getPlanner()).createRelBuilder();
   }
 
   @Override

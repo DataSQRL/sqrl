@@ -4,7 +4,6 @@
 package com.datasqrl.spi;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Strings;
 import lombok.*;
 
 import javax.validation.constraints.NotEmpty;
@@ -24,11 +23,8 @@ public class ManifestConfiguration {
 
   @JsonIgnore
   public Optional<String> getOptGraphQL() {
-    if (Strings.isNullOrEmpty(graphql)) {
-      return Optional.empty();
-    } else {
-      return Optional.of(graphql);
-    }
+    return Optional.ofNullable(graphql)
+        .filter(gql -> !gql.isEmpty());
   }
 
 }

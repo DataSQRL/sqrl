@@ -19,17 +19,19 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DynamicExporter;
-import com.datasqrl.loaders.ExporterContext.Implementation;
+import com.datasqrl.loaders.DataSystemNsObject;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ModuleLoaderImpl;
+import com.datasqrl.loaders.StandardLibraryLoader;
+import com.datasqrl.loaders.URLObjectLoaderImpl;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.plan.calcite.Planner;
-import com.datasqrl.plan.calcite.PlannerFactory;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
+import com.datasqrl.plan.local.generate.FileResourceResolver;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.Resolve;
-import com.datasqrl.plan.local.generate.Resolve.Env;
 import com.datasqrl.plan.local.generate.Session;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.spi.ManifestConfiguration;
@@ -42,6 +44,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.validation.constraints.NotEmpty;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -70,11 +74,7 @@ public class Compiler {
     DebuggerConfig debugger = DebuggerConfig.NONE;
     if (debug) debugger = compilerConfig.getDebug().getDebugger();
 
-    Optional<TableSink> errorSink = new DynamicExporter().export(new Implementation(buildDir, collector),
-        NamePath.parse(compilerConfig.getErrorSink()));
-    collector.checkFatal(errorSink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
-        "Cannot resolve table sink: %s", compilerConfig.getErrorSink());
-
+    TableSink errorSink = loadErrorSink(compilerConfig.getErrorSink(), collector, buildDir);
 
     Session session = createSession(collector, engineSettings, debugger);
     Resolve resolve = new Resolve(buildDir);
@@ -90,35 +90,54 @@ public class Compiler {
     ScriptNode scriptNode = SqrlParser.newParser()
         .parse(scriptStr, scriptErrors);
 
-    Env env = resolve.planDag(session, scriptNode, scriptErrors);
+    Namespace ns = resolve.planDag(scriptNode, scriptErrors, new FileResourceResolver(buildDir), session);
 
-    String gqlSchema = inferOrGetSchema(env, graphqlSchema);
+    String gqlSchema = inferOrGetSchema(session.getSchema(), graphqlSchema);
 
-    InferredSchema inferredSchema = new SchemaInference(gqlSchema, env.getRelSchema(),
-        env.getSession().getPlanner().getRelBuilder())
+    InferredSchema inferredSchema = new SchemaInference(gqlSchema, session.getSchema(),
+        session.createRelBuilder())
         .accept();
 
     PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(gqlSchema,
-        env.getRelSchema(),
-        env.getSession().getPlanner().getRelBuilder(),
-        env.getSession().getPlanner());
+        session.getSchema(),
+        session.createRelBuilder(),
+        session, ns.getOperatorTable());
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), env);
-    PhysicalPlan plan = createPhysicalPlan(dag, env, session, errorSink.get());
+    OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), session, ns);
+    PhysicalPlan plan = createPhysicalPlan(dag, session, errorSink);
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
     return new CompilerResult(root, gqlSchema, plan);
   }
 
+  private TableSink loadErrorSink(@NonNull @NotEmpty String errorSinkName, ErrorCollector error,
+      Path buildDir) {
+
+    ModuleLoader moduleLoader = new ModuleLoaderImpl(new FileResourceResolver(buildDir), new StandardLibraryLoader(
+        Map.of()), new URLObjectLoaderImpl(error));
+    NamePath sinkPath = NamePath.parse(errorSinkName);
+
+    Optional<TableSink> errorSink = moduleLoader
+        .getModule(sinkPath.popLast())
+        .flatMap(m->m.getNamespaceObject(sinkPath.popLast().getLast()))
+        .map(s -> ((DataSystemNsObject) s).getTable())
+        .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), error))
+        .map(tblConfig ->
+            tblConfig.initializeSink(error, sinkPath, Optional.empty()));
+    error.checkFatal(errorSink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
+        "Cannot resolve table sink: %s", errorSink);
+
+    return errorSink.get();
+  }
+
   private Session createSession(ErrorCollector collector, EngineSettings engineSettings,
       DebuggerConfig debugger) {
     SqrlCalciteSchema schema = new SqrlCalciteSchema(
         CalciteSchema.createRootSchema(false, false).plus());
-    Planner planner = new PlannerFactory(schema.plus()).createPlanner();
-    return new Session(collector, planner, engineSettings.getPipeline(), debugger);
+    return Session.createSession(collector, engineSettings.getPipeline(), debugger, schema);
   }
 
   @SneakyThrows
@@ -143,9 +162,10 @@ public class Compiler {
     ScriptNode scriptNode = SqrlParser.newParser()
         .parse(scriptStr, scriptErrors);
 
-    Env env = resolve.planDag(session, scriptNode, scriptErrors);
+    Namespace ns = resolve.planDag(scriptNode, scriptErrors, new FileResourceResolver(buildDir),
+        session);
 
-    return inferOrGetSchema(env, Optional.empty());
+    return inferOrGetSchema(session.getSchema(), Optional.empty());
   }
 
   @Value
@@ -156,11 +176,11 @@ public class Compiler {
     PhysicalPlan plan;
   }
 
-  private OptimizedDAG optimizeDag(List<APIQuery> queries, Env env) {
-    DAGPlanner dagPlanner = new DAGPlanner(env.getSession().getPlanner(),
-        env.getSession().getPipeline());
-    CalciteSchema relSchema = env.getRelSchema();
-    return dagPlanner.plan(relSchema, queries, env.getExports());
+  private OptimizedDAG optimizeDag(List<APIQuery> queries, Session session, Namespace ns) {
+    DAGPlanner dagPlanner = new DAGPlanner(session.createRelBuilder(), session.getRelPlanner(),
+        session.getPipeline());
+    CalciteSchema relSchema = session.getSchema();
+    return dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
   }
 
   private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root,
@@ -170,19 +190,19 @@ public class Compiler {
     return root;
   }
 
-  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Env env, Session s, TableSink errorSink) {
-    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.getPlanner().getRelBuilder(), errorSink);
+  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, Session s, TableSink errorSink) {
+    PhysicalPlanner physicalPlanner = new PhysicalPlanner(s.createRelBuilder(), errorSink);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     return physicalPlan;
   }
 
   @SneakyThrows
-  public static String inferOrGetSchema(Env env, Optional<Path> graphqlSchema) {
+  public static String inferOrGetSchema(SqrlCalciteSchema calciteSchema, Optional<Path> graphqlSchema) {
     if (graphqlSchema.isPresent()) {
       Preconditions.checkArgument(Files.isRegularFile(graphqlSchema.get()));
       return Files.readString(graphqlSchema.get());
     }
-    GraphQLSchema schema = new SchemaGenerator().generate(env.getRelSchema());
+    GraphQLSchema schema = new SchemaGenerator().generate(calciteSchema);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)

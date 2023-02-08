@@ -1,6 +1,0 @@
-[FATAL] Complex column not yet supported
-in script:test.sqrl [2:1]:
-IMPORT ecommerce-data.Product;
-Product.total := COUNT(*);
-^
-

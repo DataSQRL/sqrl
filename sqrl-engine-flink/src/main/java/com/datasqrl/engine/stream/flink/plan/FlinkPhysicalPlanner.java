@@ -9,7 +9,10 @@ import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRe
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
+import com.datasqrl.plan.global.OptimizedDAG.Query;
+import java.net.URL;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.api.config.ExecutionConfigOptions.NotNullEnforcer;
@@ -20,7 +23,7 @@ public class FlinkPhysicalPlanner {
   private final AbstractFlinkStreamEngine streamEngine;
 
   public FlinkStreamPhysicalPlan createStreamGraph(
-      List<? extends OptimizedDAG.Query> streamQueries, TableSink errorSink) {
+      List<? extends Query> streamQueries, TableSink errorSink, Set<URL> jars) {
     final FlinkStreamBuilder streamBuilder = streamEngine.createJob();
     final FlinkTableRegistrationContext regContext = streamBuilder.getContext();
 
@@ -35,6 +38,6 @@ public class FlinkPhysicalPlanner {
     }
     streamBuilder.getErrorHandler().getErrorStream().ifPresent(errorStream -> tableRegistration.registerErrors(
         errorStream, new ExternalSink("_errors", errorSink), regContext));
-    return new FlinkStreamPhysicalPlan(regContext.getStreamStatementSet());
+    return new FlinkStreamPhysicalPlan(regContext.getStreamStatementSet(), jars);
   }
 }

@@ -5,13 +5,16 @@ package com.datasqrl;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.loaders.TableLoader;
+import com.datasqrl.loaders.URLObjectLoaderImpl;
+import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.plan.calcite.Planner;
-import com.datasqrl.plan.calcite.PlannerFactory;
+import com.datasqrl.plan.local.generate.FileResourceResolver;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.local.generate.Session;
+import com.google.common.base.Preconditions;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
@@ -31,7 +34,6 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
 
   public ErrorCollector error;
   public SqrlParser parser;
-  public Planner planner;
   public Resolve resolve;
   public Session session;
   public Path rootDir;
@@ -41,19 +43,26 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     super.initialize(settings);
     error = ErrorCollector.root();
 
-    planner = new PlannerFactory(
+    SqrlCalciteSchema schema =
         new SqrlCalciteSchema(
-            CalciteSchema.createRootSchema(false, false).plus()).plus()).createPlanner();
-    Session session = new Session(error, planner, engineSettings.getPipeline(), settings.getDebugger());
-    this.session = session;
+            CalciteSchema.createRootSchema(false, false).plus());
+    this.session = Session.createSession(error, engineSettings.getPipeline(),
+        settings.getDebugger(), schema);
     this.parser = new SqrlParser();
     this.resolve = new Resolve(rootDir);
+    Preconditions.checkState(rootDir.toFile().exists(), "Root dir does not exist");
     this.rootDir = rootDir;
   }
 
   protected TableSource loadTable(NamePath path) {
-    TableLoader loader = new TableLoader();
-    return loader.readTable(rootDir, path, error).get();
+    URLObjectLoaderImpl URLObjectLoaderImpl = new URLObjectLoaderImpl(error);
+    FileResourceResolver fileResourceResolver = new FileResourceResolver(rootDir);
+    URL url = fileResourceResolver.resolveTableJson(path)
+        .get();
+
+    TableSourceNamespaceObject ts = (TableSourceNamespaceObject) URLObjectLoaderImpl.load(url, fileResourceResolver, path)
+        .get();
+    return ts.getTable();
   }
 
   @SneakyThrows
@@ -62,10 +71,11 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     return Files.readString(path);
   }
 
-  protected Resolve.Env plan(String script) {
+  protected Namespace plan(String script) {
     ErrorCollector scriptError = error.withFile("test.sqrl", script);
     ScriptNode node = parser.parse(script, scriptError);
-    return resolve.planDag(session, node, scriptError);
+    return resolve.planDag(node, scriptError, new FileResourceResolver(rootDir),
+        session);
   }
 
 }

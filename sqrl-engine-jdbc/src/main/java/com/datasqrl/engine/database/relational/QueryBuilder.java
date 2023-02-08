@@ -17,9 +17,7 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.util.HashMap;
@@ -57,7 +55,7 @@ public class QueryBuilder {
       List<RexNode> clonedOperands = this.visitList(call.operands, update);
       SqlOperator operator = call.getOperator();
       RelDataType datatype = call.getType();
-      Optional<SqrlFunction> sqrlFunction = SqrlFunction.unwrapSqrlFunction(operator);
+      Optional<SqrlFunction> sqrlFunction = SqrlFunction.lookupTimeFunction(operator);
       if (sqrlFunction.isPresent()) {
         update[0] = true;
         if (sqrlFunction.get().equals(StdTimeLibraryImpl.NOW)) {

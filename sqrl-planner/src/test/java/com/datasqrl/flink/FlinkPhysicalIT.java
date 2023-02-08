@@ -71,6 +71,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @Test
   public void nestedAggregationandSelfJoinTest() {
     ScriptBuilder builder = new ScriptBuilder();
+    builder.add("IMPORT time.*");
     builder.add("IMPORT ecommerce-data.Orders");
     builder.add(
         "IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS updateTime");
@@ -88,6 +89,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @Test
   public void joinTest() {
     ScriptBuilder builder = new ScriptBuilder();
+    builder.add("IMPORT time.*");
     builder.add(
         "IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
     builder.add("IMPORT ecommerce-data.Orders TIMESTAMP \"time\" AS rowtime");
@@ -176,6 +178,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @Test
   public void setTest() {
     ScriptBuilder builder = new ScriptBuilder();
+    builder.add("IMPORT time.*");
     builder.add(
         "IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
     builder.add("IMPORT ecommerce-data.Orders");

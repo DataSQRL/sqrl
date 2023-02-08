@@ -1,6 +1,0 @@
-LogicalUnion(all=[true])
-  LogicalProject(productid=[$2], name=[$3], category=[$5], description=[null:NULL])
-    LogicalTableScan(table=[[product$3]])
-  LogicalProject(productid=[$2], name=[null:NULL], category=[null:NULL], description=[$4])
-    LogicalTableScan(table=[[product$3]])
-

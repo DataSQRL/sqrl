@@ -17,7 +17,7 @@ import java.util.List;
 public class ExpressionReducer {
 
   private final org.apache.flink.table.planner.codegen.ExpressionReducer reducer =
-      new org.apache.flink.table.planner.codegen.ExpressionReducer(TableConfig.getDefault(), true);
+      new org.apache.flink.table.planner.codegen.ExpressionReducer(TableConfig.getDefault(), ClassLoader.getSystemClassLoader(), true);
 
   List<RexNode> reduce(RexBuilder rexBuilder, List<RexNode> original) {
     ArrayList<RexNode> reduced = new ArrayList<>();

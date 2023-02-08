@@ -1,5 +1,6 @@
 package org.apache.calcite.sql;
 
+import com.datasqrl.name.NamePath;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
@@ -13,10 +14,10 @@ public class DistinctAssignment extends Assignment {
   private final List<SqlNode> order;
   private final SqlNode query;
 
-  public DistinctAssignment(SqlParserPos location, SqlIdentifier name, SqlNode table,
+  public DistinctAssignment(SqlParserPos location, SqlIdentifier name, NamePath namePath, SqlNode table,
       List<SqlNode> partitionKeys,
       List<SqlNode> order, Optional<SqlNodeList> hints, SqlNode query) {
-    super(location, name, hints);
+    super(location, name, namePath, hints);
     this.table = table;
     this.partitionKeys = partitionKeys;
     this.order = order;
@@ -29,5 +30,10 @@ public class DistinctAssignment extends Assignment {
     sqlWriter.keyword("DISTINCT");
     table.unparse(sqlWriter, i, i1);
     sqlWriter.print("ON ...");
+  }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
   }
 }

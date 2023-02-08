@@ -1,6 +1,0 @@
-[FATAL] Root JOIN declarations are not yet supported
-in script:test.sqrl [2:1]:
-IMPORT ecommerce-data.Product;
-Product2 := JOIN Product;
-^
-

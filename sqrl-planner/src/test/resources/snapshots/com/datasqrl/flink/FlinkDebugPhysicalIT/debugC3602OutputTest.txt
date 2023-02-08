@@ -123,12 +123,7 @@ LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=
     LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[customer$i$1]])
 
->>>customer$3$4-lp-stream
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
-    LogicalTableScan(table=[[customer$i$1]])
-
->>>favorite_categories$24$5-lp-stream
+>>>favorite_categories$24$4-lp-stream
 LogicalProject(__pk_0=[$0], category_name=[$1], total=[$2], month=[$3])
   LogicalProject(__pk_0=[$2], category_name=[$1], total=[$3], month=[$0])
     LogicalAggregate(group=[{1, 2, 5}], total=[SUM($3)]) hints[SlidingAggregationHint options:[1, 31536000000, 630720000]]
@@ -161,12 +156,12 @@ LogicalProject(__pk_0=[$0], category_name=[$1], total=[$2], month=[$3])
               LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
                 LogicalTableScan(table=[[customer$i$1]])
 
->>>newcustomerpromotion$29$6-lp-stream
+>>>newcustomerpromotion$29$5-lp-stream
 LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
   LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
     LogicalTableScan(table=[[newcustomerpromotion$s$27]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
 
->>>order_again$20$7-lp-stream
+>>>order_again$20$6-lp-stream
 LogicalProject(__pk_0=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4], time=[$5])
   LogicalProject(__pk_0=[$6], productid=[$15], quantity=[SUM($16) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], most_recent=[MAX($4) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
     LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
@@ -182,7 +177,7 @@ LogicalProject(__pk_0=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most
         LogicalProject($f0=[$cor3.entries])
           LogicalValues(tuples=[[{ 0 }]])
 
->>>order_stats$26$8-lp-stream
+>>>order_stats$26$7-lp-stream
 LogicalProject(__pk_0=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
   LogicalProject(__pk_0=[$6], total_spend=[SUM($15) IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
     LogicalJoin(condition=[AND(=($0, $14), =($18, $4))], joinType=[left]) hints[IntervalJoin]
@@ -204,23 +199,18 @@ LogicalProject(__pk_0=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
                 LogicalProject($f0=[$cor1.entries])
                   LogicalValues(tuples=[[{ 0 }]])
 
->>>orders$9$9-lp-stream
+>>>orders$9$8-lp-stream
 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
   LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
     LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>product$16$10-lp-stream
+>>>product$16$9-lp-stream
 LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6])
   LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[product$i$4]])
 
->>>product$6$11-lp-stream
-LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6])
-  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
-    LogicalTableScan(table=[[product$i$4]])
-
->>>total$18$12-lp-stream
+>>>total$18$10-lp-stream
 LogicalProject(__pk_0=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
   LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
     LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
@@ -287,8 +277,6 @@ Personal Care, 146.82, 2023-05-28T21:23:59.999-07:00
 6
 >>>export-customer$12
 4
->>>export-customer$3
-4
 >>>export-favorite_categories$24
 150
 >>>export-newcustomerpromotion$29
@@ -300,8 +288,6 @@ Personal Care, 146.82, 2023-05-28T21:23:59.999-07:00
 >>>export-orders$9
 4
 >>>export-product$16
-6
->>>export-product$6
 6
 >>>export-total$18
 4

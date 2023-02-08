@@ -36,6 +36,7 @@ public class GlobalPackageConfiguration implements GlobalConfiguration {
   @NonNull
   @Builder.Default
   @Valid
+  @Setter
   LinkedHashMap<String, Dependency> dependencies = new LinkedHashMap<>();
 
   @Setter

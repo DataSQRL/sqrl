@@ -124,6 +124,7 @@ public class FlinkTableRegistration implements
     TableDescriptor sinkDescriptor = query.getSink().accept(this, new SinkContext(tblSchema));
 
     context.getTEnv().createTemporaryTable(flinkSinkName, sinkDescriptor);
+
     context.getStreamStatementSet().addInsert(flinkSinkName, tbl);
     return null;
   }

@@ -1,3 +1,4 @@
+IMPORT time.*;
 IMPORT nutshop-medium.Products;
 IMPORT nutshop-medium.Orders TIMESTAMP epoch_to_timestamp(time/1000) AS timestamp;
 

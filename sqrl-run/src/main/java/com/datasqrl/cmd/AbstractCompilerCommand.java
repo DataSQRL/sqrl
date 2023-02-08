@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
 import picocli.CommandLine;
+import picocli.CommandLine.ScopeType;
 
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
@@ -57,6 +58,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"--port"}, description = "Port for API server")
   private int port = 8888;
 
+  @CommandLine.Option(names = {"--noinfer"}, description = "Do not infer dependencies",
+      scope = ScopeType.INHERIT)
+  protected boolean noinfer = false;
+
   private final ObjectWriter writer = new ObjectMapper()
       .writerWithDefaultPrettyPrinter();
 
@@ -71,7 +76,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     Build build = new Build(collector);
     Packager packager = PackagerUtil.create(root.rootDir, files, packageFiles, collector);
-    Path buildLoc = build.build(packager);
+    Path buildLoc = build.build(packager, !noinfer);
 
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
         GlobalEngineConfiguration.class);

@@ -1,5 +1,6 @@
 package org.apache.calcite.sql;
 
+import com.datasqrl.name.NamePath;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -14,9 +15,9 @@ public class JoinAssignment extends Assignment {
   private final SqlNode query;
 
   public JoinAssignment(SqlParserPos location,
-      SqlIdentifier name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query,
+      SqlIdentifier identifier, NamePath namePath, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query,
       Optional<SqlNodeList> hints) {
-    super(location, name, hints);
+    super(location, identifier, namePath, hints);
     this.tableArgs = tableArgs;
     this.query = query;
   }
@@ -42,5 +43,10 @@ public class JoinAssignment extends Assignment {
   public void unparse(SqlWriter sqlWriter, int i, int i1) {
     super.unparse(sqlWriter, i, i1);
     sqlWriter.print(SqlNodePrinter.printJoin(query));
+  }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
   }
 }

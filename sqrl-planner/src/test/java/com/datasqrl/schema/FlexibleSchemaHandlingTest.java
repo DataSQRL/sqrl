@@ -4,9 +4,7 @@
 package com.datasqrl.schema;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.DataSource;
 import com.datasqrl.loaders.Deserializer;
-import com.datasqrl.loaders.TableLoader;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
@@ -17,7 +15,6 @@ import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import com.datasqrl.schema.input.FlexibleTableConverter;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
-import com.datasqrl.schema.input.InputTableSchema;
 import com.datasqrl.schema.input.external.DatasetDefinition;
 import com.datasqrl.schema.input.external.SchemaDefinition;
 import com.datasqrl.schema.input.external.SchemaImport;

@@ -1,0 +1,4 @@
+>>>errors
+[FATAL] No value present
+in script:test.sqrl:
+

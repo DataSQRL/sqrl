@@ -1,0 +1,12 @@
+>>>product$q$2
+LogicalValues(tuples=[[]])
+
+>>>product2$q$4
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], EXPR$0=[$6])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[product$q$2]])
+    LogicalProject(EXPR$0=[MIN($2) IGNORE NULLS OVER (ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
+      LogicalTableScan(table=[[product$q$2]])
+
+>>>join-declaration-joinDeclaration
+JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "Product") USING "@"."productid" = "Product"."productid"

@@ -143,7 +143,7 @@ public abstract class TimestampHolder<C extends TimestampHolder.Candidate> {
         this.score = score;
       }
 
-      public void fixAsTimestamp() {
+      public void lockTimestamp() {
         candidatesLocked = true;
         //Eliminate all other candidates
         for (Candidate c : new ArrayList<>(candidates)) {
@@ -213,7 +213,7 @@ public abstract class TimestampHolder<C extends TimestampHolder.Candidate> {
       }
 
       public Derived fixAsTimestamp() {
-        basedOn.forEach(Base.Candidate::fixAsTimestamp);
+        basedOn.forEach(Base.Candidate::lockTimestamp);
         return new Derived(List.of(this));
       }
 

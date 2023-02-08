@@ -3,7 +3,7 @@
  */
 package com.datasqrl.function;
 
-public interface TimestampPreservingFunction extends SqrlFunction {
+public interface TimestampPreservingFunction {
 
   default boolean isTimestampPreserving() {
     return true;

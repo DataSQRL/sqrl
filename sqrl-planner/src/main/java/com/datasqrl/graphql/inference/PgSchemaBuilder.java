@@ -24,15 +24,18 @@ import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.PgParameterHandler;
+import com.datasqrl.graphql.server.Model.QueryBase;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SourcePgParameter;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.calcite.OptimizationStage;
-import com.datasqrl.plan.calcite.Planner;
+import com.datasqrl.plan.calcite.RelStageRunner;
 import com.datasqrl.plan.calcite.SqlValidatorUtil;
+import com.datasqrl.plan.calcite.SqrlToRelConverter;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.local.generate.Session;
 import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.schema.Relationship;
@@ -59,6 +62,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -72,8 +76,10 @@ public class PgSchemaBuilder implements
   private final String stringSchema;
   private final TypeDefinitionRegistry registry;
   private final SqrlCalciteSchema schema;
-  private final Planner planner;
+  private final Session session;
   private final RelBuilder relBuilder;
+
+  private final SqlOperatorTable operatorTable;
   //todo: migrate out
   List<ArgumentHandler> argumentHandlers = List.of(
       new EqHandler(), new LimitOffsetHandler()
@@ -82,12 +88,13 @@ public class PgSchemaBuilder implements
   private List<APIQuery> apiQueries = new ArrayList<>();
 
   public PgSchemaBuilder(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder,
-      Planner planner) {
+      Session session, SqlOperatorTable operatorTable) {
     this.stringSchema = gqlSchema;
     this.registry = (new SchemaParser()).parse(gqlSchema);
     this.schema = schema;
-    this.planner = planner;
+    this.session = session;
     this.relBuilder = relBuilder;
+    this.operatorTable = operatorTable;
   }
 
   @Override
@@ -122,7 +129,20 @@ public class PgSchemaBuilder implements
 
   @Override
   public Coords visitObjectField(InferredObjectField field, Object context) {
-    RelNode relNode = relBuilder.scan(field.getTable().getVt().getNameId()).build();
+    //todo Project out only the needed columns and primary keys (requires looking at sql to
+    // determine full scope.
+//    List<String> projectedColumns = new ArrayList<>();
+//    field.getFieldDefinition().getInputValueDefinitions().forEach(fieldDefinition -> {
+//      projectedColumns.add(fieldDefinition.getName());
+//      field.getChildren().forEach(child -> {
+//        projectedColumns.add(child.getFieldDefinition().getName());
+//      });
+//    });
+
+    RelNode relNode = relBuilder
+        .scan(field.getTable().getVt().getNameId())
+//        .project(projectedColumns)
+        .build();
 
     Set<ArgumentSet> possibleArgCombinations = createArgumentSuperset(
         field.getTable(),
@@ -186,34 +206,38 @@ public class PgSchemaBuilder implements
       //Add api query
       RelNode relNode = optimize(argumentSet.getRelNode());
       APIQuery query = new APIQuery(UUID.randomUUID().toString(), relNode);
-
       apiQueries.add(query);
 
       List<PgParameterHandler> argHandler = new ArrayList<>();
       argHandler.addAll(existingHandlers);
       argHandler.addAll(argumentSet.getArgumentParameters());
-
+      QueryBase queryBase;
       if (argumentSet.isLimitOffsetFlag()) {
-        coordsBuilder.match(com.datasqrl.graphql.server.Model.ArgumentSet.builder()
-            .arguments(argumentSet.getArgumentHandlers()).query(
-                PagedApiQueryBase.builder().query(query).relNode(argumentSet.getRelNode())
-                    .relAndArg(argumentSet)
-                    .parameters(argHandler)
-                    .build()).build()).build();
+        queryBase = PagedApiQueryBase.builder()
+            .query(query)
+            .relNode(argumentSet.getRelNode())
+            .relAndArg(argumentSet)
+            .parameters(argHandler)
+            .build();
       } else {
-        coordsBuilder.match(com.datasqrl.graphql.server.Model.ArgumentSet.builder()
-            .arguments(argumentSet.getArgumentHandlers()).query(
-                ApiQueryBase.builder().query(query).relNode(argumentSet.getRelNode())
-                    .relAndArg(argumentSet)
-                    .parameters(argHandler)
-                    .build()).build()).build();
+        queryBase = ApiQueryBase.builder()
+            .query(query)
+            .relNode(argumentSet.getRelNode())
+            .relAndArg(argumentSet)
+            .parameters(argHandler)
+            .build();
       }
+
+      //Add argument set to coords
+      coordsBuilder.match(com.datasqrl.graphql.server.Model.ArgumentSet.builder()
+          .arguments(argumentSet.getArgumentHandlers()).query(queryBase).build()).build();
     }
     return coordsBuilder.build();
   }
 
   private RelNode optimize(RelNode relNode) {
-    return this.planner.transform(OptimizationStage.PUSH_DOWN_FILTERS, relNode);
+    return RelStageRunner.runStage(OptimizationStage.PUSH_DOWN_FILTERS,
+        relNode, session.getRelPlanner());
   }
 
   @Override
@@ -318,12 +342,14 @@ public class PgSchemaBuilder implements
   }
 
   private RelNode plan(SqlNode node) {
-    SqlValidator sqrlValidator = SqlValidatorUtil.createSqlValidator(schema,
-        List.of());
-    SqlNode validated = sqrlValidator.validate(node);
+    SqlValidator sqlValidator = SqlValidatorUtil.createSqlValidator(schema,
+        operatorTable);
+    SqlNode validatedNode = sqlValidator.validate(node);
 
-    planner.setValidator(validated, sqrlValidator);
-    return planner.rel(validated).rel;
+    SqrlToRelConverter sqlToRelConverter = new SqrlToRelConverter(session.getCluster(),
+        session.getSchema());
+
+    return sqlToRelConverter.toRel(sqlValidator, validatedNode);
   }
 
   @Value

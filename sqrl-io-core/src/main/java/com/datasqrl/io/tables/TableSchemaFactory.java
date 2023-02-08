@@ -1,13 +1,18 @@
 package com.datasqrl.io.tables;
 
 import com.datasqrl.error.ErrorCollector;
-import java.nio.file.Path;
+import com.datasqrl.loaders.ResourceResolver;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URL;
 import java.util.Optional;
 import java.util.Set;
+import lombok.Builder;
+import lombok.Value;
 
 public interface TableSchemaFactory {
-  Optional<TableSchema> create(com.datasqrl.loaders.Deserializer deserialize, Path baseDir, TableConfig tableConfig,
-      ErrorCollector errors);
+  Optional<TableSchema> create(URL url, SchemaFactoryContext context);
 
   String baseFileSuffix();
 
@@ -17,4 +22,15 @@ public interface TableSchemaFactory {
   Set<String> allSuffixes();
 
   Optional<String> getFileName();
+
+
+  @Value
+  @Builder
+  public class SchemaFactoryContext {
+    ResourceResolver resourceResolver;
+    ErrorCollector errors;
+    NameCanonicalizer canonicalizer;
+    ObjectMapper mapper;
+    Name resolvedName;
+  }
 }

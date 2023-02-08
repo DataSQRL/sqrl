@@ -1,0 +1,13 @@
+>>>product$q$2
+LogicalValues(tuples=[[]])
+
+>>>product2$q$4
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
+  LogicalFilter(condition=[=($2, $SCALAR_QUERY({
+LogicalProject(productid=[$2])
+  LogicalTableScan(table=[[product$3]])
+}))])
+    LogicalTableScan(table=[[product$q$2]])
+
+>>>join-declaration-joinDeclaration
+JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "Product") USING "@"."productid" = "Product"."productid"

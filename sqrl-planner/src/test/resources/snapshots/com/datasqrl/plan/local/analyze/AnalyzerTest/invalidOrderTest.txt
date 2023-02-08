@@ -1,5 +1,0 @@
-[FATAL] Unexpected column type. Expected a column, got: parent : entries -> orders [PARENT,ONE]
-in script:test.sqrl [1:30]:
-IMPORT ecommerce-data.Orders;X := SELECT e.* FROM Orders.entries AS e ORDER BY e.parent;
------------------------------^
-

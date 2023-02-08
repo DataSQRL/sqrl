@@ -1,0 +1,31 @@
+>>>customer$q$2
+LogicalValues(tuples=[[]])
+
+>>>orders$q$5
+LogicalValues(tuples=[[]])
+
+>>>orders2$q$13
+LogicalProject(_uuid=[$0], _idx=[$6], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+  LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+    LogicalTableScan(table=[[orders$q$5]])
+    Uncollect
+      LogicalProject($f0=[$cor5.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>orders3$q$11
+LogicalProject(_uuid=[$0], _idx=[$6], _idx0=[$11], productid=[$12], quantity=[$13], unit_price=[$14], discount=[$15], _ingest_time0=[$1], time0=[$4])
+  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$5]])
+      Uncollect
+        LogicalProject($f0=[$cor1.entries])
+          LogicalValues(tuples=[[{ 0 }]])
+    Uncollect
+      LogicalProject($f0=[$cor3.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>product$q$9
+LogicalValues(tuples=[[]])
+
+>>>join-declaration-biggestDiscount
+JOIN PATH ON ("orders$6" AS "@") ON ("entries$7" AS "e") USING "@"."_uuid" = "e"."_uuid" ORDER BY "e"."discount" DESC

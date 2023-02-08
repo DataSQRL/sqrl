@@ -16,7 +16,7 @@
  */
 package org.apache.calcite.sql.parser;
 
-import com.datasqrl.plan.calcite.SqrlTypeSystem;
+import com.datasqrl.plan.calcite.TypeFactory;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.avatica.util.DateTimeUtils;
 import org.apache.calcite.config.CalciteSystemProperty;
@@ -243,7 +243,7 @@ public final class SqlParserUtil {
     int[] ret;
     try {
       ret = intervalQualifier.evaluateIntervalLiteral(literal,
-          intervalQualifier.getParserPosition(), new SqrlTypeSystem());
+          intervalQualifier.getParserPosition(), TypeFactory.getTypeSystem());
       assert ret != null;
     } catch (CalciteContextException e) {
       throw new RuntimeException("while parsing day-to-second interval "
@@ -283,7 +283,7 @@ public final class SqlParserUtil {
     int[] ret;
     try {
       ret = intervalQualifier.evaluateIntervalLiteral(literal,
-          intervalQualifier.getParserPosition(), new SqrlTypeSystem());
+          intervalQualifier.getParserPosition(), TypeFactory.getTypeSystem());
       assert ret != null;
     } catch (CalciteContextException e) {
       throw new RuntimeException("Error while parsing year-to-month interval "

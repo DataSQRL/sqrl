@@ -3,15 +3,19 @@
  */
 package com.datasqrl.packager;
 
+import static com.datasqrl.packager.LambdaUtil.rethrowCall;
+import static com.datasqrl.util.NameUtil.namepath2Path;
+
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.AbstractLoader;
-import com.datasqrl.loaders.DynamicExporter;
-import com.datasqrl.loaders.DynamicLoader;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
+import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.GlobalPackageConfiguration;
-import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
+import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
+import com.datasqrl.packager.preprocess.FlexibleSchemaPreprocessor;
+import com.datasqrl.packager.preprocess.JarPreprocessor;
+import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.spi.ManifestConfiguration;
 import com.datasqrl.util.FileUtil;
@@ -22,24 +26,19 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
@@ -50,158 +49,208 @@ public class Packager {
   public static final String BUILD_DIR_NAME = "build";
   public static final String GRAPHQL_SCHEMA_FILE_NAME = "schema.graphqls";
   public static final String PACKAGE_FILE_NAME = "package.json";
-  public static final Set<String> EXCLUDED_DIRS = Set.of(BUILD_DIR_NAME, "deploy");
 
-  private static final BiPredicate<Path, BasicFileAttributes> FIND_SQLR_SCRIPT = (p,f) ->
+  private static final BiPredicate<Path, BasicFileAttributes> FIND_SQLR_SCRIPT = (p, f) ->
       f.isRegularFile() && p.getFileName().toString().toLowerCase().endsWith(".sqrl");
 
   Repository repository;
   Path rootDir;
-  JsonNode packageConfig;
+  ObjectNode packageConfig;
   GlobalPackageConfiguration config;
   ErrorCollector errors;
+  Path buildDir;
+  protected static final ObjectMapper mapper = createMapper();
 
-  private Packager(@NonNull Repository repository, @NonNull Path rootDir,
-      @NonNull JsonNode packageConfig, @NonNull GlobalPackageConfiguration config,
+  public Packager(@NonNull Repository repository, @NonNull Path rootDir,
+      @NonNull ObjectNode packageConfig, @NonNull GlobalPackageConfiguration config,
       @NonNull ErrorCollector errors) {
     Preconditions.checkArgument(Files.isDirectory(rootDir));
     this.repository = repository;
     this.rootDir = rootDir;
+    this.buildDir = rootDir.resolve(BUILD_DIR_NAME);
+
     this.packageConfig = packageConfig;
     this.config = config;
     this.errors = errors;
   }
 
   public Path populateBuildDir(boolean inferDependencies) {
+    Preconditions.checkArgument(
+        config.getManifest() != null && !Strings.isNullOrEmpty(config.getManifest().getMain()),
+        "No config or main script specified");
     try {
-      Path buildDir = rootDir.resolve(BUILD_DIR_NAME);
-      try {
-        Files.deleteIfExists(buildDir);
-      } catch (DirectoryNotEmptyException e) {
-        errors.fatal("Build directory [%s] already exists and is non-empty. Check and empty directory before running command again",
-            buildDir);
-      }
-      Files.createDirectories(buildDir);
-      Preconditions.checkArgument(
-          config.getManifest() != null && !Strings.isNullOrEmpty(config.getManifest().getMain()));
-      Path originalMainFile = rootDir.resolve(config.getManifest().getMain());
-      Path mainFile = copyRelativeFile(originalMainFile, rootDir, buildDir);
-      Optional<Path> originalGraphQLSchemaFile = config.getManifest().getOptGraphQL()
-          .map(file -> rootDir.resolve(file));
-      Path graphQLSchemaFile = null;
-      if (originalGraphQLSchemaFile.isPresent()) {
-        graphQLSchemaFile = copyFile(originalGraphQLSchemaFile.get(), buildDir,
-            Path.of(GRAPHQL_SCHEMA_FILE_NAME));
-      }
-      ManifestConfiguration manifest = Config.getManifest(buildDir, mainFile, graphQLSchemaFile);
-      JsonNode mappedManifest = getMapper().valueToTree(manifest);
-      ((ObjectNode) packageConfig).set(ManifestConfiguration.PROPERTY, mappedManifest);
-
-      //Recursively copy all files that can be handled by loaders
-      DynamicLoader loader = new DynamicLoader();
-      DynamicExporter exporter = new DynamicExporter();
-      Predicate<Path> copyFilePredicate = path -> loader.usesFile(path) || exporter.usesFile(path);
-      CopyFiles cpFiles = new CopyFiles(rootDir, buildDir, copyFilePredicate,
-          EXCLUDED_DIRS.stream().map(dir -> rootDir.resolve(dir)).collect(Collectors.toList()));
-      Files.walkFileTree(rootDir, cpFiles);
-
-      //Retrieve dependencies
-      LinkedHashMap<String, Dependency> dependencies = config.getDependencies();
-      for (Map.Entry<String,Dependency> entry : dependencies.entrySet()) {
-        NamePath pkgPath = NamePath.parse(entry.getKey());
-        if (!retrieveDependency(buildDir, pkgPath, entry.getValue().normalize(entry.getKey()))) {
-          errors.fatal("Could not retrieve dependency: %s", pkgPath);
-        }
-      };
-
+      cleanBuildDir();
+      createBuildDir();
+      validateDependencyConfig();
       if (inferDependencies) {
-        ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
-        ImportExportAnalyzer.Result allResults = Files.find(buildDir, 128, FIND_SQLR_SCRIPT)
-            .map(script -> analyzer.analyze(script, errors)).reduce(Result.EMPTY, (r1,r2) -> r1.add(r2));
-        Set<NamePath> unloadedDeps = allResults.getUnloadableDependencies(buildDir, loader, exporter);
-        LinkedHashMap<String, Dependency> inferredDependencies = new LinkedHashMap<>();
-        for (NamePath unloadedDep : unloadedDeps) {
-          Optional<Dependency> optDep = repository.resolveDependency(unloadedDep.toString());
-          boolean success = optDep.isPresent();
-          if (optDep.isPresent()) {
-            inferredDependencies.put(unloadedDep.toString(), optDep.get());
-            success = retrieveDependency(buildDir, unloadedDep, optDep.get());
-          }
-          errors.checkFatal(success, "Could not infer dependency: %s", unloadedDep);
-        }
-        //TODO: should we write out the inferred dependencies separately in the root-dir as well?
-        dependencies.putAll(inferredDependencies);
-        JsonNode mappedDepends = getMapper().valueToTree(dependencies);
-        ((ObjectNode) packageConfig).set(GlobalPackageConfiguration.DEPENDENCIES_NAME, mappedDepends);
+        inferDependencies();
       }
-
-      Path packageFile = buildDir.resolve(PACKAGE_FILE_NAME);
-      getMapper().writeValue(packageFile.toFile(), packageConfig);
-      return packageFile;
+      retrieveDependencies();
+      copySystemFilesToBuildDir();
+      preProcessFiles();
+      updatePackageConfig();
+      return buildDir.resolve(PACKAGE_FILE_NAME);
     } catch (IOException e) {
+      e.printStackTrace();
       errors.fatal("Could not read or write files on local file-system: %s", e);
       return null;
     }
   }
 
-  private boolean retrieveDependency(Path buildDir, NamePath packagePath, Dependency dependency) throws IOException {
-    Path targetPath = AbstractLoader.namepath2Path(buildDir, packagePath);
-    Preconditions.checkArgument(FileUtil.isEmptyDirectory(targetPath),"Dependency [%s] conflicts with existing module structure in directory: [%s]", dependency, targetPath);
+  private void createBuildDir() throws IOException {
+    Files.createDirectories(buildDir);
+  }
+
+  /**
+   * Helper function to validate dependency config.
+   */
+  private void validateDependencyConfig() {
+    Preconditions.checkArgument(config.getDependencies() != null,
+        "No dependency config found");
+  }
+
+  private void inferDependencies() throws IOException {
+    //Analyze all local SQRL files to discovery transitive or undeclared dependencies
+    //At the end, we'll add the new dependencies to the package config.
+    LinkedHashMap<String, Dependency> dependencies = new LinkedHashMap<>(
+        config.getDependencies());
+    ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
+
+    // Find all SQRL script files
+    Result allResults = Files.find(rootDir, 128, FIND_SQLR_SCRIPT)
+        .map(script -> analyzer.analyze(script, errors))
+        .reduce(Result.EMPTY, (r1, r2) -> r1.add(r2));
+
+    Set<NamePath> pkgs = allResults.getPkgs();
+
+    Set<NamePath> unloadedDeps = new HashSet<>();
+    for (NamePath packagePath : pkgs) {
+      Path dir = namepath2Path(rootDir, packagePath);
+      if (!Files.exists(dir)) {
+        unloadedDeps.add(packagePath);
+      }
+    }
+
+    LinkedHashMap<String, Dependency> inferredDependencies = new LinkedHashMap<>();
+
+    //Resolve dependencies
+    for (NamePath unloadedDep : unloadedDeps) {
+      repository
+          .resolveDependency(unloadedDep.toString())
+          .ifPresentOrElse((dep) -> inferredDependencies.put(unloadedDep.toString(), dep),
+              () -> errors.checkFatal(true, "Could not infer dependency: %s", unloadedDep));
+    }
+
+    // Add inferred dependencies to package config
+    dependencies.putAll(inferredDependencies);
+    config.setDependencies(dependencies);
+  }
+
+  /**
+   * Helper function for retrieving listed dependencies.
+   */
+  private void retrieveDependencies() {
+    config.getDependencies().entrySet().stream()
+        .map(entry -> rethrowCall(() ->
+            retrieveDependency(buildDir, NamePath.parse(entry.getKey()),
+                entry.getValue().normalize(entry.getKey()))
+                ? Optional.<NamePath>empty()
+                : Optional.of(NamePath.parse(entry.getKey()))))
+        .flatMap(Optional::stream)
+        .forEach(failedDep -> errors.fatal("Could not retrieve dependency: %s", failedDep));
+  }
+
+  /**
+   * Helper function to copy files to build directory.
+   */
+  private void copySystemFilesToBuildDir() throws IOException {
+    //Copy main script to build
+    Path mainFile = copyRelativeFile(
+        rootDir.resolve(config.getManifest().getMain()),
+        rootDir,
+        buildDir);
+
+    //Copy graphql file(s)
+    Optional<Path> graphQLSchemaFile = config.getManifest().getOptGraphQL()
+        .map(rootDir::resolve)
+        .map(gql -> rethrowCall(() -> copyFile(gql, buildDir,
+            Path.of(GRAPHQL_SCHEMA_FILE_NAME))));
+
+    relativizeManifest(mainFile, graphQLSchemaFile);
+  }
+
+  /**
+   * Helper function to relativize manifest.
+   */
+  private void relativizeManifest(Path mainFile, Optional<Path> graphQLSchemaFile) {
+    config.setManifest(PackagerConfig.buildRelativizeManifest(
+        buildDir,
+        mainFile,
+        graphQLSchemaFile));
+  }
+
+  /**
+   * Helper function to preprocess files.
+   */
+  private void preProcessFiles() throws IOException {
+    //Preprocessor will normalize files
+    Preprocessors preprocessors = new Preprocessors(List.of(
+        new TablePreprocessor(),
+        new JarPreprocessor(),
+        new FlexibleSchemaPreprocessor(errors),
+        new DataSystemPreprocessor()));
+    preprocessors.handle(
+        PreprocessorsContext.builder()
+            .rootDir(rootDir)
+            .buildDir(buildDir)
+            .build());
+  }
+
+
+  /**
+   * Helper function to update package config.
+   */
+  private void updatePackageConfig() throws IOException {
+    Path packageFile = buildDir.resolve(PACKAGE_FILE_NAME);
+
+    //Update dependencies in place
+    packageConfig.set(GlobalPackageConfiguration.DEPENDENCIES_NAME,
+        mapper.valueToTree(config.getDependencies()));
+
+    //Update relativized manifest in place
+    JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
+    packageConfig.set(ManifestConfiguration.PROPERTY, mappedManifest);
+
+    mapper.writeValue(packageFile.toFile(), packageConfig);
+  }
+
+  private void cleanBuildDir() throws IOException {
+    if (Files.exists(buildDir)) {
+      Files.walk(buildDir)
+          // Sort the paths in reverse order so that directories are deleted last
+          .sorted(Comparator.reverseOrder())
+          .map(Path::toFile)
+          .forEach(File::delete);
+    }
+  }
+
+  private boolean retrieveDependency(Path buildDir, NamePath packagePath, Dependency dependency)
+      throws IOException {
+    Path targetPath = namepath2Path(buildDir, packagePath);
+    Preconditions.checkArgument(FileUtil.isEmptyDirectory(targetPath),
+        "Dependency [%s] conflicts with existing module structure in directory: [%s]", dependency,
+        targetPath);
     return repository.retrieveDependency(targetPath, dependency);
   }
 
   public void cleanUp() {
     try {
       Path buildDir = rootDir.resolve(BUILD_DIR_NAME);
-      FileUtils.deleteDirectory(buildDir.toFile());
+      if (Files.exists(buildDir)) {
+        FileUtils.deleteDirectory(buildDir.toFile());
+      }
     } catch (IOException e) {
       throw new IllegalStateException("Could not read or write files on local file-system", e);
-    }
-  }
-
-  @Value
-  private class CopyFiles implements FileVisitor<Path> {
-
-    Path srcDir;
-    Path targetDir;
-    Predicate<Path> copyFile;
-    Collection<Path> excludedDirs;
-
-    private boolean isExcludedDir(Path dir) throws IOException {
-      for (Path p : excludedDirs) {
-        if (dir.equals(p)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-        throws IOException {
-      if (isExcludedDir(dir)) {
-        return FileVisitResult.SKIP_SUBTREE;
-      }
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-      if (copyFile.test(file)) {
-        copyRelativeFile(file, srcDir, targetDir);
-      }
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-      //TODO: collect error
-      return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-      return FileVisitResult.CONTINUE;
     }
   }
 
@@ -211,108 +260,19 @@ public class Packager {
 
   public static Path copyFile(Path srcFile, Path destDir, Path relativeDestPath)
       throws IOException {
-    Preconditions.checkArgument(Files.isRegularFile(srcFile));
+    Preconditions.checkArgument(Files.isRegularFile(srcFile), "Is not a file: {}", srcFile);
     Path targetPath = destDir.resolve(relativeDestPath);
-    Files.createDirectories(targetPath.getParent());
+    if (!Files.exists(targetPath.getParent())) {
+      Files.createDirectories(targetPath.getParent());
+    }
     Files.copy(srcFile, targetPath, StandardCopyOption.REPLACE_EXISTING);
     return targetPath;
   }
 
-
-  private static ObjectMapper getMapper() {
+  protected static ObjectMapper createMapper() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.enable(SerializationFeature.INDENT_OUTPUT);
     mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     return mapper;
   }
-
-  @Builder
-  @Value
-  public static class Config {
-
-    Path rootDir;
-    Path mainScript;
-    Path graphQLSchemaFile;
-    @Builder.Default
-    @NonNull
-    List<Path> packageFiles = List.of();
-
-    Repository repository;
-
-    public Packager getPackager(ErrorCollector errors) throws IOException {
-      errors.checkFatal(mainScript == null || Files.isRegularFile(mainScript), "Not a script file: %s", mainScript);
-      errors.checkFatal(graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile), "Not a schema file: %s", graphQLSchemaFile);
-      List<Path> packageFiles = this.packageFiles;
-      if (packageFiles.isEmpty()) {
-        //Try to find it in the directory of the main script
-        if (mainScript != null) {
-          Path packageFile = mainScript.getParent().resolve(PACKAGE_FILE_NAME);
-          if (Files.isRegularFile(packageFile)) {
-            packageFiles = List.of(packageFile);
-          }
-        }
-      }
-      ObjectMapper mapper = getMapper();
-      Path rootDir = this.rootDir;
-      JsonNode packageConfig;
-      GlobalPackageConfiguration config;
-      if (packageFiles.isEmpty()) {
-        errors.checkFatal(mainScript != null,
-            "Must provide either a main script or package file");
-        if (rootDir == null) {
-          rootDir = mainScript.getParent();
-        }
-        config = GlobalPackageConfiguration.builder()
-            .manifest(getManifest(rootDir, mainScript, graphQLSchemaFile)).build();
-        packageConfig = mapper.valueToTree(config);
-      } else {
-        if (rootDir == null) {
-          rootDir = packageFiles.get(0).getParent();
-        }
-        JsonNode basePackage = mapper.readValue(packageFiles.get(0).toFile(), JsonNode.class);
-        for (int i = 1; i < packageFiles.size(); i++) {
-          basePackage = mapper.readerForUpdating(basePackage)
-              .readValue(packageFiles.get(i).toFile());
-        }
-        packageConfig = basePackage;
-        config = mapper.convertValue(packageConfig, GlobalPackageConfiguration.class);
-        Path main = mainScript, graphql = graphQLSchemaFile;
-        ManifestConfiguration manifest;
-        if (config.getManifest() != null) {
-          manifest = config.getManifest();
-          if (main == null) {
-            main = rootDir.resolve(manifest.getMain());
-          }
-          if (graphql == null && manifest.getOptGraphQL().isPresent()) {
-            graphql = rootDir.resolve(manifest.getOptGraphQL().get());
-          }
-        }
-        //Update manifest
-        config.setManifest(getManifest(rootDir, main, graphql));
-        JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
-        ((ObjectNode) packageConfig).set(ManifestConfiguration.PROPERTY, mappedManifest);
-      }
-      Repository repository = this.repository;
-      if (repository==null) {
-        repository = new RemoteRepositoryImplementation();
-      }
-      return new Packager(repository, rootDir, packageConfig, config, errors);
-    }
-
-    public static ManifestConfiguration getManifest(Path rootDir, Path mainScript,
-        Path graphQLSchemaFile) {
-      Preconditions.checkArgument(mainScript != null || !Files.isRegularFile(mainScript),
-          "Must configure a main script");
-      ManifestConfiguration.ManifestConfigurationBuilder builder = ManifestConfiguration.builder();
-      builder.main(rootDir.relativize(mainScript).normalize().toString());
-      if (graphQLSchemaFile != null) {
-        Preconditions.checkArgument(Files.isRegularFile(graphQLSchemaFile));
-        builder.graphql(rootDir.relativize(graphQLSchemaFile).normalize().toString());
-      }
-      return builder.build();
-    }
-
-
-  }
-
 }

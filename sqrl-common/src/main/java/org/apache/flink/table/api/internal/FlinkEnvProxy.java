@@ -1,19 +1,36 @@
 package org.apache.flink.table.api.internal;
 
-import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import com.datasqrl.function.builtin.time.FlinkFnc;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.util.SqlOperatorTables;
-import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.api.dag.Pipeline;
+import org.apache.flink.api.dag.Transformation;
+import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.streaming.api.graph.StreamGraph;
+import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableException;
+import org.apache.flink.table.api.config.TableConfigOptions;
 import org.apache.flink.table.catalog.FunctionCatalog;
+import org.apache.flink.table.operations.ModifyOperation;
+import org.apache.flink.table.operations.SinkModifyOperation;
+import org.apache.flink.table.operations.command.AddJarOperation;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.catalog.FunctionCatalogOperatorTable;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.operations.PlannerQueryOperation;
+import org.apache.flink.table.resource.ResourceType;
+import org.apache.flink.table.resource.ResourceUri;
 
 /**
  * Lives in the flink package to access the protected createTable function
@@ -26,32 +43,35 @@ public class FlinkEnvProxy {
     return environment.createTable(plannerQueryOperation);
   }
 
+  //
   public static FunctionCatalog getFunctionCatalog(TableEnvironmentImpl environment) {
-    StdTimeLibraryImpl.fncs.stream()
-        .forEach(fn ->
-            environment.functionCatalog.registerTemporarySystemFunction(fn.getName(),
-                fn.getFnc(), true));
     return environment.functionCatalog;
   }
-  //todo fix
-  static TableEnvironmentImpl t = TableEnvironmentImpl.create(
-      EnvironmentSettings.inStreamingMode().getConfiguration()
-  );
-  public static SqlOperatorTable getOperatorTable(List<FlinkFnc> envFunctions) {
 
-
-    FunctionCatalog catalog = FlinkEnvProxy.getFunctionCatalog(t);
-
-    envFunctions.forEach(fn -> catalog.registerTemporarySystemFunction(fn.getName(),
-        fn.getFnc(), true));
+  public static SqlOperatorTable getOperatorTable(TableEnvironmentImpl env) {
+    FunctionCatalog catalog = env.functionCatalog;
 
     SqlOperatorTable operatorTable = SqlOperatorTables.chain(
         new FunctionCatalogOperatorTable(
             catalog,
-            t.getCatalogManager().getDataTypeFactory(),
-            new FlinkTypeFactory(new FlinkTypeSystem())),
+            env.getCatalogManager().getDataTypeFactory(),
+            new FlinkTypeFactory(env.getClass().getClassLoader(), FlinkTypeSystem.INSTANCE),
+            null),
         FlinkSqlOperatorTable.instance()
     );
     return operatorTable;
+  }
+
+  public static void addJar(StatementSet statementSet, String jarPath) {
+    StatementSetImpl impl = (StatementSetImpl) statementSet;
+    TableEnvironmentImpl tEnv = (TableEnvironmentImpl) impl.tableEnvironment;
+    ResourceUri resourceUri = new ResourceUri(ResourceType.JAR, jarPath);
+    try {
+      tEnv.resourceManager.registerJarResources(Collections.singletonList(resourceUri));
+    } catch (IOException e) {
+      throw new TableException(
+          String.format("Could not register the specified resource [%s].", resourceUri),
+          e);
+    }
   }
 }

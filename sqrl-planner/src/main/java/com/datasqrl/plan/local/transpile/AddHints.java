@@ -6,14 +6,14 @@ package com.datasqrl.plan.local.transpile;
 import com.datasqrl.plan.calcite.hints.TopNHint;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
-import com.datasqrl.plan.local.generate.Resolve.StatementKind;
-import com.datasqrl.plan.local.generate.Resolve.StatementOp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.calcite.sql.Assignment;
+import org.apache.calcite.sql.DistinctAssignment;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -22,6 +22,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlNumericLiteral;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SelectScope;
@@ -42,12 +43,12 @@ public class AddHints {
     this.context = context;
   }
 
-  public void accept(StatementOp op, SqlNode node) {
+  public void accept(boolean isDistinct, SqlNode node) {
     switch (node.getKind()) {
       case UNION:
         SqlCall call = (SqlCall) node;
         call.getOperandList()
-            .forEach(o -> accept(op, o));
+            .forEach(o -> accept(isDistinct, o));
         return;
     }
 
@@ -63,10 +64,10 @@ public class AddHints {
     if (select.isDistinct()) {
       rewriteDistinctingHint(select, (ppk) ->
           TopNHint.createSqlHint(TopNHint.Type.SELECT_DISTINCT, ppk, SqlParserPos.ZERO));
-    } else if (isNested(op) && select.getFetch() != null) {
+    } else if (isNested() && select.getFetch() != null) {
       rewriteDistinctingHint(select, (ppk) ->
           TopNHint.createSqlHint(TopNHint.Type.TOP_N, ppk, SqlParserPos.ZERO));
-    } else if (op.getStatementKind() == StatementKind.DISTINCT_ON) {
+    } else if (isDistinct) {
       rewriteDistinctOnHint(select);
     }
   }
@@ -139,7 +140,7 @@ public class AddHints {
     throw new RuntimeException("Missing hint");
   }
 
-  private boolean isNested(StatementOp op) {
+  private boolean isNested() {
     return context.isPresent();
   }
 

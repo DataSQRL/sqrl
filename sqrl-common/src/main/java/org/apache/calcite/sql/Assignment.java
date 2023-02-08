@@ -1,5 +1,6 @@
 package org.apache.calcite.sql;
 
+import com.datasqrl.name.NamePath;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -11,8 +12,8 @@ import org.apache.calcite.util.Litmus;
 @Getter
 public abstract class Assignment extends SqrlStatement {
 
-  protected Assignment(SqlParserPos location, SqlIdentifier namePath, Optional<SqlNodeList> hints) {
-    super(location, namePath, hints);
+  protected Assignment(SqlParserPos location, SqlIdentifier identifier, NamePath namePath, Optional<SqlNodeList> hints) {
+    super(location, identifier, namePath, hints);
   }
 
   @Override
@@ -22,7 +23,7 @@ public abstract class Assignment extends SqrlStatement {
 
   @Override
   public void unparse(SqlWriter sqlWriter, int i, int i1) {
-    this.namePath.unparse(sqlWriter, i, i1);
+    this.identifier.unparse(sqlWriter, i, i1);
     sqlWriter.keyword(":=");
   }
 

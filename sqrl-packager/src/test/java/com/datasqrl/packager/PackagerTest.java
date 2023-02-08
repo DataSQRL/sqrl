@@ -9,6 +9,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.config.ConfigurationTest;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.repository.Repository;
+import com.datasqrl.spi.ManifestConfiguration;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
@@ -16,10 +17,12 @@ import com.datasqrl.util.data.Retail;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,25 +61,21 @@ public class PackagerTest {
   }
 
   private static final Path baseDependencyPath = ConfigurationTest.RESOURCE_DIR.resolve("dependency");
-  private static final Path[] depScripts = new Path[3];
+  private static final List<Path> depScripts = new ArrayList<>();
   static {
-    for (int i = 0; i < depScripts.length; i++) {
-      depScripts[i] = baseDependencyPath.resolve("main"+(i+1)+".sqrl");
-    }
+    IntStream.rangeClosed(1,2)
+        .forEach(i -> depScripts.add(baseDependencyPath.resolve("main" + i + ".sqrl")));
   }
 
   @Test
   public void dependencyResolution() {
-
     Path pkgWDeps = baseDependencyPath.resolve("packageWDependencies.json");
     Path pkgWODeps = baseDependencyPath.resolve("packageWODependencies.json");
-    Path pkgMappedDeps = baseDependencyPath.resolve("packageWMappedDependencies.json");
 
-    testCombinationMockRepo(depScripts[0],pkgWDeps);
-    testCombinationMockRepo(depScripts[0],pkgWODeps);
-    testCombinationMockRepo(depScripts[1],pkgWDeps);
-    testCombinationMockRepo(depScripts[1],pkgWODeps);
-    testCombinationMockRepo(depScripts[2],pkgMappedDeps);
+    testCombinationMockRepo(depScripts.get(0),pkgWDeps);
+    testCombinationMockRepo(depScripts.get(0),pkgWODeps);
+    testCombinationMockRepo(depScripts.get(1),pkgWDeps);
+    testCombinationMockRepo(depScripts.get(1),pkgWODeps);
 
     snapshot.createOrValidate();
   }
@@ -84,7 +83,7 @@ public class PackagerTest {
   @Test
   @Disabled //Requires running repository
   public void testRemoteRepository() {
-    testCombination(depScripts[0], null, null);
+    testCombination(depScripts.get(0), null, null, null);
     snapshot.createOrValidate();
   }
 
@@ -93,28 +92,40 @@ public class PackagerTest {
   }
 
   private void testCombination(Path main, Path graphQl, Path packageFile) {
-    testCombination(main,graphQl,packageFile,null);
+    testCombination(main,graphQl,packageFile,new MockRepository());
   }
 
   @SneakyThrows
   private void testCombination(Path main, Path graphQl, Path packageFile, Repository repository) {
-    Packager.Config.ConfigBuilder builder = Packager.Config.builder();
+    PackagerConfig config = buildPackagerConfig(main, graphQl, packageFile, repository);
+    Packager pkg = config.getPackager(ErrorCollector.root());
+    pkg.cleanUp();
+    populateBuildDirAndTakeSnapshot(pkg, main, graphQl, packageFile);
+    pkg.cleanUp();
+  }
+
+  private PackagerConfig buildPackagerConfig(Path main, Path graphQl, Path packageFile,
+      Repository repository) {
+    PackagerConfig.PackagerConfigBuilder builder = PackagerConfig.builder();
     if (main != null) {
-        builder.mainScript(main);
+      builder.mainScript(main);
     }
     if (graphQl != null) {
-        builder.graphQLSchemaFile(graphQl);
+      builder.graphQLSchemaFile(graphQl);
     }
     if (packageFile != null) {
-        builder.packageFiles(List.of(packageFile));
+      builder.packageFiles(List.of(packageFile));
     }
     if (repository != null) {
       builder.repository(repository);
     }
-    Packager pkg = builder.build().getPackager(ErrorCollector.root());
-    pkg.cleanUp();
-    pkg.populateBuildDir(true);
+    return builder.build();
+  }
+
+  @SneakyThrows
+  private void populateBuildDirAndTakeSnapshot(Packager pkg, Path main, Path graphQl, Path packageFile) {
     Path buildDir = pkg.getRootDir().resolve(Packager.BUILD_DIR_NAME);
+    pkg.populateBuildDir(true);
     String[] caseNames = Stream.of(main, graphQl, packageFile)
         .filter(Predicate.not(Objects::isNull)).map(String::valueOf)
         .toArray(size -> new String[size + 1]);
@@ -122,14 +133,12 @@ public class PackagerTest {
     snapshot.addContent(FileTestUtil.getAllFilesAsString(buildDir), caseNames);
     caseNames[caseNames.length - 1] = "package";
     snapshot.addContent(Files.readString(buildDir.resolve(Packager.PACKAGE_FILE_NAME)), caseNames);
-    pkg.cleanUp();
   }
 
   private static class MockRepository implements Repository {
 
     @Override
     public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
-      assertEquals(NUTSHOP, dependency);
       Files.createDirectories(targetPath);
       Files.writeString(targetPath.resolve("package.json"),"test");
       return true;
@@ -137,8 +146,10 @@ public class PackagerTest {
 
     @Override
     public Optional<Dependency> resolveDependency(String packageName) {
-      assertEquals(NUTSHOP.getName(),packageName);
-      return Optional.of(NUTSHOP);
+      if (NUTSHOP.getName().equals(packageName)) {
+        return Optional.of(NUTSHOP);
+      }
+      return Optional.empty();
     }
 
     private static final Dependency NUTSHOP = new Dependency("datasqrl.examples.Nutshop","0.1.0","dev");

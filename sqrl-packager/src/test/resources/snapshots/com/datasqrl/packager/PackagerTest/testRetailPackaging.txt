@@ -1,7 +1,5 @@
 >>>../sqrl-examples/retail/c360-full.sqrl-dir
-c360
 c360-full.sqrl
-c360/schema.yml
 ecommerce-broken
 ecommerce-broken/customer.table.json
 ecommerce-broken/orders.table.json
@@ -24,9 +22,7 @@ package.json
   }
 }
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOmanifest.json-dir
-c360
 c360-full.sqrl
-c360/schema.yml
 ecommerce-broken
 ecommerce-broken/customer.table.json
 ecommerce-broken/orders.table.json
@@ -59,9 +55,7 @@ package.json
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWmanifest.json-dir
-c360
 c360-full.sqrl
-c360/schema.yml
 ecommerce-broken
 ecommerce-broken/customer.table.json
 ecommerce-broken/orders.table.json
@@ -96,9 +90,7 @@ schema.graphqls
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/package-exampleWmanifest.json-dir
-c360
 c360-full.sqrl
-c360/schema.yml
 ecommerce-broken
 ecommerce-broken/customer.table.json
 ecommerce-broken/orders.table.json
@@ -133,9 +125,7 @@ schema.graphqls
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWOmanifest.json-dir
-c360
 c360-full.sqrl
-c360/schema.yml
 ecommerce-broken
 ecommerce-broken/customer.table.json
 ecommerce-broken/orders.table.json
@@ -170,9 +160,7 @@ schema.graphqls
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-dir
-c360
 c360-full.sqrl
-c360/schema.yml
 ecommerce-broken
 ecommerce-broken/customer.table.json
 ecommerce-broken/orders.table.json
@@ -207,9 +195,7 @@ schema.graphqls
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-dir
-c360
 c360-full.sqrl
-c360/schema.yml
 ecommerce-broken
 ecommerce-broken/customer.table.json
 ecommerce-broken/orders.table.json

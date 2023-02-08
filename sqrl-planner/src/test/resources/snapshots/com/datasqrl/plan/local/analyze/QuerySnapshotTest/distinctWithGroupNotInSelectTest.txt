@@ -1,0 +1,15 @@
+>>>errors
+[FATAL] Could not find grouping key: p.category
+in script:test.sqrl [2:81]:
+IMPORT ecommerce-data.Product;
+Product.nested :=   SELECT DISTINCT count(1)   FROM @ JOIN Product p   GROUP BY p.category;
+--------------------------------------------------------------------------------^
+Could not find field when trying to resolve expression.
+
+Erroneous code example:
+```
+IMPORT ecommerce-data.Orders;
+Orders.x := SELECT missingField FROM @;
+```
+
+Assure the column name exists.

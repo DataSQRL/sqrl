@@ -4,12 +4,12 @@ CREATE INDEX IF NOT EXISTS items$7_btree_c0c3c7c2c4 ON items$7 USING btree (_uui
 CREATE INDEX IF NOT EXISTS items$7_btree_c0c4c6c7c2 ON items$7 USING btree (_uuid,unit_price,discount$0,total,productid);
 CREATE INDEX IF NOT EXISTS items$7_btree_c0c6c3c4c7 ON items$7 USING btree (_uuid,discount$0,quantity,unit_price,total);
 CREATE INDEX IF NOT EXISTS items$7_btree_c0c7c2c6c3 ON items$7 USING btree (_uuid,total,productid,discount$0,quantity);
+CREATE INDEX IF NOT EXISTS orders$6_btree_c2c3c4c5 ON orders$6 USING btree (id,customerid,time,timestamp);
 CREATE INDEX IF NOT EXISTS orders$6_btree_c2c4 ON orders$6 USING btree (id,time);
-CREATE INDEX IF NOT EXISTS orders$6_btree_c2c5c3 ON orders$6 USING btree (id,timestamp,customerid);
-CREATE INDEX IF NOT EXISTS orders$6_btree_c3c2c4c5 ON orders$6 USING btree (customerid,id,time,timestamp);
-CREATE INDEX IF NOT EXISTS orders$6_btree_c3c4 ON orders$6 USING btree (customerid,time);
+CREATE INDEX IF NOT EXISTS orders$6_btree_c3c4c5 ON orders$6 USING btree (customerid,time,timestamp);
+CREATE INDEX IF NOT EXISTS orders$6_btree_c3c5c2 ON orders$6 USING btree (customerid,timestamp,id);
 CREATE INDEX IF NOT EXISTS orders$6_btree_c4c5c2 ON orders$6 USING btree (time,timestamp,id);
-CREATE INDEX IF NOT EXISTS orders$6_btree_c5c3c4 ON orders$6 USING btree (timestamp,customerid,time);
+CREATE INDEX IF NOT EXISTS orders$6_btree_c5c2 ON orders$6 USING btree (timestamp,id);
 CREATE INDEX IF NOT EXISTS products$11_btree_c0 ON products$11 USING btree (id);
 CREATE INDEX IF NOT EXISTS products$11_btree_c3 ON products$11 USING btree (name);
 CREATE INDEX IF NOT EXISTS products$11_btree_c4 ON products$11 USING btree (sizing);

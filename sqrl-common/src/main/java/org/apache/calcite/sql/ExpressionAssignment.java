@@ -1,5 +1,6 @@
 package org.apache.calcite.sql;
 
+import com.datasqrl.name.NamePath;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,9 +18,9 @@ public class ExpressionAssignment extends Assignment {
   private final SqlNode expression;
 
   public ExpressionAssignment(SqlParserPos location,
-      SqlIdentifier name, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression,
+      SqlIdentifier identifier, NamePath namePath, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression,
       Optional<SqlNodeList> hints) {
-    super(location, name, hints);
+    super(location, identifier, namePath, hints);
     this.tableArgs = tableArgs;
     this.expression = expression;
   }
@@ -64,5 +65,10 @@ public class ExpressionAssignment extends Assignment {
   @Override
   public boolean equalsDeep(SqlNode sqlNode, Litmus litmus) {
     return false;
+  }
+
+  @Override
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
+    return visitor.visit(this, context);
   }
 }

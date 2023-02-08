@@ -145,5 +145,10 @@ public class Examples {
           .dataDir(base.resolve("transportation/bus-data"))
           .resultTables(List.of("bus", "busstop", "gps_tracking", "route", "routestops", "schedule", "schedulefollows"))
           .build())
+      .add(TestScript.of(base.resolve("udf"),
+              base.resolve("udf/myudf.sqrl"))
+          .dataDir(base.resolve("udf/data"))
+          .resultTables(List.of("products", "mytable"))
+          .build())
       .build();
 }

@@ -27,6 +27,7 @@ import java.util.List;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.internal.FlinkEnvProxy;
 
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
     StreamEngine {
@@ -47,6 +48,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
     FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
     StatementSet statementSet = flinkPlan.getStatementSet();
+    flinkPlan.getJars().forEach(j->FlinkEnvProxy.addJar(statementSet, j.toString()));
     TableResult rslt = statementSet.execute();
     rslt.print(); //todo: this just forces print to wait for the async
     return new ExecutionResult.Message(rslt.getJobClient().get()
@@ -58,7 +60,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
       List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(this).createStreamGraph(
-        plan.getQueries(), errorSink);
+        plan.getQueries(), errorSink, plan.getJars());
     return streamPlan;
   }
 

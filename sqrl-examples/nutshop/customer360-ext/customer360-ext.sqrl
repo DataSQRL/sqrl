@@ -17,7 +17,7 @@ Orders.total := sum(items.total);
 Orders.savings := sum(items.discount);
 
 Customers.spending_by_month :=
-         SELECT TRUNCATE_TO_MONTHdate) AS month,
+         SELECT TRUNCATE_TO_MONTH(date) AS month,
                 sum(total) AS total_spend,
                 sum(discount) AS total_savings
          FROM @.purchases

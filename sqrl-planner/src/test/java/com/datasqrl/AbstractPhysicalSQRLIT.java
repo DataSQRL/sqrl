@@ -13,14 +13,20 @@ import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DynamicExporter;
-import com.datasqrl.loaders.ExporterContext.Implementation;
+import com.datasqrl.loaders.DataSystemNsObject;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ModuleLoaderImpl;
+import com.datasqrl.loaders.StandardLibraryLoader;
+import com.datasqrl.loaders.URLObjectLoaderImpl;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.analyze.ResolveTest;
-import com.datasqrl.plan.local.generate.Resolve;
+import com.datasqrl.plan.local.generate.FileResourceResolver;
+import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.ResultSetPrinter;
@@ -39,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -60,14 +67,24 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
     super.initialize(settings, rootDir);
 
+    ModuleLoader moduleLoader = new ModuleLoaderImpl(new FileResourceResolver(rootDir), new StandardLibraryLoader(
+        Map.of()), new URLObjectLoaderImpl(error));
+    NamePath sinkPath = settings.getErrorSink();
+    Optional<TableSink> errorSink = moduleLoader
+        .getModule(sinkPath.popLast())
+        .flatMap(m->m.getNamespaceObject(sinkPath.popLast().getLast()))
+        .map(s -> ((DataSystemNsObject) s).getTable())
+        .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), error))
+        .map(tblConfig ->
+            tblConfig.initializeSink(error, sinkPath, Optional.empty()));
+
     jdbc = engineSettings.getPipeline().getStages().stream()
       .filter(f->f.getEngine() instanceof JDBCEngine)
       .map(f->((JDBCEngine) f.getEngine()).getConfig())
       .findAny()
       .orElseThrow();
 
-    TableSink errorSink = new DynamicExporter().export(new Implementation(rootDir, error),settings.getErrorSink()).get();
-    physicalPlanner = new PhysicalPlanner(planner.getRelBuilder(), errorSink);
+    physicalPlanner = new PhysicalPlanner(session.createRelBuilder(), errorSink.get());
   }
 
 
@@ -83,20 +100,21 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   @SneakyThrows
   protected void validateTables(String script, Collection<String> queryTables,
       Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
-    Resolve.Env resolvedDag = plan(script);
-    DAGPlanner dagPlanner = new DAGPlanner(planner, session.getPipeline());
+    Namespace ns = plan(script);
+    DAGPlanner dagPlanner = new DAGPlanner(session.createRelBuilder(), session.getRelPlanner(),
+        session.getPipeline());
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
-    CalciteSchema relSchema = resolvedDag.getRelSchema();
+    CalciteSchema relSchema = session.getSchema();
     for (String tableName : queryTables) {
       Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(relSchema, tableName,
           VirtualRelationalTable.class);
       Preconditions.checkArgument(vtOpt.isPresent(), "No such table: %s", tableName);
       VirtualRelationalTable vt = vtOpt.get();
-      RelNode rel = planner.getRelBuilder().scan(vt.getNameId()).build();
+      RelNode rel = session.createRelBuilder().scan(vt.getNameId()).build();
       queries.add(new APIQuery(tableName, rel));
     }
-    OptimizedDAG dag = dagPlanner.plan(relSchema, queries, resolvedDag.getExports());
+    OptimizedDAG dag = dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
     addContent(dag);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
@@ -136,7 +154,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         snapshot.addContent(content, query.getNameId(), "data");
       }
     }
-    for (Resolve.ResolvedExport export : resolvedDag.getExports()) {
+    for (ResolvedExport export : ns.getExports()) {
       TableSink sink = export.getSink();
       if (sink.getConnector() instanceof DirectoryConnector) {
         DirectoryConnector connector = (DirectoryConnector) sink.getConnector();

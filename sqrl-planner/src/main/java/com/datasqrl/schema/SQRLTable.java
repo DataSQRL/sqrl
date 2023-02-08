@@ -3,15 +3,23 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Root;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.plan.calcite.TypeFactory;
+import com.datasqrl.plan.calcite.table.AddedColumn;
+import com.datasqrl.plan.calcite.table.AddedColumn.Simple;
+import com.datasqrl.plan.calcite.table.CalciteTableFactory;
+import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.schema.Relationship.JoinType;
 
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,8 +31,12 @@ import org.apache.calcite.DataContext;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.tree.Expression;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.ScannableTable;
@@ -37,6 +49,9 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.TableFunctionArgument;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
@@ -284,6 +299,75 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
 
   public <R, C> R accept(SqrlTableVisitor<R, C> visitor, C context) {
     return visitor.visit(this, context);
+  }
+
+  public void addColumn(Name name, RelNode relNode, boolean lockTimestamp, RelBuilder relBuilder,
+      CalciteTableFactory tableFactory) {
+    checkColumnPreconditions(name);
+
+//    NamePath namePath = toNamePath(env, op.getStatement().getNamePath());
+//    Name name = namePath.getLast();
+    RelDataTypeField relDataTypeField = relNode.getRowType().getFieldList()
+        .get(relNode.getRowType().getFieldCount() - 1);
+    Name vtName = uniquifyColumnName(name, this);
+
+    VirtualRelationalTable vtable = getVt();
+    Optional<Integer> timestampScore = tableFactory.getTimestampScore(
+        name, relDataTypeField.getType());
+
+    Preconditions.checkState(
+        relNode instanceof Project && relNode.getInput(0) instanceof TableScan,
+        "Complex columns not yet supported");
+    Project project = (Project) relNode;
+
+    AddedColumn addedColumn = new Simple(name.getCanonical(), project.getProjects().get(project.getProjects().size() - 1));
+    addedColumn.setNameId(vtName.getCanonical());
+
+    addColumnToVirtualTable(addedColumn, vtable, timestampScore, relBuilder);
+    if (lockTimestamp) {
+      lockTimestampScore(vtable);
+    }
+    addColumnToSQRLTable(name, addedColumn, vtName);
+  }
+
+  private void addColumnToVirtualTable(AddedColumn addedColumn, VirtualRelationalTable vtable, Optional<Integer> timestampScore, RelBuilder relBuilder) {
+    vtable.addColumn(addedColumn, TypeFactory.getTypeFactory(), ()->relBuilder,
+        timestampScore);
+  }
+
+  private void lockTimestampScore(VirtualRelationalTable vtable) {
+    Preconditions.checkState(vtable.isRoot() && vtable.getAddedColumns().isEmpty());
+    QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root) vtable).getBase();
+    baseTbl.getTimestamp()
+        .getCandidateByIndex(baseTbl.getNumColumns() - 1) //Timestamp must be last column
+        .lockTimestamp();
+  }
+
+  private void addColumnToSQRLTable(Name name, AddedColumn c, Name vtName) {
+    addColumn(name, vtName, true, c.getDataType());
+  }
+  private void checkColumnPreconditions(Name name) {
+    if (getField(name).isPresent()) {
+      if (getField(name).get() instanceof Relationship) {
+        throw new RuntimeException("Cannot shadow relationship: " + name);
+      }
+//      checkState(!(table.getField(toNamePath(env, op.statement.getNamePath()).getLast())
+//              .get() instanceof Relationship),
+//          ErrorCode.CANNOT_SHADOW_RELATIONSHIP, op.statement);
+    }
+  }
+
+  private Name uniquifyColumnName(Name name, SQRLTable table) {
+    if (table.getField(name).isPresent()) {
+      String newName = org.apache.calcite.sql.validate.SqlValidatorUtil.uniquify(
+          name.getCanonical(),
+          new HashSet<>(table.getVt().getRowType().getFieldNames()),
+          //Renamed columns to names the user cannot address to prevent collisions
+          (original, attempt, size) -> original + "$" + attempt);
+      return Name.system(newName);
+    }
+
+    return name;
   }
   public interface SqrlTableVisitor<R, C> extends TableVisitor<R, C> {
     R visit(SQRLTable table, C context);

@@ -9,7 +9,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 @Getter
 public class SqrlJoinDeclarationSpec extends SqlCall {
 
-  public static final SqlSpecialOperator OPERATOR = new Operator() {
+  protected static final SqlSpecialOperator OPERATOR = new Operator() {
     public SqlCall createCall(SqlLiteral functionQualifier, SqlParserPos pos, SqlNode... operands) {
       return new SqrlJoinDeclarationSpec(pos, (SqrlJoinTerm) operands[0],
           Optional.ofNullable((SqlNodeList) operands[1]),
@@ -65,7 +65,28 @@ public class SqrlJoinDeclarationSpec extends SqlCall {
     }
 
     public void unparse(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
-      //todo: unparse
+      SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) call;
+
+      spec.relation.unparse(writer, leftPrec, rightPrec);
+
+      if (spec.orderList.isPresent()) {
+        writer.keyword("ORDER BY");
+        spec.orderList.get().unparse(writer, leftPrec, rightPrec);
+      }
+
+      if (spec.fetch.isPresent()) {
+        writer.keyword("FETCH");
+        spec.fetch.get().unparse(writer, leftPrec, rightPrec);
+      }
+
+      if (spec.inverse.isPresent()) {
+        writer.keyword("INVERSE");
+        spec.inverse.get().unparse(writer, leftPrec, rightPrec);
+      }
+
+      if (spec.leftJoins.isPresent()) {
+        spec.leftJoins.get().unparse(writer, leftPrec, rightPrec);
+      }
     }
   }
 
