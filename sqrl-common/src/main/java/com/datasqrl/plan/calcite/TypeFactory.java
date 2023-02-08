@@ -11,7 +11,7 @@ import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 public class TypeFactory {
 
   public static RelDataTypeFactory getTypeFactory() {
-    return new FlinkTypeFactory(null, getTypeSystem());
+    return new FlinkTypeFactory(ClassLoader.getSystemClassLoader(), getTypeSystem());
   }
 
   public static RelDataTypeSystem getTypeSystem() {

@@ -78,14 +78,6 @@ public class ImportExportAnalyzer {
     public Set<NamePath> getPkgs() {
       return SetUtils.union(importPkgs, exportPkgs);
     }
-//
-//    public Set<NamePath> getUnloadableDependencies(Path basePath, Loader loader, Exporter exporter) {
-//      Set<NamePath> unloadable = new HashSet<>();
-//      importPkgs.stream().filter(np -> !loader.isPackage(basePath, np)).forEach(unloadable::add);
-//      exportPkgs.stream().filter(np -> !exporter.isPackage(basePath, np)).forEach(unloadable::add);
-//      return unloadable;
-//    }
-
   }
 
 

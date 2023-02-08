@@ -15,7 +15,7 @@ public interface SqrlFunction {
   StdTimeLibraryImpl stdTimeLibrary = new StdTimeLibraryImpl();
 
   //
-  static Optional<SqrlFunction> unwrapSqrlFunction(SqlOperator operator) {
+  static Optional<SqrlFunction> lookupTimeFunction(SqlOperator operator) {
     if (operator.getName().equalsIgnoreCase("now")) {
       return Optional.of(StdTimeLibraryImpl.NOW);
     }

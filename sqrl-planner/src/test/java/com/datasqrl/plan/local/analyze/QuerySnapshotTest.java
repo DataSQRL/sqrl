@@ -13,7 +13,7 @@ import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
-import com.datasqrl.plan.local.generate.FlinkNamespace;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.ScriptBuilder;
@@ -45,7 +45,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   protected void validateScriptInvalid(String script) {
     try {
-      FlinkNamespace ns = plan(script);
+      Namespace ns = plan(script);
       fail("Expected an exception but did not encounter one");
     } catch (Exception e) {
       snapshot.addContent(ErrorPrinter.prettyPrint(error), "errors");
@@ -53,7 +53,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     snapshot.createOrValidate();
   }
   protected void validateScript(String script) {
-    FlinkNamespace ns = plan(script);
+    Namespace ns = plan(script);
     ns.getSchema().plus().getTableNames().stream()
         .map(n->ns.getSchema().getTable(n, false))
         .filter(f->f.getTable() instanceof QueryRelationalTable)

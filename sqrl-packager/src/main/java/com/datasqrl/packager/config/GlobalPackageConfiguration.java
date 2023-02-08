@@ -40,7 +40,7 @@ public class GlobalPackageConfiguration implements GlobalConfiguration {
   LinkedHashMap<String, Dependency> dependencies = new LinkedHashMap<>();
 
   @Setter
-  @JsonProperty(ManifestConfiguration.MANIFEST)
+  @JsonProperty(ManifestConfiguration.PROPERTY)
   ManifestConfiguration manifest;
 
   public static GlobalPackageConfiguration readFrom(Path path) throws IOException {

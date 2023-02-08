@@ -13,7 +13,7 @@ import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.local.generate.FlinkNamespace;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APIQuery;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
@@ -52,7 +52,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   @SneakyThrows
   protected void validateSchemaAndQueries(String script, String schema,
       Map<String, String> queries) {
-    FlinkNamespace ns = plan(script);
+    Namespace ns = plan(script);
     DAGPlanner dagPlanner = new DAGPlanner(ns.createRelBuilder(), session.getRelPlanner(),
         session.getPipeline());
 
@@ -73,6 +73,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream()
             .map(ddl -> ddl.toSql())
             .sorted().collect(Collectors.joining(System.lineSeparator())), "database");
+    snapshot.addContent(schema, "schema");
 
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     executor.execute(physicalPlan);

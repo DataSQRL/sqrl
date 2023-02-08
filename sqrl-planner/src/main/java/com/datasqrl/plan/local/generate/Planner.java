@@ -2,7 +2,6 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.plan.calcite.SqlValidatorUtil;
 import com.datasqrl.plan.calcite.SqrlToRelConverter;
-import com.datasqrl.plan.calcite.rules.AnnotatedLP;
 import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
@@ -14,7 +13,7 @@ public class Planner {
 
   }
 
-  public RelNode plan(SqlNode sqlNode, FlinkNamespace ns) {
+  public RelNode plan(SqlNode sqlNode, Namespace ns) {
     SqlValidator validator = createValidator(ns);
     validator.validate(sqlNode);
 
@@ -24,7 +23,7 @@ public class Planner {
     return relNode;
   }
 
-  private SqlValidator createValidator(FlinkNamespace ns) {
+  private SqlValidator createValidator(Namespace ns) {
     return SqlValidatorUtil.createSqlValidator(ns.getSchema(),
         ns.getOperatorTable());
   }

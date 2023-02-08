@@ -49,22 +49,4 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
         context.getResolvedName());
     return tbField.map(f->f);
   }
-
-//
-//  @Override
-//  public Optional<TableSchema> create(Deserializer deserialize, Path baseDir, TableConfig tableConfig,
-//      ErrorCollector errors) {
-//    Path tableSchemaPath = baseDir.resolve(PACKAGE_SCHEMA_FILE);
-//
-//    SchemaDefinition schemaDef = deserialize.mapYAMLFile(tableSchemaPath, SchemaDefinition.class);
-//
-//    SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP,
-//        tableConfig.getNameCanonicalizer());
-//    Map<Name, FlexibleDatasetSchema> schemas = importer.convertImportSchema(schemaDef, errors);
-//    Preconditions.checkArgument(schemaDef.datasets.size() == 1);
-//    FlexibleDatasetSchema dsSchema = Iterables.getOnlyElement(schemas.values());
-//    Optional<FlexibleDatasetSchema.TableField> tbField = dsSchema.getFieldByName(
-//        tableConfig.getResolvedName());
-//    return tbField.map(f->f);
-//  }
 }

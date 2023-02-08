@@ -7,7 +7,6 @@ import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
@@ -29,7 +28,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -40,10 +38,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.BiPredicate;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.Value;
 import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 
@@ -223,7 +219,7 @@ public class Packager {
 
     //Update relativized manifest in place
     JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
-    packageConfig.set(ManifestConfiguration.MANIFEST, mappedManifest);
+    packageConfig.set(ManifestConfiguration.PROPERTY, mappedManifest);
 
     mapper.writeValue(packageFile.toFile(), packageConfig);
   }

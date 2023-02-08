@@ -2,6 +2,8 @@ package com.datasqrl.plan.calcite;
 
 import static java.util.Objects.requireNonNull;
 
+import com.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
+import com.datasqrl.plan.calcite.rules.SqrlRelMetadataQuery;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;

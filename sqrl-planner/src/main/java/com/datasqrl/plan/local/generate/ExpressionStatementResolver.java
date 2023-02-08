@@ -11,7 +11,7 @@ public class ExpressionStatementResolver extends AbstractStatementResolver {
     super(systemContext);
   }
 
-  public void resolve(ExpressionAssignment statement, FlinkNamespace ns) {
+  public void resolve(ExpressionAssignment statement, Namespace ns) {
     SqlNode sqlNode = transpile(statement, ns);
     RelNode relNode = plan(sqlNode, ns);
 

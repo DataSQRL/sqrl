@@ -9,9 +9,8 @@ import com.datasqrl.loaders.URLObjectLoaderImpl;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.plan.local.generate.FileResourceResolver;
-import com.datasqrl.plan.local.generate.FlinkNamespace;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.local.generate.Session;
 import com.google.common.base.Preconditions;
@@ -22,7 +21,6 @@ import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.util.SqlNodePrinter;
 import org.junit.jupiter.api.AfterEach;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {
@@ -73,7 +71,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     return Files.readString(path);
   }
 
-  protected FlinkNamespace plan(String script) {
+  protected Namespace plan(String script) {
     ErrorCollector scriptError = error.withFile("test.sqrl", script);
     ScriptNode node = parser.parse(script, scriptError);
     return resolve.planDag(node, scriptError, new FileResourceResolver(rootDir),

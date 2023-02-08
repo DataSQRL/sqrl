@@ -12,7 +12,7 @@ public class StreamStatementResolver extends AbstractQueryStatementResolver {
   }
 
   @Override
-  public Function<AnnotatedLP, AnnotatedLP> getPostProcessor(FlinkNamespace ns, RelNode relNode) {
+  public Function<AnnotatedLP, AnnotatedLP> getPostProcessor(Namespace ns, RelNode relNode) {
     return  (prel) ->
         postProcessStreamAnnotatedLP(ns.createRelBuilder(), prel, relNode.getRowType().getFieldNames());
   }

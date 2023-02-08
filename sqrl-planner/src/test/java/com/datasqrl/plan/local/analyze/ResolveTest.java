@@ -17,7 +17,7 @@ import com.datasqrl.plan.calcite.table.PullupOperator;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.plan.calcite.table.TableType;
 import com.datasqrl.plan.calcite.table.TimestampHolder;
-import com.datasqrl.plan.local.generate.FlinkNamespace;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestRelWriter;
@@ -44,7 +44,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private final Retail example = Retail.INSTANCE;
   private Path exportPath = example.getRootPackageDirectory().resolve("export-data");
 
-  private FlinkNamespace ns = null;
+  private Namespace ns = null;
   protected SnapshotTest.Snapshot snapshot;
 
   @BeforeEach

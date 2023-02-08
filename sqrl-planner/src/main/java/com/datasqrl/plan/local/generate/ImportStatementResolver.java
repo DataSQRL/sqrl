@@ -25,7 +25,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     super(systemContext);
   }
 
-  public void resolve(ImportDefinition statement, FlinkNamespace ns) {
+  public void resolve(ImportDefinition statement, Namespace ns) {
     NamePath path = statement.getNamePath();
 
     // Get the module specified in the import statement
@@ -62,7 +62,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
         () -> String.format("Could not load import [%s]", path));
   }
 
-  private void addTimestampAsColumn(ImportDefinition statement, FlinkNamespace ns) {
+  private void addTimestampAsColumn(ImportDefinition statement, Namespace ns) {
 
     SqlNode sqlNode = transpile(statement, ns);
 
@@ -81,7 +81,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     }
   }
 
-  private void setTimestampColumn(ImportDefinition importDefinition, FlinkNamespace ns) {
+  private void setTimestampColumn(ImportDefinition importDefinition, Namespace ns) {
     Name tableName = getTableName(importDefinition);
     SQRLTable table = (SQRLTable) ns.getSchema().getTable(tableName.getCanonical(), false).getTable();
     QueryRelationalTable baseTbl = getBaseTable(table);
@@ -121,7 +121,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     return path.getLast().equals(ReservedName.ALL);
   }
 
-  private boolean loadAllNamespaceObjects(SqrlModule module, FlinkNamespace ns) {
+  private boolean loadAllNamespaceObjects(SqrlModule module, Namespace ns) {
     return module.getNamespaceObjects().stream()
         .allMatch(ns::addNsObject);
   }
@@ -130,7 +130,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     return module.getNamespaceObject(path.getLast());
   }
 
-  private boolean loadNamespaceObject(FlinkNamespace ns, NamespaceObject nsObject,
+  private boolean loadNamespaceObject(Namespace ns, NamespaceObject nsObject,
       Optional<SqlIdentifier> alias) {
     return ns.addNsObject(alias.map(a-> Name.system(a.names.get(0))).orElse(nsObject.getName()), nsObject);
   }

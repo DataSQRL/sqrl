@@ -39,10 +39,10 @@ public class Resolve {
     this.basePath = basePath;
   }
 
-  FlinkNamespace ns;
+  Namespace ns;
   ModuleLoader loader;
 
-  public FlinkNamespace planDag(ScriptNode scriptNode, ErrorCollector errors,
+  public Namespace planDag(ScriptNode scriptNode, ErrorCollector errors,
       ResourceResolver resourceResolver,
       Session session) {
     session.setErrors(errors);
@@ -53,10 +53,10 @@ public class Resolve {
     }
   }
 
-  protected FlinkNamespace planDagHelper(ScriptNode scriptNode, ErrorCollector errors,
+  protected Namespace planDagHelper(ScriptNode scriptNode, ErrorCollector errors,
       ResourceResolver resourceResolver,
       Session session) {
-    FlinkNamespace ns = new FlinkNamespace(session);
+    Namespace ns = new Namespace(session);
 
     StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader(
         Map.of(Name.system("time").toNamePath(), new StdTimeLibraryImpl()));
@@ -79,7 +79,7 @@ public class Resolve {
     return ns;
   }
 
-  private void debug(FlinkNamespace ns, Session session, ErrorCollector errors_,
+  private void debug(Namespace ns, Session session, ErrorCollector errors_,
       ModuleLoader moduleLoader, ScriptNode scriptNode) {
     DebuggerConfig debugger = ns.session.getDebugger();
     ErrorCollector errors = errors_.withLocation(

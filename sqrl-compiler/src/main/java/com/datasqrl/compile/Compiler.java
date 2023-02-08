@@ -30,7 +30,7 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.local.generate.FileResourceResolver;
-import com.datasqrl.plan.local.generate.FlinkNamespace;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.local.generate.Session;
 import com.datasqrl.plan.queries.APIQuery;
@@ -90,7 +90,7 @@ public class Compiler {
     ScriptNode scriptNode = SqrlParser.newParser()
         .parse(scriptStr, scriptErrors);
 
-    FlinkNamespace ns = resolve.planDag(scriptNode, scriptErrors, new FileResourceResolver(buildDir), session);
+    Namespace ns = resolve.planDag(scriptNode, scriptErrors, new FileResourceResolver(buildDir), session);
 
     String gqlSchema = inferOrGetSchema(session.getSchema(), graphqlSchema);
 
@@ -162,7 +162,7 @@ public class Compiler {
     ScriptNode scriptNode = SqrlParser.newParser()
         .parse(scriptStr, scriptErrors);
 
-    FlinkNamespace ns = resolve.planDag(scriptNode, scriptErrors, new FileResourceResolver(buildDir),
+    Namespace ns = resolve.planDag(scriptNode, scriptErrors, new FileResourceResolver(buildDir),
         session);
 
     return inferOrGetSchema(session.getSchema(), Optional.empty());
@@ -176,7 +176,7 @@ public class Compiler {
     PhysicalPlan plan;
   }
 
-  private OptimizedDAG optimizeDag(List<APIQuery> queries, Session session, FlinkNamespace ns) {
+  private OptimizedDAG optimizeDag(List<APIQuery> queries, Session session, Namespace ns) {
     DAGPlanner dagPlanner = new DAGPlanner(session.createRelBuilder(), session.getRelPlanner(),
         session.getPipeline());
     CalciteSchema relSchema = session.getSchema();

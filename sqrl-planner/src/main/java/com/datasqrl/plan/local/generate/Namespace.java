@@ -8,7 +8,6 @@ import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
 import com.datasqrl.plan.calcite.table.ProxySourceRelationalTable;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.calcite.util.ContinuousIndexMap.Builder;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
@@ -30,7 +29,7 @@ import org.apache.flink.table.api.internal.TableEnvironmentImpl;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 
-public class FlinkNamespace {
+public class Namespace implements AbstractNamespace {
 
   private final SqrlCalciteSchema schema;
   //Temporary env for catalog construction, we'll remake this later
@@ -44,7 +43,7 @@ public class FlinkNamespace {
   @Getter
   private Set<URL> jars;
 
-  public FlinkNamespace(Session session) {
+  public Namespace(Session session) {
     this.session = session;
     this.schema = session.getSchema();
     this.jars = new HashSet<>();
@@ -56,10 +55,12 @@ public class FlinkNamespace {
    * @param nsObject the {@link NamespaceObject} to add
    * @return {@code true} if the object was successfully added; {@code false} otherwise.
    */
+  @Override
   public boolean addNsObject(NamespaceObject nsObject) {
     return addNsObject(nsObject.getName(), nsObject);
   }
 
+  @Override
   public boolean addNsObject(Name name, NamespaceObject nsObject) {
     if (nsObject instanceof FunctionNamespaceObject) {
       return addFunctionObject(name, (FunctionNamespaceObject) nsObject);
@@ -70,55 +71,7 @@ public class FlinkNamespace {
     }
   }
 
-  /**
-   * Adds the given {@link FunctionNamespaceObject} to the namespace.
-   *
-   * @param name
-   * @param nsObject the {@link FunctionNamespaceObject} to add
-   * @return {@code true} if the object was successfully added; {@code false} otherwise.
-   */
-  private boolean addFunctionObject(Name name, FunctionNamespaceObject<UserDefinedFunction> nsObject) {
-    udfs.put(name.getCanonical(), nsObject.getFunction());
-
-    tempEnv.createTemporarySystemFunction(name.getCanonical(), nsObject.getFunction());
-    nsObject.getJarUrl().map(j->jars.add(j));
-    return true;
-  }
-
-  /**
-   * Adds the given {@link TableNamespaceObject} to the namespace.
-   *
-   * @param name
-   * @param nsObject the {@link TableNamespaceObject} to add
-   * @return {@code true} if the object was successfully added; {@code false} otherwise.
-   */
-  private boolean addTableObject(Name name, TableNamespaceObject nsObject) {
-    Preconditions.checkNotNull(nsObject.getName());
-    Preconditions.checkNotNull(nsObject.getTable());
-    if (nsObject instanceof TableSourceNamespaceObject) {
-
-      ScriptTableDefinition def = tableFactory.importTable(((TableSourceNamespaceObject) nsObject).getTable(),
-          Optional.of(name),//todo can remove optional
-          createRelBuilder(), session.getPipeline());
-
-    session.getErrors().checkFatal(
-        session.getSchema().getTable(def.getTable().getName().getCanonical(), false) == null,
-        ErrorCode.IMPORT_NAMESPACE_CONFLICT,
-        String.format("An item named `%s` is already in scope",
-            def.getTable().getName().getDisplay()));
-      registerScriptTable(def);
-      return true;
-
-    } else if (nsObject.getTable() instanceof ScriptTableDefinition) {
-      registerScriptTable((ScriptTableDefinition) nsObject.getTable());
-      return true;
-
-//      schema.add(nsObject.getName().getCanonical(), nsObject.getTable());
-    } else {
-      throw new RuntimeException("unknown");
-    }
-  }
-
+  @Override
   public void registerScriptTable(ScriptTableDefinition tblDef) {
     for (Map.Entry<SQRLTable, VirtualRelationalTable> entry : tblDef.getShredTableMap()
         .entrySet()) {
@@ -141,23 +94,74 @@ public class FlinkNamespace {
           tblDef.getTable());
     }
   }
+
+  public boolean addFunctionObject(Name name,
+      FunctionNamespaceObject<UserDefinedFunction> nsObject) {
+    udfs.put(name.getCanonical(), nsObject.getFunction());
+
+    tempEnv.createTemporarySystemFunction(name.getCanonical(), nsObject.getFunction());
+    nsObject.getJarUrl().map(j -> jars.add(j));
+    return true;
+  }
+
+  /**
+   * Adds the given {@link TableNamespaceObject} to the namespace.
+   *
+   * @param name
+   * @param nsObject the {@link TableNamespaceObject} to add
+   * @return {@code true} if the object was successfully added; {@code false} otherwise.
+   */
+  public boolean addTableObject(Name name, TableNamespaceObject nsObject) {
+    Preconditions.checkNotNull(nsObject.getName());
+    Preconditions.checkNotNull(nsObject.getTable());
+    if (nsObject instanceof TableSourceNamespaceObject) {
+
+      ScriptTableDefinition def = tableFactory.importTable(
+          ((TableSourceNamespaceObject) nsObject).getTable(),
+          Optional.of(name),//todo can remove optional
+          createRelBuilder(), session.getPipeline());
+
+      session.getErrors().checkFatal(
+          session.getSchema().getTable(def.getTable().getName().getCanonical(), false) == null,
+          ErrorCode.IMPORT_NAMESPACE_CONFLICT,
+          String.format("An item named `%s` is already in scope",
+              def.getTable().getName().getDisplay()));
+      registerScriptTable(def);
+      return true;
+
+    } else if (nsObject.getTable() instanceof ScriptTableDefinition) {
+      registerScriptTable((ScriptTableDefinition) nsObject.getTable());
+      return true;
+
+//      schema.add(nsObject.getName().getCanonical(), nsObject.getTable());
+    } else {
+      throw new RuntimeException("unknown");
+    }
+  }
+
+  @Override
   public SqlOperatorTable getOperatorTable() {
     return FlinkEnvProxy.getOperatorTable(tempEnv);
   }
 
+  @Override
   public SqrlCalciteSchema getSchema() {
     return schema;
   }
 
+  @Override
   public RelBuilder createRelBuilder() {
     return session.createRelBuilder();
   }
 
   private List<ResolvedExport> exports = new ArrayList<>();
+
+  @Override
   public List<ResolvedExport> getExports() {
     return exports;
   }
 
+  @Override
   public void addExport(ResolvedExport resolvedExport) {
     exports.add(resolvedExport);
   }

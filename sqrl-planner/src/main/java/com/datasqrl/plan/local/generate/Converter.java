@@ -23,7 +23,7 @@ public class Converter {
     this.systemContext = systemContext;
   }
 
-  public AnnotatedLP convert(RelNode relNode, FlinkNamespace ns, boolean isStream,
+  public AnnotatedLP convert(RelNode relNode, Namespace ns, boolean isStream,
       Optional<SqlNodeList> hints) {
 //    List<String> fieldNames = new ArrayList<>(relNode.getRowType().getFieldNames());
 
@@ -40,7 +40,7 @@ public class Converter {
   }
 
   //Converts SQRL conventions into vanilla SQL
-  private AnnotatedLP convertToVanillaSQL(FlinkNamespace ns, RelNode relNode, RelBuilder relBuilder,
+  private AnnotatedLP convertToVanillaSQL(Namespace ns, RelNode relNode, RelBuilder relBuilder,
       boolean isStream, Optional<SqlNodeList> hints) {
     final SQRLLogicalPlanConverter.Config.ConfigBuilder configBuilder = SQRLLogicalPlanConverter.Config.builder();
     Optional<ExecutionHint> execHint = ExecutionHint.fromSqlHint(hints);

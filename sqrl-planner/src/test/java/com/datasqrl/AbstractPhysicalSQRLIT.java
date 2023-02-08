@@ -25,7 +25,7 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.analyze.ResolveTest;
 import com.datasqrl.plan.local.generate.FileResourceResolver;
-import com.datasqrl.plan.local.generate.FlinkNamespace;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.FileTestUtil;
@@ -100,7 +100,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   @SneakyThrows
   protected void validateTables(String script, Collection<String> queryTables,
       Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
-    FlinkNamespace ns = plan(script);
+    Namespace ns = plan(script);
     DAGPlanner dagPlanner = new DAGPlanner(session.createRelBuilder(), session.getRelPlanner(),
         session.getPipeline());
     //We add a scan query for every query table

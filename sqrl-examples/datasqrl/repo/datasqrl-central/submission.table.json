@@ -8,7 +8,7 @@
   "name" : "submission",
   "identifier" : "submission",
   "connector" : {
-    "directoryURI" : "/Users/henneberger/sqrl/sqrl-integration-tests/../sqrl-examples/datasqrl/datasqrl-central/",
+    "directoryURI" : "../sqrl-examples/datasqrl/datasqrl-central/",
     "fileURIs" : [ ],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
     "systemType" : "dir"

@@ -17,15 +17,11 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
-import org.apache.flink.table.api.internal.FlinkEnvProxy;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
-import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 import java.math.BigDecimal;
@@ -45,27 +41,6 @@ public class SqrlRexUtil {
   public SqrlRexUtil(RexBuilder rexBuilder) {
     this(rexBuilder.getTypeFactory());
   }
-
-//
-//  public static SqlOperator getSqrlOperator(SqrlFunctionCatalog catalog, String name) {
-//    List<SqlOperator> ops = new ArrayList<>();
-//    catalog.lookupOperatorOverloads(
-//        new SqlIdentifier(name, SqlParserPos.ZERO),
-//        SqlFunctionCategory.USER_DEFINED_FUNCTION,
-//        SqlSyntax.FUNCTION,
-//        ops,
-//        SqlNameMatchers.withCaseSensitive(false)
-//    );
-////
-////    for (SqlOperator op : ops) {
-////      if (op instanceof BridgingSqlFunction && ((BridgingSqlFunction) op).getDefinition()
-////          instanceof SqrlFunction) {
-////        return op;
-////      }
-////    }
-//
-//    return ops.get(0);
-//  }
 
   public RexBuilder getBuilder() {
     return rexBuilder;
@@ -135,7 +110,7 @@ public class SqrlRexUtil {
     return new RexFinder<Void>() {
       @Override
       public Void visitCall(RexCall call) {
-        if (SqrlFunction.unwrapSqrlFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
+        if (SqrlFunction.lookupTimeFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
           throw Util.FoundOne.NULL;
         }
         return super.visitCall(call);

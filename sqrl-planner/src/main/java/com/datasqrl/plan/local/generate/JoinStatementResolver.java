@@ -26,7 +26,7 @@ public class JoinStatementResolver extends AbstractStatementResolver {
 
   }
 
-  public void resolve(JoinAssignment statement, FlinkNamespace ns) {
+  public void resolve(JoinAssignment statement, Namespace ns) {
     SqlNode joinSqlNode = transpile(statement, ns);
 
     Optional<SQRLTable> tbl = getContext(ns, statement.getNamePath());
@@ -40,7 +40,7 @@ public class JoinStatementResolver extends AbstractStatementResolver {
     updateJoinMapping(ns, statement, joinSqlNode, fullSql);
   }
 
-  private void updateJoinMapping(FlinkNamespace ns, JoinAssignment statement, SqlNode joinSqlNode,
+  private void updateJoinMapping(Namespace ns, JoinAssignment statement, SqlNode joinSqlNode,
       SqlNode fullSql) {
     //op is a join, we need to discover the /to/ relationship
     SQRLTable table = getContext(ns, statement.getNamePath())
@@ -63,7 +63,7 @@ public class JoinStatementResolver extends AbstractStatementResolver {
   }
 
   //todo: this is too many places
-  private SqlValidator createValidator(FlinkNamespace ns) {
+  private SqlValidator createValidator(Namespace ns) {
     return SqlValidatorUtil.createSqlValidator(ns.getSchema(),
         ns.getOperatorTable());
   }

@@ -9,7 +9,6 @@ import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
 import com.datasqrl.plan.local.transpile.AddContextTable;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
-import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
@@ -29,7 +28,6 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StreamAssignment;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -46,7 +44,7 @@ public class Transpiler {
     this.systemContext = systemContext;
   }
 
-  public SqlNode transpile(SqrlStatement query, FlinkNamespace ns) {
+  public SqlNode transpile(SqrlStatement query, Namespace ns) {
     List<String> assignmentPath = query.getNamePath().popLast()
         .stream()
         .map(e -> e.getCanonical())
@@ -151,7 +149,7 @@ public class Transpiler {
         );
     return query;
   }
-  private Optional<SQRLTable> getContext(FlinkNamespace ns, SqrlStatement statement) {
+  private Optional<SQRLTable> getContext(Namespace ns, SqrlStatement statement) {
     if (statement instanceof ImportDefinition) { //a table import
       return resolveTable(ns,
           ((ImportDefinition) statement).getAlias()
@@ -161,7 +159,7 @@ public class Transpiler {
     return resolveTable(ns, statement.getNamePath(), true);
   }
 
-  private Optional<SQRLTable> resolveTable(FlinkNamespace ns, NamePath namePath, boolean getParent) {
+  private Optional<SQRLTable> resolveTable(Namespace ns, NamePath namePath, boolean getParent) {
     if (getParent && !namePath.isEmpty()) {
       namePath = namePath.popLast();
     }
@@ -174,7 +172,7 @@ public class Transpiler {
     NamePath childPath = namePath.popFirst();
     return table.flatMap(t -> t.walkTable(childPath));
   }
-  private void checkPathWritable(FlinkNamespace ns, SqrlStatement statement, NamePath path) {
+  private void checkPathWritable(Namespace ns, SqrlStatement statement, NamePath path) {
     Optional<SQRLTable> table = Optional.ofNullable(
             ns.getSchema().getTable(path.get(0).getCanonical(), false))
         .filter(e -> e.getTable() instanceof SQRLTable)
@@ -191,7 +189,7 @@ public class Transpiler {
         checkFatal(field.isEmpty(), ErrorCode.PATH_CONTAINS_RELATIONSHIP,
             "Path is not writable %s", path);
   }
-  private SqlValidator createValidator(FlinkNamespace ns) {
+  private SqlValidator createValidator(Namespace ns) {
     return SqlValidatorUtil.createSqlValidator(ns.getSchema(),
         ns.getOperatorTable());
   }

@@ -10,6 +10,5 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class FlinkUdfNsObject implements FunctionNamespaceObject<UserDefinedFunction> {
   Name name;
   UserDefinedFunction function;
-
   Optional<URL> jarUrl;
 }

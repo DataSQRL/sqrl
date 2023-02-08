@@ -2,33 +2,29 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
 import com.datasqrl.plan.calcite.table.StateChangeType;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.schema.SQRLTable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.sql.StreamAssignment;
 import org.apache.calcite.sql.SubscriptionType;
-import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
 public class NsTableFactory {
 
   CalciteTableFactory tableFactory;
 
-  public NamespaceObject createTable(FlinkNamespace ns, NamePath namePath, AnnotatedLP processedRel,
+  public NamespaceObject createTable(Namespace ns, NamePath namePath, AnnotatedLP processedRel,
       Optional<SubscriptionType> subscriptionType, Optional<SQRLTable> parentTable) {
     return new SqrlTableNamespaceObject(namePath.getLast(),
         createScriptDef(ns, namePath, processedRel, subscriptionType, parentTable));
   }
 
-  public ScriptTableDefinition createScriptDef(FlinkNamespace ns, NamePath namePath,
+  public ScriptTableDefinition createScriptDef(Namespace ns, NamePath namePath,
       AnnotatedLP processedRel, Optional<SubscriptionType> subscriptionType,
       Optional<SQRLTable> parentTable) {
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();

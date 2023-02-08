@@ -2,7 +2,6 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
@@ -29,23 +28,23 @@ public abstract class AbstractStatementResolver {
     this.systemContext = systemContext;
   }
 
-  protected SqlNode transpile(SqrlStatement sqlNode, FlinkNamespace ns) {
+  protected SqlNode transpile(SqrlStatement sqlNode, Namespace ns) {
     Transpiler transpiler = new Transpiler(systemContext);
     return transpiler.transpile(sqlNode, ns);
   }
 
-  protected void addColumn(NamePath namePath, FlinkNamespace ns, RelNode relNode, boolean lockTimestamp) {
+  protected void addColumn(NamePath namePath, Namespace ns, RelNode relNode, boolean lockTimestamp) {
     SQRLTable table = getContext(ns, namePath)
         .orElseThrow(()->new RuntimeException("Could not find table"));
 
     table.addColumn(namePath.getLast(), relNode, lockTimestamp, ns.session.createRelBuilder(), ns.tableFactory);
   }
 
-  protected Optional<SQRLTable> getContext(FlinkNamespace ns, NamePath namePath) {
+  protected Optional<SQRLTable> getContext(Namespace ns, NamePath namePath) {
     return resolveTable(ns, namePath, true);
   }
 
-  protected Optional<SQRLTable> resolveTable(FlinkNamespace ns, NamePath namePath, boolean getParent) {
+  protected Optional<SQRLTable> resolveTable(Namespace ns, NamePath namePath, boolean getParent) {
     if (getParent && !namePath.isEmpty()) {
       namePath = namePath.popLast();
     }
@@ -59,11 +58,11 @@ public abstract class AbstractStatementResolver {
     return table.flatMap(t -> t.walkTable(childPath));
   }
 
-  protected RelNode plan(SqlNode sqlNode, FlinkNamespace ns) {
+  protected RelNode plan(SqlNode sqlNode, Namespace ns) {
     Planner planner = new Planner(systemContext);
     return planner.plan(sqlNode, ns);
   }
-  protected AnnotatedLP convert(RelNode relNode, FlinkNamespace ns,
+  protected AnnotatedLP convert(RelNode relNode, Namespace ns,
       Function<AnnotatedLP, AnnotatedLP> postProcess, boolean isStream, Optional<SqlNodeList> hints) {
     Converter planner = new Converter(systemContext);
     AnnotatedLP annotatedLP = planner.convert(relNode, ns, isStream, hints);

@@ -11,7 +11,7 @@
   "name" : "products",
   "identifier" : "products",
   "connector" : {
-    "directoryURI" : "/Users/henneberger/sqrl/sqrl-integration-tests/../sqrl-examples/udf/data/",
+    "directoryURI" : "../sqrl-examples/udf/data/",
     "fileURIs" : [ ],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
     "systemType" : "dir"

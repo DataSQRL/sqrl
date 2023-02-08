@@ -1,13 +1,10 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
 import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
-import com.datasqrl.schema.SQRLTable;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.Assignment;
 import org.apache.calcite.sql.SqlNode;
@@ -21,7 +18,7 @@ public abstract class AbstractQueryStatementResolver extends AbstractStatementRe
     super(systemContext);
   }
 
-  public void resolve(Assignment statement, FlinkNamespace ns) {
+  public void resolve(Assignment statement, Namespace ns) {
     SqlNode sqlNode = transpile(statement, ns);
     RelNode relNode = plan(sqlNode, ns);
 
@@ -36,7 +33,7 @@ public abstract class AbstractQueryStatementResolver extends AbstractStatementRe
     ns.addNsObject(table);
   }
 
-  public abstract Function<AnnotatedLP, AnnotatedLP> getPostProcessor(FlinkNamespace ns, RelNode relNode);
+  public abstract Function<AnnotatedLP, AnnotatedLP> getPostProcessor(Namespace ns, RelNode relNode);
 
   //Post-process the AnnotatedLP to account for unique statement kinds
   protected AnnotatedLP postProcessAnnotatedLP(RelBuilder relBuilder, AnnotatedLP prel, List<String> fieldNames) {

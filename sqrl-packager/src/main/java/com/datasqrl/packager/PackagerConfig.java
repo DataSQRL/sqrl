@@ -86,7 +86,7 @@ public class PackagerConfig {
       config = mapper.convertValue(packageConfig, GlobalPackageConfiguration.class);
       updateManifest(rootDir, config);
       JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
-      packageConfig.set(ManifestConfiguration.MANIFEST, mappedManifest);
+      packageConfig.set(ManifestConfiguration.PROPERTY, mappedManifest);
     }
     return packageConfig;
   }

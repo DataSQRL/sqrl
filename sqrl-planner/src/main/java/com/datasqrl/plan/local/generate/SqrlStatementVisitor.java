@@ -14,7 +14,7 @@ import org.apache.calcite.sql.QueryAssignment;
 import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.sql.StreamAssignment;
 
-public class SqrlStatementVisitor implements StatementVisitor<Void, FlinkNamespace> {
+public class SqrlStatementVisitor implements StatementVisitor<Void, Namespace> {
 
   private final SystemContext systemContext;
 
@@ -30,49 +30,49 @@ public class SqrlStatementVisitor implements StatementVisitor<Void, FlinkNamespa
   }
 
   @Override
-  public Void visit(ImportDefinition statement, FlinkNamespace ns) {
+  public Void visit(ImportDefinition statement, Namespace ns) {
     ImportStatementResolver importStatementResolver = new ImportStatementResolver(systemContext);
     importStatementResolver.resolve(statement, ns);
     return null;
   }
 
   @Override
-  public Void visit(ExportDefinition statement, FlinkNamespace ns) {
+  public Void visit(ExportDefinition statement, Namespace ns) {
     ExportStatementResolver exportStatementResolver = new ExportStatementResolver(systemContext);
     exportStatementResolver.resolve(statement, ns);
     return null;
   }
 
   @Override
-  public Void visit(StreamAssignment statement, FlinkNamespace ns) {
+  public Void visit(StreamAssignment statement, Namespace ns) {
     StreamStatementResolver streamStatementResolver = new StreamStatementResolver(systemContext);
     streamStatementResolver.resolve(statement, ns);
     return null;
   }
 
   @Override
-  public Void visit(ExpressionAssignment statement, FlinkNamespace ns) {
+  public Void visit(ExpressionAssignment statement, Namespace ns) {
     ExpressionStatementResolver expressionStatementResolver = new ExpressionStatementResolver(systemContext);
     expressionStatementResolver.resolve(statement, ns);
     return null;
   }
 
   @Override
-  public Void visit(QueryAssignment statement, FlinkNamespace ns) {
+  public Void visit(QueryAssignment statement, Namespace ns) {
     QueryStatementResolver queryStatementResolver = new QueryStatementResolver(systemContext);
     queryStatementResolver.resolve(statement, ns);
     return null;
   }
 
   @Override
-  public Void visit(JoinAssignment statement, FlinkNamespace ns) {
+  public Void visit(JoinAssignment statement, Namespace ns) {
     JoinStatementResolver joinStatementResolver = new JoinStatementResolver(systemContext);
     joinStatementResolver.resolve(statement, ns);
     return null;
   }
 
   @Override
-  public Void visit(DistinctAssignment statement, FlinkNamespace ns) {
+  public Void visit(DistinctAssignment statement, Namespace ns) {
     DistinctStatementResolver distinctStatementResolver = new DistinctStatementResolver(systemContext);
     distinctStatementResolver.resolve(statement, ns);
     return null;

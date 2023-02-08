@@ -22,7 +22,7 @@ public class ExportStatementResolver extends AbstractStatementResolver {
     super(systemContext);
   }
 
-  public void resolve(ExportDefinition statement, FlinkNamespace ns) {
+  public void resolve(ExportDefinition statement, Namespace ns) {
     Optional<SQRLTable> tableOpt = resolveTable(ns, statement.getNamePath(),
         false);
     checkState(tableOpt.isPresent(), ErrorCode.MISSING_DEST_TABLE,
@@ -39,7 +39,7 @@ public class ExportStatementResolver extends AbstractStatementResolver {
             .atFile(SqrlAstException.toLocation(statement.getSinkPath().getParserPosition())));
   }
 
-  public void exportTable(SQRLTable table, NamePath sinkPath, FlinkNamespace ns,
+  public void exportTable(SQRLTable table, NamePath sinkPath, Namespace ns,
       ExportDefinition statement, ErrorCollector errors) {
     Preconditions.checkArgument(table.getVt().getRoot().getBase().getExecution().isWrite());
 

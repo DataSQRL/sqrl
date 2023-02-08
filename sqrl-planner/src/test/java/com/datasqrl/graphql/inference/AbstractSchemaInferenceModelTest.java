@@ -13,7 +13,7 @@ import com.datasqrl.plan.global.IndexCall;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.local.generate.FlinkNamespace;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.Session;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.TestScript;
@@ -28,9 +28,9 @@ import org.apache.commons.lang3.tuple.Triple;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
-  private FlinkNamespace ns;
+  private Namespace ns;
 
-  public AbstractSchemaInferenceModelTest(FlinkNamespace ns) {
+  public AbstractSchemaInferenceModelTest(Namespace ns) {
     this.ns = ns;
   }
 

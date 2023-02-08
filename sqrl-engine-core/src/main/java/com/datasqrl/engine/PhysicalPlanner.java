@@ -12,15 +12,11 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.tools.RelBuilder;
 
+@AllArgsConstructor
 public class PhysicalPlanner {
 
   RelBuilder relBuilder;
   TableSink errorSink;
-
-  public PhysicalPlanner(RelBuilder relBuilder, TableSink errorSink) {
-    this.relBuilder = relBuilder;
-    this.errorSink = errorSink;
-  }
 
   public PhysicalPlan plan(OptimizedDAG plan) {
     List<PhysicalPlan.StagePlan> physicalStages = new ArrayList<>();
