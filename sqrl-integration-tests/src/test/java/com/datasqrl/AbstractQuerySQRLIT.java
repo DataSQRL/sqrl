@@ -73,7 +73,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream()
             .map(ddl -> ddl.toSql())
             .sorted().collect(Collectors.joining(System.lineSeparator())), "database");
-    snapshot.addContent(schema, "schema");
 
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     executor.execute(physicalPlan);
