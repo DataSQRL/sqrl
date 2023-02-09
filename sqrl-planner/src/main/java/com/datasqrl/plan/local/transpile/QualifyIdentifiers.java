@@ -3,11 +3,13 @@
  */
 package com.datasqrl.plan.local.transpile;
 
+import com.datasqrl.plan.local.generate.SqlNodeFactory;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -33,7 +35,6 @@ import org.apache.calcite.sql.util.SqlShuttle;
 public class QualifyIdentifiers extends SqlShuttle
     implements SqrlJoinTermVisitor<SqrlJoinTerm, Object> {
 
-
   private final Analysis analysis;
 
   public QualifyIdentifiers(Analysis analysis) {
@@ -44,11 +45,8 @@ public class QualifyIdentifiers extends SqlShuttle
   @Override
   public SqlNode visit(SqlIdentifier id) {
     if (analysis.mayNeedAlias.get(id) != null) {
-      return SqlStdOperatorTable.AS.createCall(
-          SqlParserPos.ZERO,
-          id,
-          new SqlIdentifier(analysis.mayNeedAlias.get(id), SqlParserPos.ZERO)
-      );
+      SqlNodeFactory factory = new SqlNodeFactory(id.getParserPosition());
+      return factory.callAs(id, analysis.mayNeedAlias.get(id));
     }
 
     return super.visit(id);
@@ -82,19 +80,21 @@ public class QualifyIdentifiers extends SqlShuttle
 
   @Override
   public SqrlJoinTerm visitJoinPath(SqrlJoinPath sqrlJoinPath, Object context) {
-    List<SqlNode> relations = new ArrayList<>();
-    List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < sqrlJoinPath.relations.size(); i++) {
-      relations.add(sqrlJoinPath.relations.get(i).accept(this));
-      if (sqrlJoinPath.getConditions().get(i) != null) {
-        conditions.add(expr(sqrlJoinPath.getConditions().get(i)));
-      } else {
-        conditions.add(null);
-      }
-    }
     return new SqrlJoinPath(sqrlJoinPath.getParserPosition(),
-        relations,
-        conditions);
+        mapRelations(sqrlJoinPath),
+        mapConditions(sqrlJoinPath));
+  }
+
+  private List<SqlNode> mapRelations(SqrlJoinPath sqrlJoinPath) {
+    return sqrlJoinPath.relations.stream()
+        .map(i -> i.accept(this))
+        .collect(Collectors.toList());
+  }
+
+  private List<SqlNode> mapConditions(SqrlJoinPath sqrlJoinPath) {
+    return sqrlJoinPath.conditions.stream()
+        .map(i -> i != null ? expr(i) : null)
+        .collect(Collectors.toList());
   }
 
   @Override

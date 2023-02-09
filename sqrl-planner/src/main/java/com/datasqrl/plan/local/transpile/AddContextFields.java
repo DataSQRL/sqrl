@@ -5,18 +5,15 @@ package com.datasqrl.plan.local.transpile;
 
 import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.calcite.util.CalciteUtil;
-import java.util.ArrayList;
+import com.datasqrl.plan.local.generate.SqlNodeFactory;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.flink.util.Preconditions;
 
 /**
@@ -50,68 +47,60 @@ public class AddContextFields {
 
     if (node instanceof SqlSelect) {
       SqlSelect select = (SqlSelect) node;
+      SqlNodeFactory factory = new SqlNodeFactory(select.getParserPosition());
+
       if (!select.isDistinct() &&
           !(context.isPresent()
               && select.getFetch() != null)
           || aggregate) { //we add this to the hint instead of these keywords
-        rewriteGroup(select);
-        rewriteOrder(select);
+        rewriteGroup(select, factory);
+        rewriteOrder(select, factory);
       }
 
-      rewriteSelect(select);
+      rewriteSelect(select, factory);
     }
 
     return node;
   }
 
-  private void rewriteSelect(SqlSelect select) {
-    //add columns to select list. If a key already exists with that name, make unique
-    List<SqlNode> identifiers = new ArrayList<>();
-    List<SqlNode> ppkNodes = getPPKNodes(context);
-    for (int i = 0; i < ppkNodes.size(); i++) {
-      SqlNode ppk = ppkNodes.get(i);
-      String alias = SqlValidatorUtil.getAlias(ppk, -1);
+  private void rewriteSelect(SqlSelect select, SqlNodeFactory factory) {
+    List<SqlNode> ppkNodes = getPPKNodes(context, factory);
+    List<SqlNode> toPrepend = ppkNodes.stream()
+        .map(ppk -> factory.callAs(ppk, "__pk_" + ppkNodes.indexOf(ppk)))
+        .collect(Collectors.toList());
 
-      identifiers.add(
-          SqlStdOperatorTable.AS.createCall(
-              SqlParserPos.ZERO,
-              ppk,
-              new SqlIdentifier(List.of("__pk_" + i), SqlParserPos.ZERO)
-          ));
-    }
-
-    CalciteUtil.prependSelectListNodes(select, identifiers);
+    SqlNodeList prependList = factory.prependList(select.getSelectList(), toPrepend);
+    select.setSelectList(prependList);
   }
 
-  private void rewriteGroup(SqlSelect select) {
+  private void rewriteGroup(SqlSelect select, SqlNodeFactory factory) {
     if (!sqrlValidator.isAggregate(select)) {
       Preconditions.checkState(select.getGroup() == null);
       return;
     }
 
-    List<SqlNode> ppkNodes = getPPKNodes(context);
-    CalciteUtil.prependGroupByNodes(select, ppkNodes);
+    List<SqlNode> ppkNodes = getPPKNodes(context, factory);
+
+    SqlNodeList prependList = factory.prependList(select.getGroup(), ppkNodes);
+    select.setGroupBy(prependList);
   }
 
-  private void rewriteOrder(SqlSelect select) {
+  private void rewriteOrder(SqlSelect select, SqlNodeFactory factory) {
     //If no orders, exit
     if (select.getOrderList() == null || select.getOrderList().getList().isEmpty()) {
       return;
     }
 
-    List<SqlNode> ppkNodes = getPPKNodes(context);
-    CalciteUtil.prependOrderByNodes(select, ppkNodes);
+    List<SqlNode> ppkNodes = getPPKNodes(context, factory);
+    SqlNodeList prependList = factory.prependList(select.getOrderList(), ppkNodes);
+    select.setOrderBy(prependList);
   }
 
-  public static List<SqlNode> getPPKNodes(Optional<VirtualRelationalTable> context) {
-    List<SqlNode> identifiers = new ArrayList<>();
-    for (String ppk : context.get().getPrimaryKeyNames()) {
-      identifiers.add(
-          new SqlIdentifier(List.of(ReservedName.SELF_IDENTIFIER.getCanonical(), ppk),
-              SqlParserPos.ZERO)
-      );
-    }
-
-    return identifiers;
+  public static List<SqlNode> getPPKNodes(Optional<VirtualRelationalTable> context,
+      SqlNodeFactory factory) {
+    return context.get().getPrimaryKeyNames()
+        .stream()
+        .map(ppk -> factory.toIdentifier(ReservedName.SELF_IDENTIFIER.getCanonical(), ppk))
+        .collect(Collectors.toList());
   }
 }

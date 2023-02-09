@@ -3,7 +3,9 @@
  */
 package com.datasqrl.plan.local.transpile;
 
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.SqlNodeUtil;
+import com.datasqrl.plan.local.generate.SqlNodeFactory;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
@@ -18,11 +20,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
@@ -35,7 +38,6 @@ import org.apache.calcite.sql.UnboundJoin;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class ReplaceWithVirtualTable extends SqlShuttle
     implements SqrlJoinTermVisitor<SqrlJoinTerm, Object> {
@@ -55,99 +57,151 @@ public class ReplaceWithVirtualTable extends SqlShuttle
   public SqlNode visit(SqlCall call) {
     switch (call.getKind()) {
       case UNBOUND_JOIN:
-        UnboundJoin u = (UnboundJoin) call;
-        return new UnboundJoin(u.getParserPosition(),
-            u.getRelation().accept(this),
-            u.getCondition()
-        );
+        return handleUnboundJoin(call);
       case JOIN_DECLARATION:
-        SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) call;
-        SqrlJoinTerm relation = spec.getRelation().accept(this, null);
-        Optional<SqlNodeList> orderList = spec.getOrderList()
-            .map(o -> (SqlNodeList) o.accept(this));
-        Optional<SqlNodeList> leftJoin = spec.getLeftJoins().map(l -> (SqlNodeList) l.accept(this));
-
-        return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
-            relation,
-            orderList,
-            spec.getFetch(),
-            spec.getInverse(),
-            leftJoin);
+        return handleJoinDeclaration(call);
       case AS:
-        SqlNode tbl = call.getOperandList().get(0);
-        //aliased in inlined
-        if (tbl instanceof SqlIdentifier) {
-          ResolvedTable resolved = analysis.getTableIdentifiers().get(tbl);
-          if (resolved instanceof RelativeResolvedTable &&
-              ((RelativeResolvedTable) resolved).getFields().get(0).getJoin().isPresent()) {
-            return tbl.accept(this);
-          }
-        }
-
-        return super.visit(call);
+        return handleAs(call);
       case SELECT:
-        SqlSelect select = (SqlSelect) super.visit(call);
-        while (!pullup.isEmpty()) {
-          SqlNode condition = pullup.pop();
-
-          appendToSelect(select, condition);
-        }
-        return select;
+        return handleSelect(call);
       case JOIN:
-        SqlJoin join = (SqlJoin) super.visit(call);
-        if (!pullup.isEmpty()) {
-          SqlNode condition = pullup.pop();
-          addJoinCondition(join, condition);
-        }
-
-        return join;
+        return handleJoin(call);
     }
 
     return super.visit(call);
   }
 
-  public static void addJoinCondition(SqlJoin join, SqlNode condition) {
-    if (join.getCondition() == null) {
-      join.setOperand(5, condition);
-    } else {
-      join.setOperand(5, SqlNodeUtil.and(join.getCondition(), condition));
+  private SqlNode handleUnboundJoin(SqlCall call) {
+    UnboundJoin u = (UnboundJoin) call;
+    return new UnboundJoin(u.getParserPosition(),
+        u.getRelation().accept(this),
+        u.getCondition()
+    );
+  }
+
+  private SqlNode handleJoinDeclaration(SqlCall call) {
+    SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) call;
+    SqrlJoinTerm relation = spec.getRelation().accept(this, null);
+    Optional<SqlNodeList> orderList = spec.getOrderList()
+        .map(o -> (SqlNodeList) o.accept(this));
+    Optional<SqlNodeList> leftJoin = spec.getLeftJoins().map(l -> (SqlNodeList) l.accept(this));
+
+    return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
+        relation,
+        orderList,
+        spec.getFetch(),
+        spec.getInverse(),
+        leftJoin);
+  }
+
+  private SqlNode handleAs(SqlCall call) {
+    SqlNode tbl = call.getOperandList().get(0);
+    //aliased in inlined
+    if (tbl instanceof SqlIdentifier) {
+      ResolvedTable resolved = analysis.getTableIdentifiers().get(tbl);
+      if (resolved instanceof RelativeResolvedTable &&
+          ((RelativeResolvedTable) resolved).getFields().get(0).getJoin().isPresent()) {
+        return tbl.accept(this);
+      }
     }
+
+    return super.visit(call);
+  }
+
+  private SqlNode handleSelect(SqlCall call) {
+    SqlSelect select = (SqlSelect) super.visit(call);
+    while (!pullup.isEmpty()) {
+      SqlNode condition = pullup.pop();
+
+      appendToSelect(select, condition);
+    }
+    return select;
+  }
+
+  private SqlNode handleJoin(SqlCall call) {
+    SqlJoin join = (SqlJoin) super.visit(call);
+    if (!pullup.isEmpty()) {
+      SqlNode condition = pullup.pop();
+      addJoinCondition(join, condition);
+    }
+
+    return join;
+  }
+
+  public static void addJoinCondition(SqlJoin join, SqlNode condition) {
+    join.setOperand(5, concat(join.getCondition(), condition));
     join.setOperand(4, JoinConditionType.ON.symbol(SqlParserPos.ZERO));
   }
 
+
   private void appendToSelect(SqlSelect select, SqlNode condition) {
-    SqlNode where = select.getWhere();
-    if (where == null) {
-      select.setWhere(condition);
-    } else {
-      select.setWhere(SqlNodeUtil.and(select.getWhere(), condition));
-    }
+    select.setWhere(concat(condition,SqlNodeUtil.and(select.getWhere(), condition)));
   }
 
+  private static SqlNode concat(SqlNode condition1, SqlNode condition2) {
+    if (condition1 == null) {
+      return condition2;
+    } else {
+      if (condition2 == null) {
+        return condition1;
+      } else {
+        return SqlNodeUtil.and(condition1, condition2);
+      }
+    }
+  }
+  /**
+   * Visits an {@link SqlIdentifier} and returns the corresponding SqlNode.
+   *
+   * @param id the {@link SqlIdentifier} to visit
+   * @return the corresponding SqlNode
+   */
   @Override
   public SqlNode visit(SqlIdentifier id) {
-    //identifier
+    // Check if identifier is an expression
     if (analysis.getExpressions().get(id) != null) {
       return id.accept(new ShadowColumns());
-    } else if (analysis.getTableIdentifiers().get(id) == null) {
+    }
+
+    // Check if identifier is a table identifier
+    if (analysis.getTableIdentifiers().get(id) == null) {
       return super.visit(id);
     }
 
+    // Resolve the table identifier
     ResolvedTable resolved = analysis.getTableIdentifiers().get(id);
+    return resolveTableIdentifier(resolved, id);
+  }
+
+  /**
+   * Resolves the table identifier.
+   *
+   * @param resolved the {@link ResolvedTable}
+   * @param id the {@link SqlIdentifier}
+   * @return the corresponding SqlNode
+   */
+  private SqlNode resolveTableIdentifier(ResolvedTable resolved, SqlIdentifier id) {
+    // Identifier is a single table
+    SqlNodeFactory factory = new SqlNodeFactory(id.getParserPosition());
     if (resolved instanceof SingleTable) {
       SingleTable singleTable = (SingleTable) resolved;
       return new SqlIdentifier(singleTable.getToTable().getVt().getNameId(),
           id.getParserPosition());
-    } else if (resolved instanceof AbsoluteResolvedTable) {
+    }
+
+    // Identifier is an absolute resolved table
+    if (resolved instanceof AbsoluteResolvedTable) {
       throw new RuntimeException("unexpected type");
-    } else if (resolved instanceof RelativeResolvedTable) {
+    }
+
+    // Identifier is a relative resolved table
+    if (resolved instanceof RelativeResolvedTable) {
       RelativeResolvedTable resolveRel = (RelativeResolvedTable) resolved;
       Preconditions.checkState(resolveRel.getFields().size() == 1);
       Relationship relationship = resolveRel.getFields().get(0);
-      //Is a join declaration
+
+      // Check if join declaration
       if (relationship.getJoin().isPresent()) {
         String alias = analysis.tableAlias.get(id);
-
         ExpandJoinDeclaration expander = new ExpandJoinDeclaration(resolveRel.getAlias(), alias,
             aliasCnt);
         UnboundJoin pair = expander.expand(relationship.getJoin().get());
@@ -155,35 +209,33 @@ public class ReplaceWithVirtualTable extends SqlShuttle
         return pair.getRelation();
       }
 
+      // Handle normal relationship
       String alias = analysis.tableAlias.get(id);
       SqlNode condition = createCondition(alias, resolveRel.getAlias(),
-          relationship.getFromTable(),
-          relationship.getToTable()
-      );
+          relationship.getFromTable(), relationship.getToTable(), factory);
       pullup.push(condition);
-
-      return new SqlIdentifier(relationship.getToTable().getVt().getNameId(),
-          id.getParserPosition());
+      return factory.toIdentifier(relationship.getToTable().getVt().getNameId());
     }
 
     return super.visit(id);
   }
 
   public static SqlNode createCondition(String firstAlias, String alias, SQRLTable from,
-      SQRLTable to) {
+      SQRLTable to, SqlNodeFactory factory) {
     List<SqlNode> conditions = new ArrayList<>();
     for (int i = 0; i < from.getVt().getPrimaryKeyNames().size()
         && i < to.getVt().getPrimaryKeyNames().size(); i++) {
-      String pkName = from.getVt().getPrimaryKeyNames().get(i);
-      String toPkName = to.getVt().getPrimaryKeyNames().get(i);
-      SqlCall call = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
-          new SqlIdentifier(List.of(alias, pkName), SqlParserPos.ZERO),
-          new SqlIdentifier(List.of(firstAlias, toPkName), SqlParserPos.ZERO)
-      );
+      SqlNode lhs = factory.toIdentifier(alias, getPrimaryKeyName(from.getVt(), i));
+      SqlNode rhs = factory.toIdentifier(firstAlias, getPrimaryKeyName(to.getVt(), i));
+      SqlCall call = factory.callEq(lhs, rhs);
+
       conditions.add(call);
     }
-    SqlNode condition = SqlNodeUtil.and(conditions);
-    return condition;
+    return SqlNodeUtil.and(conditions);
+  }
+
+  private static String getPrimaryKeyName(VirtualRelationalTable vt, int i) {
+    return vt.getPrimaryKeyNames().get(i);
   }
 
   @Override
@@ -191,6 +243,7 @@ public class ReplaceWithVirtualTable extends SqlShuttle
     List<SqlNode> relations = new ArrayList<>();
     List<SqlNode> conditions = new ArrayList<>();
     for (int i = 0; i < node.getRelations().size(); i++) {
+      //Note: this function may add to the pullup object. After we process, empty the pullup conditions
       relations.add(node.getRelations().get(i).accept(this));
       if (node.getConditions().get(i) != null) {
         conditions.add(node.getConditions().get(i).accept(this));

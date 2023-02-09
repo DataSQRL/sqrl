@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.local.transpile;
 
+import com.datasqrl.plan.local.generate.SqlNodeFactory;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.RelativeResolvedTable;
@@ -19,7 +20,6 @@ import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -102,10 +102,9 @@ public class FlattenTablePaths extends SqlShuttle
 
   @Override
   public SqrlJoinTerm visitJoinPath(SqrlJoinPath sqrlJoinPath, Object context) {
-    List<SqlNode> relation = new ArrayList<>();
-    for (SqlNode rel : sqrlJoinPath.getRelations()) {
-      relation.add(rel.accept(this));
-    }
+    List<SqlNode> relation = sqrlJoinPath.getRelations().stream()
+        .map(rel -> rel.accept(this))
+        .collect(Collectors.toList());
 
     return new SqrlJoinPath(sqrlJoinPath.getParserPosition(),
         relation,
@@ -129,60 +128,70 @@ public class FlattenTablePaths extends SqlShuttle
 
   private SqlNode expandTable(SqlIdentifier id) {
     String finalAlias = analysis.tableAlias.get(id);
-    List<String> suffix;
 
-    SqlIdentifier first;
+    SqlNodeFactory factory = new SqlNodeFactory(id.getParserPosition());
+    // Get the ResolvedTable for the SqlIdentifier
     ResolvedTable resolve = analysis.tableIdentifiers.get(id);
-    if (resolve instanceof SingleTable || resolve instanceof VirtualResolvedTable) {
-      suffix = List.of();
-      first = new SqlIdentifier(List.of(
-          id.names.get(0)
-      ), SqlParserPos.ZERO);
-    } else if (resolve instanceof AbsoluteResolvedTable) {
-      suffix = id.names.subList(1, id.names.size());
-      first = new SqlIdentifier(List.of(
-          id.names.get(0)
-      ), SqlParserPos.ZERO);
-    } else if (resolve instanceof RelativeResolvedTable) {
-      first = new SqlIdentifier(List.of(id.names.get(0),
-          id.names.get(1)
-      ), SqlParserPos.ZERO);
-      if (id.names.size() > 2) {
-        suffix = id.names.subList(2, id.names.size());
-      } else {
-        suffix = List.of();
-      }
 
+    // Depending on the ResolvedTable type, build the SqlIdentifier and the suffix
+    List<String> suffix = getSuffix(id, resolve);
+    SqlIdentifier first = getFirstIdentifier(id, resolve, factory);
+
+    // Create the first SqlNode
+    String firstAlias = "_g" + (++idx);
+    SqlNode n = factory.callAs(first, suffix.size() > 0 ? firstAlias : finalAlias);
+
+    // If there are suffixes, build the SqlNode by joining
+    if (suffix.size() >= 1) {
+      n = buildSuffixSqlNode(suffix, finalAlias, firstAlias, n, factory);
+    }
+
+    return n;
+  }
+
+  private SqlIdentifier getFirstIdentifier(SqlIdentifier id, ResolvedTable resolve,
+      SqlNodeFactory factory) {
+    if (resolve instanceof SingleTable || resolve instanceof VirtualResolvedTable
+        || resolve instanceof AbsoluteResolvedTable) {
+      return factory.toIdentifier(id.names.get(0));
+    } else if (resolve instanceof RelativeResolvedTable) {
+      return factory.toIdentifier(id.names.get(0), id.names.get(1));
     } else {
       throw new RuntimeException("");
     }
+  }
 
-    String firstAlias = "_g" + (++idx);
-    SqlNode n =
-        SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-            first,
-            new SqlIdentifier(suffix.size() > 0 ? firstAlias : finalAlias,
-                SqlParserPos.ZERO));
-    if (suffix.size() >= 1) {
-      String currentAlias = firstAlias;
-
-      for (int i = 0; i < suffix.size(); i++) {
-        String nextAlias = i == suffix.size() - 1 ? finalAlias : "_g" + (++idx);
-        n = new SqlJoin(
-            SqlParserPos.ZERO,
-            n,
-            SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-            JoinType.DEFAULT.symbol(SqlParserPos.ZERO),
-            SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-                new SqlIdentifier(List.of(currentAlias, suffix.get(i)), SqlParserPos.ZERO),
-                new SqlIdentifier(nextAlias, SqlParserPos.ZERO)),
-            JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
-            null
-        );
-        currentAlias = nextAlias;
+  private List<String> getSuffix(SqlIdentifier id, ResolvedTable resolve) {
+    if (resolve instanceof SingleTable || resolve instanceof VirtualResolvedTable) {
+      return List.of();
+    } else if (resolve instanceof AbsoluteResolvedTable) {
+      return id.names.subList(1, id.names.size());
+    } else if (resolve instanceof RelativeResolvedTable) {
+      if (id.names.size() > 2) {
+        return id.names.subList(2, id.names.size());
+      } else {
+        return List.of();
       }
+    } else {
+      throw new RuntimeException("");
     }
+  }
 
+  /**
+   * Builds the SqlNode by joining the suffixes.
+   */
+  private SqlNode buildSuffixSqlNode(List<String> suffix, String finalAlias, String firstAlias,
+      SqlNode n,
+      SqlNodeFactory factory) {
+    String currentAlias = firstAlias;
+
+    // Iterate through the suffixes and join them
+    for (int i = 0; i < suffix.size(); i++) {
+      String nextAlias = i == suffix.size() - 1 ? finalAlias : "_g" + (++idx);
+      SqlNode rhs = factory.callAs(factory.toIdentifier(currentAlias, suffix.get(i)), nextAlias);
+      n = factory.createJoin(n, JoinType.DEFAULT, rhs);
+      currentAlias = nextAlias;
+    }
     return n;
   }
 }

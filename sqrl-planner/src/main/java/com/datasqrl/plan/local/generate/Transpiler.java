@@ -7,6 +7,8 @@ import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.calcite.SqlValidatorUtil;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
+import com.datasqrl.plan.local.transpile.AddContextFields;
+import com.datasqrl.plan.local.transpile.AddHints;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.datasqrl.schema.Field;
@@ -22,18 +24,12 @@ import org.apache.calcite.sql.ExpressionAssignment;
 import org.apache.calcite.sql.ImportDefinition;
 import org.apache.calcite.sql.JoinAssignment;
 import org.apache.calcite.sql.QueryAssignment;
-import org.apache.calcite.sql.SqlHint;
-import org.apache.calcite.sql.SqlHint.HintOptionFormat;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StreamAssignment;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
-import com.datasqrl.plan.local.transpile.*;
 
 public class Transpiler {
 
@@ -110,8 +106,9 @@ public class Transpiler {
       }
       return transformExpressionToQuery(sqlNode);
     } else if (query instanceof ImportDefinition) {
-      ConvertTimestampToQuery tsToQuery = new ConvertTimestampToQuery();
-      return tsToQuery.convert((ImportDefinition)query);
+      ConvertTimestampToExpression tsToQuery = new ConvertTimestampToExpression();
+      SqlNode ts = tsToQuery.convert((ImportDefinition)query);
+      return transformExpressionToQuery(ts);
     }
     throw new IllegalArgumentException("Unsupported query type: " + query.getClass().getSimpleName());
   }
@@ -122,27 +119,16 @@ public class Transpiler {
   }
 
   public SqlNode convertDistinctOnToQuery(DistinctAssignment node) {
-    SqlNode query =
-        new SqlSelect(
-            node.getParserPosition(),
-            null,
-            new SqlNodeList(List.of(SqlIdentifier.star(node.getParserPosition())), node.getParserPosition()),
-            node.getTable(),
-            null,
-            null,
-            null,
-            null,
-            new SqlNodeList(node.getOrder(), node.getParserPosition()),
-            null,
-            SqlLiteral.createExactNumeric("1", node.getParserPosition()),
-            new SqlNodeList(List.of(new SqlHint(node.getParserPosition(),
-                new SqlIdentifier("DISTINCT_ON", node.getParserPosition()),
-                new SqlNodeList(node.getPartitionKeys(), node.getParserPosition()),
-                HintOptionFormat.ID_LIST
-            )), node.getParserPosition())
-        );
+    SqlNodeFactory sqlNodeFactory = new SqlNodeFactory(node.getParserPosition());
+    SqlSelect query = sqlNodeFactory.createSqlSelect();
+    query.setSelectList(sqlNodeFactory.createStarSelectList());
+    query.setFrom(node.getTable());
+    query.setOrderBy(sqlNodeFactory.list(node.getOrder()));
+    query.setFetch(SqlLiteral.createExactNumeric("1", node.getParserPosition()));
+    query.setHints(sqlNodeFactory.createDistinctOnHintList(node.getPartitionKeys()));
     return query;
   }
+
   private Optional<SQRLTable> getContext(Namespace ns, SqrlStatement statement) {
     if (statement instanceof ImportDefinition) { //a table import
       return resolveTable(ns,
@@ -195,18 +181,9 @@ public class Transpiler {
   }
 
   private SqlNode transformExpressionToQuery(SqlNode sqlNode) {
-    return new SqlSelect(SqlParserPos.ZERO,
-        SqlNodeList.EMPTY,
-        new SqlNodeList(List.of(sqlNode), SqlParserPos.ZERO),
-        null,
-        null,
-        null,
-        null,
-        SqlNodeList.EMPTY,
-        null,
-        null,
-        null,
-        SqlNodeList.EMPTY
-    );
+    SqlNodeFactory factory = new SqlNodeFactory(sqlNode.getParserPosition());
+    SqlSelect select = factory.createSqlSelect();
+    select.setSelectList(factory.list(sqlNode));
+    return select;
   }
 }

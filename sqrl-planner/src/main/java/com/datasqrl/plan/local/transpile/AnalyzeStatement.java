@@ -142,7 +142,7 @@ public class AnalyzeStatement implements
         return spec.accept(this, context);
       default:
         throw new SqrlAstException(ErrorLabel.GENERIC, node.getParserPosition(),
-            "unknown ast node");
+            "unknown ast node:" + node.getClass());
     }
   }
 

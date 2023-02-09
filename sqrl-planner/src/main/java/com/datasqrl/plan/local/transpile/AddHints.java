@@ -12,18 +12,12 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.calcite.sql.Assignment;
-import org.apache.calcite.sql.DistinctAssignment;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlNumericLiteral;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqrlStatement;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SelectScope;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -71,30 +65,17 @@ public class AddHints {
       rewriteDistinctOnHint(select);
     }
   }
-
   private void rewriteDistinctOnHint(SqlSelect select) {
     SqlValidatorScope scope = validator.getSelectScope(select);
 
-    //1. Rearrange so distinct on is first few columns
+    //Rearrange distinct on to be the first few columns
     SqlHint hint = getDistinctOnHint(select);
+    List<SqlNode> operands = extractHintOperands(hint);
+    List<SqlNode> newSelectList = rearrangeDistinctOnFirstFewColumns(select, scope, operands);
 
-    SelectScope selectScope = validator.getRawSelectScope(select);
-    List<SqlNode> items = selectScope.getExpandedSelectList();
-
-    List<SqlNode> newSelectList = new ArrayList<>();
-    //Hint operand lists include hint name so skip first
-    List<SqlNode> operands = ((SqlNodeList) hint.getOperandList().get(1)).getList();
-    for (int i = 0; i < operands.size(); i++) {
-      SqlNode operand = operands.get(i);
-      newSelectList.add(operand);
-      operands.set(i, new SqlIdentifier(Integer.toString(i), SqlParserPos.ZERO));
-    }
-
-    List<SqlNode> list = removeDuplicates(newSelectList, items, scope);
-    List<SqlNode> newList = new ArrayList<>(newSelectList);
-    newList.addAll(list);
-
-    select.setSelectList(new SqlNodeList(newList, SqlParserPos.ZERO));
+    List<SqlNode> withoutDuplicates = removeDuplicates(newSelectList, select, scope);
+    List<SqlNode> finalSelectList = mergeLists(newSelectList, withoutDuplicates);
+    select.setSelectList(new SqlNodeList(finalSelectList, SqlParserPos.ZERO));
     CalciteUtil.wrapSelectInProject(select);
     SqlSelect inner = (SqlSelect) select.getFrom();
     //pull up hints
@@ -102,17 +83,64 @@ public class AddHints {
     inner.setHints(new SqlNodeList(SqlParserPos.ZERO));
   }
 
-  private List<SqlNode> removeDuplicates(List<SqlNode> newSelectList, List<SqlNode> items,
-      SqlValidatorScope scope) {
-    List<SqlIdentifier> identifiers = newSelectList.stream().filter(f -> f instanceof SqlIdentifier)
-        .map(i -> scope.fullyQualify((SqlIdentifier) i).identifier)
-        .collect(Collectors.toList());
+  /**
+   * Extracts the operands from the distinct on hint.
+   *
+   * @param hint the distinct on hint
+   * @return the operands from the hint
+   */
+  private List<SqlNode> extractHintOperands(SqlHint hint) {
+    //Hint operand lists include hint name so skip first
+    return ((SqlNodeList) hint.getOperandList().get(1)).getList();
+  }
 
+  /**
+   * Rearranges the distinct on columns to be the first few columns.
+   *
+   * @param select the select node
+   * @param scope the current scope
+   * @param operands the distinct on columns
+   * @return the rearranged select list
+   */
+  private List<SqlNode> rearrangeDistinctOnFirstFewColumns(SqlSelect select, SqlValidatorScope scope, List<SqlNode> operands) {
+    List<SqlNode> newSelectList = new ArrayList<>();
+    for (int i = 0; i < operands.size(); i++) {
+      SqlNode operand = operands.get(i);
+      newSelectList.add(operand);
+      operands.set(i, new SqlIdentifier(Integer.toString(i), SqlParserPos.ZERO));
+    }
+    return newSelectList;
+  }
+
+  /**
+   * Merges two lists into one.
+   *
+   * @param newSelectList the new select list
+   * @param withoutDuplicates the list without duplicates
+   * @return the merged list
+   */
+  private List<SqlNode> mergeLists(List<SqlNode> newSelectList, List<SqlNode> withoutDuplicates) {
+    List<SqlNode> finalSelectList = new ArrayList<>(newSelectList);
+    finalSelectList.addAll(withoutDuplicates);
+    return finalSelectList;
+  }
+
+  private List<SqlNode> removeDuplicates(List<SqlNode> newSelectList, SqlSelect select,
+      SqlValidatorScope scope) {
+    SelectScope selectScope = validator.getRawSelectScope(select);
+    List<SqlNode> items = selectScope.getExpandedSelectList();
+    List<SqlIdentifier> fullyQualifiedIdentifiers = fullyQualifyIdentifiers(newSelectList, scope);
+
+    return filterDuplicateItems(items, fullyQualifiedIdentifiers, scope);
+  }
+
+  private List<SqlNode> filterDuplicateItems(List<SqlNode> items,
+      List<SqlIdentifier> fullyQualifiedIdentifiers, SqlValidatorScope scope) {
     List<SqlNode> newNodes = new ArrayList<>();
     for (SqlNode item : items) {
       if (item instanceof SqlIdentifier) {
-        Optional<SqlIdentifier> found = identifiers.stream().filter(i ->
-                scope.fullyQualify((SqlIdentifier) item).identifier.equalsDeep(i, Litmus.IGNORE))
+        Optional<SqlIdentifier> found = fullyQualifiedIdentifiers.stream()
+            .filter(i -> fullyQualifyIdentifier(item, scope).equalsDeep(i, Litmus.IGNORE))
             .findAny();
         if (found.isEmpty()) {
           newNodes.add(item);
@@ -125,121 +153,45 @@ public class AddHints {
     return newNodes;
   }
 
-  private List<SqlNode> skipFirst(List<SqlNode> operandList) {
-    return operandList.subList(1, operandList.size());
+  private SqlIdentifier fullyQualifyIdentifier(SqlNode item, SqlValidatorScope scope) {
+    return scope.fullyQualify((SqlIdentifier) item).identifier;
+  }
+
+  private List<SqlIdentifier> fullyQualifyIdentifiers(List<SqlNode> newSelectList,
+      SqlValidatorScope scope) {
+    return newSelectList.stream()
+        .filter(f -> f instanceof SqlIdentifier)
+        .map(i -> fullyQualifyIdentifier(i, scope))
+        .collect(Collectors.toList());
   }
 
   private SqlHint getDistinctOnHint(SqlSelect select) {
-    List<SqlNode> list = select.getHints().getList();
-    for (int i = 0; i < list.size(); i++) {
-      SqlHint hint = (SqlHint) list.get(i);
-      if (hint.getName().equals(TopNHint.Type.DISTINCT_ON.name())) {
-        return hint;
-      }
-    }
-    throw new RuntimeException("Missing hint");
+    return select.getHints().getList().stream()
+        .filter(hint -> ((SqlHint) hint).getName().equals(TopNHint.Type.DISTINCT_ON.name()))
+        .findFirst()
+        .map(hint -> (SqlHint) hint)
+        .orElseThrow(() -> new RuntimeException("Missing hint"));
   }
 
   private boolean isNested() {
     return context.isPresent();
   }
 
-  private void rewriteHints(SqlSelect select, SqlValidatorScope scope) {
-    SqlNodeList hints = select.getHints();
-    if (hints == null) {
-      return;
-    }
-    List<SqlNode> list = hints.getList();
-    for (int i = 0; i < list.size(); i++) {
-      SqlHint hint = (SqlHint) list.get(i);
-      if (hint.getName().equals(TopNHint.Type.DISTINCT_ON.name())) {
-        SqlHint newHint = rewriteDistinctOnHint(select, hint, scope);
-        hints.set(i, newHint);
-      }
-    }
-
-    select.setHints(hints);
-  }
 
   private void rewriteDistinctingHint(SqlSelect select, Function<SqlNodeList, SqlHint> createFnc) {
     CalciteUtil.removeKeywords(select);
 
     CalciteUtil.wrapSelectInProject(select);
 
-    List<SqlNode> innerPPKNodes = context.map(c -> getPPKNodes(select)).orElse(List.of());
+    List<SqlNode> innerPPKNodes = context.map(c -> getPPKNodes()).orElse(List.of());
     SqlNodeList ppkNode = new SqlNodeList(innerPPKNodes, SqlParserPos.ZERO);
     SqlHint selectDistinctHint = createFnc.apply(ppkNode);
     CalciteUtil.setHint(select, selectDistinctHint);
   }
 
-  private List<SqlNode> getPPKNodes(SqlSelect select) {
+  private List<SqlNode> getPPKNodes() {
     return IntStream.range(0, context.get().getPrimaryKeyNames().size())
         .mapToObj(i -> new SqlIdentifier(List.of(Integer.toString(i)), SqlParserPos.ZERO))
         .collect(Collectors.toList());
-  }
-
-  private SqlHint rewriteDistinctOnHint(SqlSelect select, SqlHint hint, SqlValidatorScope scope) {
-    List<SqlNode> options = CalciteUtil.getHintOptions(hint);
-
-    appendUniqueToSelectList(select, options, scope);
-
-    List<SqlNode> partitionKeyIndices = getSelectListIndex(select, options, 0, scope).stream()
-        .map(e -> new SqlIdentifier(((SqlNumericLiteral) e).getValue().toString(),
-            SqlParserPos.ZERO)).collect(Collectors.toList());
-
-    SqlHint newHint = new SqlHint(hint.getParserPosition(),
-        new SqlIdentifier(hint.getName(), hint.getParserPosition()),
-        new SqlNodeList(partitionKeyIndices, hint.getParserPosition()), hint.getOptionFormat());
-    return newHint;
-  }
-
-  private List<SqlNode> getSelectListIndex(SqlSelect select, List<SqlNode> operands, int offset,
-      SqlValidatorScope scope) {
-    List<SqlNode> nodeList = new ArrayList<>();
-    for (SqlNode operand : operands) {
-      int index = getIndexOfExpression(select, operand, scope);
-      if (index == -1) {
-        throw new RuntimeException("Could not find expression in select list: " + operand);
-      }
-
-      nodeList.add(SqlLiteral.createExactNumeric(Long.toString(index + offset),
-          operand.getParserPosition()));
-    }
-
-    return nodeList;
-  }
-
-  private int getIndexOfExpression(SqlSelect select, SqlNode operand, SqlValidatorScope scope) {
-    List<SqlNode> list = select.getSelectList().getList();
-    for (int i = 0; i < list.size(); i++) {
-      SqlNode selectItem = list.get(i);
-      if (CalciteUtil.selectListExpressionEquals(selectItem, operand, scope)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  private void appendUniqueToSelectList(SqlSelect select, List<SqlNode> options,
-      SqlValidatorScope scope) {
-    for (int i = 0; i < options.size(); i++) {
-      SqlNode option = options.get(i);
-      if (!expressionInSelectList(select, option, scope)) {
-        SqlCall call = SqlStdOperatorTable.AS.createCall(option.getParserPosition(),
-            List.of(
-                option,
-                new SqlIdentifier("_option_" + i, SqlParserPos.ZERO)));
-        CalciteUtil.appendSelectListItem(select, call);
-      }
-    }
-  }
-
-  private boolean expressionInSelectList(SqlSelect select, SqlNode exp, SqlValidatorScope scope) {
-    for (SqlNode selectItem : select.getSelectList()) {
-      if (CalciteUtil.selectListExpressionEquals(selectItem, exp, scope)) {
-        return true;
-      }
-    }
-    return false;
   }
 }
