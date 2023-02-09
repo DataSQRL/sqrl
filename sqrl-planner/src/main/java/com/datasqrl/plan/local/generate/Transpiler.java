@@ -3,10 +3,12 @@ package com.datasqrl.plan.local.generate;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.calcite.SqlValidatorUtil;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
-import com.datasqrl.plan.local.transpile.AddContextTable;
+import com.datasqrl.plan.local.transpile.AddContextFields;
+import com.datasqrl.plan.local.transpile.AddHints;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.datasqrl.schema.Field;
@@ -16,24 +18,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.DistinctAssignment;
 import org.apache.calcite.sql.ExpressionAssignment;
 import org.apache.calcite.sql.ImportDefinition;
 import org.apache.calcite.sql.JoinAssignment;
 import org.apache.calcite.sql.QueryAssignment;
-import org.apache.calcite.sql.SqlHint;
-import org.apache.calcite.sql.SqlHint.HintOptionFormat;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StreamAssignment;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
-import com.datasqrl.plan.local.transpile.*;
 
 public class Transpiler {
 
@@ -43,112 +39,96 @@ public class Transpiler {
 
     this.systemContext = systemContext;
   }
-
   public SqlNode transpile(SqrlStatement query, Namespace ns) {
-    List<String> assignmentPath = query.getNamePath().popLast()
-        .stream()
-        .map(e -> e.getCanonical())
-        .collect(Collectors.toList());
-
     Optional<SQRLTable> table = getContext(ns, query);
-    table.ifPresent(
-        t -> checkPathWritable(ns, query, query.getNamePath().popLast()));
-    Optional<VirtualRelationalTable> context =
-        table.map(t -> t.getVt());
+    table.ifPresent(t -> checkPathWritable(ns, query.getNamePath().popLast()));
+    Optional<VirtualRelationalTable> context = table.map(SQRLTable::getVt);
 
-    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(ns.getSchema(),
-        assignmentPath, table)
-        .accept(node);
+    SqlTransformer transformer = createTransformer(query, ns.getSchema(), table);
+    SqlNode node = convertToQuery(query, context);
+    node = transformer.transform(node);
 
-    SqlNode node = query;
+    return postprocess(query, ns, context, node);
+  }
+
+  public SqlNode postprocess(SqrlStatement query, Namespace ns,
+      Optional<VirtualRelationalTable> context, SqlNode node) {
     if (query instanceof DistinctAssignment) {
-      node = convertDistinctOnToQuery((DistinctAssignment) query);
-    } else if (query instanceof QueryAssignment) {
-      node = ((QueryAssignment) query).getQuery();
-    } else if (query instanceof JoinAssignment) {
-      node = ((JoinAssignment) query).getQuery();
-    } else if (query instanceof StreamAssignment) {
-      node = ((StreamAssignment) query).getQuery();
-    } else if (query instanceof ExpressionAssignment) {
-      SqlNode sqlNode = ((ExpressionAssignment) query).getExpression();
-      node = transformExpressionToQuery(sqlNode);
-    } else if (query instanceof ImportDefinition) {
-      ConvertTimestampToQuery tsToQuery = new ConvertTimestampToQuery();
-      node = tsToQuery.convert((ImportDefinition)query);
-    }
-    Analysis currentAnalysis = null;
-
-    List<Function<Analysis, SqlShuttle>> transforms = List.of(
-        (analysis) -> new AddContextTable(table.isPresent()),
-        QualifyIdentifiers::new,
-        FlattenFieldPaths::new,
-        FlattenTablePaths::new,
-        ReplaceWithVirtualTable::new,
-        AllowMixedFieldUnions::new
-    );
-
-    for (Function<Analysis, SqlShuttle> transform : transforms) {
-      node = node.accept(transform.apply(currentAnalysis));
-      currentAnalysis = analyzer.apply(node);
-    }
-
-
-    if (query instanceof DistinctAssignment) {
-      SqlNode sql = node;
       SqlValidator sqrlValidator = createValidator(ns);
-
-      sqrlValidator.validate(sql);
-
-//      checkState(context.isEmpty(), ErrorCode.NESTED_DISTINCT_ON, op.getStatement());
-      new AddHints(sqrlValidator, context).accept(true, sql);
-
-      SqlValidator validate2 = createValidator(ns);
-      validate2.validate(sql);
-      return sql;
+      sqrlValidator.validate(node);
+      new AddHints(sqrlValidator, context).accept(true, node);
+      sqrlValidator.validate(node);
+      return node;
     } else if (query instanceof JoinAssignment) {
       return node;
     } else {
-      SqlNode sql = node;
       SqlValidator sqrlValidator = createValidator(ns);
-
-      sqrlValidator.validate(sql);
-
-      SqlNode rewritten = new AddContextFields(sqrlValidator, context,
-          isAggregate(sqrlValidator, sql)).accept(sql);
-
+      sqrlValidator.validate(node);
+      SqlNode rewritten = addContextFields(sqrlValidator, context, isAggregate(sqrlValidator, node),
+          node);
       SqlValidator prevalidate = createValidator(ns);
       prevalidate.validate(rewritten);
       new AddHints(prevalidate, context).accept(query instanceof DistinctAssignment, rewritten);
-
       SqlValidator validator = createValidator(ns);
-      SqlNode newNode2 = validator.validate(rewritten);
-      return newNode2;
+      return validator.validate(rewritten);
     }
+  }
 
+  private SqlTransformer createTransformer(SqrlStatement query, SqrlCalciteSchema schema, Optional<SQRLTable> table) {
+    List<String> assignmentPath = getAssignmentPath(query);
+    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(schema, assignmentPath, table).accept(node);
+    return SqlTransformerFactory.create(analyzer, table.isPresent());
+  }
+
+  // Helper functions
+  private List<String> getAssignmentPath(SqrlStatement query) {
+    return query.getNamePath().popLast()
+        .stream()
+        .map(e -> e.getCanonical())
+        .collect(Collectors.toList());
+  }
+
+  private SqlNode convertToQuery(SqrlStatement query,
+      Optional<VirtualRelationalTable> context) {
+    if (query instanceof DistinctAssignment) {
+      return convertDistinctOnToQuery((DistinctAssignment) query);
+    } else if (query instanceof StreamAssignment) {
+      return ((StreamAssignment) query).getQuery();
+    } else if (query instanceof QueryAssignment) {
+      return ((QueryAssignment) query).getQuery();
+    } else if (query instanceof JoinAssignment) {
+      return ((JoinAssignment) query).getQuery();
+    } else if (query instanceof ExpressionAssignment) {
+      SqlNode sqlNode = ((ExpressionAssignment) query).getExpression();
+      if (context.isEmpty()) {
+        throw new SqrlAstException(ErrorCode.MISSING_DEST_TABLE, query.getParserPosition(),
+            String.format("Could not find table: %s", query.getNamePath()));
+      }
+      return transformExpressionToQuery(sqlNode);
+    } else if (query instanceof ImportDefinition) {
+      ConvertTimestampToExpression tsToQuery = new ConvertTimestampToExpression();
+      SqlNode ts = tsToQuery.convert((ImportDefinition)query);
+      return transformExpressionToQuery(ts);
+    }
+    throw new IllegalArgumentException("Unsupported query type: " + query.getClass().getSimpleName());
+  }
+
+  private SqlNode addContextFields(SqlValidator sqrlValidator, Optional<VirtualRelationalTable> context,
+      boolean isAggregate, SqlNode sql) {
+    return new AddContextFields(sqrlValidator, context, isAggregate).accept(sql);
   }
 
   public SqlNode convertDistinctOnToQuery(DistinctAssignment node) {
-    SqlNode query =
-        new SqlSelect(
-            node.getParserPosition(),
-            null,
-            new SqlNodeList(List.of(SqlIdentifier.star(node.getParserPosition())), node.getParserPosition()),
-            node.getTable(),
-            null,
-            null,
-            null,
-            null,
-            new SqlNodeList(node.getOrder(), node.getParserPosition()),
-            null,
-            SqlLiteral.createExactNumeric("1", node.getParserPosition()),
-            new SqlNodeList(List.of(new SqlHint(node.getParserPosition(),
-                new SqlIdentifier("DISTINCT_ON", node.getParserPosition()),
-                new SqlNodeList(node.getPartitionKeys(), node.getParserPosition()),
-                HintOptionFormat.ID_LIST
-            )), node.getParserPosition())
-        );
+    SqlNodeFactory sqlNodeFactory = new SqlNodeFactory(node.getParserPosition());
+    SqlSelect query = sqlNodeFactory.createSqlSelect();
+    query.setSelectList(sqlNodeFactory.createStarSelectList());
+    query.setFrom(node.getTable());
+    query.setOrderBy(sqlNodeFactory.list(node.getOrder()));
+    query.setFetch(SqlLiteral.createExactNumeric("1", node.getParserPosition()));
+    query.setHints(sqlNodeFactory.createDistinctOnHintList(node.getPartitionKeys()));
     return query;
   }
+
   private Optional<SQRLTable> getContext(Namespace ns, SqrlStatement statement) {
     if (statement instanceof ImportDefinition) { //a table import
       return resolveTable(ns,
@@ -172,7 +152,7 @@ public class Transpiler {
     NamePath childPath = namePath.popFirst();
     return table.flatMap(t -> t.walkTable(childPath));
   }
-  private void checkPathWritable(Namespace ns, SqrlStatement statement, NamePath path) {
+  private void checkPathWritable(Namespace ns, NamePath path) {
     Optional<SQRLTable> table = Optional.ofNullable(
             ns.getSchema().getTable(path.get(0).getCanonical(), false))
         .filter(e -> e.getTable() instanceof SQRLTable)
@@ -199,22 +179,11 @@ public class Transpiler {
     }
     return sqrlValidator.isAggregate(node);
   }
+
   private SqlNode transformExpressionToQuery(SqlNode sqlNode) {
-//    checkState(getContext(env, statement).isPresent(), ErrorCode.MISSING_DEST_TABLE, statement,
-//        String.format("Could not find table: %s", statement.getNamePath()));
-    return new SqlSelect(SqlParserPos.ZERO,
-        SqlNodeList.EMPTY,
-        new SqlNodeList(List.of(sqlNode), SqlParserPos.ZERO),
-        null,
-        null,
-        null,
-        null,
-        SqlNodeList.EMPTY,
-        null,
-        null,
-        null,
-        SqlNodeList.EMPTY
-    );
+    SqlNodeFactory factory = new SqlNodeFactory(sqlNode.getParserPosition());
+    SqlSelect select = factory.createSqlSelect();
+    select.setSelectList(factory.list(sqlNode));
+    return select;
   }
-//
 }

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.local.transpile;
 
+import com.datasqrl.plan.local.generate.SqlNodeFactory;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.ResolvedTableField;
 import com.google.common.collect.ImmutableMap;
@@ -42,71 +43,81 @@ public class FlattenFieldPaths extends SqlShuttle {
   public FlattenFieldPaths(Analysis analysis) {
     this.analysis = analysis;
   }
-
   public SqlNode accept(SqlNode node) {
+    SqlNodeFactory factory = new SqlNodeFactory(node.getParserPosition());
     switch (node.getKind()) {
       case JOIN_DECLARATION:
-        SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
-        Optional<SqlNodeList> orders = spec.getOrderList().map(o -> (SqlNodeList) o.accept(this));
-        List<UnboundJoin> leftJoins = this.left.stream()
-            .map(l -> SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-                new SqlIdentifier(l.names, SqlParserPos.ZERO),
-                new SqlIdentifier(l.alias, SqlParserPos.ZERO)))
-            .map(l -> new UnboundJoin(SqlParserPos.ZERO, l, Optional.empty()))
-            .collect(Collectors.toList());
-        return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
-            spec.relation,
-            orders,
-            spec.getFetch(),
-            spec.getInverse(),
-            Optional.of(new SqlNodeList(leftJoins, SqlParserPos.ZERO)));
+        return handleJoinDeclaration(node, factory);
       case JOIN:
-        SqlJoin join = (SqlJoin) node;
-        join.setLeft(join.getLeft().accept(this));
-        join.setRight(join.getRight().accept(this));
-        break;
+        return handleJoin(node);
       case SELECT:
-        SqlSelect select = (SqlSelect) node;
-
-        List<SqlNode> expandedSelect = analysis.expandedSelect.get(select);
-        SqlNodeList sel = (SqlNodeList) new SqlNodeList(expandedSelect,
-            SqlParserPos.ZERO).accept(this);
-        SqlNode where = select.getWhere() != null ? select.getWhere().accept(this) : null;
-        SqlNodeList ord =
-            select.getOrderList() != null ? (SqlNodeList) select.getOrderList().accept(this) : null;
-
-        select.setSelectList(sel);
-        select.setWhere(where);
-        select.setOrderBy(ord);
-
-        ReplaceGroupIdentifiers rep = new ReplaceGroupIdentifiers();
-        SqlNodeList group =
-            select.getGroup() != null ? (SqlNodeList) select.getGroup().accept(rep) : null;
-        select.setGroupBy(group);
-
-        //TODO: check to see if we've modified any select items so we can update the group or order aliases
-
-        SqlNode from = select.getFrom();
-        //add as left joins once extracted
-        for (ToLeftJoin toJoin : left) {
-          from = new SqlJoin(
-              SqlParserPos.ZERO,
-              from,
-              SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-              JoinType.LEFT.symbol(SqlParserPos.ZERO),
-              SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-                  new SqlIdentifier(toJoin.names, SqlParserPos.ZERO),
-                  new SqlIdentifier(toJoin.alias, SqlParserPos.ZERO)),
-              JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
-              null
-          );
-        }
-        select.setFrom(from);
-
-        return select;
+        return handleSelect(node, factory);
     }
 
     return node;
+  }
+
+  private SqlNode handleJoinDeclaration(SqlNode node, SqlNodeFactory factory) {
+    SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
+    Optional<SqlNodeList> orders = spec.getOrderList().map(o -> (SqlNodeList) o.accept(this));
+    List<UnboundJoin> leftJoins = createLeftJoins(factory);
+    return new SqrlJoinDeclarationSpec(spec.getParserPosition(),
+        spec.relation,
+        orders,
+        spec.getFetch(),
+        spec.getInverse(),
+        Optional.of(new SqlNodeList(leftJoins, SqlParserPos.ZERO)));
+  }
+
+  private List<UnboundJoin> createLeftJoins(SqlNodeFactory factory) {
+    return this.left.stream()
+        .map(l -> factory.callAs(factory.toIdentifier(l.names), l.alias))
+        .map(l -> new UnboundJoin(SqlParserPos.ZERO, l, Optional.empty()))
+        .collect(Collectors.toList());
+  }
+
+  private SqlNode handleJoin(SqlNode node) {
+    SqlJoin join = (SqlJoin) node;
+    join.setLeft(join.getLeft().accept(this));
+    join.setRight(join.getRight().accept(this));
+    return join;
+  }
+
+  private SqlNode handleSelect(SqlNode node, SqlNodeFactory factory) {
+    SqlSelect select = (SqlSelect) node;
+    List<SqlNode> expandedSelect = analysis.expandedSelect.get(select);
+    SqlNodeList sel = (SqlNodeList) new SqlNodeList(expandedSelect,
+        SqlParserPos.ZERO).accept(this);
+    SqlNode where = select.getWhere() != null ? select.getWhere().accept(this) : null;
+    SqlNodeList ord =
+        select.getOrderList() != null ? (SqlNodeList) select.getOrderList().accept(this) : null;
+
+    select.setSelectList(sel);
+    select.setWhere(where);
+    select.setOrderBy(ord);
+
+    SqlNodeList group = createGroup(select);
+    SqlNode from = addLeftJoins(select, factory);
+
+    select.setGroupBy(group);
+    select.setFrom(from);
+
+    return select;
+  }
+
+  private SqlNodeList createGroup(SqlSelect select) {
+    ReplaceGroupIdentifiers rep = new ReplaceGroupIdentifiers();
+    return select.getGroup() != null ? (SqlNodeList) select.getGroup().accept(rep) : null;
+  }
+
+  private SqlNode addLeftJoins(SqlSelect select, SqlNodeFactory factory) {
+    SqlNode from = select.getFrom();
+    //add as left joins once extracted
+    for (ToLeftJoin toJoin : left) {
+      SqlNode rhs = factory.callAs(factory.toIdentifier(toJoin.names), toJoin.alias);
+      from = factory.createJoin(from, JoinType.LEFT, rhs);
+    }
+    return from;
   }
 
   @Override
