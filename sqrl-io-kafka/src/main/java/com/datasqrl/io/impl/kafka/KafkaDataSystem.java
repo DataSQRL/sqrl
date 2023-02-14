@@ -4,16 +4,16 @@
 package com.datasqrl.io.impl.kafka;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.FileUtil;
-import com.datasqrl.io.formats.FileFormat;
-import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.formats.FileFormat;
+import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.util.FileUtil;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,8 +41,8 @@ public abstract class KafkaDataSystem {
     }
 
     @Override
-    public String getPrefix() {
-      return "kafka";
+    public String getSystemType() {
+      return KafkaDataSystemConfig.SYSTEM_TYPE;
     }
 
     public Properties getProperties(String groupId) {

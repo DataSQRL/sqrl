@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.packager;
+package com.datasqrl.packager.util;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -23,7 +23,6 @@ import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.functions.ReduceFunction;
@@ -34,6 +33,8 @@ import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
+
+import java.util.UUID;
 
 @Getter
 @Slf4j
@@ -103,7 +104,7 @@ public class FlinkStreamBuilder implements DataMonitor {
 
     StreamExecutionEnvironment env = getEnvironment();
     DataStream<TimeAnnotatedRecord<String>> timedSource =
-        (DataStream<TimeAnnotatedRecord<String>>)new SourceServiceLoader().load("flink", sourceConnector.getPrefix())
+        (DataStream<TimeAnnotatedRecord<String>>)new SourceServiceLoader().load("flink", sourceConnector.getSystemType())
         .orElseThrow(()->new UnsupportedOperationException("Unrecognized source table type: " + table))
         .create(sourceConnector, new FlinkSourceFactoryContext(env, flinkSourceName, table, getUuid()));
     return new FlinkStreamHolder<>(this, timedSource);

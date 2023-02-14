@@ -3,13 +3,19 @@
  */
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.packager.FileHash;
 import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.packager.util.FileHash;
+import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.FileUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import lombok.Setter;
+import lombok.SneakyThrows;
+import net.lingala.zip4j.ZipFile;
+import org.apache.commons.io.FileUtils;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -21,9 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import lombok.SneakyThrows;
-import net.lingala.zip4j.ZipFile;
-import org.apache.commons.io.FileUtils;
 
 public class RemoteRepositoryImplementation implements Repository {
 
@@ -31,6 +34,8 @@ public class RemoteRepositoryImplementation implements Repository {
 
   private final ObjectMapper mapper = new ObjectMapper();
   private final URI repositoryServerURI;
+  @Setter
+  private CacheRepository cacheRepository = null;
 
   public RemoteRepositoryImplementation(URI repositoryServerURI) {
     this.repositoryServerURI = repositoryServerURI;
@@ -47,7 +52,7 @@ public class RemoteRepositoryImplementation implements Repository {
         "version", dependency.getVersion(),
         "variant", dependency.getVariant()));
     return getDependencyVersion(result)
-        .map(dep -> downloadDependency(targetPath, dep))
+        .map(dep -> downloadDependency(targetPath, dep, dependency))
         .orElse(false);
   }
 
@@ -59,7 +64,7 @@ public class RemoteRepositoryImplementation implements Repository {
   }
 
   // Downloads the given Dependency to the specified Path
-  private boolean downloadDependency(Path targetPath, JsonNode dep) {
+  private boolean downloadDependency(Path targetPath, JsonNode dep, Dependency dependency) {
     String file = dep.get("file").asText();
     String hash = dep.get("hash").asText();
     String repoURL = dep.get("repoURL").asText();
@@ -71,7 +76,7 @@ public class RemoteRepositoryImplementation implements Repository {
       Files.createDirectories(targetPath);
 
       // Create a temporary file for the zip file
-      Path zipFile = Files.createTempFile(targetPath, "package", ".zip");
+      Path zipFile = Files.createTempFile(targetPath, "package", Zipper.ZIP_EXTENSION);
 
       // Copy the zip file from the repoURL to the temporary file
       FileUtils.copyURLToFile(
@@ -87,6 +92,9 @@ public class RemoteRepositoryImplementation implements Repository {
 
       // Extract the zip file
       new ZipFile(zipFile.toFile()).extractAll(targetPath.toString());
+
+      // Cache downloaded package
+      if (cacheRepository!=null) cacheRepository.cacheDependency(zipFile, dependency);
 
       // Delete the temporary file
       Files.deleteIfExists(zipFile);

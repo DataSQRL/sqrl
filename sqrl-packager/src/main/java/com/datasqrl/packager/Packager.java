@@ -3,10 +3,8 @@
  */
 package com.datasqrl.packager;
 
-import static com.datasqrl.packager.LambdaUtil.rethrowCall;
-import static com.datasqrl.util.NameUtil.namepath2Path;
-
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
@@ -26,22 +24,21 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.NonNull;
+import lombok.Value;
+import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiPredicate;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
+
+import static com.datasqrl.packager.LambdaUtil.rethrowCall;
+import static com.datasqrl.util.NameUtil.namepath2Path;
 
 @Value
 public class Packager {
@@ -71,11 +68,11 @@ public class Packager {
 
     this.packageConfig = packageConfig;
     this.config = config;
-    this.errors = errors;
+    this.errors = errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_FILE_NAME));
   }
 
   public Path populateBuildDir(boolean inferDependencies) {
-    Preconditions.checkArgument(
+    errors.checkFatal(
         config.getManifest() != null && !Strings.isNullOrEmpty(config.getManifest().getMain()),
         "No config or main script specified");
     try {
@@ -91,9 +88,7 @@ public class Packager {
       updatePackageConfig();
       return buildDir.resolve(PACKAGE_FILE_NAME);
     } catch (IOException e) {
-      e.printStackTrace();
-      errors.fatal("Could not read or write files on local file-system: %s", e);
-      return null;
+      throw errors.handle(e);
     }
   }
 
@@ -105,7 +100,7 @@ public class Packager {
    * Helper function to validate dependency config.
    */
   private void validateDependencyConfig() {
-    Preconditions.checkArgument(config.getDependencies() != null,
+    errors.checkFatal(config.getDependencies() != null,
         "No dependency config found");
   }
 
@@ -150,14 +145,15 @@ public class Packager {
    * Helper function for retrieving listed dependencies.
    */
   private void retrieveDependencies() {
+    ErrorCollector depErrors = errors.resolve(GlobalPackageConfiguration.DEPENDENCIES_NAME);
     config.getDependencies().entrySet().stream()
         .map(entry -> rethrowCall(() ->
             retrieveDependency(buildDir, NamePath.parse(entry.getKey()),
-                entry.getValue().normalize(entry.getKey()))
+                entry.getValue().normalize(entry.getKey(), depErrors))
                 ? Optional.<NamePath>empty()
                 : Optional.of(NamePath.parse(entry.getKey()))))
         .flatMap(Optional::stream)
-        .forEach(failedDep -> errors.fatal("Could not retrieve dependency: %s", failedDep));
+        .forEach(failedDep -> depErrors.fatal("Could not retrieve dependency: %s", failedDep));
   }
 
   /**

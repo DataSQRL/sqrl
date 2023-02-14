@@ -13,7 +13,7 @@ public class JdbcDataSystemConnector implements DataSystemConnector {
   }
 
   @Override
-  public String getPrefix() {
-    return "jdbc";
+  public String getSystemType() {
+    return JdbcDataSystemConnectorConfig.SYSTEM_TYPE;
   }
 }

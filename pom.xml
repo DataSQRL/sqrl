@@ -265,6 +265,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <artifactId>sqrl-run</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-schemas</artifactId>
                 <version>${project.version}</version>

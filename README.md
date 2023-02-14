@@ -1,90 +1,45 @@
 # DataSQRL
 
-DataSQRL is a development environment for building data services from streaming, static, or external data sources. The DataSQRL compiler generates optimal data pipelines from the data transformations expressed in SQRL and the API specification of the data service. *"Structured Query and Reaction Language"* (SQRL) is a development language that simplifies and extends SQL with reactive and streaming concepts, relationships, and explicit data dependencies.
-
-> **Warning**
-> This preview release of DataSQRL is intended for experimental use and feedback. Do not use DataSQRL in production yet.
+DataSQRL is a compiler for building data services and APIs from streaming, static, or external data sources. The DataSQRL compiler generates optimal data pipelines from the data transformations expressed in SQRL and the API specification of the data service. *"Structured Query and Reaction Language"* (SQRL) is a development language that simplifies and extends SQL with reactive and streaming concepts, relationships, and explicit data dependencies.
 
 ## Quickstart
 
 - Create a file `myscript.sqrl` and add the following content:
 ```sql
-/* Imports the Products and Orders table from the Nutshop data
-   We set an explicit timestamp on the Orders stream table */
-IMPORT datasqrl.examples.Nutshop.Products;
-IMPORT datasqrl.examples.Nutshop.Orders TIMESTAMP epoch_to_timestamp(time/1000) AS timestamp;
-
-/* Some order items are missing the discount field - let's clean that up */
-Orders.items.discount := coalesce(discount, 0.0);
-
-/* The Customers table are all the `customerid` that have placed an order */
-Customers := SELECT DISTINCT customerid AS id FROM Orders;
-/* All imported tables are streams - we convert that stream into a state table by
-   picking the most recent version for each product by `id` */
-Products := DISTINCT Products ON id ORDER BY updated DESC;
-
-/* Defines a relationship `purchases` between Customers and Orders */
-Customers.purchases := JOIN Orders ON Orders.customerid = @.id ORDER BY Orders.time DESC;
-/* and a relationship from Orders to Products */
-Orders.items.product := JOIN Products ON Products.id = @.productid;
+IMPORT datasqrl.seedshop.Orders;  -- Import orders stream
+IMPORT time.startOfMonth;         -- Import time function
+/* Augment orders with aggregate calculations */
+Orders.items.total := quantity * unit_price - discount?0.0;
+Orders.totals := SELECT sum(total) as price,
+                      sum(discount) as saving FROM @.items;
+/* Create new table of unique customers */
+Users := SELECT DISTINCT customerid AS id FROM Orders;
+/* Create relationship between customers and orders */
+Users.purchases := JOIN Orders ON Orders.customerid = @.id;
+/* Aggregate the purchase history for each user by month */
+Users.spending := SELECT startOfMonth(p.time) AS month,
+              sum(t.price) AS spend, sum(t.saving) AS saved
+         FROM @.purchases p JOIN p.totals t
+         GROUP BY month ORDER BY month DESC;
 ```
 - Run `docker run -p 8888:8888 -v $PWD:/build datasqrl/datasqrl-cmd run myscript.sqrl` 
 
-This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, H2, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) and run GraphQL queries against the API. Hit `CTRL-C` to terminate the data pipeline when you are done. 
+This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) and run GraphQL queries against the API. Hit `CTRL-C` to terminate the data pipeline when you are done. 
 
-For a full example of SQRL scripts for our Nutshop, check out the [annotated SQRL example](sqrl-examples/nutshop/customer360/nutshopv1-small.sqrl) or the [extended SQRL example](sqrl-examples/nutshop/customer360/nutshopv2-small.sqrl)
+For an explanation of this example, take a look at the [Quickstart Tutorial](https://www.datasqrl.com/docs/getting-started/quickstart).
 
-### (Optional)Step 2: Customize GraphQL API
+## Documentation
 
-Run the `compile` command with the `-s` flag and DataSQRL will write the generated GraphQL schema for the resulting API in the file `schema.graphqls`. We can modify the GraphQL schema to adjust the API to our needs.
+* [User Documentation](https://www.datasqrl.com/docs/intro) teaches you how to use DataSQRL to build data services.
+* [Developer Documentation](https://www.datasqrl.com/docs/dev/overview) talks about the architecture and structure of the DataSQRL open-source project if you wish to contribute.
+* [DataSQRL.com](https://www.datasqrl.com/) if you want to learn about DataSQRL in general.
 
-DataSQRL generates a very flexible API. Let's trim that down to only the access points that we need. Change the file `schema.graphqls` to contain the following:
-```graphql
-type Customers {
-  id: Int
-  purchases(time: Int): [orders]
-}
-
-type Products {
-  id: Int
-  name: String
-  sizing: String
-  weight_in_gram: Int
-  type: String
-  category: String
-}
-
-type orders {
-  id: Int
-  customerid: Int
-  time: Int
-  items: [items]
-  timestamp: String
-}
-
-type items {
-  productid: Int
-  quantity: Int
-  unit_price: Float
-  discount: Float
-  product: Products
-}
-
-type Query {
-  Customers(id: Int): [Customers]
-  orders(id: Int!): [orders]
-  Products: [Products]
-}
-```
-
-- Save the `schema.graphqls` file.
-- Run `docker run -p 8888:8888 -v $PWD:/build datasqrl/datasqrl-cmd run myscript.sqrl schema.graphqls`
-
-This time, the compiler generates an updated data pipeline to produce our custom API. You can inspect the results by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/).
+> **Warning**
+> This preview release of DataSQRL is intended for experimental use and feedback. Do not use DataSQRL in production yet.
 
 ## Key Contributions
 
-Building data services is more productive with DataSQRL because the development environment generates all the plumbing, schema mapping, orchestration, and workflow management code that data service implementations requires. In addition, it determines the optimal allocation of resources in data pipelines.
+Building data services is more productive with DataSQRL because the compiler generates all the plumbing, schema mapping, orchestration, and workflow management code that data service implementations require. In addition, it determines the optimal allocation of resources in the compiled data pipeline.
 
 Specifically, DataSQRL makes the following contributions as a development environment for data services:
 
@@ -96,7 +51,7 @@ Specifically, DataSQRL makes the following contributions as a development enviro
 - A compiler for SQRL scripts that produces complete data pipelines against configurable data infrastructure.
 - A package manager that resolve data dependencies and supports pluggable configuration of data systems for execution.
 
-DataSQRL is analogous to an operating system for data. Much like an operating system orchestrates multiple pluggable pieces of hardware (e.g. CPU, RAM, hard drive) behind a uniform interface, DataSQRL orchestrates multiple pluggable data systems (e.g. database, stream engine, API server) behind a unified development environment.
+The goal for DataSQRL is to become an abstraction layer over existing data technologies for building data services, APIs, and applications that makes developers more productive without sacrificing too much control or expressivity.
 
 ## Current Limitations
 
@@ -112,9 +67,9 @@ DataSQRL is currently a working prototype that is not intended for production us
 
 ## Contributing
 
-We built DataSQRL because we got tired of the endless plumbing, data mapping, and orchestration that is currently needed when building data services. We hope that DataSQRL becomes an easy-to-use abstraction layer that eliminates all the tedium and allows you to focus on the purpose and function of your data services. To make that happen we need your feedback. Let us know if DataSQRL works for you and - more importantly - when it doesn't.
+We built DataSQRL because we got tired of the endless plumbing, data mapping, and orchestration that is currently needed when building data services. We hope that DataSQRL becomes an easy-to-use abstraction layer that eliminates all the tedium and allows you to focus on the purpose and function of your data services. To make that happen we need your [feedback](https://discord.gg/vYyREMNRmh). Let us know if DataSQRL works for you and - more importantly - when it doesn't. Become part of the [DataSQRL community](https://www.datasqrl.com/community).
 
-We also love code contributions. A great place to start is contributing a data source/sink implementation, data format, or execution engine so that DataSQRL can cover more environments and use cases.
+We also love [code contributions](https://www.datasqrl.com/docs/dev/contribute). A great place to start is contributing a data source/sink implementation, data format, or schema so that DataSQRL can cover more use cases.
 
 For more details, checkout [`CONTRIBUTING.md`](CONTRIBUTING.md) as well as the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 

@@ -4,22 +4,18 @@
 package com.datasqrl.io.impl.print;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DataSystemConfig;
-import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.DataSystemConnectorConfig;
-import com.datasqrl.io.DataSystemDiscovery;
-import com.datasqrl.io.DataSystemDiscoveryConfig;
-import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.*;
 import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.name.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
+
+import java.util.Optional;
 
 @SuperBuilder
 @NoArgsConstructor
@@ -29,7 +25,7 @@ public abstract class PrintDataSystem {
 
   public static final String SYSTEM_TYPE = "print";
 
-  String prefix = "print";
+  String prefix = "";
 
   public String getSystemType() {
     return SYSTEM_TYPE;
@@ -42,11 +38,6 @@ public abstract class PrintDataSystem {
       .type(ExternalDataType.sink)
       .format(FileFormat.JSON.getImplementation().getDefaultConfiguration())
       .build();
-
-  public static Optional<TableConfig> discoverSink(@NonNull Name sinkName,
-      @NonNull ErrorCollector errors) {
-    return DEFAULT_DISCOVERY.discoverSink(sinkName, DEFAULT_DISCOVERY_CONFIG, errors);
-  }
 
   @SuperBuilder
   @NoArgsConstructor

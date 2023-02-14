@@ -6,15 +6,12 @@ import com.datasqrl.engine.stream.flink.FlinkSourceFactoryContext;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
 import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
+import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Duration;
-import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -26,6 +23,11 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.util.Collector;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
+import java.util.function.Predicate;
+
 public class FileSourceFactory implements
     SourceFactory<SingleOutputStreamOperator<TimeAnnotatedRecord<String>>> {
 
@@ -36,7 +38,7 @@ public class FileSourceFactory implements
 
   @Override
   public String getSourceName() {
-    return "file";
+    return DirectoryDataSystemConfig.SYSTEM_TYPE;
   }
 
   @Override
@@ -45,7 +47,6 @@ public class FileSourceFactory implements
     FlinkSourceFactoryContext ctx = (FlinkSourceFactoryContext) context;
 
     FilePathConfig pathConfig = filesource.getPathConfig();
-    SingleOutputStreamOperator<TimeAnnotatedRecord<String>> textSource;
     if (pathConfig.isURL()) {
       Preconditions.checkArgument(!pathConfig.isDirectory());
       return ctx.getEnv().fromCollection(pathConfig.getFiles(filesource, ctx.getTable().getConfiguration())).

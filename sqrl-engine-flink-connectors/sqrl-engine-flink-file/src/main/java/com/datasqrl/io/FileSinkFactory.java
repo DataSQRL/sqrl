@@ -3,6 +3,7 @@ package com.datasqrl.io;
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
+import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
 import com.datasqrl.plan.global.OptimizedDAG.WriteSink;
@@ -17,15 +18,15 @@ public class FileSinkFactory implements SinkFactory<TableDescriptor.Builder> {
   }
 
   @Override
-  public String getSinkName() {
-    return "file";
+  public String getSinkType() {
+    return DirectoryDataSystemConfig.SYSTEM_TYPE;
   }
 
   @Override
   public Builder create(WriteSink sink, DataSystemConnectorConfig config) {
     ExternalSink externalSink = (ExternalSink) sink;
-    TableConfig configuration = externalSink.getSink().getConfiguration();
-    DirectoryConnector connector = (DirectoryConnector)externalSink.getSink().getConnector();
+    TableConfig configuration = externalSink.getTableSink().getConfiguration();
+    DirectoryConnector connector = (DirectoryConnector)externalSink.getTableSink().getConnector();
     TableDescriptor.Builder tblBuilder = TableDescriptor.forConnector("filesystem")
         .option("path",
             connector.getPathConfig().getDirectory().resolve(configuration.getIdentifier())

@@ -3,21 +3,21 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.util.StreamUtil;
-import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.queries.APIQuery;
-import java.net.URL;
-import java.util.Set;
+import com.datasqrl.util.StreamUtil;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 
+import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Value
@@ -106,11 +106,11 @@ public class OptimizedDAG {
   public static class ExternalSink implements WriteSink {
 
     String name;
-    TableSink sink;
+    TableSink tableSink;
 
-    public ExternalSink(String name, TableSink sink) {
+    public ExternalSink(String name, TableSink tableSink) {
       this.name = name;
-      this.sink = sink;
+      this.tableSink = tableSink;
     }
 
     public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {

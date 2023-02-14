@@ -18,7 +18,6 @@ public class TableSink extends AbstractExternalTable {
 
   private final Optional<TableSchema> schema;
 
-
   public TableSink(@NonNull DataSystemConnector dataset, @NonNull TableConfig configuration,
       @NonNull NamePath path, @NonNull Name name,
       Optional<TableSchema> schema) {

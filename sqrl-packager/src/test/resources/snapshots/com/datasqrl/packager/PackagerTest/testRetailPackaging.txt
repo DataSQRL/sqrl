@@ -1,26 +1,3 @@
->>>../sqrl-examples/retail/c360-full.sqrl-dir
-c360-full.sqrl
-ecommerce-broken
-ecommerce-broken/customer.table.json
-ecommerce-broken/orders.table.json
-ecommerce-broken/product.table.json
-ecommerce-broken/schema.yml
-ecommerce-data
-ecommerce-data/customer.table.json
-ecommerce-data/orders.table.json
-ecommerce-data/product.table.json
-ecommerce-data/schema.yml
-output
-output/datasystem.json
-package.json
->>>../sqrl-examples/retail/c360-full.sqrl-package
-{
-  "package" : { },
-  "dependencies" : { },
-  "manifest" : {
-    "main" : "c360-full.sqrl"
-  }
-}
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOmanifest.json-dir
 c360-full.sqrl
 ecommerce-broken

@@ -3,21 +3,26 @@
  */
 package com.datasqrl.cmd;
 
+import com.datasqrl.packager.Packager;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import picocli.CommandLine;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestCmd {
 
@@ -70,8 +75,25 @@ public class TestCmd {
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
         script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
-        "-o", OUTPUT_DIR.toString(),
+        "-t", OUTPUT_DIR.toString(),
         "--noinfer");
+    createSnapshot();
+  }
+
+  @Test
+  @SneakyThrows
+  public void compileNutshopWithSchema() {
+    Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
+    buildDir = rootDir.resolve("build");
+
+    TestScript script = Nutshop.INSTANCE.getScripts().get(1);
+    execute(rootDir, "compile",
+            script.getScriptPath().toString(),
+            script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
+            "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
+    Path schemaFile = rootDir.resolve(Packager.GRAPHQL_SCHEMA_FILE_NAME);
+    assertTrue(Files.isRegularFile(schemaFile));
+    Files.deleteIfExists(schemaFile);
     createSnapshot();
   }
 
@@ -83,7 +105,7 @@ public class TestCmd {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
-        "-o", OUTPUT_DIR.toString(),
+        "-t", OUTPUT_DIR.toString(),
         "--noinfer");
     createSnapshot();
   }

@@ -1,24 +1,26 @@
 package com.datasqrl.packager;
 
-import static com.datasqrl.packager.Packager.mapper;
-
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.config.GlobalPackageConfiguration;
+import com.datasqrl.packager.repository.CompositeRepositoryImpl;
+import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
+import com.datasqrl.packager.util.Serializer;
 import com.datasqrl.spi.ManifestConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
+import lombok.Builder;
+import lombok.Value;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
+
+import static com.datasqrl.packager.Packager.mapper;
 
 @Builder
 @Value
@@ -27,92 +29,38 @@ public class PackagerConfig {
   Path rootDir;
   Path mainScript;
   Path graphQLSchemaFile;
-  @Builder.Default
-  @NonNull
-  List<Path> packageFiles = List.of();
+  List<Path> packageFiles;
 
   Repository repository;
 
   public Packager getPackager(ErrorCollector errors) throws IOException {
     checkRequiredArguments(errors);
-    List<Path> packageFiles = getPackageFiles(errors);
     ObjectNode packageConfig = getPackageConfig(packageFiles);
-    Repository repository = getRepository();
+    Repository repository = getRepository(errors);
     GlobalPackageConfiguration config = mapper.convertValue(packageConfig,
         GlobalPackageConfiguration.class);
-    return createPackager(packageFiles, packageConfig, repository, config, errors);
+    return new Packager(repository, rootDir, packageConfig, config, errors);
   }
 
   private void checkRequiredArguments(ErrorCollector errors) {
-    errors.checkFatal(mainScript == null || Files.isRegularFile(mainScript),
-        "Not a script file: %s", mainScript);
-    errors.checkFatal(graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile),
-        "Not a schema file: %s", graphQLSchemaFile);
-  }
-
-  private List<Path> getPackageFiles(ErrorCollector errors) {
-    if (this.packageFiles.isEmpty()) {
-      errors.checkFatal(mainScript != null,
-          "Must provide either a main script or package file");
-
-      //Try to find it in the directory of the main script
-      if (mainScript != null) {
-        Path packageFile = mainScript.getParent().resolve(Packager.PACKAGE_FILE_NAME);
-        if (Files.isRegularFile(packageFile)) {
-          return List.of(packageFile);
-        }
-      }
-    }
-    return this.packageFiles;
+    errors.checkFatal(packageFiles!=null && !packageFiles.isEmpty(), "Need to configure a package manifest");
+    packageFiles.forEach( pkg -> errors.checkFatal(Files.isRegularFile(pkg),
+            "Could not find package file: %s", pkg));
+    errors.checkFatal(rootDir!=null && Files.isDirectory(rootDir), "Not a valid root directory: %s", rootDir);
+    errors.checkFatal(mainScript == null || Files.isRegularFile(mainScript), "Could not find script file: %s", mainScript);
+    errors.checkFatal(graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile), "Could not find API file: %s", graphQLSchemaFile);
   }
 
   private ObjectNode getPackageConfig(List<Path> packageFiles) throws IOException {
     ObjectNode packageConfig;
     GlobalPackageConfiguration config;
-    if (packageFiles.isEmpty()) {
-      Path rootDir = getRootDir();
-      config = GlobalPackageConfiguration.builder()
-          .manifest(
-              buildRelativizeManifest(rootDir, mainScript, Optional.ofNullable(graphQLSchemaFile)))
-          .build();
-      packageConfig = mapper.valueToTree(config);
-    } else {
-      Path rootDir = getRootDirFromPackageFiles();
-      JsonNode basePackage = mapper.readValue(packageFiles.get(0).toFile(), JsonNode.class);
-      packageFiles.stream()
-          .skip(1)
-          .forEach(path -> updatePackageFile(mapper, basePackage, path));
-      packageConfig = (ObjectNode) basePackage;
-      config = mapper.convertValue(packageConfig, GlobalPackageConfiguration.class);
-      updateManifest(rootDir, config);
-      JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
-      packageConfig.set(ManifestConfiguration.PROPERTY, mappedManifest);
-    }
+    JsonNode basePackage = Serializer.combineFiles(packageFiles);
+    packageConfig = (ObjectNode) basePackage;
+    config = mapper.convertValue(packageConfig, GlobalPackageConfiguration.class);
+    updateManifest(rootDir, config);
+    JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
+    packageConfig.set(ManifestConfiguration.PROPERTY, mappedManifest);
     return packageConfig;
-  }
-
-  private Path getRootDir() {
-    Path rootDir = this.rootDir;
-    if (rootDir == null) {
-      rootDir = mainScript.getParent();
-    }
-    return rootDir;
-  }
-
-  private void updatePackageFile(ObjectMapper mapper, JsonNode basePackage, Path path) {
-    try {
-      mapper.readerForUpdating(basePackage).readValue(path.toFile());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private Path getRootDirFromPackageFiles() {
-    Path rootDir = this.rootDir;
-    if (rootDir == null) {
-      rootDir = packageFiles.get(0).getParent();
-    }
-    return rootDir;
   }
 
   private void updateManifest(Path rootDir, GlobalPackageConfiguration config) {
@@ -131,18 +79,15 @@ public class PackagerConfig {
     config.setManifest(buildRelativizeManifest(rootDir, main, Optional.ofNullable(graphql)));
   }
 
-  private Repository getRepository() {
+  private Repository getRepository(ErrorCollector errors) {
     if (this.repository == null) {
-      return new RemoteRepositoryImplementation();
+      LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors);
+      //TODO: read remote repository URLs from configuration?
+      RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation();
+      remoteRepo.setCacheRepository(localRepo);
+      return new CompositeRepositoryImpl(List.of(localRepo, remoteRepo));
     }
     return this.repository;
-  }
-
-  private Packager createPackager(List<Path> packageFiles, ObjectNode packageConfig,
-      Repository repository, GlobalPackageConfiguration config, ErrorCollector errors) {
-    return new Packager(repository,
-        packageFiles.isEmpty() ? getRootDir() : getRootDirFromPackageFiles(),
-        packageConfig, config, errors);
   }
 
   public static ManifestConfiguration buildRelativizeManifest(Path rootDir, Path mainScript,
@@ -155,7 +100,6 @@ public class PackagerConfig {
       Preconditions.checkArgument(Files.isRegularFile(gql));
       builder.graphql(rootDir.relativize(gql).normalize().toString());
     });
-
     return builder.build();
   }
 }
