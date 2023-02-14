@@ -2,11 +2,11 @@ package com.datasqrl.packager.repository;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.loaders.AbstractLoader;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.NameUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +75,7 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
 
     private Path package2Path(String packageName) {
         NamePath pkg = NamePath.parse(packageName);
-        return AbstractLoader.namepath2Path(repositoryPath,pkg);
+        return NameUtil.namepath2Path(repositoryPath,pkg);
     }
 
     @Override

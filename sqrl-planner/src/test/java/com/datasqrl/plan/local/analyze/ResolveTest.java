@@ -3,41 +3,35 @@
  */
 package com.datasqrl.plan.local.analyze;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.name.Name;
-import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import com.datasqrl.plan.calcite.table.CalciteTableFactory;
-import com.datasqrl.plan.calcite.table.PullupOperator;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
-import com.datasqrl.plan.calcite.table.TableType;
-import com.datasqrl.plan.calcite.table.TimestampHolder;
+import com.datasqrl.plan.calcite.table.*;
 import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestRelWriter;
 import com.datasqrl.util.data.Retail;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.commons.compress.utils.Sets;
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ResolveTest extends AbstractLogicalSQRLIT {
 
@@ -62,9 +56,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void tearDown() {
     super.tearDown();
     snapshot.createOrValidate();
-    if (Files.isDirectory(exportPath)) {
-      FileUtils.deleteDirectory(exportPath.toFile());
-    }
+    FileUtil.deleteDirectory(exportPath);
   }
 
   /*

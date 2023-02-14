@@ -9,7 +9,6 @@ import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.PackagerConfig;
-import com.datasqrl.packager.Packager.Config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
@@ -25,12 +24,11 @@ public class PackagerUtil {
   @SneakyThrows
   public static Packager create(Path rootDir, Path[] files, List<Path> packageFiles, ErrorCollector errors) {
     errors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
-    PackagerConfig packagerConfig = createPackageConfig(files, rootDir, packageFiles, errors);
+    PackagerConfig packagerConfig = createPackageConfig(files, rootDir, packageFiles);
     return packagerConfig.getPackager(errors);
   }
 
-  protected static PackagerConfig createPackageConfig(Path[] files, Path rootDir, List<Path> packageFiles,
-      ErrorCollector errors) {
+  protected static PackagerConfig createPackageConfig(Path[] files, Path rootDir, List<Path> packageFiles) {
     PackagerConfig.PackagerConfigBuilder pkgBuilder = PackagerConfig.builder();
     pkgBuilder.rootDir(rootDir);
     pkgBuilder.packageFiles(packageFiles);

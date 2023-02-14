@@ -3,17 +3,19 @@
  */
 package com.datasqrl.packager;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.config.ConfigurationTest;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.repository.Repository;
-import com.datasqrl.spi.ManifestConfiguration;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Retail;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,11 +26,9 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class PackagerTest {
 
@@ -49,7 +49,6 @@ public class PackagerTest {
     Path packageFileWithManifest = script.getRootPackageDirectory()
         .resolve("package-exampleWmanifest.json");
 
-    testCombination(script.getScriptPath(), null, null);
     testCombination(script.getScriptPath(), null, packageFileWithoutManifest);
     testCombination(script.getScriptPath(), null, packageFileWithManifest);
     testCombination(null, null, packageFileWithManifest);
@@ -66,24 +65,22 @@ public class PackagerTest {
     IntStream.rangeClosed(1,2)
         .forEach(i -> depScripts.add(baseDependencyPath.resolve("main" + i + ".sqrl")));
   }
+  private static final Path pkgWDeps = baseDependencyPath.resolve("packageWDependencies.json");
+  private static final Path pkgWODeps = baseDependencyPath.resolve("packageWODependencies.json");
 
   @Test
   public void dependencyResolution() {
-    Path pkgWDeps = baseDependencyPath.resolve("packageWDependencies.json");
-    Path pkgWODeps = baseDependencyPath.resolve("packageWODependencies.json");
-
     testCombinationMockRepo(depScripts.get(0),pkgWDeps);
     testCombinationMockRepo(depScripts.get(0),pkgWODeps);
     testCombinationMockRepo(depScripts.get(1),pkgWDeps);
     testCombinationMockRepo(depScripts.get(1),pkgWODeps);
-
     snapshot.createOrValidate();
   }
 
   @Test
-  @Disabled //Requires running repository
   public void testRemoteRepository() {
-    testCombination(depScripts.get(0), null, null, null);
+    testCombination(depScripts.get(0), null, pkgWODeps);
+    testCombination(depScripts.get(0), null, pkgWDeps);
     snapshot.createOrValidate();
   }
 
@@ -106,15 +103,15 @@ public class PackagerTest {
 
   private PackagerConfig buildPackagerConfig(Path main, Path graphQl, Path packageFile,
       Repository repository) {
+    assertNotNull(packageFile);
     PackagerConfig.PackagerConfigBuilder builder = PackagerConfig.builder();
+    builder.rootDir(packageFile.getParent());
+    builder.packageFiles(List.of(packageFile));
     if (main != null) {
       builder.mainScript(main);
     }
     if (graphQl != null) {
       builder.graphQLSchemaFile(graphQl);
-    }
-    if (packageFile != null) {
-      builder.packageFiles(List.of(packageFile));
     }
     if (repository != null) {
       builder.repository(repository);
@@ -139,6 +136,7 @@ public class PackagerTest {
 
     @Override
     public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
+      assertEquals(NUTSHOP, dependency);
       Files.createDirectories(targetPath);
       Files.writeString(targetPath.resolve("package.json"),"test");
       return true;
