@@ -3,6 +3,7 @@
  */
 package com.datasqrl.packager;
 
+import com.datasqrl.packager.util.FileHash;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -17,8 +18,8 @@ public class FileHashTest {
     @Test
     @SneakyThrows
     public void testFileHash() {
-        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("package1.json");
-        assertEquals("bd1b3b2706a15726d00ce2bd41178445",FileHash.getFor(is));
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("package-configtest.json");
+        assertEquals("bd1b3b2706a15726d00ce2bd41178445", FileHash.getFor(is));
     }
 
     @Test

@@ -24,7 +24,7 @@ public class ConfigurationTest {
   @SneakyThrows
   public void testConfiguration() {
     GlobalCompilerConfiguration config = GlobalEngineConfiguration.readFrom(
-        RESOURCE_DIR.resolve("package1.json"), GlobalCompilerConfiguration.class);
+        RESOURCE_DIR.resolve("package-configtest.json"), GlobalCompilerConfiguration.class);
     assertNotNull(config);
     assertEquals(3, config.getCompiler().getApi().getMaxArguments());
     assertEquals(2, config.getEngines().size());

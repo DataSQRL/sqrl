@@ -19,7 +19,7 @@ public class ConfigurationTest {
   @SneakyThrows
   public void testConfiguration() {
     GlobalPackageConfiguration config = GlobalPackageConfiguration.readFrom(
-        RESOURCE_DIR.resolve("package1.json"));
+        RESOURCE_DIR.resolve("package-configtest.json"));
     assertNotNull(config);
     assertEquals("1.0.0", config.getPkg().getVersion());
     assertEquals(2, config.getDependencies().size());

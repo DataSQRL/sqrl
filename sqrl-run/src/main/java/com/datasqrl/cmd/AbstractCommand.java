@@ -16,10 +16,11 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
-import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
+
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 public abstract class AbstractCommand implements Runnable {
@@ -34,7 +35,7 @@ public abstract class AbstractCommand implements Runnable {
       runCommand(collector);
     } catch (Exception e) {
       collector.getCatcher().handle(e);
-      e.printStackTrace();
+      //e.printStackTrace();
     }
     System.out.println(ErrorPrinter.prettyPrint(collector));
   }

@@ -13,11 +13,11 @@ import java.util.List;
 
 @CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "discover 0.1",
     subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class, PopulateCommand.class,
-        ServeCommand.class})
+        ServeCommand.class, PublishCommand.class})
 @Getter
 public class RootCommand implements Runnable {
 
-  @CommandLine.Option(names = {"-m", "--manifest"}, description = "Package manifest file(s)"
+  @CommandLine.Option(names = {"-c", "--config"}, description = "Package configuration file(s)"
       , scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.EMPTY_LIST;
 

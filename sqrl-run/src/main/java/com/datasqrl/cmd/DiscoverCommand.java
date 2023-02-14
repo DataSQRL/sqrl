@@ -10,6 +10,7 @@ import com.datasqrl.discovery.DiscoveryUtil;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.DataMonitor.Job.Status;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.tables.TableInput;
@@ -31,27 +32,39 @@ import static picocli.CommandLine.Parameters;
 @Command(name = "discover", description = "Discovers and defines data source or sink from data system configuration")
 public class DiscoverCommand extends AbstractCommand {
 
+  public static final long MAX_EXECUTION_TIME_DEFAULT_SEC = 3600;
+
   @Parameters(index = "0", description = "Data system configuration or data directory")
   private Path inputFile;
 
-  @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory for data source/sink configuration and schema")
+  @CommandLine.Option(names = {"-o", "--output-dir"}, description = "Output directory for data source/sink configuration (current directory by default)")
   private Path outputDir = null;
 
-  @CommandLine.Option(names = {"-l", "--limit"}, description = "Maximum amount of time (in seconds) for running data discovery")
-  private long maxExecutionTimeSec = Long.MAX_VALUE;
+  @CommandLine.Option(names = {"-s", "--statistics"}, description = "Generates statistics for each table in the data source")
+  private boolean statistics = false;
+
+  @CommandLine.Option(names = {"-l", "--limit"}, description = "Maximum amount of time (in seconds) for running data analysis (1 hour by default).")
+  private long maxExecutionTimeSec = MAX_EXECUTION_TIME_DEFAULT_SEC;
 
   @Override
   protected void runCommand(ErrorCollector errors) throws IOException {
-    DataSystemConfig discoveryConfig;
+    errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
+    DataSystemConfig discoveryConfig = null;
     if (inputFile != null && Files.isRegularFile(inputFile)) {
       Deserializer deserialize = new Deserializer();
       discoveryConfig = deserialize.mapJsonFile(inputFile, DataSystemConfig.class);
     } else if (inputFile != null && Files.isDirectory(inputFile)) {
       discoveryConfig = DiscoveryUtil.getDirectorySystemConfig(inputFile).build();
     } else {
-      throw new IllegalArgumentException(
-          "Could not find data system configuration or directory at: " + inputFile);
+      errors.fatal("Could not find data system configuration or directory at: %s", inputFile);
     }
+
+    if (!discoveryConfig.getType().isSource() && statistics) {
+      errors.warn("Data sinks don't have statistics. Statistics flag is ignored.");
+      statistics = false;
+    }
+    errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
+
     List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
     GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
         GlobalEngineConfiguration.class);
@@ -60,7 +73,7 @@ public class DiscoverCommand extends AbstractCommand {
 
     //Setup output directory to write to
     if (outputDir == null) {
-      outputDir = Path.of(discoveryConfig.getName());
+      outputDir = root.rootDir;
     }
     Files.createDirectories(outputDir);
 

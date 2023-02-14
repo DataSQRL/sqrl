@@ -41,10 +41,10 @@ public class PackagerUtil {
     return pkgBuilder.build();
   }
 
-  public static final Path DEFAULT_PACKAGE = Path.of("package.json");
+  public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_FILE_NAME);
 
   public static List<Path> getOrCreateDefaultPackageFiles(RootCommand root) {
-    Optional<List<Path>> existingPackageJson = findPackageFiles(root.getRootDir(), root.getPackageFiles());
+    Optional<List<Path>> existingPackageJson = findRootPackageFiles(root);
     return existingPackageJson
             .orElseGet(() -> List.of(writeEngineConfig(root.getRootDir(),
                     createDefaultConfig())));
@@ -83,6 +83,10 @@ public class PackagerUtil {
             .engines(List.of(flinkEngineConfiguration, jdbcEngineConfiguration))
             .build();
     return engineConfiguration;
+  }
+
+  public static Optional<List<Path>> findRootPackageFiles(RootCommand root) {
+    return findPackageFiles(root.getRootDir(), root.getPackageFiles());
   }
 
   public static Optional<List<Path>> findPackageFiles(Path rootDir, List<Path> packageFiles) {

@@ -20,7 +20,9 @@ public enum ErrorCode implements ErrorLabel {
   TO_MANY_PATH_NOT_ALLOWED,
   NESTED_DISTINCT_ON,
   READ_TABLE_CANNOT_BE_EXPORTED,
-  CANNOT_RESOLVE_TABLESINK;
+  CANNOT_RESOLVE_TABLESINK,
+  IOEXCEPTION,
+  NOT_YET_IMPLEMENTED;
 
   @Override
   public String getLabel() {

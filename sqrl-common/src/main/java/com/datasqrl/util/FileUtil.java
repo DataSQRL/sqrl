@@ -4,18 +4,26 @@
 package com.datasqrl.util;
 
 
-import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Strings;
 import com.google.common.io.Resources;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.stream.Stream;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
+/**
+ * Contains a set of static methods for handling with files and folders.
+ *
+ * A lof of the methods are proxies around 3rd party libraries and don't have dedicated tests
+ */
 public class FileUtil {
 
   public static String getExtension(Path p) {
@@ -24,6 +32,45 @@ public class FileUtil {
 
   public static String removeExtension(Path p) {
     return FilenameUtils.removeExtension(p.getFileName().toString());
+  }
+
+  public static boolean isExtension(Path p, String extension) {
+    return p.getFileName().toString().endsWith(extension);
+  }
+
+  /**
+   * Creates a hidden directory in the provided basePath.
+   *
+   * @param basePath
+   * @param folderName
+   * @return The path to the hidden folder
+   * @throws IOException
+   */
+  public static Path makeHiddenFolder(Path basePath, String folderName) throws IOException {
+    if (!folderName.startsWith(".")) folderName = "." + folderName;
+    Path result = basePath.resolve(folderName);
+    if (!Files.isDirectory(result)) {
+      Files.createDirectories(result);
+      if (SystemUtils.IS_OS_WINDOWS) {
+        Files.setAttribute(result, "dos:hidden", Boolean.TRUE, LinkOption.NOFOLLOW_LINKS);
+      }
+    }
+    return result;
+  }
+
+  public static void deleteDirectory(Path dir) throws IOException {
+    if (Files.isDirectory(dir)) {
+      FileUtils.deleteDirectory(dir.toFile());
+    }
+  }
+
+  public static Path getUserRoot() {
+    return FileUtils.getUserDirectory().toPath();
+  }
+
+  public static String addExtension(String filename, String extension) {
+    if (!extension.startsWith(".")) extension = "." + extension;
+    return filename + extension;
   }
 
   public static String readResource(String resourceName) throws IOException {
@@ -38,16 +85,11 @@ public class FileUtil {
     }
   }
 
-  public static <T> T executeFileRead(Path p, ExecuteFileRead<T> exec, ErrorCollector errors) {
-    try {
-      return exec.execute(p);
-    } catch (IOException e) {
-      errors.fatal("Could not read file or directory [%s]: [%s]", p, e);
-      return null;
-    }
-  }
-
   private static final int DELIMITER_CHAR = 46;
+
+  public static Pair<String, String> separateExtension(Path path) {
+    return separateExtension(path.getFileName().toString());
+  }
 
   public static Pair<String, String> separateExtension(String fileName) {
     if (Strings.isNullOrEmpty(fileName)) {
@@ -59,13 +101,6 @@ public class FileUtil {
     } else {
       return Pair.of(fileName.substring(0, offset).trim(), fileName.substring(offset + 1).trim());
     }
-  }
-
-  @FunctionalInterface
-  public interface ExecuteFileRead<T> {
-
-    T execute(Path p) throws IOException;
-
   }
 
 }
