@@ -73,6 +73,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void stringLibTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT string.*");
+    builder.add("X := SELECT toBase64(name) AS b64Name FROM Product");
+    validateScript(builder.getScript());
+  }
+
+  @Test
   public void productTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("X := SELECT * FROM Product");

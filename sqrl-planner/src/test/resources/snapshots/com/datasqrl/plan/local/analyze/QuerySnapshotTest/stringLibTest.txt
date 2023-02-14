@@ -1,0 +1,13 @@
+>>>customer$q$2
+LogicalValues(tuples=[[]])
+
+>>>orders$q$5
+LogicalValues(tuples=[[]])
+
+>>>product$q$9
+LogicalValues(tuples=[[]])
+
+>>>x$q$11
+LogicalProject(_uuid=[$0], b64Name=[TO_BASE64($3)], _ingest_time=[$1])
+  LogicalTableScan(table=[[product$q$9]])
+

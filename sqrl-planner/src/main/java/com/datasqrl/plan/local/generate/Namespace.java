@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.Getter;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -42,6 +43,10 @@ public class Namespace implements AbstractNamespace {
   Session session;
   @Getter
   private Set<URL> jars;
+
+  private List<ResolvedExport> exports = new ArrayList<>();
+
+  private Map<Name, SqlFunction> systemProvidedFunctionMap = new HashMap<>();
 
   public Namespace(Session session) {
     this.session = session;
@@ -66,6 +71,8 @@ public class Namespace implements AbstractNamespace {
       return addFunctionObject(name, (FunctionNamespaceObject) nsObject);
     } else if (nsObject instanceof TableNamespaceObject) {
       return addTableObject(name, (TableNamespaceObject) nsObject);
+    } else if (nsObject instanceof CalciteFunctionNsObject) {
+      return addCalciteFunctionObject(name, (CalciteFunctionNsObject) nsObject);
     } else {
       throw new RuntimeException("");
     }
@@ -102,6 +109,21 @@ public class Namespace implements AbstractNamespace {
     tempEnv.createTemporarySystemFunction(name.getCanonical(), nsObject.getFunction());
     nsObject.getJarUrl().map(j -> jars.add(j));
     return true;
+  }
+
+  public boolean addCalciteFunctionObject(Name name,
+      CalciteFunctionNsObject nsObject) {
+    systemProvidedFunctionMap.put(name, nsObject.getFunction());
+    return true;
+  }
+
+  /**
+   * Checks if a function translates to a system defined function. Used for aliasing
+   * system functions.
+   */
+  @Override
+  public Optional<SqlFunction> translateFunction(Name name) {
+    return Optional.ofNullable(systemProvidedFunctionMap.get(name));
   }
 
   /**
@@ -153,8 +175,6 @@ public class Namespace implements AbstractNamespace {
   public RelBuilder createRelBuilder() {
     return session.createRelBuilder();
   }
-
-  private List<ResolvedExport> exports = new ArrayList<>();
 
   @Override
   public List<ResolvedExport> getExports() {

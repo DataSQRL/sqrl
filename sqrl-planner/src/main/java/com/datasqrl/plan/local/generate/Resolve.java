@@ -6,6 +6,7 @@ package com.datasqrl.plan.local.generate;
 import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.function.builtin.string.StdStringLibraryImpl;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.ModuleLoader;
@@ -59,7 +60,10 @@ public class Resolve {
     Namespace ns = new Namespace(session);
 
     StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader(
-        Map.of(Name.system("time").toNamePath(), new StdTimeLibraryImpl()));
+        Map.of(
+            Name.system("time").toNamePath(), new StdTimeLibraryImpl(),
+            Name.system("string").toNamePath(), new StdStringLibraryImpl()
+        ));
 
     ModuleLoader moduleLoader = new ModuleLoaderImpl(resourceResolver, standardLibraryLoader,
         new URLObjectLoaderImpl(errors));

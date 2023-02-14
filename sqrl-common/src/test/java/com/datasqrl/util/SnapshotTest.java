@@ -123,7 +123,7 @@ public class SnapshotTest {
         Files.createDirectories(path.getParent());
         log.info("Test not running, creating snapshot");
         Files.write(path, content.getBytes());
-        fail("Creating snapshots");
+        fail("Creating snapshots: " + "file://"+path.toFile().getAbsolutePath());
       } else {
         byte[] data = Files.readAllBytes(path);
         String dataStr = new String(data);
