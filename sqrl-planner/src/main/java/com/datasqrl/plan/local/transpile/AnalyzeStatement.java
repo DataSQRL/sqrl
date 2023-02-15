@@ -11,6 +11,7 @@ import com.datasqrl.name.ReservedName;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Context;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
@@ -72,6 +73,7 @@ public class AnalyzeStatement implements
   private Map<SqlNode, SqlNode> aliasedOrder = new HashMap<>();
   private boolean allowSystemFields;
   private Optional<SQRLTable> context;
+  private final Namespace ns;
 
   @Value
   public static class Analysis {
@@ -87,20 +89,23 @@ public class AnalyzeStatement implements
     public Map<SqlNode, String> tableAlias;
     private Map<SqlNode, SqlNode> aliasedOrder;
     private boolean allowSystemFields;
+    private Namespace ns;
+
   }
 
   public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath,
-      Optional<SQRLTable> context) {
-    this(schema, assignmentPath, false, context);
+      Optional<SQRLTable> context, Namespace ns) {
+    this(schema, assignmentPath, false, context, ns);
   }
 
   public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath,
       boolean allowSystemFields,
-      Optional<SQRLTable> context) {
+      Optional<SQRLTable> context, Namespace ns) {
     this.schema = schema;
     this.assignmentPath = assignmentPath;
     this.allowSystemFields = allowSystemFields;
     this.context = context;
+    this.ns = ns;
     if (!this.assignmentPath.isEmpty()) {
       this.selfIdentifier = Optional.of(new SqlIdentifier(assignmentPath, SqlParserPos.ZERO));
     } else {
@@ -121,7 +126,8 @@ public class AnalyzeStatement implements
         groupByExpressions,
         tableAlias,
         aliasedOrder,
-        allowSystemFields);
+        allowSystemFields,
+        ns);
   }
 
   //No contextful single dispatch in SqlNode so we do it manually

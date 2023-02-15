@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -27,6 +28,8 @@ public interface AbstractNamespace {
    */
   public boolean addFunctionObject(Name name,
       FunctionNamespaceObject<UserDefinedFunction> nsObject);
+
+  Optional<SqlFunction> translateFunction(Name name);
 
   public boolean addTableObject(Name name, TableNamespaceObject nsObject);
 

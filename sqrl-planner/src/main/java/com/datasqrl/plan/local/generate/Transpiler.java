@@ -44,7 +44,7 @@ public class Transpiler {
     table.ifPresent(t -> checkPathWritable(ns, query.getNamePath().popLast()));
     Optional<VirtualRelationalTable> context = table.map(SQRLTable::getVt);
 
-    SqlTransformer transformer = createTransformer(query, ns.getSchema(), table);
+    SqlTransformer transformer = createTransformer(query, ns.getSchema(), table, ns);
     SqlNode node = convertToQuery(query, context);
     node = transformer.transform(node);
 
@@ -74,9 +74,10 @@ public class Transpiler {
     }
   }
 
-  private SqlTransformer createTransformer(SqrlStatement query, SqrlCalciteSchema schema, Optional<SQRLTable> table) {
+  private SqlTransformer createTransformer(SqrlStatement query, SqrlCalciteSchema schema, Optional<SQRLTable> table,
+      Namespace ns) {
     List<String> assignmentPath = getAssignmentPath(query);
-    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(schema, assignmentPath, table).accept(node);
+    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(schema, assignmentPath, table, ns).accept(node);
     return SqlTransformerFactory.create(analyzer, table.isPresent());
   }
 
