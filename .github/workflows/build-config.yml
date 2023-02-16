@@ -1,8 +1,6 @@
 name: Build and test SQRL with Maven
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -26,11 +24,3 @@ jobs:
         cache: maven
     - name: Build SQRL
       run: mvn -B -U -e clean install --no-transfer-progress
-#    - name: Set up Go
-#      uses: actions/setup-go@v3
-#      with:
-#        go-version: 1.15
-#    - name: Build SQRL cli
-#      run: |
-#        cd sqrl-cli
-#        go build -v ./...
