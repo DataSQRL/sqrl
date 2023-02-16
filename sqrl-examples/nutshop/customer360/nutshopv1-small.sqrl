@@ -2,7 +2,7 @@ IMPORT time.*;
 /* Imports the Products and Orders table from the Nutshop data
    We set an explicit timestamp on the Orders stream table */
 IMPORT nutshop-small.Products;
-IMPORT nutshop-small.Orders TIMESTAMP epoch_to_timestamp(time/1000) AS timestamp;
+IMPORT nutshop-small.Orders TIMESTAMP epochToTimestamp(time/1000) AS timestamp;
 
 /* Some order items are missing the discount field - let's clean that up */
 Orders.items.discount := coalesce(discount, 0.0);
@@ -25,7 +25,7 @@ Orders.totals := SELECT sum(total) as price, sum(discount) as savings FROM @.ite
 
 /* Aggregates the purchase history for each customer by month */
 Customers.spending_by_month :=
-         SELECT round_to_month(p.timestamp) AS month,
+         SELECT endOfMonth(p.timestamp) AS month,
                 sum(t.price) AS total_spend,
                 sum(t.savings) AS total_savings
          FROM @.purchases p JOIN p.totals t

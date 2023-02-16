@@ -1,13 +1,13 @@
 >>>ordernow1-lp
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 86400000]]
-    LogicalProject(customer=[$3], bucket=[round_to_day($4)], _uuid=[$0])
+    LogicalProject(customer=[$3], bucket=[endOfDay($4)], _uuid=[$0])
       LogicalTableScan(table=[[orders$q$5]])
 
 >>>ordernow2-lp
 LogicalProject(bucket=[$0], order_count=[$1])
   LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 4, 86400000]]
-    LogicalProject(bucket=[round_to_day($4)], _uuid=[$0])
+    LogicalProject(bucket=[endOfDay($4)], _uuid=[$0])
       LogicalTableScan(table=[[orders$q$5]])
 
 >>>ordernow3-lp

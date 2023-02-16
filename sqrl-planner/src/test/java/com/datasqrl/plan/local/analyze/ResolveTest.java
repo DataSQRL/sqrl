@@ -82,8 +82,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void timestampColumnDefinition() {
     String script = ScriptBuilder.of("IMPORT ecommerce-data.Customer",
         "IMPORT time.*",
-        "Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)",
-        "Customer.month := ROUND_TO_MONTH(ROUND_TO_MONTH(timestamp))",
+        "Customer.timestamp := epochToTimestamp(lastUpdated)",
+        "Customer.month := endOfMonth(endOfMonth(timestamp))",
         "CustomerCopy := SELECT timestamp, month FROM Customer");
     process(script);
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 8, 1,
@@ -95,7 +95,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void timestampExpressionTest() {
     process(
-        "IMPORT time.*; IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS timestamp;\n");
+        "IMPORT time.*; IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp;\n");
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.fixed(6));
   }
@@ -111,7 +111,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void addingSimpleColumns() {
     String script = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
         "Orders.col1 := (id + customerid)/2",
-        "Orders.entries.discount2 := COALESCE(discount,0.0)",
+        "Orders.entries.discount2 := coalesce(discount,0.0)",
         "OrderEntry := SELECT o.col1, o.\"time\", e.productid, e.discount2 FROM Orders o JOIN o.entries e");
     process(script);
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
@@ -151,7 +151,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC",
         "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e",
         "OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t",
-        "Customer.orders_by_day := SELECT round_to_day(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day");
+        "Customer.orders_by_day := SELECT endOfDay(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day");
     process(sqrl);
     validateQueryTable("total", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(4));
@@ -246,7 +246,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void streamTimeAggregateTest() {
     ScriptBuilder builder = imports();
     builder.add(
-        "Ordertime1 := SELECT o.customerid as customer, round_to_second(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "Ordertime1 := SELECT o.customerid as customer, endOfsecond(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     process(builder.toString());
     validateQueryTable("ordertime1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1));
@@ -256,9 +256,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void nowAggregateTest() {
     ScriptBuilder builder = imports();
     builder.add(
-        "OrderNow1 := SELECT o.customerid as customer, round_to_day(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer, bucket");
+        "OrderNow1 := SELECT o.customerid as customer, endOfDay(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer, bucket");
     builder.add(
-        "OrderNow2 := SELECT round_to_day(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY bucket");
+        "OrderNow2 := SELECT endOfDay(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY bucket");
     builder.add(
         "OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer");
     builder.add(
@@ -296,10 +296,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("OrderFilter := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 YEAR;\n");
 
     builder.add(
-        "OrderAgg1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM OrderFilter o GROUP BY customer, bucket;\n");
+        "OrderAgg1 := SELECT o.customerid as customer, endOfsecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM OrderFilter o GROUP BY customer, bucket;\n");
 //    //The following should be equivalent
     builder.add(
-        "OrderAgg2 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
+        "OrderAgg2 := SELECT o.customerid as customer, endOfsecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
     process(builder.toString());
     validateQueryTable("orderfilter", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(4), new PullupTest(true, false));
@@ -383,7 +383,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         " UNION ALL " +
         "(SELECT c.customerid, c.\"_ingest_time\" AS rowtime FROM Customer c);");
     builder.add(
-        "StreamCount := SELECT round_to_day(rowtime) as day, COUNT(1) as num FROM CombinedStream GROUP BY day");
+        "StreamCount := SELECT endOfDay(rowtime) as day, COUNT(1) as num FROM CombinedStream GROUP BY day");
     process(builder.toString());
     validateQueryTable("combinedstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2));

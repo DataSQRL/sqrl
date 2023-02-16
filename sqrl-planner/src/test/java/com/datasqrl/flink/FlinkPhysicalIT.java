@@ -8,16 +8,17 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Set;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Set;
 
 class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
@@ -55,7 +56,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add(
         "EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e"); //This is line 4 in the script
 
-    builder.add("Customer.timestamp := EPOCH_TO_TIMESTAMP(lastUpdated)");
+    builder.add("Customer.timestamp := epochToTimestamp(lastUpdated)");
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC");
 
     builder.add("Orders.col1 := (id + customerid)/2");
@@ -74,7 +75,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("IMPORT time.*");
     builder.add("IMPORT ecommerce-data.Orders");
     builder.add(
-        "IMPORT ecommerce-data.Customer TIMESTAMP EPOCH_TO_TIMESTAMP(lastUpdated) AS updateTime");
+        "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS updateTime");
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
     builder.add(
         "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e");
@@ -82,7 +83,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
         "OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t");
 //    builder.add("Customer.orders_by_day := SELECT o.\"time\", o.price, o.num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid");
     builder.add(
-        "Customer.orders_by_hour := SELECT round_to_hour(o.\"time\") as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY hour");
+        "Customer.orders_by_hour := SELECT endOfHour(o.\"time\") as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY hour");
     validateTables(builder.getScript(), "customer", "orders", "ordersinline", "orders_by_hour");
   }
 
@@ -91,7 +92,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     ScriptBuilder builder = new ScriptBuilder();
     builder.add("IMPORT time.*");
     builder.add(
-        "IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
+        "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
     builder.add("IMPORT ecommerce-data.Orders TIMESTAMP \"time\" AS rowtime");
 
     //Normal join
@@ -116,16 +117,16 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     ScriptBuilder builder = example.getImports();
     //temporal state
     builder.append(
-        "OrderAgg1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "OrderAgg1 := SELECT o.customerid as customer, endOfHour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     builder.append("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o");
     //time window
     builder.append(
-        "Ordertime1 := SELECT o.customerid as customer, round_to_second(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "Ordertime1 := SELECT o.customerid as customer, endOfSecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     //now() and sliding window
     builder.append(
-        "OrderNow1 := SELECT o.customerid as customer, round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer, bucket");
+        "OrderNow1 := SELECT o.customerid as customer, endOfHour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer, bucket");
     builder.append(
-        "OrderNow2 := SELECT round_to_hour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY bucket");
+        "OrderNow2 := SELECT endOfHour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY bucket");
     builder.append(
         "OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer");
     builder.append(
@@ -155,7 +156,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   public void topNTest() {
     ScriptBuilder builder = example.getImports();
 
-    builder.add("Customer.updateTime := epoch_to_timestamp(lastUpdated)");
+    builder.add("Customer.updateTime := epochToTimestamp(lastUpdated)");
     builder.add("CustomerDistinct := DISTINCT Customer ON customerid ORDER BY updateTime DESC;");
     builder.add(
         "CustomerDistinct.recentOrders := SELECT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
@@ -180,21 +181,21 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     ScriptBuilder builder = new ScriptBuilder();
     builder.add("IMPORT time.*");
     builder.add(
-        "IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
+        "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
     builder.add("IMPORT ecommerce-data.Orders");
 
     builder.add("CombinedStream := (SELECT o.customerid, o.\"time\" AS rowtime FROM Orders o)" +
         " UNION ALL " +
         "(SELECT c.customerid, c.updateTime AS rowtime FROM Customer c);");
     builder.add(
-        "StreamCount := SELECT round_to_hour(rowtime) as hour, COUNT(1) as num FROM CombinedStream GROUP BY hour");
+        "StreamCount := SELECT endOfHour(rowtime) as hour, COUNT(1) as num FROM CombinedStream GROUP BY hour");
     validateTables(builder.getScript(), "combinedstream", "streamcount");
   }
 
   @Test
   public void streamTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Customer.updateTime := epoch_to_timestamp(lastUpdated)");
+    builder.add("Customer.updateTime := epochToTimestamp(lastUpdated)");
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY updateTime DESC");
     builder.add(
         "CustomerCount := SELECT c.customerid, c.name, SUM(e.quantity) as quantity FROM Orders o JOIN o.entries e JOIN Customer c on o.customerid = c.customerid GROUP BY c.customerid, c.name");

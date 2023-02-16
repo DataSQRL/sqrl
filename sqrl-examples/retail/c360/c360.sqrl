@@ -1,4 +1,5 @@
-IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) AS updateTime;
+IMPORT time.*;
+IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS updateTime;
 IMPORT ecommerce-data.Product;
 IMPORT ecommerce-data.Orders;
 
@@ -33,7 +34,7 @@ Customer.recent_products_categories.products := JOIN @.parent.recent_products rp
 
 -- Aggregate customer spending by month and product category for the 'spending history' feature
 Customer._spending_by_month_category :=
-                     SELECT round_to_month(o.time) AS month,
+                     SELECT endOfMonth(o.time) AS month,
                             e.product.category AS category,
                             sum(e.total) AS total,
                             sum(e.discount) AS savings
@@ -50,7 +51,7 @@ Customer.spending_by_month.categories :=
 /* Compute w/w product sales volume increase average over a month
    These numbers are internal to determine trending products */
 
-Product._sales_by_hour := SELECT round_to_hour(o.time) as hour, sum(e.quantity) as quantity,
+Product._sales_by_hour := SELECT endOfHour(o.time) as hour, sum(e.quantity) as quantity,
                                 count(1) as num_orders
                           FROM @ JOIN Orders o JOIN o.entries e ON e.productid = @.productid ORDER BY hour DESC;
 

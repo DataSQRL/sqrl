@@ -23,7 +23,7 @@ LogicalProject(__pk_0=[$0], total=[$1], num=[$2], hour=[$3])
       LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
         LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
           LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
-            LogicalProject(__pk_0=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
+            LogicalProject(__pk_0=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
               LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0.0:DECIMAL(10, 5))], $f12=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
                   LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
@@ -51,14 +51,14 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
 >>>customer$12-lp-stream
 LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
   LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epoch_to_timestamp($5)]) hints[WatermarkHint options:[6]]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[customer$i$1]])
 
 >>>_sales_by_hour$20-lp-stream
 LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
   LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
     LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
-      LogicalProject(__pk_0=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
+      LogicalProject(__pk_0=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
         LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0.0:DECIMAL(10, 5))], $f12=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
             LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
@@ -80,7 +80,7 @@ LogicalProject(__pk_0=[$0], total=[$1], num=[$2], hour=[$3])
       LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
         LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
           LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
-            LogicalProject(__pk_0=[$13], hour=[round_to_hour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
+            LogicalProject(__pk_0=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
               LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], $f11=[coalesce($10, 0.0:DECIMAL(10, 5))], $f12=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
                   LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])

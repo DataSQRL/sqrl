@@ -7,7 +7,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
     LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
-      LogicalProject(customer=[$3], bucket=[round_to_hour($4)], _uuid=[$0])
+      LogicalProject(customer=[$3], bucket=[endOfHour($4)], _uuid=[$0])
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
           LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
@@ -15,7 +15,7 @@ LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
     LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
-      LogicalProject(customer=[$3], bucket=[round_to_hour($4)], _uuid=[$0], _ingest_time=[$1])
+      LogicalProject(customer=[$3], bucket=[endOfHour($4)], _uuid=[$0], _ingest_time=[$1])
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
           LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
@@ -54,7 +54,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=
 LogicalProject(bucket=[$0], order_count=[$1])
   LogicalProject(bucket=[$0], order_count=[$1])
     LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 4, 3600000]]
-      LogicalProject(bucket=[round_to_hour($4)], _uuid=[$0])
+      LogicalProject(bucket=[endOfHour($4)], _uuid=[$0])
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
           LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
@@ -62,7 +62,7 @@ LogicalProject(bucket=[$0], order_count=[$1])
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
     LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000]]
-      LogicalProject(customer=[$3], bucket=[round_to_second($4)], _uuid=[$0])
+      LogicalProject(customer=[$3], bucket=[endOfSecond($4)], _uuid=[$0])
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
           LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 

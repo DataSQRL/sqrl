@@ -30,7 +30,7 @@ ViewEvent.`stream` := JOIN `Stream` ON @.streamid = `Stream`.id;
                             SUM(duration) AS total_duration
                      FROM @.viewers;
 
-`Stream`.viewers._view_bymin := SELECT ROUND_TO_MINUTE(time) AS min, SUM(duration) AS duration
+`Stream`.viewers._view_bymin := SELECT endOfMINUTE(time) AS min, SUM(duration) AS duration
                               FROM @._views
                               GROUP BY min ORDER BY min DESC;
 `Stream`.stats_by_minute := SELECT min, COUNT(*) AS viewers, SUM(duration) AS _totalduration,

@@ -4,19 +4,19 @@ IMPORT network-data.System;
 
 -- Defining rollups that we will use for analysis
 
-MinuteTraffic := SELECT ROUND_TO_MINUTE(ts) AS time, srcIP, srcPort, destIP, destPort,
+MinuteTraffic := SELECT endOfMINUTE(ts) AS time, srcIP, srcPort, destIP, destPort,
                         SUM(len) AS total_len, COUNT(*) AS num_packets
                  FROM Traffic
                  WHERE ts > now() - INTERVAL 14 DAY
-                 GROUP BY ROUND_TO_MINUTE(ts), srcIP, srcPort, destIP, destPort
-                 ORDER BY ROUND_TO_MINUTE(ts) DESC;
+                 GROUP BY endOfMINUTE(ts), srcIP, srcPort, destIP, destPort
+                 ORDER BY endOfMINUTE(ts) DESC;
 
-HourTraffic := SELECT ROUND_TO_HOUR(ts) AS time, srcIP, srcPort, destIP, destPort,
+HourTraffic := SELECT endOfHOUR(ts) AS time, srcIP, srcPort, destIP, destPort,
                         SUM(len) AS total_len, COUNT(*) AS num_packets
                  FROM Traffic
                  WHERE ts > now() - INTERVAL 6 MONTH
-                 GROUP BY ROUND_TO_HOUR(ts), srcIP, srcPort, destIP, destPort
-                 ORDER BY ROUND_TO_HOUR(ts) DESC;
+                 GROUP BY endOfHOUR(ts), srcIP, srcPort, destIP, destPort
+                 ORDER BY endOfHOUR(ts) DESC;
 
 Instance :=  SELECT DISTINCT srcIP AS ip FROM Traffic
              UNION DISTINCT

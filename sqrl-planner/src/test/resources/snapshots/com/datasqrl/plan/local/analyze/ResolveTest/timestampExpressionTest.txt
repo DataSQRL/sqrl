@@ -1,4 +1,4 @@
 >>>customer-lp
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[EPOCH_TO_TIMESTAMP($5)])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[epochToTimestamp($5)])
   LogicalValues(tuples=[[]])
 
