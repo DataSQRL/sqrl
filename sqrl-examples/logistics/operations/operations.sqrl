@@ -20,7 +20,7 @@ Shipment.first_delivery_time := SELECT timestamp FROM @.events
 DelayedShipments := SELECT * FROM Shipment
                     WHERE is_delivered = TRUE AND first_delivery_time > expectedArrival;
 
-DelayedShipmentsAnalysis := SELECT ROUND_TO_DAY(createdOn) AS startday,
+DelayedShipmentsAnalysis := SELECT endOfDAY(createdOn) AS startday,
                               src.city + ', ' + src.state AS startlocation,
                               COUNT(*) num_shipments, AVG(first_delivery_time-expectedArrival) AS avgdelay
                             FROM DelayedShipments

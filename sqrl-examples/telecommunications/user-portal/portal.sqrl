@@ -8,7 +8,7 @@ SIM.requests := JOIN Requests ON Requests.sim_id = @.uid;
 
 -- Aggregate requests by month for each SIM
 
-SIM.requests_by_month := SELECT ROUND_TO_MONTH(timestamp) AS month, timestamp, uri, data_size
+SIM.requests_by_month := SELECT endOfMONTH(timestamp) AS month, timestamp, uri, data_size
                          FROM @.requests
                          WHERE timestamp > now() - INTERVAL 2 YEAR
                          ORDER BY month DESC;

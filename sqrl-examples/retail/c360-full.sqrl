@@ -1,7 +1,7 @@
-IMPORT time.round_to_month;
-IMPORT time.epoch_to_timestamp;
+IMPORT time.endOfMonth;
+IMPORT time.epochToTimestamp;
 
-IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) AS updateTime;
+IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS updateTime;
 IMPORT ecommerce-data.Product TIMESTAMP _ingest_time - INTERVAL 1 YEAR AS updateTime;
 IMPORT ecommerce-data.Orders;
 
@@ -28,7 +28,7 @@ Customer.order_again := SELECT e.productid, sum(e.quantity) AS quantity, count(1
 
 -- Aggregate customer spending by month and product category for the 'spending history' feature
 Customer._spending_by_month_category :=
-                     SELECT round_to_month(o.time) AS month,
+                     SELECT endOfMonth(o.time) AS month,
                             p.category AS category,
                             sum(e.total) AS total,
                             sum(e.discount) AS savings

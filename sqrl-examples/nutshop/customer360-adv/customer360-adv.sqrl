@@ -13,7 +13,7 @@ Orders.items.total := quantity * unit_price - discount;
 Orders.totals := SELECT sum(total) as price, sum(discount) as savings FROM @.items;
 
 Customers.spending_by_month :=
-         SELECT round_to_month(p.timestamp) AS month,
+         SELECT endOfmonth(p.timestamp) AS month,
                 sum(t.price) AS total_spend,
                 sum(t.savings) AS total_savings
          FROM @.purchases p JOIN p.totals t

@@ -35,14 +35,14 @@ Address._flow := SELECT parent.timestamp as timestamp, value as received FROM @.
 
 Address.balance := SELECT SUM(f.received)-SUM(f.sent) FROM @._flow f;
 
-Address.flow_history := SELECT ROUND_TO_DAY(f.timestamp) as day, SUM(f.received) as received_total,
+Address.flow_history := SELECT endOfDAY(f.timestamp) as day, SUM(f.received) as received_total,
                                SUM(f.sent) as sent_total, COUNT(*) as num_tx
                         FROM @._flow f
                         GROUP BY day ORDER BY day DESC;
 
 Address.activityLevel := SELECT SUM(num_tx) FROM @.flow_history WHERE day >= now() - INTERVAL 14 DAYS;
 
-_TxBreakdown := SELECT o.to.address AS receiverAddr, i.`from`.address AS senderAddr, ROUND_TO_MONTH(tx.timestamp) AS month,
+_TxBreakdown := SELECT o.to.address AS receiverAddr, i.`from`.address AS senderAddr, endOfMONTH(tx.timestamp) AS month,
                         SUM(o.value*i.value/tx.total_value) as total_value
                 FROM Transactions.outputs o JOIN o.parent tx JOIN tx.inputs i
                 GROUP BY receiverAddr, senderAddr, month;

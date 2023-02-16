@@ -1,6 +1,6 @@
-IMPORT time.round_to_hour;
-IMPORT time.epoch_to_timestamp;
-IMPORT ecommerce-data.Customer TIMESTAMP epoch_to_timestamp(lastUpdated) AS updateTime;
+IMPORT time.endOfHour;
+IMPORT time.epochToTimestamp;
+IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS updateTime;
 IMPORT ecommerce-data.Product TIMESTAMP _ingest_time - INTERVAL 1 YEAR AS updateTime;
 IMPORT ecommerce-data.Orders;
 
@@ -24,7 +24,7 @@ Orders.entries.product := JOIN Product ON Product.productid = @.productid;
 /* Compute w/w product sales volume increase average over a month
    These numbers are internal to determine trending products */
 
-Product._sales_by_hour := SELECT round_to_hour(o.time) as hour, sum(e.quantity) as quantity,
+Product._sales_by_hour := SELECT endOfHour(o.time) as hour, sum(e.quantity) as quantity,
                                 count(1) as num_orders
                           FROM @ JOIN Orders.entries e ON e.productid = @.productid JOIN e.parent o
                           GROUP BY hour

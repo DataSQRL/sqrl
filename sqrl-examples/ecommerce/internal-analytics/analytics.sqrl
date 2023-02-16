@@ -15,10 +15,10 @@ Seller.sales_by_category := SELECT category.name AS category, SUM(highest_bid_pr
                             WHERE end_time < now()
                             GROUP BY category.name ORDER BY total_sales DESC;
 
-Seller.sales_by_month := SELECT ROUND_TO_MONTH(end_time) AS month, SUM(highest_bid_price) AS total_sales
+Seller.sales_by_month := SELECT endOfMONTH(end_time) AS month, SUM(highest_bid_price) AS total_sales
                             FROM @.auctions
                             WHERE end_time < now()
-                            GROUP BY ROUND_TO_MONTH(end_time) ORDER BY month DESC;
+                            GROUP BY endOfMONTH(end_time) ORDER BY month DESC;
 
 Seller.num_open_auctions := SELECT COUNT(*) FROM @.auctions
                             WHERE end_time >= now() LIMIT 1;
@@ -27,7 +27,7 @@ Seller.open_auctions_total := SELECT SUM(highest_bid_price) FROM @.auctions
 
 -- Daily Stats
 
-AuctionsByDay := SELECT ROUND_TO_DAY(end_time) AS day, COUNT(*) AS num_auctions,
+AuctionsByDay := SELECT endOfDAY(end_time) AS day, COUNT(*) AS num_auctions,
                         MAX(highest_bid_price) AS max_price, AVG(highest_bid_price) AS avg_price,
                         AVG(num_bids) AS avg_num_bids, SUM(num_bids) AS total_bids, AVG(duration) AS avg_duration
                  FROM Auction
