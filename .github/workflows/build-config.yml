@@ -31,7 +31,7 @@ jobs:
         DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
         DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
       run: |
-        docker login -i $DOCKER_USERNAME -p DOCKER_PASSWORD
+        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
     - name: Build Docker image
       run: docker build . --file Dockerfile --tag datasqrl/datasqrl-cmd:latest
     - name: Push Docker image
