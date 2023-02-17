@@ -7,16 +7,16 @@ import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.name.Name;
 import com.datasqrl.schema.constraint.ConstraintHelper;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
-import com.datasqrl.schema.input.FlexibleDatasetSchema.FieldType;
-import com.datasqrl.schema.input.FlexibleDatasetSchema.FlexibleField;
-import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
+import com.datasqrl.schema.input.FlexibleFieldSchema;
+import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
+import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
 import com.datasqrl.schema.input.FlexibleSchemaHelper;
+import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.RelationType;
-import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +29,7 @@ public class FlexibleSchemaRowMapper<R> implements RowMapper<R>, Serializable {
 
   @Override
   public R apply(SourceRecord.Named sourceRecord) {
-    Object[] cols = constructRows(sourceRecord.getData(), ((TableField) schema).getFields());
+    Object[] cols = constructRows(sourceRecord.getData(), ((FlexibleTableSchema) schema).getFields());
     //Add metadata
     cols = extendCols(cols, 2 + (hasSourceTimestamp ? 1 : 0));
     cols[0] = sourceRecord.getUuid().toString();
@@ -47,9 +47,9 @@ public class FlexibleSchemaRowMapper<R> implements RowMapper<R>, Serializable {
   }
 
   private Object[] constructRows(Map<Name, Object> data,
-      RelationType<FlexibleDatasetSchema.FlexibleField> schema) {
+      RelationType<FlexibleFieldSchema.Field> schema) {
     List<Object> objects = new ArrayList<>();
-    for (FlexibleField field : schema.getFields()) {
+    for (Field field : schema.getFields()) {
       for (FieldType type : field.getTypes()) {
         objects.add(constructRow(data, field, type));
       }
@@ -58,12 +58,12 @@ public class FlexibleSchemaRowMapper<R> implements RowMapper<R>, Serializable {
     return objects.toArray();
   }
 
-  private Object constructRow(Map<Name, Object> data, FlexibleField field, FieldType type) {
+  private Object constructRow(Map<Name, Object> data, Field field, FieldType type) {
     Name name = FlexibleSchemaHelper.getCombinedName(field, type);
     boolean isMixedType = field.getTypes().size() > 1;
     if (type.getType() instanceof RelationType) {
-      RelationType<FlexibleDatasetSchema.FlexibleField> subType =
-          (RelationType<FlexibleDatasetSchema.FlexibleField>) type.getType();
+      RelationType<FlexibleFieldSchema.Field> subType =
+          (RelationType<FlexibleFieldSchema.Field>) type.getType();
       if (isSingleton(type)) {
         return rowConstructor.createNestedRow(
             constructRows((Map<Name, Object>) data.get(name), subType));
@@ -91,7 +91,7 @@ public class FlexibleSchemaRowMapper<R> implements RowMapper<R>, Serializable {
     }
   }
 
-  private static boolean isSingleton(FlexibleDatasetSchema.FieldType ftype) {
+  private static boolean isSingleton(FlexibleFieldSchema.FieldType ftype) {
     return ConstraintHelper.getCardinality(ftype.getConstraints()).isSingleton();
   }
 

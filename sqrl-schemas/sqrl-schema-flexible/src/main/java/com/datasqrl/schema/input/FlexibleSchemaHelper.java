@@ -9,8 +9,8 @@ import com.datasqrl.schema.constraint.ConstraintHelper;
 
 public class FlexibleSchemaHelper {
 
-  public static boolean isNonNull(FlexibleDatasetSchema.FlexibleField field) {
-    for (FlexibleDatasetSchema.FieldType type : field.getTypes()) {
+  public static boolean isNonNull(FlexibleFieldSchema.Field field) {
+    for (FlexibleFieldSchema.FieldType type : field.getTypes()) {
       if (!ConstraintHelper.isNonNull(type.getConstraints())) {
         return false;
       }
@@ -18,8 +18,8 @@ public class FlexibleSchemaHelper {
     return true;
   }
 
-  public static Name getCombinedName(FlexibleDatasetSchema.FlexibleField field,
-      FlexibleDatasetSchema.FieldType type) {
+  public static Name getCombinedName(FlexibleFieldSchema.Field field,
+                                     FlexibleFieldSchema.FieldType type) {
     Name name = field.getName();
     if (name instanceof SpecialName) {
       if (name.equals(SpecialName.VALUE)) {

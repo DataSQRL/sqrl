@@ -5,18 +5,20 @@ package com.datasqrl.io.stats;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.name.Name;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
-import com.datasqrl.schema.input.FlexibleDatasetSchema.FieldType;
-import java.util.List;
+import com.datasqrl.schema.input.FlexibleFieldSchema;
+import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
+import com.datasqrl.schema.input.FlexibleTableSchema;
 import lombok.NonNull;
 
+import java.util.List;
+
 public interface SchemaGenerator {
-  public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats,
-      @NonNull FlexibleDatasetSchema.TableField tableDef, @NonNull ErrorCollector errors);
+  public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
+                                                    @NonNull FlexibleTableSchema tableDef, @NonNull ErrorCollector errors);
 
-  public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats,
-      @NonNull Name tableName, @NonNull ErrorCollector errors);
+  public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
+                                                    @NonNull Name tableName, @NonNull ErrorCollector errors);
 
-  public FlexibleDatasetSchema.FieldType matchType(TypeSignature typeSignature,
-      List<FieldType> fieldTypes);
+  public FlexibleFieldSchema.FieldType matchType(TypeSignature typeSignature,
+                                                 List<FieldType> fieldTypes);
 }

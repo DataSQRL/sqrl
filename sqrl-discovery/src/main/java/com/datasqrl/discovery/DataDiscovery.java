@@ -23,10 +23,10 @@ import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
-import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
+import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,11 +90,6 @@ public class DataDiscovery {
   }
 
   public List<TableSource> discoverSchema(List<TableInput> tables) {
-    return discoverSchema(tables, FlexibleDatasetSchema.EMPTY);
-  }
-
-  public List<TableSource> discoverSchema(List<TableInput> tables,
-      FlexibleDatasetSchema baseSchema) {
     List<TableSource> resultTables = new ArrayList<>();
     try (TableStatisticsStore store = openStore()) {
       for (TableInput table : tables) {
@@ -104,13 +99,13 @@ public class DataDiscovery {
           continue;
         }
         DefaultSchemaGenerator generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
-        Optional<FlexibleDatasetSchema.TableField> tableField = baseSchema.getFieldByName(table.getName());
-        FlexibleDatasetSchema.TableField schema;
+        Optional<FlexibleTableSchema> baseSchema = Optional.empty(); //TODO: allow users to configure base schemas
+        FlexibleTableSchema schema;
         ErrorCollector subErrors = errors.resolve(table.getName());
-        if (tableField.isEmpty()) {
+        if (baseSchema.isEmpty()) {
           schema = generator.mergeSchema(stats, table.getName(), subErrors);
         } else {
-          schema = generator.mergeSchema(stats, tableField.get(), subErrors);
+          schema = generator.mergeSchema(stats, baseSchema.get(), subErrors);
         }
         TableSource tblSource = table.getConfiguration()
             .initializeSource(errors, table.getPath().parent(), schema);
@@ -137,20 +132,6 @@ public class DataDiscovery {
     List<TableSource> sourceTables = discoverSchema(inputTables);
     return sourceTables;
 
-  }
-
-  public static FlexibleDatasetSchema combineSchema(List<TableSource> tables) {
-    return combineSchema(tables, FlexibleDatasetSchema.EMPTY);
-  }
-
-  public static FlexibleDatasetSchema combineSchema(List<TableSource> tables,
-      FlexibleDatasetSchema baseSchema) {
-    FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
-    builder.setDescription(baseSchema.getDescription());
-    for (TableSource table : tables) {
-      builder.add((TableField) table.getSchema().getSchema());
-    }
-    return builder.build();
   }
 
 

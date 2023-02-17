@@ -5,8 +5,7 @@ package com.datasqrl;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.loaders.URLObjectLoaderImpl;
-import com.datasqrl.loaders.TableSourceNamespaceObject;
+import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.local.generate.FileResourceResolver;
@@ -14,14 +13,14 @@ import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.Resolve;
 import com.datasqrl.plan.local.generate.Session;
 import com.google.common.base.Preconditions;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {
 
@@ -55,14 +54,8 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
 
   protected TableSource loadTable(NamePath path) {
-    URLObjectLoaderImpl URLObjectLoaderImpl = new URLObjectLoaderImpl(error);
-    FileResourceResolver fileResourceResolver = new FileResourceResolver(rootDir);
-    URL url = fileResourceResolver.resolveTableJson(path)
-        .get();
-
-    TableSourceNamespaceObject ts = (TableSourceNamespaceObject) URLObjectLoaderImpl.load(url, fileResourceResolver, path)
-        .get();
-    return ts.getTable();
+    ObjectLoaderImpl objectLoader = new ObjectLoaderImpl(new FileResourceResolver(rootDir), error);
+    return objectLoader.loadTable(path).getTable();
   }
 
   @SneakyThrows

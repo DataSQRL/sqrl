@@ -1,20 +1,21 @@
 package com.datasqrl.packager.preprocess;
 
-import static com.datasqrl.packager.preprocess.TablePreprocessor.TABLE_FILE_REGEX;
-
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.DataSource;
+import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
+import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 @AllArgsConstructor
 public class FlexibleSchemaPreprocessor implements Preprocessor {
 
-  public static final String SCHEMA_YML_REGEX = "(.*\\.schema\\.yml|schema\\.yml)$";
+  public static final String SCHEMA_YML_REGEX = "(.*)\\.schema\\.yml$";
 
   public ErrorCollector errors;
 
@@ -26,18 +27,19 @@ public class FlexibleSchemaPreprocessor implements Preprocessor {
 
   @SneakyThrows
   @Override
-  public void loader(Path dir, ProcessorContext processorContext) {
-    Preconditions.checkArgument(Files.isRegularFile(dir), "Not a regular file: %s", dir);
+  public void loader(Path file, ProcessorContext processorContext) {
+    Preconditions.checkArgument(Files.isRegularFile(file), "Not a regular file: %s", file);
 
-    boolean hasTableJson = Files.list(dir.getParent())
-        .anyMatch(path -> TABLE_FILE_REGEX.asMatchPredicate().test(path.getFileName().toString()));
+    String tablename = StringUtil.removeFromEnd(file.getFileName().toString(), FlexibleTableSchemaFactory.SCHEMA_EXTENSION);
+    Path tableFile = file.getParent().resolve(tablename + DataSource.TABLE_FILE_SUFFIX);
+    boolean hasTableJson = Files.isRegularFile(tableFile);
 
     // If the directory does not contain a table json file
     if (!hasTableJson) {
-      errors.warn("No file with pattern %s found in directory: %s", TABLE_FILE_REGEX, dir.getParent());
+      errors.warn("No table file [%s] for schema file [%s], hence schema is ignored", tableFile, file);
       return;
     }
 
-    processorContext.addDependency(dir);
+    processorContext.addDependency(file);
   }
 }

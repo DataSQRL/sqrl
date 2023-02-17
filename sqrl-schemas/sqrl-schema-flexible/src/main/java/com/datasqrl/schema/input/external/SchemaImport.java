@@ -4,6 +4,7 @@
 package com.datasqrl.schema.input.external;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.schema.input.FlexibleFieldSchema;
 import com.datasqrl.util.NamedIdentifier;
 import com.datasqrl.util.StringNamedId;
 import com.datasqrl.name.Name;
@@ -13,7 +14,7 @@ import com.datasqrl.schema.constraint.Cardinality;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.Constraint.Lookup;
 import com.datasqrl.schema.constraint.ConstraintHelper;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.SchemaElementDescription;
 import com.datasqrl.schema.type.Type;
@@ -28,9 +29,9 @@ import java.util.*;
 
 /**
  * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a
- * {@link FlexibleDatasetSchema} to be used internally.
+ * {@link FlexibleTableSchema} to be used internally.
  * <p>
- * A {@link SchemaDefinition} is provided by a user in connection with an SQML script to specify the
+ * A {@link SchemaDefinition} is provided by a user in connection with a table configuration to specify the
  * expected schema of the source datasets consumed by the script.
  */
 public class SchemaImport {
@@ -38,213 +39,170 @@ public class SchemaImport {
   public static final NamedIdentifier VERSION = StringNamedId.of("1");
 
   private final Lookup constraintLookup;
-  private final NameCanonicalizer defaultCanonicalizer;
+  private final NameCanonicalizer canonicalizer;
 
   public SchemaImport(Lookup constraintLookup, NameCanonicalizer defaultCanonicalizer) {
     this.constraintLookup = constraintLookup;
-    this.defaultCanonicalizer = defaultCanonicalizer;
+    this.canonicalizer = defaultCanonicalizer;
   }
 
-  public Map<Name, FlexibleDatasetSchema> convertImportSchema(SchemaDefinition schema,
-      @NonNull ErrorCollector errors) {
+  public Optional<FlexibleTableSchema> convert(TableDefinition table,
+                                               @NonNull ErrorCollector errors) {
     NamedIdentifier version;
-    if (Strings.isNullOrEmpty(schema.version)) {
+    if (Strings.isNullOrEmpty(table.schema_version)) {
       version = VERSION;
     } else {
-      version = StringNamedId.of(schema.version);
+      version = StringNamedId.of(table.schema_version);
     }
     if (!version.equals(VERSION)) {
-      errors.fatal("Unrecognized version: %s. Supported versions are: %s", version, VERSION);
-      return Collections.EMPTY_MAP;
+      errors.fatal("Unrecognized schema version: %s. Supported versions are: %s", version, VERSION);
+      return Optional.empty();
     }
-    Map<Name, FlexibleDatasetSchema> result = new HashMap<>(schema.datasets.size());
-    for (DatasetDefinition dataset : schema.datasets) {
-      if (Strings.isNullOrEmpty(dataset.name)) {
-        errors.fatal("Missing or invalid dataset name: %s", dataset.name);
-        continue;
-      }
-      Name datasetName = Name.system(dataset.name);
-      if (result.containsKey(datasetName)) {
-        errors.warn(
-            "Dataset [%s] is defined multiple times in schema and later definitions are ignored",
-            dataset.name);
-        continue;
-      }
-      errors = errors.resolve(datasetName);
-      FlexibleDatasetSchema ddschema = new DatasetConverter(defaultCanonicalizer,
-          constraintLookup).convert(dataset, errors);
-      result.put(datasetName, ddschema);
+    FlexibleTableSchema.Builder builder = new FlexibleTableSchema.Builder();
+    Optional<Name> nameOpt = convert(table, builder, errors);
+    if (nameOpt.isEmpty()) {
+      return Optional.empty();
+    } else {
+      errors = errors.resolve(nameOpt.get());
     }
-    return result;
+    builder.setPartialSchema(table.partial_schema == null ? TableDefinition.PARTIAL_SCHEMA_DEFAULT
+            : table.partial_schema);
+    builder.setConstraints(convertConstraints(table.tests, errors));
+    if (table.columns == null || table.columns.isEmpty()) {
+      errors.fatal("Table does not have column definitions");
+      return Optional.empty();
+    }
+    builder.setFields(convert(table.columns, errors));
+    return Optional.of(builder.build());
   }
 
-  @Value
-  public static class DatasetConverter {
-
-    NameCanonicalizer canonicalizer;
-    Lookup constraintLookup;
-
-    public FlexibleDatasetSchema convert(DatasetDefinition dataset,
-        @NonNull ErrorCollector errors) {
-      FlexibleDatasetSchema.Builder builder = new FlexibleDatasetSchema.Builder();
-      builder.setDescription(SchemaElementDescription.of(dataset.description));
-      for (TableDefinition table : dataset.tables) {
-        Optional<FlexibleDatasetSchema.TableField> tableConvert = convert(table, errors);
-        if (tableConvert.isPresent()) {
-          builder.add(tableConvert.get());
-        }
+  private RelationType<FlexibleFieldSchema.Field> convert(List<FieldDefinition> columns,
+                                                          @NonNull ErrorCollector errors) {
+    RelationType.Builder<FlexibleFieldSchema.Field> rbuilder = new RelationType.Builder();
+    for (FieldDefinition fd : columns) {
+      Optional<FlexibleFieldSchema.Field> fieldConvert = convert(fd, errors);
+      if (fieldConvert.isPresent()) {
+        rbuilder.add(fieldConvert.get());
       }
-      return builder.build();
     }
+    return rbuilder.build();
+  }
 
-    public Optional<FlexibleDatasetSchema.TableField> convert(TableDefinition table,
-        @NonNull ErrorCollector errors) {
-      FlexibleDatasetSchema.TableField.Builder builder = new FlexibleDatasetSchema.TableField.Builder();
-      Optional<Name> nameOpt = convert(table, builder, errors);
-      if (nameOpt.isEmpty()) {
-        return Optional.empty();
-      } else {
-        errors = errors.resolve(nameOpt.get());
-      }
-      builder.setPartialSchema(table.partial_schema == null ? TableDefinition.PARTIAL_SCHEMA_DEFAULT
-          : table.partial_schema);
-      builder.setConstraints(convertConstraints(table.tests, errors));
-      if (table.columns == null || table.columns.isEmpty()) {
-        errors.fatal("Table does not have column definitions");
-        return Optional.empty();
-      }
-      builder.setFields(convert(table.columns, errors));
-      return Optional.of(builder.build());
+  private Optional<FlexibleFieldSchema.Field> convert(FieldDefinition field,
+                                                      @NonNull ErrorCollector errors) {
+    FlexibleFieldSchema.Field.Builder builder = new FlexibleFieldSchema.Field.Builder();
+    Optional<Name> nameOpt = convert(field, builder, errors);
+    if (nameOpt.isEmpty()) {
+      return Optional.empty();
+    } else {
+      errors = errors.resolve(nameOpt.get());
     }
-
-    private RelationType<FlexibleDatasetSchema.FlexibleField> convert(List<FieldDefinition> columns,
-        @NonNull ErrorCollector errors) {
-      RelationType.Builder<FlexibleDatasetSchema.FlexibleField> rbuilder = new RelationType.Builder();
-      for (FieldDefinition fd : columns) {
-        Optional<FlexibleDatasetSchema.FlexibleField> fieldConvert = convert(fd, errors);
-        if (fieldConvert.isPresent()) {
-          rbuilder.add(fieldConvert.get());
+    //Add types
+    final Map<Name, FieldTypeDefinition> ftds;
+    if (field.mixed != null) {
+      if (field.type != null || field.columns != null || field.tests != null) {
+        errors.warn(
+                "When [mixed] types are defined, field level type, column, and test definitions are ignored");
+      }
+      if (field.mixed.isEmpty()) {
+        errors.fatal("[mixed] type are empty");
+      }
+      ftds = new HashMap<>(field.mixed.size());
+      for (Map.Entry<String, FieldTypeDefinitionImpl> entry : field.mixed.entrySet()) {
+        Optional<Name> name = convert(entry.getKey(), errors);
+        if (name.isPresent()) {
+          ftds.put(name.get(), entry.getValue());
         }
       }
-      return rbuilder.build();
+    } else if (field.columns != null || field.type != null) {
+      ftds = Map.of(SpecialName.SINGLETON, field);
+    } else {
+      ftds = Collections.EMPTY_MAP;
     }
-
-    private Optional<FlexibleDatasetSchema.FlexibleField> convert(FieldDefinition field,
-        @NonNull ErrorCollector errors) {
-      FlexibleDatasetSchema.FlexibleField.Builder builder = new FlexibleDatasetSchema.FlexibleField.Builder();
-      Optional<Name> nameOpt = convert(field, builder, errors);
-      if (nameOpt.isEmpty()) {
-        return Optional.empty();
-      } else {
-        errors = errors.resolve(nameOpt.get());
+    final List<FlexibleFieldSchema.FieldType> types = new ArrayList<>();
+    for (Map.Entry<Name, FieldTypeDefinition> entry : ftds.entrySet()) {
+      Optional<FlexibleFieldSchema.FieldType> ft = convert(entry.getKey(), entry.getValue(),
+              errors);
+      if (ft.isPresent()) {
+        types.add(ft.get());
       }
-      //Add types
-      final Map<Name, FieldTypeDefinition> ftds;
-      if (field.mixed != null) {
-        if (field.type != null || field.columns != null || field.tests != null) {
-          errors.warn(
-              "When [mixed] types are defined, field level type, column, and test definitions are ignored");
-        }
-        if (field.mixed.isEmpty()) {
-          errors.fatal("[mixed] type are empty");
-        }
-        ftds = new HashMap<>(field.mixed.size());
-        for (Map.Entry<String, FieldTypeDefinitionImpl> entry : field.mixed.entrySet()) {
-          Optional<Name> name = convert(entry.getKey(), errors);
-          if (name.isPresent()) {
-            ftds.put(name.get(), entry.getValue());
-          }
-        }
-      } else if (field.columns != null || field.type != null) {
-        ftds = Map.of(SpecialName.SINGLETON, field);
-      } else {
-        ftds = Collections.EMPTY_MAP;
-      }
-      final List<FlexibleDatasetSchema.FieldType> types = new ArrayList<>();
-      for (Map.Entry<Name, FieldTypeDefinition> entry : ftds.entrySet()) {
-        Optional<FlexibleDatasetSchema.FieldType> ft = convert(entry.getKey(), entry.getValue(),
-            errors);
-        if (ft.isPresent()) {
-          types.add(ft.get());
-        }
-      }
-      builder.setTypes(types);
-      return Optional.of(builder.build());
     }
+    builder.setTypes(types);
+    return Optional.of(builder.build());
+  }
 
-    private Optional<FlexibleDatasetSchema.FieldType> convert(Name variant, FieldTypeDefinition ftd,
-        @NonNull ErrorCollector errors) {
-      errors = errors.resolve(variant);
-      final Type type;
-      final int arrayDepth;
-      List<Constraint> constraints = convertConstraints(ftd.getTests(), errors);
-      if (ftd.getColumns() != null) {
-        if (ftd.getType() != null) {
-          errors.warn("Cannot define columns and type. Type is ignored");
-        }
-        arrayDepth = ConstraintHelper.getConstraint(constraints, Cardinality.class)
-            .map(c -> c.isSingleton() ? 0 : 1).orElse(1);
-        type = convert(ftd.getColumns(), errors);
-      } else if (!Strings.isNullOrEmpty(ftd.getType())) {
-        BasicTypeParse btp = BasicTypeParse.parse(ftd.getType());
-        if (btp == null) {
-          errors.fatal("Type unrecognized: %s", ftd.getType());
-          return Optional.empty();
-        }
-        type = btp.type;
-        arrayDepth = btp.arrayDepth;
-      } else {
-        errors.fatal("Type definition missing (specify either [type] or [columns])");
+  private Optional<FlexibleFieldSchema.FieldType> convert(Name variant, FieldTypeDefinition ftd,
+                                                          @NonNull ErrorCollector errors) {
+    errors = errors.resolve(variant);
+    final Type type;
+    final int arrayDepth;
+    List<Constraint> constraints = convertConstraints(ftd.getTests(), errors);
+    if (ftd.getColumns() != null) {
+      if (ftd.getType() != null) {
+        errors.warn("Cannot define columns and type. Type is ignored");
+      }
+      arrayDepth = ConstraintHelper.getConstraint(constraints, Cardinality.class)
+              .map(c -> c.isSingleton() ? 0 : 1).orElse(1);
+      type = convert(ftd.getColumns(), errors);
+    } else if (!Strings.isNullOrEmpty(ftd.getType())) {
+      BasicTypeParse btp = BasicTypeParse.parse(ftd.getType());
+      if (btp == null) {
+        errors.fatal("Type unrecognized: %s", ftd.getType());
         return Optional.empty();
       }
-      return Optional.of(
-          new FlexibleDatasetSchema.FieldType(variant, type, arrayDepth, constraints));
+      type = btp.type;
+      arrayDepth = btp.arrayDepth;
+    } else {
+      errors.fatal("Type definition missing (specify either [type] or [columns])");
+      return Optional.empty();
     }
+    return Optional.of(
+            new FlexibleFieldSchema.FieldType(variant, type, arrayDepth, constraints));
+  }
 
-    private List<Constraint> convertConstraints(List<String> tests,
-        @NonNull ErrorCollector errors) {
-      if (tests == null) {
-        return Collections.EMPTY_LIST;
-      }
-      List<Constraint> constraints = new ArrayList<>(tests.size());
-      for (String testString : tests) {
-        Constraint.Factory cf = constraintLookup.get(testString);
-        if (cf == null) {
-          errors.warn("Unknown test [%s] - this constraint is ignored", testString);
-          continue;
-        }
-        //TODO: extract parameters from yaml
-        Optional<Constraint> r = cf.create(Collections.EMPTY_MAP, errors);
-        if (r.isPresent()) {
-          constraints.add(r.get());
-        }
-      }
-      return constraints;
+  private List<Constraint> convertConstraints(List<String> tests,
+                                              @NonNull ErrorCollector errors) {
+    if (tests == null) {
+      return Collections.EMPTY_LIST;
     }
+    List<Constraint> constraints = new ArrayList<>(tests.size());
+    for (String testString : tests) {
+      Constraint.Factory cf = constraintLookup.get(testString);
+      if (cf == null) {
+        errors.warn("Unknown test [%s] - this constraint is ignored", testString);
+        continue;
+      }
+      //TODO: extract parameters from yaml
+      Optional<Constraint> r = cf.create(Collections.EMPTY_MAP, errors);
+      if (r.isPresent()) {
+        constraints.add(r.get());
+      }
+    }
+    return constraints;
+  }
 
-    private Optional<Name> convert(String sname, @NonNull ErrorCollector errors) {
-      if (Strings.isNullOrEmpty(sname)) {
-        errors.fatal("Missing or invalid field name: %s", sname);
-        return Optional.empty();
-      } else {
-        Name name = canonicalizer.name(sname);
-        return Optional.of(name);
-      }
+  private Optional<Name> convert(String sname, @NonNull ErrorCollector errors) {
+    if (Strings.isNullOrEmpty(sname)) {
+      errors.fatal("Missing or invalid field name: %s", sname);
+      return Optional.empty();
+    } else {
+      Name name = canonicalizer.name(sname);
+      return Optional.of(name);
     }
+  }
 
-    private Optional<Name> convert(AbstractElementDefinition element,
-        FlexibleDatasetSchema.AbstractField.Builder builder,
-        @NonNull ErrorCollector errors) {
-      final Optional<Name> name = convert(element.name, errors);
-      if (name.isPresent()) {
-        builder.setName(name.get());
-        errors = errors.resolve(name.get());
-      }
-      builder.setDescription(SchemaElementDescription.of(element.description));
-      builder.setDefault_value(
-          element.default_value); //TODO: Validate that default value has right type
-      return name;
+  private Optional<Name> convert(AbstractElementDefinition element,
+                                 FlexibleFieldSchema.Builder builder,
+                                 @NonNull ErrorCollector errors) {
+    final Optional<Name> name = convert(element.name, errors);
+    if (name.isPresent()) {
+      builder.setName(name.get());
+      errors = errors.resolve(name.get());
     }
+    builder.setDescription(SchemaElementDescription.of(element.description));
+    builder.setDefault_value(
+            element.default_value); //TODO: Validate that default value has right type
+    return name;
   }
 
   @Value
@@ -267,7 +225,7 @@ public class SchemaImport {
       return new BasicTypeParse(depth, type);
     }
 
-    public static String export(FlexibleDatasetSchema.FieldType ft) {
+    public static String export(FlexibleFieldSchema.FieldType ft) {
       Preconditions.checkArgument(ft.getType() instanceof BasicType);
       return export(ft.getArrayDepth(), (BasicType) ft.getType());
     }

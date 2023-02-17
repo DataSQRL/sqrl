@@ -15,6 +15,8 @@ public interface TableSchema {
 
   Name getName();
 
+  String getSchemaType();
+
   SchemaValidator getValidator(TableConfig config, boolean hasSourceTimestamp);
 
   UniversalTable createUniversalTable(boolean hasSourceTimestamp);

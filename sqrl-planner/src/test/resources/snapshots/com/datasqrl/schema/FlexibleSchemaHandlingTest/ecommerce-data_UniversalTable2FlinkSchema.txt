@@ -1,21 +1,21 @@
->>>product-hasTimestamp
+>>>customer-hasTimestamp
 (
   `_uuid` CHAR(36) NOT NULL,
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `productid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(32767) NOT NULL,
   `name` VARCHAR(32767) NOT NULL,
-  `description` VARCHAR(32767) NOT NULL,
-  `category` VARCHAR(32767) NOT NULL
+  `lastupdated` BIGINT NOT NULL
 )
->>>product
+>>>customer
 (
   `_uuid` CHAR(36) NOT NULL,
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `productid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(32767) NOT NULL,
   `name` VARCHAR(32767) NOT NULL,
-  `description` VARCHAR(32767) NOT NULL,
-  `category` VARCHAR(32767) NOT NULL
+  `lastupdated` BIGINT NOT NULL
 )
 >>>orders-hasTimestamp
 (
@@ -36,22 +36,22 @@
   `time` TIMESTAMP_LTZ(3) NOT NULL,
   `entries` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DECIMAL(10, 5) NOT NULL, `discount` DECIMAL(10, 5)> NOT NULL> NOT NULL
 )
->>>customer-hasTimestamp
+>>>product-hasTimestamp
 (
   `_uuid` CHAR(36) NOT NULL,
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(32767) NOT NULL,
+  `productid` BIGINT NOT NULL,
   `name` VARCHAR(32767) NOT NULL,
-  `lastupdated` BIGINT NOT NULL
+  `description` VARCHAR(32767) NOT NULL,
+  `category` VARCHAR(32767) NOT NULL
 )
->>>customer
+>>>product
 (
   `_uuid` CHAR(36) NOT NULL,
   `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(32767) NOT NULL,
+  `productid` BIGINT NOT NULL,
   `name` VARCHAR(32767) NOT NULL,
-  `lastupdated` BIGINT NOT NULL
+  `description` VARCHAR(32767) NOT NULL,
+  `category` VARCHAR(32767) NOT NULL
 )

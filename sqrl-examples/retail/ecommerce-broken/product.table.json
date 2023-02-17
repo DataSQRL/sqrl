@@ -15,6 +15,7 @@
   },
   "name": "product",
   "identifier": "product",
+  "schema": "flexible",
   "connector": {
     "directoryURI": "../sqrl-examples/retail/broken-data/",
     "fileURIs": [],

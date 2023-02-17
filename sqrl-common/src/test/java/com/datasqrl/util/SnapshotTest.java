@@ -63,7 +63,7 @@ public class SnapshotTest {
         fileName = matcher.group(1);
       }
       if (fileName.endsWith("()")) {
-        fileName = fileName.substring(0, fileName.length() - 2);
+        fileName = StringUtil.removeFromEnd(fileName, "()");
       }
       StringBuilder c = new StringBuilder();
       if (!Strings.isNullOrEmpty(content)) {

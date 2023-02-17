@@ -7,6 +7,7 @@
   },
   "name" : "submission",
   "identifier" : "submission",
+  "schema": "flexible",
   "connector" : {
     "directoryURI" : "../sqrl-examples/datasqrl/datasqrl-central/",
     "fileURIs" : [ ],

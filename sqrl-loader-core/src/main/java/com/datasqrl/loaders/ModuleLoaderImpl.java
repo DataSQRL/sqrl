@@ -8,17 +8,14 @@ import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.local.generate.NamespaceObject;
 import lombok.AllArgsConstructor;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class ModuleLoaderImpl implements ModuleLoader {
-  ResourceResolver resourceResolver;
   StandardLibraryLoader standardLibraryLoader;
-  URLObjectLoader objectLoader;
+  ObjectLoader objectLoader;
 
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
@@ -55,10 +52,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
   }
 
   private List<NamespaceObject> loadFromFileSystem(NamePath namePath) {
+    return objectLoader.load(namePath);
 
-    List<URL> allItems = resourceResolver.loadPath(namePath);
-    return allItems.stream()
-        .flatMap(url -> objectLoader.load(url, resourceResolver, namePath).stream())
-        .collect(Collectors.toList());
   }
 }

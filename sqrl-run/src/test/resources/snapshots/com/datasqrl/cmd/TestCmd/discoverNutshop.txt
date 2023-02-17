@@ -1,4 +1,5 @@
 >>>output
+orders.schema.yml
 orders.table.json
+products.schema.yml
 products.table.json
-schema.yml

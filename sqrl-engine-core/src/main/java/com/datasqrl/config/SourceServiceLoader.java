@@ -3,21 +3,15 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.loaders.ServiceLoaderDiscovery;
+
 import java.util.Optional;
-import java.util.ServiceLoader;
 
 public class SourceServiceLoader {
 
   public Optional<SourceFactory> load(String engine, String source) {
-    ServiceLoader<SourceFactory> sourceFactories = ServiceLoader.load(SourceFactory.class);
-    for (SourceFactory factory : sourceFactories) {
-      if (factory.getEngine().equalsIgnoreCase(engine)
-          && factory.getSourceName().equalsIgnoreCase(source)) {
-        return Optional.of(factory);
-      }
-    }
-
-    return Optional.empty();
+    return ServiceLoaderDiscovery.findFirst(SourceFactory.class, sf -> sf.getEngine(), engine,
+            sf -> sf.getSourceName(), source);
   }
 
   public interface SourceFactoryContext {

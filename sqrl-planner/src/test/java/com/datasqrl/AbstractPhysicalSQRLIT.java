@@ -13,11 +13,7 @@ import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DataSystemNsObject;
-import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderImpl;
-import com.datasqrl.loaders.StandardLibraryLoader;
-import com.datasqrl.loaders.URLObjectLoaderImpl;
+import com.datasqrl.loaders.*;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.RelToSql;
@@ -34,27 +30,21 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import lombok.SneakyThrows;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.rel.RelNode;
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.rel.RelNode;
-import org.apache.commons.lang3.ArrayUtils;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
@@ -67,8 +57,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
     super.initialize(settings, rootDir);
 
-    ModuleLoader moduleLoader = new ModuleLoaderImpl(new FileResourceResolver(rootDir), new StandardLibraryLoader(
-        Map.of()), new URLObjectLoaderImpl(error));
+    ModuleLoader moduleLoader = new ModuleLoaderImpl(new StandardLibraryLoader(
+        Map.of()), new ObjectLoaderImpl(new FileResourceResolver(rootDir), error));
     NamePath sinkPath = settings.getErrorSink();
     Optional<TableSink> errorSink = moduleLoader
         .getModule(sinkPath.popLast())

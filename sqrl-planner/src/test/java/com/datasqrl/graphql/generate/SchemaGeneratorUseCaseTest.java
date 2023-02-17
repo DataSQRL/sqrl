@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.generate;
 
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.util.StringUtil;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Nutshop;
 import lombok.SneakyThrows;
@@ -41,7 +42,7 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
     String schema = generateSchema(script.getScript());
     String filename = script.getScriptPath().getFileName().toString();
     if (filename.endsWith(".sqrl")) {
-      filename = filename.substring(0, filename.length() - 5);
+      filename = StringUtil.removeFromEnd(filename, ".sqrl");
     }
     filename += ".schema.graphql";
     Path path = script.getScriptPath().getParent().resolve(filename);

@@ -9,26 +9,22 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.builtin.string.StdStringLibraryImpl;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderImpl;
-import com.datasqrl.loaders.ResourceResolver;
-import com.datasqrl.loaders.StandardLibraryLoader;
-import com.datasqrl.loaders.URLObjectLoaderImpl;
-import com.datasqrl.loaders.DataSystemNsObject;
+import com.datasqrl.loaders.*;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.schema.SQRLTable;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.tools.RelBuilder;
+
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
 
 @Getter
 @Slf4j
@@ -65,8 +61,8 @@ public class Resolve {
             Name.system("string").toNamePath(), new StdStringLibraryImpl()
         ));
 
-    ModuleLoader moduleLoader = new ModuleLoaderImpl(resourceResolver, standardLibraryLoader,
-        new URLObjectLoaderImpl(errors));
+    ModuleLoader moduleLoader = new ModuleLoaderImpl(standardLibraryLoader,
+        new ObjectLoaderImpl(resourceResolver, errors));
 
     SqrlStatementVisitor sqrlStatementVisitor = new SqrlStatementVisitor(
         SqrlStatementVisitor.SystemContext.builder()

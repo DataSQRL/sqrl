@@ -6,40 +6,25 @@ package com.datasqrl.schema.input;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.stats.SchemaGenerator;
-import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.io.stats.FieldStats;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
+import com.datasqrl.io.stats.FieldStats;
+import com.datasqrl.io.stats.SchemaGenerator;
 import com.datasqrl.io.stats.TypeSignature.Simple;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
-import com.datasqrl.engine.stream.FunctionWithError;
-import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
 import com.datasqrl.schema.type.basic.StringType;
 import com.google.common.base.Preconditions;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiPredicate;
-import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Follows {@link DefaultSchemaGenerator} in structure and semantics.
@@ -47,11 +32,11 @@ import java.util.function.Consumer;
 public class DefaultSchemaValidator implements SchemaValidator, Serializable {
 
   private final SchemaAdjustmentSettings settings;
-  private final InputTableSchema<TableField> tableSchema;
+  private final InputTableSchema<FlexibleTableSchema> tableSchema;
   private final NameCanonicalizer canonicalizer;
   private final SchemaGenerator schemaGenerator;
 
-  public DefaultSchemaValidator(@NonNull InputTableSchema<TableField> tableSchema,
+  public DefaultSchemaValidator(@NonNull InputTableSchema<FlexibleTableSchema> tableSchema,
       @NonNull SchemaAdjustmentSettings settings,
       @NonNull NameCanonicalizer canonicalizer,
       @NonNull SchemaGenerator schemaGenerator) {
@@ -83,14 +68,14 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
   }
 
   private Map<Name, Object> verifyAndAdjust(Map<String, Object> relationData,
-      RelationType<FlexibleDatasetSchema.FlexibleField> relationSchema,
+      RelationType<FlexibleFieldSchema.Field> relationSchema,
       ErrorCollector errors) {
     Map<Name, Object> result = new LinkedHashMap<>(relationData.size());
     Set<Name> visitedFields = new HashSet<>();
     for (Map.Entry<String, Object> entry : relationData.entrySet()) {
       Name name = Name.of(entry.getKey(), canonicalizer);
       Object data = entry.getValue();
-      Optional<FlexibleDatasetSchema.FlexibleField> field = relationSchema.getFieldByName(name);
+      Optional<FlexibleFieldSchema.Field> field = relationSchema.getFieldByName(name);
       if (field.isEmpty()) {
         if (!settings.dropFields()) {
           errors.fatal("Field is not defined in schema: %s", field);
@@ -111,7 +96,7 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
     }
 
     //See if we missed any non-null fields
-    for (FlexibleDatasetSchema.FlexibleField field : relationSchema.getFields()) {
+    for (FlexibleFieldSchema.Field field : relationSchema.getFields()) {
       if (!visitedFields.contains(field.getName()) && isNonNull(field)) {
         Pair<Name, Object> fieldResult = handleNull(field, errors);
         if (fieldResult != null) {
@@ -122,15 +107,15 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
     return result;
   }
 
-  private boolean isNonNull(FlexibleDatasetSchema.FlexibleField field) {
+  private boolean isNonNull(FlexibleFieldSchema.Field field) {
     //Use memoization to reduce repeated computation
     return FlexibleSchemaHelper.isNonNull(field);
   }
 
-  private Pair<Name, Object> handleNull(FlexibleDatasetSchema.FlexibleField field,
-      ErrorCollector errors) {
+  private Pair<Name, Object> handleNull(FlexibleFieldSchema.Field field,
+                                        ErrorCollector errors) {
     //See if we can map this onto any field type
-    for (FlexibleDatasetSchema.FieldType ft : field.getTypes()) {
+    for (FlexibleFieldSchema.FieldType ft : field.getTypes()) {
       if (ft.getArrayDepth() > 0 && settings.null2EmptyArray()) {
         return ImmutablePair.of(FlexibleSchemaHelper.getCombinedName(field, ft),
             deepenArray(Collections.EMPTY_LIST, ft.getArrayDepth() - 1));
@@ -141,28 +126,28 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
   }
 
   private static BasicType detectType(Map<String, Object> originalComposite,
-      List<FlexibleDatasetSchema.FieldType> ftypes) {
+      List<FlexibleFieldSchema.FieldType> ftypes) {
     return detectTypeInternal((t, d) -> t.conversion().detectType(d), originalComposite, ftypes);
   }
 
   private static BasicType detectType(String original,
-      List<FlexibleDatasetSchema.FieldType> ftypes) {
+      List<FlexibleFieldSchema.FieldType> ftypes) {
     return detectTypeInternal((t, d) -> t.conversion().detectType(d), original, ftypes);
   }
 
   private static <O> BasicType detectTypeInternal(BiPredicate<BasicType, O> typeFilter, O data,
-      List<FlexibleDatasetSchema.FieldType> ftypes) {
+      List<FlexibleFieldSchema.FieldType> ftypes) {
     return ftypes.stream().filter(t -> t.getType() instanceof BasicType)
         .map(t -> (BasicType) t.getType())
         .filter(t -> typeFilter.test(t, data)).findFirst().orElse(null);
   }
 
-  private Pair<Name, Object> verifyAndAdjust(Object data, FlexibleDatasetSchema.FlexibleField field,
+  private Pair<Name, Object> verifyAndAdjust(Object data, FlexibleFieldSchema.Field field,
       ErrorCollector errors) {
-    List<FlexibleDatasetSchema.FieldType> types = field.getTypes();
+    List<FlexibleFieldSchema.FieldType> types = field.getTypes();
     Simple typeSignature = FieldStats.detectTypeSignature(data, s -> detectType(s, types),
         m -> detectType(m, types));
-    FlexibleDatasetSchema.FieldType match = schemaGenerator.matchType(typeSignature, types);
+    FlexibleFieldSchema.FieldType match = schemaGenerator.matchType(typeSignature, types);
     if (match != null) {
       Object converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), errors);
       return ImmutablePair.of(FlexibleSchemaHelper.getCombinedName(field, match), converted);
@@ -174,7 +159,7 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
   }
 
   private Object convertDataToMatchedType(Object data, Type type,
-      FlexibleDatasetSchema.FlexibleField field,
+      FlexibleFieldSchema.Field field,
       ErrorCollector errors) {
     if (FieldStats.isArray(data)) {
       Collection<Object> col = FieldStats.array2Collection(data);
@@ -245,8 +230,8 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
     return data;
   }
 
-  private Object verifyAndAdjust(Object data, FlexibleDatasetSchema.FieldType type,
-      FlexibleDatasetSchema.FlexibleField field,
+  private Object verifyAndAdjust(Object data, FlexibleFieldSchema.FieldType type,
+      FlexibleFieldSchema.Field field,
       int detectedArrayDepth, ErrorCollector errors) {
     data = convertDataToMatchedType(data, type.getType(), field, errors);
 

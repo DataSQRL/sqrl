@@ -10,14 +10,13 @@ import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
-import com.datasqrl.schema.input.external.SchemaDefinition;
+import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.external.SchemaExport;
+import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Nutshop;
-import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
 import lombok.SneakyThrows;
@@ -30,7 +29,6 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,19 +53,16 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         tables.stream().map(TableSource::getName).map(Name::getCanonical)
             .collect(Collectors.toSet()));
 
+    SchemaExport export = new SchemaExport();
     //Write out table configurations
     for (TableSource table : tables) {
       String json = FileTestUtil.writeJson(table.getConfiguration());
       assertTrue(json.length() > 0);
+
+      TableDefinition outputSchema = export.export((FlexibleTableSchema) table.getSchema().getSchema());
+      snapshot.addContent(FileTestUtil.writeYaml(outputSchema), table.getName().getDisplay() + " schema");
     }
 
-    Name datasetName = tables.get(0).getPath().parent().getLast();
-    FlexibleDatasetSchema combinedSchema = DataDiscovery.combineSchema(tables);
-
-    //Write out combined schema file
-    SchemaExport export = new SchemaExport();
-    SchemaDefinition outputSchema = export.export(Map.of(datasetName, combinedSchema));
-    snapshot.addContent(FileTestUtil.writeYaml(outputSchema), "combined schema");
     snapshot.createOrValidate();
   }
 
@@ -108,10 +103,10 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
   @Test
   @Disabled
   public void generateSchema() {
-//    generateTableConfigAndSchemaInDataDir(Retail.INSTANCE,
-//        IntegrationTestSettings.getInMemory());
-    generateTableConfigAndSchemaInDataDir(Quickstart.INSTANCE,
-        IntegrationTestSettings.getFlinkWithDB());
+    generateTableConfigAndSchemaInDataDir(Retail.INSTANCE,
+        IntegrationTestSettings.getInMemory());
+//    generateTableConfigAndSchemaInDataDir(Quickstart.INSTANCE,
+//        IntegrationTestSettings.getFlinkWithDB());
   }
 
   @SneakyThrows
