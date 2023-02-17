@@ -76,6 +76,7 @@ public class JarPreprocessor implements Preprocessor {
       String functionName = clazz.substring(clazz.lastIndexOf('.') + 1);
       File toFile = createTempFile(obj, functionName);
       processorContext.addDependency(toFile.toPath());
+      processorContext.addLibrary(path);
     }
 
     return null;

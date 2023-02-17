@@ -1,4 +1,5 @@
 >>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWODependencies.json-dir
+build.gradle
 datasqrl
 datasqrl/examples
 datasqrl/examples/nutshop
@@ -40,6 +41,7 @@ package.json
   }
 }
 >>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWDependencies.json-dir
+build.gradle
 datasqrl
 datasqrl/examples
 datasqrl/examples/nutshop

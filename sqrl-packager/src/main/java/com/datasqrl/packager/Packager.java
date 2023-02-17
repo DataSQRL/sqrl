@@ -27,6 +27,12 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import lombok.NonNull;
+import lombok.Value;
+import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -87,7 +93,7 @@ public class Packager {
         inferDependencies();
       }
       retrieveDependencies();
-      copySystemFilesToBuildDir();
+      copyFilesToBuildDir();
       preProcessFiles();
       updatePackageConfig();
       return buildDir.resolve(PACKAGE_FILE_NAME);
@@ -163,20 +169,45 @@ public class Packager {
   /**
    * Helper function to copy files to build directory.
    */
-  private void copySystemFilesToBuildDir() throws IOException {
-    //Copy main script to build
-    Path mainFile = copyRelativeFile(
+
+  private void copyFilesToBuildDir() throws IOException {
+    Path mainFile = copyMainFileToBuildDir();
+    Optional<Path> graphqlFile = copyGraphQLSchemaFileToBuildDir();
+    relativizeScriptConfig(mainFile, graphqlFile);
+
+    copyGradleBuildFileToBuildDir();
+  }
+
+  /**
+   * Copies main script to build directory.
+   *
+   * @throws IOException If an I/O error occurs during the copy operation
+   */
+  private Path copyMainFileToBuildDir() throws IOException {
+    return copyRelativeFile(
         rootDir.resolve(config.getScript().getMain()),
         rootDir,
         buildDir);
+  }
 
-    //Copy graphql file(s)
-    Optional<Path> graphQLSchemaFile = config.getScript().getOptGraphQL()
+  /**
+   * Copies GraphQL schema file to build directory, if present.
+   */
+  private Optional<Path> copyGraphQLSchemaFileToBuildDir() {
+    return config.getScript().getOptGraphQL()
         .map(rootDir::resolve)
         .map(gql -> rethrowCall(() -> copyFile(gql, buildDir,
             Path.of(GRAPHQL_SCHEMA_FILE_NAME))));
+  }
 
-    relativizeScriptConfig(mainFile, graphQLSchemaFile);
+  /**
+   * Copies build file to assemble an uber-jar to build directory.
+   */
+  private void copyGradleBuildFileToBuildDir() throws IOException {
+    String gradleBuildFile = "build.gradle";
+    String buildFile = FileUtil.readResource(gradleBuildFile);
+    InputStream buildStream = new ByteArrayInputStream(buildFile.getBytes());
+    Files.copy(buildStream, buildDir.resolve(gradleBuildFile));
   }
 
   /**

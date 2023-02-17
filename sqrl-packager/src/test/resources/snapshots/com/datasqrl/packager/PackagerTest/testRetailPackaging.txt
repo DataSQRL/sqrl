@@ -1,4 +1,5 @@
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOscript.json-dir
+build.gradle
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -14,6 +15,7 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
+lib
 output
 output/datasystem.json
 package.json
@@ -36,6 +38,7 @@ package.json
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWscript.json-dir
+build.gradle
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -51,6 +54,7 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
+lib
 output
 output/datasystem.json
 package.json
@@ -75,6 +79,7 @@ schema.graphqls
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/package-exampleWscript.json-dir
+build.gradle
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -90,6 +95,7 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
+lib
 output
 output/datasystem.json
 package.json
@@ -114,6 +120,7 @@ schema.graphqls
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWOscript.json-dir
+build.gradle
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -129,6 +136,7 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
+lib
 output
 output/datasystem.json
 package.json
@@ -153,6 +161,7 @@ schema.graphqls
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWscript.json-dir
+build.gradle
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -168,6 +177,7 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
+lib
 output
 output/datasystem.json
 package.json
@@ -192,6 +202,7 @@ schema.graphqls
   "dependencies" : { }
 }
 >>>../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWscript.json-dir
+build.gradle
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -207,6 +218,7 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
+lib
 output
 output/datasystem.json
 package.json
