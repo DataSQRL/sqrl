@@ -3,21 +3,20 @@
  */
 package com.datasqrl.schema;
 
+import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
+import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.Deserializer;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
-import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
-import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
 import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
 import com.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import com.datasqrl.schema.input.FlexibleTableConverter;
+import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
-import com.datasqrl.schema.input.external.DatasetDefinition;
-import com.datasqrl.schema.input.external.SchemaDefinition;
 import com.datasqrl.schema.input.external.SchemaImport;
+import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.junit.ArgumentProvider;
@@ -31,6 +30,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests the generation of schemas for various consumers based on the central
- * {@link FlexibleDatasetSchema} by way of the {@link UniversalTable}.
+ * {@link FlexibleTableSchema} by way of the {@link UniversalTable}.
  */
 public class FlexibleSchemaHandlingTest {
 
@@ -52,8 +52,8 @@ public class FlexibleSchemaHandlingTest {
     SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), inputSchema.getName(),
         visitorTest.schemaConverter.getClass().getSimpleName());
     Name tableAlias = Name.system("TestTable");
-    FlexibleDatasetSchema schema = getSchema(inputSchema);
-    for (FlexibleDatasetSchema.TableField table : schema.getFields()) {
+    List<FlexibleTableSchema> schemas = getSchemas(inputSchema);
+    for (FlexibleTableSchema table : schemas) {
       for (boolean hasSourceTimestamp : new boolean[]{true, false}) {
         for (Optional<Name> alias : new Optional[]{Optional.empty(), Optional.of(tableAlias)}) {
           FlexibleTableConverter converter = new FlexibleTableConverter(
@@ -84,26 +84,21 @@ public class FlexibleSchemaHandlingTest {
   }
 
   @SneakyThrows
-  public FlexibleDatasetSchema getSchema(InputSchema inputSchema) {
-    SchemaDefinition schemaDef = loadPackageSchema(inputSchema.packageDir);
-    DatasetDefinition datasetDefinition = schemaDef.datasets.stream()
-        .filter(dd -> dd.name.equalsIgnoreCase(inputSchema.name)).findFirst().get();
-    SchemaImport.DatasetConverter importer = new SchemaImport.DatasetConverter(
-        NameCanonicalizer.SYSTEM, Constraint.FACTORY_LOOKUP);
+  public List<FlexibleTableSchema> getSchemas(InputSchema inputSchema) {
+    SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);
     ErrorCollector errors = ErrorCollector.root();
-    FlexibleDatasetSchema schema = importer.convert(datasetDefinition, errors);
+    Deserializer deserializer = new Deserializer();
+    List<FlexibleTableSchema> schemas = Files.list(inputSchema.packageDir)
+            .filter(f -> f.getFileName().toString().endsWith(FlexibleTableSchemaFactory.SCHEMA_EXTENSION))
+            .map(f -> deserializer.mapYAMLFile(f, TableDefinition.class))
+            .map(td -> importer.convert(td, errors).get())
+            .collect(Collectors.toList());
 
     assertFalse(errors.isFatal(), errors.toString());
-    assertFalse(schema.getFields().isEmpty());
-    return schema;
+    assertFalse(schemas.isEmpty());
+    return schemas;
   }
 
-
-  public SchemaDefinition loadPackageSchema(Path baseDir) {
-    Path tableSchemaPath = baseDir.resolve(FlexibleTableSchemaFactory.PACKAGE_SCHEMA_FILE);
-    Deserializer deserializer = new Deserializer();
-    return deserializer.mapYAMLFile(tableSchemaPath, SchemaDefinition.class);
-  }
 
   @Value
   public static class InputSchema {

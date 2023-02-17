@@ -19,6 +19,7 @@
   },
   "name": "products",
   "identifier": "products",
+  "schema": "flexible",
   "connector": {
     "directoryURI": "",
     "fileURIs": [

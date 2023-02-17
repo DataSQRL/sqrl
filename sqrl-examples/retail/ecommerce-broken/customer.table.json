@@ -15,6 +15,7 @@
   },
   "name": "customer",
   "identifier": "customer",
+  "schema": "flexible",
   "connector": {
     "directoryURI": "../sqrl-examples/retail/broken-data/",
     "fileURIs": [],

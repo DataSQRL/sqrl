@@ -9,10 +9,12 @@ import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.SchemaValidator;
 import io.vertx.json.schema.Validator;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 @AllArgsConstructor
 public class JsonTableSchema implements TableSchema {
+
+  public static final String SCHEMA_TYPE = "json";
+
   Validator validator;
 
   @Override
@@ -23,6 +25,11 @@ public class JsonTableSchema implements TableSchema {
   @Override
   public Name getName() {
     return null;
+  }
+
+  @Override
+  public String getSchemaType() {
+    return SCHEMA_TYPE;
   }
 
   @Override

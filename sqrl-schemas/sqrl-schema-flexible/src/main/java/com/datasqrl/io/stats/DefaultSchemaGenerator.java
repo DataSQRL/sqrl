@@ -9,7 +9,8 @@ import com.datasqrl.name.SpecialName;
 import com.datasqrl.schema.constraint.Cardinality;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.NotNull;
-import com.datasqrl.schema.input.FlexibleDatasetSchema;
+import com.datasqrl.schema.input.FlexibleFieldSchema;
+import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.schema.type.Type;
@@ -37,28 +38,28 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
     this.settings = settings;
   }
 
-  public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats,
-      @NonNull FlexibleDatasetSchema.TableField tableDef, @NonNull ErrorCollector errors) {
+  public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
+                                                    @NonNull FlexibleTableSchema tableDef, @NonNull ErrorCollector errors) {
     isComplete = !tableDef.isPartialSchema();
-    FlexibleDatasetSchema.TableField.Builder builder = new FlexibleDatasetSchema.TableField.Builder();
+    FlexibleTableSchema.Builder builder = new FlexibleTableSchema.Builder();
     builder.copyFrom(tableDef);
     builder.setPartialSchema(false);
     builder.setFields(merge(tableStats.relation, tableDef.getFields(), errors));
     return builder.build();
   }
 
-  public FlexibleDatasetSchema.TableField mergeSchema(@NonNull SourceTableStatistics tableStats,
-      @NonNull Name tableName, @NonNull ErrorCollector errors) {
-    return mergeSchema(tableStats, FlexibleDatasetSchema.TableField.empty(tableName), errors);
+  public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
+                                                    @NonNull Name tableName, @NonNull ErrorCollector errors) {
+    return mergeSchema(tableStats, FlexibleTableSchema.empty(tableName), errors);
   }
 
-  RelationType<FlexibleDatasetSchema.FlexibleField> merge(@NonNull RelationStats relation,
-      @NonNull RelationType<FlexibleDatasetSchema.FlexibleField> fields,
-      @NonNull ErrorCollector errors) {
+  RelationType<FlexibleFieldSchema.Field> merge(@NonNull RelationStats relation,
+                                                @NonNull RelationType<FlexibleFieldSchema.Field> fields,
+                                                @NonNull ErrorCollector errors) {
     Set<Name> coveredNames = new HashSet<>();
     long numRecords = relation.getCount();
-    RelationType.Builder<FlexibleDatasetSchema.FlexibleField> builder = RelationType.build();
-    for (FlexibleDatasetSchema.FlexibleField f : fields) {
+    RelationType.Builder<FlexibleFieldSchema.Field> builder = RelationType.build();
+    for (FlexibleFieldSchema.Field f : fields) {
       builder.add(
           merge(relation.fieldStats.get(f.getName()), f, f.getName(), numRecords,
               errors.resolve(f.getName())));
@@ -75,11 +76,11 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
     return builder.build();
   }
 
-  FlexibleDatasetSchema.FlexibleField merge(FieldStats fieldStats,
-      FlexibleDatasetSchema.FlexibleField fieldDef,
-      @NonNull Name fieldName, long numRecords, @NonNull ErrorCollector errors) {
+  FlexibleFieldSchema.Field merge(FieldStats fieldStats,
+                                  FlexibleFieldSchema.Field fieldDef,
+                                  @NonNull Name fieldName, long numRecords, @NonNull ErrorCollector errors) {
     Preconditions.checkArgument(fieldDef != null || !isComplete);
-    FlexibleDatasetSchema.FlexibleField.Builder builder = new FlexibleDatasetSchema.FlexibleField.Builder();
+    FlexibleFieldSchema.Field.Builder builder = new FlexibleFieldSchema.Field.Builder();
     if (fieldDef != null) {
       builder.copyFrom(fieldDef);
     } else {
@@ -89,16 +90,16 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
     if (fieldStats != null) {
       statsNotNull = fieldStats.numNulls == 0 && fieldStats.count == numRecords;
     }
-    List<FlexibleDatasetSchema.FieldType> types = merge(
+    List<FlexibleFieldSchema.FieldType> types = merge(
         fieldStats != null ? fieldStats.types.keySet() : Collections.EMPTY_SET,
         fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, statsNotNull, errors);
     builder.setTypes(types);
     return builder.build();
   }
 
-  List<FlexibleDatasetSchema.FieldType> merge(@NonNull Set<FieldTypeStats> statTypes,
-      @NonNull List<FlexibleDatasetSchema.FieldType> fieldTypes, boolean statsNotNull,
-      @NonNull ErrorCollector errors) {
+  List<FlexibleFieldSchema.FieldType> merge(@NonNull Set<FieldTypeStats> statTypes,
+                                            @NonNull List<FlexibleFieldSchema.FieldType> fieldTypes, boolean statsNotNull,
+                                            @NonNull ErrorCollector errors) {
     if (fieldTypes.isEmpty()) {
       /* Need to generate single type from statistics. First, we check if there is one family of detected types.
          If not (or if there is ambiguity), we combine all of the raw types.
@@ -106,7 +107,7 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
          in cases where the detected type is obvious.
        */
       Preconditions.checkArgument(!statTypes.isEmpty() && !isComplete);
-      FlexibleDatasetSchema.FieldType result = null;
+      FlexibleFieldSchema.FieldType result = null;
       List<Constraint> constraints =
           statsNotNull ? List.of(NotNull.INSTANCE) : Collections.EMPTY_LIST;
       int maxArrayDepth = 0;
@@ -130,7 +131,7 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
       }
       if (type != null) {
         //We have found a shared detected type
-        result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
+        result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
             constraints);
       } else {
         //Combine all of the encountered raw types
@@ -158,18 +159,18 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
           }
         }
         if (type != null) {
-          result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
+          result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
               constraints);
         }
         if (nested != null) {
-          RelationType<FlexibleDatasetSchema.FlexibleField> nestedType = merge(nested,
+          RelationType<FlexibleFieldSchema.Field> nestedType = merge(nested,
               RelationType.EMPTY, errors);
           if (result != null) {
             //Need to embed basictype into nested relation as value
-            FlexibleDatasetSchema.FlexibleField.Builder b = new FlexibleDatasetSchema.FlexibleField.Builder();
+            FlexibleFieldSchema.Field.Builder b = new FlexibleFieldSchema.Field.Builder();
             b.setName(SpecialName.VALUE);
             b.setTypes(Collections.singletonList(result));
-            nestedType = RelationType.<FlexibleDatasetSchema.FlexibleField>build()
+            nestedType = RelationType.<FlexibleFieldSchema.Field>build()
                 .addAll(nestedType)
                 .add(b.build())
                 .build();
@@ -178,7 +179,7 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
             constraints = new ArrayList<>(constraints);
             constraints.add(new Cardinality(0, 1));
           }
-          result = new FlexibleDatasetSchema.FieldType(SpecialName.SINGLETON, nestedType,
+          result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, nestedType,
               1, constraints);
         }
       }
@@ -192,11 +193,11 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
          We first try to match on raw type within type families with the closest relative. If that doesn't match, we try
          the same with the detected type. If all fails, we forcefully combine the raw type.
        */
-      List<FlexibleDatasetSchema.FieldType> result = new ArrayList<>(fieldTypes.size());
-      Multimap<FlexibleDatasetSchema.FieldType, FieldTypeStats> typePairing = ArrayListMultimap.create();
+      List<FlexibleFieldSchema.FieldType> result = new ArrayList<>(fieldTypes.size());
+      Multimap<FlexibleFieldSchema.FieldType, FieldTypeStats> typePairing = ArrayListMultimap.create();
       for (FieldTypeStats fts : statTypes) {
         //Try to match on raw first
-        FlexibleDatasetSchema.FieldType match = matchType(fts, fieldTypes);
+        FlexibleFieldSchema.FieldType match = matchType(fts, fieldTypes);
         if (match != null) {
           if (!match.getType().getClass().equals(fts.getRaw().getClass())
               || match.getArrayDepth() != fts.getArrayDepth()) {
@@ -209,15 +210,15 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
               fts.raw);
         }
       }
-      for (FlexibleDatasetSchema.FieldType ft : fieldTypes) {
+      for (FlexibleFieldSchema.FieldType ft : fieldTypes) {
         result.add(merge(typePairing.get(ft), ft, errors));
       }
       return result;
     }
   }
 
-  FlexibleDatasetSchema.FieldType merge(@NonNull Collection<FieldTypeStats> ftstats,
-      @NonNull FlexibleDatasetSchema.FieldType ftdef, @NonNull ErrorCollector errors) {
+  FlexibleFieldSchema.FieldType merge(@NonNull Collection<FieldTypeStats> ftstats,
+                                      @NonNull FlexibleFieldSchema.FieldType ftdef, @NonNull ErrorCollector errors) {
     if (ftdef.getType() instanceof BasicType) {
       return ftdef; //It's an immutable object, no need to copy
     } else {
@@ -229,16 +230,16 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
           nested.merge(fts.nestedRelationStats);
         }
       }
-      return new FlexibleDatasetSchema.FieldType(ftdef.getVariantName(),
+      return new FlexibleFieldSchema.FieldType(ftdef.getVariantName(),
           merge(nested == null ? RelationStats.EMPTY : nested, (RelationType) ftdef.getType(),
               errors),
           ftdef.getArrayDepth(), ftdef.getConstraints());
     }
   }
 
-  public FlexibleDatasetSchema.FieldType matchType(TypeSignature typeSignature,
-      List<FlexibleDatasetSchema.FieldType> fieldTypes) {
-    FlexibleDatasetSchema.FieldType match;
+  public FlexibleFieldSchema.FieldType matchType(TypeSignature typeSignature,
+                                                 List<FlexibleFieldSchema.FieldType> fieldTypes) {
+    FlexibleFieldSchema.FieldType match;
     //First, try to match raw type
     match = matchSingleType(typeSignature.getRaw(), typeSignature.getArrayDepth(), fieldTypes,
         false);
@@ -255,9 +256,9 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
     return match;
   }
 
-  private FlexibleDatasetSchema.FieldType matchSingleType(Type type, int arrayDepth,
-      List<FlexibleDatasetSchema.FieldType> fieldTypes, boolean force) {
-    FlexibleDatasetSchema.FieldType match;
+  private FlexibleFieldSchema.FieldType matchSingleType(Type type, int arrayDepth,
+                                                        List<FlexibleFieldSchema.FieldType> fieldTypes, boolean force) {
+    FlexibleFieldSchema.FieldType match;
     if (type instanceof RelationType) {
       assert arrayDepth == 1;
       match = fieldTypes.stream().filter(ft -> ft.getType() instanceof RelationType).findFirst()
@@ -267,9 +268,9 @@ public class DefaultSchemaGenerator implements SchemaGenerator, Serializable {
       }
     } else {
       BasicType btype = (BasicType) type;
-      List<Pair<Integer, FlexibleDatasetSchema.FieldType>> potentialMatches = new ArrayList<>(
+      List<Pair<Integer, FlexibleFieldSchema.FieldType>> potentialMatches = new ArrayList<>(
           fieldTypes.size());
-      for (FlexibleDatasetSchema.FieldType ft : fieldTypes) {
+      for (FlexibleFieldSchema.FieldType ft : fieldTypes) {
         if (ft.getType() instanceof BasicType) {
           typeDistanceWithArray(btype, arrayDepth, (BasicType) ft.getType(), ft.getArrayDepth(),
               force ? settings.maxForceCastingTypeDistance() : settings.maxCastingTypeDistance())

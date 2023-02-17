@@ -19,7 +19,7 @@ import java.nio.charset.Charset;
 
 @NoArgsConstructor
 @Getter
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @ToString
 public abstract class SharedConfiguration implements Serializable {
 

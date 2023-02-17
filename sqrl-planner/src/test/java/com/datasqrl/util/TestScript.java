@@ -10,12 +10,7 @@ import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
 import com.google.common.collect.ImmutableList;
-import java.util.stream.Collectors;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Singular;
-import lombok.SneakyThrows;
-import lombok.Value;
+import lombok.*;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
@@ -89,7 +84,7 @@ public interface TestScript {
   static TestScript.Impl.ImplBuilder of(Path rootPackage, Path script, String... resultTables) {
     String name = script.getFileName().toString();
     if (name.endsWith(".sqrl")) {
-      name = name.substring(0, name.length() - 5);
+      name = StringUtil.removeFromEnd(name, ".sqrl");
     }
     return Impl.builder().name(name).rootPackageDirectory(rootPackage).scriptPath(script)
         .resultTables(Arrays.asList(resultTables));

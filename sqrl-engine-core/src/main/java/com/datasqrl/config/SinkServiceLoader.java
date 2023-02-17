@@ -3,20 +3,14 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.loaders.ServiceLoaderDiscovery;
+
 import java.util.Optional;
-import java.util.ServiceLoader;
 
 public class SinkServiceLoader {
 
   public Optional<SinkFactory> load(String engineName, String sinkType) {
-    ServiceLoader<SinkFactory> sinkFactories = ServiceLoader.load(SinkFactory.class);
-    for (SinkFactory factory : sinkFactories) {
-      if (factory.getEngine().equalsIgnoreCase(engineName)
-          && factory.getSinkType().equalsIgnoreCase(sinkType)) {
-        return Optional.of(factory);
-      }
-    }
-
-    return Optional.empty();
+    return ServiceLoaderDiscovery.findFirst(SinkFactory.class, sf -> sf.getEngine(), engineName,
+            sf -> sf.getSinkType(), sinkType);
   }
 }

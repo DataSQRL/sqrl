@@ -1,19 +1,18 @@
 package com.datasqrl.plan.local.generate;
 
-import static com.datasqrl.util.NameUtil.namepath2Path;
-
 import com.datasqrl.loaders.ResourceResolver;
 import com.datasqrl.name.NamePath;
 import com.google.common.base.Preconditions;
-import java.net.MalformedURLException;
-import java.net.URL;
+import lombok.SneakyThrows;
+
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
+
+import static com.datasqrl.util.NameUtil.namepath2Path;
 
 public class FileResourceResolver implements ResourceResolver {
 
@@ -25,23 +24,19 @@ public class FileResourceResolver implements ResourceResolver {
   }
 
   //todo hacks remove
-  public Optional<URL> resolveTableJson(NamePath namePath) {
+  public Optional<URI> resolveTableJson(NamePath namePath) {
     Path path = namepath2Path(baseDir, namePath.popLast());
 
     return resolve(path.resolve(namePath.getLast().getCanonical() + ".table.json"));
   }
 
-  public Optional<URL> resolve(Path path) {
-    try {
-      return Optional.of(path.toFile().toURI().toURL());
-    } catch (MalformedURLException e) {
-      return Optional.empty();
-    }
+  public Optional<URI> resolve(Path path) {
+    return Optional.of(path.toFile().toURI());
   }
 
   @SneakyThrows
   @Override
-  public List<URL> loadPath(NamePath namePath) {
+  public List<URI> loadPath(NamePath namePath) {
     Path path = namepath2Path(baseDir, namePath);
 
     if (!Files.exists(path)) {
@@ -49,13 +44,7 @@ public class FileResourceResolver implements ResourceResolver {
     }
 
     return Files.list(path)
-        .map(f-> {
-          try {
-            return f.toUri().toURL();
-          } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-          }
-        })
+        .map(Path::toUri)
         .collect(Collectors.toList());
   }
 }

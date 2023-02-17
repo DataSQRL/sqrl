@@ -19,32 +19,18 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DataSystemNsObject;
-import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderImpl;
-import com.datasqrl.loaders.StandardLibraryLoader;
-import com.datasqrl.loaders.URLObjectLoaderImpl;
+import com.datasqrl.loaders.*;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.local.generate.DebuggerConfig;
-import com.datasqrl.plan.local.generate.FileResourceResolver;
-import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.local.generate.Resolve;
-import com.datasqrl.plan.local.generate.Session;
+import com.datasqrl.plan.local.generate.*;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.spi.ManifestConfiguration;
 import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import javax.validation.constraints.NotEmpty;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -52,6 +38,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlCalciteSchema;
 import org.apache.calcite.sql.ScriptNode;
+
+import javax.validation.constraints.NotEmpty;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 public class Compiler {
@@ -115,9 +108,9 @@ public class Compiler {
 
   private TableSink loadErrorSink(@NonNull @NotEmpty String errorSinkName, ErrorCollector error,
       Path buildDir) {
-
-    ModuleLoader moduleLoader = new ModuleLoaderImpl(new FileResourceResolver(buildDir), new StandardLibraryLoader(
-        Map.of()), new URLObjectLoaderImpl(error));
+    //TODO: can we resuse this code from Resolve?
+    ModuleLoader moduleLoader = new ModuleLoaderImpl(new StandardLibraryLoader(
+        Map.of()), new ObjectLoaderImpl(new FileResourceResolver(buildDir), error));
     NamePath sinkPath = NamePath.parse(errorSinkName);
 
     Optional<TableSink> errorSink = moduleLoader

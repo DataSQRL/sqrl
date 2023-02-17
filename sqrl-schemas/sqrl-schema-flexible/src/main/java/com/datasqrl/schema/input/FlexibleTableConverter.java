@@ -8,7 +8,6 @@ import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.constraint.Cardinality;
 import com.datasqrl.schema.constraint.ConstraintHelper;
-import com.datasqrl.schema.input.FlexibleDatasetSchema.TableField;
 import com.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -25,18 +24,18 @@ public class FlexibleTableConverter {
 
   public <T> T apply(Visitor<T> visitor) {
     return visitRelation(NamePath.ROOT, tableAlias.orElse(schema.getName()),
-        ((TableField)schema).getFields(),
+        ((FlexibleTableSchema)schema).getFields(),
         false, false, hasSourceTimestamp, visitor);
   }
 
   private <T> T visitRelation(NamePath path, Name name,
-      RelationType<FlexibleDatasetSchema.FlexibleField> relation,
+      RelationType<FlexibleFieldSchema.Field> relation,
       boolean isNested, boolean isSingleton, boolean hasSourceTime, Visitor<T> visitor) {
     visitor.beginTable(name, path, isNested, isSingleton, hasSourceTime);
     path = path.concat(name);
 
-    for (FlexibleDatasetSchema.FlexibleField field : relation.getFields()) {
-      for (FlexibleDatasetSchema.FieldType ftype : field.getTypes()) {
+    for (FlexibleFieldSchema.Field field : relation.getFields()) {
+      for (FlexibleFieldSchema.FieldType ftype : field.getTypes()) {
         Name fieldName = FlexibleSchemaHelper.getCombinedName(field, ftype);
         boolean isMixedType = field.getTypes().size() > 1;
         visitFieldType(path, fieldName, ftype, isMixedType, visitor);
@@ -46,14 +45,14 @@ public class FlexibleTableConverter {
   }
 
   private <T> void visitFieldType(NamePath path, Name fieldName,
-      FlexibleDatasetSchema.FieldType ftype,
+      FlexibleFieldSchema.FieldType ftype,
       boolean isMixedType, Visitor<T> visitor) {
     boolean nullable = isMixedType || !ConstraintHelper.isNonNull(ftype.getConstraints());
     boolean isSingleton = false;
     if (ftype.getType() instanceof RelationType) {
       isSingleton = isSingleton(ftype);
       T nestedTable = visitRelation(path, fieldName,
-          (RelationType<FlexibleDatasetSchema.FlexibleField>) ftype.getType(), true,
+          (RelationType<FlexibleFieldSchema.Field>) ftype.getType(), true,
           isSingleton, false, visitor);
       nullable = isMixedType || hasZeroOneMultiplicity(ftype);
       visitor.addField(fieldName, nestedTable, nullable, isSingleton);
@@ -62,11 +61,11 @@ public class FlexibleTableConverter {
     }
   }
 
-  private static boolean isSingleton(FlexibleDatasetSchema.FieldType ftype) {
+  private static boolean isSingleton(FlexibleFieldSchema.FieldType ftype) {
     return ConstraintHelper.getCardinality(ftype.getConstraints()).isSingleton();
   }
 
-  private static boolean hasZeroOneMultiplicity(FlexibleDatasetSchema.FieldType ftype) {
+  private static boolean hasZeroOneMultiplicity(FlexibleFieldSchema.FieldType ftype) {
     Cardinality card = ConstraintHelper.getCardinality(ftype.getConstraints());
     return card.isSingleton() && card.getMin() == 0;
   }

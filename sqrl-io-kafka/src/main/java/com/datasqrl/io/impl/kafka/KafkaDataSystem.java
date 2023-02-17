@@ -14,6 +14,7 @@ import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.StringUtil;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -78,7 +79,7 @@ public abstract class KafkaDataSystem {
         String name = topicPrefix;
         for (String suffix : TOPIC_SUFFIX) {
           if (name.endsWith(suffix)) {
-            name = name.substring(0, name.length() - suffix.length());
+            name = StringUtil.removeFromEnd(name, suffix);
             break;
           }
         }

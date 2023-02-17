@@ -19,6 +19,7 @@
   },
   "name": "products",
   "identifier": "products",
+  "schema": "flexible",
   "connector": {
     "directoryURI": "../sqrl-examples/nutshop/data-compress/",
     "fileURIs": [],

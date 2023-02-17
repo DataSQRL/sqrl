@@ -4,7 +4,6 @@
 package com.datasqrl.schema.input;
 
 import com.datasqrl.name.Name;
-import com.datasqrl.schema.input.FlexibleDatasetSchema.AbstractField;
 import com.datasqrl.schema.type.Type;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
@@ -82,7 +81,7 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
     return ordered;
   }
 
-  public static <F extends AbstractField> Builder<F> build() {
+  public static <F extends FlexibleFieldSchema> Builder<F> build() {
     return new Builder<>();
   }
 
@@ -95,7 +94,7 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
     return fields.iterator();
   }
 
-  public static class Builder<F extends AbstractField> extends AbstractBuilder<F, Builder<F>> {
+  public static class Builder<F extends FlexibleFieldSchema> extends AbstractBuilder<F, Builder<F>> {
 
     public Builder() {
       super(true);
@@ -106,7 +105,7 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
     }
   }
 
-  protected static class AbstractBuilder<F extends AbstractField, B extends AbstractBuilder<F, B>> {
+  protected static class AbstractBuilder<F extends FlexibleFieldSchema, B extends AbstractBuilder<F, B>> {
 
     protected final List<F> fields = new ArrayList<>();
     protected final Set<Name> fieldNames;

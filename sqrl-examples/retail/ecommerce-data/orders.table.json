@@ -1,16 +1,17 @@
 {
-  "type": "source",
-  "canonicalizer": "system",
-  "charset": "UTF-8",
-  "format": {
-    "formatType": "json"
+  "type" : "source",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
   },
-  "name": "orders",
-  "identifier": "orders",
-  "connector": {
-    "directoryURI": "../sqrl-examples/retail/data/",
-    "fileURIs": [],
-    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
-    "systemType": "dir"
+  "name" : "orders",
+  "identifier" : "orders",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "../sqrl-examples/retail/data/",
+    "fileURIs" : [ ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "systemType" : "dir"
   }
 }

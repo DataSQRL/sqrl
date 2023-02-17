@@ -5,13 +5,15 @@ package com.datasqrl.schema.input.external;
 
 import java.util.List;
 
-public class TableDefinition extends AbstractElementDefinition {
+public class  TableDefinition extends AbstractElementDefinition {
 
   public TableDefinition() {
 
   }
 
   public static boolean PARTIAL_SCHEMA_DEFAULT = true;
+
+  public String schema_version;
 
   public Boolean partial_schema;
 

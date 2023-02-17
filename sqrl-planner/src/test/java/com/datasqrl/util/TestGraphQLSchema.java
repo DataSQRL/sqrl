@@ -60,7 +60,7 @@ public interface TestGraphQLSchema {
           String filename = f.getFileName().toString();
           if (filename.endsWith(QUERY_FILE_SUFFIX)) {
             try {
-              result.put(filename.substring(0, filename.length() - QUERY_FILE_SUFFIX.length()),
+              result.put(StringUtil.removeFromEnd(filename, QUERY_FILE_SUFFIX),
                   Files.readString(f));
             } catch (IOException e) {
               throw new RuntimeException(e);
