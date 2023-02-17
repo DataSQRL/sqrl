@@ -2,6 +2,7 @@
 config.json
 model.json
 >>>build
+build.gradle
 customer360
 customer360/nutshopv2-small.sqrl
 nutshop-compress

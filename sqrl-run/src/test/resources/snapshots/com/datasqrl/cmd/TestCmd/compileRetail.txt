@@ -2,6 +2,7 @@
 config.json
 model.json
 >>>build
+build.gradle
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml

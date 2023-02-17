@@ -15,7 +15,6 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
-lib
 output
 output/datasystem.json
 package.json
@@ -54,7 +53,6 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
-lib
 output
 output/datasystem.json
 package.json
@@ -95,7 +93,6 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
-lib
 output
 output/datasystem.json
 package.json
@@ -136,7 +133,6 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
-lib
 output
 output/datasystem.json
 package.json
@@ -177,7 +173,6 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
-lib
 output
 output/datasystem.json
 package.json
@@ -218,7 +213,6 @@ ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
-lib
 output
 output/datasystem.json
 package.json

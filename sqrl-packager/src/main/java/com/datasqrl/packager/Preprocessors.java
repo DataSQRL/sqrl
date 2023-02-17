@@ -82,6 +82,9 @@ public class Preprocessors {
    */
   @SneakyThrows
   private void copyLibrarySymlinks(Set<Path> libraries, Path buildDir) {
+    if (libraries.isEmpty()) {
+      return;
+    }
     Path libDir = buildDir.resolve("lib");
     Files.createDirectories(libDir);
     for (Path library : libraries) {
