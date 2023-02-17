@@ -89,6 +89,7 @@ public class FlexibleSchemaHandlingTest {
     ErrorCollector errors = ErrorCollector.root();
     Deserializer deserializer = new Deserializer();
     List<FlexibleTableSchema> schemas = Files.list(inputSchema.packageDir)
+            .sorted()
             .filter(f -> f.getFileName().toString().endsWith(FlexibleTableSchemaFactory.SCHEMA_EXTENSION))
             .map(f -> deserializer.mapYAMLFile(f, TableDefinition.class))
             .map(td -> importer.convert(td, errors).get())
