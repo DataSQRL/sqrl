@@ -1,0 +1,17 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
+  },
+  "name" : "orders",
+  "identifier" : "orders",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "",
+    "fileURIs" : [ "../sqrl-examples/quickstart/data/orders_part1.json.gz", "../sqrl-examples/quickstart/data/products.csv.gz", "../sqrl-examples/quickstart/data/customers.json.gz" ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "systemType" : "dir"
+  }
+}

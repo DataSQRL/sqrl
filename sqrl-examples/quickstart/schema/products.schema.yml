@@ -1,0 +1,37 @@
+---
+name: "products"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "name"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "sizing"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "weight_in_gram"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "type"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "category"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "usda_id"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "updated"
+  type: "DATETIME"
+  tests:
+  - "not_null"

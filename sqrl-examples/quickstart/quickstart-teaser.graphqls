@@ -1,0 +1,37 @@
+type Query {
+  orders(time: String): [orders!]
+  Users(id: Int!): Users!
+}
+
+type Users {
+  id: Int!
+  purchases(time: String): [orders!]
+  spending(week: String): [spending!]
+}
+
+type items {
+  productid: Int!
+  quantity: Int!
+  unit_price: Float!
+  discount: Float
+  total: Float!
+}
+
+type orders {
+  id: Int!
+  customerid: Int!
+  time: String!
+  items: [items!]
+  totals: totals
+}
+
+type spending {
+  week: String!
+  spend: Float!
+  saved: Float!
+}
+
+type totals {
+  price: Float!
+  saving: Float!
+}
