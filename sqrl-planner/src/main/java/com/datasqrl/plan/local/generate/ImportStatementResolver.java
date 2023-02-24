@@ -50,10 +50,11 @@ public class ImportStatementResolver extends AbstractStatementResolver {
           () -> String.format("Could not resolve import [%s]", path));
 
       // Add the namespace object to the current namespace
-      loaded = loadNamespaceObject(ns, nsObject.get(), statement.getAlias());
+      Name objectName = getObjectName(nsObject.get(), statement.getAlias());
+      loaded = ns.addNsObject(objectName, nsObject.get());
 
       if (statement.getTimestamp().isPresent()) {
-        addTimestampAsColumn(statement, ns);
+        addTimestampAsColumn(statement, ns, objectName);
       }
     }
 
@@ -62,7 +63,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
         () -> String.format("Could not load import [%s]", path));
   }
 
-  private void addTimestampAsColumn(ImportDefinition statement, Namespace ns) {
+  private void addTimestampAsColumn(ImportDefinition statement, Namespace ns, Name tableName) {
 
     SqlNode sqlNode = transpile(statement, ns);
 
@@ -74,7 +75,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
       setTimestampColumn(statement, ns);
     } else {
       SqlIdentifier name = statement.getTimestampAlias().get();
-      Optional<SQRLTable> table = resolveTable(ns, statement.getNamePath().getLast().toNamePath(), false);
+      Optional<SQRLTable> table = resolveTable(ns, tableName.toNamePath(), false);
       Name name1 = Name.system(name.names.get(0));
       Preconditions.checkState(table.isPresent(), "Could not find table during import");
       table.ifPresent(t->t.addColumn(name1, relNode, true, ns.session.createRelBuilder(), ns.tableFactory));
@@ -130,8 +131,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     return module.getNamespaceObject(path.getLast());
   }
 
-  private boolean loadNamespaceObject(Namespace ns, NamespaceObject nsObject,
-      Optional<SqlIdentifier> alias) {
-    return ns.addNsObject(alias.map(a-> Name.system(a.names.get(0))).orElse(nsObject.getName()), nsObject);
+  private Name getObjectName(NamespaceObject nsObject, Optional<SqlIdentifier> alias) {
+    return alias.map(a-> Name.system(a.names.get(0))).orElse(nsObject.getName());
   }
 }

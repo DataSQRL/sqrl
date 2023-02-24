@@ -4,7 +4,7 @@
 package com.datasqrl.packager.config;
 
 import com.datasqrl.spi.GlobalConfiguration;
-import com.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.spi.ScriptConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -40,8 +40,8 @@ public class GlobalPackageConfiguration implements GlobalConfiguration {
   LinkedHashMap<String, Dependency> dependencies = new LinkedHashMap<>();
 
   @Setter
-  @JsonProperty(ManifestConfiguration.PROPERTY)
-  ManifestConfiguration manifest;
+  @JsonProperty(ScriptConfiguration.PROPERTY)
+  ScriptConfiguration script;
 
   public static GlobalPackageConfiguration readFrom(Path path) throws IOException {
     ObjectMapper mapper = new ObjectMapper();

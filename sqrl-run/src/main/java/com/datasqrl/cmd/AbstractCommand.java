@@ -35,7 +35,7 @@ public abstract class AbstractCommand implements Runnable {
       runCommand(collector);
     } catch (Exception e) {
       collector.getCatcher().handle(e);
-      //e.printStackTrace();
+      e.printStackTrace();
     }
     System.out.println(ErrorPrinter.prettyPrint(collector));
   }

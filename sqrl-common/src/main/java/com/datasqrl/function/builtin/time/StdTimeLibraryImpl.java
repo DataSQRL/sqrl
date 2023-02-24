@@ -41,6 +41,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
   //
   public static final NOW NOW = new NOW();
   public static final EpochToTimestamp EPOCH_TO_TIMESTAMP = new EpochToTimestamp();
+  public static final EpochMilliToTimestamp EPOCH_MILLI_TO_TIMESTAMP = new EpochMilliToTimestamp();
   public static final TimestampToEpoch TIMESTAMP_TO_EPOCH = new TimestampToEpoch();
   public static final ParseTimestamp STRING_TO_TIMESTAMP = new ParseTimestamp();
   public static final formatTimestamp TIMESTAMP_TO_STRING = new formatTimestamp();
@@ -77,6 +78,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
   public final List<ScalarFunction> functions = List.of(
 //      NOW,
       EPOCH_TO_TIMESTAMP,
+      EPOCH_MILLI_TO_TIMESTAMP,
       TIMESTAMP_TO_EPOCH,
       STRING_TO_TIMESTAMP,
       TIMESTAMP_TO_STRING,
@@ -559,6 +561,19 @@ public class StdTimeLibraryImpl implements SqrlModule {
       return Instant.ofEpochSecond(l.longValue());
     }
 
+
+    @Override
+    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.BIGINT());
+    }
+  }
+
+  public static class EpochMilliToTimestamp extends ScalarFunction implements SqrlFunction,
+          TimestampPreservingFunction {
+
+    public Instant eval(Long l) {
+      return Instant.ofEpochMilli(l.longValue());
+    }
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {

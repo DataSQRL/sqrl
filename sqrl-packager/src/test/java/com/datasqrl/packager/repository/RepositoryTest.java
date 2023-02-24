@@ -6,12 +6,10 @@ import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Retail;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -64,6 +62,22 @@ public class RepositoryTest {
         snapshot.addContent(FileTestUtil.getAllFilesAsString(localRepoPath),"localRepo");
         snapshot.addContent(FileTestUtil.getAllFilesAsString(outputPath),"output");
         snapshot.createOrValidate();
+    }
+
+    @Test
+    @Disabled
+    public void publishQuickstartLocally() {
+        LocalRepositoryImplementation repo = LocalRepositoryImplementation.of(errors);
+        publishLocally(Quickstart.BASE_PATH.resolve("schema"), repo);
+    }
+
+    @SneakyThrows
+    public void publishLocally(Path pkgPath, LocalRepositoryImplementation repo) {
+        Publisher publisher = new Publisher(errors);
+        Dependency dep = publisher.publish(pkgPath, repo);
+        assertFalse(errors.isFatal(), errors.toString());
+
+        assertTrue(repo.retrieveDependency(outputPath, dep));
     }
 
     @Test

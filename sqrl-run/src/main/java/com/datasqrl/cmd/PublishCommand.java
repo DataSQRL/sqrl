@@ -8,7 +8,7 @@ import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.util.Serializer;
 import com.datasqrl.service.PackagerUtil;
-import com.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.spi.ScriptConfiguration;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -40,8 +40,8 @@ public class PublishCommand extends AbstractCommand {
         Publisher publisher = new Publisher(errors);
 
         if (mainScript==null && packageconfigs.size()==1 && Files.isSameFile(defaultPkgConfig,packageconfigs.get(0))
-                && !Serializer.hasField(defaultPkgConfig, ManifestConfiguration.PROPERTY)) {
-            //If no main script is specified and only a single default package config and that config does not contain a manifest
+                && !Serializer.hasField(defaultPkgConfig, ScriptConfiguration.PROPERTY)) {
+            //If no main script is specified and only a single default package config and that config does not contain a script config
             //then we are publishing a data source/sink or function package (i.e. we don't need to build)
             Dependency dep = publisher.publish(packageRoot, localRepo);
             System.out.println(String.format("Successfully published package [%s] to local repository", dep));

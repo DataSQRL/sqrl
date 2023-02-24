@@ -3,26 +3,24 @@
  */
 package com.datasqrl.cmd;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.datasqrl.packager.Packager;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import picocli.CommandLine;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestCmd {
 
@@ -76,7 +74,7 @@ public class TestCmd {
         script.getScriptPath().toString(),
         script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
         "-t", OUTPUT_DIR.toString(),
-        "--noinfer");
+        "--nolookup");
     createSnapshot();
   }
 
@@ -106,7 +104,7 @@ public class TestCmd {
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
         "-t", OUTPUT_DIR.toString(),
-        "--noinfer");
+        "--nolookup");
     createSnapshot();
   }
 
@@ -118,7 +116,7 @@ public class TestCmd {
   }
 
   public static void execute(Path rootDir, String... args) {
-    new CommandLine(new RootCommand(rootDir)).execute(args);
+    new RootCommand(rootDir).getCmd().execute(args);
   }
 
 }

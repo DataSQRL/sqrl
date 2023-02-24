@@ -65,7 +65,7 @@ public class GenerateNutData {
     }
     final String nutFile = args[0];
     final int numCustomers = Integer.parseInt(args[1]);
-    final int numDays = Integer.parseInt(args[2]);
+    final long numDays = Integer.parseInt(args[2]);
     final int ordersPerDay = Integer.parseInt(args[3]);
 
     if (numDays < 1 || numCustomers < 1 || ordersPerDay < 1) {
@@ -75,6 +75,7 @@ public class GenerateNutData {
     final long timeNow = System.currentTimeMillis();
     final int millisPerDay = (24 * 3600 * 1000);
     final long productUpdateTime = timeNow - (numDays + 1) * millisPerDay;
+    System.out.println(String.format("Before time %s as %s", productUpdateTime, Instant.ofEpochMilli(productUpdateTime)));
 
     //First, generate products from list of USDA nuts
     List<Product> products = new ArrayList<>();
@@ -125,6 +126,7 @@ public class GenerateNutData {
         orders.clear();
       }
       long baseTime = timeNow - (numDays - days) * millisPerDay;
+//      System.out.println(String.format("Base time %s as %s", baseTime, Instant.ofEpochMilli(baseTime)));
       int numOrders = ordersPerDay + (int) Math.round(rand.nextGaussian() * stdDevMulti);
 
       for (int i = 0; i < numOrders; i++) {

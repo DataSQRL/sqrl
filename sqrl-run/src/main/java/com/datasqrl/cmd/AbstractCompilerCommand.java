@@ -18,11 +18,6 @@ import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.service.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +29,6 @@ import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.file.PathUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
@@ -63,7 +57,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"-p","--port"}, description = "Port for API server")
   private int port = 8888;
 
-  @CommandLine.Option(names = {"--noinfer"}, description = "Do not infer dependencies",
+  @CommandLine.Option(names = {"--nolookup"}, description = "Do not look up package dependencies in the repository",
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
 

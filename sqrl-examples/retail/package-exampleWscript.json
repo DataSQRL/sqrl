@@ -6,7 +6,7 @@
     "variant": "dev",
     "description": "Simple e-commerce data example"
   },
-  "manifest":
+  "script":
   {
     "main": "c360-full.sqrl",
     "graphql": "c360-full-graphqlv1/schema.graphqls"

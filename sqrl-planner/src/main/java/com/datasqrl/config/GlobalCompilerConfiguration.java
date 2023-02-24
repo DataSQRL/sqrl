@@ -6,7 +6,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigurationUtil;
-import com.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.spi.ScriptConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,8 +26,8 @@ public class GlobalCompilerConfiguration extends GlobalEngineConfiguration {
   CompilerConfiguration compiler = new CompilerConfiguration();
 
   @Valid
-  @JsonProperty(ManifestConfiguration.PROPERTY)
-  ManifestConfiguration manifest;
+  @JsonProperty(ScriptConfiguration.PROPERTY)
+  ScriptConfiguration script;
 
   public CompilerConfiguration initializeCompiler(ErrorCollector errors) {
     if (!ConfigurationUtil.javaxValidate(this, errors)) {
