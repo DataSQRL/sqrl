@@ -26,7 +26,7 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.generate.*;
 import com.datasqrl.plan.queries.APIQuery;
-import com.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.spi.ScriptConfiguration;
 import com.google.common.base.Preconditions;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
@@ -72,10 +72,10 @@ public class Compiler {
     Session session = createSession(collector, engineSettings, debugger);
     Resolve resolve = new Resolve(buildDir);
 
-    ManifestConfiguration manifest = globalConfig.getManifest();
-    Preconditions.checkArgument(manifest != null);
-    Path mainScript = buildDir.resolve(manifest.getMain());
-    Optional<Path> graphqlSchema = manifest.getOptGraphQL().map(file -> buildDir.resolve(file));
+    ScriptConfiguration script = globalConfig.getScript();
+    Preconditions.checkArgument(script != null);
+    Path mainScript = buildDir.resolve(script.getMain());
+    Optional<Path> graphqlSchema = script.getOptGraphQL().map(file -> buildDir.resolve(file));
 
     String scriptStr = Files.readString(mainScript);
 
@@ -145,9 +145,9 @@ public class Compiler {
     Session session = createSession(collector, engineSettings, DebuggerConfig.NONE);
     Resolve resolve = new Resolve(buildDir);
 
-    ManifestConfiguration manifest = globalConfig.getManifest();
-    Preconditions.checkArgument(manifest != null);
-    Path mainScript = buildDir.resolve(manifest.getMain());
+    ScriptConfiguration script = globalConfig.getScript();
+    Preconditions.checkArgument(script != null);
+    Path mainScript = buildDir.resolve(script.getMain());
 
     String scriptStr = Files.readString(mainScript);
     ErrorCollector scriptErrors = collector.withFile(mainScript, scriptStr);

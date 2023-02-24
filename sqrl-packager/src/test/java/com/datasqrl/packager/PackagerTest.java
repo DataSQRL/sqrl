@@ -3,6 +3,9 @@
  */
 package com.datasqrl.packager;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.config.ConfigurationTest;
 import com.datasqrl.packager.config.Dependency;
@@ -11,11 +14,6 @@ import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Retail;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,9 +24,10 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class PackagerTest {
 
@@ -44,17 +43,17 @@ public class PackagerTest {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
     Path graphQLSchema = script.getRootPackageDirectory().resolve("c360-full-graphqlv1")
         .resolve("schema.graphqls");
-    Path packageFileWithoutManifest = script.getRootPackageDirectory()
-        .resolve("package-exampleWOmanifest.json");
-    Path packageFileWithManifest = script.getRootPackageDirectory()
-        .resolve("package-exampleWmanifest.json");
+    Path packageFileWithoutScript = script.getRootPackageDirectory()
+        .resolve("package-exampleWOscript.json");
+    Path packageFileWithScript = script.getRootPackageDirectory()
+        .resolve("package-exampleWscript.json");
 
-    testCombination(script.getScriptPath(), null, packageFileWithoutManifest);
-    testCombination(script.getScriptPath(), null, packageFileWithManifest);
-    testCombination(null, null, packageFileWithManifest);
-    testCombination(script.getScriptPath(), graphQLSchema, packageFileWithoutManifest);
-    testCombination(script.getScriptPath(), graphQLSchema, packageFileWithManifest);
-    testCombination(null, graphQLSchema, packageFileWithManifest);
+    testCombination(script.getScriptPath(), null, packageFileWithoutScript);
+    testCombination(script.getScriptPath(), null, packageFileWithScript);
+    testCombination(null, null, packageFileWithScript);
+    testCombination(script.getScriptPath(), graphQLSchema, packageFileWithoutScript);
+    testCombination(script.getScriptPath(), graphQLSchema, packageFileWithScript);
+    testCombination(null, graphQLSchema, packageFileWithScript);
 
     snapshot.createOrValidate();
   }

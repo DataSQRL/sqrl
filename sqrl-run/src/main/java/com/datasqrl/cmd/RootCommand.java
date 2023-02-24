@@ -35,4 +35,8 @@ public class RootCommand implements Runnable {
   public RootCommand() {
     this(Path.of(""));
   }
+
+  public CommandLine getCmd() {
+    return new CommandLine(this).setCaseInsensitiveEnumValuesAllowed(true);
+  }
 }

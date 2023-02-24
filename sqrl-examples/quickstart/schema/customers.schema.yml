@@ -21,7 +21,7 @@ columns:
   - "not_null"
 - name: "ip_address"
   type: "STRING"
-- name: "zip_code"
+- name: "country"
   type: "STRING"
 - name: "changed_on"
   type: "INTEGER"

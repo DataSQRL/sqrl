@@ -14,9 +14,19 @@ a maven subdirectory.
 
 `mvn -Dmaven.test.skip compile jar:test-jar install`
 
+
 ### Maven
 -DskipTests=true and not -Dmaven.test.skip=true
 
 skipTests will build the test jars which is required for downstream module pom resolution
 
 Add the -T parameter for more threads. Modules can compile in parallel.
+
+
+## Build docker
+
+To build the docker image for the DataSQRL command:
+
+```bash
+docker build -t datasqrl/datasqrl-cmd .
+```

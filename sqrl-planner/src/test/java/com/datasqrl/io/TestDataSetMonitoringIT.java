@@ -3,6 +3,10 @@
  */
 package com.datasqrl.io;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.discovery.DataDiscovery;
@@ -17,8 +21,12 @@ import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Nutshop;
+import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -27,12 +35,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
@@ -103,10 +105,10 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
   @Test
   @Disabled
   public void generateSchema() {
-    generateTableConfigAndSchemaInDataDir(Retail.INSTANCE,
-        IntegrationTestSettings.getInMemory());
-//    generateTableConfigAndSchemaInDataDir(Quickstart.INSTANCE,
-//        IntegrationTestSettings.getFlinkWithDB());
+//    generateTableConfigAndSchemaInDataDir(Retail.INSTANCE,
+//        IntegrationTestSettings.getInMemory());
+    generateTableConfigAndSchemaInDataDir(Quickstart.INSTANCE,
+        IntegrationTestSettings.getFlinkWithDB());
   }
 
   @SneakyThrows

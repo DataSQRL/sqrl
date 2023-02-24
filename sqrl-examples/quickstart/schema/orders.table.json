@@ -10,7 +10,7 @@
   "schema" : "flexible",
   "connector" : {
     "directoryURI" : "",
-    "fileURIs" : [ "../sqrl-examples/quickstart/data/orders_part1.json.gz", "../sqrl-examples/quickstart/data/products.csv.gz", "../sqrl-examples/quickstart/data/customers.json.gz" ],
+    "fileURIs" : [ "../sqrl-examples/quickstart/data/orders_part1.json.gz"],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
     "systemType" : "dir"
   }

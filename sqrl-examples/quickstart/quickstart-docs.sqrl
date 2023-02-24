@@ -1,0 +1,71 @@
+IMPORT schema.Orders; -- replace w/ repository
+IMPORT schema.Products;
+IMPORT time.*;
+IMPORT schema.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp; -- replace w/ mydata
+
+Orders.items.discount := discount?0.0;
+Orders.items.total := quantity * unit_price - discount;
+Orders.totals := SELECT sum(total) as price,
+                  sum(discount) as saving FROM @.items;
+
+-- Replacing users from import
+Users := DISTINCT Users ON id ORDER BY timestamp DESC;
+--Users.country := country?'none';
+Users.purchases := JOIN Orders ON Orders.customerid = @.id;
+Orders.user := JOIN Users ON @.customerid = Users.id;
+
+Users.spending := SELECT endOfWeek(p.time) AS week,
+         sum(t.price) AS spend, sum(t.saving) AS saved
+      FROM @.purchases p JOIN p.totals t
+      GROUP BY week ORDER BY week DESC;
+
+EXPORT Users.spending TO print.spending;
+
+Products := DISTINCT Products ON id ORDER BY updated DESC;
+Orders.items.product := JOIN Products ON Products.id = @.productid;
+
+Users.past_purchases := SELECT i.productid, count(1) as num_orders,
+         sum(i.quantity) as total_quantity
+      FROM @.purchases.items i
+      GROUP BY i.productid
+      ORDER BY num_orders DESC, total_quantity DESC;
+
+-- aggregating by country
+Products.volume_today := SELECT u.country, sum(i.quantity) as quantity,
+         sum(i.total) as spend, sum(i.quantity * @.weight_in_gram) as weight
+      FROM @ JOIN Orders.items i ON i.productid = @.id JOIN i.parent o
+             JOIN o.user u
+      WHERE o.time > now() - INTERVAL 1 DAY GROUP BY u.country;
+
+Users.order_stats := SELECT min(o.time) as first_order,
+         sum(t.price) as spend, sum(t.saving) as saved, count(1) as num_orders
+      FROM @.purchases o JOIN o.totals t;
+
+UserPromotion := STREAM ON ADD AS
+  SELECT u.id, u.first_name, u.last_name, u.email, s.first_order, s.spend
+  FROM Users u JOIN u.order_stats s WHERE s.spend >= 100;
+
+EXPORT UserPromotion TO print.promotion;
+
+UsersWithSpending := SELECT id, email, order_stats.spend AS spend FROM Users;
+
+HighSpendingUsers := SELECT id, email FROM Users WHERE order_stats.spend > 1000;
+
+Users.spending_last_week := SELECT sum(i.total) AS spend,
+            sum(i.discount) AS saved
+      FROM @.purchases p JOIN p.items i
+      WHERE p.time > now() - INTERVAL 7 DAY;
+
+Users.total_spend := SELECT sum(i.total) AS spend,
+            sum(i.discount) AS saved
+      FROM @ JOIN Orders o ON o.customerid = @.id JOIN o.items i;
+
+RecentTotal := SELECT sum(i.total) AS total, count(1) AS num
+      FROM Orders o JOIN o.items i
+      WHERE time > now() - INTERVAL 7 DAY;
+
+OrderCountry := SELECT o.time, u.country
+                FROM Orders o TEMPORAL JOIN Users u ON o.customerid = u.id;
+
+OrderCountryInner := SELECT o.time, u.country
+                FROM Orders o INNER JOIN Users u ON o.customerid = u.id;

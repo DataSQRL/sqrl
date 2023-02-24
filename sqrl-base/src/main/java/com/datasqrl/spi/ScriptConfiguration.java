@@ -13,9 +13,9 @@ import java.util.Optional;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class ManifestConfiguration {
+public class ScriptConfiguration {
 
-  public static final String PROPERTY = "manifest";
+  public static final String PROPERTY = "script";
 
   @NonNull @NotEmpty
   String main;

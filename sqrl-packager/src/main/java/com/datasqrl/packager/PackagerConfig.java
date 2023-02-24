@@ -1,5 +1,7 @@
 package com.datasqrl.packager;
 
+import static com.datasqrl.packager.Packager.mapper;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.config.GlobalPackageConfiguration;
 import com.datasqrl.packager.repository.CompositeRepositoryImpl;
@@ -7,20 +9,17 @@ import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.packager.util.Serializer;
-import com.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.spi.ScriptConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import lombok.Builder;
-import lombok.Value;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-
-import static com.datasqrl.packager.Packager.mapper;
+import lombok.Builder;
+import lombok.Value;
 
 @Builder
 @Value
@@ -43,7 +42,7 @@ public class PackagerConfig {
   }
 
   private void checkRequiredArguments(ErrorCollector errors) {
-    errors.checkFatal(packageFiles!=null && !packageFiles.isEmpty(), "Need to configure a package manifest");
+    errors.checkFatal(packageFiles!=null && !packageFiles.isEmpty(), "Need to configure a package configuration");
     packageFiles.forEach( pkg -> errors.checkFatal(Files.isRegularFile(pkg),
             "Could not find package file: %s", pkg));
     errors.checkFatal(rootDir!=null && Files.isDirectory(rootDir), "Not a valid root directory: %s", rootDir);
@@ -57,26 +56,26 @@ public class PackagerConfig {
     JsonNode basePackage = Serializer.combineFiles(packageFiles);
     packageConfig = (ObjectNode) basePackage;
     config = mapper.convertValue(packageConfig, GlobalPackageConfiguration.class);
-    updateManifest(rootDir, config);
-    JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
-    packageConfig.set(ManifestConfiguration.PROPERTY, mappedManifest);
+    updateScriptConfig(rootDir, config);
+    JsonNode mappedScript = mapper.valueToTree(config.getScript());
+    packageConfig.set(ScriptConfiguration.PROPERTY, mappedScript);
     return packageConfig;
   }
 
-  private void updateManifest(Path rootDir, GlobalPackageConfiguration config) {
+  private void updateScriptConfig(Path rootDir, GlobalPackageConfiguration config) {
     Path main = mainScript, graphql = graphQLSchemaFile;
-    ManifestConfiguration manifest;
-    if (config.getManifest() != null) {
-      manifest = config.getManifest();
+    ScriptConfiguration script;
+    if (config.getScript() != null) {
+      script = config.getScript();
       if (main == null) {
-        main = rootDir.resolve(manifest.getMain());
+        main = rootDir.resolve(script.getMain());
       }
-      if (graphql == null && manifest.getOptGraphQL().isPresent()) {
-        graphql = rootDir.resolve(manifest.getOptGraphQL().get());
+      if (graphql == null && script.getOptGraphQL().isPresent()) {
+        graphql = rootDir.resolve(script.getOptGraphQL().get());
       }
     }
-    //Update manifest
-    config.setManifest(buildRelativizeManifest(rootDir, main, Optional.ofNullable(graphql)));
+    //Update script config
+    config.setScript(buildRelativizeScriptConfig(rootDir, main, Optional.ofNullable(graphql)));
   }
 
   private Repository getRepository(ErrorCollector errors) {
@@ -90,11 +89,11 @@ public class PackagerConfig {
     return this.repository;
   }
 
-  public static ManifestConfiguration buildRelativizeManifest(Path rootDir, Path mainScript,
+  public static ScriptConfiguration buildRelativizeScriptConfig(Path rootDir, Path mainScript,
       Optional<Path> graphQLSchemaFile) {
     Preconditions.checkArgument(mainScript != null || !Files.isRegularFile(mainScript),
         "Must configure a main script");
-    ManifestConfiguration.ManifestConfigurationBuilder builder = ManifestConfiguration.builder();
+    ScriptConfiguration.ScriptConfigurationBuilder builder = ScriptConfiguration.builder();
     builder.main(rootDir.relativize(mainScript).normalize().toString());
     graphQLSchemaFile.ifPresent(gql -> {
       Preconditions.checkArgument(Files.isRegularFile(gql));

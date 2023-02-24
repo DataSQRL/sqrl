@@ -1,4 +1,4 @@
->>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOscript.json-dir
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -17,7 +17,7 @@ ecommerce-data/product.table.json
 output
 output/datasystem.json
 package.json
->>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOmanifest.json-package
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWOscript.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -30,12 +30,12 @@ package.json
       "maxArguments" : 3
     }
   },
-  "manifest" : {
+  "script" : {
     "main" : "c360-full.sqrl"
   },
   "dependencies" : { }
 }
->>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWscript.json-dir
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -55,7 +55,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWmanifest.json-package
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/package-exampleWscript.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -63,7 +63,7 @@ schema.graphqls
     "variant" : "dev",
     "description" : "Simple e-commerce data example"
   },
-  "manifest" : {
+  "script" : {
     "main" : "c360-full.sqrl",
     "graphql" : "schema.graphqls"
   },
@@ -74,7 +74,7 @@ schema.graphqls
   },
   "dependencies" : { }
 }
->>>../sqrl-examples/retail/package-exampleWmanifest.json-dir
+>>>../sqrl-examples/retail/package-exampleWscript.json-dir
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -94,7 +94,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqrl-examples/retail/package-exampleWmanifest.json-package
+>>>../sqrl-examples/retail/package-exampleWscript.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -102,7 +102,7 @@ schema.graphqls
     "variant" : "dev",
     "description" : "Simple e-commerce data example"
   },
-  "manifest" : {
+  "script" : {
     "main" : "c360-full.sqrl",
     "graphql" : "schema.graphqls"
   },
@@ -113,7 +113,7 @@ schema.graphqls
   },
   "dependencies" : { }
 }
->>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWOmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWOscript.json-dir
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -133,7 +133,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWOmanifest.json-package
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWOscript.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -146,13 +146,13 @@ schema.graphqls
       "maxArguments" : 3
     }
   },
-  "manifest" : {
+  "script" : {
     "main" : "c360-full.sqrl",
     "graphql" : "schema.graphqls"
   },
   "dependencies" : { }
 }
->>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWscript.json-dir
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -172,7 +172,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-package
+>>>../sqrl-examples/retail/c360-full.sqrl-../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWscript.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -180,7 +180,7 @@ schema.graphqls
     "variant" : "dev",
     "description" : "Simple e-commerce data example"
   },
-  "manifest" : {
+  "script" : {
     "main" : "c360-full.sqrl",
     "graphql" : "schema.graphqls"
   },
@@ -191,7 +191,7 @@ schema.graphqls
   },
   "dependencies" : { }
 }
->>>../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-dir
+>>>../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWscript.json-dir
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -211,7 +211,7 @@ output
 output/datasystem.json
 package.json
 schema.graphqls
->>>../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWmanifest.json-package
+>>>../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../sqrl-examples/retail/package-exampleWscript.json-package
 {
   "package" : {
     "name" : "datasqrl.examples.Retail",
@@ -219,7 +219,7 @@ schema.graphqls
     "variant" : "dev",
     "description" : "Simple e-commerce data example"
   },
-  "manifest" : {
+  "script" : {
     "main" : "c360-full.sqrl",
     "graphql" : "schema.graphqls"
   },

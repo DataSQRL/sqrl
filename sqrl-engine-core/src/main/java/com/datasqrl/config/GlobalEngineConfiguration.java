@@ -39,7 +39,6 @@ import java.util.Optional;
 /**
  * Configuration for the engines
  * <p>
- * TODO: Should extend GlobalLoaderConfiguration once we make loaders configurable
  */
 @SuperBuilder
 @NoArgsConstructor

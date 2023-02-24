@@ -3,6 +3,9 @@
  */
 package com.datasqrl.packager;
 
+import static com.datasqrl.packager.LambdaUtil.rethrowCall;
+import static com.datasqrl.util.NameUtil.namepath2Path;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.name.NamePath;
@@ -15,7 +18,7 @@ import com.datasqrl.packager.preprocess.FlexibleSchemaPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
-import com.datasqrl.spi.ManifestConfiguration;
+import com.datasqrl.spi.ScriptConfiguration;
 import com.datasqrl.util.FileUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,21 +27,22 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiPredicate;
-
-import static com.datasqrl.packager.LambdaUtil.rethrowCall;
-import static com.datasqrl.util.NameUtil.namepath2Path;
+import lombok.NonNull;
+import lombok.Value;
+import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 
 @Value
 public class Packager {
@@ -73,7 +77,7 @@ public class Packager {
 
   public Path populateBuildDir(boolean inferDependencies) {
     errors.checkFatal(
-        config.getManifest() != null && !Strings.isNullOrEmpty(config.getManifest().getMain()),
+        config.getScript() != null && !Strings.isNullOrEmpty(config.getScript().getMain()),
         "No config or main script specified");
     try {
       cleanBuildDir();
@@ -162,24 +166,24 @@ public class Packager {
   private void copySystemFilesToBuildDir() throws IOException {
     //Copy main script to build
     Path mainFile = copyRelativeFile(
-        rootDir.resolve(config.getManifest().getMain()),
+        rootDir.resolve(config.getScript().getMain()),
         rootDir,
         buildDir);
 
     //Copy graphql file(s)
-    Optional<Path> graphQLSchemaFile = config.getManifest().getOptGraphQL()
+    Optional<Path> graphQLSchemaFile = config.getScript().getOptGraphQL()
         .map(rootDir::resolve)
         .map(gql -> rethrowCall(() -> copyFile(gql, buildDir,
             Path.of(GRAPHQL_SCHEMA_FILE_NAME))));
 
-    relativizeManifest(mainFile, graphQLSchemaFile);
+    relativizeScriptConfig(mainFile, graphQLSchemaFile);
   }
 
   /**
-   * Helper function to relativize manifest.
+   * Helper function to relativize script configuration.
    */
-  private void relativizeManifest(Path mainFile, Optional<Path> graphQLSchemaFile) {
-    config.setManifest(PackagerConfig.buildRelativizeManifest(
+  private void relativizeScriptConfig(Path mainFile, Optional<Path> graphQLSchemaFile) {
+    config.setScript(PackagerConfig.buildRelativizeScriptConfig(
         buildDir,
         mainFile,
         graphQLSchemaFile));
@@ -213,9 +217,9 @@ public class Packager {
     packageConfig.set(GlobalPackageConfiguration.DEPENDENCIES_NAME,
         mapper.valueToTree(config.getDependencies()));
 
-    //Update relativized manifest in place
-    JsonNode mappedManifest = mapper.valueToTree(config.getManifest());
-    packageConfig.set(ManifestConfiguration.PROPERTY, mappedManifest);
+    //Update relativized script in place
+    JsonNode mappedScript = mapper.valueToTree(config.getScript());
+    packageConfig.set(ScriptConfiguration.PROPERTY, mappedScript);
 
     mapper.writeValue(packageFile.toFile(), packageConfig);
   }

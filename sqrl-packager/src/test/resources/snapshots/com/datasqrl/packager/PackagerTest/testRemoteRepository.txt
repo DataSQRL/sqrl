@@ -28,7 +28,7 @@ package.json
     "dialect" : "H2",
     "database" : "sqrl"
   } ],
-  "manifest" : {
+  "script" : {
     "main" : "main1.sqrl"
   },
   "dependencies" : {
@@ -76,7 +76,7 @@ package.json
       "variant" : "dev"
     }
   },
-  "manifest" : {
+  "script" : {
     "main" : "main1.sqrl"
   }
 }

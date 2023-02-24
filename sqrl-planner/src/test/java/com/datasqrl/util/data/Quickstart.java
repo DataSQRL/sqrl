@@ -31,7 +31,7 @@ public class Quickstart implements TestDataset {
 
   @Override
   public Set<String> getTables() {
-    return Set.of("products", "orders");
+    return Set.of("products", "orders", "customers");
   }
 
   @Override
@@ -46,11 +46,13 @@ public class Quickstart implements TestDataset {
 
   @Override
   public DataSystemDiscoveryConfig getDiscoveryConfig() {
-    String baseUrl = "https://github.com/DataSQRL/sqrl/raw/651b944d4597865cf020c8fb8b73aca18aa1c3ca/sqrl-examples/quickstart/data/%s";
+//    String baseUrl = "https://github.com/DataSQRL/sqrl/raw/651b944d4597865cf020c8fb8b73aca18aa1c3ca/sqrl-examples/quickstart/data/%s";
+    String baseUrl = "../sqrl-examples/quickstart/data/%s";
     return DirectoryDataSystemConfig.Discovery.builder()
             .fileURIs(List.of(
                     String.format(baseUrl,"orders_part1.json.gz"),
-                    String.format(baseUrl,"products.csv.gz")))
+                    String.format(baseUrl,"products.csv.gz"),
+                    String.format(baseUrl,"customers.json.gz")))
             .build();
   }
 
