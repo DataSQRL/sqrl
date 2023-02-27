@@ -3,12 +3,12 @@ package com.datasqrl.packager;
 import static com.datasqrl.packager.Packager.mapper;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.Deserializer;
 import com.datasqrl.packager.config.GlobalPackageConfiguration;
 import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
-import com.datasqrl.packager.util.Serializer;
 import com.datasqrl.spi.ScriptConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -53,7 +53,7 @@ public class PackagerConfig {
   private ObjectNode getPackageConfig(List<Path> packageFiles) throws IOException {
     ObjectNode packageConfig;
     GlobalPackageConfiguration config;
-    JsonNode basePackage = Serializer.combineFiles(packageFiles);
+    JsonNode basePackage = new Deserializer().combineJsonFiles(packageFiles);
     packageConfig = (ObjectNode) basePackage;
     config = mapper.convertValue(packageConfig, GlobalPackageConfiguration.class);
     updateScriptConfig(rootDir, config);

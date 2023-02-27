@@ -1,11 +1,10 @@
 package com.datasqrl.packager.repository;
 
-import com.datasqrl.packager.config.Dependency;
-
+import com.datasqrl.packager.config.PackageConfiguration;
 import java.nio.file.Path;
 
 public interface PublishRepository {
 
-    void publish(Path zipFile, Dependency dependency);
+    boolean publish(Path zipFile, PackageConfiguration pkgConfig);
 
 }

@@ -1,4 +1,4 @@
-IMPORT datasqrl.seedshop.Orders;  -- Import orders stream
+IMPORT schema.Orders;  -- Import orders stream
 IMPORT time.endOfWeek;            -- Import time function
 /* Augment orders with total price */
 Orders.items.total := quantity * unit_price - discount?0.0;

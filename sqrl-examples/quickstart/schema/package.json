@@ -3,6 +3,12 @@
     "name": "datasqrl.seedshop",
     "version": "0.1.0",
     "variant": "dev",
-    "description": "Simple e-commerce dataset for the DataSQRL Seed-shop"
+    "latest": true,
+    "description": "Simple e-commerce dataset for the DataSQRL Seed-shop",
+    "license": "Apache 2.0",
+    "documentation": "https://www.datasqrl.com/docs/getting-started/quickstart",
+    "homepage": "https://www.datasqrl.com/",
+    "repository": "https://github.com/DataSQRL/sqrl/tree/main/sqrl-examples/quickstart",
+    "readme": "https://github.com/DataSQRL/sqrl/tree/main/sqrl-examples/quickstart/README.md"
   }
 }
