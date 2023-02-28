@@ -21,7 +21,7 @@ public class Quickstart implements TestDataset {
 
   @Override
   public String getName() {
-    return "schema";
+    return "mydata";
   }
 
   @Override

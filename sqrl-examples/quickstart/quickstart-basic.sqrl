@@ -1,5 +1,5 @@
-IMPORT schema.Orders;  -- replace w/ repository
-IMPORT schema.Products;
+IMPORT datasqrl.seedshop.Orders;
+IMPORT datasqrl.seedshop.Products;
 IMPORT time.*;
 
 Orders.items.discount := discount?0.0; -- Data cleaning

@@ -37,7 +37,7 @@ public class QuickstartTest {
     @Disabled
     @ParameterizedTest
     @ArgumentsSource(TutorialProvider.class)
-    public void testQuickstartTutorial(Path root, String script) {
+    public void compileQuickstartTutorial(Path root, String script) {
         execute(root, "compile", script);
         //   , root.resolve("quickstart-teaser.graphqls").toString() );
         //,"-a","graphql");
@@ -50,17 +50,23 @@ public class QuickstartTest {
         Files.deleteIfExists(Path.of("h2.db.mv.db"));
     }
 
+    public static final String[] SCRIPTS = {
+        "quickstart-teaser.sqrl",
+        "quickstart-basic.sqrl",
+        "quickstart-user.sqrl",
+        "quickstart-export.sqrl",
+        "quickstart-docs.sqrl"
+        };
+
     static class TutorialProvider implements ArgumentsProvider {
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
             throws Exception {
             Path root = Quickstart.BASE_PATH;
-            String[] scripts = { root.resolve("quickstart-docs.sqrl").toString() ,
-                root.resolve("quickstart-basic.sqrl").toString(),
-                root.resolve("quickstart-user.sqrl").toString(),
-                root.resolve("quickstart-export.sqrl").toString()};
-            return Arrays.stream(scripts).map(s->Arguments.of(root,s));
+            return Arrays.stream(SCRIPTS)
+                .map(s -> root.resolve(s).toString())
+                .map(s->Arguments.of(root,s));
         }
     }
 

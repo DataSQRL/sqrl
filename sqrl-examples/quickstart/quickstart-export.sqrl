@@ -1,7 +1,7 @@
-IMPORT schema.Orders; -- replace w/ repository
-IMPORT schema.Products;
+IMPORT datasqrl.seedshop.Orders;
+IMPORT datasqrl.seedshop.Products;
 IMPORT time.*;
-IMPORT schema.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp; -- replace w/ mydata
+IMPORT mydata.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp;
 
 Orders.items.discount := discount?0.0;
 Orders.items.total := quantity * unit_price - discount;

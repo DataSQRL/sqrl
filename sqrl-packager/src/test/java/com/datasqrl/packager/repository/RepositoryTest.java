@@ -131,7 +131,7 @@ public class RepositoryTest {
     @Disabled
     public void publishQuickstartLocally() {
         LocalRepositoryImplementation repo = LocalRepositoryImplementation.of(errors);
-        publishLocally(Quickstart.BASE_PATH.resolve("schema"), repo);
+        publishLocally(Quickstart.BASE_PATH.resolve(Quickstart.INSTANCE.getName()), repo);
     }
 
     @SneakyThrows
@@ -146,7 +146,7 @@ public class RepositoryTest {
     @Test
     @SneakyThrows
     public void remoteRepoTest() {
-        Dependency dependency = new Dependency("datasqrl.examples.Nutshop", "0.1.0", "dev");
+        Dependency dependency = new Dependency("datasqrl.seedshop", "0.1.0", "dev");
 
         RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation(RemoteRepositoryImplementation.DEFAULT_URI);
         remoteRepo.setCacheRepository(localRepo);
