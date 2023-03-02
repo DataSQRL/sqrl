@@ -34,7 +34,6 @@ public class QuickstartTest {
                 //,"-a","graphql");
     }
 
-    @Disabled
     @ParameterizedTest
     @ArgumentsSource(TutorialProvider.class)
     public void compileQuickstartTutorial(Path root, String script) {
@@ -43,16 +42,31 @@ public class QuickstartTest {
         //,"-a","graphql");
     }
 
+    @Test
+    public void runExportScript() {
+        Path root = Quickstart.BASE_PATH;
+        execute(root, "run", root.resolve(SCRIPTS[3]).toString());
+    }
+
     @SneakyThrows
     @BeforeEach
     @AfterEach
-    public void cleanUpH2() {
+    public void cleanUp() {
+        //Clean up H2
         Files.deleteIfExists(Path.of("h2.db.mv.db"));
+        //Clean up directory
+        Files.deleteIfExists(Quickstart.BASE_PATH.resolve("mysink-output").resolve("promotion"));
+    }
+
+    @SneakyThrows
+    @BeforeEach
+    public void createSinkDir() {
+        Files.createDirectories(Quickstart.BASE_PATH.resolve("mysink-output"));
     }
 
     public static final String[] SCRIPTS = {
         "quickstart-teaser.sqrl",
-        "quickstart-basic.sqrl",
+        "quickstart-sqrl.sqrl",
         "quickstart-user.sqrl",
         "quickstart-export.sqrl",
         "quickstart-docs.sqrl"

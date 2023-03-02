@@ -1,0 +1,14 @@
+{
+  "type": "sink",
+  "canonicalizer": "system",
+  "charset": "UTF-8",
+  "format": {
+    "formatType": "json"
+  },
+  "name": "mysink",
+  "datadiscovery": {
+    "directoryURI": "../sqrl-examples/quickstart/mysink-output/",
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
+    "systemType": "dir"
+  }
+}
