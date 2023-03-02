@@ -1,6 +1,7 @@
 package com.datasqrl;
 
 import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.data.Quickstart;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -55,7 +56,7 @@ public class QuickstartTest {
         //Clean up H2
         Files.deleteIfExists(Path.of("h2.db.mv.db"));
         //Clean up directory
-        Files.deleteIfExists(Quickstart.BASE_PATH.resolve("mysink-output").resolve("promotion"));
+        FileUtil.deleteDirectory(Quickstart.BASE_PATH.resolve("mysink-output").resolve("promotion"));
     }
 
     @SneakyThrows
