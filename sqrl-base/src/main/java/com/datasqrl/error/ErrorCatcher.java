@@ -31,12 +31,12 @@ public class ErrorCatcher implements Serializable {
     return handlers;
   }
 
-  public CollectedException handle(Exception e) {
+  public CollectedException handle(Throwable e) {
     if (e instanceof CollectedException) return (CollectedException) e; //has already been handled
     Optional<ErrorHandler> handler = Optional.ofNullable(handlers.get(e.getClass()));
     ErrorMessage msg;
     if (handler.isPresent()) {
-      msg = handler.get().handle(e, baseLocation);
+      msg = handler.get().handle((Exception)e, baseLocation);
     } else {
       msg = new Implementation(ErrorLabel.GENERIC, e.getMessage(), baseLocation, Severity.FATAL);
     }
