@@ -4,15 +4,13 @@ import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.data.Quickstart;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import java.nio.file.Path;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -27,7 +25,6 @@ public class QuickstartTest {
     }
 
     @Test
-    @Disabled
     public void testQuickStartTeaser() {
         Path root = Quickstart.BASE_PATH;
         execute(root, "run",root.resolve("quickstart-teaser.sqrl").toString(),

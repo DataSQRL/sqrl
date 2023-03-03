@@ -494,7 +494,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         if (mappedProjects.putIfAbsent(originalIndex, exp.i) != null) {
           Optional<TimestampHolder.Derived.Candidate> originalCand = input.timestamp.getOptCandidateByIndex(
               originalIndex);
-          originalCand.map(c -> timeCandidates.add(c.withIndex(exp.i)));
+          originalCand.ifPresent(c -> timeCandidates.add(c.withIndex(exp.i)));
           //We are ignoring this mapping because the prior one takes precedence, let's see if we should warn the user
           if (input.primaryKey.containsTarget(originalIndex)) {
             //TODO: issue a warning to alert the user that this mapping is not considered part of primary key
@@ -531,12 +531,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             RexInputRef.of(candidate.getIndex(), input.relNode.getRowType()));
         updatedNames.add(null);
         mappedProjects.put(candidate.getIndex(), target);
-      } else {
-        //Update now-filter if it matches candidate
-        if (!input.nowFilter.isEmpty()
-            && input.nowFilter.getTimestampIndex() == candidate.getIndex()) {
-          nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(), target));
-        }
+      }
+      //Update now-filter if it matches candidate
+      if (!input.nowFilter.isEmpty()
+          && input.nowFilter.getTimestampIndex() == candidate.getIndex()) {
+        nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(), target));
       }
       timeCandidates.add(candidate.withIndex(target));
     }
@@ -986,11 +985,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
     ExecutionAnalysis exec = input.getExec().requireAggregates(aggregateCalls);
 
-    //Check if this an aggregation of a stream on root primary key
+    //Check if this an aggregation of a stream on root primary key during write stage
     if (input.type == TableType.STREAM && input.numRootPks.isPresent() && exec.getStage().isWrite()
         && input.numRootPks.get() <= groupByIdx.size() && groupByIdx.subList(0,
-            input.numRootPks.get())
-        .equals(input.primaryKey.targetsAsList().subList(0, input.numRootPks.get()))) {
+            input.numRootPks.get()).equals(input.primaryKey.targetsAsList().subList(0, input.numRootPks.get()))) {
       TimestampHolder.Derived.Candidate candidate = input.timestamp.getCandidates().stream()
           .filter(cand -> groupByIdx.contains(cand.getIndex())).findAny()
           .orElse(input.timestamp.getBestCandidate());
@@ -1075,7 +1073,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
       TimestampHolder.Derived.Candidate candidate = inputTimestamp.getBestCandidate();
       targetLength += 1; //Adding timestamp column to output relation
 
-      if (!input.nowFilter.isEmpty() && exec.getStage().isWrite()) {
+      if (!input.nowFilter.isEmpty() && input.type == TableType.STREAM && exec.getStage().isWrite()) {
         NowFilter nowFilter = input.nowFilter;
         //Determine timestamp, add to group-By and
         Preconditions.checkArgument(nowFilter.getTimestampIndex() == candidate.getIndex(),
@@ -1172,6 +1170,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
       RelBuilder relBuilder, List<Integer> groupByIdx, TimestampHolder.Derived.Candidate candidate,
       List<AggregateCall> aggregateCalls) {
     int targetLength = groupByIdx.size() + aggregateCalls.size();
+    //if agg-calls return types are nullable because there are no group-by keys, we have to make then non-null
+    if (groupByIdx.isEmpty()) {
+      aggregateCalls = aggregateCalls.stream().map(agg -> CalciteUtil.makeNotNull(agg,
+          relBuilder.getTypeFactory())).collect(Collectors.toList());
+    }
+
     List<Integer> groupByIdxTimestamp = new ArrayList<>(groupByIdx);
     boolean addedTimestamp = !groupByIdxTimestamp.contains(candidate.getIndex());
     if (addedTimestamp) {

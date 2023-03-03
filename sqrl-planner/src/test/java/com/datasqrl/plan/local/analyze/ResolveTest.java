@@ -3,17 +3,31 @@
  */
 package com.datasqrl.plan.local.analyze;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.name.Name;
-import com.datasqrl.plan.calcite.table.*;
+import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
+import com.datasqrl.plan.calcite.table.CalciteTableFactory;
+import com.datasqrl.plan.calcite.table.PullupOperator;
+import com.datasqrl.plan.calcite.table.QueryRelationalTable;
+import com.datasqrl.plan.calcite.table.TableType;
+import com.datasqrl.plan.calcite.table.TimestampHolder;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestRelWriter;
 import com.datasqrl.util.data.Retail;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
@@ -24,14 +38,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class ResolveTest extends AbstractLogicalSQRLIT {
 
@@ -272,6 +278,17 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("orderaugment", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
         TimestampTest.fixed(2));
+  }
+
+  @Test
+  public void nowAggregateTestWOGroupBY() {
+    ScriptBuilder builder = imports();
+    builder.add("RecentTotal := SELECT sum(e.unit_price * e.quantity) AS total, sum(e.quantity) AS quantity "
+        + "FROM Orders o JOIN o.entries e WHERE o.time > now() - INTERVAL 7 DAY;");
+    process(builder.getScript());
+    validateQueryTable("recenttotal", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 4, 1,
+        TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
+
   }
 
   @Test

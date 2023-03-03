@@ -60,9 +60,9 @@ Users.total_spend := SELECT sum(i.total) AS spend,
             sum(i.discount) AS saved
       FROM @ JOIN Orders o ON o.customerid = @.id JOIN o.items i;
 
-RecentTotal := SELECT sum(i.total) AS total, count(1) AS num
+RecentTotal := SELECT sum(i.total) AS total, sum(i.quantity) AS quantity
       FROM Orders o JOIN o.items i
-      WHERE time > now() - INTERVAL 7 DAY;
+      WHERE o.time > now() - INTERVAL 7 DAY;
 
 OrderCountry := SELECT o.time, u.country
                 FROM Orders o TEMPORAL JOIN Users u ON o.customerid = u.id;
