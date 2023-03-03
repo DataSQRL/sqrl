@@ -206,4 +206,14 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("EXPORT CountStream TO output.CountStream");
     validateTables(builder.getScript(), "customercount", "countstream", "customercount2");
   }
+
+  @Test
+  public void simpleStreamTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("CustomerCount := SELECT customerid, count(1) AS num FROM orders GROUP BY customerid");
+    builder.add(
+        "CountStream := STREAM ON ADD AS SELECT customerid, num FROM CustomerCount WHERE num > 0");
+    builder.add("EXPORT CountStream TO print.CountStream");
+    validateTables(builder.getScript(), "customercount", "countstream");
+  }
 }

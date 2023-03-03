@@ -1,0 +1,35 @@
+>>>customercount$12-lp-stream
+LogicalProject(customerid=[$0], num=[$1], time=[$2])
+  LogicalProject(customerid=[$3], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+      LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>countstream$15-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], num=[$3])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], num=[$3])
+    LogicalTableScan(table=[[countstream$s$13]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>countstream$15$1-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], num=[$3])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], num=[$3])
+    LogicalTableScan(table=[[countstream$s$13]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>customercount-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(customerid=[$0], num=[$1], time=[$2])
+    LogicalTableScan(table=[[customercount$12]])
+
+>>>countstream-lp-database
+LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], num=[$3])
+    LogicalTableScan(table=[[countstream$15]])
+
+>>>customercount-data
+1000101, 1, 2022-05-19T01:29:39.553-07:00
+1000107, 2, 2022-05-19T02:28:39.553-07:00
+1000121, 1, 2022-05-19T02:16:39.553-07:00
+>>>countstream-data
+1000101, 1
+1000107, 1
+1000107, 2
+1000121, 1

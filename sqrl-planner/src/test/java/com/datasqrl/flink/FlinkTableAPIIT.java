@@ -69,9 +69,15 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 //            + "UNNEST(o.entries) AS items) AS total FROM orders o");
 //    tEnv.toChangelogStream(tableSelectUnnest).print();
 
-    Table tableNest = tEnv.sqlQuery("SELECT COALESCE(_uuid, '') FROM orders"
-        + "");
-    tEnv.toChangelogStream(tableNest).print();
+//    Table tableNest = tEnv.sqlQuery("SELECT COALESCE(_uuid, '') FROM orders"
+//        + "");
+//    tEnv.toChangelogStream(tableNest).print();
+
+
+
+    Table aggTest = tEnv.sqlQuery("SELECT customerid, num FROM (SELECT customerid, count(1) AS num FROM orders GROUP BY customerid) WHERE num>0");
+
+    tEnv.toChangelogStream(aggTest).print();
 
     streamBuilder.build().execute("test");
   }

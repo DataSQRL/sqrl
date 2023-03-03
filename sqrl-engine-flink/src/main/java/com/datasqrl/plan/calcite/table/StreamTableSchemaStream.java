@@ -14,7 +14,9 @@ import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
@@ -31,8 +33,8 @@ public class StreamTableSchemaStream {
 
   public DataStream convertToStream(StreamTableEnvironment tEnv,
       StreamRelationalTableContext ctx) {
-
-    return tEnv.toChangelogStream(ctx.getInputTable())
+    Table inputTable = ctx.getInputTable();
+    return tEnv.toChangelogStream(inputTable, inputTable.getSchema().toSchema(), ChangelogMode.all())
         .filter(new ChangeFilter(ctx.getStateChangeType()))
         .process(new AugmentStream(), getTypeInformation());
   }
@@ -44,6 +46,7 @@ public class StreamTableSchemaStream {
 
     @Override
     public boolean filter(Row row) throws Exception {
+//      System.out.println(String.format("stream:[%s] - [%s]",row.getKind(), row));
       RowKind kind = row.getKind();
       switch (stateChangeType) {
         case ADD:
