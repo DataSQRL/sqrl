@@ -84,7 +84,8 @@ public class TopNConstraint implements PullupOperator {
   }
 
   public boolean isPrimaryKeyDedup() {
-    return (!distinct && hasLimit() && getLimit() == 1) ||
+    //This assumes sorting by timestamp decreasing; if distinct==true || hasPartition then this is guaranteed
+    return (!distinct && hasPartition() && hasLimit() && getLimit() == 1) ||
         (distinct && !hasPartition() && !hasLimit());
   }
 

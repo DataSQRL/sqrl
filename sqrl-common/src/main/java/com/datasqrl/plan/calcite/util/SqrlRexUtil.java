@@ -4,18 +4,42 @@
 package com.datasqrl.plan.calcite.util;
 
 import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.plan.calcite.hints.DedupHint;
+import com.datasqrl.plan.calcite.hints.SqrlHint;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rex.*;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexFieldCollation;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexOver;
+import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexSubQuery;
+import org.apache.calcite.rex.RexVisitorImpl;
+import org.apache.calcite.rex.RexWindowBounds;
+import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlBinaryOperator;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Util;
@@ -23,12 +47,6 @@ import org.apache.calcite.util.mapping.IntPair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
-
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class SqrlRexUtil {
 
@@ -219,7 +237,7 @@ public class SqrlRexUtil {
   public RexNode createRowFunction(SqlAggFunction rowFunction, List<RexNode> partition,
       List<RexFieldCollation> fieldCollations) {
     final RelDataType intType =
-        rexBuilder.getTypeFactory().createSqlType(SqlTypeName.INTEGER);
+        rexBuilder.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
     RexNode row_function = rexBuilder.makeOver(intType, rowFunction,
         List.of(), partition, ImmutableList.copyOf(fieldCollations),
         RexWindowBounds.UNBOUNDED_PRECEDING,
@@ -246,22 +264,6 @@ public class SqrlRexUtil {
         rexBuilder.makeExactLiteral(BigDecimal.valueOf(limit)));
   }
 
-  public static Optional<Integer> parseWindowLimitOneFilter(RexNode node) {
-    if (node instanceof RexCall) {
-      RexCall call = (RexCall) node;
-      if (call.getOperator().equals(SqlStdOperatorTable.EQUALS)) {
-        if (call.getOperands().get(0) instanceof RexInputRef && call.getOperands()
-            .get(1) instanceof RexLiteral) {
-          RexLiteral literal = (RexLiteral) call.getOperands().get(1);
-          if (literal.getValueAs(BigDecimal.class).equals(BigDecimal.valueOf(1))) {
-            return Optional.of(((RexInputRef) call.getOperands().get(0)).getIndex());
-          }
-        }
-      }
-    }
-    return Optional.empty();
-  }
-
   public static boolean isSimpleProject(LogicalProject project) {
     RexFinder<Void> findComplex = new RexFinder<Void>() {
       @Override
@@ -277,40 +279,24 @@ public class SqrlRexUtil {
     return !findComplex.foundIn(project.getProjects());
   }
 
-  public static boolean hasDeduplicationWindow(RelNode relNode) {
+
+
+  public static boolean isDedupedRelNode(RelNode relNode, boolean includeAggregation, boolean allowFilter) {
     if (relNode instanceof LogicalProject) {
-        if (SqrlRexUtil.isSimpleProject((LogicalProject) relNode)) {
-            return hasDeduplicationWindow(relNode.getInput(0));
-        }
-    }
-    if (relNode instanceof LogicalFilter) {
-      LogicalFilter filter = (LogicalFilter) relNode;
-      Optional<Integer> rowNumIdx = parseWindowLimitOneFilter(filter.getCondition());
-      if (rowNumIdx.isPresent()) {
-        if (filter.getInput() instanceof LogicalProject) {
-          LogicalProject project = (LogicalProject) filter.getInput();
-          if (project.getProjects().size() > rowNumIdx.get()) {
-            RexFinder<RexOver> findOver = new RexFinder<RexOver>() {
-              @Override
-              public Void visitOver(RexOver over) {
-                throw new Util.FoundOne(over);
-              }
-            };
-            Optional<RexOver> over = findOver.find(project.getProjects().get(rowNumIdx.get()));
-            if (over.isPresent()) {
-              //TODO: this is a partial check but should be good enough since we only generate over-statements internally
-                if (over.get().getOperator() == SqlStdOperatorTable.ROW_NUMBER) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-          }
-        }
+      if (SqrlRexUtil.isSimpleProject((LogicalProject) relNode)) {
+        return isDedupedRelNode(relNode.getInput(0), includeAggregation, allowFilter);
       }
-      return hasDeduplicationWindow(filter.getInput());
     }
-    return false;
+    Optional<DedupHint> dedupHint = SqrlHint.fromRel(relNode, DedupHint.CONSTRUCTOR);
+    if (dedupHint.isPresent()) {
+      return true;
+    } else if (includeAggregation && (relNode instanceof LogicalAggregate)) {
+      return true;
+    } else if (allowFilter && (relNode instanceof LogicalFilter)) {
+      return isDedupedRelNode(relNode.getInput(0), includeAggregation, allowFilter);
+    } else {
+      return false;
+    }
   }
 
 }

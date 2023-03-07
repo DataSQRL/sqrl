@@ -5,9 +5,15 @@ package com.datasqrl.plan.calcite.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexInputRef;
@@ -15,18 +21,10 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 @AllArgsConstructor
-@Getter
 @EqualsAndHashCode
 @ToString
-public class ContinuousIndexMap implements IndexMap {
+public class ContinuousIndexMap implements IndexMap, Serializable {
 
   public static final ContinuousIndexMap EMPTY = new ContinuousIndexMap(new int[0]);
 

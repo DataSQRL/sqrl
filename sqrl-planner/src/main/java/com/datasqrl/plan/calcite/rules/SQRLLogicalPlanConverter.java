@@ -1012,7 +1012,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
               .nowFilter(nowFilter).build());
     }
 
-    //Check if this is a time-window aggregation
+    //Check if this is a time-window aggregation (i.e. a roll-up)
     if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject) {
       //Determine if one of the groupBy keys is a timestamp
       TimestampHolder.Derived.Candidate keyCandidate = null;
@@ -1103,7 +1103,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
                     timestamp, pkAndSelect.select, exec, input)
                 .topN(dedup).build());
       } else {
-        //Convert aggregation to window-based aggregation in a project so we can preserve timestamp
+        //Convert aggregation to window-based aggregation in a project so we can preserve timestamp followed by dedup
         AnnotatedLP nowInput = input.inlineNowFilter(makeRelBuilder());
 
         RelNode inputRel = nowInput.relNode;
@@ -1149,9 +1149,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         relB.project(projects, projectNames);
         PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength - 1);
+        TopNConstraint dedup = TopNConstraint.dedupWindowAggregation(pkSelect.pk.targetsAsList(),
+            outputTimestamp.getTimestampCandidate().getIndex());
         return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pkSelect.pk,
             outputTimestamp, pkSelect.select, nowInput.getExec().requireAggregates(aggregateCalls),
-            input).build());
+            input).topN(dedup).build());
       }
     } else {
       //Standard aggregation produces a state table

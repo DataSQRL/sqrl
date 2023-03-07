@@ -22,8 +22,18 @@ import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Retail;
 import lombok.SneakyThrows;
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableDescriptor;
+import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.types.Row;
+import org.apache.flink.types.RowKind;
+import org.apache.flink.util.Collector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -74,11 +84,45 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 //    tEnv.toChangelogStream(tableNest).print();
 
 
+    Table aggTest = tEnv.sqlQuery("SELECT customerid, count(1) AS num FROM orders GROUP BY customerid");
 
-    Table aggTest = tEnv.sqlQuery("SELECT customerid, num FROM (SELECT customerid, count(1) AS num FROM orders GROUP BY customerid) WHERE num>0");
+//    tEnv.toChangelogStream(aggTest).map(r -> {
+//      System.out.println("Printing:" + r);
+//      return r;
+//    }).print();
 
-    tEnv.toChangelogStream(aggTest).print();
+    DataStream<Row> tableStream = tEnv.toChangelogStream(aggTest).filter(r -> {
+      System.out.println("xtprint:" + r);
+      return r.getKind()==RowKind.INSERT;
+    }).process(new AugmentStream(), Types.ROW_NAMED(new String[]{"customerid", "num"}, BasicTypeInfo.INT_TYPE_INFO, BasicTypeInfo.INT_TYPE_INFO));
 
-    streamBuilder.build().execute("test");
+    tEnv.createTemporaryView("testStreamTable", tableStream, aggTest.getSchema().toSchema());
+
+    StatementSet s = tEnv.createStatementSet();
+
+    Table streamTable = tEnv.from("testStreamTable"); //tEnv.fromChangelogStream(tableStream, aggTest.getSchema().toSchema());
+
+    TableDescriptor sink = TableDescriptor.forConnector("print")
+        .option("print-identifier", "xtprint").build();
+    s.addInsert(sink, streamTable);
+    TableResult res = s.execute();
+
+    res.await();
+
+//    streamBuilder.build().execute("test");
+  }
+
+  public static class AugmentStream extends ProcessFunction<Row, Row> {
+
+    @Override
+    public void processElement(Row row, ProcessFunction<Row, Row>.Context context,
+        Collector<Row> collector) throws Exception {
+      System.out.println("Timestamp: " + context.timestamp());
+      Object[] data = new Object[row.getArity()];
+      for (int i = 0; i < row.getArity(); i++) {
+        data[i] = row.getField(i);
+      }
+      collector.collect(Row.ofKind(RowKind.INSERT, data));
+    }
   }
 }

@@ -5,6 +5,7 @@ package com.datasqrl.plan.calcite.rules;
 
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.calcite.hints.DedupHint;
 import com.datasqrl.plan.calcite.table.NowFilter;
 import com.datasqrl.plan.calcite.table.PullupOperator;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
@@ -185,6 +186,7 @@ public class AnnotatedLP implements RelHolder {
       }
       int projectLength = projectIdx.size() + rowFunctionColumns;
 
+      //Create references for all projects and partition keys
       List<RexNode> partitionKeys = new ArrayList<>(partitionIdx.size());
       List<RexNode> projects = new ArrayList<>(projectLength);
       List<String> projectNames = new ArrayList<>(projectLength);
@@ -266,6 +268,9 @@ public class AnnotatedLP implements RelHolder {
       }
       ContinuousIndexMap newPk = primaryKey.remap(IndexMap.IDENTITY);
       ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
+      if (topN.isPrimaryKeyDedup()) {
+        DedupHint.of().addTo(relBuilder);
+      }
       return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, newExec, this)
           .sort(newSort).build();
     }
@@ -297,6 +302,10 @@ public class AnnotatedLP implements RelHolder {
     return copy().relNode(relB.build())
         .stage(getExec().require(EngineCapability.GLOBAL_SORT).getStage())
         .sort(SortOrder.EMPTY).build();
+  }
+
+  private AnnotatedLP dropSort() {
+    return copy().sort(SortOrder.EMPTY).build();
   }
 
   public PullupOperator.Container getPullups() {
@@ -413,22 +422,9 @@ public class AnnotatedLP implements RelHolder {
 
   public AnnotatedLP postProcessStream(RelBuilder relBuilder, List<String> fieldNames) {
     AnnotatedLP input = this;
-    input = input.inlineNowFilter(relBuilder).inlineTopN(relBuilder); //for streams, we ignore sorts
+    input = input.dropSort().inlineNowFilter(relBuilder).inlineTopN(relBuilder); //for streams, we ignore sorts
 
-    List<RexNode> projects = new ArrayList<>(input.select.getSourceLength());
-    Preconditions.checkArgument(fieldNames.size() == input.select.getSourceLength());
-    RelDataType rowType = input.relNode.getRowType();
-    for (int targetIdx : input.select.targetsAsList()) {
-      projects.add(RexInputRef.of(targetIdx, rowType));
-    }
-    relBuilder.push(input.relNode);
-    relBuilder.project(projects, fieldNames, true); //Force to make sure fields are renamed
-    RelNode relNode = relBuilder.build();
-    return new AnnotatedLP(relNode, input.type, ContinuousIndexMap.EMPTY,
-        TimestampHolder.Derived.NONE,
-        ContinuousIndexMap.identity(projects.size(), projects.size()), input.stage, null,
-        Optional.empty(),
-        NowFilter.EMPTY, TopNConstraint.EMPTY, SortOrder.EMPTY, List.of(this));
+    return input.postProcess(relBuilder, fieldNames);
   }
 
   public double estimateRowCount() {

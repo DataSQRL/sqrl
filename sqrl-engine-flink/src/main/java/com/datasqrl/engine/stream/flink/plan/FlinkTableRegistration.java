@@ -24,6 +24,7 @@ import com.datasqrl.plan.calcite.table.ImportedRelationalTable;
 import com.datasqrl.plan.calcite.table.SourceRelationalTable;
 import com.datasqrl.plan.calcite.table.StreamRelationalTable;
 import com.datasqrl.plan.calcite.table.StreamTableSchemaStream;
+import com.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
 import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
 import com.datasqrl.plan.global.OptimizedDAG.QueryVisitor;
@@ -59,13 +60,21 @@ public class FlinkTableRegistration implements
     }
 
     RelNode relnode = table.getBaseRelation();
+    /* Flink does not produce a correct changelog stream if there is a filter after the logical
+       operation that produces the state (such as window deduplication), because the filter is applied
+       to the changelog stream.
+       The following checks whether this is the case
+    */
+    boolean unmodifiedChangelog = SqrlRexUtil.isDedupedRelNode(relnode, true, false);
+    //physically rewrite the relnode for Flink and create table from it
     Table inputTable = makeTable(relnode, context);
 
 
     StreamTableSchemaStream schema2Stream = new StreamTableSchemaStream(table.getStreamSchema());
     Schema schema = new UniversalTable2FlinkSchema().convertSchema(table.getStreamSchema());
     DataStream stream = schema2Stream.convertToStream(context.getTEnv(),
-      new StreamRelationalTableContext(inputTable, table.getStateChangeType()));
+      new StreamRelationalTableContext(inputTable, table.getStateChangeType(),
+          unmodifiedChangelog, table.getBaseTableMetaData()));
 
     context.getTEnv().createTemporaryView(table.getNameId(), stream, schema);
 

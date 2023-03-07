@@ -237,10 +237,12 @@ public class UniversalTable {
   public static class ImportFactory extends AbstractFactory {
 
     boolean addArrayIndex;
+    boolean hasSourceTimestamp;
 
-    public ImportFactory(RelDataTypeFactory typeFactory, boolean addArrayIndex) {
+    public ImportFactory(RelDataTypeFactory typeFactory, boolean addArrayIndex, boolean hasSourceTimestamp) {
       super(typeFactory);
       this.addArrayIndex = addArrayIndex;
+      this.hasSourceTimestamp = hasSourceTimestamp;
     }
 
     @Override
@@ -256,7 +258,7 @@ public class UniversalTable {
 
     @Override
     public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path) {
-      return createTable(name, path, false);
+      return createTable(name, path, hasSourceTimestamp);
     }
 
     public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,

@@ -3,6 +3,10 @@
  */
 package com.datasqrl.schema;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorCollector;
@@ -20,6 +24,13 @@ import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.junit.ArgumentProvider;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -29,16 +40,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests the generation of schemas for various consumers based on the central
@@ -58,7 +59,7 @@ public class FlexibleSchemaHandlingTest {
         for (Optional<Name> alias : new Optional[]{Optional.empty(), Optional.of(tableAlias)}) {
           FlexibleTableConverter converter = new FlexibleTableConverter(
               table, hasSourceTimestamp, alias);
-          FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter();
+          FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter(false);
           UniversalTable tblBuilder = converter.apply(utbConverter);
           if (alias.isPresent()) {
             assertEquals(tblBuilder.getName(), alias.get());
