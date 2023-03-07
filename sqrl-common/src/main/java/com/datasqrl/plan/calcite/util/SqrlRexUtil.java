@@ -6,6 +6,8 @@ package com.datasqrl.plan.calcite.util;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.calcite.hints.DedupHint;
 import com.datasqrl.plan.calcite.hints.SqrlHint;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +22,7 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelCollation;
+import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalAggregate;
@@ -279,8 +282,6 @@ public class SqrlRexUtil {
     return !findComplex.foundIn(project.getProjects());
   }
 
-
-
   public static boolean isDedupedRelNode(RelNode relNode, boolean includeAggregation, boolean allowFilter) {
     if (relNode instanceof LogicalProject) {
       if (SqrlRexUtil.isSimpleProject((LogicalProject) relNode)) {
@@ -298,5 +299,7 @@ public class SqrlRexUtil {
       return false;
     }
   }
+
+
 
 }

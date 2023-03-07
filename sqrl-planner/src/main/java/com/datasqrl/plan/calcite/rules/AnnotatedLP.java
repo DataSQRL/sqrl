@@ -156,7 +156,7 @@ public class AnnotatedLP implements RelHolder {
 
     ExecutionAnalysis newExec = getExec();
     SortOrder newSort = sort;
-    if (!topN.isDistinct() && (!topN.hasPartition() || !topN.hasLimit())) {
+    if (!topN.isDeduplication() && !topN.isDistinct() && (!topN.hasPartition() || !topN.hasLimit())) {
       RelCollation collation = topN.getCollation();
       if (topN.hasLimit()) { //It's not partitioned, so straight forward order and limit
         if (topN.hasCollation()) {
@@ -176,12 +176,9 @@ public class AnnotatedLP implements RelHolder {
 
       List<Integer> projectIdx = ContiguousSet.closedOpen(0, inputType.getFieldCount()).asList();
       List<Integer> partitionIdx = topN.getPartition();
-      if (topN.isDistinct() && !topN.hasPartition()) { //Partition by all distinct columns
-        partitionIdx = primaryKey.targetsAsList();
-      }
 
       int rowFunctionColumns = 1;
-      if (topN.isDistinct() && topN.hasPartition()) {
+      if (topN.isDistinct()) { //It's a partitioned distinct
         rowFunctionColumns += topN.hasLimit() ? 2 : 1;
       }
       int projectLength = projectIdx.size() + rowFunctionColumns;
@@ -202,7 +199,7 @@ public class AnnotatedLP implements RelHolder {
 
       List<RexFieldCollation> fieldCollations = new ArrayList<>();
       fieldCollations.addAll(SqrlRexUtil.translateCollation(topN.getCollation(), inputType));
-      if (topN.isDistinct() && topN.hasPartition()) {
+      if (topN.isDistinct()) {
         //Add all other selects that are not partition indexes or collations to the sort
         List<Integer> remainingDistincts = new ArrayList<>(primaryKey.targetsAsList());
         topN.getCollation().getFieldCollations().stream().map(RelFieldCollation::getFieldIndex)
@@ -220,7 +217,7 @@ public class AnnotatedLP implements RelHolder {
       projectNames.add(null);
       int rowNumberIdx = projectIdx.size(), rankIdx = rowNumberIdx + 1, denserankIdx =
           rowNumberIdx + 2;
-      if (topN.isDistinct() && topN.hasPartition()) {
+      if (topN.isDistinct()) {
         //Add rank and dense_rank if we have a limit
         projects.add(
             rexUtil.createRowFunction(SqlStdOperatorTable.RANK, partitionKeys, fieldCollations));
@@ -237,7 +234,7 @@ public class AnnotatedLP implements RelHolder {
       RelDataType windowType = relBuilder.peek().getRowType();
       //Add filter
       List<RexNode> conditions = new ArrayList<>();
-      if (topN.isDistinct() && topN.hasPartition()) {
+      if (topN.isDistinct()) {
         conditions.add(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS,
             RexInputRef.of(rowNumberIdx, windowType),
             RexInputRef.of(rankIdx, windowType)));
@@ -247,28 +244,22 @@ public class AnnotatedLP implements RelHolder {
                   windowType));
         }
       } else {
-        final int limit;
-        if (topN.isDistinct()) {
-          assert !topN.hasLimit();
-          limit = 1;
-        } else {
-          limit = topN.getLimit();
-        }
         conditions.add(
-            SqrlRexUtil.makeWindowLimitFilter(rexBuilder, limit, rowNumberIdx, windowType));
+            SqrlRexUtil.makeWindowLimitFilter(rexBuilder, topN.getLimit(), rowNumberIdx, windowType));
       }
 
       relBuilder.filter(conditions);
-      if (topN.hasPartition() && (!topN.hasLimit() || topN.getLimit() > 1)) {
-        //Add sort on top
+      ContinuousIndexMap newPk = primaryKey.remap(IndexMap.IDENTITY);
+      ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
+      if (topN.isDeduplication() || topN.isDistinct()) { //Drop sort since it doesn't apply globally
+        newSort = SortOrder.EMPTY;
+      } else { //Add partitioned sort on top
         SortOrder sortByRowNum = SortOrder.of(topN.getPartition(),
             RelCollations.of(new RelFieldCollation(rowNumberIdx,
                 RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST)));
         newSort = newSort.ifEmpty(sortByRowNum);
       }
-      ContinuousIndexMap newPk = primaryKey.remap(IndexMap.IDENTITY);
-      ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
-      if (topN.isPrimaryKeyDedup()) {
+      if (topN.isDeduplication()) { //Add hint for physical plan analysis
         DedupHint.of().addTo(relBuilder);
       }
       return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, newExec, this)

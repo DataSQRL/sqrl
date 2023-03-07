@@ -6,7 +6,7 @@ LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=
 LogicalProject(__pk_0=[$6], _uuid=[$0], id=[$2], time=[$4])
   LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$q$5]])
-    LogicalFilter(condition=[=($6, 1)])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
       LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
         LogicalTableScan(table=[[customer$q$11]])
 

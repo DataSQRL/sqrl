@@ -6,7 +6,7 @@ LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER 
       Uncollect
         LogicalProject($f0=[$cor1.entries])
           LogicalValues(tuples=[[{ 0 }]])
-    LogicalFilter(condition=[=($7, 1)])
+    LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
       LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
         LogicalTableScan(table=[[product$q$11]])
 
@@ -14,6 +14,6 @@ LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER 
 LogicalValues(tuples=[[]])
 
 >>>productcount2-lp
-LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], quantity=[$4])
+LogicalProject(productid=[$3], _uuid=[$0], _ingest_time=[$1], _source_time=[$2], name=[$4], quantity=[$5])
   LogicalTableScan(table=[[countstream$q$16]])
 

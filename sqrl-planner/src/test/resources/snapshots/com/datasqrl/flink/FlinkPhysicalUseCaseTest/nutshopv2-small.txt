@@ -12,7 +12,7 @@ LogicalProject(__pk_0=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
           LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[TemporalJoinHint options:[6, 1, 0]]
             LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
               LogicalTableScan(table=[[orders$i$4]])
-            LogicalFilter(condition=[=($2, 1)])
+            LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
               LogicalProject(id=[$0], timestamp=[$1], $f2=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
                 LogicalProject(id=[$3], timestamp=[$6])
                   LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
@@ -38,7 +38,7 @@ LogicalProject(__pk_0=[$0], productid=[$1], num_orders=[$2], total_quantity=[$3]
           Uncollect
             LogicalProject($f0=[$cor3.items])
               LogicalValues(tuples=[[{ 0 }]])
-      LogicalFilter(condition=[=($2, 1)])
+      LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
         LogicalProject(id=[$0], timestamp=[$1], $f2=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
           LogicalProject(id=[$3], timestamp=[$6])
             LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
@@ -75,7 +75,7 @@ LogicalProject(__pk_0=[$0], day=[$1], quantity=[$2], total=[$3], total_weight=[$
               Uncollect
                 LogicalProject($f0=[$cor5.items])
                   LogicalValues(tuples=[[{ 0 }]])
-          LogicalFilter(condition=[=($10, 1)])
+          LogicalFilter(condition=[=($10, 1)]) hints[DedupHint]
             LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9], $f10=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $9 DESC NULLS LAST)])
               LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9])
                 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9])

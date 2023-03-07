@@ -2,7 +2,7 @@
 LogicalValues(tuples=[[]])
 
 >>>dproduct$q$11
-LogicalProject(__pk_0=[$0], __pk_1=[$1], name=[$11], $f12=[$12])
+LogicalProject(__pk_0=[$0], __pk_1=[$1], name=[$11])
   LogicalFilter(condition=[=($12, $13)])
     LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], _uuid0=[$6], _ingest_time=[$7], productid0=[$8], name=[$9], description=[$10], category=[$11], $f12=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $11 NULLS LAST)], $f13=[RANK() OVER (PARTITION BY $0, $1 ORDER BY $11 NULLS LAST)])
       LogicalJoin(condition=[=($8, $2)], joinType=[inner])

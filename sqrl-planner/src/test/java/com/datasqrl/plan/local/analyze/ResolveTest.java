@@ -243,9 +243,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;");
     process(builder.toString());
     validateQueryTable("orderagg1", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 3, 1,
-        TimestampTest.fixed(2)); //timestamp column is added
+        TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //timestamp column is added
     validateQueryTable("orderagg2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 3, 1,
-        TimestampTest.fixed(2));
+        TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
   }
 
   @Test
@@ -432,14 +432,14 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "ProductCount := SELECT p.productid, p.name, SUM(e.quantity) as quantity FROM Orders.entries e JOIN Product p on e.productid = p.productid GROUP BY p.productid, p.name");
     builder.add(
         "CountStream := STREAM ON ADD AS SELECT productid, name, quantity FROM ProductCount WHERE quantity > 1");
-    builder.add("ProductCount2 := DISTINCT CountStream ON productid ORDER BY _ingest_time DESC");
+    builder.add("ProductCount2 := DISTINCT CountStream ON productid ORDER BY _source_time DESC");
     process(builder.toString());
     validateQueryTable("productcount", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 4, 2,
-        TimestampTest.fixed(3));
-    validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
-        TimestampTest.fixed(1));
-    validateQueryTable("productcount2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 5, 1,
-        TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
+        TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
+        TimestampTest.fixed(2));
+    validateQueryTable("productcount2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 6, 1,
+        TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
   }
 
   @Test
@@ -450,8 +450,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("EXPORT CountStream TO print.CountStream");
     builder.add("EXPORT CountStream TO output.CountStream");
     process(builder.toString());
-    validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
-        TimestampTest.candidates(1));
+    validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
+        TimestampTest.candidates(1,2));
   }
 
 
