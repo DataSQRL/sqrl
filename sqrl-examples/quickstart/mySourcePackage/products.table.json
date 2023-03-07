@@ -13,7 +13,7 @@
   "schema" : "flexible",
   "connector" : {
     "directoryURI" : "",
-    "fileURIs" : [ "../sqrl-examples/quickstart/data/products.csv.gz" ],
+    "fileURIs" : [ "https://github.com/DataSQRL/sqrl/raw/1bc64dd4d1f8c5d336383cfc18d56736d24a5019/sqrl-examples/quickstart/data/products.csv.gz" ],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
     "systemType" : "dir"
   }

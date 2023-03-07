@@ -136,7 +136,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       Holder<RexCorrelVariable> correlVar = Holder.of(null);
       relBuilder.push(left).variable(correlVar);
       relBuilder.push(right);
-      if (!SqrlRexUtil.hasDeduplicationWindow(right)) {
+      if (!SqrlRexUtil.isDedupedRelNode(join.getRight(),false, true)) { //TODO: change to isDedupedRelNode(right, false)
         addDeduplicationWindow(relBuilder, temporalHint);
       }
       //CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount());
@@ -161,11 +161,15 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   private void addDeduplicationWindow(FlinkRelBuilder relBuilder, TemporalJoinHint temporalHint) {
+    addDeduplicationWindow(relBuilder, temporalHint.getStatePrimaryKeys(), temporalHint.getStreamTimestampIdx());
+  }
+
+  public static void addDeduplicationWindow(FlinkRelBuilder relBuilder, int[] keyIdx, int timestampIdx) {
     final RelDataType inputType = relBuilder.peek().getRowType();
-    List<RexNode> partitionKeys = Arrays.stream(temporalHint.getStatePrimaryKeys())
+    List<RexNode> partitionKeys = Arrays.stream(keyIdx)
         .mapToObj(idx -> RexInputRef.of(idx, inputType)).collect(Collectors.toList());
     List<RexFieldCollation> fieldCollations = List.of(
-        new RexFieldCollation(RexInputRef.of(temporalHint.getStateTimestampIdx(), inputType),
+        new RexFieldCollation(RexInputRef.of(timestampIdx, inputType),
             Set.of(SqlKind.DESCENDING, SqlKind.NULLS_LAST)));
     List<RexNode> projects = inputType.getFieldList().stream()
         .map(f -> RexInputRef.of(f.getIndex(), inputType)).collect(Collectors.toList());

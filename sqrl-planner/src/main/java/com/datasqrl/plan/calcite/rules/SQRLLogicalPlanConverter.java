@@ -186,7 +186,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
       PullupOperator.Container pullups = queryTable.getPullups();
       if (vtable.isRoot()) {
         TopNConstraint topN = pullups.getTopN();
-        if (exec.isMaterialize(scanExec) && topN.isPrimaryKeyDedup()) {
+        if (exec.isMaterialize(scanExec) && topN.isDeduplication()) {
           //We can drop topN since that gets enforced by writing to DB with primary key
           topN = TopNConstraint.EMPTY;
         }
@@ -404,41 +404,32 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             baseInput.type == TableType.STATE ? TableType.STATE : TableType.TEMPORAL_STATE;
         boolean isDistinct = false;
         if (topNHint.getType() == TopNHint.Type.SELECT_DISTINCT) {
-          isDistinct = true;
           List<Integer> distincts = SqrlRexUtil.combineIndexes(partition,
               trivialMap.targetsAsList());
           pk = ContinuousIndexMap.builder(distincts.size()).addAll(distincts).build(targetLength);
           if (partition.isEmpty()) {
-            //If there is no partition, we can ignore the sort order plus limit and sort by time instead
+            //If there is no partition, we can ignore the sort order plus limit and turn this into a simple deduplication
             timestamp = timestamp.getBestCandidate().fixAsTimestamp();
-            collation = RelCollations.of(
-                new RelFieldCollation(timestamp.getTimestampCandidate().getIndex(),
-                    RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
-            limit = Optional.empty();
+            partition = pk.targetsAsList();
+            collation = LPConverterUtil.getTimestampCollation(timestamp.getTimestampCandidate());
+            limit = Optional.of(1);
+          } else {
+            isDistinct = true;
           }
         } else if (topNHint.getType() == TopNHint.Type.DISTINCT_ON) {
           //Partition is the new primary key and the underlying table must be a stream
           Preconditions.checkArgument(
-              !partition.isEmpty() && collation.getFieldCollations().size() == 1
+              !partition.isEmpty() && LPConverterUtil.getTimestampOrderIndex(collation, timestamp).isPresent()
                   && baseInput.type == TableType.STREAM,
               "Distinct on statement not valid");
-          isDistinct = true;
 
           pk = ContinuousIndexMap.builder(partition.size()).addAll(partition).build(targetLength);
           select = ContinuousIndexMap.identity(targetLength, targetLength); //Select everything
           //Extract timestamp from collation
-          RelFieldCollation fieldCol = Iterables.getOnlyElement(collation.getFieldCollations())
-              .withNullDirection(RelFieldCollation.NullDirection.LAST); //overwrite null-direction
-          Preconditions.checkArgument(
-              fieldCol.direction == RelFieldCollation.Direction.DESCENDING &&
-                  fieldCol.nullDirection == RelFieldCollation.NullDirection.LAST);
-          collation = RelCollations.of(fieldCol);
-          Optional<TimestampHolder.Derived.Candidate> candidateOpt = timestamp.getOptCandidateByIndex(
-              fieldCol.getFieldIndex());
-          Preconditions.checkArgument(candidateOpt.isPresent(), "Not a valid timestamp column");
-          timestamp = candidateOpt.get().fixAsTimestamp();
-          partition = Collections.EMPTY_LIST; //remove partition since we set primary key to partition
-          limit = Optional.empty(); //distinct does not need a limit
+          TimestampHolder.Derived.Candidate candidate = LPConverterUtil.getTimestampOrderIndex(collation, timestamp).get();
+          collation = LPConverterUtil.getTimestampCollation(candidate);
+          timestamp = candidate.fixAsTimestamp();
+          limit = Optional.of(1); //distinct on has implicit limit of 1
         } else if (topNHint.getType() == TopNHint.Type.TOP_N) {
           //Prepend partition to primary key
           List<Integer> pkIdx = SqrlRexUtil.combineIndexes(partition, pk.targetsAsList());
@@ -446,7 +437,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         }
 
         TopNConstraint topN = new TopNConstraint(partition, isDistinct, collation, limit,
-            baseInput.type);
+            LPConverterUtil.getTimestampOrderIndex(collation, timestamp).isPresent(), baseInput.type);
         return setRelHolder(baseInput.copy().type(topN.getTableType())
             .primaryKey(pk).select(select).timestamp(timestamp)
             .joinTables(null).topN(topN).sort(SortOrder.EMPTY).build());
@@ -494,7 +485,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         if (mappedProjects.putIfAbsent(originalIndex, exp.i) != null) {
           Optional<TimestampHolder.Derived.Candidate> originalCand = input.timestamp.getOptCandidateByIndex(
               originalIndex);
-          originalCand.map(c -> timeCandidates.add(c.withIndex(exp.i)));
+          originalCand.ifPresent(c -> timeCandidates.add(c.withIndex(exp.i)));
           //We are ignoring this mapping because the prior one takes precedence, let's see if we should warn the user
           if (input.primaryKey.containsTarget(originalIndex)) {
             //TODO: issue a warning to alert the user that this mapping is not considered part of primary key
@@ -531,12 +522,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             RexInputRef.of(candidate.getIndex(), input.relNode.getRowType()));
         updatedNames.add(null);
         mappedProjects.put(candidate.getIndex(), target);
-      } else {
-        //Update now-filter if it matches candidate
-        if (!input.nowFilter.isEmpty()
-            && input.nowFilter.getTimestampIndex() == candidate.getIndex()) {
-          nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(), target));
-        }
+      }
+      //Update now-filter if it matches candidate
+      if (!input.nowFilter.isEmpty()
+          && input.nowFilter.getTimestampIndex() == candidate.getIndex()) {
+        nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(), target));
       }
       timeCandidates.add(candidate.withIndex(target));
     }
@@ -986,11 +976,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
     ExecutionAnalysis exec = input.getExec().requireAggregates(aggregateCalls);
 
-    //Check if this an aggregation of a stream on root primary key
+    //Check if this an aggregation of a stream on root primary key during write stage
     if (input.type == TableType.STREAM && input.numRootPks.isPresent() && exec.getStage().isWrite()
         && input.numRootPks.get() <= groupByIdx.size() && groupByIdx.subList(0,
-            input.numRootPks.get())
-        .equals(input.primaryKey.targetsAsList().subList(0, input.numRootPks.get()))) {
+            input.numRootPks.get()).equals(input.primaryKey.targetsAsList().subList(0, input.numRootPks.get()))) {
       TimestampHolder.Derived.Candidate candidate = input.timestamp.getCandidates().stream()
           .filter(cand -> groupByIdx.contains(cand.getIndex())).findAny()
           .orElse(input.timestamp.getBestCandidate());
@@ -1014,7 +1003,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
               .nowFilter(nowFilter).build());
     }
 
-    //Check if this is a time-window aggregation
+    //Check if this is a time-window aggregation (i.e. a roll-up)
     if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject) {
       //Determine if one of the groupBy keys is a timestamp
       TimestampHolder.Derived.Candidate keyCandidate = null;
@@ -1075,7 +1064,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
       TimestampHolder.Derived.Candidate candidate = inputTimestamp.getBestCandidate();
       targetLength += 1; //Adding timestamp column to output relation
 
-      if (!input.nowFilter.isEmpty() && exec.getStage().isWrite()) {
+      if (!input.nowFilter.isEmpty() && input.type == TableType.STREAM && exec.getStage().isWrite()) {
         NowFilter nowFilter = input.nowFilter;
         //Determine timestamp, add to group-By and
         Preconditions.checkArgument(nowFilter.getTimestampIndex() == candidate.getIndex(),
@@ -1098,14 +1087,14 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             "Invalid window widths: %s - %s", intervalWidthMs, slideWidthMs);
         new SlidingAggregationHint(candidate.getIndex(), intervalWidthMs, slideWidthMs).addTo(relB);
 
-        TopNConstraint dedup = TopNConstraint.dedupWindowAggregation(pkAndSelect.pk.targetsAsList(),
+        TopNConstraint dedup = TopNConstraint.makeDeduplication(pkAndSelect.pk.targetsAsList(),
             timestamp.getTimestampCandidate().getIndex());
         return setRelHolder(
             AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pkAndSelect.pk,
                     timestamp, pkAndSelect.select, exec, input)
                 .topN(dedup).build());
       } else {
-        //Convert aggregation to window-based aggregation in a project so we can preserve timestamp
+        //Convert aggregation to window-based aggregation in a project so we can preserve timestamp followed by dedup
         AnnotatedLP nowInput = input.inlineNowFilter(makeRelBuilder());
 
         RelNode inputRel = nowInput.relNode;
@@ -1151,9 +1140,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
         relB.project(projects, projectNames);
         PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength - 1);
+        TopNConstraint dedup = TopNConstraint.makeDeduplication(pkSelect.pk.targetsAsList(),
+            outputTimestamp.getTimestampCandidate().getIndex());
         return setRelHolder(AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pkSelect.pk,
             outputTimestamp, pkSelect.select, nowInput.getExec().requireAggregates(aggregateCalls),
-            input).build());
+            input).topN(dedup).build());
       }
     } else {
       //Standard aggregation produces a state table
@@ -1172,6 +1163,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
       RelBuilder relBuilder, List<Integer> groupByIdx, TimestampHolder.Derived.Candidate candidate,
       List<AggregateCall> aggregateCalls) {
     int targetLength = groupByIdx.size() + aggregateCalls.size();
+    //if agg-calls return types are nullable because there are no group-by keys, we have to make then non-null
+    if (groupByIdx.isEmpty()) {
+      aggregateCalls = aggregateCalls.stream().map(agg -> CalciteUtil.makeNotNull(agg,
+          relBuilder.getTypeFactory())).collect(Collectors.toList());
+    }
+
     List<Integer> groupByIdxTimestamp = new ArrayList<>(groupByIdx);
     boolean addedTimestamp = !groupByIdxTimestamp.contains(candidate.getIndex());
     if (addedTimestamp) {
@@ -1250,7 +1247,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     AnnotatedLP result;
     if (limit.isPresent()) {
       result = input.copy()
-          .topN(new TopNConstraint(List.of(), false, newCollation, limit, input.type)).build();
+          .topN(new TopNConstraint(List.of(), false, newCollation, limit,
+              LPConverterUtil.getTimestampOrderIndex(newCollation, input.timestamp).isPresent(),
+              input.type)).build();
     } else {
       //We can just replace any old order that might be present
       result = input.copy().sort(new SortOrder(newCollation)).build();

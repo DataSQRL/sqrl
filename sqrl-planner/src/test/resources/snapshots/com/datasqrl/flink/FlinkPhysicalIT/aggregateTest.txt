@@ -32,7 +32,7 @@ LogicalProject(_uuid=[$0], id=[$1], time=[$2], order_count=[$3])
     LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
         LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-      LogicalFilter(condition=[=($3, 1)])
+      LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
         LogicalProject(customer=[$0], order_count=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
           LogicalProject(customer=[$0], order_count=[$2], time=[$1])
             LogicalAggregate(group=[{3, 4}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[4, 252460800000, 5049216000]]

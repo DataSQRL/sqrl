@@ -1,12 +1,12 @@
 type Query {
-  Orders(time: String): [Orders!]
+  Orders(time: String, limit: Int!, offset: Int): [Orders!]
   Users(id: Int!): Users
 }
 
 type Users {
   id: Int!
-  purchases: [Orders!]
-  spending(week: String): [spending!]
+  purchases(limit: Int!, offset: Int): [Orders!]
+  spending(week: String, limit: Int): [spending!]
 }
 
 type spending {

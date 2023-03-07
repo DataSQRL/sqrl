@@ -201,9 +201,25 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
         "CustomerCount := SELECT c.customerid, c.name, SUM(e.quantity) as quantity FROM Orders o JOIN o.entries e JOIN Customer c on o.customerid = c.customerid GROUP BY c.customerid, c.name");
     builder.add(
         "CountStream := STREAM ON ADD AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1");
+    builder.add(
+        "UpdateStream := STREAM ON UPDATE AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1");
     builder.add("CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _ingest_time DESC");
     builder.add("EXPORT CountStream TO print.CountStream");
     builder.add("EXPORT CountStream TO output.CountStream");
-    validateTables(builder.getScript(), "customercount", "countstream", "customercount2");
+    validateTables(builder.getScript(), "customercount", "countstream", "customercount2","updatestream");
+  }
+
+  @Test
+  public void simpleStreamTest() {
+    ScriptBuilder builder = new ScriptBuilder();
+    builder.add("IMPORT ecommerce-data.Orders");
+    builder.add("CountStream0 := STREAM ON ADD AS SELECT customerid, count(1) AS num FROM orders GROUP BY customerid");
+    builder.add("CustomerCount := SELECT o.customerid, count(1) as quantity FROM Orders o GROUP BY o.customerid");
+    builder.add("CountStream1 := STREAM ON ADD AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 1");
+    builder.add("CountStream2 := STREAM ON ADD AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 2");
+    builder.add("UpdateStream0 := STREAM ON UPDATE AS SELECT customerid, count(1) AS num FROM orders GROUP BY customerid");
+    builder.add("UpdateStream1 := STREAM ON UPDATE AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 1");
+    validateTables(builder.getScript(), "customercount", "countstream0", "countstream1",
+        "countstream2","updatestream0","updatestream1");
   }
 }

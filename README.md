@@ -4,7 +4,7 @@ DataSQRL is a compiler for building data services and APIs from streaming, stati
 
 ## Quickstart
 
-- Create a file `myscript.sqrl` and add the following content:
+- Create a file `seedshop.sqrl` and add the following content:
 ```sql
 IMPORT datasqrl.seedshop.Orders;  -- Import orders stream
 IMPORT time.startOfMonth;         -- Import time function
@@ -22,7 +22,7 @@ Users.spending := SELECT startOfMonth(p.time) AS month,
          FROM @.purchases p JOIN p.totals t
          GROUP BY month ORDER BY month DESC;
 ```
-- Run `docker run -p 8888:8888 -v $PWD:/build datasqrl/datasqrl-cmd run myscript.sqrl` 
+- Run `docker run -it -p 8888:8888 -v $PWD:/build datasqrl/datasqrl-cmd run seedshop.sqrl` 
 
 This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) and run GraphQL queries against the API. Hit `CTRL-C` to terminate the data pipeline when you are done. 
 
@@ -51,15 +51,14 @@ Specifically, DataSQRL makes the following contributions as a development enviro
 - A compiler for SQRL scripts that produces complete data pipelines against configurable data infrastructure.
 - A package manager that resolve data dependencies and supports pluggable configuration of data systems for execution.
 
-The goal for DataSQRL is to become an abstraction layer over existing data technologies for building data services, APIs, and applications that makes developers more productive without sacrificing too much control or expressivity.
+The goal for DataSQRL is to become an abstraction layer over existing data technologies for building data services, APIs, and applications that makes developers more productive without sacrificing control or expressivity.
 
 ## Current Limitations
 
-DataSQRL is currently a working prototype that is not intended for production use. 
+DataSQRL is currently a preview release that is not intended for production use. 
 
 - DataSQRL has a pluggable infrastructure for "execution engines" (i.e. the data systems that comprise the data infrastructure DataSQRL compiles against) but currently it supports only [Apache Flink](https://flink.apache.org/) as a streaming engine, [PostgreSQL](https://www.postgresql.org/) as a database engine, and [Vert.x](https://vertx.io/) as a server engine.
 - DataSQRL has a pluggable infrastructure for data sources and sinks (i.e. the locations it ingests data from and writes data to) but currently supports only local and remote filesystems and [Apache Kafka](https://kafka.apache.org/).
-- DataSQRL has a pluggable infrastructure for data formats but currently only supports json and csv formats.
 - The GraphQL schema parser is currently limited in the kinds of transformations that it allows to the GraphQL schema file. Currently, field names need to map exactly onto those defined in the script.
 - The DataSQRL planner has some inefficiencies in handling nested data, limited self-join elimination, and limited temporal join support.
 - The DataSQRL optimizer currently uses a trivial cost model and does not yet produce optimal results.

@@ -130,7 +130,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     return new ErrorCatcher(location, errors);
   }
 
-  public RuntimeException handle(Exception e) {
+  public RuntimeException handle(Throwable e) {
     return getCatcher().handle(e);
   }
 

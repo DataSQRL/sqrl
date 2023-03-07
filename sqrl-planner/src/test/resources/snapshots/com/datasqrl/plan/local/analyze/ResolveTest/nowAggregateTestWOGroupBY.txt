@@ -1,0 +1,10 @@
+>>>recenttotal-lp
+LogicalProject(_pk=[1], total=[$1], quantity=[$2], time=[$0])
+  LogicalAggregate(group=[{4}], total=[SUM($0)], quantity=[SUM($1)]) hints[SlidingAggregationHint options:[4, 604800000, 12096000]]
+    LogicalProject($f0=[*($9, $8)], quantity=[$8], _uuid=[$0], _idx=[$6], time=[$4])
+      LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+        LogicalTableScan(table=[[orders$q$5]])
+        Uncollect
+          LogicalProject($f0=[$cor1.entries])
+            LogicalValues(tuples=[[{ 0 }]])
+

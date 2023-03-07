@@ -77,7 +77,7 @@ public class FilePathConfig implements Serializable {
         return null;
       }
     } catch (IOException e) {
-      errors.fatal("%s [%s] is invalid: %s", fieldName, uri, e);
+      errors.fatal("%s [%s] could not be accessed: %s", fieldName, uri, e);
       return null;
     }
     return filepath;

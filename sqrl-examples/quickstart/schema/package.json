@@ -1,8 +1,0 @@
-{
-  "package": {
-    "name": "datasqrl.seedshop",
-    "version": "0.1.0",
-    "variant": "dev",
-    "description": "Simple e-commerce dataset for the DataSQRL Seed-shop"
-  }
-}

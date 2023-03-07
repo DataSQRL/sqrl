@@ -4,7 +4,9 @@
 package com.datasqrl.packager.config;
 
 import com.datasqrl.error.ErrorCollector;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +41,18 @@ public class PackageConfiguration {
     if (latest==null) latest = true;
     if (Strings.isNullOrEmpty(variant)) variant=DEFAULT_VARIANT;
     return true;
+  }
+
+  public void checkInitialized() {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(getName()) &&
+        !Strings.isNullOrEmpty(getVersion()) && !Strings.isNullOrEmpty(getVariant()) &&
+        getLatest()!=null, "Package configuration has not been initialized.");
+  }
+
+  @JsonIgnore
+  public Dependency asDependency() {
+    checkInitialized();
+    return new Dependency(getName(), getVersion(), getVariant());
   }
 
 

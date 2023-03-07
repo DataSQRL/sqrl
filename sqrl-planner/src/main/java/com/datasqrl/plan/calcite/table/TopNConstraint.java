@@ -20,22 +20,26 @@ import java.util.stream.Stream;
 public class TopNConstraint implements PullupOperator {
 
   public static TopNConstraint EMPTY = new TopNConstraint(List.of(), false, RelCollations.EMPTY,
-      Optional.empty(), null);
+      Optional.empty(),false, null);
 
   @NonNull List<Integer> partition; //First, we partition in the input relation
-  boolean distinct; //second, we select distinct rows if true [All columns not in the partition indexes are SELECT DISTINCT columns]
+  boolean distinct; //second, we select distinct rows if true [All pk columns not in the partition indexes are SELECT DISTINCT columns]
   @NonNull RelCollation collation; //third, we sort it
   @NonNull Optional<Integer> limit; //fourth, we limit the result
+
+  boolean isTimestampSort; //true, if the collation orders decreasingly by timestamp
   TableType inputTableType; //optional table type of the input relation so we can add a hint in case we are stacking temporal state
 
   public TopNConstraint(List<Integer> partition, boolean distinct, RelCollation collation,
-      Optional<Integer> limit, TableType inputTableType) {
+      Optional<Integer> limit, boolean isTimestampSort, TableType inputTableType) {
     this.partition = partition;
     this.distinct = distinct;
     this.collation = collation;
     this.limit = limit;
+    this.isTimestampSort = isTimestampSort;
     this.inputTableType = inputTableType;
-    Preconditions.checkArgument(isEmpty() || distinct || limit.isPresent());
+    Preconditions.checkArgument(isEmpty() || distinct || hasLimit());
+    Preconditions.checkArgument(isEmpty() || !distinct || hasPartition());
   }
 
   public boolean isEmpty() {
@@ -66,7 +70,7 @@ public class TopNConstraint implements PullupOperator {
     RelCollation newCollation = map.map(collation);
     List<Integer> newPartition = partition.stream().map(i -> map.map(i))
         .collect(Collectors.toList());
-    return new TopNConstraint(newPartition, distinct, newCollation, limit, inputTableType);
+    return new TopNConstraint(newPartition, distinct, newCollation, limit, isTimestampSort, inputTableType);
   }
 
   public List<Integer> getIndexes() {
@@ -74,18 +78,18 @@ public class TopNConstraint implements PullupOperator {
         partition.stream()).collect(Collectors.toList());
   }
 
-  public static TopNConstraint dedupWindowAggregation(List<Integer> partitionByIndexes,
+  public static TopNConstraint makeDeduplication(List<Integer> partitionByIndexes,
       int timestampIndex) {
     RelCollation collation = RelCollations.of(
         new RelFieldCollation(timestampIndex, RelFieldCollation.Direction.DESCENDING,
             RelFieldCollation.NullDirection.LAST));
     return new TopNConstraint(partitionByIndexes, false, collation, Optional.of(1),
-        TableType.STREAM);
+        true, TableType.STREAM);
   }
 
-  public boolean isPrimaryKeyDedup() {
-    return (!distinct && hasLimit() && getLimit() == 1) ||
-        (distinct && !hasPartition() && !hasLimit());
+  public boolean isDeduplication() {
+    //This assumes sorting by timestamp decreasing; if distinct==true || hasPartition then this is guaranteed
+    return !distinct && isTimestampSort && hasLimit() && getLimit() == 1;
   }
 
   public TableType getTableType() {

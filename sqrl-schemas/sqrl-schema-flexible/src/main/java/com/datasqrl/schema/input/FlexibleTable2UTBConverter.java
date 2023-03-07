@@ -24,12 +24,12 @@ public class FlexibleTable2UTBConverter implements
   private final SqrlTypeRelDataTypeConverter typeConverter;
   private final Deque<UniversalTable> stack = new ArrayDeque<>();
 
-  public FlexibleTable2UTBConverter() {
-    this(new JavaTypeFactoryImpl());
+  public FlexibleTable2UTBConverter(boolean hasSourceTimestamp) {
+    this(new JavaTypeFactoryImpl(), hasSourceTimestamp);
   }
 
-  public FlexibleTable2UTBConverter(RelDataTypeFactory typeFactory) {
-    this.tableFactory = new UniversalTable.ImportFactory(typeFactory, true);
+  public FlexibleTable2UTBConverter(RelDataTypeFactory typeFactory, boolean hasSourceTimestamp) {
+    this.tableFactory = new UniversalTable.ImportFactory(typeFactory, true, hasSourceTimestamp);
     this.typeConverter = new SqrlTypeRelDataTypeConverter(typeFactory);
   }
 

@@ -4,7 +4,6 @@
 package com.datasqrl.packager.config;
 
 import com.datasqrl.error.ErrorCollector;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -41,13 +40,6 @@ public class Dependency {
       this.variant = PackageConfiguration.DEFAULT_VARIANT;
     }
     return this;
-  }
-
-  public static Dependency of(PackageConfiguration pkgConfig) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(pkgConfig.getName()));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(pkgConfig.getVersion()));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(pkgConfig.getVariant()));
-    return new Dependency(pkgConfig.getName(), pkgConfig.getVersion(), pkgConfig.getVariant());
   }
 
 }

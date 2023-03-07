@@ -19,7 +19,7 @@ LogicalProject(customer=[$0], order_count=[$2], time=[$1])
 LogicalProject(_uuid=[$0], id=[$2], time=[$4], order_count=[$7])
   LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$q$5]])
-    LogicalFilter(condition=[=($3, 1)])
+    LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
       LogicalProject(customer=[$0], order_count=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
         LogicalTableScan(table=[[ordernow3$q$15]])
 

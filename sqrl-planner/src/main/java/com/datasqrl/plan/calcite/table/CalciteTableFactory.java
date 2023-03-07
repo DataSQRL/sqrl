@@ -13,7 +13,9 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
+import com.datasqrl.plan.calcite.table.StreamRelationalTableImpl.BaseRelationMeta;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.calcite.util.CalciteUtil.RelDataTypeBuilder;
 import com.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.schema.*;
@@ -21,11 +23,13 @@ import com.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import com.datasqrl.schema.input.FlexibleTableConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -65,7 +69,7 @@ public class CalciteTableFactory {
   public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias,
       RelBuilder relBuilder,
       ExecutionPipeline pipeline) {
-    FlexibleTable2UTBConverter converter = new FlexibleTable2UTBConverter(typeFactory);
+    FlexibleTable2UTBConverter converter = new FlexibleTable2UTBConverter(typeFactory, tableSource.hasSourceTimestamp());
     UniversalTable rootTable = new FlexibleTableConverter(tableSource.getSchema().getSchema(),
         tableSource.hasSourceTimestamp(),
         tblAlias).apply(
@@ -91,16 +95,24 @@ public class CalciteTableFactory {
         "Underlying table is already a stream");
     Name tableName = tablePath.getLast();
 
-    UniversalTable rootTable = convertStream2TableBuilder(tablePath,
-        baseRel.getRelNode().getRowType());
+    StreamRelationalTableImpl.BaseRelationMeta baseRelMeta = new BaseRelationMeta(baseRel);
+
+    //Build the RelDataType for just the selected fields which is the result of the stream
+    RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(relBuilder.getTypeFactory());
+    List<RelDataTypeField> baseRelFields = baseRel.getRelNode().getRowType().getFieldList();
+    List<RelDataTypeField> selectFields = Arrays.stream(baseRelMeta.getSelectIdx())
+            .mapToObj(idx -> baseRelFields.get(idx)).collect(Collectors.toList());
+    typeBuilder.addAll(selectFields);
+    RelDataType streamType = typeBuilder.build();
+
+    UniversalTable rootTable = convertStream2TableBuilder(tablePath, streamType,
+        baseRelMeta.hasTimestamp());
     RelDataType rootType = convertTable(rootTable, true, true);
     StreamRelationalTableImpl source = new StreamRelationalTableImpl(getTableId(tableName, "s"),
-        baseRel.getRelNode(), rootType,
-        rootTable, changeType);
+        baseRel.getRelNode(), rootType, baseRelMeta, rootTable, changeType);
     TableStatistic statistic = TableStatistic.of(baseRel.estimateRowCount());
     ProxyStreamRelationalTable impTable = new ProxyStreamRelationalTable(getTableId(tableName, "q"),
-        getTimestampHolder(rootTable),
-        relBuilder.values(rootType).build(), source,
+        getTimestampHolder(rootTable), relBuilder.values(rootType).build(), source,
         pipeline.getStage(ExecutionEngine.Type.STREAM).get(), statistic);
 
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable,
@@ -181,9 +193,9 @@ public class CalciteTableFactory {
   }
 
   public UniversalTable convertStream2TableBuilder(@NonNull NamePath path,
-      RelDataType type) {
+      RelDataType type, boolean hasTimestamp) {
     RelDataType2UTBConverter converter = new RelDataType2UTBConverter(
-        new UniversalTable.ImportFactory(typeFactory, false), canonicalizer);
+        new UniversalTable.ImportFactory(typeFactory, false, hasTimestamp), canonicalizer);
     return converter.convert(path, type, null);
   }
 

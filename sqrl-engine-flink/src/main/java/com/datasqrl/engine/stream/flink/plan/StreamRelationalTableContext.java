@@ -4,6 +4,7 @@
 package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.plan.calcite.table.StateChangeType;
+import com.datasqrl.plan.calcite.table.StreamRelationalTable.BaseTableMetaData;
 import lombok.Value;
 import org.apache.flink.table.api.Table;
 
@@ -12,4 +13,9 @@ public class StreamRelationalTableContext  {
 
   Table inputTable;
   StateChangeType stateChangeType;
+
+  boolean unmodifiedChangelog;
+  BaseTableMetaData baseTableMetaData;
+
+
 }

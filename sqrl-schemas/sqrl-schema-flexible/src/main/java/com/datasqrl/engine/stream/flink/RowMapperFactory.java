@@ -19,7 +19,7 @@ public class RowMapperFactory {
   public static UniversalTable getFlexibleUniversalTableBuilder(TableSchema schema, boolean hasSourceTimestamp) {
     FlexibleTableConverter converter = new FlexibleTableConverter(schema, hasSourceTimestamp,
         Optional.empty());
-    FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter();
+    FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter(hasSourceTimestamp);
     return converter.apply(utbConverter);
   }
 

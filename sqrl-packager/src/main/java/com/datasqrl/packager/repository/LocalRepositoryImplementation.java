@@ -4,6 +4,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.NameUtil;
@@ -79,9 +80,12 @@ public class LocalRepositoryImplementation implements Repository, CacheRepositor
     }
 
     @Override
-    public void publish(Path zipFile, Dependency dependency) {
+    public boolean publish(Path zipFile, PackageConfiguration pkgConfig) {
+        pkgConfig.checkInitialized();
+        Dependency dependency = pkgConfig.asDependency();
         try {
             cacheDependency(zipFile, dependency);
+            return true;
         } catch (IOException ex) {
             throw errors.handle(ex);
         }

@@ -1,23 +1,33 @@
 package com.datasqrl.packager.repository;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.Deserializer;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.StringUtil;
 import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Retail;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.*;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class RepositoryTest {
 
@@ -44,6 +54,59 @@ public class RepositoryTest {
     }
 
     @Test
+    public void testQuickstartValidatePub() {
+        Publication pub = testValidatePublication(Quickstart.BASE_PATH.resolve(Quickstart.INSTANCE.getName()));
+        assertEquals("datasqrl.seedshop", pub.getName());
+        assertEquals("dev", pub.getVariant());
+        assertEquals(true, pub.getLatest());
+    }
+
+    @Test
+    public void testRetailValidatePub() {
+        Publication pub = testValidatePublication(Retail.BASE_PATH.resolve(Retail.INSTANCE.getName()));
+        assertEquals("datasqrl.examples.ecommerce", pub.getName());
+        assertEquals("dev", pub.getVariant());
+        assertEquals(true, pub.getLatest());
+        assertEquals("Simple e-commerce dataset", pub.getDescription());
+        assertEquals("datasqrl",pub.getAuthorId());
+    }
+
+
+    @SneakyThrows
+    public Publication testValidatePublication(Path packagePath) {
+        ValidatePublication validate = new ValidatePublication("datasqrl", outputPath, errors);
+        Publisher publisher = new Publisher(errors);
+        assertNotNull(publisher.publish(packagePath, validate));
+        String uid = Files.find(outputPath,1,(p,a) -> p.getFileName().toString().endsWith("zip")).map(p -> p.getFileName().toString())
+            .map(s -> StringUtil.removeFromEnd(s, Zipper.ZIP_EXTENSION)).findAny().get();
+        Path pubFile = Files.find(outputPath,1,(p,a) -> p.getFileName().toString().endsWith("json")).findFirst().get();
+        Publication pub = new Deserializer().mapJsonFile(pubFile, Publication.class);
+        assertEquals(pub.getUniqueId(),uid);
+        assertTrue(Instant.now().compareTo(Instant.parse(pub.getSubmissionTime()))>0);
+        return pub;
+    }
+
+
+
+    @Test
+    @Disabled
+    /**
+     * Used to create a new publication in the DataSQRL repository.
+     * Set packagePath to the package to publish and output path to the repository data directory.
+     *
+     * Then commit the files to the repository and upload the zip file to the S3 bucket.
+     */
+    public void createPublication() {
+        Path packagePath = Quickstart.BASE_PATH.resolve(Quickstart.INSTANCE.getName());
+        Path output = Path.of("../../sqrl-repository/repodata");
+        ValidatePublication validate = new ValidatePublication("datasqrl", output, errors);
+        Publisher publisher = new Publisher(errors);
+        assertNotNull(publisher.publish(packagePath, validate));
+    }
+
+
+
+    @Test
     @SneakyThrows
     public void localPublishAndRetrieve() {
         Dependency dependency = new Dependency("datasqrl.examples.ecommerce", "1.0.0", "dev");
@@ -68,13 +131,13 @@ public class RepositoryTest {
     @Disabled
     public void publishQuickstartLocally() {
         LocalRepositoryImplementation repo = LocalRepositoryImplementation.of(errors);
-        publishLocally(Quickstart.BASE_PATH.resolve("schema"), repo);
+        publishLocally(Quickstart.BASE_PATH.resolve(Quickstart.INSTANCE.getName()), repo);
     }
 
     @SneakyThrows
     public void publishLocally(Path pkgPath, LocalRepositoryImplementation repo) {
         Publisher publisher = new Publisher(errors);
-        Dependency dep = publisher.publish(pkgPath, repo);
+        Dependency dep = publisher.publish(pkgPath, repo).asDependency();
         assertFalse(errors.isFatal(), errors.toString());
 
         assertTrue(repo.retrieveDependency(outputPath, dep));
@@ -83,7 +146,7 @@ public class RepositoryTest {
     @Test
     @SneakyThrows
     public void remoteRepoTest() {
-        Dependency dependency = new Dependency("datasqrl.examples.Nutshop", "0.1.0", "dev");
+        Dependency dependency = new Dependency("datasqrl.seedshop", "0.1.0", "dev");
 
         RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation(RemoteRepositoryImplementation.DEFAULT_URI);
         remoteRepo.setCacheRepository(localRepo);

@@ -55,11 +55,15 @@ public class Converter {
     execHint.map(h -> h.getConfig(ns.session.getPipeline(), configBuilder));
     SQRLLogicalPlanConverter.Config config = configBuilder.build();
 
-    if (config.getStartStage() != null) {
-      return SQRLLogicalPlanConverter.convert(relNode, () -> relBuilder, config);
-    } else {
-      return SQRLLogicalPlanConverter.findCheapest(Name.system("/*lp table*/").toNamePath(),
-          relNode,  () -> relBuilder, ns.session.pipeline, config);
+    try {
+      if (config.getStartStage() != null) {
+        return SQRLLogicalPlanConverter.convert(relNode, () -> relBuilder, config);
+      } else {
+        return SQRLLogicalPlanConverter.findCheapest(Name.system("/*lp table*/").toNamePath(),
+            relNode, () -> relBuilder, ns.session.pipeline, config);
+      }
+    } catch (Throwable e) {
+      throw systemContext.getErrors().handle(e);
     }
   }
 
