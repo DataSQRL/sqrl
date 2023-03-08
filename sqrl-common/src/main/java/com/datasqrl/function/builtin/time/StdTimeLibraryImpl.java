@@ -6,6 +6,7 @@ package com.datasqrl.function.builtin.time;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
+import com.datasqrl.function.builtin.FunctionUtil;
 import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
@@ -13,6 +14,20 @@ import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.local.generate.FlinkUdfNsObject;
 import com.datasqrl.plan.local.generate.NamespaceObject;
 import com.google.common.base.Preconditions;
+import java.lang.reflect.Field;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -22,18 +37,13 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.types.inference.*;
+import org.apache.flink.table.types.inference.ArgumentCount;
+import org.apache.flink.table.types.inference.CallContext;
+import org.apache.flink.table.types.inference.InputTypeStrategy;
+import org.apache.flink.table.types.inference.Signature;
+import org.apache.flink.table.types.inference.TypeInference;
+import org.apache.flink.table.types.inference.TypeStrategy;
 import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
-
-import java.lang.reflect.Field;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Getter
 public class StdTimeLibraryImpl implements SqrlModule {
@@ -43,15 +53,15 @@ public class StdTimeLibraryImpl implements SqrlModule {
   public static final EpochToTimestamp EPOCH_TO_TIMESTAMP = new EpochToTimestamp();
   public static final EpochMilliToTimestamp EPOCH_MILLI_TO_TIMESTAMP = new EpochMilliToTimestamp();
   public static final TimestampToEpoch TIMESTAMP_TO_EPOCH = new TimestampToEpoch();
+  public static final TimestampToEpochMilli TIMESTAMP_TO_EPOCH_MILLI = new TimestampToEpochMilli();
   public static final ParseTimestamp STRING_TO_TIMESTAMP = new ParseTimestamp();
-  public static final formatTimestamp TIMESTAMP_TO_STRING = new formatTimestamp();
-  public static final ToUTC TO_UTC = new ToUTC();
+  public static final FormatTimestamp TIMESTAMP_TO_STRING = new FormatTimestamp();
   public static final AtZone AT_ZONE = new AtZone();
   public static final EndOfSecond END_OF_SECOND = new EndOfSecond();
   public static final EndOfMinute END_OF_MINUTE = new EndOfMinute();
   public static final EndOfHour END_OF_HOUR = new EndOfHour();
-  public static final EndOfWeek END_OF_WEEK = new EndOfWeek();
   public static final EndOfDay END_OF_DAY = new EndOfDay();
+  public static final EndOfWeek END_OF_WEEK = new EndOfWeek();
   public static final EndOfMonth END_OF_MONTH = new EndOfMonth();
   public static final EndOfYear END_OF_YEAR = new EndOfYear();
   public static final GetSecond GET_SECOND = new GetSecond();
@@ -82,7 +92,6 @@ public class StdTimeLibraryImpl implements SqrlModule {
       TIMESTAMP_TO_EPOCH,
       STRING_TO_TIMESTAMP,
       TIMESTAMP_TO_STRING,
-      TO_UTC,
       AT_ZONE,
       END_OF_SECOND,
       END_OF_MINUTE,
@@ -101,11 +110,8 @@ public class StdTimeLibraryImpl implements SqrlModule {
       GET_YEAR
   );
   List<NamespaceObject> nsObjects = getFunctions().stream()
-      .map(f -> {
-        String fctName = f.getClass().getSimpleName();
-        fctName = Character.toLowerCase(fctName.charAt(0)) + fctName.substring(1);
-        return new FlinkUdfNsObject(Name.system(fctName), f, Optional.empty());
-      })
+      .map(f -> new FlinkUdfNsObject(FunctionUtil.getFunctionNameFromClass(f.getClass()),
+                                     f, Optional.empty()))
       .collect(Collectors.toList());
 
   @Override
@@ -256,7 +262,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
   public abstract static class RoundingFunction extends ScalarFunction implements SqrlFunction,
       SqrlTimeTumbleFunction {
 
-    private final ChronoUnit timeUnit;
+    protected final ChronoUnit timeUnit;
 
     public RoundingFunction(ChronoUnit timeUnit) {
       this.timeUnit = timeUnit;
@@ -285,7 +291,8 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
     public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS)
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
+          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
           .toInstant();
     }
 
@@ -304,7 +311,8 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
     public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.MINUTES)
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
+          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
           .toInstant();
     }
 
@@ -323,7 +331,8 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
     public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.HOURS)
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
+          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
           .toInstant();
     }
 
@@ -342,7 +351,8 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
     public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
+          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
           .toInstant();
     }
 
@@ -362,9 +372,12 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
     public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
-          .with(TemporalAdjusters.firstDayOfMonth())
-          .truncatedTo(ChronoUnit.WEEKS).toInstant();
+      ZonedDateTime time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+      int daysToSubtract = time.getDayOfWeek().getValue()-1;
+      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
+          .minus(daysToSubtract, ChronoUnit.DAYS)
+          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
+          .toInstant();
     }
 
     @Override
@@ -384,7 +397,9 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
     public Instant eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
-          .with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant();
+          .with(TemporalAdjusters.firstDayOfNextMonth()).truncatedTo(ChronoUnit.DAYS)
+          .minus(1, ChronoUnit.NANOS)
+          .toInstant();
     }
 
     @Override
@@ -404,7 +419,9 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
     public Instant eval(Instant instant) {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
-          .with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS).toInstant();
+          .with(TemporalAdjusters.firstDayOfNextYear()).truncatedTo(ChronoUnit.DAYS)
+          .minus(1, ChronoUnit.NANOS)
+          .toInstant();
     }
 
     @Override
@@ -441,23 +458,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
   }
 
-  public static class ToUTC extends ScalarFunction implements SqrlFunction,
-      TimestampPreservingFunction {
-
-    public Instant eval(ZonedDateTime zonedDateTime) {
-      return zonedDateTime.toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
-
-  }
-
-  public static class formatTimestamp extends ScalarFunction implements SqrlFunction {
+  public static class FormatTimestamp extends ScalarFunction implements SqrlFunction {
 
     public String eval(Instant instant) {
       return instant.toString();
@@ -540,10 +541,15 @@ public class StdTimeLibraryImpl implements SqrlModule {
     };
   }
 
-  public static class TimestampToEpoch extends ScalarFunction implements SqrlFunction {
+  @AllArgsConstructor
+  private abstract static class AbstractTimestampToEpoch extends ScalarFunction implements SqrlFunction {
+
+    private final boolean isMilli;
 
     public Long eval(Instant instant) {
-      return instant.toEpochMilli();
+      long epoch = instant.toEpochMilli();
+      if (!isMilli) epoch = epoch/1000;
+      return epoch;
     }
 
     @Override
@@ -552,6 +558,20 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
 
+  }
+
+  public static class TimestampToEpoch extends AbstractTimestampToEpoch {
+
+    public TimestampToEpoch() {
+      super(false);
+    }
+  }
+
+  public static class TimestampToEpochMilli extends AbstractTimestampToEpoch {
+
+    public TimestampToEpochMilli() {
+      super(true);
+    }
   }
 
   public static class EpochToTimestamp extends ScalarFunction implements SqrlFunction,
