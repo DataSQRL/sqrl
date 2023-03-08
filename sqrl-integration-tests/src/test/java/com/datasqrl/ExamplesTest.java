@@ -76,7 +76,7 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
       validateTables(script.getScript(), script.getResultTables()
         .toArray(new String[0]));
     } catch (Exception e) {
-      System.err.println(ErrorPrinter.prettyPrint(error));
+      System.err.println(ErrorPrinter.prettyPrint(errors));
       throw e;
     }
 

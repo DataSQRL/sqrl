@@ -14,7 +14,7 @@ import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import java.util.stream.Collectors;
 import org.apache.calcite.jdbc.CalciteSchemaVisitor;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 
 /**
  * Generates the GraphQL Query type.
@@ -24,7 +24,7 @@ public class QueryTypeGenerator implements
     CalciteSchemaVisitor<GraphQLObjectType, SchemaGeneratorContext> {
 
   @Override
-  public GraphQLObjectType visit(SqrlCalciteSchema schema, SchemaGeneratorContext context) {
+  public GraphQLObjectType visit(SqrlSchema schema, SchemaGeneratorContext context) {
     return GraphQLObjectType.newObject()
         .name("Query")
         .fields(schema.getRootTables().stream()

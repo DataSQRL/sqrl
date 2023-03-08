@@ -12,6 +12,7 @@ import com.datasqrl.util.data.Retail;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -47,7 +48,8 @@ class FlinkInputErrorIT extends AbstractPhysicalSQRLIT {
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
         .errorSink(NamePath.of("output","errors"))
         .build(),
-        example.getRootPackageDirectory());
+        example.getRootPackageDirectory(),
+        Optional.of(outputPath));
     validateTables("IMPORT ecommerce-broken.*;","customer", "orders",
         "product");
     Path errorPath = outputPath.resolve("errors");

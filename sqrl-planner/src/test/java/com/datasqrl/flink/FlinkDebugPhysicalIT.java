@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
@@ -52,8 +53,7 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
   public void debugC3602OutputTest() {
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
           .debugger(DebuggerConfig.of(NamePath.of("output"),null))
-        .build(),
-        example.getRootPackageDirectory());
+        .build(),(Path) null, Optional.of(outputPath));
     TestScript script = example.getScript(RetailScriptNames.FULL);
     validateTables(script.getScript(),"favorite_categories", "order_stats",
         "NewCustomerPromotion", "order_again", "total");
@@ -65,7 +65,8 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
             .debugger(DebuggerConfig.of(NamePath.of("output"),
                 toName("order_stats", "NewCustomerPromotion", "order_again", "total")))
             .build(),
-        example.getRootPackageDirectory());
+        (Path) null,
+        Optional.of(outputPath));
     TestScript script = example.getScript(RetailScriptNames.FULL);
     validateTables(script.getScript(),"favorite_categories");
   }

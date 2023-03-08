@@ -4,6 +4,7 @@
 package com.datasqrl.error;
 
 import com.datasqrl.error.ErrorLocation.FileRange;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,9 @@ public class ErrorPrinter {
 
   public static String prettyPrint(ErrorMessage errorMessage) {
     ErrorLocation location = errorMessage.getLocation();
+    Preconditions.checkNotNull(location, "Error location can not be null");
     StringBuilder b = new StringBuilder();
+
     //print error severity and message
     b.append(getHead(errorMessage));
     //print error location

@@ -1,7 +1,7 @@
 package com.datasqrl.plan.calcite;
 
 import lombok.AllArgsConstructor;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable.ViewExpander;
 import org.apache.calcite.rel.RelNode;
@@ -15,7 +15,7 @@ import org.apache.calcite.tools.RelBuilder;
 @AllArgsConstructor
 public class SqrlToRelConverter {
   RelOptCluster cluster;
-  SqrlCalciteSchema schema;
+  SqrlSchema schema;
 
 
   public RelNode toRel(SqlValidator validator, SqlNode sqlNode) {

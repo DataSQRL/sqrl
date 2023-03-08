@@ -1,6 +1,6 @@
 package com.datasqrl.plan.calcite;
 
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.tools.RelBuilder;
@@ -12,7 +12,7 @@ public class SqrlRelBuilder extends RelBuilder {
     super(null, cluster, relOptSchema);
   }
 
-  public static SqrlRelBuilder create(RelOptCluster cluster, SqrlCalciteSchema schema) {
+  public static SqrlRelBuilder create(RelOptCluster cluster, SqrlSchema schema) {
     return new SqrlRelBuilder(cluster, SqrlPlannerConfigFactory.createCatalogReader(schema));
   }
 }

@@ -17,6 +17,7 @@
         <module>sqrl-io-core</module>
         <module>sqrl-io-kafka</module>
         <module>sqrl-io-file</module>
+        <module>sqrl-io-inmem</module>
         <module>sqrl-engine-core</module>
         <module>sqrl-engine-flink</module>
         <module>sqrl-engine-jdbc</module>
@@ -104,6 +105,11 @@
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>5.1.0</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -161,6 +167,11 @@
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-io-inmem</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <artifactId>sqrl-transpiler</artifactId>
@@ -241,6 +252,11 @@
             </dependency>
             <dependency>
                 <artifactId>sqrl-engine-flink-file</artifactId>
+                <groupId>com.datasqrl</groupId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>sqrl-engine-flink-inmem</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>

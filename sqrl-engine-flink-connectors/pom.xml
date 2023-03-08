@@ -25,5 +25,6 @@
     <module>sqrl-engine-flink-print</module>
     <module>sqrl-engine-flink-file</module>
     <module>sqrl-engine-flink-kafka</module>
+    <module>sqrl-engine-flink-inmem</module>
   </modules>
 </project>

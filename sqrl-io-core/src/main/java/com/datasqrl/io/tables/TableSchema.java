@@ -8,6 +8,7 @@ import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.SchemaValidator;
+import java.util.Optional;
 
 public interface TableSchema {
   RowMapper getRowMapper(RowConstructor rowConstructor,
@@ -19,5 +20,5 @@ public interface TableSchema {
 
   SchemaValidator getValidator(TableConfig config, boolean hasSourceTimestamp);
 
-  UniversalTable createUniversalTable(boolean hasSourceTimestamp);
+  UniversalTable createUniversalTable(boolean hasSourceTimestamp, Optional<Name> tblAlias);
 }

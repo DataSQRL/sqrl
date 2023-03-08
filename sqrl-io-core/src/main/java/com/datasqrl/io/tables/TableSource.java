@@ -14,7 +14,7 @@ import lombok.NonNull;
 /**
  * A {@link TableSource} defines an input source to be imported into an SQML script. A
  * {@link TableSource} is comprised of records and is the smallest unit of data that one can refer
- * to within an SQML script.
+ * to within an SQRL script.
  */
 public class TableSource extends TableInput {
 

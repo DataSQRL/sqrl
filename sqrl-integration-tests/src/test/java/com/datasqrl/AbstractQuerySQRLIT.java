@@ -52,15 +52,16 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   @SneakyThrows
   protected void validateSchemaAndQueries(String script, String schema,
       Map<String, String> queries) {
+
     Namespace ns = plan(script);
-    DAGPlanner dagPlanner = new DAGPlanner(ns.createRelBuilder(), session.getRelPlanner(),
-        session.getPipeline());
+    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
+        ns.getPipeline());
 
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
     Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = t
-        .getModelAndQueries(session, schema);
+        .getModelAndQueries(planner, schema);
 
-    OptimizedDAG dag = dagPlanner.plan(session.getSchema(), modelAndQueries.getRight(),
+    OptimizedDAG dag = dagPlanner.plan(planner.getSchema(), modelAndQueries.getRight(),
         ns.getExports(), ns.getJars());
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
@@ -68,7 +69,9 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     RootGraphqlModel model = modelAndQueries.getKey();
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(
         physicalPlan.getDatabaseQueries());
+
     model.accept(replaceGraphqlQueries, null);
+
     snapshot.addContent(
         physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream()
             .map(ddl -> ddl.toSql())

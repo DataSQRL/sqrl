@@ -5,6 +5,7 @@ package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.tables.TableSchema;
+import com.datasqrl.name.Name;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
 import com.datasqrl.schema.converters.RowConstructor;
@@ -16,9 +17,10 @@ import org.apache.flink.api.common.functions.MapFunction;
 
 public class RowMapperFactory {
 
-  public static UniversalTable getFlexibleUniversalTableBuilder(TableSchema schema, boolean hasSourceTimestamp) {
+  public static UniversalTable getFlexibleUniversalTableBuilder(TableSchema schema, boolean hasSourceTimestamp,
+      Optional<Name> tblAlias) {
     FlexibleTableConverter converter = new FlexibleTableConverter(schema, hasSourceTimestamp,
-        Optional.empty());
+        tblAlias);
     FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter(hasSourceTimestamp);
     return converter.apply(utbConverter);
   }

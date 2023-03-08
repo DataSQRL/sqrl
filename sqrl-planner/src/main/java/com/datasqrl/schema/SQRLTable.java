@@ -301,8 +301,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     return visitor.visit(this, context);
   }
 
-  public void addColumn(Name name, RelNode relNode, boolean lockTimestamp, RelBuilder relBuilder,
-      CalciteTableFactory tableFactory) {
+  public void addColumn(Name name, RelNode relNode, boolean lockTimestamp, RelBuilder relBuilder) {
     checkColumnPreconditions(name);
 
 //    NamePath namePath = toNamePath(env, op.getStatement().getNamePath());
@@ -312,7 +311,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     Name vtName = uniquifyColumnName(name, this);
 
     VirtualRelationalTable vtable = getVt();
-    Optional<Integer> timestampScore = tableFactory.getTimestampScore(
+    Optional<Integer> timestampScore = CalciteTableFactory.getTimestampScore(
         name, relDataTypeField.getType());
 
     Preconditions.checkState(

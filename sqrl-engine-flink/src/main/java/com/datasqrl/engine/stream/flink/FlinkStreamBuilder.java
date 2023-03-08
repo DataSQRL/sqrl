@@ -23,6 +23,7 @@ import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.functions.ReduceFunction;
@@ -84,7 +85,8 @@ public class FlinkStreamBuilder implements DataMonitor {
     FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder) stream;
 
     //TODO: error handling when mapping doesn't work?
-    UniversalTable universalTable = schema.getSchema().createUniversalTable(schema.isHasSourceTimestamp());
+    UniversalTable universalTable = schema.getSchema().createUniversalTable(schema.isHasSourceTimestamp(),
+        Optional.empty());
     Schema flinkSchema = new UniversalTable2FlinkSchema().convertSchema(universalTable);
     TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()
         .convertSchema(universalTable);

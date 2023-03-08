@@ -3,12 +3,16 @@ package com.datasqrl.function.builtin.string;
 import static com.datasqrl.function.builtin.FunctionUtil.createFunctionFromFlink;
 
 import com.datasqrl.function.builtin.AbstractFunctionModule;
+import com.datasqrl.function.builtin.time.StdLibrary;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.local.generate.NamespaceObject;
+import com.google.auto.service.AutoService;
 import java.util.List;
-import lombok.Getter;
 
-@Getter
-public class StdStringLibraryImpl extends AbstractFunctionModule {
+@AutoService(StdLibrary.class)
+public class StdStringLibraryImpl extends AbstractFunctionModule implements StdLibrary {
+
+  private static final NamePath LIB_NAME = NamePath.of("string");
   private static List<NamespaceObject> stringFunctions = List.of(
       createFunctionFromFlink("length", "CHAR_LENGTH"),
       createFunctionFromFlink("upper", "UPPER"),
@@ -47,5 +51,9 @@ public class StdStringLibraryImpl extends AbstractFunctionModule {
 
   public StdStringLibraryImpl() {
     super(stringFunctions);
+  }
+
+  public NamePath getPath() {
+    return LIB_NAME;
   }
 }

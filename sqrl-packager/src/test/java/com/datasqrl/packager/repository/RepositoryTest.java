@@ -145,6 +145,7 @@ public class RepositoryTest {
 
     @Test
     @SneakyThrows
+    @Disabled //todo: re-enable once repo changes are merged in (currently in pr)
     public void remoteRepoTest() {
         Dependency dependency = new Dependency("datasqrl.seedshop", "0.1.0", "dev");
 

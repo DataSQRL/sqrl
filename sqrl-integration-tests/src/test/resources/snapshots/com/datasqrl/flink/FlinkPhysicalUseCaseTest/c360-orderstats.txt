@@ -16,11 +16,11 @@ LogicalProject(customerid=[$0], total_price=[$1], num_orders=[$2], time=[$3])
 
 >>>entries$4-lp-stream
 LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DECIMAL(10, 5))], price=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))], time=[$4])
-  LogicalCorrelate(correlation=[$cor2], joinType=[inner], requiredColumns=[{5}])
+  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
       LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     Uncollect
-      LogicalProject($f0=[$cor2.entries])
+      LogicalProject($f0=[$cor0.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>totals$6-lp-stream

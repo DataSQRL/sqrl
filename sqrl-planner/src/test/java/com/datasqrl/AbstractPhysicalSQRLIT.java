@@ -10,17 +10,20 @@ import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.*;
+import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.analyze.ResolveTest;
-import com.datasqrl.plan.local.generate.FileResourceResolver;
+import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIQuery;
@@ -30,6 +33,8 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
@@ -55,26 +60,27 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   protected boolean closeSnapshotOnValidate = true;
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
-    super.initialize(settings, rootDir);
+    initialize(settings, rootDir, Optional.empty());
+  }
+  protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
+    Map<NamePath, SqrlModule> addlModules = Map.of();
+    if (rootDir == null) {
+      addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule());
+    }
+    SqrlTestDIModule module = new SqrlTestDIModule(settings, rootDir, addlModules, errorDir,
+        ErrorCollector.root());
+    Injector injector = Guice.createInjector(module);
 
-    ModuleLoader moduleLoader = new ModuleLoaderImpl(new StandardLibraryLoader(
-        Map.of()), new ObjectLoaderImpl(new FileResourceResolver(rootDir), error));
-    NamePath sinkPath = settings.getErrorSink();
-    Optional<TableSink> errorSink = moduleLoader
-        .getModule(sinkPath.popLast())
-        .flatMap(m->m.getNamespaceObject(sinkPath.popLast().getLast()))
-        .map(s -> ((DataSystemNsObject) s).getTable())
-        .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), error))
-        .map(tblConfig ->
-            tblConfig.initializeSink(error, sinkPath, Optional.empty()));
+    super.initialize(settings, rootDir, injector);
 
-    jdbc = engineSettings.getPipeline().getStages().stream()
+    jdbc = injector.getInstance(ExecutionPipeline.class).getStages().stream()
       .filter(f->f.getEngine() instanceof JDBCEngine)
       .map(f->((JDBCEngine) f.getEngine()).getConfig())
       .findAny()
       .orElseThrow();
 
-    physicalPlanner = new PhysicalPlanner(session.createRelBuilder(), errorSink.get());
+    SqrlPhysicalPlan planner = injector.getInstance(SqrlPhysicalPlan.class);
+    physicalPlanner = planner.getPhysicalPlanner();
   }
 
 
@@ -91,21 +97,25 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   protected void validateTables(String script, Collection<String> queryTables,
       Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
     Namespace ns = plan(script);
-    DAGPlanner dagPlanner = new DAGPlanner(session.createRelBuilder(), session.getRelPlanner(),
-        session.getPipeline());
+
+    //todo Inject this:
+    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
+        ns.getPipeline());
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
-    CalciteSchema relSchema = session.getSchema();
+    CalciteSchema relSchema = planner.getSchema();
     for (String tableName : queryTables) {
       Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(relSchema, tableName,
           VirtualRelationalTable.class);
       Preconditions.checkArgument(vtOpt.isPresent(), "No such table: %s", tableName);
       VirtualRelationalTable vt = vtOpt.get();
-      RelNode rel = session.createRelBuilder().scan(vt.getNameId()).build();
+      RelNode rel = planner.createRelBuilder().scan(vt.getNameId()).build();
       queries.add(new APIQuery(tableName, rel));
     }
     OptimizedDAG dag = dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
     addContent(dag);
+
+    //todo: inject
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan);

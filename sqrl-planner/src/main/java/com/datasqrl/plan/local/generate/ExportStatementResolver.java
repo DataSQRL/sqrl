@@ -4,9 +4,10 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.DataSystemNsObject;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlAstException;
-import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
 import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -18,8 +19,12 @@ import org.apache.calcite.tools.RelBuilder;
 
 public class ExportStatementResolver extends AbstractStatementResolver {
 
-  public ExportStatementResolver(SystemContext systemContext) {
-    super(systemContext);
+  private final ModuleLoader moduleLoader;
+
+  protected ExportStatementResolver(ModuleLoader moduleLoader, ErrorCollector errors,
+      NameCanonicalizer nameCanonicalizer, SqrlQueryPlanner planner) {
+    super(errors, nameCanonicalizer, planner);
+    this.moduleLoader = moduleLoader;
   }
 
   public void resolve(ExportDefinition statement, Namespace ns) {
@@ -34,16 +39,14 @@ public class ExportStatementResolver extends AbstractStatementResolver {
         () -> String.format("Table [%s] is not be exported because it is not computed in-stream",
             table.getPath()));
     NamePath sinkPath = toNamePath(statement.getSinkPath());
-    exportTable(table, sinkPath, ns, statement,
-        systemContext.getErrors()
-            .atFile(SqrlAstException.toLocation(statement.getSinkPath().getParserPosition())));
+    exportTable(table, sinkPath, ns, statement, errors);
   }
 
   public void exportTable(SQRLTable table, NamePath sinkPath, Namespace ns,
       ExportDefinition statement, ErrorCollector errors) {
     Preconditions.checkArgument(table.getVt().getRoot().getBase().getExecution().isWrite());
 
-    Optional<TableSink> sink = systemContext.getModuleLoader()
+    Optional<TableSink> sink = moduleLoader
         .getModule(sinkPath.popLast())
         .flatMap(m->m.getNamespaceObject(sinkPath.popLast().getLast()))
         .map(s -> ((DataSystemNsObject) s).getTable())
@@ -51,9 +54,15 @@ public class ExportStatementResolver extends AbstractStatementResolver {
         .map(tblConfig ->
             tblConfig.initializeSink(errors, sinkPath, Optional.empty()));
 
-    errors.checkFatal(sink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
-        "Cannot resolve table sink: %s", sinkPath);
-    RelBuilder relBuilder = ns.session.createRelBuilder()
+    if (sink.isEmpty()) {
+      errors.atPosition(
+          statement.getSinkPath().getParserPosition().getLineNum(),
+          statement.getSinkPath().getParserPosition().getColumnNum() + 1)
+          .fatal(ErrorCode.CANNOT_RESOLVE_TABLESINK,
+          "Cannot resolve table sink: %s", sinkPath);
+    }
+
+    RelBuilder relBuilder = planner.createRelBuilder()
         .scan(table.getVt().getNameId());
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();

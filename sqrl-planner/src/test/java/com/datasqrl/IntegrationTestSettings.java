@@ -20,12 +20,14 @@ import com.datasqrl.util.JDBCTestDatabase;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Pair;
 
-@Value
+@Getter
 @Builder
 public class IntegrationTestSettings {
+  private Pair<DatabaseHandle, EngineSettings> settings = null;
 
   public enum StreamEngine {FLINK, INMEMORY}
 
@@ -40,7 +42,11 @@ public class IntegrationTestSettings {
   @Builder.Default
   final NamePath errorSink = NamePath.of("print","errors");
 
+
   Pair<DatabaseHandle, EngineSettings> getSqrlSettings() {
+    if (settings != null) {
+      return settings;
+    }
 
     List<EngineConfiguration> engines = new ArrayList<>();
     //Stream engine
@@ -74,7 +80,8 @@ public class IntegrationTestSettings {
     ErrorCollector errors = ErrorCollector.root();
     EngineSettings engineSettings = engineConfig.initializeEngines(errors);
     assertNotNull(engineSettings, errors.toString());
-    return Pair.of(database, engineSettings);
+    settings = Pair.of(database, engineSettings);
+    return settings;
   }
 
   public static IntegrationTestSettings getInMemory() {

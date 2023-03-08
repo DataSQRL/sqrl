@@ -1,0 +1,24 @@
+2023-03-07 19:25:44 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "products$22" not found (this database is empty); SQL statement:
+SELECT *
+FROM "products$22"
+WHERE "id" = $1
+ORDER BY "id" [42104-214]
+2023-03-07 19:25:49 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "products$22" not found (this database is empty); SQL statement:
+SELECT *
+FROM "products$22"
+WHERE "id" = $1
+ORDER BY "id" [42104-214]
+2023-03-07 19:25:51 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "products$22" not found (this database is empty); SQL statement:
+SELECT *
+FROM "products$22"
+WHERE "id" = $1
+ORDER BY "id" [42104-214]
+2023-03-07 19:26:29 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "products$22" not found (this database is empty); SQL statement:
+SELECT *
+FROM "products$22"
+WHERE "id" = $1
+ORDER BY "id" [42104-214]

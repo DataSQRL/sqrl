@@ -1,15 +1,13 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.error.ErrorCode;
-import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.name.Name;
 import com.datasqrl.plan.local.ScriptTableDefinition;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
@@ -31,15 +29,11 @@ public interface AbstractNamespace {
 
   Optional<SqlFunction> translateFunction(Name name);
 
-  public boolean addTableObject(Name name, TableNamespaceObject nsObject);
-
   void registerScriptTable(ScriptTableDefinition tblDef);
 
   SqlOperatorTable getOperatorTable();
 
-  SqrlCalciteSchema getSchema();
-
-  RelBuilder createRelBuilder();
+  SqrlSchema getSchema();
 
   List<ResolvedExport> getExports();
 

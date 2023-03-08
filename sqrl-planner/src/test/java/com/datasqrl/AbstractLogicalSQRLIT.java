@@ -4,22 +4,21 @@
 package com.datasqrl;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.frontend.SqrlPlan;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.loaders.ObjectLoaderImpl;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.SqrlModule;
+import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.plan.local.generate.FileResourceResolver;
+import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.local.generate.Resolve;
-import com.datasqrl.plan.local.generate.Session;
-import com.google.common.base.Preconditions;
-import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
-import org.apache.calcite.sql.ScriptNode;
+import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {
@@ -27,48 +26,47 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   @AfterEach
   public void tearDown() {
     super.tearDown();
-    error = null;
+    errors = null;
 
   }
 
-  public ErrorCollector error;
-  public SqrlParser parser;
-  public Resolve resolve;
-  public Session session;
+  public ErrorCollector errors;
+  public SqrlQueryPlanner planner;
   public Path rootDir;
-
+  private SqrlPlan sqrlPlanner;
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
-    super.initialize(settings);
-    error = ErrorCollector.root();
+    initialize(settings, rootDir, Optional.empty());
+  }
+  protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
+    Map<NamePath, SqrlModule> addlModules = Map.of();
+    if (rootDir == null) {
+      addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule());
+    }
+    SqrlTestDIModule module = new SqrlTestDIModule(settings, rootDir, addlModules, errorDir,
+        ErrorCollector.root());
+    Injector injector = Guice.createInjector(module);
+    initialize(settings, rootDir, injector);
+  }
 
-    SqrlCalciteSchema schema =
-        new SqrlCalciteSchema(
-            CalciteSchema.createRootSchema(false, false).plus());
-    this.session = Session.createSession(error, engineSettings.getPipeline(),
-        settings.getDebugger(), schema);
-    this.parser = new SqrlParser();
-    this.resolve = new Resolve(rootDir);
-    Preconditions.checkState(rootDir.toFile().exists(), "Root dir does not exist");
-    this.rootDir = rootDir;
+  protected void initialize(IntegrationTestSettings settings, Path rootDir, Injector injector) {
+    super.initialize(settings, injector);
+
+    errors = injector.getInstance(ErrorCollector.class);
+    planner = injector.getInstance(SqrlQueryPlanner.class);
+    sqrlPlanner = injector.getInstance(SqrlPlan.class);
   }
 
   protected TableSource loadTable(NamePath path) {
-    ObjectLoaderImpl objectLoader = new ObjectLoaderImpl(new FileResourceResolver(rootDir), error);
-    return objectLoader.loadTable(path).getTable();
+    TableSourceNamespaceObject ns = (TableSourceNamespaceObject)injector.getInstance(ModuleLoader.class)
+        .getModule(path.popLast())
+        .get()
+        .getNamespaceObject(path.getLast())
+        .get();
+    return ns.getTable();
   }
 
-  @SneakyThrows
-  protected String loadScript(String name) {
-    Path path = rootDir.resolve(name);
-    return Files.readString(path);
+  protected Namespace plan(String query) {
+    return sqrlPlanner.plan(query);
   }
-
-  protected Namespace plan(String script) {
-    ErrorCollector scriptError = error.withFile("test.sqrl", script);
-    ScriptNode node = parser.parse(script, scriptError);
-    return resolve.planDag(node, scriptError, new FileResourceResolver(rootDir),
-        session);
-  }
-
 }

@@ -2,6 +2,7 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.name.Name;
 import com.datasqrl.plan.local.generate.NamespaceObject;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -12,7 +13,8 @@ public class SqrlDirectoryModule implements SqrlModule {
   List<NamespaceObject> nsObjects;
 
   public SqrlDirectoryModule(List<NamespaceObject> nsObjects) {
-    nsObjects.sort(Comparator.comparing(NamespaceObject::getName));
+    if (nsObjects instanceof ArrayList) //check for mutable lists to sort (for consistent tests and behavior)
+      nsObjects.sort(Comparator.comparing(NamespaceObject::getName));
     this.nsObjects = nsObjects;
   }
 

@@ -1,4 +1,0 @@
->>>errors
-[FATAL] Distinct on statement not valid
-in script:test.sqrl:
-

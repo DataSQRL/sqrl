@@ -3,13 +3,15 @@ package com.datasqrl.plan.local.generate;
 import static com.datasqrl.error.ErrorLabel.GENERIC;
 
 import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
 import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
@@ -21,8 +23,12 @@ import org.apache.calcite.sql.SqlNode;
 
 public class ImportStatementResolver extends AbstractStatementResolver {
 
-  public ImportStatementResolver(SystemContext systemContext) {
-    super(systemContext);
+  private final ModuleLoader moduleLoader;
+
+  protected ImportStatementResolver(ModuleLoader moduleLoader, ErrorCollector errors,
+      NameCanonicalizer nameCanonicalizer, SqrlQueryPlanner planner) {
+    super(errors, nameCanonicalizer, planner);
+    this.moduleLoader = moduleLoader;
   }
 
   public void resolve(ImportDefinition statement, Namespace ns) {
@@ -68,7 +74,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     SqlNode sqlNode = transpile(statement, ns);
 
     Preconditions.checkNotNull(sqlNode);
-    RelNode relNode = plan(sqlNode, ns);
+    RelNode relNode = plan(sqlNode);
 
     //if there is no timestamp alias, we call setTimestampColumn
     if (statement.getTimestampAlias().isEmpty()) {
@@ -78,7 +84,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
       Optional<SQRLTable> table = resolveTable(ns, tableName.toNamePath(), false);
       Name name1 = Name.system(name.names.get(0));
       Preconditions.checkState(table.isPresent(), "Could not find table during import");
-      table.ifPresent(t->t.addColumn(name1, relNode, true, ns.session.createRelBuilder(), ns.tableFactory));
+      table.ifPresent(t->t.addColumn(name1, relNode, true, planner.createRelBuilder()));
     }
   }
 
@@ -113,7 +119,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     return ((VirtualRelationalTable.Root) table.getVt()).getBase();
   }
   private SqrlModule getModule(NamePath path) {
-    return systemContext.getModuleLoader()
+    return moduleLoader
         .getModule(path.popLast())
         .orElseThrow(()-> new RuntimeException("Could not find module: " + path));
   }
@@ -124,7 +130,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
 
   private boolean loadAllNamespaceObjects(SqrlModule module, Namespace ns) {
     return module.getNamespaceObjects().stream()
-        .allMatch(ns::addNsObject);
+        .allMatch(obj -> ns.addNsObject(obj));
   }
 
   private Optional<NamespaceObject> getNamespaceObject(SqrlModule module, NamePath path) {

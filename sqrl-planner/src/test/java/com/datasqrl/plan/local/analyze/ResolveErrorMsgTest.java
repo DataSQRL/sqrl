@@ -48,7 +48,7 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void basicErrors() {
-    initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getInMemory(), (Path) null);
     generateInvalid("import",
         "IMPORT ecommerce-data.Customerrr");
     generateInvalid("export",
@@ -60,7 +60,7 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
   public void debugErrors() {
     initialize(IntegrationTestSettings.builder().debugger(
             DebuggerConfig.of(NamePath.of("missing"),null))
-        .build(), example.getRootPackageDirectory());
+        .build(), (Path) null);
     generateInvalid("wrong-sink",
         "IMPORT ecommerce-data.Customer",
         "Customer2 := SELECT * FROM Customer WHERE customerid > 0");
@@ -76,14 +76,7 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
       plan(script);
       fail("Should throw exception");
     } catch (Exception e) {
-      snapshot.addContent(ErrorPrinter.prettyPrint(error), caseName);
-//      e.printStackTrace();
+      snapshot.addContent(ErrorPrinter.prettyPrint(errors), caseName);
     }
-
-
   }
-
-
-
-
 }

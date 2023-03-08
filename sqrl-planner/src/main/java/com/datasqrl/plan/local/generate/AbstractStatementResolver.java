@@ -1,13 +1,13 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
-import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
 import com.datasqrl.schema.SQRLTable;
 import java.util.Optional;
 import java.util.function.Function;
@@ -22,14 +22,20 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 
 public abstract class AbstractStatementResolver {
 
-  protected final SystemContext systemContext;
+  ErrorCollector errors;
+  private final NameCanonicalizer nameCanonicalizer;
 
-  public AbstractStatementResolver(SystemContext systemContext) {
-    this.systemContext = systemContext;
+  SqrlQueryPlanner planner;
+
+  protected AbstractStatementResolver(ErrorCollector errors, NameCanonicalizer nameCanonicalizer,
+      SqrlQueryPlanner planner) {
+    this.errors = errors;
+    this.nameCanonicalizer = nameCanonicalizer;
+    this.planner = planner;
   }
 
   protected SqlNode transpile(SqrlStatement sqlNode, Namespace ns) {
-    Transpiler transpiler = new Transpiler(systemContext);
+    Transpiler transpiler = new Transpiler(errors);
     return transpiler.transpile(sqlNode, ns);
   }
 
@@ -37,7 +43,7 @@ public abstract class AbstractStatementResolver {
     SQRLTable table = getContext(ns, namePath)
         .orElseThrow(()->new RuntimeException("Could not find table"));
 
-    table.addColumn(namePath.getLast(), relNode, lockTimestamp, ns.session.createRelBuilder(), ns.tableFactory);
+    table.addColumn(namePath.getLast(), relNode, lockTimestamp, planner.createRelBuilder());
   }
 
   protected Optional<SQRLTable> getContext(Namespace ns, NamePath namePath) {
@@ -58,37 +64,21 @@ public abstract class AbstractStatementResolver {
     return table.flatMap(t -> t.walkTable(childPath));
   }
 
-  protected RelNode plan(SqlNode sqlNode, Namespace ns) {
-    Planner planner = new Planner(systemContext);
-    return planner.plan(sqlNode, ns);
+  //TODO: operator table is namespace dependent but not exposed
+  // in the planner in a coherent way
+  protected RelNode plan(SqlNode sqlNode) {
+    return planner.plan(sqlNode);
   }
-  protected AnnotatedLP convert(RelNode relNode, Namespace ns,
+
+  protected AnnotatedLP convert(SqrlQueryPlanner queryPlanner, RelNode relNode, Namespace ns,
       Function<AnnotatedLP, AnnotatedLP> postProcess, boolean isStream, Optional<SqlNodeList> hints) {
-    Converter planner = new Converter(systemContext);
-    AnnotatedLP annotatedLP = planner.convert(relNode, ns, isStream, hints);
+    Converter converter = new Converter();
+    AnnotatedLP annotatedLP = converter.convert(queryPlanner, relNode, ns, isStream, hints, errors);
     return postProcess.apply(annotatedLP);
   }
 
-  //  private void exportTable(SQRLTable table, NamePath sinkPath, Env env, ErrorCollector errors) {
-//    Preconditions.checkArgument(table.getVt().getRoot().getBase().getExecution().isWrite());
-//    Optional<TableSink> sink = env.getExporter().export(new LoaderContextImpl(env, env.namespace, new ResourceResolver(basePath), sinkPath), sinkPath);
-//    errors.checkFatal(sink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
-//        "Cannot resolve table sink: %s", sinkPath);
-//    RelBuilder relBuilder = env.createRelBuilder()
-//        .scan(table.getVt().getNameId());
-//    List<RexNode> selects = new ArrayList<>();
-//    List<String> fieldNames = new ArrayList<>();
-//    table.getVisibleColumns().stream().forEach(c -> {
-//      selects.add(relBuilder.field(c.getShadowedName().getCanonical()));
-//      fieldNames.add(c.getName().getDisplay());
-//    });
-//    relBuilder.project(selects, fieldNames);
-//    env.exports.add(new ResolvedExport(table.getVt(), relBuilder.build(), sink.get()));
-//  }
-//
-
   public NamePath toNamePath(SqlIdentifier identifier) {
-    return toNamePath(systemContext.getNameCanonicalizer(), identifier);
+    return toNamePath(nameCanonicalizer, identifier);
   }
 
   public static NamePath toNamePath(NameCanonicalizer nameCanonicalizer, SqlIdentifier identifier) {

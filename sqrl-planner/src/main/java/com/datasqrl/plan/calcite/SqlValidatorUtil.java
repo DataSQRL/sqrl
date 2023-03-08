@@ -5,20 +5,18 @@ package com.datasqrl.plan.calcite;
 
 import static com.datasqrl.plan.calcite.SqrlPlannerConfigFactory.sqlValidatorConfig;
 
-import com.datasqrl.SqrlCalciteCatalogReader;
 import java.util.List;
 import java.util.Properties;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.config.CalciteConnectionProperty;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
 public class SqlValidatorUtil {
 
-  public static SqlValidator createSqlValidator(SqrlCalciteSchema schema,
+  public static SqlValidator createSqlValidator(SqrlSchema schema,
       SqlOperatorTable operatorTable) {
     Properties p = new Properties();
     p.put(CalciteConnectionProperty.CASE_SENSITIVE.name(), false);

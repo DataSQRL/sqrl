@@ -39,6 +39,14 @@ public abstract class SharedConfiguration implements Serializable {
   @Valid
   protected FormatConfiguration format;
 
+  public SharedConfiguration(@NonNull ExternalDataType type,
+      @NonNull CanonicalizerConfiguration canonicalizer, @NonNull String charset,
+      FormatConfiguration format) {
+    this.type = type;
+    this.canonicalizer = canonicalizer;
+    this.charset = charset;
+    this.format = format;
+  }
 
   @JsonIgnore
   public NameCanonicalizer getNameCanonicalizer() {

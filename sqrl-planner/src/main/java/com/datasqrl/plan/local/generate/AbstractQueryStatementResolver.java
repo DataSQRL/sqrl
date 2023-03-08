@@ -1,7 +1,9 @@
 package com.datasqrl.plan.local.generate;
 
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
-import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
+import com.datasqrl.plan.calcite.table.CalciteTableFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -14,21 +16,24 @@ import org.apache.calcite.tools.RelBuilder;
 
 public abstract class AbstractQueryStatementResolver extends AbstractStatementResolver {
 
-  public AbstractQueryStatementResolver(SystemContext systemContext) {
-    super(systemContext);
+
+  private final CalciteTableFactory tableFactory;
+
+  protected AbstractQueryStatementResolver(ErrorCollector errors,
+      NameCanonicalizer nameCanonicalizer, SqrlQueryPlanner planner, CalciteTableFactory tableFactory) {
+    super(errors, nameCanonicalizer, planner);
+    this.tableFactory = tableFactory;
   }
 
   public void resolve(Assignment statement, Namespace ns) {
     SqlNode sqlNode = transpile(statement, ns);
-    RelNode relNode = plan(sqlNode, ns);
+    RelNode relNode = plan(sqlNode);
 
-    AnnotatedLP prel = convert(relNode, ns, getPostProcessor(ns, relNode), statement instanceof StreamAssignment, statement.getHints());
-
-    NsTableFactory tableFactory = new NsTableFactory(ns.tableFactory);
+    AnnotatedLP prel = convert(planner, relNode, ns, getPostProcessor(ns, relNode), statement instanceof StreamAssignment, statement.getHints());
 
     Optional<SubscriptionType> type =
         Optional.of(statement).filter(f->f instanceof StreamAssignment).map(f->((StreamAssignment)f).getType());
-    NamespaceObject table = tableFactory.createTable(ns, statement.getNamePath(), prel, type, getContext(ns, statement.getNamePath()));
+    NamespaceObject table = tableFactory.createTable(planner, ns, statement.getNamePath(), prel, type, getContext(ns, statement.getNamePath()));
 
     ns.addNsObject(table);
   }

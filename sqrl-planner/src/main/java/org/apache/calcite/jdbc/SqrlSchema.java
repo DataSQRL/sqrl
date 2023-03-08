@@ -18,6 +18,7 @@ package org.apache.calcite.jdbc;
 
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
+import com.google.inject.Singleton;
 import org.apache.calcite.schema.Schema;
 
 import java.util.HashSet;
@@ -26,13 +27,14 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-public class SqrlCalciteSchema extends SimpleCalciteSchema {
+@Singleton
+public class SqrlSchema extends SimpleCalciteSchema {
 
-  public SqrlCalciteSchema() {
+  public SqrlSchema() {
     this(CalciteSchema.createRootSchema(false, false).plus());
   }
 
-  public SqrlCalciteSchema(Schema schema) {
+  public SqrlSchema(Schema schema) {
     super(null, schema, "");
   }
 

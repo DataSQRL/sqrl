@@ -14,7 +14,7 @@ import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.local.generate.Session;
+import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.TestScript;
 import java.nio.file.Files;
@@ -44,23 +44,23 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     String schemaStr = Files.readString(schemaPath);
     ns = plan(script.getScript());
     Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(
-        session,
+        planner,
         schemaStr);
     return Pair.of(result.getLeft(), result.getRight());
   }
 
   private Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> inferSchemaModelQueries(
-      Session session, String schemaStr) {
+      SqrlQueryPlanner planner, String schemaStr) {
     //Inference
-    SchemaInference inference = new SchemaInference(schemaStr, session.getSchema(),
-        session.createRelBuilder());
+    SchemaInference inference = new SchemaInference(schemaStr, planner.getSchema(),
+        planner.createRelBuilder());
     InferredSchema inferredSchema = inference.accept();
 
     //Build queries
     PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(schemaStr,
-        session.getSchema(),
-        session.createRelBuilder(),
-        session,
+        planner.getSchema(),
+        planner.createRelBuilder(),
+        planner,
         ns.getOperatorTable());
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
@@ -69,21 +69,21 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     return Triple.of(inferredSchema, root, queries);
   }
 
-  public Pair<RootGraphqlModel, List<APIQuery>> getModelAndQueries(Session session,
+  public Pair<RootGraphqlModel, List<APIQuery>> getModelAndQueries(SqrlQueryPlanner planner,
       String schemaStr) {
     Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(
-        session, schemaStr);
+        planner, schemaStr);
     return Pair.of(result.getMiddle(), result.getRight());
   }
 
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
     List<APIQuery> queries = inferSchemaAndQueries(script, schemaPath).getValue();
     /// plan dag
-    DAGPlanner dagPlanner = new DAGPlanner(ns.createRelBuilder(), session.getRelPlanner(),
-        session.getPipeline());
-    OptimizedDAG dag = dagPlanner.plan(session.getSchema(), queries, ns.getExports(), ns.getJars());
+    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
+        ns.getPipeline());
+    OptimizedDAG dag = dagPlanner.plan(ns.getSchema(), queries, ns.getExports(), ns.getJars());
 
-    IndexSelector indexSelector = new IndexSelector(session.getRelPlanner(),
+    IndexSelector indexSelector = new IndexSelector(planner.getPlanner(),
         IndexSelectorConfigByDialect.of("POSTGRES"));
     List<IndexCall> allIndexes = new ArrayList<>();
     for (OptimizedDAG.ReadQuery query : dag.getReadQueries()) {
