@@ -55,7 +55,7 @@ public class QueryBuilder {
       List<RexNode> clonedOperands = this.visitList(call.operands, update);
       SqlOperator operator = call.getOperator();
       RelDataType datatype = call.getType();
-      Optional<SqrlFunction> sqrlFunction = SqrlFunction.lookupTimeFunction(operator);
+      Optional<SqrlFunction> sqrlFunction = StdTimeLibraryImpl.lookupTimeFunction(operator);
       if (sqrlFunction.isPresent()) {
         update[0] = true;
         if (sqrlFunction.get().equals(StdTimeLibraryImpl.NOW)) {

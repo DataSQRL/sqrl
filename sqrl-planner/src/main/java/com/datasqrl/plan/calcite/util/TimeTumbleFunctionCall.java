@@ -3,8 +3,8 @@
  */
 package com.datasqrl.plan.calcite.util;
 
-import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
+import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.google.common.base.Preconditions;
 import lombok.Value;
 import org.apache.calcite.rex.*;
@@ -29,7 +29,7 @@ public class TimeTumbleFunctionCall {
           return Optional.empty();
       }
     RexCall call = (RexCall) rexNode;
-    Optional<SqrlTimeTumbleFunction> fnc = SqrlFunction.lookupTimeFunction(call.getOperator())
+    Optional<SqrlTimeTumbleFunction> fnc = StdTimeLibraryImpl.lookupTimeFunction(call.getOperator())
         .filter(o -> o instanceof SqrlTimeTumbleFunction)
         .map(o -> (SqrlTimeTumbleFunction) o);
       if (fnc.isEmpty()) {

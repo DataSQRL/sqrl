@@ -101,7 +101,7 @@ public class ExecutionAnalysis {
 
     @Override
     public Void visitCall(RexCall call) {
-      Optional<SqrlFunction> sqrlFunction = SqrlFunction.lookupTimeFunction(call.getOperator());
+      Optional<SqrlFunction> sqrlFunction = StdTimeLibraryImpl.lookupTimeFunction(call.getOperator());
       if (sqrlFunction.filter(func -> func instanceof StdTimeLibraryImpl.NOW).isPresent()) {
         capabilities.add(EngineCapability.NOW);
       } else if (sqrlFunction.filter(func -> func instanceof TimestampPreservingFunction)

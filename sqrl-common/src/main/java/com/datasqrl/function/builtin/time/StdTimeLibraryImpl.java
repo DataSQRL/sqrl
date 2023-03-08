@@ -6,13 +6,12 @@ package com.datasqrl.function.builtin.time;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
+import com.datasqrl.function.builtin.AbstractFunctionModule;
 import com.datasqrl.function.builtin.FunctionUtil;
-import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.name.Name;
-import com.datasqrl.name.NamePath;
-import com.datasqrl.plan.calcite.TypeFactory;
-import com.datasqrl.plan.local.generate.FlinkUdfNsObject;
+import com.datasqrl.plan.local.generate.FunctionNamespaceObject;
 import com.datasqrl.plan.local.generate.NamespaceObject;
+import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -28,10 +27,9 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.commons.collections.ListUtils;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
@@ -45,8 +43,7 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategy;
 import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
-@Getter
-public class StdTimeLibraryImpl implements SqrlModule {
+public class StdTimeLibraryImpl extends AbstractFunctionModule {
 
   //
   public static final NOW NOW = new NOW();
@@ -55,7 +52,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
   public static final TimestampToEpoch TIMESTAMP_TO_EPOCH = new TimestampToEpoch();
   public static final TimestampToEpochMilli TIMESTAMP_TO_EPOCH_MILLI = new TimestampToEpochMilli();
   public static final ParseTimestamp STRING_TO_TIMESTAMP = new ParseTimestamp();
-  public static final FormatTimestamp TIMESTAMP_TO_STRING = new FormatTimestamp();
+  public static final TimestampToString TIMESTAMP_TO_STRING = new TimestampToString();
   public static final AtZone AT_ZONE = new AtZone();
   public static final EndOfSecond END_OF_SECOND = new EndOfSecond();
   public static final EndOfMinute END_OF_MINUTE = new EndOfMinute();
@@ -64,28 +61,9 @@ public class StdTimeLibraryImpl implements SqrlModule {
   public static final EndOfWeek END_OF_WEEK = new EndOfWeek();
   public static final EndOfMonth END_OF_MONTH = new EndOfMonth();
   public static final EndOfYear END_OF_YEAR = new EndOfYear();
-  public static final GetSecond GET_SECOND = new GetSecond();
-  public static final GetMinute GET_MINUTE = new GetMinute();
-  public static final GetHour GET_HOUR = new GetHour();
-  public static final GetDayOfWeek GET_DAY_OF_WEEK = new GetDayOfWeek();
-  public static final GetDayOfMonth GET_DAY_OF_MONTH = new GetDayOfMonth();
-  public static final GetDayOfYear GET_DAY_OF_YEAR = new GetDayOfYear();
-  public static final GetMonth GET_MONTH = new GetMonth();
-  public static final GetYear GET_YEAR = new GetYear();
 
-  static RelDataTypeFactory sqrlTypeFactory = TypeFactory.getTypeFactory();
 
-  //  @Override
-  public NamePath getPath() {
-    return NamePath.of("time");
-  }
-
-  public SqlOperator lookupFunction(String name) {
-
-    return null;
-  }
-
-  public final List<ScalarFunction> functions = List.of(
+  public static final List<SqrlFunction> SQRL_FUNCTIONS = List.of(
 //      NOW,
       EPOCH_TO_TIMESTAMP,
       EPOCH_MILLI_TO_TIMESTAMP,
@@ -99,173 +77,60 @@ public class StdTimeLibraryImpl implements SqrlModule {
       END_OF_DAY,
       END_OF_WEEK,
       END_OF_MONTH,
-      END_OF_YEAR,
-      GET_SECOND,
-      GET_MINUTE,
-      GET_HOUR,
-      GET_DAY_OF_WEEK,
-      GET_DAY_OF_MONTH,
-      GET_DAY_OF_YEAR,
-      GET_MONTH,
-      GET_YEAR
+      END_OF_YEAR
   );
-  List<NamespaceObject> nsObjects = getFunctions().stream()
-      .map(f -> new FlinkUdfNsObject(FunctionUtil.getFunctionNameFromClass(f.getClass()),
-                                     f, Optional.empty()))
-      .collect(Collectors.toList());
 
-  @Override
-  public Optional<NamespaceObject> getNamespaceObject(Name name) {
-    return getNamespaceObjects().stream()
-        .filter(f -> f.getName().equals(name))
-        .findAny();
+  private static List<NamespaceObject> SQL_FUNCTIONS = List.of(
+      FunctionUtil.createFunctionFromFlink("second"),
+      FunctionUtil.createFunctionFromFlink("minute"),
+      FunctionUtil.createFunctionFromFlink("hour"),
+      FunctionUtil.createFunctionFromFlink("dayOfWeek"),
+      FunctionUtil.createFunctionFromFlink("dayOfMonth"),
+      FunctionUtil.createFunctionFromFlink("dayOfYear"),
+      FunctionUtil.createFunctionFromFlink("month"),
+      FunctionUtil.createFunctionFromFlink("week"),
+      FunctionUtil.createFunctionFromFlink("quarter"),
+      FunctionUtil.createFunctionFromFlink("year")
+  );
+
+
+  public StdTimeLibraryImpl() {
+    super(ListUtils.union(SQRL_FUNCTIONS.stream().map(FunctionUtil::createNsObject).collect(Collectors.toList()),SQL_FUNCTIONS));
   }
 
-  @Override
-  public List<NamespaceObject> getNamespaceObjects() {
-    return nsObjects;
-  }
 
-  public static class GetSecond extends ScalarFunction implements SqrlFunction {
+  /* ========
+      Function Class Implementations
+     ========
+   */
 
-    public int eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getSecond();
-    }
+  private static final Instant DEFAULT_DOC_TIMESTAMP = Instant.parse("2023-03-12T18:23:34.083Z");
 
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-//
-//    @Override
-//    public SqlReturnTypeInference getReturnTypeInference() {
-//      return nullPreservingReturnType(sqrlTypeFactory.createSqlType(SqlTypeName.INTEGER));
-//    }
-//
-//    @Override
-//    public SqlOperandTypeInference getOperandTypeInference() {
-//      return new SqrlExplicitOperandTypeInference(
-//          List.of(sqrlTypeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
-//    }
-//
-//    @Override
-//    public SqlOperandTypeChecker getOperandTypeChecker() {
-//      return OperandTypes.COMPARABLE_ORDERED;
-//    }
-  }
+  private interface TimeWindowBucketFunctionEval {
 
-  public static class GetMinute extends ScalarFunction implements SqrlFunction {
-
-    public int eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getMinute();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
-//    @Override
-//    public SqlReturnTypeInference getReturnTypeInference() {
-//      return nullPreservingReturnType(sqrlTypeFactory.createSqlType(SqlTypeName.INTEGER));
-//    }
-//
-//    @Override
-//    public SqlOperandTypeInference getOperandTypeInference() {
-//      return new SqrlExplicitOperandTypeInference(
-//          List.of(sqrlTypeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3)));
-//    }
-//
-//    @Override
-//    public SqlOperandTypeChecker getOperandTypeChecker() {
-//      return OperandTypes.COMPARABLE_ORDERED;
-//    }
-  }
-
-  public static class GetHour extends ScalarFunction implements SqrlFunction {
-
-    public int eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getHour();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-  }
-
-  public static class GetDayOfWeek extends ScalarFunction implements SqrlFunction {
-
-    public int eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfWeek().getValue();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
+    Instant eval(Instant instant);
 
   }
 
-  public static class GetDayOfMonth extends ScalarFunction implements SqrlFunction {
-
-    public int eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfMonth();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
-  }
-
-  public static class GetDayOfYear extends ScalarFunction implements SqrlFunction {
-
-    public int eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getDayOfYear();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
-  }
-
-  public static class GetMonth extends ScalarFunction implements SqrlFunction {
-
-    public int eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getMonthValue();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
-  }
-
-  public static class GetYear extends ScalarFunction implements SqrlFunction {
-
-    public int eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).getYear();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.INT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
-  }
-
-  public abstract static class RoundingFunction extends ScalarFunction implements SqrlFunction,
-      SqrlTimeTumbleFunction {
+  public abstract static class TimeWindowBucketFunction extends ScalarFunction implements SqrlFunction,
+      SqrlTimeTumbleFunction, TimeWindowBucketFunctionEval {
 
     protected final ChronoUnit timeUnit;
 
-    public RoundingFunction(ChronoUnit timeUnit) {
+    public TimeWindowBucketFunction(ChronoUnit timeUnit) {
       this.timeUnit = timeUnit;
+    }
+
+    @Override
+    public String getDocumentation() {
+      Instant DEFAULT_DOC_TIMESTAMP = Instant.parse("2023-03-12T18:23:34.083Z");
+      String functionCall = String.format("%s(%s(%s))",
+          getFunctionName().getDisplay(),
+          STRING_TO_TIMESTAMP.getFunctionName().getDisplay(),
+          DEFAULT_DOC_TIMESTAMP.toString());
+      String result = this.eval(DEFAULT_DOC_TIMESTAMP).toString();
+      return String.format("Time window function that returns the end of %s for the timestamp argument.<br />E.g. `%s` returns the timestamp `%s`",
+          StringUtil.removeFromEnd(timeUnit.toString().toLowerCase(),"s"), functionCall, result);
     }
 
     @Override
@@ -284,7 +149,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
   }
 
-  public static class EndOfSecond extends RoundingFunction {
+  public static class EndOfSecond extends TimeWindowBucketFunction {
 
     public EndOfSecond() {
       super(ChronoUnit.SECONDS);
@@ -304,7 +169,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
   }
 
-  public static class EndOfMinute extends RoundingFunction {
+  public static class EndOfMinute extends TimeWindowBucketFunction {
 
     public EndOfMinute() {
       super(ChronoUnit.MINUTES);
@@ -324,7 +189,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
   }
 
-  public static class EndOfHour extends RoundingFunction {
+  public static class EndOfHour extends TimeWindowBucketFunction {
 
     public EndOfHour() {
       super(ChronoUnit.HOURS);
@@ -344,7 +209,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
   }
 
-  public static class EndOfDay extends RoundingFunction {
+  public static class EndOfDay extends TimeWindowBucketFunction {
 
     public EndOfDay() {
       super(ChronoUnit.DAYS);
@@ -365,7 +230,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
   }
 
-  public static class EndOfWeek extends RoundingFunction {
+  public static class EndOfWeek extends TimeWindowBucketFunction {
 
     public EndOfWeek() {
       super(ChronoUnit.WEEKS);
@@ -389,7 +254,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
   }
 
-  public static class EndOfMonth extends RoundingFunction {
+  public static class EndOfMonth extends TimeWindowBucketFunction {
 
     public EndOfMonth() {
       super(ChronoUnit.MONTHS);
@@ -411,7 +276,7 @@ public class StdTimeLibraryImpl implements SqrlModule {
 
   }
 
-  public static class EndOfYear extends RoundingFunction {
+  public static class EndOfYear extends TimeWindowBucketFunction {
 
     public EndOfYear() {
       super(ChronoUnit.YEARS);
@@ -456,9 +321,13 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
 
+    @Override
+    public String getDocumentation() {
+      return String.format("Returns the timestamp at the given timezone.");
+    }
   }
 
-  public static class FormatTimestamp extends ScalarFunction implements SqrlFunction {
+  public static class TimestampToString extends ScalarFunction implements SqrlFunction {
 
     public String eval(Instant instant) {
       return instant.toString();
@@ -470,6 +339,10 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
 
+    @Override
+    public String getDocumentation() {
+      return String.format("Converts the timestamp to an ISO timestamp string");
+    }
   }
 
   public static class ParseTimestamp extends ScalarFunction implements SqrlFunction {
@@ -496,6 +369,10 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
 
 
+    @Override
+    public String getDocumentation() {
+      return String.format("Parses a timestamp from an ISO timestamp string.");
+    }
   }
 
   public static InputTypeStrategy stringToTimestampInputTypeStrategy() {
@@ -557,6 +434,18 @@ public class StdTimeLibraryImpl implements SqrlModule {
       return basicNullInference(DataTypes.BIGINT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
+    @Override
+    public String getDocumentation() {
+      Instant DEFAULT_DOC_TIMESTAMP = Instant.parse("2023-03-12T18:23:34.083Z");
+      String functionCall = String.format("%s(%s(%s))",
+          getFunctionName().getDisplay(),
+          STRING_TO_TIMESTAMP.getFunctionName().getDisplay(),
+          DEFAULT_DOC_TIMESTAMP.toString());
+      String result = this.eval(DEFAULT_DOC_TIMESTAMP).toString();
+      return String.format("Returns the %s since epoch for the given timestamp.<br />E.g. `%s` returns the number `%s`",
+          isMilli?"milliseconds":"seconds",
+          functionCall, result);
+    }
 
   }
 
@@ -574,11 +463,16 @@ public class StdTimeLibraryImpl implements SqrlModule {
     }
   }
 
-  public static class EpochToTimestamp extends ScalarFunction implements SqrlFunction,
-      TimestampPreservingFunction {
+
+  @AllArgsConstructor
+  public static class AbstractEpochToTimestamp extends ScalarFunction implements SqrlFunction {
+
+    boolean isMilli;
+
 
     public Instant eval(Long l) {
-      return Instant.ofEpochSecond(l.longValue());
+      if (isMilli) return Instant.ofEpochMilli(l.longValue());
+      else return Instant.ofEpochSecond(l.longValue());
     }
 
 
@@ -586,49 +480,35 @@ public class StdTimeLibraryImpl implements SqrlModule {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.BIGINT());
     }
-  }
-
-  public static class EpochMilliToTimestamp extends ScalarFunction implements SqrlFunction,
-          TimestampPreservingFunction {
-
-    public Instant eval(Long l) {
-      return Instant.ofEpochMilli(l.longValue());
-    }
 
     @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.BIGINT());
+    public String getDocumentation() {
+      Instant inst = DEFAULT_DOC_TIMESTAMP.truncatedTo(ChronoUnit.SECONDS);
+      long epoch = inst.toEpochMilli()/(isMilli?1:1000);
+      String functionCall = String.format("%s(%s)",
+          getFunctionName().getDisplay(), epoch);
+      String result = this.eval(epoch).toString();
+      return String.format("Converts the epoch timestamp in %s to the corresponding timestamp.<br />E.g. `%s` returns the timestamp `%s`",
+          isMilli?"milliseconds":"seconds",
+          functionCall, result);
     }
+
   }
 
-//
-//  public class SqrlScalarTimeFunction extends SqlFunction {
-//
-//    private final SqlTypeName typeName;
-//
-//    protected SqrlScalarTimeFunction(String name, SqlTypeName typeName) {
-//      super(name, SqlKind.OTHER_FUNCTION, (SqlReturnTypeInference)null, (SqlOperandTypeInference)null,
-//          OperandTypes.or(new SqlSingleOperandTypeChecker[]{OperandTypes.POSITIVE_INTEGER_LITERAL, OperandTypes.NILADIC}),
-//          SqlFunctionCategory.TIMEDATE);
-//      this.typeName = typeName;
-//    }
-//  }
-//
-//  @AllArgsConstructor
-//  public class Sqrl2FlinkFunctionMapper {
-//    RelOptCluster cluster;
-//
-//    public BridgingSqlFunction map(SqlFunction fnc) {
-//      UserDefinedFunction udf = UserDefinedFunctionHelper.instantiateFunction(fnc.getClass());
-//
-//      ContextResolvedFunction contextResolvedFunction = ContextResolvedFunction.temporary(
-//          FunctionIdentifier.of(fnc.getName()),
-//          udf);
-//
-//      return BridgingSqlFunction.of(cluster, contextResolvedFunction);
-//    }
-//
-//  }
+  public static class EpochToTimestamp extends AbstractEpochToTimestamp {
+
+    public EpochToTimestamp() {
+      super(false);
+    }
+
+  }
+
+  public static class EpochMilliToTimestamp extends AbstractEpochToTimestamp {
+
+    public EpochMilliToTimestamp() {
+      super(true);
+    }
+  }
 
   public static class NOW extends ScalarFunction implements SqrlFunction {
 
@@ -636,6 +516,11 @@ public class StdTimeLibraryImpl implements SqrlModule {
       return Instant.now();
     }
 
+
+    @Override
+    public String getDocumentation() {
+      return "Special timestamp function that evaluates to the current time on the timeline.";
+    }
   }
 
 
@@ -671,6 +556,27 @@ public class StdTimeLibraryImpl implements SqrlModule {
     } else {
       return callContext.getArgumentDataTypes().get(0);
     }
+  }
+
+  public static final StdTimeLibraryImpl stdTimeLibrary = new StdTimeLibraryImpl();
+
+  public static Optional<SqrlFunction> lookupTimeFunction(SqlOperator operator) {
+    if (operator.getName().equalsIgnoreCase("now")) {
+      return Optional.of(NOW);
+    }
+    //lookup time fnc
+    Optional<NamespaceObject> ns = stdTimeLibrary.getNamespaceObject(Name.system(operator.getName()));
+    if (ns.isPresent()) {
+      return ns.filter(n->n instanceof FunctionNamespaceObject)
+          .map(n->((FunctionNamespaceObject)n).getFunction())
+          .filter(f->f instanceof SqrlFunction)
+          .map(f->(SqrlFunction)f);
+    }
+
+    if (operator instanceof SqrlFunction) {
+      return Optional.of((SqrlFunction)operator);
+    }
+    return Optional.empty();
   }
 
 }

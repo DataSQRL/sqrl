@@ -4,10 +4,9 @@
 package com.datasqrl.plan.calcite.util;
 
 import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.plan.calcite.hints.DedupHint;
 import com.datasqrl.plan.calcite.hints.SqrlHint;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,7 +21,6 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelCollation;
-import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalAggregate;
@@ -131,7 +129,7 @@ public class SqrlRexUtil {
     return new RexFinder<Void>() {
       @Override
       public Void visitCall(RexCall call) {
-        if (SqrlFunction.lookupTimeFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
+        if (StdTimeLibraryImpl.lookupTimeFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
           throw Util.FoundOne.NULL;
         }
         return super.visitCall(call);

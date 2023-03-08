@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.calcite.util;
 
-import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.google.common.collect.Iterables;
 import org.apache.calcite.rex.RexBuilder;
@@ -94,7 +93,7 @@ public class TimePredicateAnalyzer {
     }
     if (rexNode instanceof RexCall) {
       RexCall call = (RexCall) rexNode;
-      if (SqrlFunction.lookupTimeFunction(call.getOperator())
+      if (StdTimeLibraryImpl.lookupTimeFunction(call.getOperator())
           .filter(op -> op instanceof StdTimeLibraryImpl.NOW).isPresent()) {
         return Pair.of(Set.of(TimePredicate.NOW_INDEX),
             rexBuilder.makeZeroLiteral(rexNode.getType()));

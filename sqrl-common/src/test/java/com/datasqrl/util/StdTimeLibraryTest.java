@@ -40,17 +40,6 @@ public class StdTimeLibraryTest {
 //    assertEquals(t("2023-03-08T13:23:34.083704-05:00"), AT_ZONE.eval(TIME1, "GMT-8"));
   }
 
-  @Test
-  public void testTimeInspection() {
-    assertEquals(34, GET_SECOND.eval(TIME1));
-    assertEquals(23, GET_MINUTE.eval(TIME1));
-    assertEquals(18, GET_HOUR.eval(TIME1));
-    assertEquals(3, GET_DAY_OF_WEEK.eval(TIME1));
-    assertEquals(8, GET_DAY_OF_MONTH.eval(TIME1));
-    assertEquals(67, GET_DAY_OF_YEAR.eval(TIME1));
-    assertEquals(3, GET_MONTH.eval(TIME1));
-    assertEquals(2023, GET_YEAR.eval(TIME1));
-  }
 
 
 
