@@ -3,6 +3,8 @@
  */
 package com.datasqrl.plan.local.transpile;
 
+import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.local.generate.SqlNodeFactory;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
 import java.util.ArrayList;
@@ -107,6 +109,7 @@ public class QualifyIdentifiers extends SqlShuttle
     select.setFrom(select.getFrom().accept(this));
 
     List<SqlNode> expandedSelect = analysis.expandedSelect.get(select);
+    expandedSelect = aliasAllFields(expandedSelect);
     SqlNodeList nodeList = new SqlNodeList(expandedSelect,
         select.getSelectList().getParserPosition());
     select.setSelectList((SqlNodeList) expr(nodeList));
@@ -127,6 +130,28 @@ public class QualifyIdentifiers extends SqlShuttle
     }
 
     return select;
+  }
+
+  private List<SqlNode> aliasAllFields(List<SqlNode> expandedSelect) {
+    return expandedSelect.stream()
+        .map(n -> aliasNode(n))
+        .collect(Collectors.toList());
+  }
+
+  private SqlNode aliasNode(SqlNode n) {
+    if (n.getKind() == SqlKind.AS) {
+      return n;
+    }
+
+    if (n instanceof SqlIdentifier) {
+      SqlIdentifier identifier = (SqlIdentifier) n;
+      return SqlStdOperatorTable.AS.createCall(n.getParserPosition(),
+          n,
+              new SqlIdentifier(identifier.names.get(identifier.names.size() - 1),
+                  n.getParserPosition()));
+    }
+    throw new SqrlAstException(ErrorLabel.GENERIC, n.getParserPosition(),
+        "Cannot derive column name. Specify one using the AS keyword.");
   }
 
   private SqlNodeList replaceGroupBy(SqlNodeList group) {

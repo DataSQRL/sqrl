@@ -21,7 +21,8 @@ public class SqlTransformer {
   public SqlNode transform(SqlNode node) {
     Analysis currentAnalysis = null;
     for (Function<Analysis, SqlShuttle> transform : shuttles) {
-      node = node.accept(transform.apply(currentAnalysis));
+      SqlShuttle shuttle = transform.apply(currentAnalysis);
+      node = node.accept(shuttle);
       currentAnalysis = analyzer.apply(node);
     }
     return node;

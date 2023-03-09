@@ -40,7 +40,6 @@ public class ReflectionToTableSource {
     List<TimeAnnotatedRecord<String>> records = new ArrayList<>();
     for (Object obj : data) {
       String record = mapper.writeValueAsString(obj);
-      System.out.println(record);
       records.add(new TimeAnnotatedRecord<>(record));
     }
 

@@ -98,16 +98,17 @@ public class Transpiler {
     } else if (query instanceof JoinAssignment) {
       return ((JoinAssignment) query).getQuery();
     } else if (query instanceof ExpressionAssignment) {
-      SqlNode sqlNode = ((ExpressionAssignment) query).getExpression();
+      ExpressionAssignment expr = (ExpressionAssignment) query;
+      SqlNode sqlNode = expr.getExpression();
       if (context.isEmpty()) {
         throw new SqrlAstException(ErrorCode.MISSING_DEST_TABLE, query.getParserPosition(),
             String.format("Could not find table: %s", query.getNamePath()));
       }
-      return transformExpressionToQuery(sqlNode);
+      return transformExpressionToQuery(sqlNode, Optional.of(expr.getNamePath().getLast()));
     } else if (query instanceof ImportDefinition) {
       ConvertTimestampToExpression tsToQuery = new ConvertTimestampToExpression();
       SqlNode ts = tsToQuery.convert((ImportDefinition)query);
-      return transformExpressionToQuery(ts);
+      return transformExpressionToQuery(ts, Optional.empty());
     }
     throw new IllegalArgumentException("Unsupported query type: " + query.getClass().getSimpleName());
   }
@@ -182,10 +183,11 @@ public class Transpiler {
     return sqrlValidator.isAggregate(node);
   }
 
-  private SqlNode transformExpressionToQuery(SqlNode sqlNode) {
+  private SqlNode transformExpressionToQuery(SqlNode sqlNode, Optional<Name> name) {
     SqlNodeFactory factory = new SqlNodeFactory(sqlNode.getParserPosition());
     SqlSelect select = factory.createSqlSelect();
-    select.setSelectList(factory.list(sqlNode));
+    select.setSelectList(name.map(n->factory.list(factory.callAs(sqlNode, n.getDisplay())))
+        .orElseGet(()->factory.list(sqlNode)));
     return select;
   }
 }

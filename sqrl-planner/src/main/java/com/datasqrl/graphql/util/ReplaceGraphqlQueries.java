@@ -58,8 +58,12 @@ public class ReplaceGraphqlQueries implements
     SqlWriterConfig config = RelToSql.transform.apply(SqlPrettyWriter.config());
     DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
     String query = convertDynamicParams(writer, template.getRelNode());
-    Preconditions.checkState(
-        Collections.max(writer.dynamicParameters) < apiQueryBase.getParameters().size());
+    if (writer.dynamicParameters.size() > 0) {
+      Preconditions.checkState(
+          Collections.max(writer.dynamicParameters) < apiQueryBase.getParameters().size());
+    } else {
+      Preconditions.checkState(apiQueryBase.getParameters().size() == 0);
+    }
     return new PagedPgQuery(
         query,
         apiQueryBase.getParameters());

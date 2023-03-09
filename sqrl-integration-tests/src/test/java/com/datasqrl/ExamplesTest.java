@@ -79,8 +79,6 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
       System.err.println(ErrorPrinter.prettyPrint(errors));
       throw e;
     }
-
-    System.out.println(script);
   }
 
   @Disabled

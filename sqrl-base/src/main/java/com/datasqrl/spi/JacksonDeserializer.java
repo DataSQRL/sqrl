@@ -42,7 +42,7 @@ public class JacksonDeserializer<T> extends StdDeserializer<T> {
 
     ServiceLoader<T> serviceLoader = ServiceLoader.load(superType);
     for (T subType : serviceLoader) {
-      if (typeFunction.apply(subType).equals(type)) {
+      if (typeFunction.apply(subType) != null && typeFunction.apply(subType).equals(type)) {
         return (T) mapper.treeToValue(node, subType.getClass());
       }
     }

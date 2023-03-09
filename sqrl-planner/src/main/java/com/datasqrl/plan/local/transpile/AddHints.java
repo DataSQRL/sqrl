@@ -71,7 +71,7 @@ public class AddHints {
     //Rearrange distinct on to be the first few columns
     SqlHint hint = getDistinctOnHint(select);
     List<SqlNode> operands = extractHintOperands(hint);
-    List<SqlNode> newSelectList = rearrangeDistinctOnFirstFewColumns(select, scope, operands);
+    List<SqlNode> newSelectList = rearrangeDistinctOnFirstFewColumns(operands);
 
     List<SqlNode> withoutDuplicates = removeDuplicates(newSelectList, select, scope);
     List<SqlNode> finalSelectList = mergeLists(newSelectList, withoutDuplicates);
@@ -97,12 +97,10 @@ public class AddHints {
   /**
    * Rearranges the distinct on columns to be the first few columns.
    *
-   * @param select the select node
-   * @param scope the current scope
    * @param operands the distinct on columns
    * @return the rearranged select list
    */
-  private List<SqlNode> rearrangeDistinctOnFirstFewColumns(SqlSelect select, SqlValidatorScope scope, List<SqlNode> operands) {
+  private List<SqlNode> rearrangeDistinctOnFirstFewColumns(List<SqlNode> operands) {
     List<SqlNode> newSelectList = new ArrayList<>();
     for (int i = 0; i < operands.size(); i++) {
       SqlNode operand = operands.get(i);
@@ -138,7 +136,16 @@ public class AddHints {
       List<SqlIdentifier> fullyQualifiedIdentifiers, SqlValidatorScope scope) {
     List<SqlNode> newNodes = new ArrayList<>();
     for (SqlNode item : items) {
-      if (item instanceof SqlIdentifier) {
+      if (item instanceof SqlCall) {
+        SqlCall call = (SqlCall) item;
+        SqlIdentifier alias = (SqlIdentifier) call.getOperandList().get(1);
+        Optional<SqlIdentifier> found = fullyQualifiedIdentifiers.stream()
+            .filter(i -> fullyQualifyIdentifier(alias, scope).equalsDeep(i, Litmus.IGNORE))
+            .findAny();
+        if (found.isEmpty()) {
+          newNodes.add(item);
+        }
+      } else if (item instanceof SqlIdentifier) {
         Optional<SqlIdentifier> found = fullyQualifiedIdentifiers.stream()
             .filter(i -> fullyQualifyIdentifier(item, scope).equalsDeep(i, Litmus.IGNORE))
             .findAny();
