@@ -71,10 +71,8 @@ public class Namespace implements AbstractNamespace {
       return addFunctionObject(name, (FunctionNamespaceObject) nsObject);
     } else if (nsObject instanceof TableNamespaceObject) {
       return addTableObject(name, (TableNamespaceObject) nsObject);
-    } else if (nsObject instanceof CalciteFunctionNsObject) {
-      return addCalciteFunctionObject(name, (CalciteFunctionNsObject) nsObject);
     } else {
-      throw new RuntimeException("");
+      throw new UnsupportedOperationException("Unexpected namespace object: " + nsObject.getClass());
     }
   }
 
@@ -102,18 +100,17 @@ public class Namespace implements AbstractNamespace {
     }
   }
 
-  public boolean addFunctionObject(Name name,
-      FunctionNamespaceObject<UserDefinedFunction> nsObject) {
-    udfs.put(name.getCanonical(), nsObject.getFunction());
-
-    tempEnv.createTemporarySystemFunction(name.getCanonical(), nsObject.getFunction());
-    nsObject.getJarUrl().map(j -> jars.add(j));
-    return true;
-  }
-
-  public boolean addCalciteFunctionObject(Name name,
-      CalciteFunctionNsObject nsObject) {
-    systemProvidedFunctionMap.put(name, nsObject.getFunction());
+  public boolean addFunctionObject(Name name, FunctionNamespaceObject nsObject) {
+    if (nsObject instanceof CalciteFunctionNsObject) {
+      systemProvidedFunctionMap.put(name, ((CalciteFunctionNsObject)nsObject).getFunction());
+    } else if (nsObject instanceof FlinkUdfNsObject) {
+      FlinkUdfNsObject fctObject = (FlinkUdfNsObject)nsObject;
+      udfs.put(name.getCanonical(), fctObject.getFunction());
+      tempEnv.createTemporarySystemFunction(name.getCanonical(), fctObject.getFunction());
+      fctObject.getJarUrl().map(j -> jars.add(j));
+    } else {
+      throw new UnsupportedOperationException("Unexpected function object: " + nsObject.getClass());
+    }
     return true;
   }
 

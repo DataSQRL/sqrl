@@ -7,9 +7,9 @@ import com.datasqrl.spi.JacksonDeserializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -60,7 +60,13 @@ public class Deserializer {
   }
 
   public <O> void writeToJson(Path file, O object) throws IOException {
-    jsonMapper.writeValue(file.toFile(),object);
+    writeToJson(file, object, false);
+  }
+
+  public <O> void writeToJson(Path file, O object, boolean pretty) throws IOException {
+    ObjectWriter writer = jsonMapper.writer();
+    if (pretty) writer = writer.withDefaultPrettyPrinter();
+    writer.writeValue(file.toFile(),object);
   }
 
   public JsonNode combineJsonFiles(List<Path> packageFiles) throws IOException {

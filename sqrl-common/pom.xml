@@ -29,6 +29,12 @@
       <artifactId>flink-table-planner_2.12</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>com.theokanning.openai-gpt3-java</groupId>
+      <artifactId>service</artifactId>
+      <version>0.11.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

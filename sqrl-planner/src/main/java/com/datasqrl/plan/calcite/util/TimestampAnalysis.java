@@ -3,8 +3,8 @@
  */
 package com.datasqrl.plan.calcite.util;
 
-import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
+import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.plan.calcite.table.TimestampHolder;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
@@ -45,7 +45,7 @@ public class TimestampAnalysis {
       return true;
     }
     Optional<TimestampPreservingFunction> fnc = Optional.of(operator)
-        .flatMap(f->SqrlFunction.lookupTimeFunction(operator))
+        .flatMap(f-> StdTimeLibraryImpl.lookupTimeFunction(operator))
         .filter(op -> op instanceof TimestampPreservingFunction)
         .map(op -> (TimestampPreservingFunction) op)
         .filter(TimestampPreservingFunction::isTimestampPreserving);
