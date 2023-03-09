@@ -11,7 +11,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.Assignment;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.StreamAssignment;
-import org.apache.calcite.sql.SubscriptionType;
+import org.apache.calcite.sql.StreamType;
 import org.apache.calcite.tools.RelBuilder;
 
 public abstract class AbstractQueryStatementResolver extends AbstractStatementResolver {
@@ -31,7 +31,7 @@ public abstract class AbstractQueryStatementResolver extends AbstractStatementRe
 
     AnnotatedLP prel = convert(planner, relNode, ns, getPostProcessor(ns, relNode), statement instanceof StreamAssignment, statement.getHints());
 
-    Optional<SubscriptionType> type =
+    Optional<StreamType> type =
         Optional.of(statement).filter(f->f instanceof StreamAssignment).map(f->((StreamAssignment)f).getType());
     NamespaceObject table = tableFactory.createTable(planner, ns, statement.getNamePath(), prel, type, getContext(ns, statement.getNamePath()));
 

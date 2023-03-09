@@ -30,21 +30,15 @@ public class ImportExportAnalyzer {
   SqrlParser parser = new SqrlParserImpl();
 
   public Result analyze(Path sqrlScript, ErrorCollector errors) {
+    ScriptNode node;
     try {
-      String scriptContent = Files.readString(sqrlScript);
-      errors = errors.withFile(sqrlScript, scriptContent);
-      ScriptNode node;
-      try {
-        node = parser.parse(scriptContent, errors);
-      } catch (Exception e) {
-        errors.warn("Could not compile SQRL script %s", sqrlScript);
-        return Result.EMPTY;
-      }
-
-      return analyze(node);
-    } catch (IOException e) {
-      throw errors.handle(e);
+      node = parser.parse(sqrlScript, errors);
+    } catch (Exception e) {
+      errors.warn("Could not compile SQRL script %s", sqrlScript);
+      return Result.EMPTY;
     }
+
+    return analyze(node);
   }
 
   private Result analyze(ScriptNode scriptNode) {

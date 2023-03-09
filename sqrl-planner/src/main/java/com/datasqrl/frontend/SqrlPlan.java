@@ -58,16 +58,16 @@ public class SqrlPlan extends SqrlParse {
     Namespace namespace = resolve.planDag(node);
 
     try {
-      debug(this.planner, namespace, errors, this.moduleLoader, node, debuggerConfig);
+      debug(this.planner, namespace, errors, this.moduleLoader, debuggerConfig);
     } catch (Exception e) {
       throw this.errors.handle(e);
     }
     return namespace;
   }
 
-  private void debug(SqrlQueryPlanner planner, Namespace ns, ErrorCollector errors_,
-      ModuleLoader moduleLoader, ScriptNode scriptNode, DebuggerConfig debugger) {
-    ErrorCollector errors = errors_.withLocation(
+  private void debug(SqrlQueryPlanner planner, Namespace ns, ErrorCollector parentError,
+      ModuleLoader moduleLoader, DebuggerConfig debugger) {
+    ErrorCollector errors = parentError.withLocation(
         CompilerConfiguration.DebugConfiguration.getLocation());
     if (debugger.isEnabled()) {
       ns.getSchema().getAllTables().stream()
@@ -83,7 +83,7 @@ public class SqrlPlan extends SqrlParse {
                 Optional<TableSink> sink = moduleLoader.getModule(sinkPath.popLast())
                     .flatMap(m -> m.getNamespaceObject(sinkPath.popLast().getLast()))
                     .map(s -> ((DataSystemNsObject) s).getTable())
-                    .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), errors))
+                    .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), parentError))
                     .map(tblConfig ->
                         tblConfig.initializeSink(errors, sinkPath, Optional.empty()));
 

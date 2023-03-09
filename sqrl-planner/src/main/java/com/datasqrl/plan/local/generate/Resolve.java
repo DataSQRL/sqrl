@@ -3,6 +3,8 @@
  */
 package com.datasqrl.plan.local.generate;
 
+import static com.datasqrl.error.PosToErrorPos.atPosition;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.*;
 import com.datasqrl.name.NameCanonicalizer;
@@ -33,8 +35,9 @@ public class Resolve {
   }
 
   public Namespace planDag(ScriptNode scriptNode) {
-    ErrorCollector error = errors
-        .withFile("test.sqrl", scriptNode.getOriginalScript());
+    ErrorCollector error = scriptNode.getScriptPath().isPresent()
+        ? errors.withFile(scriptNode.getScriptPath().get(), scriptNode.getOriginalScript())
+        : errors.withFile("test.sqrl", scriptNode.getOriginalScript());
 
     try {
       return planDagHelper(scriptNode, error);
@@ -55,8 +58,7 @@ public class Resolve {
 
   private void executeStatement(Namespace ns, SqrlStatement s, ErrorCollector error) {
     ErrorCollector errors = error
-        .atPosition(s.getParserPosition().getLineNum(),
-            s.getParserPosition().getColumnNum() + 1);
+        .atPosition(atPosition(error, s.getParserPosition()));
     try {
       s.accept(statementProcessor,
           new ProcessorContext(ns, errors));

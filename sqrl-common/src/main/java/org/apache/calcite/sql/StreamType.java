@@ -1,5 +1,5 @@
 package org.apache.calcite.sql;
 
-public enum SubscriptionType {
+public enum StreamType {
   ADD, UPDATE, DELETE
 }

@@ -20,10 +20,14 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
 import com.datasqrl.parse.SqlBaseParser.BetweenContext;
 import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import lombok.SneakyThrows;
 import lombok.Value;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonToken;
@@ -57,10 +61,21 @@ public class SqrlParserImpl implements SqrlParser {
 //      .ignoredRule(com.datasqrl.sqml.parser.SqlBaseParser.RULE_nonReserved)
       .build();
 
+  @SneakyThrows
+  @Override
+  public ScriptNode parse(Path scriptPath, ErrorCollector errors) {
+    String scriptContent = Files.readString(scriptPath);
+    errors = errors.withFile(scriptPath, scriptContent);
+    ScriptNode scriptNode = parse(scriptContent, errors);
+    scriptNode.setScriptPath(Optional.of(scriptPath));
+    return scriptNode;
+  }
+
   public ScriptNode parse(String sql, ErrorCollector errors) {
     try {
       ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
       scriptNode.setOriginalScript(sql);
+      scriptNode.setScriptPath(Optional.empty());
       return scriptNode;
     } catch (Exception e) {
       throw errors.handle(e);

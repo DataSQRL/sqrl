@@ -44,7 +44,7 @@ import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.SubscriptionType;
+import org.apache.calcite.sql.StreamType;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -347,13 +347,13 @@ public class CalciteTableFactory {
   }
 
   public NamespaceObject createTable(SqrlQueryPlanner planner, Namespace ns, NamePath namePath, AnnotatedLP processedRel,
-      Optional<SubscriptionType> subscriptionType, Optional<SQRLTable> parentTable) {
+      Optional<StreamType> subscriptionType, Optional<SQRLTable> parentTable) {
     return new SqrlTableNamespaceObject(namePath.getLast(),
         createScriptDef(planner, ns, namePath, processedRel, subscriptionType, parentTable));
   }
 
   public ScriptTableDefinition createScriptDef(SqrlQueryPlanner planner, Namespace ns, NamePath namePath,
-      AnnotatedLP processedRel, Optional<SubscriptionType> subscriptionType,
+      AnnotatedLP processedRel, Optional<StreamType> subscriptionType,
       Optional<SQRLTable> parentTable) {
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()

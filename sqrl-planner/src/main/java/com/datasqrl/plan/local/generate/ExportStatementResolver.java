@@ -1,5 +1,7 @@
 package com.datasqrl.plan.local.generate;
 
+import static com.datasqrl.error.PosToErrorPos.atPosition;
+
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
@@ -7,7 +9,6 @@ import com.datasqrl.loaders.DataSystemNsObject;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -55,9 +56,7 @@ public class ExportStatementResolver extends AbstractStatementResolver {
             tblConfig.initializeSink(errors, sinkPath, Optional.empty()));
 
     if (sink.isEmpty()) {
-      errors.atPosition(
-          statement.getSinkPath().getParserPosition().getLineNum(),
-          statement.getSinkPath().getParserPosition().getColumnNum() + 1)
+      errors.atPosition(atPosition(errors, statement.getSinkPath().getParserPosition()))
           .fatal(ErrorCode.CANNOT_RESOLVE_TABLESINK,
           "Cannot resolve table sink: %s", sinkPath);
     }

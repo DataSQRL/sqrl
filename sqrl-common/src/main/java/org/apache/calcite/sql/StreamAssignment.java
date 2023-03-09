@@ -12,10 +12,10 @@ public class StreamAssignment extends QueryAssignment {
 
   private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode query;
-  private final SubscriptionType type;
+  private final StreamType type;
 
   public StreamAssignment(SqlParserPos location, SqlIdentifier identifier, NamePath namePath,
-      Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, SubscriptionType type,
+      Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, StreamType type,
       Optional<SqlNodeList> hints) {
     super(location, identifier, namePath, tableArgs, query, hints);
     this.tableArgs = tableArgs;
