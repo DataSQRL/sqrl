@@ -166,7 +166,11 @@
       <groupId>org.glassfish</groupId>
       <artifactId>javax.el</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- stream: Flink -->
     <dependency>
       <groupId>org.apache.flink</groupId>

@@ -9,10 +9,13 @@ import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.name.NamePath;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ReflectionToTableSource {
 
@@ -31,9 +34,14 @@ public class ReflectionToTableSource {
   @SneakyThrows
   private static TimeAnnotatedRecord[] convertToData(List<?> data) {
     ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    mapper.registerModule(new Jdk8Module());
     List<TimeAnnotatedRecord<String>> records = new ArrayList<>();
     for (Object obj : data) {
-      records.add(new TimeAnnotatedRecord<>(mapper.writeValueAsString(obj)));
+      String record = mapper.writeValueAsString(obj);
+      System.out.println(record);
+      records.add(new TimeAnnotatedRecord<>(record));
     }
 
     return records.toArray(TimeAnnotatedRecord[]::new);

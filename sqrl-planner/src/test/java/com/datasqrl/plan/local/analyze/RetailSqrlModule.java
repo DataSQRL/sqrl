@@ -8,6 +8,8 @@ import com.datasqrl.name.Name;
 import com.datasqrl.plan.local.generate.NamespaceObject;
 import com.google.auto.service.AutoService;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,17 +35,17 @@ public class RetailSqrlModule implements SqrlModule {
           "A real-sized garden gnome adds character to your outdoor space", "House & Garden"));
   static List<Orders> orders = List.of(
       new Orders(10007543, 1000101,
-          LocalDateTime.parse("2022-05-19T01:29:39.553244Z", DateTimeFormatter.ISO_DATE_TIME),
+          ZonedDateTime.of(LocalDateTime.parse("2022-05-19T01:29:39.553244Z", DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC")),
           Arrays.asList(new Entries(7235, 1, 17.35, Optional.of(0.0)), new Entries(8757, 2, 57.5, Optional.of(11.5)))),
       new Orders(10008434, 1000107,
-          LocalDateTime.parse("2022-05-19T01:45:39.553244Z", DateTimeFormatter.ISO_DATE_TIME),
+          ZonedDateTime.of(LocalDateTime.parse("2022-05-19T01:45:39.553244Z", DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC")),
           Arrays.asList(new Entries(3571, 1, 41.95, Optional.of(0.0)))),
       new Orders(10008231, 1000121,
-          LocalDateTime.parse("2022-05-19T02:16:39.553244Z", DateTimeFormatter.ISO_DATE_TIME),
+          ZonedDateTime.of(LocalDateTime.parse("2022-05-19T02:16:39.553244Z", DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC")),
           Arrays.asList(new Entries(7552, 3, 25.5, Optional.of(15.0)), new Entries(3225, 1, 105.0, Optional.of(0.0)))),
       new Orders(10007140, 1000107,
-          LocalDateTime.parse("2022-05-19T02:28:39.553244Z", DateTimeFormatter.ISO_DATE_TIME),
-          Arrays.asList(new Entries(1332, 8, 8.49, Optional.of(0.0)), new Entries(3571, 1, 41.95, Optional.of(5.0)))));
+          ZonedDateTime.of(LocalDateTime.parse("2022-05-19T02:28:39.553244Z", DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC")),
+          Arrays.asList(new Entries(1332, 8, 8.49, Optional.empty()), new Entries(3571, 1, 41.95, Optional.of(5.0)))));
 
   static List<Customer> customers = List.of(
       new Customer(1000101, "john.mekker@gmail.com", "John Mekker", 1645396849),
@@ -80,7 +82,7 @@ public class RetailSqrlModule implements SqrlModule {
 
     long id;
     long customerid;
-    LocalDateTime time;
+    ZonedDateTime time;
     List<Entries> entries;
   }
 

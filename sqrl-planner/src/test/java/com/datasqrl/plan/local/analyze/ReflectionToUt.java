@@ -93,6 +93,7 @@ public class ReflectionToUt {
       case "FLOAT":
         return typeFactory.createSqlType(SqlTypeName.DECIMAL, 10, 5);
       case "LOCALDATETIME":
+      case "ZONEDDATETIME":
         return typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3);
       default:
         throw new RuntimeException("Unknown type: " + type.getSimpleName());
