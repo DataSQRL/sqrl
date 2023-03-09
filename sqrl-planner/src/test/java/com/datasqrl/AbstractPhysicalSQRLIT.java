@@ -3,6 +3,7 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.config.EngineSettings;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
@@ -27,6 +28,7 @@ import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.ResultSetPrinter;
 import com.datasqrl.util.SnapshotTest;
@@ -50,6 +52,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
@@ -67,7 +70,11 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     if (rootDir == null) {
       addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule());
     }
-    SqrlTestDIModule module = new SqrlTestDIModule(settings, rootDir, addlModules, errorDir,
+    Pair<DatabaseHandle, EngineSettings> engines = settings.getSqrlSettings();
+    this.engineSettings = engines.getRight();
+    this.database = engines.getLeft();
+
+    SqrlTestDIModule module = new SqrlTestDIModule(engineSettings.getPipeline(), settings, rootDir, addlModules, errorDir,
         ErrorCollector.root());
     Injector injector = Guice.createInjector(module);
 

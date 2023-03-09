@@ -3,6 +3,7 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.config.EngineSettings;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.SqrlPlan;
 import com.datasqrl.io.tables.TableSource;
@@ -13,10 +14,12 @@ import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
+import com.datasqrl.util.DatabaseHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 
 import java.nio.file.Path;
@@ -43,7 +46,10 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     if (rootDir == null) {
       addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule());
     }
-    SqrlTestDIModule module = new SqrlTestDIModule(settings, rootDir, addlModules, errorDir,
+    Pair<DatabaseHandle, EngineSettings> engines = settings.getSqrlSettings();
+    this.engineSettings = engines.getRight();
+    this.database = engines.getLeft();
+    SqrlTestDIModule module = new SqrlTestDIModule(engineSettings.getPipeline(), settings, rootDir, addlModules, errorDir,
         ErrorCollector.root());
     Injector injector = Guice.createInjector(module);
     initialize(settings, rootDir, injector);

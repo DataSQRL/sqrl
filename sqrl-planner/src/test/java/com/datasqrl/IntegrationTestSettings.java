@@ -27,8 +27,6 @@ import org.apache.commons.lang3.tuple.Pair;
 @Getter
 @Builder
 public class IntegrationTestSettings {
-  private Pair<DatabaseHandle, EngineSettings> settings = null;
-
   public enum StreamEngine {FLINK, INMEMORY}
 
   public enum DatabaseEngine {INMEMORY, H2, POSTGRES, SQLITE}
@@ -44,10 +42,6 @@ public class IntegrationTestSettings {
 
 
   Pair<DatabaseHandle, EngineSettings> getSqrlSettings() {
-    if (settings != null) {
-      return settings;
-    }
-
     List<EngineConfiguration> engines = new ArrayList<>();
     //Stream engine
     switch (getStream()) {
@@ -80,8 +74,7 @@ public class IntegrationTestSettings {
     ErrorCollector errors = ErrorCollector.root();
     EngineSettings engineSettings = engineConfig.initializeEngines(errors);
     assertNotNull(engineSettings, errors.toString());
-    settings = Pair.of(database, engineSettings);
-    return settings;
+    return Pair.of(database, engineSettings);
   }
 
   public static IntegrationTestSettings getInMemory() {

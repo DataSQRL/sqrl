@@ -32,9 +32,11 @@ public abstract class AbstractEngineIT {
     this.injector = injector;
   }
   protected void initialize(IntegrationTestSettings settings) {
-    Pair<DatabaseHandle, EngineSettings> setup = settings.getSqrlSettings();
-    engineSettings = setup.getRight();
-    database = setup.getLeft();
+    if (engineSettings == null) {
+      Pair<DatabaseHandle, EngineSettings> setup = settings.getSqrlSettings();
+      engineSettings = setup.getRight();
+      database = setup.getLeft();
+    }
   }
 
   protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(

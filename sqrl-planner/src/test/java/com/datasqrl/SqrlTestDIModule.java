@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
@@ -20,10 +21,10 @@ import lombok.NonNull;
 
 public class SqrlTestDIModule extends SqrlDIModule {
 
-  public SqrlTestDIModule(
+  public SqrlTestDIModule(ExecutionPipeline pipeline,
       IntegrationTestSettings settings, Path rootDir, Map<NamePath, SqrlModule> addlModules,
       Optional<Path> errorDir, ErrorCollector errors) {
-    super(settings.getSqrlSettings().getRight().getPipeline(),
+    super(pipeline,
         settings.getDebugger(),
         createModuleLoader(rootDir, addlModules, errors, errorDir),
         createErrorSink(settings.getErrorSink(), errors,
