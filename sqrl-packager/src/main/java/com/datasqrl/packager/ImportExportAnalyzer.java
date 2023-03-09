@@ -9,6 +9,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
+import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.plan.local.generate.Resolve;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,24 +27,18 @@ import org.apache.commons.collections4.SetUtils;
 public class ImportExportAnalyzer {
 
   NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM;
-  SqrlParser parser = new SqrlParser();
+  SqrlParser parser = new SqrlParserImpl();
 
   public Result analyze(Path sqrlScript, ErrorCollector errors) {
+    ScriptNode node;
     try {
-      String scriptContent = Files.readString(sqrlScript);
-      errors = errors.withFile(sqrlScript, scriptContent);
-      ScriptNode node;
-      try {
-        node = parser.parse(scriptContent, errors);
-      } catch (Exception e) {
-        errors.warn("Could not compile SQRL script %s", sqrlScript);
-        return Result.EMPTY;
-      }
-
-      return analyze(node);
-    } catch (IOException e) {
-      throw errors.handle(e);
+      node = parser.parse(sqrlScript, errors);
+    } catch (Exception e) {
+      errors.warn("Could not compile SQRL script %s", sqrlScript);
+      return Result.EMPTY;
     }
+
+    return analyze(node);
   }
 
   private Result analyze(ScriptNode scriptNode) {

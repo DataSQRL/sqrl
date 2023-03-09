@@ -32,10 +32,8 @@ import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.calcite.OptimizationStage;
 import com.datasqrl.plan.calcite.RelStageRunner;
-import com.datasqrl.plan.calcite.SqlValidatorUtil;
-import com.datasqrl.plan.calcite.SqrlToRelConverter;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.local.generate.Session;
+import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.schema.Relationship;
@@ -57,7 +55,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexDynamicParam;
@@ -65,7 +63,6 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
 
 public class PgSchemaBuilder implements
@@ -75,11 +72,12 @@ public class PgSchemaBuilder implements
 
   private final String stringSchema;
   private final TypeDefinitionRegistry registry;
-  private final SqrlCalciteSchema schema;
-  private final Session session;
+  private final SqrlSchema schema;
   private final RelBuilder relBuilder;
 
   private final SqlOperatorTable operatorTable;
+
+  private final SqrlQueryPlanner planner;
   //todo: migrate out
   List<ArgumentHandler> argumentHandlers = List.of(
       new EqHandler(), new LimitOffsetHandler()
@@ -87,14 +85,15 @@ public class PgSchemaBuilder implements
   @Getter
   private List<APIQuery> apiQueries = new ArrayList<>();
 
-  public PgSchemaBuilder(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder,
-      Session session, SqlOperatorTable operatorTable) {
+  public PgSchemaBuilder(String gqlSchema, SqrlSchema schema, RelBuilder relBuilder,
+      SqrlQueryPlanner planner,
+      SqlOperatorTable operatorTable) {
     this.stringSchema = gqlSchema;
     this.registry = (new SchemaParser()).parse(gqlSchema);
     this.schema = schema;
-    this.session = session;
     this.relBuilder = relBuilder;
     this.operatorTable = operatorTable;
+    this.planner = planner;
   }
 
   @Override
@@ -236,8 +235,8 @@ public class PgSchemaBuilder implements
   }
 
   private RelNode optimize(RelNode relNode) {
-    return RelStageRunner.runStage(OptimizationStage.PUSH_DOWN_FILTERS,
-        relNode, session.getRelPlanner());
+    return planner.runStage(OptimizationStage.PUSH_DOWN_FILTERS,
+        relNode);
   }
 
   @Override
@@ -342,14 +341,7 @@ public class PgSchemaBuilder implements
   }
 
   private RelNode plan(SqlNode node) {
-    SqlValidator sqlValidator = SqlValidatorUtil.createSqlValidator(schema,
-        operatorTable);
-    SqlNode validatedNode = sqlValidator.validate(node);
-
-    SqrlToRelConverter sqlToRelConverter = new SqrlToRelConverter(session.getCluster(),
-        session.getSchema());
-
-    return sqlToRelConverter.toRel(sqlValidator, validatedNode);
+    return planner.planQuery(node);
   }
 
   @Value

@@ -33,6 +33,12 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-inmem</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-http-vertx</artifactId>
@@ -73,6 +79,11 @@
     </dependency>
     <dependency>
       <artifactId>sqrl-engine-flink-jdbc</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-engine-flink-inmem</artifactId>
       <groupId>com.datasqrl</groupId>
       <scope>test</scope>
     </dependency>
@@ -155,7 +166,11 @@
       <groupId>org.glassfish</groupId>
       <artifactId>javax.el</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- stream: Flink -->
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -302,7 +317,6 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
     </dependency>
-
   </dependencies>
 
   <build>

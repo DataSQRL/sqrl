@@ -1,6 +1,9 @@
 >>>errors
 [FATAL] An item named `product` is already in scope
-in script:test.sqrl:
+in script:test.sqrl [2:8]:
+IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Product;
+-------^
 You can't import a module with the same name in the current scope.
 
 Erroneous code example:

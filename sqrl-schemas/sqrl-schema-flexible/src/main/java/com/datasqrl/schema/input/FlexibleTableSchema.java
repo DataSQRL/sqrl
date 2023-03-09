@@ -14,6 +14,7 @@ import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
 import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
 import com.google.auto.service.AutoService;
+import java.util.Optional;
 import lombok.*;
 
 import java.util.Collections;
@@ -65,8 +66,8 @@ public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSch
   }
 
   @Override
-  public UniversalTable createUniversalTable(boolean hasSourceTimestamp) {
-    return RowMapperFactory.getFlexibleUniversalTableBuilder(this, hasSourceTimestamp);
+  public UniversalTable createUniversalTable(boolean hasSourceTimestamp, Optional<Name> tblAlias) {
+    return RowMapperFactory.getFlexibleUniversalTableBuilder(this, hasSourceTimestamp, tblAlias);
   }
 
   @Setter

@@ -3,51 +3,64 @@
  */
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.io.stats.TableStatistic;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
+import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
 import com.datasqrl.plan.calcite.table.StreamRelationalTableImpl.BaseRelationMeta;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.calcite.util.CalciteUtil.RelDataTypeBuilder;
 import com.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import com.datasqrl.plan.local.ScriptTableDefinition;
-import com.datasqrl.schema.*;
-import com.datasqrl.schema.input.FlexibleTable2UTBConverter;
-import com.datasqrl.schema.input.FlexibleTableConverter;
+import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.plan.local.generate.NamespaceObject;
+import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
+import com.datasqrl.plan.local.generate.SqrlTableNamespaceObject;
+import com.datasqrl.schema.Field;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.Relationship;
+import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import java.util.Arrays;
 import java.util.stream.Collectors;
-import lombok.Getter;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.StreamType;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
+@Singleton
 public class CalciteTableFactory {
 
   private final AtomicInteger tableIdCounter = new AtomicInteger(0);
   private final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM; //TODO: make constructor argument and configure correctly
-  @Getter
   private final RelDataTypeFactory typeFactory;
-  private final SqrlTypeRelDataTypeConverter typeConverter;
+  private final RelBuilder relBuilder;
 
-  public CalciteTableFactory(RelDataTypeFactory typeFactory) {
-    this.typeFactory = typeFactory;
-    this.typeConverter = new SqrlTypeRelDataTypeConverter(typeFactory);
+  @Inject
+  public CalciteTableFactory(SqrlQueryPlanner planner) {
+    this.typeFactory = TypeFactory.getTypeFactory();
+    this.relBuilder = planner.createRelBuilder();
   }
 
   private Name getTableId(@NonNull Name name) {
@@ -67,13 +80,9 @@ public class CalciteTableFactory {
   }
 
   public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias,
-      RelBuilder relBuilder,
       ExecutionPipeline pipeline) {
-    FlexibleTable2UTBConverter converter = new FlexibleTable2UTBConverter(typeFactory, tableSource.hasSourceTimestamp());
-    UniversalTable rootTable = new FlexibleTableConverter(tableSource.getSchema().getSchema(),
-        tableSource.hasSourceTimestamp(),
-        tblAlias).apply(
-        converter);
+    UniversalTable rootTable = tableSource.getSchema().getSchema()
+        .createUniversalTable(tableSource.hasSourceTimestamp(), tblAlias);
     RelDataType rootType = convertTable(rootTable, true, true);
     ImportedRelationalTableImpl source = new ImportedRelationalTableImpl(
         getTableId(rootTable.getName(), "i"), rootType, tableSource);
@@ -153,17 +162,17 @@ public class CalciteTableFactory {
     return tblDef;
   }
 
-  private final Map<Name, Integer> defaultTimestampPreference = ImmutableMap.of(
+  private static final Map<Name, Integer> defaultTimestampPreference = ImmutableMap.of(
       ReservedName.SOURCE_TIME, 6,
       ReservedName.INGEST_TIME, 3,
       Name.system("timestamp"), 20,
       Name.system("time"), 8);
 
-  protected int getTimestampScore(Name columnName) {
+  protected static int getTimestampScore(Name columnName) {
     return Optional.ofNullable(defaultTimestampPreference.get(columnName)).orElse(1);
   }
 
-  public Optional<Integer> getTimestampScore(Name columnName, RelDataType datatype) {
+  public static Optional<Integer> getTimestampScore(Name columnName, RelDataType datatype) {
     if (!CalciteUtil.isTimestamp(datatype)) {
       return Optional.empty();
     }
@@ -337,5 +346,28 @@ public class CalciteTableFactory {
         Relationship.JoinType.CHILD, multiplicity, Optional.empty());
   }
 
+  public NamespaceObject createTable(SqrlQueryPlanner planner, Namespace ns, NamePath namePath, AnnotatedLP processedRel,
+      Optional<StreamType> subscriptionType, Optional<SQRLTable> parentTable) {
+    return new SqrlTableNamespaceObject(namePath.getLast(),
+        createScriptDef(planner, ns, namePath, processedRel, subscriptionType, parentTable));
+  }
 
+  public ScriptTableDefinition createScriptDef(SqrlQueryPlanner planner, Namespace ns, NamePath namePath,
+      AnnotatedLP processedRel, Optional<StreamType> subscriptionType,
+      Optional<SQRLTable> parentTable) {
+    List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
+    List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
+        .map(idx -> relFieldNames.get(idx))
+        .map(n -> Name.system(n)).collect(Collectors.toList());
+
+    if (subscriptionType.isPresent()) {
+      return defineStreamTable(namePath,
+          processedRel,
+          StateChangeType.valueOf(subscriptionType.get().name()),
+          planner.createRelBuilder(), ns.getPipeline());
+    } else {
+      return defineTable(namePath,
+          processedRel, fieldNames, parentTable);
+    }
+  }
 }

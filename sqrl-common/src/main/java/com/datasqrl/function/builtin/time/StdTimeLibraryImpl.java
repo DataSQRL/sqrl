@@ -9,9 +9,11 @@ import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.function.builtin.AbstractFunctionModule;
 import com.datasqrl.function.builtin.FunctionUtil;
 import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.local.generate.FunctionNamespaceObject;
 import com.datasqrl.plan.local.generate.NamespaceObject;
 import com.datasqrl.util.StringUtil;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -43,8 +45,9 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategy;
 import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
-public class StdTimeLibraryImpl extends AbstractFunctionModule {
-
+@AutoService(StdLibrary.class)
+public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLibrary {
+  public static final NamePath LIB_NAME = NamePath.of("time");
   //
   public static final NOW NOW = new NOW();
   public static final EpochToTimestamp EPOCH_TO_TIMESTAMP = new EpochToTimestamp();
@@ -98,7 +101,9 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule {
     super(ListUtils.union(SQRL_FUNCTIONS.stream().map(FunctionUtil::createNsObject).collect(Collectors.toList()),SQL_FUNCTIONS));
   }
 
-
+  public NamePath getPath() {
+    return LIB_NAME;
+  }
   /* ========
       Function Class Implementations
      ========

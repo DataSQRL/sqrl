@@ -1,9 +1,11 @@
 package com.datasqrl.plan.local.generate;
 
+import com.datasqrl.functions.SqrlFunctionCatalog;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.name.Name;
-import com.datasqrl.plan.calcite.TypeFactory;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
 import com.datasqrl.plan.calcite.table.ProxySourceRelationalTable;
@@ -20,27 +22,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Getter;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperatorTable;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.flink.table.api.EnvironmentSettings;
-import org.apache.flink.table.api.internal.FlinkEnvProxy;
-import org.apache.flink.table.api.internal.TableEnvironmentImpl;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 
 public class Namespace implements AbstractNamespace {
 
-  private final SqrlCalciteSchema schema;
+  private final SqrlSchema schema;
+  private final CalciteTableFactory tableFactory;
+  private final SqrlFunctionCatalog functionCatalog;
   //Temporary env for catalog construction, we'll remake this later
-  TableEnvironmentImpl tempEnv = TableEnvironmentImpl.create(
-      EnvironmentSettings.inStreamingMode().getConfiguration());
 
   Map<String, UserDefinedFunction> udfs = new HashMap<>();
 
-  CalciteTableFactory tableFactory = new CalciteTableFactory(TypeFactory.getTypeFactory());
-  Session session;
   @Getter
   private Set<URL> jars;
 
@@ -48,9 +45,15 @@ public class Namespace implements AbstractNamespace {
 
   private Map<Name, SqlFunction> systemProvidedFunctionMap = new HashMap<>();
 
-  public Namespace(Session session) {
-    this.session = session;
-    this.schema = session.getSchema();
+  @Getter
+  ExecutionPipeline pipeline;
+
+  public Namespace(CalciteTableFactory tableFactory, SqrlFunctionCatalog functionCatalog,
+      ExecutionPipeline pipeline, SqrlSchema schema) {
+    this.tableFactory = tableFactory;
+    this.functionCatalog = functionCatalog;
+    this.pipeline = pipeline;
+    this.schema = schema;
     this.jars = new HashSet<>();
   }
 
@@ -102,11 +105,11 @@ public class Namespace implements AbstractNamespace {
 
   public boolean addFunctionObject(Name name, FunctionNamespaceObject nsObject) {
     if (nsObject instanceof CalciteFunctionNsObject) {
-      systemProvidedFunctionMap.put(name, ((CalciteFunctionNsObject)nsObject).getFunction());
+      systemProvidedFunctionMap.put(name, ((CalciteFunctionNsObject) nsObject).getFunction());
     } else if (nsObject instanceof FlinkUdfNsObject) {
-      FlinkUdfNsObject fctObject = (FlinkUdfNsObject)nsObject;
+      FlinkUdfNsObject fctObject = (FlinkUdfNsObject) nsObject;
       udfs.put(name.getCanonical(), fctObject.getFunction());
-      tempEnv.createTemporarySystemFunction(name.getCanonical(), fctObject.getFunction());
+      functionCatalog.addNativeFunction(name.getCanonical(), fctObject.getFunction());
       fctObject.getJarUrl().map(j -> jars.add(j));
     } else {
       throw new UnsupportedOperationException("Unexpected function object: " + nsObject.getClass());
@@ -134,17 +137,18 @@ public class Namespace implements AbstractNamespace {
     Preconditions.checkNotNull(nsObject.getName());
     Preconditions.checkNotNull(nsObject.getTable());
     if (nsObject instanceof TableSourceNamespaceObject) {
-
       ScriptTableDefinition def = tableFactory.importTable(
           ((TableSourceNamespaceObject) nsObject).getTable(),
           Optional.of(name),//todo can remove optional
-          createRelBuilder(), session.getPipeline());
+          pipeline);
 
-      session.getErrors().checkFatal(
-          session.getSchema().getTable(def.getTable().getName().getCanonical(), false) == null,
-          ErrorCode.IMPORT_NAMESPACE_CONFLICT,
-          String.format("An item named `%s` is already in scope",
-              def.getTable().getName().getDisplay()));
+      if (getSchema().getTable(name.getCanonical(), false) != null) {
+        //todo: normal exception?
+        throw new SqrlAstException(ErrorCode.IMPORT_NAMESPACE_CONFLICT, null,
+            String.format("An item named `%s` is already in scope",
+            name.getDisplay()));
+      }
+
       registerScriptTable(def);
       return true;
 
@@ -160,17 +164,12 @@ public class Namespace implements AbstractNamespace {
 
   @Override
   public SqlOperatorTable getOperatorTable() {
-    return FlinkEnvProxy.getOperatorTable(tempEnv);
+    return functionCatalog.getOperatorTable();
   }
 
   @Override
-  public SqrlCalciteSchema getSchema() {
+  public SqrlSchema getSchema() {
     return schema;
-  }
-
-  @Override
-  public RelBuilder createRelBuilder() {
-    return session.createRelBuilder();
   }
 
   @Override

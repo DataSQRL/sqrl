@@ -183,5 +183,4 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     ErrorMessage errorMessage = new Implementation(label, ErrorMessage.getMessage(msg,args), location, Severity.NOTICE);
     addInternal(errorMessage);
   }
-
 }

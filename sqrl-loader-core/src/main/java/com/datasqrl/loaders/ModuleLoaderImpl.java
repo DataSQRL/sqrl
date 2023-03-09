@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @AllArgsConstructor
 public class ModuleLoaderImpl implements ModuleLoader {
-  StandardLibraryLoader standardLibraryLoader;
+  final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
   ObjectLoader objectLoader;
 
   @Override

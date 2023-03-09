@@ -26,6 +26,7 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
@@ -48,19 +50,29 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   protected VertxTestContext vertxContext;
 
   ObjectMapper mapper = new ObjectMapper();
+  private int port;
+
+  @SneakyThrows
+  @AfterEach
+  public void stop() {
+    if (vertx != null) {
+      vertx.close().toCompletionStage().toCompletableFuture().get();
+    }
+  }
 
   @SneakyThrows
   protected void validateSchemaAndQueries(String script, String schema,
       Map<String, String> queries) {
+
     Namespace ns = plan(script);
-    DAGPlanner dagPlanner = new DAGPlanner(ns.createRelBuilder(), session.getRelPlanner(),
-        session.getPipeline());
+    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
+        ns.getPipeline());
 
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
     Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = t
-        .getModelAndQueries(session, schema);
+        .getModelAndQueries(planner, schema);
 
-    OptimizedDAG dag = dagPlanner.plan(session.getSchema(), modelAndQueries.getRight(),
+    OptimizedDAG dag = dagPlanner.plan(planner.getSchema(), modelAndQueries.getRight(),
         ns.getExports(), ns.getJars());
 
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
@@ -68,7 +80,9 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     RootGraphqlModel model = modelAndQueries.getKey();
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(
         physicalPlan.getDatabaseQueries());
+
     model.accept(replaceGraphqlQueries, null);
+
     snapshot.addContent(
         physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream()
             .map(ddl -> ddl.toSql())
@@ -91,8 +105,11 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
     }
     CountDownLatch countDownLatch = new CountDownLatch(1);
+
+
+    this.port = getPort(8888);
     GraphQLServer server = new GraphQLServer(
-        model, 8888, client);
+        model, port, client);
     vertx.deployVerticle(server, c->countDownLatch.countDown());
     countDownLatch.await(10, TimeUnit.SECONDS);
     if (countDownLatch.getCount() != 0) {
@@ -107,6 +124,22 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     }
     snapshot.createOrValidate();
     vertxContext.completeNow();
+  }
+
+  @SneakyThrows
+  private static int getPort(int port) {
+    int attempts = 10;
+    while(attempts-- != 0) {
+      try (ServerSocket serverSocket = new ServerSocket(port)) {
+        boolean isPortBound = serverSocket.isBound();
+        if (isPortBound) {
+          return port;
+        }
+      } catch (Exception e) {
+        port++;
+      }
+    }
+    return -1;
   }
 
   private JDBCConnectOptions toJdbcConfig(JdbcDataSystemConnectorConfig config) {
@@ -150,7 +183,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         .POST(HttpRequest.BodyPublishers.ofString(mapper
             .writeValueAsString(
                 Map.of("query", query))))
-        .uri(URI.create("http://localhost:8888/graphql"))
+        .uri(URI.create("http://localhost:" + port + "/graphql"))
         .build();
     return client.send(request, BodyHandlers.ofString());
   }

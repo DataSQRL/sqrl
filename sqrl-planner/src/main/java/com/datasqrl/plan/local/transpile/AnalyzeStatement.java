@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlCall;
@@ -60,7 +60,7 @@ public class AnalyzeStatement implements
     SqrlJoinDeclarationVisitor<Context, Context>,
     SqrlJoinTermVisitor<Context, Context> {
 
-  private final SqrlCalciteSchema schema;
+  private final SqrlSchema schema;
   private final List<String> assignmentPath;
   private final Optional<SqlIdentifier> selfIdentifier;
   private final Map<SqlIdentifier, ResolvedTableField> expressions = new HashMap<>();
@@ -78,7 +78,7 @@ public class AnalyzeStatement implements
   @Value
   public static class Analysis {
 
-    private SqrlCalciteSchema schema;
+    private SqrlSchema schema;
     private List<String> assignmentPath;
     private Optional<SqlIdentifier> selfIdentifier;
     private Map<SqlIdentifier, ResolvedTableField> expressions;
@@ -93,12 +93,12 @@ public class AnalyzeStatement implements
 
   }
 
-  public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath,
+  public AnalyzeStatement(SqrlSchema schema, List<String> assignmentPath,
       Optional<SQRLTable> context, Namespace ns) {
     this(schema, assignmentPath, false, context, ns);
   }
 
-  public AnalyzeStatement(SqrlCalciteSchema schema, List<String> assignmentPath,
+  public AnalyzeStatement(SqrlSchema schema, List<String> assignmentPath,
       boolean allowSystemFields,
       Optional<SQRLTable> context, Namespace ns) {
     this.schema = schema;

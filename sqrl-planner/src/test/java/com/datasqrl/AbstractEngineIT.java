@@ -8,6 +8,7 @@ import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.TestDataset;
+import com.google.inject.Injector;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 
@@ -15,6 +16,7 @@ public abstract class AbstractEngineIT {
 
   public DatabaseHandle database = null;
   public EngineSettings engineSettings = null;
+  protected Injector injector;
 
 
   @AfterEach
@@ -25,10 +27,16 @@ public abstract class AbstractEngineIT {
     }
   }
 
+  protected void initialize(IntegrationTestSettings settings, Injector injector) {
+    this.initialize(settings);
+    this.injector = injector;
+  }
   protected void initialize(IntegrationTestSettings settings) {
-    Pair<DatabaseHandle, EngineSettings> setup = settings.getSqrlSettings();
-    engineSettings = setup.getRight();
-    database = setup.getLeft();
+    if (engineSettings == null) {
+      Pair<DatabaseHandle, EngineSettings> setup = settings.getSqrlSettings();
+      engineSettings = setup.getRight();
+      database = setup.getLeft();
+    }
   }
 
   protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(

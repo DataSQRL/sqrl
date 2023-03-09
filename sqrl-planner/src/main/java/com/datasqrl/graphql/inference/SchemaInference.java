@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
@@ -41,14 +41,14 @@ import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
 public class SchemaInference {
 
   private final TypeDefinitionRegistry registry;
-  private final SqrlCalciteSchema schema;
+  private final SqrlSchema schema;
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
   List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
   RelBuilder relBuilder;
   private Set<FieldDefinition> visited = new HashSet<>();
   private Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference(String gqlSchema, SqrlCalciteSchema schema, RelBuilder relBuilder) {
+  public SchemaInference(String gqlSchema, SqrlSchema schema, RelBuilder relBuilder) {
     this.registry = (new SchemaParser()).parse(gqlSchema);
     this.schema = schema;
     RootGraphqlModel.RootGraphqlModelBuilder root = RootGraphqlModel.builder()

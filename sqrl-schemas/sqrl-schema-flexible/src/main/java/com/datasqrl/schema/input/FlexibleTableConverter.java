@@ -80,16 +80,6 @@ public class FlexibleTableConverter {
     void addField(Name name, Type type, boolean nullable);
 
     void addField(Name name, T nestedTable, boolean nullable, boolean isSingleTon);
-
-//        default void addField(Name name, BasicType type, boolean nullable) {
-//            addField(name,convertBasicType(type),nullable,false, false);
-//        }
-
-//        T nullable(T type, boolean nullable);
-//
-//        T convertBasicType(BasicType type);
-//
-//        T wrapArray(T type);
   }
 
 }

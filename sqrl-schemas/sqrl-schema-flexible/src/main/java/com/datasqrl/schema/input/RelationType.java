@@ -37,7 +37,6 @@ public class RelationType<F extends SchemaField> implements Type, Iterable<F> {
    * @param name
    * @return
    */
-  //TODO: Should be optional
   public Optional<F> getFieldByName(Name name) {
     if (fieldsByName == null) {
       fieldsByName = fields.stream().collect(

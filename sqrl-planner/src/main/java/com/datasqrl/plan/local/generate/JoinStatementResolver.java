@@ -1,9 +1,10 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.plan.calcite.SqlValidatorUtil;
-import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
 import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import com.datasqrl.plan.local.transpile.JoinDeclarationUtil;
 import com.datasqrl.schema.Multiplicity;
@@ -21,9 +22,10 @@ import org.apache.calcite.sql.validate.SqlValidator;
 
 public class JoinStatementResolver extends AbstractStatementResolver {
 
-  public JoinStatementResolver(SystemContext systemContext) {
-    super(systemContext);
 
+  protected JoinStatementResolver(ErrorCollector errors,
+      NameCanonicalizer nameCanonicalizer, SqrlQueryPlanner planner) {
+    super(errors, nameCanonicalizer, planner);
   }
 
   public void resolve(JoinAssignment statement, Namespace ns) {
@@ -33,7 +35,7 @@ public class JoinStatementResolver extends AbstractStatementResolver {
 
     final SqlNode fullSql = joinSqlNode.accept(
         new ConvertJoinDeclaration(tbl.map(SQRLTable::getVt)));
-    RelNode relNode = plan(fullSql, ns); //verify correct sql
+    RelNode relNode = plan(fullSql); //verify correct sql
 
     checkState(tbl.isPresent(), ErrorLabel.GENERIC, statement,
             "Root JOIN declarations are not yet supported");
@@ -46,7 +48,7 @@ public class JoinStatementResolver extends AbstractStatementResolver {
     SQRLTable table = getContext(ns, statement.getNamePath())
         .orElseThrow(() -> new RuntimeException("Internal Error: Missing context"));
     JoinDeclarationUtil joinDeclarationUtil = new JoinDeclarationUtil(
-        ns.createRelBuilder().getRexBuilder());
+        planner.createRelBuilder().getRexBuilder());
 
     SqlValidator validator = createValidator(ns);
     validator.validate(fullSql);

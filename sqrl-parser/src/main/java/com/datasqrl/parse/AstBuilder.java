@@ -1179,7 +1179,7 @@ class AstBuilder
   public SqlNode visitStreamAssign(StreamAssignContext ctx) {
 
     SqlNode query = visit(ctx.streamQuery().query());
-    SubscriptionType type = SubscriptionType.valueOf(
+    StreamType type = StreamType.valueOf(
         ctx.streamQuery().subscriptionType().getText());
     return new StreamAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
         toNamePath(getNamePath(ctx.qualifiedName())),

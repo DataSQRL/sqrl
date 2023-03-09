@@ -8,6 +8,7 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -27,7 +28,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    initialize(IntegrationTestSettings.getFlinkWithDB(), example.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getFlinkWithDB(), (Path) null, Optional.of(exportPath));
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     if (!Files.isDirectory(exportPath)) {
       Files.createDirectory(exportPath);

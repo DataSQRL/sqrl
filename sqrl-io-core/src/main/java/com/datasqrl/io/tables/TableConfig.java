@@ -6,7 +6,10 @@ package com.datasqrl.io.tables;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.SharedConfiguration;
+import com.datasqrl.io.formats.FormatConfiguration;
+import com.datasqrl.io.impl.CanonicalizerConfiguration;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
@@ -16,6 +19,7 @@ import com.datasqrl.util.constraints.OptionalMinString;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -41,6 +45,17 @@ public class TableConfig extends SharedConfiguration implements Serializable {
   String schema;
   @Valid @NonNull @NotNull
   DataSystemConnectorConfig connector;
+
+  public TableConfig(@NonNull ExternalDataType type,
+      @NonNull CanonicalizerConfiguration canonicalizer, @NonNull String charset,
+      FormatConfiguration format, @NonNull String name, String identifier,
+      String schema, @NonNull DataSystemConnectorConfig connector) {
+    super(type, canonicalizer, charset, format);
+    this.name = name;
+    this.identifier = identifier;
+    this.schema = schema;
+    this.connector = connector;
+  }
 
   /**
    * TODO: make this configurable

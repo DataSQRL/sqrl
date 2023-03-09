@@ -3,11 +3,10 @@
  */
 package com.datasqrl.plan.calcite;
 
-import com.datasqrl.SqrlCalciteCatalogReader;
 import com.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -33,7 +32,7 @@ public class SqrlPlannerConfigFactory {
       .withHintStrategyTable(SqrlHintStrategyTable.getHintStrategyTable());
 
 
-  public static CalciteCatalogReader createCatalogReader(SqrlCalciteSchema schema) {
+  public static CalciteCatalogReader createCatalogReader(SqrlSchema schema) {
     return new SqrlCalciteCatalogReader(
         schema,
         CalciteSchema.from(schema.plus()).path(null),

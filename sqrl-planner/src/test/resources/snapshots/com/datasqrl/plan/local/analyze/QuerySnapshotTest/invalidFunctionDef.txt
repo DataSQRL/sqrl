@@ -1,4 +1,7 @@
 >>>errors
 [FATAL] From line 2, column 16 to line 2, column 24: No match found for function signature NO_FUNC(<NUMERIC>)
-in script:test.sqrl:
+in script:test.sqrl [2:1]:
+IMPORT ecommerce-data.Product;
+Product.test := NO_FUNC(100);
+^
 

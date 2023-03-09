@@ -33,6 +33,7 @@ import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,16 +41,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 public class ResolveTest extends AbstractLogicalSQRLIT {
-
-  private final Retail example = Retail.INSTANCE;
-  private Path exportPath = example.getRootPackageDirectory().resolve("export-data");
-
-  private Namespace ns = null;
   protected SnapshotTest.Snapshot snapshot;
+  private SqrlSchema schema;
 
+  private Path exportPath = Retail.INSTANCE.getRootPackageDirectory().resolve("export-data");
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getInMemory(), null, Optional.of(exportPath));
+    schema = injector.getInstance(SqrlSchema.class);
+
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     if (!Files.isDirectory(exportPath)) {
       Files.createDirectory(exportPath);
@@ -71,7 +71,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void tableImportTest() {
-    process(imports().toString());
+    plan(imports().toString());
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.candidates(1));
     validateQueryTable("product", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
@@ -91,7 +91,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "Customer.timestamp := epochToTimestamp(lastUpdated)",
         "Customer.month := endOfMonth(endOfMonth(timestamp))",
         "CustomerCopy := SELECT timestamp, month FROM Customer");
-    process(script);
+    plan(script);
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 8, 1,
         TimestampTest.candidates(1, 6, 7));
     validateQueryTable("customercopy", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
@@ -100,7 +100,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void timestampExpressionTest() {
-    process(
+    plan(
         "IMPORT time.*; IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp;\n");
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.fixed(6));
@@ -108,7 +108,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void timestampDefinitionTest() {
-    process("IMPORT ecommerce-data.Orders TIMESTAMP time;\n");
+    plan("IMPORT ecommerce-data.Orders TIMESTAMP time;\n");
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(4));
   }
@@ -119,7 +119,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "Orders.col1 := (id + customerid)/2",
         "Orders.entries.discount2 := coalesce(discount,0.0)",
         "OrderEntry := SELECT o.col1, o.\"time\", e.productid, e.discount2 FROM Orders o JOIN o.entries e");
-    process(script);
+    plan(script);
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.candidates(1, 4));
     validateQueryTable("orderentry", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 2,
@@ -131,7 +131,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Orders2 := SELECT o2._uuid FROM Orders o2 "
         + "INNER JOIN (SELECT _uuid FROM Orders) AS o ON o._uuid = o2._uuid;\n");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("orders2", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.candidates(1, 2));
   }
@@ -140,7 +140,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void tableDefinitionTest() {
     String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
         "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;");
-    process(sqrl);
+    plan(sqrl);
     validateQueryTable("entrycount", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 2,
         TimestampTest.candidates(3, 4)); //5 cols = 1 select col + 2 pk cols + 2 timestamp cols
   }
@@ -158,7 +158,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e",
         "OrdersInline := SELECT o.id, o.customerid, o.\"time\", t.price, t.num FROM Orders o JOIN o.total t",
         "Customer.orders_by_day := SELECT endOfDay(o.\"time\") as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day");
-    process(sqrl);
+    plan(sqrl);
     validateQueryTable("total", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(4));
     validateQueryTable("ordersinline", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
@@ -177,7 +177,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add(
         "OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("ordercustomer", TableType.STATE, ExecutionEngine.Type.DATABASE, 5, 2,
         TimestampTest.NONE); //numCols = 3 selected cols + 2 uuid cols for pk
   }
@@ -193,7 +193,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "
             +
             "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("ordercustomer", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 2,
         TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
     validateQueryTable("ordercustomer2", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 2,
@@ -209,7 +209,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderWithCount := SELECT o.id, c.order_count, o.customerid FROM Orders o TEMPORAL JOIN CustomerCount c on o.customerid = c.customer");
     builder.add(
         "OrderWithCount2 := SELECT o.id, c.order_count, o.customerid FROM CustomerCount c TEMPORAL JOIN Orders o on o.customerid = c.customer");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("orderwithcount", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(4)); //numCols = 3 selected cols + 1 uuid cols for pk + 1 for timestamp
     validateQueryTable("orderwithcount2", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
@@ -225,7 +225,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid");
     builder.add("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
         "FROM @.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 YEAR GROUP BY category");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("totals", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 4, 2,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
   }
@@ -241,7 +241,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer");
     builder.add("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("orderagg1", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //timestamp column is added
     validateQueryTable("orderagg2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 3, 1,
@@ -253,7 +253,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add(
         "Ordertime1 := SELECT o.customerid as customer, endOfsecond(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("ordertime1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1));
   }
@@ -269,7 +269,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer");
     builder.add(
         "OrderAugment := SELECT o.id, o.\"time\", c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("ordernow1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1), PullupTest.builder().hasNowFilter(true).build());
     validateQueryTable("ordernow2", TableType.STREAM, ExecutionEngine.Type.STREAM, 2, 1,
@@ -285,7 +285,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("RecentTotal := SELECT sum(e.unit_price * e.quantity) AS total, sum(e.quantity) AS quantity "
         + "FROM Orders o JOIN o.entries e WHERE o.time > now() - INTERVAL 7 DAY;");
-    process(builder.getScript());
+    plan(builder.getScript());
     validateQueryTable("recenttotal", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 4, 1,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
 
@@ -298,7 +298,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     builder.add(
         "agg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM OrderCustomer o GROUP BY customer;\n");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("agg1", TableType.STATE, ExecutionEngine.Type.DATABASE, 2, 1,
         TimestampTest.NONE);
   }
@@ -317,7 +317,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 //    //The following should be equivalent
     builder.add(
         "OrderAgg2 := SELECT o.customerid as customer, endOfsecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("orderfilter", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(4), new PullupTest(true, false));
     validateQueryTable("orderagg1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
@@ -336,7 +336,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC;");
     builder.add(
         "Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("customer", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(2),
         PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
@@ -350,7 +350,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("CustomerId := SELECT DISTINCT customerid FROM Customer;");
     builder.add(
         "CustomerOrders := SELECT o.id, c.customerid FROM CustomerId c JOIN Orders o ON o.customerid = c.customerid");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("customerid", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 2, 1,
         TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("customerorders", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
@@ -367,7 +367,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
 //    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM @.distinctOrders d");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("customer", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(2),
         PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
@@ -384,7 +384,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void distinctTest() {
     ScriptBuilder builder = imports();
     builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("orders", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(4)); //pullup is inlined because nested
   }
@@ -401,7 +401,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "(SELECT c.customerid, c.\"_ingest_time\" AS rowtime FROM Customer c);");
     builder.add(
         "StreamCount := SELECT endOfDay(rowtime) as day, COUNT(1) as num FROM CombinedStream GROUP BY day");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("combinedstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2));
     validateQueryTable("streamcount", TableType.STREAM, ExecutionEngine.Type.STREAM, 2, 1,
@@ -414,7 +414,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("CombinedStream := (SELECT o.customerid FROM Orders o)" +
         " UNION ALL " +
         "(SELECT c.customerid FROM Customer c);");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("combinedstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2));
   }
@@ -433,7 +433,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "CountStream := STREAM ON ADD AS SELECT productid, name, quantity FROM ProductCount WHERE quantity > 1");
     builder.add("ProductCount2 := DISTINCT CountStream ON productid ORDER BY _source_time DESC");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("productcount", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 4, 2,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
@@ -449,7 +449,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "CountStream := STREAM ON ADD AS SELECT customerid, COUNT(1) as num_orders FROM Orders GROUP BY customerid"); //TODO: change to update
     builder.add("EXPORT CountStream TO print.CountStream");
     builder.add("EXPORT CountStream TO output.CountStream");
-    process(builder.toString());
+    plan(builder.toString());
     validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.candidates(1,2));
   }
@@ -470,7 +470,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "/*+ EXEC_STREAM */ CustomerAgg3 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
 
-    process(builder.getScript());
+    plan(builder.getScript());
     validateQueryTable("customeragg1", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("customeragg2", TableType.TEMPORAL_STATE, ExecutionEngine.Type.DATABASE, 3,
@@ -480,19 +480,20 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   private ScriptBuilder imports() {
-    return example.getImports();
+    ScriptBuilder builder = new ScriptBuilder();
+    builder.append("IMPORT ecommerce-data.Customer");
+    builder.append("IMPORT ecommerce-data.Orders");
+    builder.append("IMPORT ecommerce-data.Product");
+    builder.append("IMPORT time.*");
+    return builder;
   }
 
-  @SneakyThrows
-  protected void process(String query) {
-    plan(query);
-  }
-
-  private void validateQueryTable(String name, TableType tableType, ExecutionEngine.Type execType,
-      int numCols, int numPrimaryKeys) {
-    validateQueryTable(name, tableType, execType, numCols, numPrimaryKeys, TimestampTest.NO_TEST,
-        PullupTest.EMPTY);
-  }
+  //
+//  private void validateQueryTable(String name, TableType tableType, ExecutionEngine.Type execType,
+//      int numCols, int numPrimaryKeys) {
+//    validateQueryTable(name, tableType, execType, numCols, numPrimaryKeys, TimestampTest.NO_TEST,
+//        PullupTest.EMPTY);
+//  }
 
   private void validateQueryTable(String name, TableType tableType, ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys, TimestampTest timestampTest) {
@@ -504,7 +505,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
       ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys, TimestampTest timestampTest,
       PullupTest pullupTest) {
-    CalciteSchema relSchema = session.getSchema();
+    CalciteSchema relSchema = this.schema;
     QueryRelationalTable table = getLatestTable(relSchema, tableName,
         QueryRelationalTable.class).get();
     snapshot.addContent(TestRelWriter.explain(table.getRelNode()), tableName, "lp");

@@ -31,29 +31,4 @@ public class ScriptTableDefinition {
     return shredTableMap.entrySet().stream().filter(e -> e.getValue().isRoot())
         .map(Map.Entry::getKey).findFirst().get();
   }
-
-  /**
-   * Produces a mapping from SQRL Table fields to the corresponding fields in Calcite. Since import
-   * tables are generated from a single {@link UniversalTable} we can make the simplifying
-   * assumption that the names are identical.
-   *
-   * @return
-   */
-  public Map<Field, String> getFieldNameMap() {
-    Map<Field, String> fieldMap = new HashMap<>();
-    shredTableMap.entrySet().stream().forEach(e -> {
-      e.getKey().getColumns(false).forEach(f -> {
-        String fieldName = f.getId().getCanonical();
-        Preconditions.checkArgument(
-            e.getValue().getRowType().getField(fieldName, true, false) != null);
-        fieldMap.put(f, fieldName);
-      });
-    });
-    return fieldMap;
-  }
-
-  public Map<SQRLTable, VirtualRelationalTable> getShredTableMap() {
-    return shredTableMap;
-  }
-
 }

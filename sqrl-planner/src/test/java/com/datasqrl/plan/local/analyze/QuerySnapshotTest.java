@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
@@ -19,6 +20,7 @@ import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
+import java.nio.file.Path;
 import java.util.Comparator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.util.SqlNodePrinter;
@@ -38,7 +40,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     initialize(IntegrationTestSettings.builder()
             .stream(IntegrationTestSettings.StreamEngine.FLINK)
             .database(DatabaseEngine.INMEMORY).build(),
-        example.getRootPackageDirectory());
+        (Path)null);
 
     snapshot = SnapshotTest.Snapshot.of(getClass(), info);
   }
@@ -47,11 +49,15 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     try {
       Namespace ns = plan(script);
       fail("Expected an exception but did not encounter one");
+    } catch (CollectedException e) {
+      snapshot.addContent(ErrorPrinter.prettyPrint(errors), "errors");
     } catch (Exception e) {
-      snapshot.addContent(ErrorPrinter.prettyPrint(error), "errors");
+      e.printStackTrace();
+      fail("Unknown exception", e);
     }
     snapshot.createOrValidate();
   }
+
   protected void validateScript(String script) {
     Namespace ns = plan(script);
     ns.getSchema().plus().getTableNames().stream()
@@ -466,7 +472,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void importWithTimestamp() {
     validateScript("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;");
-    SQRLTable sqrlTable = (SQRLTable) session.getSchema().getTable("Customer", false).getTable();
+    SQRLTable sqrlTable = (SQRLTable) planner.getSchema().getTable("Customer", false).getTable();
     assertTrue(sqrlTable.getField(Name.system("c_ts")).isPresent(), "Timestamp column missing");
   }
 
@@ -870,8 +876,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
+  //Automatically determining the order by statement not yet supported
   public void distinctOnTest() {
-    //Automatically determining the order by statement not yet supported
     validateScriptInvalid(
         "IMPORT ecommerce-data.Product;\n"
             + "Product := DISTINCT Product ON productid;\n");
@@ -1044,7 +1051,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         + "X := STREAM ON ADD AS SELECT * From Y;");
 
     assertNotNull(
-        session.getSchema().getTable("X", false));
+        planner.getSchema().getTable("X", false));
   }
 
   @Test

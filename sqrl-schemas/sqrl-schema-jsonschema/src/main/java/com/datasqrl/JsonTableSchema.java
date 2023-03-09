@@ -8,6 +8,7 @@ import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.SchemaValidator;
 import io.vertx.json.schema.Validator;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -38,7 +39,7 @@ public class JsonTableSchema implements TableSchema {
   }
 
   @Override
-  public UniversalTable createUniversalTable(boolean hasSourceTimestamp) {
+  public UniversalTable createUniversalTable(boolean hasSourceTimestamp, Optional<Name> tblAlias) {
     throw new RuntimeException("Not yet implemented");
   }
 }

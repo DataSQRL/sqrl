@@ -65,7 +65,7 @@ public class ParserErrorTest {
 
 //    errorCollector.registerHandler(ParsingException.class, new ParsingExceptionHandler());
 
-    SqrlParser parser = SqrlParser.newParser();
+    SqrlParser parser = new SqrlParserImpl();
 
     try {
       ScriptNode n = parser.parse(str, errorCollector);

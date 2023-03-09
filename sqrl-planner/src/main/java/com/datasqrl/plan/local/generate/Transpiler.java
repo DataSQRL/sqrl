@@ -1,12 +1,12 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.calcite.SqlValidatorUtil;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.local.generate.SqrlStatementVisitor.SystemContext;
 import com.datasqrl.plan.local.transpile.AddContextFields;
 import com.datasqrl.plan.local.transpile.AddHints;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement;
@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.calcite.jdbc.SqrlCalciteSchema;
+import lombok.AllArgsConstructor;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.DistinctAssignment;
 import org.apache.calcite.sql.ExpressionAssignment;
 import org.apache.calcite.sql.ImportDefinition;
@@ -31,14 +32,11 @@ import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StreamAssignment;
 import org.apache.calcite.sql.validate.SqlValidator;
 
+@AllArgsConstructor
 public class Transpiler {
 
-  private final SystemContext systemContext;
+  ErrorCollector errors;
 
-  public Transpiler(SystemContext systemContext) {
-
-    this.systemContext = systemContext;
-  }
   public SqlNode transpile(SqrlStatement query, Namespace ns) {
     Optional<SQRLTable> table = getContext(ns, query);
     table.ifPresent(t -> checkPathWritable(ns, query.getNamePath().popLast()));
@@ -74,7 +72,7 @@ public class Transpiler {
     }
   }
 
-  private SqlTransformer createTransformer(SqrlStatement query, SqrlCalciteSchema schema, Optional<SQRLTable> table,
+  private SqlTransformer createTransformer(SqrlStatement query, SqrlSchema schema, Optional<SQRLTable> table,
       Namespace ns) {
     List<String> assignmentPath = getAssignmentPath(query);
     Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(schema, assignmentPath, table, ns).accept(node);
@@ -132,10 +130,14 @@ public class Transpiler {
 
   private Optional<SQRLTable> getContext(Namespace ns, SqrlStatement statement) {
     if (statement instanceof ImportDefinition) { //a table import
-      return resolveTable(ns,
-          ((ImportDefinition) statement).getAlias()
-              .map(a-> Name.system(a.names.get(0)).toNamePath()).orElse(
-              statement.getNamePath().getLast().toNamePath()), false);
+      ImportDefinition def = ((ImportDefinition) statement);
+
+      //TODO: The logic is not fully correct here. The last name of the path isn't
+      // necessarily the table name. Maybe use a qualified name?
+      NamePath name = def.getAlias()
+          .map(a-> Name.system(a.names.get(0)).toNamePath()).orElse(
+              statement.getNamePath().getLast().toNamePath());
+      return resolveTable(ns, name, false);
     }
     return resolveTable(ns, statement.getNamePath(), true);
   }
@@ -166,9 +168,8 @@ public class Transpiler {
             ((Relationship) f).getJoinType() == Relationship.JoinType.JOIN
                 || ((Relationship) f).getJoinType() == Relationship.JoinType.PARENT))
         .findAny();
-    systemContext.getErrors().
-        checkFatal(field.isEmpty(), ErrorCode.PATH_CONTAINS_RELATIONSHIP,
-            "Path is not writable %s", path);
+    errors.checkFatal(field.isEmpty(), ErrorCode.PATH_CONTAINS_RELATIONSHIP,
+          "Path is not writable %s", path);
   }
   private SqlValidator createValidator(Namespace ns) {
     return SqlValidatorUtil.createSqlValidator(ns.getSchema(),

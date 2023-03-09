@@ -6,6 +6,7 @@ package com.datasqrl.graphql.generate;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Retail;
+import java.nio.file.Path;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,11 +17,9 @@ import java.io.IOException;
 @Slf4j
 public class SchemaGeneratorTest extends AbstractSchemaGeneratorTest {
 
-  private TestDataset example = Retail.INSTANCE;
-
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getInMemory(), (Path) null);
     super.setup(testInfo);
   }
 

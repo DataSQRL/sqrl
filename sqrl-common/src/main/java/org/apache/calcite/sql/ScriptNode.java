@@ -13,7 +13,9 @@
  */
 package org.apache.calcite.sql;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -29,6 +31,9 @@ public final class ScriptNode
   private final List<SqlNode> statements;
   @Setter
   private String originalScript;
+
+  @Setter
+  private Optional<Path> scriptPath;
 
   public ScriptNode(SqlParserPos location,
       List<SqlNode> statements) {

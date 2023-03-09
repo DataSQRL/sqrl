@@ -54,7 +54,7 @@ public class TimestampAnalysis {
       long numTimeParams = call.getOperands().stream().map(param -> param.getType())
           .filter(CalciteUtil::isTimestamp).count();
       Preconditions.checkArgument(numTimeParams == 1,
-          "%s is an invalid time-preserving function as it allows %d number of timestamp arguments",
+          "%s is an invalid time-preserving function as it allows %s number of timestamp arguments",
           operator, numTimeParams);
       return true;
     } else {
