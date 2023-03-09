@@ -58,7 +58,7 @@ public class Resolve {
 
   private void executeStatement(Namespace ns, SqrlStatement s, ErrorCollector error) {
     ErrorCollector errors = error
-        .atPosition(atPosition(error, s.getParserPosition()));
+        .withLocation(atPosition(error, s.getParserPosition()));
     try {
       s.accept(statementProcessor,
           new ProcessorContext(ns, errors));

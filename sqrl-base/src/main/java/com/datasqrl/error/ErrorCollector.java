@@ -183,13 +183,4 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     ErrorMessage errorMessage = new Implementation(label, ErrorMessage.getMessage(msg,args), location, Severity.NOTICE);
     addInternal(errorMessage);
   }
-
-  public ErrorCollector atPosition(long lineNum, long columnNum) {
-    return atPosition(location.atFile(new FileRange((int)lineNum, (int)columnNum, (int)lineNum, (int)columnNum)));
-  }
-
-  public ErrorCollector atPosition(ErrorLocation location) {
-    return new ErrorCollector(location,
-        this.getErrors());
-  }
 }

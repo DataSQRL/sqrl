@@ -56,7 +56,7 @@ public class ExportStatementResolver extends AbstractStatementResolver {
             tblConfig.initializeSink(errors, sinkPath, Optional.empty()));
 
     if (sink.isEmpty()) {
-      errors.atPosition(atPosition(errors, statement.getSinkPath().getParserPosition()))
+      errors.withLocation(atPosition(errors, statement.getSinkPath().getParserPosition()))
           .fatal(ErrorCode.CANNOT_RESOLVE_TABLESINK,
           "Cannot resolve table sink: %s", sinkPath);
     }
