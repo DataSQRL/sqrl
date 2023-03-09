@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Function;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.util.SqlNodePrinter;
 
 public class SqlTransformer {
 

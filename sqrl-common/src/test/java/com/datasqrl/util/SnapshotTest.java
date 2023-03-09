@@ -127,7 +127,7 @@ public class SnapshotTest {
       } else {
         byte[] data = Files.readAllBytes(path);
         String dataStr = new String(data);
-        assertEquals(dataStr, content, fileName);
+        assertEquals(dataStr, content, fileName + " " + "file://"+path.toFile().getAbsolutePath());
       }
     }
 

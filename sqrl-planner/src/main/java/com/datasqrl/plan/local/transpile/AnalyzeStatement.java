@@ -657,7 +657,7 @@ public class AnalyzeStatement implements
     String alias;
 
     public SqlIdentifier toIdentifier() {
-      return new SqlIdentifier(List.of(alias, field.getName().getCanonical()),
+      return new SqlIdentifier(List.of(alias, field.getName().getDisplay()),
           SqlParserPos.ZERO);
     }
 
