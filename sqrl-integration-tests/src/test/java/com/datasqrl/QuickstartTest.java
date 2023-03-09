@@ -34,6 +34,23 @@ public class QuickstartTest {
                 //,"-a","graphql");
     }
 
+    @Test
+    @Disabled("only used to generate schema")
+    public void getQuickstartGraphQL() {
+        Path root = Quickstart.BASE_PATH;
+        execute(root, "compile",root.resolve("quickstart-teaser.sqrl").toString(),
+            "-a","graphql");
+    }
+
+    @Test
+    @Disabled("requires GraphQL pagination fix")
+    public void testQuickStartUserWithGraphQL() {
+        Path root = Quickstart.BASE_PATH;
+        execute(root, "run",root.resolve("quickstart-user.sqrl").toString(),
+            root.resolve("quickstart-user-paging.graphqls").toString() );
+        //,"-a","graphql");
+    }
+
     @ParameterizedTest
     @ArgumentsSource(TutorialProvider.class)
     public void compileQuickstartTutorial(Path root, String script) {

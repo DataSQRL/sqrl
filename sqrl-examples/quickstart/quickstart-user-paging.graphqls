@@ -5,11 +5,11 @@ type Products {
   weight_in_gram: Int!
   type: String!
   category: String!
-  volume_10day(country: String, limit: Int, offset: Int): [volume_10day!]
+  volume_10day(country: String, limit: Int = 20, offset: Int = 0): [volume_10day!]
 }
 
 type Query {
-  Products(id: Int, name: String, category: String, limit: Int, offset: Int): [Products!]
+  Products(id: Int, name: String, category: String, limit: Int!, offset: Int = 0): [Products!]
   Users(id: Int!): Users
 }
 
@@ -19,7 +19,7 @@ type Users {
   last_name: String!
   email: String!
   country: String
-  purchases(limit: Int, offset: Int): [orders!]
+  purchases(limit: Int = 20, offset: Int = 0): [orders!]
   spending: [spending!]
   past_purchases(productid: Int): [past_purchases!]
 }
