@@ -45,17 +45,13 @@ public class ReflectionToUt {
           ParameterizedType optionalType = (ParameterizedType) field.getGenericType();
           table.addColumn(Name.system(field.getName()),
               typeFactory.createTypeWithNullability(
-                      getSqlTypeName(typeFactory, optionalType.getActualTypeArguments()[0].getClass()),
+                      getSqlTypeName(typeFactory, (Class<?>) optionalType.getActualTypeArguments()[0]),
                   true));
         } else {
           throw new RuntimeException("unknown generic type");
         }
       } else if (field.getType().equals(List.class)) {
         if (field.getGenericType() instanceof ParameterizedType) {
-
-//            UniversalTable nested = importFactory.createTable(Name.system("entries"),
-//                NamePath.of("entries"), table, false);
-
           ParameterizedType listType = (ParameterizedType) field.getGenericType();
           Class<?> type = (Class<?>)listType.getActualTypeArguments()[0];
 
