@@ -12,8 +12,12 @@ import lombok.NonNull;
 public class InMemConnector implements DataSystemConnectorConfig,
   DataSystemConnector {
 
-  private final String name;
-  private final TimeAnnotatedRecord[] data;
+  private String name;
+  private TimeAnnotatedRecord[] data;
+
+  public InMemConnector() {
+
+  }
 
   public InMemConnector(String name, TimeAnnotatedRecord[] data) {
     this.name = name;

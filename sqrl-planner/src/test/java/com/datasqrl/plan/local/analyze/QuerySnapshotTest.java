@@ -215,14 +215,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void orderCoalesceTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries.discount := SELECT coalesce(x.discount, 0.0) FROM @ AS x");
+    builder.add("Orders.entries.discount := SELECT coalesce(x.discount, 0.0) AS discount FROM @ AS x");
     validateScript(builder.getScript());
   }
 
   @Test
   public void orderTotalTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries.total := SELECT x.quantity * x.unit_price - x.discount FROM @ AS x");
+    builder.add("Orders.entries.total := SELECT x.quantity * x.unit_price - x.discount AS total FROM @ AS x");
     validateScript(builder.getScript());
   }
 
@@ -653,7 +653,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void subQueryTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
-        + "Product2 := SELECT * FROM Product, (SELECT MIN(productid) FROM Product) f;");
+        + "Product2 := SELECT * FROM Product, (SELECT MIN(productid) AS min FROM Product) f;");
   }
 
   @Test
@@ -799,7 +799,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void queryAsExpressionTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.total := SELECT SUM(x.productid) - 1 FROM @ AS x;");
+            + "Product.total := SELECT SUM(x.productid) - 1 AS sum FROM @ AS x;");
   }
 
   @Test
@@ -955,7 +955,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void groupTest() {
     validateScript("IMPORT ecommerce-data.Orders;"
-        + "X := SELECT e.parent._uuid AS gp, min(e.unit_price) "
+        + "X := SELECT e.parent._uuid AS gp, min(e.unit_price) AS min_price"
         + "     FROM Orders.entries AS e "
         + "     GROUP BY e.parent._uuid;");
   }
@@ -982,7 +982,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void queryAsExpressionUnnamedTest3() {
     validateScript("IMPORT ecommerce-data.Product;\n"
-        + "Product.example := SELECT @.productid + 1 FROM @ INNER JOIN Product ON true;\n");
+        + "Product.example := SELECT @.productid + 1 AS pid FROM @ INNER JOIN Product ON true;\n");
   }
 
   @Test
@@ -1017,11 +1017,11 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void castTest() {
     validateScript("IMPORT ecommerce-data.Orders;"
-        + "X := SELECT CAST(1 AS String) From Orders;"
-        + "X := SELECT CAST(1 AS Boolean) From Orders;"
-        + "X := SELECT CAST(1 AS Float) From Orders;"
-        + "X := SELECT CAST(1 AS Integer) From Orders;"
-        + "X := SELECT CAST(1 AS DateTime) From Orders;");
+        + "X := SELECT CAST(1 AS String) AS cast1 From Orders;"
+        + "X := SELECT CAST(1 AS Boolean) AS cast2 From Orders;"
+        + "X := SELECT CAST(1 AS Float) AS cast3 From Orders;"
+        + "X := SELECT CAST(1 AS Integer) AS cast4 From Orders;"
+        + "X := SELECT CAST(1 AS DateTime) AS cast5 From Orders;");
   }
 
   @Test

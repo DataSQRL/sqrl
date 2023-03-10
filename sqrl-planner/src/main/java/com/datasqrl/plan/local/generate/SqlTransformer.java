@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Function;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.util.SqlNodePrinter;
 
 public class SqlTransformer {
 
@@ -21,7 +22,8 @@ public class SqlTransformer {
   public SqlNode transform(SqlNode node) {
     Analysis currentAnalysis = null;
     for (Function<Analysis, SqlShuttle> transform : shuttles) {
-      node = node.accept(transform.apply(currentAnalysis));
+      SqlShuttle shuttle = transform.apply(currentAnalysis);
+      node = node.accept(shuttle);
       currentAnalysis = analyzer.apply(node);
     }
     return node;

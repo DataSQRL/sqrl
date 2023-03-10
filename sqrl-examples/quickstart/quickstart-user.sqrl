@@ -11,7 +11,7 @@ Orders.totals := SELECT sum(total) as price,
 -- Replacing users from import
 Users := DISTINCT Users ON id ORDER BY timestamp DESC;
 Users.purchases := JOIN Orders ON Orders.customerid = @.id;
---Users.country := country?'none';
+Users.country := country?'none';
 Orders.user := JOIN Users ON @.customerid = Users.id;
 
 Users.spending := SELECT endOfWeek(p.time) AS week,

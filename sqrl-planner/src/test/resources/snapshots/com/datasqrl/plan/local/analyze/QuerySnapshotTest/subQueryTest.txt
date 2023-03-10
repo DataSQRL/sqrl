@@ -2,12 +2,12 @@
 LogicalValues(tuples=[[]])
 
 >>>product2$q$4
-LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], EXPR$0=[$6])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], min=[$6])
   LogicalJoin(condition=[true], joinType=[inner])
     LogicalTableScan(table=[[product$q$2]])
     LogicalFilter(condition=[=($2, 1)])
-      LogicalProject(EXPR$0=[$0], _ingest_time=[$1], $f2=[ROW_NUMBER() OVER (ORDER BY $1 DESC NULLS LAST)])
-        LogicalProject(EXPR$0=[MIN($2) IGNORE NULLS OVER (ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
+      LogicalProject(min=[$0], _ingest_time=[$1], $f2=[ROW_NUMBER() OVER (ORDER BY $1 DESC NULLS LAST)])
+        LogicalProject(min=[MIN($2) IGNORE NULLS OVER (ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
           LogicalTableScan(table=[[product$q$2]])
 
 >>>join-declaration-joinDeclaration
