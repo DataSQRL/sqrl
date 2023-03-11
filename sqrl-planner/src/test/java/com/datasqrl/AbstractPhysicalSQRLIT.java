@@ -106,8 +106,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     Namespace ns = plan(script);
 
     //todo Inject this:
-    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
-        ns.getPipeline());
+    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
+        ns.getSchema().getPipeline());
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
     CalciteSchema relSchema = planner.getSchema();

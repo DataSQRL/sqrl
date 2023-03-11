@@ -138,8 +138,8 @@ public class Compiler {
   }
 
   private OptimizedDAG optimizeDag(List<APIQuery> queries, SqrlQueryPlanner planner, Namespace ns) {
-    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
-        ns.getPipeline());
+    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
+        ns.getSchema().getPipeline());
     CalciteSchema relSchema = planner.getSchema();
     return dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
   }

@@ -118,9 +118,9 @@ public class FlexibleSchemaHandlingTest {
         throws Exception {
       List<SchemaConverterTestCase> converters = new ArrayList<>();
 
-      SqrlQueryPlanner planner = new SqrlQueryPlanner(new SqrlSchema(), new FlinkBackedFunctionCatalog());
+      CalciteTableFactory calciteTableFactory = new CalciteTableFactory();
+//      SqrlQueryPlanner planner = new SqrlQueryPlanner(new SqrlSchema(), new FlinkBackedFunctionCatalog());
       //Calcite
-      CalciteTableFactory calciteTableFactory = new CalciteTableFactory(planner);
       CalciteTableFactory.UTB2RelDataTypeConverter converter = calciteTableFactory.new UTB2RelDataTypeConverter();
       converters.add(new SchemaConverterTestCase(converter));
       //Flink

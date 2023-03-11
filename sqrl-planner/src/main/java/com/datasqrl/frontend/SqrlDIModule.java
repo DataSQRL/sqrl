@@ -39,7 +39,6 @@ public class SqrlDIModule extends AbstractModule {
     bind(ErrorCollector.class).toInstance(errors);
     bind(NameCanonicalizer.class).toInstance(NameCanonicalizer.SYSTEM);
     bind(SqrlFunctionCatalog.class).toInstance(new FlinkBackedFunctionCatalog());
-    bind(SqrlSchema.class).toInstance(new SqrlSchema());
     bind(SqrlParser.class).toInstance(new SqrlParserImpl());
     bind(ExecutionPipeline.class).toInstance(pipeline);
     bind(DebuggerConfig.class).toInstance(debugConfig);
