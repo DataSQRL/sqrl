@@ -31,30 +31,13 @@ import org.apache.calcite.tools.RelBuilder;
  */
 @Getter
 public class SqrlQueryPlanner {
-  private final RelOptPlanner planner;
-  private final RelOptCluster cluster;
-
   private final SqrlSchema schema;
   private final SqrlFunctionCatalog functionCatalog;
-  private final RelDataTypeFactory typeFactory;
 
   @Inject
   public SqrlQueryPlanner(SqrlSchema schema, SqrlFunctionCatalog functionCatalog) {
     this.schema = schema;
     this.functionCatalog = functionCatalog;
-
-    RelOptPlanner planner = new VolcanoPlanner(null, Contexts.empty());
-
-    RelOptCluster cluster = RelOptCluster.create(
-        requireNonNull(planner, "planner"),
-        new RexBuilder(TypeFactory.getTypeFactory()));
-    cluster.setMetadataProvider(new SqrlRelMetadataProvider());
-    cluster.setMetadataQuerySupplier(SqrlRelMetadataQuery::new);
-    cluster.setHintStrategies(SqrlHintStrategyTable.getHintStrategyTable());
-
-    this.planner = planner;
-    this.cluster = cluster;
-    this.typeFactory = TypeFactory.getTypeFactory();
   }
 
   public RelNode planQuery(SqlNode node) {
@@ -62,21 +45,21 @@ public class SqrlQueryPlanner {
         functionCatalog.getOperatorTable());
     SqlNode validatedNode = sqlValidator.validate(node);
 
-    SqrlToRelConverter sqlToRelConverter = new SqrlToRelConverter(cluster,
+    SqrlToRelConverter sqlToRelConverter = new SqrlToRelConverter(schema.getCluster(),
         schema);
 
     return sqlToRelConverter.toRel(sqlValidator, validatedNode);
   }
 
   public RelBuilder createRelBuilder() {
-    return SqrlRelBuilder.create(cluster, schema);
+    return SqrlRelBuilder.create(schema.getCluster(), schema);
   }
 
   public RelNode plan(SqlNode sqlNode) {
     SqlValidator validator = createValidator();
     validator.validate(sqlNode);
 
-    SqrlToRelConverter relConverter = new SqrlToRelConverter(cluster,
+    SqrlToRelConverter relConverter = new SqrlToRelConverter(schema.getCluster(),
         schema);
     RelNode relNode = relConverter.toRel(validator, sqlNode);
     return relNode;
@@ -93,6 +76,6 @@ public class SqrlQueryPlanner {
 
   public RelNode runStage(OptimizationStage stage, RelNode relNode) {
     return RelStageRunner.runStage(stage,
-        relNode, getPlanner());
+        relNode, schema.getPlanner());
   }
 }

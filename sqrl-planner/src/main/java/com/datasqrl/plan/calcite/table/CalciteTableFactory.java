@@ -55,12 +55,10 @@ public class CalciteTableFactory {
   private final AtomicInteger tableIdCounter = new AtomicInteger(0);
   private final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM; //TODO: make constructor argument and configure correctly
   private final RelDataTypeFactory typeFactory;
-  private final RelBuilder relBuilder;
 
   @Inject
-  public CalciteTableFactory(SqrlQueryPlanner planner) {
+  public CalciteTableFactory() {
     this.typeFactory = TypeFactory.getTypeFactory();
-    this.relBuilder = planner.createRelBuilder();
   }
 
   private Name getTableId(@NonNull Name name) {
@@ -80,7 +78,7 @@ public class CalciteTableFactory {
   }
 
   public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias,
-      ExecutionPipeline pipeline) {
+      ExecutionPipeline pipeline, RelBuilder relBuilder) {
     UniversalTable rootTable = tableSource.getSchema().getSchema()
         .createUniversalTable(tableSource.hasSourceTimestamp(), tblAlias);
     RelDataType rootType = convertTable(rootTable, true, true);
@@ -364,7 +362,7 @@ public class CalciteTableFactory {
       return defineStreamTable(namePath,
           processedRel,
           StateChangeType.valueOf(subscriptionType.get().name()),
-          planner.createRelBuilder(), ns.getPipeline());
+          planner.createRelBuilder(), ns.getSchema().getPipeline());
     } else {
       return defineTable(namePath,
           processedRel, fieldNames, parentTable);

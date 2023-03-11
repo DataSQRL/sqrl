@@ -29,8 +29,6 @@ public interface AbstractNamespace {
 
   Optional<SqlFunction> translateFunction(Name name);
 
-  void registerScriptTable(ScriptTableDefinition tblDef);
-
   SqlOperatorTable getOperatorTable();
 
   SqrlSchema getSchema();

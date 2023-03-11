@@ -43,7 +43,7 @@ public class Converter {
         execHint = Optional.of(new ExecutionHint(ExecutionEngine.Type.STREAM));
       }
     }
-    execHint.map(h -> h.getConfig(ns.getPipeline(), configBuilder));
+    execHint.map(h -> h.getConfig(ns.getSchema().getPipeline(), configBuilder));
     SQRLLogicalPlanConverter.Config config = configBuilder.build();
 
     try {
@@ -51,7 +51,7 @@ public class Converter {
         return SQRLLogicalPlanConverter.convert(relNode, () -> relBuilder, config);
       } else {
         return SQRLLogicalPlanConverter.findCheapest(Name.system("/*lp table*/").toNamePath(),
-            relNode,  () -> relBuilder, ns.getPipeline(), config);
+            relNode,  () -> relBuilder, ns.getSchema().getPipeline(), config);
       }
     } catch (Throwable e) {
       throw errors.handle(e);

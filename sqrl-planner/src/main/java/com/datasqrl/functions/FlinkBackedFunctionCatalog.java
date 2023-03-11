@@ -1,6 +1,5 @@
 package com.datasqrl.functions;
 
-import com.datasqrl.functions.SqrlFunctionCatalog;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.internal.FlinkEnvProxy;

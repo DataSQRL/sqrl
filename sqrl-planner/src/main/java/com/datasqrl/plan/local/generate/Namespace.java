@@ -32,9 +32,6 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class Namespace implements AbstractNamespace {
 
   private final SqrlSchema schema;
-  private final CalciteTableFactory tableFactory;
-  private final SqrlFunctionCatalog functionCatalog;
-  //Temporary env for catalog construction, we'll remake this later
 
   Map<String, UserDefinedFunction> udfs = new HashMap<>();
 
@@ -45,14 +42,7 @@ public class Namespace implements AbstractNamespace {
 
   private Map<Name, SqlFunction> systemProvidedFunctionMap = new HashMap<>();
 
-  @Getter
-  ExecutionPipeline pipeline;
-
-  public Namespace(CalciteTableFactory tableFactory, SqrlFunctionCatalog functionCatalog,
-      ExecutionPipeline pipeline, SqrlSchema schema) {
-    this.tableFactory = tableFactory;
-    this.functionCatalog = functionCatalog;
-    this.pipeline = pipeline;
+  public Namespace(SqrlSchema schema) {
     this.schema = schema;
     this.jars = new HashSet<>();
   }
@@ -79,37 +69,13 @@ public class Namespace implements AbstractNamespace {
     }
   }
 
-  @Override
-  public void registerScriptTable(ScriptTableDefinition tblDef) {
-    for (Map.Entry<SQRLTable, VirtualRelationalTable> entry : tblDef.getShredTableMap()
-        .entrySet()) {
-      entry.getKey().setVT(entry.getValue());
-      entry.getValue().setSqrlTable(entry.getKey());
-    }
-    schema.add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
-
-    tblDef.getShredTableMap().values().stream().forEach(vt ->
-        schema.add(vt.getNameId(),
-            vt));
-
-    if (tblDef.getBaseTable() instanceof ProxySourceRelationalTable) {
-      AbstractRelationalTable impTable = ((ProxySourceRelationalTable) tblDef.getBaseTable()).getBaseTable();
-      schema.add(impTable.getNameId(), impTable);
-    }
-
-    if (tblDef.getTable().getPath().size() == 1) {
-      this.schema.add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
-          tblDef.getTable());
-    }
-  }
-
   public boolean addFunctionObject(Name name, FunctionNamespaceObject nsObject) {
     if (nsObject instanceof CalciteFunctionNsObject) {
       systemProvidedFunctionMap.put(name, ((CalciteFunctionNsObject) nsObject).getFunction());
     } else if (nsObject instanceof FlinkUdfNsObject) {
       FlinkUdfNsObject fctObject = (FlinkUdfNsObject) nsObject;
       udfs.put(name.getCanonical(), fctObject.getFunction());
-      functionCatalog.addNativeFunction(name.getCanonical(), fctObject.getFunction());
+      schema.addFunction(name.getCanonical(), fctObject.getFunction());
       fctObject.getJarUrl().map(j -> jars.add(j));
     } else {
       throw new UnsupportedOperationException("Unexpected function object: " + nsObject.getClass());
@@ -137,26 +103,12 @@ public class Namespace implements AbstractNamespace {
     Preconditions.checkNotNull(nsObject.getName());
     Preconditions.checkNotNull(nsObject.getTable());
     if (nsObject instanceof TableSourceNamespaceObject) {
-      ScriptTableDefinition def = tableFactory.importTable(
-          ((TableSourceNamespaceObject) nsObject).getTable(),
-          Optional.of(name),//todo can remove optional
-          pipeline);
-
-      if (getSchema().getTable(name.getCanonical(), false) != null) {
-        //todo: normal exception?
-        throw new SqrlAstException(ErrorCode.IMPORT_NAMESPACE_CONFLICT, null,
-            String.format("An item named `%s` is already in scope",
-            name.getDisplay()));
-      }
-
-      registerScriptTable(def);
+      TableSourceNamespaceObject tableSourceNamespaceObject = (TableSourceNamespaceObject) nsObject;
+      return schema.addTable(name, tableSourceNamespaceObject.getTable());
+    } else if (nsObject instanceof SqrlTableNamespaceObject) {
+      SqrlTableNamespaceObject sqrlTable = (SqrlTableNamespaceObject) nsObject;
+      schema.registerScriptTable(sqrlTable.getTable());
       return true;
-
-    } else if (nsObject.getTable() instanceof ScriptTableDefinition) {
-      registerScriptTable((ScriptTableDefinition) nsObject.getTable());
-      return true;
-
-//      schema.add(nsObject.getName().getCanonical(), nsObject.getTable());
     } else {
       throw new RuntimeException("unknown");
     }
@@ -164,7 +116,7 @@ public class Namespace implements AbstractNamespace {
 
   @Override
   public SqlOperatorTable getOperatorTable() {
-    return functionCatalog.getOperatorTable();
+    return getSchema().getFunctionCatalog().getOperatorTable();
   }
 
   @Override

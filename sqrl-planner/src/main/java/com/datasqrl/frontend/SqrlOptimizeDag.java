@@ -30,11 +30,11 @@ public class SqrlOptimizeDag extends SqrlPlan {
     super(parser, errors, nsFactory, moduleLoader, nameCanonicalizer, statementProcessor, planner, debuggerConfig);
   }
 
-  public OptimizedDAG optimize(Namespace ns, Collection<APIQuery> queries) {
-    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
-        ns.getPipeline());
-    CalciteSchema relSchema = planner.getSchema();
-    return dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
-  }
+//  public OptimizedDAG optimize(Namespace ns, Collection<APIQuery> queries) {
+//    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
+//        ns.getSchema().getPipeline());
+//    CalciteSchema relSchema = planner.getSchema();
+//    return dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
+//  }
 
 }

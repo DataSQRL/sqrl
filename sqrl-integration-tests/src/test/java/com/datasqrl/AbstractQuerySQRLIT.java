@@ -65,8 +65,8 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
       Map<String, String> queries) {
 
     Namespace ns = plan(script);
-    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner.getPlanner(),
-        ns.getPipeline());
+    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
+        ns.getSchema().getPipeline());
 
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
     Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = t
