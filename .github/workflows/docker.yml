@@ -27,6 +27,7 @@ jobs:
           file: Dockerfile
           push: true
           tags: datasqrl/datasqrl-cmd:latest
+          platforms: linux/amd64,linux/arm64
       - name: Release Build and Push Docker
         uses: docker/build-push-action@v3
         if: ${{ github.ref != 'refs/heads/main'}}
