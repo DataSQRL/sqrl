@@ -1,0 +1,11 @@
+type Query {
+  pRoDuCt(productid: Int, name: String, description: String, category: String): [pRoDuCt!]
+}
+
+type pRoDuCt {
+  productid: Int!
+  name: String!
+  description: String!
+  category: String!
+}
+

@@ -4,8 +4,6 @@
 package com.datasqrl.graphql.generate;
 
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.util.TestDataset;
-import com.datasqrl.util.data.Retail;
 import java.nio.file.Path;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +24,16 @@ public class SchemaGeneratorTest extends AbstractSchemaGeneratorTest {
   @Test
   public void testImport() {
     snapshotTest("IMPORT ecommerce-data.Product;");
+  }
+
+  @Test
+  public void testImportWithDifferentCapitalization() {
+    snapshotTest("IMPORT ecommerce-data.product;");
+  }
+
+  @Test
+  public void testAliased() {
+    snapshotTest("IMPORT ecommerce-data.Product AS pRoDuCt;");
   }
 
   @Test
