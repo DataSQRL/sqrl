@@ -135,19 +135,22 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     RelNode left = join.getLeft().accept(this);
     RelNode right = join.getRight().accept(this);
 
-    Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join, TemporalJoinHint.CONSTRUCTOR);
+    Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join,
+        TemporalJoinHint.CONSTRUCTOR);
 
     return temporalHintOpt
         .map(hint -> handleTemporalJoin(join, relBuilder, left, right, hint))
         .orElseGet(() -> handleRegularJoin(join, relBuilder, left, right));
   }
 
-  private RelNode handleTemporalJoin(LogicalJoin join, FlinkRelBuilder relBuilder, RelNode left, RelNode right, TemporalJoinHint temporalHint) {
+  private RelNode handleTemporalJoin(LogicalJoin join, FlinkRelBuilder relBuilder, RelNode left,
+      RelNode right, TemporalJoinHint temporalHint) {
     FlinkRexBuilder rexBuilder = FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder);
     Holder<RexCorrelVariable> correlVar = Holder.of(null);
     relBuilder.push(left).variable(correlVar);
     relBuilder.push(right);
-    if (!SqrlRexUtil.isDedupedRelNode(join.getRight(),false, true)) { //TODO: change to isDedupedRelNode(right, false)
+    if (!SqrlRexUtil.isDedupedRelNode(join.getRight(), false,
+        true)) { //TODO: change to isDedupedRelNode(right, false)
       addDeduplicationWindow(relBuilder, temporalHint);
     }
     //CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount());
@@ -164,7 +167,8 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     return relBuilder.build();
   }
 
-  private RelNode handleRegularJoin(LogicalJoin join, FlinkRelBuilder relBuilder, RelNode left, RelNode right) {
+  private RelNode handleRegularJoin(LogicalJoin join, FlinkRelBuilder relBuilder, RelNode left,
+      RelNode right) {
     relBuilder.push(left);
     relBuilder.push(right);
     JoinRelType joinType = join.getJoinType();
@@ -173,10 +177,12 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   private void addDeduplicationWindow(FlinkRelBuilder relBuilder, TemporalJoinHint temporalHint) {
-    addDeduplicationWindow(relBuilder, temporalHint.getStatePrimaryKeys(), temporalHint.getStreamTimestampIdx());
+    addDeduplicationWindow(relBuilder, temporalHint.getStatePrimaryKeys(),
+        temporalHint.getStreamTimestampIdx());
   }
 
-  public static void addDeduplicationWindow(FlinkRelBuilder relBuilder, int[] keyIdx, int timestampIdx) {
+  public static void addDeduplicationWindow(FlinkRelBuilder relBuilder, int[] keyIdx,
+      int timestampIdx) {
     final RelDataType inputType = relBuilder.peek().getRowType();
     List<RexNode> partitionKeys = Arrays.stream(keyIdx)
         .mapToObj(idx -> RexInputRef.of(idx, inputType)).collect(Collectors.toList());
@@ -202,8 +208,10 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @Override
   public RelNode visit(LogicalAggregate aggregate) {
     FlinkRelBuilder relBuilder = getBuilder();
-    Optional<TumbleAggregationHint> tumbleHintOpt = SqrlHint.fromRel(aggregate, TumbleAggregationHint.CONSTRUCTOR);
-    Optional<SlidingAggregationHint> slideHintOpt = SqrlHint.fromRel(aggregate, SlidingAggregationHint.CONSTRUCTOR);
+    Optional<TumbleAggregationHint> tumbleHintOpt = SqrlHint.fromRel(aggregate,
+        TumbleAggregationHint.CONSTRUCTOR);
+    Optional<SlidingAggregationHint> slideHintOpt = SqrlHint.fromRel(aggregate,
+        SlidingAggregationHint.CONSTRUCTOR);
     ImmutableBitSet groupBy = Iterables.getOnlyElement(aggregate.groupSets);
     List<AggregateCall> aggCalls = aggregate.getAggCallList();
     RelNode input = aggregate.getInput().accept(this);
@@ -237,7 +245,9 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
         aggCalls, inputFieldCount, timestampIdx);
   }
   
-  public void applyWindowedGroupingAndProjection(FlinkRelBuilder relBuilder, FlinkRexBuilder rexBuilder, RelDataType inputType, ImmutableBitSet groupBy, List<AggregateCall> aggCalls, int inputFieldCount, int timestampIdx) {
+  public void applyWindowedGroupingAndProjection(FlinkRelBuilder relBuilder,
+      FlinkRexBuilder rexBuilder, RelDataType inputType, ImmutableBitSet groupBy,
+      List<AggregateCall> aggCalls, int inputFieldCount, int timestampIdx) {
     //Need to add all 3 window columns that are added to groupBy and then project out all but window_time
     int window_start = inputFieldCount, window_end = inputFieldCount + 1, window_time =
         inputFieldCount + 2;
@@ -337,7 +347,8 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     return relBuilder;
   }
 
-  private List<RexNode> createOperandList(FlinkRexBuilder rexBuilder, RelNode input, int timestampIdx, long[] intervalsMs) {
+  private List<RexNode> createOperandList(FlinkRexBuilder rexBuilder, RelNode input,
+      int timestampIdx, long[] intervalsMs) {
     List<RexNode> operandList = new ArrayList<>();
     operandList.add(rexBuilder.makeRangeReference(input));
     operandList.add(rexBuilder.makeCall(FlinkSqlOperatorTable.DESCRIPTOR,
@@ -499,11 +510,13 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
         return RexSubQuery.exists(rewriter.rewrite(subQuery.rel));
       } else if (subQuery.op == SqlStdOperatorTable.IN) {
         return RexSubQuery.in(rewriter.rewrite(subQuery.rel), subQuery.operands.stream()
-            .map(e->e.accept(this)).collect(org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList.toImmutableList()));
+            .map(e -> e.accept(this)).collect(
+                org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList.toImmutableList()));
       } else if (subQuery.op.getKind() == SqlKind.SOME) {
         return RexSubQuery.some(rewriter.rewrite(subQuery.rel), subQuery.operands.stream()
-            .map(e->e.accept(this)).collect(org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList.toImmutableList()),
-            (SqlQuantifyOperator)subQuery.op);
+                .map(e -> e.accept(this)).collect(
+                    org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList.toImmutableList()),
+            (SqlQuantifyOperator) subQuery.op);
       }
 
       throw new RuntimeException("not supported");
