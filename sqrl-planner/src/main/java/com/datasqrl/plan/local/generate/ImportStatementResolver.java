@@ -56,7 +56,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
           () -> String.format("Could not resolve import [%s]", path));
 
       // Add the namespace object to the current namespace
-      Name objectName = getObjectName(nsObject.get(), statement.getAlias());
+      Name objectName = getObjectName(path.getLast(), statement.getAlias());
       loaded = ns.addNsObject(objectName, nsObject.get());
 
       if (statement.getTimestamp().isPresent()) {
@@ -137,7 +137,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     return module.getNamespaceObject(path.getLast());
   }
 
-  private Name getObjectName(NamespaceObject nsObject, Optional<SqlIdentifier> alias) {
-    return alias.map(a-> Name.system(a.names.get(0))).orElse(nsObject.getName());
+  private Name getObjectName(Name last, Optional<SqlIdentifier> alias) {
+    return alias.map(a-> Name.system(a.names.get(0))).orElse(last);
   }
 }
