@@ -58,6 +58,7 @@ public class Preprocessors {
     ProcessorContext context = new ProcessorContext(rootDir, buildDir);
     preprocessor.loader(userDir, context);
     copyRelativeFiles(context.getDependencies(), rootDir, buildDir, userDir);
+    copyLibrarySymlinks(context.getLibraries(), buildDir);
   }
 
   /**
@@ -73,6 +74,22 @@ public class Preprocessors {
       Path copyPath = copyDir.resolve(file.getFileName());
       Files.createDirectories(copyDir);
       Files.copy(file, copyPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+  }
+
+  /**
+   * Creates a `lib` directory in the buildDir and creates a symlink for each library
+   */
+  @SneakyThrows
+  private void copyLibrarySymlinks(Set<Path> libraries, Path buildDir) {
+    if (libraries.isEmpty()) {
+      return;
+    }
+    Path libDir = buildDir.resolve("lib");
+    Files.createDirectories(libDir);
+    for (Path library : libraries) {
+      Path libPath = libDir.resolve(library.getFileName());
+      Files.createSymbolicLink(libPath, library.toAbsolutePath());
     }
   }
 

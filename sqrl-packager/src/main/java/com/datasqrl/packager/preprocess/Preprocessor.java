@@ -21,6 +21,7 @@ public interface Preprocessor {
   @Getter
   public static class ProcessorContext {
     Set<Path> dependencies = new HashSet<>();
+    Set<Path> libraries = new HashSet<>();
 
     Path rootDir;
     Path buildDir;
@@ -36,6 +37,10 @@ public interface Preprocessor {
 
     public void addDependencies(ProcessorContext context) {
       context.getDependencies().forEach(dep -> addDependency(dep));
+    }
+
+    public void addLibrary(Path jarPath) {
+      libraries.add(jarPath);
     }
   }
 }
