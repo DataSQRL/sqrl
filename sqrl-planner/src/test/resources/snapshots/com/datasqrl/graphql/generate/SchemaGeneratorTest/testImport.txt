@@ -1,11 +1,11 @@
-type Query {
-  product(productid: Int, name: String, description: String, category: String): [product!]
-}
-
-type product {
+type Product {
   productid: Int!
   name: String!
   description: String!
   category: String!
+}
+
+type Query {
+  Product(productid: Int, name: String, description: String, category: String): [Product!]
 }
 

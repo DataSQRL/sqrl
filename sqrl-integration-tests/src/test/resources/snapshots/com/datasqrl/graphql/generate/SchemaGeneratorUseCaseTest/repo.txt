@@ -1,21 +1,15 @@
 type Package {
   name: String!
-  latest(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [submission!]
-  versions(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [submission!]
+  latest(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [Submission!]
+  versions(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [Submission!]
 }
 
 type Query {
   Package(name: String): [Package!]
-  submission(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [submission!]
+  Submission(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [Submission!]
 }
 
-type files {
-  filename: String!
-  filesize: Int!
-  parent: submission!
-}
-
-type submission {
+type Submission {
   name: String!
   version: String!
   license: String!
@@ -32,5 +26,11 @@ type submission {
   submissionTime: String!
   files(filename: String, filesize: Int): [files!]
   variant: String!
+}
+
+type files {
+  filename: String!
+  filesize: Int!
+  parent: Submission!
 }
 

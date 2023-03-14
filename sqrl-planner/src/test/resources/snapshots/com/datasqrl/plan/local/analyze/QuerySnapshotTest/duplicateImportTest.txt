@@ -1,5 +1,5 @@
 >>>errors
-[FATAL] An item named `product` is already in scope
+[FATAL] An item named `Product` is already in scope
 in script:test.sqrl [2:8]:
 IMPORT ecommerce-data.Product;
 IMPORT ecommerce-data.Product;

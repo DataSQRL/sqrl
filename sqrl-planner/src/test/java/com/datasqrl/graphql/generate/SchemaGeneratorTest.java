@@ -30,7 +30,7 @@ public class SchemaGeneratorTest extends AbstractSchemaGeneratorTest {
   public void testImportWithDifferentCapitalization() {
     snapshotTest("IMPORT ecommerce-data.product;");
   }
-  
+
   @Test
   public void testAliased() {
     snapshotTest("IMPORT ecommerce-data.Product AS pRoDuCt;");
