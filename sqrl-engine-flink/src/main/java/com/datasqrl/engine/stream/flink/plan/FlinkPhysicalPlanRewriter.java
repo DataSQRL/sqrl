@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.rel.core.*;
 import org.apache.calcite.rel.logical.*;
 import org.apache.calcite.rel.type.RelDataType;
@@ -97,11 +98,15 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     return isTopTmp;
   }
 
+  private void pushInputAndAccept(SingleRel node, FlinkRelBuilder relBuilder) {
+    relBuilder.push(node.getInput().accept(this));
+  }
+
   @Override
   public RelNode visit(LogicalProject project) {
     boolean forceProject = isTop(); //We want to make sure we preserve the projection at the top so the names line up
     FlinkRelBuilder relBuilder = getBuilder();
-    relBuilder.push(project.getInput().accept(this));
+    pushInputAndAccept(project, relBuilder);
     List<String> projectNames = project.getRowType().getFieldNames();
     relBuilder.project(project.getProjects().stream().map(rex -> rewrite(rex, relBuilder))
             .collect(Collectors.toList()),
@@ -119,7 +124,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @Override
   public RelNode visit(LogicalFilter filter) {
     FlinkRelBuilder relBuilder = getBuilder();
-    relBuilder.push(filter.getInput().accept(this));
+    pushInputAndAccept(filter, relBuilder);
     relBuilder.filter(filter.getVariablesSet(), rewrite(filter.getCondition(), relBuilder));
     return relBuilder.build();
   }
@@ -127,37 +132,44 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @Override
   public RelNode visit(LogicalJoin join) {
     FlinkRelBuilder relBuilder = getBuilder();
-    RelNode left = join.getLeft().accept(this), right = join.getRight().accept(this);
-    Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join,
-        TemporalJoinHint.CONSTRUCTOR);
-    if (temporalHintOpt.isPresent()) {
-      TemporalJoinHint temporalHint = temporalHintOpt.get();
-      FlinkRexBuilder rexBuilder = FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder);
-      Holder<RexCorrelVariable> correlVar = Holder.of(null);
-      relBuilder.push(left).variable(correlVar);
-      relBuilder.push(right);
-      if (!SqrlRexUtil.isDedupedRelNode(join.getRight(),false, true)) { //TODO: change to isDedupedRelNode(right, false)
-        addDeduplicationWindow(relBuilder, temporalHint);
-      }
-      //CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount());
-      relBuilder.snapshot(
-          rexBuilder.makeFieldAccess(correlVar.get(), temporalHint.getStreamTimestampIdx()));
-      CorrelateRexRewriter correlRewriter = new CorrelateRexRewriter(rexBuilder,
-          left.getRowType().getFieldList(),
-          correlVar, right.getRowType().getFieldList(), this);
-      relBuilder.filter(correlRewriter.rewrite(join.getCondition()));
-      Set<Integer> usedLeftFieldIdx = correlRewriter.usedLeftFieldIdx;
-      usedLeftFieldIdx.add(temporalHint.getStreamTimestampIdx());
-      relBuilder.correlate(join.getJoinType(), correlVar.get().id, usedLeftFieldIdx.stream()
-          .map(idx -> rexBuilder.makeInputRef(left, idx)).collect(Collectors.toList()));
-      return relBuilder.build();
-    } else {
-      relBuilder.push(left);
-      relBuilder.push(right);
-      JoinRelType joinType = join.getJoinType();
-      relBuilder.join(joinType, rewrite(join.getCondition(), relBuilder, left, right));
-      return relBuilder.build();
+    RelNode left = join.getLeft().accept(this);
+    RelNode right = join.getRight().accept(this);
+
+    Optional<TemporalJoinHint> temporalHintOpt = SqrlHint.fromRel(join, TemporalJoinHint.CONSTRUCTOR);
+
+    return temporalHintOpt
+        .map(hint -> handleTemporalJoin(join, relBuilder, left, right, hint))
+        .orElseGet(() -> handleRegularJoin(join, relBuilder, left, right));
+  }
+
+  private RelNode handleTemporalJoin(LogicalJoin join, FlinkRelBuilder relBuilder, RelNode left, RelNode right, TemporalJoinHint temporalHint) {
+    FlinkRexBuilder rexBuilder = FlinkPhysicalPlanRewriter.getRexBuilder(relBuilder);
+    Holder<RexCorrelVariable> correlVar = Holder.of(null);
+    relBuilder.push(left).variable(correlVar);
+    relBuilder.push(right);
+    if (!SqrlRexUtil.isDedupedRelNode(join.getRight(),false, true)) { //TODO: change to isDedupedRelNode(right, false)
+      addDeduplicationWindow(relBuilder, temporalHint);
     }
+    //CalciteUtil.addIdentityProjection(relBuilder, relBuilder.peek().getRowType().getFieldCount());
+    relBuilder.snapshot(
+        rexBuilder.makeFieldAccess(correlVar.get(), temporalHint.getStreamTimestampIdx()));
+    CorrelateRexRewriter correlRewriter = new CorrelateRexRewriter(rexBuilder,
+        left.getRowType().getFieldList(),
+        correlVar, right.getRowType().getFieldList(), this);
+    relBuilder.filter(correlRewriter.rewrite(join.getCondition()));
+    Set<Integer> usedLeftFieldIdx = correlRewriter.usedLeftFieldIdx;
+    usedLeftFieldIdx.add(temporalHint.getStreamTimestampIdx());
+    relBuilder.correlate(join.getJoinType(), correlVar.get().id, usedLeftFieldIdx.stream()
+        .map(idx -> rexBuilder.makeInputRef(left, idx)).collect(Collectors.toList()));
+    return relBuilder.build();
+  }
+
+  private RelNode handleRegularJoin(LogicalJoin join, FlinkRelBuilder relBuilder, RelNode left, RelNode right) {
+    relBuilder.push(left);
+    relBuilder.push(right);
+    JoinRelType joinType = join.getJoinType();
+    relBuilder.join(joinType, rewrite(join.getCondition(), relBuilder, left, right));
+    return relBuilder.build();
   }
 
   private void addDeduplicationWindow(FlinkRelBuilder relBuilder, TemporalJoinHint temporalHint) {
@@ -190,94 +202,111 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   @Override
   public RelNode visit(LogicalAggregate aggregate) {
     FlinkRelBuilder relBuilder = getBuilder();
-    Optional<TumbleAggregationHint> tumbleHintOpt = SqrlHint.fromRel(aggregate,
-        TumbleAggregationHint.CONSTRUCTOR);
-    Optional<SlidingAggregationHint> slideHintOpt = SqrlHint.fromRel(aggregate,
-        SlidingAggregationHint.CONSTRUCTOR);
+    Optional<TumbleAggregationHint> tumbleHintOpt = SqrlHint.fromRel(aggregate, TumbleAggregationHint.CONSTRUCTOR);
+    Optional<SlidingAggregationHint> slideHintOpt = SqrlHint.fromRel(aggregate, SlidingAggregationHint.CONSTRUCTOR);
     ImmutableBitSet groupBy = Iterables.getOnlyElement(aggregate.groupSets);
     List<AggregateCall> aggCalls = aggregate.getAggCallList();
     RelNode input = aggregate.getInput().accept(this);
+
     if (tumbleHintOpt.isPresent() || slideHintOpt.isPresent()) {
-      Preconditions.checkArgument(tumbleHintOpt.isPresent() ^ slideHintOpt.isPresent());
-      FlinkRexBuilder rexBuilder = getRexBuilder(relBuilder);
-      int inputFieldCount = input.getRowType().getFieldCount();
-      RelDataType inputType = input.getRowType();
-
-      final int timestampIdx;
-      final long[] intervalsMs;
-      final SqlOperator windowFunction;
-
-      if (tumbleHintOpt.isPresent()) {
-        TumbleAggregationHint tumbleHint = tumbleHintOpt.get();
-        timestampIdx = tumbleHint.getTimestampIdx();
-        windowFunction = FlinkSqlOperatorTable.TUMBLE;
-        if (tumbleHint.getType() == TumbleAggregationHint.Type.FUNCTION) {
-          //Extract bucketing function from project
-          Preconditions.checkArgument(input instanceof LogicalProject,
-              "Expected projection as input");
-          relBuilder.push(input.getInput(0));
-          List<RexNode> projects = new ArrayList<>(((LogicalProject) input).getProjects());
-          projects.set(timestampIdx,
-              rexBuilder.makeInputRef(input.getInput(0), tumbleHint.getInputTimestampIdx()));
-          long intervalMs = tumbleHint.getIntervalMS();
-          intervalsMs = new long[]{intervalMs};
-
-          relBuilder.project(projects, inputType.getFieldNames());
-        } else if (tumbleHint.getType() == TumbleAggregationHint.Type.INSTANT) {
-          relBuilder.push(input);
-          intervalsMs = new long[]{1};
-        } else {
-          throw new UnsupportedOperationException(
-              "Invalid tumble window type: " + tumbleHint.getType());
-        }
-      } else {
-        relBuilder.push(input);
-        SlidingAggregationHint slideHint = slideHintOpt.get();
-        timestampIdx = slideHint.getTimestampIdx();
-        intervalsMs = new long[]{slideHint.getSlideWidthMs(), slideHint.getIntervalWidthMs()};
-        windowFunction = FlinkSqlOperatorTable.HOP;
-      }
-
-      makeWindow(relBuilder, windowFunction, timestampIdx, intervalsMs);
-      //Need to add all 3 window columns that are added to groupBy and then project out all but window_time
-      int window_start = inputFieldCount, window_end = inputFieldCount + 1, window_time =
-          inputFieldCount + 2;
-      List<Integer> groupByIdx = new ArrayList<>();
-      List<Integer> projectIdx = new ArrayList<>();
-      List<String> projectNames = new ArrayList<>();
-      int index = 0;
-      int window_time_idx =
-          (groupBy.cardinality() - 1) + 3 - 1; //Points at window_time at the end of groupByIdx
-      for (int idx : groupBy.asList()) {
-        if (idx == timestampIdx) {
-          projectIdx.add(window_time_idx);
-          projectNames.add(inputType.getFieldNames().get(timestampIdx));
-        } else {
-          groupByIdx.add(idx);
-          projectIdx.add(index++);
-          projectNames.add(inputType.getFieldNames().get(idx));
-        }
-      }
-      groupByIdx.add(window_start);
-      groupByIdx.add(window_end);
-      groupByIdx.add(window_time); //Window_time is new timestamp
-      index += 3;
-      assert window_time_idx == index - 1;
-
-      for (int i = 0; i < aggCalls.size(); i++) {
-        projectIdx.add(index++);
-        projectNames.add(null);
-      }
-      relBuilder.aggregate(relBuilder.groupKey(Ints.toArray(groupByIdx)), aggCalls);
-      relBuilder.project(
-          projectIdx.stream().map(idx -> rexBuilder.makeInputRef(relBuilder.peek(), idx))
-              .collect(Collectors.toList()), projectNames);
+      handleWindowedAggregation(relBuilder, tumbleHintOpt, slideHintOpt, groupBy, aggCalls, input);
     } else {
-      //Normal aggregation
-      relBuilder.push(input);
-      relBuilder.aggregate(relBuilder.groupKey(groupBy), aggCalls);
+      handleRegularAggregation(relBuilder, groupBy, aggCalls, input);
     }
     return relBuilder.build();
+  }
+
+  private void handleWindowedAggregation(FlinkRelBuilder relBuilder,
+      Optional<TumbleAggregationHint> tumbleHintOpt, Optional<SlidingAggregationHint> slideHintOpt,
+      ImmutableBitSet groupBy, List<AggregateCall> aggCalls, RelNode input) {
+    Preconditions.checkArgument(tumbleHintOpt.isPresent() ^ slideHintOpt.isPresent());
+    FlinkRexBuilder rexBuilder = getRexBuilder(relBuilder);
+    int inputFieldCount = input.getRowType().getFieldCount();
+    RelDataType inputType = input.getRowType();
+
+    final int timestampIdx = tumbleHintOpt
+        .map(tumbleHint -> tumbleHint.getTimestampIdx())
+        .orElseGet(() -> slideHintOpt.get().getTimestampIdx());
+
+    tumbleHintOpt.ifPresentOrElse(
+        tumbleHint -> handleTumbleWindow(timestampIdx, tumbleHint, input, inputType, rexBuilder, relBuilder),
+        () -> handleSlidingWindow(timestampIdx, slideHintOpt.get(), input, relBuilder));
+
+    //Need to add all 3 window columns that are added to groupBy and then project out all but window_time
+    int window_start = inputFieldCount, window_end = inputFieldCount + 1, window_time =
+        inputFieldCount + 2;
+    List<Integer> groupByIdx = new ArrayList<>();
+    List<Integer> projectIdx = new ArrayList<>();
+    List<String> projectNames = new ArrayList<>();
+    int index = 0;
+    int window_time_idx =
+        (groupBy.cardinality() - 1) + 3 - 1; //Points at window_time at the end of groupByIdx
+    for (int idx : groupBy.asList()) {
+      if (idx == timestampIdx) {
+        projectIdx.add(window_time_idx);
+        projectNames.add(inputType.getFieldNames().get(timestampIdx));
+      } else {
+        groupByIdx.add(idx);
+        projectIdx.add(index++);
+        projectNames.add(inputType.getFieldNames().get(idx));
+      }
+    }
+    groupByIdx.add(window_start);
+    groupByIdx.add(window_end);
+    groupByIdx.add(window_time); //Window_time is new timestamp
+    index += 3;
+    assert window_time_idx == index - 1;
+
+    for (int i = 0; i < aggCalls.size(); i++) {
+      projectIdx.add(index++);
+      projectNames.add(null);
+    }
+    relBuilder.aggregate(relBuilder.groupKey(Ints.toArray(groupByIdx)), aggCalls);
+    relBuilder.project(
+        projectIdx.stream().map(idx -> rexBuilder.makeInputRef(relBuilder.peek(), idx))
+            .collect(Collectors.toList()), projectNames);
+  }
+
+  private void handleTumbleWindow(int timestampIdx, TumbleAggregationHint tumbleHint, RelNode input,
+      RelDataType inputType, FlinkRexBuilder rexBuilder, FlinkRelBuilder relBuilder) {
+    SqlOperator windowFunction = FlinkSqlOperatorTable.TUMBLE;
+    if (tumbleHint.getType() == TumbleAggregationHint.Type.FUNCTION) {
+      //Extract bucketing function from project
+      Preconditions.checkArgument(input instanceof LogicalProject,
+          "Expected projection as input");
+      relBuilder.push(input.getInput(0));
+      List<RexNode> projects = new ArrayList<>(((LogicalProject) input).getProjects());
+      projects.set(timestampIdx,
+          rexBuilder.makeInputRef(input.getInput(0), tumbleHint.getInputTimestampIdx()));
+      long intervalMs = tumbleHint.getIntervalMS();
+      relBuilder.project(projects, inputType.getFieldNames());
+
+      long[] intervalsMs = new long[]{intervalMs};
+      makeWindow(relBuilder, windowFunction, timestampIdx, intervalsMs);
+
+    } else if (tumbleHint.getType() == TumbleAggregationHint.Type.INSTANT) {
+      relBuilder.push(input);
+      long[] intervalsMs = new long[]{1};
+
+      makeWindow(relBuilder, windowFunction, timestampIdx, intervalsMs);
+    } else {
+      throw new UnsupportedOperationException(
+          "Invalid tumble window type: " + tumbleHint.getType());
+    }
+  }
+
+  private void handleSlidingWindow(int timestampIdx, SlidingAggregationHint slideHint,
+      RelNode input, FlinkRelBuilder relBuilder) {
+    relBuilder.push(input);
+    long[] intervalsMs = new long[]{slideHint.getSlideWidthMs(), slideHint.getIntervalWidthMs()};
+    SqlOperator windowFunction = FlinkSqlOperatorTable.HOP;
+    makeWindow(relBuilder, windowFunction, timestampIdx, intervalsMs);
+  }
+
+  private void handleRegularAggregation(FlinkRelBuilder relBuilder,
+      ImmutableBitSet groupBy, List<AggregateCall> aggCalls, RelNode input) {
+    relBuilder.push(input);
+    relBuilder.aggregate(relBuilder.groupKey(groupBy), aggCalls);
   }
 
   private FlinkRelBuilder makeWindow(FlinkRelBuilder relBuilder, SqlOperator operator,
@@ -286,13 +315,7 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
     FlinkRexBuilder rexBuilder = getRexBuilder(relBuilder);
     RelNode input = relBuilder.peek();
 
-    List<RexNode> operandList = new ArrayList<>();
-    operandList.add(rexBuilder.makeRangeReference(input));
-    operandList.add(rexBuilder.makeCall(FlinkSqlOperatorTable.DESCRIPTOR,
-        rexBuilder.makeInputRef(input, timestampIdx)));
-    for (long intervalArg : intervalsMs) {
-      operandList.add(CalciteUtil.makeTimeInterval(intervalArg, rexBuilder));
-    }
+    List<RexNode> operandList = createOperandList(rexBuilder, input, timestampIdx, intervalsMs);
 
     //this window functions adds 3 columns to end of relation: window_start/_end/_time
     relBuilder.functionScan(FlinkSqlOperatorTable.TUMBLE, 1, operandList);
@@ -306,6 +329,17 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
         rexBuilder.makeCall(tfs.getRowType(), operator, operandList),
         tfs.getElementType(), tfs.getRowType(), tfs.getColumnMappings()));
     return relBuilder;
+  }
+
+  private List<RexNode> createOperandList(FlinkRexBuilder rexBuilder, RelNode input, int timestampIdx, long[] intervalsMs) {
+    List<RexNode> operandList = new ArrayList<>();
+    operandList.add(rexBuilder.makeRangeReference(input));
+    operandList.add(rexBuilder.makeCall(FlinkSqlOperatorTable.DESCRIPTOR,
+        rexBuilder.makeInputRef(input, timestampIdx)));
+    for (long intervalArg : intervalsMs) {
+      operandList.add(CalciteUtil.makeTimeInterval(intervalArg, rexBuilder));
+    }
+    return operandList;
   }
 
   @Override
