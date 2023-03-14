@@ -229,9 +229,15 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
         .orElseGet(() -> slideHintOpt.get().getTimestampIdx());
 
     tumbleHintOpt.ifPresentOrElse(
-        tumbleHint -> handleTumbleWindow(timestampIdx, tumbleHint, input, inputType, rexBuilder, relBuilder),
+        tumbleHint -> handleTumbleWindow(timestampIdx, tumbleHint, input, inputType, rexBuilder,
+            relBuilder),
         () -> handleSlidingWindow(timestampIdx, slideHintOpt.get(), input, relBuilder));
 
+    applyWindowedGroupingAndProjection(relBuilder, rexBuilder, inputType, groupBy,
+        aggCalls, inputFieldCount, timestampIdx);
+  }
+  
+  public void applyWindowedGroupingAndProjection(FlinkRelBuilder relBuilder, FlinkRexBuilder rexBuilder, RelDataType inputType, ImmutableBitSet groupBy, List<AggregateCall> aggCalls, int inputFieldCount, int timestampIdx) {
     //Need to add all 3 window columns that are added to groupBy and then project out all but window_time
     int window_start = inputFieldCount, window_end = inputFieldCount + 1, window_time =
         inputFieldCount + 2;
@@ -382,8 +388,8 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   public RelNode visit(RelNode other) {
     if (other instanceof Uncollect) {
       Uncollect uncollect = (Uncollect) other;
-      RelBuilder relBuilder = getBuilder();
-      relBuilder.push(uncollect.getInput().accept(this));
+      FlinkRelBuilder relBuilder = getBuilder();
+      pushInputAndAccept(uncollect, relBuilder);
       relBuilder.uncollect(List.of(), uncollect.withOrdinality);
       return relBuilder.build();
     }
