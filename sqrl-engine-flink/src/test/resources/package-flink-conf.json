@@ -1,0 +1,7 @@
+{
+  "savepoint" : false,
+  "engineName" : "flink",
+  "flinkConf" : {
+    "rest.flamegraph.enabled" : "true"
+  }
+}

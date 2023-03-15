@@ -23,13 +23,6 @@ public class FileResourceResolver implements ResourceResolver {
     this.baseDir = baseDir;
   }
 
-  //todo hacks remove
-  public Optional<URI> resolveTableJson(NamePath namePath) {
-    Path path = namepath2Path(baseDir, namePath.popLast());
-
-    return resolve(path.resolve(namePath.getLast().getCanonical() + ".table.json"));
-  }
-
   public Optional<URI> resolve(Path path) {
     return Optional.of(path.toFile().toURI());
   }
