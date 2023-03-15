@@ -104,6 +104,7 @@ public class RepositoryTest {
     ValidatePublication validate = new ValidatePublication("datasqrl", output, errors);
     Publisher publisher = new Publisher(errors);
     assertNotNull(publisher.publish(packagePath, validate));
+    assertFalse(errors.isFatal());
   }
 
 

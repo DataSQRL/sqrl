@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,18 +36,22 @@ public class PackageConfiguration {
   String readme;
   String description;
 
+  @Builder.Default
+  List<KeyWord> keywords = List.of();
+
   public boolean initialize(ErrorCollector errors) {
     errors.checkFatal(!Strings.isNullOrEmpty(name),"Need to specify a package name");
     errors.checkFatal(!Strings.isNullOrEmpty(version),"Need to specify a package version");
     if (latest==null) latest = true;
     if (Strings.isNullOrEmpty(variant)) variant=DEFAULT_VARIANT;
+    if (keywords==null) keywords = List.of();
     return true;
   }
 
   public void checkInitialized() {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(getName()) &&
         !Strings.isNullOrEmpty(getVersion()) && !Strings.isNullOrEmpty(getVariant()) &&
-        getLatest()!=null, "Package configuration has not been initialized.");
+        getLatest()!=null && getKeywords()!=null, "Package configuration has not been initialized.");
   }
 
   @JsonIgnore
@@ -55,7 +60,15 @@ public class PackageConfiguration {
     return new Dependency(getName(), getVersion(), getVariant());
   }
 
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @Getter
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static final class KeyWord {
 
+    String name;
+
+  }
 
 
 }

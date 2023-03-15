@@ -77,6 +77,8 @@ public class InputError<Input> implements Serializable {
 
   public static class InputErrorMessage implements Serializable {
 
+    public static final int MAX_DATA_LENGTH = 1024;
+
     public String severity;
     public String message;
     public String location;
@@ -119,7 +121,9 @@ public class InputError<Input> implements Serializable {
       StringBuilder b = new StringBuilder();
       if (includeSeverity) b.append("[").append(severity).append("]");
       b.append(message).append("\n");
-      b.append("on data: ").append(inputData).append("\n");
+      b.append("on data: ")
+          .append(inputData.length()<=MAX_DATA_LENGTH?inputData:inputData.substring(0,MAX_DATA_LENGTH))
+          .append("\n");
       b.append("in ").append(location).append("\n");
       b.append(description);
       return b.toString();

@@ -22,7 +22,7 @@ public class Publication extends PackageConfiguration {
         @NonNull String hash, @NonNull String authorId, @NonNull String submissionTime) {
         super(pkg.getName(), pkg.getVersion(), pkg.getVariant(), pkg.getLatest(), orEmpty(pkg.getLicense()),
             orEmpty(pkg.getRepository()), orEmpty(pkg.getHomepage()), orEmpty(pkg.getDocumentation()),
-            orEmpty(pkg.getReadme()), orEmpty(pkg.getDescription()));
+            orEmpty(pkg.getReadme()), orEmpty(pkg.getDescription()), pkg.getKeywords());
         pkg.checkInitialized();
         this.uniqueId = uniqueId;
         this.file = file;
