@@ -30,7 +30,7 @@ public class ServeCommand extends AbstractCommand {
   protected void runCommand(ErrorCollector errors) throws Exception {
     //Get jdbc config from package.json
     List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
-    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
+    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFromPath(packageFiles,
         GlobalEngineConfiguration.class);
 
     startGraphQLServer(readModel(), port, Util.getJdbcEngine(engineConfig.getEngines()));

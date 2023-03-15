@@ -24,7 +24,6 @@
     <testcontainers.version>1.17.4</testcontainers.version>
     <junit.jupiter.version>5.8.2</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
-    <flink.version>1.15.2</flink.version>
   </properties>
 
   <dependencies>

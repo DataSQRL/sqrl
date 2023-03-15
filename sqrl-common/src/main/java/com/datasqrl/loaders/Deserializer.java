@@ -4,6 +4,7 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.spi.JacksonDeserializer;
+import com.datasqrl.util.FileUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -33,14 +35,29 @@ public class Deserializer {
     yamlMapper = new YAMLMapper();
   }
 
+  public <T> T mapJsonFile(URI path, Class<T> clazz) {
+    return mapFile(jsonMapper, path, clazz);
+  }
+
   public <T> T mapJsonFile(Path path, Class<T> clazz) {
     return mapFile(jsonMapper, path, clazz);
+  }
+
+  public <T> T mapYAMLFile(URI uri, Class<T> clazz) {
+    return mapFile(yamlMapper, uri, clazz);
   }
 
   public <T> T mapYAMLFile(Path path, Class<T> clazz) {
     return mapFile(yamlMapper, path, clazz);
   }
 
+  public static <T> T mapFile(ObjectMapper mapper, URI uri, Class<T> clazz) {
+    try {
+      return mapper.readValue(uri.toURL(), clazz);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
   public static <T> T mapFile(ObjectMapper mapper, Path path, Class<T> clazz) {
     try {
       return mapper.readValue(path.toFile(), clazz);

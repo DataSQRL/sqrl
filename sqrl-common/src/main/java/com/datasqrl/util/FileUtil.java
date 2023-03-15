@@ -6,6 +6,11 @@ package com.datasqrl.util;
 
 import com.google.common.base.Strings;
 import com.google.common.io.Resources;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -103,4 +108,27 @@ public class FileUtil {
     }
   }
 
+
+  @SneakyThrows
+  public static String readFile(URI uri) {
+    URL url = uri.toURL();
+    StringBuilder content = new StringBuilder();
+
+    try (InputStream inputStream = url.openStream();
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
+
+      String line;
+      while ((line = bufferedReader.readLine()) != null) {
+        content.append(line).append(System.lineSeparator());
+      }
+    }
+
+    return content.toString();
+  }
+
+  @SneakyThrows
+  public static URI getParent(URI uri) {
+    return new URI(uri.toString().substring(0, uri.toString().lastIndexOf("/") + 1));
+  }
 }

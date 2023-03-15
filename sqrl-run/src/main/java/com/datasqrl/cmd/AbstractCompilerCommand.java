@@ -12,12 +12,15 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
+import com.datasqrl.loaders.ResourceResolver;
 import com.datasqrl.packager.Packager;
+import com.datasqrl.plan.local.generate.FileResourceResolver;
 import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.service.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,15 +78,18 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     Build build = new Build(collector);
     Packager packager = PackagerUtil.create(root.rootDir, files, packageFiles, collector);
-    Path buildLoc = build.build(packager, !noinfer);
+    Path packageFilePath = build.build(packager, !noinfer);
 
-    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
+    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFromPath(packageFiles,
         GlobalEngineConfiguration.class);
     JdbcDataSystemConnectorConfig jdbc = Util.getJdbcEngine(engineConfig.getEngines());
 
     Compiler compiler = new Compiler();
 
-    Compiler.CompilerResult result = compiler.run(collector, buildLoc, debug);
+    Preconditions.checkArgument(Files.isRegularFile(packageFilePath));
+
+    ResourceResolver resourceResolver = new FileResourceResolver(packageFilePath.getParent());
+    Compiler.CompilerResult result = compiler.run(collector, resourceResolver, debug);
     write(result, jdbc);
     if (generateAPI.length>0) {
       collector.checkFatal(Arrays.stream(generateAPI).noneMatch(a -> a!=APIType.GraphQL), ErrorCode.NOT_YET_IMPLEMENTED, "DataSQRL currently only supports GraphQL APIs.");
