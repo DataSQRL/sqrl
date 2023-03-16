@@ -68,8 +68,6 @@ public class RemoteRepositoryImplementation implements Repository {
     String file = dep.get("file").asText();
     String hash = dep.get("hash").asText();
     String repoURL = dep.get("repoURL").asText();
-    //TODO (remove): Current hack to fix bug in SQRL
-    repoURL = repoURL.replace("'","");
 
     try {
       // Create target directory
@@ -80,7 +78,7 @@ public class RemoteRepositoryImplementation implements Repository {
 
       // Copy the zip file from the repoURL to the temporary file
       FileUtils.copyURLToFile(
-          new URL(repoURL+file),
+          new URL(repoURL),
           zipFile.toFile());
 
       // Get the hash for the downloaded file
