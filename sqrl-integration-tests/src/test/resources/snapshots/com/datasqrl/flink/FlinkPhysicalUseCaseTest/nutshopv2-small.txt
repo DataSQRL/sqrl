@@ -29,7 +29,7 @@ LogicalProject(__pk_0=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
 
 >>>past_purchases$17-lp-stream
 LogicalProject(__pk_0=[$0], productid=[$1], num_orders=[$2], total_quantity=[$3], timestamp=[$4])
-  LogicalProject(__pk_0=[$8], productid=[$14], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $14, $8 ORDER BY $6 ROWS UNBOUNDED PRECEDING)], total_quantity=[SUM($9) IGNORE NULLS OVER (PARTITION BY $14, $8 ORDER BY $6 ROWS UNBOUNDED PRECEDING)], timestamp=[$6])
+  LogicalProject(__pk_0=[$8], productid=[$14], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $8, $14 ORDER BY $6 ROWS UNBOUNDED PRECEDING)], total_quantity=[SUM($9) IGNORE NULLS OVER (PARTITION BY $8, $14 ORDER BY $6 ROWS UNBOUNDED PRECEDING)], timestamp=[$6])
     LogicalJoin(condition=[=($3, $14)], joinType=[inner]) hints[TemporalJoinHint options:[6, 1, 0]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], $f12=[coalesce($11, 0.0:DECIMAL(10, 5))], $f13=[-(*($9, $10), coalesce($11, 0.0:DECIMAL(10, 5)))])
         LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
