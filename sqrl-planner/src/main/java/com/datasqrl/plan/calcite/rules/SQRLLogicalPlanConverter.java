@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.calcite.rules;
 
-import com.datasqrl.plan.calcite.table.PullupOperator.Container;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Child;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Root;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
@@ -170,8 +169,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
     if (exec.getStage().supports(EngineCapability.DENORMALIZE)) {
       return denormalizeTable(queryTable, vtable, exec, numRootPks);
+    } else if (vtable.isRoot()) {
+      return createAnnotatedRootTableScan(queryTable, tableScan, vtable, exec, scanExec, numRootPks);
     } else {
-      return createAnnotatedTableScan(queryTable, tableScan, vtable, exec, scanExec, numRootPks);
+      return createAnnotatedChildTableScan(queryTable, tableScan, vtable, exec, numRootPks);
     }
   }
 
@@ -196,25 +197,12 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     return result;
   }
 
-  private AnnotatedLP createAnnotatedTableScan(QueryRelationalTable queryTable, TableScan tableScan,
-      VirtualRelationalTable vtable, ExecutionAnalysis exec,
+  private AnnotatedLP createAnnotatedRootTableScan(QueryRelationalTable queryTable,
+      TableScan tableScan, VirtualRelationalTable vtable, ExecutionAnalysis exec,
       ExecutionAnalysis scanExec, Optional<Integer> numRootPks) {
     int targetLength = vtable.getNumColumns();
     PullupOperator.Container pullups = queryTable.getPullups();
 
-    if (vtable.isRoot()) {
-      return createAnnotatedRootTableScan(queryTable, tableScan, vtable, exec, scanExec, numRootPks,
-          pullups, targetLength);
-    } else {
-      return createAnnotatedChildTableScan(queryTable, tableScan, vtable, exec, numRootPks,
-          targetLength);
-    }
-  }
-
-  private AnnotatedLP createAnnotatedRootTableScan(QueryRelationalTable queryTable,
-      TableScan tableScan, VirtualRelationalTable vtable, ExecutionAnalysis exec,
-      ExecutionAnalysis scanExec, Optional<Integer> numRootPks, Container pullups,
-      int targetLength) {
     TopNConstraint topN = pullups.getTopN();
     if (exec.isMaterialize(scanExec) && topN.isDeduplication()) {
       // We can drop topN since that gets enforced by writing to DB with primary key
@@ -232,8 +220,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
   private AnnotatedLP createAnnotatedChildTableScan(QueryRelationalTable queryTable,
       TableScan tableScan, VirtualRelationalTable vtable, ExecutionAnalysis exec,
-      Optional<Integer> numRootPks, int targetLength) {
+      Optional<Integer> numRootPks) {
+    int targetLength = vtable.getNumColumns();
     PullupOperator.Container pullups = queryTable.getPullups();
+
     Preconditions.checkArgument(
         pullups.getTopN().isEmpty() && pullups.getNowFilter().isEmpty());
     return new AnnotatedLP(tableScan, queryTable.getType(),
