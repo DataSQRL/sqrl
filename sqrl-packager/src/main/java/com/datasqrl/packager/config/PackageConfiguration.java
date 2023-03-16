@@ -28,7 +28,7 @@ public class PackageConfiguration {
   String variant;
   @Builder.Default
   Boolean latest = true;
-
+  String type;
   String license;
   String repository;
   String homepage;
