@@ -39,7 +39,7 @@ public class TopNConstraint implements PullupOperator {
     this.isTimestampSort = isTimestampSort;
     this.inputTableType = inputTableType;
     Preconditions.checkArgument(isEmpty() || distinct || hasLimit());
-    Preconditions.checkArgument(isEmpty() || !distinct || hasPartition());
+    Preconditions.checkArgument(isEmpty() || !distinct || hasPartition() || !hasCollation());
   }
 
   public boolean isEmpty() {
@@ -88,7 +88,7 @@ public class TopNConstraint implements PullupOperator {
   }
 
   public boolean isDeduplication() {
-    //This assumes sorting by timestamp decreasing; if distinct==true || hasPartition then this is guaranteed
+    //Deduplication may not have a partition for global/single row tables, e.g. after a global aggregation
     return !distinct && isTimestampSort && hasLimit() && getLimit() == 1;
   }
 
