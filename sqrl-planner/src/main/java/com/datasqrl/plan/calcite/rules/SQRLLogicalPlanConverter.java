@@ -1022,6 +1022,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
   }
 
   public AnnotatedLP processAggregate(LogicalAggregate aggregate) {
+    //Need to inline TopN before we aggregate, but we postpone inlining now-filter in case we can push it through
     final AnnotatedLP input = getRelHolder(aggregate.getInput().accept(this)).inlineTopN(
         makeRelBuilder());
     Preconditions.checkArgument(aggregate.groupSets.size() == 1,
