@@ -1,0 +1,32 @@
+>>>productid-lp
+LogicalProject(productid=[$7], time=[$4])
+  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+    LogicalTableScan(table=[[orders$q$5]])
+    Uncollect
+      LogicalProject($f0=[$cor3.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>productorders-lp
+LogicalProject(_uuid=[$0], _idx=[$6], id=[$2], productid=[$11], time=[$4])
+  LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
+    LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$5]])
+      Uncollect
+        LogicalProject($f0=[$cor5.entries])
+          LogicalValues(tuples=[[{ 0 }]])
+    LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
+      LogicalProject(productid=[$0], time=[$1], $f2=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+        LogicalTableScan(table=[[productid$q$11]])
+
+>>>suborders-lp
+LogicalProject(__pk_0=[$2], orderid=[$11], numOrders=[COUNT() IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], lastOrder=[MAX($4) IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+  LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
+    LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$5]])
+      Uncollect
+        LogicalProject($f0=[$cor7.entries])
+          LogicalValues(tuples=[[{ 0 }]])
+    LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
+      LogicalProject(productid=[$0], time=[$1], $f2=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+        LogicalTableScan(table=[[productid$q$11]])
+

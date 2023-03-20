@@ -59,6 +59,8 @@ public class ValidatePublication implements PublishRepository {
     NamePath namePath = NamePath.parse(pkgConfig.getName());
     Preconditions.checkArgument(namePath.size()>=2, "Invalid package name: %s. "
         + "Should have at least two components: name-of-organization.package-name", pkgConfig.getName());
+    Preconditions.checkArgument(pkgConfig.getType()!=null && PackageTypes.valueOf(pkgConfig.getType())!=null,
+        "Invalid package type: %s", pkgConfig.getType());
   }
 
 }

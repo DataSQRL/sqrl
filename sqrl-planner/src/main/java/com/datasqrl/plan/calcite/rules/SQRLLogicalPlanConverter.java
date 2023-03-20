@@ -467,9 +467,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
           pk = ContinuousIndexMap.builder(distincts.size()).addAll(distincts).build(targetLength);
           if (partition.isEmpty()) {
             //If there is no partition, we can ignore the sort order plus limit and turn this into a simple deduplication
-            timestamp = timestamp.getBestCandidate().fixAsTimestamp();
             partition = pk.targetsAsList();
-            collation = LPConverterUtil.getTimestampCollation(timestamp.getTimestampCandidate());
+            if (timestamp.hasCandidates()) {
+              timestamp = timestamp.getBestCandidate().fixAsTimestamp();
+              collation = LPConverterUtil.getTimestampCollation(timestamp.getTimestampCandidate());
+            } else {
+              collation = RelCollations.of(distincts.get(0));
+            }
             limit = Optional.of(1);
           } else {
             isDistinct = true;

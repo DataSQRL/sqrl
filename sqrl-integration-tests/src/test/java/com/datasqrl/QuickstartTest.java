@@ -26,7 +26,6 @@ public class QuickstartTest {
     }
 
     @Test
-    @Disabled("requires GraphQL pagination fix")
     public void testQuickStartTeaser() {
         Path root = Quickstart.BASE_PATH;
         execute(root, "run",root.resolve("quickstart-teaser.sqrl").toString(),
@@ -43,7 +42,6 @@ public class QuickstartTest {
     }
 
     @Test
-    @Disabled("requires GraphQL pagination fix")
     public void testQuickStartUserWithGraphQL() {
         Path root = Quickstart.BASE_PATH;
         execute(root, "run",root.resolve("quickstart-user.sqrl").toString(),

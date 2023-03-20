@@ -96,7 +96,7 @@ public class PackagerConfig {
     ScriptConfiguration.ScriptConfigurationBuilder builder = ScriptConfiguration.builder();
     builder.main(rootDir.relativize(mainScript).normalize().toString());
     graphQLSchemaFile.ifPresent(gql -> {
-      Preconditions.checkArgument(Files.isRegularFile(gql));
+      Preconditions.checkArgument(Files.isRegularFile(gql),"GraphQL schema does not exist");
       builder.graphql(rootDir.relativize(gql).normalize().toString());
     });
     return builder.build();

@@ -17,7 +17,6 @@ import com.datasqrl.plan.calcite.table.PullupOperator;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.plan.calcite.table.TableType;
 import com.datasqrl.plan.calcite.table.TimestampHolder;
-import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
@@ -358,6 +357,25 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void selectDistinctNestedTest() {
+    ScriptBuilder builder = imports();
+    builder.add("ProductId := SELECT DISTINCT productid FROM Orders.entries;");
+    builder.add(
+        "ProductOrders := SELECT o.id, p.productid FROM ProductId p JOIN Orders.entries e ON e.productid = p.productid JOIN e.parent o");
+    builder.add(
+        "ProductId.suborders := SELECT o.id as orderid, COUNT(1) AS numOrders, MAX(o.time) AS lastOrder FROM @ "
+            + "JOIN Orders.entries e ON e.productid = @.productid JOIN e.parent o GROUP BY orderid ORDER BY numOrders DESC");
+    plan(builder.toString());
+    validateQueryTable("productid", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 2, 1,
+        TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("productorders", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 2,
+        TimestampTest.fixed(4));
+    validateQueryTable("suborders", TableType.TEMPORAL_STATE, ExecutionEngine.Type.STREAM, 5, 2,
+        TimestampTest.fixed(4), PullupTest.builder().hasTopN(true).hasSort(true).build());
+  }
+  //
+
+  @Test
   public void partitionSelectDistinctTest() {
     //TODO: add distinctAgg test back in once we keep parent state
     ScriptBuilder builder = imports();
@@ -550,6 +568,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
       assertEquals(hasNowFilter, !pullups.getNowFilter().isEmpty(), "now filter");
       assertEquals(hasTopN, !pullups.getTopN().isEmpty(), "topN");
       assertEquals(hasSort, !pullups.getSort().isEmpty(), "sort");
+    }
+
+    public static PullupTest hasTopN() {
+      return PullupTest.builder().hasTopN(true).build();
     }
 
   }

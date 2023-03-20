@@ -464,6 +464,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void invalidParentTable() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "Products.orders := SELECT COUNT(1) FROM @ JOIN Orders.entries e ON e.productid = @.productid;\n");
+  }
+
+  @Test
   public void importAllTest() {
     validateScript("IMPORT ecommerce-data.*;");
   }
