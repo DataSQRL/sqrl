@@ -173,7 +173,8 @@ public class Model {
       include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
-      @Type(value = PgQuery.class, name = "pgQuery")
+      @Type(value = PgQuery.class, name = "pgQuery"),
+      @Type(value = PagedPgQuery.class, name = "PagedPgQuery")
   })
   public interface QueryBase {
 
