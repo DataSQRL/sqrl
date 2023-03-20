@@ -28,6 +28,7 @@ import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.plan.ViewExpanders;
 import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.prepare.RelOptTableImpl;
+import org.apache.calcite.rel.LogicalStream;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelCollations;
@@ -126,6 +127,7 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSetOperator;
 import org.apache.calcite.sql.SqlSnapshot;
+import org.apache.calcite.sql.SqlStream;
 import org.apache.calcite.sql.SqlUnnestOperator;
 import org.apache.calcite.sql.SqlUpdate;
 import org.apache.calcite.sql.SqlUtil;
@@ -2189,7 +2191,14 @@ public class SqlToRelConverter {
         convertCollectionTable(bb, call2);
         return;
 
-      default:
+      case OTHER:
+        if (from instanceof SqlStream) {
+          final RelNode rel2 = convertQueryRecursive(from, false, null).project();
+          bb.setRoot(rel2, true);
+          return;
+        }
+
+        default:
         throw new AssertionError("not a join operator " + from);
     }
   }
@@ -3456,9 +3465,19 @@ public class SqlToRelConverter {
         return convertWith((SqlWith) query, top);
       case VALUES:
         return RelRoot.of(convertValues((SqlCall) query, targetRowType), kind);
+      case OTHER:
+        if (query instanceof SqlStream) {
+          return RelRoot.of(convertStream((SqlStream) query, top), kind);
+        }
       default:
         throw new AssertionError("not a query: " + query);
     }
+  }
+
+  private RelNode convertStream(SqlStream query, boolean top) {
+    final RelNode left =
+        convertQueryRecursive(query.operand(0), false, null).project();
+    return LogicalStream.create(left);
   }
 
   /**

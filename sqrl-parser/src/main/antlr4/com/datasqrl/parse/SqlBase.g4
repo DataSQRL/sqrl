@@ -40,7 +40,6 @@ statement
     | hint? qualifiedName tableFunction? ':=' joinSpecification                          # joinAssignment
     | hint? qualifiedName tableFunction? ':=' expression                                 # expressionAssign
     | hint? qualifiedName tableFunction? ':=' query                                      # queryAssign
-    | hint? qualifiedName tableFunction? ':=' streamQuery                                # streamAssign
     | hint? qualifiedName ':=' DISTINCT table=identifier (AS? distinctAlias=identifier)?
                                ON onList
                                (ORDER BY orderExpr=expression ordering=DESC?)?           # distinctAssignment
@@ -92,9 +91,6 @@ joinPathCondition
     : aliasedRelation (joinCondition)?
     ;
 
-streamQuery
-    : STREAM ON subscriptionType AS query;
-
 query
     : queryNoWith
     ;
@@ -112,6 +108,7 @@ queryTerm
 
 queryPrimary
     : querySpecification                   #queryPrimaryDefault
+    | STREAM ON subscriptionType FROM query  #streamQuery
     | '(' queryNoWith  ')'                 #subquery
     ;
 

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.calcite.rules;
 
+import org.apache.calcite.rel.LogicalStream;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttle;
 import org.apache.calcite.rel.core.TableFunctionScan;
@@ -41,6 +42,9 @@ public interface SqrlRelShuttle extends RelShuttle {
 
   @Override
   default RelNode visit(RelNode relNode) {
+    if (relNode instanceof LogicalStream) {
+      return visit((LogicalStream) relNode);
+    }
     throw new UnsupportedOperationException("Unexpected rel node: " + relNode);
   }
 
@@ -69,6 +73,9 @@ public interface SqrlRelShuttle extends RelShuttle {
     return visit((RelNode) logicalTableModify);
   }
 
+  default RelNode visit(LogicalStream stream) {
+    throw new RuntimeException("to implement");
+  }
 
   @Override
   default RelNode visit(LogicalMatch logicalMatch) {

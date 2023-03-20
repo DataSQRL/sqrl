@@ -72,6 +72,7 @@ import org.apache.calcite.sql.SqlSampleSpec;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSnapshot;
+import org.apache.calcite.sql.SqlStream;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlTableFunction;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
@@ -1135,6 +1136,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       // Handle extended identifiers.
       final SqlCall call = (SqlCall) node;
       switch (call.getOperator().getKind()) {
+        case OTHER:
         case TABLE_REF:
           return getNamespace(call.operand(0), scope);
         case EXTEND:
@@ -1147,6 +1149,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         case AS:
           final SqlNode nested = call.getOperandList().get(0);
           switch (nested.getKind()) {
+            case OTHER:
             case TABLE_REF:
             case EXTEND:
               return getNamespace(nested, scope);
@@ -2415,6 +2418,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             forceNullable,
             lateral);
 
+      case OTHER:
+        if (!(node instanceof SqlStream)) {
+          //todo: Validate sql stream
+          throw Util.unexpected(kind);
+        }
+
       case SNAPSHOT:
         call = (SqlCall) node;
         operand = call.operand(0);
@@ -3168,6 +3177,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlValidatorScope scope) {
     Objects.requireNonNull(targetRowType);
     switch (node.getKind()) {
+      case OTHER:
+        if (!(node instanceof SqlStream)) {
+          throw new RuntimeException();
+        }
       case AS:
       case TABLE_REF:
         validateFrom(

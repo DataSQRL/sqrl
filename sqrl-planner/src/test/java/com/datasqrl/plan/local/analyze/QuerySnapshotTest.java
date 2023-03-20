@@ -78,6 +78,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     snapshot.createOrValidate();
   }
 
+
+  @Test
+  public void testStream() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("X := SELECT uuid AS uuid FROM (STREAM ON ADD FROM SELECT _uuid AS uuid FROM Product) AS x");
+    validateScript(builder.getScript());
+  }
+
   @Test
   public void stringLibTest() {
     ScriptBuilder builder = example.getImports();

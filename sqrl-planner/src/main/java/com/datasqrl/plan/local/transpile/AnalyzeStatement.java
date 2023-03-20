@@ -38,6 +38,7 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlStream;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec.SqrlJoinDeclarationVisitor;
@@ -146,6 +147,12 @@ public class AnalyzeStatement implements
       case JOIN_DECLARATION:
         SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
         return spec.accept(this, context);
+      case OTHER:
+        if (node instanceof SqlStream) {
+          SqlStream stream = (SqlStream) node;
+          Context rel = visit(stream.getQuery(), context);
+          return rel;
+        }
       default:
         throw new SqrlAstException(ErrorLabel.GENERIC, node.getParserPosition(),
             "unknown ast node:" + node.getClass());

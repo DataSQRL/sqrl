@@ -4,14 +4,13 @@
 package com.datasqrl.plan.calcite.util;
 
 import com.google.common.base.Preconditions;
+import java.util.function.UnaryOperator;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
-
-import java.util.function.UnaryOperator;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 public class RelToSql {

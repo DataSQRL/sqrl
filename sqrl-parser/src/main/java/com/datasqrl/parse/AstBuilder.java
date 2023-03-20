@@ -1176,17 +1176,12 @@ class AstBuilder
   }
 
   @Override
-  public SqlNode visitStreamAssign(StreamAssignContext ctx) {
-
-    SqlNode query = visit(ctx.streamQuery().query());
+  public SqlNode visitStreamQuery(StreamQueryContext ctx) {
     StreamType type = StreamType.valueOf(
-        ctx.streamQuery().subscriptionType().getText());
-    return new StreamAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
-        toNamePath(getNamePath(ctx.qualifiedName())),
-        getTableArgs(ctx.tableFunction()),
-        query,
+        ctx.subscriptionType().getText());
+    return new SqlStream(getLocation(ctx),
         type,
-        emptyListToEmptyOptional(getHints(ctx.hint())));
+        visit(ctx.query()));
   }
 
   private Optional<SqlNodeList> emptyListToEmptyOptional(List<SqlNode> list) {
