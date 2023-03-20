@@ -20,7 +20,8 @@ public class Publication extends PackageConfiguration {
 
     public Publication(@NonNull PackageConfiguration pkg, @NonNull String uniqueId, @NonNull String file,
         @NonNull String hash, @NonNull String authorId, @NonNull String submissionTime) {
-        super(pkg.getName(), pkg.getVersion(), pkg.getVariant(), pkg.getLatest(), orEmpty(pkg.getLicense()),
+        super(pkg.getName(), pkg.getVersion(), pkg.getVariant(), pkg.getLatest(), orEmpty(pkg.getType()),
+            orEmpty(pkg.getLicense()),
             orEmpty(pkg.getRepository()), orEmpty(pkg.getHomepage()), orEmpty(pkg.getDocumentation()),
             orEmpty(pkg.getReadme()), orEmpty(pkg.getDescription()), pkg.getKeywords());
         pkg.checkInitialized();

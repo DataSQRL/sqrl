@@ -3,6 +3,7 @@
     "name": "datasqrl.examples.ecommerce",
     "version": "1.0.0",
     "variant": "dev",
-    "description": "Simple e-commerce dataset"
+    "description": "Simple e-commerce dataset",
+    "type": "source"
   }
 }
