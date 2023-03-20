@@ -148,9 +148,8 @@ public class RepositoryTest {
 
   @Test
   @SneakyThrows
-  @Disabled("until repository is running again")
   public void remoteRepoTest() {
-    Dependency dependency = new Dependency("datasqrl.seedshop", "0.1.0", "dev");
+    Dependency dependency = new Dependency("datasqrl.seedshop", "0.1.1", "dev");
 
     RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation(
         RemoteRepositoryImplementation.DEFAULT_URI);

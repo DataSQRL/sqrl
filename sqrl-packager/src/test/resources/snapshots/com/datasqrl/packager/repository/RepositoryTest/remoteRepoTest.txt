@@ -1,8 +1,8 @@
 >>>localRepo
 datasqrl
 datasqrl/seedshop
-datasqrl/seedshop/0.1.0
-datasqrl/seedshop/0.1.0/dev.zip
+datasqrl/seedshop/0.1.1
+datasqrl/seedshop/0.1.1/dev.zip
 >>>output-local
 customers.schema.yml
 customers.table.json
