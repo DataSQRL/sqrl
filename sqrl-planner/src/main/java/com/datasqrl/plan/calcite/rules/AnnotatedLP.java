@@ -295,7 +295,7 @@ public class AnnotatedLP implements RelHolder {
         .sort(SortOrder.EMPTY).build();
   }
 
-  private AnnotatedLP dropSort() {
+  public AnnotatedLP dropSort() {
     return copy().sort(SortOrder.EMPTY).build();
   }
 
@@ -409,13 +409,6 @@ public class AnnotatedLP implements RelHolder {
 
   public AnnotatedLP postProcess(RelBuilder relBuilder) {
     return postProcess(relBuilder, Collections.nCopies(select.getSourceLength(), null));
-  }
-
-  public AnnotatedLP postProcessStream(RelBuilder relBuilder, List<String> fieldNames) {
-    AnnotatedLP input = this;
-    input = input.dropSort().inlineNowFilter(relBuilder).inlineTopN(relBuilder); //for streams, we ignore sorts
-
-    return input.postProcess(relBuilder, fieldNames);
   }
 
   public double estimateRowCount() {

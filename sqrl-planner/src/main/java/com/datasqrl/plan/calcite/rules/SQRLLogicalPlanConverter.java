@@ -3,6 +3,8 @@
  */
 package com.datasqrl.plan.calcite.rules;
 
+import com.datasqrl.plan.calcite.rel.LogicalStream;
+import com.datasqrl.plan.calcite.rel.LogicalStreamMetaData;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Child;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Root;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
@@ -1334,6 +1336,27 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
     ContinuousIndexMap pk;
     ContinuousIndexMap select;
+  }
+
+
+  @Override
+  public RelNode visit(LogicalStream logicalStream) {
+    AnnotatedLP input = getRelHolder(logicalStream.getInput().accept(this));
+    Preconditions.checkArgument(input.type.isState(),
+        "Underlying table is already a stream");
+    RelBuilder relBuilder = makeRelBuilder();
+    input = input.dropSort().inlineNowFilter(relBuilder).inlineTopN(relBuilder);
+    TimestampHolder.Derived.Candidate candidate = input.timestamp.getBestCandidate();
+    TimestampHolder.Derived timestamp = input.timestamp.restrictTo(List.of(candidate.withIndex(1)));
+
+    RelNode relNode = LogicalStream.create(input.relNode,logicalStream.getStreamType(),
+        new LogicalStreamMetaData(input.primaryKey.targetsAsArray(), input.select.targetsAsArray(), candidate.getIndex()));
+    ContinuousIndexMap pk = ContinuousIndexMap.of(List.of(0));
+    int numFields = relNode.getRowType().getFieldCount();
+    ContinuousIndexMap select = ContinuousIndexMap.identity(numFields, numFields);
+
+    return setRelHolder(AnnotatedLP.build(relNode, TableType.STREAM, pk, timestamp,
+        select, input.getExec().require(EngineCapability.TO_STREAM), input).build());
   }
 
   @Override

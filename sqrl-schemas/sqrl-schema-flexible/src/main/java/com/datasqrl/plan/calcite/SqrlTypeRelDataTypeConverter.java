@@ -4,24 +4,28 @@
 package com.datasqrl.plan.calcite;
 
 import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.schema.TypeUtil;
 import com.datasqrl.schema.input.SqrlTypeConverter;
 import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
-import com.datasqrl.schema.type.basic.*;
-import java.math.BigDecimal;
+import com.datasqrl.schema.type.basic.AbstractBasicType;
+import com.datasqrl.schema.type.basic.BooleanType;
+import com.datasqrl.schema.type.basic.DateTimeType;
+import com.datasqrl.schema.type.basic.FloatType;
+import com.datasqrl.schema.type.basic.IntegerType;
+import com.datasqrl.schema.type.basic.IntervalType;
+import com.datasqrl.schema.type.basic.StringType;
+import com.datasqrl.schema.type.basic.UuidType;
+import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeFactoryImpl.JavaType;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
-
-import java.util.Optional;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 
 @Value
 public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataType> {
@@ -45,7 +49,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
 
   @Override
   public RelDataType visitDateTimeType(DateTimeType type, Void context) {
-    return typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3);
+    return TypeUtil.makeTimestampType(typeFactory);
   }
 
   @Override
@@ -65,8 +69,9 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
 
   @Override
   public RelDataType visitUuidType(UuidType type, Void context) {
-    return typeFactory.createSqlType(SqlTypeName.CHAR, 36);
+    return TypeUtil.makeUuidType(typeFactory);
   }
+
 
   @Override
   public RelDataType visitIntervalType(IntervalType type, Void context) {

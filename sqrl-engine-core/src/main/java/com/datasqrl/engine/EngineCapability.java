@@ -7,6 +7,7 @@ public enum EngineCapability {
 
   DENORMALIZE,
   TEMPORAL_JOIN,
+  TO_STREAM,
   TIME_WINDOW_AGGREGATION,
   NOW,
   GLOBAL_SORT,

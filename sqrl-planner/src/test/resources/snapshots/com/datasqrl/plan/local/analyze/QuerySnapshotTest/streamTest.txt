@@ -1,8 +1,12 @@
 >>>customer$q$2
 LogicalValues(tuples=[[]])
 
->>>x$q$7
-LogicalValues(tuples=[[]])
+>>>x$q$6
+LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], _uuid0=[$3], _ingest_time=[$4], email=[$5], name=[$6], lastupdated=[$7])
+  LogicalStream(stream=[ADD])
+    LogicalFilter(condition=[=($6, 1)])
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[y$q$4]])
 
 >>>y$q$4
 LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5])

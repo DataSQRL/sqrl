@@ -13,4 +13,13 @@ public enum TableType {
   public boolean hasTimestamp() {
     return this != STATE;
   }
+
+  public boolean isStream() {
+    return this==STREAM;
+  }
+
+  public boolean isState() {
+    return !isStream();
+  }
+
 }

@@ -228,7 +228,7 @@ public class UniversalTable {
     }
 
     public RelDataType withNullable(RelDataType type, boolean nullable) {
-      return typeFactory.createTypeWithNullability(type, nullable);
+      return TypeUtil.withNullable(typeFactory, type, nullable);
     }
 
   }
@@ -264,15 +264,10 @@ public class UniversalTable {
     public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
         boolean hasSourceTimestamp) {
       UniversalTable tblBuilder = new UniversalTable(name, path, 1, hasSourceTimestamp);
-      tblBuilder.addColumn(ReservedName.UUID,
-          withNullable(typeFactory.createSqlType(SqlTypeName.CHAR, 36), false));
-      tblBuilder.addColumn(ReservedName.INGEST_TIME,
-          withNullable(typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
-              false));
+      tblBuilder.addColumn(ReservedName.UUID, TypeUtil.makeUuidType(typeFactory, false));
+      tblBuilder.addColumn(ReservedName.INGEST_TIME, TypeUtil.makeTimestampType(typeFactory,false));
       if (hasSourceTimestamp) {
-        tblBuilder.addColumn(ReservedName.SOURCE_TIME,
-            withNullable(typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3),
-                false));
+        tblBuilder.addColumn(ReservedName.SOURCE_TIME, TypeUtil.makeTimestampType(typeFactory,false));
       }
       return tblBuilder;
     }

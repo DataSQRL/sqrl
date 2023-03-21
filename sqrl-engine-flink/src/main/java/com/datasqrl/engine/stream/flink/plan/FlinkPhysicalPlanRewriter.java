@@ -10,7 +10,10 @@ import com.datasqrl.plan.calcite.hints.SqrlHint;
 import com.datasqrl.plan.calcite.hints.TemporalJoinHint;
 import com.datasqrl.plan.calcite.hints.TumbleAggregationHint;
 import com.datasqrl.plan.calcite.hints.WatermarkHint;
+import com.datasqrl.plan.calcite.rel.LogicalStream;
+import com.datasqrl.plan.calcite.table.ImportedRelationalTable;
 import com.datasqrl.plan.calcite.table.SourceRelationalTable;
+import com.datasqrl.plan.calcite.table.StreamRelationalTable;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
@@ -108,18 +111,26 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
 
   @Override
   public RelNode visit(TableScan scan) {
+    ImportedRelationalTable t = scan.getTable().unwrap(ImportedRelationalTable.class);
+    flinkTableRegistration.accept(t, context);
+    return makeTableScan(t, SqrlHint.fromRel(scan, WatermarkHint.CONSTRUCTOR));
+  }
 
-    SourceRelationalTable t = scan.getTable().unwrap(SourceRelationalTable.class);
-    t.accept(flinkTableRegistration, context);
+  public RelNode makeTableScan(SourceRelationalTable t, Optional<WatermarkHint> watermarkHint) {
     String tableName = t.getNameId();
     FlinkRelBuilder relBuilder = getBuilder();
     relBuilder.scan(tableName);
     //todo: why does this not work for batching?
     if (!tEnv.getConfig().get(ExecutionOptions.RUNTIME_MODE).equals(RuntimeExecutionMode.BATCH)) {
-      SqrlHint.fromRel(scan, WatermarkHint.CONSTRUCTOR)
-          .ifPresent(watermark -> addWatermark(relBuilder, watermark.getTimestampIdx()));
+      watermarkHint.ifPresent(watermark -> addWatermark(relBuilder, watermark.getTimestampIdx()));
     }
     return relBuilder.build();
+  }
+
+  public RelNode visit(LogicalStream stream) {
+    StreamRelationalTable t = new StreamRelationalTable(stream);
+    flinkTableRegistration.accept(t, context);
+    return makeTableScan(t, Optional.of(new WatermarkHint(1))); //source_time is the 2nd column
   }
 
   private boolean isTop() {
@@ -147,8 +158,13 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
   }
 
   private void addWatermark(FlinkRelBuilder relBuilder, int timestampIndex) {
-    relBuilder.watermark(timestampIndex,
-        getRexBuilder(relBuilder).makeInputRef(relBuilder.peek(), timestampIndex));
+    FlinkRexBuilder rexB = getRexBuilder(relBuilder);
+    SqlIntervalQualifier sqlIntervalQualifier =
+        new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO);
+    RexNode watermarkExp = rexB.makeCall(FlinkSqlOperatorTable.MINUS,
+        rexB.makeInputRef(relBuilder.peek(), timestampIndex),
+        rexB.makeIntervalLiteral(new BigDecimal(0.001), sqlIntervalQualifier));
+    relBuilder.watermark(timestampIndex, watermarkExp );
   }
 
   @Override
@@ -442,6 +458,8 @@ public class FlinkPhysicalPlanRewriter extends RelShuttleImpl {
       pushInputAndAccept(uncollect, relBuilder);
       relBuilder.uncollect(List.of(), uncollect.withOrdinality);
       return relBuilder.build();
+    } else if (other instanceof LogicalStream) {
+      return visit((LogicalStream) other);
     }
     throw new UnsupportedOperationException("not yet implemented:" + other.getClass());
   }

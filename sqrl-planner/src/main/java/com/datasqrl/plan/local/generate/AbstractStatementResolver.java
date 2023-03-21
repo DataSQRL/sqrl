@@ -71,9 +71,9 @@ public abstract class AbstractStatementResolver {
   }
 
   protected AnnotatedLP convert(SqrlQueryPlanner queryPlanner, RelNode relNode, Namespace ns,
-      Function<AnnotatedLP, AnnotatedLP> postProcess, boolean isStream, Optional<SqlNodeList> hints) {
+      Function<AnnotatedLP, AnnotatedLP> postProcess, Optional<SqlNodeList> hints) {
     Converter converter = new Converter();
-    AnnotatedLP annotatedLP = converter.convert(queryPlanner, relNode, ns, isStream, hints, errors);
+    AnnotatedLP annotatedLP = converter.convert(queryPlanner, relNode, ns, hints, errors);
     return postProcess.apply(annotatedLP);
   }
 

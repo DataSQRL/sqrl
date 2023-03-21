@@ -31,15 +31,20 @@ import com.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.calcite.rules.SqrlRelMetadataQuery;
 import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
-import com.datasqrl.plan.calcite.table.ProxySourceRelationalTable;
+import com.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.Stack;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.plan.Contexts;
 import org.apache.calcite.plan.RelOptCluster;
@@ -48,12 +53,6 @@ import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.schema.Schema;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
-import java.util.stream.Collectors;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Singleton
@@ -161,8 +160,8 @@ public class SqrlSchema extends SimpleCalciteSchema {
         add(vt.getNameId(),
             vt));
 
-    if (tblDef.getBaseTable() instanceof ProxySourceRelationalTable) {
-      AbstractRelationalTable impTable = ((ProxySourceRelationalTable) tblDef.getBaseTable()).getBaseTable();
+    if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {
+      AbstractRelationalTable impTable = ((ProxyImportRelationalTable) tblDef.getBaseTable()).getBaseTable();
       add(impTable.getNameId(), impTable);
     }
 

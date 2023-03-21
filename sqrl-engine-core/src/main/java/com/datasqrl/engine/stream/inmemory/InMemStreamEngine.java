@@ -9,6 +9,7 @@ import static com.datasqrl.engine.EngineCapability.DENORMALIZE;
 import static com.datasqrl.engine.EngineCapability.EXTENDED_FUNCTIONS;
 import static com.datasqrl.engine.EngineCapability.TEMPORAL_JOIN;
 import static com.datasqrl.engine.EngineCapability.TIME_WINDOW_AGGREGATION;
+import static com.datasqrl.engine.EngineCapability.TO_STREAM;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -51,7 +52,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
 
   public InMemStreamEngine() {
     super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM,
-        EnumSet.of(DENORMALIZE, TEMPORAL_JOIN,
+        EnumSet.of(DENORMALIZE, TEMPORAL_JOIN, TO_STREAM,
             TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS, DATA_MONITORING));
   }
 

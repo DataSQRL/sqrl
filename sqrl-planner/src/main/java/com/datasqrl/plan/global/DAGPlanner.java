@@ -16,9 +16,8 @@ import com.datasqrl.plan.calcite.hints.WatermarkHint;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
 import com.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
 import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import com.datasqrl.plan.calcite.table.ProxySourceRelationalTable;
+import com.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.calcite.table.QueryRelationalTable;
-import com.datasqrl.plan.calcite.table.StreamRelationalTableImpl;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
@@ -78,7 +77,7 @@ public class DAGPlanner {
         QueryRelationalTable.class);
 
     //Assign timestamps to imports which should propagate and set all remaining timestamps
-    StreamUtil.filterByClass(queryTables, ProxySourceRelationalTable.class)
+    StreamUtil.filterByClass(queryTables, ProxyImportRelationalTable.class)
         .forEach(this::finalizeSourceTable);
     Preconditions.checkArgument(queryTables.stream().allMatch(
         table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
@@ -152,11 +151,11 @@ public class DAGPlanner {
     }
 
     //Stitch together all StreamSourceTable
-    for (StreamRelationalTableImpl sst : CalciteUtil.getTables(relSchema,
-        StreamRelationalTableImpl.class)) {
-      RelNode stitchedNode = RelStageRunner.runStage(WRITE_DAG_STITCHING, sst.getBaseRelation(), planner);
-      sst.setBaseRelation(stitchedNode);
-    }
+//    for (StreamRelationalTableImpl sst : CalciteUtil.getTables(relSchema,
+//        StreamRelationalTableImpl.class)) {
+//      RelNode stitchedNode = RelStageRunner.runStage(WRITE_DAG_STITCHING, sst.getBaseRelation(), planner);
+//      sst.setBaseRelation(stitchedNode);
+//    }
 
 //        readDAG = readDAG.stream().map( q -> {
 //            RelNode newStitch = planner.transform(READ2WRITE_STITCHING, q.getRelNode());
@@ -200,13 +199,13 @@ public class DAGPlanner {
     return () -> relBuilder;
   }
 
-  private void finalizeSourceTable(ProxySourceRelationalTable table) {
+  private void finalizeSourceTable(ProxyImportRelationalTable table) {
     // Determine timestamp
     if (!table.getTimestamp().hasFixedTimestamp()) {
       table.getTimestamp().getBestCandidate().lockTimestamp();
     }
     // Rewrite LogicalValues to TableScan and add watermark hint
-    new SourceTableRewriter(table, relBuilder).replaceImport();
+    new ImportedTableRewriter(table, relBuilder).replaceImport();
   }
 
   private static class VisitTableScans extends RelShuttleImpl {
@@ -229,9 +228,9 @@ public class DAGPlanner {
    * Replaces LogicalValues with the TableScan for the actual import table
    */
   @AllArgsConstructor
-  private static class SourceTableRewriter extends RelShuttleImpl {
+  private static class ImportedTableRewriter extends RelShuttleImpl {
 
-    final ProxySourceRelationalTable table;
+    final ProxyImportRelationalTable table;
     final RelBuilder relBuilder;
 
     public void replaceImport() {

@@ -5,13 +5,10 @@ import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.Assignment;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.StreamAssignment;
-import org.apache.calcite.sql.StreamType;
 import org.apache.calcite.tools.RelBuilder;
 
 public abstract class AbstractQueryStatementResolver extends AbstractStatementResolver {
@@ -25,16 +22,17 @@ public abstract class AbstractQueryStatementResolver extends AbstractStatementRe
     this.tableFactory = tableFactory;
   }
 
+  protected RelNode preprocessRelNode(RelNode relNode, Assignment statement) {
+    return relNode;
+  }
+
   public void resolve(Assignment statement, Namespace ns) {
     SqlNode sqlNode = transpile(statement, ns);
     RelNode relNode = plan(sqlNode);
+    relNode = preprocessRelNode(relNode,statement);
 
-    AnnotatedLP prel = convert(planner, relNode, ns, getPostProcessor(ns, relNode), statement instanceof StreamAssignment, statement.getHints());
-
-    Optional<StreamType> type =
-        Optional.of(statement).filter(f->f instanceof StreamAssignment).map(f->((StreamAssignment)f).getType());
-    NamespaceObject table = tableFactory.createTable(planner, ns, statement.getNamePath(), prel, type, getContext(ns, statement.getNamePath()));
-
+    AnnotatedLP prel = convert(planner, relNode, ns, getPostProcessor(ns, relNode), statement.getHints());
+    NamespaceObject table = tableFactory.createTable(planner, ns, statement.getNamePath(), prel, getContext(ns, statement.getNamePath()));
     ns.addNsObject(table);
   }
 
@@ -45,8 +43,4 @@ public abstract class AbstractQueryStatementResolver extends AbstractStatementRe
     return prel.postProcess(relBuilder, fieldNames);
   }
 
-  //Post-process the AnnotatedLP to account for unique statement kinds
-  protected AnnotatedLP postProcessStreamAnnotatedLP(RelBuilder relBuilder, AnnotatedLP prel, List<String> fieldNames) {
-    return prel.postProcessStream(relBuilder, fieldNames);
-  }
 }

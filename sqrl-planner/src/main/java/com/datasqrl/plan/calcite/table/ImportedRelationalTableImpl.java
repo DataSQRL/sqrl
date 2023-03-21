@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.engine.stream.plan.TableRegistration;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.ReservedName;
@@ -36,8 +35,4 @@ public class ImportedRelationalTableImpl extends SourceRelationalTableImpl imple
     return List.of(ReservedName.UUID.getCanonical());
   }
 
-  @Override
-  public <R, C> R accept(TableRegistration<R, C> tableRegistration, C context) {
-    return tableRegistration.accept(this, context);
-  }
 }

@@ -16,7 +16,7 @@ import org.apache.calcite.rel.RelNode;
  * <p>
  * This is a phyiscal relation with a schema that captures the input data.
  */
-public class ProxyImportRelationalTable extends ProxySourceRelationalTable {
+public class ProxyImportRelationalTable extends QueryRelationalTable {
 
   @Getter
   private final ImportedRelationalTableImpl baseTable;

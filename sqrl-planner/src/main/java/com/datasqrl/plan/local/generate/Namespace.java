@@ -1,17 +1,7 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.functions.SqrlFunctionCatalog;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.error.ErrorCode;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.name.Name;
-import com.datasqrl.parse.SqrlAstException;
-import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import com.datasqrl.plan.calcite.table.CalciteTableFactory;
-import com.datasqrl.plan.calcite.table.ProxySourceRelationalTable;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.local.ScriptTableDefinition;
-import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import java.net.URL;
 import java.util.ArrayList;
@@ -25,7 +15,6 @@ import lombok.Getter;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 

@@ -12,7 +12,6 @@ import com.datasqrl.engine.stream.flink.InputError.Map2InputErrorMessage;
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRegistrationContext;
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.SinkContext;
 import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
-import com.datasqrl.engine.stream.plan.TableRegistration;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
@@ -20,10 +19,15 @@ import com.datasqrl.io.SourceRecord.Raw;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.name.NamePath;
+import com.datasqrl.plan.calcite.rel.LogicalStream;
 import com.datasqrl.plan.calcite.table.ImportedRelationalTable;
+import com.datasqrl.plan.calcite.table.RelDataType2UTBConverter;
 import com.datasqrl.plan.calcite.table.SourceRelationalTable;
 import com.datasqrl.plan.calcite.table.StreamRelationalTable;
-import com.datasqrl.plan.calcite.table.StreamTableSchemaStream;
+import com.datasqrl.plan.calcite.table.StreamTableConverter;
 import com.datasqrl.plan.calcite.util.SqrlRexUtil;
 import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
 import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
@@ -31,12 +35,19 @@ import com.datasqrl.plan.global.OptimizedDAG.QueryVisitor;
 import com.datasqrl.plan.global.OptimizedDAG.ReadQuery;
 import com.datasqrl.plan.global.OptimizedDAG.SinkVisitor;
 import com.datasqrl.plan.global.OptimizedDAG.WriteQuery;
+import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.input.SchemaValidator;
 import com.google.common.base.Preconditions;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.table.api.Schema;
@@ -45,21 +56,36 @@ import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.internal.FlinkEnvProxy;
+import org.apache.flink.table.planner.delegation.PlannerBase;
 
+@Slf4j
 public class FlinkTableRegistration implements
-    TableRegistration<Void, FlinkTableRegistrationContext>,
     QueryVisitor<Void, FlinkTableRegistrationContext>,
     SinkVisitor<TableDescriptor, SinkContext> {
 
-  private final Set<String> registeredTables = new HashSet<>();
+  public static final String STREAM_TABLE_PREFIX = "streamTbl";
 
-  @Override
+  private final Set<String> registeredTables = new HashSet<>();
+  private AtomicInteger streamCounter = new AtomicInteger(0);
+  private final Map<LogicalStream, String> streamTableCache = new HashMap<>();
+
   public Void accept(StreamRelationalTable table, FlinkTableRegistrationContext context) {
+    LogicalStream streamNode = table.getRelNode();
+    //Caching stream tables by LogicalStream nodes, so we only create the stream once
+    String tableName = streamTableCache.entrySet().stream()
+        .filter(e -> e.getKey().deepEquals(streamNode))
+        .map(Entry::getValue).findAny().orElseGet(() -> {
+          String name = STREAM_TABLE_PREFIX + streamCounter.incrementAndGet();
+          streamTableCache.put(streamNode,name);
+          return name;
+        });
+    table.setNameId(tableName);
+
     if (!addSource(table)) {
       return null;
     }
 
-    RelNode relnode = table.getBaseRelation();
+    RelNode relnode = streamNode.getInput();
     /* Flink does not produce a correct changelog stream if there is a filter after the logical
        operation that produces the state (such as window deduplication), because the filter is applied
        to the changelog stream.
@@ -69,19 +95,21 @@ public class FlinkTableRegistration implements
     //physically rewrite the relnode for Flink and create table from it
     Table inputTable = makeTable(relnode, context);
 
-
-    StreamTableSchemaStream schema2Stream = new StreamTableSchemaStream(table.getStreamSchema());
-    Schema schema = new UniversalTable2FlinkSchema().convertSchema(table.getStreamSchema());
-    DataStream stream = schema2Stream.convertToStream(context.getTEnv(),
-      new StreamRelationalTableContext(inputTable, table.getStateChangeType(),
-          unmodifiedChangelog, table.getBaseTableMetaData()));
+    RelDataType2UTBConverter utbConverter = new RelDataType2UTBConverter(getTypeFactory(context), 1,
+        NameCanonicalizer.SYSTEM);
+    UniversalTable streamSchema = utbConverter.convert(NamePath.of(Name.system(table.getNameId())),
+        streamNode.getRowType(), null);
+    StreamTableConverter streamConverter = new StreamTableConverter(streamSchema);
+    Schema schema = new UniversalTable2FlinkSchema().convertSchema(streamSchema);
+    DataStream stream = streamConverter.convertToStream(context.getTEnv(),
+        new StreamTableConverterContext(inputTable, streamNode.getStreamType(), unmodifiedChangelog,
+            streamNode.getMetaData()));
 
     context.getTEnv().createTemporaryView(table.getNameId(), stream, schema);
-
+    log.info("Created stream table: {}",table.getNameId());
     return null;
   }
 
-  @Override
   public Void accept(ImportedRelationalTable table, FlinkTableRegistrationContext context) {
     if (!addSource(table)) {
       return null;
@@ -107,6 +135,10 @@ public class FlinkTableRegistration implements
     }
     registeredTables.add(table.getNameId());
     return true;
+  }
+
+  private RelDataTypeFactory getTypeFactory(FlinkTableRegistrationContext context) {
+    return ((PlannerBase) context.tEnv.getPlanner()).getTypeFactory();
   }
 
 
@@ -169,8 +201,7 @@ public class FlinkTableRegistration implements
   }
 
   @Value
-  public static class FlinkTableRegistrationContext implements TableRegistrationContext {
-
+  public static class FlinkTableRegistrationContext {
     StreamTableEnvironmentImpl tEnv;
     FlinkStreamBuilder builder;
     StreamStatementSet streamStatementSet;
