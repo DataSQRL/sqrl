@@ -14,7 +14,7 @@ import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.EnumSet;
@@ -27,9 +27,7 @@ import org.apache.flink.table.api.internal.FlinkEnvProxy;
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
     StreamEngine {
 
-  public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = EnumSet.of(DENORMALIZE,
-      TEMPORAL_JOIN, TO_STREAM, TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS, DATA_MONITORING);
-
+  public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = STANDARD_STREAM;
   final FlinkEngineConfiguration config;
 
   public AbstractFlinkStreamEngine(FlinkEngineConfiguration config) {
@@ -50,8 +48,8 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   }
 
   @Override
-  public FlinkStreamPhysicalPlan plan(OptimizedDAG.StagePlan plan,
-      List<OptimizedDAG.StageSink> inputs, RelBuilder relBuilder, TableSink errorSink) {
+  public FlinkStreamPhysicalPlan plan(PhysicalDAGPlan.StagePlan plan,
+      List<PhysicalDAGPlan.StageSink> inputs, RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(this).createStreamGraph(
         plan.getQueries(), errorSink, plan.getJars());

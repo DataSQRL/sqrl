@@ -3,33 +3,59 @@
  */
 package com.datasqrl.plan.calcite.rules;
 
+import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
+import com.datasqrl.name.ReservedName;
+import com.datasqrl.plan.calcite.hints.JoinCostHint;
+import com.datasqrl.plan.calcite.hints.SlidingAggregationHint;
+import com.datasqrl.plan.calcite.hints.SqrlHint;
+import com.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
+import com.datasqrl.plan.calcite.hints.TemporalJoinHint;
+import com.datasqrl.plan.calcite.hints.TopNHint;
+import com.datasqrl.plan.calcite.hints.TumbleAggregationHint;
 import com.datasqrl.plan.calcite.rel.LogicalStream;
 import com.datasqrl.plan.calcite.rel.LogicalStreamMetaData;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Child;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Root;
-import com.datasqrl.plan.calcite.util.CalciteUtil;
-import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import com.datasqrl.name.NamePath;
-import com.datasqrl.engine.EngineCapability;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.calcite.hints.*;
+import com.datasqrl.plan.calcite.rules.JoinTable.NormType;
+import com.datasqrl.plan.calcite.rules.SQRLConverter.Config;
 import com.datasqrl.plan.calcite.table.AddedColumn;
 import com.datasqrl.plan.calcite.table.NowFilter;
 import com.datasqrl.plan.calcite.table.PullupOperator;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
+import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
 import com.datasqrl.plan.calcite.table.SortOrder;
 import com.datasqrl.plan.calcite.table.TableType;
 import com.datasqrl.plan.calcite.table.TimestampHolder;
 import com.datasqrl.plan.calcite.table.TopNConstraint;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.calcite.util.*;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Child;
+import com.datasqrl.plan.calcite.table.VirtualRelationalTable.Root;
+import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.plan.calcite.util.ContinuousIndexMap;
+import com.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.plan.calcite.util.SqrlRexUtil;
+import com.datasqrl.plan.calcite.util.TimePredicate;
+import com.datasqrl.plan.calcite.util.TimePredicateAnalyzer;
+import com.datasqrl.plan.calcite.util.TimeTumbleFunctionCall;
+import com.datasqrl.plan.calcite.util.TimestampAnalysis;
+import com.datasqrl.plan.calcite.util.TimestampAnalysis.MaxTimestamp;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
-import lombok.Builder;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.linq4j.Ord;
@@ -41,113 +67,93 @@ import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.logical.*;
+import org.apache.calcite.rel.logical.LogicalAggregate;
+import org.apache.calcite.rel.logical.LogicalFilter;
+import org.apache.calcite.rel.logical.LogicalJoin;
+import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.logical.LogicalSort;
+import org.apache.calcite.rel.logical.LogicalUnion;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
-import org.apache.calcite.rex.*;
+import org.apache.calcite.rex.RexFieldCollation;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexLiteral;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.rex.RexWindowBounds;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.StreamType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 @Value
-public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP> {
-
-  @Value
-  @Builder
-  public static class Config {
-
-    ExecutionStage startStage;
-    @Builder.Default
-    boolean allowStageChange = false;
-    @Builder.Default
-    int defaultSlideWindowPanes = DEFAULT_SLIDING_WINDOW_PANES;
-
-    public ConfigBuilder copy() {
-      return builder()
-          .startStage(startStage)
-          .allowStageChange(allowStageChange)
-          .defaultSlideWindowPanes(defaultSlideWindowPanes);
-    }
-  }
+public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP> {
 
   public static final long UPPER_BOUND_INTERVAL_MS = 999L * 365L * 24L * 3600L; //999 years
-  public static final int DEFAULT_SLIDING_WINDOW_PANES = 50;
   public static final String UNION_TIMESTAMP_COLUMN_NAME = "_timestamp";
   public static final String DEFAULT_PRIMARY_KEY_COLUMN_NAME = "_pk";
 
-  Supplier<RelBuilder> relBuilderFactory;
+  RelBuilder relBuilder;
   SqrlRexUtil rexUtil;
   Config config;
+  ErrorCollector errors;
 
-  public SQRLLogicalPlanConverter(@NonNull Supplier<RelBuilder> relBuilderFactory,
-      @NonNull Config config) {
-    this.relBuilderFactory = relBuilderFactory;
-    this.rexUtil = new SqrlRexUtil(relBuilderFactory.get().getTypeFactory());
+  ExecutionAnalysis exec;
+
+  SQRLLogicalPlanRewriter(@NonNull RelBuilder relBuilder, @NonNull ExecutionAnalysis exec,
+      @NonNull ErrorCollector errors, @NonNull Config config) {
+    this.relBuilder = relBuilder;
+    this.rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
     this.config = config;
+    this.errors = errors;
+    this.exec = exec;
   }
 
-  public static AnnotatedLP findCheapest(NamePath name, RelNode relNode,
-      Supplier<RelBuilder> relBuilderFactory,
-      ExecutionPipeline pipeline, Config config) {
-    AnnotatedLP cheapest = null;
-    ComputeCost cheapestCost = null;
-    Map<ExecutionStage, ExecutionStageException> stageExceptions = new HashMap<>();
-    for (ExecutionStage stage : pipeline.getStages()) {
-      try {
-        Config.ConfigBuilder configBuilder = config.copy();
-        AnnotatedLP alp = convert(relNode, relBuilderFactory,
-            configBuilder.startStage(stage).build());
-        ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(), alp);
-        if (cheapestCost == null || cost.compareTo(cheapestCost) < 0) {
-          cheapest = alp;
-          cheapestCost = cost;
-        }
-      } catch (ExecutionStageException e) {
-        stageExceptions.put(stage, e);
-      }
-    }
-    if (cheapest == null) {
-      throw new ExecutionStageException.NoStage(name, stageExceptions);
-    }
-    return cheapest;
-  }
+//  public static AnnotatedLP findCheapest(NamePath name, RelNode relNode,
+//      Supplier<RelBuilder> relBuilderFactory,
+//      ExecutionPipeline pipeline, Config config) {
+//    AnnotatedLP cheapest = null;
+//    ComputeCost cheapestCost = null;
+//    Map<ExecutionStage, ExecutionStageException> stageExceptions = new HashMap<>();
+//    for (ExecutionStage stage : pipeline.getStages()) {
+//      try {
+//        Config.ConfigBuilder configBuilder = config.copy();
+//        AnnotatedLP alp = convert(relNode, relBuilderFactory,
+//            configBuilder.startStage(stage).build());
+//        ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(), alp);
+//        if (cheapestCost == null || cost.compareTo(cheapestCost) < 0) {
+//          cheapest = alp;
+//          cheapestCost = cost;
+//        }
+//      } catch (ExecutionStageException e) {
+//        stageExceptions.put(stage, e);
+//      }
+//    }
+//    if (cheapest == null) {
+//      throw new ExecutionStageException.NoStage(name, stageExceptions);
+//    }
+//    return cheapest;
+//  }
 
-  public static AnnotatedLP convert(RelNode relNode, Supplier<RelBuilder> relBuilderFactory,
-      Config config) {
-    SQRLLogicalPlanConverter sqrl2sql = new SQRLLogicalPlanConverter(relBuilderFactory, config);
-    relNode = relNode.accept(sqrl2sql);
-    return sqrl2sql.getRelHolder(relNode);
-  }
 
-  public RelBuilder makeRelBuilder() {
-    RelBuilder rel = relBuilderFactory.get()
-        .transform(config -> config.withPruneInputOfAggregate(false));
+  private RelBuilder makeRelBuilder() {
+    RelBuilder rel = relBuilder.transform(config -> config.withPruneInputOfAggregate(false));
     return rel;
   }
 
   @Override
   protected RelNode setRelHolder(AnnotatedLP relHolder) {
-    if (relHolder.getStage().isRead()) {
+    Preconditions.checkArgument(relHolder.timestamp.hasCandidates(),"Invalid timestamp");
+    if (!exec.supports(EngineCapability.PULLUP_OPTIMIZATION)) {
       //Inline all pullups
-      relHolder = relHolder.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
+      RelBuilder relB = makeRelBuilder();
+      relHolder = relHolder.inlineNowFilter(relB, exec).inlineTopN(relB, exec);
     }
-    if (!config.allowStageChange && !relHolder.getStage().equals(config.startStage)) {
-      throw ExecutionStageException.StageChange.of(config.startStage, relHolder.getStage())
-          .injectInput(relHolder);
-    }
-
     super.setRelHolder(relHolder);
     this.relHolder = relHolder;
     return relHolder.getRelNode();
@@ -163,26 +169,31 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     VirtualRelationalTable vtable = tableScan.getTable().unwrap(VirtualRelationalTable.class);
     Preconditions.checkArgument(vtable != null);
 
-    QueryRelationalTable queryTable = vtable.getRoot().getBase();
-    ExecutionAnalysis scanExec = ExecutionAnalysis.of(AnnotatedLP.ofScan(queryTable, tableScan));
-    ExecutionAnalysis exec = scanExec.combine(ExecutionAnalysis.start(config.startStage));
+    //Fields might have been added to vtable, so we need to trim the selects
+    int numColumns = tableScan.getRowType().getFieldCount();
+
+    ScriptRelationalTable queryTable = vtable.getRoot().getBase();
+    config.getSourceTableConsumer().accept(queryTable);
 
     Optional<Integer> numRootPks = Optional.of(vtable.getRoot().getNumPrimaryKeys());
 
-    if (exec.getStage().supports(EngineCapability.DENORMALIZE)) {
-      return denormalizeTable(queryTable, vtable, exec, numRootPks);
-    } else if (vtable.isRoot()) {
-      return createAnnotatedRootTableScan(queryTable, tableScan, vtable, exec, scanExec, numRootPks);
+    if (exec.supports(EngineCapability.DENORMALIZE)) {
+      return denormalizeTable(queryTable, vtable, numColumns, numRootPks);
     } else {
-      return createAnnotatedChildTableScan(queryTable, tableScan, vtable, exec, numRootPks);
+      if (vtable.isRoot()) {
+        return createAnnotatedRootTableScan(queryTable, numColumns,
+            (VirtualRelationalTable.Root)vtable, numRootPks);
+      } else {
+        return createAnnotatedChildTableScan(queryTable, numColumns, vtable, numRootPks);
+      }
     }
   }
 
-  private AnnotatedLP denormalizeTable(QueryRelationalTable queryTable,
-      VirtualRelationalTable vtable, ExecutionAnalysis exec, Optional<Integer> numRootPks) {
+  private AnnotatedLP denormalizeTable(ScriptRelationalTable queryTable,
+      VirtualRelationalTable vtable, int numColumns, Optional<Integer> numRootPks) {
     //Shred the virtual table all the way to root:
     //First, we prepare all the data structures
-    ContinuousIndexMap.Builder indexMap = ContinuousIndexMap.builder(vtable.getNumColumns());
+    ContinuousIndexMap.Builder indexMap = ContinuousIndexMap.builder(numColumns);
     ContinuousIndexMap.Builder primaryKey = ContinuousIndexMap.builder(vtable.getNumPrimaryKeys());
     List<JoinTable> joinTables = new ArrayList<>();
     //Now, we shred
@@ -193,46 +204,60 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     AnnotatedLP result = new AnnotatedLP(relNode, queryTable.getType(),
         primaryKey.build(targetLength),
         queryTable.getTimestamp().getDerived(),
-        indexMap.build(targetLength), exec.getStage(), joinTables, numRootPks,
+        indexMap.build(targetLength), joinTables, numRootPks,
         queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(),
         queryTable.getPullups().getSort(), List.of());
     return result;
   }
 
-  private AnnotatedLP createAnnotatedRootTableScan(QueryRelationalTable queryTable,
-      TableScan tableScan, VirtualRelationalTable vtable, ExecutionAnalysis exec,
-      ExecutionAnalysis scanExec, Optional<Integer> numRootPks) {
+  private AnnotatedLP createAnnotatedRootTableScan(ScriptRelationalTable queryTable,
+      int numColumns, VirtualRelationalTable.Root vtable, Optional<Integer> numRootPks) {
     int targetLength = vtable.getNumColumns();
     PullupOperator.Container pullups = queryTable.getPullups();
 
+    RelBuilder builder = makeRelBuilder();
+    builder.scan(vtable.getNameId());
+
     TopNConstraint topN = pullups.getTopN();
-    if (exec.isMaterialize(scanExec) && topN.isDeduplication()) {
+    if (exec.isMaterialize(queryTable) && topN.isDeduplication()) {
       // We can drop topN since that gets enforced by writing to DB with primary key
       topN = TopNConstraint.EMPTY;
     }
-    IndexMap query2virtualTable = ((VirtualRelationalTable.Root) vtable).mapQueryTable();
-    return new AnnotatedLP(tableScan, queryTable.getType(),
+    IndexMap query2virtualTable = vtable.mapQueryTable();
+    return new AnnotatedLP(builder.build(), queryTable.getType(),
         ContinuousIndexMap.identity(vtable.getNumPrimaryKeys(), targetLength),
         queryTable.getTimestamp().getDerived().remapIndexes(query2virtualTable),
-        ContinuousIndexMap.identity(targetLength, targetLength),
-        exec.getStage(), null, numRootPks,
+        ContinuousIndexMap.identity(numColumns, targetLength),
+         List.of(JoinTable.ofRoot(vtable, NormType.NORMALIZED)), numRootPks,
         pullups.getNowFilter().remap(query2virtualTable), topN,
         pullups.getSort().remap(query2virtualTable), List.of());
   }
 
-  private AnnotatedLP createAnnotatedChildTableScan(QueryRelationalTable queryTable,
-      TableScan tableScan, VirtualRelationalTable vtable, ExecutionAnalysis exec,
-      Optional<Integer> numRootPks) {
+  private AnnotatedLP createAnnotatedChildTableScan(ScriptRelationalTable queryTable,
+      int numColumns, VirtualRelationalTable vtable, Optional<Integer> numRootPks) {
     int targetLength = vtable.getNumColumns();
     PullupOperator.Container pullups = queryTable.getPullups();
-
     Preconditions.checkArgument(
         pullups.getTopN().isEmpty() && pullups.getNowFilter().isEmpty());
-    return new AnnotatedLP(tableScan, queryTable.getType(),
+
+    //For this stage, data is normalized and we need to re-scan the VirtualRelationalTable
+    //because it now has a timestamp at the end
+    RelBuilder builder = makeRelBuilder();
+    builder.scan(vtable.getNameId()); //table now has a timestamp column at the end
+    Preconditions.checkArgument(targetLength==builder.peek().getRowType().getFieldCount());
+    Preconditions.checkArgument(queryTable.getTimestamp().hasFixedTimestamp());
+    int timestampIdx = targetLength-1;
+    IndexMap remapTimestamp = IndexMap.singleton(queryTable.getTimestamp()
+        .getTimestampCandidate().getIndex(),timestampIdx);
+
+    //ToDo: need to join with root table on timestamp to ensure we are filtering out outdated
+    //versions from previous upserts
+    JoinTable joinTable = new JoinTable(vtable, null, JoinRelType.INNER, 0, NormType.NORMALIZED);
+    return new AnnotatedLP(builder.build(), queryTable.getType(),
         ContinuousIndexMap.identity(vtable.getNumPrimaryKeys(), targetLength),
-        TimestampHolder.Derived.NONE,
-        ContinuousIndexMap.identity(targetLength, targetLength),
-        exec.getStage(), null, numRootPks,
+        queryTable.getTimestamp().getDerived().remapIndexes(remapTimestamp),
+        ContinuousIndexMap.identity(numColumns, targetLength),
+         List.of(joinTable), numRootPks,
         NowFilter.EMPTY, TopNConstraint.EMPTY,
         SortOrder.EMPTY, List.of());
   }
@@ -276,10 +301,15 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
       tableResult = shredRootTable((VirtualRelationalTable.Root) vtable);
     } else {
       tableResult = shredChildTable((VirtualRelationalTable.Child) vtable, primaryKey, select, joinTables, startingBase,
-          joinType, joinTables);
+          joinType);
     }
-
-    updatePrimaryKeyAndSelect(vtable, primaryKey, select, startingBase, isLeaf, tableResult.getBuilder(), tableResult.getOffset());
+    int offset = tableResult.getOffset();
+    for (int i = 0; i < vtable.getNumLocalPks(); i++) {
+      primaryKey.add(offset + i);
+      if (!isLeaf && startingBase == null) {
+        select.add(offset + i);
+      }
+    }
     addAdditionalColumns(vtable, tableResult.getBuilder(), tableResult.getJoinTable());
     joinTables.add(tableResult.getJoinTable());
     constructLeafIndexMap(vtable, select, isLeaf, startingBase, tableResult.getOffset());
@@ -288,16 +318,15 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
   }
 
   private ShredTableResult shredRootTable(Root root) {
-    int offset = 0;
     RelBuilder builder = makeRelBuilder();
     builder.scan(root.getBase().getNameId());
-    JoinTable joinTable = JoinTable.ofRoot(root);
-    return new ShredTableResult(builder, offset, joinTable);
+    JoinTable joinTable = JoinTable.ofRoot(root, NormType.DENORMALIZED);
+    return new ShredTableResult(builder, 0, joinTable);
   }
 
   private ShredTableResult shredChildTable(Child child, ContinuousIndexMap.Builder primaryKey,
       ContinuousIndexMap.Builder select, List<JoinTable> joinTables,
-      Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType, List<JoinTable> tables) {
+      Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType) {
     RelBuilder builder = shredTable(child.getParent(), primaryKey, select, joinTables, startingBase,
         joinType, false);
     JoinTable parentJoinTable = Iterables.getLast(joinTables);
@@ -305,7 +334,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     CorrelationId id = builder.getCluster().createCorrel();
     RelDataType base = builder.peek().getRowType();
     int offset = base.getFieldCount();
-    JoinTable joinTable = new JoinTable(child, parentJoinTable, joinType, offset);
+    JoinTable joinTable = new JoinTable(child, parentJoinTable, joinType, offset, NormType.DENORMALIZED);
 
     builder
         .values(List.of(List.of(rexUtil.getBuilder().makeExactLiteral(BigDecimal.ZERO))),
@@ -323,29 +352,14 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     return new ShredTableResult(builder, offset, joinTable);
   }
 
-  public void updatePrimaryKeyAndSelect(VirtualRelationalTable vtable,
-      ContinuousIndexMap.Builder primaryKey, ContinuousIndexMap.Builder select,
-      Pair<JoinTable, RelBuilder> startingBase, boolean isLeaf, RelBuilder builder, int offset) {
-    for (int i = 0; i < vtable.getNumLocalPks(); i++) {
-      primaryKey.add(offset + i);
-      if (!isLeaf && startingBase == null) {
-        select.add(offset + i);
-      }
-    }
-  }
-
-  private void addAdditionalColumns(VirtualRelationalTable vtable, RelBuilder builder,
-      JoinTable joinTable) {
+  private void addAdditionalColumns(VirtualRelationalTable vtable, RelBuilder builder, JoinTable joinTable) {
     //Add additional columns
     JoinTable.Path path = JoinTable.Path.of(joinTable);
     for (AddedColumn column : vtable.getAddedColumns()) {
       //How do columns impact materialization preference (e.g. contain function that cannot be computed in DB) if they might get projected out again
-      List<RexNode> projects = rexUtil.getIdentityProject(builder.peek());
-      RexNode added;
       AddedColumn.Simple simpleCol = (AddedColumn.Simple) column;
-      added = simpleCol.getExpression(path.mapLeafTable());
-      projects.add(added);
-      builder.project(projects);
+      RexNode added = simpleCol.getExpression(path.mapLeafTable());
+      rexUtil.appendColumn(builder, added, simpleCol.getNameId());
     }
   }
 
@@ -356,7 +370,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     if (isLeaf && startingBase == null) {
       //All non-nested fields are part of the virtual table query row type
       List<RelDataTypeField> queryRowType = vtable.getQueryRowType().getFieldList();
-      for (int i = 0; i < queryRowType.size(); i++) {
+      for (int i = 0; i < queryRowType.size() && select.remaining()>0; i++) {
         RelDataTypeField field = queryRowType.get(i);
         if (!CalciteUtil.isNestedTable(field.getType())) {
           select.add(offset + i);
@@ -371,7 +385,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {
     AnnotatedLP input = getRelHolder(logicalFilter.getInput().accept(this));
-    input = input.inlineTopN(makeRelBuilder()); //Filtering doesn't preserve deduplication
+    input = input.inlineTopN(makeRelBuilder(), exec); //Filtering doesn't preserve deduplication
     RexNode condition = logicalFilter.getCondition();
     condition = input.select.map(condition);
     TimestampHolder.Derived timestamp = input.timestamp;
@@ -421,8 +435,9 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
       conjunctions = List.of(condition);
     }
     relBuilder.filter(conjunctions);
+    exec.requireRex(conjunctions);
     return setRelHolder(input.copy().relNode(relBuilder.build()).timestamp(timestamp)
-        .stage(input.getExec().requireRex(conjunctions).getStage()).nowFilter(nowFilter).build());
+        .nowFilter(nowFilter).build());
   }
 
   @Override
@@ -447,7 +462,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         }
 
         AnnotatedLP baseInput = getRelHolder(base.accept(this));
-        baseInput = baseInput.inlineNowFilter(makeRelBuilder()).inlineTopN(makeRelBuilder());
+        baseInput = baseInput.inlineNowFilter(makeRelBuilder(), exec).inlineTopN(makeRelBuilder(), exec);
         int targetLength = baseInput.getFieldLength();
 
         collation = baseInput.select.map(collation);
@@ -460,8 +475,6 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         ContinuousIndexMap pk = baseInput.primaryKey;
         ContinuousIndexMap select = trivialMap;
         TimestampHolder.Derived timestamp = baseInput.timestamp;
-        TableType type =
-            baseInput.type == TableType.STATE ? TableType.STATE : TableType.TEMPORAL_STATE;
         boolean isDistinct = false;
         if (topNHint.getType() == TopNHint.Type.SELECT_DISTINCT) {
           List<Integer> distincts = SqrlRexUtil.combineIndexes(partition,
@@ -485,7 +498,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
           Preconditions.checkArgument(
               !partition.isEmpty() && LPConverterUtil.getTimestampOrderIndex(collation, timestamp)
                   .isPresent()
-                  && baseInput.type == TableType.STREAM,
+                  && baseInput.type.isStream(),
               "Distinct on statement not valid");
 
           pk = ContinuousIndexMap.builder(partition.size()).addAll(partition).build(targetLength);
@@ -503,9 +516,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         }
 
         TopNConstraint topN = new TopNConstraint(partition, isDistinct, collation, limit,
-            LPConverterUtil.getTimestampOrderIndex(collation, timestamp).isPresent(),
-            baseInput.type);
-        return setRelHolder(baseInput.copy().type(topN.getTableType())
+            LPConverterUtil.getTimestampOrderIndex(collation, timestamp).isPresent());
+        TableType resultType = TableType.STATE;
+        if (baseInput.type.isStream() && topN.isDeduplication()) resultType = TableType.DEDUP_STREAM;
+        return setRelHolder(baseInput.copy().type(resultType)
             .primaryKey(pk).select(select).timestamp(timestamp)
             .joinTables(null).topN(topN).sort(SortOrder.EMPTY).build());
       } else {
@@ -513,7 +527,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         return setRelHolder(rawInput.copy().select(trivialMap).build());
       }
     }
-    AnnotatedLP input = rawInput.inlineTopN(makeRelBuilder());
+    AnnotatedLP input = rawInput.inlineTopN(makeRelBuilder(), exec);
     //Update index mappings
     List<RexNode> updatedProjects = new ArrayList<>();
     List<String> updatedNames = new ArrayList<>();
@@ -543,7 +557,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
               nowFilter = input.nowFilter.map(tp -> new TimePredicate(tp.getSmallerIndex(),
                   exp.i, tp.getComparison(), tp.getIntervalLength() + intervalExpansion));
             } else {
-              input = input.inlineNowFilter(makeRelBuilder());
+              input = input.inlineNowFilter(makeRelBuilder(), exec);
             }
           }
         }
@@ -625,9 +639,10 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     relB.project(updatedProjects, updatedNames);
     RelNode newProject = relB.build();
     int fieldCount = updatedProjects.size();
+    exec.requireRex(updatedProjects);
     return setRelHolder(AnnotatedLP.build(newProject, input.type, primaryKey.build(fieldCount),
             timestamp, ContinuousIndexMap.identity(logicalProject.getProjects().size(), fieldCount),
-            input.getExec().requireRex(updatedProjects), input)
+            input)
         .numRootPks(input.numRootPks).nowFilter(nowFilter).sort(sort).build());
   }
 
@@ -647,13 +662,14 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     AnnotatedLP leftIn = getRelHolder(logicalJoin.getLeft().accept(this));
     AnnotatedLP rightIn = getRelHolder(logicalJoin.getRight().accept(this));
 
-    AnnotatedLP leftInput = leftIn.inlineTopN(makeRelBuilder());
-    AnnotatedLP rightInput = rightIn.inlineTopN(makeRelBuilder());
+    AnnotatedLP leftInput = leftIn.inlineTopN(makeRelBuilder(), exec);
+    AnnotatedLP rightInput = rightIn.inlineTopN(makeRelBuilder(), exec);
     JoinRelType joinType = logicalJoin.getJoinType();
 
     final int leftSideMaxIdx = leftInput.getFieldLength();
     ContinuousIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx);
     RexNode condition = joinedIndexMap.map(logicalJoin.getCondition());
+    exec.requireRex(condition);
     //TODO: pull now() conditions up as a nowFilter and move nested now filters through
     Preconditions.checkArgument(!FIND_NOW.foundIn(condition),
         "now() is not allowed in join conditions");
@@ -664,78 +680,99 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     boolean hasTransformativePullups =
         !leftIn.topN.isEmpty() || !rightIn.topN.isEmpty() || !rightIn.nowFilter.isEmpty();
     if ((joinType == JoinRelType.DEFAULT || joinType == JoinRelType.INNER
-        || joinType == JoinRelType.LEFT) && leftInput.joinTables != null
-        && rightInput.joinTables != null
-        && !hasTransformativePullups && eqDecomp.getRemainingPredicates().isEmpty()) {
+        || joinType == JoinRelType.LEFT)
+        && JoinTable.valid(leftInput.joinTables) && JoinTable.valid(rightInput.joinTables)
+        && !hasTransformativePullups
+        && eqDecomp.getRemainingPredicates().isEmpty() && !eqDecomp.getEqualities().isEmpty()) {
+      errors.checkFatal(JoinTable.getRoots(rightInput.joinTables).size() == 1,
+          ErrorCode.NOT_YET_IMPLEMENTED,
+          "Current assuming a single table on the right for self-join elimination.");
+
       //Determine if we can map the tables from both branches of the join onto each-other
-      Map<JoinTable, JoinTable> right2left = JoinTable.joinTreeMap(leftInput.joinTables,
-          leftSideMaxIdx, rightInput.joinTables, eqDecomp.getEqualities());
+      Map<JoinTable, JoinTable> right2left;
+      if (exec.supports(EngineCapability.DENORMALIZE)) {
+        right2left = JoinTable.joinTreeMap(leftInput.joinTables, leftSideMaxIdx,
+            rightInput.joinTables, eqDecomp.getEqualities());
+      } else {
+        right2left = JoinTable.joinListMap(leftInput.joinTables, leftSideMaxIdx,
+            rightInput.joinTables, eqDecomp.getEqualities());
+      }
       if (!right2left.isEmpty()) {
-        //We currently expect a single path from leaf to right as a self-join
-        Preconditions.checkArgument(JoinTable.getRoots(rightInput.joinTables).size() == 1,
-            "Current assuming a single root table on the right");
         JoinTable rightLeaf = Iterables.getOnlyElement(JoinTable.getLeafs(rightInput.joinTables));
         RelBuilder relBuilder = makeRelBuilder().push(leftInput.getRelNode());
         ContinuousIndexMap newPk = leftInput.primaryKey;
         List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
-        if (right2left.containsKey(rightLeaf) || leftInput.getStage()
-            .supports(EngineCapability.DENORMALIZE)) {
-          if (joinType == JoinRelType.DEFAULT) {
-            joinType = JoinRelType.INNER;
-          }
-          if (!right2left.containsKey(rightLeaf)) {
-            //Find closest ancestor that was mapped and shred from there
-            List<JoinTable> ancestorPath = new ArrayList<>();
-            int numAddedPks = 0;
-            ancestorPath.add(rightLeaf);
-            JoinTable ancestor = rightLeaf;
-            while (!right2left.containsKey(ancestor)) {
-              numAddedPks += ancestor.getNumLocalPk();
-              ancestor = ancestor.parent;
-              ancestorPath.add(ancestor);
-            }
-            Collections.reverse(
-                ancestorPath); //To match the order of addedTables when shredding (i.e. from root to leaf)
-            ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, numAddedPks);
-            List<JoinTable> addedTables = new ArrayList<>();
-            relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
-                Pair.of(right2left.get(ancestor), relBuilder), joinType);
-            newPk = addedPk.build(relBuilder.peek().getRowType().getFieldCount());
-            Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
-            for (int i = 1; i < addedTables.size();
-                i++) { //First table is the already mapped root ancestor
-              joinTables.add(addedTables.get(i));
-              right2left.put(ancestorPath.get(i), addedTables.get(i));
-            }
-          }
-          RelNode relNode = relBuilder.build();
-          //Update indexMap based on the mapping of join tables
-          final AnnotatedLP rightInputfinal = rightInput;
-          ContinuousIndexMap remapedRight = rightInput.select.remap(
-              index -> {
-                JoinTable jt = JoinTable.find(rightInputfinal.joinTables, index).get();
-                return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
-              });
-          ContinuousIndexMap indexMap = leftInput.select.append(remapedRight);
-          return setRelHolder(AnnotatedLP.build(relNode, leftInput.type, newPk, leftInput.timestamp,
-                  indexMap, leftInput.getExec(), leftInput)
-              .numRootPks(leftInput.numRootPks).nowFilter(leftInput.nowFilter)
-              .joinTables(joinTables).build());
+        if (joinType == JoinRelType.DEFAULT) {
+          joinType = JoinRelType.INNER;
         }
+        if (!right2left.containsKey(rightLeaf)) {
+          //Find closest ancestor that was mapped and shred from there
+          List<JoinTable> ancestorPath = new ArrayList<>();
+          int numAddedPks = 0;
+          ancestorPath.add(rightLeaf);
+          JoinTable ancestor = rightLeaf;
+          while (!right2left.containsKey(ancestor)) {
+            numAddedPks += ancestor.getNumLocalPk();
+            ancestor = ancestor.parent;
+            ancestorPath.add(ancestor);
+          }
+          Collections.reverse(
+              ancestorPath); //To match the order of addedTables when shredding (i.e. from root to leaf)
+          ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, numAddedPks);
+          List<JoinTable> addedTables = new ArrayList<>();
+          relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
+              Pair.of(right2left.get(ancestor), relBuilder), joinType);
+          newPk = addedPk.build(relBuilder.peek().getRowType().getFieldCount());
+          Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
+          for (int i = 1; i < addedTables.size();
+              i++) { //First table is the already mapped root ancestor
+            joinTables.add(addedTables.get(i));
+            right2left.put(ancestorPath.get(i), addedTables.get(i));
+          }
+        } else if (!right2left.get(rightLeaf).getTable().equals(rightLeaf.getTable())) {
+          //When mapping normalized tables, the mapping might map siblings which we need to join
+          Preconditions.checkArgument(!exec.supports(EngineCapability.DENORMALIZE));
+          JoinTable leftTbl = right2left.get(rightLeaf);
+          relBuilder.push(rightInput.getRelNode());
+          relBuilder.join(joinType, condition);
+          JoinTable rightTbl = rightLeaf.withOffset(leftSideMaxIdx);
+          joinTables.add(rightTbl);
+          right2left.put(rightLeaf,rightTbl);
+          //Add any additional pks
+          int rightNumPk = rightLeaf.getNumPkNormalized(), leftNumPk = leftTbl.getNumPkNormalized();
+          if (rightNumPk > leftNumPk) {
+            int deltaPk = rightNumPk - leftNumPk;
+            ContinuousIndexMap.Builder addedPk = ContinuousIndexMap.builder(newPk, deltaPk);
+            for (int i = 0; i < deltaPk; i++) {
+              addedPk.add(rightTbl.getGlobalIndex(leftNumPk + deltaPk));
+            }
+            newPk = addedPk.build();
+          }
+         }
+        RelNode relNode = relBuilder.build();
+        //Update indexMap based on the mapping of join tables
+        final List<JoinTable> rightTables = rightInput.joinTables;
+        ContinuousIndexMap remapedRight = rightInput.select.remap(
+            index -> {
+              JoinTable jt = JoinTable.find(rightTables, index).get();
+              return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
+            });
+        ContinuousIndexMap indexMap = leftInput.select.append(remapedRight);
+        return setRelHolder(AnnotatedLP.build(relNode, leftInput.type, newPk, leftInput.timestamp,
+                indexMap, leftInput)
+            .numRootPks(leftInput.numRootPks).nowFilter(leftInput.nowFilter)
+            .joinTables(joinTables).build());
       }
     }
-
-    ExecutionAnalysis combinedExec = leftInput.getExec().combine(rightInput.getExec())
-        .requireRex(List.of(condition));
 
     //Detect temporal join
     if (joinType == JoinRelType.DEFAULT || joinType == JoinRelType.TEMPORAL
         || joinType == JoinRelType.LEFT) {
-      if ((leftInput.type == TableType.STREAM && rightInput.type == TableType.TEMPORAL_STATE) ||
-          (rightInput.type == TableType.STREAM && leftInput.type == TableType.TEMPORAL_STATE
+      if ((leftInput.type.isStream() && rightInput.type.isState()) ||
+          (rightInput.type.isStream() && leftInput.type.isState()
               && joinType != JoinRelType.LEFT)) {
         //Make sure the stream is left and state is right
-        if (rightInput.type == TableType.STREAM) {
+        if (rightInput.type.isStream()) {
           //Switch sides
           AnnotatedLP tmp = rightInput;
           rightInput = leftInput;
@@ -758,7 +795,18 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
             rightInput.nowFilter.isEmpty()) {
           RelBuilder relB = makeRelBuilder();
           relB.push(leftInput.relNode);
-          relB.push(rightInput.relNode);
+          RelNode state = rightInput.relNode;
+          if (rightInput.type!=TableType.DEDUP_STREAM && !exec.supports(EngineCapability.TEMPORAL_JOIN_ON_STATE)) {
+            //Need to convert to stream and add dedup to make this work
+            AnnotatedLP state2stream = makeStream(rightInput, StreamType.UPDATE);
+            //stream has the same order of fields
+//            TopNConstraint dedup = TopNConstraint.makeDeduplication(pkAndSelect.pk.targetsAsList(),
+//                timestamp.getTimestampCandidate().getIndex());
+            errors.checkFatal(false, ErrorCode.NOT_YET_IMPLEMENTED,
+                "Currently temporal joins are limited to states that are deduplicated streams.");
+          }
+
+          relB.push(state);
           Preconditions.checkArgument(rightInput.timestamp.hasFixedTimestamp());
           TimestampHolder.Derived joinTimestamp = leftInput.timestamp.getBestCandidate()
               .fixAsTimestamp();
@@ -771,30 +819,27 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
               rightInput.primaryKey.targetsAsArray());
           relB.join(joinType == JoinRelType.LEFT ? joinType : JoinRelType.INNER, condition);
           hint.addTo(relB);
+          exec.require(EngineCapability.TEMPORAL_JOIN);
           return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
                   pk, joinTimestamp, joinedIndexMap,
-                  combinedExec.require(EngineCapability.TEMPORAL_JOIN), List.of(leftInput, rightInput))
+                  List.of(leftInput, rightInput))
               .joinTables(leftInput.joinTables)
               .numRootPks(leftInput.numRootPks).nowFilter(leftInput.nowFilter).sort(leftInput.sort)
               .build());
         } else if (joinType == JoinRelType.TEMPORAL) {
-          throw new IllegalArgumentException(
-              "Expected join condition to be equality condition on state's primary key: "
-                  + logicalJoin);
+          errors.fatal("Expected join condition to be equality condition on state's primary key: %s",
+                  logicalJoin);
         }
       } else if (joinType == JoinRelType.TEMPORAL) {
-        throw new ExecutionStageException.StageIncompatibility(
-            "Expect one side of the join to be stream and the other temporal state: "
-                + logicalJoin);
+        errors.fatal("Expect one side of the join to be stream and the other temporal state: %s",
+                logicalJoin);
       }
 
     }
 
     //TODO: pull now-filters through interval join where possible
-    final AnnotatedLP leftInputF = leftInput.inlineNowFilter(makeRelBuilder());
-    final AnnotatedLP rightInputF = rightInput.inlineNowFilter(makeRelBuilder());
-    combinedExec = leftInputF.getExec().combine(rightInputF.getExec())
-        .requireRex(List.of(condition));
+    final AnnotatedLP leftInputF = leftInput.inlineNowFilter(makeRelBuilder(), exec);
+    final AnnotatedLP rightInputF = rightInput.inlineNowFilter(makeRelBuilder(), exec);
 
     RelBuilder relB = makeRelBuilder();
     relB.push(leftInputF.relNode);
@@ -825,9 +870,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     //Detect interval join
     if (joinType == JoinRelType.DEFAULT || joinType == JoinRelType.INNER
         || joinType == JoinRelType.INTERVAL || joinType == JoinRelType.LEFT) {
-      if (leftInputF.type == TableType.STREAM && rightInputF.type == TableType.STREAM &&
-          leftInputF.timestamp.hasCandidates() && rightInputF.timestamp.hasCandidates()
-          && combinedExec.getStage().isWrite()) {
+      if (leftInputF.type.isStream() && rightInputF.type.isStream()) {
         //Validate that the join condition includes time bounds on both sides
         List<RexNode> conjunctions = new ArrayList<>(rexUtil.getConjunctions(condition));
         Predicate<Integer> isTimestampColumn = idx -> idx < leftSideMaxIdx
@@ -907,14 +950,13 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
               condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
           SqrlHintStrategyTable.INTERVAL_JOIN.addTo(relB);
           return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
-              concatPk, joinTimestamp, joinedIndexMap, combinedExec,
+              concatPk, joinTimestamp, joinedIndexMap,
               List.of(leftInputF, rightInputF)).numRootPks(numRootPks).sort(joinedSort).build());
         } else if (joinType == JoinRelType.INTERVAL) {
-          throw new IllegalArgumentException(
-              "Interval joins require time bounds in the join condition: " + logicalJoin);
+          errors.fatal("Interval joins require time bounds in the join condition: " + logicalJoin);
         }
       } else if (joinType == JoinRelType.INTERVAL) {
-        throw new ExecutionStageException.StageIncompatibility(
+        errors.fatal(
             "Interval joins are only supported between two streams: " + logicalJoin);
       }
     }
@@ -927,14 +969,24 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT,
         "Unsupported join type: %s", logicalJoin);
     //Default inner join creates a state table
-    relB.push(leftInputF.relNode).push(rightInputF.relNode);
     relB.join(joinType, condition);
     new JoinCostHint(leftInputF.type, rightInputF.type, eqDecomp.getEqualities().size()).addTo(
         relB);
 
+    //Determine timestamps for each side and add the max of those two as the resulting timestamp
+    TimestampHolder.Derived.Candidate leftBest = leftInputF.timestamp.getBestCandidate();
+    TimestampHolder.Derived.Candidate rightBest = rightInputF.timestamp.getBestCandidate();
+    //New timestamp column is added at the end
+    TimestampHolder.Derived resultTimestamp = leftBest.withIndex(relB.peek().getRowType().getFieldCount())
+        .fixAsTimestamp();
+    rightBest.fixAsTimestamp();
+    RexNode maxTimestamp = rexUtil.maxOfTwoColumnsNotNull(leftBest.getIndex(),
+        rightBest.getIndex()+leftSideMaxIdx, relB.peek());
+    rexUtil.appendColumn(relB, maxTimestamp, ReservedName.SYSTEM_TIMESTAMP.getCanonical());
+
     return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE,
-        concatPk, TimestampHolder.Derived.NONE, joinedIndexMap,
-        combinedExec, List.of(leftInputF, rightInputF)).sort(joinedSort).build());
+        concatPk, resultTimestamp, joinedIndexMap,
+        List.of(leftInputF, rightInputF)).sort(joinedSort).build());
   }
 
   private static <T, R> R apply2JoinSide(int joinIndex, int leftSideMaxIdx, T left, T right,
@@ -955,17 +1007,16 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
         "Currently, only UNION ALL is supported. Combine with SELECT DISTINCT for UNION");
 
     List<AnnotatedLP> inputs = logicalUnion.getInputs().stream()
-        .map(in -> getRelHolder(in.accept(this)).inlineTopN(makeRelBuilder()))
+        .map(in -> getRelHolder(in.accept(this)).inlineTopN(makeRelBuilder(), exec))
         .map(meta -> meta.copy().sort(SortOrder.EMPTY)
             .build()) //We ignore the sorts of the inputs (if any) since they are streams and we union them the default sort is timestamp
         .map(meta -> meta.postProcess(
-            makeRelBuilder())) //The post-process makes sure the input relations are aligned (pk,selects,timestamps)
+            makeRelBuilder(), null, exec)) //The post-process makes sure the input relations are aligned (pk,selects,timestamps)
         .collect(Collectors.toList());
     Preconditions.checkArgument(inputs.size() > 0);
 
     //In the following, we can assume that the input relations are aligned because we post-processed them
     RelBuilder relBuilder = makeRelBuilder();
-    ExecutionAnalysis exec = null;
     ContinuousIndexMap pk = inputs.get(0).primaryKey;
     ContinuousIndexMap select = inputs.get(0).select;
     Optional<Integer> numRootPks = inputs.get(0).numRootPks;
@@ -984,7 +1035,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     Set<Integer> timestampIndexes = inputs.get(0).timestamp.getCandidateIndexes().stream()
         .filter(idx -> idx < maxSelectIdx).collect(Collectors.toSet());
     for (AnnotatedLP input : inputs) {
-      Preconditions.checkArgument(input.type == TableType.STREAM,
+      Preconditions.checkArgument(input.type.isStream(),
           "Only stream tables can currently be unioned. Union tables before converting them to state.");
       //Validate primary key and selects line up between the streams
       Preconditions.checkArgument(pk.equals(input.primaryKey),
@@ -1013,12 +1064,11 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
       relBuilder.push(input.relNode);
       CalciteUtil.addProjection(relBuilder, localSelectIndexes, localSelectNames);
       unionTimestamp = unionTimestamp.union(localTimestamp);
-      exec = exec == null ? input.getExec() : exec.combine(input.getExec());
     }
+    Preconditions.checkArgument(unionTimestamp.hasCandidates());
     relBuilder.union(true, inputs.size());
     return setRelHolder(
-        AnnotatedLP.build(relBuilder.build(), TableType.STREAM, pk, unionTimestamp, select, exec,
-                inputs)
+        AnnotatedLP.build(relBuilder.build(), TableType.STREAM, pk, unionTimestamp, select, inputs)
             .numRootPks(numRootPks).build());
   }
 
@@ -1029,32 +1079,53 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
 
   public AnnotatedLP processAggregate(LogicalAggregate aggregate) {
     //Need to inline TopN before we aggregate, but we postpone inlining now-filter in case we can push it through
-    final AnnotatedLP input = getRelHolder(aggregate.getInput().accept(this)).inlineTopN(
-        makeRelBuilder());
+    final AnnotatedLP input = getRelHolder(aggregate.getInput().accept(this))
+        .inlineTopN(makeRelBuilder(), exec);
     Preconditions.checkArgument(aggregate.groupSets.size() == 1,
         "Do not yet support GROUPING SETS.");
     final List<Integer> groupByIdx = aggregate.getGroupSet().asList().stream()
         .map(idx -> input.select.map(idx))
         .collect(Collectors.toList());
-    List<AggregateCall> aggregateCalls = createAggregateCalls(aggregate, input);
+    List<AggregateCall> aggregateCalls = mapAggregateCalls(aggregate, input);
     int targetLength = groupByIdx.size() + aggregateCalls.size();
 
-    ExecutionAnalysis exec = input.getExec().requireAggregates(aggregateCalls);
+    exec.requireAggregates(aggregateCalls);
 
-    AnnotatedLP result = handleStreamRootPrimaryKeyAggregation(input, groupByIdx, aggregateCalls,
-        exec);
-    if (result != null) return result;
+    //Check if this a nested aggregation of a stream on root primary key during write stage
+    if (input.type == TableType.STREAM && input.numRootPks.isPresent()
+        && input.numRootPks.get() <= groupByIdx.size()
+        && groupByIdx.subList(0, input.numRootPks.get())
+        .equals(input.primaryKey.targetsAsList().subList(0, input.numRootPks.get()))) {
+      return handleNestedAggregationInStream(input, groupByIdx, aggregateCalls);
+    }
 
-    result = handleTimeWindowAggregation(input, groupByIdx, aggregateCalls, targetLength, exec);
-    if (result != null) return result;
+    //Check if this is a time-window aggregation (i.e. a roll-up)
+    Pair<TimestampHolder.Derived.Candidate, Integer> timeKey;
+    if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject
+        && (timeKey = findTimestampInGroupBy(groupByIdx, input.timestamp))!=null) {
+      return handleTimeWindowAggregation(input, groupByIdx, aggregateCalls, targetLength,
+          timeKey.getLeft(), timeKey.getRight());
+    }
 
-    result = handleTimestampPropagation(aggregate, input, groupByIdx, aggregateCalls, targetLength, exec);
-    if (result != null) return result;
+    /* Check if any of the aggregate calls is a max(timestamp candidate) in which
+       case that candidate should be the fixed timestamp and the result of the agg should be
+       the resulting timestamp
+     */
+    Optional<TimestampAnalysis.MaxTimestamp> maxTimestamp = TimestampAnalysis.findMaxTimestamp(
+        aggregateCalls, input.timestamp);
 
-    return handleStandardAggregation(input, groupByIdx, aggregateCalls, targetLength, exec);
+    //Check if we need to propagate timestamps
+    if (input.type.isStream()) {
+      return handleTimestampedAggregationInStream(aggregate, input, groupByIdx, aggregateCalls,
+          maxTimestamp, targetLength);
+    }
+
+    return handleStandardAggregation(input, groupByIdx, aggregateCalls, maxTimestamp, targetLength);
   }
 
-  private List<AggregateCall> createAggregateCalls(LogicalAggregate aggregate, AnnotatedLP input) {
+
+
+  private List<AggregateCall> mapAggregateCalls(LogicalAggregate aggregate, AnnotatedLP input) {
     List<AggregateCall> aggregateCalls = aggregate.getAggCallList().stream().map(agg -> {
       Preconditions.checkArgument(agg.getCollation().getFieldCollations().isEmpty(),
           "Unexpected aggregate call: %s", agg);
@@ -1065,208 +1136,215 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     return aggregateCalls;
   }
 
-  private AnnotatedLP handleStreamRootPrimaryKeyAggregation(AnnotatedLP input, List<Integer> groupByIdx, List<AggregateCall> aggregateCalls,
-      ExecutionAnalysis exec) {
+  private AnnotatedLP handleNestedAggregationInStream(AnnotatedLP input, List<Integer> groupByIdx,
+      List<AggregateCall> aggregateCalls) {
+    TimestampHolder.Derived.Candidate candidate = input.timestamp.getCandidates().stream()
+        .filter(cand -> groupByIdx.contains(cand.getIndex())).findAny()
+        .orElse(input.timestamp.getBestCandidate());
 
-    //Check if this an aggregation of a stream on root primary key during write stage
-    if (input.type == TableType.STREAM && input.numRootPks.isPresent() && exec.getStage().isWrite()
-        && input.numRootPks.get() <= groupByIdx.size() && groupByIdx.subList(0,
-            input.numRootPks.get())
-        .equals(input.primaryKey.targetsAsList().subList(0, input.numRootPks.get()))) {
-      TimestampHolder.Derived.Candidate candidate = input.timestamp.getCandidates().stream()
-          .filter(cand -> groupByIdx.contains(cand.getIndex())).findAny()
-          .orElse(input.timestamp.getBestCandidate());
+    RelBuilder relB = makeRelBuilder();
+    relB.push(input.relNode);
+    Pair<PkAndSelect, TimestampHolder.Derived> addedTimestamp =
+        addTimestampAggregate(relB, groupByIdx, candidate, aggregateCalls);
+    PkAndSelect pkSelect = addedTimestamp.getKey();
+    TimestampHolder.Derived timestamp = addedTimestamp.getValue();
 
-      RelBuilder relB = makeRelBuilder();
-      relB.push(input.relNode);
-      Pair<PkAndSelect, TimestampHolder.Derived> addedTimestamp =
-          addTimestampAggregate(relB, groupByIdx, candidate, aggregateCalls);
-      PkAndSelect pkSelect = addedTimestamp.getKey();
-      TimestampHolder.Derived timestamp = addedTimestamp.getValue();
+    TumbleAggregationHint.instantOf(candidate.getIndex()).addTo(relB);
 
-      TumbleAggregationHint.instantOf(candidate.getIndex()).addTo(relB);
+    NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(),
+        timestamp.getTimestampCandidate().getIndex()));
 
-      NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(),
-          timestamp.getTimestampCandidate().getIndex()));
+    return AnnotatedLP.build(relB.build(), TableType.STREAM, pkSelect.pk, timestamp, pkSelect.select,
+                input)
+            .numRootPks(Optional.of(pkSelect.pk.getSourceLength()))
+            .nowFilter(nowFilter).build();
+  }
 
-      return AnnotatedLP.build(relB.build(), TableType.STREAM, pkSelect.pk, timestamp, pkSelect.select,
-                  exec, input)
-              .numRootPks(Optional.of(pkSelect.pk.getSourceLength()))
-              .nowFilter(nowFilter).build();
+  private Pair<TimestampHolder.Derived.Candidate, Integer> findTimestampInGroupBy(
+      List<Integer> groupByIdx, TimestampHolder.Derived timestamp) {
+    //Determine if one of the groupBy keys is a timestamp
+    TimestampHolder.Derived.Candidate keyCandidate = null;
+    int keyIdx = -1;
+    for (int i = 0; i < groupByIdx.size(); i++) {
+      int idx = groupByIdx.get(i);
+      if (timestamp.isCandidate(idx)) {
+        Preconditions.checkArgument(keyCandidate == null,
+            "Do not currently support aggregating by multiple timestamp columns");
+        keyCandidate = timestamp.getCandidateByIndex(idx);
+        keyIdx = i;
+        assert keyCandidate.getIndex() == idx;
+      }
     }
-    return null;
+    if (keyCandidate == null) return null;
+    return Pair.of(keyCandidate, keyIdx);
   }
 
   private AnnotatedLP handleTimeWindowAggregation(AnnotatedLP input,
       List<Integer> groupByIdx, List<AggregateCall> aggregateCalls, int targetLength,
-      ExecutionAnalysis exec) {
+      TimestampHolder.Derived.Candidate keyCandidate, int keyIdx) {
+    LogicalProject inputProject = (LogicalProject) input.getRelNode();
+    RexNode timeAgg = inputProject.getProjects().get(keyCandidate.getIndex());
+    TimeTumbleFunctionCall bucketFct = TimeTumbleFunctionCall.from(timeAgg,
+        rexUtil.getBuilder()).orElseThrow(
+        () -> new IllegalArgumentException("Not a valid time aggregation function: " + timeAgg)
+    );
 
-    //Check if this is a time-window aggregation (i.e. a roll-up)
-    if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject) {
-      //Determine if one of the groupBy keys is a timestamp
-      TimestampHolder.Derived.Candidate keyCandidate = null;
-      int keyIdx = -1;
-      for (int i = 0; i < groupByIdx.size(); i++) {
-        int idx = groupByIdx.get(i);
-        if (input.timestamp.isCandidate(idx)) {
-          Preconditions.checkArgument(keyCandidate == null,
-              "Do not currently support aggregating by multiple timestamp columns");
-          keyCandidate = input.timestamp.getCandidateByIndex(idx);
-          keyIdx = i;
-          assert keyCandidate.getIndex() == idx;
-        }
-      }
-      if (keyCandidate != null) {
-        LogicalProject inputProject = (LogicalProject) input.getRelNode();
-        RexNode timeAgg = inputProject.getProjects().get(keyCandidate.getIndex());
-        TimeTumbleFunctionCall bucketFct = TimeTumbleFunctionCall.from(timeAgg,
-            rexUtil.getBuilder()).orElseThrow(
-            () -> new IllegalArgumentException("Not a valid time aggregation function: " + timeAgg)
-        );
+    //Fix timestamp (if not already fixed)
+    TimestampHolder.Derived newTimestamp = keyCandidate.withIndex(keyIdx).fixAsTimestamp();
+    //Now filters must be on the timestamp - this is an internal check
+    Preconditions.checkArgument(input.nowFilter.isEmpty()
+        || input.nowFilter.getTimestampIndex() == keyCandidate.getIndex());
+    NowFilter nowFilter = input.nowFilter.remap(
+        IndexMap.singleton(keyCandidate.getIndex(), keyIdx));
 
-        //Fix timestamp (if not already fixed)
-        TimestampHolder.Derived newTimestamp = keyCandidate.withIndex(keyIdx).fixAsTimestamp();
-        //Now filters must be on the timestamp - this is an internal check
-        Preconditions.checkArgument(input.nowFilter.isEmpty()
-            || input.nowFilter.getTimestampIndex() == keyCandidate.getIndex());
-        NowFilter nowFilter = input.nowFilter.remap(
-            IndexMap.singleton(keyCandidate.getIndex(), keyIdx));
+    RelBuilder relB = makeRelBuilder();
+    relB.push(input.relNode);
+    relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
+    TumbleAggregationHint.functionOf(keyCandidate.getIndex(),
+        bucketFct.getTimestampColumnIndex(),
+        bucketFct.getSpecification().getBucketWidthMillis()).addTo(relB);
+    PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
 
-        RelBuilder relB = makeRelBuilder();
-        relB.push(input.relNode);
-        relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
-        TumbleAggregationHint.functionOf(keyCandidate.getIndex(),
-            bucketFct.getTimestampColumnIndex(),
-            bucketFct.getSpecification().getBucketWidthMillis()).addTo(relB);
-        PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
+    /* TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,
+    i.e. time_bucket_col < time_bucket_function(now()) [if now() lands in a time bucket, that bucket is still open and shouldn't be shown]
+      set to "SHOULD" once this is supported
+     */
 
-                /* TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,
-                i.e. time_bucket_col < time_bucket_function(now()) [if now() lands in a time bucket, that bucket is still open and shouldn't be shown]
-                  set to "SHOULD" once this is supported
-                 */
-
-        return AnnotatedLP.build(relB.build(), TableType.STREAM, pkSelect.pk, newTimestamp,
-                    pkSelect.select, exec, input)
-                .numRootPks(Optional.of(pkSelect.pk.getSourceLength()))
-                .nowFilter(nowFilter).build();
-
-      }
-    }
-
-    return null;
+    return AnnotatedLP.build(relB.build(), TableType.STREAM, pkSelect.pk, newTimestamp,
+                pkSelect.select, input)
+            .numRootPks(Optional.of(pkSelect.pk.getSourceLength()))
+            .nowFilter(nowFilter).build();
   }
 
-  private AnnotatedLP handleTimestampPropagation(LogicalAggregate aggregate, AnnotatedLP input,
-      List<Integer> groupByIdx, List<AggregateCall> aggregateCalls, int targetLength,
-      ExecutionAnalysis exec) {
+  private AnnotatedLP handleTimestampedAggregationInStream(LogicalAggregate aggregate, AnnotatedLP input,
+      List<Integer> groupByIdx, List<AggregateCall> aggregateCalls,
+      Optional<TimestampAnalysis.MaxTimestamp> maxTimestamp, int targetLength) {
 
-    //Check if we need to propagate timestamps
-    if (input.type == TableType.STREAM || input.type == TableType.TEMPORAL_STATE) {
+    //Fix best timestamp (if not already fixed)
+    TimestampHolder.Derived inputTimestamp = input.timestamp;
+    TimestampHolder.Derived.Candidate candidate = maxTimestamp.map(MaxTimestamp::getCandidate)
+        .orElse(inputTimestamp.getBestCandidate());
 
-      //Fix best timestamp (if not already fixed)
-      TimestampHolder.Derived inputTimestamp = input.timestamp;
-      TimestampHolder.Derived.Candidate candidate = inputTimestamp.getBestCandidate();
-      targetLength += 1; //Adding timestamp column to output relation
+    if (!input.nowFilter.isEmpty() && exec.supports(EngineCapability.STREAM_WINDOW_AGGREGATION)) {
+      NowFilter nowFilter = input.nowFilter;
+      //Determine timestamp, add to group-By and
+      Preconditions.checkArgument(nowFilter.getTimestampIndex() == candidate.getIndex(),
+          "Timestamp indexes don't match");
+      Preconditions.checkArgument(!groupByIdx.contains(candidate.getIndex()),
+          "Cannot group on timestamp");
+      RelBuilder relB = makeRelBuilder();
+      relB.push(input.relNode);
+      Pair<PkAndSelect, TimestampHolder.Derived> addedTimestamp =
+          addTimestampAggregate(relB, groupByIdx, candidate, aggregateCalls);
+      PkAndSelect pkAndSelect = addedTimestamp.getKey();
+      TimestampHolder.Derived timestamp = addedTimestamp.getValue();
 
-      if (!input.nowFilter.isEmpty() && input.type == TableType.STREAM && exec.getStage()
-          .isWrite()) {
-        NowFilter nowFilter = input.nowFilter;
-        //Determine timestamp, add to group-By and
-        Preconditions.checkArgument(nowFilter.getTimestampIndex() == candidate.getIndex(),
-            "Timestamp indexes don't match");
-        Preconditions.checkArgument(!groupByIdx.contains(candidate.getIndex()),
-            "Cannot group on timestamp");
+      //Convert now-filter to sliding window and add as hint
+      long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
+      // TODO: extract slide-width from hint
+      long slideWidthMs = intervalWidthMs / config.getSlideWindowPanes();
+      Preconditions.checkArgument(slideWidthMs > 0 && slideWidthMs < intervalWidthMs,
+          "Invalid window widths: %s - %s", intervalWidthMs, slideWidthMs);
+      new SlidingAggregationHint(candidate.getIndex(), intervalWidthMs, slideWidthMs).addTo(relB);
 
-        RelBuilder relB = makeRelBuilder();
-        relB.push(input.relNode);
-        Pair<PkAndSelect, TimestampHolder.Derived> addedTimestamp =
-            addTimestampAggregate(relB, groupByIdx, candidate, aggregateCalls);
-        PkAndSelect pkAndSelect = addedTimestamp.getKey();
-        TimestampHolder.Derived timestamp = addedTimestamp.getValue();
+      TopNConstraint dedup = TopNConstraint.makeDeduplication(pkAndSelect.pk.targetsAsList(),
+          timestamp.getTimestampCandidate().getIndex());
+      return AnnotatedLP.build(relB.build(), TableType.DEDUP_STREAM, pkAndSelect.pk,
+              timestamp, pkAndSelect.select, input)
+          .topN(dedup).build();
+    } else {
+      //Convert aggregation to window-based aggregation in a project so we can preserve timestamp followed by dedup
+      AnnotatedLP nowInput = input.inlineNowFilter(makeRelBuilder(), exec);
 
-        //Convert now-filter to sliding window and add as hint
-        long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
-        // TODO: extract slide-width from hint
-        long slideWidthMs = intervalWidthMs / config.defaultSlideWindowPanes;
-        Preconditions.checkArgument(slideWidthMs > 0 && slideWidthMs < intervalWidthMs,
-            "Invalid window widths: %s - %s", intervalWidthMs, slideWidthMs);
-        new SlidingAggregationHint(candidate.getIndex(), intervalWidthMs, slideWidthMs).addTo(relB);
+      //Adding timestamp column to output relation if not already present
+      if (maxTimestamp.isEmpty()) targetLength += 1;
 
-        TopNConstraint dedup = TopNConstraint.makeDeduplication(pkAndSelect.pk.targetsAsList(),
-            timestamp.getTimestampCandidate().getIndex());
-        return AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pkAndSelect.pk,
-                timestamp, pkAndSelect.select, exec, input)
-            .topN(dedup).build();
+      RelNode inputRel = nowInput.relNode;
+      RelBuilder relB = makeRelBuilder();
+      relB.push(inputRel);
+
+      RexInputRef timestampRef = RexInputRef.of(candidate.getIndex(), inputRel.getRowType());
+
+      List<RexNode> partitionKeys = new ArrayList<>(groupByIdx.size());
+      List<RexNode> projects = new ArrayList<>(targetLength);
+      List<String> projectNames = new ArrayList<>(targetLength);
+      //Add groupByKeys in a sorted order
+      List<Integer> sortedGroupByKeys = groupByIdx.stream().sorted().collect(Collectors.toList());
+      for (Integer keyIdx : sortedGroupByKeys) {
+        RexInputRef ref = RexInputRef.of(keyIdx, inputRel.getRowType());
+        projects.add(ref);
+        projectNames.add(null);
+        partitionKeys.add(ref);
+      }
+      RexFieldCollation orderBy = new RexFieldCollation(timestampRef, Set.of());
+
+      //Add aggregate functions
+      for (int i = 0; i < aggregateCalls.size(); i++) {
+        AggregateCall call = aggregateCalls.get(i);
+        RexNode agg = rexUtil.getBuilder().makeOver(call.getType(), call.getAggregation(),
+            call.getArgList().stream()
+                .map(idx -> RexInputRef.of(idx, inputRel.getRowType()))
+                .collect(Collectors.toList()),
+            partitionKeys,
+            ImmutableList.of(orderBy),
+            RexWindowBounds.UNBOUNDED_PRECEDING,
+            RexWindowBounds.CURRENT_ROW,
+            true, true, false, false, true
+        );
+        projects.add(agg);
+        projectNames.add(aggregate.getNamedAggCalls().get(i).getValue());
+      }
+
+      TimestampHolder.Derived outputTimestamp;
+      if (maxTimestamp.isPresent()) {
+        outputTimestamp = candidate.withIndex(sortedGroupByKeys.size() + maxTimestamp.get().getAggCallIdx())
+            .fixAsTimestamp();
       } else {
-        //Convert aggregation to window-based aggregation in a project so we can preserve timestamp followed by dedup
-        AnnotatedLP nowInput = input.inlineNowFilter(makeRelBuilder());
-
-        RelNode inputRel = nowInput.relNode;
-        RelBuilder relB = makeRelBuilder();
-        relB.push(inputRel);
-
-        RexInputRef timestampRef = RexInputRef.of(candidate.getIndex(), inputRel.getRowType());
-
-        List<RexNode> partitionKeys = new ArrayList<>(groupByIdx.size());
-        List<RexNode> projects = new ArrayList<>(targetLength);
-        List<String> projectNames = new ArrayList<>(targetLength);
-        //Add groupByKeys in a sorted order
-        List<Integer> sortedGroupByKeys = groupByIdx.stream().sorted().collect(Collectors.toList());
-        for (Integer keyIdx : sortedGroupByKeys) {
-          RexInputRef ref = RexInputRef.of(keyIdx, inputRel.getRowType());
-          projects.add(ref);
-          projectNames.add(null);
-          partitionKeys.add(ref);
-        }
-        RexFieldCollation orderBy = new RexFieldCollation(timestampRef, Set.of());
-
-        //Add aggregate functions
-        for (int i = 0; i < aggregateCalls.size(); i++) {
-          AggregateCall call = aggregateCalls.get(i);
-          RexNode agg = rexUtil.getBuilder().makeOver(call.getType(), call.getAggregation(),
-              call.getArgList().stream()
-                  .map(idx -> RexInputRef.of(idx, inputRel.getRowType()))
-                  .collect(Collectors.toList()),
-              partitionKeys,
-              ImmutableList.of(orderBy),
-              RexWindowBounds.UNBOUNDED_PRECEDING,
-              RexWindowBounds.CURRENT_ROW,
-              true, true, false, false, true
-          );
-          projects.add(agg);
-          projectNames.add(aggregate.getNamedAggCalls().get(i).getValue());
-        }
-
         //Add timestamp as last project
-        TimestampHolder.Derived outputTimestamp = candidate.withIndex(targetLength - 1)
+        outputTimestamp = candidate.withIndex(targetLength - 1)
             .fixAsTimestamp();
         projects.add(timestampRef);
         projectNames.add(null);
-
-        relB.project(projects, projectNames);
-        PkAndSelect pkSelect = aggregatePkAndSelect(sortedGroupByKeys, sortedGroupByKeys, targetLength - 1);
-        TopNConstraint dedup = TopNConstraint.makeDeduplication(pkSelect.pk.targetsAsList(),
-            outputTimestamp.getTimestampCandidate().getIndex());
-        return AnnotatedLP.build(relB.build(), TableType.TEMPORAL_STATE, pkSelect.pk,
-            outputTimestamp, pkSelect.select, nowInput.getExec().requireAggregates(aggregateCalls),
-            input).topN(dedup).build();
       }
+
+      relB.project(projects, projectNames);
+      PkAndSelect pkSelect = aggregatePkAndSelect(sortedGroupByKeys, sortedGroupByKeys, targetLength - 1);
+      TopNConstraint dedup = TopNConstraint.makeDeduplication(pkSelect.pk.targetsAsList(),
+          outputTimestamp.getTimestampCandidate().getIndex());
+      return AnnotatedLP.build(relB.build(), TableType.DEDUP_STREAM, pkSelect.pk,
+          outputTimestamp, pkSelect.select, input).topN(dedup).build();
     }
-    return null;
   }
 
   private AnnotatedLP handleStandardAggregation(AnnotatedLP input,
-      List<Integer> groupByIdx, List<AggregateCall> aggregateCalls, int targetLength,
-      ExecutionAnalysis exec) {
+      List<Integer> groupByIdx, List<AggregateCall> aggregateCalls,
+      Optional<TimestampAnalysis.MaxTimestamp> maxTimestamp, int targetLength) {
     //Standard aggregation produces a state table
     Preconditions.checkArgument(input.nowFilter.isEmpty(),
         "State table cannot have now-filter since there is no timestamp");
     RelBuilder relB = makeRelBuilder();
     relB.push(input.relNode);
+    TimestampHolder.Derived resultTimestamp;
+    if (maxTimestamp.isPresent()) {
+      TimestampAnalysis.MaxTimestamp mt = maxTimestamp.get();
+      resultTimestamp = mt.getCandidate()
+          .withIndex(groupByIdx.size() + mt.getAggCallIdx())
+          .fixAsTimestamp();
+    } else { //add max timestamp
+      TimestampHolder.Derived.Candidate bestCand = input.timestamp.getBestCandidate();
+      //New timestamp column is added at the end
+      resultTimestamp = bestCand.withIndex(targetLength)
+          .fixAsTimestamp();
+      AggregateCall maxTimestampAgg = rexUtil.makeMaxAggCall(bestCand.getIndex(),
+          ReservedName.SYSTEM_TIMESTAMP.getCanonical(), groupByIdx.size(), relB.peek());
+      aggregateCalls.add(maxTimestampAgg);
+      targetLength++;
+    }
+
     relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
     PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
     return AnnotatedLP.build(relB.build(), TableType.STATE, pkSelect.pk,
-        TimestampHolder.Derived.NONE, pkSelect.select, exec, input).build();
+        resultTimestamp, pkSelect.select, input).build();
   }
 
   private Pair<PkAndSelect, TimestampHolder.Derived> addTimestampAggregate(
@@ -1342,21 +1420,25 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
   @Override
   public RelNode visit(LogicalStream logicalStream) {
     AnnotatedLP input = getRelHolder(logicalStream.getInput().accept(this));
-    Preconditions.checkArgument(input.type.isState(),
+    return setRelHolder(makeStream(input, logicalStream.getStreamType()));
+  }
+
+  private AnnotatedLP makeStream(AnnotatedLP state, StreamType streamType) {
+    errors.checkFatal(state.type.isState(),
         "Underlying table is already a stream");
     RelBuilder relBuilder = makeRelBuilder();
-    input = input.dropSort().inlineNowFilter(relBuilder).inlineTopN(relBuilder);
-    TimestampHolder.Derived.Candidate candidate = input.timestamp.getBestCandidate();
-    TimestampHolder.Derived timestamp = input.timestamp.restrictTo(List.of(candidate.withIndex(1)));
+    state = state.dropSort().inlineNowFilter(relBuilder, exec).inlineTopN(relBuilder, exec);
+    TimestampHolder.Derived.Candidate candidate = state.timestamp.getBestCandidate();
+    TimestampHolder.Derived timestamp = state.timestamp.restrictTo(List.of(candidate.withIndex(1)));
 
-    RelNode relNode = LogicalStream.create(input.relNode,logicalStream.getStreamType(),
-        new LogicalStreamMetaData(input.primaryKey.targetsAsArray(), input.select.targetsAsArray(), candidate.getIndex()));
+    RelNode relNode = LogicalStream.create(state.relNode,streamType,
+        new LogicalStreamMetaData(state.primaryKey.targetsAsArray(), state.select.targetsAsArray(), candidate.getIndex()));
     ContinuousIndexMap pk = ContinuousIndexMap.of(List.of(0));
     int numFields = relNode.getRowType().getFieldCount();
     ContinuousIndexMap select = ContinuousIndexMap.identity(numFields, numFields);
-
-    return setRelHolder(AnnotatedLP.build(relNode, TableType.STREAM, pk, timestamp,
-        select, input.getExec().require(EngineCapability.TO_STREAM), input).build());
+    exec.require(EngineCapability.TO_STREAM);
+    return AnnotatedLP.build(relNode, TableType.STREAM, pk, timestamp,
+        select, state).build();
   }
 
   @Override
@@ -1367,7 +1449,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     Optional<Integer> limit = getLimit(logicalSort.fetch);
     if (limit.isPresent()) {
       //Need to inline topN
-      input = input.inlineTopN(makeRelBuilder());
+      input = input.inlineTopN(makeRelBuilder(), exec);
     }
 
     //Map the collation fields
@@ -1379,8 +1461,7 @@ public class SQRLLogicalPlanConverter extends AbstractSqrlRelShuttle<AnnotatedLP
     if (limit.isPresent()) {
       result = input.copy()
           .topN(new TopNConstraint(List.of(), false, newCollation, limit,
-              LPConverterUtil.getTimestampOrderIndex(newCollation, input.timestamp).isPresent(),
-              input.type)).build();
+              LPConverterUtil.getTimestampOrderIndex(newCollation, input.timestamp).isPresent())).build();
     } else {
       //We can just replace any old order that might be present
       result = input.copy().sort(new SortOrder(newCollation)).build();

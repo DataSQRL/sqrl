@@ -22,7 +22,7 @@ import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.analyze.ResolveTest;
 import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
@@ -107,7 +107,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     //todo Inject this:
     DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
-        ns.getSchema().getPipeline());
+        ns.getSchema().getPipeline(), errors);
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
     CalciteSchema relSchema = planner.getSchema();
@@ -119,7 +119,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       RelNode rel = planner.createRelBuilder().scan(vt.getNameId()).build();
       queries.add(new APIQuery(tableName, rel));
     }
-    OptimizedDAG dag = dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
+    PhysicalDAGPlan dag = dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
     addContent(dag);
 
     //todo: inject
@@ -175,7 +175,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     if (closeSnapshotOnValidate) snapshot.createOrValidate();
   }
 
-  private void addContent(OptimizedDAG dag, String... caseNames) {
+  private void addContent(PhysicalDAGPlan dag, String... caseNames) {
     dag.getWriteQueries().forEach(mq -> snapshot.addContent(TestRelWriter.explain(mq.getRelNode()),
         ArrayUtils.addAll(caseNames, mq.getSink().getName(), "lp-stream")));
     dag.getReadQueries().forEach(dq -> snapshot.addContent(TestRelWriter.explain(dq.getRelNode()),

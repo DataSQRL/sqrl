@@ -49,6 +49,10 @@ public abstract class AddedColumn {
       return indexMap.map(expression);
     }
 
+    public RexNode getBaseExpression() {
+      return expression;
+    }
+
     public RelBuilder appendTo(@NonNull RelBuilder relBuilder) {
       RelDataType baseType = relBuilder.peek().getRowType();
       int noBaseFields = baseType.getFieldCount();

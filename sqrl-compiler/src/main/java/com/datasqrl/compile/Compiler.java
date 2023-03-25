@@ -25,7 +25,7 @@ import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.*;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.*;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.spi.ScriptConfiguration;
@@ -46,6 +46,8 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
 
 import javax.validation.constraints.NotEmpty;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,8 +111,8 @@ public class Compiler {
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), queryPlanner, ns,
-        !(resourceResolver instanceof ClasspathResourceResolver));
+    PhysicalDAGPlan dag = optimizeDag(pgSchemaBuilder.getApiQueries(), queryPlanner, ns,
+        !(resourceResolver instanceof ClasspathResourceResolver), errors);
     PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, ns, errorSink);
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
@@ -143,10 +145,10 @@ public class Compiler {
     PhysicalPlan plan;
   }
 
-  private OptimizedDAG optimizeDag(List<APIQuery> queries, SqrlQueryPlanner planner, Namespace ns,
-      boolean includeJars) {
+  private PhysicalDAGPlan optimizeDag(List<APIQuery> queries, SqrlQueryPlanner planner, Namespace ns,
+      boolean includeJars, ErrorCollector errors) {
     DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
-        ns.getSchema().getPipeline());
+        ns.getSchema().getPipeline(), errors);
     CalciteSchema relSchema = planner.getSchema();
     return dagPlanner.plan(relSchema, queries, ns.getExports(), includeJars ? ns.getJars() : Set.of());
   }
@@ -158,7 +160,7 @@ public class Compiler {
     return root;
   }
 
-  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, SqrlQueryPlanner planner,
+  private PhysicalPlan createPhysicalPlan(PhysicalDAGPlan dag, SqrlQueryPlanner planner,
       Namespace namespace,
       TableSink errorSink) {
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(planner.createRelBuilder(), errorSink);

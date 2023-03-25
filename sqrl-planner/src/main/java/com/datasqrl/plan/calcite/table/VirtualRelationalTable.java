@@ -5,12 +5,19 @@ package com.datasqrl.plan.calcite.table;
 
 import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.name.Name;
+import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.calcite.util.IndexMap;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.schema.TableVisitor;
+import com.datasqrl.schema.TypeUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -19,11 +26,7 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.ImmutableBitSet;
-
-import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * A relational table that represents the relational equivalent of a
@@ -47,7 +50,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
   @NonNull
   protected RelDataType rowType;
   /**
-   * The row type of the underlying {@link QueryRelationalTable} at the shredding level of this
+   * The row type of the underlying {@link ScriptRelationalTable} at the shredding level of this
    * virtual table including any nested relations. This is distinct from the rowType of the virtual
    * table which is padded with parent primary keys and does not contain nested relations.
    */
@@ -71,12 +74,13 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
   public abstract VirtualRelationalTable.Root getRoot();
 
   public void addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory,
-      Supplier<RelBuilder> relBuilderFactory, Optional<Integer> timestampScore) {
+      Optional<Integer> timestampScore) {
     if (isRoot() && column instanceof AddedColumn.Simple && addedColumns.isEmpty()) {
       //We can inline this column on the parent table
       ((VirtualRelationalTable.Root) this).getBase().addInlinedColumn((AddedColumn.Simple) column,
-          relBuilderFactory, timestampScore);
+          typeFactory, timestampScore);
     } else {
+      Preconditions.checkArgument(!isRoot(),"Complex columns not yet supported");
       addedColumns.add(column);
     }
     //Update the row types
@@ -138,9 +142,9 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
   public static class Root extends VirtualRelationalTable {
 
     @NonNull
-    final QueryRelationalTable base;
+    final ScriptRelationalTable base;
 
-    protected Root(Name nameId, @NonNull RelDataType rowType, @NonNull QueryRelationalTable base) {
+    protected Root(Name nameId, @NonNull RelDataType rowType, @NonNull ScriptRelationalTable base) {
       super(nameId, rowType, base.getRowType(), base.getNumPrimaryKeys());
       this.base = base;
     }
@@ -240,10 +244,9 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
       }
     }
 
-    public void appendTimestampColumn(@NonNull RelDataTypeField timestampField,
-        @NonNull RelDataTypeFactory typeFactory) {
-      rowType = CalciteUtil.appendField(rowType, timestampField.getName(), timestampField.getType(),
-          typeFactory);
+    public void appendTimestampColumn(@NonNull RelDataTypeFactory typeFactory) {
+      rowType = CalciteUtil.appendField(rowType, ReservedName.SYSTEM_TIMESTAMP.getCanonical(),
+          TypeUtil.makeTimestampType(typeFactory,false), typeFactory);
     }
 
     public <R, C> R accept(ChildVirtualTableVisitor<R, C> visitor, C context) {

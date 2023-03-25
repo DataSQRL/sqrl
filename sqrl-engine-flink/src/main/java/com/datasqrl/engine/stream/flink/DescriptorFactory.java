@@ -7,8 +7,8 @@ import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SinkServiceLoader;
 import com.datasqrl.engine.stream.flink.plan.FlinkPipelineUtils;
 import com.datasqrl.io.DataSystemConnectorConfig;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
-import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableDescriptor;
 

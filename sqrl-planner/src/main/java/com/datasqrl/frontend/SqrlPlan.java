@@ -10,7 +10,7 @@ import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
+import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.local.generate.Namespace;
@@ -55,7 +55,7 @@ public class SqrlPlan extends SqrlParse {
     Resolve resolve = new Resolve(this.nsFactory, this.moduleLoader,
         this.nameCanonicalizer, this.errors, this.statementProcessor);
 
-    Namespace namespace = resolve.planDag(node);
+    Namespace namespace = resolve.planTables(node);
 
     try {
       debug(this.planner, namespace, errors, this.moduleLoader, debuggerConfig);
@@ -76,8 +76,8 @@ public class SqrlPlan extends SqrlParse {
             VirtualRelationalTable vt = tableEntry.getVt();
             SQRLTable st = tableEntry;
             if (vt.isRoot() && debugger.debugTable(st.getName())) {
-              QueryRelationalTable bt = vt.getRoot().getBase();
-              if (bt.getExecution().isWrite()) {
+              ScriptRelationalTable bt = vt.getRoot().getBase();
+              if (true) {
                 NamePath sinkPath = debugger.getSinkBasePath().concat(Name.system(vt.getNameId()));
 
                 Optional<TableSink> sink = moduleLoader.getModule(sinkPath.popLast())

@@ -8,9 +8,8 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.List;
-import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -18,7 +17,6 @@ import org.apache.calcite.tools.RelBuilder;
 public class EngineStage implements ExecutionStage {
 
   ExecutionEngine engine;
-  Optional<ExecutionStage> next;
 
   @Override
   public String getName() {
@@ -31,17 +29,12 @@ public class EngineStage implements ExecutionStage {
   }
 
   @Override
-  public Optional<ExecutionStage> nextStage() {
-    return next;
-  }
-
-  @Override
   public ExecutionResult execute(EnginePhysicalPlan plan) {
     return engine.execute(plan);
   }
 
   @Override
-  public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink) {
     return engine.plan(plan, inputs, relBuilder, errorSink);
   }

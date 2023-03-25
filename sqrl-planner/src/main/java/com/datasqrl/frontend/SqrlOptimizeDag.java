@@ -4,17 +4,11 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
-import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.NamespaceFactory;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.local.generate.StatementProcessor;
-import com.datasqrl.plan.queries.APIQuery;
 import com.google.inject.Inject;
-import java.util.Collection;
-import org.apache.calcite.jdbc.CalciteSchema;
 
 public class SqrlOptimizeDag extends SqrlPlan {
 

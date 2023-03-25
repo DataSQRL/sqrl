@@ -7,16 +7,13 @@ import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
 import com.datasqrl.parse.SqrlAstException;
-import com.datasqrl.plan.calcite.rules.AnnotatedLP;
 import com.datasqrl.schema.SQRLTable;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
@@ -43,7 +40,7 @@ public abstract class AbstractStatementResolver {
     SQRLTable table = getContext(ns, namePath)
         .orElseThrow(()->new RuntimeException("Could not find table"));
 
-    table.addColumn(namePath.getLast(), relNode, lockTimestamp, planner.createRelBuilder());
+    table.addColumn(namePath.getLast(), relNode, lockTimestamp);
   }
 
   protected Optional<SQRLTable> getContext(Namespace ns, NamePath namePath) {
@@ -68,13 +65,6 @@ public abstract class AbstractStatementResolver {
   // in the planner in a coherent way
   protected RelNode plan(SqlNode sqlNode) {
     return planner.plan(sqlNode);
-  }
-
-  protected AnnotatedLP convert(SqrlQueryPlanner queryPlanner, RelNode relNode, Namespace ns,
-      Function<AnnotatedLP, AnnotatedLP> postProcess, Optional<SqlNodeList> hints) {
-    Converter converter = new Converter();
-    AnnotatedLP annotatedLP = converter.convert(queryPlanner, relNode, ns, hints, errors);
-    return postProcess.apply(annotatedLP);
   }
 
   public NamePath toNamePath(SqlIdentifier identifier) {

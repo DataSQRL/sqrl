@@ -3,49 +3,20 @@
  */
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.plan.calcite.OptimizationStage.READ_DAG_STITCHING;
-import static com.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_STITCHING;
-
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.name.Name;
-import com.datasqrl.plan.calcite.RelStageRunner;
-import com.datasqrl.plan.calcite.hints.WatermarkHint;
-import com.datasqrl.plan.calcite.rules.AnnotatedLP;
-import com.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import com.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.calcite.util.CalciteUtil;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.calcite.rules.SQRLConverter;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIQuery;
-import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.plan.RelOptPlanner;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.hint.Hintable;
-import org.apache.calcite.rel.logical.LogicalJoin;
-import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of
@@ -57,220 +28,68 @@ public class DAGPlanner {
   private final RelOptPlanner planner;
   private final ExecutionPipeline pipeline;
 
+  private final SQRLConverter sqrlConverter;
+
+  private final ErrorCollector errors;
+
   private final ExecutionStage streamStage;
   private final ExecutionStage databaseStage;
 
   public DAGPlanner(RelBuilder relBuilder, RelOptPlanner planner,
-      ExecutionPipeline pipeline) {
+      ExecutionPipeline pipeline, ErrorCollector errors) {
     this.relBuilder = relBuilder;
     this.planner = planner;
     this.pipeline = pipeline;
+    this.sqrlConverter = new SQRLConverter(relBuilder);
 
     streamStage = pipeline.getStage(ExecutionEngine.Type.STREAM).get();
     databaseStage = pipeline.getStage(ExecutionEngine.Type.DATABASE).get();
+    this.errors = errors;
   }
 
-  public OptimizedDAG plan(CalciteSchema relSchema, Collection<APIQuery> queries,
+  public SqrlDAG build(CalciteSchema relSchema, Collection<APIQuery> queries,
+      Collection<ResolvedExport> exports) {
+    //Prepare the inputs
+    Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, queries);
+
+    //Assemble DAG
+    SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(relSchema, analyzedQueries, exports);
+    try {
+      dag.eliminateInviableStages(pipeline);
+    } catch (SqrlDAG.NoPlanException ex) {
+      //Print error message that is easy to read
+      errors.fatal("Could not find execution stage for [%s]. Full DAG below.\n%s", ex.getNode(), dag);
+    }
+    dag.forEach(node -> Preconditions.checkArgument(node.hasViableStage()));
+    return dag;
+  }
+
+  public void optimize(SqrlDAG dag) {
+    //Pick most cost-effective stage for each node and assign
+    for (SqrlDAG.SqrlNode node : dag) {
+      if (node.setCheapestStage()) {
+        //If we eliminated stages, we make sure to eliminate all inviable stages
+        dag.eliminateInviableStages(pipeline);
+      }
+    }
+  }
+
+  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars) {
+    //Stitch DAG together
+    DAGAssembler assembler = new DAGAssembler(planner, sqrlConverter, pipeline, errors);
+    return assembler.assemble(dag, jars);
+  }
+
+  public PhysicalDAGPlan plan(CalciteSchema relSchema, Collection<APIQuery> queries,
       Collection<ResolvedExport> exports, Set<URL> jars) {
 
-    List<QueryRelationalTable> queryTables = CalciteUtil.getTables(relSchema,
-        QueryRelationalTable.class);
-
-    //Assign timestamps to imports which should propagate and set all remaining timestamps
-    StreamUtil.filterByClass(queryTables, ProxyImportRelationalTable.class)
-        .forEach(this::finalizeSourceTable);
-    Preconditions.checkArgument(queryTables.stream().allMatch(
-        table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
-
-    //Plan API queries and find all tables that need to be materialized
-    List<OptimizedDAG.ReadQuery> readDAG = new ArrayList<>();
-    VisitTableScans tableScanVisitor = new VisitTableScans();
-    for (APIQuery query : queries) {
-      //Replace DEFAULT joins
-      RelNode relNode = APIQueryRewriter.rewrite(relBuilder, query.getRelNode());
-      //Rewrite query
-      AnnotatedLP rewritten = SQRLLogicalPlanConverter.convert(relNode, getRelBuilderFactory(),
-          SQRLLogicalPlanConverter.Config.builder()
-              .startStage(databaseStage)
-              .allowStageChange(false) //set to true once we can execute relnodes in the server
-              .build());
-      rewritten = rewritten.postProcess(getRelBuilderFactory().get(),
-              query.getRelNode().getRowType().getFieldNames())
-          .withDefaultSort().inlineSort(getRelBuilderFactory().get());
-      assert rewritten.getPullups().isEmpty();
-      relNode = rewritten.getRelNode();
-      relNode = RelStageRunner.runStage(READ_DAG_STITCHING, relNode, planner);
-      relNode.accept(tableScanVisitor);
-      readDAG.add(new OptimizedDAG.ReadQuery(query, relNode));
-    }
-    Preconditions.checkArgument(
-        tableScanVisitor.scanTables.stream().allMatch(t -> t instanceof VirtualRelationalTable));
-    Set<VirtualRelationalTable> tableSinks = StreamUtil.filterByClass(tableScanVisitor.scanTables,
-        VirtualRelationalTable.class).collect(Collectors.toSet());
-
-    //Fill all table sinks
-    List<OptimizedDAG.WriteQuery> writeDAG = new ArrayList<>();
-    //First, all the tables that need to be written to the database
-    for (VirtualRelationalTable dbTable : tableSinks) {
-      RelNode scanTable = relBuilder.scan(dbTable.getNameId()).build();
-      Pair<RelNode, Optional<Integer>> processed = processWriteVTable(scanTable, pipeline);
-      RelNode processedRelnode = processed.getKey();
-      Optional<Integer> timestampIdx = processed.getValue();
-      //Check if we need to add timestamp column for nested child-tables
-      if (!dbTable.isRoot() && timestampIdx.isPresent() &&
-          dbTable.getRowType().getFieldCount() < processedRelnode.getRowType().getFieldCount()) {
-        //Append timestamp to the end of table
-        assert dbTable.getRowType().getFieldCount() == timestampIdx.get();
-        ((VirtualRelationalTable.Child) dbTable).appendTimestampColumn(
-            processedRelnode.getRowType().getFieldList().get(timestampIdx.get()),
-            relBuilder.getTypeFactory());
-      }
-      assert dbTable.getRowType().equals(processedRelnode.getRowType()) :
-          "Rowtypes do not match: \n" + dbTable.getRowType() + "\n vs \n " + processedRelnode.getRowType();
-      writeDAG.add(new OptimizedDAG.WriteQuery(
-          new EngineSink(dbTable.getNameId(), dbTable.getNumPrimaryKeys(),
-              dbTable.getRowType(), processed.getValue(), databaseStage),
-          processed.getKey()));
-    }
-    //Second, all the tables that are exported
-    int numExports = 1;
-    for (ResolvedExport export : exports) {
-      RelNode relnode = export.getRelNode();
-      Pair<RelNode, Optional<Integer>> processed = processWriteVTable(relnode, pipeline);
-      RelNode processedRelnode = processed.getKey();
-      //Pick only the selected keys
-      RelBuilder relBuilder1 = relBuilder.push(processedRelnode);
-      relBuilder1.project(relnode.getRowType().getFieldNames().stream()
-          .map(n -> relBuilder1.field(n)).collect(Collectors.toList()));
-      processedRelnode = relBuilder1.build();
-      //TODO: check that the rowtype matches the schema of the tablesink (if present)
-      String name = Name.addSuffix(export.getTable().getNameId(), String.valueOf(numExports++));
-      writeDAG.add(new OptimizedDAG.WriteQuery(
-          new OptimizedDAG.ExternalSink(name, export.getSink()),
-          processedRelnode));
-    }
-
-    //Stitch together all StreamSourceTable
-//    for (StreamRelationalTableImpl sst : CalciteUtil.getTables(relSchema,
-//        StreamRelationalTableImpl.class)) {
-//      RelNode stitchedNode = RelStageRunner.runStage(WRITE_DAG_STITCHING, sst.getBaseRelation(), planner);
-//      sst.setBaseRelation(stitchedNode);
-//    }
-
-//        readDAG = readDAG.stream().map( q -> {
-//            RelNode newStitch = planner.transform(READ2WRITE_STITCHING, q.getRelNode());
-//            return new OptimizedDAG.ReadQuery(q.getQuery(), newStitch);
-//        }).collect(Collectors.toList());
-
-    //Pick index structures for database tables based on the database queries
-    IndexSelector indexSelector = new IndexSelector(planner,
-        ((DatabaseEngine) databaseStage.getEngine()).getIndexSelectorConfig());
-    Collection<IndexCall> indexCalls = readDAG.stream().map(indexSelector::getIndexSelection)
-        .flatMap(List::stream).collect(Collectors.toList());
-    Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(indexCalls)
-        .keySet();
-
-    return new OptimizedDAG(List.of(new OptimizedDAG.StagePlan(streamStage, writeDAG, null,
-            jars),
-        new OptimizedDAG.StagePlan(databaseStage, readDAG, indexDefinitions, null)));
+    SqrlDAG dag = build(relSchema, queries, exports);
+    optimize(dag);
+    return assemble(dag,jars);
   }
 
-  private Pair<RelNode, Optional<Integer>> processWriteVTable(RelNode scanTable,
-      ExecutionPipeline pipeline) {
-    //Shred the table if necessary before materialization
-    AnnotatedLP processedRel = SQRLLogicalPlanConverter.convert(scanTable, getRelBuilderFactory(),
-        SQRLLogicalPlanConverter.Config.builder()
-            .startStage(streamStage)
-            .allowStageChange(false)
-            .build());
-    processedRel = processedRel.postProcess(relBuilder,
-        scanTable.getRowType().getFieldNames());
-    RelNode expandedScan = processedRel.getRelNode();
-    //Expand to full tree
-    expandedScan = RelStageRunner.runStage(WRITE_DAG_STITCHING, expandedScan, planner);
-    //Determine if we need to append a timestamp for nested tables
-    Optional<Integer> timestampIdx = processedRel.getType().hasTimestamp() ?
-        Optional.of(processedRel.getTimestamp().getTimestampCandidate().getIndex())
-        : Optional.empty();
-    return Pair.of(expandedScan, timestampIdx);
-  }
 
-  private Supplier<RelBuilder> getRelBuilderFactory() {
-    return () -> relBuilder;
-  }
 
-  private void finalizeSourceTable(ProxyImportRelationalTable table) {
-    // Determine timestamp
-    if (!table.getTimestamp().hasFixedTimestamp()) {
-      table.getTimestamp().getBestCandidate().lockTimestamp();
-    }
-    // Rewrite LogicalValues to TableScan and add watermark hint
-    new ImportedTableRewriter(table, relBuilder).replaceImport();
-  }
 
-  private static class VisitTableScans extends RelShuttleImpl {
-
-    final Set<AbstractRelationalTable> scanTables = new HashSet<>();
-
-    @Override
-    public RelNode visit(TableScan scan) {
-      QueryRelationalTable table = scan.getTable().unwrap(QueryRelationalTable.class);
-      if (table == null) { //It's a database query
-        scanTables.add(scan.getTable().unwrap(VirtualRelationalTable.class));
-      } else {
-        scanTables.add(table);
-      }
-      return super.visit(scan);
-    }
-  }
-
-  /**
-   * Replaces LogicalValues with the TableScan for the actual import table
-   */
-  @AllArgsConstructor
-  private static class ImportedTableRewriter extends RelShuttleImpl {
-
-    final ProxyImportRelationalTable table;
-    final RelBuilder relBuilder;
-
-    public void replaceImport() {
-      RelNode updated = table.getRelNode().accept(this);
-      int timestampIdx = table.getTimestamp().getTimestampCandidate().getIndex();
-      Preconditions.checkArgument(timestampIdx < updated.getRowType().getFieldCount());
-      WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
-      updated = ((Hintable) updated).attachHints(List.of(watermarkHint.getHint()));
-      table.updateRelNode(updated);
-    }
-
-    @Override
-    public RelNode visit(LogicalValues values) {
-      //The Values are a place-holder for the tablescan, replace with actual table now
-      return relBuilder.scan(table.getBaseTable().getNameId()).build();
-    }
-  }
-
-  /**
-   * Replaces default joins with inner joins
-   */
-  @AllArgsConstructor
-  private static class APIQueryRewriter extends RelShuttleImpl {
-
-    final RelBuilder relBuilder;
-
-    public static RelNode rewrite(RelBuilder relBuilder, RelNode query) {
-      APIQueryRewriter rewriter = new APIQueryRewriter(relBuilder);
-      return query.accept(rewriter);
-    }
-
-    @Override
-    public RelNode visit(LogicalJoin join) {
-      if (join.getJoinType() == JoinRelType.DEFAULT) { //replace DEFAULT joins with INNER
-        join = join.copy(join.getTraitSet(), join.getCondition(), join.getLeft(), join.getRight(),
-            JoinRelType.INNER, join.isSemiJoinDone());
-      }
-      return super.visit(join);
-    }
-
-  }
 
 }

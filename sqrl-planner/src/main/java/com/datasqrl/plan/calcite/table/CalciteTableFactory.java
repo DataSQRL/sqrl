@@ -3,8 +3,6 @@
  */
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
@@ -13,6 +11,7 @@ import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
+import com.datasqrl.plan.calcite.rules.LPAnalysis;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import com.datasqrl.plan.local.ScriptTableDefinition;
@@ -40,7 +39,6 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -72,17 +70,16 @@ public class CalciteTableFactory {
     return Integer.parseInt(tableId.substring(idx + 1));
   }
 
-  public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias,
-      ExecutionPipeline pipeline, RelBuilder relBuilder) {
+  public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias) {
     UniversalTable rootTable = tableSource.getSchema().getSchema()
         .createUniversalTable(tableSource.hasSourceTimestamp(), tblAlias);
     RelDataType rootType = convertTable(rootTable, true, true);
+    //Currently, we only support imports through the stream engine
     ImportedRelationalTableImpl source = new ImportedRelationalTableImpl(
         getTableId(rootTable.getName(), "i"), rootType, tableSource);
     ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(
         getTableId(rootTable.getName(), "q"), getTimestampHolder(rootTable),
-        relBuilder.values(rootType).build(), source,
-        pipeline.getStage(ExecutionEngine.Type.STREAM).get(),
+        rootType, source,
         TableStatistic.of(1000));
 
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable,
@@ -90,18 +87,13 @@ public class CalciteTableFactory {
     return new ScriptTableDefinition(impTable, tables);
   }
 
-  public ScriptTableDefinition defineTable(NamePath tablePath, AnnotatedLP rel,
+  public ScriptTableDefinition defineTable(NamePath tablePath, LPAnalysis analyzedLP,
       List<Name> fieldNames, Optional<SQRLTable> parentTable) {
-    ContinuousIndexMap selectMap = rel.getSelect();
+    ContinuousIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
     Name tableid = getTableId(tablePath.getLast(), "q");
-    TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
-    TableStatistic statistic = TableStatistic.of(rel.estimateRowCount());
-    QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),
-        rel.getRelNode(), rel.getPullups(), timestamp,
-        rel.getPrimaryKey().getSourceLength(), statistic,
-        rel.getExec().getStage());
+    ScriptRelationalTable baseTable = new QueryRelationalTable(tableid, analyzedLP);
 
     LinkedHashMap<Integer, Name> index2Name = new LinkedHashMap<>();
     for (int i = 0; i < fieldNames.size(); i++) {
@@ -163,7 +155,7 @@ public class CalciteTableFactory {
   }
 
   public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTable rootTable,
-      QueryRelationalTable baseTable,
+      ScriptRelationalTable baseTable,
       Optional<Pair<SQRLTable, Multiplicity>> parent) {
     return build(rootTable, new VirtualTableConstructor(baseTable), parent);
   }
@@ -216,7 +208,7 @@ public class CalciteTableFactory {
   @Value
   private final class VirtualTableConstructor {
 
-    QueryRelationalTable baseTable;
+    ScriptRelationalTable baseTable;
 
     public VirtualRelationalTable make(@NonNull UniversalTable tblBuilder) {
       RelDataType rowType = convertTable(tblBuilder, false, false);
@@ -300,19 +292,20 @@ public class CalciteTableFactory {
         Relationship.JoinType.CHILD, multiplicity, Optional.empty());
   }
 
-  public NamespaceObject createTable(SqrlQueryPlanner planner, Namespace ns, NamePath namePath, AnnotatedLP processedRel,
+  public NamespaceObject createTable(SqrlQueryPlanner planner, Namespace ns, NamePath namePath, LPAnalysis analyzedLP,
       Optional<SQRLTable> parentTable) {
     return new SqrlTableNamespaceObject(namePath.getLast(),
-        createScriptDef(planner, ns, namePath, processedRel, parentTable));
+        createScriptDef(planner, ns, namePath, analyzedLP, parentTable));
   }
 
   public ScriptTableDefinition createScriptDef(SqrlQueryPlanner planner, Namespace ns, NamePath namePath,
-      AnnotatedLP processedRel, Optional<SQRLTable> parentTable) {
+      LPAnalysis analyzedLP, Optional<SQRLTable> parentTable) {
+    AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
         .map(idx -> relFieldNames.get(idx))
         .map(n -> Name.system(n)).collect(Collectors.toList());
 
-    return defineTable(namePath, processedRel, fieldNames, parentTable);
+    return defineTable(namePath, analyzedLP, fieldNames, parentTable);
   }
 }

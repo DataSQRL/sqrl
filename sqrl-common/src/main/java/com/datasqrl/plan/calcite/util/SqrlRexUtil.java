@@ -7,9 +7,11 @@ import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.plan.calcite.hints.DedupHint;
 import com.datasqrl.plan.calcite.hints.SqrlHint;
+import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -21,8 +23,10 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelCollation;
+import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalProject;
@@ -43,6 +47,7 @@ import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
@@ -179,6 +184,15 @@ public class SqrlRexUtil {
         .collect(Collectors.toList());
   }
 
+  public RelBuilder appendColumn(RelBuilder relBuilder, RexNode rexNode, String fieldName) {
+    List<RexNode> rexes = new ArrayList<>(getIdentityProject(relBuilder.peek()));
+    List<String> fieldNames = new ArrayList<>(Collections.nCopies(rexes.size(), null));
+    rexes.add(rexNode);
+    fieldNames.add(fieldName);
+    relBuilder.projectNamed(rexes, fieldNames, false);
+    return relBuilder;
+  }
+
   public abstract static class RexFinder<R> extends RexVisitorImpl<Void> {
 
     public RexFinder() {
@@ -298,6 +312,21 @@ public class SqrlRexUtil {
     }
   }
 
+  public RexNode maxOfTwoColumnsNotNull(int col1Idx, int col2Idx, RelNode input) {
+    Preconditions.checkArgument(col1Idx>=0 && col2Idx >= 0 && col1Idx!=col2Idx);
+    RexInputRef col1 = rexBuilder.makeInputRef(input, col1Idx);
+    RexInputRef col2 = rexBuilder.makeInputRef(input, col2Idx);
+    return rexBuilder.makeCall(SqlStdOperatorTable.CASE, rexBuilder.makeCall(SqlStdOperatorTable.LESS_THAN, col1, col2), col2, col1);
+  }
+
+  public RexNode makeInputRef(int colIdx, RelBuilder builder) {
+    return rexBuilder.makeInputRef(builder.peek(), colIdx);
+  }
+
+  public AggregateCall makeMaxAggCall(int colIdx, String name, int groupCount, RelNode input) {
+    return AggregateCall.create(SqlStdOperatorTable.MAX, false, false, false,
+        List.of(colIdx) , -1, RelCollations.EMPTY, groupCount, input, null, name);
+  }
 
 
 }

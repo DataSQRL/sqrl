@@ -7,8 +7,14 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
-
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -18,6 +24,7 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
   Multimap<E, E> inputs;
   Multimap<E, E> outputs;
   Set<E> sources;
+  Set<E> sinks;
 
   protected AbstractDAG(Multimap<E, E> inputs) {
     this.inputs = inputs;
@@ -26,10 +33,12 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     inputs.entries().forEach(e -> {
       E in = e.getValue(), out = e.getKey();
       outputs.put(in, out);
-        if (inputs.get(in).isEmpty()) {
-            sources.add(in);
-        }
+      if (inputs.get(in).isEmpty()) {
+          sources.add(in);
+      }
     });
+    this.sinks = Streams.concat(inputs.keySet().stream(), sources.stream()).filter(Node::isSink)
+        .collect(Collectors.toSet());
   }
 
   public D addNodes(Multimap<E, E> inputs) {
@@ -44,8 +53,7 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
   protected abstract D create(Multimap<E, E> inputs);
 
   public Set<E> getSinks() {
-    return Streams.concat(inputs.keySet().stream(), sources.stream()).filter(Node::isSink)
-        .collect(Collectors.toSet());
+    return sinks;
   }
 
   /**
@@ -72,9 +80,9 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
         next.addAll(inputs.get(n));
       }
     }
-      if (!includeElements) {
-          reached.removeAll(elements);
-      }
+    if (!includeElements) {
+        reached.removeAll(elements);
+    }
     return reached;
   }
 
@@ -92,14 +100,22 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
 
   @Override
   public Iterator<E> iterator() {
-    return new Source2SinkIterator();
+    return new OrderedIterator(true);
   }
 
-  private class Source2SinkIterator implements Iterator<E> {
+  private class OrderedIterator implements Iterator<E> {
 
-    private final Deque<E> toVisit = new ArrayDeque<>(sources);
-    private final Set<E> visited = new HashSet<>();
-    private E next = toVisit.removeFirst();
+    private final Deque<E> toVisit;
+    private final Set<E> visited;
+    private E next;
+    private final boolean source2sink; //direction of iteration
+
+    public OrderedIterator(boolean source2sink) {
+      toVisit = new ArrayDeque<>(source2sink?sources:sinks);
+      visited = new HashSet<>();
+      next = toVisit.removeFirst();
+      this.source2sink = source2sink;
+    }
 
     @Override
     public boolean hasNext() {
@@ -109,7 +125,8 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     @Override
     public E next() {
       E toReturn = next;
-      toVisit.addAll(outputs.get(toReturn));
+      Multimap<E, E> lookup = source2sink?outputs:inputs;
+      toVisit.addAll(lookup.get(toReturn));
       visited.add(toReturn);
       next = null;
       while (next == null && !toVisit.isEmpty()) {
@@ -122,11 +139,47 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     }
   }
 
+  /**
+   *
+   * @param processNode
+   * @param maxIterations
+   * @return whether message passing converged within the given number of maxIterations
+   */
+  protected boolean messagePassing(Function<E,Boolean> processNode, int maxIterations) {
+    int iteration = 0;
+    boolean nodeChanged = true;
+    while (nodeChanged && iteration < maxIterations) {
+      nodeChanged = false;
+      OrderedIterator iter = new OrderedIterator(iteration%2==0); //reverse order of traversal
+      while (iter.hasNext()) {
+        E node = iter.next();
+        nodeChanged |= processNode.apply(node);
+      }
+    }
+    return !nodeChanged;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder s = new StringBuilder();
+    for (E node : this) { //list from source to sink
+      s.append("- Node [").append(node.getName()).append("]:\n");
+      s.append(node.toString()).append("\n");
+      s.append("inputs: [");
+      s.append(inputs.get(node).stream().map(Node::getName).collect(Collectors.joining(", ")));
+      s.append("]\n");
+    }
+    return s.toString();
+  }
+
+
   public interface Node {
 
     default boolean isSink() {
       return false;
     }
+
+    String getName();
 
   }
 

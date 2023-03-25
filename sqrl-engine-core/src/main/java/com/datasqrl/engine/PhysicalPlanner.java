@@ -4,7 +4,7 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.util.StreamUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,13 +18,13 @@ public class PhysicalPlanner {
   RelBuilder relBuilder;
   TableSink errorSink;
 
-  public PhysicalPlan plan(OptimizedDAG plan) {
+  public PhysicalPlan plan(PhysicalDAGPlan plan) {
     List<PhysicalPlan.StagePlan> physicalStages = new ArrayList<>();
     for (int i = 0; i < plan.getStagePlans().size(); i++) {
-      OptimizedDAG.StagePlan stagePlan = plan.getStagePlans().get(i);
+      PhysicalDAGPlan.StagePlan stagePlan = plan.getStagePlans().get(i);
       //1. Get all queries that sink into this stage
-      List<OptimizedDAG.StageSink> inputs = StreamUtil.filterByClass(
-              plan.getWriteQueries().stream().map(wq -> wq.getSink()), OptimizedDAG.StageSink.class)
+      List<PhysicalDAGPlan.StageSink> inputs = StreamUtil.filterByClass(
+              plan.getWriteQueries().stream().map(wq -> wq.getSink()), PhysicalDAGPlan.StageSink.class)
           .filter(sink -> sink.getStage().equals(stagePlan.getStage()))
           .collect(Collectors.toList());
       EnginePhysicalPlan physicalPlan = stagePlan.getStage().plan(stagePlan, inputs, relBuilder, errorSink);

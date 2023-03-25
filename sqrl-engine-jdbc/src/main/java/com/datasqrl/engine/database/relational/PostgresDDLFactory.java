@@ -7,7 +7,7 @@ import com.datasqrl.engine.database.relational.ddl.*;
 import com.datasqrl.engine.database.relational.dialect.JdbcDDLFactory;
 import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 import java.util.ArrayList;

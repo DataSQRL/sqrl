@@ -3,12 +3,18 @@
  */
 package com.datasqrl.plan.queries;
 
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
+import lombok.ToString;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
 @Value
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString
 public class APIQuery {
 
+  @Include
   private final String nameId;
   private final RelNode relNode;
 

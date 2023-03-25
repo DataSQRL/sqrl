@@ -8,13 +8,12 @@ import com.datasqrl.plan.calcite.hints.JoinCostHint;
 import com.datasqrl.plan.calcite.hints.SqrlHint;
 import com.datasqrl.plan.calcite.table.TableType;
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 import javax.validation.constraints.NotNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
 import org.apache.calcite.rel.core.Join;
-
-import java.util.Optional;
 
 @Value
 public
@@ -26,7 +25,7 @@ class SimpleCostModel implements ComputeCost {
     this.cost = cost;
   }
 
-  public static SimpleCostModel of(ExecutionEngine.Type engineType, AnnotatedLP annotatedLP) {
+  public static SimpleCostModel of(ExecutionEngine.Type engineType, RelNode relNode) {
     double cost = 1.0;
     if (engineType.isRead()) {
       //Currently we make the simplifying assumption that read execution is the baseline and we compare
@@ -35,7 +34,7 @@ class SimpleCostModel implements ComputeCost {
       Preconditions.checkArgument(engineType == ExecutionEngine.Type.STREAM);
       //We assume that pre-computing is generally cheaper (by factor of 10) unless (standard) joins are
       //involved which can lead to combinatorial explosion. So, we primarily cost the joins
-      cost = joinCost(annotatedLP.getRelNode());
+      cost = joinCost(relNode);
       cost = cost / 10;
     } else {
       throw new UnsupportedOperationException("Unsupported engine type: " + engineType);
@@ -80,7 +79,7 @@ class SimpleCostModel implements ComputeCost {
             return 100;
           case STATE:
             return 10;
-          case TEMPORAL_STATE:
+          case DEDUP_STREAM:
             return 4;
           default:
             throw new UnsupportedOperationException();

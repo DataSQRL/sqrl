@@ -10,7 +10,7 @@ import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
+import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
@@ -84,14 +84,14 @@ public class ImportStatementResolver extends AbstractStatementResolver {
       Optional<SQRLTable> table = resolveTable(ns, tableName.toNamePath(), false);
       Name name1 = Name.system(name.names.get(0));
       Preconditions.checkState(table.isPresent(), "Could not find table during import");
-      table.ifPresent(t->t.addColumn(name1, relNode, true, planner.createRelBuilder()));
+      table.ifPresent(t->t.addColumn(name1, relNode, true));
     }
   }
 
   private void setTimestampColumn(ImportDefinition importDefinition, Namespace ns) {
     Name tableName = getTableName(importDefinition);
     SQRLTable table = (SQRLTable) ns.getSchema().getTable(tableName.getCanonical(), false).getTable();
-    QueryRelationalTable baseTbl = getBaseTable(table);
+    ScriptRelationalTable baseTbl = getBaseTable(table);
     Preconditions.checkState(importDefinition.getTimestamp().isPresent(),
         ErrorCode.TIMESTAMP_COLUMN_EXPRESSION);
     SqlIdentifier identifier = getTimestampIdentifier(importDefinition);
@@ -111,11 +111,11 @@ public class ImportStatementResolver extends AbstractStatementResolver {
     return (SqlIdentifier) importDefinition.getTimestamp().get();
   }
 
-  private RelDataTypeField getFieldFromTable(QueryRelationalTable baseTbl, SqlIdentifier identifier) {
+  private RelDataTypeField getFieldFromTable(ScriptRelationalTable baseTbl, SqlIdentifier identifier) {
     return baseTbl.getRowType().getField(identifier.names.get(0), false, false);
   }
 
-  private QueryRelationalTable getBaseTable(SQRLTable table) {
+  private ScriptRelationalTable getBaseTable(SQRLTable table) {
     return ((VirtualRelationalTable.Root) table.getVt()).getBase();
   }
   private SqrlModule getModule(NamePath path) {

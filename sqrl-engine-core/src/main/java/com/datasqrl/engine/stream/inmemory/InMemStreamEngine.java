@@ -3,13 +3,7 @@
  */
 package com.datasqrl.engine.stream.inmemory;
 
-import static com.datasqrl.engine.EngineCapability.CUSTOM_FUNCTIONS;
-import static com.datasqrl.engine.EngineCapability.DATA_MONITORING;
-import static com.datasqrl.engine.EngineCapability.DENORMALIZE;
-import static com.datasqrl.engine.EngineCapability.EXTENDED_FUNCTIONS;
-import static com.datasqrl.engine.EngineCapability.TEMPORAL_JOIN;
-import static com.datasqrl.engine.EngineCapability.TIME_WINDOW_AGGREGATION;
-import static com.datasqrl.engine.EngineCapability.TO_STREAM;
+import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -33,12 +27,11 @@ import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.util.Metric;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -51,9 +44,7 @@ import org.apache.calcite.tools.RelBuilder;
 public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
 
   public InMemStreamEngine() {
-    super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM,
-        EnumSet.of(DENORMALIZE, TEMPORAL_JOIN, TO_STREAM,
-            TIME_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS, DATA_MONITORING));
+    super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM, STANDARD_STREAM);
   }
 
   @Override
@@ -71,7 +62,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
   }
 
   @Override
-  public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }

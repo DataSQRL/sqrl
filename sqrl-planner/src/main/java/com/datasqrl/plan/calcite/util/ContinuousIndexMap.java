@@ -135,6 +135,10 @@ public class ContinuousIndexMap implements IndexMap, Serializable {
       this.map = new int[length];
     }
 
+    public int remaining() {
+      return map.length-offset;
+    }
+
     public Builder addAll(ContinuousIndexMap indexMap) {
       for (int i = 0; i < indexMap.getSourceLength(); i++) {
         add(indexMap.map(i));

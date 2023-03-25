@@ -7,21 +7,19 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.StreamUtil;
+import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 
-import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Value
-public class OptimizedDAG {
+public class PhysicalDAGPlan {
 
   /**
    * Must be in the order of the pipeline stages
@@ -89,7 +87,7 @@ public class OptimizedDAG {
     final String nameId;
     final int numPrimaryKeys;
     final RelDataType rowType;
-    final Optional<Integer> timestampIdx;
+    final int timestampIdx;
     final ExecutionStage stage;
 
     @Override

@@ -24,7 +24,6 @@ import com.datasqrl.functions.SqrlFunctionCatalog;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.parse.SqrlAstException;
-import com.datasqrl.plan.calcite.SqrlRelBuilder;
 import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.calcite.rules.SqrlRelMetadataProvider;
@@ -133,9 +132,8 @@ public class SqrlSchema extends SimpleCalciteSchema {
   public boolean addTable(Name name, TableSource table) {
 
     ScriptTableDefinition def = tableFactory.importTable(
-        table,
-        Optional.of(name),//todo can remove optional
-        pipeline, SqrlRelBuilder.create(getCluster(), this));
+        table, Optional.of(name) //todo can remove optional
+        );
 
     if (getTable(name.getCanonical(), false) != null) {
       //todo: normal exception?

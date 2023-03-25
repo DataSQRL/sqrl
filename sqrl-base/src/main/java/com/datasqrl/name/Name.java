@@ -16,6 +16,8 @@ import java.util.function.Function;
 public interface Name extends Serializable, Comparable<Name> {
 
   String HIDDEN_PREFIX = "_";
+
+  String SYSTEM_HIDDEN_PREFIX = HIDDEN_PREFIX + HIDDEN_PREFIX;
   char NAME_DELIMITER = '$';
 
   /**
@@ -42,6 +44,10 @@ public interface Name extends Serializable, Comparable<Name> {
 
   default boolean isHidden() {
     return getCanonical().startsWith(HIDDEN_PREFIX);
+  }
+
+  default boolean isSsytemHidden() {
+    return getCanonical().startsWith(SYSTEM_HIDDEN_PREFIX);
   }
 
   default NamePath toNamePath() {
@@ -100,10 +106,6 @@ public interface Name extends Serializable, Comparable<Name> {
 
   static Name system(String name) {
     return of(name, NameCanonicalizer.SYSTEM);
-  }
-
-  static Name hidden(String name) {
-    return system(HIDDEN_PREFIX + name);
   }
 
 }

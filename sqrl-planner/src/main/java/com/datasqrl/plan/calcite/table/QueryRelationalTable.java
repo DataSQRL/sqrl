@@ -1,132 +1,60 @@
-/*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
- */
 package com.datasqrl.plan.calcite.table;
 
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.name.Name;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ContiguousSet;
+import com.datasqrl.plan.calcite.rules.LPAnalysis;
+import com.datasqrl.plan.calcite.rules.SQRLConverter;
+import com.datasqrl.plan.calcite.rules.SQRLConverter.Config.ConfigBuilder;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.Statistic;
-import org.apache.calcite.schema.Statistics;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.util.ImmutableBitSet;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
-
-/**
- * A relational table that is defined by the user query in the SQRL script.
- * <p>
- * This is a physical relation that gets materialized in the write DAG or computed in the read DAG.
- */
 @Getter
-public class QueryRelationalTable extends AbstractRelationalTable {
+public class QueryRelationalTable extends ScriptRelationalTable {
 
-  @NonNull
-  private final TableType type;
-  @NonNull
-  private final TimestampHolder.Base timestamp;
-  @NonNull
-  private final int numPrimaryKeys;
+  private final LPAnalysis analyzedLP;
 
-  protected RelNode relNode;
-  /* Additional operators at the root of the relNode logical plan that we want to pull-up as much as possible
-  and execute in the database because they are expensive or impossible to execute in a stream
-   */
-  private final PullupOperator.Container pullups;
-
-  private final TableStatistic tableStatistic;
-
-  /*
-   The materialization strategy for this table as determined by the optimizer. This is used when cutting
-   the DAG and expanding the RelNodes.
-   */
-  private final ExecutionStage execution;
-
-
-  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull TableType type,
-      RelNode relNode, PullupOperator.Container pullups,
-      @NonNull TimestampHolder.Base timestamp,
-      @NonNull int numPrimaryKeys,
-      @NonNull TableStatistic stats,
-      @NonNull ExecutionStage execution) {
-    super(rootTableId);
-    this.type = type;
-    this.timestamp = timestamp;
-    this.relNode = relNode;
-    this.pullups = pullups;
-    this.numPrimaryKeys = numPrimaryKeys;
-    this.tableStatistic = stats;
-    this.execution = execution;
-  }
-
-  public RelNode getRelNode() {
-    Preconditions.checkState(relNode != null, "Not yet initialized");
-    return relNode;
-  }
-
-  public int getNumColumns() {
-    return relNode.getRowType().getFieldCount();
-  }
-
-  public void updateRelNode(@NonNull RelNode relNode) {
-    this.relNode = relNode;
-  }
-
-  public int addInlinedColumn(AddedColumn.Simple column, Supplier<RelBuilder> relBuilderFactory,
-      Optional<Integer> timestampScore) {
-    int index = getNumColumns();
-    this.relNode = column.appendTo(relBuilderFactory.get().push(relNode)).build();
-    //Check if this adds a timestamp candidate
-    if (timestampScore.isPresent() && !timestamp.isCandidatesLocked()) {
-      timestamp.addCandidate(index, timestampScore.get());
-    }
-    return index;
-  }
-
-  private static RelDataTypeField getField(FieldIndexPath path, RelDataType rowType) {
-    Preconditions.checkArgument(path.size() > 0);
-    Preconditions.checkArgument(rowType.isStruct(), "Expected relational data type but found: %s",
-        rowType);
-    int firstIndex = path.get(0);
-    Preconditions.checkArgument(firstIndex < rowType.getFieldCount());
-    RelDataTypeField field = rowType.getFieldList().get(firstIndex);
-    path = path.popFirst();
-    if (path.isEmpty()) {
-      return field;
-    } else {
-      return getField(path, field.getType());
-    }
+  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull LPAnalysis analyzedLP) {
+    super(rootTableId,
+        analyzedLP.getConvertedRelnode().getType(),
+        analyzedLP.getConvertedRelnode().getRelNode().getRowType(),
+        TimestampHolder.Base.ofDerived(analyzedLP.getConvertedRelnode().getTimestamp()),
+        analyzedLP.getConvertedRelnode().getPrimaryKey().getSourceLength(),
+        TableStatistic.of(analyzedLP.getConvertedRelnode().estimateRowCount()));
+    this.analyzedLP = analyzedLP;
   }
 
   @Override
-  public RelDataType getRowType() {
-    return relNode.getRowType();
+  public PullupOperator.Container getPullups() {
+    return analyzedLP.getConvertedRelnode().getPullups();
   }
 
-  public RelDataTypeField getField(FieldIndexPath path) {
-    return getField(path, getRowType());
+  public RelNode getOriginalRelnode() {
+    return analyzedLP.getOriginalRelnode();
   }
-
-  public Statistic getStatistic() {
-    if (tableStatistic.isUnknown()) {
-      return Statistics.UNKNOWN;
-    }
-    ImmutableBitSet key = ImmutableBitSet.of(ContiguousSet.closedOpen(0, numPrimaryKeys));
-    return Statistics.of(tableStatistic.getRowCount(), List.of(key));
-  }
-
 
   @Override
-  public List<String> getPrimaryKeyNames() {
-    throw new UnsupportedOperationException();
+  public Collection<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors) {
+    if (analyzedLP.getConfiguredStages().isEmpty()) return pipeline.getStages();
+    return analyzedLP.getConfiguredStages().stream().map(stage -> {
+      Optional<ExecutionStage> execStage = pipeline.getStage(stage.getStageName());
+      errors.checkFatal(execStage.isPresent(),"Could not find execution stage [%s] "
+          + "specified in optimizer hint on table [%s] in pipeline [%s]", stage.getStageName(), this, pipeline);
+      return execStage.get();
+    }).collect(Collectors.toList());
   }
+
+  @Override
+  public ConfigBuilder getBaseConfig() {
+    SQRLConverter.Config.ConfigBuilder builder = getAnalyzedLP().getConverterConfig().toBuilder();
+    getAssignedStage().ifPresent(stage -> builder.stage(stage));
+    return builder;
+  }
+
 }

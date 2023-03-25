@@ -3,9 +3,7 @@
  */
 package com.datasqrl.engine.database.inmemory;
 
-import static com.datasqrl.engine.EngineCapability.GLOBAL_SORT;
-import static com.datasqrl.engine.EngineCapability.MULTI_RANK;
-import static com.datasqrl.engine.EngineCapability.NOW;
+import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -14,7 +12,7 @@ import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.EnumSet;
 import java.util.List;
 import org.apache.calcite.tools.RelBuilder;
@@ -26,8 +24,7 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
 
 
   public InMemoryDatabase() {
-    super(InMemoryDatabaseConfiguration.ENGINE_NAME, Type.DATABASE,
-        EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
+    super(InMemoryDatabaseConfiguration.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
   }
 
   @Override
@@ -36,7 +33,7 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
   }
 
   @Override
-  public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }

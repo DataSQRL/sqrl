@@ -8,10 +8,9 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import org.apache.calcite.tools.RelBuilder;
 
 public interface ExecutionStage {
@@ -26,37 +25,29 @@ public interface ExecutionStage {
 
   boolean supports(EngineCapability capability);
 
-  ExecutionEngine getEngine();
+  default boolean isRead() {
+    return getEngine().getType().isRead();
+  }
 
   default boolean isWrite() {
     return getEngine().getType().isWrite();
   }
 
-  default boolean isRead() {
-    return getEngine().getType().isRead();
-  }
+  ExecutionEngine getEngine();
 
-  /**
-   * @param from
-   * @return Whether going from the given stage to this one crosses the materialization boundary
-   */
-  default boolean isMaterialize(ExecutionStage from) {
-    return from.isWrite() && isRead();
-  }
-
-  /**
-   * We currently make the simplifying assumption that an {@link ExecutionPipeline} has a tree
-   * structure. To generalize this to a DAG structure (e.g. to support multiple database engines) we
-   * need to make significant changes to the LPConverter and DAGPlanner. See also
-   * {@link ExecutionPipeline#getStage(ExecutionEngine.Type)}.
-   *
-   * @return Next execution stage in this pipeline
-   */
-  Optional<ExecutionStage> nextStage();
+//  /**
+//   * We currently make the simplifying assumption that an {@link ExecutionPipeline} has a tree
+//   * structure. To generalize this to a DAG structure (e.g. to support multiple database engines) we
+//   * need to make significant changes to the LPConverter and DAGPlanner. See also
+//   * {@link ExecutionPipeline#getStage(ExecutionEngine.Type)}.
+//   *
+//   * @return Next execution stage in this pipeline
+//   */
+//  Optional<ExecutionStage> nextStage();
 
   ExecutionResult execute(EnginePhysicalPlan plan);
 
-  EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+  EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink);
 
 

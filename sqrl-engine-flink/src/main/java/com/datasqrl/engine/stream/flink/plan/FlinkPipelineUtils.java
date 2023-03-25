@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedColumn;
 import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;

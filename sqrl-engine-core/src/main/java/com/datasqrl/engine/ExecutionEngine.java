@@ -5,7 +5,7 @@ package com.datasqrl.engine;
 
 import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.EnumSet;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -45,7 +45,7 @@ public interface ExecutionEngine {
 
   ExecutionResult execute(EnginePhysicalPlan plan);
 
-  EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+  EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink);
 
   @AllArgsConstructor

@@ -34,19 +34,19 @@ public class Resolve {
     this.statementProcessor = statementProcessor;
   }
 
-  public Namespace planDag(ScriptNode scriptNode) {
+  public Namespace planTables(ScriptNode scriptNode) {
     ErrorCollector error = scriptNode.getScriptPath().isPresent()
         ? errors.withFile(scriptNode.getScriptPath().get(), scriptNode.getOriginalScript())
         : errors.withFile("test.sqrl", scriptNode.getOriginalScript());
 
     try {
-      return planDagHelper(scriptNode, error);
+      return planTablesHelper(scriptNode, error);
     } catch (Exception e) {
       throw error.handle(e);
     }
   }
 
-  protected Namespace planDagHelper(ScriptNode scriptNode, ErrorCollector error) {
+  protected Namespace planTablesHelper(ScriptNode scriptNode, ErrorCollector error) {
     Namespace ns = namespaceFactory.createNamespace();
 
     scriptNode.getStatements()

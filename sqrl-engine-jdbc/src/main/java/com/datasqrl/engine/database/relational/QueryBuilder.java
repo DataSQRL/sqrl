@@ -7,7 +7,7 @@ import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -31,17 +31,17 @@ public class QueryBuilder {
   private RexBuilder rexBuilder;
 
   public Map<APIQuery, QueryTemplate> planQueries(
-      List<? extends OptimizedDAG.Query> databaseQueries) {
+      List<? extends PhysicalDAGPlan.Query> databaseQueries) {
     Map<APIQuery, QueryTemplate> resultQueries = new HashMap<>();
-    for (OptimizedDAG.Query query : databaseQueries) {
-      Preconditions.checkArgument(query instanceof OptimizedDAG.ReadQuery);
-      OptimizedDAG.ReadQuery rquery = (OptimizedDAG.ReadQuery) query;
+    for (PhysicalDAGPlan.Query query : databaseQueries) {
+      Preconditions.checkArgument(query instanceof PhysicalDAGPlan.ReadQuery);
+      PhysicalDAGPlan.ReadQuery rquery = (PhysicalDAGPlan.ReadQuery) query;
       resultQueries.put(rquery.getQuery(), planQuery(rquery));
     }
     return resultQueries;
   }
 
-  private QueryTemplate planQuery(OptimizedDAG.ReadQuery query) {
+  private QueryTemplate planQuery(PhysicalDAGPlan.ReadQuery query) {
     RelNode relNode = query.getRelNode();
     relNode = CalciteUtil.applyRexShuttleRecursively(relNode, new FunctionNameRewriter());
     return new QueryTemplate(relNode);
