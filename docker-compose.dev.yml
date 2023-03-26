@@ -12,7 +12,7 @@ services:
       - db:/var/lib/postgresql/data
 
   flink-jobmanager:
-    image: flink:1.15.2-java8
+    image: flink:1.16.1-scala_2.12-java11
     ports:
       - "8081:8081"
     command: jobmanager
@@ -22,7 +22,7 @@ services:
         jobmanager.rpc.address: flink-jobmanager
 
   flink-taskmanager:
-    image: flink:1.15.2-java8
+    image: flink:1.16.1-scala_2.12-java11
     depends_on:
       - flink-jobmanager
     command: taskmanager

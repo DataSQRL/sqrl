@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.net.URI;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -102,26 +104,32 @@ public class GlobalEngineConfiguration implements GlobalConfiguration {
       engines.add(db);
     }
   }
-
-  public static <C extends GlobalEngineConfiguration> C readFrom(@NonNull Path path,
+  public static <C extends GlobalEngineConfiguration> C readFrom(@NonNull URI uri,
       @NonNull Class<C> clazz) throws IOException {
-    return readFrom(List.of(path), clazz);
+    return readFrom(List.of(uri), clazz);
   }
 
-  public static <C extends GlobalEngineConfiguration> C readFrom(@NonNull List<Path> paths,
+  public static <C extends GlobalEngineConfiguration> C readFromPath(@NonNull List<Path> paths,
+      @NonNull Class<C> clazz) throws IOException {
+    return combinePackages(paths.stream()
+        .map(p->p.toUri())
+        .collect(Collectors.toList()), clazz).getKey();
+  }
+
+  public static <C extends GlobalEngineConfiguration> C readFrom(@NonNull List<URI> paths,
       @NonNull Class<C> clazz) throws IOException {
     return combinePackages(paths, clazz).getKey();
   }
 
   public static <C extends GlobalEngineConfiguration> Pair<C, JsonNode> combinePackages(
-      @NonNull List<Path> paths, @NonNull Class<C> clazz) throws IOException {
+      @NonNull List<URI> paths, @NonNull Class<C> clazz) throws IOException {
     Preconditions.checkArgument(!paths.isEmpty());
     SimpleModule module = new SimpleModule();
     module.addDeserializer(EngineConfiguration.class, new EngineConfiguration.Deserializer());
     ObjectMapper mapper = new ObjectMapper().registerModule(module);
-    JsonNode combinedPackage = mapper.readValue(paths.get(0).toFile(), JsonNode.class);
+    JsonNode combinedPackage = mapper.readValue(paths.get(0).toURL(), JsonNode.class);
     for (int i = 1; i < paths.size(); i++) {
-      combinedPackage = mapper.readerForUpdating(combinedPackage).readValue(paths.get(i).toFile());
+      combinedPackage = mapper.readerForUpdating(combinedPackage).readValue(paths.get(i).toURL());
     }
     return Pair.of(mapper.convertValue(combinedPackage, clazz), combinedPackage);
   }

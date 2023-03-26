@@ -40,4 +40,13 @@ public class FileResourceResolver implements ResourceResolver {
         .map(Path::toUri)
         .collect(Collectors.toList());
   }
+
+  @Override
+  public Optional<URI> resolveFile(NamePath namePath) {
+    Path path = namepath2Path(baseDir, namePath);
+    if (!Files.exists(path)) {
+      return Optional.empty();
+    }
+    return Optional.of(path.toUri());
+  }
 }

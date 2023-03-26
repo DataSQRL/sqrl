@@ -5,7 +5,6 @@ import com.datasqrl.name.Name;
 import com.datasqrl.plan.local.generate.TableNamespaceObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.schema.Table;
 
 @AllArgsConstructor
 @Getter

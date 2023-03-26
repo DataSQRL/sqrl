@@ -29,12 +29,15 @@ import com.datasqrl.plan.global.OptimizedDAG;
 import com.datasqrl.plan.local.generate.*;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.spi.ScriptConfiguration;
+import com.datasqrl.util.FileUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
+import java.net.URI;
+import java.util.Set;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -43,8 +46,6 @@ import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
 
 import javax.validation.constraints.NotEmpty;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,12 +59,11 @@ public class Compiler {
    * @return
    */
   @SneakyThrows
-  public CompilerResult run(ErrorCollector errors, Path packageFile, boolean debug) {
+  public CompilerResult run(ErrorCollector errors, ResourceResolver resourceResolver, boolean debug) {
 
-    Preconditions.checkArgument(Files.isRegularFile(packageFile));
+    Optional<URI> packagePath = resourceResolver.resolveFile(NamePath.of("package.json"));
 
-    Path buildDir = packageFile.getParent();
-    GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packageFile,
+    GlobalCompilerConfiguration globalConfig = GlobalEngineConfiguration.readFrom(packagePath.get(),
         GlobalCompilerConfiguration.class);
     CompilerConfiguration compilerConfig = globalConfig.initializeCompiler(errors);
     EngineSettings engineSettings = globalConfig.initializeEngines(errors);
@@ -71,7 +71,7 @@ public class Compiler {
     DebuggerConfig debugger = DebuggerConfig.NONE;
     if (debug) debugger = compilerConfig.getDebug().getDebugger();
 
-    ModuleLoader moduleLoader = new ModuleLoaderImpl(new ObjectLoaderImpl(new FileResourceResolver(buildDir), errors));
+    ModuleLoader moduleLoader = new ModuleLoaderImpl(new ObjectLoaderImpl(resourceResolver, errors));
     TableSink errorSink = loadErrorSink(moduleLoader, compilerConfig.getErrorSink(), errors);
 
     SqrlDIModule module = new SqrlDIModule(engineSettings.getPipeline(), debugger,
@@ -81,11 +81,16 @@ public class Compiler {
 
     ScriptConfiguration script = globalConfig.getScript();
     Preconditions.checkArgument(script != null);
-    Path mainScript = buildDir.resolve(script.getMain());
-    Optional<Path> graphqlSchema = script.getOptGraphQL().map(file -> buildDir.resolve(file));
+
+    URI mainScript = resourceResolver
+        .resolveFile(NamePath.of(script.getMain()))
+        .orElseThrow();
+
+    Optional<URI> graphqlSchema = script.getOptGraphQL()
+        .flatMap(file -> resourceResolver.resolveFile(NamePath.of(file)));
 
     SqrlPhysicalPlan planner = injector.getInstance(SqrlPhysicalPlan.class);
-    Namespace ns = planner.plan(Files.readString(mainScript));
+    Namespace ns = planner.plan(FileUtil.readFile(mainScript));
 
     String gqlSchema = inferOrGetSchema(ns.getSchema(), graphqlSchema);
 
@@ -104,7 +109,8 @@ public class Compiler {
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), queryPlanner, ns);
+    OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), queryPlanner, ns,
+        !(resourceResolver instanceof ClasspathResourceResolver));
     PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, ns, errorSink);
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
@@ -137,11 +143,12 @@ public class Compiler {
     PhysicalPlan plan;
   }
 
-  private OptimizedDAG optimizeDag(List<APIQuery> queries, SqrlQueryPlanner planner, Namespace ns) {
+  private OptimizedDAG optimizeDag(List<APIQuery> queries, SqrlQueryPlanner planner, Namespace ns,
+      boolean includeJars) {
     DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
         ns.getSchema().getPipeline());
     CalciteSchema relSchema = planner.getSchema();
-    return dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
+    return dagPlanner.plan(relSchema, queries, ns.getExports(), includeJars ? ns.getJars() : Set.of());
   }
 
   private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root,
@@ -160,10 +167,9 @@ public class Compiler {
   }
 
   @SneakyThrows
-  public static String inferOrGetSchema(SqrlSchema schema, Optional<Path> graphqlSchema) {
+  public static String inferOrGetSchema(SqrlSchema schema, Optional<URI> graphqlSchema) {
     if (graphqlSchema.isPresent()) {
-      Preconditions.checkArgument(Files.isRegularFile(graphqlSchema.get()));
-      return Files.readString(graphqlSchema.get());
+      return FileUtil.readFile(graphqlSchema.get());
     }
     GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema);
 

@@ -66,7 +66,7 @@ public class DiscoverCommand extends AbstractCommand {
     errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
 
     List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
-    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFrom(packageFiles,
+    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFromPath(packageFiles,
         GlobalEngineConfiguration.class);
     EngineSettings engineSettings = engineConfig.initializeEngines(errors);
     DataDiscovery discovery = new DataDiscovery(errors, engineSettings);

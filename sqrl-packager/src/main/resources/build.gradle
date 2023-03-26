@@ -11,9 +11,17 @@ jar {
         attributes "Main-Class": "com.datasqrl.FlinkMain"
     }
     from('.') {
-        include '*'
-        exclude '*gradle*'
+        include '**'
+        exclude 'build.gradle'
+        exclude 'lib'
+        exclude 'gradle'
+        exclude '.gradle'
+        exclude 'build'
+        exclude '.idea'
+        exclude 'gradle*'
+        into('build')
     }
+
     from {
         configurations.runtimeClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
