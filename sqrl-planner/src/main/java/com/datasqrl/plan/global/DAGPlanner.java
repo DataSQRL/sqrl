@@ -53,7 +53,7 @@ public class DAGPlanner {
     Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, queries);
 
     //Assemble DAG
-    SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(relSchema, analyzedQueries, exports);
+    SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(analyzedQueries, exports);
     try {
       dag.eliminateInviableStages(pipeline);
     } catch (SqrlDAG.NoPlanException ex) {

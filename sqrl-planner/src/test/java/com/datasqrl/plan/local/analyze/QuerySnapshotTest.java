@@ -13,6 +13,8 @@ import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.name.Name;
+import com.datasqrl.plan.calcite.rules.IdealExecutionStage;
+import com.datasqrl.plan.calcite.rules.SQRLConverter;
 import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.schema.Field;
@@ -60,12 +62,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   protected void validateScript(String script) {
     Namespace ns = plan(script);
+    SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
+    SQRLConverter.Config config = SQRLConverter.Config.builder().stage(IdealExecutionStage.INSTANCE).build();
     ns.getSchema().plus().getTableNames().stream()
         .map(n->ns.getSchema().getTable(n, false))
         .filter(f->f.getTable() instanceof ScriptRelationalTable)
         .sorted(Comparator.comparing(f->f.name))
         .forEach(t->snapshot.addContent(
-            ((ScriptRelationalTable)t.getTable()).getRelNode().explain(),
+            sqrlConverter.convert((ScriptRelationalTable)t.getTable(), config, errors).explain(),
             t.name));
     ns.getSchema().getAllTables().stream()
         .flatMap(t->t.getAllRelationships())

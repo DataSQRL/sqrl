@@ -78,15 +78,19 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
      * @return true, if other stages were eliminated, else false
      */
     public boolean setCheapestStage() {
-      Optional<StageAnalysis.Cost> stage = StreamUtil.filterByClass(stageAnalysis.values(),
-              StageAnalysis.Cost.class)
-          .sorted((s1, s2) -> s1.getCost().compareTo(s2.getCost())).findFirst();
-      Preconditions.checkArgument(stage.isPresent());
-      StageAnalysis.Cost cheapest = stage.get();
+      StageAnalysis.Cost cheapest = findCheapestStage(stageAnalysis);
       return StreamUtil.filterByClass(stageAnalysis.values(),
           StageAnalysis.Cost.class).filter(other -> !cheapest.equals(other))
           .map(other ->
               stageAnalysis.put(other.getStage(), other.tooExpensive())).count()>0;
+    }
+
+    public static StageAnalysis.Cost findCheapestStage(Map<ExecutionStage, StageAnalysis> stageAnalysis) {
+      Optional<StageAnalysis.Cost> stage = StreamUtil.filterByClass(stageAnalysis.values(),
+              StageAnalysis.Cost.class)
+          .sorted((s1, s2) -> s1.getCost().compareTo(s2.getCost())).findFirst();
+      Preconditions.checkArgument(stage.isPresent());
+      return stage.get();
     }
 
     public ExecutionStage getChosenStage() {

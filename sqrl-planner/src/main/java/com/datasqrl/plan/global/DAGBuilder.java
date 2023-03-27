@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Value;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 
 /**
@@ -41,7 +40,7 @@ public class DAGBuilder {
   private ErrorCollector errors;
 
 
-  public SqrlDAG build(CalciteSchema relSchema, Collection<AnalyzedAPIQuery> queries,
+  public SqrlDAG build(Collection<AnalyzedAPIQuery> queries,
       Collection<ResolvedExport> exports) {
     Map<ScriptRelationalTable, TableNode> table2Node = new HashMap<>();
     Multimap<SqrlNode, SqrlNode> dagInputs = HashMultimap.create();
@@ -89,9 +88,9 @@ public class DAGBuilder {
       Map<ScriptRelationalTable, TableNode> table2Node) {
     if (table2Node.containsKey(table)) return table2Node.get(table);
     Set<ScriptRelationalTable> inputTables = new LinkedHashSet<>();
-    Collection<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
     configBuilder.sourceTableConsumer(inputTables::add);
+    Collection<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     Map<ExecutionStage, StageAnalysis> stageAnalysis = tryStages(stages, stage ->
         sqrlConverter.convert(table, configBuilder.stage(stage).build(), errors));
     TableNode node = new TableNode(stageAnalysis, table);
@@ -102,6 +101,13 @@ public class DAGBuilder {
     return node;
   }
 
+  public Map<ExecutionStage, StageAnalysis> planStages(ScriptRelationalTable table) {
+    SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
+    Collection<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
+    return tryStages(stages, stage ->
+        sqrlConverter.convert(table, configBuilder.stage(stage).build(), errors));
+  }
+
   private Map<ExecutionStage, StageAnalysis> tryStages(Collection<ExecutionStage> stages,
       Function<ExecutionStage, RelNode> planner) {
     Map<ExecutionStage, StageAnalysis> stageAnalysis = new HashMap<>();
@@ -110,7 +116,7 @@ public class DAGBuilder {
       try {
         RelNode relNode = planner.apply(stage);
         ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(), relNode);
-        result = new Cost(stage, cost, true);
+        result = new Cost(stage, cost, true, relNode);
       } catch (ExecutionAnalysis.CapabilityException ex) {
         result = StageAnalysis.of(ex);
       }

@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Value;
+import org.apache.calcite.rel.RelNode;
 
 @Getter
 @AllArgsConstructor
@@ -37,11 +38,13 @@ public abstract class StageAnalysis {
 
     ComputeCost cost;
     boolean supported;
+    RelNode relNode;
 
-    public Cost(ExecutionStage stage, ComputeCost cost, boolean supported) {
+    public Cost(ExecutionStage stage, ComputeCost cost, boolean supported, RelNode relNode) {
       super(stage);
       this.cost = cost;
       this.supported = supported;
+      this.relNode = relNode;
     }
 
     @Override
@@ -59,7 +62,7 @@ public abstract class StageAnalysis {
     }
 
     public Cost tooExpensive() {
-      return new Cost(super.getStage(), cost, false);
+      return new Cost(super.getStage(), cost, false, relNode);
     }
 
   };

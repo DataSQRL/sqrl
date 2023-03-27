@@ -11,12 +11,14 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.name.NamePath;
+import com.datasqrl.plan.global.DAGPreparation;
 import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.util.DatabaseHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
@@ -74,5 +76,13 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
 
   protected Namespace plan(String query) {
     return sqrlPlanner.plan(query);
+  }
+
+  protected Namespace planAndFinalize(String query) {
+    Namespace ns = plan(query);
+    //Finalize queries
+    new DAGPreparation(planner.createRelBuilder(), errors).prepareInputs(planner.getSchema(),
+        Collections.EMPTY_LIST);
+    return ns;
   }
 }
