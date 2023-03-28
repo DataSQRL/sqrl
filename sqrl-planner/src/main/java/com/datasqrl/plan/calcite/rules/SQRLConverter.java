@@ -12,7 +12,6 @@ import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.function.Consumer;
 import lombok.Builder;
-import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.Hintable;
@@ -23,12 +22,12 @@ public class SQRLConverter {
 
   private RelBuilder relBuilder;
 
-  public AnnotatedLP convert(RelNode relNode, Config config, ErrorCollector errors) {
+  public AnnotatedLP convert(final RelNode relNode, Config config, ErrorCollector errors) {
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
     SQRLLogicalPlanRewriter sqrl2sql = new SQRLLogicalPlanRewriter(relBuilder, exec,
         errors, config);
-    relNode = relNode.accept(sqrl2sql);
-    AnnotatedLP alp = sqrl2sql.getRelHolder(relNode);
+    RelNode converted = relNode.accept(sqrl2sql);
+    AnnotatedLP alp = sqrl2sql.getRelHolder(converted);
     alp = alp.postProcess(relBuilder, config.getFieldNames(relNode), exec);
     return alp;
   }
@@ -42,9 +41,14 @@ public class SQRLConverter {
   }
 
   public RelNode convert(ScriptRelationalTable table, Config config, ErrorCollector errors) {
+    return convert(table,config,true,errors);
+  }
+
+  public RelNode convert(ScriptRelationalTable table, Config config,
+      boolean addWatermark, ErrorCollector errors) {
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
     if (table instanceof ProxyImportRelationalTable) {
-      return convert((ProxyImportRelationalTable) table, exec);
+      return convert((ProxyImportRelationalTable) table, exec, addWatermark);
     } else {
       QueryRelationalTable queryTable = (QueryRelationalTable) table;
       AnnotatedLP alp = convert(queryTable.getOriginalRelnode(), config, errors);
@@ -54,14 +58,17 @@ public class SQRLConverter {
     }
   }
 
-  private RelNode convert(ProxyImportRelationalTable table, ExecutionAnalysis exec) {
+  private RelNode convert(ProxyImportRelationalTable table, ExecutionAnalysis exec,
+      boolean addWatermark) {
     RelBuilder builder = relBuilder.scan(table.getBaseTable().getNameId());
     addColumns(builder, table.getAddedColumns(), exec);
     RelNode relNode = builder.build();
-    int timestampIdx = table.getTimestamp().getTimestampCandidate().getIndex();
-    Preconditions.checkArgument(timestampIdx < relNode.getRowType().getFieldCount());
-    WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
-    relNode = ((Hintable) relNode).attachHints(List.of(watermarkHint.getHint()));
+    if (addWatermark) {
+      int timestampIdx = table.getTimestamp().getTimestampCandidate().getIndex();
+      Preconditions.checkArgument(timestampIdx < relNode.getRowType().getFieldCount());
+      WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
+      relNode = ((Hintable) relNode).attachHints(List.of(watermarkHint.getHint()));
+    }
     return relNode;
   }
 
@@ -80,7 +87,7 @@ public class SQRLConverter {
   @Builder(toBuilder = true)
   public static class Config {
 
-    @NonNull ExecutionStage stage;
+    ExecutionStage stage;
 
     @Builder.Default
     Consumer<ScriptRelationalTable> sourceTableConsumer = (t) -> {};
@@ -89,6 +96,9 @@ public class SQRLConverter {
 
     @Builder.Default
     boolean setOriginalFieldnames = false;
+
+    @Builder.Default
+    boolean addTimestamp2NormalizedChildTable = true;
 
     @Builder.Default
     List<String> fieldNames = null;

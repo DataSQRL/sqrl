@@ -44,10 +44,15 @@ public class Converter {
     List<OptimizerHint.Stage> configuredStages = StreamUtil.filterByClass(optimizerHints,
         OptimizerHint.Stage.class).collect(Collectors.toList());
     configBuilder.setOriginalFieldnames(setOriginalFieldnames);
+    Config baseConfig = configBuilder.build();
+
+    //Config for original construction without a specific stage
+    configBuilder.stage(IdealExecutionStage.INSTANCE);
+    configBuilder.addTimestamp2NormalizedChildTable(false);
     Config config = configBuilder.build();
 
     SQRLConverter sqrlConverter = new SQRLConverter(relBuilder);
-    AnnotatedLP alp = sqrlConverter.convert(relNode, config.withStage(IdealExecutionStage.INSTANCE), errors);
-    return new LPAnalysis(relNode, alp, configuredStages, config);
+    AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
+    return new LPAnalysis(relNode, alp, configuredStages, baseConfig);
   }
 }

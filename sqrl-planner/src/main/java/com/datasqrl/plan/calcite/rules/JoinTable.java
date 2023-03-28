@@ -11,6 +11,7 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -114,6 +115,13 @@ public class JoinTable implements Comparable<JoinTable> {
     return tables!=null && !tables.isEmpty();
   }
 
+  public static boolean compatible(List<JoinTable> left, List<JoinTable> right) {
+    if (!valid(left) || !valid(right)) return false;
+    Set<VirtualRelationalTable.Root> rightRoots = right.stream().map(jt -> jt.table.getRoot()).collect(
+        Collectors.toSet());
+    return left.stream().map(jt -> jt.table.getRoot()).anyMatch(rightRoots::contains);
+  }
+
   public static Map<JoinTable, JoinTable> joinListMap(List<JoinTable> left, int rightOffset,
       List<JoinTable> right, List<IntPair> equalities) {
     Preconditions.checkArgument(!equalities.isEmpty() && valid(left) && valid(right));
@@ -129,7 +137,9 @@ public class JoinTable implements Comparable<JoinTable> {
     for (JoinTable leftTbl : left) {
       if (isPKPrefixConstraint(leftTbl, equalities, p -> p.source, 0)
           && leftTbl.isJoinCompatible(rightTbl)) {
-        return Map.of(rightTbl, leftTbl);
+        Map<JoinTable, JoinTable> result = new HashMap<>(1);
+        result.put(rightTbl, leftTbl);
+        return result;
       }
     }
     return Collections.EMPTY_MAP;

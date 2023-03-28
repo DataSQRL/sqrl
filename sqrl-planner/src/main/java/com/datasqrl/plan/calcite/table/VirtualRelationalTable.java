@@ -5,12 +5,10 @@ package com.datasqrl.plan.calcite.table;
 
 import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.name.Name;
-import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.calcite.util.IndexMap;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.schema.TableVisitor;
-import com.datasqrl.schema.TypeUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import java.util.ArrayList;
@@ -245,8 +243,11 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
     }
 
     public void appendTimestampColumn(@NonNull RelDataTypeFactory typeFactory) {
-      rowType = CalciteUtil.appendField(rowType, ReservedName.SYSTEM_TIMESTAMP.getCanonical(),
-          TypeUtil.makeTimestampType(typeFactory,false), typeFactory);
+      ScriptRelationalTable base = getRoot().getBase();
+      int timestampIdx = base.getTimestamp().getTimestampCandidate().getIndex();
+      RelDataTypeField timestampField = base.getRowType().getFieldList().get(timestampIdx);
+      rowType = CalciteUtil.appendField(rowType, timestampField.getName(),
+          timestampField.getType(), typeFactory);
     }
 
     public <R, C> R accept(ChildVirtualTableVisitor<R, C> visitor, C context) {

@@ -1,3 +1,0 @@
->>>orders$q$2
-LogicalValues(tuples=[[]])
-

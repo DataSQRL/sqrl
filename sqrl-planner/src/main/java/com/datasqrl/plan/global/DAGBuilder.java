@@ -21,7 +21,9 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -45,7 +47,7 @@ public class DAGBuilder {
     Map<ScriptRelationalTable, TableNode> table2Node = new HashMap<>();
     Multimap<SqrlNode, SqrlNode> dagInputs = HashMultimap.create();
     //1. Add all queries as sinks
-    Set<ExecutionStage> frontendStages = pipeline.getFrontendStages();
+    List<ExecutionStage> frontendStages = pipeline.getFrontendStages();
     errors.checkFatal(!frontendStages.isEmpty(), "Configured Pipeline does not include"
         + " any frontend stages to execute API queries: %s",pipeline);
     for (AnalyzedAPIQuery query : queries) {
@@ -54,8 +56,8 @@ public class DAGBuilder {
     }
     //2. Add all exports as sinks
     int numExports = 1;
-    Set<ExecutionStage> exportStages = pipeline.getStages().stream().filter(s -> s.supports(
-        EngineCapability.EXPORT)).collect(Collectors.toSet());
+    List<ExecutionStage> exportStages = pipeline.getStages().stream().filter(s -> s.supports(
+        EngineCapability.EXPORT)).collect(Collectors.toList());
     errors.checkFatal(!exportStages.isEmpty(), "Configured Pipeline does not include "
         + "any stages that support export: %s",pipeline);
     for (ResolvedExport export : exports) {
@@ -67,7 +69,7 @@ public class DAGBuilder {
   }
 
   private void add2DAG(RelNode relnode, Config baseConfig,
-      Collection<ExecutionStage> stages, Multimap<SqrlNode, SqrlNode> dagInputs,
+      List<ExecutionStage> stages, Multimap<SqrlNode, SqrlNode> dagInputs,
       Function<Map<ExecutionStage, StageAnalysis>,SqrlNode> nodeConstructor,
       Map<ScriptRelationalTable, TableNode> table2Node) {
     Set<ScriptRelationalTable> inputTables = new LinkedHashSet<>();
@@ -90,7 +92,7 @@ public class DAGBuilder {
     Set<ScriptRelationalTable> inputTables = new LinkedHashSet<>();
     SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
     configBuilder.sourceTableConsumer(inputTables::add);
-    Collection<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
+    List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     Map<ExecutionStage, StageAnalysis> stageAnalysis = tryStages(stages, stage ->
         sqrlConverter.convert(table, configBuilder.stage(stage).build(), errors));
     TableNode node = new TableNode(stageAnalysis, table);
@@ -103,14 +105,14 @@ public class DAGBuilder {
 
   public Map<ExecutionStage, StageAnalysis> planStages(ScriptRelationalTable table) {
     SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
-    Collection<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
+    List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     return tryStages(stages, stage ->
         sqrlConverter.convert(table, configBuilder.stage(stage).build(), errors));
   }
 
-  private Map<ExecutionStage, StageAnalysis> tryStages(Collection<ExecutionStage> stages,
+  private Map<ExecutionStage, StageAnalysis> tryStages(List<ExecutionStage> stages,
       Function<ExecutionStage, RelNode> planner) {
-    Map<ExecutionStage, StageAnalysis> stageAnalysis = new HashMap<>();
+    Map<ExecutionStage, StageAnalysis> stageAnalysis = new LinkedHashMap<>();
     for (ExecutionStage stage : stages) {
       StageAnalysis result;
       try {

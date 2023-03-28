@@ -11,7 +11,6 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.rules.SQRLConverter;
 import com.datasqrl.plan.calcite.rules.SQRLConverter.Config.ConfigBuilder;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,10 +29,10 @@ public class ProxyImportRelationalTable extends ScriptRelationalTable {
   @Getter
   private final ImportedRelationalTableImpl baseTable;
 
-  public ProxyImportRelationalTable(@NonNull Name rootTableId,
+  public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
       @NonNull TimestampHolder.Base timestamp, @NonNull RelDataType rowType,
       ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
-    super(rootTableId, TableType.STREAM, rowType, timestamp,   1, tableStatistic);
+    super(rootTableId, tableName, TableType.STREAM, rowType, timestamp,   1, tableStatistic);
     this.baseTable = baseTable;
   }
 
@@ -49,7 +48,7 @@ public class ProxyImportRelationalTable extends ScriptRelationalTable {
   }
 
   @Override
-  public Collection<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors) {
+  public List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors) {
     List<ExecutionStage> stages = pipeline.getStages().stream().filter(stage ->
             baseTable.getSupportsStage().test(stage))
         .collect(Collectors.toList());

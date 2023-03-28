@@ -16,6 +16,12 @@ import org.apache.calcite.tools.RelBuilder;
 public final class IdealExecutionStage implements ExecutionStage {
 
   public static final ExecutionStage INSTANCE = new IdealExecutionStage();
+  public static final String NAME = "IDEAL";
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
 
   @Override
   public boolean supports(EngineCapability capability) {

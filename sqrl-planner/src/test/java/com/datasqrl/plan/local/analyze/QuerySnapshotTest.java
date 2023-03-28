@@ -63,14 +63,18 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   protected void validateScript(String script) {
     Namespace ns = plan(script);
     SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
-    SQRLConverter.Config config = SQRLConverter.Config.builder().stage(IdealExecutionStage.INSTANCE).build();
     ns.getSchema().plus().getTableNames().stream()
         .map(n->ns.getSchema().getTable(n, false))
         .filter(f->f.getTable() instanceof ScriptRelationalTable)
         .sorted(Comparator.comparing(f->f.name))
-        .forEach(t->snapshot.addContent(
-            sqrlConverter.convert((ScriptRelationalTable)t.getTable(), config, errors).explain(),
-            t.name));
+        .forEach(t-> {
+          ScriptRelationalTable table = (ScriptRelationalTable) t.getTable();
+          SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE)
+              .addTimestamp2NormalizedChildTable(false).build();
+          snapshot.addContent(
+              sqrlConverter.convert(table, config, false, errors).explain(),
+              t.name);
+        });
     ns.getSchema().getAllTables().stream()
         .flatMap(t->t.getAllRelationships())
         .sorted(Comparator.comparing(Field::getName))

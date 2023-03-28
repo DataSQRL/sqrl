@@ -10,11 +10,14 @@ import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
 
 public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
@@ -27,6 +30,11 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
   @Override
   protected SqrlDAG create(Multimap<SqrlNode, SqrlNode> inputs) {
     return new SqrlDAG(inputs);
+  }
+
+  @Override
+  public<T extends SqrlNode> Stream<T> allNodesByClass(Class<T> clazz) {
+    return super.allNodesByClass(clazz).sorted();
   }
 
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
@@ -62,7 +70,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
   }
 
   @AllArgsConstructor
-  public abstract static class SqrlNode implements Node {
+  public abstract static class SqrlNode implements Node, Comparable<SqrlNode> {
 
     private final Map<ExecutionStage, StageAnalysis> stageAnalysis;
 
@@ -88,7 +96,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     public static StageAnalysis.Cost findCheapestStage(Map<ExecutionStage, StageAnalysis> stageAnalysis) {
       Optional<StageAnalysis.Cost> stage = StreamUtil.filterByClass(stageAnalysis.values(),
               StageAnalysis.Cost.class)
-          .sorted((s1, s2) -> s1.getCost().compareTo(s2.getCost())).findFirst();
+          .sorted(Comparator.comparing(StageAnalysis.Cost::getCost)).findFirst();
       Preconditions.checkArgument(stage.isPresent());
       return stage.get();
     }
@@ -108,9 +116,13 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
       ).collect(Collectors.joining("\n"));
     }
 
+    @Override
+    public int compareTo(SqrlDAG.SqrlNode other) {
+      return getName().compareTo(other.getName());
+    }
   }
 
-  @Value
+  @Getter
   public static class TableNode extends SqrlNode {
 
     private final ScriptRelationalTable table;
@@ -128,7 +140,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
 
   }
 
-  @Value
+  @Getter
   public static class QueryNode extends SqrlNode {
 
     private final AnalyzedAPIQuery query;
@@ -149,7 +161,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     }
   }
 
-  @Value
+  @Getter
   public static class ExportNode extends SqrlNode {
 
     private final ResolvedExport export;

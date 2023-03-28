@@ -1,3 +1,0 @@
->>>o$q$2
-LogicalValues(tuples=[[]])
-

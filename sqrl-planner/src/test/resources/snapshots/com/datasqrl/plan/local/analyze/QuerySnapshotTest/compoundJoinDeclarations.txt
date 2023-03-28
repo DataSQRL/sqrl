@@ -1,7 +1,0 @@
->>>product$q$2
-LogicalValues(tuples=[[]])
-
->>>join-declaration-joinDeclaration
-JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "Product") USING "@"."productid" = "Product"."productid"
->>>join-declaration-joinDeclaration2
-JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "j") USING "@"."productid" = "j"."productid" AND "@"."productid" = "j"."productid"

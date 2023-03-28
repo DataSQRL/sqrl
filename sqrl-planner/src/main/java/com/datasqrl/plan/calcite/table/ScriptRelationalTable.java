@@ -14,7 +14,6 @@ import com.datasqrl.plan.calcite.table.PullupOperator.Container;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
@@ -36,6 +35,9 @@ import org.apache.calcite.util.ImmutableBitSet;
 @Getter
 public abstract class ScriptRelationalTable extends AbstractRelationalTable {
 
+  //Name assigned by user - different from nameId which is unique
+  @NonNull
+  protected final Name tableName;
   @NonNull
   protected final TableType type;
   @NonNull
@@ -59,10 +61,11 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable {
   @NonNull
   protected final TableStatistic tableStatistic;
 
-  public ScriptRelationalTable(@NonNull Name rootTableId, @NonNull TableType type,
-      @NonNull RelDataType rowType, @NonNull TimestampHolder.Base timestamp,
+  public ScriptRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
+      @NonNull TableType type, @NonNull RelDataType rowType, @NonNull TimestampHolder.Base timestamp,
       @NonNull int numPrimaryKeys, @NonNull TableStatistic tableStatistic) {
     super(rootTableId);
+    this.tableName = tableName;
     this.type = type;
     this.timestamp = timestamp;
     this.rowType = rowType;
@@ -85,7 +88,7 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable {
     return assignedStage;
   }
 
-  public abstract Collection<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors);
+  public abstract List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors);
 
   public abstract SQRLConverter.Config.ConfigBuilder getBaseConfig();
 

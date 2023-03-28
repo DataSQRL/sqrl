@@ -1,6 +1,0 @@
->>>errors
-[FATAL] Alias not expected here: ecommerce-data.*
-in script:test.sqrl [1:8]:
-IMPORT ecommerce-data.* AS ecommerce;
--------^
-

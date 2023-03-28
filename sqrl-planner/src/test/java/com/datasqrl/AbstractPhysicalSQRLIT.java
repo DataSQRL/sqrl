@@ -7,7 +7,6 @@ import com.datasqrl.config.EngineSettings;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
-import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
@@ -16,47 +15,54 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
-import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.RelToSql;
-import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.local.analyze.ResolveTest;
 import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.ResultSetPrinter;
 import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.StreamUtil;
 import com.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.rel.RelNode;
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Types;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.rel.RelNode;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
-  public PhysicalPlanner physicalPlanner;
+  public SqrlPhysicalPlan physicalPlanner;
   JDBCEngineConfiguration jdbc;
 
   protected SnapshotTest.Snapshot snapshot;
@@ -86,8 +92,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       .findAny()
       .orElseThrow();
 
-    SqrlPhysicalPlan planner = injector.getInstance(SqrlPhysicalPlan.class);
-    physicalPlanner = planner.getPhysicalPlanner();
+    physicalPlanner = injector.getInstance(SqrlPhysicalPlan.class);
   }
 
 
@@ -105,9 +110,6 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
     Namespace ns = plan(script);
 
-    //todo Inject this:
-    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
-        ns.getSchema().getPipeline(), errors);
     //We add a scan query for every query table
     List<APIQuery> queries = new ArrayList<APIQuery>();
     CalciteSchema relSchema = planner.getSchema();
@@ -119,11 +121,11 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       RelNode rel = planner.createRelBuilder().scan(vt.getNameId()).build();
       queries.add(new APIQuery(tableName, rel));
     }
-    PhysicalDAGPlan dag = dagPlanner.plan(relSchema, queries, ns.getExports(), ns.getJars());
+
+    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, queries);
     addContent(dag);
 
-    //todo: inject
-    PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
+    PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan);
     //todo: filter out jdbc engine
@@ -161,24 +163,27 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         snapshot.addContent(content, query.getNameId(), "data");
       }
     }
-    for (ResolvedExport export : ns.getExports()) {
-      TableSink sink = export.getSink();
-      if (sink.getConnector() instanceof DirectoryConnector) {
-        DirectoryConnector connector = (DirectoryConnector) sink.getConnector();
-        FilePath path = connector.getPathConfig().getDirectory()
-            .resolve(sink.getConfiguration().getIdentifier());
-        Path filePath = Paths.get(path.toString());
-        snapshot.addContent(String.valueOf(FileTestUtil.countLinesInAllPartFiles(filePath)),
-            "export", sink.getConfiguration().getIdentifier());
-      }
-    }
+    StreamUtil.filterByClass(dag.getQueriesByType(PhysicalDAGPlan.WriteQuery.class).stream()
+        .map(WriteQuery::getSink),ExternalSink.class)
+        .map(ExternalSink::getTableSink)
+        .filter(sink -> sink.getConnector() instanceof DirectoryConnector)
+        .forEach(sink -> {
+          DirectoryConnector connector = (DirectoryConnector) sink.getConnector();
+          FilePath path = connector.getPathConfig().getDirectory()
+              .resolve(sink.getConfiguration().getIdentifier());
+          Path filePath = Paths.get(path.toString());
+          snapshot.addContent(String.valueOf(FileTestUtil.countLinesInAllPartFiles(filePath)),
+              "export", sink.getConfiguration().getIdentifier());
+        });
     if (closeSnapshotOnValidate) snapshot.createOrValidate();
   }
 
   private void addContent(PhysicalDAGPlan dag, String... caseNames) {
-    dag.getWriteQueries().forEach(mq -> snapshot.addContent(TestRelWriter.explain(mq.getRelNode()),
+    dag.getWriteQueries().stream().sorted(Comparator.comparing(wq -> wq.getSink().getName()))
+        .forEach(mq -> snapshot.addContent(TestRelWriter.explain(mq.getRelNode()),
         ArrayUtils.addAll(caseNames, mq.getSink().getName(), "lp-stream")));
-    dag.getReadQueries().forEach(dq -> snapshot.addContent(TestRelWriter.explain(dq.getRelNode()),
+    dag.getReadQueries().stream().sorted(Comparator.comparing(rq -> rq.getQuery().getNameId()))
+        .forEach(dq -> snapshot.addContent(TestRelWriter.explain(dq.getRelNode()),
         ArrayUtils.addAll(caseNames, dq.getQuery().getNameId(), "lp-database")));
   }
 

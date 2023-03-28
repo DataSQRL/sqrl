@@ -11,7 +11,6 @@ import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -185,8 +184,9 @@ public class SqrlRexUtil {
   }
 
   public RelBuilder appendColumn(RelBuilder relBuilder, RexNode rexNode, String fieldName) {
-    List<RexNode> rexes = new ArrayList<>(getIdentityProject(relBuilder.peek()));
-    List<String> fieldNames = new ArrayList<>(Collections.nCopies(rexes.size(), null));
+    RelNode relNode = relBuilder.peek();
+    List<RexNode> rexes = new ArrayList<>(getIdentityProject(relNode));
+    List<String> fieldNames = new ArrayList<>(relNode.getRowType().getFieldNames());
     rexes.add(rexNode);
     fieldNames.add(fieldName);
     relBuilder.projectNamed(rexes, fieldNames, false);

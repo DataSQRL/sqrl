@@ -28,14 +28,6 @@ public class DAGPreparation {
   private final ErrorCollector errors;
 
   public Collection<AnalyzedAPIQuery> prepareInputs(CalciteSchema relSchema, Collection<APIQuery> queries) {
-    //Append timestamp column to nested, normalized tables, so we can propagate it
-    //to engines that don't support denormalization
-    StreamUtil.filterByClass(CalciteUtil.getTables(relSchema,
-        VirtualRelationalTable.class).stream(),VirtualRelationalTable.Child.class)
-        .forEach(nestedTable -> {
-        nestedTable.appendTimestampColumn(relBuilder.getTypeFactory());
-    });
-
     List<ScriptRelationalTable> scriptTables = CalciteUtil.getTables(relSchema,
         ScriptRelationalTable.class);
     //Assign timestamps to imports which should propagate and set all remaining timestamps
@@ -45,6 +37,14 @@ public class DAGPreparation {
         .forEach(this::finalizeSourceTable);
     Preconditions.checkArgument(scriptTables.stream().allMatch(
         table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
+
+    //Append timestamp column to nested, normalized tables, so we can propagate it
+    //to engines that don't support denormalization
+    StreamUtil.filterByClass(CalciteUtil.getTables(relSchema,
+            VirtualRelationalTable.class).stream(),VirtualRelationalTable.Child.class)
+        .forEach(nestedTable -> {
+          nestedTable.appendTimestampColumn(relBuilder.getTypeFactory());
+        });
 
     //Replace default joins with inner joins for API queries
     return queries.stream().map(apiQuery -> {

@@ -8,6 +8,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.calcite.rules.SQRLConverter;
+import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
@@ -30,13 +31,15 @@ public class DAGPlanner {
 
   private final SQRLConverter sqrlConverter;
 
+  private final Debugger debugger;
+
   private final ErrorCollector errors;
 
   private final ExecutionStage streamStage;
   private final ExecutionStage databaseStage;
 
   public DAGPlanner(RelBuilder relBuilder, RelOptPlanner planner,
-      ExecutionPipeline pipeline, ErrorCollector errors) {
+      ExecutionPipeline pipeline, Debugger debugger, ErrorCollector errors) {
     this.relBuilder = relBuilder;
     this.planner = planner;
     this.pipeline = pipeline;
@@ -44,6 +47,7 @@ public class DAGPlanner {
 
     streamStage = pipeline.getStage(ExecutionEngine.Type.STREAM).get();
     databaseStage = pipeline.getStage(ExecutionEngine.Type.DATABASE).get();
+    this.debugger = debugger;
     this.errors = errors;
   }
 
@@ -54,11 +58,16 @@ public class DAGPlanner {
 
     //Assemble DAG
     SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(analyzedQueries, exports);
+    for (SqrlDAG.SqrlNode node : dag) {
+      if (!node.hasViableStage()) {
+        errors.fatal("Could not find execution stage for [%s]. Stage analysis below.\n%s",node.getName(), node.toString());
+      }
+    }
     try {
       dag.eliminateInviableStages(pipeline);
     } catch (SqrlDAG.NoPlanException ex) {
       //Print error message that is easy to read
-      errors.fatal("Could not find execution stage for [%s]. Full DAG below.\n%s", ex.getNode(), dag);
+      errors.fatal("Could not find execution stage for [%s]. Full DAG below.\n%s", ex.getNode().getName(), dag);
     }
     dag.forEach(node -> Preconditions.checkArgument(node.hasViableStage()));
     return dag;
@@ -76,7 +85,7 @@ public class DAGPlanner {
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars) {
     //Stitch DAG together
-    DAGAssembler assembler = new DAGAssembler(planner, sqrlConverter, pipeline, errors);
+    DAGAssembler assembler = new DAGAssembler(planner, sqrlConverter, pipeline, debugger, errors);
     return assembler.assemble(dag, jars);
   }
 

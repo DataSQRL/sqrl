@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends AbstractDAG<E, D>> implements
@@ -25,13 +26,15 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
   Multimap<E, E> outputs;
   Set<E> sources;
   Set<E> sinks;
+  Set<E> allNodes;
 
   protected AbstractDAG(Multimap<E, E> inputs) {
     this.inputs = inputs;
     this.outputs = HashMultimap.create();
     this.sources = new HashSet<>();
-    inputs.entries().forEach(e -> {
-      E in = e.getValue(), out = e.getKey();
+    this.allNodes = new HashSet<>();
+    inputs.forEach((out, in) -> {
+      allNodes.add(in); allNodes.add(out);
       outputs.put(in, out);
       if (inputs.get(in).isEmpty()) {
           sources.add(in);
@@ -39,6 +42,10 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     });
     this.sinks = Streams.concat(inputs.keySet().stream(), sources.stream()).filter(Node::isSink)
         .collect(Collectors.toSet());
+  }
+
+  public<T extends E> Stream<T> allNodesByClass(Class<T> clazz) {
+    return StreamUtil.filterByClass(allNodes.stream(),clazz);
   }
 
   public D addNodes(Multimap<E, E> inputs) {
@@ -113,7 +120,7 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     public OrderedIterator(boolean source2sink) {
       toVisit = new ArrayDeque<>(source2sink?sources:sinks);
       visited = new HashSet<>();
-      next = toVisit.removeFirst();
+      next = toVisit.isEmpty()?null:toVisit.removeFirst();
       this.source2sink = source2sink;
     }
 

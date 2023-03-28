@@ -5,16 +5,16 @@ package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.util.StreamUtil;
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public interface ExecutionPipeline {
 
-  Collection<ExecutionStage> getStages();
+  List<ExecutionStage> getStages();
 
-  default Set<ExecutionStage> getFrontendStages() {
+  default List<ExecutionStage> getFrontendStages() {
     return getStages().stream().filter(s -> {
       switch (s.getEngine().getType()) {
         case DATABASE:
@@ -23,7 +23,7 @@ public interface ExecutionPipeline {
         default:
           return false;
       }
-    }).collect(Collectors.toSet());
+    }).collect(Collectors.toList());
   }
 
   Set<ExecutionStage> getUpStreamFrom(ExecutionStage stage);

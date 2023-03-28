@@ -1,6 +1,0 @@
->>>ordertime1-lp
-LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
-  LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000]]
-    LogicalProject(customer=[$3], bucket=[endOfsecond($4)], _uuid=[$0], _ingest_time=[$1])
-      LogicalTableScan(table=[[orders$q$5]])
-

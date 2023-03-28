@@ -78,8 +78,8 @@ public class CalciteTableFactory {
     ImportedRelationalTableImpl source = new ImportedRelationalTableImpl(
         getTableId(rootTable.getName(), "i"), rootType, tableSource);
     ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(
-        getTableId(rootTable.getName(), "q"), getTimestampHolder(rootTable),
-        rootType, source,
+        getTableId(rootTable.getName(), "q"), rootTable.getName(),
+        getTimestampHolder(rootTable), rootType, source,
         TableStatistic.of(1000));
 
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable,
@@ -93,7 +93,7 @@ public class CalciteTableFactory {
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
     Name tableid = getTableId(tablePath.getLast(), "q");
-    ScriptRelationalTable baseTable = new QueryRelationalTable(tableid, analyzedLP);
+    ScriptRelationalTable baseTable = new QueryRelationalTable(tableid, tablePath.getLast(), analyzedLP);
 
     LinkedHashMap<Integer, Name> index2Name = new LinkedHashMap<>();
     for (int i = 0; i < fieldNames.size(); i++) {
@@ -116,9 +116,9 @@ public class CalciteTableFactory {
   }
 
   private static final Map<Name, Integer> defaultTimestampPreference = ImmutableMap.of(
-      ReservedName.SOURCE_TIME, 6,
+      ReservedName.SOURCE_TIME, 20,
       ReservedName.INGEST_TIME, 3,
-      Name.system("timestamp"), 20,
+      Name.system("timestamp"), 10,
       Name.system("time"), 8);
 
   protected static int getTimestampScore(Name columnName) {

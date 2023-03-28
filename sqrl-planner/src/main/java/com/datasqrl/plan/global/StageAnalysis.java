@@ -101,7 +101,7 @@ public abstract class StageAnalysis {
 
     @Override
     public String getMessage() {
-      return String.format("%s [%s] does not support stage [%s] or any %s stages: %s",
+      return String.format("%s [%s] does not support stage [%s] or any %s stages",
           upstream?"Upstream input":"Downstream consumer",
           tableName, getName(),
           upstream?"prior":"subsequent");

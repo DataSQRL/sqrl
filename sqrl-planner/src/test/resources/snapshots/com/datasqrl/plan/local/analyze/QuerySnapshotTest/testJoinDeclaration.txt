@@ -1,9 +1,0 @@
->>>product$q$2
-LogicalValues(tuples=[[]])
-
->>>product$q$4
-LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5])
-  LogicalTableScan(table=[[product$q$2]])
-
->>>join-declaration-joinDeclaration
-JOIN PATH ON ("product$5" AS "@") ON ("product$5" AS "Product") USING "@"."productid" = "Product"."productid"

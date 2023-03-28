@@ -1,9 +1,0 @@
->>>customer$q$2
-LogicalValues(tuples=[[]])
-
->>>orders$q$5
-LogicalValues(tuples=[[]])
-
->>>product$q$9
-LogicalValues(tuples=[[]])
-

@@ -8,7 +8,7 @@ import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.rules.LPAnalysis;
 import com.datasqrl.plan.calcite.rules.SQRLConverter;
 import com.datasqrl.plan.calcite.rules.SQRLConverter.Config.ConfigBuilder;
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -20,8 +20,9 @@ public class QueryRelationalTable extends ScriptRelationalTable {
 
   private final LPAnalysis analyzedLP;
 
-  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull LPAnalysis analyzedLP) {
-    super(rootTableId,
+  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
+      @NonNull LPAnalysis analyzedLP) {
+    super(rootTableId, tableName,
         analyzedLP.getConvertedRelnode().getType(),
         analyzedLP.getConvertedRelnode().getRelNode().getRowType(),
         TimestampHolder.Base.ofDerived(analyzedLP.getConvertedRelnode().getTimestamp()),
@@ -40,7 +41,7 @@ public class QueryRelationalTable extends ScriptRelationalTable {
   }
 
   @Override
-  public Collection<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors) {
+  public List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors) {
     if (analyzedLP.getConfiguredStages().isEmpty()) return pipeline.getStages();
     return analyzedLP.getConfiguredStages().stream().map(stage -> {
       Optional<ExecutionStage> execStage = pipeline.getStage(stage.getStageName());

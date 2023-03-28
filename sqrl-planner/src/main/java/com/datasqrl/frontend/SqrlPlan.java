@@ -1,29 +1,18 @@
 package com.datasqrl.frontend;
 
-import com.datasqrl.config.CompilerConfiguration;
-import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DataSystemNsObject;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
-import com.datasqrl.name.NamePath;
 import com.datasqrl.parse.SqrlParser;
-import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.NamespaceFactory;
 import com.datasqrl.plan.local.generate.Resolve;
-import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.local.generate.StatementProcessor;
-import com.datasqrl.schema.SQRLTable;
 import com.google.inject.Inject;
-import java.util.Optional;
 import org.apache.calcite.sql.ScriptNode;
-import org.apache.calcite.tools.RelBuilder;
 
 public class SqrlPlan extends SqrlParse {
 
@@ -57,44 +46,11 @@ public class SqrlPlan extends SqrlParse {
 
     Namespace namespace = resolve.planTables(node);
 
-    try {
-      debug(this.planner, namespace, errors, this.moduleLoader, debuggerConfig);
-    } catch (Exception e) {
-      throw this.errors.handle(e);
-    }
     return namespace;
   }
 
-  private void debug(SqrlQueryPlanner planner, Namespace ns, ErrorCollector parentError,
-      ModuleLoader moduleLoader, DebuggerConfig debugger) {
-    ErrorCollector errors = parentError.withLocation(
-        CompilerConfiguration.DebugConfiguration.getLocation());
-    if (debugger.isEnabled()) {
-      ns.getSchema().getAllTables().stream()
-          .sorted((e1, e2) -> e1.getVt().getNameId().compareTo(e2.getVt().getNameId()))
-          .forEach(tableEntry -> {
-            VirtualRelationalTable vt = tableEntry.getVt();
-            SQRLTable st = tableEntry;
-            if (vt.isRoot() && debugger.debugTable(st.getName())) {
-              ScriptRelationalTable bt = vt.getRoot().getBase();
-              if (true) {
-                NamePath sinkPath = debugger.getSinkBasePath().concat(Name.system(vt.getNameId()));
-
-                Optional<TableSink> sink = moduleLoader.getModule(sinkPath.popLast())
-                    .flatMap(m -> m.getNamespaceObject(sinkPath.popLast().getLast()))
-                    .map(s -> ((DataSystemNsObject) s).getTable())
-                    .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), parentError))
-                    .map(tblConfig ->
-                        tblConfig.initializeSink(errors, sinkPath, Optional.empty()));
-
-                errors.checkFatal(sink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
-                    "Cannot resolve table sink: %s", sinkPath);
-                RelBuilder relBuilder = planner.createRelBuilder()
-                    .scan(vt.getNameId());
-                ns.addExport(new ResolvedExport(vt, relBuilder.build(), sink.get()));
-              }
-            }
-          });
-    }
+  public Debugger getDebugger() {
+    return new Debugger(debuggerConfig, moduleLoader);
   }
+
 }

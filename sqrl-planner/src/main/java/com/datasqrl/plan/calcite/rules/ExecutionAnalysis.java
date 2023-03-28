@@ -15,6 +15,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
@@ -24,10 +25,10 @@ import org.apache.calcite.rex.RexVisitorImpl;
 @Value
 public class ExecutionAnalysis {
 
-  ExecutionStage stage;
+  @NonNull ExecutionStage stage;
 
 
-  public static ExecutionAnalysis of(ExecutionStage stage) {
+  public static ExecutionAnalysis of(@NonNull ExecutionStage stage) {
     return new ExecutionAnalysis(stage);
   }
 

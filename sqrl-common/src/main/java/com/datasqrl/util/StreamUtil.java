@@ -6,6 +6,7 @@ package com.datasqrl.util;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class StreamUtil {
@@ -16,6 +17,10 @@ public class StreamUtil {
 
   public static <T, C extends T> Stream<C> filterByClass(Collection<T> col, Class<C> clazz) {
     return col.stream().filter(clazz::isInstance).map(clazz::cast);
+  }
+
+  public static <T, C extends T> Function<T,Stream<C>> classFilter(Class<C> clazz) {
+    return (t) -> clazz.isInstance(t)?Stream.of(clazz.cast(t)):Stream.empty();
   }
 
   public static <T> Stream<T> getPresent(Stream<Optional<T>> stream) {
