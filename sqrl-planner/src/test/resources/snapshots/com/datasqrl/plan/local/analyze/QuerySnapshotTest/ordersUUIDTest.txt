@@ -1,0 +1,15 @@
+>>>customer$q$2
+LogicalTableScan(table=[[customer$i$1]])
+
+>>>o2$q$11
+LogicalProject(__pk_0=[$0], _uuid=[$6], _ingest_time=[$7], id=[$8], customerid=[$9], time=[$10], __timestamp=[CASE(<($4, $10), $10, $4)])
+  LogicalJoin(condition=[true], joinType=[inner])
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[orders$q$5]])
+
+>>>orders$q$5
+LogicalTableScan(table=[[orders$i$4]])
+
+>>>product$q$9
+LogicalTableScan(table=[[product$i$8]])
+

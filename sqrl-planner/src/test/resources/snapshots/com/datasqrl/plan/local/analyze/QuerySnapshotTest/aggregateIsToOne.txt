@@ -1,0 +1,18 @@
+>>>orders$q$2
+LogicalTableScan(table=[[orders$i$1]])
+
+>>>stats$q$5
+LogicalProject(__pk_0=[$0], num=[$2], total=[$3], time=[$1])
+  LogicalAggregate(group=[{0, 4}], num=[COUNT()], total=[SUM($10)])
+    LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$2]])
+      Uncollect
+        LogicalProject($f0=[$cor3.entries])
+          LogicalValues(tuples=[[{ 0 }]])
+
+>>>x$q$7
+LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], num=[$7], time=[$4])
+  LogicalJoin(condition=[AND(=($0, $6), =($9, $4))], joinType=[left])
+    LogicalTableScan(table=[[orders$q$2]])
+    LogicalTableScan(table=[[stats$q$5]])
+

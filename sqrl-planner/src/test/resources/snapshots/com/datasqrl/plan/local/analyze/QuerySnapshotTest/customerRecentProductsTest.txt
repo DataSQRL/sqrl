@@ -1,0 +1,32 @@
+>>>customer$q$2
+LogicalTableScan(table=[[customer$i$1]])
+
+>>>orders$q$5
+LogicalTableScan(table=[[orders$i$4]])
+
+>>>product$q$9
+LogicalTableScan(table=[[product$i$8]])
+
+>>>recent_products$q$11
+LogicalProject(__pk_0=[$0], productid=[$1], category=[$2], quantity=[$3], num_orders=[$4], __timestamp=[$5])
+  LogicalAggregate(group=[{0, 13, 22}], quantity=[SUM($14)], num_orders=[COUNT()], __timestamp=[MAX($29)])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], _uuid0=[$6], _ingest_time0=[$7], id=[$8], customerid0=[$9], time=[$10], _uuid00=[$6], _idx=[$12], productid=[$13], quantity=[$14], unit_price=[$15], discount=[$16], _uuid1=[$18], _ingest_time1=[$19], productid0=[$20], name0=[$21], description=[$22], category=[$23], _uuid2=[CAST($25):CHAR(36)], _ingest_time2=[CAST($26):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], id0=[CAST($27):BIGINT], customerid1=[CAST($28):BIGINT], time0=[CAST($29):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], _uuid20=[$25], __timestamp31=[CASE(<($24, $29), $29, $24)])
+      LogicalJoin(condition=[=($6, $25)], joinType=[inner])
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], _uuid0=[$6], _ingest_time0=[$7], id=[$8], customerid0=[$9], time=[$10], entries=[$11], _idx=[$12], productid=[$13], quantity=[$14], unit_price=[$15], discount=[$16], __timestamp=[$17], _uuid1=[$18], _ingest_time1=[$19], productid0=[$20], name0=[$21], description=[$22], category=[$23], __timestamp24=[CASE(<($17, $19), $19, $17)])
+          LogicalJoin(condition=[=($20, $13)], joinType=[left])
+            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], _uuid0=[$6], _ingest_time0=[$7], id=[$8], customerid0=[$9], time=[$10], entries=[$11], _idx=[$12], productid=[$13], quantity=[$14], unit_price=[$15], discount=[$16], __timestamp=[CASE(<($1, $10), $10, $1)])
+              LogicalJoin(condition=[=($9, $2)], joinType=[inner])
+                LogicalTableScan(table=[[customer$q$2]])
+                LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+                  LogicalTableScan(table=[[orders$q$5]])
+                  Uncollect
+                    LogicalProject($f0=[$cor3.entries])
+                      LogicalValues(tuples=[[{ 0 }]])
+            LogicalTableScan(table=[[product$q$9]])
+        LogicalFilter(condition=[<(NOW(), +($4, 63158400000:INTERVAL SECOND))])
+          LogicalTableScan(table=[[orders$q$5]])
+
+>>>join-declaration-orders
+JOIN PATH ON ("customer$3" AS "@") ON ("orders$6" AS "Orders") USING "Orders"."customerid" = "@"."customerid"
+>>>join-declaration-product
+JOIN PATH ON ("entries$7" AS "@") ON ("product$10" AS "Product") USING "Product"."productid" = "@"."productid" FETCH 1

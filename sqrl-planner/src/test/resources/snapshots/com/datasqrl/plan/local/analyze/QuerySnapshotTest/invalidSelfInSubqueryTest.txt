@@ -1,0 +1,8 @@
+>>>errors
+[FATAL] No value present
+in script:test.sqrl [3:1]:
+IMPORT ecommerce-data.Product;
+Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
+Product2 := SELECT * FROM Product, (SELECT MIN(productid) FROM @);
+^
+

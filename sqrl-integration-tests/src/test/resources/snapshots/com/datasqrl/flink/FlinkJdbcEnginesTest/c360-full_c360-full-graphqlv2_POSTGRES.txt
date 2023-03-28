@@ -1,0 +1,65 @@
+>>>database
+CREATE TABLE IF NOT EXISTS category$14 (name VARCHAR NOT NULL,updatetime TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));
+CREATE TABLE IF NOT EXISTS customer$12 (customerid BIGINT NOT NULL,_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,email VARCHAR NOT NULL,name VARCHAR NOT NULL,lastupdated BIGINT NOT NULL,updatetime TIMESTAMPTZ NOT NULL , PRIMARY KEY (customerid));
+CREATE TABLE IF NOT EXISTS favorite_categories$24 (__pk_0 BIGINT NOT NULL,category_name VARCHAR NOT NULL,total DECIMAL NOT NULL,month TIMESTAMPTZ NOT NULL , PRIMARY KEY (__pk_0,category_name));
+CREATE TABLE IF NOT EXISTS order_again$20 (__pk_0 BIGINT NOT NULL,productid BIGINT NOT NULL,quantity BIGINT NOT NULL,num_orders BIGINT NOT NULL,most_recent TIMESTAMPTZ NOT NULL , PRIMARY KEY (__pk_0,productid));
+CREATE TABLE IF NOT EXISTS product$16 (productid BIGINT NOT NULL,_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,description VARCHAR NOT NULL,category VARCHAR NOT NULL,updatetime TIMESTAMPTZ NOT NULL , PRIMARY KEY (productid));
+>>>query-category
+{
+  "data" : {
+    "Category" : [ {
+      "name" : "Decoration",
+      "products" : [ {
+        "name" : "Aachen Snow Globe",
+        "productid" : 7235,
+        "description" : "Picturesque city in a beautiful snow globe"
+      }, {
+        "name" : "Original German Nutcracker 3ft",
+        "productid" : 8757,
+        "description" : "Hand-made nutcracker is the perfect Christmas decoration"
+      } ]
+    } ]
+  }
+}
+>>>query-customerrecommend
+{
+  "data" : {
+    "Customer" : [ {
+      "email" : "emily.ludies@hotmail.com",
+      "name" : "Emily F. Ludies",
+      "order_again" : [ {
+        "productid" : 1332,
+        "quantity" : 8,
+        "num_orders" : 1
+      }, {
+        "productid" : 3571,
+        "quantity" : 2,
+        "num_orders" : 2
+      } ],
+      "favorite_categories" : [ {
+        "category_name" : "Personal Care",
+        "total" : 146.82,
+        "category" : [ {
+          "products" : [ {
+            "name" : "Heavy Duty Butt Wipes",
+            "productid" : 1332,
+            "description" : "Wipes for hardiest of messes"
+          }, {
+            "name" : "Poptech Blow 500",
+            "productid" : 3571,
+            "description" : "High powered blowdryer for any hair"
+          } ]
+        } ]
+      } ]
+    } ]
+  }
+}
+>>>query-customers
+{
+  "data" : {
+    "Customer" : [ {
+      "email" : "john.mekker@gmail.com",
+      "name" : "John Mekker"
+    } ]
+  }
+}

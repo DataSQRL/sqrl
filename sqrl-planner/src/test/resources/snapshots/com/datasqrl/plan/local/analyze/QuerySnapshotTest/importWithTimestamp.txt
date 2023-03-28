@@ -1,0 +1,4 @@
+>>>customer$q$2
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], c_ts=[$1])
+  LogicalTableScan(table=[[customer$i$1]])
+

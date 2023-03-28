@@ -1,0 +1,121 @@
+>>>database
+CREATE INDEX IF NOT EXISTS customer$12_btree_c3c4 ON customer$12 ("email","name")
+CREATE INDEX IF NOT EXISTS customer$12_hash_c4 ON customer$12 ("name")
+CREATE INDEX IF NOT EXISTS newcustomerpromotion$28_hash_c2 ON newcustomerpromotion$28 ("customerid")
+CREATE INDEX IF NOT EXISTS order_again$20_hash_c0c3 ON order_again$20 ("__pk_0","num_orders")
+CREATE INDEX IF NOT EXISTS orders$9_hash_c2 ON orders$9 ("id")
+CREATE INDEX IF NOT EXISTS product$16_hash_c3 ON product$16 ("name")
+CREATE TABLE IF NOT EXISTS "category$14" ("name" VARCHAR NOT NULL,"updatetime" INTEGER NOT NULL , PRIMARY KEY ("name"));
+CREATE TABLE IF NOT EXISTS "customer$12" ("customerid" BIGINT NOT NULL,"_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"email" VARCHAR NOT NULL,"name" VARCHAR NOT NULL,"lastupdated" BIGINT NOT NULL,"updatetime" INTEGER NOT NULL , PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "entries$10" ("_uuid" VARCHAR NOT NULL,"_idx" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"unit_price" NUMERIC NOT NULL,"discount" NUMERIC ,"discount$0" NUMERIC NOT NULL,"total" NUMERIC NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS "favorite_categories$24" ("__pk_0" BIGINT NOT NULL,"category_name" VARCHAR NOT NULL,"total" NUMERIC NOT NULL,"month" INTEGER NOT NULL , PRIMARY KEY ("__pk_0","category_name"));
+CREATE TABLE IF NOT EXISTS "newcustomerpromotion$28" ("_uuid" VARCHAR NOT NULL,"_source_time" INTEGER NOT NULL,"customerid" BIGINT NOT NULL,"email" VARCHAR NOT NULL,"name" VARCHAR NOT NULL,"total_spend" NUMERIC ,"num_orders" BIGINT NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "order_again$20" ("__pk_0" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"num_orders" BIGINT NOT NULL,"most_recent" INTEGER NOT NULL , PRIMARY KEY ("__pk_0","productid"));
+CREATE TABLE IF NOT EXISTS "order_stats$26" ("__pk_0" BIGINT NOT NULL,"total_spend" NUMERIC ,"num_orders" BIGINT NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("__pk_0"));
+CREATE TABLE IF NOT EXISTS "orders$9" ("_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "product$16" ("productid" BIGINT NOT NULL,"_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"name" VARCHAR NOT NULL,"description" VARCHAR NOT NULL,"category" VARCHAR NOT NULL,"updatetime" INTEGER NOT NULL , PRIMARY KEY ("productid"));
+CREATE TABLE IF NOT EXISTS "total$18" ("__pk_0" VARCHAR NOT NULL,"price" NUMERIC NOT NULL,"discount" NUMERIC NOT NULL,"num" BIGINT NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("__pk_0"));
+>>>query-allcustomers
+{
+  "data" : {
+    "Customer" : [ {
+      "email" : "john.mekker@gmail.com",
+      "name" : "John Mekker",
+      "updatetime" : "1645425649000",
+      "favorite_categories" : [ {
+        "category_name" : "Decoration",
+        "total" : 120.85
+      } ]
+    }, {
+      "email" : "emily.ludies@hotmail.com",
+      "name" : "Emily F. Ludies",
+      "updatetime" : "1650518389000",
+      "favorite_categories" : [ {
+        "category_name" : "Personal Care",
+        "total" : 146.82
+      } ]
+    }, {
+      "email" : "lalelu@hottunes.org",
+      "name" : "Michelle Dagnes",
+      "updatetime" : "1650518649000",
+      "favorite_categories" : [ {
+        "category_name" : "House & Garden",
+        "total" : 166.5
+      } ]
+    }, {
+      "email" : "hotbear753@yahoo.com",
+      "name" : "Mark Spielman",
+      "updatetime" : "1650519649000",
+      "favorite_categories" : [ ]
+    } ]
+  }
+}
+>>>query-customerordertotal
+{
+  "data" : {
+    "Customer" : [ {
+      "email" : "john.mekker@gmail.com",
+      "name" : "John Mekker",
+      "updatetime" : "1645425649000",
+      "orders" : [ {
+        "id" : 10007543,
+        "time" : "1652948979553",
+        "total" : [ {
+          "price" : 120.85,
+          "discount" : 11.5,
+          "num" : 2
+        } ]
+      } ]
+    } ]
+  }
+}
+>>>query-orders
+{
+  "data" : {
+    "orders" : [ {
+      "id" : 10007140,
+      "customerid" : 1000107,
+      "time" : "1652952519553",
+      "entries" : [ {
+        "productid" : 1332,
+        "quantity" : 8,
+        "unit_price" : 8.49,
+        "discount" : 0.0,
+        "total" : 67.92,
+        "product" : [ {
+          "name" : "Heavy Duty Butt Wipes",
+          "description" : "Wipes for hardiest of messes",
+          "category" : "Personal Care"
+        } ]
+      }, {
+        "productid" : 3571,
+        "quantity" : 1,
+        "unit_price" : 41.95,
+        "discount" : 5.0,
+        "total" : 36.95,
+        "product" : [ {
+          "name" : "Poptech Blow 500",
+          "description" : "High powered blowdryer for any hair",
+          "category" : "Personal Care"
+        } ]
+      } ],
+      "total" : [ {
+        "price" : 104.87,
+        "discount" : 5.0,
+        "num" : 2
+      } ]
+    } ]
+  }
+}
+>>>query-promotions
+{
+  "data" : {
+    "NewCustomerPromotion" : [ {
+      "customerid" : 1000121,
+      "email" : "lalelu@hottunes.org",
+      "name" : "Michelle Dagnes",
+      "total_spend" : 166.5,
+      "num_orders" : 1
+    } ]
+  }
+}

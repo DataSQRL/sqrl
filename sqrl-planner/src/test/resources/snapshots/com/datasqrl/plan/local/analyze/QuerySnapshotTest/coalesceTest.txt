@@ -1,0 +1,3 @@
+>>>orders$q$2
+LogicalTableScan(table=[[orders$i$1]])
+

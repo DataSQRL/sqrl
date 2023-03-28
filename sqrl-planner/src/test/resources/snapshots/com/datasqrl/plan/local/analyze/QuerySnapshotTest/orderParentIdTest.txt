@@ -1,0 +1,17 @@
+>>>customer$q$2
+LogicalTableScan(table=[[customer$i$1]])
+
+>>>d$q$11
+LogicalProject(_uuid=[$0], _idx=[$6], id=[$2], time=[$4])
+  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+    LogicalTableScan(table=[[orders$q$5]])
+    Uncollect
+      LogicalProject($f0=[$cor3.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>orders$q$5
+LogicalTableScan(table=[[orders$i$4]])
+
+>>>product$q$9
+LogicalTableScan(table=[[product$i$8]])
+

@@ -1,0 +1,11 @@
+>>>ordered_entries$q$5
+LogicalProject(__pk_0=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], time=[$4])
+  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+    LogicalTableScan(table=[[orders$q$2]])
+    Uncollect
+      LogicalProject($f0=[$cor3.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>orders$q$2
+LogicalTableScan(table=[[orders$i$1]])
+

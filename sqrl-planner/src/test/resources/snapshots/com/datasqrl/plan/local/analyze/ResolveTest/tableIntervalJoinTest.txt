@@ -1,0 +1,24 @@
+>>>ordercustomer$q$11-lp-STREAM
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], time=[$4])
+  LogicalJoin(condition=[AND(=($3, $8), >($4, $7), <=($4, +($7, 2:INTERVAL MONTH)))], joinType=[inner]) hints[IntervalJoin]
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[customer$q$2]])
+
+>>>ordercustomer$q$11-lp-DATABASE
+LogicalProject(_uuid=[$0], _uuid0=[$5], id=[$2], name=[$9], customerid=[$3], time=[$4])
+  LogicalJoin(condition=[AND(=($3, $7), >($4, $6), <=($4, +($6, 2:INTERVAL MONTH)))], joinType=[inner]) hints[IntervalJoin]
+    LogicalTableScan(table=[[orders$6]])
+    LogicalTableScan(table=[[customer$3]])
+
+>>>ordercustomer2$q$13-lp-STREAM
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], time=[$4])
+  LogicalJoin(condition=[AND(=($3, $8), >($4, $7), <=($4, +($7, 2:INTERVAL MONTH)))], joinType=[inner]) hints[IntervalJoin]
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[customer$q$2]])
+
+>>>ordercustomer2$q$13-lp-DATABASE
+LogicalProject(_uuid=[$0], _uuid0=[$5], id=[$2], name=[$9], customerid=[$3], time=[$4])
+  LogicalJoin(condition=[AND(=($3, $7), >($4, $6), <=($4, +($6, 2:INTERVAL MONTH)))], joinType=[inner]) hints[IntervalJoin]
+    LogicalTableScan(table=[[orders$6]])
+    LogicalTableScan(table=[[customer$3]])
+

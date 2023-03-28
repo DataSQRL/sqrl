@@ -1,0 +1,11 @@
+>>>product$q$2
+LogicalTableScan(table=[[product$i$1]])
+
+>>>product2$q$4
+LogicalProject(_uuid=[$0], productid=[$8], productid0=[$2], __timestamp=[CASE(<($1, $7), $7, $1)])
+  LogicalJoin(condition=[true], joinType=[left])
+    LogicalTableScan(table=[[product$q$2]])
+    LogicalTableScan(table=[[product$q$2]])
+
+>>>join-declaration-joinDeclaration
+JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "Product") USING TRUE FETCH 1

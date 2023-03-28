@@ -1,0 +1,12 @@
+>>>example$q$4
+LogicalProject(__pk_0=[$0], example=[$1], __timestamp=[$2])
+  LogicalFilter(condition=[>($1, 10)])
+    LogicalAggregate(group=[{0}], example=[SUM($8)], __timestamp=[MAX($12)])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _uuid0=[$6], _ingest_time0=[$7], productid0=[$8], name0=[$9], description0=[$10], category0=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
+        LogicalJoin(condition=[true], joinType=[inner])
+          LogicalTableScan(table=[[product$q$2]])
+          LogicalTableScan(table=[[product$q$2]])
+
+>>>product$q$2
+LogicalTableScan(table=[[product$i$1]])
+

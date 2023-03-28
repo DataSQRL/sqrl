@@ -1,0 +1,19 @@
+>>>_stats$q$11
+LogicalProject(__pk_0=[$0], total=[$2], total_savings=[$3], total_entries=[$4], time=[$1])
+  LogicalAggregate(group=[{0, 4}], total=[SUM($1)], total_savings=[SUM($2)], total_entries=[COUNT()])
+    LogicalProject(__pk_0=[$0], $f1=[-(*($8, $9), $10)], discount=[$10], _idx=[$6], time=[$4])
+      LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+        LogicalTableScan(table=[[orders$q$5]])
+        Uncollect
+          LogicalProject($f0=[$cor3.entries])
+            LogicalValues(tuples=[[{ 0 }]])
+
+>>>customer$q$2
+LogicalTableScan(table=[[customer$i$1]])
+
+>>>orders$q$5
+LogicalTableScan(table=[[orders$i$4]])
+
+>>>product$q$9
+LogicalTableScan(table=[[product$i$8]])
+

@@ -1,0 +1,3 @@
+>>>orders$q$2-lp-STREAM
+LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+

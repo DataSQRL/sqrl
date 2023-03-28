@@ -1,0 +1,3 @@
+>>>o$q$2
+LogicalTableScan(table=[[o$i$1]])
+
