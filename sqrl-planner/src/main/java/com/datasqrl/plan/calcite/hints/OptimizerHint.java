@@ -21,7 +21,7 @@ public interface OptimizerHint {
   @Value
   public static class Stage implements OptimizerHint.Pipeline {
 
-    public static final String STAGE_PREFIX = "exec_";
+    public static final String HINT_NAME = "exec";
 
     String stageName;
 
@@ -56,13 +56,18 @@ public interface OptimizerHint {
 
   }
 
-  static List<OptimizerHint> fromSqlHint(Optional<SqlNodeList> hints) {
+  static List<OptimizerHint> fromSqlHint(Optional<SqlNodeList> hints, ErrorCollector errors) {
     List<OptimizerHint> optHints = new ArrayList<>();
     if (hints.isPresent()) {
       for (SqlHint hint : Iterables.filter(hints.get().getList(), SqlHint.class)) {
         String hintname = hint.getName().toLowerCase();
-        if (hintname.startsWith(Stage.STAGE_PREFIX)) {
-          optHints.add(new Stage(hintname.substring(Stage.STAGE_PREFIX.length()).trim()));
+        if (hintname.equalsIgnoreCase(Stage.HINT_NAME)) {
+          List<String> options = hint.getOptionList();
+          errors.checkFatal(options!=null && options.size()==1,
+              "Expected a single option for [%s] hint but found: %s", Stage.HINT_NAME, options);
+          optHints.add(new Stage(options.get(0).trim()));
+        } else {
+          errors.fatal("Unrecognized hint: %s", hintname);
         }
       }
     }

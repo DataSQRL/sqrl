@@ -147,11 +147,20 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public void fatal(ErrorLabel label, String msg, Object... args) {
+    RuntimeException exception = exception(label, msg, args);
+    if (abortOnFatal) {
+      throw exception;
+    }
+  }
+
+  public RuntimeException exception(String msg, Object... args) {
+    return exception(ErrorLabel.GENERIC,msg,args);
+  }
+
+  public RuntimeException exception(ErrorLabel label, String msg, Object... args) {
     ErrorMessage errorMessage = new Implementation(label, ErrorMessage.getMessage(msg,args), location, Severity.FATAL);
     addInternal(errorMessage);
-    if (abortOnFatal) {
-      throw new CollectedException(errorMessage.asException());
-    }
+    return new CollectedException(errorMessage.asException());
   }
 
   public void checkFatal(boolean condition, String msg, Object... args) {

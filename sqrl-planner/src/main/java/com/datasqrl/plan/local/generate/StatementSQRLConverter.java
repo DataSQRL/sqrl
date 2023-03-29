@@ -16,7 +16,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.tools.RelBuilder;
 
-public class Converter {
+public class StatementSQRLConverter {
 
   public LPAnalysis convert(SqrlQueryPlanner planner, RelNode relNode, boolean setOriginalFieldnames,
       Namespace ns, Optional<SqlNodeList> hints, ErrorCollector errors) {
@@ -31,11 +31,11 @@ public class Converter {
     return convertToVanillaSQL(ns, relNode, setOriginalFieldnames, planner.createRelBuilder(), hints, errors);
   }
 
-  //Converts SQRL conventions into vanilla SQL
+  //Converts SQRL statements into vanilla SQL
   private LPAnalysis convertToVanillaSQL(Namespace ns, RelNode relNode, boolean setOriginalFieldnames,
       RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
     //Parse all optimizer hints
-    List<OptimizerHint> optimizerHints = OptimizerHint.fromSqlHint(hints);
+    List<OptimizerHint> optimizerHints = OptimizerHint.fromSqlHint(hints, errors);
     SQRLConverter.Config.ConfigBuilder configBuilder = SQRLConverter.Config.builder();
     //Apply only generic optimizer hints (pipeline optimization happens in the DAGPlanner)
     StreamUtil.filterByClass(optimizerHints, OptimizerHint.Generic.class)

@@ -3,6 +3,11 @@
  */
 package com.datasqrl.plan.calcite.rules;
 
+import static com.datasqrl.error.ErrorCode.DISTINCT_ON_TIMESTAMP;
+import static com.datasqrl.error.ErrorCode.NOT_YET_IMPLEMENTED;
+import static com.datasqrl.error.ErrorCode.WRONG_INTERVAL_JOIN;
+import static com.datasqrl.error.ErrorCode.WRONG_TABLE_TYPE;
+
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -114,33 +119,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     this.exec = exec;
   }
 
-//  public static AnnotatedLP findCheapest(NamePath name, RelNode relNode,
-//      Supplier<RelBuilder> relBuilderFactory,
-//      ExecutionPipeline pipeline, Config config) {
-//    AnnotatedLP cheapest = null;
-//    ComputeCost cheapestCost = null;
-//    Map<ExecutionStage, ExecutionStageException> stageExceptions = new HashMap<>();
-//    for (ExecutionStage stage : pipeline.getStages()) {
-//      try {
-//        Config.ConfigBuilder configBuilder = config.copy();
-//        AnnotatedLP alp = convert(relNode, relBuilderFactory,
-//            configBuilder.startStage(stage).build());
-//        ComputeCost cost = SimpleCostModel.of(stage.getEngine().getType(), alp);
-//        if (cheapestCost == null || cost.compareTo(cheapestCost) < 0) {
-//          cheapest = alp;
-//          cheapestCost = cost;
-//        }
-//      } catch (ExecutionStageException e) {
-//        stageExceptions.put(stage, e);
-//      }
-//    }
-//    if (cheapest == null) {
-//      throw new ExecutionStageException.NoStage(name, stageExceptions);
-//    }
-//    return cheapest;
-//  }
-
-
   private RelBuilder makeRelBuilder() {
     RelBuilder rel = relBuilder.transform(config -> config.withPruneInputOfAggregate(false));
     return rel;
@@ -247,8 +225,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       int numColumns, VirtualRelationalTable vtable, Optional<Integer> numRootPks) {
     int targetLength = vtable.getNumColumns();
     PullupOperator.Container pullups = queryTable.getPullups();
-    Preconditions.checkArgument(
-        pullups.getTopN().isEmpty() && pullups.getNowFilter().isEmpty());
+    Preconditions.checkArgument(pullups.getTopN().isEmpty() && pullups.getNowFilter().isEmpty());
 
     //For this stage, data is normalized and we need to re-scan the VirtualRelationalTable
     //because it now has a timestamp at the end
@@ -504,12 +481,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
             isDistinct = true;
           }
         } else if (topNHint.getType() == TopNHint.Type.DISTINCT_ON) {
-          //Partition is the new primary key and the underlying table must be a stream
-          Preconditions.checkArgument(
-              !partition.isEmpty() && LPConverterUtil.getTimestampOrderIndex(collation, timestamp)
-                  .isPresent()
-                  && baseInput.type.isStream(),
-              "Distinct on statement not valid");
+          Preconditions.checkArgument(!partition.isEmpty());
+          Preconditions.checkArgument(!collation.getFieldCollations().isEmpty());
+          errors.checkFatal(LPConverterUtil.getTimestampOrderIndex(collation, timestamp).isPresent(),
+              DISTINCT_ON_TIMESTAMP, "Not a valid timestamp order in ORDER BY clause: %s",
+              rexUtil.getCollationName(collation, baseInput.relNode));
+          errors.checkFatal(baseInput.type.isStream(), WRONG_TABLE_TYPE,
+              "DISTINCT ON statements require stream table as input");
 
           pk = ContinuousIndexMap.builder(partition.size()).addAll(partition).build(targetLength);
           select = ContinuousIndexMap.identity(targetLength, targetLength); //Select everything
@@ -681,7 +659,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     RexNode condition = joinedIndexMap.map(logicalJoin.getCondition());
     exec.requireRex(condition);
     //TODO: pull now() conditions up as a nowFilter and move nested now filters through
-    Preconditions.checkArgument(!FIND_NOW.foundIn(condition),
+    errors.checkFatal(!FIND_NOW.foundIn(condition),
         "now() is not allowed in join conditions");
     SqrlRexUtil.EqualityComparisonDecomposition eqDecomp = rexUtil.decomposeEqualityComparison(
         condition);
@@ -938,10 +916,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         if (!timePredicates.isEmpty()) {
           Set<Integer> timestampIndexes = timePredicates.stream()
               .flatMap(tp -> tp.getIndexes().stream()).collect(Collectors.toSet());
-          Preconditions.checkArgument(timestampIndexes.size() == 2,
+          errors.checkFatal(timestampIndexes.size() == 2, WRONG_INTERVAL_JOIN,
               "Invalid interval condition - more than 2 timestamp columns: %s", condition);
-          Preconditions.checkArgument(
-              timePredicates.stream().filter(TimePredicate::isUpperBound).count() == 1,
+          errors.checkFatal(timePredicates.stream()
+                  .filter(TimePredicate::isUpperBound).count() == 1, WRONG_INTERVAL_JOIN,
               "Expected exactly one upper bound time predicate, but got: %s", condition);
           int upperBoundTimestampIndex = timePredicates.stream().filter(TimePredicate::isUpperBound)
               .findFirst().get().getLargerIndex();
@@ -989,8 +967,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       joinType = JoinRelType.INNER;
     }
 
-    Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT,
-        "Unsupported join type: %s", logicalJoin);
+    errors.checkFatal(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT,
+        NOT_YET_IMPLEMENTED,"Unsupported join type: %s", logicalJoin);
     //Default inner join creates a state table
     relB.join(joinType, condition);
     new JoinCostHint(leftInputF.type, rightInputF.type, eqDecomp.getEqualities().size()).addTo(
@@ -1026,7 +1004,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   public RelNode visit(LogicalUnion logicalUnion) {
-    Preconditions.checkArgument(logicalUnion.all,
+    errors.checkFatal(logicalUnion.all, NOT_YET_IMPLEMENTED,
         "Currently, only UNION ALL is supported. Combine with SELECT DISTINCT for UNION");
 
     List<AnnotatedLP> inputs = logicalUnion.getInputs().stream()
@@ -1047,9 +1025,9 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     List<Integer> selectIndexes = SqrlRexUtil.combineIndexes(pk.targetsAsList(),
         select.targetsAsList());
     List<String> selectNames = Collections.nCopies(maxSelectIdx, null);
-    assert
-        maxSelectIdx == selectIndexes.size() && ContiguousSet.closedOpen(0, maxSelectIdx).asList()
-            .equals(selectIndexes) : maxSelectIdx + " vs " + selectIndexes;
+    assert maxSelectIdx == selectIndexes.size()
+        && ContiguousSet.closedOpen(0, maxSelectIdx).asList().equals(selectIndexes)
+        : maxSelectIdx + " vs " + selectIndexes;
 
         /* Timestamp determination works as follows: First, we collect all candidates that are part of the selected indexes
           and are identical across all inputs. If this set is non-empty, it becomes the new timestamp. Otherwise, we pick
@@ -1058,12 +1036,12 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     Set<Integer> timestampIndexes = inputs.get(0).timestamp.getCandidateIndexes().stream()
         .filter(idx -> idx < maxSelectIdx).collect(Collectors.toSet());
     for (AnnotatedLP input : inputs) {
-      Preconditions.checkArgument(input.type.isStream(),
+      errors.checkFatal(input.type.isStream(), NOT_YET_IMPLEMENTED,
           "Only stream tables can currently be unioned. Union tables before converting them to state.");
       //Validate primary key and selects line up between the streams
-      Preconditions.checkArgument(pk.equals(input.primaryKey),
-          "Input streams have different primary keys");
-      Preconditions.checkArgument(select.equals(input.select),
+      errors.checkFatal(pk.equals(input.primaryKey),
+          "The tables in the union have different primary keys. UNION requires uniform primary keys.");
+      errors.checkFatal(select.equals(input.select),
           "Input streams select different columns");
       timestampIndexes.retainAll(input.timestamp.getCandidateIndexes());
       numRootPks = numRootPks.flatMap(npk -> input.numRootPks.filter(npk2 -> npk.equals(npk2)));
@@ -1104,7 +1082,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     //Need to inline TopN before we aggregate, but we postpone inlining now-filter in case we can push it through
     final AnnotatedLP input = getRelHolder(aggregate.getInput().accept(this))
         .inlineTopN(makeRelBuilder(), exec);
-    Preconditions.checkArgument(aggregate.groupSets.size() == 1,
+    errors.checkFatal(aggregate.groupSets.size() == 1, NOT_YET_IMPLEMENTED,
         "Do not yet support GROUPING SETS.");
     final List<Integer> groupByIdx = aggregate.getGroupSet().asList().stream()
         .map(idx -> input.select.map(idx))
@@ -1125,7 +1103,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     //Check if this is a time-window aggregation (i.e. a roll-up)
     Pair<TimestampHolder.Derived.Candidate, Integer> timeKey;
     if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject
-        && (timeKey = findTimestampInGroupBy(groupByIdx, input.timestamp))!=null) {
+        && (timeKey = findTimestampInGroupBy(groupByIdx, input.timestamp, input.relNode))!=null) {
       return handleTimeWindowAggregation(input, groupByIdx, aggregateCalls, targetLength,
           timeKey.getLeft(), timeKey.getRight());
     }
@@ -1150,9 +1128,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   private List<AggregateCall> mapAggregateCalls(LogicalAggregate aggregate, AnnotatedLP input) {
     List<AggregateCall> aggregateCalls = aggregate.getAggCallList().stream().map(agg -> {
-      Preconditions.checkArgument(agg.getCollation().getFieldCollations().isEmpty(),
-          "Unexpected aggregate call: %s", agg);
-      Preconditions.checkArgument(agg.filterArg < 0, "Unexpected aggregate call: %s", agg);
+      errors.checkFatal(agg.getCollation().getFieldCollations().isEmpty(), NOT_YET_IMPLEMENTED,
+          "Ordering within aggregations is not yet supported: %s", agg);
+      errors.checkFatal(agg.getCollation().getFieldCollations().isEmpty(), NOT_YET_IMPLEMENTED,
+          "Filtering within aggregations is not yet supported: %s", agg);
       return agg.copy(
           agg.getArgList().stream().map(idx -> input.select.map(idx)).collect(Collectors.toList()));
     }).collect(Collectors.toList());
@@ -1184,15 +1163,18 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   }
 
   private Pair<TimestampHolder.Derived.Candidate, Integer> findTimestampInGroupBy(
-      List<Integer> groupByIdx, TimestampHolder.Derived timestamp) {
+      List<Integer> groupByIdx, TimestampHolder.Derived timestamp, RelNode input) {
     //Determine if one of the groupBy keys is a timestamp
     TimestampHolder.Derived.Candidate keyCandidate = null;
     int keyIdx = -1;
     for (int i = 0; i < groupByIdx.size(); i++) {
       int idx = groupByIdx.get(i);
       if (timestamp.isCandidate(idx)) {
-        Preconditions.checkArgument(keyCandidate == null,
-            "Do not currently support aggregating by multiple timestamp columns");
+        if (keyCandidate!=null) {
+          errors.fatal(ErrorCode.NOT_YET_IMPLEMENTED, "Do not currently support grouping by "
+              + "multiple timestamp columns: [%s] and [%s]",
+              rexUtil.getFieldName(idx,input), rexUtil.getFieldName(keyCandidate.getIndex(),input));
+        }
         keyCandidate = timestamp.getCandidateByIndex(idx);
         keyIdx = i;
         assert keyCandidate.getIndex() == idx;
@@ -1209,7 +1191,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     RexNode timeAgg = inputProject.getProjects().get(keyCandidate.getIndex());
     TimeTumbleFunctionCall bucketFct = TimeTumbleFunctionCall.from(timeAgg,
         rexUtil.getBuilder()).orElseThrow(
-        () -> new IllegalArgumentException("Not a valid time aggregation function: " + timeAgg)
+        () -> errors.exception("Not a valid time aggregation function: %s", timeAgg)
     );
 
     //Fix timestamp (if not already fixed)
@@ -1253,8 +1235,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       //Determine timestamp, add to group-By and
       Preconditions.checkArgument(nowFilter.getTimestampIndex() == candidate.getIndex(),
           "Timestamp indexes don't match");
-      Preconditions.checkArgument(!groupByIdx.contains(candidate.getIndex()),
-          "Cannot group on timestamp");
+      errors.checkFatal(!groupByIdx.contains(candidate.getIndex()),
+          "Cannot group on timestamp: %s", rexUtil.getFieldName(candidate.getIndex(), input.relNode));
       RelBuilder relB = makeRelBuilder();
       relB.push(input.relNode);
       Pair<PkAndSelect, TimestampHolder.Derived> addedTimestamp =
@@ -1266,8 +1248,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
       // TODO: extract slide-width from hint
       long slideWidthMs = intervalWidthMs / config.getSlideWindowPanes();
-      Preconditions.checkArgument(slideWidthMs > 0 && slideWidthMs < intervalWidthMs,
-          "Invalid window widths: %s - %s", intervalWidthMs, slideWidthMs);
+      errors.checkFatal(slideWidthMs > 0 && slideWidthMs < intervalWidthMs,
+          "Invalid sliding window widths: %s - %s", intervalWidthMs, slideWidthMs);
       new SlidingAggregationHint(candidate.getIndex(), intervalWidthMs, slideWidthMs).addTo(relB);
 
       TopNConstraint dedup = TopNConstraint.makeDeduplication(pkAndSelect.pk.targetsAsList(),
@@ -1344,8 +1326,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       List<Integer> groupByIdx, List<AggregateCall> aggregateCalls,
       Optional<TimestampAnalysis.MaxTimestamp> maxTimestamp, int targetLength) {
     //Standard aggregation produces a state table
-    Preconditions.checkArgument(input.nowFilter.isEmpty(),
-        "State table cannot have now-filter since there is no timestamp");
+    input = input.inlineNowFilter(makeRelBuilder(), exec);
     RelBuilder relB = makeRelBuilder();
     relB.push(input.relNode);
     TimestampHolder.Derived resultTimestamp;
@@ -1468,7 +1449,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   public RelNode visit(LogicalSort logicalSort) {
-    Preconditions.checkArgument(logicalSort.offset == null, "OFFSET not yet supported");
+    errors.checkFatal(logicalSort.offset == null, NOT_YET_IMPLEMENTED,
+        "OFFSET not yet supported");
     AnnotatedLP input = getRelHolder(logicalSort.getInput().accept(this));
 
     Optional<Integer> limit = getLimit(logicalSort.fetch);

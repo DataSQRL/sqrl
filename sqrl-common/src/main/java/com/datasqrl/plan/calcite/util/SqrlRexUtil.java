@@ -328,5 +328,16 @@ public class SqrlRexUtil {
         List.of(colIdx) , -1, RelCollations.EMPTY, groupCount, input, null, name);
   }
 
+  public String getFieldName(int idx, RelNode relNode) {
+    RelDataType rowType = relNode.getRowType();
+    return rowType.getFieldList().get(idx).getName();
+  }
+
+  public String getCollationName(RelCollation collation, RelNode relNode) {
+    return collation.getFieldCollations().stream()
+        .map(col -> getFieldName(col.getFieldIndex(),relNode) + " " + col.direction.name())
+        .collect(Collectors.joining(","));
+  }
+
 
 }
