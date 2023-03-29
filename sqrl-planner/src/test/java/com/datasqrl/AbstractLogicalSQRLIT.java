@@ -17,12 +17,11 @@ import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.util.DatabaseHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
-
-import java.nio.file.Path;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {
 
@@ -75,4 +74,5 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   protected Namespace plan(String query) {
     return sqrlPlanner.plan(query);
   }
+
 }

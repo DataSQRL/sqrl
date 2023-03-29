@@ -7,9 +7,9 @@ import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.engine.stream.flink.plan.FlinkTableRegistration.FlinkTableRegistrationContext;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
-import com.datasqrl.plan.global.OptimizedDAG.Query;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import java.net.URL;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +33,7 @@ public class FlinkPhysicalPlanner {
 
     //TODO: push down filters across queries to determine if we can constraint sources by time for efficiency (i.e. only load the subset of the stream that is required)
     FlinkTableRegistration tableRegistration = new FlinkTableRegistration();
-    for (OptimizedDAG.Query q : streamQueries) {
+    for (PhysicalDAGPlan.Query q : streamQueries) {
       q.accept(tableRegistration, regContext);
     }
     streamBuilder.getErrorHandler().getErrorStream().ifPresent(errorStream -> tableRegistration.registerErrors(

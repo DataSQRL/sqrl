@@ -11,8 +11,7 @@ import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
-import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APIQuery;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -65,17 +64,14 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
       Map<String, String> queries) {
 
     Namespace ns = plan(script);
-    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
-        ns.getSchema().getPipeline());
 
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
     Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = t
         .getModelAndQueries(planner, schema);
 
-    OptimizedDAG dag = dagPlanner.plan(planner.getSchema(), modelAndQueries.getRight(),
-        ns.getExports(), ns.getJars());
+    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, modelAndQueries.getRight());
 
-    PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
+    PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
 
     RootGraphqlModel model = modelAndQueries.getKey();
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(

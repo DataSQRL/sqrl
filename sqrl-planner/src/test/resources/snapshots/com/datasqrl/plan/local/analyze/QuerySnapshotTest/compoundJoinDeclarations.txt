@@ -1,5 +1,5 @@
 >>>product$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$1]])
 
 >>>join-declaration-joinDeclaration
 JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "Product") USING "@"."productid" = "Product"."productid"

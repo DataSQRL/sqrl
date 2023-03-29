@@ -1,9 +1,9 @@
 >>>customer$q$9
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[customer$i$8]])
 
 >>>orders$q$5
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[orders$i$4]])
 
 >>>product$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$1]])
 

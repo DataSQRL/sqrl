@@ -3,9 +3,7 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import static com.datasqrl.engine.EngineCapability.GLOBAL_SORT;
-import static com.datasqrl.engine.EngineCapability.MULTI_RANK;
-import static com.datasqrl.engine.EngineCapability.NOW;
+import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -18,8 +16,8 @@ import com.datasqrl.engine.database.relational.dialect.JdbcDDLServiceLoader;
 import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexSelectorConfig;
-import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -27,7 +25,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,8 +47,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   final JDBCEngineConfiguration config;
 
   public JDBCEngine(JDBCEngineConfiguration configuration) {
-    super(JDBCEngineConfiguration.ENGINE_NAME, Type.DATABASE,
-        EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK));
+    super(JDBCEngineConfiguration.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
 //        CAPABILITIES_BY_DIALECT.get(configuration.getDialect()));
     this.config = configuration;
   }
@@ -92,7 +88,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   }
 
   @Override
-  public EnginePhysicalPlan plan(OptimizedDAG.StagePlan plan, List<OptimizedDAG.StageSink> inputs,
+  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink) {
 
     JdbcDDLFactory factory =

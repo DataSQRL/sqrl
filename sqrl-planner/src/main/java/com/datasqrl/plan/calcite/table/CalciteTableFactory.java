@@ -3,8 +3,6 @@
  */
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
@@ -13,9 +11,8 @@ import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
 import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
-import com.datasqrl.plan.calcite.table.StreamRelationalTableImpl.BaseRelationMeta;
+import com.datasqrl.plan.calcite.rules.LPAnalysis;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
-import com.datasqrl.plan.calcite.util.CalciteUtil.RelDataTypeBuilder;
 import com.datasqrl.plan.calcite.util.ContinuousIndexMap;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.plan.local.generate.Namespace;
@@ -29,8 +26,6 @@ import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.HashMap;
@@ -39,13 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.StreamType;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -77,17 +70,16 @@ public class CalciteTableFactory {
     return Integer.parseInt(tableId.substring(idx + 1));
   }
 
-  public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias,
-      ExecutionPipeline pipeline, RelBuilder relBuilder) {
+  public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias) {
     UniversalTable rootTable = tableSource.getSchema().getSchema()
         .createUniversalTable(tableSource.hasSourceTimestamp(), tblAlias);
     RelDataType rootType = convertTable(rootTable, true, true);
+    //Currently, we only support imports through the stream engine
     ImportedRelationalTableImpl source = new ImportedRelationalTableImpl(
         getTableId(rootTable.getName(), "i"), rootType, tableSource);
     ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(
-        getTableId(rootTable.getName(), "q"), getTimestampHolder(rootTable),
-        relBuilder.values(rootType).build(), source,
-        pipeline.getStage(ExecutionEngine.Type.STREAM).get(),
+        getTableId(rootTable.getName(), "q"), rootTable.getName(),
+        getTimestampHolder(rootTable), rootType, source,
         TableStatistic.of(1000));
 
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable,
@@ -95,50 +87,13 @@ public class CalciteTableFactory {
     return new ScriptTableDefinition(impTable, tables);
   }
 
-  public ScriptTableDefinition defineStreamTable(NamePath tablePath, AnnotatedLP baseRel,
-      StateChangeType changeType,
-      RelBuilder relBuilder, ExecutionPipeline pipeline) {
-    Preconditions.checkArgument(baseRel.type != TableType.STREAM,
-        "Underlying table is already a stream");
-    Name tableName = tablePath.getLast();
-
-    StreamRelationalTableImpl.BaseRelationMeta baseRelMeta = new BaseRelationMeta(baseRel);
-
-    //Build the RelDataType for just the selected fields which is the result of the stream
-    RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(relBuilder.getTypeFactory());
-    List<RelDataTypeField> baseRelFields = baseRel.getRelNode().getRowType().getFieldList();
-    List<RelDataTypeField> selectFields = Arrays.stream(baseRelMeta.getSelectIdx())
-            .mapToObj(idx -> baseRelFields.get(idx)).collect(Collectors.toList());
-    typeBuilder.addAll(selectFields);
-    RelDataType streamType = typeBuilder.build();
-
-    UniversalTable rootTable = convertStream2TableBuilder(tablePath, streamType,
-        baseRelMeta.hasTimestamp());
-    RelDataType rootType = convertTable(rootTable, true, true);
-    StreamRelationalTableImpl source = new StreamRelationalTableImpl(getTableId(tableName, "s"),
-        baseRel.getRelNode(), rootType, baseRelMeta, rootTable, changeType);
-    TableStatistic statistic = TableStatistic.of(baseRel.estimateRowCount());
-    ProxyStreamRelationalTable impTable = new ProxyStreamRelationalTable(getTableId(tableName, "q"),
-        getTimestampHolder(rootTable), relBuilder.values(rootType).build(), source,
-        pipeline.getStage(ExecutionEngine.Type.STREAM).get(), statistic);
-
-    Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable,
-        Optional.empty());
-    return new ScriptTableDefinition(impTable, tables);
-  }
-
-  public ScriptTableDefinition defineTable(NamePath tablePath, AnnotatedLP rel,
+  public ScriptTableDefinition defineTable(NamePath tablePath, LPAnalysis analyzedLP,
       List<Name> fieldNames, Optional<SQRLTable> parentTable) {
-    ContinuousIndexMap selectMap = rel.getSelect();
+    ContinuousIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
     Name tableid = getTableId(tablePath.getLast(), "q");
-    TimestampHolder.Base timestamp = TimestampHolder.Base.ofDerived(rel.getTimestamp());
-    TableStatistic statistic = TableStatistic.of(rel.estimateRowCount());
-    QueryRelationalTable baseTable = new QueryRelationalTable(tableid, rel.getType(),
-        rel.getRelNode(), rel.getPullups(), timestamp,
-        rel.getPrimaryKey().getSourceLength(), statistic,
-        rel.getExec().getStage());
+    ScriptRelationalTable baseTable = new QueryRelationalTable(tableid, tablePath.getLast(), analyzedLP);
 
     LinkedHashMap<Integer, Name> index2Name = new LinkedHashMap<>();
     for (int i = 0; i < fieldNames.size(); i++) {
@@ -161,9 +116,9 @@ public class CalciteTableFactory {
   }
 
   private static final Map<Name, Integer> defaultTimestampPreference = ImmutableMap.of(
-      ReservedName.SOURCE_TIME, 6,
+      ReservedName.SOURCE_TIME, 20,
       ReservedName.INGEST_TIME, 3,
-      Name.system("timestamp"), 20,
+      Name.system("timestamp"), 10,
       Name.system("time"), 8);
 
   protected static int getTimestampScore(Name columnName) {
@@ -199,15 +154,8 @@ public class CalciteTableFactory {
     return converter.convert(path, type, index2Name);
   }
 
-  public UniversalTable convertStream2TableBuilder(@NonNull NamePath path,
-      RelDataType type, boolean hasTimestamp) {
-    RelDataType2UTBConverter converter = new RelDataType2UTBConverter(
-        new UniversalTable.ImportFactory(typeFactory, false, hasTimestamp), canonicalizer);
-    return converter.convert(path, type, null);
-  }
-
   public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTable rootTable,
-      QueryRelationalTable baseTable,
+      ScriptRelationalTable baseTable,
       Optional<Pair<SQRLTable, Multiplicity>> parent) {
     return build(rootTable, new VirtualTableConstructor(baseTable), parent);
   }
@@ -260,7 +208,7 @@ public class CalciteTableFactory {
   @Value
   private final class VirtualTableConstructor {
 
-    QueryRelationalTable baseTable;
+    ScriptRelationalTable baseTable;
 
     public VirtualRelationalTable make(@NonNull UniversalTable tblBuilder) {
       RelDataType rowType = convertTable(tblBuilder, false, false);
@@ -344,28 +292,20 @@ public class CalciteTableFactory {
         Relationship.JoinType.CHILD, multiplicity, Optional.empty());
   }
 
-  public NamespaceObject createTable(SqrlQueryPlanner planner, Namespace ns, NamePath namePath, AnnotatedLP processedRel,
-      Optional<StreamType> subscriptionType, Optional<SQRLTable> parentTable) {
+  public NamespaceObject createTable(SqrlQueryPlanner planner, Namespace ns, NamePath namePath, LPAnalysis analyzedLP,
+      Optional<SQRLTable> parentTable) {
     return new SqrlTableNamespaceObject(namePath.getLast(),
-        createScriptDef(planner, ns, namePath, processedRel, subscriptionType, parentTable));
+        createScriptDef(planner, ns, namePath, analyzedLP, parentTable));
   }
 
   public ScriptTableDefinition createScriptDef(SqrlQueryPlanner planner, Namespace ns, NamePath namePath,
-      AnnotatedLP processedRel, Optional<StreamType> subscriptionType,
-      Optional<SQRLTable> parentTable) {
+      LPAnalysis analyzedLP, Optional<SQRLTable> parentTable) {
+    AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
         .map(idx -> relFieldNames.get(idx))
         .map(n -> Name.system(n)).collect(Collectors.toList());
 
-    if (subscriptionType.isPresent()) {
-      return defineStreamTable(namePath,
-          processedRel,
-          StateChangeType.valueOf(subscriptionType.get().name()),
-          planner.createRelBuilder(), ns.getSchema().getPipeline());
-    } else {
-      return defineTable(namePath,
-          processedRel, fieldNames, parentTable);
-    }
+    return defineTable(namePath, analyzedLP, fieldNames, parentTable);
   }
 }

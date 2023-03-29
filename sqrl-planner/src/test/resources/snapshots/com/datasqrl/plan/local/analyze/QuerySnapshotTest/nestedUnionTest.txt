@@ -5,5 +5,5 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], descrip
     LogicalTableScan(table=[[product$q$2]])
 
 >>>product$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$1]])
 

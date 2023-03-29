@@ -1,5 +1,5 @@
 >>>product$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$1]])
 
 >>>product2$q$4
 LogicalProject(productid=[$2], _ingest_time=[$1])

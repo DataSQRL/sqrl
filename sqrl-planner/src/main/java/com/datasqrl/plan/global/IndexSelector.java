@@ -3,16 +3,26 @@
  */
 package com.datasqrl.plan.global;
 
+import static com.datasqrl.plan.calcite.OptimizationStage.READ_QUERY_OPTIMIZATION;
+
+import com.datasqrl.plan.calcite.OptimizationStage;
 import com.datasqrl.plan.calcite.RelStageRunner;
 import com.datasqrl.plan.calcite.SqrlPlannerConfigFactory;
-import com.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import com.datasqrl.util.ArrayUtil;
-import com.datasqrl.plan.calcite.OptimizationStage;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.SqrlRexUtil;
+import com.datasqrl.util.ArrayUtil;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.primitives.Ints;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
@@ -28,12 +38,6 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.commons.math3.util.Precision;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.datasqrl.plan.calcite.OptimizationStage.READ_QUERY_OPTIMIZATION;
-
 @AllArgsConstructor
 public class IndexSelector {
 
@@ -42,7 +46,7 @@ public class IndexSelector {
   private final RelOptPlanner planner;
   private final IndexSelectorConfig config;
 
-  public List<IndexCall> getIndexSelection(OptimizedDAG.ReadQuery query) {
+  public List<IndexCall> getIndexSelection(PhysicalDAGPlan.ReadQuery query) {
     RelNode optimized = RelStageRunner.runStage(READ_QUERY_OPTIMIZATION, query.getRelNode(), planner);
 //        System.out.println(optimized.explain());
     IndexFinder indexFinder = new IndexFinder();

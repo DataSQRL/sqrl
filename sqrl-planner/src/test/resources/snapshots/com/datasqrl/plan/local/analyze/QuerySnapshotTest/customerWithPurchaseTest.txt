@@ -1,5 +1,5 @@
 >>>customer$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[customer$i$1]])
 
 >>>customerwithpurchase$q$11
 LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5])
@@ -14,8 +14,8 @@ LogicalProject(customerid=[$14])
     LogicalTableScan(table=[[customer$q$2]])
 
 >>>orders$q$5
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[orders$i$4]])
 
 >>>product$q$9
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$8]])
 

@@ -32,7 +32,7 @@ public interface SqrlHint {
       return ((Hintable) node).getHints().stream()
           .filter(h -> hintConstructor.validName(h.hintName))
           .filter(
-              h -> h.inheritPath.isEmpty()) //we only want the hint on that particular join, not inherited ones
+              h -> h.inheritPath.isEmpty()) //we only want the hint on that particular node, not inherited ones
           .findFirst().map(hintConstructor::fromHint);
     }
     return Optional.empty();

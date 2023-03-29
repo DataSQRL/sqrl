@@ -1,12 +1,12 @@
 >>>orders$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[orders$i$1]])
 
 >>>x$q$5
 LogicalProject(gp=[$0], min_price=[$2], time=[$1])
   LogicalAggregate(group=[{0, 4}], min_price=[MIN($9)])
-    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+    LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$2]])
       Uncollect
-        LogicalProject($f0=[$cor1.entries])
+        LogicalProject($f0=[$cor3.entries])
           LogicalValues(tuples=[[{ 0 }]])
 

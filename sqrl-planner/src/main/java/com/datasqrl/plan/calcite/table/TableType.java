@@ -3,14 +3,28 @@
  */
 package com.datasqrl.plan.calcite.table;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public enum TableType {
-  STREAM, //a stream of records with synthetic (i.e. uuid) primary key ordered by timestamp
-  TEMPORAL_STATE, //table with natural primary key that ensures uniqueness and timestamp for
+  STREAM(true), //a stream of records with synthetic (i.e. uuid) primary key ordered by timestamp
+  DEDUP_STREAM(false), //table with natural primary key that ensures uniqueness and timestamp for
   // change-stream
-  STATE; //table with natural primary key that ensures uniqueness but no timestamp (i.e.
+  STATE(false); //table with natural primary key that ensures uniqueness but no timestamp (i.e.
   // represents timeless state)
 
+  private final boolean isStream;
+
   public boolean hasTimestamp() {
-    return this != STATE;
+    return true;
   }
+
+  public boolean isStream() {
+    return isStream;
+  }
+
+  public boolean isState() {
+    return !isStream;
+  }
+
 }

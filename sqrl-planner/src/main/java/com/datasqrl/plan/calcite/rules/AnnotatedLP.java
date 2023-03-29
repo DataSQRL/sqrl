@@ -4,11 +4,9 @@
 package com.datasqrl.plan.calcite.rules;
 
 import com.datasqrl.engine.EngineCapability;
-import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.calcite.hints.DedupHint;
 import com.datasqrl.plan.calcite.table.NowFilter;
 import com.datasqrl.plan.calcite.table.PullupOperator;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
 import com.datasqrl.plan.calcite.table.SortOrder;
 import com.datasqrl.plan.calcite.table.TableType;
 import com.datasqrl.plan.calcite.table.TimestampHolder;
@@ -35,7 +33,6 @@ import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -63,9 +60,6 @@ public class AnnotatedLP implements RelHolder {
   public TimestampHolder.Derived timestamp;
   @NonNull
   public ContinuousIndexMap select;
-  @NonNull
-  public ExecutionStage stage;
-
   @Builder.Default
   public List<JoinTable> joinTables = null;
   @Builder.Default
@@ -89,17 +83,17 @@ public class AnnotatedLP implements RelHolder {
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
       ContinuousIndexMap primaryKey,
       TimestampHolder.Derived timestamp, ContinuousIndexMap select,
-      ExecutionAnalysis exec, AnnotatedLP input) {
-    return build(relNode, type, primaryKey, timestamp, select, exec, List.of(input));
+      AnnotatedLP input) {
+    return build(relNode, type, primaryKey, timestamp, select, List.of(input));
   }
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
       ContinuousIndexMap primaryKey,
       TimestampHolder.Derived timestamp, ContinuousIndexMap select,
-      ExecutionAnalysis exec, List<AnnotatedLP> inputs) {
+      List<AnnotatedLP> inputs) {
     return AnnotatedLP.builder().relNode(relNode).type(type).primaryKey(primaryKey)
         .timestamp(timestamp)
-        .select(select).stage(exec.getStage()).inputs(inputs);
+        .select(select).inputs(inputs);
   }
 
   public AnnotatedLPBuilder copy() {
@@ -111,7 +105,6 @@ public class AnnotatedLP implements RelHolder {
     builder.select(select);
     builder.joinTables(joinTables);
     builder.numRootPks(numRootPks);
-    builder.stage(stage);
     builder.nowFilter(nowFilter);
     builder.topN(topN);
     builder.sort(sort);
@@ -119,21 +112,8 @@ public class AnnotatedLP implements RelHolder {
     return builder;
   }
 
-  public static AnnotatedLP ofScan(QueryRelationalTable table, TableScan scan) {
-    int numCols = table.getNumColumns();
-    return AnnotatedLP.builder().relNode(scan).type(table.getType())
-        .primaryKey(ContinuousIndexMap.identity(table.getNumPrimaryKeys(), numCols))
-        .timestamp(table.getTimestamp().getDerived())
-        .select(ContinuousIndexMap.identity(numCols, numCols))
-        .stage(table.getExecution()).build();
-  }
-
   public int getFieldLength() {
     return relNode.getRowType().getFieldCount();
-  }
-
-  public ExecutionAnalysis getExec() {
-    return ExecutionAnalysis.of(this);
   }
 
   /**
@@ -142,19 +122,18 @@ public class AnnotatedLP implements RelHolder {
    *
    * @return
    */
-  public AnnotatedLP inlineTopN(RelBuilder relBuilder) {
+  public AnnotatedLP inlineTopN(RelBuilder relBuilder, ExecutionAnalysis exec) {
     if (topN.isEmpty()) {
       return this;
     }
     if (!nowFilter.isEmpty()) {
-      return inlineNowFilter(relBuilder).inlineTopN(relBuilder);
+      return inlineNowFilter(relBuilder, exec).inlineTopN(relBuilder, exec);
     }
 
     Preconditions.checkArgument(nowFilter.isEmpty());
 
     relBuilder.push(relNode);
 
-    ExecutionAnalysis newExec = getExec();
     SortOrder newSort = sort;
     if (!topN.isDeduplication() && !topN.isDistinct() && (!topN.hasPartition() || !topN.hasLimit())) {
       RelCollation collation = topN.getCollation();
@@ -163,12 +142,11 @@ public class AnnotatedLP implements RelHolder {
           relBuilder.sort(collation);
         }
         relBuilder.limit(0, topN.getLimit());
-        newExec = newExec.require(EngineCapability.GLOBAL_SORT);
+        exec.require(EngineCapability.GLOBAL_SORT);
       } else { //Lift up sort and prepend partition (if any)
         newSort = newSort.ifEmpty(SortOrder.of(topN.getPartition(), collation));
       }
-      return AnnotatedLP.build(relBuilder.build(), type, primaryKey, timestamp, select, newExec,
-              this)
+      return AnnotatedLP.build(relBuilder.build(), type, primaryKey, timestamp, select, this)
           .sort(newSort).build();
     } else { //distinct or (hasPartition and hasLimit)
       final RelDataType inputType = relBuilder.peek().getRowType();
@@ -227,7 +205,7 @@ public class AnnotatedLP implements RelHolder {
               fieldCollations));
           projectNames.add(null);
         }
-        newExec = newExec.require(EngineCapability.MULTI_RANK);
+        exec.require(EngineCapability.MULTI_RANK);
       }
 
       relBuilder.project(projects, projectNames);
@@ -262,40 +240,40 @@ public class AnnotatedLP implements RelHolder {
       if (topN.isDeduplication()) { //Add hint for physical plan analysis
         DedupHint.of().addTo(relBuilder);
       }
-      return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, newExec, this)
+      return AnnotatedLP.build(relBuilder.build(), type, newPk, timestamp, newSelect, this)
           .sort(newSort).build();
     }
   }
 
-  public AnnotatedLP inlineNowFilter(RelBuilder relB) {
+  public AnnotatedLP inlineNowFilter(RelBuilder relB, ExecutionAnalysis exec) {
     if (nowFilter.isEmpty()) {
       return this;
     }
+    exec.require(EngineCapability.NOW);
     nowFilter.addFilterTo(relB.push(relNode));
     return copy().relNode(relB.build())
-        .stage(getExec().require(EngineCapability.NOW).getStage())
         .nowFilter(NowFilter.EMPTY).build();
 
   }
 
-  public AnnotatedLP inlineSort(RelBuilder relB) {
+  public AnnotatedLP inlineSort(RelBuilder relB, ExecutionAnalysis exec) {
     if (sort.isEmpty()) {
       return this;
     }
     //Need to inline now-filter and topN first
     if (!nowFilter.isEmpty()) {
-      return inlineNowFilter(relB).inlineSort(relB);
+      return inlineNowFilter(relB, exec).inlineSort(relB, exec);
     }
     if (!topN.isEmpty()) {
-      return inlineTopN(relB).inlineSort(relB);
+      return inlineTopN(relB, exec).inlineSort(relB, exec);
     }
+    exec.require(EngineCapability.GLOBAL_SORT);
     sort.addTo(relB.push(relNode));
     return copy().relNode(relB.build())
-        .stage(getExec().require(EngineCapability.GLOBAL_SORT).getStage())
         .sort(SortOrder.EMPTY).build();
   }
 
-  private AnnotatedLP dropSort() {
+  public AnnotatedLP dropSort() {
     return copy().sort(SortOrder.EMPTY).build();
   }
 
@@ -319,7 +297,7 @@ public class AnnotatedLP implements RelHolder {
   public SortOrder getDefaultOrder(AnnotatedLP alp) {
     //If stream, timestamp first then pk, otherwise just pk
     List<RelFieldCollation> collations = new ArrayList<>();
-    if (alp.getType() == TableType.STREAM && alp.getTimestamp().hasFixedTimestamp()) {
+    if (alp.getType().isStream() && alp.getTimestamp().hasFixedTimestamp()) {
       collations.add(new RelFieldCollation(alp.getTimestamp().getTimestampCandidate().getIndex(),
           RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
     }
@@ -335,14 +313,18 @@ public class AnnotatedLP implements RelHolder {
    *
    * @return
    */
-  public AnnotatedLP postProcess(RelBuilder relBuilder, List<String> fieldNames) {
+  public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, List<String> fieldNames,
+      ExecutionAnalysis exec) {
+    if (fieldNames == null) { //Use existing fieldnames
+      fieldNames = Collections.nCopies(select.getSourceLength(), null);
+    }
     Preconditions.checkArgument(fieldNames.size() == select.getSourceLength());
     List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
     AnnotatedLP input = this;
     if (!topN.isEmpty() && //If any selected field is nested we have to inline topN
         select.targetsAsList().stream().map(fields::get).map(RelDataTypeField::getType)
             .anyMatch(CalciteUtil::isNestedTable)) {
-      input = input.inlineTopN(relBuilder);
+      input = input.inlineTopN(relBuilder, exec);
     }
     HashMap<Integer, Integer> remapping = new HashMap<>();
     int index = 0;
@@ -361,11 +343,24 @@ public class AnnotatedLP implements RelHolder {
         remapping.put(target, index++);
       }
     }
-    for (TimestampHolder.Candidate c : input.timestamp.getCandidates()) {
-      if (!remapping.containsKey(c.getIndex())) {
-        remapping.put(c.getIndex(), index++);
+
+    //Determine which timestamp candidates have already been mapped and map the candidates accordingly
+    List<TimestampHolder.Derived.Candidate> candidates = new ArrayList<>();
+    for (TimestampHolder.Derived.Candidate c : input.timestamp.getCandidates()) {
+      Integer mappedIndex;
+      if ((mappedIndex = remapping.get(c.getIndex()))!=null) {
+        candidates.add(c.withIndex(mappedIndex));
       }
     }
+    if (candidates.isEmpty()) {
+      //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
+      TimestampHolder.Derived.Candidate bestCandidate = input.timestamp.getBestCandidate();
+      int nextIndex = index++;
+      remapping.put(bestCandidate.getIndex(), nextIndex);
+      candidates.add(bestCandidate.withIndex(nextIndex));
+    }
+
+    //Make sure we preserve sort orders if they aren't selected
     for (RelFieldCollation fieldcol : input.sort.getCollation().getFieldCollations()) {
       if (!remapping.containsKey(fieldcol.getFieldIndex())) {
         remapping.put(fieldcol.getFieldIndex(), index++);
@@ -385,7 +380,7 @@ public class AnnotatedLP implements RelHolder {
     if (addedPk) {
       primaryKey = ContinuousIndexMap.identity(1, projectLength);
       projects.add(0, relBuilder.literal(1));
-      updatedFieldNames.set(0, SQRLLogicalPlanConverter.DEFAULT_PRIMARY_KEY_COLUMN_NAME);
+      updatedFieldNames.set(0, SQRLLogicalPlanRewriter.DEFAULT_PRIMARY_KEY_COLUMN_NAME);
     }
     RelDataType rowType = input.relNode.getRowType();
     remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(), e.getValue()))
@@ -401,22 +396,12 @@ public class AnnotatedLP implements RelHolder {
     RelNode relNode = relBuilder.build();
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
-        input.timestamp.remapIndexes(remap), updatedSelect, input.getStage(), null,
+        input.timestamp.restrictTo(candidates), updatedSelect,null,
         input.numRootPks,
         input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap),
         List.of(this));
   }
 
-  public AnnotatedLP postProcess(RelBuilder relBuilder) {
-    return postProcess(relBuilder, Collections.nCopies(select.getSourceLength(), null));
-  }
-
-  public AnnotatedLP postProcessStream(RelBuilder relBuilder, List<String> fieldNames) {
-    AnnotatedLP input = this;
-    input = input.dropSort().inlineNowFilter(relBuilder).inlineTopN(relBuilder); //for streams, we ignore sorts
-
-    return input.postProcess(relBuilder, fieldNames);
-  }
 
   public double estimateRowCount() {
     final RelMetadataQuery mq = relNode.getCluster().getMetadataQuery();

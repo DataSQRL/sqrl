@@ -5,15 +5,13 @@ package com.datasqrl.flink.connector.jdbc.dialect.h2;
 
 import com.datasqrl.engine.database.relational.ddl.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.CreateTableDDL;
-import com.datasqrl.engine.database.relational.ddl.DropIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.dialect.JdbcDDLFactory;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;

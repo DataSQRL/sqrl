@@ -1,11 +1,11 @@
 >>>newproduct$q$4
-LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$7], productid=[$8], name=[$9], description=[$10], category=[$11])
+LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$7], productid=[$8], name=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
   LogicalJoin(condition=[=($2, $8)], joinType=[inner])
-    LogicalTableScan(table=[[product$3]])
-    LogicalTableScan(table=[[product$3]])
+    LogicalTableScan(table=[[product$q$2]])
+    LogicalTableScan(table=[[product$q$2]])
 
 >>>product$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$1]])
 
 >>>join-declaration-joinDeclaration
 JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "Product") USING "@"."productid" = "Product"."productid"

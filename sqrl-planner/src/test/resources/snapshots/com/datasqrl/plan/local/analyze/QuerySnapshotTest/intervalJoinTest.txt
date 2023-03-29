@@ -1,8 +1,8 @@
 >>>orders$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[orders$i$1]])
 
 >>>product$q$6
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$5]])
 
 >>>x$q$8
 LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _ingest_time0=[$7], id=[$8], customerid=[$9], time=[$10])

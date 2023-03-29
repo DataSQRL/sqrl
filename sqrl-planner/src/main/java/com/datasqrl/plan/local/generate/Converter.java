@@ -1,22 +1,25 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.name.Name;
 import com.datasqrl.plan.calcite.OptimizationStage;
-import com.datasqrl.plan.calcite.hints.ExecutionHint;
+import com.datasqrl.plan.calcite.hints.OptimizerHint;
 import com.datasqrl.plan.calcite.rules.AnnotatedLP;
-import com.datasqrl.plan.calcite.rules.SQRLLogicalPlanConverter;
-import com.google.common.base.Preconditions;
+import com.datasqrl.plan.calcite.rules.IdealExecutionStage;
+import com.datasqrl.plan.calcite.rules.LPAnalysis;
+import com.datasqrl.plan.calcite.rules.SQRLConverter;
+import com.datasqrl.plan.calcite.rules.SQRLConverter.Config;
+import com.datasqrl.util.StreamUtil;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.tools.RelBuilder;
 
 public class Converter {
 
-  public AnnotatedLP convert(SqrlQueryPlanner planner, RelNode relNode, Namespace ns, boolean isStream,
-      Optional<SqlNodeList> hints, ErrorCollector errors) {
+  public LPAnalysis convert(SqrlQueryPlanner planner, RelNode relNode, boolean setOriginalFieldnames,
+      Namespace ns, Optional<SqlNodeList> hints, ErrorCollector errors) {
 //    List<String> fieldNames = new ArrayList<>(relNode.getRowType().getFieldNames());
 
     //Push filters into joins so we can correctly identify self-joins
@@ -25,36 +28,31 @@ public class Converter {
     //Convert all special SQRL conventions into vanilla SQL and remove self-joins
     //(including nested self-joins) as well as infer primary keys, table types, and
     //timestamps in the process
-    AnnotatedLP prel = convertToVanillaSQL(ns, relNode, planner.createRelBuilder(), isStream, hints, errors);
-
-    return prel;
+    return convertToVanillaSQL(ns, relNode, setOriginalFieldnames, planner.createRelBuilder(), hints, errors);
   }
 
   //Converts SQRL conventions into vanilla SQL
-  private AnnotatedLP convertToVanillaSQL(Namespace ns, RelNode relNode, RelBuilder relBuilder,
-      boolean isStream, Optional<SqlNodeList> hints, ErrorCollector errors) {
-    final SQRLLogicalPlanConverter.Config.ConfigBuilder configBuilder = SQRLLogicalPlanConverter.Config.builder();
-    Optional<ExecutionHint> execHint = ExecutionHint.fromSqlHint(hints);
-    if (isStream) {
-      Preconditions.checkArgument(
-          !execHint.filter(h -> h.getExecType() != ExecutionEngine.Type.STREAM).isPresent(),
-          "Invalid execution hint: %s", execHint);
-      if (execHint.isEmpty()) {
-        execHint = Optional.of(new ExecutionHint(ExecutionEngine.Type.STREAM));
-      }
-    }
-    execHint.map(h -> h.getConfig(ns.getSchema().getPipeline(), configBuilder));
-    SQRLLogicalPlanConverter.Config config = configBuilder.build();
+  private LPAnalysis convertToVanillaSQL(Namespace ns, RelNode relNode, boolean setOriginalFieldnames,
+      RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
+    //Parse all optimizer hints
+    List<OptimizerHint> optimizerHints = OptimizerHint.fromSqlHint(hints);
+    SQRLConverter.Config.ConfigBuilder configBuilder = SQRLConverter.Config.builder();
+    //Apply only generic optimizer hints (pipeline optimization happens in the DAGPlanner)
+    StreamUtil.filterByClass(optimizerHints, OptimizerHint.Generic.class)
+        .forEach(h -> h.add2Config(configBuilder, errors));
+    //Capture stages
+    List<OptimizerHint.Stage> configuredStages = StreamUtil.filterByClass(optimizerHints,
+        OptimizerHint.Stage.class).collect(Collectors.toList());
+    configBuilder.setOriginalFieldnames(setOriginalFieldnames);
+    Config baseConfig = configBuilder.build();
 
-    try {
-      if (config.getStartStage() != null) {
-        return SQRLLogicalPlanConverter.convert(relNode, () -> relBuilder, config);
-      } else {
-        return SQRLLogicalPlanConverter.findCheapest(Name.system("/*lp table*/").toNamePath(),
-            relNode,  () -> relBuilder, ns.getSchema().getPipeline(), config);
-      }
-    } catch (Throwable e) {
-      throw errors.handle(e);
-    }
+    //Config for original construction without a specific stage
+    configBuilder.stage(IdealExecutionStage.INSTANCE);
+    configBuilder.addTimestamp2NormalizedChildTable(false);
+    Config config = configBuilder.build();
+
+    SQRLConverter sqrlConverter = new SQRLConverter(relBuilder);
+    AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
+    return new LPAnalysis(relNode, alp, configuredStages, baseConfig);
   }
 }

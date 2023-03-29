@@ -1,6 +1,12 @@
->>>orders-lp
+>>>orders$q$11-lp-STREAM
 LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], customerid=[$3], time=[$4], entries=[$5])
   LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[orders$q$5]])
+
+>>>orders$q$11-lp-DATABASE
+LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], customerid=[$3], time=[$4])
+  LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], $f5=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
+      LogicalTableScan(table=[[orders$6]])
 

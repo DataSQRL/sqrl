@@ -3,92 +3,82 @@
  */
 package com.datasqrl.plan.calcite.rules;
 
+import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import com.datasqrl.engine.EngineCapability;
-import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexVisitorImpl;
-import org.apache.commons.collections.ListUtils;
-
-import java.util.*;
 
 @Value
 public class ExecutionAnalysis {
 
-  ExecutionStage stage;
-  List<AnnotatedLP> inputs;
+  @NonNull ExecutionStage stage;
 
-  public static ExecutionAnalysis of(AnnotatedLP alp) {
-    return new ExecutionAnalysis(alp.getStage(), List.of(alp));
+
+  public static ExecutionAnalysis of(@NonNull ExecutionStage stage) {
+    return new ExecutionAnalysis(stage);
   }
 
-  public static ExecutionAnalysis start(ExecutionStage start) {
-    return new ExecutionAnalysis(start, List.of());
+  public void require(EngineCapability... requiredCapabilities) {
+    require(Arrays.asList(requiredCapabilities));
   }
 
-  public ExecutionStage getStage() {
-    return stage;
+  public boolean isMaterialize(ScriptRelationalTable sourceTable) {
+    //check if this is a stage transition and the result stage supports materialization on key
+    return sourceTable.getAssignedStage().map(s -> !s.equals(stage)).orElse(false)
+        && supports(EngineCapability.MATERIALIZE_ON_KEY);
   }
 
-  public boolean isMaterialize(ExecutionAnalysis from) {
-    return stage.isMaterialize(from.stage);
+  public boolean supports(EngineCapability... capabilities) {
+    return stage.supportsAll(Arrays.asList(capabilities));
   }
 
-  public ExecutionAnalysis combine(ExecutionAnalysis other) {
-    List<AnnotatedLP> inputs = ListUtils.union(this.inputs, other.inputs);
-    ExecutionStage resultStage;
-    if (stage.equals(other.stage)) {
-      resultStage = stage;
-    } else {
-      Optional<ExecutionStage> next = stage.nextStage();
-      Optional<ExecutionStage> otherNext = other.stage.nextStage();
-      if (next.filter(s -> s.equals(other.stage)).isPresent()) {
-        resultStage = other.stage;
-      } else if (otherNext.filter(s -> s.equals(stage)).isPresent()) {
-        resultStage = stage;
-      } else if (otherNext.isPresent() && next.isPresent() && next.get().equals(otherNext.get())) {
-        resultStage = next.get();
-      } else {
-        throw ExecutionStageException.StageFinding.of(stage, other.stage).injectInputs(inputs);
-      }
+  public void require(Collection<EngineCapability> requiredCapabilities) {
+    if (!stage.supportsAll(requiredCapabilities)) {
+      throw new CapabilityException(stage, requiredCapabilities);
     }
-    return new ExecutionAnalysis(resultStage, inputs);
   }
 
-  public ExecutionAnalysis require(EngineCapability... requiredCapabilities) {
-    return require(Arrays.asList(requiredCapabilities));
-  }
+  @Getter
+  public static class CapabilityException extends RuntimeException {
 
-  public ExecutionAnalysis require(Collection<EngineCapability> requiredCapabilities) {
-    if (stage.supportsAll(requiredCapabilities)) {
-      return this;
+    private final ExecutionStage stage;
+    private final Collection<EngineCapability> capabilities;
+
+    public CapabilityException(ExecutionStage stage, Collection<EngineCapability> capabilities) {
+      super(String.format("Execution stage [%s] does not support capabilities [%s].",
+          stage.getName(), capabilities));
+      this.capabilities = capabilities;
+      this.stage = stage;
     }
 
-    Optional<ExecutionStage> nextStage = stage.nextStage();
-    while (nextStage.isPresent()) {
-      if (nextStage.get().supportsAll(requiredCapabilities)) {
-        return new ExecutionAnalysis(nextStage.get(), inputs);
-      } else {
-        nextStage = nextStage.get().nextStage();
-      }
-    }
-    throw ExecutionStageException.StageFinding.of(stage, requiredCapabilities).injectInputs(inputs);
   }
 
-  public ExecutionAnalysis requireRex(Iterable<RexNode> nodes) {
+  public void requireRex(Iterable<RexNode> nodes) {
     RexCapabilityAnalysis rexAnalysis = new RexCapabilityAnalysis();
     nodes.forEach(rex -> rex.accept(rexAnalysis));
-    return require(rexAnalysis.capabilities);
+    require(rexAnalysis.capabilities);
   }
 
-  public ExecutionAnalysis requireAggregates(Iterable<AggregateCall> aggregates) {
+  public void requireRex(RexNode node) {
+    this.requireRex(List.of(node));
+  }
+
+  public void requireAggregates(Iterable<AggregateCall> aggregates) {
     //TODO: implement once we have non-SQL aggregate functions
-    return this;
   }
 
   public static class RexCapabilityAnalysis extends RexVisitorImpl<Void> {

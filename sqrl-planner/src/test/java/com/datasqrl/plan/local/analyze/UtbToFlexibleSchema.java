@@ -1,7 +1,5 @@
 package com.datasqrl.plan.local.analyze;
 
-import static com.datasqrl.name.Name.HIDDEN_PREFIX;
-
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
@@ -31,8 +29,7 @@ public class UtbToFlexibleSchema {
   private static RelationType<Field> createFields(List<com.datasqrl.schema.Field> f) {
     List<Field> fields = new ArrayList<>();
     for (com.datasqrl.schema.Field field : f) {
-      if (field.getName().getCanonical().startsWith(
-          HIDDEN_PREFIX)) { //todo: what if a user defines a _ingest_time in the schema.yml?
+      if (field.getName().isHidden()) { //todo: what if a user defines a _ingest_time in the schema.yml?
         continue;
       }
       if (field instanceof UniversalTable.Column) {

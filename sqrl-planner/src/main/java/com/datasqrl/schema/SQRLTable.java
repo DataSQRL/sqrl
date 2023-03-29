@@ -3,19 +3,16 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.error.ErrorCode;
-import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.TypeFactory;
 import com.datasqrl.plan.calcite.table.AddedColumn;
 import com.datasqrl.plan.calcite.table.AddedColumn.Simple;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
-import com.datasqrl.util.StreamUtil;
-import com.datasqrl.name.Name;
-import com.datasqrl.name.NamePath;
+import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.schema.Relationship.JoinType;
-
+import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,9 +46,6 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.TableFunctionArgument;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
@@ -301,7 +295,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     return visitor.visit(this, context);
   }
 
-  public void addColumn(Name name, RelNode relNode, boolean lockTimestamp, RelBuilder relBuilder) {
+  public void addColumn(Name name, RelNode relNode, boolean lockTimestamp) {
     checkColumnPreconditions(name);
 
 //    NamePath namePath = toNamePath(env, op.getStatement().getNamePath());
@@ -322,21 +316,20 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
     AddedColumn addedColumn = new Simple(name.getCanonical(), project.getProjects().get(project.getProjects().size() - 1));
     addedColumn.setNameId(vtName.getCanonical());
 
-    addColumnToVirtualTable(addedColumn, vtable, timestampScore, relBuilder);
+    addColumnToVirtualTable(addedColumn, vtable, timestampScore);
     if (lockTimestamp) {
       lockTimestampScore(vtable);
     }
     addColumnToSQRLTable(name, addedColumn, vtName);
   }
 
-  private void addColumnToVirtualTable(AddedColumn addedColumn, VirtualRelationalTable vtable, Optional<Integer> timestampScore, RelBuilder relBuilder) {
-    vtable.addColumn(addedColumn, TypeFactory.getTypeFactory(), ()->relBuilder,
-        timestampScore);
+  private void addColumnToVirtualTable(AddedColumn addedColumn, VirtualRelationalTable vtable, Optional<Integer> timestampScore) {
+    vtable.addColumn(addedColumn, TypeFactory.getTypeFactory(), timestampScore);
   }
 
   private void lockTimestampScore(VirtualRelationalTable vtable) {
     Preconditions.checkState(vtable.isRoot() && vtable.getAddedColumns().isEmpty());
-    QueryRelationalTable baseTbl = ((VirtualRelationalTable.Root) vtable).getBase();
+    ScriptRelationalTable baseTbl = ((VirtualRelationalTable.Root) vtable).getBase();
     baseTbl.getTimestamp()
         .getCandidateByIndex(baseTbl.getNumColumns() - 1) //Timestamp must be last column
         .lockTimestamp();

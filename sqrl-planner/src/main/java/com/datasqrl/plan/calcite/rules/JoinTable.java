@@ -3,10 +3,25 @@
  */
 package com.datasqrl.plan.calcite.rules;
 
-import com.datasqrl.util.AbstractPath;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
 import com.datasqrl.plan.calcite.util.IndexMap;
+import com.datasqrl.util.AbstractPath;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.Iterables;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -14,25 +29,34 @@ import lombok.ToString;
 import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.util.mapping.IntPair;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 @AllArgsConstructor
 @Getter
 @ToString
 public class JoinTable implements Comparable<JoinTable> {
 
+  /**
+   * The type of normalization used by a join table
+   */
+  public enum NormType {
+    NORMALIZED, DENORMALIZED;
+  }
+
   final VirtualRelationalTable table;
   final JoinTable parent;
   final JoinRelType joinType;
   final int offset;
+  final NormType normType;
 
-  public static JoinTable ofRoot(VirtualRelationalTable.Root root) {
-    return new JoinTable(root, null, JoinRelType.INNER, 0);
+  public static JoinTable ofRoot(VirtualRelationalTable.Root root, NormType normType) {
+    return new JoinTable(root, null, JoinRelType.INNER, 0, normType);
   }
 
   public int numColumns() {
-    return table.getNumQueryColumns();
+    return normType==NormType.DENORMALIZED?table.getNumQueryColumns():table.getNumColumns();
+  }
+
+  public JoinTable withOffset(int newOffset) {
+    return new JoinTable(table, parent, joinType, newOffset, normType);
   }
 
   public boolean isRoot() {
@@ -65,6 +89,8 @@ public class JoinTable implements Comparable<JoinTable> {
     return table.getNumLocalPks();
   }
 
+  public int getNumPkNormalized() { return table.getNumPrimaryKeys(); }
+
   @Override
   public int compareTo(JoinTable o) {
     return Integer.compare(this.offset, o.offset);
@@ -85,8 +111,55 @@ public class JoinTable implements Comparable<JoinTable> {
         .filter(jt -> jt.offset <= index && jt.offset + jt.numColumns() > index).findFirst();
   }
 
+  public static boolean valid(List<JoinTable> tables) {
+    return tables!=null && !tables.isEmpty();
+  }
+
+  public static boolean compatible(List<JoinTable> left, List<JoinTable> right) {
+    if (!valid(left) || !valid(right)) return false;
+    Set<VirtualRelationalTable.Root> rightRoots = right.stream().map(jt -> jt.table.getRoot()).collect(
+        Collectors.toSet());
+    return left.stream().map(jt -> jt.table.getRoot()).anyMatch(rightRoots::contains);
+  }
+
+  public static Map<JoinTable, JoinTable> joinListMap(List<JoinTable> left, int rightOffset,
+      List<JoinTable> right, List<IntPair> equalities) {
+    Preconditions.checkArgument(!equalities.isEmpty() && valid(left) && valid(right));
+    Preconditions.checkArgument(Stream.concat(left.stream(),right.stream())
+        .allMatch(jt -> jt.normType == NormType.NORMALIZED));
+    Preconditions.checkArgument(right.size()==1); //Assumption checked prior
+    JoinTable rightTbl = Iterables.getOnlyElement(right);
+    //Check if equality condition are on primary key prefix for rightTbl
+    if (!isPKPrefixConstraint(rightTbl,equalities, p -> p.target, rightOffset)) {
+      return Collections.EMPTY_MAP;
+    }
+    //Find join table from left matches the constraints on pk prefix
+    for (JoinTable leftTbl : left) {
+      if (isPKPrefixConstraint(leftTbl, equalities, p -> p.source, 0)
+          && leftTbl.isJoinCompatible(rightTbl)) {
+        Map<JoinTable, JoinTable> result = new HashMap<>(1);
+        result.put(rightTbl, leftTbl);
+        return result;
+      }
+    }
+    return Collections.EMPTY_MAP;
+  }
+
+  private static boolean isPKPrefixConstraint(JoinTable tbl, List<IntPair> equalities,
+      Function<IntPair,Integer> getIdx, int offset) {
+    List<Integer> pkList = ContiguousSet.closedOpen(0,
+            Math.min(tbl.getNumPkNormalized(),equalities.size())).stream()
+        .map(idx -> idx + tbl.offset + offset) //offset to actual index in relnode
+        .collect(Collectors.toList());
+    List<Integer> equalityList = equalities.stream().map(getIdx).sorted().collect(Collectors.toList());
+    return pkList.equals(equalityList);
+  }
+
   /**
-   * This method tries to map
+   * This method tries to map the join tables from two join trees onto each other
+   * if those trees are rooted in the same table.
+   *
+   * It assumes that nested tables are denormalized.
    *
    * @param left
    * @param rightOffset
@@ -95,11 +168,10 @@ public class JoinTable implements Comparable<JoinTable> {
    * @return
    */
   public static Map<JoinTable, JoinTable> joinTreeMap(List<JoinTable> left, int rightOffset,
-      List<JoinTable> right,
-      List<IntPair> equalities) {
-    if (equalities.isEmpty()) {
-      return Collections.EMPTY_MAP;
-    }
+      List<JoinTable> right, List<IntPair> equalities) {
+    Preconditions.checkArgument(!equalities.isEmpty() && valid(left) && valid(right));
+    Preconditions.checkArgument(Stream.concat(left.stream(),right.stream())
+        .allMatch(jt -> jt.normType == NormType.DENORMALIZED));
     equalities = new ArrayList<>(equalities);
     LinkedHashMap<JoinTable, JoinTable> right2Left = new LinkedHashMap<>();
     //By sorting we make sure we can map from root to leaf and therefore that parents are mapped first

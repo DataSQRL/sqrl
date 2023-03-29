@@ -17,6 +17,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -57,13 +58,15 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled("move to physical error handling test")
   public void debugErrors() {
     initialize(IntegrationTestSettings.builder().debugger(
             DebuggerConfig.of(NamePath.of("missing"),null))
         .build(), (Path) null);
     generateInvalid("wrong-sink",
         "IMPORT ecommerce-data.Customer",
-        "Customer2 := SELECT * FROM Customer WHERE customerid > 0");
+        "Customer2 := SELECT * FROM Customer WHERE customerid > 0",
+        "EXPORT Customer2 TO print.customer2");
   }
 
   private void generateInvalid(String caseName, String... lines) {

@@ -3,12 +3,12 @@
  */
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.engine.stream.flink.plan.StreamRelationalTableContext;
+import com.datasqrl.engine.stream.flink.plan.StreamTableConverterContext;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.io.SourceRecord;
+import com.datasqrl.plan.calcite.rel.LogicalStreamMetaData;
 import com.datasqrl.schema.UniversalTable;
 import java.io.Serializable;
-import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
@@ -30,7 +30,7 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.Preconditions;
 
 @Value
-public class StreamTableSchemaStream {
+public class StreamTableConverter {
 
   public static final Time DEFAULT_SESSION_WINDOW_TIME = Time.milliseconds(3);
 
@@ -54,14 +54,13 @@ public class StreamTableSchemaStream {
   }
 
   public DataStream convertToStream(StreamTableEnvironment tEnv,
-      StreamRelationalTableContext ctx) {
+      StreamTableConverterContext ctx) {
     Table inputTable = ctx.getInputTable();
-    StateChangeType changeType = ctx.getStateChangeType();
-    StreamRelationalTable.BaseTableMetaData baseTbl = ctx.getBaseTableMetaData();
+    LogicalStreamMetaData baseTbl = ctx.getStreamMetaData();
     RowMapper rowMapper = new RowMapper(baseTbl);
     DataStream<Row> stream =  tEnv.toChangelogStream(inputTable, inputTable.getSchema().toSchema(), ChangelogMode.upsert());
 //        .process(new Inspector("Raw data"));
-    switch (ctx.getStateChangeType()) {
+    switch (ctx.getStreamType()) {
       case ADD:
         if (ctx.isUnmodifiedChangelog()) {
           //We can simply filter on RowKind
@@ -80,7 +79,7 @@ public class StreamTableSchemaStream {
         stream = stream.filter(row -> row.getKind()==RowKind.INSERT || row.getKind()==RowKind.UPDATE_AFTER);
         break;
       default:
-        throw new UnsupportedOperationException("Unexpected state change type: " + ctx.getStateChangeType());
+        throw new UnsupportedOperationException("Unexpected state change type: " + ctx.getStreamType());
     }
     stream = stream.process(new ConvertToStream(rowMapper),getTypeInformation());
     return stream;
@@ -162,16 +161,14 @@ public class StreamTableSchemaStream {
   @AllArgsConstructor
   public static class RowMapper implements Serializable {
 
-    final StreamRelationalTable.BaseTableMetaData baseTbl;
+    final LogicalStreamMetaData baseTbl;
 
     public Row apply(Row row, Long processingTimestamp) {
-      int offset = baseTbl.hasTimestamp()?3:2;
+      int offset = 2;
       Object[] data = new Object[baseTbl.getSelectIdx().length + offset];
       data[0] = SourceRecord.makeUUID().toString();
-      data[1] = Instant.ofEpochMilli(processingTimestamp); //ingest time
-      if (baseTbl.hasTimestamp()) {
-        data[2] = row.getField(baseTbl.getTimestampIdx());
-      }
+//      data[1] = Instant.ofEpochMilli(processingTimestamp); //ingest time
+      data[1] = row.getField(baseTbl.getTimestampIdx());
       int i = offset;
       for (int idx  : baseTbl.getSelectIdx()) {
         data[i++] = row.getField(idx);

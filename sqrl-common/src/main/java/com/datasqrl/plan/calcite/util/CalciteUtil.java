@@ -172,17 +172,21 @@ public class CalciteUtil {
     addProjection(relBuilder, selectIdx, fieldNames, false);
   }
 
+  public static List<RexNode> getSelectRex(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx) {
+    Preconditions.checkArgument(!selectIdx.isEmpty());
+    List<RexNode> rexList = new ArrayList<>(selectIdx.size());
+    RelDataType inputType = relBuilder.peek().getRowType();
+    selectIdx.forEach(idx -> rexList.add(RexInputRef.of(idx, inputType)));
+    return rexList;
+  }
+
   public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
       List<String> fieldNames, boolean force) {
-    Preconditions.checkArgument(!selectIdx.isEmpty());
     if (fieldNames == null || fieldNames.isEmpty()) {
       fieldNames = Collections.nCopies(selectIdx.size(), null);
     }
     Preconditions.checkArgument(selectIdx.size() == fieldNames.size());
-    List<RexNode> rex = new ArrayList<>(selectIdx.size());
-    RelDataType inputType = relBuilder.peek().getRowType();
-    selectIdx.forEach(idx -> rex.add(RexInputRef.of(idx, inputType)));
-    relBuilder.project(rex, fieldNames,
+    relBuilder.project(getSelectRex(relBuilder, selectIdx), fieldNames,
         force); //Need to force otherwise Calcite eliminates the project
   }
 

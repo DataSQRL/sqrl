@@ -57,13 +57,6 @@ public class StatementProcessor implements StatementVisitor<Void, ProcessorConte
     return null;
   }
 
-  @Override
-  public Void visit(StreamAssignment statement, ProcessorContext ctx) {
-    StreamStatementResolver streamStatementResolver = new StreamStatementResolver(
-        ctx.errors, nameCanonicalizer, planner, tableFactory);
-    streamStatementResolver.resolve(statement, ctx.namespace);
-    return null;
-  }
 
   @Override
   public Void visit(ExpressionAssignment statement, ProcessorContext ctx) {
@@ -78,6 +71,14 @@ public class StatementProcessor implements StatementVisitor<Void, ProcessorConte
     QueryStatementResolver queryStatementResolver = new QueryStatementResolver(ctx.errors,
         nameCanonicalizer, planner, tableFactory);
     queryStatementResolver.resolve(statement, ctx.namespace);
+    return null;
+  }
+
+  @Override
+  public Void visit(StreamAssignment statement, ProcessorContext ctx) {
+    StreamStatementResolver streamStatementResolver = new StreamStatementResolver(
+        ctx.errors, nameCanonicalizer, planner, tableFactory);
+    streamStatementResolver.resolve(statement, ctx.namespace);
     return null;
   }
 

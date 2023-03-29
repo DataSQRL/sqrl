@@ -1,17 +1,21 @@
 >>>customer$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[customer$i$1]])
 
 >>>dproduct$q$11
-LogicalProject(__pk_0=[$0], __pk_1=[$1], unit_price=[$4], category=[$11], name=[$9])
-  LogicalJoin(condition=[=($8, $2)], joinType=[left])
-    LogicalTableScan(table=[[entries$7]])
-    LogicalTableScan(table=[[product$10]])
+LogicalProject(__pk_0=[$0], __pk_1=[$6], unit_price=[$9], category=[$16], name=[$14], __timestamp=[CASE(<($4, $12), $12, $4)])
+  LogicalJoin(condition=[=($13, $7)], joinType=[left])
+    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$5]])
+      Uncollect
+        LogicalProject($f0=[$cor1.entries])
+          LogicalValues(tuples=[[{ 0 }]])
+    LogicalTableScan(table=[[product$q$9]])
 
 >>>orders$q$5
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[orders$i$4]])
 
 >>>product$q$9
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$8]])
 
 >>>join-declaration-product
 JOIN PATH ON ("entries$7" AS "@") ON ("product$10" AS "Product") USING "Product"."productid" = "@"."productid" FETCH 1

@@ -10,7 +10,6 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.SQRLTable;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,17 +34,12 @@ public class ExportStatementResolver extends AbstractStatementResolver {
         statement.getTablePath()::getParserPosition,
         () -> String.format("Could not find table path: %s", statement.getTablePath()));
     SQRLTable table = tableOpt.get();
-    checkState(table.getVt().getRoot().getBase().getExecution().isWrite(),
-        ErrorCode.READ_TABLE_CANNOT_BE_EXPORTED, statement.getTablePath()::getParserPosition,
-        () -> String.format("Table [%s] is not be exported because it is not computed in-stream",
-            table.getPath()));
     NamePath sinkPath = toNamePath(statement.getSinkPath());
     exportTable(table, sinkPath, ns, statement, errors);
   }
 
   public void exportTable(SQRLTable table, NamePath sinkPath, Namespace ns,
       ExportDefinition statement, ErrorCollector errors) {
-    Preconditions.checkArgument(table.getVt().getRoot().getBase().getExecution().isWrite());
 
     Optional<TableSink> sink = moduleLoader
         .getModule(sinkPath.popLast())

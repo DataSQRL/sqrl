@@ -7,14 +7,17 @@ import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.plan.calcite.table.TimestampHolder;
 import com.google.common.base.Preconditions;
+import java.util.List;
+import java.util.Optional;
 import lombok.NonNull;
+import lombok.Value;
+import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
-
-import java.util.Optional;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class TimestampAnalysis {
 
@@ -61,4 +64,33 @@ public class TimestampAnalysis {
       return false;
     }
   }
+
+
+  @Value
+  public static class MaxTimestamp {
+    TimestampHolder.Derived.Candidate candidate;
+    int timestampIdx;
+    int aggCallIdx;
+  }
+
+  public static Optional<MaxTimestamp> findMaxTimestamp(List<AggregateCall> aggregateCalls,
+      TimestampHolder.Derived timestamp) {
+    for (int idx = 0; idx < aggregateCalls.size(); idx++) {
+      AggregateCall aggCall = aggregateCalls.get(idx);
+      if (aggCall.getAggregation().equals(SqlStdOperatorTable.MAX)
+          && aggCall.getArgList().size()==1 && aggCall.filterArg==-1
+          && !aggCall.isApproximate() && !aggCall.isDistinct()
+          && aggCall.collation.getFieldCollations().isEmpty()
+      ) {
+        //Check if input is a timestamp candidate
+        int inputIdx = aggCall.getArgList().get(0);
+        Optional<TimestampHolder.Derived.Candidate> candidate = timestamp.getOptCandidateByIndex(inputIdx);
+        if (candidate.isPresent()) {
+          return Optional.of(new MaxTimestamp(candidate.get(), inputIdx, idx));
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
 }

@@ -12,7 +12,8 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.IndexCall;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
-import com.datasqrl.plan.global.OptimizedDAG;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
@@ -80,13 +81,13 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     List<APIQuery> queries = inferSchemaAndQueries(script, schemaPath).getValue();
     /// plan dag
     DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
-        ns.getSchema().getPipeline());
-    OptimizedDAG dag = dagPlanner.plan(ns.getSchema(), queries, ns.getExports(), ns.getJars());
+        ns.getSchema().getPipeline(), Debugger.NONE, errors);
+    PhysicalDAGPlan dag = dagPlanner.plan(ns.getSchema(), queries, ns.getExports(), ns.getJars());
 
     IndexSelector indexSelector = new IndexSelector(ns.getSchema().getPlanner(),
         IndexSelectorConfigByDialect.of("POSTGRES"));
     List<IndexCall> allIndexes = new ArrayList<>();
-    for (OptimizedDAG.ReadQuery query : dag.getReadQueries()) {
+    for (PhysicalDAGPlan.ReadQuery query : dag.getReadQueries()) {
       List<IndexCall> indexCall = indexSelector.getIndexSelection(query);
       allIndexes.addAll(indexCall);
     }

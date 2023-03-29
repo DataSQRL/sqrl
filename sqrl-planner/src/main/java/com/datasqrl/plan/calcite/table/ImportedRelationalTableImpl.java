@@ -3,11 +3,13 @@
  */
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.engine.stream.plan.TableRegistration;
+import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.ReservedName;
 import java.util.List;
+import java.util.function.Predicate;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -18,6 +20,10 @@ public class ImportedRelationalTableImpl extends SourceRelationalTableImpl imple
 
   TableSource tableSource;
   RelDataType baseRowType;
+
+  //Currently, we hardcode all table sources to support only stream engines
+  private final Predicate<ExecutionStage> supportsStage =
+      stage -> stage.getEngine().getType()== Type.STREAM;
 
   public ImportedRelationalTableImpl(@NonNull Name nameId, RelDataType baseRowType,
       TableSource tableSource) {
@@ -36,8 +42,5 @@ public class ImportedRelationalTableImpl extends SourceRelationalTableImpl imple
     return List.of(ReservedName.UUID.getCanonical());
   }
 
-  @Override
-  public <R, C> R accept(TableRegistration<R, C> tableRegistration, C context) {
-    return tableRegistration.accept(this, context);
-  }
+
 }

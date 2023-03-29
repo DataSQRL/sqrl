@@ -4,7 +4,7 @@
 package com.datasqrl.config;
 
 import com.datasqrl.io.DataSystemConnectorConfig;
-import com.datasqrl.plan.global.OptimizedDAG.WriteSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 
 public interface SinkFactory<ENGINE_SINK> {
   String getEngine();

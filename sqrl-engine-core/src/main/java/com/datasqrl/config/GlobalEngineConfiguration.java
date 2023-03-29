@@ -7,7 +7,7 @@ import com.datasqrl.engine.EngineConfiguration;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.DatabaseEngineConfiguration;
-import com.datasqrl.engine.pipeline.EnginePipeline;
+import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.error.ErrorCollector;
@@ -93,7 +93,7 @@ public class GlobalEngineConfiguration implements GlobalConfiguration {
       }
     }
     MetadataStoreProvider metadataStoreProvider = metaOpt.get().getMetadataStore();
-    ExecutionPipeline pipeline = new EnginePipeline(db, stream);
+    ExecutionPipeline pipeline = SimplePipeline.of(stream, db);
     return new EngineSettings(pipeline, metadataStoreProvider, stream);
   }
 

@@ -8,7 +8,6 @@ import com.datasqrl.name.Name;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.datasqrl.schema.input.SchemaValidator;
-import lombok.Getter;
 import lombok.NonNull;
 
 /**

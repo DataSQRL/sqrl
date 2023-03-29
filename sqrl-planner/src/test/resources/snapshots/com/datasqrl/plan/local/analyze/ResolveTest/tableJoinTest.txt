@@ -1,5 +1,11 @@
->>>ordercustomer-lp
-LogicalProject(_uuid=[$0], _uuid0=[$5], id=[$2], name=[$9], customerid=[$3])
+>>>ordercustomer$q$11-lp-STREAM
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
+  LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1]]
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[customer$q$2]])
+
+>>>ordercustomer$q$11-lp-DATABASE
+LogicalProject(_uuid=[$0], _uuid0=[$5], id=[$2], name=[$9], customerid=[$3], __timestamp=[CASE(<($4, $6), $6, $4)])
   LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1]]
     LogicalTableScan(table=[[orders$6]])
     LogicalTableScan(table=[[customer$3]])

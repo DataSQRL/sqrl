@@ -25,7 +25,7 @@ import org.apache.calcite.schema.impl.AbstractTable;
  */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public abstract class AbstractRelationalTable extends AbstractTable implements QueryableTable,
-    TableWithPK {
+    TableWithPK, Comparable<AbstractRelationalTable> {
 
   @EqualsAndHashCode.Include
   protected final String nameId;
@@ -65,5 +65,8 @@ public abstract class AbstractRelationalTable extends AbstractTable implements Q
     return Object[].class;
   }
 
-
+  @Override
+  public int compareTo(AbstractRelationalTable other) {
+    return this.getNameId().compareTo(other.getNameId());
+  }
 }

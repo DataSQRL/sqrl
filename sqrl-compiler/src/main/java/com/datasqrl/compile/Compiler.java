@@ -3,7 +3,6 @@
  */
 package com.datasqrl.compile;
 
-import com.datasqrl.frontend.SqrlDIModule;
 import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.GlobalCompilerConfiguration;
@@ -14,6 +13,7 @@ import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
+import com.datasqrl.frontend.SqrlDIModule;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.graphql.generate.SchemaGenerator;
 import com.datasqrl.graphql.inference.PgSchemaBuilder;
@@ -22,11 +22,17 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.*;
+import com.datasqrl.loaders.DataSystemNsObject;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ModuleLoaderImpl;
+import com.datasqrl.loaders.ObjectLoaderImpl;
+import com.datasqrl.loaders.ResourceResolver;
 import com.datasqrl.name.NamePath;
-import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.OptimizedDAG;
-import com.datasqrl.plan.local.generate.*;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.local.generate.ClasspathResourceResolver;
+import com.datasqrl.plan.local.generate.DebuggerConfig;
+import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.spi.ScriptConfiguration;
 import com.datasqrl.util.FileUtil;
@@ -37,18 +43,14 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import java.net.URI;
-import java.util.Set;
+import java.util.Map;
+import java.util.Optional;
+import javax.validation.constraints.NotEmpty;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
-
-import javax.validation.constraints.NotEmpty;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 public class Compiler {
@@ -109,8 +111,7 @@ public class Compiler {
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    OptimizedDAG dag = optimizeDag(pgSchemaBuilder.getApiQueries(), queryPlanner, ns,
-        !(resourceResolver instanceof ClasspathResourceResolver));
+    PhysicalDAGPlan dag = planner.planDag(ns, pgSchemaBuilder.getApiQueries(), !(resourceResolver instanceof ClasspathResourceResolver));
     PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, ns, errorSink);
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
@@ -143,14 +144,6 @@ public class Compiler {
     PhysicalPlan plan;
   }
 
-  private OptimizedDAG optimizeDag(List<APIQuery> queries, SqrlQueryPlanner planner, Namespace ns,
-      boolean includeJars) {
-    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
-        ns.getSchema().getPipeline());
-    CalciteSchema relSchema = planner.getSchema();
-    return dagPlanner.plan(relSchema, queries, ns.getExports(), includeJars ? ns.getJars() : Set.of());
-  }
-
   private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root,
       Map<APIQuery, QueryTemplate> queries) {
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries);
@@ -158,7 +151,7 @@ public class Compiler {
     return root;
   }
 
-  private PhysicalPlan createPhysicalPlan(OptimizedDAG dag, SqrlQueryPlanner planner,
+  private PhysicalPlan createPhysicalPlan(PhysicalDAGPlan dag, SqrlQueryPlanner planner,
       Namespace namespace,
       TableSink errorSink) {
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(planner.createRelBuilder(), errorSink);

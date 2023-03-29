@@ -1,23 +1,30 @@
 >>>customer$q$2
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[customer$i$1]])
 
 >>>orders$q$5
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[orders$i$4]])
 
 >>>product$q$9
-LogicalValues(tuples=[[]])
+LogicalTableScan(table=[[product$i$8]])
 
 >>>x$q$11
-LogicalProject(_uuid=[$0], _uuid0=[$5], _idx=[$6], _uuid1=[$11], _uuid00=[$16], _idx0=[$17], _uuid2=[$22], _uuid01=[$27], _idx1=[$28], discount=[$32])
+LogicalProject(_uuid=[$0], _idx=[$6], _uuid0=[$11], _idx0=[$17], _uuid1=[$23], _idx1=[$29], discount=[$33], __timestamp34=[CASE(<($22, $27), $27, $22)])
   LogicalJoin(condition=[true], joinType=[inner])
-    LogicalJoin(condition=[true], joinType=[inner])
-      LogicalJoin(condition=[=($0, $5)], joinType=[inner])
-        LogicalTableScan(table=[[orders$6]])
-        LogicalTableScan(table=[[entries$7]])
-      LogicalJoin(condition=[=($0, $5)], joinType=[inner])
-        LogicalTableScan(table=[[orders$6]])
-        LogicalTableScan(table=[[entries$7]])
-    LogicalJoin(condition=[=($0, $5)], joinType=[inner])
-      LogicalTableScan(table=[[orders$6]])
-      LogicalTableScan(table=[[entries$7]])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], _uuid0=[$11], _ingest_time0=[$12], id0=[$13], customerid0=[$14], time0=[$15], entries0=[$16], _idx0=[$17], productid0=[$18], quantity0=[$19], unit_price0=[$20], discount0=[$21], __timestamp=[CASE(<($4, $15), $15, $4)])
+      LogicalJoin(condition=[true], joinType=[inner])
+        LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
+          LogicalTableScan(table=[[orders$q$5]])
+          Uncollect
+            LogicalProject($f0=[$cor7.entries])
+              LogicalValues(tuples=[[{ 0 }]])
+        LogicalCorrelate(correlation=[$cor9], joinType=[inner], requiredColumns=[{5}])
+          LogicalTableScan(table=[[orders$q$5]])
+          Uncollect
+            LogicalProject($f0=[$cor9.entries])
+              LogicalValues(tuples=[[{ 0 }]])
+    LogicalCorrelate(correlation=[$cor11], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$5]])
+      Uncollect
+        LogicalProject($f0=[$cor11.entries])
+          LogicalValues(tuples=[[{ 0 }]])
 

@@ -26,7 +26,7 @@ public class ReservedName extends AbstractName {
   public static final ReservedName INGEST_TIME = new ReservedName(HIDDEN_PREFIX + "ingest_time");
   public static final ReservedName SOURCE_TIME = new ReservedName(HIDDEN_PREFIX + "source_time");
   public static final ReservedName ARRAY_IDX = new ReservedName(HIDDEN_PREFIX + "idx");
-  public static final ReservedName TIMESTAMP = new ReservedName(HIDDEN_PREFIX + "timestamp");
+  public static final ReservedName SYSTEM_TIMESTAMP = new ReservedName(SYSTEM_HIDDEN_PREFIX + "timestamp");
   public static final ReservedName PARENT = new ReservedName("parent");
   public static final ReservedName ALL = new ReservedName("*");
 

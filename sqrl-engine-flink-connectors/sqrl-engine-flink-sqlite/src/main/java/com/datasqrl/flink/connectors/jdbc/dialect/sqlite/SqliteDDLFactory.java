@@ -3,13 +3,12 @@
  */
 package com.datasqrl.flink.connectors.jdbc.dialect.sqlite;
 
-import com.datasqrl.engine.database.relational.ddl.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.CreateTableDDL;
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.dialect.JdbcDDLFactory;
 import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;

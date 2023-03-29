@@ -204,7 +204,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
         "CountStream := STREAM ON ADD AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1");
     builder.add(
         "UpdateStream := STREAM ON UPDATE AS SELECT customerid, name, quantity FROM CustomerCount WHERE quantity > 1");
-    builder.add("CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _ingest_time DESC");
+    builder.add("CustomerCount2 := DISTINCT CountStream ON customerid ORDER BY _source_time DESC");
     builder.add("EXPORT CountStream TO print.CountStream");
     builder.add("EXPORT CountStream TO output.CountStream");
     validateTables(builder.getScript(), "customercount", "countstream", "customercount2","updatestream");

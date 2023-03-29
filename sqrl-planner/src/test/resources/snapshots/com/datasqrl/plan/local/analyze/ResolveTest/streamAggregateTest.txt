@@ -1,8 +1,22 @@
->>>orderagg1-lp
+>>>orderagg1$q$11-lp-STREAM
 LogicalProject(customer=[$3], order_count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
   LogicalTableScan(table=[[orders$q$5]])
 
->>>orderagg2-lp
+>>>orderagg1$q$11-lp-DATABASE
+LogicalProject(customer=[$0], order_count=[$1], time=[$2])
+  LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
+    LogicalProject(customerid=[$0], order_count=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+      LogicalProject(customerid=[$3], order_count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+        LogicalTableScan(table=[[orders$6]])
+
+>>>orderagg2$q$13-lp-STREAM
 LogicalProject(_pk=[1], order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
   LogicalTableScan(table=[[orders$q$5]])
+
+>>>orderagg2$q$13-lp-DATABASE
+LogicalProject(_pk=[1], order_count=[$0], time=[$1])
+  LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
+    LogicalProject(order_count=[$0], time=[$1], $f2=[ROW_NUMBER() OVER (ORDER BY $1 DESC NULLS LAST)])
+      LogicalProject(order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+        LogicalTableScan(table=[[orders$6]])
 

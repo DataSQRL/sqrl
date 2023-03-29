@@ -106,6 +106,13 @@ public abstract class TimestampHolder<C extends TimestampHolder.Candidate> {
       return base;
     }
 
+    public static Base ofSingle(int timestampIndex) {
+      Base base = new Base();
+      base.addCandidate(timestampIndex, 0);
+      base.candidatesLocked = true;
+      return base;
+    }
+
     private void addCandidate(TimestampHolder.Derived.Candidate derivedCand) {
       Candidate cand = new Candidate(derivedCand.getIndex(), derivedCand.getScore());
       cand.dependents.addAll(derivedCand.basedOn);

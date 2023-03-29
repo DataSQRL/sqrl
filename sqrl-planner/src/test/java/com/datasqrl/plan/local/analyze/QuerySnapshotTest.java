@@ -13,7 +13,9 @@ import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.name.Name;
-import com.datasqrl.plan.calcite.table.QueryRelationalTable;
+import com.datasqrl.plan.calcite.rules.IdealExecutionStage;
+import com.datasqrl.plan.calcite.rules.SQRLConverter;
+import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.SQRLTable;
@@ -60,13 +62,19 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   protected void validateScript(String script) {
     Namespace ns = plan(script);
+    SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
     ns.getSchema().plus().getTableNames().stream()
         .map(n->ns.getSchema().getTable(n, false))
-        .filter(f->f.getTable() instanceof QueryRelationalTable)
+        .filter(f->f.getTable() instanceof ScriptRelationalTable)
         .sorted(Comparator.comparing(f->f.name))
-        .forEach(t->snapshot.addContent(
-            ((QueryRelationalTable)t.getTable()).getRelNode().explain(),
-            t.name));
+        .forEach(t-> {
+          ScriptRelationalTable table = (ScriptRelationalTable) t.getTable();
+          SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE)
+              .addTimestamp2NormalizedChildTable(false).build();
+          snapshot.addContent(
+              sqrlConverter.convert(table, config, false, errors).explain(),
+              t.name);
+        });
     ns.getSchema().getAllTables().stream()
         .flatMap(t->t.getAllRelationships())
         .sorted(Comparator.comparing(Field::getName))

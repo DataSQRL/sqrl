@@ -5,9 +5,7 @@ package com.datasqrl.engine.database.relational.dialect;
 
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.plan.global.OptimizedDAG.EngineSink;
-import java.util.Collection;
-import java.util.List;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 
 public interface JdbcDDLFactory {
   String getDialect();

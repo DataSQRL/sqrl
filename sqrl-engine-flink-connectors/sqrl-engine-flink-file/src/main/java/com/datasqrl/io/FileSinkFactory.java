@@ -5,8 +5,8 @@ import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.tables.TableConfig;
-import com.datasqrl.plan.global.OptimizedDAG.ExternalSink;
-import com.datasqrl.plan.global.OptimizedDAG.WriteSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.TableDescriptor.Builder;
 

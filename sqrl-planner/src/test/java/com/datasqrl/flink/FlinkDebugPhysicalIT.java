@@ -55,8 +55,7 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
           .debugger(DebuggerConfig.of(NamePath.of("output"),null))
         .build(),(Path) null, Optional.of(outputPath));
     TestScript script = example.getScript(RetailScriptNames.FULL);
-    validateTables(script.getScript(),"favorite_categories", "order_stats",
-        "NewCustomerPromotion", "order_again", "total");
+    validateTables(script.getScript(), "order_stats", "order_again");
   }
 
   @Test
@@ -68,7 +67,7 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
         (Path) null,
         Optional.of(outputPath));
     TestScript script = example.getScript(RetailScriptNames.FULL);
-    validateTables(script.getScript(),"favorite_categories");
+    validateTables(script.getScript(),"favorite_categories", "NewCustomerPromotion", "order_again");
   }
 
   public static Set<Name> toName(String... tables) {

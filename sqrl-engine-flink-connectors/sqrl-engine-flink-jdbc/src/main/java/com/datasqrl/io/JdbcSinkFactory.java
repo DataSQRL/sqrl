@@ -5,7 +5,7 @@ package com.datasqrl.io;
 
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
-import com.datasqrl.plan.global.OptimizedDAG.WriteSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import org.apache.flink.connector.jdbc.table.JdbcConnectorOptions;
 import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.TableDescriptor.Builder;

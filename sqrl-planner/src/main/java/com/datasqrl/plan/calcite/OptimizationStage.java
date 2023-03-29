@@ -69,11 +69,6 @@ public class OptimizationStage {
           SqrlRelMetadataProvider.INSTANCE),
       Optional.empty());
 
-  public static final OptimizationStage READ2WRITE_STITCHING = new OptimizationStage(
-      "Read2WriteAdjustment",
-      Programs.hep(List.of(new DAGExpansionRule.Read2Write()), false,
-          SqrlRelMetadataProvider.INSTANCE),
-      Optional.empty());
 
   public static final OptimizationStage VOLCANO = new OptimizationStage("Volcano",
       SQRLPrograms.ENUMERABLE_VOLCANO, Optional.of(EnumerableConvention.INSTANCE)
