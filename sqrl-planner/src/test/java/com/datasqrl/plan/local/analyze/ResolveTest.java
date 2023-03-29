@@ -537,9 +537,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "CustomerAgg1 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
     builder.add(
-        "/*+ EXEC_hashmap */ CustomerAgg2 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
+        "/*+ EXEC(hashmap) */ CustomerAgg2 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
     builder.add(
-        "/*+ EXEC_memStream */ CustomerAgg3 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
+        "/*+ EXEC(memStream) */ CustomerAgg3 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
 
     plan(builder.getScript());
     validateQueryTable("customeragg1", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
