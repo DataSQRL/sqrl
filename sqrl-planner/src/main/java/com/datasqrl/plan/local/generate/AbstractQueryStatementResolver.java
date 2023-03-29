@@ -32,7 +32,7 @@ public abstract class AbstractQueryStatementResolver extends AbstractStatementRe
     RelNode relNode = plan(sqlNode);
     relNode = preprocessRelNode(relNode,statement);
 
-    Converter converter = new Converter();
+    StatementSQRLConverter converter = new StatementSQRLConverter();
     LPAnalysis analyzedLP = converter.convert(planner, relNode, setOriginalFieldnames(), ns, statement.getHints(), errors);
 
     NamespaceObject table = tableFactory.createTable(planner, ns, statement.getNamePath(), analyzedLP, getContext(ns, statement.getNamePath()));

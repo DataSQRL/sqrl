@@ -56,13 +56,15 @@ public interface OptimizerHint {
 
   }
 
-  static List<OptimizerHint> fromSqlHint(Optional<SqlNodeList> hints) {
+  static List<OptimizerHint> fromSqlHint(Optional<SqlNodeList> hints, ErrorCollector errors) {
     List<OptimizerHint> optHints = new ArrayList<>();
     if (hints.isPresent()) {
       for (SqlHint hint : Iterables.filter(hints.get().getList(), SqlHint.class)) {
         String hintname = hint.getName().toLowerCase();
         if (hintname.startsWith(Stage.STAGE_PREFIX)) {
           optHints.add(new Stage(hintname.substring(Stage.STAGE_PREFIX.length()).trim()));
+        } else {
+          errors.fatal("Unrecognized hint: %s", hintname);
         }
       }
     }

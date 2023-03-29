@@ -129,7 +129,6 @@ public class AnnotatedLP implements RelHolder {
     if (!nowFilter.isEmpty()) {
       return inlineNowFilter(relBuilder, exec).inlineTopN(relBuilder, exec);
     }
-
     Preconditions.checkArgument(nowFilter.isEmpty());
 
     relBuilder.push(relNode);
