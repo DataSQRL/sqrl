@@ -1,8 +1,0 @@
-subscription BrokenSensorAlert {
-  BrokenSensorAlert {
-    sensorid
-    location
-    registered
-    num_deviations_last_month
-  }
-}

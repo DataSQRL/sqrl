@@ -1,7 +1,0 @@
-IMPORT social-commons.Users
-IMPORT social-commons.Friendships;
-IMPORT social-commons.Postings;
-
-Users.newsfeed := SELECT p.* FROM @.friends f JOIN f.friend.postings p
-                  WHERE f.since < p.timestamp
-                  ORDER BY p.timestamp DESC;
