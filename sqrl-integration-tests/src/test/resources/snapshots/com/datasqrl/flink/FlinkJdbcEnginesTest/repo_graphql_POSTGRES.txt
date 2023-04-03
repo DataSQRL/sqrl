@@ -1,18 +1,21 @@
 >>>database
-CREATE TABLE IF NOT EXISTS package$6 (name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));
-CREATE TABLE IF NOT EXISTS submission$3 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,version VARCHAR NOT NULL,variant VARCHAR NOT NULL,license VARCHAR NOT NULL,repository VARCHAR NOT NULL,homepage VARCHAR NOT NULL,documentation VARCHAR NOT NULL,readme VARCHAR NOT NULL,description VARCHAR NOT NULL,lateststable BOOLEAN NOT NULL,uniqueid VARCHAR NOT NULL,file VARCHAR NOT NULL,hash VARCHAR NOT NULL,authorid VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL,variant$0 VARCHAR NOT NULL , PRIMARY KEY (_uuid));
+CREATE INDEX IF NOT EXISTS topicpackages$9_hash_c1 ON topicpackages$9 USING hash (topicname);
+CREATE TABLE IF NOT EXISTS keywords$5 (_uuid VARCHAR NOT NULL,_idx BIGINT NOT NULL,name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid,_idx));
+CREATE TABLE IF NOT EXISTS package$7 (name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));
+CREATE TABLE IF NOT EXISTS submission$3 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,version VARCHAR NOT NULL,variant VARCHAR ,latest BOOLEAN NOT NULL,type VARCHAR ,license VARCHAR ,repository VARCHAR ,homepage VARCHAR ,documentation VARCHAR ,readme VARCHAR ,description VARCHAR ,uniqueid VARCHAR NOT NULL,file VARCHAR NOT NULL,hash VARCHAR NOT NULL,authorid VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL,variant$0 VARCHAR NOT NULL,repourl VARCHAR NOT NULL , PRIMARY KEY (_uuid));
+CREATE TABLE IF NOT EXISTS topicpackages$9 (pkgname VARCHAR NOT NULL,topicname VARCHAR NOT NULL,numsubmissions BIGINT NOT NULL,lastsubmission TIMESTAMPTZ NOT NULL , PRIMARY KEY (pkgname,topicname));
+CREATE TABLE IF NOT EXISTS topicsearch$11 (topicname VARCHAR NOT NULL,numpackages BIGINT NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (topicname));
 >>>query-latest
 {
   "data" : {
     "Package" : [ {
       "latest" : {
-        "version" : "0.1.0",
+        "version" : "0.1.1",
         "variant" : "dev",
-        "latestStable" : true,
-        "description" : "Small Nutshop example data",
-        "file" : "hbG-vCnRyRo62jIMH2LCVw0PE8w.zip",
-        "hash" : "c514baa309a470bf6bb7b43a88dfe70c",
-        "submissionTime" : "2022-12-09T07:06:27.429598Z"
+        "description" : "Simple e-commerce dataset for the DataSQRL Seed-shop",
+        "file" : "mX9HHbUFTgI8XQiJ8PDKMXD_Kno.zip",
+        "hash" : "56a79531809887f504fb62a667580532",
+        "submissionTime" : "2023-03-15T05:53:24.579297Z"
       }
     } ]
   }
@@ -23,9 +26,9 @@ CREATE TABLE IF NOT EXISTS submission$3 (_uuid VARCHAR NOT NULL,_ingest_time TIM
     "Package" : [ {
       "versions" : [ {
         "version" : "0.1.0",
-        "file" : "hbG-vCnRyRo62jIMH2LCVw0PE8w.zip",
-        "hash" : "c514baa309a470bf6bb7b43a88dfe70c",
-        "submissionTime" : "2022-12-09T07:06:27.429598Z"
+        "file" : "LRlmya89b1u-PMJFFoeoz22Kb7c.zip",
+        "hash" : "4483fd392182318d2d9a3bbee6c99dae",
+        "submissionTime" : "2023-02-28T05:35:13.903106Z"
       } ]
     } ]
   }

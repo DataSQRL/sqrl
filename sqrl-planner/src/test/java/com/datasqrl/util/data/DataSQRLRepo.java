@@ -15,13 +15,13 @@ import java.util.Set;
 
 public class DataSQRLRepo implements TestDataset {
 
-  public static final Path BASE_PATH = Path.of("..", "sqrl-examples", "datasqrl", "repo");
+  public static final Path BASE_PATH = Path.of("..", "sqrl-examples", "repository");
 
   public static final DataSQRLRepo INSTANCE = new DataSQRLRepo();
 
   @Override
   public String getName() {
-    return "datasqrl-central";
+    return "repository";
   }
 
   @Override

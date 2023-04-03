@@ -1,5 +1,5 @@
 {
-Package(name: "datasqrl.examples.Nutshop") {
+Package(name: "datasqrl.seedshop") {
     versions(version: "0.1.0", variant: "dev") {
         version
         file

@@ -1,36 +1,59 @@
 type Package {
   name: String!
-  latest(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [Submission!]
-  versions(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [Submission!]
+  latest(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  versions(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
 }
 
 type Query {
   Package(name: String): [Package!]
-  Submission(name: String, version: String, license: String, repository: String, homepage: String, documentation: String, readme: String, description: String): [Submission!]
+  Submission(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  TopicPackages(pkgName: String, topicName: String, numSubmissions: Int, lastSubmission: String): [TopicPackages!]
+  TopicSearch(topicName: String, numPackages: Int): [TopicSearch!]
 }
 
 type Submission {
   name: String!
   version: String!
-  license: String!
-  repository: String!
-  homepage: String!
-  documentation: String!
-  readme: String!
-  description: String!
-  latestStable: Boolean!
+  latest: Boolean!
+  type: String
+  license: String
+  repository: String
+  homepage: String
+  documentation: String
+  readme: String
+  description: String
   uniqueId: String!
   file: String!
   hash: String!
   authorid: String!
   submissionTime: String!
   files(filename: String, filesize: Int): [files!]
+  keywords(name: String): [keywords!]
   variant: String!
+  repoURL: String!
+}
+
+type TopicPackages {
+  pkgName: String!
+  topicName: String!
+  numSubmissions: Int!
+  lastSubmission: String!
+  latest(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+}
+
+type TopicSearch {
+  topicName: String!
+  numPackages: Int!
 }
 
 type files {
   filename: String!
   filesize: Int!
+  parent: Submission!
+}
+
+type keywords {
+  name: String!
   parent: Submission!
 }
 

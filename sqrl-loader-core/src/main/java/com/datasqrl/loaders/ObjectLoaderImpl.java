@@ -14,18 +14,16 @@ import com.datasqrl.util.FileUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
-import org.apache.flink.table.functions.UserDefinedFunction;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 @AllArgsConstructor
 public class ObjectLoaderImpl implements ObjectLoader {
@@ -39,7 +37,6 @@ public class ObjectLoaderImpl implements ObjectLoader {
   @Override
   public List<NamespaceObject> load(NamePath directory) {
     List<URI> allItems = resourceResolver.loadPath(directory);
-    System.out.println(allItems);
     return allItems.stream()
             .flatMap(url -> load(url, directory).stream())
             .collect(Collectors.toList());

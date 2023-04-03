@@ -1,5 +1,6 @@
+---
 name: "submission"
-schema_version: 1
+schema_version: "1"
 partial_schema: false
 columns:
 - name: "name"
@@ -12,36 +13,24 @@ columns:
   - "not_null"
 - name: "variant"
   type: "STRING"
-  tests:
-  - "not_null"
-- name: "license"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "repository"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "homepage"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "documentation"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "readme"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "description"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "latestStable"
+- name: "latest"
   type: "BOOLEAN"
   tests:
-  - "not_null"
+    - "not_null"
+- name: "type"
+  type: "STRING"
+- name: "license"
+  type: "STRING"
+- name: "repository"
+  type: "STRING"
+- name: "homepage"
+  type: "STRING"
+- name: "documentation"
+  type: "STRING"
+- name: "readme"
+  type: "STRING"
+- name: "description"
+  type: "STRING"
 - name: "uniqueId"
   type: "STRING"
   tests:
@@ -72,5 +61,9 @@ columns:
     type: "INTEGER"
     tests:
     - "not_null"
-  tests:
-  - "not_null"
+- name: "keywords"
+  columns:
+  - name: "name"
+    type: "STRING"
+    tests:
+    - "not_null"

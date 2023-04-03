@@ -103,13 +103,14 @@ public class DAGAssembler {
       //First, all the tables that need to be written to the database in normalized form
       for (VirtualRelationalTable normTable : normalizedTables) {
         RelNode scanTable = sqrlConverter.getRelBuilder().scan(normTable.getNameId()).build();
-
+        SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBase().getBaseConfig();
+        configBuilder.fieldNames(normTable.getRowType().getFieldNames());
         Pair<RelNode, Integer> relPlusTimestamp = produceWriteTree(scanTable,
-            normTable.getRoot().getBase().getBaseConfig().build(), errors);
+            configBuilder.build(), errors);
         RelNode processedRelnode = relPlusTimestamp.getKey();
-        assert normTable.getRowType().equals(processedRelnode.getRowType()) :
-            "Rowtypes do not match: \n" + normTable.getRowType() + "\n vs \n "
-                + processedRelnode.getRowType();
+        Preconditions.checkArgument(normTable.getRowType().equals(processedRelnode.getRowType()),
+            "Rowtypes do not match: \n%s \n vs \n%s",
+            normTable.getRowType(), processedRelnode.getRowType());
         writeDAG.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(normTable.getNameId(), normTable.getNumPrimaryKeys(),
                 normTable.getRowType(), relPlusTimestamp.getRight(), database),
