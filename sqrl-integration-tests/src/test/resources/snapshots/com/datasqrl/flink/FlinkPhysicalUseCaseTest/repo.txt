@@ -1,25 +1,26 @@
->>>package$6-lp-stream
+>>>package$7-lp-stream
 LogicalProject(name=[$0], submissiontime=[$1])
-  LogicalProject(name=[$2], submissiontime=[$16])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], lateststable=[$11], uniqueid=[$12], file=[$13], hash=[$14], authorid=[$15], submissiontime=[$16], files=[$17], variant$0=[COALESCE($4, _UTF-16LE'')]) hints[WatermarkHint options:[16]]
+  LogicalProject(name=[$2], submissiontime=[$17])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], files=[$18], keywords=[$19], variant$0=[COALESCE($4, _UTF-16LE'default')], repourl=[CONCAT(_UTF-16LE'https://repository.datasqrl.com/', $14)]) hints[WatermarkHint options:[17]]
       LogicalTableScan(table=[[submission$i$1]])
 
 >>>submission$3-lp-stream
-LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], lateststable=[$11], uniqueid=[$12], file=[$13], hash=[$14], authorid=[$15], submissiontime=[$16], variant$0=[$18])
-  LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], lateststable=[$11], uniqueid=[$12], file=[$13], hash=[$14], authorid=[$15], submissiontime=[$16], files=[$17], variant$0=[COALESCE($4, _UTF-16LE'')]) hints[WatermarkHint options:[16]]
+LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], variant$0=[$20], repourl=[$21])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], files=[$18], keywords=[$19], variant$0=[COALESCE($4, _UTF-16LE'default')], repourl=[CONCAT(_UTF-16LE'https://repository.datasqrl.com/', $14)]) hints[WatermarkHint options:[17]]
     LogicalTableScan(table=[[submission$i$1]])
 
 >>>package-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(name=[$0], submissiontime=[$1])
-    LogicalTableScan(table=[[package$6]])
+    LogicalTableScan(table=[[package$7]])
 
 >>>submission-lp-database
-LogicalSort(sort0=[$16], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], lateststable=[$11], uniqueid=[$12], file=[$13], hash=[$14], authorid=[$15], submissiontime=[$16], variant$0=[$17])
+LogicalSort(sort0=[$17], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], variant$0=[$18], repourl=[$19])
     LogicalTableScan(table=[[submission$3]])
 
 >>>package-data
-datasqrl.examples.Nutshop
+datasqrl.seedshop
 >>>submission-data
-datasqrl.examples.Nutshop, 0.1.0, dev, , https://github.com/DataSQRL/sqrl, , , , Small Nutshop example data, true, hbG-vCnRyRo62jIMH2LCVw0PE8w, hbG-vCnRyRo62jIMH2LCVw0PE8w.zip, c514baa309a470bf6bb7b43a88dfe70c, datasqrl, dev
+datasqrl.seedshop, 0.1.0, dev, true, null, Apache 2.0, https://github.com/DataSQRL/sqrl/tree/main/sqrl-examples/quickstart, https://www.datasqrl.com/, https://www.datasqrl.com/docs/getting-started/quickstart, , Simple e-commerce dataset for the DataSQRL Seed-shop, LRlmya89b1u-PMJFFoeoz22Kb7c, LRlmya89b1u-PMJFFoeoz22Kb7c.zip, 4483fd392182318d2d9a3bbee6c99dae, datasqrl, dev, https://repository.datasqrl.com/LRlmya89b1u-PMJFFoeoz22Kb7c.zip
+datasqrl.seedshop, 0.1.1, dev, true, source, Apache 2.0, https://github.com/DataSQRL/sqrl/tree/main/sqrl-examples/quickstart, https://www.datasqrl.com/, https://www.datasqrl.com/docs/getting-started/quickstart, https://raw.githubusercontent.com/DataSQRL/sqrl/07730c5713932b3dd5421c132f890ae415f25a19/sqrl-examples/quickstart/README.md, Simple e-commerce dataset for the DataSQRL Seed-shop, mX9HHbUFTgI8XQiJ8PDKMXD_Kno, mX9HHbUFTgI8XQiJ8PDKMXD_Kno.zip, 56a79531809887f504fb62a667580532, datasqrl, dev, https://repository.datasqrl.com/mX9HHbUFTgI8XQiJ8PDKMXD_Kno.zip

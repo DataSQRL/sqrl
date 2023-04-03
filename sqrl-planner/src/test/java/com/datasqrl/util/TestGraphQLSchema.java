@@ -3,15 +3,18 @@
  */
 package com.datasqrl.util;
 
-import lombok.SneakyThrows;
-import lombok.Value;
-
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
+import lombok.Value;
 
 public interface TestGraphQLSchema {
 
@@ -30,6 +33,8 @@ public interface TestGraphQLSchema {
   class Directory implements TestGraphQLSchema {
 
     public static final String SCHEMA_FILE = "schema.graphqls";
+    public static final String SCHEMA_FILE_EXTENSION = "graphqls";
+
     public static final String QUERY_FILE_SUFFIX = ".query.graphql";
 
     Path schemaDir;
@@ -41,8 +46,17 @@ public interface TestGraphQLSchema {
     }
 
     @Override
+    @SneakyThrows
     public Path getSchemaPath() {
-      return schemaDir.resolve(SCHEMA_FILE);
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(schemaDir,
+          "*.{"+SCHEMA_FILE_EXTENSION+"}")) {
+        for (Path entry : stream) {
+          if (!Files.isDirectory(entry)) {
+            return entry;
+          }
+        }
+      }
+      return null;
     }
 
     public static List<TestGraphQLSchema> of(Path... paths) {

@@ -1,9 +1,0 @@
-subscription CapacityAlert {
-  CapacityAlert {
-    id
-    name
-    capacity
-    occupancy
-    occupancy_rate
-  }
-}

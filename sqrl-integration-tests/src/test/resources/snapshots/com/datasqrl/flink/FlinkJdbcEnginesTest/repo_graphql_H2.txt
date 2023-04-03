@@ -1,18 +1,21 @@
 >>>database
-CREATE TABLE IF NOT EXISTS "package$6" ("name" CHARACTER VARYING NOT NULL,"submissiontime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
-CREATE TABLE IF NOT EXISTS "submission$3" ("_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"name" CHARACTER VARYING NOT NULL,"version" CHARACTER VARYING NOT NULL,"variant" CHARACTER VARYING NOT NULL,"license" CHARACTER VARYING NOT NULL,"repository" CHARACTER VARYING NOT NULL,"homepage" CHARACTER VARYING NOT NULL,"documentation" CHARACTER VARYING NOT NULL,"readme" CHARACTER VARYING NOT NULL,"description" CHARACTER VARYING NOT NULL,"lateststable" BOOLEAN NOT NULL,"uniqueid" CHARACTER VARYING NOT NULL,"file" CHARACTER VARYING NOT NULL,"hash" CHARACTER VARYING NOT NULL,"authorid" CHARACTER VARYING NOT NULL,"submissiontime" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"variant$0" CHARACTER VARYING NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE INDEX IF NOT EXISTS "topicpackages$9_hash_c1" ON "topicpackages$9" USING hash ("topicname");
+CREATE TABLE IF NOT EXISTS "keywords$5" ("_uuid" CHARACTER VARYING NOT NULL,"_idx" INTEGER NOT NULL,"name" CHARACTER VARYING NOT NULL,"submissiontime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS "package$7" ("name" CHARACTER VARYING NOT NULL,"submissiontime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
+CREATE TABLE IF NOT EXISTS "submission$3" ("_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"name" CHARACTER VARYING NOT NULL,"version" CHARACTER VARYING NOT NULL,"variant" CHARACTER VARYING ,"latest" BOOLEAN NOT NULL,"type" CHARACTER VARYING ,"license" CHARACTER VARYING ,"repository" CHARACTER VARYING ,"homepage" CHARACTER VARYING ,"documentation" CHARACTER VARYING ,"readme" CHARACTER VARYING ,"description" CHARACTER VARYING ,"uniqueid" CHARACTER VARYING NOT NULL,"file" CHARACTER VARYING NOT NULL,"hash" CHARACTER VARYING NOT NULL,"authorid" CHARACTER VARYING NOT NULL,"submissiontime" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"variant$0" CHARACTER VARYING NOT NULL,"repourl" CHARACTER VARYING NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "topicpackages$9" ("pkgname" CHARACTER VARYING NOT NULL,"topicname" CHARACTER VARYING NOT NULL,"numsubmissions" BIGINT NOT NULL,"lastsubmission" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("pkgname","topicname"));
+CREATE TABLE IF NOT EXISTS "topicsearch$11" ("topicname" CHARACTER VARYING NOT NULL,"numpackages" BIGINT NOT NULL,"submissiontime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("topicname"));
 >>>query-latest
 {
   "data" : {
     "Package" : [ {
       "latest" : {
-        "version" : "0.1.0",
+        "version" : "0.1.1",
         "variant" : "dev",
-        "latestStable" : true,
-        "description" : "Small Nutshop example data",
-        "file" : "hbG-vCnRyRo62jIMH2LCVw0PE8w.zip",
-        "hash" : "c514baa309a470bf6bb7b43a88dfe70c",
-        "submissionTime" : "2022-12-08T23:06:27.429598-08:00"
+        "description" : "Simple e-commerce dataset for the DataSQRL Seed-shop",
+        "file" : "mX9HHbUFTgI8XQiJ8PDKMXD_Kno.zip",
+        "hash" : "56a79531809887f504fb62a667580532",
+        "submissionTime" : "2023-03-14T22:53:24.579297-07:00"
       }
     } ]
   }
@@ -23,9 +26,9 @@ CREATE TABLE IF NOT EXISTS "submission$3" ("_uuid" CHARACTER VARYING NOT NULL,"_
     "Package" : [ {
       "versions" : [ {
         "version" : "0.1.0",
-        "file" : "hbG-vCnRyRo62jIMH2LCVw0PE8w.zip",
-        "hash" : "c514baa309a470bf6bb7b43a88dfe70c",
-        "submissionTime" : "2022-12-08T23:06:27.429598-08:00"
+        "file" : "LRlmya89b1u-PMJFFoeoz22Kb7c.zip",
+        "hash" : "4483fd392182318d2d9a3bbee6c99dae",
+        "submissionTime" : "2023-02-27T21:35:13.903106-08:00"
       } ]
     } ]
   }

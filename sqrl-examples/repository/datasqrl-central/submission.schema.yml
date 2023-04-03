@@ -1,0 +1,69 @@
+---
+name: "submission"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "name"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "version"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "variant"
+  type: "STRING"
+- name: "latest"
+  type: "BOOLEAN"
+  tests:
+    - "not_null"
+- name: "type"
+  type: "STRING"
+- name: "license"
+  type: "STRING"
+- name: "repository"
+  type: "STRING"
+- name: "homepage"
+  type: "STRING"
+- name: "documentation"
+  type: "STRING"
+- name: "readme"
+  type: "STRING"
+- name: "description"
+  type: "STRING"
+- name: "uniqueId"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "file"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "hash"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "authorid"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "submissionTime"
+  type: "DATETIME"
+  tests:
+  - "not_null"
+- name: "files"
+  columns:
+  - name: "filename"
+    type: "STRING"
+    tests:
+    - "not_null"
+  - name: "filesize"
+    type: "INTEGER"
+    tests:
+    - "not_null"
+- name: "keywords"
+  columns:
+  - name: "name"
+    type: "STRING"
+    tests:
+    - "not_null"
