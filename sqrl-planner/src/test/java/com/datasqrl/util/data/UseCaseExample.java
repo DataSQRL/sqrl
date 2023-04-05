@@ -103,6 +103,7 @@ public class UseCaseExample implements TestDataset {
         return TestScript.Impl.builder().rootPackageDirectory(getRootPackageDirectory())
             .name(scriptName).scriptPath(getRootPackageDirectory().resolve(scriptName+".sqrl"))
             .resultTables(scriptsWithTables.get(scriptName))
+            .dataSnapshot(false)
             .graphQLSchemas(getGraphQLSchema(scriptName))
             .build();
         }).collect(Collectors.toList());

@@ -15,6 +15,6 @@ public class Sensors extends UseCaseExample {
 
   protected Sensors(String variant) {
     super(variant, Set.of("sensors","sensorreading","machinegroup"),
-        script("sensors-teaser","machines","hourly"));
+        script("sensors-teaser","machine","minreadings"));
   }
 }
