@@ -1,10 +1,5 @@
 {
 Users(id: 2) {
-    spending {
-        week
-        spend
-        saved
-    }
     purchases(limit: 5) {
         id
         time

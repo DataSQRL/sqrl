@@ -47,52 +47,19 @@ CREATE TABLE IF NOT EXISTS "users$8" ("id" BIGINT NOT NULL,"time" INTEGER NOT NU
 {
   "data" : {
     "Users" : {
-      "spending" : [ {
-        "week" : "1677167999999",
-        "spend" : 54.82,
-        "saved" : 24.58
-      }, {
-        "week" : "1676563199999",
-        "spend" : 60.75,
-        "saved" : 0.0
-      }, {
-        "week" : "1675958399999",
-        "spend" : 10.64,
-        "saved" : 0.0
-      }, {
-        "week" : "1675353599999",
-        "spend" : 151.61,
-        "saved" : 76.97
-      }, {
-        "week" : "1674748799999",
-        "spend" : 103.73,
-        "saved" : 9.46
-      }, {
-        "week" : "1674143999999",
-        "spend" : 66.6,
-        "saved" : 6.51
-      }, {
-        "week" : "1673539199999",
-        "spend" : 252.11,
-        "saved" : 18.42
-      }, {
-        "week" : "1672934399999",
-        "spend" : 10.62,
-        "saved" : 0.0
-      } ],
       "purchases" : [ {
-        "id" : 150000036,
-        "time" : "1672835201425",
+        "id" : 150000083,
+        "time" : "1673056351581",
         "totals" : {
-          "price" : 10.62,
+          "price" : 117.54,
           "saving" : 0.0
         }
       }, {
-        "id" : 150000265,
-        "time" : "1673699073568",
+        "id" : 150000151,
+        "time" : "1673204995599",
         "totals" : {
-          "price" : 9.37,
-          "saving" : 6.51
+          "price" : 64.74,
+          "saving" : 0.0
         }
       }, {
         "id" : 150000983,
@@ -102,17 +69,17 @@ CREATE TABLE IF NOT EXISTS "users$8" ("id" BIGINT NOT NULL,"time" INTEGER NOT NU
           "saving" : 0.0
         }
       }, {
-        "id" : 150000380,
-        "time" : "1674215743025",
+        "id" : 150000463,
+        "time" : "1674637714392",
         "totals" : {
-          "price" : 26.58,
-          "saving" : 8.76
+          "price" : 49.73,
+          "saving" : 0.7
         }
       }, {
-        "id" : 150000551,
-        "time" : "1675101511794",
+        "id" : 150000833,
+        "time" : "1676231372602",
         "totals" : {
-          "price" : 26.74,
+          "price" : 5.24,
           "saving" : 0.0
         }
       } ]
