@@ -35,6 +35,11 @@ public class ObjectLoaderImpl implements ObjectLoader {
   final static Deserializer deserializer = new Deserializer();
 
   @Override
+  public String toString() {
+    return resourceResolver.toString();
+  }
+
+  @Override
   public List<NamespaceObject> load(NamePath directory) {
     List<URI> allItems = resourceResolver.loadPath(directory);
     return allItems.stream()

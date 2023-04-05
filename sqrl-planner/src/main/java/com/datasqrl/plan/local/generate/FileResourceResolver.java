@@ -1,18 +1,17 @@
 package com.datasqrl.plan.local.generate;
 
+import static com.datasqrl.util.NameUtil.namepath2Path;
+
 import com.datasqrl.loaders.ResourceResolver;
 import com.datasqrl.name.NamePath;
 import com.google.common.base.Preconditions;
-import lombok.SneakyThrows;
-
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static com.datasqrl.util.NameUtil.namepath2Path;
+import lombok.SneakyThrows;
 
 public class FileResourceResolver implements ResourceResolver {
 
@@ -25,6 +24,11 @@ public class FileResourceResolver implements ResourceResolver {
 
   public Optional<URI> resolve(Path path) {
     return Optional.of(path.toFile().toURI());
+  }
+
+  @Override
+  public String toString() {
+    return "FileResourceResolver[" + baseDir + ']';
   }
 
   @SneakyThrows

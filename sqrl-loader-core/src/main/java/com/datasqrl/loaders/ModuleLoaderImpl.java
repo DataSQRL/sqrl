@@ -55,4 +55,10 @@ public class ModuleLoaderImpl implements ModuleLoader {
     return objectLoader.load(namePath);
 
   }
+
+  @Override
+  public String toString() {
+    return objectLoader.toString();
+  }
+
 }
