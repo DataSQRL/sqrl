@@ -1,0 +1,54 @@
+>>>database
+CREATE INDEX IF NOT EXISTS machine$16_btree_c1c2 ON machine$16 ("maxtemp","avgtemp")
+CREATE INDEX IF NOT EXISTS machine$16_hash_c2 ON machine$16 ("avgtemp")
+CREATE INDEX IF NOT EXISTS sensors$14_btree_c3c4 ON sensors$14 ("machineid","placed")
+CREATE INDEX IF NOT EXISTS sensors$14_hash_c4 ON sensors$14 ("placed")
+CREATE TABLE IF NOT EXISTS "machine$16" ("machineid" BIGINT NOT NULL,"maxtemp" NUMERIC NOT NULL,"avgtemp" NUMERIC NOT NULL,"timemin" INTEGER NOT NULL , PRIMARY KEY ("machineid"));
+CREATE TABLE IF NOT EXISTS "minreadings$12" ("sensorid" BIGINT NOT NULL,"timemin" INTEGER NOT NULL,"temp" NUMERIC NOT NULL , PRIMARY KEY ("sensorid","timemin"));
+CREATE TABLE IF NOT EXISTS "sensors$14" ("id" BIGINT NOT NULL,"_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"machineid" BIGINT NOT NULL,"placed" INTEGER NOT NULL , PRIMARY KEY ("id"));
+>>>query-machine
+{
+  "data" : {
+    "Machine" : [ {
+      "maxTemp" : 19.507746,
+      "avgTemp" : 17.981122
+    } ]
+  }
+}
+>>>query-sensor
+{
+  "data" : {
+    "Sensors" : [ {
+      "placed" : "1680505200000",
+      "machineid" : 0,
+      "readings" : [ {
+        "timeMin" : "1680591659999",
+        "temp" : 19.987373
+      }, {
+        "timeMin" : "1680591719999",
+        "temp" : 16.415954
+      }, {
+        "timeMin" : "1680591779999",
+        "temp" : 19.949893
+      }, {
+        "timeMin" : "1680591839999",
+        "temp" : 18.036033
+      }, {
+        "timeMin" : "1680591899999",
+        "temp" : 17.132023
+      }, {
+        "timeMin" : "1680591959999",
+        "temp" : 20.240243
+      }, {
+        "timeMin" : "1680592019999",
+        "temp" : 19.383995
+      }, {
+        "timeMin" : "1680592079999",
+        "temp" : 18.855442
+      }, {
+        "timeMin" : "1680592139999",
+        "temp" : 18.237065
+      } ]
+    } ]
+  }
+}

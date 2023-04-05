@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-@CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "discover 0.1",
+@CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "0.1",
     subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class, PopulateCommand.class,
         ServeCommand.class, PublishCommand.class})
 @Getter

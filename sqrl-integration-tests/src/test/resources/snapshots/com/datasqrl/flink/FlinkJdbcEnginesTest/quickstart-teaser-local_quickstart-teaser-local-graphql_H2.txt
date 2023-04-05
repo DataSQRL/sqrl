@@ -1,0 +1,121 @@
+>>>database
+CREATE INDEX IF NOT EXISTS "orders$3_hash_c4" ON "orders$3" USING hash ("time");
+CREATE TABLE IF NOT EXISTS "items$4" ("_uuid" CHARACTER VARYING NOT NULL,"_idx" INTEGER NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"unit_price" DECFLOAT(8) NOT NULL,"discount" DECFLOAT(8) ,"total" DECFLOAT(8) NOT NULL,"time" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS "orders$3" ("_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "spending$10" ("__pk_0" BIGINT NOT NULL,"week" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"spend" DECFLOAT(8) NOT NULL,"saved" DECFLOAT(8) NOT NULL , PRIMARY KEY ("__pk_0","week"));
+CREATE TABLE IF NOT EXISTS "totals$6" ("__pk_0" CHARACTER VARYING NOT NULL,"price" DECFLOAT(8) NOT NULL,"saving" DECFLOAT(8) NOT NULL,"time" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__pk_0"));
+CREATE TABLE IF NOT EXISTS "users$8" ("id" BIGINT NOT NULL,"time" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+>>>query-orders
+{
+  "data" : {
+    "Orders" : [ {
+      "id" : 150000986,
+      "time" : "2023-02-21T18:43:09.852-08:00",
+      "items" : [ {
+        "productid" : 16,
+        "quantity" : 1,
+        "unit_price" : 18.64,
+        "discount" : null,
+        "total" : 18.64
+      }, {
+        "productid" : 189,
+        "quantity" : 2,
+        "unit_price" : 5.75,
+        "discount" : null,
+        "total" : 11.5
+      }, {
+        "productid" : 55,
+        "quantity" : 1,
+        "unit_price" : 12.22,
+        "discount" : null,
+        "total" : 12.22
+      } ]
+    }, {
+      "id" : 150001008,
+      "time" : "2023-02-21T17:07:18.370-08:00",
+      "items" : [ {
+        "productid" : 24,
+        "quantity" : 1,
+        "unit_price" : 5.02,
+        "discount" : null,
+        "total" : 5.02
+      } ]
+    } ]
+  }
+}
+>>>query-user
+{
+  "data" : {
+    "Users" : {
+      "spending" : [ {
+        "week" : "2023-02-23T07:59:59.999-08:00",
+        "spend" : 54.82,
+        "saved" : 24.58
+      }, {
+        "week" : "2023-02-16T07:59:59.999-08:00",
+        "spend" : 60.75,
+        "saved" : 0.0
+      }, {
+        "week" : "2023-02-09T07:59:59.999-08:00",
+        "spend" : 10.64,
+        "saved" : 0.0
+      }, {
+        "week" : "2023-02-02T07:59:59.999-08:00",
+        "spend" : 151.61,
+        "saved" : 76.97
+      }, {
+        "week" : "2023-01-26T07:59:59.999-08:00",
+        "spend" : 103.73,
+        "saved" : 9.46
+      }, {
+        "week" : "2023-01-19T07:59:59.999-08:00",
+        "spend" : 66.6,
+        "saved" : 6.51
+      }, {
+        "week" : "2023-01-12T07:59:59.999-08:00",
+        "spend" : 252.11,
+        "saved" : 18.42
+      }, {
+        "week" : "2023-01-05T07:59:59.999-08:00",
+        "spend" : 10.62,
+        "saved" : 0.0
+      } ],
+      "purchases" : [ {
+        "id" : 150000532,
+        "time" : "2023-01-29T22:09:05.237-08:00",
+        "totals" : {
+          "price" : 13.12,
+          "saving" : 0.0
+        }
+      }, {
+        "id" : 150000551,
+        "time" : "2023-01-30T09:58:31.794-08:00",
+        "totals" : {
+          "price" : 26.74,
+          "saving" : 0.0
+        }
+      }, {
+        "id" : 150000200,
+        "time" : "2023-01-11T08:37:30.966-08:00",
+        "totals" : {
+          "price" : 31.41,
+          "saving" : 8.22
+        }
+      }, {
+        "id" : 150000140,
+        "time" : "2023-01-07T02:47:27.759-08:00",
+        "totals" : {
+          "price" : 17.47,
+          "saving" : 8.41
+        }
+      }, {
+        "id" : 150000833,
+        "time" : "2023-02-12T11:49:32.602-08:00",
+        "totals" : {
+          "price" : 5.24,
+          "saving" : 0.0
+        }
+      } ]
+    }
+  }
+}

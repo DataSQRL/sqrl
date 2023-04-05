@@ -1,0 +1,17 @@
+---
+name: "sensors"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "machineid"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "placed"
+  type: "DATETIME"
+  tests:
+  - "not_null"

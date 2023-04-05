@@ -1,7 +1,6 @@
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.loaders.ResourceResolver;
-import com.google.inject.Inject;
+import java.util.HashMap;
 import java.util.Map;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -15,8 +14,11 @@ public class ExecutionEnvironmentFactory {
   }
 
   public StreamExecutionEnvironment createEnvironment() {
+    Map conf = new HashMap(flinkConf);
+    //conf.put("taskmanager.memory.network.max", "1g"); -- Add if tests fail with buffer exhaustion
+
     StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
-        org.apache.flink.configuration.Configuration.fromMap(flinkConf));
+        org.apache.flink.configuration.Configuration.fromMap(conf));
     env.getConfig().enableObjectReuse();
     env.setRuntimeMode(RuntimeExecutionMode.STREAMING); //todo add to config
     return env;

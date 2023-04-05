@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.datasqrl.functions.FlinkBackedFunctionCatalog;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorCollector;
@@ -15,7 +14,6 @@ import com.datasqrl.loaders.Deserializer;
 import com.datasqrl.name.Name;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.plan.calcite.table.CalciteTableFactory;
-import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import com.datasqrl.schema.input.FlexibleTableConverter;
@@ -36,7 +34,6 @@ import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.calcite.jdbc.SqrlSchema;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -128,7 +125,7 @@ public class FlexibleSchemaHandlingTest {
       converters.add(new SchemaConverterTestCase(new UniversalTable2FlinkSchema()));
 
       List<InputSchema> schemas = TestDataset.getAll().stream()
-          .map(td -> new InputSchema(td.getRootPackageDirectory().resolve(td.getName()),
+          .map(td -> new InputSchema(td.getDataPackageDirectory(),
               td.getName()))
           .collect(Collectors.toList());
 

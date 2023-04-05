@@ -1,0 +1,121 @@
+>>>database
+CREATE INDEX IF NOT EXISTS orders$3_hash_c4 ON orders$3 ("time")
+CREATE TABLE IF NOT EXISTS "items$4" ("_uuid" VARCHAR NOT NULL,"_idx" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"unit_price" NUMERIC NOT NULL,"discount" NUMERIC ,"total" NUMERIC NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS "orders$3" ("_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "spending$10" ("__pk_0" BIGINT NOT NULL,"week" INTEGER NOT NULL,"spend" NUMERIC NOT NULL,"saved" NUMERIC NOT NULL , PRIMARY KEY ("__pk_0","week"));
+CREATE TABLE IF NOT EXISTS "totals$6" ("__pk_0" VARCHAR NOT NULL,"price" NUMERIC NOT NULL,"saving" NUMERIC NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("__pk_0"));
+CREATE TABLE IF NOT EXISTS "users$8" ("id" BIGINT NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("id"));
+>>>query-orders
+{
+  "data" : {
+    "Orders" : [ {
+      "id" : 150000986,
+      "time" : "1677033789852",
+      "items" : [ {
+        "productid" : 16,
+        "quantity" : 1,
+        "unit_price" : 18.64,
+        "discount" : null,
+        "total" : 18.64
+      }, {
+        "productid" : 189,
+        "quantity" : 2,
+        "unit_price" : 5.75,
+        "discount" : null,
+        "total" : 11.5
+      }, {
+        "productid" : 55,
+        "quantity" : 1,
+        "unit_price" : 12.22,
+        "discount" : null,
+        "total" : 12.22
+      } ]
+    }, {
+      "id" : 150001008,
+      "time" : "1677028038370",
+      "items" : [ {
+        "productid" : 24,
+        "quantity" : 1,
+        "unit_price" : 5.02,
+        "discount" : null,
+        "total" : 5.02
+      } ]
+    } ]
+  }
+}
+>>>query-user
+{
+  "data" : {
+    "Users" : {
+      "spending" : [ {
+        "week" : "1677167999999",
+        "spend" : 54.82,
+        "saved" : 24.58
+      }, {
+        "week" : "1676563199999",
+        "spend" : 60.75,
+        "saved" : 0.0
+      }, {
+        "week" : "1675958399999",
+        "spend" : 10.64,
+        "saved" : 0.0
+      }, {
+        "week" : "1675353599999",
+        "spend" : 151.61,
+        "saved" : 76.97
+      }, {
+        "week" : "1674748799999",
+        "spend" : 103.73,
+        "saved" : 9.46
+      }, {
+        "week" : "1674143999999",
+        "spend" : 66.6,
+        "saved" : 6.51
+      }, {
+        "week" : "1673539199999",
+        "spend" : 252.11,
+        "saved" : 18.42
+      }, {
+        "week" : "1672934399999",
+        "spend" : 10.62,
+        "saved" : 0.0
+      } ],
+      "purchases" : [ {
+        "id" : 150000036,
+        "time" : "1672835201425",
+        "totals" : {
+          "price" : 10.62,
+          "saving" : 0.0
+        }
+      }, {
+        "id" : 150000265,
+        "time" : "1673699073568",
+        "totals" : {
+          "price" : 9.37,
+          "saving" : 6.51
+        }
+      }, {
+        "id" : 150000983,
+        "time" : "1676903115669",
+        "totals" : {
+          "price" : 15.22,
+          "saving" : 0.0
+        }
+      }, {
+        "id" : 150000380,
+        "time" : "1674215743025",
+        "totals" : {
+          "price" : 26.58,
+          "saving" : 8.76
+        }
+      }, {
+        "id" : 150000551,
+        "time" : "1675101511794",
+        "totals" : {
+          "price" : 26.74,
+          "saving" : 0.0
+        }
+      } ]
+    }
+  }
+}
