@@ -75,7 +75,7 @@ public class UseCaseExample implements TestDataset {
 
   @Override
   public Path getDataPackageDirectory() {
-    return getRootPackageDirectory().resolve("mySourcePackage"+ getVariant());
+    return getRootPackageDirectory().resolve("mysourcepackage"+ getVariant());
   }
 
   @Override
