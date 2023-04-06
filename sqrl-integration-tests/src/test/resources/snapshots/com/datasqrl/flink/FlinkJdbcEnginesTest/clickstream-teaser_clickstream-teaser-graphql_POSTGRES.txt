@@ -1,17 +1,6 @@
 >>>database
-CREATE INDEX IF NOT EXISTS click$3_btree_c2c3c4 ON click$3 USING btree (url,timestamp,userid);
-CREATE INDEX IF NOT EXISTS click$3_btree_c3c4 ON click$3 USING btree (timestamp,userid);
-CREATE INDEX IF NOT EXISTS click$3_btree_c4c2 ON click$3 USING btree (userid,url);
-CREATE INDEX IF NOT EXISTS recommendation$9_btree_c1c2 ON recommendation$9 USING btree (rec,frequency);
-CREATE INDEX IF NOT EXISTS recommendation$9_btree_c2c0 ON recommendation$9 USING btree (frequency,url);
-CREATE INDEX IF NOT EXISTS trending$5_hash_c1 ON trending$5 USING hash (total);
-CREATE INDEX IF NOT EXISTS visitafter$7_btree_c2c3c4 ON visitafter$7 USING btree (beforeurl,afterurl,timestamp);
-CREATE INDEX IF NOT EXISTS visitafter$7_btree_c3c4 ON visitafter$7 USING btree (afterurl,timestamp);
-CREATE INDEX IF NOT EXISTS visitafter$7_btree_c4c2 ON visitafter$7 USING btree (timestamp,beforeurl);
-CREATE TABLE IF NOT EXISTS click$3 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,url VARCHAR NOT NULL,timestamp TIMESTAMPTZ NOT NULL,userid VARCHAR NOT NULL , PRIMARY KEY (_uuid));
 CREATE TABLE IF NOT EXISTS recommendation$9 (url VARCHAR NOT NULL,rec VARCHAR NOT NULL,frequency BIGINT NOT NULL,timestamp TIMESTAMPTZ NOT NULL , PRIMARY KEY (url,rec));
 CREATE TABLE IF NOT EXISTS trending$5 (url VARCHAR NOT NULL,total BIGINT NOT NULL,timestamp TIMESTAMPTZ NOT NULL , PRIMARY KEY (url));
-CREATE TABLE IF NOT EXISTS visitafter$7 (_uuid VARCHAR NOT NULL,_uuid0 VARCHAR NOT NULL,beforeurl VARCHAR NOT NULL,afterurl VARCHAR NOT NULL,timestamp TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid,_uuid0));
 >>>query-recommendation
 {
   "data" : {

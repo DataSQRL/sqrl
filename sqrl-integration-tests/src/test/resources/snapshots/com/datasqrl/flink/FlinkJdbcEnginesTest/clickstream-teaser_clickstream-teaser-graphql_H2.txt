@@ -1,17 +1,6 @@
 >>>database
-CREATE INDEX IF NOT EXISTS "click$3_btree_c2c3c4" ON "click$3" USING btree ("url","timestamp","userid");
-CREATE INDEX IF NOT EXISTS "click$3_btree_c3c4" ON "click$3" USING btree ("timestamp","userid");
-CREATE INDEX IF NOT EXISTS "click$3_btree_c4c2" ON "click$3" USING btree ("userid","url");
-CREATE INDEX IF NOT EXISTS "recommendation$9_btree_c1c2" ON "recommendation$9" USING btree ("rec","frequency");
-CREATE INDEX IF NOT EXISTS "recommendation$9_btree_c2c0" ON "recommendation$9" USING btree ("frequency","url");
-CREATE INDEX IF NOT EXISTS "trending$5_hash_c1" ON "trending$5" USING hash ("total");
-CREATE INDEX IF NOT EXISTS "visitafter$7_btree_c2c3c4" ON "visitafter$7" USING btree ("beforeurl","afterurl","timestamp");
-CREATE INDEX IF NOT EXISTS "visitafter$7_btree_c3c4" ON "visitafter$7" USING btree ("afterurl","timestamp");
-CREATE INDEX IF NOT EXISTS "visitafter$7_btree_c4c2" ON "visitafter$7" USING btree ("timestamp","beforeurl");
-CREATE TABLE IF NOT EXISTS "click$3" ("_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"url" CHARACTER VARYING NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"userid" CHARACTER VARYING NOT NULL , PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS "recommendation$9" ("url" CHARACTER VARYING NOT NULL,"rec" CHARACTER VARYING NOT NULL,"frequency" BIGINT NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("url","rec"));
 CREATE TABLE IF NOT EXISTS "trending$5" ("url" CHARACTER VARYING NOT NULL,"total" BIGINT NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("url"));
-CREATE TABLE IF NOT EXISTS "visitafter$7" ("_uuid" CHARACTER VARYING NOT NULL,"_uuid0" CHARACTER VARYING NOT NULL,"beforeurl" CHARACTER VARYING NOT NULL,"afterurl" CHARACTER VARYING NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_uuid0"));
 >>>query-recommendation
 {
   "data" : {

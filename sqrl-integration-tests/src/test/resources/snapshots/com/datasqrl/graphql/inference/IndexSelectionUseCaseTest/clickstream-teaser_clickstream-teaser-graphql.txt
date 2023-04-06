@@ -1,9 +1,1 @@
-click$3_btree_c2c3c4 - 3789.000
-click$3_btree_c3c4 - 990.000
-click$3_btree_c4c2 - 1890.000
-recommendation$9_btree_c1c2 - 37125.000
-recommendation$9_btree_c2c0 - 70875.000
-trending$5_hash_c1 - 1350.000
-visitafter$7_btree_c2c3c4 - 142087.500
-visitafter$7_btree_c3c4 - 37125.000
-visitafter$7_btree_c4c2 - 70875.000
+
