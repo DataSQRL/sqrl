@@ -36,6 +36,7 @@
         <module>sqrl-schemas</module>
         <module>sqrl-schemas/sqrl-schema-jsonschema</module>
         <module>sqrl-schemas/sqrl-schema-flexible</module>
+      <module>sqrl-examples</module>
     </modules>
 
 

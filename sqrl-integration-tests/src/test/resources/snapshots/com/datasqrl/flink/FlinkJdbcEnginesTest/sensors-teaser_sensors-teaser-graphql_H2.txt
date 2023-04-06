@@ -1,0 +1,54 @@
+>>>database
+CREATE INDEX IF NOT EXISTS "machine$16_btree_c1c2" ON "machine$16" USING btree ("maxtemp","avgtemp");
+CREATE INDEX IF NOT EXISTS "machine$16_hash_c2" ON "machine$16" USING hash ("avgtemp");
+CREATE INDEX IF NOT EXISTS "sensors$14_btree_c3c4" ON "sensors$14" USING btree ("machineid","placed");
+CREATE INDEX IF NOT EXISTS "sensors$14_hash_c4" ON "sensors$14" USING hash ("placed");
+CREATE TABLE IF NOT EXISTS "machine$16" ("machineid" BIGINT NOT NULL,"maxtemp" DECFLOAT(8) NOT NULL,"avgtemp" DECFLOAT(8) NOT NULL,"timemin" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("machineid"));
+CREATE TABLE IF NOT EXISTS "minreadings$12" ("sensorid" BIGINT NOT NULL,"timemin" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"temp" DECFLOAT(8) NOT NULL , PRIMARY KEY ("sensorid","timemin"));
+CREATE TABLE IF NOT EXISTS "sensors$14" ("id" BIGINT NOT NULL,"_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"machineid" BIGINT NOT NULL,"placed" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+>>>query-machine
+{
+  "data" : {
+    "Machine" : [ {
+      "maxTemp" : 19.507746,
+      "avgTemp" : 17.981122
+    } ]
+  }
+}
+>>>query-sensor
+{
+  "data" : {
+    "Sensors" : [ {
+      "placed" : "2023-04-03T00:00-07:00",
+      "machineid" : 0,
+      "readings" : [ {
+        "timeMin" : "2023-04-04T00:00:59.999-07:00",
+        "temp" : 19.987373
+      }, {
+        "timeMin" : "2023-04-04T00:01:59.999-07:00",
+        "temp" : 16.415954
+      }, {
+        "timeMin" : "2023-04-04T00:02:59.999-07:00",
+        "temp" : 19.949893
+      }, {
+        "timeMin" : "2023-04-04T00:03:59.999-07:00",
+        "temp" : 18.036033
+      }, {
+        "timeMin" : "2023-04-04T00:04:59.999-07:00",
+        "temp" : 17.132023
+      }, {
+        "timeMin" : "2023-04-04T00:05:59.999-07:00",
+        "temp" : 20.240243
+      }, {
+        "timeMin" : "2023-04-04T00:06:59.999-07:00",
+        "temp" : 19.383995
+      }, {
+        "timeMin" : "2023-04-04T00:07:59.999-07:00",
+        "temp" : 18.855442
+      }, {
+        "timeMin" : "2023-04-04T00:08:59.999-07:00",
+        "temp" : 18.237065
+      } ]
+    } ]
+  }
+}

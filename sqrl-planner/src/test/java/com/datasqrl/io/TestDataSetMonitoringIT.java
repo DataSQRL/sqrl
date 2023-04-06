@@ -22,7 +22,7 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
-import com.datasqrl.util.data.RetailNested;
+import com.datasqrl.util.data.Sensors;
 import com.datasqrl.util.junit.ArgumentProvider;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -105,10 +105,10 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
   @Test
   @Disabled
   public void generateSchema() {
-    generateTableConfigAndSchemaInDataDir(RetailNested.INSTANCE,
-        IntegrationTestSettings.getInMemory());
-//    generateTableConfigAndSchemaInDataDir(Quickstart.INSTANCE,
-//        IntegrationTestSettings.getFlinkWithDB());
+//    generateTableConfigAndSchemaInDataDir(RetailNested.INSTANCE,
+//        IntegrationTestSettings.getInMemory());
+    generateTableConfigAndSchemaInDataDir(Sensors.INSTANCE_EPOCH,
+        IntegrationTestSettings.getFlinkWithDB());
 //    generateTableConfigAndSchemaInDataDir(TestDataset.ofSingleFile(Path.of("../../sqrl-repository/repodata/package_mX9HHbUFTgI8XQiJ8PDKMXD_Kno.json")),
 //        IntegrationTestSettings.getFlinkWithDB());
   }
@@ -121,7 +121,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     initialize(settings);
     List<TableSource> tables = discoverSchema(example);
     TableWriter writer = new TableWriter();
-    writer.writeToFile(example.getRootPackageDirectory().resolve(example.getName()), tables);
+    writer.writeToFile(example.getDataPackageDirectory(), tables);
   }
 
 }

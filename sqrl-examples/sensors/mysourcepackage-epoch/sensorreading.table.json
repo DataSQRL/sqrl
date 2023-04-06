@@ -1,0 +1,20 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "csv",
+    "delimiter" : ",",
+    "commentPrefix" : null,
+    "header" : [ "sensorid", "time", "temperature", "humidity" ]
+  },
+  "name" : "sensorreading",
+  "identifier" : "sensorreading",
+  "schema" : "flexible",
+  "connector" : {
+    "directoryURI" : "",
+    "fileURIs" : [ "../sqrl-examples/sensors/data-epoch/sensors_part0001.json.gz", "../sqrl-examples/sensors/data-epoch/sensorreading_part0001.csv.gz", "../sqrl-examples/sensors/data-epoch/sensors_part0000.json.gz", "../sqrl-examples/sensors/data-epoch/machinegroup_part0001.json.gz" ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "systemType" : "dir"
+  }
+}

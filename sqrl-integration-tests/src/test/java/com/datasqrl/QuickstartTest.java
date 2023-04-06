@@ -20,14 +20,15 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class QuickstartTest {
 
+    final Path root = Quickstart.INSTANCE.getRootPackageDirectory();
+
     @Test
     public void testRootCmd() {
-        execute(Quickstart.BASE_PATH);
+        execute(root);
     }
 
     @Test
     public void testQuickStartTeaser() {
-        Path root = Quickstart.BASE_PATH;
         execute(root, "run",root.resolve("quickstart-teaser.sqrl").toString(),
                 root.resolve("quickstart-teaser.graphqls").toString() );
                 //,"-a","graphql");
@@ -36,14 +37,12 @@ public class QuickstartTest {
     @Test
     @Disabled("only used to generate schema")
     public void getQuickstartGraphQL() {
-        Path root = Quickstart.BASE_PATH;
         execute(root, "compile",root.resolve("quickstart-teaser.sqrl").toString(),
             "-a","graphql");
     }
 
     @Test
     public void testQuickStartUserWithGraphQL() {
-        Path root = Quickstart.BASE_PATH;
         execute(root, "run",root.resolve("quickstart-user.sqrl").toString(),
             root.resolve("quickstart-user-paging.graphqls").toString() );
         //,"-a","graphql");
@@ -59,7 +58,6 @@ public class QuickstartTest {
 
     @Test
     public void runExportScript() {
-        Path root = Quickstart.BASE_PATH;
         execute(root, "run", root.resolve(SCRIPTS[3]).toString());
     }
 
@@ -70,13 +68,13 @@ public class QuickstartTest {
         //Clean up H2
         Files.deleteIfExists(Path.of("h2.db.mv.db"));
         //Clean up directory
-        FileUtil.deleteDirectory(Quickstart.BASE_PATH.resolve("mysink-output").resolve("promotion"));
+        FileUtil.deleteDirectory(root.resolve("mysink-output").resolve("promotion"));
     }
 
     @SneakyThrows
     @BeforeEach
     public void createSinkDir() {
-        Files.createDirectories(Quickstart.BASE_PATH.resolve("mysink-output"));
+        Files.createDirectories(root.resolve("mysink-output"));
     }
 
     public static final String[] SCRIPTS = {
@@ -92,7 +90,7 @@ public class QuickstartTest {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
             throws Exception {
-            Path root = Quickstart.BASE_PATH;
+            Path root = Quickstart.INSTANCE.getRootPackageDirectory();
             return Arrays.stream(SCRIPTS)
                 .map(s -> root.resolve(s).toString())
                 .map(s->Arguments.of(root,s));

@@ -1,9 +1,6 @@
 package com.datasqrl.plan.local.analyze;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.function.builtin.string.StdStringLibraryImpl;
-import com.datasqrl.function.builtin.time.StdLibrary;
-import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.io.DataSystem;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.DataSystemDiscoveryConfig;
@@ -19,14 +16,10 @@ import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.loaders.StandardLibraryLoader;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.local.generate.NamespaceObject;
-import com.datasqrl.util.TestDataset;
-import com.datasqrl.util.data.Retail;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MockModuleLoader implements ModuleLoader {
 
@@ -98,5 +91,10 @@ public class MockModuleLoader implements ModuleLoader {
   private static boolean isOutputSink(NamePath namePath) {
     return namePath.size() == 1 && namePath.getLast().getCanonical()
         .equals("output");
+  }
+
+  @Override
+  public String toString() {
+    return objLoader.toString();
   }
 }

@@ -1,0 +1,216 @@
+>>>database
+CREATE TABLE IF NOT EXISTS "recommendation$9" ("url" CHARACTER VARYING NOT NULL,"rec" CHARACTER VARYING NOT NULL,"frequency" BIGINT NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("url","rec"));
+CREATE TABLE IF NOT EXISTS "trending$5" ("url" CHARACTER VARYING NOT NULL,"total" BIGINT NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("url"));
+>>>query-recommendation
+{
+  "data" : {
+    "Recommendation" : [ {
+      "rec" : "mascot_books/a_time_of_gifts",
+      "frequency" : 132
+    }, {
+      "rec" : "schocken_books/arms_and_the_man",
+      "frequency" : 18
+    }, {
+      "rec" : "virgin_publishing/antic_hay",
+      "frequency" : 18
+    }, {
+      "rec" : "mapin_publishing/a_time_to_kill",
+      "frequency" : 17
+    }, {
+      "rec" : "harper__brothers/ah_wilderness",
+      "frequency" : 16
+    }, {
+      "rec" : "edupedia_publications/the_golden_apples_of_the_sun",
+      "frequency" : 14
+    }, {
+      "rec" : "reed_publishing/a_handful_of_dust",
+      "frequency" : 14
+    }, {
+      "rec" : "university_of_chicago_press/the_wives_of_bath",
+      "frequency" : 14
+    }, {
+      "rec" : "berkley_books/to_sail_beyond_the_sunset",
+      "frequency" : 12
+    }, {
+      "rec" : "george_newnes/behold_the_man",
+      "frequency" : 10
+    }, {
+      "rec" : "marshall_cavendish/the_painted_veil",
+      "frequency" : 8
+    }, {
+      "rec" : "schocken_books/the_cricket_on_the_hearth",
+      "frequency" : 8
+    }, {
+      "rec" : "university_of_akron_press/beyond_the_mexique_bay",
+      "frequency" : 7
+    }, {
+      "rec" : "ace_books/the_mirror_crackd_from_side_to_side",
+      "frequency" : 6
+    }, {
+      "rec" : "adis_international/if_i_forget_thee_jerusalem",
+      "frequency" : 5
+    }, {
+      "rec" : "berg_publishers/behold_the_man",
+      "frequency" : 5
+    }, {
+      "rec" : "blackwell_publishing/the_wealth_of_nations",
+      "frequency" : 5
+    }, {
+      "rec" : "nauka/recalled_to_life",
+      "frequency" : 5
+    }, {
+      "rec" : "united_states_government_publishing_office/the_waste_land",
+      "frequency" : 5
+    }, {
+      "rec" : "bantam_spectra/the_curious_incident_of_the_dog_in_the_nighttime",
+      "frequency" : 4
+    }, {
+      "rec" : "chick_publications/death_be_not_proud",
+      "frequency" : 4
+    }, {
+      "rec" : "left_book_club/where_angels_fear_to_tread",
+      "frequency" : 4
+    }, {
+      "rec" : "matthias_media/the_green_bay_tree",
+      "frequency" : 4
+    }, {
+      "rec" : "sage_publications/i_know_why_the_caged_bird_sings",
+      "frequency" : 4
+    }, {
+      "rec" : "secker__warburg/look_homeward_angel",
+      "frequency" : 4
+    }, {
+      "rec" : "carlton_publishing_group/the_lathe_of_heaven",
+      "frequency" : 3
+    }, {
+      "rec" : "casemate_publishers/everything_is_illuminated",
+      "frequency" : 3
+    }, {
+      "rec" : "casemate_publishers/the_heart_is_deceitful_above_all_things",
+      "frequency" : 3
+    }, {
+      "rec" : "kogan_page/tender_is_the_night",
+      "frequency" : 3
+    }, {
+      "rec" : "university_of_minnesota_press/to_a_god_unknown",
+      "frequency" : 3
+    }, {
+      "rec" : "butterworthheinemann/nectar_in_a_sieve",
+      "frequency" : 2
+    }, {
+      "rec" : "cisco_press/franoise_sagan",
+      "frequency" : 2
+    }, {
+      "rec" : "daw_books/death_be_not_proud",
+      "frequency" : 2
+    }, {
+      "rec" : "gay_mens_press/alone_on_a_wide_wide_sea",
+      "frequency" : 2
+    }, {
+      "rec" : "gunit_books/by_grand_central_station_i_sat_down_and_wept",
+      "frequency" : 2
+    }, {
+      "rec" : "hmso/a_summer_birdcage",
+      "frequency" : 2
+    }, {
+      "rec" : "karadi_tales/a_manysplendoured_thing",
+      "frequency" : 2
+    }, {
+      "rec" : "karadi_tales/the_moon_by_night",
+      "frequency" : 2
+    }, {
+      "rec" : "legend_books/cabbages_and_kings",
+      "frequency" : 2
+    }, {
+      "rec" : "manchester_university_press/the_other_side_of_silence",
+      "frequency" : 2
+    }, {
+      "rec" : "new_directions_publishing/to_your_scattered_bodies_go",
+      "frequency" : 2
+    }, {
+      "rec" : "ziff_davis_media/edna_obrien",
+      "frequency" : 2
+    }, {
+      "rec" : "cambridge_university_press/the_house_of_mirth",
+      "frequency" : 1
+    }, {
+      "rec" : "etruscan_press/a_time_to_kill",
+      "frequency" : 1
+    }, {
+      "rec" : "harvard_university_press/consider_phlebas",
+      "frequency" : 1
+    }, {
+      "rec" : "holt_mcdougal/waiting_for_the_barbarians",
+      "frequency" : 1
+    }, {
+      "rec" : "marion_boyars_publishers/o_pioneers",
+      "frequency" : 1
+    } ]
+  }
+}
+>>>query-trending
+{
+  "data" : {
+    "Trending" : [ {
+      "url" : "ziff_davis_media/edna_obrien",
+      "total" : 7
+    }, {
+      "url" : "gunit_books/by_grand_central_station_i_sat_down_and_wept",
+      "total" : 5
+    }, {
+      "url" : "athabasca_university_press/the_doors_of_perception",
+      "total" : 4
+    }, {
+      "url" : "berkley_books/to_sail_beyond_the_sunset",
+      "total" : 3
+    }, {
+      "url" : "blackwell_publishing/the_wealth_of_nations",
+      "total" : 3
+    }, {
+      "url" : "chick_publications/death_be_not_proud",
+      "total" : 3
+    }, {
+      "url" : "edupedia_publications/the_golden_apples_of_the_sun",
+      "total" : 3
+    }, {
+      "url" : "george_newnes/behold_the_man",
+      "total" : 3
+    }, {
+      "url" : "matthias_media/the_green_bay_tree",
+      "total" : 3
+    }, {
+      "url" : "secker__warburg/look_homeward_angel",
+      "total" : 3
+    }, {
+      "url" : "gay_mens_press/alone_on_a_wide_wide_sea",
+      "total" : 2
+    }, {
+      "url" : "george_h_doran_company/the_other_side_of_silence",
+      "total" : 2
+    }, {
+      "url" : "karadi_tales/a_manysplendoured_thing",
+      "total" : 2
+    }, {
+      "url" : "karadi_tales/the_moon_by_night",
+      "total" : 2
+    }, {
+      "url" : "left_book_club/where_angels_fear_to_tread",
+      "total" : 2
+    }, {
+      "url" : "marshall_cavendish/the_painted_veil",
+      "total" : 2
+    }, {
+      "url" : "navpress/death_be_not_proud",
+      "total" : 2
+    }, {
+      "url" : "schocken_books/the_cricket_on_the_hearth",
+      "total" : 2
+    }, {
+      "url" : "united_states_government_publishing_office/the_waste_land",
+      "total" : 2
+    }, {
+      "url" : "university_of_minnesota_press/to_a_god_unknown",
+      "total" : 2
+    } ]
+  }
+}

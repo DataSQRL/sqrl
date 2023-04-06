@@ -55,8 +55,7 @@ public class RepositoryTest {
 
   @Test
   public void testQuickstartValidatePub() {
-    Publication pub = testValidatePublication(
-        Quickstart.BASE_PATH.resolve(Quickstart.INSTANCE.getName()));
+    Publication pub = testValidatePublication(Quickstart.INSTANCE.getDataPackageDirectory());
     assertEquals("datasqrl.seedshop", pub.getName());
     assertEquals("dev", pub.getVariant());
     assertEquals(true, pub.getLatest());
@@ -64,7 +63,7 @@ public class RepositoryTest {
 
   @Test
   public void testRetailValidatePub() {
-    Publication pub = testValidatePublication(Retail.BASE_PATH.resolve(Retail.INSTANCE.getName()));
+    Publication pub = testValidatePublication(Retail.INSTANCE.getDataPackageDirectory());
     assertEquals("datasqrl.examples.ecommerce", pub.getName());
     assertEquals("dev", pub.getVariant());
     assertEquals(true, pub.getLatest());
@@ -99,7 +98,7 @@ public class RepositoryTest {
    * Then commit the files to the repository and upload the zip file to the S3 bucket.
    */
   public void createPublication() {
-    Path packagePath = Quickstart.BASE_PATH.resolve(Quickstart.INSTANCE.getName());
+    Path packagePath = Quickstart.INSTANCE.getDataPackageDirectory();
     Path output = Path.of("../../sqrl-repository/repodata");
     ValidatePublication validate = new ValidatePublication("datasqrl", output, errors);
     Publisher publisher = new Publisher(errors);
@@ -117,7 +116,7 @@ public class RepositoryTest {
     assertFalse(localRepo.retrieveDependency(outputPath, dependency));
 
     Publisher publisher = new Publisher(errors);
-    Path ecommercePkg = Retail.BASE_PATH.resolve(Retail.INSTANCE.getName());
+    Path ecommercePkg = Retail.INSTANCE.getDataPackageDirectory();
     publisher.publish(ecommercePkg, localRepo);
     assertFalse(errors.isFatal(), errors.toString());
 
@@ -134,7 +133,7 @@ public class RepositoryTest {
   @Disabled
   public void publishQuickstartLocally() {
     LocalRepositoryImplementation repo = LocalRepositoryImplementation.of(errors);
-    publishLocally(Quickstart.BASE_PATH.resolve(Quickstart.INSTANCE.getName()), repo);
+    publishLocally(Quickstart.INSTANCE.getDataPackageDirectory(), repo);
   }
 
   @SneakyThrows

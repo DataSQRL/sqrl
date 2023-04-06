@@ -7,10 +7,9 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
+import java.util.stream.Collectors;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-
-import java.util.stream.Collectors;
 
 public class IndexSelectionUseCaseTest extends AbstractSchemaInferenceModelTest {
 
@@ -26,6 +25,5 @@ public class IndexSelectionUseCaseTest extends AbstractSchemaInferenceModelTest 
     snapshot.addContent(result);
     snapshot.createOrValidate();
   }
-
 
 }

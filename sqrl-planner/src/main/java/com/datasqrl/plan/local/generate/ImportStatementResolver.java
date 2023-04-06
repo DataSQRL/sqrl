@@ -121,7 +121,7 @@ public class ImportStatementResolver extends AbstractStatementResolver {
   private SqrlModule getModule(NamePath path) {
     return moduleLoader
         .getModule(path.popLast())
-        .orElseThrow(()-> new RuntimeException("Could not find module: " + path));
+        .orElseThrow(()-> errors.exception("Could not find module [%s] in: %s", path, moduleLoader));
   }
 
   private boolean isAllImport(NamePath path) {

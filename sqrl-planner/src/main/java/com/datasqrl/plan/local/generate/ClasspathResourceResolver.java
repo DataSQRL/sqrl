@@ -70,4 +70,9 @@ public class ClasspathResourceResolver implements ResourceResolver {
     return Optional.ofNullable(files.get(path.toString()));
   }
 
+  @Override
+  public String toString() {
+    return "ClasspathResourceResolver";
+  }
+
 }

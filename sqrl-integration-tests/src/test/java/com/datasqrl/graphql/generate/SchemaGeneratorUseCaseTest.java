@@ -6,7 +6,8 @@ package com.datasqrl.graphql.generate;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.StringUtil;
 import com.datasqrl.util.TestScript;
-import com.datasqrl.util.data.Nutshop;
+import com.datasqrl.util.data.Sensors;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
@@ -17,8 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-
-import java.io.IOException;
 
 @Slf4j
 public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
@@ -45,8 +44,9 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   @Test
   @Disabled
   public void writeSchemaFile() {
-    String schema = produceSchemaString(Nutshop.INSTANCE.getScripts().get(0));
-    writeSchemaFile(Nutshop.INSTANCE.getScripts().get(0), schema);
+    TestScript script = Sensors.INSTANCE.getScripts().get(0);
+    String schema = produceSchemaString(script);
+    writeSchemaFile(script, schema);
   }
 
   @SneakyThrows
@@ -55,7 +55,7 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
     if (filename.endsWith(".sqrl")) {
       filename = StringUtil.removeFromEnd(filename, ".sqrl");
     }
-    filename += ".schema.graphql";
+    filename += ".schema.graphqls";
     Path path = script.getScriptPath().getParent().resolve(filename);
     Files.writeString(path, schema);
   }

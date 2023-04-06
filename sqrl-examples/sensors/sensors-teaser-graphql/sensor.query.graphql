@@ -1,0 +1,9 @@
+{
+Sensors(id: 11) {
+    placed
+    machineid
+    readings {
+      timeMin
+      temp
+    }
+}}

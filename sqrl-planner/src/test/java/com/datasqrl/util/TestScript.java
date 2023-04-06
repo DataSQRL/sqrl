@@ -4,22 +4,28 @@
 package com.datasqrl.util;
 
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
-import com.datasqrl.util.data.DataSQRLRepo;
+import com.datasqrl.util.data.Clickstream;
 import com.datasqrl.util.data.Examples;
 import com.datasqrl.util.data.Nutshop;
+import com.datasqrl.util.data.Quickstart;
+import com.datasqrl.util.data.Repository;
 import com.datasqrl.util.data.Retail;
+import com.datasqrl.util.data.Sensors;
 import com.datasqrl.util.junit.ArgumentProvider;
 import com.google.common.collect.ImmutableList;
-import lombok.*;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Singular;
+import lombok.SneakyThrows;
+import lombok.Value;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
 
 public interface TestScript {
 
@@ -98,7 +104,10 @@ public interface TestScript {
     return ImmutableList.<TestScript>builder()
         .addAll(Retail.INSTANCE.getTestScripts().values())
         .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
-        .add(DataSQRLRepo.INSTANCE.getScript())
+        .addAll(Repository.INSTANCE.getScripts())
+        .addAll(Quickstart.INSTANCE.getScripts())
+        .addAll(Clickstream.INSTANCE.getScripts())
+        .addAll(Sensors.INSTANCE.getScripts())
         .build();
   }
 
