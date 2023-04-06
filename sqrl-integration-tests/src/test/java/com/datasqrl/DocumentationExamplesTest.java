@@ -52,6 +52,7 @@ public class DocumentationExamplesTest {
     }
 
     @ParameterizedTest
+    @Disabled("port binding issues")
     @ArgumentsSource(RunProvider.class)
     public void runTutorials(@NonNull Path root, @NonNull String script, String graphQL) {
         execute(root, "run", script, graphQL);
@@ -71,8 +72,8 @@ public class DocumentationExamplesTest {
         Execution.BOTH.of(Quickstart.INSTANCE,"quickstart-user.sqrl", "quickstart-user-paging.graphqls"),
         Execution.BOTH.of(Quickstart.INSTANCE,"quickstart-export.sqrl"),
         Execution.COMPILE.of(Quickstart.INSTANCE,"quickstart-docs.sqrl"),
-        Execution.RUN.of(Sensors.INSTANCE,"sensors-teaser-docs.sqrl"),
-        Execution.RUN.of(Clickstream.INSTANCE,"clickstream-teaser-docs.sqrl"),
+        Execution.BOTH.of(Sensors.INSTANCE,"sensors-teaser-docs.sqrl"),
+        Execution.BOTH.of(Clickstream.INSTANCE,"clickstream-teaser-docs.sqrl"),
     };
 
     @AllArgsConstructor
