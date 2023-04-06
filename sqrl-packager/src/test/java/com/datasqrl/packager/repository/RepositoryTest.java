@@ -90,24 +90,6 @@ public class RepositoryTest {
 
 
   @Test
-  @Disabled
-  /**
-   * Used to create a new publication in the DataSQRL repository.
-   * Set packagePath to the package to publish and output path to the repository data directory.
-   *
-   * Then commit the files to the repository and upload the zip file to the S3 bucket.
-   */
-  public void createPublication() {
-    Path packagePath = Quickstart.INSTANCE.getDataPackageDirectory();
-    Path output = Path.of("../../sqrl-repository/repodata");
-    ValidatePublication validate = new ValidatePublication("datasqrl", output, errors);
-    Publisher publisher = new Publisher(errors);
-    assertNotNull(publisher.publish(packagePath, validate));
-    assertFalse(errors.isFatal());
-  }
-
-
-  @Test
   @SneakyThrows
   public void localPublishAndRetrieve() {
     Dependency dependency = new Dependency("datasqrl.examples.ecommerce", "1.0.0", "dev");
