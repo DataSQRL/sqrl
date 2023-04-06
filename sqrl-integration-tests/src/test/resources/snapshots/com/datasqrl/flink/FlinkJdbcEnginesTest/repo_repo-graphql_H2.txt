@@ -20,6 +20,48 @@ CREATE TABLE IF NOT EXISTS "topicsearch$11" ("topicname" CHARACTER VARYING NOT N
     } ]
   }
 }
+>>>query-topicpkg
+{
+  "data" : {
+    "TopicPackages" : [ {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.example.clickstream",
+      "lastSubmission" : "2023-04-06T03:46:25.260-07:00",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev"
+      }
+    }, {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.example.sensors",
+      "lastSubmission" : "2023-04-06T03:50:51.034-07:00",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev"
+      }
+    }, {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.seedshop",
+      "lastSubmission" : "2023-03-14T22:53:24.579-07:00",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.1",
+        "variant" : "dev"
+      }
+    } ]
+  }
+}
+>>>query-topics
+{
+  "data" : {
+    "TopicSearch" : [ {
+      "topicName" : "example",
+      "numPackages" : 3
+    } ]
+  }
+}
 >>>query-versions
 {
   "data" : {

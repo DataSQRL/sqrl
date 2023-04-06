@@ -20,6 +20,48 @@ CREATE TABLE IF NOT EXISTS "topicsearch$11" ("topicname" VARCHAR NOT NULL,"numpa
     } ]
   }
 }
+>>>query-topicpkg
+{
+  "data" : {
+    "TopicPackages" : [ {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.example.clickstream",
+      "lastSubmission" : "1680777985260",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev"
+      }
+    }, {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.example.sensors",
+      "lastSubmission" : "1680778251034",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev"
+      }
+    }, {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.seedshop",
+      "lastSubmission" : "1678859604579",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.1",
+        "variant" : "dev"
+      }
+    } ]
+  }
+}
+>>>query-topics
+{
+  "data" : {
+    "TopicSearch" : [ {
+      "topicName" : "example",
+      "numPackages" : 3
+    } ]
+  }
+}
 >>>query-versions
 {
   "data" : {

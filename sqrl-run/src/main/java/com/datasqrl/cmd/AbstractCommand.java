@@ -33,9 +33,11 @@ public abstract class AbstractCommand implements Runnable {
     ErrorCollector collector = ErrorCollector.root();
     try {
       runCommand(collector);
+      root.statusHook.onSuccess();
     } catch (Exception e) {
       collector.getCatcher().handle(e);
       e.printStackTrace();
+      root.statusHook.onFailure();
     }
     System.out.println(ErrorPrinter.prettyPrint(collector));
   }
