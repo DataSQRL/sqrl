@@ -1,0 +1,15 @@
+IMPORT datasqrl.example.clickstream.Click;   -- Import data
+/* Most visited pages in the last day */
+Trending := SELECT url, count(1) AS total
+    FROM Click WHERE timestamp > now() - INTERVAL 1 DAY
+    GROUP BY url ORDER BY total DESC;
+/* Find next page visits within 10 minutes */
+VisitAfter := SELECT b.url AS beforeURL, a.url AS afterURL,
+    a.timestamp AS timestamp
+    FROM Click b JOIN Click a ON b.userid=a.userid AND
+        b.timestamp <= a.timestamp AND
+        b.timestamp >= a.timestamp - INTERVAL 10 MINUTE;
+/* Recommend pages that are visited shortly after */
+Recommendation := SELECT beforeURL AS url, afterURL AS rec,
+    count(1) AS frequency FROM VisitAfter
+    GROUP BY url, rec ORDER BY url ASC, frequency DESC;
