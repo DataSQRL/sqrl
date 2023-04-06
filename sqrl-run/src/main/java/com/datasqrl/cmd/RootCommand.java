@@ -3,13 +3,13 @@
  */
 package com.datasqrl.cmd;
 
-import lombok.Getter;
-import picocli.CommandLine;
-import picocli.CommandLine.ScopeType;
-
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import lombok.Getter;
+import lombok.NonNull;
+import picocli.CommandLine;
+import picocli.CommandLine.ScopeType;
 
 @CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "0.1",
     subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class, PopulateCommand.class,
@@ -24,12 +24,19 @@ public class RootCommand implements Runnable {
   @Override
   public void run() {
     CommandLine.usage(this, System.out);
+    statusHook.onSuccess();
   }
 
   final Path rootDir;
+  final StatusHook statusHook;
 
-  public RootCommand(Path rootDir) {
+  public RootCommand(@NonNull Path rootDir, @NonNull StatusHook statusHook) {
     this.rootDir = rootDir;
+    this.statusHook = statusHook;
+  }
+
+  public RootCommand(@NonNull Path rootDir) {
+    this(rootDir, StatusHook.NONE);
   }
 
   public RootCommand() {
@@ -39,4 +46,5 @@ public class RootCommand implements Runnable {
   public CommandLine getCmd() {
     return new CommandLine(this).setCaseInsensitiveEnumValuesAllowed(true);
   }
+
 }

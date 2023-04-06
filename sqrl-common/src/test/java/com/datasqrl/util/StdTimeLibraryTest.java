@@ -40,6 +40,13 @@ public class StdTimeLibraryTest {
 //    assertEquals(t("2023-03-08T13:23:34.083704-05:00"), AT_ZONE.eval(TIME1, "GMT-8"));
   }
 
+  @Test
+  public void convert() {
+    System.out.println(Instant.parse("2023-04-06T03:46:25.260230Z").toEpochMilli());
+    System.out.println(Instant.parse("2023-02-27T21:35:13.903106Z").toEpochMilli());
+    System.out.println(Instant.parse("2023-03-14T22:53:24.579297Z").toEpochMilli());
+    System.out.println(Instant.parse("2023-04-06T03:50:51.034470Z").toEpochMilli());
+  }
 
 
 

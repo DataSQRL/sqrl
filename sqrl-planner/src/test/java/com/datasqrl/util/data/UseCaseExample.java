@@ -19,6 +19,9 @@ import lombok.SneakyThrows;
 
 public class UseCaseExample implements TestDataset {
 
+  public static final String DATA_DIR = "data";
+
+  public static final String DATA_PACKAGE = "mysourcepackage";
   public static final Path BASE_PATH = Path.of("..", "sqrl-examples");
 
   protected final String name;
@@ -60,7 +63,7 @@ public class UseCaseExample implements TestDataset {
 
   @Override
   public Path getDataDirectory() {
-    return basePath.resolve("data"+ getVariant());
+    return basePath.resolve(DATA_DIR+ getVariant());
   }
 
   @Override
@@ -75,7 +78,7 @@ public class UseCaseExample implements TestDataset {
 
   @Override
   public Path getDataPackageDirectory() {
-    return getRootPackageDirectory().resolve("mysourcepackage"+ getVariant());
+    return getRootPackageDirectory().resolve(DATA_PACKAGE + getVariant());
   }
 
   @Override

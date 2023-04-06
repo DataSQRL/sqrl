@@ -18,7 +18,7 @@ import lombok.NonNull;
 @AllArgsConstructor
 public class ValidatePublication implements PublishRepository {
 
-  public static final String PUBLICATION_FILENAME_FORMAT = "package_%s.json";
+  public static final String PUBLICATION_FILENAME_FORMAT = "package_%d-%s.json";
 
   private final @NonNull String authorId;
 
@@ -38,12 +38,13 @@ public class ValidatePublication implements PublishRepository {
     } catch (IOException ex) {
       throw errors.handle(ex);
     }
-    Publication publication = new Publication(packageConfig, uniqueId, file, hash, authorId, Instant.now().toString());
+    Instant pubTime = Instant.now();
+    Publication publication = new Publication(packageConfig, uniqueId, file, hash, authorId, pubTime.toString());
 
     //Write results if outputdir is configured
     if (outputDir != null && Files.isDirectory(outputDir)) {
       Path destFile = outputDir.resolve(file);
-      Path pkgFile = outputDir.resolve(String.format(PUBLICATION_FILENAME_FORMAT, uniqueId));
+      Path pkgFile = outputDir.resolve(String.format(PUBLICATION_FILENAME_FORMAT, pubTime.toEpochMilli(), uniqueId));
       try {
         Files.copy(zipFile, destFile);
         new Deserializer().writeToJson(pkgFile, publication);

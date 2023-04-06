@@ -1,0 +1,21 @@
+---
+name: "sensorreading"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "sensorid"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "time"
+  type: "DATETIME"
+  tests:
+  - "not_null"
+- name: "temperature"
+  type: "FLOAT"
+  tests:
+  - "not_null"
+- name: "humidity"
+  type: "FLOAT"
+  tests:
+  - "not_null"
