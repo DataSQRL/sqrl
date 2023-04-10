@@ -6,38 +6,34 @@ package com.datasqrl.io;
 
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
-import com.datasqrl.util.data.BookClub;
-import com.google.common.collect.ImmutableList;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.junit.jupiter.api.*;
-
+import com.datasqrl.io.formats.JsonLineFormat.Configuration;
+import com.datasqrl.io.impl.kafka.KafkaDataSystemConfig;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 
 @Slf4j
-//TODO: flink integration currently hangs on monitoring
-public class KafkaSourceIT extends AbstractEngineIT {
+public class KafkaBaseTest extends AbstractEngineIT {
 
   public static final int NUM_BROKERS = 1;
 
@@ -54,10 +50,8 @@ public class KafkaSourceIT extends AbstractEngineIT {
   }
 
   String[] bootstrapServers;
-  String[] topics = {"bookclub.book", "book.json"};
 
-  @BeforeEach
-  public void before() throws Exception {
+  public void createTopics(String[] topics) throws Exception {
     bootstrapServers = CLUSTER.bootstrapServers().split(";");
     CLUSTER.createTopics(topics);
   }
@@ -69,83 +63,80 @@ public class KafkaSourceIT extends AbstractEngineIT {
 
   public Properties getAdminProps() {
     Properties props = new Properties();
-    props.put("bootstrap.servers", CLUSTER.bootstrapServers());
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     return props;
   }
 
   public Properties getProducerProps() {
     Properties props = getAdminProps();
-    props.put("retries", 0);
-    //props.put("acks", "all");
-    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    props.put(ProducerConfig.RETRIES_CONFIG, 0);
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     return props;
   }
 
   public Properties getConsumerProps(String groupId) {
     Properties props = getAdminProps();
-    props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
     props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
     props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
-    props.put("group.id", groupId);
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     return props;
   }
 
-
-  public static <K, V> Stream<Pair<K, V>> addDefaultKey(K key, Stream<V> values) {
-    return values.map(v -> Pair.of(key, v));
-  }
-
   @SneakyThrows
-  private <K, V> void writeToTopic(String topic, Stream<Pair<K, V>> messages) {
-    try (Producer<K, V> producer = new KafkaProducer<K, V>(getProducerProps())) {
+  public <V> int writeToTopic(String topic, Stream<V> messages) {
+    try (Producer<Void, V> producer = new KafkaProducer<>(getProducerProps())) {
+      AtomicInteger counter = new AtomicInteger(0);
       messages.forEach(msg -> {
-        ProducerRecord<K, V> record = new ProducerRecord<>(topic, msg.getKey(), msg.getValue());
+        ProducerRecord<Void, V> record = new ProducerRecord<>(topic, null, msg);
         try {
           RecordMetadata metadata = producer.send(record).get(1, TimeUnit.SECONDS);
-          log.warn("Send record at: " + Instant.ofEpochMilli(metadata.timestamp()));
+          counter.incrementAndGet();
+          log.info("Send record at: " + Instant.ofEpochMilli(metadata.timestamp()));
         } catch (Exception e) {
           e.printStackTrace();
           throw new RuntimeException(e);
         }
       });
+      return counter.get();
     }
   }
 
-  private void writeTextFilesToTopic(String topic, String key, Path... paths) {
-    writeToTopic(topics[0], addDefaultKey(key, FileStreamUtil.filesByline(paths)));
+  public int writeTextFilesToTopic(String topic, Path... paths) {
+    return writeToTopic(topic, FileStreamUtil.filesByline(paths));
   }
 
-  @Test
-  @SneakyThrows
-  public void testKafka() {
-    Admin admin = Admin.create(getAdminProps());
-    String clusterId = admin.describeCluster().clusterId().get();
-    assertNotNull(clusterId);
-    log.warn("Cluster id: " + clusterId);
-    assertEquals(Set.of(topics), admin.listTopics().names().get());
-
-    int numRecords = 0;
-    try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(getConsumerProps("test1"))) {
-      consumer.subscribe(ImmutableList.of(topics[0]));
-      writeTextFilesToTopic(topics[0], "key", BookClub.BOOK_FILES);
-
-      ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(2));
-      for (ConsumerRecord<String, String> record : records) {
-        log.warn("Received record: " + record.value());
-        numRecords++;
-      }
-    }
-    assertEquals(4, numRecords);
+  protected DataSystemDiscoveryConfig getDiscoveryConfig(String topicPrefix) {
+    KafkaDataSystemConfig.Discovery.DiscoveryBuilder builder = KafkaDataSystemConfig.Discovery.builder();
+    builder.servers(Arrays.asList(bootstrapServers));
+    if (!Strings.isNullOrEmpty(topicPrefix)) builder.topicPrefix(topicPrefix);
+    return builder.build();
   }
+
+  protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(String name,
+      boolean withTopicPrefix, boolean withFormat) {
+    DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
+    builder.datadiscovery(getDiscoveryConfig(withTopicPrefix?name+".":null));
+    if (withFormat) builder.format(new Configuration());
+    builder.type(ExternalDataType.source);
+    builder.name(name);
+    return builder;
+  }
+
+
+
+
 
 //    @Disabled("fix after Flink monitoring idling is solved")
 //    @Test
 //    @SneakyThrows
 //    public void testDatasetMonitoringWithPrefix() {
+//String[] topics = {"bookclub.book", "book.json"};
+
 //        writeTextFilesToTopic(topics[0], "key", BookClub.BOOK_FILES);
 //
 //        String dsName = "bookclub";

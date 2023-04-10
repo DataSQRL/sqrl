@@ -93,6 +93,8 @@ public abstract class KafkaDataSystemConfig {
 
   }
 
+  @SuperBuilder
+  @NoArgsConstructor
   public static class Discovery extends KafkaDataSystemConfig implements DataSystemDiscoveryConfig {
 
     @Override

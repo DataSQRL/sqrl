@@ -5,6 +5,7 @@ package com.datasqrl;
 
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.io.DataSystemConfig;
+import com.datasqrl.io.DataSystemDiscoveryConfig;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.TestDataset;
@@ -41,10 +42,15 @@ public abstract class AbstractEngineIT {
 
   protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(
       TestDataset testDataset) {
+    return getSystemConfigBuilder(testDataset.getName(), testDataset.getDiscoveryConfig());
+  }
+
+  protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(String name,
+      DataSystemDiscoveryConfig discovery) {
     DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-    builder.datadiscovery(testDataset.getDiscoveryConfig());
+    builder.datadiscovery(discovery);
     builder.type(ExternalDataType.source);
-    builder.name(testDataset.getName());
+    builder.name(name);
     return builder;
   }
 

@@ -7,14 +7,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -49,6 +53,28 @@ public class FileTestUtil {
         consumer.accept(stream);
       }
     }
+  }
+
+  @SneakyThrows
+  public static Map<String, String> readAllFilesInDirectory(Path path, String extension) {
+    Preconditions.checkArgument(Files.isDirectory(path));
+    Map<String, String> fileContentMap = new HashMap<>();
+
+    try (var filesStream = Files.list(path)) {
+      filesStream.filter(Files::isRegularFile).filter(f -> {
+        if (Strings.isNullOrEmpty(extension)) return true;
+        return f.getFileName().toString().endsWith(extension);
+      }).forEach(file -> {
+        try {
+          String content = Files.readString(file, StandardCharsets.UTF_8);
+          fileContentMap.put(file.getFileName().toString(), content);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      });
+    }
+
+    return fileContentMap;
   }
 
   @SneakyThrows

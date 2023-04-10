@@ -47,7 +47,8 @@ public abstract class KafkaDataSystem {
     }
 
     public Properties getProperties(String groupId) {
-      Properties copy = new Properties(properties);
+      Properties copy = new Properties();
+      copy.putAll(properties);
       if (!Strings.isNullOrEmpty(groupId)) {
         copy.put("group.id", groupId);
       }
@@ -126,6 +127,7 @@ public abstract class KafkaDataSystem {
                 tblBuilder.format(format);
               } else {
                 errors.warn("Topic [%s] has an invalid name and is not added as a table", name);
+                return;
               }
             } else {
               //try to infer format from topic name
@@ -137,9 +139,10 @@ public abstract class KafkaDataSystem {
               } else {
                 errors.warn("Could not infer format for topic [%s] and is not added as a table",
                     name);
+                return;
               }
-              tables.add(tblBuilder.build());
             }
+            tables.add(tblBuilder.build());
           });
       return tables;
     }
