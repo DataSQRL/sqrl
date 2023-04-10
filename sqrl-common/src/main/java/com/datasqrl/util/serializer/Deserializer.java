@@ -1,37 +1,36 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.loaders;
+package com.datasqrl.util.serializer;
 
-import com.datasqrl.spi.JacksonDeserializer;
-import com.datasqrl.util.FileUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.ServiceLoader;
+import lombok.Getter;
 
+@Getter
 public class Deserializer {
 
   final ObjectMapper jsonMapper;
   final YAMLMapper yamlMapper;
 
   public Deserializer() {
-    SimpleModule module = new SimpleModule();
-    ServiceLoader<JacksonDeserializer> moduleLoader = ServiceLoader.load(JacksonDeserializer.class);
-    for (JacksonDeserializer deserializer : moduleLoader) {
-      module.addDeserializer(deserializer.getSuperType(), deserializer);
-    }
-
-    jsonMapper = new ObjectMapper().registerModule(module)
+    SimpleModule module = new SqrlSerializerModule();
+    jsonMapper = new ObjectMapper()
+        .registerModule(new JavaTimeModule())
+        .registerModule(module)
         .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+
     yamlMapper = new YAMLMapper();
   }
 
@@ -76,11 +75,11 @@ public class Deserializer {
     return jsonNode.has(field) && jsonNode.hasNonNull(field);
   }
 
-  public <O> void writeToJson(Path file, O object) throws IOException {
-    writeToJson(file, object, false);
+  public <O> void writeJson(Path file, O object) throws IOException {
+    writeJson(file, object, false);
   }
 
-  public <O> void writeToJson(Path file, O object, boolean pretty) throws IOException {
+  public <O> void writeJson(Path file, O object, boolean pretty) throws IOException {
     ObjectWriter writer = jsonMapper.writer();
     if (pretty) writer = writer.withDefaultPrettyPrinter();
     writer.writeValue(file.toFile(),object);

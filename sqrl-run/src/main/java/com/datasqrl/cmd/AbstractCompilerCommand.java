@@ -18,6 +18,7 @@ import com.datasqrl.plan.local.generate.FileResourceResolver;
 import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.service.Util;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Preconditions;
@@ -64,7 +65,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
 
-  private final ObjectWriter writer = new ObjectMapper()
+  private final ObjectWriter writer = SqrlObjectMapper.INSTANCE
       .writerWithDefaultPrettyPrinter();
 
   protected AbstractCompilerCommand(boolean execute, boolean startGraphql) {
@@ -114,6 +115,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         throw new RuntimeException(e);
       }
     });
+
+    if (collector.isFatal()) {
+      throw new RuntimeException("Could not run");
+    }
   }
 
   @SneakyThrows

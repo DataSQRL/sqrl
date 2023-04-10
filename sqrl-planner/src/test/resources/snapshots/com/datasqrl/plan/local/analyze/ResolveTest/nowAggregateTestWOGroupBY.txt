@@ -14,7 +14,7 @@ LogicalProject(_pk=[1], total=[$0], quantity=[$1], time=[$2])
     LogicalProject(total=[$0], quantity=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(total=[SUM(*($9, $8)) IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], quantity=[SUM($8) IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
         LogicalJoin(condition=[=($0, $5)], joinType=[inner])
-          LogicalFilter(condition=[<(NOW(), +($4, 604800000:INTERVAL SECOND))])
+          LogicalFilter(condition=[<(NOW(), +($4, 604800000:INTERVAL SECOND(9)))])
             LogicalTableScan(table=[[orders$6]])
           LogicalTableScan(table=[[entries$7]])
 

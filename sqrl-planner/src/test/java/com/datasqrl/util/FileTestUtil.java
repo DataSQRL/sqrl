@@ -65,7 +65,7 @@ public class FileTestUtil {
     return String.join("\n", files);
   }
 
-  private static final ObjectMapper jsonMapper = new ObjectMapper();
+  private static final ObjectMapper jsonMapper = SqrlObjectMapper.INSTANCE;
   private static final YAMLMapper yamlMapper = new YAMLMapper();
 
   static {

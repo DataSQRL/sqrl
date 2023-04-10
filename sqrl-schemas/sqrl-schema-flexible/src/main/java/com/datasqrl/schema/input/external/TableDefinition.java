@@ -3,9 +3,11 @@
  */
 package com.datasqrl.schema.input.external;
 
+import com.datasqrl.io.tables.SchemaDefinition;
 import java.util.List;
 
-public class  TableDefinition extends AbstractElementDefinition {
+public class TableDefinition extends AbstractElementDefinition implements
+    SchemaDefinition {
 
   public TableDefinition() {
 

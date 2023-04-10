@@ -51,7 +51,19 @@ public class InputError<Input> implements Serializable {
 
   public void printToLog(Logger log) {
     for (ErrorMessage error : errors) {
-      log.atLevel(getLevel(error.getSeverity())).log(getInputErrorMessage(error).prettyPrint(false));
+      String message = getInputErrorMessage(error).prettyPrint(false);
+      switch (error.getSeverity()) {
+        case NOTICE:
+          log.info(message);
+          break;
+        case FATAL:
+          log.error(message);
+          break;
+        default:
+        case WARN:
+          log.warn(message);
+          break;
+      }
     }
   }
 
@@ -65,6 +77,9 @@ public class InputError<Input> implements Serializable {
   }
 
   public static String getLocationString(ErrorLocation location) {
+    if (location.getPrefix() == null) {
+      return "" + ":" + location.getPath();
+    }
     return location.getPrefix().toLowerCase() + ":" + location.getPath();
   }
 

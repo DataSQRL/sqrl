@@ -7,6 +7,7 @@ import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.util.FileHash;
 import com.datasqrl.packager.util.Zipper;
 import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +33,7 @@ public class RemoteRepositoryImplementation implements Repository {
 
   public static final URI DEFAULT_URI = URI.create("https://repo.sqrl.run");
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
   private final URI repositoryServerURI;
   @Setter
   private CacheRepository cacheRepository = null;

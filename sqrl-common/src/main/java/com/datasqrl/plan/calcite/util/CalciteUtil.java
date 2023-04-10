@@ -233,9 +233,25 @@ public class CalciteUtil {
   }
 
   public static RexNode makeTimeInterval(long interval_ms, RexBuilder rexBuilder) {
+    String intervalStr = Long.toString(interval_ms);
     SqlIntervalQualifier sqlIntervalQualifier =
-        new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO);
+        new SqlIntervalQualifier(TimeUnit.SECOND, getPrecision(intervalStr), TimeUnit.SECOND,
+            getFracPrecision(intervalStr),
+            SqlParserPos.ZERO);
     return rexBuilder.makeIntervalLiteral(new BigDecimal(interval_ms), sqlIntervalQualifier);
+  }
+
+  public static int getFracPrecision(String toValue) {
+    String[] val = toValue.split("\\.");
+    if (val.length == 2) {
+      return val[1].length();
+    }
+
+    return -1;
+  }
+
+  public static int getPrecision(String toValue) {
+    return toValue.split("\\.")[0].length();
   }
 
   public static AggregateCall makeNotNull(AggregateCall call, RelDataTypeFactory typeFactory) {

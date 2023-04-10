@@ -11,6 +11,7 @@ import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.local.generate.FlinkUdfNsObject;
 import com.datasqrl.plan.local.generate.NamespaceObject;
 import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.serializer.Deserializer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

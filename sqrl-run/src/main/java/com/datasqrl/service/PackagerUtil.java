@@ -9,6 +9,7 @@ import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.PackagerConfig;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
@@ -54,7 +55,7 @@ public class PackagerUtil {
     File file = enginesFile.toFile();
     file.deleteOnExit();
 
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
     String enginesConf = mapper.writerWithDefaultPrettyPrinter()
             .writeValueAsString(config);
 

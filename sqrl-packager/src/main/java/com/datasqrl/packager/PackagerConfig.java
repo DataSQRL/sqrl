@@ -3,7 +3,7 @@ package com.datasqrl.packager;
 import static com.datasqrl.packager.Packager.mapper;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.util.serializer.Deserializer;
 import com.datasqrl.packager.config.GlobalPackageConfiguration;
 import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;

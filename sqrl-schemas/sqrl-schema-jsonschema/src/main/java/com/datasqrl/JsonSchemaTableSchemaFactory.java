@@ -4,7 +4,7 @@
 //import com.datasqrl.io.tables.TableConfig;
 //import com.datasqrl.io.tables.TableSchema;
 //import com.datasqrl.io.tables.TableSchemaFactory;
-//import com.datasqrl.loaders.Deserializer;
+//import com.datasqrl.util.serializer.Deserializer;
 //import com.google.auto.service.AutoService;
 //import io.vertx.core.json.JsonObject;
 //import io.vertx.json.schema.JsonSchema;

@@ -5,7 +5,7 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.engine.database.relational.ddl.*;
 import com.datasqrl.engine.database.relational.dialect.JdbcDDLFactory;
-import com.datasqrl.plan.calcite.util.RelToSql;
+import org.apache.calcite.rel.rel2sql.RelToSql;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import org.apache.calcite.rel.type.RelDataTypeField;

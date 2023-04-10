@@ -24,7 +24,7 @@ LogicalProject(_uuid=[$0], id=[$1], name=[$2], customerid=[$3], rowtime=[$4])
 >>>ordercustomerinterval$11-lp-stream
 LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], rowtime=[$5])
   LogicalProject(_uuid=[$0], _uuid0=[$7], id=[$2], name=[$11], customerid=[$3], rowtime=[$6])
-    LogicalJoin(condition=[AND(=($3, $9), >=($6, $13), <=($6, +($13, 12:INTERVAL YEAR)))], joinType=[inner]) hints[IntervalJoin]
+    LogicalJoin(condition=[AND(=($3, $9), >=($6, $13), <=($6, +($13, 31536000000:INTERVAL DAY(3))))], joinType=[inner]) hints[IntervalJoin]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], rowtime=[$4]) hints[WatermarkHint options:[6]]
         LogicalTableScan(table=[[orders$i$4]])
       LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]

@@ -6,9 +6,7 @@ package com.datasqrl.config;
 import com.datasqrl.config.SourceServiceLoader.SourceFactoryContext;
 import com.datasqrl.io.DataSystemConnector;
 
-public interface SourceFactory<ENGINE_SOURCE> {
-  String getEngine();
+public interface SourceFactory<ENGINE_SOURCE> extends BaseConnectorFactory {
   String getSourceName();
-
   ENGINE_SOURCE create(DataSystemConnector connector, SourceFactoryContext context);
 }

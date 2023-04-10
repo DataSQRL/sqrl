@@ -50,7 +50,7 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
   }
 
   @AllArgsConstructor
-  private static class MapText2Raw implements
+  public static class MapText2Raw implements
       FunctionWithError<TimeAnnotatedRecord<String>, SourceRecord.Raw> {
 
     private final TextLineFormat.Parser textparser;

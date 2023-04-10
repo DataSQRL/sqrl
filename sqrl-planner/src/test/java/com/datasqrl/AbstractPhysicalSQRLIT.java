@@ -11,6 +11,7 @@ import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
@@ -18,7 +19,6 @@ import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.calcite.util.RelToSql;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
@@ -55,11 +55,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+@Slf4j
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   public SqrlPhysicalPlan physicalPlanner;
@@ -140,8 +142,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     for (APIQuery query : queries) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
-      String sqlQuery = RelToSql.convertToSql(template.getRelNode());
-      System.out.println("Executing query for " + query.getNameId() + ": " + sqlQuery);
+      String sqlQuery = RelToFlinkSql.convertToString(template.getRelNode());
+      log.info("Executing query for {}: {}", query.getNameId(), sqlQuery);
 
       ResultSet resultSet = conn
           .createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
@@ -149,7 +151,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       if (tableNoDataSnapshot.contains(query.getNameId())) {
         resultSet.last();
         int numResults = resultSet.getRow();
-        System.out.println("Number of rows returned: " + numResults);
+        log.info("Number of rows returned: " + numResults);
       } else {
         //Since Flink execution order is non-deterministic we need to sort results and remove uuid and ingest_time which change with every invocation
         Predicate<Integer> typeFilter = Predicates.alwaysTrue();

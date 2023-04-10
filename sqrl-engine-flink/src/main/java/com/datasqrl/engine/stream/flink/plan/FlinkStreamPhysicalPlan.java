@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
+import com.datasqrl.FlinkExecutablePlan;
 import com.datasqrl.engine.stream.StreamPhysicalPlan;
 import java.net.URL;
 import java.util.Set;
@@ -12,8 +13,9 @@ import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 @Value
 public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
 
-  StreamStatementSet statementSet;
+  FlinkExecutablePlan executablePlan;
 
+  //TODO: Make the jars work in executable plan (if local)
   Set<URL> jars;
 
 }

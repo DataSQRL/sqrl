@@ -1,6 +1,6 @@
 >>>totals$q$15-lp-STREAM
 LogicalProject(__pk_0=[$1], category=[$2], num=[$3], time=[$0])
-  LogicalAggregate(group=[{4, 6, 23}], num=[SUM($15)]) hints[SlidingAggregationHint options:[4, 31536000000, 630720000]]
+  LogicalAggregate(group=[{4, 6, 23}], num=[SUM($15)]) hints[SlidingAggregationHint options:[4, 86400000, 1728000]]
     LogicalJoin(condition=[=($18, $14)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
       LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
         LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]

@@ -5,6 +5,7 @@ package com.datasqrl.io.formats;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.impl.InputPreview;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.*;
@@ -41,7 +42,7 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
     @Override
     public Result parse(@NonNull String line) {
       if (mapper == null) {
-        mapper = new ObjectMapper();
+        mapper = SqrlObjectMapper.INSTANCE;
       }
       try {
         Map<String, Object> record = mapper.readValue(line, LinkedHashMap.class);

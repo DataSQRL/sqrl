@@ -221,11 +221,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INTERVAL JOIN Customer c on o.customerid = c.customerid "
             +
-            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
+            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 31 DAYS;");
     builder.add(
         "OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "
             +
-            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 2 MONTH;");
+            "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 31 DAYS;");
     plan(builder.toString());
     validateQueryTable("ordercustomer", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 2,
         TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
@@ -257,7 +257,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("Customer.orders := JOIN Orders ON Orders.customerid = @.customerid");
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid");
     builder.add("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
-        "FROM @.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 YEAR GROUP BY category");
+        "FROM @.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 DAY GROUP BY category");
     plan(builder.toString());
     validateQueryTable("totals", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 4, 2,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
@@ -295,11 +295,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void nowAggregateTest() {
     ScriptBuilder builder = imports();
     builder.add(
-        "OrderNow1 := SELECT o.customerid as customer, endOfDay(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer, bucket");
+        "OrderNow1 := SELECT o.customerid as customer, endOfDay(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 DAY) GROUP BY customer, bucket");
     builder.add(
-        "OrderNow2 := SELECT endOfDay(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY bucket");
+        "OrderNow2 := SELECT endOfDay(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 DAY) GROUP BY bucket");
     builder.add(
-        "OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 YEAR) GROUP BY customer");
+        "OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.\"time\" > NOW() - INTERVAL 8 DAY) GROUP BY customer");
     builder.add(
         "OrderAugment := SELECT o.id, o.\"time\", c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer");
     plan(builder.toString());
@@ -362,13 +362,13 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void nowFilterTest() {
     ScriptBuilder builder = imports();
-    builder.add("OrderFilter := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 YEAR;\n");
+    builder.add("OrderFilter := SELECT * FROM Orders WHERE \"time\" > now() - INTERVAL 1 DAY;\n");
 
     builder.add(
         "OrderAgg1 := SELECT o.customerid as customer, endOfsecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM OrderFilter o GROUP BY customer, bucket;\n");
 //    //The following should be equivalent
     builder.add(
-        "OrderAgg2 := SELECT o.customerid as customer, endOfsecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 YEAR GROUP BY customer, bucket;\n");
+        "OrderAgg2 := SELECT o.customerid as customer, endOfsecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 DAY GROUP BY customer, bucket;\n");
     plan(builder.toString());
     validateQueryTable("orderfilter", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(4), new PullupTest(true, false));
@@ -497,7 +497,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void convert2StreamTest() {
     ScriptBuilder builder = imports();
-    builder.add("Product.updateTime := _ingest_time - INTERVAL 1 YEAR");
+    builder.add("Product.updateTime := _ingest_time - INTERVAL 1 DAY");
     builder.add("Product := DISTINCT Product ON productid ORDER BY updateTime DESC");
     builder.add(
         "ProductCount := SELECT p.productid, p.name, SUM(e.quantity) as quantity FROM Orders.entries e JOIN Product p on e.productid = p.productid GROUP BY p.productid, p.name");

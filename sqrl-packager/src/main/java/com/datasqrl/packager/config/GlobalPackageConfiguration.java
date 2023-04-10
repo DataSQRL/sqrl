@@ -5,6 +5,7 @@ package com.datasqrl.packager.config;
 
 import com.datasqrl.spi.GlobalConfiguration;
 import com.datasqrl.spi.ScriptConfiguration;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -44,7 +45,7 @@ public class GlobalPackageConfiguration implements GlobalConfiguration {
   ScriptConfiguration script;
 
   public static GlobalPackageConfiguration readFrom(Path path) throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
     return mapper.readValue(path.toFile(), GlobalPackageConfiguration.class);
   }
 

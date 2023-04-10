@@ -19,6 +19,7 @@ import org.apache.flink.table.types.DataType;
 public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<DataType>,
     UniversalTable.SchemaConverter<Schema> {
 
+  //NOTE: Does not include nullable in this call, need to call nullable function
   @Override
   public DataType convertBasic(RelDataType datatype) {
     if (datatype instanceof BasicSqlType || datatype instanceof IntervalSqlType) {

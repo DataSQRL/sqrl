@@ -2,6 +2,7 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.auto.service.AutoService;
@@ -25,7 +26,7 @@ import org.apache.flink.table.functions.ScalarFunction;
  */
 public class JarPreprocessor implements Preprocessor {
 
-  public static final ObjectMapper mapper = new ObjectMapper();
+  public static final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
 
   public static final String SERVICES_PATH = "META-INF/services/";
   public static final Set<String> flinkUdfs = Set.of(

@@ -3,9 +3,11 @@ package com.datasqrl.schema.input;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
+import com.datasqrl.io.tables.SchemaDefinition;
 import com.datasqrl.io.tables.TableSchemaFactory;
-import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.util.serializer.Deserializer;
 import com.datasqrl.loaders.ResourceResolver;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.input.external.SchemaImport;
@@ -31,6 +33,13 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
     SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, tableConfig.getNameCanonicalizer());
     Optional<FlexibleTableSchema> tableSchema = importer.convert(schemaDef, errors );
     return tableSchema.map(f->f);
+  }
+
+  @Override
+  public Optional<TableSchema> create(SchemaDefinition definition) {
+    SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);
+    return importer.convert((TableDefinition) definition, ErrorCollector.root())
+        .map(s -> s);
   }
 
   public static String getSchemaFilename(TableConfig tableConfig) {

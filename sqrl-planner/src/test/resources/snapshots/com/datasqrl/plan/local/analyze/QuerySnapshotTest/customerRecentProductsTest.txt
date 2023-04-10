@@ -23,7 +23,7 @@ LogicalProject(__pk_0=[$0], productid=[$1], category=[$2], quantity=[$3], num_or
                     LogicalProject($f0=[$cor3.entries])
                       LogicalValues(tuples=[[{ 0 }]])
             LogicalTableScan(table=[[product$q$9]])
-        LogicalFilter(condition=[<(NOW(), +($4, 63158400000:INTERVAL SECOND))])
+        LogicalFilter(condition=[<(NOW(), +($4, 31536000000:INTERVAL SECOND(11)))])
           LogicalTableScan(table=[[orders$q$5]])
 
 >>>join-declaration-orders

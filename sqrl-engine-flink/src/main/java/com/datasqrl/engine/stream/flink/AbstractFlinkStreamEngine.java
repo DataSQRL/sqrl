@@ -3,8 +3,9 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import static com.datasqrl.engine.EngineCapability.*;
+import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 
+import com.datasqrl.JavaFlinkExecutablePlanVisitor;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -20,9 +21,7 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.api.internal.FlinkEnvProxy;
 
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
     StreamEngine {
@@ -39,9 +38,9 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   public ExecutionResult execute(EnginePhysicalPlan plan) {
     Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
     FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
-    StatementSet statementSet = flinkPlan.getStatementSet();
-    flinkPlan.getJars().forEach(j->FlinkEnvProxy.addJar(statementSet, j.toString()));
-    TableResult rslt = statementSet.execute();
+    JavaFlinkExecutablePlanVisitor executablePlanVisitor = new JavaFlinkExecutablePlanVisitor();
+    TableResult rslt = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
+
     rslt.print(); //todo: this just forces print to wait for the async
     return new ExecutionResult.Message(rslt.getJobClient().get()
         .getJobID().toString());
@@ -51,7 +50,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   public FlinkStreamPhysicalPlan plan(PhysicalDAGPlan.StagePlan plan,
       List<PhysicalDAGPlan.StageSink> inputs, RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
-    FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(this).createStreamGraph(
+    FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
         plan.getQueries(), errorSink, plan.getJars());
     return streamPlan;
   }

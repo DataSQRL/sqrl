@@ -1,7 +1,7 @@
 package com.datasqrl.packager.repository;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.util.serializer.Deserializer;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.util.FileHash;
@@ -47,7 +47,7 @@ public class ValidatePublication implements PublishRepository {
       Path pkgFile = outputDir.resolve(String.format(PUBLICATION_FILENAME_FORMAT, pubTime.toEpochMilli(), uniqueId));
       try {
         Files.copy(zipFile, destFile);
-        new Deserializer().writeToJson(pkgFile, publication);
+        new Deserializer().writeJson(pkgFile, publication);
       } catch (IOException ex) {
         throw errors.handle(ex);
       }

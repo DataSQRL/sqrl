@@ -35,6 +35,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-flink-inmem</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-flink-jdbc</artifactId>
       <scope>test</scope>
     </dependency>

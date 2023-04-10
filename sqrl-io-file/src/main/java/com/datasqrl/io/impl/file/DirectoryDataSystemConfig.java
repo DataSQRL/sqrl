@@ -11,6 +11,7 @@ import com.datasqrl.io.DataSystemDiscoveryConfig;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.util.constraints.OptionalMinString;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.auto.service.AutoService;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -67,6 +68,7 @@ public abstract class DirectoryDataSystemConfig {
 
   @SuperBuilder
   @NoArgsConstructor
+  @AutoService(DataSystemConnectorConfig.class)
   public static class Connector extends DirectoryDataSystemConfig implements
       DataSystemConnectorConfig {
 
@@ -86,6 +88,7 @@ public abstract class DirectoryDataSystemConfig {
 
   @SuperBuilder
   @NoArgsConstructor
+  @AutoService(DataSystemDiscoveryConfig.class)
   public static class Discovery extends DirectoryDataSystemConfig implements
       DataSystemDiscoveryConfig {
 

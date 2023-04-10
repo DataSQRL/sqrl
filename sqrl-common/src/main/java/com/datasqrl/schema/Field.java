@@ -18,7 +18,6 @@ public abstract class Field {
   @NonNull
   protected final Name name;
   protected final int version;
-  protected Optional<List<TableFunctionArgument>> tableArguments = Optional.empty();
 
   protected Field(@NonNull Name name, int version) {
     Preconditions.checkArgument(version >= 0);

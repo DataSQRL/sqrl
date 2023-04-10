@@ -22,6 +22,7 @@ import com.datasqrl.name.NamePath;
 import com.datasqrl.name.ReservedName;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.google.common.base.Preconditions;
+import java.math.BigDecimal;
 import java.util.stream.Collectors;
 import org.apache.calcite.sql.TableFunctionArgument;
 import java.util.Locale;
@@ -934,45 +935,35 @@ class AstBuilder
     // it gets converted to milliseconds when it gets converted to a relation
 
     switch (timeUnit) {
-      case DECADE:
-      case CENTURY:
-      case MILLENNIUM:
+      case WEEK:
       case YEAR:
       case MONTH:
-//        BigDecimal newValue = expr.bigDecimalValue()
-//            .multiply(timeUnit.multiplier);
-//        expr = SqlLiteral.createExactNumeric(newValue.toString(), expr.getParserPosition());
-//        timeUnit = TimeUnit.MONTH;
-//        break;
+      default:
+        throw new RuntimeException("YEAR MONTH WEEK interval not yet supported.");
       case DAY:
       case HOUR:
       case MINUTE:
       case SECOND:
-      case QUARTER:
-      case ISOYEAR:
-      case WEEK:
-      case MILLISECOND:
-      case MICROSECOND:
-      case NANOSECOND:
-      case DOW:
-      case ISODOW:
-      case DOY:
-      case EPOCH:
-        //TODO: Normalize time for calcite so its less hard on the user
-        // e.g 120 SECONDS => 2 MINUTES
-//        BigDecimal newValue2 = expr.bigDecimalValue()
-//            .multiply(timeUnit.multiplier)
-//            .divide(BigDecimal.valueOf(1000));
-//        expr = SqlLiteral.createExactNumeric(newValue2.toString(), expr.getParserPosition());
-//        timeUnit = TimeUnit.SECOND;
-        //normalized in sqltorel convert to seconds
+        return SqlLiteral.createInterval(sign,
+            expr.toValue(),
+            new SqlIntervalQualifier(timeUnit, getPrecision(expr.toValue()),
+                null, getFracPrecision(expr.toValue()), getLocation(context.intervalField())),
+            getLocation(context)
+        );
+    }
+  }
+
+  public static int getFracPrecision(String toValue) {
+    String[] val = toValue.split("\\.");
+    if (val.length == 2) {
+      return val[1].length();
     }
 
-    return SqlLiteral.createInterval(sign,
-        expr.toValue(),
-        new SqlIntervalQualifier(timeUnit, null, getLocation(context.intervalField())),
-        getLocation(context)
-    );
+    return -1;
+  }
+
+  public static int getPrecision(String toValue) {
+    return toValue.split("\\.")[0].length();
   }
 
   private static int getIntervalSign(Token token) {

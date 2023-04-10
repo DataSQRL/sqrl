@@ -3,11 +3,8 @@
  */
 package com.datasqrl.plan.calcite.table;
 
-import com.datasqrl.engine.stream.flink.plan.StreamTableConverterContext;
-import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.plan.calcite.rel.LogicalStreamMetaData;
-import com.datasqrl.schema.UniversalTable;
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -18,16 +15,12 @@ import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.Preconditions;
 
 @Value
 public class StreamTableConverter {
@@ -45,45 +38,6 @@ public class StreamTableConverter {
           .addContainedKind(RowKind.DELETE)
           .build();
 
-  UniversalTable tblBuilder;
-
-  public TypeInformation getTypeInformation() {
-    TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator().convertSchema(
-        tblBuilder);
-    return typeInformation;
-  }
-
-  public DataStream convertToStream(StreamTableEnvironment tEnv,
-      StreamTableConverterContext ctx) {
-    Table inputTable = ctx.getInputTable();
-    LogicalStreamMetaData baseTbl = ctx.getStreamMetaData();
-    RowMapper rowMapper = new RowMapper(baseTbl);
-    DataStream<Row> stream =  tEnv.toChangelogStream(inputTable, inputTable.getSchema().toSchema(), ChangelogMode.upsert());
-//        .process(new Inspector("Raw data"));
-    switch (ctx.getStreamType()) {
-      case ADD:
-        if (ctx.isUnmodifiedChangelog()) {
-          //We can simply filter on RowKind
-          stream = stream.filter(row -> row.getKind()==RowKind.INSERT);
-        } else {
-          //Only emit the first insert or update per key
-          stream = stream.keyBy(new KeyedIndexSelector(baseTbl.getKeyIdx()))
-              .flatMap(new EmitFirstInsertOrUpdate());
-        }
-        break;
-      case DELETE:
-        Preconditions.checkArgument(ctx.isUnmodifiedChangelog(),"Cannot create DELETE stream from modified state table. Invert filter and use ADD instead.");
-        stream = stream.filter(row -> row.getKind()==RowKind.DELETE);
-        break;
-      case UPDATE:
-        stream = stream.filter(row -> row.getKind()==RowKind.INSERT || row.getKind()==RowKind.UPDATE_AFTER);
-        break;
-      default:
-        throw new UnsupportedOperationException("Unexpected state change type: " + ctx.getStreamType());
-    }
-    stream = stream.process(new ConvertToStream(rowMapper),getTypeInformation());
-    return stream;
-  }
 
   @AllArgsConstructor
   public static class KeyedIndexSelector implements KeySelector<Row,Row> {
@@ -99,7 +53,6 @@ public class StreamTableConverter {
       return Row.of(data);
     }
   }
-
 
   @AllArgsConstructor
   public static class ConvertToStream extends ProcessFunction<Row, Row> {
@@ -126,7 +79,7 @@ public class StreamTableConverter {
     }
   }
 
-  public class EmitFirstInsertOrUpdate extends RichFlatMapFunction<Row, Row> {
+  public static class EmitFirstInsertOrUpdate extends RichFlatMapFunction<Row, Row> {
 
     /**
      * The ValueState handle. The first field is the count, the second field a running sum.
@@ -176,5 +129,4 @@ public class StreamTableConverter {
       return Row.ofKind(RowKind.INSERT, data);
     }
   }
-
 }
