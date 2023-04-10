@@ -1,11 +1,10 @@
 package com.datasqrl;
 
 import com.datasqrl.io.DataSystemConnectorConfig;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.SchemaDefinition;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.rel.LogicalStreamMetaData;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import lombok.AccessLevel;
@@ -14,9 +13,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.sql.StreamType;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SideOutputDataStream;
 import org.apache.flink.table.api.Schema;
@@ -214,104 +211,6 @@ public class FlinkExecutablePlan {
     @Override
     public <R, C> R accept(FlinkTableDefinitionVisitor<R, C> visitor, C context) {
       return visitor.visitFactoryDefinition(this, context);
-    }
-  }
-
-  public interface FlinkDataStreamSource {
-
-    <R, C> R accept(DataStreamSourceVisitor<R, C> visitor, C context);
-  }
-
-  public interface DataStreamSourceVisitor<R, C> {
-
-    R visitSourceSequence(FlinkDataStreamSourceSequence sequence, C context);
-
-    R visitSourceElements(FlinkDataStreamSourceElements<?> elements, C context);
-
-    R visitSourceCollection(FlinkDataStreamSourceCollection<?> collection, C context);
-
-    R visitSocketTextStream(FlinkDataStreamSourceSocketTextStream socketTextStream, C context);
-
-    R visitSourceWithWatermarkStrategy(
-        FlinkDataStreamSourceWithWatermarkStrategy<?> sourceWithWatermarkStrategy, C context);
-  }
-
-  @Value
-  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-  @AllArgsConstructor
-  @Builder
-  public static class FlinkDataStreamSourceSequence implements FlinkDataStreamSource {
-
-    long from;
-    long to;
-
-    @Override
-    public <R, C> R accept(DataStreamSourceVisitor<R, C> visitor, C context) {
-      return visitor.visitSourceSequence(this, context);
-    }
-  }
-
-  @Value
-  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-  @AllArgsConstructor
-  @Builder
-  public static class FlinkDataStreamSourceElements<OUT> implements FlinkDataStreamSource {
-
-    OUT[] data;
-
-    @Override
-    public <R, C> R accept(DataStreamSourceVisitor<R, C> visitor, C context) {
-      return visitor.visitSourceElements(this, context);
-    }
-  }
-
-  @Value
-  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-  @AllArgsConstructor
-  @Builder
-  public static class FlinkDataStreamSourceCollection<OUT> implements FlinkDataStreamSource {
-
-    Collection<OUT> data;
-    TypeInformation<OUT> typeInfo;
-
-    @Override
-    public <R, C> R accept(DataStreamSourceVisitor<R, C> visitor, C context) {
-      return visitor.visitSourceCollection(this, context);
-    }
-  }
-
-  @Value
-  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-  @AllArgsConstructor
-  @Builder
-  public static class FlinkDataStreamSourceSocketTextStream implements FlinkDataStreamSource {
-
-    String hostname;
-    int port;
-    String delimiter;
-    long maxRetry;
-
-    @Override
-    public <R, C> R accept(DataStreamSourceVisitor<R, C> visitor, C context) {
-      return visitor.visitSocketTextStream(this, context);
-    }
-  }
-
-  @Value
-  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-  @AllArgsConstructor
-  @Builder
-  public static class FlinkDataStreamSourceWithWatermarkStrategy<OUT> implements
-      FlinkDataStreamSource {
-
-    Source<OUT, ?, ?> source;
-    WatermarkStrategy<OUT> timestampsAndWatermarks;
-    String sourceName;
-    TypeInformation<OUT> typeInfo;
-
-    @Override
-    public <R, C> R accept(DataStreamSourceVisitor<R, C> visitor, C context) {
-      return visitor.visitSourceWithWatermarkStrategy(this, context);
     }
   }
 
