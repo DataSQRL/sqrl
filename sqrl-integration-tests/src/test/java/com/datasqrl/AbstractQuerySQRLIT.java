@@ -70,7 +70,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = t
         .getModelAndQueries(planner, schema);
 
-    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, modelAndQueries.getRight());
+    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, modelAndQueries.getRight(), true);
 
     PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
 

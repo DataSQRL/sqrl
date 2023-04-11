@@ -5,7 +5,7 @@ package com.datasqrl.engine.stream.flink;
 
 import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 
-import com.datasqrl.JavaFlinkExecutablePlanVisitor;
+import com.datasqrl.FlinkEnvironmentBuilder;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
 
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
@@ -38,9 +39,9 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   public ExecutionResult execute(EnginePhysicalPlan plan) {
     Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
     FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
-    JavaFlinkExecutablePlanVisitor executablePlanVisitor = new JavaFlinkExecutablePlanVisitor();
-    TableResult rslt = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
-
+    FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder();
+    StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
+    TableResult rslt = statementSet.execute();
     rslt.print(); //todo: this just forces print to wait for the async
     return new ExecutionResult.Message(rslt.getJobClient().get()
         .getJobID().toString());

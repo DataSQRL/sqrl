@@ -2,7 +2,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.datasqrl.FlinkExecutablePlan;
 import com.datasqrl.FlinkExecutablePlan.*;
-import com.datasqrl.JavaFlinkExecutablePlanVisitor;
+import com.datasqrl.FlinkEnvironmentBuilder;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.plan.calcite.rel.LogicalStreamMetaData;
 import java.util.List;
@@ -15,6 +15,7 @@ import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.ResultKind;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
 import org.junit.jupiter.api.Test;
 
@@ -109,8 +110,9 @@ class FlinkExecutablePlanTest {
             .build())
         .build();
 
-    JavaFlinkExecutablePlanVisitor visitor = new JavaFlinkExecutablePlanVisitor();
-    TableResult result = executablePlan.accept(visitor, null);
+    FlinkEnvironmentBuilder visitor = new FlinkEnvironmentBuilder();
+    StatementSet statementSet = executablePlan.accept(visitor, null);
+    TableResult result = statementSet.execute();
 
     result.print();
 

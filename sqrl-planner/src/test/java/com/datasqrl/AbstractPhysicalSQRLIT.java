@@ -124,7 +124,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       queries.add(new APIQuery(tableName, rel));
     }
 
-    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, queries);
+    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, queries, true);
     addContent(dag);
 
     PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);

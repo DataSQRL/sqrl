@@ -42,6 +42,7 @@ public class FlinkExecutablePlan {
   public static class FlinkBase {
 
     FlinkConfig config;
+    List<FlinkStatement> statements;
     List<FlinkFunction> functions;
     List<FlinkTableDefinition> tableDefinitions;
     List<FlinkQuery> queries;
@@ -104,6 +105,30 @@ public class FlinkExecutablePlan {
 
     R visitConfig(DefaultFlinkConfig config, C context);
   }
+
+  public interface FlinkStatement {
+
+    <R, C> R accept(FlinkStatementVisitor<R, C> visitor, C context);
+  }
+
+  @Value
+  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
+  @AllArgsConstructor
+  @Builder
+  public static class FlinkJarStatement implements FlinkStatement {
+
+    String path;
+    @Override
+    public <R, C> R accept(FlinkStatementVisitor<R, C> visitor, C context) {
+      return visitor.visitJarStatement(this, context);
+    }
+  }
+
+  public interface FlinkStatementVisitor<R, C> {
+
+    R visitJarStatement(FlinkJarStatement statement, C context);
+  }
+
 
   public interface FlinkFunction {
 

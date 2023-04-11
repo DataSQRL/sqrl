@@ -7,10 +7,12 @@ import com.datasqrl.FlinkExecutablePlan.FlinkBase;
 import com.datasqrl.FlinkExecutablePlan.FlinkErrorSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkFactoryDefinition;
 import com.datasqrl.FlinkExecutablePlan.FlinkFunction;
+import com.datasqrl.FlinkExecutablePlan.FlinkJarStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkJavaFunction;
 import com.datasqrl.FlinkExecutablePlan.FlinkQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
+import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
 import com.datasqrl.engine.stream.flink.RowMapperFactory;
 import com.datasqrl.engine.stream.flink.sql.calcite.ExpandTemporalJoinRule;
@@ -20,7 +22,6 @@ import com.datasqrl.engine.stream.flink.sql.calcite.PushWatermarkHintToTableScan
 import com.datasqrl.engine.stream.flink.sql.calcite.ShapeBushyCorrelateJoinRule;
 import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
-import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
@@ -37,12 +38,14 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -87,14 +90,18 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   TableSink errorSink;
 
+  private final List<FlinkStatement> statements = new ArrayList<>();
   private final List<FlinkFunction> functions = new ArrayList<>();
   private final List<FlinkSink> sinks = new ArrayList<>();
   private final List<FlinkTableDefinition> tableDefs = new ArrayList<>();
   private final List<FlinkQuery> queries = new ArrayList<>();
   private final FlinkRelToSqlConverter relToSqlConverter = new FlinkRelToSqlConverter(queries);
 
-  public FlinkBase create(List<? extends Query> queries, Map<String, UserDefinedFunction> udfs) {
+  public FlinkBase create(List<? extends Query> queries, Map<String, UserDefinedFunction> udfs,
+      Set<URL> jars) {
     checkQueriesAreWriteQuery(queries);
+
+    registerJars(jars);
 
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(queries);
     Map<String, ImportedRelationalTable> tables = extractTablesFromQueries(writeQueries);
@@ -117,12 +124,21 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
             .tableEnvironmentConfig(new HashMap<>())
             //todo: get flink config
             .build())
+        .statements(this.statements)
         .functions(this.functions)
         .sinks(this.sinks)
         .tableDefinitions(this.tableDefs)
         .queries(this.queries)
         .errorSink(createErrorSink(errorSink))
         .build();
+  }
+
+  private void registerJars(Set<URL> jars) {
+    for (URL url : jars) {
+      this.statements.add(FlinkJarStatement.builder()
+          .path(url.getPath())
+          .build());
+    }
   }
 
   private FlinkErrorSink createErrorSink(TableSink errorSink) {

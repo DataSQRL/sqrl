@@ -15,7 +15,4 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
 
   FlinkExecutablePlan executablePlan;
 
-  //TODO: Make the jars work in executable plan (if local)
-  Set<URL> jars;
-
 }

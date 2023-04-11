@@ -13,6 +13,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkErrorSinkVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkExecutablePlanVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkFactoryDefinition;
 import com.datasqrl.FlinkExecutablePlan.FlinkFunctionVisitor;
+import com.datasqrl.FlinkExecutablePlan.FlinkJarStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkJavaFunction;
 import com.datasqrl.FlinkExecutablePlan.FlinkQueryVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkSinkVisitor;
@@ -20,9 +21,10 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSqlFunction;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlTableApiDefinition;
+import com.datasqrl.FlinkExecutablePlan.FlinkStatementVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinitionVisitor;
-import com.datasqrl.JavaFlinkExecutablePlanVisitor.PlanContext;
+import com.datasqrl.FlinkEnvironmentBuilder.PlanContext;
 import com.datasqrl.config.BaseConnectorFactory;
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SinkFactory.FlinkSinkFactoryContext;
@@ -88,24 +90,27 @@ import org.apache.flink.util.OutputTag;
 import org.apache.flink.util.Preconditions;
 
 @Slf4j
-public class JavaFlinkExecutablePlanVisitor implements
-    FlinkExecutablePlanVisitor<TableResult, Object>,
-    FlinkBaseVisitor<TableResult, Object>,
+public class FlinkEnvironmentBuilder implements
+    FlinkExecutablePlanVisitor<StatementSet, Object>,
+    FlinkBaseVisitor<StatementSet, Object>,
     FlinkConfigVisitor<PlanContext, Object>,
     FlinkFunctionVisitor<Object, PlanContext>,
     FlinkTableDefinitionVisitor<Object, PlanContext>,
     FlinkQueryVisitor<Object, PlanContext>,
     FlinkSinkVisitor<Object, PlanContext>,
-    FlinkErrorSinkVisitor<Object, PlanContext> {
+    FlinkErrorSinkVisitor<Object, PlanContext>,
+    FlinkStatementVisitor<Object, PlanContext> {
 
   @Override
-  public TableResult visitPlan(FlinkExecutablePlan plan, Object context) {
+  public StatementSet visitPlan(FlinkExecutablePlan plan, Object context) {
     return plan.getBase().accept(this, null);
   }
 
   @Override
-  public TableResult visitBase(FlinkBase base, Object context) {
+  public StatementSet visitBase(FlinkBase base, Object context) {
     PlanContext planCtx = base.getConfig().accept(this, context);
+    base.getStatements().stream()
+        .forEach(f -> f.accept(this, planCtx));
     base.getFunctions().stream()
         .forEach(f -> f.accept(this, planCtx));
     base.getTableDefinitions().stream()
@@ -119,7 +124,7 @@ public class JavaFlinkExecutablePlanVisitor implements
       base.getErrorSink().accept(this, planCtx);
     }
 
-    return planCtx.getStatementSet().execute();
+    return planCtx.getStatementSet();
   }
 
   private void registerErrors(DataStream<InputError> errorStream, FlinkErrorSink sink,
@@ -157,7 +162,7 @@ public class JavaFlinkExecutablePlanVisitor implements
 
   @Override
   public PlanContext visitConfig(DefaultFlinkConfig config, Object context) {
-    log.info("Setting flink config");
+    log.debug("Setting flink config");
     Configuration sEnvConfig = Configuration.fromMap(
         config.getStreamExecutionEnvironmentConfig());
     StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(
@@ -172,7 +177,7 @@ public class JavaFlinkExecutablePlanVisitor implements
 
   @Override
   public Object visitFunction(FlinkJavaFunction fnc, PlanContext context) {
-    log.info("Creating function {}", fnc.getFunctionName());
+    log.debug("Creating function {}", fnc.getFunctionName());
 
     String sql = createFunctionStatement(fnc);
     context.getTEnv()
@@ -182,7 +187,7 @@ public class JavaFlinkExecutablePlanVisitor implements
 
   @Override
   public Object visitFunction(FlinkSqlFunction fnc, PlanContext context) {
-    log.info("Creating function sql {}", fnc.getFunctionSql());
+    log.debug("Creating function sql {}", fnc.getFunctionSql());
     context.getTEnv()
         .executeSql(fnc.getFunctionSql());
     return null;
@@ -215,7 +220,7 @@ public class JavaFlinkExecutablePlanVisitor implements
 
   @Override
   public Object visitSink(FlinkSqlSink table, PlanContext context) {
-    log.info("Creating sink {} -> {}", table.getSource(), table.getTarget());
+    log.debug("Creating sink {} -> {}", table.getSource(), table.getTarget());
     context.getStatementSet()
         .addInsert(table.getTarget(),
             context.getTEnv().from(table.getSource()));
@@ -224,7 +229,7 @@ public class JavaFlinkExecutablePlanVisitor implements
 
   @Override
   public Object visitQuery(FlinkSqlQuery query, PlanContext context) {
-    log.info("Creating SQL table: {} {}", query.getName(), query.getQuery());
+    log.debug("Creating SQL table: {} {}", query.getName(), query.getQuery());
     Table table = context.getTEnv().sqlQuery(query.getQuery());
     context.getTEnv().createTemporaryView(query.getName(), table);
     return null;
@@ -235,7 +240,7 @@ public class JavaFlinkExecutablePlanVisitor implements
     StreamType streamType = query.getStateChangeType();
     LogicalStreamMetaData baseRelationMeta = query.getMeta();
     boolean unmodifiedChangelog = query.isUnmodifiedChangelog();
-    log.info("Creating Stream query {}, {}", query.getName(), query.getFromTable());
+    log.debug("Creating Stream query {}, {}", query.getName(), query.getFromTable());
     Table table = context.getTEnv().from(query.getFromTable());
 
     DataStream<Row> stream = context.getTEnv()
@@ -284,6 +289,12 @@ public class JavaFlinkExecutablePlanVisitor implements
     return null;
   }
 
+  @Override
+  public Object visitJarStatement(FlinkJarStatement statement, PlanContext context) {
+    TableResult result = context.getTEnv().executeSql(String.format("ADD JAR '%s'", statement.getPath()));
+    return null;
+  }
+
   @Builder
   public static class SourceResolver {
 
@@ -315,7 +326,7 @@ public class JavaFlinkExecutablePlanVisitor implements
         table.getOutputSchema(),
         context);
 
-    log.info("Creating datastream table definition: {}", table.getName());
+    log.debug("Creating datastream table definition: {}", table.getName());
     context.getTEnv()
         .createTemporaryView(table.getName(), dataStream, (Schema) null/*todo add schema*/);
 
@@ -382,14 +393,14 @@ public class JavaFlinkExecutablePlanVisitor implements
 
   @Override
   public Object visitTableDefinition(FlinkSqlTableApiDefinition table, PlanContext context) {
-    log.info("Creating table definition: {}", table.getCreateSql());
+    log.debug("Creating table definition: {}", table.getCreateSql());
 
     return context.getTEnv().executeSql(table.getCreateSql());
   }
 
   @Override
   public Object visitFactoryDefinition(FlinkFactoryDefinition table, PlanContext context) {
-    log.info("Creating factory: {} {}", table.getName(), table.getFactoryClass());
+    log.debug("Creating factory: {} {}", table.getName(), table.getFactoryClass());
 
     String name = table.getName();
     Class factoryClass = table.getFactoryClass();

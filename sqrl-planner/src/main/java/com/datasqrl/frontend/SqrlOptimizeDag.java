@@ -42,5 +42,4 @@ public class SqrlOptimizeDag extends SqrlPlan {
     return dagPlanner.plan(relSchema, queries, ns.getExports(), includeJars ? ns.getJars() : Set.of(),
         ns.getUdfs());
   }
-
 }

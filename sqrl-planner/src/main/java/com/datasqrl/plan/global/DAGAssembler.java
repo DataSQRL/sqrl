@@ -136,7 +136,7 @@ public class DAGAssembler {
       Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(indexCalls)
           .keySet();
       databasePlans.add(new PhysicalDAGPlan.StagePlan(database, readDAG, indexDefinitions,
-          null, udfs));
+          null, null));
     }
 
     //Add exported tables
