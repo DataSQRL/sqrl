@@ -10,11 +10,13 @@ import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 @AllArgsConstructor
 @Slf4j
@@ -27,9 +29,10 @@ public class FlinkPhysicalPlanner {
 
   @SneakyThrows
   public FlinkStreamPhysicalPlan createStreamGraph(
-      List<? extends Query> streamQueries, TableSink errorSink, Set<URL> jars) {
+      List<? extends Query> streamQueries, TableSink errorSink, Set<URL> jars,
+      Map<String, UserDefinedFunction> udfs) {
     SqrlToFlinkExecutablePlan sqrlToFlinkExecutablePlan = new SqrlToFlinkExecutablePlan(errorSink);
-    FlinkBase flinkBase = sqrlToFlinkExecutablePlan.create(streamQueries);
+    FlinkBase flinkBase = sqrlToFlinkExecutablePlan.create(streamQueries, udfs);
     return new FlinkStreamPhysicalPlan(new FlinkExecutablePlan(flinkBase), jars);
   }
 }

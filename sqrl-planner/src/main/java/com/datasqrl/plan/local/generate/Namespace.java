@@ -22,7 +22,8 @@ public class Namespace implements AbstractNamespace {
 
   private final SqrlSchema schema;
 
-  Map<String, UserDefinedFunction> udfs = new HashMap<>();
+  @Getter
+  private Map<String, UserDefinedFunction> udfs = new HashMap<>();
 
   @Getter
   private Set<URL> jars;

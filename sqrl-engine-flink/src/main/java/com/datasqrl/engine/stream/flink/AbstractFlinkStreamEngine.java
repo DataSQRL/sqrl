@@ -51,7 +51,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
       List<PhysicalDAGPlan.StageSink> inputs, RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
-        plan.getQueries(), errorSink, plan.getJars());
+        plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
     return streamPlan;
   }
 

@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -55,7 +56,6 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
-import org.apache.calcite.rel.rel2sql.RelToSql;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
@@ -75,6 +75,7 @@ import org.apache.calcite.tools.Programs;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
@@ -92,12 +93,12 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   private final List<FlinkQuery> queries = new ArrayList<>();
   private final FlinkRelToSqlConverter relToSqlConverter = new FlinkRelToSqlConverter(queries);
 
-  public FlinkBase create(List<? extends Query> queries) {
+  public FlinkBase create(List<? extends Query> queries, Map<String, UserDefinedFunction> udfs) {
     checkQueriesAreWriteQuery(queries);
 
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(queries);
     Map<String, ImportedRelationalTable> tables = extractTablesFromQueries(writeQueries);
-    registerFunctions(writeQueries);
+    registerFunctions(udfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
     extractWatermarks(writeQueries, watermarkCollector);
@@ -139,14 +140,14 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .build();
   }
 
-  private void registerFunctions(List<WriteQuery> writeQueries) {
-    StdTimeLibraryImpl.SQRL_FUNCTIONS.forEach(f -> {
-      FlinkJavaFunction function = FlinkJavaFunction.builder()
-          .functionName(f.getFunctionName().getCanonical())
-          .identifier(f.getClass().getName())
+  private void registerFunctions(Map<String, UserDefinedFunction> udfs) {
+    for (Entry<String, UserDefinedFunction> function : udfs.entrySet()) {
+      FlinkJavaFunction javaFunction = FlinkJavaFunction.builder()
+          .functionName(function.getKey())
+          .identifier(function.getValue().getClass().getName())
           .build();
-      this.functions.add(function);
-    });
+      this.functions.add(javaFunction);
+    }
   }
 
   private List<WriteQuery> applyFlinkCompatibilityRules(List<? extends Query> queries) {

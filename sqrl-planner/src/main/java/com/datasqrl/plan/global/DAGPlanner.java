@@ -14,10 +14,12 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of
@@ -83,18 +85,18 @@ public class DAGPlanner {
     }
   }
 
-  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //Stitch DAG together
     DAGAssembler assembler = new DAGAssembler(planner, sqrlConverter, pipeline, debugger, errors);
-    return assembler.assemble(dag, jars);
+    return assembler.assemble(dag, jars, udfs);
   }
 
   public PhysicalDAGPlan plan(CalciteSchema relSchema, Collection<APIQuery> queries,
-      Collection<ResolvedExport> exports, Set<URL> jars) {
+      Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
 
     SqrlDAG dag = build(relSchema, queries, exports);
     optimize(dag);
-    return assemble(dag,jars);
+    return assemble(dag,jars, udfs);
   }
 
 
