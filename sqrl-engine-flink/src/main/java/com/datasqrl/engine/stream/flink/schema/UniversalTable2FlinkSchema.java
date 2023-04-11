@@ -5,8 +5,10 @@ package com.datasqrl.engine.stream.flink.schema;
 
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,73 +24,72 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
   //NOTE: Does not include nullable in this call, need to call nullable function
   @Override
   public DataType convertBasic(RelDataType datatype) {
-    if (datatype instanceof BasicSqlType || datatype instanceof IntervalSqlType) {
-      switch (datatype.getSqlTypeName()) {
-        case VARCHAR:
-          return DataTypes.VARCHAR(32767);
-        case CHAR:
-          return DataTypes.CHAR(datatype.getPrecision());
-        case TIMESTAMP:
-          return DataTypes.TIMESTAMP(datatype.getPrecision());
-        case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-          return DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(datatype.getPrecision());
-        case BIGINT:
-          return DataTypes.BIGINT();
-        case INTEGER:
-          return DataTypes.INT();
-        case SMALLINT:
-          return DataTypes.SMALLINT();
-        case TINYINT:
-          return DataTypes.TINYINT();
-        case BOOLEAN:
-          return DataTypes.BOOLEAN();
-        case DOUBLE:
-          return DataTypes.DOUBLE();
-        case DECIMAL:
-          return DataTypes.DECIMAL(datatype.getPrecision(), datatype.getScale());
-        case FLOAT:
-          return DataTypes.FLOAT();
-        case REAL:
-          return DataTypes.DOUBLE();
-        case DATE:
-          return DataTypes.DATE();
-        case TIME:
-          return DataTypes.TIME(datatype.getPrecision());
-
-        case TIME_WITH_LOCAL_TIME_ZONE:
-        case BINARY:
-        case VARBINARY:
-        case GEOMETRY:
-        case SYMBOL:
-        case ANY:
-        case NULL:
-        default:
-      }
-    } else if (datatype instanceof IntervalSqlType) {
-      IntervalSqlType interval = (IntervalSqlType) datatype;
-      switch (interval.getSqlTypeName()) {
-        case INTERVAL_DAY_HOUR:
-        case INTERVAL_DAY_MINUTE:
-        case INTERVAL_DAY_SECOND:
-        case INTERVAL_HOUR_MINUTE:
-        case INTERVAL_HOUR_SECOND:
-        case INTERVAL_MINUTE_SECOND:
-        case INTERVAL_YEAR_MONTH:
-          throw new UnsupportedOperationException();
-        case INTERVAL_SECOND:
-          return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
-        case INTERVAL_YEAR:
-          return DataTypes.INTERVAL(DataTypes.YEAR(datatype.getPrecision()));
-        case INTERVAL_MINUTE:
-          return DataTypes.INTERVAL(DataTypes.MINUTE());
-        case INTERVAL_HOUR:
-          return DataTypes.INTERVAL(DataTypes.HOUR());
-        case INTERVAL_DAY:
-          return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
-        case INTERVAL_MONTH:
-          return DataTypes.INTERVAL(DataTypes.MONTH());
-
-      }
+    switch (datatype.getSqlTypeName()) {
+      case VARCHAR:
+        return DataTypes.VARCHAR(32767);
+      case CHAR:
+        return DataTypes.CHAR(datatype.getPrecision());
+      case TIMESTAMP:
+        return DataTypes.TIMESTAMP(datatype.getPrecision());
+      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+        return DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(datatype.getPrecision());
+      case BIGINT:
+        return DataTypes.BIGINT();
+      case INTEGER:
+        return DataTypes.INT();
+      case SMALLINT:
+        return DataTypes.SMALLINT();
+      case TINYINT:
+        return DataTypes.TINYINT();
+      case BOOLEAN:
+        return DataTypes.BOOLEAN();
+      case DOUBLE:
+        return DataTypes.DOUBLE();
+      case DECIMAL:
+        return DataTypes.DECIMAL(datatype.getPrecision(), datatype.getScale());
+      case FLOAT:
+        return DataTypes.FLOAT();
+      case REAL:
+        return DataTypes.DOUBLE();
+      case DATE:
+        return DataTypes.DATE();
+      case TIME:
+        return DataTypes.TIME(datatype.getPrecision());
+      case ARRAY:
+        return DataTypes.ARRAY(nullable(convertBasic(datatype.getComponentType()), datatype.isNullable()));
+      case ROW:
+        return DataTypes.ROW(datatype.getFieldList().stream()
+            .map(f -> nullable(convertBasic(f.getType()), datatype.isNullable()))
+            .toArray(DataType[]::new));
+      case TIME_WITH_LOCAL_TIME_ZONE:
+      case BINARY:
+      case VARBINARY:
+      case GEOMETRY:
+      case SYMBOL:
+      case ANY:
+      case NULL:
+      default:
+        break;
+      case INTERVAL_DAY_HOUR:
+      case INTERVAL_DAY_MINUTE:
+      case INTERVAL_DAY_SECOND:
+      case INTERVAL_HOUR_MINUTE:
+      case INTERVAL_HOUR_SECOND:
+      case INTERVAL_MINUTE_SECOND:
+      case INTERVAL_YEAR_MONTH:
+        throw new UnsupportedOperationException();
+      case INTERVAL_SECOND:
+        return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
+      case INTERVAL_YEAR:
+        return DataTypes.INTERVAL(DataTypes.YEAR(datatype.getPrecision()));
+      case INTERVAL_MINUTE:
+        return DataTypes.INTERVAL(DataTypes.MINUTE());
+      case INTERVAL_HOUR:
+        return DataTypes.INTERVAL(DataTypes.HOUR());
+      case INTERVAL_DAY:
+        return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
+      case INTERVAL_MONTH:
+        return DataTypes.INTERVAL(DataTypes.MONTH());
     }
     throw new UnsupportedOperationException("Unsupported type: " + datatype);
   }

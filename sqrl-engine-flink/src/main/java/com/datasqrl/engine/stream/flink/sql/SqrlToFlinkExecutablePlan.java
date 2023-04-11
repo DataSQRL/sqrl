@@ -112,7 +112,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     return FlinkBase.builder()
         .config(DefaultFlinkConfig.builder()
-            .streamExecutionEnvironmentConfig(new HashMap<>())
+            .streamExecutionEnvironmentConfig(Map.of("taskmanager.memory.network.max", "1g"))
             .tableEnvironmentConfig(new HashMap<>())
             //todo: get flink config
             .build())

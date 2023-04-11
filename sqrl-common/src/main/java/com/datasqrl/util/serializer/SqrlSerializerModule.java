@@ -1,6 +1,7 @@
 package com.datasqrl.util.serializer;
 
 import com.datasqrl.name.Name;
+import com.datasqrl.name.NamePath;
 import com.datasqrl.spi.JacksonDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -24,10 +25,13 @@ public class SqrlSerializerModule extends SimpleModule {
     addDeserializer(Name.class, new Name.NameDeserializer());
     addSerializer(Name.class, new Name.NameSerializer());
 
+    addDeserializer(NamePath.class, new NamePath.NamePathDeserializer());
+    addSerializer(NamePath.class, new NamePath.NamePathSerializer());
+
     addDeserializer(TypeInformation.class, new TypeInformationDeserializer());
     addSerializer(TypeInformation.class, new TypeInformationSerializer());
 
-    addDeserializer(Schema.class, new SchemaDeserializer());
-    addSerializer(Schema.class, new SchemaSerializer());
+//    addDeserializer(Schema.class, new SchemaDeserializer());
+//    addSerializer(Schema.class, new SchemaSerializer());
   }
 }

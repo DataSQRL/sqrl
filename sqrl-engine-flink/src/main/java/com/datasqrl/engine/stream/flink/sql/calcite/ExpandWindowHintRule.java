@@ -41,7 +41,7 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
   public void onMatch(RelOptRuleCall relOptRuleCall) {
     RelBuilder relBuilder = relOptRuleCall.builder();
     LogicalAggregate aggregate = relOptRuleCall.rel(0);
-    LogicalProject input = relOptRuleCall.rel(1);
+    RelNode input = relOptRuleCall.rel(1);
     Optional<TumbleAggregationHint> tumbleHintOpt = SqrlHint.fromRel(aggregate,
         TumbleAggregationHint.CONSTRUCTOR);
     Optional<SlidingAggregationHint> slideHintOpt = SqrlHint.fromRel(aggregate,
@@ -61,7 +61,7 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
 
   private void handleWindowedAggregation(RelBuilder relBuilder,
       Optional<TumbleAggregationHint> tumbleHintOpt, Optional<SlidingAggregationHint> slideHintOpt,
-      ImmutableBitSet groupBy, List<AggregateCall> aggCalls, LogicalProject input) {
+      ImmutableBitSet groupBy, List<AggregateCall> aggCalls, RelNode input) {
     Preconditions.checkArgument(tumbleHintOpt.isPresent() ^ slideHintOpt.isPresent());
     RexBuilder rexBuilder = getRexBuilder(relBuilder);
     int inputFieldCount = input.getRowType().getFieldCount();
@@ -122,13 +122,15 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
             .collect(Collectors.toList()), projectNames, true);
   }
 
-  private void handleTumbleWindow(int timestampIdx, TumbleAggregationHint tumbleHint, LogicalProject input,
+  private void handleTumbleWindow(int timestampIdx, TumbleAggregationHint tumbleHint, RelNode input,
       RelDataType inputType, RexBuilder rexBuilder, RelBuilder relBuilder) {
     SqlOperator windowFunction = FlinkSqlOperatorTable.TUMBLE;
     if (tumbleHint.getType() == TumbleAggregationHint.Type.FUNCTION) {
       //Extract bucketing function from project
+      Preconditions.checkArgument(input instanceof LogicalProject,
+          "Expected projection as input");
       relBuilder.push(input.getInput(0));
-      List<RexNode> projects = new ArrayList<>(input.getProjects());
+      List<RexNode> projects = new ArrayList<>(((LogicalProject)input).getProjects());
       projects.set(timestampIdx,
           rexBuilder.makeInputRef(input.getInput(0),  tumbleHint.getInputTimestampIdx()));
       long intervalMs = tumbleHint.getIntervalMS();
@@ -149,7 +151,7 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
   }
 
   private void handleSlidingWindow(int timestampIdx, SlidingAggregationHint slideHint,
-      LogicalProject input, RelBuilder relBuilder) {
+      RelNode input, RelBuilder relBuilder) {
     relBuilder.push(input);
     long[] intervalsMs = new long[]{slideHint.getSlideWidthMs(), slideHint.getIntervalWidthMs()};
     SqlOperator windowFunction = FlinkSqlOperatorTable.HOP;
@@ -203,7 +205,7 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
     ExpandWindowHintRule.Config DEFAULT = EMPTY
         .withOperandSupplier(b0 ->
             b0.operand(LogicalAggregate.class).oneInput(
-                b1 -> b1.operand(LogicalProject.class).anyInputs()))
+                b1 -> b1.operand(RelNode.class).anyInputs()))
         .withDescription("ExpandWindowHintRule")
         .as(ExpandWindowHintRule.Config.class);
 

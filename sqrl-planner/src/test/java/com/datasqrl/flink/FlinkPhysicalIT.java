@@ -115,7 +115,6 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   }
 
   @Test
-  @Disabled //TODO: type mismatch: ref: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL input: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
   public void aggregateTest() {
     ScriptBuilder builder = example.getImports();
     //temporal state
@@ -213,7 +212,6 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   }
 
   @Test
-  @Disabled //todo: unknown failure reason
   public void simpleStreamTest() {
     ScriptBuilder builder = new ScriptBuilder();
     builder.add("IMPORT ecommerce-data.Orders");

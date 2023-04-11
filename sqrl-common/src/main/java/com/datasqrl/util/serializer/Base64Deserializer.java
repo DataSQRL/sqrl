@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.*;
 import org.apache.flink.calcite.shaded.org.apache.commons.codec.binary.Base64;
 
-public class Base64Deserializer<T> extends StdDeserializer<T> {
+public class Base64Deserializer<T extends Serializable> extends StdDeserializer<T> {
 
     protected Base64Deserializer(Class<T> vc) {
         super(vc);

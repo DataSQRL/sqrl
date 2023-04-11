@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import java.io.*;
 import org.apache.flink.calcite.shaded.org.apache.commons.codec.binary.Base64;
 
-public abstract class Base64Serializer<T> extends StdSerializer<T> {
+public abstract class Base64Serializer<T extends Serializable> extends StdSerializer<T> {
 
     protected Base64Serializer(Class<T> t) {
         super(t);

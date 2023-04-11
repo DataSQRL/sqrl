@@ -16,6 +16,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,8 +25,10 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.SneakyThrows;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 @Value
+@Slf4j
 public class VertxQueryExecutionContext implements QueryExecutionContext,
     ParameterHandlerVisitor<Object, QueryExecutionContext> {
   VertxContext context;
@@ -42,6 +45,9 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
       Object o = param.accept(this, this);
       paramObj[i] = o;
     }
+
+    log.info("Query: " + ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
+        .getPreparedQuery() + "\n Params: "+ Arrays.toString(paramObj));
 
     ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
         .getPreparedQuery().execute(Tuple.from(paramObj))
@@ -72,6 +78,8 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         limit.map(Object::toString).orElse("ALL"),
         offset.orElse(0)
     );
+
+    log.info("Paged Query: " + query + " : " + Arrays.toString(paramObj));
 
     this.context.getSqlClient()
         .getSqlClient()

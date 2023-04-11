@@ -66,9 +66,13 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
 
   public QueryPipelineItem getOrCreate(QueryType queryType, SqlNode node, RelNode relNode,
       LogicalStream stream) {
-    for (QueryPipelineItem q : queries) {
-      if (q.getRelNode().deepEquals(relNode)) {
-        return q;
+
+    //todo: stream distinct?
+    if (queryType == QueryType.QUERY) {
+      for (QueryPipelineItem q : queries) {
+        if (q.getRelNode().deepEquals(relNode)) {
+          return q;
+        }
       }
     }
 
