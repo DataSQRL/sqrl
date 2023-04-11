@@ -5,6 +5,7 @@ import com.datasqrl.io.tables.SchemaDefinition;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.name.NamePath;
 import com.datasqrl.plan.calcite.rel.LogicalStreamMetaData;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.AccessLevel;
@@ -42,8 +43,10 @@ public class FlinkExecutablePlan {
   public static class FlinkBase {
 
     FlinkConfig config;
-    List<FlinkStatement> statements;
-    List<FlinkFunction> functions;
+    @Builder.Default
+    List<FlinkStatement> statements = new ArrayList<>();
+    @Builder.Default
+    List<FlinkFunction> functions = new ArrayList<>();
     List<FlinkTableDefinition> tableDefinitions;
     List<FlinkQuery> queries;
     List<FlinkSink> sinks;
