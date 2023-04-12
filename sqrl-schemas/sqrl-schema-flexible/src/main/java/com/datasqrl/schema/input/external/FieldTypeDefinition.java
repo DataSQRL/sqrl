@@ -3,9 +3,10 @@
  */
 package com.datasqrl.schema.input.external;
 
+import java.io.Serializable;
 import java.util.List;
 
-public interface FieldTypeDefinition {
+public interface FieldTypeDefinition extends Serializable {
 
   String getType();
 

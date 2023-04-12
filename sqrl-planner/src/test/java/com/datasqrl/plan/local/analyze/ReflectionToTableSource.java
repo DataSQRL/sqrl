@@ -9,6 +9,7 @@ import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.name.NamePath;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -33,7 +34,7 @@ public class ReflectionToTableSource {
 
   @SneakyThrows
   private static TimeAnnotatedRecord[] convertToData(List<?> data) {
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
     mapper.registerModule(new JavaTimeModule());
     mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     mapper.registerModule(new Jdk8Module());

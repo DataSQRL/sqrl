@@ -3,8 +3,17 @@
  */
 package com.datasqrl.name;
 
+import com.datasqrl.spi.JacksonDeserializer;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
 import lombok.NonNull;
 
 import java.io.Serializable;
@@ -108,4 +117,24 @@ public interface Name extends Serializable, Comparable<Name> {
     return of(name, NameCanonicalizer.SYSTEM);
   }
 
+  static Name hidden(String name) {
+    return system(HIDDEN_PREFIX + name);
+  }
+
+
+  class NameDeserializer extends JsonDeserializer<Name> {
+    @Override
+    public Name deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+      String nameString = jsonParser.readValueAs(String.class);
+      return Name.system(nameString);
+    }
+  }
+  class NameSerializer extends JsonSerializer<Name> {
+
+    @Override
+    public void serialize(Name name, JsonGenerator jsonGenerator,
+        SerializerProvider serializerProvider) throws IOException {
+      jsonGenerator.writeString(name.getDisplay());
+    }
+  }
 }

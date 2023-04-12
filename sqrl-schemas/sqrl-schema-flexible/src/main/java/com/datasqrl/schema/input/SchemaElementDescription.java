@@ -3,6 +3,7 @@
  */
 package com.datasqrl.schema.input;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.base.Strings;
 import lombok.*;
 
@@ -13,6 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaElementDescription implements Serializable {
 
   public static final SchemaElementDescription NONE = new SchemaElementDescription("");

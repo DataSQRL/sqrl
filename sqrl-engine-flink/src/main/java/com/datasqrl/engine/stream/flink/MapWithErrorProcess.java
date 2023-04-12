@@ -35,7 +35,7 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
     try {
       result = function.apply(input, errorHolder);
     } catch (Exception e) {
-      errorHolder.errors.handle(e);
+      errorHolder.get().handle(e);
     }
     if (errorHolder.hasErrors()) {
       InputError inputErr = InputError.of(errorHolder.errors, input);

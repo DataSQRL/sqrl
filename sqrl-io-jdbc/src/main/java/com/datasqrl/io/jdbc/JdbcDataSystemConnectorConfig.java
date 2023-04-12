@@ -7,6 +7,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.util.constraints.OptionalMinString;
+import com.google.auto.service.AutoService;
 import lombok.*;
 
 import javax.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@AutoService(DataSystemConnectorConfig.class)
 public class JdbcDataSystemConnectorConfig implements DataSystemConnectorConfig {
 
   public static final String SYSTEM_TYPE = "jdbc";

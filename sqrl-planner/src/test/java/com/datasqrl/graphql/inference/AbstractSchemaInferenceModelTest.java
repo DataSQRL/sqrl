@@ -82,7 +82,8 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     /// plan dag
     DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
         ns.getSchema().getPipeline(), Debugger.NONE, errors);
-    PhysicalDAGPlan dag = dagPlanner.plan(ns.getSchema(), queries, ns.getExports(), ns.getJars());
+    PhysicalDAGPlan dag = dagPlanner.plan(ns.getSchema(), queries, ns.getExports(), ns.getJars(),
+        ns.getUdfs());
 
     IndexSelector indexSelector = new IndexSelector(ns.getSchema().getPlanner(),
         IndexSelectorConfigByDialect.of("POSTGRES"));

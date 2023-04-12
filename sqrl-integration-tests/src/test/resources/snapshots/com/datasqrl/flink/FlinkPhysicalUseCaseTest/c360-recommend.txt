@@ -16,12 +16,12 @@ LogicalProject(__pk_0=[$0], total=[$1], num=[$2], hour=[$3])
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                     LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
-                      LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[product$i$4]])
         LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
           LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
             LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
-              LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                 LogicalTableScan(table=[[product$i$4]])
 
 >>>_sales_72h$24-lp-stream
@@ -42,12 +42,12 @@ LogicalProject(__pk_0=[$0], total=[$1], num=[$2], hour=[$3])
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                     LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
-                      LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[product$i$4]])
         LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
           LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
             LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
-              LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                 LogicalTableScan(table=[[product$i$4]])
 
 >>>_sales_by_hour$20-lp-stream
@@ -65,13 +65,13 @@ LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
           LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
             LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
               LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
-                LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+                LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                   LogicalTableScan(table=[[product$i$4]])
 
 >>>category$14-lp-stream
 LogicalProject(name=[$0], updatetime=[$1])
   LogicalProject(name=[$5], updatetime=[$6])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[product$i$4]])
 
 >>>customer$12-lp-stream
@@ -95,7 +95,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
 >>>product$16-lp-stream
 LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6])
   LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updatetime=[$6])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 12:INTERVAL YEAR)]) hints[WatermarkHint options:[6]]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updatetime=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[product$i$4]])
 
 >>>total$18-lp-stream

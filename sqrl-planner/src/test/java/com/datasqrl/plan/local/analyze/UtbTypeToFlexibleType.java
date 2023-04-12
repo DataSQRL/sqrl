@@ -33,8 +33,8 @@ public class UtbTypeToFlexibleType {
       case DOUBLE:
         return new FloatType();
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        return new DateTimeType();
       case TIME:
+        return new DateTimeType();
       case BINARY:
       case VARBINARY:
       case INTERVAL_YEAR_MONTH:

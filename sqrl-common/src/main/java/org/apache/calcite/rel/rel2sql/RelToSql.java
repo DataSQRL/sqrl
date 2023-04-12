@@ -1,13 +1,16 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.plan.calcite.util;
+package org.apache.calcite.rel.rel2sql;
 
+import com.datasqrl.plan.calcite.util.CalciteUtil;
 import com.google.common.base.Preconditions;
+import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
 
@@ -27,16 +30,7 @@ public class RelToSql {
 
   public static SqlNode convertToSqlNode(RelNode optimizedNode) {
     RelToSqlConverter converter = new RelToSqlConverter(PostgresqlSqlDialect.DEFAULT);
-    final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
-    return sqlNode;
-  }
-
-  public static String convertToSql(RelNode optimizedNode) {
-
-    String sql = convertToSqlNode(optimizedNode).toSqlString(
-            c -> transform.apply(c.withDialect(PostgresqlSqlDialect.DEFAULT)))
-        .getSql();
-    return sql;
+    return converter.visitRoot(optimizedNode).asStatement();
   }
 
   public static String toSql(RelDataTypeField field) {
@@ -93,6 +87,4 @@ public class RelToSql {
         throw new UnsupportedOperationException("Unsupported type:" + type);
     }
   }
-
-
 }

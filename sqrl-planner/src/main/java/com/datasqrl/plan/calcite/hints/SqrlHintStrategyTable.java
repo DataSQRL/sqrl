@@ -22,6 +22,10 @@ public class SqrlHintStrategyTable {
       .hintStrategy(WatermarkHint.HINT_NAME,
           HintPredicates.or(HintPredicates.PROJECT, HintPredicates.TABLE_SCAN))
       .hintStrategy(JoinCostHint.HINT_NAME, HintPredicates.JOIN)
+      .hintStrategy(SlidingAggregationHint.HINT_NAME, HintPredicates.AGGREGATE)
+      .hintStrategy(TumbleAggregationHint.HINT_NAME, HintPredicates.AGGREGATE)
+      .hintStrategy(TemporalJoinHint.HINT_NAME, HintPredicates.JOIN)
+      .hintStrategy(INTERVAL_JOIN.getHintName(), HintPredicates.JOIN)
       .build();
 
 }

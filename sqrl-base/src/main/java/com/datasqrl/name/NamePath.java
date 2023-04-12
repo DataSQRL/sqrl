@@ -5,6 +5,14 @@ package com.datasqrl.name;
 
 import com.datasqrl.util.AbstractPath;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,4 +77,31 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
     return CONSTRUCTOR.parse(path, s -> Name.of(s, NameCanonicalizer.SYSTEM));
   }
 
+  public static class NamePathDeserializer extends JsonDeserializer<NamePath> {
+
+    @Override
+    public NamePath deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+        throws IOException, JacksonException {
+      String namePathString = jsonParser.getValueAsString();
+
+      if (namePathString != null && !namePathString.isEmpty()) {
+        return NamePath.parse(namePathString);
+      } else {
+        return null;
+      }
+    }
+  }
+
+  public static class NamePathSerializer extends JsonSerializer<NamePath> {
+
+    @Override
+    public void serialize(NamePath namePath, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+        throws IOException {
+      if (namePath != null) {
+        jsonGenerator.writeString(namePath.getDisplay());
+      } else {
+        jsonGenerator.writeNull();
+      }
+    }
+  }
 }

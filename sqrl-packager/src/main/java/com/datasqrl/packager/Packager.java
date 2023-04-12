@@ -20,6 +20,7 @@ import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.spi.ScriptConfiguration;
 import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,7 +67,7 @@ public class Packager {
   GlobalPackageConfiguration config;
   ErrorCollector errors;
   Path buildDir;
-  protected static final ObjectMapper mapper = createMapper();
+  protected static final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
 
   public Packager(@NonNull Repository repository, @NonNull Path rootDir,
       @NonNull ObjectNode packageConfig, @NonNull GlobalPackageConfiguration config,
@@ -298,12 +299,5 @@ public class Packager {
     }
     Files.copy(srcFile, targetPath, StandardCopyOption.REPLACE_EXISTING);
     return targetPath;
-  }
-
-  protected static ObjectMapper createMapper() {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.enable(SerializationFeature.INDENT_OUTPUT);
-    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    return mapper;
   }
 }

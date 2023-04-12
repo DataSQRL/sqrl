@@ -4,7 +4,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
 
 >>>orderfilter$q$11-lp-DATABASE
 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
-  LogicalFilter(condition=[<(NOW(), +($4, 31536000000:INTERVAL SECOND))])
+  LogicalFilter(condition=[<(NOW(), +($4, 86400000:INTERVAL SECOND(8)))])
     LogicalTableScan(table=[[orders$6]])
 
 >>>orderagg1$q$13-lp-STREAM

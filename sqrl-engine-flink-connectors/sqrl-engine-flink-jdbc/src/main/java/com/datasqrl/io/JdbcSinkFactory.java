@@ -3,17 +3,14 @@
  */
 package com.datasqrl.io;
 
-import com.datasqrl.config.SinkFactory;
+import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.io.jdbc.JdbcDataSystemConnectorConfig;
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
+import java.util.Optional;
 import org.apache.flink.connector.jdbc.table.JdbcConnectorOptions;
 import org.apache.flink.table.api.TableDescriptor;
-import org.apache.flink.table.api.TableDescriptor.Builder;
-
-import java.util.Optional;
 
 public class JdbcSinkFactory
-    implements SinkFactory<Builder> {
+    implements TableDescriptorSinkFactory {
 
   @Override
   public String getEngine() {
@@ -26,12 +23,12 @@ public class JdbcSinkFactory
   }
 
   @Override
-  public TableDescriptor.Builder create(WriteSink sink, DataSystemConnectorConfig dsConfig) {
-      JdbcDataSystemConnectorConfig config = (JdbcDataSystemConnectorConfig)dsConfig;
+  public TableDescriptor.Builder create(FlinkSinkFactoryContext context) {
+      JdbcDataSystemConnectorConfig config = (JdbcDataSystemConnectorConfig)context.getConfig();
 
       TableDescriptor.Builder builder = TableDescriptor.forConnector("jdbc")
           .option(JdbcConnectorOptions.URL, config.getDbURL())
-          .option("table-name", sink.getName());
+          .option("table-name", context.getTableName());
       Optional.ofNullable(config.getDriverName())
           .map(u->builder.option(JdbcConnectorOptions.DRIVER, config.getDriverName()));
       Optional.ofNullable(config.getUser())

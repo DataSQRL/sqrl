@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,6 +45,7 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Value
 public class DAGAssembler {
@@ -57,7 +59,7 @@ public class DAGAssembler {
   private ErrorCollector errors;
 
 
-  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();
@@ -134,7 +136,7 @@ public class DAGAssembler {
       Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(indexCalls)
           .keySet();
       databasePlans.add(new PhysicalDAGPlan.StagePlan(database, readDAG, indexDefinitions,
-          null));
+          null, null));
     }
 
     //Add exported tables
@@ -170,7 +172,7 @@ public class DAGAssembler {
         });
 
     PhysicalDAGPlan.StagePlan streamPlan = new PhysicalDAGPlan.StagePlan(streamStage, writeDAG,
-        null, jars);
+        null, jars, udfs);
 
     return new PhysicalDAGPlan(ListUtils.union(List.of(streamPlan),databasePlans));
 

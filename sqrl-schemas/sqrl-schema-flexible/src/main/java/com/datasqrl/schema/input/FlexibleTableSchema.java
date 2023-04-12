@@ -5,9 +5,10 @@ package com.datasqrl.schema.input;
 
 import com.datasqrl.engine.stream.flink.RowMapperFactory;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.tables.SchemaDefinition;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.name.Name;
+import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
@@ -27,6 +28,8 @@ import java.util.List;
 @AutoService(TableSchema.class)
 public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSchema {
 
+  @Setter
+  private SchemaDefinition definition;
   private boolean isPartialSchema;
   @NonNull
   private RelationType<Field> fields;
@@ -34,17 +37,18 @@ public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSch
   private List<Constraint> constraints;
 
   public FlexibleTableSchema(Name name, SchemaElementDescription description, Object default_value,
-                             boolean isPartialSchema, RelationType<Field> fields, List<Constraint> constraints) {
+                             boolean isPartialSchema, RelationType<Field> fields, List<Constraint> constraints,
+      SchemaDefinition definition) {
     super(name, description, default_value);
     this.isPartialSchema = isPartialSchema;
     this.fields = fields;
     this.constraints = constraints;
+    this.definition = definition;
   }
 
   @Override
   public RowMapper getRowMapper(RowConstructor rowConstructor,
                                 boolean hasSourceTimestamp) {
-
     return new FlexibleSchemaRowMapper(this, hasSourceTimestamp,
             rowConstructor);
   }
@@ -55,13 +59,13 @@ public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSch
   }
 
   @Override
-  public SchemaValidator getValidator(TableConfig tableConfig, boolean hasSourceTimestamp) {
+  public SchemaValidator getValidator(SchemaAdjustmentSettings schemaAdjustmentSettings, boolean hasSourceTimestamp) {
 
     InputTableSchema inputTableSchema = new InputTableSchema(this, hasSourceTimestamp);
     DefaultSchemaValidator validator = new DefaultSchemaValidator(inputTableSchema,
-            tableConfig.getSchemaAdjustmentSettings(),
-            tableConfig.getNameCanonicalizer(),
-            new DefaultSchemaGenerator(tableConfig.getSchemaAdjustmentSettings()));
+        schemaAdjustmentSettings,
+        NameCanonicalizer.SYSTEM,
+            new DefaultSchemaGenerator(schemaAdjustmentSettings));
     return validator;
   }
 
@@ -76,19 +80,20 @@ public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSch
     protected boolean isPartialSchema = true;
     protected RelationType<Field> fields;
     protected List<Constraint> constraints = Collections.EMPTY_LIST;
+    protected SchemaDefinition definition;
 
     public void copyFrom(FlexibleTableSchema f) {
       super.copyFrom(f);
       isPartialSchema = f.isPartialSchema;
       fields = f.fields;
       constraints = f.constraints;
+      definition = f.definition;
     }
 
     public FlexibleTableSchema build() {
       return new FlexibleTableSchema(name, description, default_value, isPartialSchema, fields,
-              constraints);
+              constraints, definition);
     }
-
   }
 
   public static FlexibleTableSchema empty(Name name) {

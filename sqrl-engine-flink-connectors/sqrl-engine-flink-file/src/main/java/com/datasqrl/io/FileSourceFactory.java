@@ -49,18 +49,18 @@ public class FileSourceFactory implements
     FilePathConfig pathConfig = filesource.getPathConfig();
     if (pathConfig.isURL()) {
       Preconditions.checkArgument(!pathConfig.isDirectory());
-      return ctx.getEnv().fromCollection(pathConfig.getFiles(filesource, ctx.getTable().getConfiguration())).
+      return ctx.getEnv().fromCollection(pathConfig.getFiles(filesource, ctx.getTableConfig())).
           flatMap(new ReadPathByLine())
           .map(new NoTimedRecord());
     } else {
       org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder;
       if (pathConfig.isDirectory()) {
         StreamFormat<String> format;
-        if (ctx.getTable().getConfiguration().getFormat().getFileFormat() == FileFormat.JSON) {
-          format = new JsonInputFormat(ctx.getTable().getConfiguration().getCharset());
+        if (ctx.getFormatConfig().getFileFormat() == FileFormat.JSON) {
+          format = new JsonInputFormat(ctx.getTableConfig().getCharset());
         } else {
           format = new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-              ctx.getTable().getConfiguration().getCharset());
+              ctx.getTableConfig().getCharset());
         }
 
         builder = org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
@@ -68,17 +68,17 @@ public class FileSourceFactory implements
             FilePath.toFlinkPath(pathConfig.getDirectory()));
         Duration monitorDuration = null;
         FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource,
-            ctx.getTable().getConfiguration());
+            ctx.getTableConfig());
         builder.setFileEnumerator(fileEnumerator);
         if (monitorDuration != null) {
           builder.monitorContinuously(Duration.ofSeconds(10));
         }
       } else {
-        Path[] inputPaths = pathConfig.getFiles(filesource, ctx.getTable().getConfiguration()).stream()
+        Path[] inputPaths = pathConfig.getFiles(filesource, ctx.getTableConfig()).stream()
             .map(FilePath::toFlinkPath).toArray(size -> new Path[size]);
         builder = org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
             new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-                ctx.getTable().getConfiguration().getCharset()), inputPaths);
+                ctx.getTableConfig().getCharset()), inputPaths);
       }
 
       return ctx.getEnv().fromSource(builder.build(),

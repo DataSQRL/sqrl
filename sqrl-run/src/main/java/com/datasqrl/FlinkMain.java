@@ -1,25 +1,20 @@
 package com.datasqrl;
 
-import com.datasqrl.compile.Compiler;
-import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.local.generate.ClasspathResourceResolver;
+import lombok.SneakyThrows;
 
 /**
  * Used for stand alone flink jars
  */
 public class FlinkMain {
+  ErrorCollector errors = ErrorCollector.root();
 
   public static void main(String[] args) {
-    ErrorCollector errors = ErrorCollector.root();
+    (new FlinkMain()).run();
+  }
 
-    //Recompile
-    Compiler compiler = new Compiler();
+  @SneakyThrows
+  private void run() {
 
-    Compiler.CompilerResult result = compiler.run(errors,
-        new ClasspathResourceResolver(), false);
-
-    PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    PhysicalPlanExecutor.Result execute = executor.execute(result.getPlan());
   }
 }

@@ -197,7 +197,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void productIntervalTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Product2 := SELECT _ingest_time + INTERVAL 2 YEAR AS x FROM Product");
+    builder.add("Product2 := SELECT _ingest_time + INTERVAL 365 DAYS AS x FROM Product");
     validateScript(builder.getScript());
   }
 
@@ -280,7 +280,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     builder.add("Customer.recent_products := SELECT e.productid, e.product.category AS category,\n"
         + "                                       sum(e.quantity) AS quantity, count(1) AS num_orders\n"
         + "                                FROM @.orders.entries AS e\n"
-        + "                                WHERE e.parent.time > now() - INTERVAL 2 YEAR\n"
+        + "                                WHERE e.parent.time > now() - INTERVAL 365 DAYS\n"
         + "                                GROUP BY productid, category ORDER BY count(1) DESC, quantity DESC;\n");
     validateScript(builder.getScript());
   }
@@ -718,7 +718,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void intervalTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
-        + "Product2 := SELECT _ingest_time + INTERVAL 2 YEAR AS x FROM Product;");
+        + "Product2 := SELECT _ingest_time + INTERVAL 2 DAY AS x FROM Product;");
 //    LogicalProject project = (LogicalProject) env.getOps().get(0).getRelNode();
 //    RexCall call = (RexCall) project.getNamedProjects().get(0).left;
 //    RexLiteral rexLiteral = (RexLiteral) call.getOperands().get(1);

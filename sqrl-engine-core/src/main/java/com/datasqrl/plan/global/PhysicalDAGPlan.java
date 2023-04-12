@@ -10,6 +10,7 @@ import com.datasqrl.util.StreamUtil;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -17,6 +18,7 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Value
 public class PhysicalDAGPlan {
@@ -50,6 +52,8 @@ public class PhysicalDAGPlan {
     Collection<IndexDefinition> indexDefinitions;
 
     Set<URL> jars;
+
+    Map<String, UserDefinedFunction> udfs;
 
   }
 

@@ -1,16 +1,14 @@
 package com.datasqrl.io;
 
-import com.datasqrl.config.SinkFactory;
+import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.io.formats.FormatConfiguration;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.tables.TableConfig;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import org.apache.flink.table.api.TableDescriptor;
 import org.apache.flink.table.api.TableDescriptor.Builder;
 
-public class FileSinkFactory implements SinkFactory<TableDescriptor.Builder> {
+public class FileSinkFactory implements TableDescriptorSinkFactory {
 
   @Override
   public String getEngine() {
@@ -23,10 +21,9 @@ public class FileSinkFactory implements SinkFactory<TableDescriptor.Builder> {
   }
 
   @Override
-  public Builder create(WriteSink sink, DataSystemConnectorConfig config) {
-    ExternalSink externalSink = (ExternalSink) sink;
-    TableConfig configuration = externalSink.getTableSink().getConfiguration();
-    DirectoryConnector connector = (DirectoryConnector)externalSink.getTableSink().getConnector();
+  public Builder create(FlinkSinkFactoryContext context) {
+    TableConfig configuration = context.getTableConfig();
+    DirectoryConnector connector = (DirectoryConnector)context.getConfig().initialize(context.getErrors());
     TableDescriptor.Builder tblBuilder = TableDescriptor.forConnector("filesystem")
         .option("path",
             connector.getPathConfig().getDirectory().resolve(configuration.getIdentifier())

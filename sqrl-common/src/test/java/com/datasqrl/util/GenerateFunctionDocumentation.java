@@ -4,7 +4,7 @@ import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.builtin.string.StdStringLibraryImpl;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
 import com.datasqrl.function.builtin.time.StdTimeLibraryImpl.TimeWindowBucketFunction;
-import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.util.serializer.Deserializer;
 import com.datasqrl.loaders.SqrlModule;
 import com.datasqrl.plan.local.generate.CalciteFunctionNsObject;
 import com.datasqrl.plan.local.generate.FunctionNamespaceObject;
@@ -52,7 +52,7 @@ public class GenerateFunctionDocumentation {
 
   public void saveSQLFunctionDocs() throws IOException {
     Files.createDirectories(SQL_FUNCTION_DOCS_FILE.getParent());
-    new Deserializer().writeToJson(SQL_FUNCTION_DOCS_FILE, sqlFunctionDocs, true);
+    new Deserializer().writeJson(SQL_FUNCTION_DOCS_FILE, sqlFunctionDocs, true);
   }
 
   @SneakyThrows

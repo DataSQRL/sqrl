@@ -110,7 +110,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
     Preconditions.checkArgument(getType().isSource());
     Name tableName = getResolvedName();
 
-    SchemaValidator validator = schema.getValidator(this, connector.hasSourceTimestamp());
+    SchemaValidator validator = schema.getValidator(this.getSchemaAdjustmentSettings(), connector.hasSourceTimestamp());
 
     return new TableSource(connector, this, basePath.concat(tableName), tableName, schema, validator);
   }
@@ -133,7 +133,7 @@ public class TableConfig extends SharedConfiguration implements Serializable {
     }
     Preconditions.checkArgument(getType().isSink());
     Name tableName = getResolvedName();
-    return new TableSink(connector, this, basePath.concat(tableName), tableName, schema);
+    return new TableSink(connector,  getConnector(),this, basePath.concat(tableName), tableName, schema);
   }
 
   @JsonIgnore

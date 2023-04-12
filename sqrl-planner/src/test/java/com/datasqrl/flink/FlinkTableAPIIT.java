@@ -9,6 +9,10 @@ import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
+import com.datasqrl.engine.stream.flink.FlinkStreamHolder;
+import com.datasqrl.engine.stream.flink.schema.FlinkRowConstructor;
+import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
+import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
@@ -17,16 +21,23 @@ import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.name.NameCanonicalizer;
 import com.datasqrl.name.NamePath;
+import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
+import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.DefaultSchemaValidator;
+import com.datasqrl.schema.input.InputTableSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Retail;
 import java.nio.file.Path;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableDescriptor;
@@ -66,11 +77,23 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
     DefaultSchemaValidator schemaValidator = new DefaultSchemaValidator(tblSource.getSchema(),
         SchemaAdjustmentSettings.DEFAULT, NameCanonicalizer.SYSTEM,
         new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT));
-    StreamHolder<SourceRecord.Named> validate = stream.mapWithError(schemaValidator.getFunction(),
+    FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder)stream.mapWithError(schemaValidator.getFunction(),
         ErrorPrefix.INPUT_DATA, SourceRecord.Named.class);
-    streamBuilder.addAsTable(validate, tblSource.getSchema(), "orders");
+
+    InputTableSchema schema = tblSource.getSchema();
+    //TODO: error handling when mapping doesn't work?
+    UniversalTable universalTable = schema.getSchema().createUniversalTable(schema.isHasSourceTimestamp(),
+        Optional.empty());
+    Schema flinkSchema = new UniversalTable2FlinkSchema().convertSchema(universalTable);
+    TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()
+        .convertSchema(universalTable);
+    RowMapper rowMapper = schema.getSchema().getRowMapper(FlinkRowConstructor.INSTANCE, schema.isHasSourceTimestamp());
+    DataStream rows = flinkStream.getStream()
+        .map(rowMapper::apply, typeInformation);
 
     StreamTableEnvironment tEnv = streamBuilder.getTableEnvironment();
+
+    tEnv.createTemporaryView("orders", rows, flinkSchema);
 
 //    Table tableShredding = tEnv.sqlQuery("SELECT  o._uuid, items._idx, o.customerid, items.discount, items.quantity, items.productid, items.unit_price \n" +
 //            "FROM orders o CROSS JOIN UNNEST(o.entries) AS items");

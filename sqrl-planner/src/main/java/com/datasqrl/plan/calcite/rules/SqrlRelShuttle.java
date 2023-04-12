@@ -6,6 +6,7 @@ package com.datasqrl.plan.calcite.rules;
 import com.datasqrl.plan.calcite.rel.LogicalStream;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttle;
+import org.apache.calcite.rel.core.Snapshot;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.logical.LogicalCalc;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
@@ -24,7 +25,6 @@ public interface SqrlRelShuttle extends RelShuttle {
 
 
   RelNode visit(LogicalStream logicalStream);
-
 
     /*
     ====== Rel Nodes are not yet supported =====
@@ -53,6 +53,9 @@ public interface SqrlRelShuttle extends RelShuttle {
   default RelNode visit(RelNode relNode) {
     if (relNode instanceof LogicalStream) {
       return visit((LogicalStream) relNode);
+    }
+    if (relNode instanceof Snapshot) {
+      return visit((Snapshot) relNode);
     }
     throw new UnsupportedOperationException("Unexpected rel node: " + relNode);
   }
@@ -87,5 +90,4 @@ public interface SqrlRelShuttle extends RelShuttle {
   default RelNode visit(LogicalMatch logicalMatch) {
     return visit((RelNode) logicalMatch);
   }
-
 }

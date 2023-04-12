@@ -15,7 +15,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.util.serializer.Deserializer;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Stopwatch;
 import picocli.CommandLine;

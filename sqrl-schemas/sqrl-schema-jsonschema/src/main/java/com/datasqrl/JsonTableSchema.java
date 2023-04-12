@@ -1,11 +1,12 @@
 package com.datasqrl;
 
-import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.tables.SchemaDefinition;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.name.Name;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
+import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.schema.input.SchemaValidator;
 import io.vertx.json.schema.Validator;
 import java.util.Optional;
@@ -34,12 +35,17 @@ public class JsonTableSchema implements TableSchema {
   }
 
   @Override
-  public SchemaValidator getValidator(TableConfig config, boolean hasSourceTimestamp) {
+  public SchemaValidator getValidator(SchemaAdjustmentSettings adjustmentSettings, boolean hasSourceTimestamp) {
     return new JsonSchemaValidator(validator);
   }
 
   @Override
   public UniversalTable createUniversalTable(boolean hasSourceTimestamp, Optional<Name> tblAlias) {
     throw new RuntimeException("Not yet implemented");
+  }
+
+  @Override
+  public SchemaDefinition getDefinition() {
+    return null;
   }
 }

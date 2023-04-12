@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.tools.RelBuilder;
 
 @AllArgsConstructor
 public class PhysicalPlanner {
-
   RelBuilder relBuilder;
   TableSink errorSink;
 

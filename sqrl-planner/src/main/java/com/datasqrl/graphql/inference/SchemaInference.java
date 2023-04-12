@@ -95,7 +95,8 @@ public class SchemaInference {
       List<InferredField> fields, ObjectTypeDefinition parent) {
     Optional<SQRLTable> sqrlTable = getTableOfType(fieldDefinition.getType(), fieldDefinition.getName());
     Preconditions.checkState(sqrlTable.isPresent(),
-        "Could not find associated SQRL type for field {}", fieldDefinition.getName());
+        "Could not find associated SQRL type for field %s on type %s",
+        fieldDefinition.getName(), fieldDefinition.getType());
     SQRLTable table = sqrlTable.get();
 
     return inferObjectField(fieldDefinition, table, fields, parent);

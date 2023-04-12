@@ -11,6 +11,7 @@ import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.schema.input.external.SchemaExport;
 import com.datasqrl.schema.input.external.TableDefinition;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -29,7 +30,7 @@ public class TableWriter {
 
 
   public TableWriter() {
-    this.jsonMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    this.jsonMapper = SqrlObjectMapper.INSTANCE;
     this.yamlMapper = new YAMLMapper();
     this.yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
   }

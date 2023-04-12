@@ -49,7 +49,7 @@
         <agroal.version>1.11</agroal.version>
         <kafka.version>3.3.1</kafka.version>
         <flink.version>1.16.1</flink.version>
-        <slf4j.version>2.0.3</slf4j.version>
+        <slf4j.version>1.7.36</slf4j.version>
         <postgres.version>42.5.0</postgres.version>
         <log4j.version>2.19.0</log4j.version>
         <scala.version>2.12</scala.version>
@@ -175,11 +175,6 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-transpiler</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <artifactId>sqrl-engine-core</artifactId>
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
@@ -216,11 +211,7 @@
                 <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <artifactId>sqrl-engine-http-vertx</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
+
             <dependency>
                 <artifactId>sqrl-engine-http-aws-lambda</artifactId>
                 <groupId>com.datasqrl</groupId>
@@ -412,7 +403,17 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
+                <artifactId>flink-csv</artifactId>
+                <version>${flink.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
                 <artifactId>flink-streaming-java</artifactId>
+                <version>${flink.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-core</artifactId>
                 <version>${flink.version}</version>
             </dependency>
             <dependency>
@@ -434,7 +435,6 @@
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-table-planner_2.12</artifactId>
                 <version>${flink.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
@@ -611,17 +611,12 @@
             </dependency>
 
             <!-- logging -->
+            <!-- SLF4J API -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-log4j12</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-api</artifactId>
@@ -632,7 +627,11 @@
                 <artifactId>log4j-core</artifactId>
                 <version>${log4j.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
             <!-- other -->
             <dependency>
                 <groupId>org.apache.maven.plugins</groupId>

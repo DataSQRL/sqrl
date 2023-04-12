@@ -7,6 +7,7 @@ import com.datasqrl.name.Name;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
+import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.schema.input.SchemaValidator;
 import java.util.Optional;
 
@@ -18,7 +19,11 @@ public interface TableSchema {
 
   String getSchemaType();
 
-  SchemaValidator getValidator(TableConfig config, boolean hasSourceTimestamp);
+  SchemaValidator getValidator(SchemaAdjustmentSettings settings, boolean hasSourceTimestamp);
 
   UniversalTable createUniversalTable(boolean hasSourceTimestamp, Optional<Name> tblAlias);
+
+  SchemaDefinition getDefinition();
+
+  String TYPE_KEY = "schemaType";
 }

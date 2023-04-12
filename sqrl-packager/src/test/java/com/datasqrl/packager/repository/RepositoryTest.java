@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.util.serializer.Deserializer;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.util.Zipper;

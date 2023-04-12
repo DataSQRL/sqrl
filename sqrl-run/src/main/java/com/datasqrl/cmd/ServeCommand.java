@@ -8,6 +8,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.service.Util;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class ServeCommand extends AbstractCommand {
   @SneakyThrows
   private RootGraphqlModel readModel() {
     Path outputDir = root.rootDir.resolve(DEFAULT_DEPLOY_DIR);
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
     return mapper.readValue(outputDir.resolve(DEFAULT_SERVER_MODEL).toFile(), RootGraphqlModel.class);
   }
 }

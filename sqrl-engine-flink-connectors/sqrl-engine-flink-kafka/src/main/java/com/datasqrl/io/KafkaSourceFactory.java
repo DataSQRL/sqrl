@@ -30,7 +30,7 @@ public class KafkaSourceFactory implements
     FlinkSourceFactoryContext ctx = (FlinkSourceFactoryContext) context;
 
     KafkaDataSystem.Connector kafkaSource = (KafkaDataSystem.Connector) connector;
-    String topic = kafkaSource.getTopicPrefix() + ctx.getTable().getConfiguration().getIdentifier();
+    String topic = kafkaSource.getTopicPrefix() + ctx.getTableConfig().getIdentifier();
     String groupId = ctx.getFlinkName() + "-" + ctx.getUuid();
 
     KafkaSourceBuilder<TimeAnnotatedRecord<String>> builder = org.apache.flink.connector.kafka.source.KafkaSource.<TimeAnnotatedRecord<String>>builder()

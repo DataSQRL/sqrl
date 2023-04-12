@@ -1,7 +1,7 @@
 package com.datasqrl.packager;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.util.serializer.Deserializer;
 import com.datasqrl.packager.config.GlobalPackageConfiguration;
 import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.repository.PublishRepository;

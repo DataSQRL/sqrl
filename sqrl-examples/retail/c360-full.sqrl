@@ -2,7 +2,7 @@ IMPORT time.endOfMonth;
 IMPORT time.epochToTimestamp;
 
 IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS updateTime;
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time - INTERVAL 1 YEAR AS updateTime;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time - INTERVAL 365 DAYS AS updateTime;
 IMPORT ecommerce-data.Orders;
 
 
@@ -40,7 +40,7 @@ Customer._spending_by_month_category :=
 Customer.favorite_categories := SELECT s.category as category_name,
                                         sum(s.total) AS total
                                 FROM @._spending_by_month_category s
-                                WHERE s.month >= now() - INTERVAL 1 YEAR
+                                WHERE s.month >= now() - INTERVAL 365 DAYS
                                 GROUP BY category_name ORDER BY total;
 
 Customer.favorite_categories.category := JOIN Category ON @.category_name = Category.name;

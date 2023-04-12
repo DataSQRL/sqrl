@@ -64,8 +64,6 @@ public class ClasspathResourceResolver implements ResourceResolver {
   @Override
   public Optional<URI> resolveFile(NamePath namePath) {
     Path path = namepath2Path(Path.of(""), namePath);
-    System.out.println(files);
-    System.out.println(path.toString());
 
     return Optional.ofNullable(files.get(path.toString()));
   }

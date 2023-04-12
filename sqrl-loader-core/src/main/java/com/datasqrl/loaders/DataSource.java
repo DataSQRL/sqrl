@@ -29,12 +29,4 @@ public class DataSource {
     }
     return Optional.of(tableConfig.initializeSource(errors, basePath, tableSchema));
   }
-
-  public Optional<TableSink> readTableSink(TableSchema tableSchema, TableConfig tableConfig,
-                                               ErrorCollector errors, NamePath basePath) {
-    if (!tableConfig.getType().isSink()) {
-      return Optional.empty();
-    }
-    return Optional.of(tableConfig.initializeSink(errors, basePath, Optional.of(tableSchema)));
-  }
 }

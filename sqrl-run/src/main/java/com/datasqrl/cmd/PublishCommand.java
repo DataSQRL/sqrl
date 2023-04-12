@@ -2,7 +2,7 @@ package com.datasqrl.cmd;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.NotYetImplementedException;
-import com.datasqrl.loaders.Deserializer;
+import com.datasqrl.util.serializer.Deserializer;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.config.Dependency;
