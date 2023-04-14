@@ -3,7 +3,7 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 

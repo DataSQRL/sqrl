@@ -21,7 +21,7 @@
   "identifier": "products",
   "schema": "flexible",
   "connector": {
-    "directoryURI": "../sqrl-examples/nutshop/data-medium/",
+    "directoryURI": "../../sqrl-examples/nutshop/data-medium/",
     "fileURIs": [],
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
     "systemType": "dir"

@@ -3,13 +3,10 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.calcite.sql.TableFunctionArgument;
 
 @Getter
 //@EqualsAndHashCode do not use

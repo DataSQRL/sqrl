@@ -3,7 +3,7 @@
  */
 package com.datasqrl.schema.input;
 
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
 import java.io.Serializable;
 
 public interface SchemaField extends Serializable {

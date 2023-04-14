@@ -3,7 +3,7 @@
  */
 package com.datasqrl.schema.input;
 
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.schema.type.Type;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;

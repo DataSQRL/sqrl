@@ -5,8 +5,9 @@ package com.datasqrl.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -71,14 +72,17 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
 
   @Override
   public String toString() {
-    return toString('.');
+    return toString(".");
   }
 
-  public String toString(char separator) {
+  public String toString(String separator) {
     if (elements.length == 0) {
       return "/";
     }
-    return StringUtils.join(elements, separator);
+
+    return Arrays.stream((Object[]) elements)
+        .map(obj -> Objects.toString(obj, ""))
+        .collect(Collectors.joining(separator));
   }
 
   @Override

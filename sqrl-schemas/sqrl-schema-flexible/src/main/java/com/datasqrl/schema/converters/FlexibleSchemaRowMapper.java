@@ -5,7 +5,7 @@ package com.datasqrl.schema.converters;
 
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.schema.constraint.ConstraintHelper;
 import com.datasqrl.schema.input.FlexibleFieldSchema;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field;

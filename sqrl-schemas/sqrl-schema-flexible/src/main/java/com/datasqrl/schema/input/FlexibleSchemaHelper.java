@@ -3,8 +3,8 @@
  */
 package com.datasqrl.schema.input;
 
-import com.datasqrl.name.Name;
-import com.datasqrl.name.SpecialName;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.SpecialName;
 import com.datasqrl.schema.constraint.ConstraintHelper;
 
 public class FlexibleSchemaHelper {

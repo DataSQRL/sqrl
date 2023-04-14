@@ -3,9 +3,9 @@
  */
 package com.datasqrl.schema.input;
 
-import com.datasqrl.name.Name;
-import com.datasqrl.name.NamePath;
-import com.datasqrl.plan.calcite.SqrlTypeRelDataTypeConverter;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.schema.converters.SqrlTypeRelDataTypeConverter;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.type.Type;

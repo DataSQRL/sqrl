@@ -7,7 +7,7 @@
   },
   "name": "mysink",
   "datadiscovery": {
-    "directoryURI": "../sqrl-examples/quickstart/mysink-output/",
+    "directoryURI": "../../sqrl-examples/quickstart/mysink-output/",
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
     "systemType": "dir"
   }

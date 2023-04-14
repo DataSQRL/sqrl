@@ -4,8 +4,8 @@
 package com.datasqrl.io.stats;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.name.Name;
-import com.datasqrl.name.SpecialName;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.SpecialName;
 import com.datasqrl.schema.constraint.Cardinality;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.NotNull;

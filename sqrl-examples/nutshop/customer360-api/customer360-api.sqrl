@@ -53,7 +53,7 @@ Customers.products_by_protein :=
         ORDER BY protein_difference ASC LIMIT 20;
 Customers.products_by_protein.product := JOIN Products ON Products.id = _productid LIMIT 1;
 
-NewCustomerPromotion := SUBSCRIPTION ON ADD AS
+NewCustomerPromotion := STREAM ON ADD AS
 SELECT customerid, total_orders
 FROM Customers WHERE total_orders >= 100;
 

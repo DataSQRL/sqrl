@@ -4,7 +4,7 @@
 package com.datasqrl.io.stats;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;

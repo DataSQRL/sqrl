@@ -7,7 +7,7 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.error.ErrorLocation.FileRange;
 import com.datasqrl.error.ErrorMessage.Implementation;
 import com.datasqrl.error.ErrorMessage.Severity;
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Iterator;

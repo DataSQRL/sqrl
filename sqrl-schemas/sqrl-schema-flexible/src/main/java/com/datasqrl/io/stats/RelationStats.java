@@ -4,8 +4,8 @@
 package com.datasqrl.io.stats;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.name.Name;
-import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 

@@ -9,7 +9,7 @@
   "identifier": "orders",
   "schema": "flexible",
   "connector": {
-    "directoryURI": "../sqrl-examples/retail/broken-data/",
+    "directoryURI": "../../sqrl-examples/retail/broken-data/",
     "fileURIs": [],
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
     "systemType": "dir"
