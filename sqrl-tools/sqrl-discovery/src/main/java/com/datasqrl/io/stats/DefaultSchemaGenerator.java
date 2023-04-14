@@ -29,7 +29,7 @@ import java.util.*;
 /**
  * This class is not thread-safe and should be used to merge one schema at a time.
  */
-public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements SchemaGenerator, Serializable {
+public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements SchemaGenerator {
 
   private boolean isComplete;
 

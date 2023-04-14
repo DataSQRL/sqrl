@@ -1,1 +1,0 @@
-Contains the DataSQRL parser for SQRL files based on ANTLR.

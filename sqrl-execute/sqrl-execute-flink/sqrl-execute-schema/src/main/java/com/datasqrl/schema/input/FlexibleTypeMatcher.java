@@ -5,13 +5,14 @@ import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
 import com.datasqrl.schema.type.basic.BasicTypeManager;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 
-public class FlexibleTypeMatcher {
+public class FlexibleTypeMatcher implements Serializable {
 
   protected final SchemaAdjustmentSettings settings;
 

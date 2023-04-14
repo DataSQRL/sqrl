@@ -9,7 +9,7 @@ import org.apache.commons.codec.binary.Base64;
 
 public abstract class Base64Deserializer<T extends Serializable> extends StdDeserializer<T> {
 
-    protected Base64Deserializer(Class<T> vc) {
+    public Base64Deserializer(Class<T> vc) {
         super(vc);
     }
 

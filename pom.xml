@@ -239,11 +239,6 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-parser</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-planner-local</artifactId>
                 <version>${project.version}</version>
             </dependency>

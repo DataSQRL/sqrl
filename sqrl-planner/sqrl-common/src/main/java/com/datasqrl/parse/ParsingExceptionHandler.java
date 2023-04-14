@@ -10,7 +10,9 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ErrorMessage.Implementation;
 import com.datasqrl.error.ErrorMessage.Severity;
+import com.google.auto.service.AutoService;
 
+@AutoService(ErrorHandler.class)
 public class ParsingExceptionHandler implements ErrorHandler<ParsingException> {
 
   @Override
