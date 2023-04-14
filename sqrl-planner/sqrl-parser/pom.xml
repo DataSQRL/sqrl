@@ -12,68 +12,43 @@
   <artifactId>sqrl-parser</artifactId>
   <version>0.1-SNAPSHOT</version>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <mockito.version>4.8.0</mockito.version>
-    <antlr.version>4.9.2</antlr.version>
-    <log4j.version>2.19.0</log4j.version>
-    <guava.version>31.1-jre</guava.version>
-    <lombok.version>1.18.24</lombok.version>
-    <testcontainers.version>1.17.4</testcontainers.version>
-    <junit.jupiter.version>5.8.2</junit.jupiter.version>
-    <calcite.version>1.27.0</calcite.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-common</artifactId>
+      <artifactId>sqrl-base</artifactId>
     </dependency>
+
+    <!-- Parsing util -->
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4-runtime</artifactId>
+    </dependency>
+
+    <!-- todo: remove for calcite -->
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner_2.12</artifactId>
       <scope>provided</scope>
     </dependency>
-    <!-- sqrl parser -->
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr4-runtime</artifactId>
-      <version>${antlr.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-common</artifactId>
-    </dependency>
+
+    <!-- Test -->
     <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    <!-- testing -->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
-
-    <!-- other -->
-    <dependency>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-compiler-plugin</artifactId>
-      <version>3.10.1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-    </dependency>
   </dependencies>
+
   <build>
     <pluginManagement>
       <plugins>
+        <!-- Antlr code gen -->
         <plugin>
           <groupId>org.antlr</groupId>
           <artifactId>antlr4-maven-plugin</artifactId>
@@ -114,14 +89,6 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>11</source>
-          <target>11</target>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.antlr</groupId>
         <artifactId>antlr4-maven-plugin</artifactId>
       </plugin>
@@ -134,25 +101,6 @@
             <exclude>**/*IT*.java</exclude>
           </excludes>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>3.0.0-M7</version>
-        <configuration>
-          <includes>
-            <include>**/*IT.java</include>
-            <include>**/*IT*.java</include>
-          </includes>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

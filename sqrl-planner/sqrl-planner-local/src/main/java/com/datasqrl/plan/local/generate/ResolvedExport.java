@@ -1,8 +1,8 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.calcite.rules.SQRLConverter;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 

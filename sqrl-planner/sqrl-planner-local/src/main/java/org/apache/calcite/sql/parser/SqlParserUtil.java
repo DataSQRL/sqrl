@@ -16,11 +16,10 @@
  */
 package org.apache.calcite.sql.parser;
 
-import com.datasqrl.plan.calcite.TypeFactory;
+import com.datasqrl.schema.TypeFactory;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.avatica.util.DateTimeUtils;
 import org.apache.calcite.config.CalciteSystemProperty;
-import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlCall;

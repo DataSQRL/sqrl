@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 /**
  * Contains a set of static methods for handling with files and folders.
  *
- * A lof of the methods are proxies around 3rd party libraries and don't have dedicated tests
+ * A lot of the methods are proxies around 3rd party libraries and don't have dedicated tests
  */
 public class FileUtil {
 

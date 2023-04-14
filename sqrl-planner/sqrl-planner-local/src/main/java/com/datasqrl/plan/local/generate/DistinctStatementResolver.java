@@ -2,7 +2,7 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.plan.calcite.table.CalciteTableFactory;
+import com.datasqrl.plan.table.CalciteTableFactory;
 
 public class DistinctStatementResolver extends AbstractQueryStatementResolver {
 

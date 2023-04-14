@@ -3,8 +3,8 @@
  */
 package com.datasqrl.plan.local.transpile;
 
-import com.datasqrl.plan.calcite.hints.TopNHint;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.hints.TopNHint;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.util.CalciteUtil;
 import java.util.ArrayList;
 import java.util.List;

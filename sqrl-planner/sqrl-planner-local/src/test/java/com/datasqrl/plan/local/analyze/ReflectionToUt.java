@@ -2,7 +2,7 @@ package com.datasqrl.plan.local.analyze;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.plan.calcite.TypeFactory;
+import com.datasqrl.schema.TypeFactory;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.UniversalTable.ImportFactory;

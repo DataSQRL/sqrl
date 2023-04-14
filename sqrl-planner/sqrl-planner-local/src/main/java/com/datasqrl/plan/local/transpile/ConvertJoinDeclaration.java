@@ -4,7 +4,7 @@
 package com.datasqrl.plan.local.transpile;
 
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;

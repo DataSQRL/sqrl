@@ -25,36 +25,37 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-inmem</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-jdbc</artifactId>
+      <artifactId>sqrl-execute-flink-inmem</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-h2</artifactId>
+      <artifactId>sqrl-execute-flink-jdbc</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-file</artifactId>
+      <artifactId>sqrl-execute-flink-h2</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-kafka</artifactId>
+      <artifactId>sqrl-execute-flink-file</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-print</artifactId>
+      <artifactId>sqrl-execute-flink-kafka</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-sqlite</artifactId>
+      <artifactId>sqrl-execute-flink-print</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-sqlite</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -63,22 +64,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>sqrl-common</artifactId>
       <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
+      <artifactId>sqrl-execute-http-vertx</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>sqrl-planner-local</artifactId>
       <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
+      <artifactId>sqrl-cli</artifactId>
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-http-vertx</artifactId>
-    </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
@@ -96,6 +91,7 @@
       <artifactId>vertx-web-client</artifactId>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
@@ -104,11 +100,6 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-cli</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -150,5 +141,20 @@
       <artifactId>kafka-streams-test-utils</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- Test jars -->
+    <dependency>
+      <artifactId>sqrl-common</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-planner-local</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 </project>

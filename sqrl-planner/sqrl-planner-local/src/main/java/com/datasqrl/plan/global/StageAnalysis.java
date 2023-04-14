@@ -2,8 +2,8 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.calcite.rules.ComputeCost;
-import com.datasqrl.plan.calcite.rules.ExecutionAnalysis.CapabilityException;
+import com.datasqrl.plan.rules.ComputeCost;
+import com.datasqrl.plan.rules.ExecutionAnalysis.CapabilityException;
 import java.util.Collection;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

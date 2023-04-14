@@ -14,7 +14,4 @@ public class SourceServiceLoader {
             sf -> sf.getSourceName(), source);
   }
 
-  public interface SourceFactoryContext {
-
-  }
 }

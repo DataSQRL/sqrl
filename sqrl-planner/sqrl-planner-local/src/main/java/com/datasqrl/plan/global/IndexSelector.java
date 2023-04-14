@@ -3,13 +3,13 @@
  */
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.plan.calcite.OptimizationStage.READ_QUERY_OPTIMIZATION;
+import static com.datasqrl.plan.OptimizationStage.READ_QUERY_OPTIMIZATION;
 
-import com.datasqrl.plan.calcite.OptimizationStage;
-import com.datasqrl.plan.calcite.RelStageRunner;
-import com.datasqrl.plan.calcite.SqrlPlannerConfigFactory;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.calcite.util.SqrlRexUtil;
+import com.datasqrl.plan.OptimizationStage;
+import com.datasqrl.plan.RelStageRunner;
+import com.datasqrl.plan.SqrlPlannerConfigFactory;
+import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.util.SqrlRexUtil;
 import com.datasqrl.util.ArrayUtil;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

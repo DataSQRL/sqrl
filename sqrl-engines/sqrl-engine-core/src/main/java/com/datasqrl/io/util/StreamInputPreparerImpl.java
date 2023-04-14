@@ -3,10 +3,9 @@
  */
 package com.datasqrl.io.util;
 
-import com.datasqrl.engine.stream.FunctionWithError;
+import com.datasqrl.engine.stream.MapText2Raw;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.StreamSourceProvider;
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.formats.Format;
@@ -14,10 +13,6 @@ import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.function.Supplier;
-import lombok.AllArgsConstructor;
 
 public class StreamInputPreparerImpl implements StreamInputPreparer {
 
@@ -47,32 +42,6 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
       StreamHolder<TimeAnnotatedRecord<String>> textSource,
       TextLineFormat.Parser textparser, ErrorLocation errorLocation) {
     return textSource.mapWithError(new MapText2Raw(textparser), errorLocation, SourceRecord.Raw.class);
-  }
-
-  @AllArgsConstructor
-  public static class MapText2Raw implements
-      FunctionWithError<TimeAnnotatedRecord<String>, SourceRecord.Raw> {
-
-    private final TextLineFormat.Parser textparser;
-
-    @Override
-    public Optional<SourceRecord.Raw> apply(TimeAnnotatedRecord<String> t,
-        Supplier<ErrorCollector> errorCollector) {
-      Format.Parser.Result r = textparser.parse(t.getRecord());
-      if (r.isSuccess()) {
-        Instant sourceTime = r.getSourceTime();
-        if (sourceTime == null) {
-          sourceTime = t.getSourceTime();
-        }
-        return Optional.of(new SourceRecord.Raw(r.getRecord(), sourceTime));
-      } else {
-        assert r.isError() || r.isSkip();
-        if (r.isError()) {
-          errorCollector.get().fatal(r.getErrorMsg());
-        }
-        return Optional.empty();
-      }
-    }
   }
 
 }

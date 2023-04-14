@@ -2,7 +2,7 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.util.AbstractDAG;

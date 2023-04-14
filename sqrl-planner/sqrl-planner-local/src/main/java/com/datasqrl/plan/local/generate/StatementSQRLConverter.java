@@ -1,13 +1,13 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.calcite.OptimizationStage;
-import com.datasqrl.plan.calcite.hints.OptimizerHint;
-import com.datasqrl.plan.calcite.rules.AnnotatedLP;
-import com.datasqrl.plan.calcite.rules.IdealExecutionStage;
-import com.datasqrl.plan.calcite.rules.LPAnalysis;
-import com.datasqrl.plan.calcite.rules.SQRLConverter;
-import com.datasqrl.plan.calcite.rules.SQRLConverter.Config;
+import com.datasqrl.plan.OptimizationStage;
+import com.datasqrl.plan.hints.OptimizerHint;
+import com.datasqrl.plan.rules.AnnotatedLP;
+import com.datasqrl.plan.rules.IdealExecutionStage;
+import com.datasqrl.plan.rules.LPAnalysis;
+import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;
 import java.util.Optional;

@@ -4,7 +4,6 @@
 package com.datasqrl.io.impl.file;
 
 import com.datasqrl.io.formats.FileFormat;
-import com.datasqrl.util.FileUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;

@@ -4,8 +4,6 @@
 package com.datasqrl.io;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.serializer.JacksonDeserializer;
-import com.google.auto.service.AutoService;
 import lombok.NonNull;
 
 /**
@@ -14,13 +12,5 @@ import lombok.NonNull;
 public interface DataSystemConnectorConfig extends DataSystemSerializableConfig {
 
   DataSystemConnector initialize(@NonNull ErrorCollector errors);
-
-  @AutoService(JacksonDeserializer.class)
-  class Deserializer extends JacksonDeserializer<DataSystemConnectorConfig> {
-
-    public Deserializer() {
-      super(DataSystemConnectorConfig.class, TYPE_KEY, DataSystemConnectorConfig::getSystemType);
-    }
-  }
 
 }

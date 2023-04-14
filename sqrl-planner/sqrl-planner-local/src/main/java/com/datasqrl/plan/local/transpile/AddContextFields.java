@@ -4,7 +4,7 @@
 package com.datasqrl.plan.local.transpile;
 
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.generate.SqlNodeFactory;
 import java.util.List;
 import java.util.Optional;

@@ -3,9 +3,9 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.plan.calcite.rules.SqrlRelMdRowCount;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.calcite.util.SqrlRexUtil;
+import com.datasqrl.plan.rules.SqrlRelMdRowCount;
+import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;

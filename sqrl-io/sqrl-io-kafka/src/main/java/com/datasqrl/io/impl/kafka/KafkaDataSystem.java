@@ -3,31 +3,33 @@
  */
 package com.datasqrl.io.impl.kafka;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConfig;
 import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.DataSystemDiscovery;
-import com.datasqrl.io.DataSystemDiscoveryConfig;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.formats.FileFormat;
 import com.datasqrl.io.formats.FormatConfiguration;
+import com.datasqrl.io.impl.file.FileUtil;
 import com.datasqrl.io.tables.TableConfig;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
-import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
+import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.admin.Admin;
-
-import java.io.Serializable;
-import java.util.*;
-import java.util.function.Predicate;
 
 
 public abstract class KafkaDataSystem {
@@ -149,8 +151,5 @@ public abstract class KafkaDataSystem {
           });
       return tables;
     }
-
   }
-
-
 }

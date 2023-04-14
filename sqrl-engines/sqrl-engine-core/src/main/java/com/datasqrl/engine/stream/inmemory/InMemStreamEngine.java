@@ -12,7 +12,7 @@ import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.inmemory.InMemStreamEngine.JobBuilder.Sink;
-import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.util.FileStreamUtil;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.MetricStore;
 import com.datasqrl.engine.stream.monitor.MetricStore.Provider;
@@ -23,6 +23,9 @@ import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
+import com.datasqrl.io.impl.file.FilePath;
+import com.datasqrl.io.impl.file.FilePathConfig;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.util.Metric;
@@ -30,6 +33,7 @@ import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +86,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
       if (source instanceof DirectoryConnector) {
         DirectoryConnector filesource = (DirectoryConnector) source;
         try {
-          Stream<Path> paths = FileStreamUtil.matchingFiles(
+          Stream<Path> paths = matchingFiles(
               filesource.getPathConfig(),
               filesource, table.getConfiguration());
           return new Holder<>(
@@ -92,6 +96,25 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
         }
       } else {
         throw new UnsupportedOperationException();
+      }
+    }
+
+    public Stream<Path> matchingFiles(FilePathConfig pathConfig,
+        DirectoryConnector directorySource,
+        TableConfig table) throws IOException {
+      if (pathConfig.isDirectory()) {
+        return Files.find(FilePath.toJavaPath(pathConfig.getDirectory()), 100,
+            (filePath, fileAttr) -> {
+              if (!fileAttr.isRegularFile()) {
+                return false;
+              }
+              if (fileAttr.size() <= 0) {
+                return false;
+              }
+              return directorySource.isTableFile(FilePath.fromJavaPath(filePath), table);
+            });
+      } else {
+        return pathConfig.getFiles(directorySource, table).stream().map(FilePath::toJavaPath);
       }
     }
 

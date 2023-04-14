@@ -9,13 +9,15 @@
     <version>0.1-SNAPSHOT</version>
   </parent>
 
+  <!--
+    README: Engines as described in the package config
+  -->
   <artifactId>sqrl-engines</artifactId>
   <packaging>pom</packaging>
 
   <modules>
     <module>sqrl-engine-core</module>
     <module>sqrl-engine-flink</module>
-    <module>sqrl-engine-http</module>
     <module>sqrl-engine-jdbc</module>
   </modules>
 </project>

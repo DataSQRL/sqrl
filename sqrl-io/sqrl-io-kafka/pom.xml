@@ -26,6 +26,8 @@
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
     </dependency>
+
+    <!-- Test -->
     <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>com.datasqrl</groupId>

@@ -3,8 +3,8 @@
  */
 package com.datasqrl.plan.local;
 
-import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.SQRLTable;
 import lombok.Getter;
 import lombok.NonNull;

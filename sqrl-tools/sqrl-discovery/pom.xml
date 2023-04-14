@@ -23,12 +23,14 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-core</artifactId>
+      <artifactId>sqrl-engine-flink</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-schema-flexible</artifactId>
     </dependency>
+
+    <!-- Test jars -->
     <dependency>
       <artifactId>sqrl-common</artifactId>
       <groupId>com.datasqrl</groupId>

@@ -2,8 +2,8 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.plan.calcite.rel.LogicalStream;
-import com.datasqrl.plan.calcite.table.CalciteTableFactory;
+import com.datasqrl.plan.rel.LogicalStream;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.Assignment;

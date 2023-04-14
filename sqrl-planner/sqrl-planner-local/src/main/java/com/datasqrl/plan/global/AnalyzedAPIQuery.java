@@ -1,6 +1,6 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.plan.calcite.rules.SQRLConverter;
+import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.queries.APIQuery;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;

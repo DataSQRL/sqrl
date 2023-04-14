@@ -20,10 +20,14 @@
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-core</artifactId>
+      <artifactId>sqrl-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-schema</artifactId>
     </dependency>
 
-    <!-- todo refactor out after migrating type system -->
+    <!-- todo remove for calcite -->
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner_2.12</artifactId>
