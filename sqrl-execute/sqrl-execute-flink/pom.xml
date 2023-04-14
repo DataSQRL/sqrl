@@ -16,7 +16,6 @@
     <module>sqrl-execute-flink-core</module>
     <module>sqrl-execute-flink-function</module>
     <module>sqrl-execute-flink-jar</module>
-    <module>sqrl-execute-schema</module>
   </modules>
 
   <dependencies>

@@ -30,10 +30,6 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-function</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-schema</artifactId>
-    </dependency>
 
     <!-- Flink -->
     <dependency>

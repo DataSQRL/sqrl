@@ -178,12 +178,6 @@
                 <artifactId>sqrl-execute-flink-jar</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <!-- execute (flink) schema -->
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-execute-schema</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <!-- execute http -->
             <dependency>
                 <groupId>com.datasqrl</groupId>
