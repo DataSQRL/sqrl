@@ -10,7 +10,6 @@
     <version>0.1-SNAPSHOT</version>
     <modules>
         <module>sqrl-base</module>
-        <module>sqrl-common</module>
         <module>sqrl-engines</module>
         <module>sqrl-examples</module>
         <module>sqrl-io</module>
@@ -99,11 +98,6 @@
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-base</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- engines-->
@@ -239,6 +233,11 @@
                 <version>${project.version}</version>
             </dependency>
             <!-- planner -->
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-parser</artifactId>
