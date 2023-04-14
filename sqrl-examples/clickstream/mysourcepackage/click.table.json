@@ -13,7 +13,7 @@
   "schema" : "flexible",
   "connector" : {
     "directoryURI" : "",
-    "fileURIs" : [ "../sqrl-examples/clickstream/data/content.csv.gz", "../sqrl-examples/clickstream/data/click_part0001.csv.gz" ],
+    "fileURIs" : [ "../../sqrl-examples/clickstream/data/content.csv.gz", "../../sqrl-examples/clickstream/data/click_part0001.csv.gz" ],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
     "systemType" : "dir"
   }

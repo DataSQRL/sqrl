@@ -7,8 +7,8 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.Metric;
-import com.datasqrl.name.Name;
-import com.datasqrl.name.NamePath;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.google.common.base.Preconditions;
 import lombok.ToString;
 

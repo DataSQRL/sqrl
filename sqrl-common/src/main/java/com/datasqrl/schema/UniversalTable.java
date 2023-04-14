@@ -3,11 +3,11 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.plan.calcite.util.CalciteUtil;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
-import com.datasqrl.name.Name;
-import com.datasqrl.name.NamePath;
-import com.datasqrl.name.ReservedName;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

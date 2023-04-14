@@ -1,19 +1,28 @@
 {
-  "type" : "source",
-  "canonicalizer" : "system",
-  "charset" : "UTF-8",
-  "format" : {
-    "formatType" : "csv",
-    "delimiter" : ";",
-    "commentPrefix" : null,
-    "header" : [ "id", "name", "sizing", "weight_in_gram", "type", "category", "usda_id", "updated" ]
+  "type": "source",
+  "canonicalizer": "system",
+  "charset": "UTF-8",
+  "format": {
+    "formatType": "csv",
+    "delimiter": ";",
+    "header": [
+      "id",
+      "name",
+      "sizing",
+      "weight_in_gram",
+      "type",
+      "category",
+      "usda_id",
+      "updated"
+    ]
   },
-  "name" : "products",
-  "identifier" : "products",
-  "connector" : {
-    "directoryURI" : "../sqrl-examples/udf/data/",
-    "fileURIs" : [ ],
-    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
-    "systemType" : "dir"
+  "name": "products",
+  "identifier": "products",
+  "schema": "flexible",
+  "connector": {
+    "directoryURI": "/Users/henneberger/sqrl/sqrl-integration-tests/../sqrl-examples/udf/data/",
+    "fileURIs": [],
+    "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
+    "systemType": "dir"
   }
 }

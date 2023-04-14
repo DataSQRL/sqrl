@@ -18,81 +18,52 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencies>
+    <!-- SQRL -->
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-base</artifactId>
     </dependency>
 
-    <!-- Pulls in Calcite (TODO: refactor Flink out into sqrl-engine-flink and depend on Calcite directly) -->
+    <!-- Validators -->
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-table-planner_2.12</artifactId>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator</artifactId>
+    </dependency>
+
+    <!-- Jackson -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-core</artifactId>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-blackbird</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
+
+    <!-- Utils -->
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+    </dependency>
+
+    <!-- Flink -->
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-api-java-bridge</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.theokanning.openai-gpt3-java</groupId>
-      <artifactId>service</artifactId>
-      <version>0.11.0</version>
-      <scope>test</scope>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_2.12</artifactId>
+      <scope>provided</scope>
     </dependency>
-  </dependencies>
-  <build>
-    <plugins>
-      <!-- Patch in calcite class overrides -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <configuration>
-          <filters combine.children="append">
-            <filter>
-              <artifact>*:*</artifact>
-              <excludes>
-                <exclude>org-apache-calcite-jdbc.properties</exclude>
-                <exclude>common.proto</exclude>
-                <exclude>requests.proto</exclude>
-                <exclude>responses.proto</exclude>
-                <exclude>codegen/**</exclude>
-                <exclude>META-INF/*.SF</exclude>
-                <exclude>META-INF/*.DSA</exclude>
-                <exclude>META-INF/*.RSA</exclude>
-                <exclude>META-INF/services/java.sql.Driver</exclude>
-                <exclude>META-INF/versions/11/module-info.class</exclude>
-                <!-- com.ibm.icu:icu4j includes a LICENSE file in its root folder -->
-                <exclude>LICENSE</exclude>
-              </excludes>
-            </filter>
-          </filters>
-          <artifactSet>
-<!--            <includes combine.children="append">-->
-<!--              <include>org.apache.calcite:*</include>-->
-<!--              <include>org.apache.flink:*</include>-->
-<!--              <include>org.apache.calcite.avatica:*</include>-->
 
-<!--              &lt;!&ndash; Calcite's dependencies &ndash;&gt;-->
-<!--              <include>com.esri.geometry:esri-geometry-api</include>-->
-<!--              <include>com.google.guava:guava</include>-->
-<!--              <include>com.google.guava:failureaccess</include>-->
-<!--              <include>commons-codec:commons-codec</include>-->
-<!--              <include>commons-io:commons-io</include>-->
-<!--              <include>org.checkerframework:checker-qual</include>-->
-<!--            </includes>-->
-          </artifactSet>
-          <relocations>
-            <!-- Calcite is not relocated for now, because we expose it at some locations such as CalciteConfig -->
-            <!--<relocation>
-              <pattern>org.apache.calcite</pattern>
-              <shadedPattern>org.apache.flink.calcite.shaded.org.apache.calcite</shadedPattern>
-            </relocation>-->
-          </relocations>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  </dependencies>
 </project>

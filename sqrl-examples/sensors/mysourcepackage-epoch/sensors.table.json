@@ -10,7 +10,7 @@
   "schema" : "flexible",
   "connector" : {
     "directoryURI" : "",
-    "fileURIs" : [ "../sqrl-examples/sensors/data-epoch/sensors_part0001.json.gz", "../sqrl-examples/sensors/data-epoch/sensorreading_part0001.csv.gz", "../sqrl-examples/sensors/data-epoch/sensors_part0000.json.gz", "../sqrl-examples/sensors/data-epoch/machinegroup_part0001.json.gz" ],
+    "fileURIs" : [ "../../sqrl-examples/sensors/data-epoch/sensors_part0001.json.gz", "../../sqrl-examples/sensors/data-epoch/sensorreading_part0001.csv.gz", "../../sqrl-examples/sensors/data-epoch/sensors_part0000.json.gz", "../../sqrl-examples/sensors/data-epoch/machinegroup_part0001.json.gz" ],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
     "systemType" : "dir"
   }

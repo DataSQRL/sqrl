@@ -21,7 +21,7 @@
   "identifier": "products",
   "schema": "flexible",
   "connector": {
-    "directoryURI": "../sqrl-examples/nutshop/data-compress/",
+    "directoryURI": "../../sqrl-examples/nutshop/data-compress/",
     "fileURIs": [],
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
     "systemType": "dir"

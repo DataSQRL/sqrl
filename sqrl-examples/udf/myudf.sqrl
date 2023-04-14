@@ -4,5 +4,5 @@ IMPORT data.Products;
 -- The path is folder/functions
 IMPORT myjavafunction.target.MyScalarFunction;
 
-MyTable := SELECT MyScalarFunction(id, id) AS myFnc
+MyTable := SELECT id, MyScalarFunction(id, id) AS myFnc
            FROM Products;--todo (VALUES (1, 1), (1, 2), (2, 2)) AS tbl (a, b);

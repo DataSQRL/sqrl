@@ -4,7 +4,7 @@
 package com.datasqrl.schema.constraint;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.schema.type.Type;
 import java.util.Map;
 import java.util.Optional;

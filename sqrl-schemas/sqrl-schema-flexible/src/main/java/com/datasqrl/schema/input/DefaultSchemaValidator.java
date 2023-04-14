@@ -3,20 +3,18 @@
  */
 package com.datasqrl.schema.input;
 
-import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.stats.FieldStats;
 import com.datasqrl.io.stats.SchemaGenerator;
 import com.datasqrl.io.stats.TypeSignature.Simple;
-import com.datasqrl.name.Name;
-import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
 import com.datasqrl.schema.type.basic.StringType;
 import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,7 +22,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiPredicate;
-import java.util.function.Supplier;
 
 /**
  * Follows {@link DefaultSchemaGenerator} in structure and semantics.
@@ -47,11 +44,11 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
     this.schemaGenerator = schemaGenerator;
   }
 
-  public FunctionWithError<SourceRecord.Raw, SourceRecord.Named> getFunction() {
-    return new Function(this);
-  }
+//  public FunctionWithError<SourceRecord.Raw, SourceRecord.Named> getFunction() {
+//    return new Function(this);
+//  }
 
-  private SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
+  public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
     //verify meta data
     if (!record.hasUUID()) {
       errors.fatal("Input record does not have UUID");
@@ -246,23 +243,4 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
     }
     return data;
   }
-
-  @AllArgsConstructor
-  public static class Function implements FunctionWithError<SourceRecord.Raw, SourceRecord.Named> {
-
-    private final DefaultSchemaValidator validator;
-
-    @Override
-    public Optional<SourceRecord.Named> apply(SourceRecord.Raw raw,
-        Supplier<ErrorCollector> errorCollectorSupplier) {
-      ErrorCollector errors = errorCollectorSupplier.get();
-      SourceRecord.Named result = validator.verifyAndAdjust(raw, errors);
-      if (errors.isFatal()) {
-        return Optional.empty();
-      } else {
-        return Optional.of(result);
-      }
-    }
-  }
-
 }

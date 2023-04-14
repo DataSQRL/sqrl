@@ -3,7 +3,7 @@
  */
 package com.datasqrl.error;
 
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.Preconditions;

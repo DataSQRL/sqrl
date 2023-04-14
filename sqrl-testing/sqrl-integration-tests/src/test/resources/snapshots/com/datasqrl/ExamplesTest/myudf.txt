@@ -1,0 +1,25 @@
+>>>mytable$5-lp-stream
+LogicalProject(_uuid=[$0], id=[$1], myfnc=[$2], _ingest_time=[$3])
+  LogicalProject(_uuid=[$0], id=[$2], myFnc=[MyScalarFunction($2, $2)], _ingest_time=[$1])
+    LogicalTableScan(table=[[products$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>products$3-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9])
+  LogicalTableScan(table=[[products$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+>>>mytable-lp-database
+LogicalSort(sort0=[$3], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], id=[$1], myfnc=[$2], _ingest_time=[$3])
+    LogicalTableScan(table=[[mytable$5]])
+
+>>>products-lp-database
+LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9])
+    LogicalTableScan(table=[[products$3]])
+
+>>>products-data
+1, coconut meat, dried (desiccated), creamed, 1 lbs, 454, Nuts, coconut meat, 168585, 2022-10-28 21:37:23.375
+2, coconut meat, dried (desiccated), sweetened, shredded, 1 lbs, 454, Nuts, coconut meat, 168586, 2022-10-28 21:37:23.375
+>>>mytable-data
+1, 2
+2, 4

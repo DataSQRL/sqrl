@@ -4,12 +4,17 @@
 package com.datasqrl.schema.input.external;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.model.schema.AbstractElementDefinition;
+import com.datasqrl.model.schema.FieldDefinition;
+import com.datasqrl.model.schema.FieldTypeDefinition;
+import com.datasqrl.model.schema.FieldTypeDefinitionImpl;
+import com.datasqrl.model.schema.TableDefinition;
 import com.datasqrl.schema.input.FlexibleFieldSchema;
 import com.datasqrl.util.NamedIdentifier;
 import com.datasqrl.util.StringNamedId;
-import com.datasqrl.name.Name;
-import com.datasqrl.name.NameCanonicalizer;
-import com.datasqrl.name.SpecialName;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.SpecialName;
 import com.datasqrl.schema.constraint.Cardinality;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.Constraint.Lookup;

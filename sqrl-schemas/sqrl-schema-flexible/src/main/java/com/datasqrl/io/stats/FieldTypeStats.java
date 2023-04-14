@@ -4,7 +4,7 @@
 package com.datasqrl.io.stats;
 
 import com.datasqrl.io.stats.accumulator.LogarithmicHistogram;
-import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.schema.type.Type;
 import java.io.Serializable;
 import java.util.Map;

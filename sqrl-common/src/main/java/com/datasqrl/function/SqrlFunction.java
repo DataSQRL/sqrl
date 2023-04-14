@@ -3,8 +3,8 @@
  */
 package com.datasqrl.function;
 
-import com.datasqrl.function.builtin.FunctionUtil;
-import com.datasqrl.name.Name;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.util.FunctionUtil;
 
 public interface SqrlFunction {
 

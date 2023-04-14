@@ -22,6 +22,13 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
+
+    <!-- todo refactor out after migrating type system -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_2.12</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
 </project>

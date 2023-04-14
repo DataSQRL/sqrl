@@ -3,12 +3,12 @@
  */
 package com.datasqrl.schema.input;
 
-import com.datasqrl.engine.stream.flink.RowMapperFactory;
+import com.datasqrl.schema.converters.FlexibleSchemaRowMapperFactory;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
-import com.datasqrl.io.tables.SchemaDefinition;
+import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.name.Name;
-import com.datasqrl.name.NameCanonicalizer;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
@@ -71,7 +71,7 @@ public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSch
 
   @Override
   public UniversalTable createUniversalTable(boolean hasSourceTimestamp, Optional<Name> tblAlias) {
-    return RowMapperFactory.getFlexibleUniversalTableBuilder(this, hasSourceTimestamp, tblAlias);
+    return FlexibleSchemaRowMapperFactory.getFlexibleUniversalTableBuilder(this, hasSourceTimestamp, tblAlias);
   }
 
   @Setter
@@ -102,8 +102,4 @@ public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSch
     b.setFields(RelationType.EMPTY);
     return b.build();
   }
-
-
-
-
 }

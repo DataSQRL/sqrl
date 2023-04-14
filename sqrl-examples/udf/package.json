@@ -1,0 +1,23 @@
+{
+  "metadata" : {
+    "engineType" : null
+  },
+  "engines" : [ {
+    "savepoint" : false,
+    "engineName" : "flink"
+  }, {
+    "host" : null,
+    "port" : null,
+    "dbURL" : "jdbc:h2:file:./h2.db",
+    "user" : null,
+    "password" : null,
+    "driverName" : "org.h2.Driver",
+    "dialect" : "h2",
+    "database" : "datasqrl",
+    "systemType" : "jdbc",
+    "engineName" : "jdbc"
+  } ],
+  "script" : {
+    "main" : "myudf.sqrl"
+  }
+}

@@ -9,34 +9,15 @@
     <packaging>pom</packaging>
     <version>0.1-SNAPSHOT</version>
     <modules>
-        <module>sqrl-common</module>
-        <module>sqrl-parser</module>
-        <module>sqrl-compiler</module>
-        <module>sqrl-packager</module>
         <module>sqrl-base</module>
-        <module>sqrl-io-core</module>
-        <module>sqrl-io-kafka</module>
-        <module>sqrl-io-file</module>
-        <module>sqrl-io-inmem</module>
-        <module>sqrl-engine-core</module>
-        <module>sqrl-engine-flink</module>
-        <module>sqrl-engine-jdbc</module>
-        <module>sqrl-discovery</module>
+        <module>sqrl-common</module>
+        <module>sqrl-engines</module>
+        <module>sqrl-examples</module>
+        <module>sqrl-io</module>
         <module>sqrl-planner</module>
-        <module>sqrl-integration-tests</module>
-        <module>sqrl-loader-core</module>
-        <module>sqrl-run</module>
-        <module>sqrl-engine-flink-connectors</module>
-        <module>sqrl-io-jdbc</module>
-        <module>sqrl-engine-flink-connectors/sqrl-engine-flink-s3</module>
-        <module>sqrl-engine-http</module>
-        <module>sqrl-engine-http-servers</module>
-        <module>sqrl-engine-http-servers/sqrl-engine-http-vertx</module>
-        <module>sqrl-engine-http-servers/sqrl-engine-http-aws-lambda</module>
         <module>sqrl-schemas</module>
-        <module>sqrl-schemas/sqrl-schema-jsonschema</module>
-        <module>sqrl-schemas/sqrl-schema-flexible</module>
-      <module>sqrl-examples</module>
+        <module>sqrl-testing</module>
+        <module>sqrl-tools</module>
     </modules>
 
 
@@ -71,6 +52,8 @@
         <picocli.version>4.7.0</picocli.version>
         <commonscodec.version>1.15</commonscodec.version>
         <zip4j.version>2.11.2</zip4j.version>
+        <guice.version>5.1.0</guice.version>
+        <autoservice.version>1.0.1</autoservice.version>
         <snapshots.update>false</snapshots.update>
     </properties>
     <profiles>
@@ -86,185 +69,97 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service</artifactId>
-            <version>1.0.1</version>
-        </dependency>
+
+        <!-- common test infra-->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-            <version>5.1.0</version>
         </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
-            <!-- SQRL deps -->
+            <!-- SQRL deps, please keep this in order -->
             <dependency>
-                <artifactId>sqrl-parser</artifactId>
                 <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-compiler</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <artifactId>sqrl-base</artifactId>
-                <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-common</artifactId>
-                <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-common</artifactId>
                 <groupId>com.datasqrl</groupId>
-                <type>test-jar</type>
-                <scope>test</scope>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-packager</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-io-core</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-io-kafka</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-io-file</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-io-file</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-io-inmem</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <artifactId>sqrl-engine-core</artifactId>
-                <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-engine-flink</artifactId>
                 <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-flink-base</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-engine-jdbc</artifactId>
                 <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-discovery</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-planner</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-planner</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <type>test-jar</type>
-                <scope>test</scope>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-engine-http</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <artifactId>sqrl-engine-http-aws-lambda</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-integration-tests</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-loader-core</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-engine-flink-jdbc</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-engine-flink-h2</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <artifactId>sqrl-engine-flink-sqlite</artifactId>
-                <groupId>com.datasqrl</groupId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <artifactId>sqrl-engine-flink-file</artifactId>
-                <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-flink-h2</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-engine-flink-inmem</artifactId>
-                <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-flink-jdbc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-engine-flink-kafka</artifactId>
-                <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-engine-flink-print</artifactId>
-                <groupId>com.datasqrl</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-io-jdbc</artifactId>
                 <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-flink-s3</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-flink-sqlite</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-flink-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-http-aws-lambda</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-http-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -273,13 +168,43 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <artifactId>sqrl-run</artifactId>
                 <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-jdbc-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-schemas</artifactId>
+                <artifactId>sqrl-examples</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-file</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-inmem</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-jdbc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-kafka</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-print</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -289,28 +214,121 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-schema-jsonschema</artifactId>
+                <artifactId>sqrl-parser</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.ongres.scram</groupId>
-                <artifactId>common</artifactId>
-                <version>${scram.version}</version>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-planner-local</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.ongres.scram</groupId>
-                <artifactId>client</artifactId>
-                <version>${scram.version}</version>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-integration-tests</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-cli</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-discovery</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-packager</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
+            <!-- sqrl test jars-->
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-common</artifactId>
+                <type>test-jar</type>
+                <scope>test</scope>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-file</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-planner-local</artifactId>
+                <type>test-jar</type>
+                <scope>test</scope>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Test utils -->
+            <dependency>
+                <groupId>com.theokanning.openai-gpt3-java</groupId>
+                <artifactId>service</artifactId>
+                <version>0.11.0</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- General utils -->
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>${guice.version}</version>
+            </dependency>
 
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auto.service</groupId>
+                <artifactId>auto-service</artifactId>
+                <version>${autoservice.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commonsio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commonscodec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>info.picocli</groupId>
+                <artifactId>picocli</artifactId>
+                <version>${picocli.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.lingala.zip4j</groupId>
+                <artifactId>zip4j</artifactId>
+                <version>${zip4j.version}</version>
+            </dependency>
 
-            <!-- vertx -->
+            <!-- Vertx -->
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-web-graphql</artifactId>
@@ -365,7 +383,6 @@
                 <artifactId>vertx-web</artifactId>
                 <version>${vertx.version}</version>
             </dependency>
-
             <!-- required for vertx jdbc -->
             <dependency>
                 <groupId>io.agroal</groupId>
@@ -378,7 +395,7 @@
                 <version>${reactive-streams.version}</version>
             </dependency>
 
-            <!-- servlet -->
+            <!-- validation -->
             <dependency>
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>
@@ -389,21 +406,22 @@
                 <artifactId>hibernate-validator</artifactId>
                 <version>${hibernate.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.glassfish</groupId>
                 <artifactId>javax.el</artifactId>
                 <version>${glassfish.version}</version>
             </dependency>
 
-            <!-- stream: Flink -->
+            <!-- Flink -->
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-runtime-web</artifactId>
+                <artifactId>flink-core</artifactId>
                 <version>${flink.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-csv</artifactId>
+                <artifactId>flink-runtime-web</artifactId>
                 <version>${flink.version}</version>
             </dependency>
             <dependency>
@@ -413,7 +431,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-core</artifactId>
+                <artifactId>flink-csv</artifactId>
                 <version>${flink.version}</version>
             </dependency>
             <dependency>
@@ -421,11 +439,12 @@
                 <artifactId>flink-json</artifactId>
                 <version>${flink.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-table-runtime</artifactId>
-                <version>${flink.version}</version>
-            </dependency>
+
+<!--            <dependency>-->
+<!--                <groupId>org.apache.flink</groupId>-->
+<!--                <artifactId>flink-table-runtime</artifactId>-->
+<!--                <version>${flink.version}</version>-->
+<!--            </dependency>-->
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-table-api-java-bridge</artifactId>
@@ -468,6 +487,7 @@
                 <artifactId>opencsv</artifactId>
                 <version>${opencsv.version}</version>
             </dependency>
+
             <!-- stream: sources -->
             <dependency>
                 <groupId>org.apache.kafka</groupId>
@@ -520,6 +540,17 @@
                 <artifactId>postgresql</artifactId>
                 <version>${postgres.version}</version>
             </dependency>
+            <!-- postgres required libs -->
+            <dependency>
+                <groupId>com.ongres.scram</groupId>
+                <artifactId>common</artifactId>
+                <version>${scram.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ongres.scram</groupId>
+                <artifactId>client</artifactId>
+                <version>${scram.version}</version>
+            </dependency>
 
             <!-- database: h2 -->
             <dependency>
@@ -529,6 +560,21 @@
             </dependency>
 
             <!-- jackson -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-blackbird</artifactId>
@@ -545,30 +591,9 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-yaml</artifactId>
                 <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.lingala.zip4j</groupId>
-                <artifactId>zip4j</artifactId>
-                <version>${zip4j.version}</version>
             </dependency>
 
             <!-- testing -->
@@ -609,9 +634,14 @@
                 <version>${junit.jupiter.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit.jupiter.version}</version>
+                <scope>test</scope>
+            </dependency>
 
             <!-- logging -->
-            <!-- SLF4J API -->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -632,42 +662,12 @@
                 <artifactId>log4j-slf4j-impl</artifactId>
                 <version>${log4j.version}</version>
             </dependency>
-            <!-- other -->
+
+            <!-- build -->
             <dependency>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>${guava.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${lombok.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${commonsio.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>commons-codec</groupId>
-                <artifactId>commons-codec</artifactId>
-                <version>${commonscodec.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>${commons-lang3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>info.picocli</groupId>
-                <artifactId>picocli</artifactId>
-                <version>${picocli.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
