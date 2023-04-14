@@ -41,10 +41,6 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-file</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-schema</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.apache.flink</groupId>

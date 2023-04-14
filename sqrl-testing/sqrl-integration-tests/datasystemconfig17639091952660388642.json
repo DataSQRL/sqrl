@@ -1,0 +1,14 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "charset" : "UTF-8",
+  "format" : {
+    "formatType" : "json"
+  },
+  "name" : "example",
+  "datadiscovery" : {
+    "servers" : [ "localhost:53830" ],
+    "topicPrefix" : "example.",
+    "systemType" : "kafka"
+  }
+}
