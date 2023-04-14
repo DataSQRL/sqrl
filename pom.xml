@@ -14,7 +14,6 @@
         <module>sqrl-examples</module>
         <module>sqrl-io</module>
         <module>sqrl-planner</module>
-        <module>sqrl-schemas</module>
         <module>sqrl-testing</module>
         <module>sqrl-tools</module>
         <module>sqrl-execute</module>
@@ -246,12 +245,6 @@
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-planner-local</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <!-- schema (planner) -->
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-schema-flexible</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- tests -->
