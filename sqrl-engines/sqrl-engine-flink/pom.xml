@@ -39,7 +39,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-schema-flexible</artifactId>
+      <artifactId>sqrl-execute-schema</artifactId>
     </dependency>
 
     <dependency>
