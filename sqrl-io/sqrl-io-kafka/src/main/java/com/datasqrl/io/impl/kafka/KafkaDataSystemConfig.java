@@ -9,6 +9,7 @@ import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -76,6 +77,7 @@ public abstract class KafkaDataSystemConfig {
 
   @SuperBuilder
   @NoArgsConstructor
+  @AutoService(DataSystemConnectorConfig.class)
   public static class Connector extends KafkaDataSystemConfig implements DataSystemConnectorConfig {
 
     private Connector(Discovery discovery) {
@@ -95,6 +97,7 @@ public abstract class KafkaDataSystemConfig {
 
   @SuperBuilder
   @NoArgsConstructor
+  @AutoService(DataSystemDiscoveryConfig.class)
   public static class Discovery extends KafkaDataSystemConfig implements DataSystemDiscoveryConfig {
 
     @Override

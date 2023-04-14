@@ -34,7 +34,6 @@ public abstract class KafkaDataSystem {
 
   @AllArgsConstructor
   @Getter
-  @AutoService(DataSystemConnectorConfig.class)
   public static class Connector implements DataSystemConnector, Serializable {
 
     final Properties properties;
@@ -65,7 +64,6 @@ public abstract class KafkaDataSystem {
 
   }
 
-  @AutoService(DataSystemDiscoveryConfig.class)
   public static class Discovery extends Connector implements DataSystemDiscovery, Serializable {
 
     public static String[] TOPIC_SUFFIX = {".", "/", "_"};
