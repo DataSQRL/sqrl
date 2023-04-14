@@ -6,7 +6,7 @@ import com.google.auto.service.AutoService;
 @AutoService(StdDeserializer.class)
 public class SerializableSchemaDeserializer extends Base64Deserializer<SerializableSchema> {
 
-  protected SerializableSchemaDeserializer() {
+  public SerializableSchemaDeserializer() {
     super(SerializableSchema.class);
   }
 }

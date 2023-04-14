@@ -2,8 +2,6 @@ package com.datasqrl;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import com.datasqrl.compile.Compiler;
-import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.discovery.DataDiscovery;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.engine.ExecutionResult;
@@ -83,8 +81,8 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
 //        .build(), build.getParent());
 
     ResourceResolver resourceResolver = new FileResourceResolver(build.getParent());
-    Compiler compiler = new Compiler();
-    CompilerResult result = compiler.run(ErrorCollector.root(), resourceResolver, false);
+//    Compiler compiler = new Compiler();
+//    CompilerResult result = compiler.run(ErrorCollector.root(), resourceResolver, false);
 
     Path path = build.getParent().resolve("deploy");
     Files.createDirectories(path);

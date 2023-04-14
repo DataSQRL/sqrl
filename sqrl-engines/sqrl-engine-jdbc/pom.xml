@@ -25,11 +25,11 @@
     </dependency>
 
     <!-- Todo remove for Calcite -->
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-table-planner_2.12</artifactId>
-      <scope>provided</scope>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.apache.flink</groupId>-->
+<!--      <artifactId>flink-table-planner_2.12</artifactId>-->
+<!--      <scope>provided</scope>-->
+<!--    </dependency>-->
 
     <!-- used for DDL factory,
          todo: this can be modularized out -->

@@ -23,4 +23,4 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Build SQRL
-      run: mvn -B -U -e clean install --no-transfer-progress
+      run: mvn -T 6 -B -U -e clean install --no-transfer-progress
