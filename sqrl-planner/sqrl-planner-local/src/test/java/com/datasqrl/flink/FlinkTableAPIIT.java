@@ -10,9 +10,9 @@ import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.engine.stream.flink.FlinkStreamHolder;
-import com.datasqrl.engine.stream.flink.schema.FlinkRowConstructor;
-import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
-import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
+import com.datasqrl.FlinkRowConstructor;
+import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
+import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
@@ -22,8 +22,10 @@ import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.converters.FlexibleSchemaRowMapperFactory;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.DefaultSchemaValidator;
+import com.datasqrl.schema.input.FlexibleTypeMatcher;
 import com.datasqrl.schema.input.InputTableSchema;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.TestDataset;
@@ -75,7 +77,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
     StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(tblSource, streamBuilder, ErrorPrefix.INPUT_DATA);
     DefaultSchemaValidator schemaValidator = new DefaultSchemaValidator(tblSource.getSchema(),
         SchemaAdjustmentSettings.DEFAULT, NameCanonicalizer.SYSTEM,
-        new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT));
+        new FlexibleTypeMatcher(SchemaAdjustmentSettings.DEFAULT));
     FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder)stream.mapWithError(
 //        (schemaValidator.getFunction(),//todo come back to
         null,
@@ -83,7 +85,8 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 
     InputTableSchema schema = tblSource.getSchema();
     //TODO: error handling when mapping doesn't work?
-    UniversalTable universalTable = schema.getSchema().createUniversalTable(schema.isHasSourceTimestamp(),
+    UniversalTable universalTable = FlexibleSchemaRowMapperFactory.getFlexibleUniversalTableBuilder(
+        schema.getSchema(), schema.isHasSourceTimestamp(),
         Optional.empty());
     Schema flinkSchema = new UniversalTable2FlinkSchema().convertSchema(universalTable);
     TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()

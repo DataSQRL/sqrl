@@ -22,6 +22,12 @@
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
 
+    <!-- todo: migrate from flink paths to java paths and remove this,
+               or migrate the code to sqrl-flink-execute-file -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-core</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-files</artifactId>

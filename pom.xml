@@ -18,8 +18,8 @@
         <module>sqrl-schemas</module>
         <module>sqrl-testing</module>
         <module>sqrl-tools</module>
+        <module>sqrl-execute</module>
     </modules>
-
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -43,7 +43,6 @@
         <hibernate.version>6.2.5.Final</hibernate.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <glassfish.version>3.0.0</glassfish.version>
-        <graphql-java.version>16.2</graphql-java.version>
         <reactive-streams.version>1.0.4</reactive-streams.version>
         <testcontainers.version>1.17.4</testcontainers.version>
         <junit.jupiter.version>5.8.2</junit.jupiter.version>
@@ -54,7 +53,17 @@
         <zip4j.version>2.11.2</zip4j.version>
         <guice.version>5.1.0</guice.version>
         <autoservice.version>1.0.1</autoservice.version>
+        <antlr.version>4.9.2</antlr.version>
+        <log4j.version>2.19.0</log4j.version>
+        <guava.version>31.1-jre</guava.version>
+        <lombok.version>1.18.24</lombok.version>
+        <testcontainers.version>1.17.4</testcontainers.version>
+        <junit.jupiter.version>5.8.2</junit.jupiter.version>
+        <calcite.version>1.27.0</calcite.version>
+
+        <!-- params -->
         <snapshots.update>false</snapshots.update>
+
     </properties>
     <profiles>
         <profile>
@@ -97,6 +106,7 @@
                 <artifactId>sqrl-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!-- engines-->
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-engine-core</artifactId>
@@ -104,79 +114,100 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-base</artifactId>
+                <artifactId>sqrl-engine-flink</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-file</artifactId>
+                <artifactId>sqrl-engine-jdbc</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-h2</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-inmem</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-jdbc</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-kafka</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-print</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-s3</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-sqlite</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-flink-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-http-aws-lambda</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-http-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-http-vertx</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-engine-jdbc-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+            <!-- examples-->
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-examples</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!-- execute flink connectors-->
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-file</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-h2</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-inmem</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-jdbc</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-kafka</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-postgres</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-print</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-sqlite</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- execute flink -->
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-function</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-flink-jar</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- execute (flink) schema -->
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-schema</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- execute http -->
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-http-aws-lambda</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-http-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-execute-http-vertx</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- io -->
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-io-core</artifactId>
@@ -207,11 +238,7 @@
                 <artifactId>sqrl-io-print</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-schema-flexible</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+            <!-- planner -->
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-parser</artifactId>
@@ -222,11 +249,19 @@
                 <artifactId>sqrl-planner-local</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!-- schema (planner) -->
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-schema-flexible</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- tests -->
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-integration-tests</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!-- tools -->
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-cli</artifactId>
@@ -285,11 +320,15 @@
                 <artifactId>guice</artifactId>
                 <version>${guice.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${antlr.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>
@@ -326,6 +365,11 @@
                 <groupId>net.lingala.zip4j</groupId>
                 <artifactId>zip4j</artifactId>
                 <version>${zip4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>kryo</artifactId>
+                <version>5.4.0</version>
             </dependency>
 
             <!-- Vertx -->

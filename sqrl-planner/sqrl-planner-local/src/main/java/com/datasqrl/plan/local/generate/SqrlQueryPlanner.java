@@ -1,11 +1,11 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.functions.SqrlFunctionCatalog;
-import com.datasqrl.plan.calcite.OptimizationStage;
-import com.datasqrl.plan.calcite.RelStageRunner;
-import com.datasqrl.plan.calcite.SqlValidatorUtil;
-import com.datasqrl.plan.calcite.SqrlRelBuilder;
-import com.datasqrl.plan.calcite.SqrlToRelConverter;
+import com.datasqrl.plan.OptimizationStage;
+import com.datasqrl.plan.RelStageRunner;
+import com.datasqrl.plan.SqlValidatorUtil;
+import com.datasqrl.plan.SqrlRelBuilder;
+import com.datasqrl.plan.SqrlToRelConverter;
 import com.google.inject.Inject;
 import lombok.Getter;
 import org.apache.calcite.jdbc.SqrlSchema;

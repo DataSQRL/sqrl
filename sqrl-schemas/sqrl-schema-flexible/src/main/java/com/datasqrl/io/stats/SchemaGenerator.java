@@ -18,7 +18,4 @@ public interface SchemaGenerator {
 
   public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
                                                     @NonNull Name tableName, @NonNull ErrorCollector errors);
-
-  public FlexibleFieldSchema.FieldType matchType(TypeSignature typeSignature,
-                                                 List<FieldType> fieldTypes);
 }

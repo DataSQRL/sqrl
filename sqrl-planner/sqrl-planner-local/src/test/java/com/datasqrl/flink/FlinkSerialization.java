@@ -3,7 +3,7 @@
  */
 package com.datasqrl.flink;
 
-import com.datasqrl.engine.stream.flink.InputError;
+import com.datasqrl.InputError;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import java.util.List;

@@ -4,7 +4,7 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.plan.calcite.SqlValidatorUtil;
+import com.datasqrl.plan.SqlValidatorUtil;
 import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import com.datasqrl.plan.local.transpile.JoinDeclarationUtil;
 import com.datasqrl.schema.Multiplicity;

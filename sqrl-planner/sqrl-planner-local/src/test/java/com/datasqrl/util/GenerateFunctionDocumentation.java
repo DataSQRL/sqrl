@@ -1,9 +1,9 @@
 package com.datasqrl.util;
 
+import com.datasqrl.TimeFunctions.TimeWindowBucketFunction;
 import com.datasqrl.function.SqrlFunction;
-import com.datasqrl.function.builtin.string.StdStringLibraryImpl;
-import com.datasqrl.function.builtin.time.StdTimeLibraryImpl;
-import com.datasqrl.function.builtin.time.StdTimeLibraryImpl.TimeWindowBucketFunction;
+import com.datasqrl.function.StdStringLibraryImpl;
+import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.function.CalciteFunctionNsObject;

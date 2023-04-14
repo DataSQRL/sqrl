@@ -1,9 +1,9 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.calcite.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.ProxyImportRelationalTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.StreamUtil;

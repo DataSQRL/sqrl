@@ -6,7 +6,7 @@ package com.datasqrl.plan.local.transpile;
 import static com.datasqrl.plan.local.transpile.ConvertJoinDeclaration.convertToBushyTree;
 
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.plan.calcite.util.SqlNodeUtil;
+import com.datasqrl.plan.util.SqlNodeUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

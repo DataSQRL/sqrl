@@ -12,7 +12,6 @@
   <artifactId>sqrl-planner-local</artifactId>
 
   <dependencies>
-
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-common</artifactId>
@@ -21,14 +20,25 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-parser</artifactId>
     </dependency>
+    <!-- Engines -->
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-core</artifactId>
+      <artifactId>sqrl-engine-jdbc</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-flink</artifactId>
+    </dependency>
+    <!-- execute-->
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-http-core</artifactId>
+    </dependency>
+    <!-- io -->
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
@@ -37,79 +47,29 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-print</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-kafka</artifactId>
-    </dependency>
+
+    <!-- Utils -->
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-inmem</artifactId>
-      <scope>test</scope>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-http-vertx</artifactId>
+      <groupId>org.glassfish</groupId>
+      <artifactId>javax.el</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-discovery</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink-h2</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>sqrl-common</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>sqrl-io-file</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>sqrl-engine-flink-file</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>sqrl-engine-flink-print</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>sqrl-engine-flink-jdbc</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>sqrl-engine-flink-inmem</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.ongres.scram</groupId>
-      <artifactId>common</artifactId>
-    </dependency>
+
+    <!-- Flink -->
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner_2.12</artifactId>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
     <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.ongres.scram</groupId>
-      <artifactId>client</artifactId>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-api-java-bridge</artifactId>
     </dependency>
 
     <!-- Test -->
@@ -118,35 +78,85 @@
       <artifactId>service</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- vertx -->
+
+    <!-- testing -->
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-graphql</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-discovery</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-pg-client</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-postgres</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-config</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-h2</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-openapi</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-sqlite</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-io-file</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-execute-flink-file</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-execute-flink-print</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-execute-flink-jdbc</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <artifactId>sqrl-execute-flink-inmem</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-http-vertx</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-kafka</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-inmem</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+
+    <dependency>
+      <artifactId>sqrl-common</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-jdbc-client</artifactId>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-junit5</artifactId>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
       <!-- JUnit 4 is no longer necessary, so we exclude it -->
       <exclusions>
@@ -156,65 +166,19 @@
         </exclusion>
       </exclusions>
     </dependency>
+
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
       <scope>test</scope>
     </dependency>
 
-    <!-- required for vertx jdbc -->
-    <dependency>
-      <groupId>io.agroal</groupId>
-      <artifactId>agroal-pool</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.reactivestreams</groupId>
-      <artifactId>reactive-streams</artifactId>
-    </dependency>
-
-    <!-- servlet -->
-    <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.glassfish</groupId>
-      <artifactId>javax.el</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-jsr310</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <!-- stream: Flink -->
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-streaming-java</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-table-api-java-bridge</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-clients</artifactId>
-    </dependency>
-    <!-- stream: csv -->
-    <dependency>
-      <groupId>com.opencsv</groupId>
-      <artifactId>opencsv</artifactId>
-    </dependency>
-    <!-- stream: sources -->
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-    </dependency>
+    <!-- Kafka tests: todo migrate -->
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
@@ -249,68 +213,5 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- database: postgres -->
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-    </dependency>
-
-    <!-- database: h2 -->
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-    </dependency>
-
-
-    <!-- testing -->
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-      <!-- JUnit 4 is no longer necessary, so we exclude it -->
-      <exclusions>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- other -->
-    <dependency>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-compiler-plugin</artifactId>
-      <version>3.10.1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-    </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <!-- Patch in calcite class overrides -->
-
-    </plugins>
-  </build>
 </project>

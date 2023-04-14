@@ -6,7 +6,7 @@ package com.datasqrl.io;
 import com.datasqrl.io.formats.Format;
 import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.formats.TextLineFormat;
-import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.util.FileStreamUtil;
 import com.datasqrl.util.data.BookClub;
 import org.junit.jupiter.api.Test;
 

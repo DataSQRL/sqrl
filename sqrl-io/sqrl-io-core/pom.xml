@@ -19,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>com.datasqrl</groupId>
-            <artifactId>sqrl-common</artifactId>
+            <artifactId>sqrl-base</artifactId>
         </dependency>
 
         <!-- Format deps -->
@@ -27,6 +27,10 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>1.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
     </dependencies>
 </project>

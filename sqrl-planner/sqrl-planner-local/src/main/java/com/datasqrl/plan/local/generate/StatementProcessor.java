@@ -3,7 +3,7 @@ package com.datasqrl.plan.local.generate;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.plan.calcite.table.CalciteTableFactory;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.local.generate.StatementProcessor.ProcessorContext;
 import com.google.inject.Inject;
 import lombok.Value;

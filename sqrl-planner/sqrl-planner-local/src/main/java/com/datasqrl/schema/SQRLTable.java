@@ -5,12 +5,11 @@ package com.datasqrl.schema;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.plan.calcite.TypeFactory;
-import com.datasqrl.plan.calcite.table.AddedColumn;
-import com.datasqrl.plan.calcite.table.AddedColumn.Simple;
-import com.datasqrl.plan.calcite.table.CalciteTableFactory;
-import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.AddedColumn;
+import com.datasqrl.plan.table.AddedColumn.Simple;
+import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;

@@ -5,7 +5,7 @@ package com.datasqrl.io;
 
 
 import com.datasqrl.AbstractEngineIT;
-import com.datasqrl.engine.stream.inmemory.io.FileStreamUtil;
+import com.datasqrl.util.FileStreamUtil;
 import com.datasqrl.io.formats.JsonLineFormat.Configuration;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemConfig;
 import com.google.common.base.Strings;

@@ -3,8 +3,8 @@
  */
 package com.datasqrl.plan.local.transpile;
 
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
-import com.datasqrl.plan.calcite.util.SqlNodeUtil;
+import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.util.SqlNodeUtil;
 import com.datasqrl.plan.local.generate.SqlNodeFactory;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.AbsoluteResolvedTable;
 import com.datasqrl.plan.local.transpile.AnalyzeStatement.Analysis;
@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -35,7 +33,6 @@ import org.apache.calcite.sql.SqrlJoinSetOperation;
 import org.apache.calcite.sql.SqrlJoinTerm;
 import org.apache.calcite.sql.SqrlJoinTerm.SqrlJoinTermVisitor;
 import org.apache.calcite.sql.UnboundJoin;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 

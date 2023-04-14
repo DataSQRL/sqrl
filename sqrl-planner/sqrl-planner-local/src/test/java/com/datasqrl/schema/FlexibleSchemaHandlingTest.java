@@ -7,13 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.datasqrl.engine.stream.flink.schema.FlinkTypeInfoSchemaGenerator;
-import com.datasqrl.engine.stream.flink.schema.UniversalTable2FlinkSchema;
+import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
+import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.plan.calcite.table.CalciteTableFactory;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.input.FlexibleTable2UTBConverter;
 import com.datasqrl.schema.input.FlexibleTableConverter;

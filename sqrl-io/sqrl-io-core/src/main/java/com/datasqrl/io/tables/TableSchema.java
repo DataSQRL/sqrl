@@ -5,12 +5,10 @@ package com.datasqrl.io.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.model.schema.SchemaDefinition;
-import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.schema.input.SchemaValidator;
-import java.util.Optional;
 
 public interface TableSchema {
   RowMapper getRowMapper(RowConstructor rowConstructor,
@@ -21,8 +19,6 @@ public interface TableSchema {
   String getSchemaType();
 
   SchemaValidator getValidator(SchemaAdjustmentSettings settings, boolean hasSourceTimestamp);
-
-  UniversalTable createUniversalTable(boolean hasSourceTimestamp, Optional<Name> tblAlias);
 
   SchemaDefinition getDefinition();
 

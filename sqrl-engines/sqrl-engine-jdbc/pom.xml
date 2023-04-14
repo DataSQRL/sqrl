@@ -2,17 +2,54 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-engines</artifactId>
     <version>0.1-SNAPSHOT</version>
   </parent>
+  <modelVersion>4.0.0</modelVersion>
 
+  <!--
+    README: JDBC engine for converting logical plans to Sql DDL
+  -->
   <artifactId>sqrl-engine-jdbc</artifactId>
-  <packaging>pom</packaging>
 
-  <modules>
-    <module>sqrl-engine-jdbc-core</module>
-  </modules>
+  <dependencies>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-jdbc</artifactId>
+    </dependency>
+
+    <!-- Todo remove for Calcite -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_2.12</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- used for DDL factory,
+         todo: this can be modularized out -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.1.214</version>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <artifactId>sqrl-common</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
 </project>

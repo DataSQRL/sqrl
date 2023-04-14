@@ -1,7 +1,7 @@
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.plan.calcite.OptimizationStage.READ_DAG_STITCHING;
-import static com.datasqrl.plan.calcite.OptimizationStage.WRITE_DAG_STITCHING;
+import static com.datasqrl.plan.OptimizationStage.READ_DAG_STITCHING;
+import static com.datasqrl.plan.OptimizationStage.WRITE_DAG_STITCHING;
 
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
@@ -10,12 +10,12 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.plan.calcite.RelStageRunner;
-import com.datasqrl.plan.calcite.rules.AnnotatedLP;
-import com.datasqrl.plan.calcite.rules.SQRLConverter;
-import com.datasqrl.plan.calcite.table.AbstractRelationalTable;
-import com.datasqrl.plan.calcite.table.ScriptRelationalTable;
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.RelStageRunner;
+import com.datasqrl.plan.rules.AnnotatedLP;
+import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.table.AbstractRelationalTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.global.SqrlDAG.QueryNode;

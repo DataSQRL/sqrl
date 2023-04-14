@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.local.transpile;
 
-import com.datasqrl.plan.calcite.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.SQRLTable;
 import java.math.BigDecimal;
@@ -12,7 +12,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
