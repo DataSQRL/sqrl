@@ -4,7 +4,6 @@
 package com.datasqrl.engine.database.relational.metadata;
 
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnectorConfig;
-import com.datasqrl.io.stats.SourceTableStatistics;
 import com.datasqrl.metadata.MetadataStore;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -43,7 +42,6 @@ public class JDBCMetadataStore implements MetadataStore {
 
   public JDBCMetadataStore(JdbcDataSystemConnectorConfig config, Kryo kryo) {
     this.kryo = kryo;
-    kryo.register(SourceTableStatistics.class);
     try {
       this.connection = DriverManager.getConnection(
           config.getDbURL(),
