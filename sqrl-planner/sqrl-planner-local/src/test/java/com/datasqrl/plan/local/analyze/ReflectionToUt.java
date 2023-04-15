@@ -63,7 +63,6 @@ public class ReflectionToUt {
 
           UniversalTable table1 = reflection(type, factory2);
           table.addChild(Name.system(field.getName()), table1, Multiplicity.MANY);
-          System.out.println();
 //            table.addColumn(Name.system(field.getName()),
 //                typeFactory.createTypeWithNullability(typeFactory.createSqlType(
 //                        getSqlTypeName(listType.getActualTypeArguments()[0].getClass())),

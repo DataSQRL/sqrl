@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /build
-java -jar /usr/src/app/sqrl-run.jar ${@}
+java -jar /usr/src/app/sqrl-cli.jar ${@}
