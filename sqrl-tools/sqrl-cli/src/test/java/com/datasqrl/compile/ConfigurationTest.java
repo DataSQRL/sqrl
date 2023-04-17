@@ -3,18 +3,17 @@
  */
 package com.datasqrl.compile;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.GlobalCompilerConfiguration;
 import com.datasqrl.config.GlobalEngineConfiguration;
 import com.datasqrl.error.ErrorCollector;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.Test;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.Test;
 
 public class ConfigurationTest {
 
@@ -23,6 +22,7 @@ public class ConfigurationTest {
   @Test
   @SneakyThrows
   public void testConfiguration() {
+    System.out.println(RESOURCE_DIR.toAbsolutePath().toString());
     GlobalCompilerConfiguration config = GlobalEngineConfiguration.readFrom(
         RESOURCE_DIR.resolve("package-configtest.json").toUri(), GlobalCompilerConfiguration.class);
     assertNotNull(config);

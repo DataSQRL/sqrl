@@ -24,6 +24,7 @@ public enum ErrorCode implements ErrorLabel {
   DISTINCT_ON_TIMESTAMP,
   WRONG_TABLE_TYPE,
   WRONG_INTERVAL_JOIN,
+  CONFIG_EXCEPTION,
   NOT_YET_IMPLEMENTED;
 
   @Override
