@@ -1,15 +1,15 @@
 package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
-import com.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
-import com.datasqrl.graphql.server.Model.PgParameterHandler;
-import com.datasqrl.graphql.server.Model.ResolvedPagedPgQuery;
-import com.datasqrl.graphql.server.Model.ResolvedPgQuery;
-import com.datasqrl.graphql.server.Model.SourcePgParameter;
+import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
+import com.datasqrl.graphql.server.Model.ResolvedPagedJdbcQuery;
+import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
+import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.SqrlGraphQLServer;
+import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
@@ -34,11 +34,11 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
   Promise<Object> fut;
 
   @Override
-  public CompletableFuture runQuery(SqrlGraphQLServer server, ResolvedPgQuery pgQuery,
+  public CompletableFuture runQuery(BuildGraphQLEngine server, ResolvedJdbcQuery pgQuery,
       boolean isList) {
     Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
     for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
-      PgParameterHandler param = pgQuery.getQuery().getParameters().get(i);
+      JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);
       Object o = param.accept(this, this);
       paramObj[i] = o;
     }
@@ -55,13 +55,13 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
   }
 
   @Override
-  public CompletableFuture runPagedQuery(ResolvedPagedPgQuery pgQuery,
-      boolean isList) {
+  public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
+      boolean isList, QueryExecutionContext context) {
     Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument("limit"));
     Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument("offset"));
     Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
     for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
-      PgParameterHandler param = pgQuery.getQuery().getParameters().get(i);
+      JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);
       Object o = param.accept(this, this);
       paramObj[i] = o;
     }
@@ -98,14 +98,14 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
 
   @SneakyThrows
   @Override
-  public Object visitSourcePgParameter(SourcePgParameter sourceParameter,
+  public Object visitSourceParameter(SourceParameter sourceParameter,
       QueryExecutionContext context) {
     return context.getContext().createPropertyFetcher(sourceParameter.getKey())
         .get(context.getEnvironment());
   }
 
   @Override
-  public Object visitArgumentPgParameter(ArgumentPgParameter argumentParameter,
+  public Object visitArgumentParameter(ArgumentParameter argumentParameter,
       QueryExecutionContext context) {
     return context.getArguments().stream()
         .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))

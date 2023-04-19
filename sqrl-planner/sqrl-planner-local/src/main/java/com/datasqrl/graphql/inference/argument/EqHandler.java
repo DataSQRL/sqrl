@@ -5,7 +5,7 @@ package com.datasqrl.graphql.inference.argument;
 
 import com.datasqrl.graphql.inference.ArgumentSet;
 import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.schema.Column;
@@ -46,8 +46,8 @@ public class EqHandler implements ArgumentHandler {
       Set<Argument> newHandlers = new LinkedHashSet<>(args.getArgumentHandlers());
       newHandlers.add(VariableArgument.builder().path(context.getArg().getName()).build());
 
-      List<ArgumentPgParameter> parameters = new ArrayList<>(args.getArgumentParameters());
-      parameters.add(ArgumentPgParameter.builder().path(context.getArg().getName()).build());
+      List<ArgumentParameter> parameters = new ArrayList<>(args.getArgumentParameters());
+      parameters.add(ArgumentParameter.builder().path(context.getArg().getName()).build());
 
       set.add(new ArgumentSet(rel, newHandlers, parameters, args.isLimitOffsetFlag()));
     }

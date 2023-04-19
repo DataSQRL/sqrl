@@ -7,15 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.ArgumentSet;
 import com.datasqrl.graphql.server.Model.FixedArgument;
-import com.datasqrl.graphql.server.Model.PgQuery;
+import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.graphql.server.Model.SourcePgParameter;
+import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.VariableArgument;
-import com.datasqrl.graphql.server.SqrlGraphQLServer;
+import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -70,7 +70,7 @@ class VertxGraphQLBuilderTest {
                   .path("sort.customerid")
                   .value("DESC")
                   .build())
-              .query(PgQuery.builder()
+              .query(JdbcQuery.builder()
                   .sql("SELECT customerid FROM Customer ORDER BY customerid DESC")
                   .build())
               .build())
@@ -79,7 +79,7 @@ class VertxGraphQLBuilderTest {
                   .path("sort.customerid")
                   .value("ASC")
                   .build())
-              .query(PgQuery.builder()
+              .query(JdbcQuery.builder()
                   .sql("SELECT customerid FROM Customer ORDER BY customerid ASC")
                   .build())
               .build())
@@ -92,9 +92,9 @@ class VertxGraphQLBuilderTest {
               .argument(VariableArgument.builder()
                   .path("customerid")
                   .build())
-              .query(PgQuery.builder()
+              .query(JdbcQuery.builder()
                   .sql("SELECT customerid FROM Customer WHERE customerid = $1")
-                  .parameter(ArgumentPgParameter.builder()
+                  .parameter(ArgumentParameter.builder()
                       .path("customerid")
                       .build())
                   .build())
@@ -104,9 +104,9 @@ class VertxGraphQLBuilderTest {
           .parentType("Customer")
           .fieldName("sameCustomer")
           .match(ArgumentSet.builder()
-              .query(PgQuery.builder()
+              .query(JdbcQuery.builder()
                   .sql("SELECT customerid FROM Customer WHERE customerid = $1")
-                  .parameter(SourcePgParameter.builder()
+                  .parameter(SourceParameter.builder()
                       .key("customerid")
                       .build())
                   .build())
@@ -151,7 +151,7 @@ class VertxGraphQLBuilderTest {
   @Test
   public void test() {
     GraphQL graphQL = root.accept(
-        new SqrlGraphQLServer(),
+        new BuildGraphQLEngine(),
         new VertxContext(new VertxJdbcClient(client)));
     ExecutionResult result = graphQL.execute("{\n"
         + "  casc: customer(sort: {customerid: ASC}) {\n"

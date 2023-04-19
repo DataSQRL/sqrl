@@ -25,8 +25,8 @@ public class ReplaceGraphqlQueries implements
     CoordVisitor<Object, Object>,
     SchemaVisitor<Object, Object>,
     GraphQLArgumentWrapperVisitor<Object, Object>,
-    QueryBaseVisitor<PgQuery, Object>,
-    ApiQueryVisitor<PgQuery, Object>,
+    QueryBaseVisitor<JdbcQuery, Object>,
+    ApiQueryVisitor<JdbcQuery, Object>,
     ResolvedQueryVisitor<Object, Object>,
     ParameterHandlerVisitor<Object, Object> {
 
@@ -38,20 +38,20 @@ public class ReplaceGraphqlQueries implements
   }
 
   @Override
-  public PgQuery visitApiQuery(ApiQueryBase apiQueryBase, Object context) {
+  public JdbcQuery visitApiQuery(ApiQueryBase apiQueryBase, Object context) {
     QueryTemplate template = queries.get(apiQueryBase.getQuery());
 
     SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
     DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
     String query = convertDynamicParams(writer, template.getRelNode());
-    return PgQuery.builder()
+    return JdbcQuery.builder()
         .parameters(apiQueryBase.getParameters())
         .sql(query)
         .build();
   }
 
   @Override
-  public PgQuery visitPagedApiQuery(PagedApiQueryBase apiQueryBase, Object context) {
+  public JdbcQuery visitPagedApiQuery(PagedApiQueryBase apiQueryBase, Object context) {
     QueryTemplate template = queries.get(apiQueryBase.getQuery());
 
     //todo builder
@@ -64,7 +64,7 @@ public class ReplaceGraphqlQueries implements
     } else {
       Preconditions.checkState(apiQueryBase.getParameters().size() == 0);
     }
-    return new PagedPgQuery(
+    return new PagedJdbcQuery(
         query,
         apiQueryBase.getParameters());
   }
@@ -113,7 +113,7 @@ public class ReplaceGraphqlQueries implements
   @Override
   public Object visitArgumentLookup(ArgumentLookupCoords coords, Object context) {
     coords.getMatchs().forEach(c -> {
-      PgQuery query = c.getQuery().accept(this, context);
+      JdbcQuery query = c.getQuery().accept(this, context);
       c.setQuery(query);
     });
     return null;
@@ -125,32 +125,32 @@ public class ReplaceGraphqlQueries implements
   }
 
   @Override
-  public PgQuery visitPgQuery(PgQuery pgQuery, Object context) {
+  public JdbcQuery visitJdbcQuery(JdbcQuery jdbcQuery, Object context) {
     return null;
   }
 
   @Override
-  public PgQuery visitPagedPgQuery(PagedPgQuery pgQuery, Object context) {
+  public JdbcQuery visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, Object context) {
     return null;
   }
 
   @Override
-  public Object visitSourcePgParameter(SourcePgParameter sourceParameter, Object context) {
+  public Object visitSourceParameter(SourceParameter sourceParameter, Object context) {
     return null;
   }
 
   @Override
-  public Object visitArgumentPgParameter(ArgumentPgParameter argumentParameter, Object context) {
+  public Object visitArgumentParameter(ArgumentParameter argumentParameter, Object context) {
     return null;
   }
 
   @Override
-  public Object visitResolvedPgQuery(ResolvedPgQuery query, Object context) {
+  public Object visitResolvedJdbcQuery(ResolvedJdbcQuery query, Object context) {
     return null;
   }
 
   @Override
-  public Object visitResolvedPagedPgQuery(ResolvedPagedPgQuery query, Object context) {
+  public Object visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query, Object context) {
     return null;
   }
 

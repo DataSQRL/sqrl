@@ -7,7 +7,7 @@ import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.SqrlGraphQLServer;
+import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import graphql.schema.DataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
@@ -31,7 +31,7 @@ public class VertxContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createArgumentLookupFetcher(SqrlGraphQLServer server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
+  public DataFetcher<?> createArgumentLookupFetcher(BuildGraphQLEngine server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
     return VertxDataFetcher.create((env, fut) -> {
       //Map args
       Set<FixedArgument> argumentSet = GraphQLArgumentWrapper.wrap(env.getArguments())

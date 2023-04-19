@@ -6,11 +6,12 @@ import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.SqrlGraphQLServer;
+import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import graphql.schema.DataFetcher;
 import graphql.schema.PropertyDataFetcher;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import lombok.Value;
 
 @Value
@@ -24,11 +25,12 @@ public class JdbcContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createArgumentLookupFetcher(SqrlGraphQLServer server,
+  public DataFetcher<?> createArgumentLookupFetcher(BuildGraphQLEngine server,
       Map<Set<Argument>, ResolvedQuery> lookupMap) {
 
     //Runtime execution, keep this as light as possible
     return (env) -> {
+
       //Map args
       Set<FixedArgument> argumentSet = GraphQLArgumentWrapper.wrap(
               env.getArguments())
@@ -43,7 +45,8 @@ public class JdbcContext implements Context {
       //Execute
       QueryExecutionContext context = new JdbcExecutionContext(this,
           env, argumentSet);
-      return resolvedQuery.accept(server, context);
+      CompletableFuture future = resolvedQuery.accept(server, context);
+      return future;
     };
   }
 }

@@ -11,11 +11,11 @@ import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
-import com.datasqrl.graphql.server.Model.PagedPgQuery;
-import com.datasqrl.graphql.server.Model.PgQuery;
+import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
+import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
-import com.datasqrl.graphql.server.Model.ResolvedPagedPgQuery;
-import com.datasqrl.graphql.server.Model.ResolvedPgQuery;
+import com.datasqrl.graphql.server.Model.ResolvedPagedJdbcQuery;
+import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.Model.ResolvedQueryVisitor;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -40,7 +40,7 @@ import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class SqrlGraphQLServer implements
+public class BuildGraphQLEngine implements
     RootVisitor<GraphQL, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
@@ -75,14 +75,14 @@ public class SqrlGraphQLServer implements
   }
 
   @Override
-  public ResolvedQuery visitPgQuery(PgQuery pgQuery, Context context) {
+  public ResolvedQuery visitJdbcQuery(JdbcQuery jdbcQuery, Context context) {
     return context.getClient()
-        .prepareQuery(pgQuery, context);
+        .prepareQuery(jdbcQuery, context);
   }
 
   @Override
-  public ResolvedQuery visitPagedPgQuery(PagedPgQuery pgQuery, Context context) {
-    return new ResolvedPagedPgQuery(pgQuery);
+  public ResolvedQuery visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, Context context) {
+    return new ResolvedPagedJdbcQuery(jdbcQuery);
   }
 
   @Override
@@ -92,7 +92,8 @@ public class SqrlGraphQLServer implements
         .collect(Collectors.toMap(c -> c.arguments, c -> c.query.accept(this, ctx)));
 
     //Runtime execution, keep this as light as possible
-    return ctx.createArgumentLookupFetcher(this, lookupMap);
+    DataFetcher fetcher = ctx.createArgumentLookupFetcher(this, lookupMap);
+    return fetcher;
   }
 
   @Override
@@ -126,16 +127,18 @@ public class SqrlGraphQLServer implements
   }
 
   @Override
-  public CompletableFuture visitResolvedPgQuery(ResolvedPgQuery pgQuery,
+  public CompletableFuture visitResolvedJdbcQuery(ResolvedJdbcQuery query,
       QueryExecutionContext context) {
-    return context.runQuery(this, pgQuery, isList(context.getEnvironment().getFieldType()));
+    return context.runQuery(this, query, isList(context.getEnvironment().getFieldType()));
   }
 
   @Override
-  public CompletableFuture visitResolvedPagedPgQuery(ResolvedPagedPgQuery pgQuery,
+  public CompletableFuture visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query,
       QueryExecutionContext context) {
-
-    return context.runPagedQuery(pgQuery, isList(context.getEnvironment().getFieldType()));
+    CompletableFuture fut = context.runPagedJdbcQuery(query,
+        isList(context.getEnvironment().getFieldType()),
+        context);
+    return fut;
   }
 
   private boolean isList(GraphQLOutputType fieldType) {
