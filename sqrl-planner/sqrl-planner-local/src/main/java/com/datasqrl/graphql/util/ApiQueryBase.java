@@ -4,7 +4,7 @@
 package com.datasqrl.graphql.util;
 
 import com.datasqrl.graphql.inference.ArgumentSet;
-import com.datasqrl.graphql.server.Model.PgParameterHandler;
+import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.graphql.server.Model.QueryBase;
 import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
 import com.datasqrl.plan.queries.APIQuery;
@@ -27,7 +27,7 @@ public class ApiQueryBase implements QueryBase {
   RelNode relNode;
   ArgumentSet relAndArg;
   @Singular
-  List<PgParameterHandler> parameters;
+  List<JdbcParameterHandler> parameters;
 
   @Override
   public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {

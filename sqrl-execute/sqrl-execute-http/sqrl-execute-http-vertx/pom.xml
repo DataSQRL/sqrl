@@ -75,6 +75,26 @@
       <artifactId>reactive-streams</artifactId>
     </dependency>
 
+    <!-- TODO: the drivers can be loaded by the jar assembly -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+    </dependency>
+    <!-- postgres required libs -->
+    <dependency>
+      <groupId>com.ongres.scram</groupId>
+      <artifactId>common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ongres.scram</groupId>
+      <artifactId>client</artifactId>
+    </dependency>
+
     <!-- Test -->
     <dependency>
       <groupId>org.testcontainers</groupId>

@@ -163,9 +163,9 @@ public class Model {
 
   public interface QueryBaseVisitor<R, C> {
 
-    R visitPgQuery(PgQuery pgQuery, C context);
+    R visitJdbcQuery(JdbcQuery jdbcQuery, C context);
 
-    R visitPagedPgQuery(PagedPgQuery pgQuery, C context);
+    R visitPagedJdbcQuery(PagedJdbcQuery jdbcQuery, C context);
   }
 
   @JsonTypeInfo(
@@ -173,8 +173,8 @@ public class Model {
       include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
-      @Type(value = PgQuery.class, name = "pgQuery"),
-      @Type(value = PagedPgQuery.class, name = "PagedPgQuery")
+      @Type(value = JdbcQuery.class, name = "JdbcQuery"),
+      @Type(value = PagedJdbcQuery.class, name = "PagedJdbcQuery")
   })
   public interface QueryBase {
 
@@ -185,32 +185,32 @@ public class Model {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  public static class PgQuery implements QueryBase {
+  public static class JdbcQuery implements QueryBase {
 
-    final String type = "pgQuery";
+    final String type = "JdbcQuery";
     String sql;
     @Singular
-    List<PgParameterHandler> parameters;
+    List<JdbcParameterHandler> parameters;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitPgQuery(this, context);
+      return visitor.visitJdbcQuery(this, context);
     }
   }
 
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  public static class PagedPgQuery extends PgQuery {
+  public static class PagedJdbcQuery extends JdbcQuery {
 
-    final String type = "PagedPgQuery";
+    final String type = "PagedJdbcQuery";
     String sql;
     @Singular
-    List<PgParameterHandler> parameters;
+    List<JdbcParameterHandler> parameters;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
-      return visitor.visitPagedPgQuery(this, context);
+      return visitor.visitPagedJdbcQuery(this, context);
     }
   }
 
@@ -324,32 +324,32 @@ public class Model {
       include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
-      @Type(value = SourcePgParameter.class, name = "source"),
-      @Type(value = ArgumentPgParameter.class, name = "arg")
+      @Type(value = SourceParameter.class, name = "source"),
+      @Type(value = ArgumentParameter.class, name = "arg")
   })
-  public interface PgParameterHandler {
+  public interface JdbcParameterHandler {
 
     <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context);
   }
 
   public interface ParameterHandlerVisitor<R, C> {
 
-    R visitSourcePgParameter(SourcePgParameter sourceParameter, C context);
+    R visitSourceParameter(SourceParameter sourceParameter, C context);
 
-    R visitArgumentPgParameter(ArgumentPgParameter argumentParameter, C context);
+    R visitArgumentParameter(ArgumentParameter argumentParameter, C context);
   }
 
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
   @Builder
-  public static class SourcePgParameter implements PgParameterHandler {
+  public static class SourceParameter implements JdbcParameterHandler {
 
     final String type = "source";
     String key;
 
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
-      return visitor.visitSourcePgParameter(this, context);
+      return visitor.visitSourceParameter(this, context);
     }
   }
 
@@ -357,21 +357,21 @@ public class Model {
   @AllArgsConstructor
   @NoArgsConstructor
   @Builder
-  public static class ArgumentPgParameter implements PgParameterHandler {
+  public static class ArgumentParameter implements JdbcParameterHandler {
 
     final String type = "arg";
     String path;
 
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
-      return visitor.visitArgumentPgParameter(this, context);
+      return visitor.visitArgumentParameter(this, context);
     }
   }
 
   public interface ResolvedQueryVisitor<R, C> {
 
-    public R visitResolvedPgQuery(ResolvedPgQuery query, C context);
+    public R visitResolvedJdbcQuery(ResolvedJdbcQuery query, C context);
 
-    public R visitResolvedPagedPgQuery(ResolvedPagedPgQuery query, C context);
+    public R visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query, C context);
   }
 
   public interface ResolvedQuery {
@@ -382,14 +382,14 @@ public class Model {
   @AllArgsConstructor
   @Getter
   @NoArgsConstructor
-  public static class ResolvedPgQuery implements ResolvedQuery {
+  public static class ResolvedJdbcQuery implements ResolvedQuery {
 
-    PgQuery query;
+    JdbcQuery query;
     PreparedSqrlQuery preparedQueryContainer;
 
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
-      return visitor.visitResolvedPgQuery(this, context);
+      return visitor.visitResolvedJdbcQuery(this, context);
     }
   }
 
@@ -401,13 +401,13 @@ public class Model {
   @AllArgsConstructor
   @Getter
   @NoArgsConstructor
-  public static class ResolvedPagedPgQuery implements ResolvedQuery {
+  public static class ResolvedPagedJdbcQuery implements ResolvedQuery {
 
-    PagedPgQuery query;
+    PagedJdbcQuery query;
 
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
-      return visitor.visitResolvedPagedPgQuery(this, context);
+      return visitor.visitResolvedPagedJdbcQuery(this, context);
     }
   }
 

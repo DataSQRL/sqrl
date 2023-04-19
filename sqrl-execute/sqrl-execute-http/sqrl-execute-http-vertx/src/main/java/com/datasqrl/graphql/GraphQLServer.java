@@ -4,7 +4,7 @@
 package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.graphql.server.SqrlGraphQLServer;
+import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -70,7 +70,7 @@ public class GraphQLServer extends AbstractVerticle {
   @SneakyThrows
   public GraphQL createGraphQL(SqlClient client) {
     GraphQL graphQL = root.accept(
-        new SqrlGraphQLServer(),
+        new BuildGraphQLEngine(),
         new VertxContext(new VertxJdbcClient(client)));
     return graphQL;
   }

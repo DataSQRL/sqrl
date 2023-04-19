@@ -13,5 +13,5 @@ public interface Context {
 
   DataFetcher<Object> createPropertyFetcher(String name);
 
-  DataFetcher<?> createArgumentLookupFetcher(SqrlGraphQLServer server, Map<Set<Argument>, ResolvedQuery> lookupMap);
+  DataFetcher<?> createArgumentLookupFetcher(BuildGraphQLEngine server, Map<Set<Argument>, ResolvedQuery> lookupMap);
 }
