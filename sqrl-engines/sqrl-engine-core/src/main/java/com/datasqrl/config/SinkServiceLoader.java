@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public class SinkServiceLoader {
 
-  public Optional<SinkFactory> load(String engineName, String sinkType) {
-    return ServiceLoaderDiscovery.findFirst(SinkFactory.class, sf -> sf.getEngine(), engineName,
-            sf -> sf.getSinkType(), sinkType);
+  public SinkFactory load(String engineName, String sinkType) {
+    return ServiceLoaderDiscovery.get(SinkFactory.class, SinkFactory::getEngine, engineName,
+            SinkFactory::getSinkType, sinkType);
   }
 }

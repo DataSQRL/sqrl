@@ -3,16 +3,17 @@
  */
 package com.datasqrl.cmd;
 
-import com.datasqrl.config.EngineSettings;
-import com.datasqrl.config.GlobalEngineConfiguration;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.discovery.DataDiscovery;
-import com.datasqrl.discovery.DiscoveryUtil;
+import com.datasqrl.discovery.DataDiscoveryFactory;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.DataMonitor.Job.Status;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.serializer.Deserializer;
@@ -49,27 +50,24 @@ public class DiscoverCommand extends AbstractCommand {
   @Override
   protected void runCommand(ErrorCollector errors) throws IOException {
     errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
-    DataSystemConfig discoveryConfig = null;
+    TableConfig discoveryConfig = null;
     if (inputFile != null && Files.isRegularFile(inputFile)) {
       Deserializer deserialize = new Deserializer();
-      discoveryConfig = deserialize.mapJsonFile(inputFile, DataSystemConfig.class);
+      discoveryConfig = TableConfig.load(inputFile, Name.system(inputFile.getFileName().toString()), errors);
     } else if (inputFile != null && Files.isDirectory(inputFile)) {
-      discoveryConfig = DiscoveryUtil.getDirectorySystemConfig(inputFile).build();
+      discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile);
     } else {
       errors.fatal("Could not find data system configuration or directory at: %s", inputFile);
     }
 
-    if (!discoveryConfig.getType().isSource() && statistics) {
+    if (!discoveryConfig.getBase().getType().isSource() && statistics) {
       errors.warn("Data sinks don't have statistics. Statistics flag is ignored.");
       statistics = false;
     }
     errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
 
-    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
-    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFromPath(packageFiles,
-        GlobalEngineConfiguration.class);
-    EngineSettings engineSettings = engineConfig.initializeEngines(errors);
-    DataDiscovery discovery = new DataDiscovery(errors, engineSettings);
+    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors);
+    DataDiscovery discovery = DataDiscoveryFactory.fromConfig(config,errors);
 
     //Setup output directory to write to
     if (outputDir == null) {

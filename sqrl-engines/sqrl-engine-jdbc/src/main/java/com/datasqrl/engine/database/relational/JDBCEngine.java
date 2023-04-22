@@ -5,6 +5,8 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
+import com.datasqrl.config.SerializedSqrlConfig;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -13,7 +15,7 @@ import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
-import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
@@ -44,22 +46,20 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 //  }
 
   @Getter
-  final JDBCEngineConfiguration config;
+  final JdbcDataSystemConnector connector;
+  @Getter
+  final SqrlConfig connectorConfig;
 
-  public JDBCEngine(JDBCEngineConfiguration configuration) {
-    super(JDBCEngineConfiguration.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
+  public JDBCEngine(JdbcDataSystemConnector connector, SqrlConfig config) {
+    super(JDBCEngineFactory.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
 //        CAPABILITIES_BY_DIALECT.get(configuration.getDialect()));
-    this.config = configuration;
-  }
-
-  @Override
-  public DataSystemConnectorConfig getDataSystemConnectorConfig() {
-    return config.getConfig();
+    this.connector = connector;
+    this.connectorConfig = config;
   }
 
   @Override
   public IndexSelectorConfig getIndexSelectorConfig() {
-    return IndexSelectorConfigByDialect.of(config.getConfig().getDialect());
+    return IndexSelectorConfigByDialect.of(connector.getDialect());
   }
 
   @Override
@@ -69,9 +69,9 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     List<String> dmls = jdbcPlan.getDdlStatements().stream().map(ddl -> ddl.toSql())
         .collect(Collectors.toList());
     try (Connection conn = DriverManager.getConnection(
-        config.getConfig().getDbURL(),
-        config.getConfig().getUser(),
-        config.getConfig().getPassword())) {
+        connector.getDbURL(),
+        connector.getUser(),
+        connector.getPassword())) {
       for (String dml : dmls) {
         try (Statement stmt = conn.createStatement()) {
           log.trace("Creating: " + dml);
@@ -92,7 +92,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
       RelBuilder relBuilder, TableSink errorSink) {
 
     JdbcDDLFactory factory =
-        (new JdbcDDLServiceLoader()).load(config.getConfig().getDialect())
+        (new JdbcDDLServiceLoader()).load(connector.getDialect())
             .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
     List<SqlDDLStatement> ddlStatements = StreamUtil.filterByClass(inputs,

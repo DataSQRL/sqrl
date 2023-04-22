@@ -23,21 +23,22 @@ import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinitionVisitor;
 import com.datasqrl.FlinkEnvironmentBuilder.PlanContext;
 import com.datasqrl.config.BaseConnectorFactory;
+import com.datasqrl.config.DataStreamSourceFactory;
+import com.datasqrl.config.FlinkSourceFactoryContext;
 import com.datasqrl.config.SinkFactory;
-import com.datasqrl.config.SinkFactory.FlinkSinkFactoryContext;
-import com.datasqrl.config.SourceFactory;
+import com.datasqrl.config.SinkFactoryContext.Implementation;
 import com.datasqrl.config.TableDescriptorSinkFactory;
+import com.datasqrl.config.TableDescriptorSourceFactory;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.InputError.InputErrorMessage;
 import com.datasqrl.InputError.Map2InputErrorMessage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.SourceRecord.Raw;
-import com.datasqrl.io.formats.Format;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.model.schema.SchemaDefinition;
@@ -137,8 +138,8 @@ public class FlinkEnvironmentBuilder implements
 
     TableDescriptorSinkFactory builderClass = (TableDescriptorSinkFactory) createFactoryInstance(
         sink.getFactory());
-    TableDescriptor descriptor = builderClass.create(new FlinkSinkFactoryContext(sink.getName(),
-            sink.getDsConfig(), sink.getTableConfig(), context.getErrors()))
+    TableDescriptor descriptor = builderClass.create(new Implementation(sink.getName(),
+            sink.getTableConfig()))
         .schema(errorTableSchema)
         .build();
 
@@ -321,8 +322,6 @@ public class FlinkEnvironmentBuilder implements
   @Builder
   public static class SourceResolver {
 
-    DataSystemConnectorConfig config;
-
     String format;
 
     Object watermark;
@@ -358,7 +357,7 @@ public class FlinkEnvironmentBuilder implements
 
   public DataStream buildStream(
       TableConfig tableConfig,
-      SourceFactory<SingleOutputStreamOperator<TimeAnnotatedRecord<String>>> sourceFactory,
+      DataStreamSourceFactory sourceFactory,
       FlinkFormatFactory formatFactory,
       TableSchemaFactory factory,
       SchemaDefinition definition,
@@ -366,15 +365,11 @@ public class FlinkEnvironmentBuilder implements
       PlanContext context) {
     final List<SideOutputDataStream> errorSideChannels = new ArrayList<>();
 
-    DataSystemConnector connector = tableConfig.getConnector().initialize(ErrorCollector.root());
-
     SingleOutputStreamOperator<TimeAnnotatedRecord<String>> stream =
-        sourceFactory.create(connector,
-            new FlinkSourceFactoryContext(context.getSEnv(), "nameStub",
-                tableConfig.getFormat(), tableConfig, UUID.randomUUID()));
+        sourceFactory.create(new FlinkSourceFactoryContext(context.getSEnv(), tableConfig.getName().getCanonical(),
+                tableConfig, UUID.randomUUID()));
 
-    Format.Parser parser = tableConfig.getFormat().getImplementation()
-        .getParser(tableConfig.getFormat());
+    FormatFactory.Parser parser = tableConfig.getFormat().getParser(tableConfig.getFormatConfig());
 
     OutputTag formatErrorTag = context.createErrorTag();
     FunctionWithError<TimeAnnotatedRecord<String>, Raw> formatStream = formatFactory
@@ -445,13 +440,11 @@ public class FlinkEnvironmentBuilder implements
 
     String name = table.getName();
     Class factoryClass = table.getFactoryClass();
-    DataSystemConnectorConfig config = table.getConfig();
     TableConfig tableConfig = table.getTableConfig();
 
     BaseConnectorFactory factory = createFactoryInstance(factoryClass);
-    if (factory instanceof SourceFactory) {
-      SourceFactory sourceFactory = (SourceFactory) factory;
-
+    if (factory instanceof DataStreamSourceFactory) {
+      DataStreamSourceFactory sourceFactory = (DataStreamSourceFactory) factory;
       DataStream dataStream = buildStream(table.getTableConfig(),
           sourceFactory,
           new FlinkTextLineFormat(),
@@ -461,13 +454,14 @@ public class FlinkEnvironmentBuilder implements
           context);
 
       context.getTEnv().createTemporaryView(name, dataStream, toSchema(table.getSchema()));
-
+    } else if (factory instanceof TableDescriptorSourceFactory) {
+      throw new NotYetImplementedException("Table sources not yet supported");
     } else if (factory instanceof SinkFactory) {
       SinkFactory sinkFactory = (SinkFactory) factory;
       Object o = sinkFactory.create(
-          new FlinkSinkFactoryContext(name, config, tableConfig, context.getErrors()));
+          new Implementation(name, tableConfig));
       if (o instanceof DataStream) {
-        throw new RuntimeException("Datastream as sink not yet implemented");
+        throw new NotYetImplementedException("Datastream as sink not yet implemented");
       } else if (o instanceof TableDescriptor.Builder) {
         TableDescriptor.Builder builder = (TableDescriptor.Builder) o;
         TableDescriptor descriptor = builder.schema(toSchema(table.getSchema()))

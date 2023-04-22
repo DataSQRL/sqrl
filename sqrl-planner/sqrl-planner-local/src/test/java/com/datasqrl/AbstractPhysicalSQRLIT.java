@@ -3,19 +3,22 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.config.EngineSettings;
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
-import com.datasqrl.engine.database.relational.JDBCEngineConfiguration;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
-import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
+import com.datasqrl.io.impl.file.FileDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemConnector;
 import com.datasqrl.io.impl.file.FilePath;
+import com.datasqrl.io.impl.file.FilePathConfig;
+import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.table.VirtualRelationalTable;
@@ -65,7 +68,7 @@ import org.apache.commons.lang3.tuple.Pair;
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   public SqrlPhysicalPlan physicalPlanner;
-  JDBCEngineConfiguration jdbc;
+  JdbcDataSystemConnector jdbc;
 
   protected SnapshotTest.Snapshot snapshot;
   protected boolean closeSnapshotOnValidate = true;
@@ -78,11 +81,10 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     if (rootDir == null) {
       addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule());
     }
-    Pair<DatabaseHandle, EngineSettings> engines = settings.getSqrlSettings();
-    this.engineSettings = engines.getRight();
+    Pair<DatabaseHandle, PipelineFactory> engines = settings.getSqrlSettings();
     this.database = engines.getLeft();
 
-    SqrlTestDIModule module = new SqrlTestDIModule(engineSettings.getPipeline(), settings, rootDir, addlModules, errorDir,
+    SqrlTestDIModule module = new SqrlTestDIModule(engines.getRight().createPipeline(), settings, rootDir, addlModules, errorDir,
         ErrorCollector.root());
     Injector injector = Guice.createInjector(module);
 
@@ -90,7 +92,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     jdbc = injector.getInstance(ExecutionPipeline.class).getStages().stream()
       .filter(f->f.getEngine() instanceof JDBCEngine)
-      .map(f->((JDBCEngine) f.getEngine()).getConfig())
+      .map(f->((JDBCEngine) f.getEngine()).getConnector())
       .findAny()
       .orElseThrow();
 
@@ -136,9 +138,9 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         .findAny()
         .orElseThrow();
     JDBCEngine dbEngine = (JDBCEngine) db.getStage().getEngine();
-    Connection conn = DriverManager.getConnection(dbEngine.getConfig().getConfig()
-        .getDbURL(), dbEngine.getConfig().getConfig().getUser(),
-        dbEngine.getConfig().getConfig().getPassword());
+    Connection conn = DriverManager.getConnection(dbEngine.getConnector()
+        .getDbURL(), dbEngine.getConnector().getUser(),
+        dbEngine.getConnector().getPassword());
 
     for (APIQuery query : queries) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
@@ -168,14 +170,15 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     StreamUtil.filterByClass(dag.getQueriesByType(PhysicalDAGPlan.WriteQuery.class).stream()
         .map(WriteQuery::getSink),ExternalSink.class)
         .map(ExternalSink::getTableSink)
-        .filter(sink -> sink.getConnector() instanceof DirectoryConnector)
+        .filter(sink -> sink.getConnector() instanceof FileDataSystemConnector)
         .forEach(sink -> {
-          DirectoryConnector connector = (DirectoryConnector) sink.getConnector();
-          FilePath path = connector.getPathConfig().getDirectory()
-              .resolve(sink.getConfiguration().getIdentifier());
+          TableConfig tableConfig = sink.getConfiguration();
+          FilePathConfig fpConfig = FileDataSystemConfig.fromConfig(tableConfig).getFilePath(tableConfig.getErrors());
+          FilePath path = fpConfig.getDirectory()
+              .resolve(tableConfig.getBase().getIdentifier());
           Path filePath = Paths.get(path.toString());
           snapshot.addContent(String.valueOf(FileTestUtil.countLinesInAllPartFiles(filePath)),
-              "export", sink.getConfiguration().getIdentifier());
+              "export", tableConfig.getBase().getIdentifier());
         });
     if (closeSnapshotOnValidate) snapshot.createOrValidate();
   }

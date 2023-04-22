@@ -2,6 +2,7 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.SqrlConfig;
 import java.util.Collections;
 import java.util.Set;
 import lombok.Builder;
@@ -24,7 +25,8 @@ public class DebuggerConfig {
   }
 
   public static DebuggerConfig of(@NonNull NamePath sinkBasePath, Set<Name> debugTables) {
-    return DebuggerConfig.builder().enabled(true).sinkBasePath(sinkBasePath).debugTables(debugTables).build();
+    return DebuggerConfig.builder().enabled(true).sinkBasePath(sinkBasePath).debugTables(debugTables)
+        .build();
   }
 
 }

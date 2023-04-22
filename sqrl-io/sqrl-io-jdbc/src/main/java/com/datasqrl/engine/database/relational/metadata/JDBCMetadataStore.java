@@ -3,23 +3,27 @@
  */
 package com.datasqrl.engine.database.relational.metadata;
 
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnectorConfig;
+import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.metadata.MetadataStore;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Stores meta data in a database table with a simple key->value structure where key is the
@@ -40,7 +44,7 @@ public class JDBCMetadataStore implements MetadataStore {
   private final String dialect;
   private final Kryo kryo;
 
-  public JDBCMetadataStore(JdbcDataSystemConnectorConfig config, Kryo kryo) {
+  public JDBCMetadataStore(JdbcDataSystemConnector config, Kryo kryo) {
     this.kryo = kryo;
     try {
       this.connection = DriverManager.getConnection(

@@ -9,11 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.discovery.DataDiscovery;
+import com.datasqrl.discovery.DataDiscoveryFactory;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.external.SchemaExport;
 import com.datasqrl.model.schema.TableDefinition;
@@ -37,6 +40,14 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class TestDataSetMonitoringIT extends AbstractEngineIT {
+
+  private PipelineFactory pipelineFactory;
+
+  @Override
+  protected PipelineFactory initialize(IntegrationTestSettings settings) {
+    this.pipelineFactory = super.initialize(settings);
+    return this.pipelineFactory;
+  }
 
   @SneakyThrows
   @ParameterizedTest
@@ -70,9 +81,8 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
   private List<TableSource> discoverSchema(TestDataset example) {
     ErrorCollector errors = ErrorCollector.root();
-    DataDiscovery discovery = new DataDiscovery(errors, engineSettings);
-    DataSystemConfig systemConfig = getSystemConfigBuilder(example).build();
-    List<TableSource> sourceTables = discovery.runFullDiscovery(systemConfig);
+    DataDiscovery discovery = DataDiscoveryFactory.fromPipeline(pipelineFactory, errors);
+    List<TableSource> sourceTables = discovery.runFullDiscovery(example.getDiscoveryConfig());
     assertFalse(errors.isFatal(), errors.toString());
     assertEquals(example.getNumTables(), sourceTables.size());
     return sourceTables;

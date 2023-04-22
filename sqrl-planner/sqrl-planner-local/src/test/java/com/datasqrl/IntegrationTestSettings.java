@@ -6,19 +6,21 @@ package com.datasqrl;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.datasqrl.config.EngineSettings;
-import com.datasqrl.config.GlobalEngineConfiguration;
-import com.datasqrl.engine.EngineConfiguration;
-import com.datasqrl.engine.database.inmemory.InMemoryDatabaseConfiguration;
+import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.engine.EngineFactory;
+import com.datasqrl.engine.database.inmemory.InMemoryDatabaseFactory;
 import com.datasqrl.engine.database.inmemory.InMemoryMetadataStore;
-import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
-import com.datasqrl.engine.stream.inmemory.InMemoryStreamConfiguration;
+import com.datasqrl.engine.database.relational.JDBCEngineFactory;
+import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
+import com.datasqrl.engine.stream.inmemory.InMemoryStreamFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.JDBCTestDatabase;
-import java.util.ArrayList;
-import java.util.List;
+import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
@@ -41,40 +43,46 @@ public class IntegrationTestSettings {
   final NamePath errorSink = NamePath.of("print","errors");
 
 
-  Pair<DatabaseHandle, EngineSettings> getSqrlSettings() {
-    List<EngineConfiguration> engines = new ArrayList<>();
+  Pair<DatabaseHandle, PipelineFactory> getSqrlSettings() {
+    ErrorCollector errors = ErrorCollector.root();
+    SqrlConfig config = SqrlConfigCommons.create(errors);
+
     //Stream engine
+    String streamEngineName = null;
     switch (getStream()) {
       case FLINK:
-        engines.add(new FlinkEngineConfiguration());
+        streamEngineName = FlinkEngineFactory.ENGINE_NAME;
         break;
       case INMEMORY:
-        engines.add(new InMemoryStreamConfiguration());
+        streamEngineName = InMemoryStreamFactory.ENGINE_NAME;
         break;
     }
+    if (!Strings.isNullOrEmpty(streamEngineName)) {
+      config.getSubConfig("stream").setProperty(EngineFactory.ENGINE_NAME_KEY, streamEngineName);
+    }
+
     //Database engine
     DatabaseHandle database = null;
+    SqrlConfig dbconfig = config.getSubConfig("database");
     switch (getDatabase()) {
       case INMEMORY:
-        engines.add(new InMemoryDatabaseConfiguration());
+        dbconfig.setProperty(InMemoryDatabaseFactory.ENGINE_NAME_KEY, InMemoryDatabaseFactory.ENGINE_NAME);
         database = () -> InMemoryMetadataStore.clearLocal();
         break;
       case H2:
       case POSTGRES:
       case SQLITE:
         JDBCTestDatabase jdbcDB = new JDBCTestDatabase(getDatabase());
-        engines.add(jdbcDB.getJdbcConfiguration());
+        dbconfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
+        dbconfig.setProperties(jdbcDB.getConnector());
         database = jdbcDB;
         break;
       default:
         throw new RuntimeException("Could not find db engine");
     }
-    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.builder().engines(engines)
-        .build();
-    ErrorCollector errors = ErrorCollector.root();
-    EngineSettings engineSettings = engineConfig.initializeEngines(errors);
-    assertNotNull(engineSettings, errors.toString());
-    return Pair.of(database, engineSettings);
+
+    PipelineFactory pipelineFactory = new PipelineFactory(config);
+    return Pair.of(database, pipelineFactory);
   }
 
   public static IntegrationTestSettings getInMemory() {

@@ -5,12 +5,12 @@ package com.datasqrl.engine.stream.flink;
 
 public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
-  public LocalFlinkStreamEngineImpl(FlinkEngineConfiguration config) {
-    super(config);
+  public LocalFlinkStreamEngineImpl(ExecutionEnvironmentFactory execFactory) {
+    super(execFactory);
   }
 
   public FlinkStreamBuilder createJob() {
     return new FlinkStreamBuilder(this,
-        config.createEnvFactory().createEnvironment());
+        execFactory.createEnvironment());
   }
 }

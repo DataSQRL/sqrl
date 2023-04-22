@@ -1,17 +1,25 @@
 package com.datasqrl.io;
 
+import com.datasqrl.config.DataStreamSourceFactory;
+import com.datasqrl.config.FlinkSourceFactoryContext;
 import com.datasqrl.config.SourceFactory;
-import com.datasqrl.config.SourceFactoryContext;
-import com.datasqrl.FlinkSourceFactoryContext;
-import com.datasqrl.util.FileStreamUtil;
-import com.datasqrl.io.formats.FileFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.formats.JsonLineFormat;
+import com.datasqrl.io.formats.TextLineFormat;
+import com.datasqrl.io.impl.file.FileDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemDiscovery;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
+import com.datasqrl.util.FileStreamUtil;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
+import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -23,62 +31,54 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.util.Collector;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Duration;
-import java.util.function.Predicate;
 
-public class FileSourceFactory implements
-    SourceFactory<SingleOutputStreamOperator<TimeAnnotatedRecord<String>>> {
-
-  @Override
-  public String getEngine() {
-    return "flink";
-  }
+@AutoService(SourceFactory.class)
+public class FileSourceFactory implements DataStreamSourceFactory {
 
   @Override
   public String getSourceName() {
-    return DirectoryDataSystemConfig.SYSTEM_TYPE;
+    return FileDataSystemFactory.SYSTEM_NAME;
   }
 
   @Override
-  public SingleOutputStreamOperator<TimeAnnotatedRecord<String>> create(DataSystemConnector connector, SourceFactoryContext context) {
-    DirectoryConnector filesource = (DirectoryConnector) connector;
-    FlinkSourceFactoryContext ctx = (FlinkSourceFactoryContext) context;
+  public SingleOutputStreamOperator<TimeAnnotatedRecord<String>> create(FlinkSourceFactoryContext ctx) {
+    TableConfig tableConfig = ctx.getTableConfig();
+    FilePathConfig pathConfig = FileDataSystemConfig.fromConfig(tableConfig).getFilePath(tableConfig.getErrors());
+    FormatFactory formatFactory = tableConfig.getFormat();
+    Preconditions.checkArgument(formatFactory instanceof TextLineFormat,"This connector only supports text files");
+    String charset = ((TextLineFormat)formatFactory).getCharset(tableConfig.getFormatConfig()).name();
 
-    FilePathConfig pathConfig = filesource.getPathConfig();
     if (pathConfig.isURL()) {
       Preconditions.checkArgument(!pathConfig.isDirectory());
-      return ctx.getEnv().fromCollection(pathConfig.getFiles(filesource, ctx.getTableConfig())).
-          flatMap(new ReadPathByLine())
+      return ctx.getEnv().fromCollection(pathConfig.getFiles(ctx.getTableConfig())).
+          flatMap(new ReadPathByLine(charset))
           .map(new NoTimedRecord());
     } else {
       org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder;
       if (pathConfig.isDirectory()) {
         StreamFormat<String> format;
-        if (ctx.getFormatConfig().getFileFormat() == FileFormat.JSON) {
-          format = new JsonInputFormat(ctx.getTableConfig().getCharset());
+        if (formatFactory instanceof JsonLineFormat) {
+          format = new JsonInputFormat(charset);
         } else {
           format = new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-              ctx.getTableConfig().getCharset());
+              charset);
         }
 
         builder = org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
             format,
             FilePath.toFlinkPath(pathConfig.getDirectory()));
         Duration monitorDuration = null;
-        FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(filesource,
-            ctx.getTableConfig());
+        FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(ctx.getTableConfig());
         builder.setFileEnumerator(fileEnumerator);
         if (monitorDuration != null) {
           builder.monitorContinuously(Duration.ofSeconds(10));
         }
       } else {
-        Path[] inputPaths = pathConfig.getFiles(filesource, ctx.getTableConfig()).stream()
+        Path[] inputPaths = pathConfig.getFiles(ctx.getTableConfig()).stream()
             .map(FilePath::toFlinkPath).toArray(size -> new Path[size]);
         builder = org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
             new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
-                ctx.getTableConfig().getCharset()), inputPaths);
+                charset), inputPaths);
       }
 
       return ctx.getEnv().fromSource(builder.build(),
@@ -94,7 +94,6 @@ public class FileSourceFactory implements
   public static class FileEnumeratorProvider implements
       org.apache.flink.connector.file.src.enumerate.FileEnumerator.Provider {
 
-    DirectoryConnector directorySource;
     TableConfig table;
 
     @Override
@@ -113,7 +112,7 @@ public class FileSourceFactory implements
         } catch (IOException e) {
           return false;
         }
-        return directorySource.isTableFile(FilePath.fromFlinkPath(path), table);
+        return FileDataSystemDiscovery.isTableFile(FilePath.fromFlinkPath(path), table);
       }
     }
   }
@@ -127,11 +126,15 @@ public class FileSourceFactory implements
   }
 
 
+  @AllArgsConstructor
   public class ReadPathByLine implements FlatMapFunction<FilePath, String> {
+
+    private String charset;
+
     @Override
     public void flatMap(FilePath filePath, Collector<String> collector) throws Exception {
       try (InputStream is = filePath.read()) {
-        FileStreamUtil.readByLine(is).forEach(collector::collect);
+        FileStreamUtil.readByLine(is, charset).forEach(collector::collect);
       }
     }
   }

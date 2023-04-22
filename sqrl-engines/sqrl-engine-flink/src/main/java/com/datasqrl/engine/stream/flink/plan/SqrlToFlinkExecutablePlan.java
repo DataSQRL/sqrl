@@ -14,11 +14,14 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.stream.flink.sql.ExtractUniqueSourceVisitor;
 import com.datasqrl.engine.stream.flink.sql.FlinkConnectorServiceLoader;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToTypeInformationTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.tables.BaseTableConfig;
 import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.schema.converters.FlexibleSchemaRowMapperFactory;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandTemporalJoinRule;
@@ -28,7 +31,6 @@ import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRu
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule;
 import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
-import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
@@ -149,12 +151,10 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private FlinkErrorSink createErrorSink(TableSink errorSink) {
     TableConfig tableConfig = errorSink.getConfiguration();
-    DataSystemConnectorConfig dsConfig = errorSink.getDsConfig();
 
-    Class factory = FlinkConnectorServiceLoader.resolveSinkClass(dsConfig.getSystemType());
+    Class factory = FlinkConnectorServiceLoader.resolveSinkClass(tableConfig.getConnectorName());
 
     return FlinkErrorSink.builder()
-        .dsConfig(dsConfig)
         .tableConfig(tableConfig)
         .name(errorSink.getName().getDisplay())
         .factory(factory)
@@ -192,20 +192,18 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       Optional<SqlNode> watermarkColumn,
       Optional<SqlNode> watermarkExpression) {
 
-    DataSystemConnectorConfig config = relationalTable.getTableSource().getConfiguration()
-        .getConnector();
-    Class<?> factoryClass = FlinkConnectorServiceLoader.resolveSourceClass(config.getSystemType());
+    TableConfig tableConfig = relationalTable.getTableSource().getConfiguration();
+    Class<?> factoryClass = FlinkConnectorServiceLoader.resolveSourceClass(tableConfig.getConnectorName());
 
     Pair<TypeInformation, SerializableSchema> type = createTypeInformation(tableName, relationalTable, watermarkColumn,
         watermarkExpression);
     FlinkFactoryDefinition factoryDefinition = FlinkFactoryDefinition.builder()
         .name(tableName)
         .factoryClass(factoryClass)
-        .config(config)
         .schemaDefinition((TableDefinition)relationalTable.getTableSource().getTableSchema().getDefinition())
         .typeInformation(type.getKey())
         .schema(type.getValue())
-        .tableConfig(relationalTable.getTableSource().getConfiguration())
+        .tableConfig(tableConfig)
         .build();
 
     this.tableDefs.add(factoryDefinition);
@@ -377,33 +375,39 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   }
 
+  private TableConfig engineSink2Table(EngineSink engineSink) {
+    TableConfig.Builder tblBuilder = TableConfig.builder(engineSink.getNameId())
+        .base(BaseTableConfig.builder()
+            .type(ExternalDataType.sink.name())
+            .identifier(engineSink.getNameId())
+            .build());
+    SqrlConfig connectorConfig = tblBuilder.getConnectorConfig();
+    connectorConfig.copy(engineSink.getStage().getEngine().getConnectorConfig());
+    return tblBuilder.build();
+  }
+
   private void registerSinkTable(WriteSink sink, RelNode relNode) {
-    String connectorName;
-    DataSystemConnectorConfig config;
     String name;
     SerializableSchema schema;
     TableConfig tableConfig;
 
     if (sink instanceof EngineSink) {
       EngineSink engineSink = (EngineSink) sink;
-      connectorName = engineSink.getStage().getName();
-      config = engineSink.getStage().getEngine().getDataSystemConnectorConfig();
+      tableConfig = engineSink2Table(engineSink);
       name = engineSink.getNameId();
       schema = new RelNodeToSchemaTransformer()
           .transform(relNode, engineSink.getNumPrimaryKeys());
-      tableConfig = null;
     } else if (sink instanceof ExternalSink) {
       ExternalSink externalSink = (ExternalSink) sink;
-      connectorName = externalSink.getTableSink().getConnector().getSystemType();
-      config = externalSink.getTableSink().getConfiguration().getConnector();
+      tableConfig = externalSink.getTableSink().getConfiguration();
       name = externalSink.getName();
       schema = new RelNodeToSchemaTransformer()
           .transform(relNode, 0);
-      tableConfig = externalSink.getTableSink().getConfiguration();
     } else {
       throw new RuntimeException("Could not identify write sink type.");
     }
 
+    String connectorName = tableConfig.getConnectorName();
     TypeInformation typeInformation = new RelNodeToTypeInformationTransformer()
         .transform(relNode);
 
@@ -411,7 +415,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     FlinkFactoryDefinition factoryDefinition = FlinkFactoryDefinition.builder()
         .factoryClass(factory)
-        .config(config)
         .name(name)
         .schema(schema)
         .typeInformation(typeInformation)

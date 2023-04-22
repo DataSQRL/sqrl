@@ -8,24 +8,21 @@
   },
   "compiler":
   {
-    "api":
-    {
-      "maxArguments": 3
-    }
+    "maxApiArguments": 3
   },
-  "engines": [
-    {
+  "engines": {
+    "stream": {
       "engineName": "flink",
       "savepoint": false
     },
-    {
+    "database": {
       "engineName": "jdbc",
       "dbURL": "jdbc:h2:tmp/output",
       "driverName": "org.h2.Driver",
       "dialect": "H2",
       "database": "sqrl"
     }
-  ],
+  },
   "dependencies":
   {
     "datasqrl.examples.Shared": { "version":  "1.0.0", "variant":  "dev" },

@@ -12,6 +12,9 @@ import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.inmemory.InMemStreamEngine.JobBuilder.Sink;
+import com.datasqrl.io.impl.file.FileDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemConnector;
+import com.datasqrl.io.impl.file.FileDataSystemDiscovery;
 import com.datasqrl.util.FileStreamUtil;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.MetricStore;
@@ -22,7 +25,6 @@ import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.formats.TextLineFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.tables.TableConfig;
@@ -83,12 +85,11 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
           "This method only supports text sources");
       DataSystemConnector source = table.getConnector();
 
-      if (source instanceof DirectoryConnector) {
-        DirectoryConnector filesource = (DirectoryConnector) source;
+      if (source instanceof FileDataSystemConnector) {
+        TableConfig tableConfig = table.getConfiguration();
+        FilePathConfig fpConfig = FileDataSystemConfig.fromConfig(tableConfig).getFilePath(tableConfig.getErrors());
         try {
-          Stream<Path> paths = matchingFiles(
-              filesource.getPathConfig(),
-              filesource, table.getConfiguration());
+          Stream<Path> paths = matchingFiles(fpConfig, table.getConfiguration());
           return new Holder<>(
               FileStreamUtil.filesByline(paths).map(s -> new TimeAnnotatedRecord<>(s)));
         } catch (IOException e) {
@@ -100,7 +101,6 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
     }
 
     public Stream<Path> matchingFiles(FilePathConfig pathConfig,
-        DirectoryConnector directorySource,
         TableConfig table) throws IOException {
       if (pathConfig.isDirectory()) {
         return Files.find(FilePath.toJavaPath(pathConfig.getDirectory()), 100,
@@ -111,10 +111,10 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
               if (fileAttr.size() <= 0) {
                 return false;
               }
-              return directorySource.isTableFile(FilePath.fromJavaPath(filePath), table);
+              return FileDataSystemDiscovery.isTableFile(FilePath.fromJavaPath(filePath), table);
             });
       } else {
-        return pathConfig.getFiles(directorySource, table).stream().map(FilePath::toJavaPath);
+        return pathConfig.getFiles(table).stream().map(FilePath::toJavaPath);
       }
     }
 

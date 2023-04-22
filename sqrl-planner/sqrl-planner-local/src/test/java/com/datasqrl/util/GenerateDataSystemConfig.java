@@ -3,11 +3,10 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.io.DataSystemConfig;
-import com.datasqrl.io.DataSystemDiscoveryConfig;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.formats.FileFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.formats.JsonLineFormat;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.loaders.DataSource;
 import com.datasqrl.util.data.Retail;
 import java.nio.file.Path;
@@ -23,17 +22,13 @@ public class GenerateDataSystemConfig {
   public void generateConfigFile() {
     TestDataset testDataset = Retail.INSTANCE;
     Path output = testDataset.getRootPackageDirectory().resolve("export-data");
-    DataSystemDiscoveryConfig datasystem = DirectoryDataSystemConfig.ofDirectory(output);
-    DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-    builder.datadiscovery(datasystem);
-    builder.type(ExternalDataType.sink);
-    builder.name("output");
-    builder.format(FileFormat.JSON.getImplementation().getDefaultConfiguration());
-    DataSystemConfig config = builder.build();
+
+    TableConfig.Builder discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(output).toBuilder();
+    discoveryConfig.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
 
     Path datasystemConfigFile = testDataset.getRootPackageDirectory().resolve("output")
         .resolve(DataSource.DATASYSTEM_FILE);
-    FileTestUtil.writeJson(datasystemConfigFile, config);
+    discoveryConfig.build().toFile(datasystemConfigFile);
   }
 
 }

@@ -2,7 +2,6 @@ package com.datasqrl;
 
 import com.datasqrl.model.StreamType;
 import com.datasqrl.serializer.SerializableSchema;
-import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.canonicalizer.NamePath;
@@ -74,7 +73,6 @@ public class FlinkExecutablePlan {
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
   public static class FlinkErrorSink {
 
-    DataSystemConnectorConfig dsConfig;
     TableConfig tableConfig;
     String name;
     NamePath namePath;
@@ -254,7 +252,6 @@ public class FlinkExecutablePlan {
 
     String name;
     Class factoryClass;
-    DataSystemConnectorConfig config;
     TableConfig tableConfig;
     TableDefinition schemaDefinition;
     TypeInformation typeInformation;

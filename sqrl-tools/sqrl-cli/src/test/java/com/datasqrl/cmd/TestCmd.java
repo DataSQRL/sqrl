@@ -5,7 +5,7 @@ package com.datasqrl.cmd;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.datasqrl.packager.Packager;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
@@ -91,7 +91,7 @@ public class TestCmd {
             script.getScriptPath().toString(),
             script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
             "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
-    Path schemaFile = rootDir.resolve(Packager.GRAPHQL_SCHEMA_FILE_NAME);
+    Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
     assertTrue(Files.isRegularFile(schemaFile));
     Files.deleteIfExists(schemaFile);
     createSnapshot();

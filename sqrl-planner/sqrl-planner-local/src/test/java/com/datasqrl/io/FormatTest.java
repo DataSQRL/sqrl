@@ -3,7 +3,7 @@
  */
 package com.datasqrl.io;
 
-import com.datasqrl.io.formats.Format;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.util.FileStreamUtil;
@@ -39,7 +39,7 @@ public class FormatTest {
   public static Stream<SourceRecord.Raw> parseStream(Stream<String> textSource,
       TextLineFormat.Parser textparser) {
     return textSource.map(s -> {
-          Format.Parser.Result result = textparser.parse(s);
+          FormatFactory.Parser.Result result = textparser.parse(s);
           if (!result.isSuccess()) {
             throw new RuntimeException(
                 String.format("Could not parse line [%s] due to error: %s", s,

@@ -14,19 +14,19 @@ import java.util.Optional;
 public class DataSource {
 
   public static final String TABLE_FILE_SUFFIX = ".table.json";
-  public static final String DATASYSTEM_FILE = "datasystem.json";
+  public static final String DATASYSTEM_FILE = "system" + TABLE_FILE_SUFFIX;
 
   public Optional<TableSource> readTableSource(TableSchema tableSchema, TableConfig tableConfig,
                                                ErrorCollector errors, NamePath basePath) {
-    if (!tableConfig.getType().isSource()) {
+    if (!tableConfig.getBase().getType().isSource()) {
       return Optional.empty();
     }
     //TableSource requires a schema
     if (tableSchema == null) {
       errors.warn("Found configuration for table [%s] but no schema. Table not loaded.",
-          tableConfig.getResolvedName());
+          tableConfig.getName());
       return Optional.empty();
     }
-    return Optional.of(tableConfig.initializeSource(errors, basePath, tableSchema));
+    return Optional.of(tableConfig.initializeSource(basePath, tableSchema));
   }
 }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
@@ -52,21 +53,7 @@ public class KafkaMonitoringTest extends KafkaBaseTest {
     int recordsWritten = writeTextFilesToTopic(topic, Retail.INSTANCE.getDataDirectory().resolve("orders.json"));
     assertEquals(4, recordsWritten);
 
-    DataSystemConfig systemConfig = getSystemConfigBuilder("retail",false, true).build();
-    monitor(systemConfig);
-  }
-
-  @Test
-  @SneakyThrows
-  public void monitorOrdersWithoutFormatTest() {
-    String topic = "orders.json";
-    createTopics(new String[]{topic});
-    initialize(IntegrationTestSettings.getFlinkWithDB());
-
-    int recordsWritten = writeTextFilesToTopic(topic, Retail.INSTANCE.getDataDirectory().resolve("orders.json"));
-    assertEquals(4, recordsWritten);
-
-    DataSystemConfig systemConfig = getSystemConfigBuilder("retail", false,false).build();
+    TableConfig systemConfig = getSystemConfigBuilder("retail",false);
     monitor(systemConfig);
   }
 
@@ -82,14 +69,14 @@ public class KafkaMonitoringTest extends KafkaBaseTest {
     recordsWritten = writeTextFilesToTopic(topics[1], Nutshop.INSTANCE.getDataDirectory().resolve("orders_part1.json"));
     assertEquals(87, recordsWritten);
 
-    DataSystemConfig systemConfig = getSystemConfigBuilder("example", true, true).build();
+    TableConfig systemConfig = getSystemConfigBuilder("example", true);
     monitor(systemConfig);
   }
 
   @SneakyThrows
-  private void monitor(DataSystemConfig config) {
-    Path configFile = Files.createTempFile(rootDir, "datasystemconfig", ".json");
-    FileTestUtil.writeJson(configFile, config);
+  private void monitor(TableConfig config) {
+    Path configFile = Files.createTempFile(rootDir, "system.table", ".json");
+    config.toFile(configFile);
     try {
       new RootCommand(rootDir).getCmd().execute("discover",
           configFile.toString(), "-o", writeToDir.toString(), "-l", "7");

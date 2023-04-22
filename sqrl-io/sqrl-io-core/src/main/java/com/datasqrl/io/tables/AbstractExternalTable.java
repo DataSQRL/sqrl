@@ -34,7 +34,7 @@ public class AbstractExternalTable {
   }
 
   public Digest getDigest() {
-    return new Digest(path, configuration.getNameCanonicalizer());
+    return new Digest(path, configuration.getBase().getCanonicalizer());
   }
 
   @Value

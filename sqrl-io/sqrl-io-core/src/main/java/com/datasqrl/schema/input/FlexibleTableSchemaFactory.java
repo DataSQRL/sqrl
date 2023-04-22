@@ -30,7 +30,7 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
       errors.fatal("Could not find schema file [%s] for table [%s]", schemaPath, baseURI);
     }
     TableDefinition schemaDef = deserializer.mapYAMLFile(schemaPath.get(), TableDefinition.class);
-    SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, tableConfig.getNameCanonicalizer());
+    SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, tableConfig.getBase().getCanonicalizer());
     Optional<FlexibleTableSchema> tableSchema = importer.convert(schemaDef, errors );
     return tableSchema.map(f->f);
   }
@@ -43,7 +43,7 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
   }
 
   public static String getSchemaFilename(TableConfig tableConfig) {
-    return tableConfig.getResolvedName().getCanonical() + SCHEMA_EXTENSION;
+    return tableConfig.getName().getCanonical() + SCHEMA_EXTENSION;
   }
 
   @Override

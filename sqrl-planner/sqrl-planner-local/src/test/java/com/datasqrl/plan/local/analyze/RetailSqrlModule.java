@@ -121,7 +121,7 @@ public class RetailSqrlModule implements SqrlModule {
   public static class InMemProduct extends InMemSourceFactory {
 
     public InMemProduct() {
-      super("in-mem-product");
+      super("in-mem-product", products);
     }
   }
 
@@ -129,7 +129,7 @@ public class RetailSqrlModule implements SqrlModule {
   public static class InMemOrders extends InMemSourceFactory {
 
     public InMemOrders() {
-      super("in-mem-orders");
+      super("in-mem-orders", orders);
     }
   }
 
@@ -137,7 +137,7 @@ public class RetailSqrlModule implements SqrlModule {
   public static class InMemCustomer extends InMemSourceFactory {
 
     public InMemCustomer() {
-      super("in-mem-customer");
+      super("in-mem-customer", customers);
     }
   }
 }

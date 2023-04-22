@@ -4,7 +4,6 @@
 package com.datasqrl.io.impl.file;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.impl.file.DirectoryDataSystem.DirectoryConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -102,9 +101,8 @@ public class FilePathConfig implements Serializable {
     return paths.get(0).isURL();
   }
 
-  public List<FilePath> getFiles(DirectoryConnector directorySource,
-      TableConfig table) {
-    return paths.stream().filter(p -> directorySource.isTableFile(p, table))
+  public List<FilePath> getFiles(TableConfig table) {
+    return paths.stream().filter(p -> FileDataSystemDiscovery.isTableFile(p, table))
         .collect(Collectors.toList());
   }
 

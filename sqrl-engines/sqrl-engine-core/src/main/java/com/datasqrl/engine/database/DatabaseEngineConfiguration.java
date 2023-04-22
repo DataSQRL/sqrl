@@ -9,6 +9,9 @@ import com.datasqrl.engine.EngineConfiguration;
 import com.datasqrl.engine.ExecutionEngine;
 import lombok.NonNull;
 
+/**
+ * TODO:remove, replaced with DatabaseEngineFactory
+ */
 public interface DatabaseEngineConfiguration extends EngineConfiguration {
 
   MetadataStoreProvider getMetadataStore();

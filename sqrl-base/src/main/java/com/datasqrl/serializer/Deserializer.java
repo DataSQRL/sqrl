@@ -3,6 +3,7 @@
  */
 package com.datasqrl.serializer;
 
+import com.datasqrl.module.resolver.ResourceResolver;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +53,7 @@ public class Deserializer {
 
   public static <T> T mapFile(ObjectMapper mapper, URI uri, Class<T> clazz) {
     try {
-      return mapper.readValue(uri.toURL(), clazz);
+      return mapper.readValue(ResourceResolver.toURL(uri), clazz);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

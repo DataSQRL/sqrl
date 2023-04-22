@@ -28,11 +28,11 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     StreamEngine {
 
   public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = STANDARD_STREAM;
-  final FlinkEngineConfiguration config;
+  final ExecutionEnvironmentFactory execFactory;
 
-  public AbstractFlinkStreamEngine(FlinkEngineConfiguration config) {
-    super(FlinkEngineConfiguration.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
-    this.config = config;
+  public AbstractFlinkStreamEngine(ExecutionEnvironmentFactory execFactory) {
+    super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
+    this.execFactory = execFactory;
   }
 
   @Override

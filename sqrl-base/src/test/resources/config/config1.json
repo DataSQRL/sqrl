@@ -1,0 +1,50 @@
+{
+  "key1" : "value1",
+  "key2" : 5,
+  "key3" : true,
+  "sub" : {
+    "v1" : 10,
+    "v2" : "hello"
+  },
+  "list" : ["a", "b", "c"],
+  "map" : {
+    "e1" : {
+      "field1" : 5,
+      "field2" : "blub",
+      "field3" : ["a", "b", "c"]
+    },
+    "e2" : {
+      "field1" : 7,
+      "field2" : "yek"
+    },
+    "e3" : {
+      "field1" : 9,
+      "field2" : "flip"
+    }
+  },
+  "x1" : {
+    "optInt" : 2,
+    "optString" : "hello world",
+    "flag" : false
+  },
+  "x2" : {
+    "optString" : "hello world",
+    "flag" : false
+  },
+  "xf1" : {
+    "optInt" : 2,
+    "optString" : "hel",
+    "flag" : false
+  },
+  "xf2" : {
+    "optInt" : 2,
+    "optString" : "hello world"
+  },
+  "nested" : {
+    "counter" : 5,
+    "obj" : {
+      "optString" : "hello world",
+      "flag" : true
+    }
+  }
+}

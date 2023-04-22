@@ -3,10 +3,11 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.FlinkSourceFactoryContext;
+import com.datasqrl.config.FlinkSourceFactoryContext;
 import com.datasqrl.config.SourceServiceLoader;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.monitor.SaveMetricsSink;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.FlinkUtilities;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.MetricStore.Provider;
@@ -65,15 +66,14 @@ public class FlinkStreamBuilder implements DataMonitor {
   public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
     Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser,
         "This method only supports text sources");
-    DataSystemConnector sourceConnector = table.getConnector();
+    TableConfig tableConfig = table.getConfiguration();
     String flinkSourceName = table.getDigest().toString('-', "input");
 
     StreamExecutionEnvironment env = getEnvironment();
     DataStream<TimeAnnotatedRecord<String>> timedSource =
-        (DataStream<TimeAnnotatedRecord<String>>)new SourceServiceLoader().load("flink", sourceConnector.getSystemType())
-        .orElseThrow(()->new UnsupportedOperationException("Unrecognized source table type: " + table))
-        .create(sourceConnector, new FlinkSourceFactoryContext(env, flinkSourceName,
-            table.getConfiguration().getFormat(), table.getConfiguration(), getUuid()));
+        (DataStream<TimeAnnotatedRecord<String>>)new SourceServiceLoader().load(FlinkEngineFactory.ENGINE_NAME,
+                tableConfig.getConnectorName())
+        .create(new FlinkSourceFactoryContext(env, flinkSourceName, tableConfig, getUuid()));
     return new FlinkStreamHolder<>(this, timedSource);
   }
 

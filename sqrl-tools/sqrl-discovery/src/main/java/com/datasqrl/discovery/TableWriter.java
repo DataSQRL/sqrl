@@ -49,7 +49,7 @@ public class TableWriter {
             table.getName().getCanonical() + TABLE_FILE_SUFFIX);
     TableSchema ts = table.getSchema().getSchema();
     TableConfig config = table.getConfiguration().toBuilder().schema(ts.getSchemaType()).build();
-    jsonMapper.writeValue(tableConfigFile.toFile(), config);
+    config.toFile(tableConfigFile);
     if (ts instanceof FlexibleTableSchema) {
       TableDefinition outputSchema = export.export((FlexibleTableSchema) ts);
       Path schemaFile = destinationDir.resolve(FlexibleTableSchemaFactory.getSchemaFilename(config));

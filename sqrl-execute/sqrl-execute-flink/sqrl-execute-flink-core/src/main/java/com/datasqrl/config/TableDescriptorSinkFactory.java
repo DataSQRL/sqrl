@@ -1,8 +1,12 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.SinkFactory.FlinkSinkFactoryContext;
 import org.apache.flink.table.api.TableDescriptor;
 
-public interface TableDescriptorSinkFactory extends SinkFactory<TableDescriptor.Builder, FlinkSinkFactoryContext> {
+public interface TableDescriptorSinkFactory extends SinkFactory<TableDescriptor.Builder, SinkFactoryContext> {
+
+  @Override
+  default String getEngine() {
+    return "flink";
+  }
 
 }

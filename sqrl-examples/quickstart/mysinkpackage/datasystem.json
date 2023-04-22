@@ -3,12 +3,23 @@
   "canonicalizer": "system",
   "charset": "UTF-8",
   "format": {
-    "formatType": "json"
+    "name": "json"
   },
   "name": "mysink",
   "datadiscovery": {
     "directoryURI": "../../sqrl-examples/quickstart/mysink-output/",
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
     "systemType": "dir"
+  },
+  "connector" : "kafka",
+  "kafka" : {
+    "bootstrap.server" : "x",
+    ""
+  },
+
+  "connector" : {
+    "name" : "kafka",
+
   }
+
 }

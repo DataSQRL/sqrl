@@ -3,8 +3,9 @@
  */
 package com.datasqrl.util.data;
 
-import com.datasqrl.io.DataSystemDiscoveryConfig;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
@@ -31,12 +32,11 @@ public class Nutshop implements TestDataset {
 
   public static final Nutshop URL = new Nutshop(Variant.url) {
     @Override
-    public DataSystemDiscoveryConfig getDiscoveryConfig() {
-      return DirectoryDataSystemConfig.Discovery.builder()
-          .fileURIs(List.of(
-              "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/orders_part1.json.gz",
-              "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/products.csv.gz"))
-          .build();
+    public TableConfig getDiscoveryConfig() {
+      List<String> urls = List.of(
+          "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/orders_part1.json.gz",
+          "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/products.csv.gz");
+      return FileDataSystemFactory.getFileDiscoveryConfig(getName(), FileDataSystemConfig.builder().fileURIs(urls).build());
     }
   };
 

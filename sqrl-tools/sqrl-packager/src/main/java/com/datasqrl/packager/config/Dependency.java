@@ -16,6 +16,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Dependency {
 
+
+
   String name;
   String version;
   String variant;

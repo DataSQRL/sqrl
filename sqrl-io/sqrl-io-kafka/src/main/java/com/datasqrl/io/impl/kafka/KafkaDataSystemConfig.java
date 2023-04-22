@@ -5,9 +5,7 @@ package com.datasqrl.io.impl.kafka;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.DataSystemConnectorConfig;
 import com.datasqrl.io.DataSystemDiscovery;
-import com.datasqrl.io.DataSystemDiscoveryConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
@@ -75,40 +73,6 @@ public abstract class KafkaDataSystemConfig {
     return properties;
   }
 
-  @SuperBuilder
-  @NoArgsConstructor
-  @AutoService(DataSystemConnectorConfig.class)
-  public static class Connector extends KafkaDataSystemConfig implements DataSystemConnectorConfig {
-
-    private Connector(Discovery discovery) {
-      super(discovery.servers, discovery.topicPrefix);
-    }
-
-    @Override
-    public DataSystemConnector initialize(@NonNull ErrorCollector errors) {
-      if (rootInitialize(errors)) {
-        return new KafkaDataSystem.Connector(getProperties(), topicPrefix);
-      } else {
-        return null;
-      }
-    }
-
-  }
-
-  @SuperBuilder
-  @NoArgsConstructor
-  @AutoService(DataSystemDiscoveryConfig.class)
-  public static class Discovery extends KafkaDataSystemConfig implements DataSystemDiscoveryConfig {
-
-    @Override
-    public DataSystemDiscovery initialize(@NonNull ErrorCollector errors) {
-      if (rootInitialize(errors)) {
-        return new KafkaDataSystem.Discovery(getProperties(), topicPrefix, new Connector(this));
-      } else {
-        return null;
-      }
-    }
-  }
 
 
 }

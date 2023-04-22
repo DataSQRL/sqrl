@@ -11,6 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
+/**
+ * TODO: remove, replaced by factory
+ */
 @Builder
 @Getter
 @NoArgsConstructor

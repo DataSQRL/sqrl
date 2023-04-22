@@ -3,7 +3,7 @@ package com.datasqrl;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Raw;
-import com.datasqrl.io.formats.Format.Parser;
+import com.datasqrl.io.formats.FormatFactory.Parser;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.engine.stream.MapText2Raw;
 import com.datasqrl.io.util.TimeAnnotatedRecord;

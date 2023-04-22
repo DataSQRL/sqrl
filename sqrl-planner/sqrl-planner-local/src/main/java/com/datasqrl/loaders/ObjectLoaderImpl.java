@@ -1,19 +1,19 @@
 package com.datasqrl.loaders;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
-import com.datasqrl.io.DataSystem;
-import com.datasqrl.io.DataSystemConfig;
+import com.datasqrl.io.DataSystemDiscovery;
+import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
-import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.datasqrl.serializer.Deserializer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -62,10 +62,9 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   private List<NamespaceObject> loadDataSystem(URI uri, NamePath basePath) {
-    DataSystemConfig dataSystemConfig = deserializer.mapJsonFile(uri, DataSystemConfig.class);
-
-    DataSystem dataSystem = dataSystemConfig.initialize(errors);
-    return List.of(new DataSystemNsObject(basePath, dataSystem));
+    TableConfig discoveryConfig = TableConfig.load(uri, basePath.getLast(), errors);
+    DataSystemDiscovery discovery = discoveryConfig.initializeDiscovery();
+    return List.of(new DataSystemNsObject(basePath, discovery));
   }
 
   @SneakyThrows
@@ -73,7 +72,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
     TableConfig tableConfig = deserializer.mapJsonFile(uri, TableConfig.class);
 
-    String schemaType = tableConfig.getSchema();
+    String schemaType = tableConfig.getBase().getSchema();
     errors.checkFatal(!Strings.isNullOrEmpty(schemaType), "Schema has not been configured for table [%s]", uri);
     Optional<TableSchemaFactory> tsfOpt = ServiceLoaderDiscovery.findFirst(TableSchemaFactory.class, tsf -> tsf.getType(), schemaType);
     errors.checkFatal(tsfOpt.isPresent(), "Could not find schema factory [%s] for table [%s]", schemaType, uri);

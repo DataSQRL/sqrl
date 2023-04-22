@@ -1,5 +1,7 @@
 package com.datasqrl;
 
+import static com.datasqrl.loaders.LoaderUtil.loadSink;
+
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -34,7 +36,7 @@ public class SqrlTestDIModule extends SqrlDIModule {
 
   private static ErrorSink createErrorSink(NamePath errorSink, ErrorCollector errors,
       ModuleLoader moduleLoader) {
-    return new ErrorSink(loadErrorSink(errorSink, errors, moduleLoader));
+    return new ErrorSink(loadSink(errorSink, errors, moduleLoader));
   }
 
   private static ModuleLoader createModuleLoader(Path rootDir, Map<NamePath, SqrlModule> addlModules,
@@ -48,18 +50,5 @@ public class SqrlTestDIModule extends SqrlDIModule {
     }
   }
 
-  private static TableSink loadErrorSink(@NonNull @NotEmpty NamePath sinkPath, ErrorCollector error,
-      ModuleLoader ml) {
-    Optional<TableSink> errorSink = ml
-        .getModule(sinkPath.popLast())
-        .flatMap(m->m.getNamespaceObject(sinkPath.popLast().getLast()))
-        .map(s -> ((DataSystemNsObject) s).getTable())
-        .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), error))
-        .map(tblConfig ->
-            tblConfig.initializeSink(error, sinkPath, Optional.empty()));
-    error.checkFatal(errorSink.isPresent(), ErrorCode.CANNOT_RESOLVE_TABLESINK,
-        "Cannot resolve table sink: %s", errorSink);
 
-    return errorSink.get();
-  }
 }

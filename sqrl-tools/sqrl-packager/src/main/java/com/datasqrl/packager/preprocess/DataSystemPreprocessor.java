@@ -1,5 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.loaders.DataSource;
 import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,7 +9,7 @@ import lombok.SneakyThrows;
 
 public class DataSystemPreprocessor implements Preprocessor {
 
-  public static final String DATASYSTEM_REGEX = "datasystem.json";
+  public static final String DATASYSTEM_REGEX = DataSource.DATASYSTEM_FILE;
 
   @Override
   public Pattern getPattern() {
