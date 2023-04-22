@@ -40,7 +40,7 @@ public class PipelineFactory {
 
 
   public MetadataStoreProvider getMetaDataStoreProvider(Optional<String> engineIdentifier) {
-    for (String engineId : config.getLocalKeys()) {
+    for (String engineId : config.getKeys()) {
       SqrlConfig engineConfig = config.getSubConfig(engineId);
       EngineFactory engineFactory = EngineFactory.fromConfig(engineConfig);
       if (engineIdentifier.map(id -> id.equalsIgnoreCase(engineId))
@@ -55,7 +55,7 @@ public class PipelineFactory {
 
   private Map<String, ExecutionEngine> getEngines(Optional<ExecutionEngine.Type> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
-    for (String engineId : config.getLocalKeys()) {
+    for (String engineId : config.getKeys()) {
       SqrlConfig engineConfig = config.getSubConfig(engineId);
       EngineFactory engineFactory = EngineFactory.fromConfig(engineConfig);
       if (engineType.map(type -> engineFactory.getEngineType()==type).orElse(true)) {

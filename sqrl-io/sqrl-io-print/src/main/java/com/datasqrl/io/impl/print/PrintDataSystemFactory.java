@@ -52,7 +52,7 @@ public abstract class PrintDataSystemFactory implements DataSystemImplementation
         .type(ExternalDataType.sink.name())
         .build());
     builder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
-    builder.getConnectorConfig().setProperty(SYSTEM_NAME_KEY, SYSTEM_NAME_KEY);
+    builder.getConnectorConfig().setProperty(SYSTEM_NAME_KEY, SYSTEM_NAME);
     return builder.build();
   }
 

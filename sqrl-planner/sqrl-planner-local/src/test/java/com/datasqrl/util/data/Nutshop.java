@@ -36,7 +36,7 @@ public class Nutshop implements TestDataset {
       List<String> urls = List.of(
           "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/orders_part1.json.gz",
           "https://github.com/DataSQRL/sqrl/raw/55628dff255ffdf4c6de879ea1f2abe4b54d5e99/sqrl-examples/nutshop/data-compress/products.csv.gz");
-      return FileDataSystemFactory.getFileDiscoveryConfig(getName(), FileDataSystemConfig.builder().fileURIs(urls).build());
+      return FileDataSystemFactory.getFileDiscoveryConfig(getName(), FileDataSystemConfig.builder().fileURIs(urls).build()).build();
     }
   };
 

@@ -2,6 +2,8 @@ package com.datasqrl.io.impl.file;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.tables.BaseTableConfig;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemConnectorFactory;
@@ -25,7 +27,7 @@ public class FileDataSystemFactory implements DataSystemImplementationFactory {
     return SYSTEM_NAME;
   }
 
-  public static TableConfig getFileDiscoveryConfig(String name, FileDataSystemConfig config) {
+  public static TableConfig.Builder getFileDiscoveryConfig(String name, FileDataSystemConfig config) {
     BaseTableConfig baseTable = BaseTableConfig.builder()
         .type(ExternalDataType.source_and_sink.name())
         .build();
@@ -33,18 +35,20 @@ public class FileDataSystemFactory implements DataSystemImplementationFactory {
     SqrlConfig connectorConfig = tblBuilder.getConnectorConfig();
     connectorConfig.setProperty(SYSTEM_NAME_KEY, SYSTEM_NAME);
     connectorConfig.setProperties(config);
-    return tblBuilder.build();
+    return tblBuilder;
   }
 
-  public static TableConfig getFileDiscoveryConfig(Path path) {
+  public static TableConfig.Builder getFileDiscoveryConfig(Path path) {
     Preconditions.checkArgument(Files.isDirectory(path));
     String name = path.getFileName().toString();
     return getFileDiscoveryConfig(name,
         FileDataSystemConfig.builder().directoryURI(path.toString()).build());
   }
 
-  public static DataSystemDiscovery getFileDiscovery(Path path) {
-    return getFileDiscoveryConfig(path).initializeDiscovery();
+  public static TableConfig.Builder getFileSinkConfig(Path path) {
+    TableConfig.Builder builder = getFileDiscoveryConfig(path);
+    builder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
+    return builder;
   }
 
 

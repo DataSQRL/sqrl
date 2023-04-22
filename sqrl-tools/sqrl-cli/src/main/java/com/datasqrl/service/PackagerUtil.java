@@ -62,7 +62,7 @@ public class PackagerUtil {
     File file = enginesFile.toFile();
     file.deleteOnExit();
 
-    config.toFile(enginesFile);
+    config.toFile(enginesFile,true);
     return enginesFile;
   }
 

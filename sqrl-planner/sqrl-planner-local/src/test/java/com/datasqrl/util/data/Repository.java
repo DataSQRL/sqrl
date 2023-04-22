@@ -22,6 +22,6 @@ public class Repository extends UseCaseExample {
         FileDataSystemConfig.builder()
             .directoryURI(getDataDirectory().toUri().getPath())
             .filenamePattern("([^\\.]+?)\\.(?:[-_A-Za-z0-9]+)")
-            .build());
+            .build()).build();
   }
 }

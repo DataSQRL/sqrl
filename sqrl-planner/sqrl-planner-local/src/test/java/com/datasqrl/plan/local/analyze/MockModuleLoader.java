@@ -51,7 +51,7 @@ public class MockModuleLoader implements ModuleLoader {
     }
 
     if (isOutputSink(namePath)) {
-      DataSystemDiscovery output = FileDataSystemFactory.getFileDiscovery(errorDir.get());
+      DataSystemDiscovery output = FileDataSystemFactory.getFileSinkConfig(errorDir.get()).build().initializeDiscovery();
       return Optional.of(
           new SqrlDirectoryModule(
               List.of(new DataSystemNsObject(namePath,output))));

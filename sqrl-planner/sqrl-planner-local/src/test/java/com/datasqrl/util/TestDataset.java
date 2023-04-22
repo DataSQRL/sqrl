@@ -23,7 +23,7 @@ public interface TestDataset {
   Path getDataDirectory();
 
   default TableConfig getDiscoveryConfig() {
-    return FileDataSystemFactory.getFileDiscoveryConfig(getDataDirectory());
+    return FileDataSystemFactory.getFileDiscoveryConfig(getDataDirectory()).build();
   }
 
   Set<String> getTables();

@@ -55,7 +55,7 @@ public class DiscoverCommand extends AbstractCommand {
       Deserializer deserialize = new Deserializer();
       discoveryConfig = TableConfig.load(inputFile, Name.system(inputFile.getFileName().toString()), errors);
     } else if (inputFile != null && Files.isDirectory(inputFile)) {
-      discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile);
+      discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile).build();
     } else {
       errors.fatal("Could not find data system configuration or directory at: %s", inputFile);
     }

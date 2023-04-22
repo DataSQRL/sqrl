@@ -19,7 +19,7 @@ public interface SqrlConfig {
    *
    * @return Iterable over all local keys at the current level of nesting in the configuration
    */
-  Iterable<String> getLocalKeys();
+  Iterable<String> getKeys();
 
   /**
    * Returns all keys in this (sub) configuration including
@@ -27,7 +27,7 @@ public interface SqrlConfig {
    *
    * @return Iterable over all keys in this configuration
    */
-  Iterable<String> getAllKeys();
+//  Iterable<String> getAllKeys();
 
   boolean containsKey(String key);
 
@@ -47,7 +47,13 @@ public interface SqrlConfig {
 
   void copy(SqrlConfig from);
 
-  void toFile(Path file);
+  default void toFile(Path file) {
+    toFile(file,false);
+  }
+
+  void toFile(Path file, boolean pretty);
+
+  Map<String, Object> toMap();
 
   SerializedSqrlConfig serialize(); //TODO: add secrets injector
 

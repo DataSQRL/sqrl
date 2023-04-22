@@ -30,7 +30,7 @@ public class FlinkEngineFactory implements EngineFactory {
   }
 
   public Map<String,String> getFlinkConfiguration(@NonNull SqrlConfig config) {
-    return SqrlConfigUtil.toMap(config, EngineFactory.getReservedKeys());
+    return SqrlConfigUtil.toStringMap(config, EngineFactory.getReservedKeys());
   }
 
 }

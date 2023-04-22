@@ -96,7 +96,7 @@ public class UseCaseExample implements TestDataset {
       urls = fileStream.filter(Files::isRegularFile).
           map(Path::toString).collect(Collectors.toList());
     }
-    return FileDataSystemFactory.getFileDiscoveryConfig(getName(), FileDataSystemConfig.builder().fileURIs(urls).build());
+    return FileDataSystemFactory.getFileDiscoveryConfig(getName(), FileDataSystemConfig.builder().fileURIs(urls).build()).build();
   }
 
   public List<TestScript> getScripts() {

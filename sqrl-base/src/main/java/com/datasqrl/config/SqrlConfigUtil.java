@@ -1,25 +1,28 @@
 package com.datasqrl.config;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+
 import lombok.NonNull;
 
 public class SqrlConfigUtil {
 
-  public static Map<String,String> toMap(@NonNull SqrlConfig config, @NonNull Collection<String> withoutKeys) {
-    Map<String,String> conf = new HashMap<>();
-    config.getAllKeys().forEach(key -> {
-      if (!withoutKeys.contains(key)) conf.put(key, config.asString(key).get());
+  public static Map<String, String> toStringMap(@NonNull SqrlConfig config, @NonNull Collection<String> withoutKeys) {
+    return toMap(config, Object::toString, withoutKeys);
+  }
+
+  public static<R> Map<String, R> toMap(@NonNull SqrlConfig config, Function<Object,R> valueFunction, @NonNull Collection<String> withoutKeys) {
+    LinkedHashMap<String, R> result = new LinkedHashMap<>();
+    config.toMap().forEach((key,value) -> {
+      if (withoutKeys.contains(key)) return;
+      result.put(key,valueFunction.apply(value));
     });
-    return conf;
+    return result;
   }
 
   public static Properties toProperties(@NonNull SqrlConfig config, @NonNull Collection<String> withoutKeys) {
     Properties prop = new Properties();
-    prop.putAll(toMap(config,withoutKeys));
+    prop.putAll(toMap(config,Function.identity(),withoutKeys));
     return prop;
   }
 

@@ -219,7 +219,7 @@ public class Packager {
    */
   private void writePackageConfig() throws IOException {
     Path packageFile = buildDir.resolve(PACKAGE_FILE_NAME);
-    config.toFile(packageFile);
+    config.toFile(packageFile, true);
   }
 
   private void cleanBuildDir() throws IOException {

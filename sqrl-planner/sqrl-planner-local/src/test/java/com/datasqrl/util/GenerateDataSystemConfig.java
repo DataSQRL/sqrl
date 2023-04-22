@@ -23,12 +23,12 @@ public class GenerateDataSystemConfig {
     TestDataset testDataset = Retail.INSTANCE;
     Path output = testDataset.getRootPackageDirectory().resolve("export-data");
 
-    TableConfig.Builder discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(output).toBuilder();
-    discoveryConfig.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
+    TableConfig.Builder sinkConfig = FileDataSystemFactory.getFileSinkConfig(output);
+
 
     Path datasystemConfigFile = testDataset.getRootPackageDirectory().resolve("output")
         .resolve(DataSource.DATASYSTEM_FILE);
-    discoveryConfig.build().toFile(datasystemConfigFile);
+    sinkConfig.build().toFile(datasystemConfigFile);
   }
 
 }

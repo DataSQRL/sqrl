@@ -59,7 +59,7 @@ public class TableConfig implements Serializable {
   }
 
   public void toFile(Path file) {
-    config.toFile(file);
+    config.toFile(file, true);
   }
 
   public ErrorCollector getErrors() {

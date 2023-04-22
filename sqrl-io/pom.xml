@@ -15,7 +15,7 @@
   <modules>
     <module>sqrl-io-core</module>
     <module>sqrl-io-file</module>
-    <module>sqrl-io-inmem</module>
+    <module>sqrl-io-mem</module>
     <module>sqrl-io-jdbc</module>
     <module>sqrl-io-kafka</module>
     <module>sqrl-io-print</module>

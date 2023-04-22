@@ -208,7 +208,7 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-io-inmem</artifactId>
+                <artifactId>sqrl-io-mem</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -3,6 +3,7 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.serializer.KryoProvider;
 import com.datasqrl.config.serializer.SerializerProvider;
+import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.DatabaseEngineFactory;
 import com.datasqrl.engine.database.relational.metadata.JDBCMetadataStore;
@@ -14,7 +15,7 @@ import com.google.auto.service.AutoService;
 import lombok.NonNull;
 import lombok.Value;
 
-@AutoService(DatabaseEngineFactory.class)
+@AutoService(EngineFactory.class)
 public class JDBCEngineFactory implements DatabaseEngineFactory {
   public static final String ENGINE_NAME = "jdbc";
 
