@@ -104,7 +104,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (execute) {
-      executePlan(result.getPlan());
+      executePlan(result.getPlan(), errors);
     }
 
     fut.map(f-> {
@@ -153,8 +153,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 //        writer.writeValueAsString(plan), StandardOpenOption.CREATE);
   }
 
-  private void executePlan(PhysicalPlan physicalPlan) {
+  private void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    PhysicalPlanExecutor.Result result = executor.execute(physicalPlan);
+    PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
   }
 }

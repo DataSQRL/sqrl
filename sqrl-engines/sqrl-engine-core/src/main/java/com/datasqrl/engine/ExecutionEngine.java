@@ -5,6 +5,7 @@ package com.datasqrl.engine;
 
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
@@ -45,7 +46,7 @@ public interface ExecutionEngine {
    */
   SqrlConfig getConnectorConfig();
 
-  ExecutionResult execute(EnginePhysicalPlan plan);
+  ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink);

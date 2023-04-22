@@ -131,7 +131,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    PhysicalPlanExecutor.Result result = executor.execute(physicalPlan);
+    PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
     //todo: filter out jdbc engine
     StagePlan db = physicalPlan.getStagePlans().stream()
         .filter(e-> e.getStage().getEngine() instanceof JDBCEngine)

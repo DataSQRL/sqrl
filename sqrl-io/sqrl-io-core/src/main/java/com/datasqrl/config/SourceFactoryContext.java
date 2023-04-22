@@ -7,9 +7,4 @@ public interface SourceFactoryContext {
 
   public TableConfig getTableConfig();
 
-  @Value
-  class Implementation implements SourceFactoryContext {
-    TableConfig tableConfig;
-  }
-
 }

@@ -1,5 +1,7 @@
 package com.datasqrl;
 
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.resolver.ClasspathResourceResolver;
@@ -34,13 +36,16 @@ public class FlinkMain {
     FlinkExecutablePlan executablePlan = deserializer.mapJsonFile(flinkPlan.get(), FlinkExecutablePlan.class);
     log.info("Found executable.");
 
-    FlinkEnvironmentBuilder builder = new FlinkEnvironmentBuilder();
-    StatementSet statementSet = executablePlan.accept(builder, null);
-
-    TableResult result = statementSet.execute();
-
-    result.await();
-
-    log.info("Plan execution complete: {}", result.getResultKind());
+    ErrorCollector errors = ErrorCollector.root();
+    try {
+      FlinkEnvironmentBuilder builder = new FlinkEnvironmentBuilder(errors);
+      StatementSet statementSet = executablePlan.accept(builder, null);
+      TableResult result = statementSet.execute();
+      result.await();
+      log.info("Plan execution complete: {}", result.getResultKind());
+    } catch (Exception e) {
+      errors.getCatcher().handle(e);
+    }
+    System.out.println(ErrorPrinter.prettyPrint(errors));
   }
 }

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.io.tables;
 
+import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
@@ -18,10 +19,14 @@ import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.schema.input.SchemaValidator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.net.URI;
 import java.nio.file.Path;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -32,6 +37,7 @@ public class TableConfig implements Serializable {
 
   public static final String CONNECTOR_KEY = "connector";
   public static final String FORMAT_KEY = "format";
+
   @NonNull Name name;
   @NonNull SqrlConfig config;
   @NonNull BaseTableConfig base;
@@ -183,6 +189,24 @@ public class TableConfig implements Serializable {
 
     public TableConfig build() {
       return new TableConfig(name,config);
+    }
+
+  }
+
+  public Serialized serialize() {
+    return new Serialized(name,config.serialize());
+  }
+
+  @AllArgsConstructor
+  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
+  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
+  public static class Serialized {
+
+    Name name;
+    SerializedSqrlConfig config;
+
+    public TableConfig deserialize(ErrorCollector errors) {
+      return new TableConfig(name, config.deserialize(errors));
     }
 
   }

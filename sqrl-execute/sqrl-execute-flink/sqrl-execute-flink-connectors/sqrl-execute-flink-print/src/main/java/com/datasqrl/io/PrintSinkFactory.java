@@ -1,7 +1,6 @@
 package com.datasqrl.io;
 
-import com.datasqrl.config.SinkFactoryContext;
-import com.datasqrl.config.SinkFactoryContext.Implementation;
+import com.datasqrl.config.FlinkSinkFactoryContext;
 import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.io.impl.print.PrintDataSystem;
 import com.datasqrl.io.impl.print.PrintDataSystemFactory;
@@ -17,7 +16,7 @@ public class PrintSinkFactory implements TableDescriptorSinkFactory {
   }
 
   @Override
-  public Builder create(SinkFactoryContext context) {
+  public Builder create(FlinkSinkFactoryContext context) {
     TableConfig tblConfig = context.getTableConfig();
     String identifier = tblConfig.getConnectorConfig().asString(PrintDataSystem.PREFIX_KEY).withDefault("").get();
     return TableDescriptor.forConnector("print")

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.io;
 
+import com.datasqrl.config.FlinkSinkFactoryContext;
 import com.datasqrl.config.SinkFactoryContext;
 import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
@@ -20,7 +21,7 @@ public class JdbcSinkFactory
   }
 
   @Override
-  public TableDescriptor.Builder create(SinkFactoryContext context) {
+  public TableDescriptor.Builder create(FlinkSinkFactoryContext context) {
     JdbcDataSystemConnector jdbc = new JdbcDataSystemConnectorFactory().initialize(context.getTableConfig()
         .getConnectorConfig());
 

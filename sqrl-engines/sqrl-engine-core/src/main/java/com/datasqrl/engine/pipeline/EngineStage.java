@@ -7,6 +7,7 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.List;
@@ -29,8 +30,8 @@ public class EngineStage implements ExecutionStage {
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan) {
-    return engine.execute(plan);
+  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
+    return engine.execute(plan, errors);
   }
 
   @Override

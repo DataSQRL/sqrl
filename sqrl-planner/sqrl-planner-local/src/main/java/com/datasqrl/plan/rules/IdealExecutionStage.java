@@ -5,6 +5,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -34,7 +35,7 @@ public final class IdealExecutionStage implements ExecutionStage {
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan) {
+  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     throw new UnsupportedOperationException();
   }
 

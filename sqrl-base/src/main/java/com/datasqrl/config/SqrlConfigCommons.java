@@ -2,6 +2,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.lang.reflect.Field;
@@ -20,7 +21,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -311,8 +314,9 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   @AllArgsConstructor
-  @NoArgsConstructor
-  private static class Serialized implements SerializedSqrlConfig {
+  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
+  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
+  public static class Serialized implements SerializedSqrlConfig {
 
     String configFilename;
     Map<String,Object> configs;

@@ -15,6 +15,7 @@ import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexSelectorConfig;
@@ -63,7 +64,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan) {
+  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     Preconditions.checkArgument(plan instanceof JDBCPhysicalPlan);
     JDBCPhysicalPlan jdbcPlan = (JDBCPhysicalPlan) plan;
     List<String> dmls = jdbcPlan.getDdlStatements().stream().map(ddl -> ddl.toSql())

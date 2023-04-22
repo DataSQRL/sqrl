@@ -88,7 +88,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
             .sorted().collect(Collectors.joining(System.lineSeparator())), "database");
 
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    executor.execute(physicalPlan);
+    executor.execute(physicalPlan, errors);
 
 
     SqlClient client;

@@ -63,7 +63,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan) {
+  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     throw new UnsupportedOperationException();
   }
 

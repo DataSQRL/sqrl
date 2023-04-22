@@ -7,6 +7,7 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public interface ExecutionStage {
 //   */
 //  Optional<ExecutionStage> nextStage();
 
-  ExecutionResult execute(EnginePhysicalPlan plan);
+  ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink);

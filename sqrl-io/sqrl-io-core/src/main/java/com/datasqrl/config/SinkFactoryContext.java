@@ -9,9 +9,4 @@ public interface SinkFactoryContext {
 
   public TableConfig getTableConfig();
 
-  @Value
-  class Implementation implements SinkFactoryContext {
-    String tableName;
-    TableConfig tableConfig;
-  }
 }

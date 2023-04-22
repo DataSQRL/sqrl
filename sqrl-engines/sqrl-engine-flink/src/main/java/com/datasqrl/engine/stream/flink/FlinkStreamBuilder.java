@@ -73,7 +73,7 @@ public class FlinkStreamBuilder implements DataMonitor {
     DataStream<TimeAnnotatedRecord<String>> timedSource =
         (DataStream<TimeAnnotatedRecord<String>>)new SourceServiceLoader().load(FlinkEngineFactory.ENGINE_NAME,
                 tableConfig.getConnectorName())
-        .create(new FlinkSourceFactoryContext(env, flinkSourceName, tableConfig, getUuid()));
+        .create(new FlinkSourceFactoryContext(env, flinkSourceName, tableConfig, tableConfig.getFormat(), getUuid()));
     return new FlinkStreamHolder<>(this, timedSource);
   }
 

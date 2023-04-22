@@ -7,14 +7,14 @@ import com.datasqrl.config.SourceServiceLoader;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 
 public class FlinkConnectorServiceLoader {
-  public static Class<?> resolveSourceClass(String connectorName) {
+  public static Class<? extends SourceFactory> resolveSourceClass(String connectorName) {
     SourceFactory factory = (new SourceServiceLoader())
         .load(FlinkEngineFactory.ENGINE_NAME, connectorName);
 
     return factory.getClass();
   }
 
-  public static Class<?> resolveSinkClass(String connectorName) {
+  public static Class<? extends SinkFactory> resolveSinkClass(String connectorName) {
     SinkFactory factory = (new SinkServiceLoader())
         .load(FlinkEngineFactory.ENGINE_NAME, connectorName);
 
