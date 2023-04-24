@@ -11,12 +11,15 @@ import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.List;
+
+import com.google.auto.service.AutoService;
 import lombok.*;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@AutoService(FormatFactory.class)
 public class JsonLineFormat implements TextLineFormat {
 
   public static final String NAME = "json";

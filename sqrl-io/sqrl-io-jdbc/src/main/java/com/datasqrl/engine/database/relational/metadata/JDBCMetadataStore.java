@@ -48,7 +48,7 @@ public class JDBCMetadataStore implements MetadataStore {
     this.kryo = kryo;
     try {
       this.connection = DriverManager.getConnection(
-          config.getDbURL(),
+          config.getUrl(),
           config.getUser(),
           config.getPassword()
       );

@@ -27,9 +27,15 @@ import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Sensors;
 import com.datasqrl.util.junit.ArgumentProvider;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.google.common.collect.Iterables;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -69,8 +75,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     SchemaExport export = new SchemaExport();
     //Write out table configurations
     for (TableSource table : tables) {
-      String json = FileTestUtil.writeJson(table.getConfiguration());
-      assertTrue(json.length() > 0);
+      assertTrue(Iterables.size(table.getConfiguration().getConfig().getKeys()) > 0);
 
       TableDefinition outputSchema = export.export((FlexibleTableSchema) table.getSchema().getSchema());
       snapshot.addContent(FileTestUtil.writeYaml(outputSchema), table.getName().getDisplay() + " schema");

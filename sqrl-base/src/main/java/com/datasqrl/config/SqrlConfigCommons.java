@@ -67,7 +67,7 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   private String getPrefix(String name) {
-    return prefix + name + DELIMITER;
+    return getFullKey(name) + DELIMITER;
   }
 
   private String getFullKey(String key) {
@@ -380,7 +380,9 @@ public class SqrlConfigCommons implements SqrlConfig {
     public SqrlConfig deserialize(@NonNull ErrorCollector errors) {
       Configuration config = new BaseHierarchicalConfiguration();
       configs.forEach(config::setProperty);
-      return new SqrlConfigCommons(errors.withConfig(configFilename), configFilename, config, prefix);
+      ErrorCollector configErrors = errors;
+      if (!Strings.isNullOrEmpty(configFilename)) configErrors = configErrors.withConfig(configFilename);
+      return new SqrlConfigCommons(configErrors, configFilename, config, prefix);
     }
   }
 

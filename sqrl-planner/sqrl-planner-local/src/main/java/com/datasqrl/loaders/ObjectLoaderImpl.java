@@ -14,6 +14,7 @@ import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -51,12 +52,12 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   private List<? extends NamespaceObject> load(URI uri, NamePath directory) {
-    if (uri.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
+    if (uri.toString().endsWith(DataSource.DATASYSTEM_FILE)) {
+      return loadDataSystem(uri, directory);
+    } else if (uri.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
       return loadTable(uri, directory);
     } else if (uri.toString().endsWith(FUNCTION_JSON)) {
       return loadFunction(uri, directory);
-    } else if (uri.toString().endsWith(DataSource.DATASYSTEM_FILE)) {
-      return loadDataSystem(uri, directory);
     }
     return List.of();
   }
@@ -69,9 +70,8 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
   @SneakyThrows
   private List<TableSourceNamespaceObject> loadTable(URI uri, NamePath basePath) {
-
-    TableConfig tableConfig = deserializer.mapJsonFile(uri, TableConfig.class);
-
+    String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(uri),DataSource.TABLE_FILE_SUFFIX);
+    TableConfig tableConfig = TableConfig.load(uri, Name.system(tableName), errors);
     String schemaType = tableConfig.getBase().getSchema();
     errors.checkFatal(!Strings.isNullOrEmpty(schemaType), "Schema has not been configured for table [%s]", uri);
     Optional<TableSchemaFactory> tsfOpt = ServiceLoaderDiscovery.findFirst(TableSchemaFactory.class, tsf -> tsf.getType(), schemaType);
@@ -83,6 +83,9 @@ public class ObjectLoaderImpl implements ObjectLoader {
     return new DataSource().readTableSource(tableSchema.get(), tableConfig, errors, basePath)
             .map(TableSourceNamespaceObject::new).map(List::of).orElse(List.of());
   }
+
+
+
   private static final Class<?> UDF_FUNCTION_CLASS = UserDefinedFunction.class;
 
   @SneakyThrows

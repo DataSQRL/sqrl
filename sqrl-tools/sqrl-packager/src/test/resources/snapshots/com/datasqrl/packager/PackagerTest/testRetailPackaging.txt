@@ -16,25 +16,22 @@ ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
 output
-output/datasystem.json
+output/system.discover.table.json
 package.json
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/package-exampleWOscript.json-package
 {
-  "package" : {
-    "name" : "datasqrl.examples.Retail",
-    "version" : "1.0.0",
-    "variant" : "dev",
-    "description" : "Simple e-commerce data example"
-  },
   "compiler" : {
-    "api" : {
-      "maxArguments" : 3
-    }
+    "maxApiArguments" : 3
   },
   "script" : {
     "main" : "c360-full.sqrl"
   },
-  "dependencies" : { }
+  "package" : {
+    "name" : "datasqrl.examples.Retail",
+    "variant" : "dev",
+    "description" : "Simple e-commerce data example",
+    "version" : "1.0.0"
+  }
 }
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/package-exampleWscript.json-dir
 build.gradle
@@ -54,27 +51,24 @@ ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
 output
-output/datasystem.json
+output/system.discover.table.json
 package.json
 schema.graphqls
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/package-exampleWscript.json-package
 {
-  "package" : {
-    "name" : "datasqrl.examples.Retail",
-    "version" : "1.0.0",
-    "variant" : "dev",
-    "description" : "Simple e-commerce data example"
+  "compiler" : {
+    "maxApiArguments" : 3
   },
   "script" : {
-    "main" : "c360-full.sqrl",
-    "graphql" : "schema.graphqls"
+    "graphql" : "schema.graphqls",
+    "main" : "c360-full.sqrl"
   },
-  "compiler" : {
-    "api" : {
-      "maxArguments" : 3
-    }
-  },
-  "dependencies" : { }
+  "package" : {
+    "name" : "datasqrl.examples.Retail",
+    "variant" : "dev",
+    "description" : "Simple e-commerce data example",
+    "version" : "1.0.0"
+  }
 }
 >>>../../sqrl-examples/retail/package-exampleWscript.json-dir
 build.gradle
@@ -94,27 +88,24 @@ ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
 output
-output/datasystem.json
+output/system.discover.table.json
 package.json
 schema.graphqls
 >>>../../sqrl-examples/retail/package-exampleWscript.json-package
 {
-  "package" : {
-    "name" : "datasqrl.examples.Retail",
-    "version" : "1.0.0",
-    "variant" : "dev",
-    "description" : "Simple e-commerce data example"
+  "compiler" : {
+    "maxApiArguments" : 3
   },
   "script" : {
-    "main" : "c360-full.sqrl",
-    "graphql" : "schema.graphqls"
+    "graphql" : "schema.graphqls",
+    "main" : "c360-full.sqrl"
   },
-  "compiler" : {
-    "api" : {
-      "maxArguments" : 3
-    }
-  },
-  "dependencies" : { }
+  "package" : {
+    "name" : "datasqrl.examples.Retail",
+    "variant" : "dev",
+    "description" : "Simple e-commerce data example",
+    "version" : "1.0.0"
+  }
 }
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWOscript.json-dir
 build.gradle
@@ -134,27 +125,24 @@ ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
 output
-output/datasystem.json
+output/system.discover.table.json
 package.json
 schema.graphqls
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWOscript.json-package
 {
-  "package" : {
-    "name" : "datasqrl.examples.Retail",
-    "version" : "1.0.0",
-    "variant" : "dev",
-    "description" : "Simple e-commerce data example"
-  },
   "compiler" : {
-    "api" : {
-      "maxArguments" : 3
-    }
+    "maxApiArguments" : 3
   },
   "script" : {
-    "main" : "c360-full.sqrl",
-    "graphql" : "schema.graphqls"
+    "graphql" : "schema.graphqls",
+    "main" : "c360-full.sqrl"
   },
-  "dependencies" : { }
+  "package" : {
+    "name" : "datasqrl.examples.Retail",
+    "variant" : "dev",
+    "description" : "Simple e-commerce data example",
+    "version" : "1.0.0"
+  }
 }
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWscript.json-dir
 build.gradle
@@ -174,27 +162,24 @@ ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
 output
-output/datasystem.json
+output/system.discover.table.json
 package.json
 schema.graphqls
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWscript.json-package
 {
-  "package" : {
-    "name" : "datasqrl.examples.Retail",
-    "version" : "1.0.0",
-    "variant" : "dev",
-    "description" : "Simple e-commerce data example"
+  "compiler" : {
+    "maxApiArguments" : 3
   },
   "script" : {
-    "main" : "c360-full.sqrl",
-    "graphql" : "schema.graphqls"
+    "graphql" : "schema.graphqls",
+    "main" : "c360-full.sqrl"
   },
-  "compiler" : {
-    "api" : {
-      "maxArguments" : 3
-    }
-  },
-  "dependencies" : { }
+  "package" : {
+    "name" : "datasqrl.examples.Retail",
+    "variant" : "dev",
+    "description" : "Simple e-commerce data example",
+    "version" : "1.0.0"
+  }
 }
 >>>../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWscript.json-dir
 build.gradle
@@ -214,25 +199,22 @@ ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
 output
-output/datasystem.json
+output/system.discover.table.json
 package.json
 schema.graphqls
 >>>../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWscript.json-package
 {
-  "package" : {
-    "name" : "datasqrl.examples.Retail",
-    "version" : "1.0.0",
-    "variant" : "dev",
-    "description" : "Simple e-commerce data example"
+  "compiler" : {
+    "maxApiArguments" : 3
   },
   "script" : {
-    "main" : "c360-full.sqrl",
-    "graphql" : "schema.graphqls"
+    "graphql" : "schema.graphqls",
+    "main" : "c360-full.sqrl"
   },
-  "compiler" : {
-    "api" : {
-      "maxArguments" : 3
-    }
-  },
-  "dependencies" : { }
+  "package" : {
+    "name" : "datasqrl.examples.Retail",
+    "variant" : "dev",
+    "description" : "Simple e-commerce data example",
+    "version" : "1.0.0"
+  }
 }

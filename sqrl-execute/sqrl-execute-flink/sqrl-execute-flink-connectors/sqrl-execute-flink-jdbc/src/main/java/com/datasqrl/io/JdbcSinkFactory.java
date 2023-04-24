@@ -4,7 +4,6 @@
 package com.datasqrl.io;
 
 import com.datasqrl.config.FlinkSinkFactoryContext;
-import com.datasqrl.config.SinkFactoryContext;
 import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnectorFactory;
@@ -26,10 +25,10 @@ public class JdbcSinkFactory
         .getConnectorConfig());
 
     TableDescriptor.Builder builder = TableDescriptor.forConnector("jdbc")
-        .option(JdbcConnectorOptions.URL, jdbc.getDbURL())
+        .option(JdbcConnectorOptions.URL, jdbc.getUrl())
         .option("table-name", context.getTableName());
-    Optional.ofNullable(jdbc.getDriverName())
-        .map(u->builder.option(JdbcConnectorOptions.DRIVER, jdbc.getDriverName()));
+    Optional.ofNullable(jdbc.getDriver())
+        .map(u->builder.option(JdbcConnectorOptions.DRIVER, jdbc.getDriver()));
     Optional.ofNullable(jdbc.getUser())
         .map(u->builder.option(JdbcConnectorOptions.USERNAME, u));
     Optional.ofNullable(jdbc.getPassword())

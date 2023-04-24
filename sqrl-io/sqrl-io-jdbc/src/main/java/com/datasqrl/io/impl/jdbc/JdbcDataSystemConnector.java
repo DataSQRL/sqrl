@@ -7,26 +7,24 @@ import com.datasqrl.config.Constraints.Default;
 import com.datasqrl.config.Constraints.MinLength;
 import com.datasqrl.config.Constraints.Regex;
 import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.util.constraints.OptionalMinString;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
+
+import java.io.Serializable;
 
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class JdbcDataSystemConnector implements DataSystemConnector {
+public class JdbcDataSystemConnector implements DataSystemConnector, Serializable {
 
-  @Regex(match = "^[a-z][_a-z0-9$]{2,}$")
-  String dbURL;
+  @MinLength(min = 3)
+  String url;
   @MinLength(min = 2)
   String dialect;
-  @MinLength(min = 1)
+  @Regex(match = "^[a-z][_a-z0-9$]{2,}$")
   String database;
   @Default
   String host = null;
@@ -37,7 +35,7 @@ public class JdbcDataSystemConnector implements DataSystemConnector {
   @Default
   String password = null;
   @Default @MinLength(min = 3)
-  String driverName = null;
+  String driver = null;
 
   @Override
   public boolean hasSourceTimestamp() {

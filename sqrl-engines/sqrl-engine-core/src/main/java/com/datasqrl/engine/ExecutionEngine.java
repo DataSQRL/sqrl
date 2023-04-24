@@ -3,10 +3,9 @@
  */
 package com.datasqrl.engine;
 
-import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.EnumSet;
@@ -40,11 +39,11 @@ public interface ExecutionEngine {
   String getName();
 
   /**
-   * Returns the {@link DataSystemConnector} for this engine so it can
+   * Returns the {@link com.datasqrl.io.tables.TableConfig} for this engine so it can
    * be used as a sink by a previous stage in the pipeline.
    * @return
    */
-  SqrlConfig getConnectorConfig();
+  TableConfig getSinkConfig(String sinkName);
 
   ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
@@ -65,7 +64,7 @@ public interface ExecutionEngine {
     }
 
     @Override
-    public SqrlConfig getConnectorConfig() {
+    public TableConfig getSinkConfig(String sinkName) {
       throw new UnsupportedOperationException("Not a sink");
     }
   }

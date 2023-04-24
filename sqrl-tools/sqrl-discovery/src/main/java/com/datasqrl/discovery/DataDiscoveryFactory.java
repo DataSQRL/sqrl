@@ -15,7 +15,7 @@ public class DataDiscoveryFactory {
 
   public static final String DISCOVERY_KEY = "discovery";
 
-  public static final String DATABASE_ENGINE_KEY = "databaseEngine";
+  public static final String DATABASE_ENGINE_KEY = "database";
 
   public static DataDiscovery fromConfig(@NonNull SqrlConfig config, ErrorCollector errors) {
     PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);

@@ -48,7 +48,12 @@ public class FileDataSystemDiscovery extends DataSystemDiscovery.Base {
     BaseTableConfig baseConfig = tableConfig.getBase();
     FormatFactory format = tableConfig.getFormat();
     FileDataSystemConfig fileConfig = FileDataSystemConfig.fromConfig(
-        tableConfig);
+            tableConfig);
+    return isTableFile(file, baseConfig, format, fileConfig);
+  }
+
+  public static boolean isTableFile(@NonNull FilePath file, @NonNull BaseTableConfig baseConfig,
+                                    @NonNull FormatFactory format, @NonNull FileDataSystemConfig fileConfig) {
     Optional<NameComponents> componentsOpt = file.getComponents(fileConfig.getPattern());
     if (componentsOpt.isEmpty()) {
       return false;

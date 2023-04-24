@@ -4,6 +4,8 @@ import com.datasqrl.config.Constraints.Default;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
+
+import java.io.Serializable;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.validation.constraints.NotNull;
@@ -15,7 +17,7 @@ import lombok.NonNull;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FileDataSystemConfig {
+public class FileDataSystemConfig implements Serializable {
 
   public static final String DEFAULT_FILENAME_PATTERN = "^([^\\.]+?)(?:_part.*)?$";
 

@@ -119,7 +119,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
     }
 
     @Override
-    public <M extends Metric<M>> void monitorTable(TableInput tableSource, StreamHolder<M> stream,
+    public <M extends Metric<M>> void monitorTable(StreamHolder<M> stream,
         Provider<M> storeProvider) {
       Preconditions.checkArgument(stream instanceof Holder);
       Holder<M> metrics = (Holder<M>) stream;

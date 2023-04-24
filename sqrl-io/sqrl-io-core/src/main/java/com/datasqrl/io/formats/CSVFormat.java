@@ -9,6 +9,7 @@ import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.io.impl.InputPreview;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.BufferedReader;
@@ -30,6 +31,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+@AutoService(FormatFactory.class)
 public class CSVFormat implements TextLineFormat {
 
   public static final String NAME = "csv";

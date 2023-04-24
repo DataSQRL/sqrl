@@ -53,7 +53,7 @@ public abstract class AbstractCommand implements Runnable {
     } else {
       client = JDBCPool.pool(vertx,
           new JDBCConnectOptions()
-              .setJdbcUrl(jdbc.getDbURL())
+              .setJdbcUrl(jdbc.getUrl())
               .setDatabase(jdbc.getDatabase()),
           new PoolOptions());
     }

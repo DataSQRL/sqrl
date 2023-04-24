@@ -32,9 +32,9 @@ public class ServiceHandler implements
         Map.class);
     RootGraphqlModel model = mapper.readValue(new File(MODEL_JSON), RootGraphqlModel.class);
 
-    Class.forName((String)jdbcConfig.get("driverName"));
+    Class.forName((String)jdbcConfig.get("driver"));
     Connection connection = DriverManager.getConnection(
-        (String)jdbcConfig.get("dbURL"), (String)jdbcConfig.get("user"), (String) jdbcConfig.get("password"));
+        (String)jdbcConfig.get("url"), (String)jdbcConfig.get("user"), (String) jdbcConfig.get("password"));
 
     GraphQL graphQL = model.accept(
         new SqrlGraphQLServer(),

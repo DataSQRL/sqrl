@@ -67,14 +67,14 @@ public class PackagerUtil {
   }
 
   protected static SqrlConfig createDefaultConfig(ErrorCollector errors) {
-    SqrlConfig config = SqrlConfigCommons.create(errors)
-        .getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
 
     SqrlConfig dbConfig = config.getSubConfig("database");
     dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
     dbConfig.setProperties(JdbcDataSystemConnector.builder()
-        .dbURL("jdbc:h2:file:./h2.db")
-        .driverName("org.h2.Driver")
+        .url("jdbc:h2:file:./h2.db")
+        .driver("org.h2.Driver")
         .dialect("h2")
         .database("datasqrl")
         .build()
@@ -83,7 +83,7 @@ public class PackagerUtil {
     SqrlConfig flinkConfig = config.getSubConfig("stream");
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
 
-    return config;
+    return rootConfig;
   }
 
   public static Optional<List<Path>> findRootPackageFiles(RootCommand root) {

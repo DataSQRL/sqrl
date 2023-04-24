@@ -139,7 +139,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         .orElseThrow();
     JDBCEngine dbEngine = (JDBCEngine) db.getStage().getEngine();
     Connection conn = DriverManager.getConnection(dbEngine.getConnector()
-        .getDbURL(), dbEngine.getConnector().getUser(),
+        .getUrl(), dbEngine.getConnector().getUser(),
         dbEngine.getConnector().getPassword());
 
     for (APIQuery query : queries) {

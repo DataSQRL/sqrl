@@ -112,7 +112,7 @@ public class KafkaBaseTest extends AbstractEngineIT {
 
   protected TableConfig getSystemConfigBuilder(String name,
       boolean withTopicPrefix) {
-    TableConfig.Builder tblBuilder = KafkaDataSystemFactory.getKafkaConfig(name, bootstrapServers, withTopicPrefix?name:null);
+    TableConfig.Builder tblBuilder = KafkaDataSystemFactory.getKafkaConfig(name, bootstrapServers, withTopicPrefix?name+".":null);
     tblBuilder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
     return tblBuilder.build();
   }

@@ -1,5 +1,6 @@
 package com.datasqrl.config;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.tables.TableConfig;
 import java.util.UUID;
@@ -10,7 +11,11 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 public class FlinkSourceFactoryContext implements SourceFactoryContext {
   StreamExecutionEnvironment env;
   String flinkName;
-  TableConfig tableConfig;
+  TableConfig.Serialized tableConfig;
   FormatFactory formatFactory;
   UUID uuid;
+
+  public TableConfig getTableConfig() {
+    return tableConfig.deserialize(ErrorCollector.root());
+  }
 }

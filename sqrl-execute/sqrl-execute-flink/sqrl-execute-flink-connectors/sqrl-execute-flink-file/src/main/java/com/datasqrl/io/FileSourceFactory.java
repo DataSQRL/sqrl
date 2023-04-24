@@ -11,6 +11,7 @@ import com.datasqrl.io.impl.file.FileDataSystemDiscovery;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
+import com.datasqrl.io.tables.BaseTableConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.util.FileStreamUtil;
@@ -68,7 +69,9 @@ public class FileSourceFactory implements DataStreamSourceFactory {
             format,
             FilePath.toFlinkPath(pathConfig.getDirectory()));
         Duration monitorDuration = null;
-        FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(ctx.getTableConfig());
+        FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(tableConfig.getBase(),
+                tableConfig.getFormat(),
+                FileDataSystemConfig.fromConfig(tableConfig));
         builder.setFileEnumerator(fileEnumerator);
         if (monitorDuration != null) {
           builder.monitorContinuously(Duration.ofSeconds(10));
@@ -94,7 +97,9 @@ public class FileSourceFactory implements DataStreamSourceFactory {
   public static class FileEnumeratorProvider implements
       org.apache.flink.connector.file.src.enumerate.FileEnumerator.Provider {
 
-    TableConfig table;
+    BaseTableConfig baseConfig;
+    FormatFactory format;
+    FileDataSystemConfig fileConfig;
 
     @Override
     public org.apache.flink.connector.file.src.enumerate.FileEnumerator create() {
@@ -112,7 +117,7 @@ public class FileSourceFactory implements DataStreamSourceFactory {
         } catch (IOException e) {
           return false;
         }
-        return FileDataSystemDiscovery.isTableFile(FilePath.fromFlinkPath(path), table);
+        return FileDataSystemDiscovery.isTableFile(FilePath.fromFlinkPath(path), baseConfig, format, fileConfig);
       }
     }
   }

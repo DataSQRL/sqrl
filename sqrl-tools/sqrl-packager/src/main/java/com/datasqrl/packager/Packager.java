@@ -128,7 +128,7 @@ public class Packager {
 
     // Add inferred dependencies to package config
     inferredDependencies.forEach((key, dep) -> {
-      config.getSubConfig(key).setProperties(dep);
+      config.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
     });
   }
 
@@ -153,9 +153,10 @@ public class Packager {
    */
 
   private void copyFilesToBuildDir() throws IOException {
-    Map<String,Path> destinationPaths = copyScriptFilesToBuildDir();
+    Map<String,Optional<Path>> destinationPaths = copyScriptFilesToBuildDir();
     //Files should exist, if error occurs its internal, hence we create root error collector
-    PackagerConfig.setScriptFiles(buildDir, config, destinationPaths, ErrorCollector.root());
+    PackagerConfig.setScriptFiles(buildDir, ScriptConfiguration.fromRootConfig(config),
+            destinationPaths, ErrorCollector.root());
 
     copyGradleBuildFileToBuildDir();
   }
@@ -166,9 +167,9 @@ public class Packager {
    *
    * @throws IOException
    */
-  private Map<String,Path> copyScriptFilesToBuildDir() throws IOException {
+  private Map<String,Optional<Path>> copyScriptFilesToBuildDir() throws IOException {
     SqrlConfig scriptConfig = ScriptConfiguration.fromRootConfig(config);
-    Map<String,Path> destinationPaths = new HashMap<>();
+    Map<String,Optional<Path>> destinationPaths = new HashMap<>();
     for (String fileKey : ScriptConfiguration.FILE_KEYS) {
       Optional<String> configuredFile = scriptConfig.asString(fileKey).getOptional();
       if (configuredFile.isPresent()) {
@@ -180,7 +181,7 @@ public class Packager {
         } else {
           destinationPath = copyRelativeFile(rootDir.resolve(configuredFile.get()), rootDir, buildDir);
         }
-        destinationPaths.put(fileKey,destinationPath);
+        destinationPaths.put(fileKey,Optional.of(destinationPath));
       }
     }
     return destinationPaths;

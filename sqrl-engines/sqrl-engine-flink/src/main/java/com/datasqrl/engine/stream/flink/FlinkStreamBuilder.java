@@ -73,12 +73,12 @@ public class FlinkStreamBuilder implements DataMonitor {
     DataStream<TimeAnnotatedRecord<String>> timedSource =
         (DataStream<TimeAnnotatedRecord<String>>)new SourceServiceLoader().load(FlinkEngineFactory.ENGINE_NAME,
                 tableConfig.getConnectorName())
-        .create(new FlinkSourceFactoryContext(env, flinkSourceName, tableConfig, tableConfig.getFormat(), getUuid()));
+        .create(new FlinkSourceFactoryContext(env, flinkSourceName, tableConfig.serialize(), tableConfig.getFormat(), getUuid()));
     return new FlinkStreamHolder<>(this, timedSource);
   }
 
   @Override
-  public <M extends Metric<M>> void monitorTable(TableInput tableSource, StreamHolder<M> stream,
+  public <M extends Metric<M>> void monitorTable(StreamHolder<M> stream,
       Provider<M> storeProvider) {
     Preconditions.checkArgument(stream instanceof FlinkStreamHolder);
 

@@ -1,9 +1,8 @@
 {
   "type" : "source",
   "canonicalizer" : "system",
-  "charset" : "UTF-8",
   "format" : {
-    "formatType" : "json"
+    "name" : "json"
   },
   "name" : "sensors",
   "identifier" : "sensors",
@@ -12,6 +11,6 @@
     "directoryURI" : "",
     "fileURIs" : [ "../../sqrl-examples/sensors/data/sensors_part0001.json.gz", "../../sqrl-examples/sensors/data/sensorreading_part0001.csv.gz", "../../sqrl-examples/sensors/data/sensors_part0000.json.gz", "../../sqrl-examples/sensors/data/machinegroup_part0001.json.gz" ],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
-    "systemType" : "dir"
+    "name" : "file"
   }
 }

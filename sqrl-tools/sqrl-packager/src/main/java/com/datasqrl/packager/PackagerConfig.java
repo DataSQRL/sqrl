@@ -13,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import lombok.Builder;
 import lombok.Value;
 
@@ -42,8 +44,8 @@ public class PackagerConfig {
 
   private void updateScriptConfig(ErrorCollector errors) {
     SqrlConfig scriptConfig = ScriptConfiguration.fromRootConfig(config);
-    setScriptFiles(rootDir, scriptConfig, ImmutableMap.of(ScriptConfiguration.MAIN_KEY, mainScript,
-        ScriptConfiguration.GRAPHQL_KEY, graphQLSchemaFile), errors);
+    setScriptFiles(rootDir, scriptConfig, ImmutableMap.of(ScriptConfiguration.MAIN_KEY, Optional.ofNullable(mainScript),
+        ScriptConfiguration.GRAPHQL_KEY, Optional.ofNullable(graphQLSchemaFile)), errors);
   }
 
   private Repository getRepository(ErrorCollector errors) {
@@ -57,12 +59,12 @@ public class PackagerConfig {
     return this.repository;
   }
 
-  public static void setScriptFiles(Path rootDir, SqrlConfig config, Map<String, Path> filesByKey,
+  public static void setScriptFiles(Path rootDir, SqrlConfig config, Map<String, Optional<Path>> filesByKey,
       ErrorCollector errors) {
     filesByKey.forEach((key, file) -> {
-      if (file!=null) {
-        errors.checkFatal(Files.isRegularFile(file), "Could not locate %s file: %s", key, file);
-        config.setProperty(key,rootDir.relativize(file).normalize().toString());
+      if (file.isPresent()) {
+        errors.checkFatal(Files.isRegularFile(file.get()), "Could not locate %s file: %s", key, file);
+        config.setProperty(key,rootDir.relativize(file.get()).normalize().toString());
       }
     });
   }

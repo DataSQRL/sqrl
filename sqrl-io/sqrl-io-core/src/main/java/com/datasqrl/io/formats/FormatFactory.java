@@ -13,7 +13,7 @@ import java.util.Map;
 import lombok.NonNull;
 import lombok.Value;
 
-public interface FormatFactory {
+public interface FormatFactory extends Serializable {
 
   List<String> getExtensions();
 

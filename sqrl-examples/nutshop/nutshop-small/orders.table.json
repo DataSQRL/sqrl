@@ -1,9 +1,8 @@
 {
   "type": "source",
   "canonicalizer": "system",
-  "charset": "UTF-8",
   "format": {
-    "formatType": "json"
+    "name": "json"
   },
   "name": "orders",
   "identifier": "orders",
@@ -13,6 +12,6 @@
       "../../sqrl-examples/nutshop/data-small/orders_part1.json"
     ],
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
-    "systemType": "dir"
+    "name": "file"
   }
 }

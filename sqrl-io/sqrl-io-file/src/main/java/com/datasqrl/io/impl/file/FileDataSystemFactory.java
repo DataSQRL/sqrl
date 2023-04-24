@@ -27,9 +27,10 @@ public class FileDataSystemFactory implements DataSystemImplementationFactory {
     return SYSTEM_NAME;
   }
 
-  public static TableConfig.Builder getFileDiscoveryConfig(String name, FileDataSystemConfig config) {
+  public static TableConfig.Builder getFileDiscoveryConfig(String name, ExternalDataType type,
+                                                           FileDataSystemConfig config) {
     BaseTableConfig baseTable = BaseTableConfig.builder()
-        .type(ExternalDataType.source_and_sink.name())
+        .type(type.name())
         .build();
     TableConfig.Builder tblBuilder = TableConfig.builder(Name.system(name)).base(baseTable);
     SqrlConfig connectorConfig = tblBuilder.getConnectorConfig();
@@ -38,15 +39,20 @@ public class FileDataSystemFactory implements DataSystemImplementationFactory {
     return tblBuilder;
   }
 
-  public static TableConfig.Builder getFileDiscoveryConfig(Path path) {
+  public static TableConfig.Builder getFileDiscoveryConfig(String name,
+                                                           FileDataSystemConfig config) {
+    return getFileDiscoveryConfig(name, ExternalDataType.source, config);
+  }
+
+  public static TableConfig.Builder getFileDiscoveryConfig(Path path, ExternalDataType type) {
     Preconditions.checkArgument(Files.isDirectory(path));
     String name = path.getFileName().toString();
-    return getFileDiscoveryConfig(name,
+    return getFileDiscoveryConfig(name, type,
         FileDataSystemConfig.builder().directoryURI(path.toString()).build());
   }
 
   public static TableConfig.Builder getFileSinkConfig(Path path) {
-    TableConfig.Builder builder = getFileDiscoveryConfig(path);
+    TableConfig.Builder builder = getFileDiscoveryConfig(path, ExternalDataType.sink);
     builder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
     return builder;
   }

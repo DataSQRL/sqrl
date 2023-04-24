@@ -21,4 +21,9 @@ public interface ResourceResolver {
     }
   }
 
+  static String getFileName(URI uri) {
+    String[] pathSegments = uri.getPath().split("/");
+    return pathSegments[pathSegments.length - 1];
+  }
+
 }

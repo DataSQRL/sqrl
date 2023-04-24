@@ -1,9 +1,9 @@
 {
   "type" : "source",
   "canonicalizer" : "system",
-  "charset" : "UTF-8",
   "format" : {
-    "formatType" : "csv",
+    "charset" : "UTF-8",
+    "name" : "csv",
     "delimiter" : ",",
     "commentPrefix" : null,
     "header" : [ "url", "category", "author", "updated" ]
@@ -15,6 +15,6 @@
     "directoryURI" : "",
     "fileURIs" : [ "https://github.com/DataSQRL/sqrl/raw/485185a28cff3f4dd8819549612ec84e5116efc7/sqrl-examples/clickstream/data/content.csv.gz"],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
-    "systemType" : "dir"
+    "name" : "file"
   }
 }

@@ -1,9 +1,9 @@
 {
   "type": "source",
   "canonicalizer": "system",
-  "charset": "UTF-8",
   "format": {
-    "formatType": "csv",
+    "name": "csv",
+    "charset": "UTF-8",
     "delimiter": ";",
     "header": [
       "id",
@@ -16,13 +16,12 @@
       "updated"
     ]
   },
-  "name": "products",
   "identifier": "products",
   "schema": "flexible",
   "connector": {
     "directoryURI": "/Users/henneberger/sqrl/sqrl-integration-tests/../sqrl-examples/udf/data/",
     "fileURIs": [],
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
-    "systemType": "dir"
+    "name": "file"
   }
 }

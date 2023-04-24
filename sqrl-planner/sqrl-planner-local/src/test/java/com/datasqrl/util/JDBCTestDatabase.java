@@ -30,21 +30,21 @@ public class JDBCTestDatabase implements DatabaseHandle {
     if (dbType == DatabaseEngine.H2) {
       connector = JdbcDataSystemConnector.builder()
               //When the mem db is closed,
-              .dbURL("jdbc:h2:mem:test_mem;DB_CLOSE_DELAY=-1")
-              .driverName("org.h2.Driver")
+              .url("jdbc:h2:mem:test_mem;DB_CLOSE_DELAY=-1")
+              .driver("org.h2.Driver")
               .dialect("h2")
               .database(TEST_DATABASE_NAME)
               .build();
     } else if (dbType == DatabaseEngine.SQLITE) {
       connector = JdbcDataSystemConnector.builder()
               //A connection may be leaking somewhere, the inmem doesn't close after test is done
-              .dbURL("jdbc:sqlite:file:test?mode=memory&cache=shared")
-              .driverName("org.sqlite.JDBC")
+              .url("jdbc:sqlite:file:test?mode=memory&cache=shared")
+              .driver("org.sqlite.JDBC")
               .dialect("sqlite")
               .database(TEST_DATABASE_NAME)
               .build();
       //Hold open the connection so the db stays around
-      this.sqliteConn = DriverManager.getConnection(connector.getDbURL());
+      this.sqliteConn = DriverManager.getConnection(connector.getUrl());
     } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES) {
       DockerImageName image = DockerImageName.parse("postgres:14.2");
       postgreSQLContainer = new PostgreSQLContainer(image)
@@ -54,8 +54,8 @@ public class JDBCTestDatabase implements DatabaseHandle {
       connector = JdbcDataSystemConnector.builder()
               .host(postgreSQLContainer.getHost())
               .port(postgreSQLContainer.getMappedPort(5432))
-              .dbURL(postgreSQLContainer.getJdbcUrl())
-              .driverName(postgreSQLContainer.getDriverClassName())
+              .url(postgreSQLContainer.getJdbcUrl())
+              .driver(postgreSQLContainer.getDriverClassName())
               .dialect("postgres")
               .user(postgreSQLContainer.getUsername())
               .password(postgreSQLContainer.getPassword())
@@ -79,7 +79,7 @@ public class JDBCTestDatabase implements DatabaseHandle {
     if (dbType == DatabaseEngine.H2) {
       try {
         //close after tests to clean up DB_CLOSE_DELAY
-        DriverManager.getConnection(connector.getDbURL())
+        DriverManager.getConnection(connector.getUrl())
             .createStatement().execute("SHUTDOWN");
       } catch (SQLException e) {
         throw new RuntimeException(e);

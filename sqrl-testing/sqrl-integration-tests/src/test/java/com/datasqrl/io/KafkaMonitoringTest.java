@@ -75,7 +75,7 @@ public class KafkaMonitoringTest extends KafkaBaseTest {
 
   @SneakyThrows
   private void monitor(TableConfig config) {
-    Path configFile = Files.createTempFile(rootDir, "system.table", ".json");
+    Path configFile = Files.createTempFile(rootDir, "system.discover.table", ".json");
     config.toFile(configFile);
     try {
       new RootCommand(rootDir).getCmd().execute("discover",

@@ -33,7 +33,7 @@ import lombok.Value;
 import java.util.Optional;
 
 @Value
-public class TableConfig implements Serializable {
+public class TableConfig {
 
   public static final String CONNECTOR_KEY = "connector";
   public static final String FORMAT_KEY = "format";

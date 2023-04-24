@@ -7,7 +7,7 @@ import com.datasqrl.io.util.Metric;
 
 public interface DataMonitor extends StreamSourceProvider {
 
-  <M extends Metric<M>> void monitorTable(TableInput tableSource, StreamHolder<M> stream,
+  <M extends Metric<M>> void monitorTable(StreamHolder<M> stream,
       MetricStore.Provider<M> storeProvider);
 
   Job build();

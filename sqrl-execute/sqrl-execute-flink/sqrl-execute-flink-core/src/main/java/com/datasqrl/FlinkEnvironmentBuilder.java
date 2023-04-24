@@ -358,7 +358,7 @@ public class FlinkEnvironmentBuilder implements
 
     SingleOutputStreamOperator<TimeAnnotatedRecord<String>> stream =
         sourceFactory.create(new FlinkSourceFactoryContext(context.getSEnv(), tableConfig.getName().getCanonical(),
-                tableConfig, formatFactory, UUID.randomUUID()));
+                tableConfig.serialize(), formatFactory, UUID.randomUUID()));
 
     OutputTag formatErrorTag = context.createErrorTag();
     FlinkFormatFactory flinkFormat = FlinkFormatFactory.of(formatFactory.getParser(tableConfig.getFormatConfig()));

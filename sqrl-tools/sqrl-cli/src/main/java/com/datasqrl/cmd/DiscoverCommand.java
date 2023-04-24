@@ -12,6 +12,7 @@ import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.DataMonitor.Job.Status;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
@@ -55,7 +56,7 @@ public class DiscoverCommand extends AbstractCommand {
       Deserializer deserialize = new Deserializer();
       discoveryConfig = TableConfig.load(inputFile, Name.system(inputFile.getFileName().toString()), errors);
     } else if (inputFile != null && Files.isDirectory(inputFile)) {
-      discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile).build();
+      discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile, ExternalDataType.source).build();
     } else {
       errors.fatal("Could not find data system configuration or directory at: %s", inputFile);
     }

@@ -47,7 +47,7 @@ public class PipelineFactory {
           .orElse(engineFactory.getEngineType()==Type.DATABASE)) {
         config.getErrorCollector().checkFatal(engineFactory instanceof DatabaseEngineFactory,
             "Selected or default engine [%s] for metadata is not a database engine", engineId);
-        return ((DatabaseEngineFactory)engineFactory).getMetadataStore(config);
+        return ((DatabaseEngineFactory)engineFactory).getMetadataStore(engineConfig);
       }
     }
     throw config.getErrorCollector().exception("Could not find database engine for metadata");

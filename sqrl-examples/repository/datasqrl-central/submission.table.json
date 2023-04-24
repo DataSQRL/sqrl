@@ -1,9 +1,8 @@
 {
   "type" : "source",
   "canonicalizer" : "system",
-  "charset" : "UTF-8",
   "format" : {
-    "formatType" : "json"
+    "name" : "json"
   },
   "name" : "submission",
   "identifier" : "package",
@@ -11,6 +10,6 @@
   "connector" : {
     "directoryURI" : "../../sqrl-examples/repository/data/",
     "filenamePattern": "^([^_]+?)_(?:[-_A-Za-z0-9]+)?$",
-    "systemType" : "dir"
+    "name" : "file"
   }
 }

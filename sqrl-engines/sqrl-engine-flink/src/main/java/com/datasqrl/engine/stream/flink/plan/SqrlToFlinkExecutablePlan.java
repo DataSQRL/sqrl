@@ -160,6 +160,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .tableConfig(tableConfig.serialize())
         .name(errorSink.getName().getDisplay())
         .connectorFactory(factory)
+        .formatFactory(tableConfig.getFormat().getClass())
         .namePath(errorSink.getPath())
         .build();
   }
@@ -378,16 +379,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   }
 
-  private TableConfig engineSink2Table(EngineSink engineSink) {
-    TableConfig.Builder tblBuilder = TableConfig.builder(engineSink.getNameId())
-        .base(BaseTableConfig.builder()
-            .type(ExternalDataType.sink.name())
-            .identifier(engineSink.getNameId())
-            .build());
-    SqrlConfig connectorConfig = tblBuilder.getConnectorConfig();
-    connectorConfig.copy(engineSink.getStage().getEngine().getConnectorConfig());
-    return tblBuilder.build();
-  }
 
   private void registerSinkTable(WriteSink sink, RelNode relNode) {
     String name;
@@ -396,7 +387,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     if (sink instanceof EngineSink) {
       EngineSink engineSink = (EngineSink) sink;
-      tableConfig = engineSink2Table(engineSink);
+      tableConfig = engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
       name = engineSink.getNameId();
       schema = new RelNodeToSchemaTransformer()
           .transform(relNode, engineSink.getNumPrimaryKeys());

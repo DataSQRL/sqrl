@@ -143,7 +143,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
   private JDBCConnectOptions toJdbcConfig(JdbcDataSystemConnector config) {
     JDBCConnectOptions options = new JDBCConnectOptions()
-        .setJdbcUrl(jdbc.getDbURL())
+        .setJdbcUrl(jdbc.getUrl())
         .setDatabase(jdbc.getDatabase());
 
     Optional.ofNullable(config.getUser()).map(options::setUser);

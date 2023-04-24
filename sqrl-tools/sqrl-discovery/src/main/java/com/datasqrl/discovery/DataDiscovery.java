@@ -78,7 +78,7 @@ public class DataDiscovery {
           ErrorPrefix.INPUT_DATA.resolve(table.getName()));
       StreamHolder<SourceTableStatistics> stats = stream.mapWithError(new ComputeMetrics(table.getDigest()),
           ErrorPrefix.INPUT_DATA.resolve(table.getName()), SourceTableStatistics.class);
-      dataMonitor.monitorTable(table, stats, new MetricStoreProvider(metadataStoreProvider,
+      dataMonitor.monitorTable(stats, new MetricStoreProvider(metadataStoreProvider,
           table.getDigest().getPath()));
     }
     DataMonitor.Job job = dataMonitor.build();
