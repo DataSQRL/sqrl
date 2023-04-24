@@ -24,10 +24,5 @@
       <artifactId>graphql-java</artifactId>
       <version>19.3</version>
     </dependency>
-    <dependency>
-      <groupId>org.jooq</groupId>
-      <artifactId>jooq</artifactId>
-      <version>3.16.12</version>
-    </dependency>
   </dependencies>
 </project>

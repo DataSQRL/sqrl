@@ -4,7 +4,7 @@
 package com.datasqrl.graphql.inference.argument;
 
 import com.datasqrl.graphql.inference.ArgumentSet;
-import com.datasqrl.graphql.server.Model.PgParameterHandler;
+import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.schema.SQRLTable;
 import graphql.language.InputValueDefinition;
 import java.util.List;
@@ -19,5 +19,5 @@ public class ArgumentHandlerContextV1 {
   Set<ArgumentSet> argumentSet;
   SQRLTable table;
   RelBuilder relBuilder;
-  List<PgParameterHandler> sourceHandlers;
+  List<JdbcParameterHandler> sourceHandlers;
 }

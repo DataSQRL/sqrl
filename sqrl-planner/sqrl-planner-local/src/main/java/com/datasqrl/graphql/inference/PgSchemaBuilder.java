@@ -23,10 +23,10 @@ import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
-import com.datasqrl.graphql.server.Model.PgParameterHandler;
+import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.graphql.server.Model.QueryBase;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.graphql.server.Model.SourcePgParameter;
+import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
@@ -158,7 +158,7 @@ public class PgSchemaBuilder implements
 
   //Creates a superset of all possible arguments w/ their respective query
   private Set<ArgumentSet> createArgumentSuperset(SQRLTable sqrlTable,
-      RelNode relNode, List<PgParameterHandler> existingHandlers,
+      RelNode relNode, List<JdbcParameterHandler> existingHandlers,
       List<InputValueDefinition> inputArgs, FieldDefinition fieldDefinition) {
     //todo: table functions
 
@@ -196,7 +196,7 @@ public class PgSchemaBuilder implements
 
   private ArgumentLookupCoords buildArgumentQuerySet(Set<ArgumentSet> possibleArgCombinations,
       ObjectTypeDefinition parent, FieldDefinition fieldDefinition,
-      List<PgParameterHandler> existingHandlers) {
+      List<JdbcParameterHandler> existingHandlers) {
     ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
         .parentType(parent.getName()).fieldName(fieldDefinition.getName());
 
@@ -206,7 +206,7 @@ public class PgSchemaBuilder implements
       APIQuery query = new APIQuery(UUID.randomUUID().toString(), relNode);
       apiQueries.add(query);
 
-      List<PgParameterHandler> argHandler = new ArrayList<>();
+      List<JdbcParameterHandler> argHandler = new ArrayList<>();
       argHandler.addAll(existingHandlers);
       argHandler.addAll(argumentSet.getArgumentParameters());
       QueryBase queryBase;
@@ -292,7 +292,7 @@ public class PgSchemaBuilder implements
       RelNode relNode = plan(query);
 
       RelBuilder builder = relBuilder.push(relNode);
-      List<PgParameterHandler> handlers = new ArrayList<>();
+      List<JdbcParameterHandler> handlers = new ArrayList<>();
       List<String> primaryKeyNames = r.getFromTable().getVt().getPrimaryKeyNames();
       for (int i = 0; i < primaryKeyNames.size(); i++) {
         String pkName = primaryKeyNames.get(i);
@@ -304,7 +304,7 @@ public class PgSchemaBuilder implements
         builder = relBuilder.filter(relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
             relBuilder.getRexBuilder().makeInputRef(relBuilder.peek(), field.getIndex()),
             dynamicParam));
-        handlers.add(new SourcePgParameter(pkName));
+        handlers.add(new SourceParameter(pkName));
       }
       return new RelPair(builder.build(), handlers);
     } else {
@@ -318,7 +318,7 @@ public class PgSchemaBuilder implements
         throw new RuntimeException("Unknown join type");
       }
 
-      List<PgParameterHandler> handlers = new ArrayList<>();
+      List<JdbcParameterHandler> handlers = new ArrayList<>();
       for (int i = 0; i < formTable.getVt().getPrimaryKeyNames().size(); i++) {
         RelDataTypeField field = relBuilder.peek().getRowType().getFieldList()
             .get(i);
@@ -328,7 +328,7 @@ public class PgSchemaBuilder implements
         builder = relBuilder.filter(relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
             relBuilder.getRexBuilder().makeInputRef(relBuilder.peek(), field.getIndex()),
             dynamicParam));
-        handlers.add(new SourcePgParameter(formTable.getVt().getPrimaryKeyNames().get(i)));
+        handlers.add(new SourceParameter(formTable.getVt().getPrimaryKeyNames().get(i)));
       }
       return new RelPair(builder.build(), handlers);
     }
@@ -353,6 +353,6 @@ public class PgSchemaBuilder implements
   public static class RelPair {
 
     RelNode relNode;
-    List<PgParameterHandler> handlers;
+    List<JdbcParameterHandler> handlers;
   }
 }

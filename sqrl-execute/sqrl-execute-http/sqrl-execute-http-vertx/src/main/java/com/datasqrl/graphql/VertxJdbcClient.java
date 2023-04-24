@@ -2,9 +2,9 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
-import com.datasqrl.graphql.server.Model.PgQuery;
+import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.PreparedSqrlQuery;
-import com.datasqrl.graphql.server.Model.ResolvedPgQuery;
+import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
@@ -17,11 +17,11 @@ public class VertxJdbcClient implements JdbcClient {
   SqlClient sqlClient;
 
   @Override
-  public ResolvedQuery prepareQuery(PgQuery pgQuery, Context context) {
+  public ResolvedQuery prepareQuery(JdbcQuery pgQuery, Context context) {
     PreparedQuery<RowSet<Row>> preparedQuery = sqlClient
         .preparedQuery(pgQuery.getSql());
 
-    return new ResolvedPgQuery(pgQuery,
+    return new ResolvedJdbcQuery(pgQuery,
         new PreparedSqrlQueryImpl(preparedQuery));
   }
 

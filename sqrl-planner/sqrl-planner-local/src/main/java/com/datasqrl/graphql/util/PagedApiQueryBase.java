@@ -22,7 +22,7 @@ public class PagedApiQueryBase implements QueryBase {
   RelNode relNode;
   ArgumentSet relAndArg;
   @Singular
-  List<PgParameterHandler> parameters;
+  List<JdbcParameterHandler> parameters;
 
   @Override
   public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {

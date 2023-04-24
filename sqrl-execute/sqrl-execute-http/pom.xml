@@ -17,20 +17,4 @@
     <module>sqrl-execute-http-core</module>
     <module>sqrl-execute-http-vertx</module>
   </modules>
-
-  <dependencies>
-    <!-- TODO: these can be loaded from the connector jar -->
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-h2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-sqlite</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-postgres</artifactId>
-    </dependency>
-  </dependencies>
 </project>

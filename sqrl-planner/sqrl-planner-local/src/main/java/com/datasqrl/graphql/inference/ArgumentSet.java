@@ -4,7 +4,7 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.ArgumentPgParameter;
+import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -18,7 +18,7 @@ public class ArgumentSet {
 
   RelNode relNode;
   Set<Argument> argumentHandlers;
-  List<ArgumentPgParameter> argumentParameters;
+  List<ArgumentParameter> argumentParameters;
   @Setter
   boolean limitOffsetFlag;
 }
