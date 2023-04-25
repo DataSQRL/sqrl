@@ -1,14 +1,17 @@
 plugins {
     id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 dependencies {
     implementation fileTree('lib')
     implementation files(System.getenv('SQRL_JAR_PATH'))
 }
-jar {
+
+shadowJar {
+    mergeServiceFiles()
     manifest {
-        attributes "Main-Class": "com.datasqrl.FlinkMain"
+        attributes 'Main-Class': 'com.datasqrl.FlinkMain'
     }
     from('.') {
         include '**'
@@ -22,10 +25,5 @@ jar {
         into('build')
     }
 
-    from {
-        configurations.runtimeClasspath.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
     zip64=true
 }
