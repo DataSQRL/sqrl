@@ -8,8 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.metadata.MetadataStore;
 import com.google.common.collect.ImmutableSet;
+import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -28,8 +30,8 @@ public class MetadataStoreTestIT extends AbstractEngineIT {
   MetadataStore meta = null;
 
   public void setup(IntegrationTestSettings.DatabaseEngine database) {
-    initialize(IntegrationTestSettings.getDatabaseOnly(database));
-    meta = engineSettings.getMetadataStoreProvider().openStore();
+    PipelineFactory pipelineFactory = initialize(IntegrationTestSettings.getDatabaseOnly(database));
+    meta = pipelineFactory.getMetaDataStoreProvider(Optional.empty()).openStore();
   }
 
   @AfterEach

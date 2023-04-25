@@ -4,6 +4,7 @@
 package com.datasqrl;
 
 import com.datasqrl.config.EngineSettings;
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.SqrlPlan;
 import com.datasqrl.io.tables.TableSource;
@@ -45,10 +46,9 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     if (rootDir == null) {
       addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule());
     }
-    Pair<DatabaseHandle, EngineSettings> engines = settings.getSqrlSettings();
-    this.engineSettings = engines.getRight();
+    Pair<DatabaseHandle, PipelineFactory> engines = settings.getSqrlSettings();
     this.database = engines.getLeft();
-    SqrlTestDIModule module = new SqrlTestDIModule(engineSettings.getPipeline(), settings, rootDir, addlModules, errorDir,
+    SqrlTestDIModule module = new SqrlTestDIModule(engines.getRight().createPipeline(), settings, rootDir, addlModules, errorDir,
         ErrorCollector.root());
     Injector injector = Guice.createInjector(module);
     initialize(settings, rootDir, injector);

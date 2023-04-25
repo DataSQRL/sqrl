@@ -6,6 +6,7 @@ package com.datasqrl.packager;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.config.ConfigurationTest;
 import com.datasqrl.packager.config.Dependency;
@@ -105,7 +106,7 @@ public class PackagerTest {
     assertNotNull(packageFile);
     PackagerConfig.PackagerConfigBuilder builder = PackagerConfig.builder();
     builder.rootDir(packageFile.getParent());
-    builder.packageFiles(List.of(packageFile));
+    builder.config(SqrlConfigCommons.fromFiles(ErrorCollector.root(),packageFile));
     if (main != null) {
       builder.mainScript(main);
     }

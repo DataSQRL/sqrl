@@ -6,27 +6,22 @@ package com.datasqrl.packager;
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
-import com.datasqrl.packager.config.GlobalPackageConfiguration;
+import com.datasqrl.packager.config.DependencyConfig;
 import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
 import com.datasqrl.packager.preprocess.FlexibleSchemaPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
-import com.datasqrl.config.ScriptConfiguration;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.SqrlObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -36,21 +31,23 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import lombok.NonNull;
 import lombok.Value;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 
 @Value
 public class Packager {
 
   public static final String BUILD_DIR_NAME = "build";
-  public static final String GRAPHQL_SCHEMA_FILE_NAME = "schema.graphqls";
   public static final String PACKAGE_FILE_NAME = "package.json";
 
   private static final BiPredicate<Path, BasicFileAttributes> FIND_SQLR_SCRIPT = (p, f) ->
@@ -58,40 +55,35 @@ public class Packager {
 
   Repository repository;
   Path rootDir;
-  ObjectNode packageConfig;
-  GlobalPackageConfiguration config;
+  SqrlConfig config;
   ErrorCollector errors;
   Path buildDir;
-  protected static final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
 
   public Packager(@NonNull Repository repository, @NonNull Path rootDir,
-      @NonNull ObjectNode packageConfig, @NonNull GlobalPackageConfiguration config,
+      @NonNull SqrlConfig config,
       @NonNull ErrorCollector errors) {
     Preconditions.checkArgument(Files.isDirectory(rootDir));
     this.repository = repository;
     this.rootDir = rootDir;
     this.buildDir = rootDir.resolve(BUILD_DIR_NAME);
-
-    this.packageConfig = packageConfig;
     this.config = config;
     this.errors = errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_FILE_NAME));
   }
 
   public Path populateBuildDir(boolean inferDependencies) {
-    errors.checkFatal(
-        config.getScript() != null && !Strings.isNullOrEmpty(config.getScript().getMain()),
+    errors.checkFatal(ScriptConfiguration.fromRootConfig(config).asString(ScriptConfiguration.MAIN_KEY)
+            .getOptional().map(StringUtils::isNotBlank).orElse(false),
         "No config or main script specified");
     try {
       cleanBuildDir();
       createBuildDir();
-      validateDependencyConfig();
       if (inferDependencies) {
         inferDependencies();
       }
       retrieveDependencies();
       copyFilesToBuildDir();
       preProcessFiles();
-      updatePackageConfig();
+      writePackageConfig();
       return buildDir.resolve(PACKAGE_FILE_NAME);
     } catch (IOException e) {
       throw errors.handle(e);
@@ -102,19 +94,11 @@ public class Packager {
     Files.createDirectories(buildDir);
   }
 
-  /**
-   * Helper function to validate dependency config.
-   */
-  private void validateDependencyConfig() {
-    errors.checkFatal(config.getDependencies() != null,
-        "No dependency config found");
-  }
 
   private void inferDependencies() throws IOException {
     //Analyze all local SQRL files to discovery transitive or undeclared dependencies
     //At the end, we'll add the new dependencies to the package config.
-    LinkedHashMap<String, Dependency> dependencies = new LinkedHashMap<>(
-        config.getDependencies());
+    LinkedHashMap<String, Dependency> dependencies = DependencyConfig.fromRootConfig(config);
     ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
 
     // Find all SQRL script files
@@ -143,16 +127,18 @@ public class Packager {
     }
 
     // Add inferred dependencies to package config
-    dependencies.putAll(inferredDependencies);
-    config.setDependencies(dependencies);
+    inferredDependencies.forEach((key, dep) -> {
+      config.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
+    });
   }
 
   /**
    * Helper function for retrieving listed dependencies.
    */
   private void retrieveDependencies() {
-    ErrorCollector depErrors = errors.resolve(GlobalPackageConfiguration.DEPENDENCIES_NAME);
-    config.getDependencies().entrySet().stream()
+    LinkedHashMap<String, Dependency> dependencies = DependencyConfig.fromRootConfig(config);
+    ErrorCollector depErrors = config.getErrorCollector().resolve(DependencyConfig.DEPENDENCIES_KEY);
+    dependencies.entrySet().stream()
         .map(entry -> rethrowCall(() ->
             retrieveDependency(buildDir, NamePath.parse(entry.getKey()),
                 entry.getValue().normalize(entry.getKey(), depErrors))
@@ -167,33 +153,38 @@ public class Packager {
    */
 
   private void copyFilesToBuildDir() throws IOException {
-    Path mainFile = copyMainFileToBuildDir();
-    Optional<Path> graphqlFile = copyGraphQLSchemaFileToBuildDir();
-    relativizeScriptConfig(mainFile, graphqlFile);
+    Map<String,Optional<Path>> destinationPaths = copyScriptFilesToBuildDir();
+    //Files should exist, if error occurs its internal, hence we create root error collector
+    PackagerConfig.setScriptFiles(buildDir, ScriptConfiguration.fromRootConfig(config),
+            destinationPaths, ErrorCollector.root());
 
     copyGradleBuildFileToBuildDir();
   }
 
   /**
-   * Copies main script to build directory.
+   * Copies all the files in the script configuration section of the config to the build dir
+   * and either normalizes the file or preserves the relative path.
    *
-   * @throws IOException If an I/O error occurs during the copy operation
+   * @throws IOException
    */
-  private Path copyMainFileToBuildDir() throws IOException {
-    return copyRelativeFile(
-        rootDir.resolve(config.getScript().getMain()),
-        rootDir,
-        buildDir);
-  }
-
-  /**
-   * Copies GraphQL schema file to build directory, if present.
-   */
-  private Optional<Path> copyGraphQLSchemaFileToBuildDir() {
-    return config.getScript().getOptGraphQL()
-        .map(rootDir::resolve)
-        .map(gql -> rethrowCall(() -> copyFile(gql, buildDir,
-            Path.of(GRAPHQL_SCHEMA_FILE_NAME))));
+  private Map<String,Optional<Path>> copyScriptFilesToBuildDir() throws IOException {
+    SqrlConfig scriptConfig = ScriptConfiguration.fromRootConfig(config);
+    Map<String,Optional<Path>> destinationPaths = new HashMap<>();
+    for (String fileKey : ScriptConfiguration.FILE_KEYS) {
+      Optional<String> configuredFile = scriptConfig.asString(fileKey).getOptional();
+      if (configuredFile.isPresent()) {
+        Path path = rootDir.resolve(configuredFile.get());
+        Optional<String> normFile = ScriptConfiguration.NORMALIZED_FILE_NAMES.get(fileKey);
+        Path destinationPath;
+        if (normFile.isPresent()) {
+          destinationPath = copyFile(path, buildDir, Path.of(normFile.get()));
+        } else {
+          destinationPath = copyRelativeFile(rootDir.resolve(configuredFile.get()), rootDir, buildDir);
+        }
+        destinationPaths.put(fileKey,Optional.of(destinationPath));
+      }
+    }
+    return destinationPaths;
   }
 
   /**
@@ -204,16 +195,6 @@ public class Packager {
     String buildFile = FileUtil.readResource(gradleBuildFile);
     InputStream buildStream = new ByteArrayInputStream(buildFile.getBytes());
     Files.copy(buildStream, buildDir.resolve(gradleBuildFile));
-  }
-
-  /**
-   * Helper function to relativize script configuration.
-   */
-  private void relativizeScriptConfig(Path mainFile, Optional<Path> graphQLSchemaFile) {
-    config.setScript(PackagerConfig.buildRelativizeScriptConfig(
-        buildDir,
-        mainFile,
-        graphQLSchemaFile));
   }
 
   /**
@@ -237,19 +218,9 @@ public class Packager {
   /**
    * Helper function to update package config.
    */
-  private void updatePackageConfig() throws IOException {
+  private void writePackageConfig() throws IOException {
     Path packageFile = buildDir.resolve(PACKAGE_FILE_NAME);
-
-    //Update dependencies in place
-    packageConfig.set(GlobalPackageConfiguration.DEPENDENCIES_NAME,
-        mapper.valueToTree(config.getDependencies()));
-
-    //Update relativized script in place
-    JsonNode mappedScript = mapper.valueToTree(config.getScript());
-    packageConfig.set(ScriptConfiguration.PROPERTY, mappedScript);
-
-    mapper.writerWithDefaultPrettyPrinter()
-        .writeValue(packageFile.toFile(), packageConfig);
+    config.toFile(packageFile, true);
   }
 
   private void cleanBuildDir() throws IOException {

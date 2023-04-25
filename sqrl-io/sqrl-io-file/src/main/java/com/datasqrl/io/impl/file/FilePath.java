@@ -3,7 +3,7 @@
  */
 package com.datasqrl.io.impl.file;
 
-import com.datasqrl.io.formats.FileFormat;
+import com.datasqrl.io.formats.FileFormatExtension;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -114,7 +114,7 @@ public class FilePath implements Serializable {
       extPair = FileUtil.separateExtension(fullName);
       extension = extPair.getRight();
     }
-    if (!Strings.isNullOrEmpty(extension) && FileFormat.validFormat(extension)) {
+    if (!Strings.isNullOrEmpty(extension) && FileFormatExtension.validFormat(extension)) {
       format = extension;
       fullName = extPair.getLeft();
     }

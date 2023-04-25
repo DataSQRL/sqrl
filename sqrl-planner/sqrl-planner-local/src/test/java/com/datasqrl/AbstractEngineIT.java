@@ -3,12 +3,8 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.config.EngineSettings;
-import com.datasqrl.io.DataSystemConfig;
-import com.datasqrl.io.DataSystemDiscoveryConfig;
-import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.util.DatabaseHandle;
-import com.datasqrl.util.TestDataset;
 import com.google.inject.Injector;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
@@ -16,7 +12,6 @@ import org.junit.jupiter.api.AfterEach;
 public abstract class AbstractEngineIT {
 
   public DatabaseHandle database = null;
-  public EngineSettings engineSettings = null;
   protected Injector injector;
 
 
@@ -28,30 +23,21 @@ public abstract class AbstractEngineIT {
     }
   }
 
-  protected void initialize(IntegrationTestSettings settings, Injector injector) {
-    this.initialize(settings);
+  protected PipelineFactory initialize(IntegrationTestSettings settings, Injector injector) {
     this.injector = injector;
+    return this.initialize(settings);
   }
-  protected void initialize(IntegrationTestSettings settings) {
-    if (engineSettings == null) {
-      Pair<DatabaseHandle, EngineSettings> setup = settings.getSqrlSettings();
-      engineSettings = setup.getRight();
+
+  protected PipelineFactory initialize(IntegrationTestSettings settings) {
+    if (database == null) {
+      Pair<DatabaseHandle, PipelineFactory> setup = settings.getSqrlSettings();
       database = setup.getLeft();
+      return setup.getRight();
+    } else {
+      return null;
     }
   }
 
-  protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(
-      TestDataset testDataset) {
-    return getSystemConfigBuilder(testDataset.getName(), testDataset.getDiscoveryConfig());
-  }
 
-  protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(String name,
-      DataSystemDiscoveryConfig discovery) {
-    DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-    builder.datadiscovery(discovery);
-    builder.type(ExternalDataType.source);
-    builder.name(name);
-    return builder;
-  }
 
 }

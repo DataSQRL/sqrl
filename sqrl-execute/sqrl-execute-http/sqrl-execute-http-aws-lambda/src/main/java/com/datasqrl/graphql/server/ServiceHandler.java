@@ -46,11 +46,10 @@ public class ServiceHandler implements
   private static GenericJdbcClient createClient() {
     Map jdbcConfig = mapper.readValue(new File(CONFIG_JSON), Map.class);
 
-    clazz = Class.forName((String) jdbcConfig.get("driverName"));
+    clazz = Class.forName((String)jdbcConfig.get("driver"));
 
     Connection connection = DriverManager.getConnection(
-        (String) jdbcConfig.get("dbURL"), (String) jdbcConfig.get("user"),
-        (String) jdbcConfig.get("password"));
+        (String)jdbcConfig.get("url"), (String)jdbcConfig.get("user"), (String) jdbcConfig.get("password"));
 
     return new GenericJdbcClient(connection);
   }

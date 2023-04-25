@@ -19,5 +19,5 @@ ecommerce-data/orders.table.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
 output
-output/datasystem.json
+output/system.discover.table.json
 package.json

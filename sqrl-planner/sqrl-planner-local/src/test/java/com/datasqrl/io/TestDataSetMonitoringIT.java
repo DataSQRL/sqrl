@@ -9,11 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.discovery.DataDiscovery;
+import com.datasqrl.discovery.DataDiscoveryFactory;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.external.SchemaExport;
 import com.datasqrl.model.schema.TableDefinition;
@@ -24,9 +27,15 @@ import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Sensors;
 import com.datasqrl.util.junit.ArgumentProvider;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.google.common.collect.Iterables;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -37,6 +46,14 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class TestDataSetMonitoringIT extends AbstractEngineIT {
+
+  private PipelineFactory pipelineFactory;
+
+  @Override
+  protected PipelineFactory initialize(IntegrationTestSettings settings) {
+    this.pipelineFactory = super.initialize(settings);
+    return this.pipelineFactory;
+  }
 
   @SneakyThrows
   @ParameterizedTest
@@ -58,8 +75,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     SchemaExport export = new SchemaExport();
     //Write out table configurations
     for (TableSource table : tables) {
-      String json = FileTestUtil.writeJson(table.getConfiguration());
-      assertTrue(json.length() > 0);
+      assertTrue(Iterables.size(table.getConfiguration().getConfig().getKeys()) > 0);
 
       TableDefinition outputSchema = export.export((FlexibleTableSchema) table.getSchema().getSchema());
       snapshot.addContent(FileTestUtil.writeYaml(outputSchema), table.getName().getDisplay() + " schema");
@@ -70,9 +86,8 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
   private List<TableSource> discoverSchema(TestDataset example) {
     ErrorCollector errors = ErrorCollector.root();
-    DataDiscovery discovery = new DataDiscovery(errors, engineSettings);
-    DataSystemConfig systemConfig = getSystemConfigBuilder(example).build();
-    List<TableSource> sourceTables = discovery.runFullDiscovery(systemConfig);
+    DataDiscovery discovery = DataDiscoveryFactory.fromPipeline(pipelineFactory, errors);
+    List<TableSource> sourceTables = discovery.runFullDiscovery(example.getDiscoveryConfig());
     assertFalse(errors.isFatal(), errors.toString());
     assertEquals(example.getNumTables(), sourceTables.size());
     return sourceTables;

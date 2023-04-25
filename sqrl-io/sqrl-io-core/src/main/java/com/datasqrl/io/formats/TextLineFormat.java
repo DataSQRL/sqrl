@@ -3,34 +3,42 @@
  */
 package com.datasqrl.io.formats;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import com.datasqrl.config.SqrlConfig;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import lombok.NonNull;
 
-public interface TextLineFormat<C extends FormatConfiguration> extends Format<C> {
+public interface TextLineFormat extends FormatFactory {
 
   @Override
-  Parser getParser(C config);
+  Parser getParser(@NonNull SqrlConfig config);
 
-  interface Parser extends Format.Parser {
+  interface Parser extends FormatFactory.Parser {
 
     Result parse(@NonNull String line);
 
   }
 
-  interface ConfigurationInference<C extends FormatConfiguration> extends
-      Format.ConfigurationInference<C> {
+  @Override
+  Writer getWriter(@NonNull SqrlConfig config);
 
-    void nextSegment(@NonNull BufferedReader textInput) throws IOException;
+  interface Writer extends FormatFactory.Writer {
+
 
   }
 
-  @Override
-  Writer getWriter(C configuration);
+  String CHARSET_KEY = "charset";
+  String DEFAULT_CHARSET = "UTF-8";
 
-  interface Writer extends Format.Writer {
-
-
+  default Charset getCharset(@NonNull SqrlConfig config) {
+    return Charset.forName(config.asString(CHARSET_KEY).withDefault(DEFAULT_CHARSET)
+        .validate(charset -> {
+          try {
+            return Charset.forName(charset)!=null;
+          } catch (Exception e) {
+            return false;
+          }
+        }, "Not a valid charset").get());
   }
 
 }

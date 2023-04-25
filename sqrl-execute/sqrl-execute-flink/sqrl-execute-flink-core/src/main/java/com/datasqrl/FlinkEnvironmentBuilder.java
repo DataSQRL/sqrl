@@ -4,7 +4,6 @@ import com.datasqrl.FlinkExecutablePlan.DefaultFlinkConfig;
 import com.datasqrl.FlinkExecutablePlan.FlinkBase;
 import com.datasqrl.FlinkExecutablePlan.FlinkBaseVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkConfigVisitor;
-import com.datasqrl.FlinkExecutablePlan.FlinkDataStreamDefinition;
 import com.datasqrl.FlinkExecutablePlan.FlinkErrorSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkErrorSinkVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkExecutablePlanVisitor;
@@ -23,21 +22,22 @@ import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinitionVisitor;
 import com.datasqrl.FlinkEnvironmentBuilder.PlanContext;
 import com.datasqrl.config.BaseConnectorFactory;
+import com.datasqrl.config.DataStreamSourceFactory;
+import com.datasqrl.config.FlinkSinkFactoryContext;
+import com.datasqrl.config.FlinkSourceFactoryContext;
 import com.datasqrl.config.SinkFactory;
-import com.datasqrl.config.SinkFactory.FlinkSinkFactoryContext;
-import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.TableDescriptorSinkFactory;
+import com.datasqrl.config.TableDescriptorSourceFactory;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.InputError.InputErrorMessage;
 import com.datasqrl.InputError.Map2InputErrorMessage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.DataSystemConnectorConfig;
+import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.SourceRecord.Raw;
-import com.datasqrl.io.formats.Format;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.model.schema.SchemaDefinition;
@@ -52,7 +52,6 @@ import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
 import com.datasqrl.schema.input.DefaultSchemaValidator;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.model.StreamType;
-import com.datasqrl.FlinkFormatFactory.FlinkTextLineFormat;
 import com.datasqrl.serializer.SerializableSchema;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -102,6 +101,16 @@ public class FlinkEnvironmentBuilder implements
   public static final String ERROR_TAG_PREFIX = "_errors";
   public static final String ERROR_SINK_NAME = "errors_internal_sink";
 
+  private final ErrorCollector errors;
+
+  public FlinkEnvironmentBuilder(ErrorCollector errors) {
+    this.errors = errors;
+  }
+
+  public FlinkEnvironmentBuilder() {
+    this(ErrorCollector.root());
+  }
+
   @Override
   public StatementSet visitPlan(FlinkExecutablePlan plan, Object context) {
     return plan.getBase().accept(this, null);
@@ -136,9 +145,10 @@ public class FlinkEnvironmentBuilder implements
     Table errorTable = context.getTEnv().fromDataStream(errorMessages, errorTableSchema);
 
     TableDescriptorSinkFactory builderClass = (TableDescriptorSinkFactory) createFactoryInstance(
-        sink.getFactory());
+        sink.getConnectorFactory());
+    FormatFactory formatFactory = createFactoryInstance(sink.getFormatFactory());
     TableDescriptor descriptor = builderClass.create(new FlinkSinkFactoryContext(sink.getName(),
-            sink.getDsConfig(), sink.getTableConfig(), context.getErrors()))
+            sink.getTableConfig().deserialize(errors),formatFactory))
         .schema(errorTableSchema)
         .build();
 
@@ -321,8 +331,6 @@ public class FlinkEnvironmentBuilder implements
   @Builder
   public static class SourceResolver {
 
-    DataSystemConnectorConfig config;
-
     String format;
 
     Object watermark;
@@ -338,47 +346,23 @@ public class FlinkEnvironmentBuilder implements
     }
   }
 
-
-  @Override
-  public Object visitTableDefinition(FlinkDataStreamDefinition table, PlanContext context) {
-    DataStream dataStream = buildStream(table.getConfig(),
-        null,
-        new FlinkTextLineFormat(),
-        new FlexibleTableSchemaFactory(),
-        table.getSchemaDefinition(),
-        table.getOutputSchema(),
-        context);
-
-    log.debug("Creating datastream table definition: {}", table.getName());
-    context.getTEnv()
-        .createTemporaryView(table.getName(), dataStream, (Schema) null/*todo add schema*/);
-
-    return null;
-  }
-
   public DataStream buildStream(
       TableConfig tableConfig,
-      SourceFactory<SingleOutputStreamOperator<TimeAnnotatedRecord<String>>> sourceFactory,
-      FlinkFormatFactory formatFactory,
+      DataStreamSourceFactory sourceFactory,
+      FormatFactory formatFactory,
       TableSchemaFactory factory,
       SchemaDefinition definition,
       TypeInformation outputSchema,
       PlanContext context) {
     final List<SideOutputDataStream> errorSideChannels = new ArrayList<>();
 
-    DataSystemConnector connector = tableConfig.getConnector().initialize(ErrorCollector.root());
-
     SingleOutputStreamOperator<TimeAnnotatedRecord<String>> stream =
-        sourceFactory.create(connector,
-            new FlinkSourceFactoryContext(context.getSEnv(), "nameStub",
-                tableConfig.getFormat(), tableConfig, UUID.randomUUID()));
-
-    Format.Parser parser = tableConfig.getFormat().getImplementation()
-        .getParser(tableConfig.getFormat());
+        sourceFactory.create(new FlinkSourceFactoryContext(context.getSEnv(), tableConfig.getName().getCanonical(),
+                tableConfig.serialize(), formatFactory, UUID.randomUUID()));
 
     OutputTag formatErrorTag = context.createErrorTag();
-    FunctionWithError<TimeAnnotatedRecord<String>, Raw> formatStream = formatFactory
-        .create(parser, stream, formatErrorTag);
+    FlinkFormatFactory flinkFormat = FlinkFormatFactory.of(formatFactory.getParser(tableConfig.getFormatConfig()));
+    FunctionWithError<TimeAnnotatedRecord<String>, Raw> formatStream = flinkFormat.create(stream, formatErrorTag);
     SingleOutputStreamOperator process = stream.process(
         new MapWithErrorProcess<>(formatErrorTag, formatStream,
             ErrorPrefix.INPUT_DATA.resolve("format")),
@@ -386,8 +370,7 @@ public class FlinkEnvironmentBuilder implements
     errorSideChannels.add(process.getSideOutput(formatErrorTag));
 
     //todo validator may be optional
-    TableSchema schema = factory.create(definition)
-        .get();
+    TableSchema schema = factory.create(definition).get();
     //todo: fix flexible schema hard referenced
     DefaultSchemaValidator schemaValidator = (DefaultSchemaValidator)schema.getValidator(tableConfig.getSchemaAdjustmentSettings(),
         false);
@@ -441,33 +424,33 @@ public class FlinkEnvironmentBuilder implements
 
   @Override
   public Object visitFactoryDefinition(FlinkFactoryDefinition table, PlanContext context) {
-    log.debug("Creating factory: {} {}", table.getName(), table.getFactoryClass());
+    log.debug("Creating factory: {} {}", table.getName(), table.getConnectorFactory());
 
     String name = table.getName();
-    Class factoryClass = table.getFactoryClass();
-    DataSystemConnectorConfig config = table.getConfig();
-    TableConfig tableConfig = table.getTableConfig();
+    TableConfig tableConfig = table.getTableConfig().deserialize(errors);
 
-    BaseConnectorFactory factory = createFactoryInstance(factoryClass);
-    if (factory instanceof SourceFactory) {
-      SourceFactory sourceFactory = (SourceFactory) factory;
+    FormatFactory formatFactory = createFactoryInstance(table.getFormatFactory());
+    BaseConnectorFactory connectorFactory = createFactoryInstance(table.getConnectorFactory());
+    if (connectorFactory instanceof DataStreamSourceFactory) {
+      DataStreamSourceFactory sourceFactory = (DataStreamSourceFactory) connectorFactory;
 
-      DataStream dataStream = buildStream(table.getTableConfig(),
+      DataStream dataStream = buildStream(tableConfig,
           sourceFactory,
-          new FlinkTextLineFormat(),
+          formatFactory,
           new FlexibleTableSchemaFactory(),
           table.getSchemaDefinition(),
           table.getTypeInformation(),
           context);
 
       context.getTEnv().createTemporaryView(name, dataStream, toSchema(table.getSchema()));
-
-    } else if (factory instanceof SinkFactory) {
-      SinkFactory sinkFactory = (SinkFactory) factory;
+    } else if (connectorFactory instanceof TableDescriptorSourceFactory) {
+      throw new NotYetImplementedException("Table sources not yet supported");
+    } else if (connectorFactory instanceof SinkFactory) {
+      SinkFactory sinkFactory = (SinkFactory) connectorFactory;
       Object o = sinkFactory.create(
-          new FlinkSinkFactoryContext(name, config, tableConfig, context.getErrors()));
+          new FlinkSinkFactoryContext(name, tableConfig, formatFactory));
       if (o instanceof DataStream) {
-        throw new RuntimeException("Datastream as sink not yet implemented");
+        throw new NotYetImplementedException("Datastream as sink not yet implemented");
       } else if (o instanceof TableDescriptor.Builder) {
         TableDescriptor.Builder builder = (TableDescriptor.Builder) o;
         TableDescriptor descriptor = builder.schema(toSchema(table.getSchema()))
@@ -478,21 +461,20 @@ public class FlinkEnvironmentBuilder implements
       }
 
     } else {
-      throw new RuntimeException("Unknown factory type " + factory.getClass().getName());
+      throw new RuntimeException("Unknown factory type " + connectorFactory.getClass().getName());
     }
 
     return null;
   }
 
 
-  public static BaseConnectorFactory createFactoryInstance(Class<?> factoryClass) {
+  public static<T> T createFactoryInstance(Class<T> factoryClass) {
     try {
-      //todo generics
-      Constructor constructor = factoryClass.getDeclaredConstructor();
-      return (BaseConnectorFactory) constructor.newInstance();
+      Constructor<T> constructor = factoryClass.getDeclaredConstructor();
+      return constructor.newInstance();
     } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
              InvocationTargetException e) {
-      throw new RuntimeException("Could not load connector: " + factoryClass.getName());
+      throw new RuntimeException("Could not load factory for: " + factoryClass.getName());
     }
   }
 

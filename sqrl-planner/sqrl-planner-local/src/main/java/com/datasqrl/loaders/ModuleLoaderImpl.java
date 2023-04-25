@@ -1,17 +1,15 @@
 package com.datasqrl.loaders;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DataSystem;
-import com.datasqrl.io.DataSystemConfig;
-import com.datasqrl.io.impl.print.PrintDataSystem;
-import com.datasqrl.module.SqrlModule;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.io.DataSystemDiscovery;
+import com.datasqrl.io.impl.print.PrintDataSystem;
+import com.datasqrl.io.impl.print.PrintDataSystemFactory;
 import com.datasqrl.module.NamespaceObject;
-import lombok.AllArgsConstructor;
-
+import com.datasqrl.module.SqrlModule;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class ModuleLoaderImpl implements ModuleLoader {
@@ -38,15 +36,13 @@ public class ModuleLoaderImpl implements ModuleLoader {
 
   private static boolean isPrintSink(NamePath namePath) {
     return namePath.size() == 1 && namePath.getLast().getCanonical()
-            .equals(PrintDataSystem.SYSTEM_TYPE);
+            .equals(PrintDataSystemFactory.SYSTEM_NAME);
   }
 
   private List<NamespaceObject> loadFromStandardLibrary(NamePath namePath) {
     if (isPrintSink(namePath)) {
-      DataSystemConfig config = PrintDataSystem.DEFAULT_DISCOVERY_CONFIG;
-      ErrorCollector errors = ErrorCollector.root();
-      DataSystem dataSystem = config.initialize(errors);
-      return List.of(new DataSystemNsObject(namePath,dataSystem));
+      DataSystemDiscovery printSinks = PrintDataSystemFactory.getDefaultDiscovery();
+      return List.of(new DataSystemNsObject(namePath, printSinks));
     }
 
     return standardLibraryLoader.load(namePath);

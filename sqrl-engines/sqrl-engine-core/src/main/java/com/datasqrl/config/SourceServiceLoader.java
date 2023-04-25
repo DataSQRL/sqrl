@@ -9,9 +9,9 @@ import java.util.Optional;
 
 public class SourceServiceLoader {
 
-  public Optional<SourceFactory> load(String engine, String source) {
-    return ServiceLoaderDiscovery.findFirst(SourceFactory.class, sf -> sf.getEngine(), engine,
-            sf -> sf.getSourceName(), source);
+  public SourceFactory load(String engine, String source) {
+    return ServiceLoaderDiscovery.get(SourceFactory.class, SourceFactory::getEngine, engine,
+            SourceFactory::getSourceName, source);
   }
 
 }

@@ -3,61 +3,101 @@
  */
 package com.datasqrl.io.tables;
 
+import com.datasqrl.config.SerializedSqrlConfig;
+import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConnector;
-import com.datasqrl.io.DataSystemConnectorConfig;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.SharedConfiguration;
-import com.datasqrl.io.formats.FormatConfiguration;
-import com.datasqrl.io.impl.CanonicalizerConfiguration;
+import com.datasqrl.io.DataSystemConnectorFactory;
+import com.datasqrl.io.DataSystemDiscovery;
+import com.datasqrl.io.DataSystemDiscoveryFactory;
+import com.datasqrl.io.DataSystemImplementationFactory;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.schema.input.SchemaValidator;
-import com.datasqrl.util.ConfigurationUtil;
-import com.datasqrl.util.constraints.OptionalMinString;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Preconditions;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Strings;
-import lombok.Getter;
+import java.io.Serializable;
+import java.net.URI;
+import java.nio.file.Path;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
+import lombok.Value;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import java.io.Serializable;
 import java.util.Optional;
 
-@SuperBuilder(toBuilder = true)
-@NoArgsConstructor
-@Getter
-public class TableConfig extends SharedConfiguration implements Serializable {
+@Value
+public class TableConfig {
 
-  @NonNull @NotNull
-  @Size(min = 3)
-  String name;
-  @OptionalMinString
-  String identifier;
-  @OptionalMinString
-  String schema;
-  @Valid @NonNull @NotNull
-  DataSystemConnectorConfig connector;
+  public static final String CONNECTOR_KEY = "connector";
+  public static final String FORMAT_KEY = "format";
 
-  public TableConfig(@NonNull ExternalDataType type,
-      @NonNull CanonicalizerConfiguration canonicalizer, @NonNull String charset,
-      FormatConfiguration format, @NonNull String name, String identifier,
-      String schema, @NonNull DataSystemConnectorConfig connector) {
-    super(type, canonicalizer, charset, format);
+  @NonNull Name name;
+  @NonNull SqrlConfig config;
+  @NonNull BaseTableConfig base;
+
+  public TableConfig(@NonNull Name name, @NonNull SqrlConfig config) {
     this.name = name;
-    this.identifier = identifier;
-    this.schema = schema;
-    this.connector = connector;
+    this.config = config;
+    this.base = config.allAs(BaseTableConfig.class).get();
+  }
+
+  public static TableConfig load(@NonNull URI uri, @NonNull Name name, @NonNull ErrorCollector errors) {
+    SqrlConfig config = SqrlConfigCommons.fromURL(errors, ResourceResolver.toURL(uri));
+    return new TableConfig(name, config);
+  }
+
+  public static TableConfig load(@NonNull Path path, @NonNull Name name, @NonNull ErrorCollector errors) {
+    SqrlConfig config = SqrlConfigCommons.fromFiles(errors, path);
+    return new TableConfig(name, config);
+  }
+
+  public void toFile(Path file) {
+    config.toFile(file, true);
+  }
+
+  public ErrorCollector getErrors() {
+    return config.getErrorCollector();
+  }
+
+  public SqrlConfig getConnectorConfig() {
+    return config.getSubConfig(CONNECTOR_KEY);
+  }
+
+  public DataSystemConnector getConnector() {
+    return DataSystemConnectorFactory.fromConfig(this);
+  }
+
+  public String getConnectorName() {
+    return getConnectorConfig().asString(DataSystemImplementationFactory.SYSTEM_NAME_KEY).get();
   }
 
   /**
-   * TODO: make this configurable
+   * TODO: make private and return Format object for getFormat that combines FormatFactory with SqrlConfig
+   * @return
+   */
+  public SqrlConfig getFormatConfig() {
+    return config.getSubConfig(FORMAT_KEY);
+  }
+
+  public boolean hasFormat() {
+    return getFormatConfig().containsKey(FormatFactory.FORMAT_NAME_KEY);
+  }
+
+  public FormatFactory getFormat() {
+    SqrlConfig formatConfig = getFormatConfig();
+    FormatFactory factory = FormatFactory.fromConfig(formatConfig);
+    return factory;
+  }
+
+  /**
+   * TODO: read from config
    *
    * @return
    */
@@ -66,86 +106,109 @@ public class TableConfig extends SharedConfiguration implements Serializable {
     return SchemaAdjustmentSettings.DEFAULT;
   }
 
-  private DataSystemConnector baseInitialize(ErrorCollector errors) {
-    if (!Name.validName(name)) {
-      errors.fatal("Table needs to have valid name: %s", name);
-      return null;
-    }
-    errors = errors.resolve(name);
-    if (!rootInitialize(errors)) {
-      return null;
-    }
-    if (!ConfigurationUtil.javaxValidate(this, errors)) {
-      return null;
-    }
 
-    if (Strings.isNullOrEmpty(identifier)) {
-      identifier = name;
-    }
-    identifier = getCanonicalizer().getCanonicalizer().getCanonical(identifier);
-
-    if (!format.initialize(errors.resolve("format"))) {
-      return null;
-    }
-
-    DataSystemConnector connector = this.connector.initialize(
-        errors.resolve(name).resolve("datasource"));
-    if (connector == null) {
-      return null;
-    }
-    if (connector.requiresFormat(getType()) && getFormat() == null) {
-      errors.fatal("Need to configure a format");
-      return null;
-    }
-    return connector;
+  private void validateTable() {
+    getErrors().checkFatal(!Strings.isNullOrEmpty(base.getIdentifier()), "Need to specify a table identifier");
+    getErrors().checkFatal(hasFormat(), "Need to define a table format");
   }
 
-  public TableSource initializeSource(ErrorCollector errors, NamePath basePath,
-      TableSchema schema) {
-    DataSystemConnector connector = baseInitialize(errors);
-    if (connector == null) {
-      return null;
-    }
-    Preconditions.checkArgument(getType().isSource());
-    Name tableName = getResolvedName();
-
+  public TableSource initializeSource(NamePath basePath, TableSchema schema) {
+    validateTable();
+    getErrors().checkFatal(base.getType().isSource(), "Table is not a source: %s", name);
+    DataSystemConnector connector = getConnector();
+    Name tableName = getName();
     SchemaValidator validator = schema.getValidator(this.getSchemaAdjustmentSettings(), connector.hasSourceTimestamp());
-
     return new TableSource(connector, this, basePath.concat(tableName), tableName, schema, validator);
   }
 
-  public TableInput initializeInput(ErrorCollector errors, NamePath basePath) {
-    DataSystemConnector connector = baseInitialize(errors);
-    if (connector == null) {
-      return null;
-    }
-    Preconditions.checkArgument(getType().isSource());
-    Name tableName = getResolvedName();
+  public TableInput initializeInput(NamePath basePath) {
+    validateTable();
+    getErrors().checkFatal(base.getType().isSource(), "Table is not a source: %s", name);
+    DataSystemConnector connector = getConnector();
+    Name tableName = getName();
     return new TableInput(connector, this, basePath.concat(tableName), tableName);
   }
 
   public TableSink initializeSink(ErrorCollector errors, NamePath basePath,
       Optional<TableSchema> schema) {
-    DataSystemConnector connector = baseInitialize(errors);
-    if (connector == null) {
-      return null;
+    validateTable();
+    getErrors().checkFatal(base.getType().isSink(), "Table is not a sink: %s", name);
+    DataSystemConnector connector = getConnector();
+    Name tableName = getName();
+    return new TableSink(connector,this, basePath.concat(tableName), tableName, schema);
+  }
+
+  public DataSystemDiscovery initializeDiscovery() {
+    DataSystemDiscoveryFactory factory = DataSystemImplementationFactory.fromConfig(DataSystemDiscoveryFactory.class, this);
+    DataSystemDiscovery discovery = factory.initialize(this);
+    getErrors().checkFatal(!discovery.requiresFormat(base.getType()) || hasFormat(),
+        "Data Discovery [%s] requires a format", discovery);
+    return discovery;
+  }
+
+  public static Builder builder(String name) {
+    return builder(Name.system(name));
+  }
+
+  public static Builder builder(Name name) {
+    return new Builder(name, SqrlConfig.create());
+  }
+
+  public Builder toBuilder() {
+    return new Builder(this.getName(), SqrlConfig.create()).copyFrom(this);
+  }
+
+  @Value
+  public static class Builder {
+
+    @NonNull Name name;
+    @NonNull SqrlConfig config;
+
+    public Builder copyFrom(TableConfig otherTable) {
+      config.copy(otherTable.config);
+      return this;
     }
-    Preconditions.checkArgument(getType().isSink());
-    Name tableName = getResolvedName();
-    return new TableSink(connector,  getConnector(),this, basePath.concat(tableName), tableName, schema);
+
+    public Builder base(BaseTableConfig baseConfig) {
+      config.setProperties(baseConfig);
+      return this;
+    }
+
+    public Builder schema(String schema) {
+      config.setProperty(BaseTableConfig.SCHEMA_KEY, schema);
+      return this;
+    }
+
+    public SqrlConfig getConnectorConfig() {
+      return config.getSubConfig(TableConfig.CONNECTOR_KEY);
+    }
+
+    public SqrlConfig getFormatConfig() {
+      return config.getSubConfig(TableConfig.FORMAT_KEY);
+    }
+
+    public TableConfig build() {
+      return new TableConfig(name,config);
+    }
+
   }
 
-  @JsonIgnore
-  public Name getResolvedName() {
-    return Name.of(name, getCanonicalizer().getCanonicalizer());
+  public Serialized serialize() {
+    return new Serialized(name,config.serialize());
   }
 
-  public static TableConfigBuilder copy(SharedConfiguration config) {
-    return TableConfig.builder()
-        .type(config.getType())
-        .canonicalizer(config.getCanonicalizer())
-        .charset(config.getCharset())
-        .format(config.getFormat());
+  @AllArgsConstructor
+  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
+  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
+  public static class Serialized {
+
+    Name name;
+    SerializedSqrlConfig config;
+
+    public TableConfig deserialize(ErrorCollector errors) {
+      return new TableConfig(name, config.deserialize(errors));
+    }
+
   }
 
 }

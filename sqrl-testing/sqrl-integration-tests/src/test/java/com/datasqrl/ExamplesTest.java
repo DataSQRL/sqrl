@@ -1,27 +1,22 @@
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
-import com.datasqrl.discovery.DataDiscovery;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.io.DataSystemConfig;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
 import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.PackagerConfig;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.repository.Repository;
-import com.datasqrl.module.resolver.FileResourceResolver;
+import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Examples;
-import com.datasqrl.serializer.Deserializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
 import java.net.URI;
@@ -57,7 +52,7 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
     Packager packager = PackagerConfig.builder()
         .rootDir(script.getRootPackageDirectory())
         .mainScript(script.getScriptPath())
-        .packageFiles(List.of(script.getRootPackageDirectory().resolve("package.json")))
+        .config(SqrlConfigCommons.fromFiles(errors,script.getRootPackageDirectory().resolve("package.json")))
         .graphQLSchemaFile(script.getGraphQLSchemas().isEmpty() ? null : script.getGraphQLSchemas().get(0).getSchemaPath())
         .repository(new Repository() {
           @Override
@@ -135,26 +130,6 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
     test(script);
   }
 
-
-  private void discover(TestScript script) {
-    for (Path dataDir : script.getDataDirs()) {
-      discover(script, dataDir);
-    }
-  }
-  private void discover(TestScript script, Path dataDir) {
-    ErrorCollector errors = ErrorCollector.root();
-    DataDiscovery discovery = new DataDiscovery(errors, engineSettings);
-    DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-    builder.datadiscovery(DirectoryDataSystemConfig.ofDirectory(dataDir));
-    builder.type(ExternalDataType.source);
-    builder.name(dataDir.getFileName().toString());
-
-    DataSystemConfig systemConfig = builder.build();
-    List<TableSource> sourceTables = discovery.runFullDiscovery(systemConfig);
-    assertFalse(errors.isFatal(), errors.toString());
-
-    write(script, dataDir, sourceTables);
-  }
 
   @SneakyThrows
   private void write(TestScript script, Path dataDir, List<TableSource> sources) {

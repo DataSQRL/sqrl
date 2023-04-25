@@ -3,35 +3,46 @@
  */
 package com.datasqrl.io.formats;
 
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.io.impl.InputPreview;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.util.List;
+
+import com.google.auto.service.AutoService;
 import lombok.*;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configuration> {
+@AutoService(FormatFactory.class)
+public class JsonLineFormat implements TextLineFormat {
 
-  public static final FileFormat FORMAT = FileFormat.JSON;
   public static final String NAME = "json";
+  public static final List<String> EXTENSIONS = List.of(NAME);
 
   @Override
-  public Parser getParser(Configuration config) {
+  public List<String> getExtensions() {
+    return EXTENSIONS;
+  }
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
+
+  @Override
+  public Parser getParser(@NonNull SqrlConfig config) {
     return new JsonLineParser();
   }
 
   @Override
-  public Configuration getDefaultConfiguration() {
-    return new Configuration();
-  }
-
-  @Override
-  public Writer getWriter(Configuration configuration) {
-    return new JsonLineWriter();
+  public Writer getWriter(@NonNull SqrlConfig config) {
+    throw new NotYetImplementedException("JSON writing not yet supported");
   }
 
   @NoArgsConstructor
@@ -50,43 +61,6 @@ public class JsonLineFormat implements TextLineFormat<JsonLineFormat.Configurati
       } catch (IOException e) {
         return Result.error(e.getMessage());
       }
-    }
-  }
-
-  @NoArgsConstructor
-  public static class JsonLineWriter implements TextLineFormat.Writer {
-
-    private transient ObjectMapper mapper;
-
-
-  }
-
-
-  @NoArgsConstructor
-  @ToString
-  @Builder
-  @Getter
-  @JsonSerialize
-  public static class Configuration implements FormatConfiguration {
-
-    @Override
-    public boolean initialize(InputPreview preview, ErrorCollector errors) {
-      return true;
-    }
-
-    @Override
-    public FileFormat getFileFormat() {
-      return FORMAT;
-    }
-
-    @Override
-    public Format getImplementation() {
-      return new JsonLineFormat();
-    }
-
-    @Override
-    public String getName() {
-      return NAME;
     }
   }
 

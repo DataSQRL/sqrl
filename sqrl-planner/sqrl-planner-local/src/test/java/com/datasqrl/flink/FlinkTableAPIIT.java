@@ -5,9 +5,10 @@ package com.datasqrl.flink;
 
 import com.datasqrl.AbstractPhysicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
-import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
+import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.engine.stream.flink.FlinkStreamHolder;
 import com.datasqrl.FlinkRowConstructor;
@@ -69,7 +70,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 
     TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"));
 
-    AbstractFlinkStreamEngine flink = FlinkEngineConfiguration.builder().build().initialize(errors);
+    AbstractFlinkStreamEngine flink = new FlinkEngineFactory().initialize(SqrlConfig.EMPTY);
     FlinkStreamBuilder streamBuilder = flink.createJob();
     StreamInputPreparer streamPreparer = new StreamInputPreparerImpl();
 

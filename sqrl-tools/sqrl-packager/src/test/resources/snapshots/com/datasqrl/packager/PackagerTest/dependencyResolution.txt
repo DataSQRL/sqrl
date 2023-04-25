@@ -10,34 +10,34 @@ package.json
 {
   "package" : {
     "name" : "datasqrl.test.Foo",
-    "version" : "1.0.0",
     "variant" : "dev",
-    "description" : "Basic test example"
+    "description" : "Basic test example",
+    "version" : "1.0.0"
   },
   "compiler" : {
-    "api" : {
-      "maxArguments" : 3
-    }
+    "maxApiArguments" : 3
   },
-  "engines" : [ {
-    "engineName" : "flink",
-    "savepoint" : false
-  }, {
-    "engineName" : "jdbc",
-    "dbURL" : "jdbc:h2:tmp/output",
-    "driverName" : "org.h2.Driver",
-    "dialect" : "H2",
-    "database" : "sqrl"
-  } ],
-  "dependencies" : {
-    "datasqrl.examples.Nutshop" : {
-      "name" : "datasqrl.examples.Nutshop",
-      "version" : "0.1.0",
-      "variant" : "dev"
+  "engines" : {
+    "stream" : {
+      "name" : "flink"
+    },
+    "database" : {
+      "name" : "jdbc",
+      "database" : "sqrl",
+      "dialect" : "H2",
+      "driver" : "org.h2.Driver",
+      "url" : "jdbc:h2:tmp/output"
     }
   },
   "script" : {
     "main" : "main1.sqrl"
+  },
+  "dependencies" : {
+    "datasqrl.examples.Nutshop" : {
+      "variant" : "dev",
+      "name" : "datasqrl.examples.Nutshop",
+      "version" : "0.1.0"
+    }
   }
 }
 >>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWODependencies.json-dir
@@ -52,33 +52,33 @@ package.json
 {
   "package" : {
     "name" : "datasqrl.test.Foo",
-    "version" : "1.0.0",
     "variant" : "dev",
-    "description" : "Basic test example"
+    "description" : "Basic test example",
+    "version" : "1.0.0"
   },
   "compiler" : {
-    "api" : {
-      "maxArguments" : 3
+    "maxApiArguments" : 3
+  },
+  "engines" : {
+    "stream" : {
+      "name" : "flink"
+    },
+    "database" : {
+      "name" : "jdbc",
+      "database" : "sqrl",
+      "dialect" : "H2",
+      "driver" : "org.h2.Driver",
+      "url" : "jdbc:h2:tmp/output"
     }
   },
-  "engines" : [ {
-    "engineName" : "flink",
-    "savepoint" : false
-  }, {
-    "engineName" : "jdbc",
-    "dbURL" : "jdbc:h2:tmp/output",
-    "driverName" : "org.h2.Driver",
-    "dialect" : "H2",
-    "database" : "sqrl"
-  } ],
   "script" : {
     "main" : "main1.sqrl"
   },
   "dependencies" : {
     "datasqrl.examples.Nutshop" : {
       "name" : "datasqrl.examples.Nutshop",
-      "version" : "0.1.0",
-      "variant" : "dev"
+      "variant" : "dev",
+      "version" : "0.1.0"
     }
   }
 }
@@ -94,34 +94,34 @@ package.json
 {
   "package" : {
     "name" : "datasqrl.test.Foo",
-    "version" : "1.0.0",
     "variant" : "dev",
-    "description" : "Basic test example"
+    "description" : "Basic test example",
+    "version" : "1.0.0"
   },
   "compiler" : {
-    "api" : {
-      "maxArguments" : 3
-    }
+    "maxApiArguments" : 3
   },
-  "engines" : [ {
-    "engineName" : "flink",
-    "savepoint" : false
-  }, {
-    "engineName" : "jdbc",
-    "dbURL" : "jdbc:h2:tmp/output",
-    "driverName" : "org.h2.Driver",
-    "dialect" : "H2",
-    "database" : "sqrl"
-  } ],
-  "dependencies" : {
-    "datasqrl.examples.Nutshop" : {
-      "name" : "datasqrl.examples.Nutshop",
-      "version" : "0.1.0",
-      "variant" : "dev"
+  "engines" : {
+    "stream" : {
+      "name" : "flink"
+    },
+    "database" : {
+      "name" : "jdbc",
+      "database" : "sqrl",
+      "dialect" : "H2",
+      "driver" : "org.h2.Driver",
+      "url" : "jdbc:h2:tmp/output"
     }
   },
   "script" : {
     "main" : "main2.sqrl"
+  },
+  "dependencies" : {
+    "datasqrl.examples.Nutshop" : {
+      "variant" : "dev",
+      "name" : "datasqrl.examples.Nutshop",
+      "version" : "0.1.0"
+    }
   }
 }
 >>>src/test/resources/dependency/main2.sqrl-src/test/resources/dependency/packageWODependencies.json-dir
@@ -136,33 +136,33 @@ package.json
 {
   "package" : {
     "name" : "datasqrl.test.Foo",
-    "version" : "1.0.0",
     "variant" : "dev",
-    "description" : "Basic test example"
+    "description" : "Basic test example",
+    "version" : "1.0.0"
   },
   "compiler" : {
-    "api" : {
-      "maxArguments" : 3
+    "maxApiArguments" : 3
+  },
+  "engines" : {
+    "stream" : {
+      "name" : "flink"
+    },
+    "database" : {
+      "name" : "jdbc",
+      "database" : "sqrl",
+      "dialect" : "H2",
+      "driver" : "org.h2.Driver",
+      "url" : "jdbc:h2:tmp/output"
     }
   },
-  "engines" : [ {
-    "engineName" : "flink",
-    "savepoint" : false
-  }, {
-    "engineName" : "jdbc",
-    "dbURL" : "jdbc:h2:tmp/output",
-    "driverName" : "org.h2.Driver",
-    "dialect" : "H2",
-    "database" : "sqrl"
-  } ],
   "script" : {
     "main" : "main2.sqrl"
   },
   "dependencies" : {
     "datasqrl.examples.Nutshop" : {
       "name" : "datasqrl.examples.Nutshop",
-      "version" : "0.1.0",
-      "variant" : "dev"
+      "variant" : "dev",
+      "version" : "0.1.0"
     }
   }
 }

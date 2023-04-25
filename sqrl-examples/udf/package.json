@@ -1,22 +1,16 @@
 {
-  "metadata" : {
-    "engineType" : null
+  "engines" : {
+    "stream" : {
+      "name" : "flink"
+    },
+    "database" : {
+      "url" : "jdbc:h2:file:./h2.db",
+      "driver" : "org.h2.Driver",
+      "dialect" : "h2",
+      "database" : "datasqrl",
+      "name" : "jdbc"
+    }
   },
-  "engines" : [ {
-    "savepoint" : false,
-    "engineName" : "flink"
-  }, {
-    "host" : null,
-    "port" : null,
-    "dbURL" : "jdbc:h2:file:./h2.db",
-    "user" : null,
-    "password" : null,
-    "driverName" : "org.h2.Driver",
-    "dialect" : "h2",
-    "database" : "datasqrl",
-    "systemType" : "jdbc",
-    "engineName" : "jdbc"
-  } ],
   "script" : {
     "main" : "myudf.sqrl"
   }

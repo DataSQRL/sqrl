@@ -1,9 +1,9 @@
 package com.datasqrl;
 
+import com.datasqrl.config.BaseConnectorFactory;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.model.StreamType;
 import com.datasqrl.serializer.SerializableSchema;
-import com.datasqrl.io.DataSystemConnectorConfig;
-import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.model.LogicalStreamMetaData;
@@ -74,11 +74,11 @@ public class FlinkExecutablePlan {
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
   public static class FlinkErrorSink {
 
-    DataSystemConnectorConfig dsConfig;
-    TableConfig tableConfig;
+    Class<? extends BaseConnectorFactory> connectorFactory;
+    Class<? extends FormatFactory> formatFactory;
+    TableConfig.Serialized tableConfig;
     String name;
     NamePath namePath;
-    Class factory;
 
     public <R, C> R accept(FlinkErrorSinkVisitor<R, C> visitor, C context) {
       return visitor.visitErrorSink(this, context);
@@ -205,8 +205,6 @@ public class FlinkExecutablePlan {
 
   public interface FlinkTableDefinitionVisitor<R, C> {
 
-    R visitTableDefinition(FlinkDataStreamDefinition table, C context);
-
     R visitTableDefinition(FlinkSqlTableApiDefinition table, C context);
 
     R visitFactoryDefinition(FlinkFactoryDefinition table, C context);
@@ -232,30 +230,12 @@ public class FlinkExecutablePlan {
   @AllArgsConstructor
   @Builder
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
-  public static class FlinkDataStreamDefinition implements FlinkTableDefinition {
-
-    String name;
-    TableConfig config;
-    SchemaDefinition schemaDefinition;
-    TypeInformation outputSchema;
-
-    @Override
-    public <R, C> R accept(FlinkTableDefinitionVisitor<R, C> visitor, C context) {
-      return visitor.visitTableDefinition(this, context);
-    }
-  }
-
-  @Value
-  @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-  @AllArgsConstructor
-  @Builder
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
   public static class FlinkFactoryDefinition implements FlinkTableDefinition {
 
     String name;
-    Class factoryClass;
-    DataSystemConnectorConfig config;
-    TableConfig tableConfig;
+    Class<? extends BaseConnectorFactory> connectorFactory;
+    Class<? extends FormatFactory> formatFactory;
+    TableConfig.Serialized tableConfig;
     TableDefinition schemaDefinition;
     TypeInformation typeInformation;
     SerializableSchema schema;

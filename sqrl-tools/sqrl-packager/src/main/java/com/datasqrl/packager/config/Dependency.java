@@ -3,6 +3,7 @@
  */
 package com.datasqrl.packager.config;
 
+import com.datasqrl.config.Constraints;
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Strings;
 import lombok.AllArgsConstructor;
@@ -16,9 +17,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Dependency {
 
-  String name;
+  @Constraints.Default
+  String name = null;
   String version;
-  String variant;
+  @Constraints.Default
+  String variant = PackageConfiguration.DEFAULT_VARIANT;
 
   @Override
   public String toString() {

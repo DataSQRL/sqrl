@@ -1,9 +1,8 @@
 {
   "type" : "source",
   "canonicalizer" : "system",
-  "charset" : "UTF-8",
   "format" : {
-    "formatType" : "csv",
+    "name" : "csv",
     "delimiter" : ",",
     "commentPrefix" : null,
     "header" : [ "url", "category", "author", "updated" ]
@@ -15,6 +14,6 @@
     "directoryURI" : "",
     "fileURIs" : [ "../../sqrl-examples/clickstream/data/content.csv.gz", "../../sqrl-examples/clickstream/data/click_part0001.csv.gz" ],
     "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
-    "systemType" : "dir"
+    "name" : "file"
   }
 }

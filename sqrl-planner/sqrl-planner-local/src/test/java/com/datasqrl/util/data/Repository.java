@@ -3,8 +3,9 @@
  */
 package com.datasqrl.util.data;
 
-import com.datasqrl.io.DataSystemDiscoveryConfig;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
+import com.datasqrl.io.tables.TableConfig;
 import java.util.Set;
 
 public class Repository extends UseCaseExample {
@@ -16,10 +17,11 @@ public class Repository extends UseCaseExample {
   }
 
   @Override
-  public DataSystemDiscoveryConfig getDiscoveryConfig() {
-    return DirectoryDataSystemConfig.Discovery.builder()
+  public TableConfig getDiscoveryConfig() {
+    return FileDataSystemFactory.getFileDiscoveryConfig(getName(),
+        FileDataSystemConfig.builder()
             .directoryURI(getDataDirectory().toUri().getPath())
             .filenamePattern("([^\\.]+?)\\.(?:[-_A-Za-z0-9]+)")
-            .build();
+            .build()).build();
   }
 }

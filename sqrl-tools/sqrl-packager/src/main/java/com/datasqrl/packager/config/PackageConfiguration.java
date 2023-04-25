@@ -3,6 +3,8 @@
  */
 package com.datasqrl.packager.config;
 
+import com.datasqrl.config.Constraints.Default;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -13,39 +15,42 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
-@JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class PackageConfiguration {
+
+  public static final String PACKAGE_KEY = "package";
 
   public static final String DEFAULT_VARIANT = "default";
 
   String name;
   String version;
-  String variant;
-  @Builder.Default
+  @Default
+  String variant = DEFAULT_VARIANT;
+  @Default
   Boolean latest = true;
-  String type;
-  String license;
-  String repository;
-  String homepage;
-  String documentation;
-  String readme;
-  String description;
-
-  @Builder.Default
+  @Default
+  String type = null;
+  @Default
+  String license = "";
+  @Default
+  String repository = "";
+  @Default
+  String homepage = "";
+  @Default
+  String documentation = "";
+  @Default
+  String readme = "";
+  @Default
+  String description = "";
+  @Default
   List<KeyWord> keywords = List.of();
 
-  public boolean initialize(ErrorCollector errors) {
-    errors.checkFatal(!Strings.isNullOrEmpty(name),"Need to specify a package name");
-    errors.checkFatal(!Strings.isNullOrEmpty(version),"Need to specify a package version");
-    if (latest==null) latest = true;
-    if (Strings.isNullOrEmpty(variant)) variant=DEFAULT_VARIANT;
-    if (keywords==null) keywords = List.of();
-    return true;
+  public static PackageConfiguration fromRootConfig(@NonNull SqrlConfig rootConfig) {
+    return rootConfig.getSubConfig(PACKAGE_KEY).allAs(PackageConfiguration.class).get();
   }
 
   public void checkInitialized() {
@@ -60,10 +65,8 @@ public class PackageConfiguration {
     return new Dependency(getName(), getVersion(), getVariant());
   }
 
-  @AllArgsConstructor
   @NoArgsConstructor
   @Getter
-  @JsonIgnoreProperties(ignoreUnknown = true)
   public static final class KeyWord {
 
     String name;

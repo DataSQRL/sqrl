@@ -5,14 +5,14 @@ package com.datasqrl.io;
 
 
 import com.datasqrl.AbstractEngineIT;
+import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.formats.JsonLineFormat;
+import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.FileStreamUtil;
-import com.datasqrl.io.formats.JsonLineFormat.Configuration;
-import com.datasqrl.io.impl.kafka.KafkaDataSystemConfig;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,10 +49,10 @@ public class KafkaBaseTest extends AbstractEngineIT {
     CLUSTER.stop();
   }
 
-  String[] bootstrapServers;
+  String bootstrapServers;
 
   public void createTopics(String[] topics) throws Exception {
-    bootstrapServers = CLUSTER.bootstrapServers().split(";");
+    bootstrapServers = CLUSTER.bootstrapServers();
     CLUSTER.createTopics(topics);
   }
 
@@ -110,21 +110,11 @@ public class KafkaBaseTest extends AbstractEngineIT {
     return writeToTopic(topic, FileStreamUtil.filesByline(paths));
   }
 
-  protected DataSystemDiscoveryConfig getDiscoveryConfig(String topicPrefix) {
-    KafkaDataSystemConfig.Discovery.DiscoveryBuilder builder = KafkaDataSystemConfig.Discovery.builder();
-    builder.servers(Arrays.asList(bootstrapServers));
-    if (!Strings.isNullOrEmpty(topicPrefix)) builder.topicPrefix(topicPrefix);
-    return builder.build();
-  }
-
-  protected DataSystemConfig.DataSystemConfigBuilder getSystemConfigBuilder(String name,
-      boolean withTopicPrefix, boolean withFormat) {
-    DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-    builder.datadiscovery(getDiscoveryConfig(withTopicPrefix?name+".":null));
-    if (withFormat) builder.format(new Configuration());
-    builder.type(ExternalDataType.source);
-    builder.name(name);
-    return builder;
+  protected TableConfig getSystemConfigBuilder(String name,
+      boolean withTopicPrefix) {
+    TableConfig.Builder tblBuilder = KafkaDataSystemFactory.getKafkaConfig(name, bootstrapServers, withTopicPrefix?name+".":null);
+    tblBuilder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
+    return tblBuilder.build();
   }
 
 

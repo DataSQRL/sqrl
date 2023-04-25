@@ -92,12 +92,20 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     return new ErrorCollector(location, errors, abortOnFatal);
   }
 
-  public ErrorCollector withFile(Path file, String scriptContent) {
-    return withFile(file.getFileName().toString(),scriptContent);
+  public ErrorCollector withScript(Path file, String scriptContent) {
+    return withScript(file.getFileName().toString(),scriptContent);
   }
 
-  public ErrorCollector withFile(String filename, String scriptContent) {
+  public ErrorCollector withScript(String filename, String scriptContent) {
     return withLocation(ErrorPrefix.SCRIPT.resolve(filename)).withSource(scriptContent);
+  }
+
+  public ErrorCollector withConfig(Path file) {
+    return withConfig(file.getFileName().toString());
+  }
+
+  public ErrorCollector withConfig(String filename) {
+    return withLocation(ErrorPrefix.CONFIG.resolve(filename));
   }
 
   /*

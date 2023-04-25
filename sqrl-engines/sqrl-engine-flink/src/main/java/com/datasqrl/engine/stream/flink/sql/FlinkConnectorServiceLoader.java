@@ -4,21 +4,19 @@ import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SinkServiceLoader;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.SourceServiceLoader;
-import com.datasqrl.engine.stream.flink.FlinkEngineConfiguration;
+import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 
 public class FlinkConnectorServiceLoader {
-  public static Class<?> resolveSourceClass(String connectorName) {
-    SourceFactory<?> factory = (new SourceServiceLoader())
-        .load(FlinkEngineConfiguration.ENGINE_NAME, connectorName)
-        .orElseThrow();
+  public static Class<? extends SourceFactory> resolveSourceClass(String connectorName) {
+    SourceFactory factory = (new SourceServiceLoader())
+        .load(FlinkEngineFactory.ENGINE_NAME, connectorName);
 
     return factory.getClass();
   }
 
-  public static Class<?> resolveSinkClass(String connectorName) {
+  public static Class<? extends SinkFactory> resolveSinkClass(String connectorName) {
     SinkFactory factory = (new SinkServiceLoader())
-        .load(FlinkEngineConfiguration.ENGINE_NAME, connectorName)
-        .orElseThrow();
+        .load(FlinkEngineFactory.ENGINE_NAME, connectorName);
 
     return factory.getClass();
   }

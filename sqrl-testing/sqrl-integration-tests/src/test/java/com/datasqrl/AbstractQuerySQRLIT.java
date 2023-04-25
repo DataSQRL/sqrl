@@ -11,7 +11,7 @@ import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnectorConfig;
+import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APIQuery;
@@ -88,18 +88,18 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
             .sorted().collect(Collectors.joining(System.lineSeparator())), "database");
 
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    executor.execute(physicalPlan);
+    executor.execute(physicalPlan, errors);
 
 
     SqlClient client;
 
-    if (jdbc.getConfig().getDialect().equalsIgnoreCase("postgres")) {
-      client = PgPool.client(vertx, toPgOptions(jdbc.getConfig()),
+    if (jdbc.getDialect().equalsIgnoreCase("postgres")) {
+      client = PgPool.client(vertx, toPgOptions(jdbc),
           new PgPoolOptions(new PoolOptions()));
     } else {
       client = JDBCPool.pool(
           vertx,
-          toJdbcConfig(jdbc.getConfig()),
+          toJdbcConfig(jdbc),
           new PoolOptions());
 
     }
@@ -141,10 +141,10 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     return -1;
   }
 
-  private JDBCConnectOptions toJdbcConfig(JdbcDataSystemConnectorConfig config) {
+  private JDBCConnectOptions toJdbcConfig(JdbcDataSystemConnector config) {
     JDBCConnectOptions options = new JDBCConnectOptions()
-        .setJdbcUrl(jdbc.getConfig().getDbURL())
-        .setDatabase(jdbc.getConfig().getDatabase());
+        .setJdbcUrl(jdbc.getUrl())
+        .setDatabase(jdbc.getDatabase());
 
     Optional.ofNullable(config.getUser()).map(options::setUser);
     Optional.ofNullable(config.getPassword()).map(options::setPassword);
@@ -163,7 +163,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         .writeValueAsString(mapper.readTree(body));
   }
 
-  private PgConnectOptions toPgOptions(JdbcDataSystemConnectorConfig jdbcConf) {
+  private PgConnectOptions toPgOptions(JdbcDataSystemConnector jdbcConf) {
     PgConnectOptions options = new PgConnectOptions();
     options.setDatabase(jdbcConf.getDatabase());
     options.setHost(jdbcConf.getHost());

@@ -3,11 +3,13 @@
  */
 package com.datasqrl.cmd;
 
-import com.datasqrl.config.GlobalEngineConfiguration;
+import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.service.PackagerUtil;
-import com.datasqrl.service.Util;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
@@ -15,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.util.List;
 
 import static com.datasqrl.cmd.AbstractCompilerCommand.DEFAULT_DEPLOY_DIR;
 import static com.datasqrl.cmd.AbstractCompilerCommand.DEFAULT_SERVER_MODEL;
@@ -30,11 +31,11 @@ public class ServeCommand extends AbstractCommand {
   @Override
   protected void runCommand(ErrorCollector errors) throws Exception {
     //Get jdbc config from package.json
-    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
-    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFromPath(packageFiles,
-        GlobalEngineConfiguration.class);
-
-    startGraphQLServer(readModel(), port, Util.getJdbcEngine(engineConfig.getEngines()));
+    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors);
+    DatabaseEngine dbEngine = PipelineFactory.fromRootConfig(config).getDatabaseEngine();
+    errors.checkFatal(dbEngine instanceof JDBCEngine, "Expected configured "
+        + "database engine to be a JDBC database: %s");
+    startGraphQLServer(readModel(), port, ((JDBCEngine)dbEngine).getConnector());
   }
 
   @SneakyThrows

@@ -1,9 +1,8 @@
 {
   "type": "source",
   "canonicalizer": "system",
-  "charset": "UTF-8",
   "format": {
-    "formatType": "json"
+    "name": "json"
   },
   "name": "orders",
   "identifier": "orders",
@@ -12,6 +11,6 @@
     "directoryURI": "../../sqrl-examples/nutshop/data-compress/",
     "fileURIs": [],
     "filenamePattern": "^([^\\.]+?)(?:_part.*)?$",
-    "systemType": "dir"
+    "name": "file"
   }
 }

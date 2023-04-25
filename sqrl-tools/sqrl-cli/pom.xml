@@ -18,7 +18,10 @@
   </properties>
 
   <dependencies>
-
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-base</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-common</artifactId>

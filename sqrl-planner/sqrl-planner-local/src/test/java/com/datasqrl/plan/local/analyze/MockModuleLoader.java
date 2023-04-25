@@ -1,21 +1,17 @@
 package com.datasqrl.plan.local.analyze;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DataSystem;
-import com.datasqrl.io.DataSystemConfig;
-import com.datasqrl.io.DataSystemDiscoveryConfig;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.formats.FileFormat;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.io.DataSystemDiscovery;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.print.PrintDataSystem;
+import com.datasqrl.io.impl.print.PrintDataSystemFactory;
 import com.datasqrl.loaders.DataSystemNsObject;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.loaders.SqrlDirectoryModule;
-import com.datasqrl.module.SqrlModule;
 import com.datasqrl.loaders.StandardLibraryLoader;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.module.SqrlModule;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -48,16 +44,14 @@ public class MockModuleLoader implements ModuleLoader {
 
     //todo: move this out
     if (isPrintSink(namePath)) {
-      DataSystemConfig config = PrintDataSystem.DEFAULT_DISCOVERY_CONFIG;
-      ErrorCollector errors = ErrorCollector.root();
-      DataSystem dataSystem = config.initialize(errors);
+      DataSystemDiscovery sinks = PrintDataSystemFactory.getDefaultDiscovery();
       return Optional.of(
           new SqrlDirectoryModule(
-              List.of(new DataSystemNsObject(namePath,dataSystem))));
+              List.of(new DataSystemNsObject(namePath,sinks))));
     }
 
     if (isOutputSink(namePath)) {
-      DataSystem output = createOutputModule();
+      DataSystemDiscovery output = FileDataSystemFactory.getFileSinkConfig(errorDir.get()).build().initializeDiscovery();
       return Optional.of(
           new SqrlDirectoryModule(
               List.of(new DataSystemNsObject(namePath,output))));
@@ -72,21 +66,10 @@ public class MockModuleLoader implements ModuleLoader {
         new SqrlDirectoryModule(objects));
   }
 
-  public DataSystem createOutputModule() {
-    DataSystemDiscoveryConfig datasystem = DirectoryDataSystemConfig.ofDirectory(errorDir.get());
-    DataSystemConfig.DataSystemConfigBuilder builder = DataSystemConfig.builder();
-    builder.datadiscovery(datasystem);
-    builder.type(ExternalDataType.sink);
-    builder.name("output");
-    builder.format(FileFormat.JSON.getImplementation().getDefaultConfiguration());
-    DataSystemConfig config = builder.build();
-
-    return config.initialize(ErrorCollector.root());
-  }
 
   private static boolean isPrintSink(NamePath namePath) {
     return namePath.size() == 1 && namePath.getLast().getCanonical()
-        .equals(PrintDataSystem.SYSTEM_TYPE);
+        .equals(PrintDataSystemFactory.SYSTEM_NAME);
   }
   private static boolean isOutputSink(NamePath namePath) {
     return namePath.size() == 1 && namePath.getLast().getCanonical()

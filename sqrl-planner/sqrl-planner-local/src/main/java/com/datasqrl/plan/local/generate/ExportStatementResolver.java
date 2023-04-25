@@ -6,6 +6,7 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.DataSystemNsObject;
+import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -41,19 +42,9 @@ public class ExportStatementResolver extends AbstractStatementResolver {
   public void exportTable(SQRLTable table, NamePath sinkPath, Namespace ns,
       ExportDefinition statement, ErrorCollector errors) {
 
-    Optional<TableSink> sink = moduleLoader
-        .getModule(sinkPath.popLast())
-        .flatMap(m->m.getNamespaceObject(sinkPath.popLast().getLast()))
-        .map(s -> ((DataSystemNsObject) s).getTable())
-        .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), errors))
-        .map(tblConfig ->
-            tblConfig.initializeSink(errors, sinkPath, Optional.empty()));
-
-    if (sink.isEmpty()) {
-      errors.withLocation(atPosition(errors, statement.getSinkPath().getParserPosition()))
-          .fatal(ErrorCode.CANNOT_RESOLVE_TABLESINK,
-          "Cannot resolve table sink: %s", sinkPath);
-    }
+    ErrorCollector sinkErrors = errors.withLocation(atPosition(errors,
+        statement.getSinkPath().getParserPosition()));
+    TableSink sink = LoaderUtil.loadSink(sinkPath, sinkErrors, moduleLoader);
 
     RelBuilder relBuilder = planner.createRelBuilder()
         .scan(table.getVt().getNameId());
@@ -64,7 +55,7 @@ public class ExportStatementResolver extends AbstractStatementResolver {
       fieldNames.add(c.getName().getDisplay());
     });
     relBuilder.project(selects, fieldNames);
-    ns.addExport(new ResolvedExport(table.getVt(), relBuilder.build(), sink.get()));
+    ns.addExport(new ResolvedExport(table.getVt(), relBuilder.build(), sink));
 
   }
 }

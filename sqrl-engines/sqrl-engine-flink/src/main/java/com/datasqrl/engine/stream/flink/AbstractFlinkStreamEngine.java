@@ -14,6 +14,7 @@ import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.google.common.base.Preconditions;
@@ -28,18 +29,18 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     StreamEngine {
 
   public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = STANDARD_STREAM;
-  final FlinkEngineConfiguration config;
+  final ExecutionEnvironmentFactory execFactory;
 
-  public AbstractFlinkStreamEngine(FlinkEngineConfiguration config) {
-    super(FlinkEngineConfiguration.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
-    this.config = config;
+  public AbstractFlinkStreamEngine(ExecutionEnvironmentFactory execFactory) {
+    super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
+    this.execFactory = execFactory;
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan) {
+  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
     FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
-    FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder();
+    FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder(errors);
     StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
     TableResult rslt = statementSet.execute();
     rslt.print(); //todo: this just forces print to wait for the async

@@ -1,7 +1,8 @@
 package com.datasqrl.util.data;
 
-import com.datasqrl.io.DataSystemDiscoveryConfig;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
@@ -88,16 +89,14 @@ public class UseCaseExample implements TestDataset {
 
   @Override
   @SneakyThrows
-  public DataSystemDiscoveryConfig getDiscoveryConfig() {
+  public TableConfig getDiscoveryConfig() {
 //    String baseUrl = "https://github.com/DataSQRL/sqrl/raw/651b944d4597865cf020c8fb8b73aca18aa1c3ca/sqrl-examples/quickstart/data/%s";
     List<String> urls;
     try (Stream<Path> fileStream = Files.list(getDataDirectory())) {
       urls = fileStream.filter(Files::isRegularFile).
           map(Path::toString).collect(Collectors.toList());
     }
-    return DirectoryDataSystemConfig.Discovery.builder()
-        .fileURIs(urls)
-        .build();
+    return FileDataSystemFactory.getFileDiscoveryConfig(getName(), FileDataSystemConfig.builder().fileURIs(urls).build()).build();
   }
 
   public List<TestScript> getScripts() {

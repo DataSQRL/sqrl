@@ -65,7 +65,7 @@ public class SqrlParserImpl implements SqrlParser {
   @Override
   public ScriptNode parse(Path scriptPath, ErrorCollector errors) {
     String scriptContent = Files.readString(scriptPath);
-    errors = errors.withFile(scriptPath, scriptContent);
+    errors = errors.withScript(scriptPath, scriptContent);
     ScriptNode scriptNode = parse(scriptContent, errors);
     scriptNode.setScriptPath(Optional.of(scriptPath));
     return scriptNode;

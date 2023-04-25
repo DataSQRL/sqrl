@@ -5,29 +5,29 @@ package com.datasqrl.cmd;
 
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.Compiler.CompilerResult;
-import com.datasqrl.config.GlobalEngineConfiguration;
+import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
-import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
+import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnectorConfig;
+import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.module.resolver.FileResourceResolver;
+import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
-import com.datasqrl.service.Util;
-import com.datasqrl.util.SqrlObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
@@ -65,8 +65,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
 
-  private final ObjectWriter writer = SqrlObjectMapper.INSTANCE
-      .writerWithDefaultPrettyPrinter();
+
+  private final Deserializer writer = new Deserializer();
 
   protected AbstractCompilerCommand(boolean execute, boolean startGraphql) {
     this.execute = execute;
@@ -74,26 +74,25 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   @SneakyThrows
-  public void runCommand(ErrorCollector collector) throws IOException {
-    List<Path> packageFiles = PackagerUtil.getOrCreateDefaultPackageFiles(root);
-
-    Build build = new Build(collector);
-    Packager packager = PackagerUtil.create(root.rootDir, files, packageFiles, collector);
+  public void runCommand(ErrorCollector errors) throws IOException {
+    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors);
+    Build build = new Build(errors);
+    Packager packager = PackagerUtil.create(root.rootDir, files, config, errors);
     Path packageFilePath = build.build(packager, !noinfer);
-
-    GlobalEngineConfiguration engineConfig = GlobalEngineConfiguration.readFromPath(packageFiles,
-        GlobalEngineConfiguration.class);
-    JdbcDataSystemConnectorConfig jdbc = Util.getJdbcEngine(engineConfig.getEngines());
+    PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
+    DatabaseEngine dbEngine = pipelineFactory.getDatabaseEngine();
+    errors.checkFatal(dbEngine instanceof JDBCEngine, "Expected configured "
+        + "database engine to be a JDBC database: %s");
+    JdbcDataSystemConnector jdbc = ((JDBCEngine)dbEngine).getConnector();
 
     Compiler compiler = new Compiler();
 
     Preconditions.checkArgument(Files.isRegularFile(packageFilePath));
 
-    ResourceResolver resourceResolver = new FileResourceResolver(packageFilePath.getParent());
-    Compiler.CompilerResult result = compiler.run(collector, resourceResolver, debug);
+    Compiler.CompilerResult result = compiler.run(errors, packageFilePath.getParent(), debug);
     write(result, jdbc);
     if (generateAPI.length>0) {
-      collector.checkFatal(Arrays.stream(generateAPI).noneMatch(a -> a!=APIType.GraphQL), ErrorCode.NOT_YET_IMPLEMENTED, "DataSQRL currently only supports GraphQL APIs.");
+      errors.checkFatal(Arrays.stream(generateAPI).noneMatch(a -> a!=APIType.GraphQL), ErrorCode.NOT_YET_IMPLEMENTED, "DataSQRL currently only supports GraphQL APIs.");
       writeSchema(root.getRootDir(), result.getGraphQLSchema());
     }
 
@@ -105,7 +104,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (execute) {
-      executePlan(result.getPlan());
+      executePlan(result.getPlan(), errors);
     }
 
     fut.map(f-> {
@@ -116,21 +115,21 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       }
     });
 
-    if (collector.isFatal()) {
+    if (errors.isFatal()) {
       throw new RuntimeException("Could not run");
     }
   }
 
   @SneakyThrows
   private void writeSchema(Path rootDir, String schema) {
-    Path schemaFile = rootDir.resolve(Packager.GRAPHQL_SCHEMA_FILE_NAME);
+    Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
     Files.deleteIfExists(schemaFile);
     Files.writeString(schemaFile,
         schema, StandardOpenOption.CREATE);
   }
 
   @SneakyThrows
-  public void write(CompilerResult result, JdbcDataSystemConnectorConfig jdbc) {
+  public void write(CompilerResult result, JdbcDataSystemConnector jdbc) {
     Path outputDir = targetDir;
     if (Files.isDirectory(outputDir)) {
       FileUtils.cleanDirectory(outputDir.toFile());
@@ -141,14 +140,12 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     writeTo(jdbc, outputDir);
   }
 
-  private void writeTo(JdbcDataSystemConnectorConfig jdbc, Path outputDir) throws IOException {
-    Files.writeString(outputDir.resolve(DEFAULT_SERVER_CONFIG),
-        writer.writeValueAsString(jdbc), StandardOpenOption.CREATE);
+  private void writeTo(JdbcDataSystemConnector jdbc, Path outputDir) throws IOException {
+    writer.writeJson(outputDir.resolve(DEFAULT_SERVER_CONFIG), jdbc, true);
   }
 
   public void writeTo(CompilerResult result, Path outputDir) throws IOException {
-    Files.writeString(outputDir.resolve(DEFAULT_SERVER_MODEL),
-        writer.writeValueAsString(result.getModel()), StandardOpenOption.CREATE);
+    writer.writeJson(outputDir.resolve(DEFAULT_SERVER_MODEL), result.getModel(), true);
 
     //TODO: Add graphql plan as engine, generate all deployment assets
 //    FlinkStreamPhysicalPlan plan = (FlinkStreamPhysicalPlan)result.getPlan().getStagePlans().get(0).getPlan();
@@ -156,8 +153,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 //        writer.writeValueAsString(plan), StandardOpenOption.CREATE);
   }
 
-  private void executePlan(PhysicalPlan physicalPlan) {
+  private void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    PhysicalPlanExecutor.Result result = executor.execute(physicalPlan);
+    PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
   }
 }

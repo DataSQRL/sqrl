@@ -3,14 +3,21 @@
  */
 package com.datasqrl.io.formats;
 
+import com.datasqrl.config.Constraints.Default;
+import com.datasqrl.config.Constraints.NotEmpty;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.io.impl.InputPreview;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,19 +31,36 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
+@AutoService(FormatFactory.class)
+public class CSVFormat implements TextLineFormat {
 
-  public static final FileFormat FORMAT = FileFormat.CSV;
   public static final String NAME = "csv";
+  public static final List<String> EXTENSIONS = List.of(NAME);
+
+  public static final String DEFAULT_DELIMITER = ",";
+  public static final String DEFAULT_COMMENT = "#";
 
   @Override
-  public Parser getParser(Configuration config) {
-    return new CSVFormatParser(config);
+  public Parser getParser(@NonNull SqrlConfig config) {
+    return new CSVFormatParser(Configuration.of(config));
   }
 
-  @Override
-  public Configuration getDefaultConfiguration() {
-    return new Configuration();
+  public static final String HEADER_KEY = "header";
+  public static final String DELIMITER_KEY = "delimiter";
+
+  public static class Configuration {
+
+    @Default
+    String delimiter = DEFAULT_DELIMITER;
+    @Default
+    String commentPrefix = DEFAULT_COMMENT;
+    @NotEmpty
+    List<String> header;
+
+    static Configuration of(SqrlConfig config) {
+      return config.allAs(Configuration.class).get();
+    }
+
   }
 
 
@@ -49,9 +73,7 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     private org.apache.commons.csv.CSVFormat format;
 
     public CSVFormatParser(Configuration config) {
-      Preconditions.checkArgument(config.header != null && config.header.length > 0);
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(config.delimiter));
-      this.header = config.header;
+      this.header = config.header.toArray(String[]::new);
       this.delimiter = config.delimiter;
       this.commentPrefix = config.commentPrefix;
       this.format = getDefaultFormat(delimiter);
@@ -108,15 +130,27 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
   }
 
   @Override
-  public Writer getWriter(Configuration configuration) {
-    return new CSVWriter();
+  public void inferConfig(@NonNull SqrlConfig config, @NonNull InputPreview inputPreview) {
+    if (!config.containsKey(DELIMITER_KEY) || !config.containsKey(HEADER_KEY)) {
+      //Try to infer
+      FormatInference fci = new FormatInference();
+      Inferer inferer = new Inferer(config.asString(DELIMITER_KEY).getOptional().orElse(null));
+      fci.inferConfigFromText(inputPreview, inferer);
+      if (inferer.foundHeader()) {
+        if (!config.containsKey(DELIMITER_KEY)) config.setProperty(DELIMITER_KEY, inferer.delimiter);
+        if (!config.containsKey(HEADER_KEY)) config.setProperty(HEADER_KEY, inferer.header);
+      } else if (!config.containsKey(HEADER_KEY)) {
+        config.getErrorCollector().fatal("Need to specify a csv header (could not be inferred)");
+      }
+    }
   }
 
-  public static class CSVWriter implements TextLineFormat.Writer {
-
+  @Override
+  public Writer getWriter(@NonNull SqrlConfig config) {
+    throw new NotYetImplementedException("CSV writing not yet supported");
   }
 
-  public static class Inferer implements TextLineFormat.ConfigurationInference<Configuration> {
+  public static class Inferer implements FormatInference.Text {
 
     public static final String[] DELIMITER_CANDIDATES = new String[]{",", ";"};
 
@@ -181,61 +215,14 @@ public class CSVFormat implements TextLineFormat<CSVFormat.Configuration> {
     }
   }
 
-  public static final String DEFAULT_DELIMITER = ",";
+  @Override
+  public List<String> getExtensions() {
+    return EXTENSIONS;
+  }
 
-  @NoArgsConstructor
-  @AllArgsConstructor
-  @ToString
-  @Builder
-  @Getter
-  public static class Configuration implements FormatConfiguration {
-
-    private String delimiter;
-    private String commentPrefix;
-    private String[] header;
-
-    public static Configuration getDefault() {
-      return builder().build();
-    }
-
-    @Override
-    public boolean initialize(InputPreview preview, @NonNull ErrorCollector errors) {
-      if (header == null || header.length == 0 || Strings.isNullOrEmpty(delimiter)) {
-        if (preview != null) {
-          //Try to infer
-          FormatConfigInferer fci = new FormatConfigInferer();
-          Inferer inferer = new Inferer(delimiter);
-          fci.inferConfig(preview, inferer);
-          if (inferer.foundHeader()) {
-            header = inferer.header;
-            delimiter = inferer.delimiter;
-          }
-        }
-      }
-      if (Strings.isNullOrEmpty(delimiter)) {
-        delimiter = DEFAULT_DELIMITER;
-      }
-      if (header == null || header.length == 0) {
-        errors.fatal("Need to specify a csv header (could not be inferred)");
-        return false;
-      }
-      return true;
-    }
-
-    @Override
-    public FileFormat getFileFormat() {
-      return FORMAT;
-    }
-
-    @Override
-    public Format getImplementation() {
-      return new CSVFormat();
-    }
-
-    @Override
-    public String getName() {
-      return NAME;
-    }
+  @Override
+  public String getName() {
+    return NAME;
   }
 
 }

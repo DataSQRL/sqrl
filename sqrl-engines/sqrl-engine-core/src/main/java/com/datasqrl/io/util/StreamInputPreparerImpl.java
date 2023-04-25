@@ -8,7 +8,7 @@ import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.StreamSourceProvider;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.formats.Format;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
@@ -29,7 +29,7 @@ public class StreamInputPreparerImpl implements StreamInputPreparer {
   public StreamHolder<SourceRecord.Raw> getRawInput(TableInput table,
       StreamSourceProvider builder, ErrorLocation errorLocation) {
     Preconditions.checkArgument(isRawInput(table), "Not a valid raw input table: " + table);
-    Format.Parser parser = table.getParser();
+    FormatFactory.Parser parser = table.getParser();
     if (parser instanceof TextLineFormat.Parser) {
       return text2Record(builder.fromTextSource(table),
           (TextLineFormat.Parser) parser, errorLocation);

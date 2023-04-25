@@ -3,11 +3,10 @@
  */
 package com.datasqrl.io.tables;
 
-import com.datasqrl.io.formats.Format;
-import com.datasqrl.io.formats.FormatConfiguration;
-import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.schema.input.SchemaValidator;
 
 public class TableInput extends AbstractExternalTable {
@@ -21,9 +20,9 @@ public class TableInput extends AbstractExternalTable {
     return connector.hasSourceTimestamp();
   }
 
-  public Format.Parser getParser() {
-    FormatConfiguration format = configuration.getFormat();
-    return format.getImplementation().getParser(format);
+  public FormatFactory.Parser getParser() {
+    FormatFactory format = configuration.getFormat();
+    return format.getParser(configuration.getFormatConfig());
   }
 
   public SchemaValidator getSchemaValidator() {

@@ -3,8 +3,10 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.io.DataSystemDiscoveryConfig;
-import com.datasqrl.io.impl.file.DirectoryDataSystemConfig;
+import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.impl.file.FileDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
@@ -22,10 +24,9 @@ public interface TestDataset {
 
   Path getDataDirectory();
 
-  default DataSystemDiscoveryConfig getDiscoveryConfig() {
-    return DirectoryDataSystemConfig.Discovery.builder()
-            .directoryURI(getDataDirectory().toUri().getPath())
-            .build();
+  default TableConfig getDiscoveryConfig() {
+    return FileDataSystemFactory.getFileDiscoveryConfig(getName(),
+            FileDataSystemConfig.builder().directoryURI(getDataDirectory().toString()).build()).build();
   }
 
   Set<String> getTables();

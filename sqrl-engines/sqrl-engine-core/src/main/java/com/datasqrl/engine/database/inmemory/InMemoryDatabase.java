@@ -9,6 +9,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
@@ -28,7 +29,7 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan) {
+  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     throw new UnsupportedOperationException();
   }
 

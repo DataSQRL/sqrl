@@ -13,9 +13,6 @@
   },
   "compiler":
   {
-    "api":
-    {
-      "maxArguments": 3
-    }
+    "maxApiArguments": 3
   }
 }

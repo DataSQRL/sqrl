@@ -36,8 +36,8 @@ public class Resolve {
 
   public Namespace planTables(ScriptNode scriptNode) {
     ErrorCollector error = scriptNode.getScriptPath().isPresent()
-        ? errors.withFile(scriptNode.getScriptPath().get(), scriptNode.getOriginalScript())
-        : errors.withFile("test.sqrl", scriptNode.getOriginalScript());
+        ? errors.withScript(scriptNode.getScriptPath().get(), scriptNode.getOriginalScript())
+        : errors.withScript("test.sqrl", scriptNode.getOriginalScript());
 
     try {
       return planTablesHelper(scriptNode, error);
