@@ -14,7 +14,4 @@ import java.io.Closeable;
  */
 public interface ServerEngine extends ExecutionEngine {
 
-  default DataMonitor createDataMonitor() {
-    throw new UnsupportedOperationException("Capability not supported by engine");
-  }
 }
