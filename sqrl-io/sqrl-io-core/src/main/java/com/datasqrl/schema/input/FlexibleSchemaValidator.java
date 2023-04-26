@@ -5,6 +5,7 @@ package com.datasqrl.schema.input;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
+import com.datasqrl.io.tables.SchemaValidator;
 import com.datasqrl.schema.input.TypeSignature.Simple;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;

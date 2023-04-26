@@ -1,7 +1,6 @@
 package com.datasqrl.plan.local.analyze;
 
 import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.constraint.NotNull;
@@ -11,7 +10,6 @@ import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.SchemaElementDescription;
-import com.datasqrl.schema.input.external.SchemaExport;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,11 +21,6 @@ public class UtbToFlexibleSchema {
         createFields(table),
         List.of());
     return new FlexibleTableSchemaHolder(schema);
-  }
-
-  private static SchemaDefinition createDefinition(FlexibleTableSchema table) {
-    SchemaExport schemaExport = new SchemaExport();
-    return schemaExport.export(table);
   }
 
   private static RelationType<Field> createFields(UniversalTable table) {

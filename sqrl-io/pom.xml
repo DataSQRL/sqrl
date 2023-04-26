@@ -19,5 +19,6 @@
     <module>sqrl-io-jdbc</module>
     <module>sqrl-io-kafka</module>
     <module>sqrl-io-print</module>
+    <module>sqrl-io-schema-flexible</module>
   </modules>
 </project>

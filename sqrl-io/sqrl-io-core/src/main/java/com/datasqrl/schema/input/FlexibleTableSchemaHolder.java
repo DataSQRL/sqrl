@@ -3,15 +3,19 @@ package com.datasqrl.schema.input;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.io.DataSystemConnectorSettings;
+import com.datasqrl.io.tables.SchemaValidator;
 import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
 import com.datasqrl.schema.converters.RowConstructor;
-import com.datasqrl.schema.converters.RowMapper;
+import com.datasqrl.engine.stream.RowMapper;
+import com.datasqrl.schema.input.external.SchemaExport;
+import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Strings;
-import com.datasqrl.schema.input.external.SchemaExport;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.Value;
 
 @Value
 @AllArgsConstructor
@@ -57,7 +61,7 @@ public class FlexibleTableSchemaHolder implements TableSchema {
   public String getDefinition() {
     if (Strings.isNullOrEmpty(definition)) {
       SchemaExport schemaExport = new SchemaExport();
-      SchemaDefinition schemaDef = schemaExport.export(schema);
+      TableDefinition schemaDef = schemaExport.export(schema);
       return new Deserializer().writeYML(schemaDef);
     }
     return definition;

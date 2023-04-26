@@ -191,15 +191,18 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     }
   }
 
+  private Class<? extends FlinkSourceFactory> determineFactory(TableConfig tableConfig) {
+    return tableConfig.getFormat().getSchemaFactory().isPresent()?
+        TableDescriptorSourceFactory.class: DataStreamSourceFactory.class;
+  }
+
   public void registerSourceTable(String tableName, ImportedRelationalTable relationalTable,
       Optional<SqlNode> watermarkColumn,
       Optional<SqlNode> watermarkExpression) {
 
     TableConfig tableConfig = relationalTable.getTableSource().getConfiguration();
-    Class<? extends FlinkSourceFactory> connectorType = tableConfig.getFormat().getSchemaFactory().isPresent()?
-            TableDescriptorSourceFactory.class: DataStreamSourceFactory.class;
     Class<? extends SourceFactory> connectorFactoryClass = FlinkConnectorServiceLoader.resolveSourceClass(
-            tableConfig.getConnectorName(), connectorType);
+            tableConfig.getConnectorName(), determineFactory(tableConfig));
     Class<? extends TableSchemaFactory> schemaFactoryClass = tableConfig.getSchemaFactory().map(TableSchemaFactory::getClass).orElse(null);
 
     Pair<TypeInformation, SerializableSchema> type = createTypeInformation(tableName, relationalTable, watermarkColumn,

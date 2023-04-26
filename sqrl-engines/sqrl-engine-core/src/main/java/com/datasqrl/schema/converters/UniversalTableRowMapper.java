@@ -3,6 +3,7 @@
  */
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.engine.stream.RowMapper;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.schema.Field;

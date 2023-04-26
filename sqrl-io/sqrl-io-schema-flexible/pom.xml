@@ -5,22 +5,23 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.datasqrl</groupId>
-    <artifactId>sqrl-root</artifactId>
+    <artifactId>sqrl-io</artifactId>
     <version>0.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>sqrl-execute</artifactId>
-  <packaging>pom</packaging>
+  <artifactId>sqrl-io-schema-flexible</artifactId>
 
-  <modules>
-    <module>sqrl-execute-flink</module>
-    <module>sqrl-execute-http</module>
-  </modules>
+  <properties>
+    <maven.compiler.source>14</maven.compiler.source>
+    <maven.compiler.target>14</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-base</artifactId>
+      <artifactId>sqrl-io-core</artifactId>
     </dependency>
   </dependencies>
+
 </project>

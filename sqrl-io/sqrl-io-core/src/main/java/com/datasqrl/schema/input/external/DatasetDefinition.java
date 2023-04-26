@@ -3,7 +3,6 @@
  */
 package com.datasqrl.schema.input.external;
 
-import com.datasqrl.model.schema.TableDefinition;
 import java.io.Serializable;
 import java.util.List;
 

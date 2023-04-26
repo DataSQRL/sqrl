@@ -4,14 +4,7 @@
 package com.datasqrl.schema.input;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
-import com.datasqrl.schema.converters.RowConstructor;
-import com.datasqrl.schema.converters.RowMapper;
-import com.google.auto.service.AutoService;
 import java.util.Collections;
 import java.util.List;
 import lombok.EqualsAndHashCode;

@@ -47,9 +47,8 @@ import com.datasqrl.StreamTableConverter.ConvertToStream;
 import com.datasqrl.StreamTableConverter.EmitFirstInsertOrUpdate;
 import com.datasqrl.StreamTableConverter.KeyedIndexSelector;
 import com.datasqrl.StreamTableConverter.RowMapper;
-import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
 import com.datasqrl.model.StreamType;
-import com.datasqrl.schema.input.SchemaValidator;
+import com.datasqrl.io.tables.SchemaValidator;
 import com.datasqrl.serializer.SerializableSchema;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -385,7 +384,7 @@ public class FlinkEnvironmentBuilder implements
         schemaValidatedStream.getSideOutput(errorTag));
 
     //Map rows (from factory)
-    com.datasqrl.schema.converters.RowMapper mapper = schema.getRowMapper(
+    com.datasqrl.engine.stream.RowMapper mapper = schema.getRowMapper(
         FlinkRowConstructor.INSTANCE, tableConfig.getConnectorSettings());
 
     DataStream rows = schemaValidatedStream

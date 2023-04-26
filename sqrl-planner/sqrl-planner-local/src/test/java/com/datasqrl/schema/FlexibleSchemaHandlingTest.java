@@ -20,7 +20,7 @@ import com.datasqrl.schema.input.FlexibleTableConverter;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.schema.input.external.SchemaImport;
-import com.datasqrl.model.schema.TableDefinition;
+import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.junit.ArgumentProvider;

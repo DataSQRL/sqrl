@@ -236,6 +236,16 @@
                 <artifactId>sqrl-planner-local</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-planner-schema-flexible</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-schema-flexible</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- tests -->
             <dependency>
                 <groupId>com.datasqrl</groupId>

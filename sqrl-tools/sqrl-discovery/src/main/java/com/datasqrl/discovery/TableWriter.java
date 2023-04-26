@@ -5,21 +5,14 @@ package com.datasqrl.discovery;
 
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
+import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
-import com.datasqrl.schema.input.external.SchemaExport;
-import com.datasqrl.model.schema.TableDefinition;
-import com.datasqrl.util.SqrlObjectMapper;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import java.nio.file.Files;
-import lombok.NonNull;
-
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import lombok.NonNull;
 
 public class TableWriter {
   public static final String TABLE_FILE_SUFFIX = ".table.json";
@@ -44,7 +37,8 @@ public class TableWriter {
     TableSchema ts = table.getSchema();
     TableConfig config = table.getConfiguration().toBuilder().schema(ts.getSchemaType()).build();
     config.toFile(tableConfigFile);
-    Path schemaFile = destinationDir.resolve(FlexibleTableSchemaFactory.getSchemaFilename(config));
+    TableSchemaFactory schemaFactory = TableSchemaFactory.load(ts.getSchemaType());
+    Path schemaFile = destinationDir.resolve(schemaFactory.getSchemaFilename(config));
     Files.writeString(schemaFile, ts.getDefinition());
   }
 

@@ -11,7 +11,7 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.input.external.SchemaImport;
-import com.datasqrl.model.schema.TableDefinition;
+import com.datasqrl.schema.input.external.TableDefinition;
 import com.google.auto.service.AutoService;
 import java.net.URI;
 import java.util.Optional;
@@ -40,7 +40,8 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
   }
 
 
-  public static String getSchemaFilename(TableConfig tableConfig) {
+  @Override
+  public String getSchemaFilename(TableConfig tableConfig) {
     return tableConfig.getName().getCanonical() + SCHEMA_EXTENSION;
   }
 

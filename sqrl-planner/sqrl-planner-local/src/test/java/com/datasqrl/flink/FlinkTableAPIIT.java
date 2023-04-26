@@ -20,7 +20,7 @@ import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
-import com.datasqrl.schema.converters.RowMapper;
+import com.datasqrl.engine.stream.RowMapper;
 import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.schema.input.FlexibleSchemaValidator;

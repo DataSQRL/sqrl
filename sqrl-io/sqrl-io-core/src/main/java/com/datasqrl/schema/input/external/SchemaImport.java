@@ -4,11 +4,6 @@
 package com.datasqrl.schema.input.external;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.model.schema.AbstractElementDefinition;
-import com.datasqrl.model.schema.FieldDefinition;
-import com.datasqrl.model.schema.FieldTypeDefinition;
-import com.datasqrl.model.schema.FieldTypeDefinitionImpl;
-import com.datasqrl.model.schema.TableDefinition;
 import com.datasqrl.schema.input.FlexibleFieldSchema;
 import com.datasqrl.util.NamedIdentifier;
 import com.datasqrl.util.StringNamedId;
