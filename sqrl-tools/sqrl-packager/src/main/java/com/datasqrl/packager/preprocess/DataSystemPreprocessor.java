@@ -1,5 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.DataSource;
 import com.google.common.base.Preconditions;
 import java.nio.file.Files;
@@ -18,7 +19,7 @@ public class DataSystemPreprocessor implements Preprocessor {
 
   @SneakyThrows
   @Override
-  public void loader(Path dir, ProcessorContext processorContext) {
+  public void loader(Path dir, ProcessorContext processorContext, ErrorCollector errors) {
     Preconditions.checkArgument(Files.isRegularFile(dir), "Not a regular file: %s", dir);
 
     processorContext.addDependency(dir);

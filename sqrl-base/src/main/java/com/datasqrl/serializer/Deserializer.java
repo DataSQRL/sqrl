@@ -5,17 +5,16 @@ package com.datasqrl.serializer;
 
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.base.Preconditions;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.List;
+
 import lombok.Getter;
 
 @Getter
@@ -33,6 +32,7 @@ public class Deserializer {
 
 
     yamlMapper = new YAMLMapper();
+    yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
   }
 
   public <T> T mapJsonFile(URI path, Class<T> clazz) {
@@ -47,6 +47,10 @@ public class Deserializer {
     return mapFile(yamlMapper, uri, clazz);
   }
 
+  public <T> T mapYAML(String yamlContent, Class<T> clazz) {
+    return map(yamlMapper, yamlContent, clazz);
+  }
+
   public <T> T mapYAMLFile(Path path, Class<T> clazz) {
     return mapFile(yamlMapper, path, clazz);
   }
@@ -54,6 +58,14 @@ public class Deserializer {
   public static <T> T mapFile(ObjectMapper mapper, URI uri, Class<T> clazz) {
     try {
       return mapper.readValue(ResourceResolver.toURL(uri), clazz);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <T> T map(ObjectMapper mapper, String content, Class<T> clazz) {
+    try {
+      return mapper.readValue(content, clazz);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -66,16 +78,6 @@ public class Deserializer {
     }
   }
 
-  public <O> O mapJsonField(Path file, String field, Class<O> clazz) throws IOException {
-    JsonNode jsonNode = jsonMapper.readValue(file.toFile(), JsonNode.class);
-    return jsonMapper.treeToValue(jsonNode.get(field),clazz);
-  }
-
-  public boolean hasJsonField(Path file, String field) throws IOException {
-    JsonNode jsonNode = jsonMapper.readValue(file.toFile(), JsonNode.class);
-    return jsonNode.has(field) && jsonNode.hasNonNull(field);
-  }
-
   public <O> void writeJson(Path file, O object) throws IOException {
     writeJson(file, object, false);
   }
@@ -86,14 +88,8 @@ public class Deserializer {
     writer.writeValue(file.toFile(),object);
   }
 
-  public JsonNode combineJsonFiles(List<Path> packageFiles) throws IOException {
-    Preconditions.checkArgument(!packageFiles.isEmpty());
-    JsonNode combined = jsonMapper.readValue(packageFiles.get(0).toFile(), JsonNode.class);
-    for (int i = 1; i < packageFiles.size(); i++) {
-      combined = jsonMapper.readerForUpdating(combined)
-          .readValue(packageFiles.get(i).toFile());
-    }
-    return combined;
+  public<O> String writeYML(O object) throws IOException {
+    return yamlMapper.writeValueAsString(object);
   }
 
 }

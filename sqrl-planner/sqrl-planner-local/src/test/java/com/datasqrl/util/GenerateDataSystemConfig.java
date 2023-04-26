@@ -3,8 +3,6 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.io.formats.FormatFactory;
-import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.loaders.DataSource;

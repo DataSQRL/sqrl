@@ -40,7 +40,6 @@ import com.datasqrl.io.SourceRecord.Raw;
 import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.model.LogicalStreamMetaData;
@@ -48,10 +47,8 @@ import com.datasqrl.StreamTableConverter.ConvertToStream;
 import com.datasqrl.StreamTableConverter.EmitFirstInsertOrUpdate;
 import com.datasqrl.StreamTableConverter.KeyedIndexSelector;
 import com.datasqrl.StreamTableConverter.RowMapper;
-import com.datasqrl.schema.converters.FlexibleSchemaRowMapper;
-import com.datasqrl.schema.input.DefaultSchemaValidator;
-import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.model.StreamType;
+import com.datasqrl.io.tables.SchemaValidator;
 import com.datasqrl.serializer.SerializableSchema;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -351,7 +348,7 @@ public class FlinkEnvironmentBuilder implements
       DataStreamSourceFactory sourceFactory,
       FormatFactory formatFactory,
       TableSchemaFactory factory,
-      SchemaDefinition definition,
+      String schemaDefinition,
       TypeInformation outputSchema,
       PlanContext context) {
     final List<SideOutputDataStream> errorSideChannels = new ArrayList<>();
@@ -370,25 +367,25 @@ public class FlinkEnvironmentBuilder implements
     errorSideChannels.add(process.getSideOutput(formatErrorTag));
 
     //todo validator may be optional
-    TableSchema schema = factory.create(definition).get();
+    TableSchema schema = factory.create(schemaDefinition, tableConfig.getBase().getCanonicalizer());
     //todo: fix flexible schema hard referenced
-    DefaultSchemaValidator schemaValidator = (DefaultSchemaValidator)schema.getValidator(tableConfig.getSchemaAdjustmentSettings(),
-        false);
+    SchemaValidator schemaValidator = schema.getValidator(
+            tableConfig.getSchemaAdjustmentSettings(),
+            tableConfig.getConnectorSettings());
 
     //validate schema
     OutputTag errorTag = context.createErrorTag();
     SingleOutputStreamOperator<Named> schemaValidatedStream = process.process(
         new MapWithErrorProcess<>(errorTag,
-            new Function(schemaValidator),
+            new InputValidatorFunction(schemaValidator),
             ErrorPrefix.INPUT_DATA.resolve("schemaValidation")),
         TypeInformation.of(Named.class));
     errorSideChannels.add(
         schemaValidatedStream.getSideOutput(errorTag));
 
     //Map rows (from factory)
-    FlexibleSchemaRowMapper mapper =
-        new FlexibleSchemaRowMapper(schema, false,
-            FlinkRowConstructor.INSTANCE);
+    com.datasqrl.engine.stream.RowMapper mapper = schema.getRowMapper(
+        FlinkRowConstructor.INSTANCE, tableConfig.getConnectorSettings());
 
     DataStream rows = schemaValidatedStream
         .map(mapper::apply, outputSchema);
@@ -399,9 +396,9 @@ public class FlinkEnvironmentBuilder implements
   }
 
   @AllArgsConstructor
-  public static class Function implements FunctionWithError<SourceRecord.Raw, SourceRecord.Named> {
+  public static class InputValidatorFunction implements FunctionWithError<SourceRecord.Raw, SourceRecord.Named> {
 
-    private final DefaultSchemaValidator validator;
+    private final SchemaValidator validator;
 
     @Override
     public Optional<SourceRecord.Named> apply(SourceRecord.Raw raw,
@@ -433,18 +430,24 @@ public class FlinkEnvironmentBuilder implements
     BaseConnectorFactory connectorFactory = createFactoryInstance(table.getConnectorFactory());
     if (connectorFactory instanceof DataStreamSourceFactory) {
       DataStreamSourceFactory sourceFactory = (DataStreamSourceFactory) connectorFactory;
+      TableSchemaFactory schemaFactory = createFactoryInstance(table.getSchemaFactory());
 
       DataStream dataStream = buildStream(tableConfig,
           sourceFactory,
           formatFactory,
-          new FlexibleTableSchemaFactory(),
+          schemaFactory,
           table.getSchemaDefinition(),
           table.getTypeInformation(),
           context);
 
       context.getTEnv().createTemporaryView(name, dataStream, toSchema(table.getSchema()));
     } else if (connectorFactory instanceof TableDescriptorSourceFactory) {
-      throw new NotYetImplementedException("Table sources not yet supported");
+      TableDescriptorSourceFactory sourceFactory = (TableDescriptorSourceFactory) connectorFactory;
+      TableDescriptor.Builder builder = sourceFactory.create(new FlinkSourceFactoryContext(context.sEnv, name, tableConfig.serialize(),
+              formatFactory, UUID.randomUUID()));
+      TableDescriptor descriptor = builder.schema(toSchema(table.getSchema()))
+              .build();
+      context.getTEnv().createTemporaryTable(name, descriptor);
     } else if (connectorFactory instanceof SinkFactory) {
       SinkFactory sinkFactory = (SinkFactory) connectorFactory;
       Object o = sinkFactory.create(

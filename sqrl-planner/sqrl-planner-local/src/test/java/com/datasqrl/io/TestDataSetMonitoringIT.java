@@ -16,11 +16,7 @@ import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.metadata.MetadataStoreProvider;
-import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.external.SchemaExport;
-import com.datasqrl.model.schema.TableDefinition;
-import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Nutshop;
@@ -28,9 +24,6 @@ import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Sensors;
 import com.datasqrl.util.junit.ArgumentProvider;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,9 +69,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     //Write out table configurations
     for (TableSource table : tables) {
       assertTrue(Iterables.size(table.getConfiguration().getConfig().getKeys()) > 0);
-
-      TableDefinition outputSchema = export.export((FlexibleTableSchema) table.getSchema().getSchema());
-      snapshot.addContent(FileTestUtil.writeYaml(outputSchema), table.getName().getDisplay() + " schema");
+      snapshot.addContent(table.getSchema().getDefinition(), table.getName().getDisplay() + " schema");
     }
 
     snapshot.createOrValidate();

@@ -15,14 +15,18 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
-import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Preconditions;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import picocli.CommandLine;
+import picocli.CommandLine.ScopeType;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,11 +34,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import picocli.CommandLine;
-import picocli.CommandLine.ScopeType;
 
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {

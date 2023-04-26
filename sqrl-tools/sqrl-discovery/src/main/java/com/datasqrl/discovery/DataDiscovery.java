@@ -24,6 +24,7 @@ import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.schema.input.FlexibleTableSchema;
+import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -104,7 +105,7 @@ public class DataDiscovery {
           schema = generator.mergeSchema(stats, baseSchema.get(), subErrors);
         }
         TableSource tblSource = table.getConfiguration()
-            .initializeSource(table.getPath().parent(), schema);
+            .initializeSource(table.getPath().parent(), new FlexibleTableSchemaHolder(schema));
         resultTables.add(tblSource);
       }
     } catch (IOException e) {

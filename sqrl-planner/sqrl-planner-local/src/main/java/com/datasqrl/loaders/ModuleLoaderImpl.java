@@ -2,7 +2,6 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.DataSystemDiscovery;
-import com.datasqrl.io.impl.print.PrintDataSystem;
 import com.datasqrl.io.impl.print.PrintDataSystemFactory;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;

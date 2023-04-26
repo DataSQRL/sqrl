@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;

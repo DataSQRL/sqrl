@@ -6,7 +6,6 @@ package com.datasqrl.plan.table;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.stats.TableStatistic;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AddedColumn.Simple;

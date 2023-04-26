@@ -15,5 +15,6 @@
   <modules>
     <module>sqrl-common</module>
     <module>sqrl-planner-local</module>
+    <module>sqrl-planner-schema-flexible</module>
   </modules>
 </project>

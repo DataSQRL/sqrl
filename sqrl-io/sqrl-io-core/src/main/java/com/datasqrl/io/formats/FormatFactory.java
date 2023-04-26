@@ -5,11 +5,14 @@ package com.datasqrl.io.formats;
 
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.io.impl.InputPreview;
+import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import lombok.NonNull;
 import lombok.Value;
 
@@ -18,6 +21,16 @@ public interface FormatFactory extends Serializable {
   List<String> getExtensions();
 
   String getName();
+
+  /**
+   * If this format has an associated schema, this method
+   * returns the schema factory for that format. Otherwise empty.
+   *
+   * @return optional {@link TableSchemaFactory} associated with this format
+   */
+  default Optional<TableSchemaFactory> getSchemaFactory() {
+    return Optional.empty();
+  }
 
   Parser getParser(@NonNull SqrlConfig config);
 

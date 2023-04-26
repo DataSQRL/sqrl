@@ -13,8 +13,7 @@ public interface DataSystemImplementationFactory {
   String getSystemName();
 
   static<F extends DataSystemImplementationFactory> F fromConfig(Class<F> clazz,
-      @NonNull TableConfig config) {
-    SqrlConfig connectorConfig = config.getConnectorConfig();
+      @NonNull SqrlConfig connectorConfig) {
     return ServiceLoaderDiscovery.get(clazz, DataSystemImplementationFactory::getSystemName,
         connectorConfig.asString(SYSTEM_NAME_KEY).get());
   }

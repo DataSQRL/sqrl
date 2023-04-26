@@ -15,12 +15,13 @@ import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
 import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
-import com.datasqrl.packager.preprocess.FlexibleSchemaPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
+import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -41,6 +42,7 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import lombok.NonNull;
 import lombok.Value;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 
@@ -202,11 +204,10 @@ public class Packager {
    */
   private void preProcessFiles() throws IOException {
     //Preprocessor will normalize files
-    Preprocessors preprocessors = new Preprocessors(List.of(
-        new TablePreprocessor(),
-        new JarPreprocessor(),
-        new FlexibleSchemaPreprocessor(errors),
-        new DataSystemPreprocessor()));
+    List<Preprocessor> loadedProcessor = ServiceLoaderDiscovery.getAll(Preprocessor.class);
+    List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
+        new JarPreprocessor(), new DataSystemPreprocessor()), loadedProcessor);
+    Preprocessors preprocessors = new Preprocessors(processorList, errors);
     preprocessors.handle(
         PreprocessorsContext.builder()
             .rootDir(rootDir)

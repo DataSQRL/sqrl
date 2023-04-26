@@ -3,22 +3,17 @@ package com.datasqrl.io.impl.kafka;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigUtil;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.DataSystemImplementationFactory;
 import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.formats.FormatFactory;
-import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.tables.BaseTableConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Properties;
 import java.util.Set;
 import lombok.NonNull;
@@ -40,8 +35,8 @@ public class KafkaDataSystemFactory implements DataSystemImplementationFactory {
       implements DataSystemConnectorFactory {
 
     @Override
-    public DataSystemConnector initialize(@NonNull SqrlConfig connectorConfig) {
-      return new KafkaDataSystemConnector();
+    public DataSystemConnectorSettings getSettings(@NonNull SqrlConfig connectorConfig) {
+      return DataSystemConnectorSettings.builder().hasSourceTimestamp(true).build();
     }
 
   }

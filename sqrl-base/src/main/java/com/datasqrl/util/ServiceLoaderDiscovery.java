@@ -1,5 +1,6 @@
 package com.datasqrl.util;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.NonNull;
 
@@ -18,6 +19,16 @@ public class ServiceLoaderDiscovery {
             }
         }
         return Optional.empty();
+    }
+
+    public static<L> List<L> getAll(Class<L> clazz) {
+        List<L> loaded = new ArrayList<>();
+        ServiceLoader.load(clazz).forEach(loaded::add);
+        return loaded;
+    }
+
+    public static <L> L get(@NonNull Class<L> clazz, @NonNull Predicate<L> condition, @NonNull List<String> identifiers) {
+        return findFirst(clazz,condition).orElseThrow(() -> new ServiceLoaderException(clazz, identifiers));
     }
 
     public static <L> Optional<L> findFirst(@NonNull Class<L> clazz, @NonNull Function<L,String> key, @NonNull String value) {

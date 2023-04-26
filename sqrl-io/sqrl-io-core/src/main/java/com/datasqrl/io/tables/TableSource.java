@@ -3,11 +3,9 @@
  */
 package com.datasqrl.io.tables;
 
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.schema.input.InputTableSchema;
-import com.datasqrl.schema.input.SchemaValidator;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -21,22 +19,16 @@ public class TableSource extends TableInput {
 
   @NonNull
   private final TableSchema tableSchema;
-  private final SchemaValidator validator;
 
-  public TableSource(DataSystemConnector dataset, TableConfig configuration, NamePath path,
-      Name name, TableSchema schema, SchemaValidator validator) {
+  public TableSource(DataSystemConnectorSettings dataset, TableConfig configuration, NamePath path,
+      Name name, TableSchema schema) {
     super(dataset, configuration, path, name);
     this.tableSchema = schema;
-    this.validator = validator;
 //    this.statistic = TableStatistic.of(1000); //TODO: extract from schema
   }
 
-  public InputTableSchema getSchema() {
-    return new InputTableSchema(tableSchema, connector.hasSourceTimestamp());
+  public TableSchema getSchema() {
+    return tableSchema;
   }
 
-  @Override
-  public SchemaValidator getSchemaValidator() {
-    return validator;
-  }
 }

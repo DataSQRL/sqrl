@@ -4,6 +4,7 @@
 package com.datasqrl.io.impl.file;
 
 import com.datasqrl.io.formats.FileFormatExtension;
+import com.datasqrl.util.BaseFileUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -106,12 +107,12 @@ public class FilePath implements Serializable {
   public Optional<NameComponents> getComponents(Pattern filenamePattern) {
     String fullName = getFileName();
     String compression = "", format = "";
-    Pair<String, String> extPair = FileUtil.separateExtension(fullName);
+    Pair<String, String> extPair = BaseFileUtil.separateExtension(fullName);
     String extension = extPair.getRight();
     if (!Strings.isNullOrEmpty(extension) && COMPRESSION_EXTENSIONS.contains(extension)) {
       compression = extension;
       fullName = extPair.getLeft();
-      extPair = FileUtil.separateExtension(fullName);
+      extPair = BaseFileUtil.separateExtension(fullName);
       extension = extPair.getRight();
     }
     if (!Strings.isNullOrEmpty(extension) && FileFormatExtension.validFormat(extension)) {

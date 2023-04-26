@@ -1,18 +1,21 @@
 package com.datasqrl.io.tables;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.model.schema.SchemaDefinition;
-import com.datasqrl.serializer.Deserializer;
-
-import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.net.URI;
-import java.util.Optional;
 
 public interface TableSchemaFactory {
-  Optional<TableSchema> create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, Deserializer deserializer, ErrorCollector errors);
-  Optional<TableSchema> create(SchemaDefinition definition);
+  TableSchema create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, ErrorCollector errors);
+  TableSchema create(String schemaDefinition, NameCanonicalizer nameCanonicalizer);
+  String getSchemaFilename(TableConfig tableConfig);
 
-  public String getType();
+  String getType();
+
+  static TableSchemaFactory load(String schemaType) {
+    return ServiceLoaderDiscovery.get(TableSchemaFactory.class, TableSchemaFactory::getType, schemaType);
+  }
 
 }

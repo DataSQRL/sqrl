@@ -1,28 +1,19 @@
 package com.datasqrl.io.impl.kafka;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.formats.FileFormatExtension;
-import com.datasqrl.io.impl.file.FileUtil;
 import com.datasqrl.io.tables.TableConfig;
-import com.datasqrl.util.StringUtil;
 import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.function.Predicate;
 import lombok.NonNull;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.clients.admin.Admin;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
 
 public class KafkaDataSystemDiscovery extends DataSystemDiscovery.Base {
 

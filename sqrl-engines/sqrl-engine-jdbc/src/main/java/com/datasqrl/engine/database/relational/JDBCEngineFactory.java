@@ -35,7 +35,7 @@ public class JDBCEngineFactory implements DatabaseEngineFactory {
   }
 
   private JdbcDataSystemConnector getConnector(@NonNull SqrlConfig config) {
-    return new JdbcDataSystemConnectorFactory().initialize(config);
+    return new JdbcDataSystemConnectorFactory().getConnector(config);
   }
 
   @Value

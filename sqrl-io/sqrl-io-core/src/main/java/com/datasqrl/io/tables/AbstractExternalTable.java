@@ -3,7 +3,7 @@
  */
 package com.datasqrl.io.tables;
 
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -20,7 +20,7 @@ import java.util.List;
 public class AbstractExternalTable {
 
   @NonNull
-  protected final DataSystemConnector connector;
+  protected final DataSystemConnectorSettings connector;
   @NonNull
   protected final TableConfig configuration;
   @EqualsAndHashCode.Include

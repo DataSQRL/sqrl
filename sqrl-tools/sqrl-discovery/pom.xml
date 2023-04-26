@@ -25,6 +25,10 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-flink</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-schema-flexible</artifactId>
+    </dependency>
 
 
     <!-- Test jars -->

@@ -1,8 +1,8 @@
 package com.datasqrl.io.impl.jdbc;
 
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.DataSystemConnectorFactory;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.google.auto.service.AutoService;
 import lombok.NonNull;
 
@@ -16,8 +16,13 @@ public class JdbcDataSystemConnectorFactory implements DataSystemConnectorFactor
     return SYSTEM_NAME;
   }
 
-  @Override
-  public JdbcDataSystemConnector initialize(@NonNull SqrlConfig connectorConfig) {
+  public JdbcDataSystemConnector getConnector(@NonNull SqrlConfig connectorConfig) {
     return connectorConfig.allAs(JdbcDataSystemConnector.class).get();
+  }
+
+  @Override
+  public DataSystemConnectorSettings getSettings(@NonNull SqrlConfig connectorConfig) {
+    return DataSystemConnectorSettings.builder().hasSourceTimestamp(false).build();
+
   }
 }

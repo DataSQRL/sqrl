@@ -7,22 +7,20 @@ package com.datasqrl.util;
 import com.google.common.base.Strings;
 import com.google.common.io.Resources;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
-import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.SystemUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Contains a set of static methods for handling with files and folders.
@@ -30,14 +28,6 @@ import java.util.stream.Stream;
  * A lot of the methods are proxies around 3rd party libraries and don't have dedicated tests
  */
 public class FileUtil {
-
-  public static String getExtension(Path p) {
-    return FilenameUtils.getExtension(p.getFileName().toString());
-  }
-
-  public static String removeExtension(Path p) {
-    return FilenameUtils.removeExtension(p.getFileName().toString());
-  }
 
   public static boolean isExtension(Path p, String extension) {
     return p.getFileName().toString().endsWith(extension);
@@ -108,23 +98,8 @@ public class FileUtil {
     }
   }
 
-
-  @SneakyThrows
   public static String readFile(URI uri) {
-    URL url = uri.toURL();
-    StringBuilder content = new StringBuilder();
-
-    try (InputStream inputStream = url.openStream();
-        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-        BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
-
-      String line;
-      while ((line = bufferedReader.readLine()) != null) {
-        content.append(line).append(System.lineSeparator());
-      }
-    }
-
-    return content.toString();
+    return BaseFileUtil.readFile(uri);
   }
 
   @SneakyThrows

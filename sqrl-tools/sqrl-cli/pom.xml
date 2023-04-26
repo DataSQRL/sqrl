@@ -68,7 +68,26 @@
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-format-json</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-format-csv</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-planner-schema-flexible</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-schema-flexible</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- Test jars -->
     <dependency>
       <artifactId>sqrl-common</artifactId>

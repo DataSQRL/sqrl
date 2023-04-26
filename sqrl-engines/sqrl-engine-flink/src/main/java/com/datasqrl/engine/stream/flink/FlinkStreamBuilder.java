@@ -3,21 +3,20 @@
  */
 package com.datasqrl.engine.stream.flink;
 
+import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactoryContext;
-import com.datasqrl.config.SourceServiceLoader;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.monitor.SaveMetricsSink;
-import com.datasqrl.io.tables.TableConfig;
-import com.datasqrl.util.FlinkUtilities;
+import com.datasqrl.engine.stream.flink.sql.FlinkConnectorServiceLoader;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.MetricStore.Provider;
-import com.datasqrl.io.DataSystemConnector;
 import com.datasqrl.io.formats.TextLineFormat;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.util.Metric;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
+import com.datasqrl.util.FlinkUtilities;
 import com.google.common.base.Preconditions;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.functions.ReduceFunction;
@@ -25,6 +24,8 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamStatementSet;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+
+import java.util.UUID;
 
 @Getter
 @Slf4j
@@ -70,9 +71,8 @@ public class FlinkStreamBuilder implements DataMonitor {
     String flinkSourceName = table.getDigest().toString('-', "input");
 
     StreamExecutionEnvironment env = getEnvironment();
-    DataStream<TimeAnnotatedRecord<String>> timedSource =
-        (DataStream<TimeAnnotatedRecord<String>>)new SourceServiceLoader().load(FlinkEngineFactory.ENGINE_NAME,
-                tableConfig.getConnectorName())
+    DataStream<TimeAnnotatedRecord<String>> timedSource = FlinkConnectorServiceLoader.getSourceFactory(
+                tableConfig.getConnectorName(), DataStreamSourceFactory.class)
         .create(new FlinkSourceFactoryContext(env, flinkSourceName, tableConfig.serialize(), tableConfig.getFormat(), getUuid()));
     return new FlinkStreamHolder<>(this, timedSource);
   }

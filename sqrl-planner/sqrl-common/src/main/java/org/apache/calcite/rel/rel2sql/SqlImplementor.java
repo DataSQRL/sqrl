@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.rel.rel2sql;
 
+import lombok.NonNull;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.tree.Expressions;
 import org.apache.calcite.rel.RelFieldCollation;
@@ -110,8 +111,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.IntFunction;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * State for generating a SQL statement.
@@ -1414,7 +1413,7 @@ public abstract class SqlImplementor {
    */
   public static class SimpleContext extends Context {
 
-    @Nonnull
+    @NonNull
     private final IntFunction<SqlNode> field;
 
     public SimpleContext(SqlDialect dialect, IntFunction<SqlNode> field) {
@@ -2041,7 +2040,7 @@ public abstract class SqlImplementor {
 
     public Builder(RelNode rel, List<Clause> clauses, SqlSelect select,
         Context context, boolean anon,
-        @Nullable Map<String, RelDataType> aliases) {
+        Map<String, RelDataType> aliases) {
       this.rel = Objects.requireNonNull(rel);
       this.clauses = ImmutableList.copyOf(clauses);
       this.select = Objects.requireNonNull(select);

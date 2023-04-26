@@ -5,7 +5,7 @@ package com.datasqrl.io.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.formats.FormatFactory;
 import java.util.Optional;
 import lombok.Getter;
@@ -16,7 +16,7 @@ public class TableSink extends AbstractExternalTable {
 
   private final Optional<TableSchema> schema;
 
-  public TableSink(@NonNull DataSystemConnector connector,
+  public TableSink(@NonNull DataSystemConnectorSettings connector,
       @NonNull TableConfig configuration,
       @NonNull NamePath path, @NonNull Name name,
       Optional<TableSchema> schema) {

@@ -2,24 +2,19 @@ package com.datasqrl;
 
 import static com.datasqrl.loaders.LoaderUtil.loadSink;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlDIModule;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DataSystemNsObject;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.module.SqrlModule;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.plan.local.analyze.MockModuleLoader;
 import com.datasqrl.module.resolver.FileResourceResolver;
+import com.datasqrl.plan.local.analyze.MockModuleLoader;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import javax.validation.constraints.NotEmpty;
-import lombok.NonNull;
 
 public class SqrlTestDIModule extends SqrlDIModule {
 
