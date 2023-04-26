@@ -238,6 +238,16 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-format-csv</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-format-json</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-planner-schema-flexible</artifactId>
                 <version>${project.version}</version>
             </dependency>

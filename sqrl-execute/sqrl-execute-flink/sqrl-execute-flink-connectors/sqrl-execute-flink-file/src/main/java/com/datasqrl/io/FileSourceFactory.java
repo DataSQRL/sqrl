@@ -4,7 +4,6 @@ import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactoryContext;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.io.formats.FormatFactory;
-import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
 import com.datasqrl.io.impl.file.FileDataSystemDiscovery;
@@ -58,7 +57,7 @@ public class FileSourceFactory implements DataStreamSourceFactory {
       org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder;
       if (pathConfig.isDirectory()) {
         StreamFormat<String> format;
-        if (formatFactory instanceof JsonLineFormat) {
+        if (formatFactory.getName().equalsIgnoreCase("json")) {
           format = new JsonInputFormat(charset);
         } else {
           format = new org.apache.flink.connector.file.src.reader.TextLineInputFormat(

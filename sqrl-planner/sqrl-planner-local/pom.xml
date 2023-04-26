@@ -83,6 +83,16 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-format-json</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-format-csv</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-planner-schema-flexible</artifactId>
       <scope>test</scope>
     </dependency>

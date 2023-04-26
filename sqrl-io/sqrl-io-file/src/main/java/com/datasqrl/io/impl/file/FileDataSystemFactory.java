@@ -2,15 +2,14 @@ package com.datasqrl.io.impl.file;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.io.formats.FormatFactory;
-import com.datasqrl.io.formats.JsonLineFormat;
-import com.datasqrl.io.tables.BaseTableConfig;
-import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemConnectorFactory;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.DataSystemImplementationFactory;
 import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.tables.BaseTableConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
@@ -53,7 +52,7 @@ public class FileDataSystemFactory implements DataSystemImplementationFactory {
 
   public static TableConfig.Builder getFileSinkConfig(Path path) {
     TableConfig.Builder builder = getFileDiscoveryConfig(path, ExternalDataType.sink);
-    builder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
+    builder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, "json");
     return builder;
   }
 
