@@ -8,6 +8,7 @@ import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.RelStageRunner;
@@ -59,7 +60,8 @@ public class DAGAssembler {
   private ErrorCollector errors;
 
 
-  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
+      RootGraphqlModel model) {
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();
@@ -136,7 +138,7 @@ public class DAGAssembler {
       Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(indexCalls)
           .keySet();
       databasePlans.add(new PhysicalDAGPlan.StagePlan(database, readDAG, indexDefinitions,
-          null, null));
+          null, null, null));
     }
 
     //Add exported tables
@@ -172,10 +174,20 @@ public class DAGAssembler {
         });
 
     PhysicalDAGPlan.StagePlan streamPlan = new PhysicalDAGPlan.StagePlan(streamStage, writeDAG,
-        null, jars, udfs);
+        null, jars, udfs, null);
 
-    return new PhysicalDAGPlan(ListUtils.union(List.of(streamPlan),databasePlans));
 
+    Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);
+    List<PhysicalDAGPlan.StagePlan> basePlans = ListUtils.union(List.of(streamPlan), databasePlans);
+
+    if (serverStage.isPresent()) {
+      PhysicalDAGPlan.StagePlan serverPlan = new PhysicalDAGPlan.StagePlan(
+          serverStage.get(), List.of(), null, jars, udfs, model
+      );
+      return new PhysicalDAGPlan(ListUtils.union(basePlans, List.of(serverPlan)));
+    } else {
+      return new PhysicalDAGPlan(basePlans);
+    }
   }
 
   private Pair<RelNode,Integer> produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {

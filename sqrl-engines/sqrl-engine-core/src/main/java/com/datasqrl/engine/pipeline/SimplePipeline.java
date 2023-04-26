@@ -4,10 +4,13 @@
 package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.Value;
 
@@ -35,10 +38,14 @@ public class SimplePipeline implements ExecutionPipeline {
     }
   }
 
-  public static SimplePipeline of(StreamEngine stream, DatabaseEngine db) {
-    return new SimplePipeline(List.of(new EngineStage(stream), new EngineStage(db)));
-  }
+  public static SimplePipeline of(StreamEngine stream, DatabaseEngine db, Optional<ServerEngine> server) {
+    List<ExecutionStage> stages = new ArrayList<>();
+    stages.add(new EngineStage(stream));
+    stages.add(new EngineStage(db));
+    server.ifPresent((s)->stages.add(new EngineStage(s)));
 
+    return new SimplePipeline(stages);
+  }
 
   @Override
   public Set<ExecutionStage> getUpStreamFrom(ExecutionStage stage) {

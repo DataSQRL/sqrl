@@ -5,7 +5,9 @@ import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
+import com.datasqrl.engine.server.GraphqlServerEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
+import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
@@ -31,10 +33,11 @@ public class PackagerUtil {
   }
 
   protected static PackagerConfig createPackageConfig(Path[] files, Path rootDir, SqrlConfig config) {
-    PackagerConfig.PackagerConfigBuilder pkgBuilder = PackagerConfig.builder();
-    pkgBuilder.rootDir(rootDir);
-    pkgBuilder.config(config);
-    pkgBuilder.mainScript(files[0]);
+    PackagerConfig.PackagerConfigBuilder pkgBuilder =
+        PackagerConfig.builder()
+            .rootDir(rootDir)
+            .config(config)
+            .mainScript(files[0]);
     if (files.length > 1) {
       pkgBuilder.graphQLSchemaFile(files[1]);
     }
@@ -82,6 +85,9 @@ public class PackagerUtil {
 
     SqrlConfig flinkConfig = config.getSubConfig("stream");
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+
+    SqrlConfig server = config.getSubConfig("server");
+    server.setProperty(GraphqlServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
 
     return rootConfig;
   }

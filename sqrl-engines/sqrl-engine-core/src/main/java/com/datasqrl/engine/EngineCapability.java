@@ -36,7 +36,6 @@ public enum EngineCapability {
   //Engine supports data monitoring
   DATA_MONITORING;
 
-
   public static EnumSet<EngineCapability> STANDARD_STREAM = EnumSet.of(DENORMALIZE,
       TEMPORAL_JOIN, TO_STREAM, STREAM_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS,
       EXPORT, PULLUP_OPTIMIZATION, DATA_MONITORING);
@@ -44,5 +43,5 @@ public enum EngineCapability {
   public static EnumSet<EngineCapability> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
       MULTI_RANK);
 
-
+  public static EnumSet<EngineCapability> NO_CAPABILITIES = EnumSet.noneOf(EngineCapability.class);
 }

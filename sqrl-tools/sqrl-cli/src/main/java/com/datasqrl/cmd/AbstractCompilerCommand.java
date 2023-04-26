@@ -73,11 +73,11 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     this.startGraphql = startGraphql;
   }
 
-  @SneakyThrows
-  public void runCommand(ErrorCollector errors) throws IOException {
+  public void runCommand(ErrorCollector errors) {
     SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors);
-    Build build = new Build(errors);
     Packager packager = PackagerUtil.create(root.rootDir, files, config, errors);
+
+    Build build = new Build(errors);
     Path packageFilePath = build.build(packager, !noinfer);
     PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
     DatabaseEngine dbEngine = pipelineFactory.getDatabaseEngine();

@@ -10,6 +10,7 @@ import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.DatabaseEngineFactory;
 import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import java.util.Collection;
@@ -84,12 +85,17 @@ public class PipelineFactory {
     return (StreamEngine) getEngine(Type.STREAM);
   }
 
+  public Optional<ServerEngine> getServerEngine() {
+    Collection<ExecutionEngine> engines = getEngines(Optional.of(Type.SERVER)).values();
+
+    return engines.stream().findFirst()
+        .map(e->(ServerEngine) e);
+  }
+
   public ExecutionPipeline createPipeline() {
     DatabaseEngine db = getDatabaseEngine();
     StreamEngine stream = getStreamEngine();
-    return SimplePipeline.of(stream, db);
+    Optional<ServerEngine> server = getServerEngine();
+    return SimplePipeline.of(stream, db, server);
   }
-
-
-
 }
