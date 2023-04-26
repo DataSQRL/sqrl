@@ -28,6 +28,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-schema-flexible</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-engine-core</artifactId>
     </dependency>
 

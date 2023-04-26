@@ -4,6 +4,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.DataSource;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.util.StringUtil;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 @AllArgsConstructor
+@AutoService(Preprocessor.class)
 public class FlexibleSchemaPreprocessor implements Preprocessor {
 
   public static final String SCHEMA_YML_REGEX = "(.*)\\.schema\\.yml$";
