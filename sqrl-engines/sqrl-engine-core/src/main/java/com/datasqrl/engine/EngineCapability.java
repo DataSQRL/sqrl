@@ -34,10 +34,7 @@ public enum EngineCapability {
   //Writing/upserting data into engine by primary key will deduplicate data
   MATERIALIZE_ON_KEY,
   //Engine supports data monitoring
-  DATA_MONITORING,
-  //No capabilities
-  NONE;
-
+  DATA_MONITORING;
 
   public static EnumSet<EngineCapability> STANDARD_STREAM = EnumSet.of(DENORMALIZE,
       TEMPORAL_JOIN, TO_STREAM, STREAM_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS,
