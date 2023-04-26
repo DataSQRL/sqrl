@@ -178,16 +178,15 @@ public class DAGAssembler {
 
 
     Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);
+    List<PhysicalDAGPlan.StagePlan> basePlans = ListUtils.union(List.of(streamPlan), databasePlans);
+
     if (serverStage.isPresent()) {
-
-      PhysicalDAGPlan.StagePlan serverPlan = new PhysicalDAGPlan.StagePlan(serverStage.get(), List.of(),
-          null, jars, udfs, model);
-
-      return new PhysicalDAGPlan(
-          ListUtils.union(ListUtils.union(List.of(streamPlan), databasePlans),
-              List.of(serverPlan)));
+      PhysicalDAGPlan.StagePlan serverPlan = new PhysicalDAGPlan.StagePlan(
+          serverStage.get(), List.of(), null, jars, udfs, model
+      );
+      return new PhysicalDAGPlan(ListUtils.union(basePlans, List.of(serverPlan)));
     } else {
-      return new PhysicalDAGPlan(ListUtils.union(List.of(streamPlan), databasePlans));
+      return new PhysicalDAGPlan(basePlans);
     }
   }
 
