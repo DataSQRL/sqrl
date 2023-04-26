@@ -46,7 +46,5 @@ public enum EngineCapability {
   public static EnumSet<EngineCapability> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
       MULTI_RANK);
 
-  public static EnumSet<EngineCapability> NO_CAPABILITIES = EnumSet.of(NONE);
-
-
+  public static EnumSet<EngineCapability> NO_CAPABILITIES = EnumSet.noneOf(EngineCapability.class);
 }

@@ -87,11 +87,9 @@ public class PipelineFactory {
 
   public Optional<ServerEngine> getServerEngine() {
     Collection<ExecutionEngine> engines = getEngines(Optional.of(Type.SERVER)).values();
-    if (engines.isEmpty()) {
-      return Optional.empty();
-    }
 
-    return Optional.of((ServerEngine)engines.stream().findFirst().get());
+    return engines.stream().findFirst()
+        .map(e->(ServerEngine) e);
   }
 
   public ExecutionPipeline createPipeline() {
