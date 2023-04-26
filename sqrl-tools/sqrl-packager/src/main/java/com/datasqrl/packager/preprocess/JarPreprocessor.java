@@ -2,6 +2,7 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -41,7 +42,7 @@ public class JarPreprocessor implements Preprocessor {
 
   @SneakyThrows
   @Override
-  public void loader(Path path, ProcessorContext processorContext) {
+  public void loader(Path path, ProcessorContext processorContext, ErrorCollector errors) {
     try (java.util.jar.JarFile file = new java.util.jar.JarFile(path.toFile())) {
       file.stream()
           .filter(this::isValidEntry)

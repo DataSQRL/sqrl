@@ -1,5 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -11,7 +12,7 @@ public interface Preprocessor {
 
   Pattern getPattern();
 
-  void loader(Path dir, ProcessorContext processorContext);
+  void loader(Path dir, ProcessorContext processorContext, ErrorCollector errors);
 
   @Getter
   public static class ProcessorContext {

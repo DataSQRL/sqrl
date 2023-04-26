@@ -7,19 +7,18 @@ import com.datasqrl.util.StringUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
-@AllArgsConstructor
+@NoArgsConstructor
 @AutoService(Preprocessor.class)
 public class FlexibleSchemaPreprocessor implements Preprocessor {
 
   public static final String SCHEMA_YML_REGEX = "(.*)\\.schema\\.yml$";
-
-  public ErrorCollector errors;
 
   @Override
   public Pattern getPattern() {
@@ -29,7 +28,7 @@ public class FlexibleSchemaPreprocessor implements Preprocessor {
 
   @SneakyThrows
   @Override
-  public void loader(Path file, ProcessorContext processorContext) {
+  public void loader(Path file, ProcessorContext processorContext, ErrorCollector errors) {
     Preconditions.checkArgument(Files.isRegularFile(file), "Not a regular file: %s", file);
 
     String tablename = StringUtil.removeFromEnd(file.getFileName().toString(), FlexibleTableSchemaFactory.SCHEMA_EXTENSION);

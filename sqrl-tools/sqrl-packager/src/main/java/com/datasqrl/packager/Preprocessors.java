@@ -1,5 +1,6 @@
 package com.datasqrl.packager;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
 import com.google.common.base.Preconditions;
@@ -17,7 +18,10 @@ import lombok.Value;
 public class Preprocessors {
 
   public static final Set<String> EXCLUDED_DIRS = Set.of(Packager.BUILD_DIR_NAME, "deploy");
-  private List<Preprocessor> preprocessors;
+
+  List<Preprocessor> preprocessors;
+  ErrorCollector errors;
+
 
   @SneakyThrows
   public boolean handle(PreprocessorsContext ctx) {
@@ -56,7 +60,7 @@ public class Preprocessors {
    */
   private void invokePreprocessor(Preprocessor preprocessor, Path userDir, Path rootDir, Path buildDir) {
     ProcessorContext context = new ProcessorContext(rootDir, buildDir);
-    preprocessor.loader(userDir, context);
+    preprocessor.loader(userDir, context, errors);
     copyRelativeFiles(context.getDependencies(), rootDir, buildDir, userDir);
     copyLibrarySymlinks(context.getLibraries(), buildDir);
   }

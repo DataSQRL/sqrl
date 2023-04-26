@@ -1,5 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
@@ -13,7 +14,7 @@ public class TablePreprocessor implements Preprocessor {
   }
 
   @Override
-  public void loader(Path path, ProcessorContext processorContext) {
+  public void loader(Path path, ProcessorContext processorContext, ErrorCollector errors) {
     processorContext.addDependency(path);
   }
 }

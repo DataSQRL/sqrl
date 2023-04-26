@@ -10,7 +10,7 @@ class FlexibleSchemaPreprocessorTest {
 
   @Test
   public void testRegex() {
-    FlexibleSchemaPreprocessor preprocessor = new FlexibleSchemaPreprocessor(ErrorCollector.root());
+    FlexibleSchemaPreprocessor preprocessor = new FlexibleSchemaPreprocessor();
     // Test the regex for the file extension .schema.yml
     assertTrue(preprocessor.getPattern().asMatchPredicate().test("some_table.schema.yml"));
     assertTrue(preprocessor.getPattern().asMatchPredicate().test("table.schema.yml"));

@@ -207,7 +207,7 @@ public class Packager {
     List<Preprocessor> loadedProcessor = ServiceLoaderDiscovery.getAll(Preprocessor.class);
     List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
         new JarPreprocessor(), new DataSystemPreprocessor()), loadedProcessor);
-    Preprocessors preprocessors = new Preprocessors(processorList);
+    Preprocessors preprocessors = new Preprocessors(processorList, errors);
     preprocessors.handle(
         PreprocessorsContext.builder()
             .rootDir(rootDir)
