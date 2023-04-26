@@ -116,6 +116,11 @@
                 <artifactId>sqrl-engine-jdbc</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- examples-->
             <dependency>
                 <groupId>com.datasqrl</groupId>

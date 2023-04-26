@@ -114,7 +114,7 @@ public class Compiler {
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    PhysicalDAGPlan dag = planner.planDag(ns, pgSchemaBuilder.getApiQueries(),
+    PhysicalDAGPlan dag = planner.planDag(ns, pgSchemaBuilder.getApiQueries(), root,
         !(resourceResolver instanceof ClasspathResourceResolver));
     PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, ns, errorSink);
 

@@ -2,17 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-engines</artifactId>
     <version>0.1-SNAPSHOT</version>
   </parent>
-  <modelVersion>4.0.0</modelVersion>
 
-  <!--
-    README: Shared dependencies between all engines
-  -->
-  <artifactId>sqrl-engine-core</artifactId>
+  <artifactId>sqrl-engine-server</artifactId>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -20,44 +17,24 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-common</artifactId>
+      <artifactId>sqrl-engine-core</artifactId>
     </dependency>
-    <!-- todo: Currently we have hard references to flink functions (time functions).
-               They should be refactored to have engine generic engine functions.
-    -->
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-function</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-http-core</artifactId>
     </dependency>
-
-    <!-- Used by in-memory stream
-         TODO: should be removed -->
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-file</artifactId>
+      <artifactId>sqrl-execute-http-vertx</artifactId>
     </dependency>
-
-    <!-- TODO: Should be removed for base calcite -->
-<!--    <dependency>-->
-<!--      <groupId>org.apache.flink</groupId>-->
-<!--      <artifactId>flink-table-planner_2.12</artifactId>-->
-<!--      <scope>provided</scope>-->
-<!--    </dependency>-->
-
-    <!--  Test -->
     <dependency>
-      <artifactId>sqrl-common</artifactId>
       <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
-      <scope>test</scope>
+      <artifactId>sqrl-engine-jdbc</artifactId>
     </dependency>
   </dependencies>
+
 </project>

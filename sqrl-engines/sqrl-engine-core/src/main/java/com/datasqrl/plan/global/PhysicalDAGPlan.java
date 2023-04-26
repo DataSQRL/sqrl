@@ -4,6 +4,7 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.StreamUtil;
@@ -55,6 +56,7 @@ public class PhysicalDAGPlan {
 
     Map<String, UserDefinedFunction> udfs;
 
+    RootGraphqlModel model;
   }
 
   public interface Query {

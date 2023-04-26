@@ -7,6 +7,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
@@ -85,17 +86,19 @@ public class DAGPlanner {
     }
   }
 
-  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
+      RootGraphqlModel model) {
     //Stitch DAG together
     DAGAssembler assembler = new DAGAssembler(planner, sqrlConverter, pipeline, debugger, errors);
-    return assembler.assemble(dag, jars, udfs);
+    return assembler.assemble(dag, jars, udfs, model);
   }
 
   public PhysicalDAGPlan plan(CalciteSchema relSchema, Collection<APIQuery> queries,
-      Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
+      Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
+      RootGraphqlModel model) {
 
     SqrlDAG dag = build(relSchema, queries, exports);
     optimize(dag);
-    return assemble(dag,jars, udfs);
+    return assemble(dag,jars, udfs, model);
   }
 }

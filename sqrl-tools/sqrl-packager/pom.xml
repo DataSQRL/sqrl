@@ -25,6 +25,10 @@
             <artifactId>sqrl-planner-local</artifactId>
             <groupId>com.datasqrl</groupId>
         </dependency>
+        <dependency>
+            <groupId>com.datasqrl</groupId>
+            <artifactId>sqrl-execute-http-vertx</artifactId>
+        </dependency>
 
         <!-- Utils -->
         <dependency>

@@ -34,7 +34,9 @@ public enum EngineCapability {
   //Writing/upserting data into engine by primary key will deduplicate data
   MATERIALIZE_ON_KEY,
   //Engine supports data monitoring
-  DATA_MONITORING;
+  DATA_MONITORING,
+  //No capabilities
+  NONE;
 
 
   public static EnumSet<EngineCapability> STANDARD_STREAM = EnumSet.of(DENORMALIZE,
@@ -43,6 +45,8 @@ public enum EngineCapability {
 
   public static EnumSet<EngineCapability> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
       MULTI_RANK);
+
+  public static EnumSet<EngineCapability> NO_CAPABILITIES = EnumSet.of(NONE);
 
 
 }
