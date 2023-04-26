@@ -23,13 +23,13 @@ import java.util.Map;
 @AllArgsConstructor
 public class FlexibleSchemaRowMapper<R> implements RowMapper<R>, Serializable {
 
-  private final TableSchema schema;
+  private final FlexibleTableSchema schema;
   private final boolean hasSourceTimestamp;
   private final RowConstructor<R> rowConstructor;
 
   @Override
   public R apply(SourceRecord.Named sourceRecord) {
-    Object[] cols = constructRows(sourceRecord.getData(), ((FlexibleTableSchema) schema).getFields());
+    Object[] cols = constructRows(sourceRecord.getData(), schema.getFields());
     //Add metadata
     cols = extendCols(cols, 2 + (hasSourceTimestamp ? 1 : 0));
     cols[0] = sourceRecord.getUuid().toString();

@@ -13,8 +13,8 @@ import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.inmemory.InMemStreamEngine.JobBuilder.Sink;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
-import com.datasqrl.io.impl.file.FileDataSystemConnector;
 import com.datasqrl.io.impl.file.FileDataSystemDiscovery;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.util.FileStreamUtil;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.MetricStore;
@@ -23,7 +23,7 @@ import com.datasqrl.error.ErrorCollection;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
@@ -83,9 +83,8 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
     public StreamHolder<TimeAnnotatedRecord<String>> fromTextSource(TableInput table) {
       Preconditions.checkArgument(table.getParser() instanceof TextLineFormat.Parser,
           "This method only supports text sources");
-      DataSystemConnector source = table.getConnector();
 
-      if (source instanceof FileDataSystemConnector) {
+      if (table.getConfiguration().getConnectorName().equalsIgnoreCase(FileDataSystemFactory.SYSTEM_NAME)) {
         TableConfig tableConfig = table.getConfiguration();
         FilePathConfig fpConfig = FileDataSystemConfig.fromConfig(tableConfig).getFilePath(tableConfig.getErrors());
         try {

@@ -5,8 +5,7 @@ package com.datasqrl.schema.input;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.stats.FieldStats;
-import com.datasqrl.io.stats.TypeSignature.Simple;
+import com.datasqrl.schema.input.TypeSignature.Simple;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.schema.type.Type;
@@ -22,22 +21,26 @@ import java.util.*;
 import java.util.function.BiPredicate;
 
 /**
- * Follows {@link DefaultSchemaGenerator} in structure and semantics.
+ * Validates raw input data against the flexible table schema and converts it to named data
  */
-public class DefaultSchemaValidator implements SchemaValidator, Serializable {
+public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
 
   private final SchemaAdjustmentSettings settings;
-  private final InputTableSchema<FlexibleTableSchema> tableSchema;
+  private final FlexibleTableSchema tableSchema;
+  private final boolean hasSourceTimestamp;
+
   private final NameCanonicalizer canonicalizer;
   private final FlexibleTypeMatcher typeMatcher;
 
-  public DefaultSchemaValidator(@NonNull InputTableSchema<FlexibleTableSchema> tableSchema,
-      @NonNull SchemaAdjustmentSettings settings,
-      @NonNull NameCanonicalizer canonicalizer,
-      @NonNull FlexibleTypeMatcher typeMatcher) {
-    Preconditions.checkArgument(!tableSchema.getSchema().isPartialSchema());
+  public FlexibleSchemaValidator(@NonNull FlexibleTableSchema tableSchema,
+                                 boolean hasSourceTimestamp,
+                                 @NonNull SchemaAdjustmentSettings settings,
+                                 @NonNull NameCanonicalizer canonicalizer,
+                                 @NonNull FlexibleTypeMatcher typeMatcher) {
+    Preconditions.checkArgument(!tableSchema.isPartialSchema());
     this.settings = settings;
     this.tableSchema = tableSchema;
+    this.hasSourceTimestamp = hasSourceTimestamp;
     this.canonicalizer = canonicalizer;
     this.typeMatcher = typeMatcher;
   }
@@ -48,17 +51,11 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
 
   public SourceRecord.Named verifyAndAdjust(SourceRecord.Raw record, ErrorCollector errors) {
     //verify meta data
-    if (!record.hasUUID()) {
-      errors.fatal("Input record does not have UUID");
-    }
-    if (record.getIngestTime() == null) {
-      errors.fatal("Input record does not ingest timestamp");
-    }
-    if (tableSchema.isHasSourceTimestamp() && record.getSourceTime() == null) {
-      errors.fatal("Input record does not source timestamp");
-    }
+    errors.checkFatal(record.hasUUID(),"Input record does not have UUID");
+    errors.checkFatal(record.getIngestTime()!=null, "Input record does not ingest timestamp");
+    errors.checkFatal(!hasSourceTimestamp || record.getSourceTime()!=null, "Input record does not have source timestamp");
     Map<Name, Object> result = verifyAndAdjust(record.getData(),
-        tableSchema.getSchema().getFields(), errors);
+        tableSchema.getFields(), errors);
     return record.replaceData(result);
   }
 
@@ -140,7 +137,7 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
   private Pair<Name, Object> verifyAndAdjust(Object data, FlexibleFieldSchema.Field field,
       ErrorCollector errors) {
     List<FlexibleFieldSchema.FieldType> types = field.getTypes();
-    Simple typeSignature = FieldStats.detectTypeSignature(data, s -> detectType(s, types),
+    Simple typeSignature = TypeSignatureUtil.detectTypeSignature(data, s -> detectType(s, types),
         m -> detectType(m, types));
     FlexibleFieldSchema.FieldType match = typeMatcher.matchType(typeSignature, types);
     if (match != null) {
@@ -156,8 +153,8 @@ public class DefaultSchemaValidator implements SchemaValidator, Serializable {
   private Object convertDataToMatchedType(Object data, Type type,
       FlexibleFieldSchema.Field field,
       ErrorCollector errors) {
-    if (FieldStats.isArray(data)) {
-      Collection<Object> col = FieldStats.array2Collection(data);
+    if (TypeSignatureUtil.isArray(data)) {
+      Collection<Object> col = TypeSignatureUtil.array2Collection(data);
       List<Object> result = new ArrayList<>(col.size());
       for (Object o : col) {
         if (o == null) {

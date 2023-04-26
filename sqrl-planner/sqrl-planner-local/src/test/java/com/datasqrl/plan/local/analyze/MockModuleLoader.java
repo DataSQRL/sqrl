@@ -3,7 +3,6 @@ package com.datasqrl.plan.local.analyze;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
-import com.datasqrl.io.impl.print.PrintDataSystem;
 import com.datasqrl.io.impl.print.PrintDataSystemFactory;
 import com.datasqrl.loaders.DataSystemNsObject;
 import com.datasqrl.loaders.ModuleLoader;

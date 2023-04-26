@@ -9,7 +9,7 @@ import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.table.TableType;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
-import javax.validation.constraints.NotNull;
+import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
@@ -43,7 +43,7 @@ class SimpleCostModel implements ComputeCost {
   }
 
   @Override
-  public int compareTo(@NotNull ComputeCost o) {
+  public int compareTo(@NonNull ComputeCost o) {
     Preconditions.checkArgument(o instanceof SimpleCostModel);
     return Double.compare(cost, ((SimpleCostModel) o).cost);
   }

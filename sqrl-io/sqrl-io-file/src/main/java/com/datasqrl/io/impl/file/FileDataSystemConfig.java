@@ -1,14 +1,11 @@
 package com.datasqrl.io.impl.file;
 
 import com.datasqrl.config.Constraints.Default;
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

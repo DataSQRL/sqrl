@@ -18,13 +18,13 @@ import java.util.Optional;
 @AllArgsConstructor
 public class FlexibleTableConverter {
 
-  private final TableSchema schema;
+  private final FlexibleTableSchema schema;
   private final boolean hasSourceTimestamp;
   private final Optional<Name> tableAlias;
 
   public <T> T apply(Visitor<T> visitor) {
     return visitRelation(NamePath.ROOT, tableAlias.orElse(schema.getName()),
-        ((FlexibleTableSchema)schema).getFields(),
+        schema.getFields(),
         false, false, hasSourceTimestamp, visitor);
   }
 

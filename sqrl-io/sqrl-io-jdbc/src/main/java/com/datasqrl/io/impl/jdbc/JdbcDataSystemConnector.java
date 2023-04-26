@@ -6,7 +6,7 @@ package com.datasqrl.io.impl.jdbc;
 import com.datasqrl.config.Constraints.Default;
 import com.datasqrl.config.Constraints.MinLength;
 import com.datasqrl.config.Constraints.Regex;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +18,7 @@ import java.io.Serializable;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class JdbcDataSystemConnector implements DataSystemConnector, Serializable {
+public class JdbcDataSystemConnector implements Serializable {
 
   @MinLength(min = 3)
   String url;
@@ -36,10 +36,5 @@ public class JdbcDataSystemConnector implements DataSystemConnector, Serializabl
   String password = null;
   @Default @MinLength(min = 3)
   String driver = null;
-
-  @Override
-  public boolean hasSourceTimestamp() {
-    return false;
-  }
 
 }

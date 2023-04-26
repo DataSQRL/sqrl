@@ -21,7 +21,7 @@ public class JdbcSinkFactory
 
   @Override
   public TableDescriptor.Builder create(FlinkSinkFactoryContext context) {
-    JdbcDataSystemConnector jdbc = new JdbcDataSystemConnectorFactory().initialize(context.getTableConfig()
+    JdbcDataSystemConnector jdbc = new JdbcDataSystemConnectorFactory().getConnector(context.getTableConfig()
         .getConnectorConfig());
 
     TableDescriptor.Builder builder = TableDescriptor.forConnector("jdbc")

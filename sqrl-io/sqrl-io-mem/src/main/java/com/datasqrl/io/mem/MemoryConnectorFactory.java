@@ -1,7 +1,7 @@
 package com.datasqrl.io.mem;
 
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import lombok.Getter;
 import lombok.NonNull;
@@ -18,13 +18,8 @@ public abstract class MemoryConnectorFactory implements DataSystemConnectorFacto
     }
 
     @Override
-    public DataSystemConnector initialize(@NonNull SqrlConfig connectorConfig) {
-        return new DataSystemConnector() {
-            @Override
-            public boolean hasSourceTimestamp() {
-                return false;
-            }
-        };
+    public DataSystemConnectorSettings getSettings(@NonNull SqrlConfig connectorConfig) {
+        return DataSystemConnectorSettings.builder().hasSourceTimestamp(false).build();
     }
 
 }

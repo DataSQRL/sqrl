@@ -8,6 +8,7 @@ import com.datasqrl.schema.constraint.NotNull;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
 import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
 import com.datasqrl.schema.input.FlexibleTableSchema;
+import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.SchemaElementDescription;
 import com.datasqrl.schema.input.external.SchemaExport;
@@ -20,13 +21,8 @@ public class UtbToFlexibleSchema {
     FlexibleTableSchema schema = new FlexibleTableSchema(
         table.getName(), new SchemaElementDescription(""), null, false,
         createFields(table),
-        List.of(),
-        null);
-
-    SchemaDefinition def = createDefinition(schema);
-    schema.setDefinition(def);
-
-    return schema;
+        List.of());
+    return new FlexibleTableSchemaHolder(schema);
   }
 
   private static SchemaDefinition createDefinition(FlexibleTableSchema table) {

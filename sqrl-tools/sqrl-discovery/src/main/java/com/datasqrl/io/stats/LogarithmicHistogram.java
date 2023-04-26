@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.io.stats.accumulator;
+package com.datasqrl.io.stats;
 
 import com.google.common.base.Preconditions;
 import java.io.Serializable;

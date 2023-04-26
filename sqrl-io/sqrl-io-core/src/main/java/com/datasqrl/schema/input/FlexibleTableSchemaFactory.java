@@ -1,9 +1,9 @@
 package com.datasqrl.schema.input;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.BaseFileUtil;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.module.resolver.ResourceResolver;
@@ -23,24 +23,22 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
   public static final String SCHEMA_TYPE = "flexible";
 
   @Override
-  public Optional<TableSchema> create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, Deserializer deserializer, ErrorCollector errors) {
+  public TableSchema create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, ErrorCollector errors) {
     Optional<URI> schemaPath = resourceResolver
         .resolveFile(basePath.concat(NamePath.of(getSchemaFilename(tableConfig))));
-    if (schemaPath.isEmpty()) {
-      errors.fatal("Could not find schema file [%s] for table [%s]", schemaPath, baseURI);
-    }
-    TableDefinition schemaDef = deserializer.mapYAMLFile(schemaPath.get(), TableDefinition.class);
-    SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, tableConfig.getBase().getCanonicalizer());
-    Optional<FlexibleTableSchema> tableSchema = importer.convert(schemaDef, errors );
-    return tableSchema.map(f->f);
+    errors.checkFatal(schemaPath.isPresent(), "Could not find schema file [%s] for table [%s]", schemaPath, baseURI);
+    return create(BaseFileUtil.readFile(schemaPath.get()), tableConfig.getBase().getCanonicalizer());
   }
 
   @Override
-  public Optional<TableSchema> create(SchemaDefinition definition) {
+  public TableSchema create(String schemaDefinition, NameCanonicalizer nameCanonicalizer) {
+    Deserializer deserializer = new Deserializer();
+    TableDefinition schemaDef = deserializer.mapYAML(schemaDefinition, TableDefinition.class);
     SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);
-    return importer.convert((TableDefinition) definition, ErrorCollector.root())
-        .map(s -> s);
+    FlexibleTableSchema tableSchema = importer.convert(schemaDef, ErrorCollector.root()).get();
+    return new FlexibleTableSchemaHolder(tableSchema, schemaDefinition);
   }
+
 
   public static String getSchemaFilename(TableConfig tableConfig) {
     return tableConfig.getName().getCanonical() + SCHEMA_EXTENSION;

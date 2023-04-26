@@ -15,6 +15,7 @@ import com.datasqrl.module.SqrlModule;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.google.auto.service.AutoService;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -86,7 +87,8 @@ public class RetailSqrlModule implements SqrlModule {
     String name = clazz.getSimpleName().toLowerCase();
     TableConfig.Builder builder = TableConfig.builder(name);
     builder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
-    builder.base(BaseTableConfig.builder().type(ExternalDataType.source.name()).identifier(name).schema("fixed").build());
+    builder.base(BaseTableConfig.builder().type(ExternalDataType.source.name()).identifier(name)
+        .schema(FlexibleTableSchemaFactory.SCHEMA_TYPE).build());
     builder.getConnectorConfig().setProperty(DataSystemConnectorFactory.SYSTEM_NAME_KEY,"in-mem-" + datasetName);
     TableConfig tableConfig = builder.build();
     return tableConfig.initializeSource(NamePath.of("ecommerce-data"),

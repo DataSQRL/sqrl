@@ -3,28 +3,27 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.io.stats.TableStatistic;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.schema.TypeFactory;
-import com.datasqrl.plan.rules.AnnotatedLP;
-import com.datasqrl.plan.rules.LPAnalysis;
-import com.datasqrl.schema.converters.FlexibleSchemaRowMapperFactory;
-import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.plan.util.ContinuousIndexMap;
+import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.local.generate.SqrlTableNamespaceObject;
+import com.datasqrl.plan.rules.AnnotatedLP;
+import com.datasqrl.plan.rules.LPAnalysis;
+import com.datasqrl.plan.util.ContinuousIndexMap;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.schema.TypeFactory;
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
+import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -73,8 +72,8 @@ public class CalciteTableFactory {
 
   public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias) {
 
-    UniversalTable rootTable = FlexibleSchemaRowMapperFactory.getFlexibleUniversalTableBuilder(tableSource.getSchema().getSchema(),
-           tableSource.hasSourceTimestamp(), tblAlias);
+    UniversalTable rootTable = SchemaToUniversalTableMapperFactory.load(tableSource.getSchema())
+        .map(tableSource.getSchema(), tableSource.getConnectorSettings(), tblAlias);
 
     RelDataType rootType = convertTable(rootTable, true, true);
     //Currently, we only support imports through the stream engine

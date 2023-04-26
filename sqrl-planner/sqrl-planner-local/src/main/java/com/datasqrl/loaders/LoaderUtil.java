@@ -5,13 +5,12 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import java.util.Optional;
-import javax.validation.constraints.NotEmpty;
 import lombok.NonNull;
 
 public class LoaderUtil {
 
 
-  public static TableSink loadSink(@NonNull @NotEmpty NamePath sinkPath, ErrorCollector errors,
+  public static TableSink loadSink(@NonNull NamePath sinkPath, ErrorCollector errors,
         ModuleLoader moduleLoader) {
       Optional<TableSink> sink = moduleLoader.getModule(sinkPath.popLast())
         .flatMap(m -> m.getNamespaceObject(sinkPath.popLast().getLast()))

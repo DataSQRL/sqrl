@@ -5,19 +5,18 @@ package com.datasqrl.io.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.formats.FormatFactory;
-import com.datasqrl.schema.input.SchemaValidator;
 
 public class TableInput extends AbstractExternalTable {
 
-  public TableInput(DataSystemConnector dataset, TableConfig configuration, NamePath path,
-      Name name) {
+  public TableInput(DataSystemConnectorSettings dataset, TableConfig configuration, NamePath path,
+                    Name name) {
     super(dataset, configuration, path, name);
   }
 
-  public boolean hasSourceTimestamp() {
-    return connector.hasSourceTimestamp();
+  public DataSystemConnectorSettings getConnectorSettings() {
+    return configuration.getConnectorSettings();
   }
 
   public FormatFactory.Parser getParser() {
@@ -25,7 +24,4 @@ public class TableInput extends AbstractExternalTable {
     return format.getParser(configuration.getFormatConfig());
   }
 
-  public SchemaValidator getSchemaValidator() {
-    return null;
-  }
 }

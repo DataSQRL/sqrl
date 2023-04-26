@@ -49,7 +49,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import javax.validation.constraints.NotEmpty;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -123,7 +122,7 @@ public class Compiler {
     return new CompilerResult(root, gqlSchema, plan);
   }
 
-  private TableSink loadErrorSink(ModuleLoader moduleLoader, @NonNull @NotEmpty String errorSinkName, ErrorCollector error) {
+  private TableSink loadErrorSink(ModuleLoader moduleLoader, @NonNull String errorSinkName, ErrorCollector error) {
     NamePath sinkPath = NamePath.parse(errorSinkName);
     return LoaderUtil.loadSink(sinkPath, error, moduleLoader);
   }

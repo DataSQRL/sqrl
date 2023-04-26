@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @ToString
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @EqualsAndHashCode
 public abstract class FlexibleFieldSchema implements SchemaField {
 
@@ -39,7 +39,7 @@ public abstract class FlexibleFieldSchema implements SchemaField {
 
     @Getter
     @ToString(callSuper = true)
-    @NoArgsConstructor
+    @NoArgsConstructor(force = true)
     @EqualsAndHashCode(callSuper = true)
     public static class Field extends FlexibleFieldSchema implements SchemaField {
 
@@ -70,7 +70,7 @@ public abstract class FlexibleFieldSchema implements SchemaField {
     }
 
     @Getter
-    @NoArgsConstructor
+    @NoArgsConstructor(force = true)
     @AllArgsConstructor
     @EqualsAndHashCode
     @ToString

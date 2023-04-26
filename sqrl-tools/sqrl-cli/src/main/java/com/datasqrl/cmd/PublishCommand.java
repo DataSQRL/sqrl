@@ -1,20 +1,21 @@
 package com.datasqrl.cmd;
 
+import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.NotYetImplementedException;
-import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.config.Dependency;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.service.PackagerUtil;
-import com.datasqrl.packager.config.ScriptConfiguration;
+import picocli.CommandLine;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import picocli.CommandLine;
 
 @CommandLine.Command(name = "publish", description = "Publishes a package to local and remote repository")
 public class PublishCommand extends AbstractCommand {
@@ -39,7 +40,7 @@ public class PublishCommand extends AbstractCommand {
         Publisher publisher = new Publisher(errors);
 
         if (mainScript==null && packageconfigs.size()==1 && Files.isSameFile(defaultPkgConfig,packageconfigs.get(0))
-                && !new Deserializer().hasJsonField(defaultPkgConfig, ScriptConfiguration.SCRIPT_KEY)) {
+                && !SqrlConfigCommons.fromFiles(errors,defaultPkgConfig).containsKey(ScriptConfiguration.SCRIPT_KEY)) {
             //If no main script is specified and only a single default package config and that config does not contain a script config
             //then we are publishing a data source/sink or function package (i.e. we don't need to build)
             Dependency dep = publisher.publish(packageRoot, localRepo).asDependency();

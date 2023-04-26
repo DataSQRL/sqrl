@@ -7,7 +7,7 @@ import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryFactory;
@@ -17,11 +17,9 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
-import com.datasqrl.schema.input.SchemaValidator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Strings;
-import java.io.Serializable;
 import java.net.URI;
 import java.nio.file.Path;
 import lombok.AccessLevel;
@@ -41,12 +39,20 @@ public class TableConfig {
   @NonNull Name name;
   @NonNull SqrlConfig config;
   @NonNull BaseTableConfig base;
+  @NonNull DataSystemConnectorSettings connectorSettings;
 
   public TableConfig(@NonNull Name name, @NonNull SqrlConfig config) {
+    this(name,config,getConnectorSettings(config));
+  }
+
+  private TableConfig(@NonNull Name name, @NonNull SqrlConfig config,
+      @NonNull DataSystemConnectorSettings connectorSettings) {
     this.name = name;
     this.config = config;
     this.base = config.allAs(BaseTableConfig.class).get();
+    this.connectorSettings = connectorSettings;
   }
+
 
   public static TableConfig load(@NonNull URI uri, @NonNull Name name, @NonNull ErrorCollector errors) {
     SqrlConfig config = SqrlConfigCommons.fromURL(errors, ResourceResolver.toURL(uri));
@@ -66,16 +72,28 @@ public class TableConfig {
     return config.getErrorCollector();
   }
 
+  private static DataSystemConnectorSettings getConnectorSettings(SqrlConfig config) {
+    SqrlConfig connectorConfig = config.getSubConfig(CONNECTOR_KEY);
+    DataSystemConnectorFactory connectorFactory = DataSystemImplementationFactory.fromConfig(DataSystemConnectorFactory.class, connectorConfig);
+    return connectorFactory.getSettings(connectorConfig);
+  }
+
+
   public SqrlConfig getConnectorConfig() {
     return config.getSubConfig(CONNECTOR_KEY);
   }
 
-  public DataSystemConnector getConnector() {
-    return DataSystemConnectorFactory.fromConfig(this);
+  public DataSystemConnectorSettings getConnectorSettings() {
+    return connectorSettings;
   }
 
   public String getConnectorName() {
     return getConnectorConfig().asString(DataSystemImplementationFactory.SYSTEM_NAME_KEY).get();
+  }
+
+  public Optional<TableSchemaFactory> getSchemaFactory() {
+    Optional<TableSchemaFactory> factory = hasFormat()?getFormat().getSchemaFactory():Optional.empty();
+    return factory.or(() -> Optional.ofNullable(base.getSchema()).map(TableSchemaFactory::load));
   }
 
   /**
@@ -115,16 +133,15 @@ public class TableConfig {
   public TableSource initializeSource(NamePath basePath, TableSchema schema) {
     validateTable();
     getErrors().checkFatal(base.getType().isSource(), "Table is not a source: %s", name);
-    DataSystemConnector connector = getConnector();
+    DataSystemConnectorSettings connector = getConnectorSettings();
     Name tableName = getName();
-    SchemaValidator validator = schema.getValidator(this.getSchemaAdjustmentSettings(), connector.hasSourceTimestamp());
-    return new TableSource(connector, this, basePath.concat(tableName), tableName, schema, validator);
+    return new TableSource(connector, this, basePath.concat(tableName), tableName, schema);
   }
 
   public TableInput initializeInput(NamePath basePath) {
     validateTable();
     getErrors().checkFatal(base.getType().isSource(), "Table is not a source: %s", name);
-    DataSystemConnector connector = getConnector();
+    DataSystemConnectorSettings connector = getConnectorSettings();
     Name tableName = getName();
     return new TableInput(connector, this, basePath.concat(tableName), tableName);
   }
@@ -133,13 +150,13 @@ public class TableConfig {
       Optional<TableSchema> schema) {
     validateTable();
     getErrors().checkFatal(base.getType().isSink(), "Table is not a sink: %s", name);
-    DataSystemConnector connector = getConnector();
+    DataSystemConnectorSettings connector = getConnectorSettings();
     Name tableName = getName();
     return new TableSink(connector,this, basePath.concat(tableName), tableName, schema);
   }
 
   public DataSystemDiscovery initializeDiscovery() {
-    DataSystemDiscoveryFactory factory = DataSystemImplementationFactory.fromConfig(DataSystemDiscoveryFactory.class, this);
+    DataSystemDiscoveryFactory factory = DataSystemImplementationFactory.fromConfig(DataSystemDiscoveryFactory.class, getConnectorConfig());
     DataSystemDiscovery discovery = factory.initialize(this);
     getErrors().checkFatal(!discovery.requiresFormat(base.getType()) || hasFormat(),
         "Data Discovery [%s] requires a format", discovery);
@@ -194,7 +211,7 @@ public class TableConfig {
   }
 
   public Serialized serialize() {
-    return new Serialized(name,config.serialize());
+    return new Serialized(name,config.serialize(), connectorSettings);
   }
 
   @AllArgsConstructor
@@ -204,9 +221,10 @@ public class TableConfig {
 
     Name name;
     SerializedSqrlConfig config;
+    DataSystemConnectorSettings connectorSettings;
 
     public TableConfig deserialize(ErrorCollector errors) {
-      return new TableConfig(name, config.deserialize(errors));
+      return new TableConfig(name, config.deserialize(errors), connectorSettings);
     }
 
   }

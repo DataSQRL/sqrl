@@ -40,7 +40,6 @@
         <commons-bean.version>1.9.4</commons-bean.version>
         <h2.version>2.1.214</h2.version>
         <opencsv.version>5.7.1</opencsv.version>
-        <hibernate.version>6.2.5.Final</hibernate.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <glassfish.version>3.0.0</glassfish.version>
         <reactive-streams.version>1.0.4</reactive-streams.version>
@@ -437,11 +436,6 @@
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>
                 <version>${javax.validation.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.hibernate.validator</groupId>
-                <artifactId>hibernate-validator</artifactId>
-                <version>${hibernate.version}</version>
             </dependency>
 
             <dependency>

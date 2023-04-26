@@ -1,6 +1,5 @@
 package com.datasqrl.schema.input;
 
-import com.datasqrl.io.stats.TypeSignature;
 import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;

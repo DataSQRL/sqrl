@@ -16,7 +16,6 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 
-import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,7 +125,7 @@ public class IndexCall {
     }
 
     @Override
-    public int compareTo(@NotNull IndexCall.IndexColumn o) {
+    public int compareTo(@NonNull IndexCall.IndexColumn o) {
       return Integer.compare(columnIndex, o.columnIndex);
     }
   }

@@ -15,7 +15,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.schema.input.FlexibleTable2UTBConverter;
+import com.datasqrl.schema.converters.FlexibleTable2UTBConverter;
 import com.datasqrl.schema.input.FlexibleTableConverter;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;

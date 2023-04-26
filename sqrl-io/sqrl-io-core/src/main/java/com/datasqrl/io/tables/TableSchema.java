@@ -4,7 +4,7 @@
 package com.datasqrl.io.tables;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.model.schema.SchemaDefinition;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.schema.converters.RowConstructor;
 import com.datasqrl.schema.converters.RowMapper;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
@@ -12,15 +12,15 @@ import com.datasqrl.schema.input.SchemaValidator;
 
 public interface TableSchema {
   RowMapper getRowMapper(RowConstructor rowConstructor,
-      boolean hasSourceTimestamp);
+      DataSystemConnectorSettings connectorSettings);
 
-  Name getName();
+  Name getTableName();
 
   String getSchemaType();
 
-  SchemaValidator getValidator(SchemaAdjustmentSettings settings, boolean hasSourceTimestamp);
+  SchemaValidator getValidator(SchemaAdjustmentSettings settings,
+      DataSystemConnectorSettings connectorSettings);
 
-  SchemaDefinition getDefinition();
+  String getDefinition();
 
-  String TYPE_KEY = "schemaType";
 }

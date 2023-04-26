@@ -78,7 +78,6 @@ public class SchemaImport {
       return Optional.empty();
     }
     builder.setFields(convert(table.columns, errors));
-    builder.setDefinition(table);
     return Optional.of(builder.build());
   }
 

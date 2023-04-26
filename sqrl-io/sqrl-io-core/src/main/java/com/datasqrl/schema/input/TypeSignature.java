@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.io.stats;
+package com.datasqrl.schema.input;
 
 import com.datasqrl.schema.type.Type;
 import lombok.NonNull;

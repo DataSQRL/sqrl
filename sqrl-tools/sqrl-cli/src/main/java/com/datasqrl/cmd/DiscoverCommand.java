@@ -17,7 +17,6 @@ import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Stopwatch;
 import picocli.CommandLine;
@@ -53,7 +52,6 @@ public class DiscoverCommand extends AbstractCommand {
     errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
     TableConfig discoveryConfig = null;
     if (inputFile != null && Files.isRegularFile(inputFile)) {
-      Deserializer deserialize = new Deserializer();
       discoveryConfig = TableConfig.load(inputFile, Name.system(inputFile.getFileName().toString()), errors);
     } else if (inputFile != null && Files.isDirectory(inputFile)) {
       discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile, ExternalDataType.source).build();

@@ -23,13 +23,10 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @EqualsAndHashCode(callSuper = true)
-@AutoService(TableSchema.class)
-public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSchema {
+public class FlexibleTableSchema extends FlexibleFieldSchema {
 
-  @Setter
-  private SchemaDefinition definition;
   private boolean isPartialSchema;
   @NonNull
   private RelationType<Field> fields;
@@ -37,37 +34,13 @@ public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSch
   private List<Constraint> constraints;
 
   public FlexibleTableSchema(Name name, SchemaElementDescription description, Object default_value,
-                             boolean isPartialSchema, RelationType<Field> fields, List<Constraint> constraints,
-      SchemaDefinition definition) {
+                             boolean isPartialSchema, RelationType<Field> fields, List<Constraint> constraints) {
     super(name, description, default_value);
     this.isPartialSchema = isPartialSchema;
     this.fields = fields;
     this.constraints = constraints;
-    this.definition = definition;
   }
 
-  @Override
-  public RowMapper getRowMapper(RowConstructor rowConstructor,
-                                boolean hasSourceTimestamp) {
-    return new FlexibleSchemaRowMapper(this, hasSourceTimestamp,
-            rowConstructor);
-  }
-
-  @Override
-  public String getSchemaType() {
-    return FlexibleTableSchemaFactory.SCHEMA_TYPE;
-  }
-
-  @Override
-  public SchemaValidator getValidator(SchemaAdjustmentSettings schemaAdjustmentSettings, boolean hasSourceTimestamp) {
-
-    InputTableSchema inputTableSchema = new InputTableSchema(this, hasSourceTimestamp);
-    DefaultSchemaValidator validator = new DefaultSchemaValidator(inputTableSchema,
-        schemaAdjustmentSettings,
-        NameCanonicalizer.SYSTEM,
-            new FlexibleTypeMatcher(schemaAdjustmentSettings));
-    return validator;
-  }
 
   @Setter
   public static class Builder extends FlexibleFieldSchema.Builder {
@@ -75,19 +48,17 @@ public class FlexibleTableSchema extends FlexibleFieldSchema implements TableSch
     protected boolean isPartialSchema = true;
     protected RelationType<Field> fields;
     protected List<Constraint> constraints = Collections.EMPTY_LIST;
-    protected SchemaDefinition definition;
 
     public void copyFrom(FlexibleTableSchema f) {
       super.copyFrom(f);
       isPartialSchema = f.isPartialSchema;
       fields = f.fields;
       constraints = f.constraints;
-      definition = f.definition;
     }
 
     public FlexibleTableSchema build() {
       return new FlexibleTableSchema(name, description, default_value, isPartialSchema, fields,
-              constraints, definition);
+              constraints);
     }
   }
 

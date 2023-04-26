@@ -2,7 +2,7 @@ package com.datasqrl.io.impl.print;
 
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.io.tables.BaseTableConfig;
-import com.datasqrl.io.DataSystemConnector;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryFactory;
@@ -28,8 +28,8 @@ public abstract class PrintDataSystemFactory implements DataSystemImplementation
       implements DataSystemConnectorFactory {
 
     @Override
-    public DataSystemConnector initialize(@NonNull SqrlConfig connectorConfig) {
-      return new PrintDataSystem.Connector();
+    public DataSystemConnectorSettings getSettings(@NonNull SqrlConfig connectorConfig) {
+      return DataSystemConnectorSettings.builder().hasSourceTimestamp(false).build();
     }
 
   }
@@ -40,7 +40,7 @@ public abstract class PrintDataSystemFactory implements DataSystemImplementation
 
     @Override
     public DataSystemDiscovery initialize(@NonNull TableConfig tableConfig) {
-      return new PrintDataSystem.Discovery(tableConfig);
+      return new PrintDataSystemDiscovery(tableConfig);
     }
 
 

@@ -2,7 +2,9 @@ package com.datasqrl;
 
 import com.datasqrl.config.BaseConnectorFactory;
 import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.model.StreamType;
+import com.datasqrl.model.schema.SchemaDefinition;
 import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.canonicalizer.NamePath;
@@ -236,7 +238,8 @@ public class FlinkExecutablePlan {
     Class<? extends BaseConnectorFactory> connectorFactory;
     Class<? extends FormatFactory> formatFactory;
     TableConfig.Serialized tableConfig;
-    TableDefinition schemaDefinition;
+    Class<? extends TableSchemaFactory> schemaFactory;
+    String schemaDefinition;
     TypeInformation typeInformation;
     SerializableSchema schema;
 

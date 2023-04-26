@@ -1,12 +1,8 @@
 package com.datasqrl.io;
 
 import com.datasqrl.config.DataStreamSourceFactory;
-import com.datasqrl.config.SourceFactory;
-import com.datasqrl.config.SourceFactoryContext;
 import com.datasqrl.config.FlinkSourceFactoryContext;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.io.impl.kafka.KafkaDataSystemConfig;
-import com.datasqrl.io.impl.kafka.KafkaDataSystemConnector;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.util.TimeAnnotatedRecord;

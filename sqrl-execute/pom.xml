@@ -15,6 +15,7 @@
   <modules>
     <module>sqrl-execute-flink</module>
     <module>sqrl-execute-http</module>
+<!--      <module>sqrl-schema-avro</module>-->
   </modules>
 
   <dependencies>

@@ -14,7 +14,7 @@ import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
-import com.datasqrl.io.impl.file.FileDataSystemConnector;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
@@ -170,7 +170,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     StreamUtil.filterByClass(dag.getQueriesByType(PhysicalDAGPlan.WriteQuery.class).stream()
         .map(WriteQuery::getSink),ExternalSink.class)
         .map(ExternalSink::getTableSink)
-        .filter(sink -> sink.getConnector() instanceof FileDataSystemConnector)
+        .filter(sink -> sink.getConfiguration().getConnectorName().equalsIgnoreCase(
+            FileDataSystemFactory.SYSTEM_NAME))
         .forEach(sink -> {
           TableConfig tableConfig = sink.getConfiguration();
           FilePathConfig fpConfig = FileDataSystemConfig.fromConfig(tableConfig).getFilePath(tableConfig.getErrors());

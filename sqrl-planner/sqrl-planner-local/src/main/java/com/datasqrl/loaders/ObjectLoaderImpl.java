@@ -5,7 +5,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.DataSystemDiscovery;
-import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
@@ -13,11 +12,13 @@ import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.apache.flink.table.functions.UserDefinedFunction;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
@@ -25,9 +26,6 @@ import java.net.URLClassLoader;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 @AllArgsConstructor
 public class ObjectLoaderImpl implements ObjectLoader {
@@ -36,7 +34,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   ResourceResolver resourceResolver;
   ErrorCollector errors;
 
-  final static Deserializer deserializer = new Deserializer();
+  final static Deserializer SERIALIZER = new Deserializer();
 
   @Override
   public String toString() {
@@ -72,15 +70,12 @@ public class ObjectLoaderImpl implements ObjectLoader {
   private List<TableSourceNamespaceObject> loadTable(URI uri, NamePath basePath) {
     String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(uri),DataSource.TABLE_FILE_SUFFIX);
     TableConfig tableConfig = TableConfig.load(uri, Name.system(tableName), errors);
-    String schemaType = tableConfig.getBase().getSchema();
-    errors.checkFatal(!Strings.isNullOrEmpty(schemaType), "Schema has not been configured for table [%s]", uri);
-    Optional<TableSchemaFactory> tsfOpt = ServiceLoaderDiscovery.findFirst(TableSchemaFactory.class, tsf -> tsf.getType(), schemaType);
-    errors.checkFatal(tsfOpt.isPresent(), "Could not find schema factory [%s] for table [%s]", schemaType, uri);
-    TableSchemaFactory tableSchemaFactory = tsfOpt.get();
+    TableSchemaFactory tableSchemaFactory = tableConfig.getSchemaFactory().orElseThrow(() ->
+            errors.exception("Schema has not been configured for table [%s]", uri));
 
-    Optional<TableSchema> tableSchema = tableSchemaFactory.create(basePath, FileUtil.getParent(uri), resourceResolver, tableConfig, deserializer, errors);
+    TableSchema tableSchema = tableSchemaFactory.create(basePath, FileUtil.getParent(uri), resourceResolver, tableConfig, errors);
 
-    return new DataSource().readTableSource(tableSchema.get(), tableConfig, errors, basePath)
+    return new DataSource().readTableSource(tableSchema, tableConfig, errors, basePath)
             .map(TableSourceNamespaceObject::new).map(List::of).orElse(List.of());
   }
 
@@ -90,7 +85,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
   @SneakyThrows
   private List<NamespaceObject> loadFunction(URI uri, NamePath namePath) {
-    ObjectNode json = deserializer.mapJsonFile(uri, ObjectNode.class);
+    ObjectNode json = SERIALIZER.mapJsonFile(uri, ObjectNode.class);
     String jarPath = json.get("jarPath").asText();
     String functionClassName = json.get("functionClass").asText();
 

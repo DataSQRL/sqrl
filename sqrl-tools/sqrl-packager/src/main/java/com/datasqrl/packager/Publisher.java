@@ -3,15 +3,15 @@ package com.datasqrl.packager;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.repository.PublishRepository;
 import com.datasqrl.packager.util.Zipper;
 import com.google.common.base.Preconditions;
+import lombok.AllArgsConstructor;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class Publisher {

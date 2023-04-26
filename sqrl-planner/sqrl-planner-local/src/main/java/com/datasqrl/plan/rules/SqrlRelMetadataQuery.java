@@ -10,7 +10,6 @@ import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexNode;
 
-import javax.annotation.Nullable;
 
 public class SqrlRelMetadataQuery extends RelMetadataQuery {
 
@@ -36,7 +35,7 @@ public class SqrlRelMetadataQuery extends RelMetadataQuery {
   }
 
   @Override
-  public @Nullable Double getSelectivity(RelNode rel, @Nullable RexNode predicate) {
+  public Double getSelectivity(RelNode rel, RexNode predicate) {
     for (; ; ) {
       try {
         Double result = selectivityHandler.getSelectivity(rel, this, predicate);

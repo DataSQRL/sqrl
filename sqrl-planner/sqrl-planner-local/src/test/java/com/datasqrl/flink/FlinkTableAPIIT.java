@@ -4,31 +4,26 @@
 package com.datasqrl.flink;
 
 import com.datasqrl.AbstractPhysicalSQRLIT;
+import com.datasqrl.FlinkRowConstructor;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.engine.stream.flink.FlinkStreamHolder;
-import com.datasqrl.FlinkRowConstructor;
-import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
-import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
-import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.schema.UniversalTable;
-import com.datasqrl.schema.converters.FlexibleSchemaRowMapperFactory;
+import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.schema.converters.RowMapper;
-import com.datasqrl.schema.input.DefaultSchemaValidator;
-import com.datasqrl.schema.input.FlexibleTypeMatcher;
-import com.datasqrl.schema.input.InputTableSchema;
-import com.datasqrl.schema.input.SchemaAdjustmentSettings;
+import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
+import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
+import com.datasqrl.schema.input.FlexibleSchemaValidator;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Retail;
 import java.nio.file.Path;
@@ -76,23 +71,21 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 
 
     StreamHolder<SourceRecord.Raw> stream = streamPreparer.getRawInput(tblSource, streamBuilder, ErrorPrefix.INPUT_DATA);
-    DefaultSchemaValidator schemaValidator = new DefaultSchemaValidator(tblSource.getSchema(),
-        SchemaAdjustmentSettings.DEFAULT, NameCanonicalizer.SYSTEM,
-        new FlexibleTypeMatcher(SchemaAdjustmentSettings.DEFAULT));
+    FlexibleSchemaValidator schemaValidator = (FlexibleSchemaValidator) tblSource.getSchema().getValidator(
+            tblSource.getConfiguration().getSchemaAdjustmentSettings(),
+            tblSource.getConnectorSettings());
     FlinkStreamHolder<SourceRecord.Named> flinkStream = (FlinkStreamHolder)stream.mapWithError(
 //        (schemaValidator.getFunction(),//todo come back to
         null,
         ErrorPrefix.INPUT_DATA, SourceRecord.Named.class);
 
-    InputTableSchema schema = tblSource.getSchema();
     //TODO: error handling when mapping doesn't work?
-    UniversalTable universalTable = FlexibleSchemaRowMapperFactory.getFlexibleUniversalTableBuilder(
-        schema.getSchema(), schema.isHasSourceTimestamp(),
-        Optional.empty());
+    UniversalTable universalTable = SchemaToUniversalTableMapperFactory.load(tblSource.getSchema())
+        .map(tblSource.getSchema(), tblSource.getConnectorSettings(), Optional.empty());
     Schema flinkSchema = new UniversalTable2FlinkSchema().convertSchema(universalTable);
     TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()
         .convertSchema(universalTable);
-    RowMapper rowMapper = schema.getSchema().getRowMapper(FlinkRowConstructor.INSTANCE, schema.isHasSourceTimestamp());
+    RowMapper rowMapper = tblSource.getSchema().getRowMapper(FlinkRowConstructor.INSTANCE, tblSource.getConnectorSettings());
     DataStream rows = flinkStream.getStream()
         .map(rowMapper::apply, typeInformation);
 

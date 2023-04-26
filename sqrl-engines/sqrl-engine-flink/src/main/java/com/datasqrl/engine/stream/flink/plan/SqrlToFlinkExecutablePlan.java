@@ -14,39 +14,39 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
+import com.datasqrl.config.DataStreamSourceFactory;
+import com.datasqrl.config.FlinkSourceFactory;
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SourceFactory;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.TableDescriptorSourceFactory;
 import com.datasqrl.engine.stream.flink.sql.ExtractUniqueSourceVisitor;
 import com.datasqrl.engine.stream.flink.sql.FlinkConnectorServiceLoader;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToTypeInformationTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.tables.BaseTableConfig;
-import com.datasqrl.serializer.SerializableSchema;
-import com.datasqrl.schema.converters.FlexibleSchemaRowMapperFactory;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandTemporalJoinRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule;
-import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
-import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.io.tables.TableConfig;
+import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.plan.hints.SqrlHint;
-import com.datasqrl.plan.hints.WatermarkHint;
-import com.datasqrl.plan.rel.LogicalStream;
-import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
+import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.hints.WatermarkHint;
+import com.datasqrl.plan.rel.LogicalStream;
+import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.schema.UniversalTable;
-import com.datasqrl.model.schema.TableDefinition;
+import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
+import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
+import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
+import com.datasqrl.serializer.SerializableSchema;
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.net.URL;
@@ -196,15 +196,20 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       Optional<SqlNode> watermarkExpression) {
 
     TableConfig tableConfig = relationalTable.getTableSource().getConfiguration();
-    Class<? extends SourceFactory> factoryClass = FlinkConnectorServiceLoader.resolveSourceClass(tableConfig.getConnectorName());
+    Class<? extends FlinkSourceFactory> connectorType = tableConfig.getFormat().getSchemaFactory().isPresent()?
+            TableDescriptorSourceFactory.class: DataStreamSourceFactory.class;
+    Class<? extends SourceFactory> connectorFactoryClass = FlinkConnectorServiceLoader.resolveSourceClass(
+            tableConfig.getConnectorName(), connectorType);
+    Class<? extends TableSchemaFactory> schemaFactoryClass = tableConfig.getSchemaFactory().map(TableSchemaFactory::getClass).orElse(null);
 
     Pair<TypeInformation, SerializableSchema> type = createTypeInformation(tableName, relationalTable, watermarkColumn,
         watermarkExpression);
     FlinkFactoryDefinition factoryDefinition = FlinkFactoryDefinition.builder()
         .name(tableName)
-        .connectorFactory(factoryClass)
+        .connectorFactory(connectorFactoryClass)
         .formatFactory(tableConfig.getFormat().getClass())
-        .schemaDefinition((TableDefinition)relationalTable.getTableSource().getTableSchema().getDefinition())
+        .schemaFactory(schemaFactoryClass)
+        .schemaDefinition(relationalTable.getTableSource().getTableSchema().getDefinition())
         .typeInformation(type.getKey())
         .schema(type.getValue())
         .tableConfig(tableConfig.serialize())
@@ -219,9 +224,8 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     TableSource tableSource = relationalTable.getTableSource();
     //TODO: error handling when mapping doesn't work?
-    UniversalTable universalTable = FlexibleSchemaRowMapperFactory.getFlexibleUniversalTableBuilder(
-        tableSource.getSchema().getSchema(),
-        tableSource.hasSourceTimestamp(), Optional.empty());
+    UniversalTable universalTable = SchemaToUniversalTableMapperFactory.load(tableSource.getSchema())
+            .map(tableSource.getSchema(), tableSource.getConnectorSettings(), Optional.empty());
 
     String watermarkName;
     String watermarkExpr;
@@ -406,11 +410,13 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .transform(relNode);
 
     Class<? extends SinkFactory> factory = FlinkConnectorServiceLoader.resolveSinkClass(connectorName);
+    Class<? extends TableSchemaFactory> schemaFactoryClass = tableConfig.getSchemaFactory().map(TableSchemaFactory::getClass).orElse(null);
 
     FlinkFactoryDefinition factoryDefinition = FlinkFactoryDefinition.builder()
         .connectorFactory(factory)
         .formatFactory(tableConfig.getFormat().getClass())
         .name(name)
+        .schemaFactory(schemaFactoryClass)
         .schema(schema)
         .typeInformation(typeInformation)
         .tableConfig(tableConfig.serialize())

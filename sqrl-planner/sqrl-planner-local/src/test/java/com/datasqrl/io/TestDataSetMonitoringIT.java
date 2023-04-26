@@ -18,6 +18,7 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.schema.input.FlexibleTableSchema;
+import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.input.external.SchemaExport;
 import com.datasqrl.model.schema.TableDefinition;
 import com.datasqrl.util.FileTestUtil;
@@ -76,9 +77,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     //Write out table configurations
     for (TableSource table : tables) {
       assertTrue(Iterables.size(table.getConfiguration().getConfig().getKeys()) > 0);
-
-      TableDefinition outputSchema = export.export((FlexibleTableSchema) table.getSchema().getSchema());
-      snapshot.addContent(FileTestUtil.writeYaml(outputSchema), table.getName().getDisplay() + " schema");
+      snapshot.addContent(table.getSchema().getDefinition(), table.getName().getDisplay() + " schema");
     }
 
     snapshot.createOrValidate();
