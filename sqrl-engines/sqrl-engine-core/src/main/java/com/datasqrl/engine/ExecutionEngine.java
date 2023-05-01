@@ -13,6 +13,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.tools.RelBuilder;
 
 /**
@@ -51,7 +52,6 @@ public interface ExecutionEngine {
       RelBuilder relBuilder, TableSink errorSink);
 
   default void generateAssets(Path buildDir) {
-    System.out.println("Skipping engine:" + this.getClass().getName());
   }
 
   @AllArgsConstructor

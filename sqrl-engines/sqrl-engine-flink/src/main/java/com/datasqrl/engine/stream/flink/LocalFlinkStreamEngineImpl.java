@@ -24,11 +24,6 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
         execFactory.createEnvironment());
   }
 
-
-//  public static void main(String[] args) {
-//    new LocalFlinkStreamEngineImpl(null)
-//        .deploy(buildDir);
-//  }
   @Override
   public void generateAssets(Path buildDir) {
     GenericContainer<?> container =
@@ -36,8 +31,6 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
             .withStartupCheckStrategy(new OneShotStartupCheckStrategy()
                 .withTimeout(Duration.ofMinutes(10))
             );
-    // Mount a volume
-//    String sourcePath = "/Users/henneberger/sqrl/sqrl-examples/udf/build";
     String targetPath = "/build";
     MountableFile mountableFile = MountableFile.forHostPath(buildDir);
     container.withFileSystemBind(mountableFile.getResolvedPath(), targetPath);

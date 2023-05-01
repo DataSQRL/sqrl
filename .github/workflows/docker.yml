@@ -21,7 +21,7 @@ jobs:
           distribution: 'adopt'
           cache: maven
       - name: Build SQRL
-        run: mvn -B -U -e clean install --no-transfer-progress
+        run: mvn -B -U -t 6 -e clean install --no-transfer-progress -DskipTests=true
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx

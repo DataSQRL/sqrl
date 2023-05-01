@@ -90,19 +90,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     executor.execute(physicalPlan, errors);
 
-
-    SqlClient client;
-
-    if (jdbc.getDialect().equalsIgnoreCase("postgres")) {
-      client = PgPool.client(vertx, toPgOptions(jdbc),
-          new PgPoolOptions(new PoolOptions()));
-    } else {
-      client = JDBCPool.pool(
-          vertx,
-          toJdbcConfig(jdbc),
-          new PoolOptions());
-
-    }
     CountDownLatch countDownLatch = new CountDownLatch(1);
 
 
@@ -141,16 +128,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     return -1;
   }
 
-  private JDBCConnectOptions toJdbcConfig(JdbcDataSystemConnector config) {
-    JDBCConnectOptions options = new JDBCConnectOptions()
-        .setJdbcUrl(jdbc.getUrl())
-        .setDatabase(jdbc.getDatabase());
-
-    Optional.ofNullable(config.getUser()).map(options::setUser);
-    Optional.ofNullable(config.getPassword()).map(options::setPassword);
-    return options;
-  }
-
   @SneakyThrows
   private String prettyPrintObj(Object body) {
     return mapper.writerWithDefaultPrettyPrinter()
@@ -161,18 +138,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   private String prettyPrint(String body) {
     return mapper.writerWithDefaultPrettyPrinter()
         .writeValueAsString(mapper.readTree(body));
-  }
-
-  private PgConnectOptions toPgOptions(JdbcDataSystemConnector jdbcConf) {
-    PgConnectOptions options = new PgConnectOptions();
-    options.setDatabase(jdbcConf.getDatabase());
-    options.setHost(jdbcConf.getHost());
-    options.setPort(jdbcConf.getPort());
-    options.setUser(jdbcConf.getUser());
-    options.setPassword(jdbcConf.getPassword());
-    options.setCachePreparedStatements(true);
-    options.setPipeliningLimit(100_000);
-    return options;
   }
 
   @SneakyThrows

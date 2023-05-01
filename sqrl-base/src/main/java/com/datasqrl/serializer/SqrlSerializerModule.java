@@ -29,16 +29,5 @@ public class SqrlSerializerModule extends SimpleModule {
     for (StdSerializer serializer : serializers) {
       super.addSerializer(serializer);
     }
-//
-//    ServiceLoader<JsonDeserializer> jsonDeserializer = ServiceLoader.load(JsonDeserializer.class);
-//    for (JsonDeserializer deserializer : jsonDeserializer) {
-//      super.addDeserializer(deserializer.getClass(), deserializer);
-//    }
-//
-//    ServiceLoader<JsonSerializer> jsonSerializer = ServiceLoader.load(JsonSerializer.class);
-//    for (JsonSerializer serializer : jsonSerializer) {
-//      super.addSerializer(serializer);
-//    }
-
    }
 }
