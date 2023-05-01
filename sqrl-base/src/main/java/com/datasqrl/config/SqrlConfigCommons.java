@@ -30,6 +30,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -368,6 +369,7 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   @AllArgsConstructor
+  @Getter
   @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
   public static class Serialized implements SerializedSqrlConfig {

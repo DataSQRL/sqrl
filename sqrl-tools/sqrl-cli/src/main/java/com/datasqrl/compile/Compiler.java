@@ -8,9 +8,15 @@ import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.error.ErrorCode;
+import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
+import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
+import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
+import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlDIModule;
@@ -21,50 +27,72 @@ import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
+import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DataSystemNsObject;
 import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.ObjectLoaderImpl;
-import com.datasqrl.module.resolver.ClasspathResourceResolver;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.Packager;
+import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.SqrlObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.commons.io.FileUtils;
 
 @Slf4j
 public class Compiler {
+  public static final String DEFAULT_SERVER_MODEL = "model.json";
+  public static final String DEFAULT_SERVER_CONFIG = "config.json";
 
+  private final Deserializer writer = new Deserializer();
+
+  private final ObjectWriter objWriter = SqrlObjectMapper.INSTANCE
+      .writerWithDefaultPrettyPrinter();
   /**
    * Processes all the files in the build directory and creates the execution artifacts
    *
    * @return
    */
   @SneakyThrows
-  public CompilerResult run(ErrorCollector errors, Path buildDir, boolean debug) {
+  public CompilerResult run(ErrorCollector errors, Path buildDir, boolean debug, Path deployDir) {
+    if (Files.isDirectory(deployDir)) {
+      FileUtils.cleanDirectory(deployDir.toFile());
+    } else {
+      Files.createDirectories(deployDir);
+    }
+
     SqrlConfig config = SqrlConfigCommons.fromFiles(errors,buildDir.resolve(
         Packager.PACKAGE_FILE_NAME));
 
@@ -114,13 +142,76 @@ public class Compiler {
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
     PhysicalDAGPlan dag = planner.planDag(ns, pgSchemaBuilder.getApiQueries(), root,
-        !(resourceResolver instanceof ClasspathResourceResolver));
+       false);
     PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, ns, errorSink);
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
+    CompilerResult result = new CompilerResult(root, gqlSchema, plan);
 
-    return new CompilerResult(root, gqlSchema, plan);
+    JdbcDataSystemConnector jdbc = ((JDBCEngine)pipelineFactory.getDatabaseEngine())
+        .getConnector();
+
+    write(result, jdbc, dag, deployDir);
+    writeSchema(buildDir, result.getGraphQLSchema());
+
+    return result;
   }
+
+
+  @SneakyThrows
+  private void writeSchema(Path rootDir, String schema) {
+    Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
+    Files.deleteIfExists(schemaFile);
+    Files.writeString(schemaFile,
+        schema, StandardOpenOption.CREATE);
+  }
+
+  @SneakyThrows
+  public void write(CompilerResult result, JdbcDataSystemConnector jdbc, PhysicalDAGPlan dag, Path deployDir) {
+
+    writeTo(result, dag, jdbc, deployDir);
+    writeTo(jdbc, deployDir);
+  }
+
+  private void writeTo(JdbcDataSystemConnector jdbc, Path outputDir) throws IOException {
+    writer.writeJson(outputDir.resolve(DEFAULT_SERVER_CONFIG), jdbc, true);
+  }
+
+  public void writeTo(CompilerResult result, PhysicalDAGPlan dag, JdbcDataSystemConnector jdbc, Path outputDir) throws IOException {
+    Files.writeString(outputDir.resolve("init-schema.sql"),
+        createDDL(jdbc, dag.getStagePlans().get(1).getIndexDefinitions(),
+            (result.getPlan().getStagePlans().get(1))));
+
+    writer.writeJson(outputDir.resolve(DEFAULT_SERVER_MODEL), result.getModel(), true);
+
+    //TODO: Add graphql plan as engine, generate all deployment assets
+    FlinkStreamPhysicalPlan plan = (FlinkStreamPhysicalPlan)result.getPlan().getStagePlans().get(0).getPlan();
+    writer.writeJson(outputDir.resolve("flinkPlan.json"), plan.getExecutablePlan());
+//    Files.writeString(outputDir.resolve("flinkPlan.json"),
+//        objWriter.writeValueAsString(plan.getExecutablePlan()), StandardOpenOption.CREATE);
+  }
+
+  //TODO: This moves to engine
+  private String createDDL(JdbcDataSystemConnector jdbc, Collection<IndexDefinition> indexDefinitions, StagePlan plan) {
+    JdbcDDLFactory factory =
+        (new JdbcDDLServiceLoader()).load(jdbc.getDialect())
+            .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
+
+    List<String> statements = ((JDBCPhysicalPlan) plan.getPlan())
+        .getDdlStatements().stream()
+        .map(SqlDDLStatement::toSql)
+        .collect(Collectors.toList());
+
+    //todo bad
+    indexDefinitions.stream()
+        .map(i->factory.createIndex(i))
+        .map(f->f.toSql())
+        .forEach(sql->statements.add(sql));
+
+    return statements.stream()
+        .collect(Collectors.joining("\n"));
+  }
+
 
   private TableSink loadErrorSink(ModuleLoader moduleLoader, @NonNull String errorSinkName, ErrorCollector error) {
     NamePath sinkPath = NamePath.parse(errorSinkName);

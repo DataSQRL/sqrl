@@ -93,7 +93,9 @@ public class Preprocessors {
     Files.createDirectories(libDir);
     for (Path library : libraries) {
       Path libPath = libDir.resolve(library.getFileName());
-      Files.createSymbolicLink(libPath, library.toAbsolutePath());
+      //We cannot use symbolic links since they can be hard to follow
+      // in other environments, like docker containers
+      Files.copy(library.toAbsolutePath(), libPath.toAbsolutePath(), StandardCopyOption.REPLACE_EXISTING);
     }
   }
 

@@ -3,6 +3,16 @@
  */
 package com.datasqrl.engine.stream.flink;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import lombok.extern.slf4j.Slf4j;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.startupcheck.OneShotStartupCheckStrategy;
+import org.testcontainers.utility.MountableFile;
+
+@Slf4j
 public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
   public LocalFlinkStreamEngineImpl(ExecutionEnvironmentFactory execFactory) {
@@ -12,5 +22,28 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
   public FlinkStreamBuilder createJob() {
     return new FlinkStreamBuilder(this,
         execFactory.createEnvironment());
+  }
+
+
+//  public static void main(String[] args) {
+//    new LocalFlinkStreamEngineImpl(null)
+//        .deploy(buildDir);
+//  }
+  @Override
+  public void generateAssets(Path buildDir) {
+    GenericContainer<?> container =
+        new GenericContainer<>("engine-flink")
+            .withStartupCheckStrategy(new OneShotStartupCheckStrategy()
+                .withTimeout(Duration.ofMinutes(10))
+            );
+    // Mount a volume
+//    String sourcePath = "/Users/henneberger/sqrl/sqrl-examples/udf/build";
+    String targetPath = "/build";
+    MountableFile mountableFile = MountableFile.forHostPath(buildDir);
+    container.withFileSystemBind(mountableFile.getResolvedPath(), targetPath);
+
+    container.start();
+    container.stop();
+
   }
 }

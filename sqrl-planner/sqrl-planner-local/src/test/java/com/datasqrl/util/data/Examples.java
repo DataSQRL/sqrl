@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Examples {
 
-  static final Path base = Path.of("..", "sqrl-examples");
+  static final Path base = Path.of("..", "..", "sqrl-examples");
   public static List<TestScript> scriptList = ImmutableList.<TestScript>builder()
       .add(TestScript.of(base.resolve("art/poetry-cloud"),
               base.resolve("art/poetry-cloud/poetry.sqrl"))

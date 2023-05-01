@@ -19,7 +19,7 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 
 import static com.datasqrl.cmd.AbstractCompilerCommand.DEFAULT_DEPLOY_DIR;
-import static com.datasqrl.cmd.AbstractCompilerCommand.DEFAULT_SERVER_MODEL;
+import static com.datasqrl.compile.Compiler.DEFAULT_SERVER_MODEL;
 
 @Slf4j
 @CommandLine.Command(name = "serve", description = "Serves a graphql api")

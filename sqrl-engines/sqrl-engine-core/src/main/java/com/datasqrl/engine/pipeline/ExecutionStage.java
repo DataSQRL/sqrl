@@ -10,6 +10,7 @@ import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import org.apache.calcite.tools.RelBuilder;
@@ -48,6 +49,4 @@ public interface ExecutionStage {
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink);
-
-
 }

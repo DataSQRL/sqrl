@@ -40,10 +40,13 @@ public class FlinkMain {
     try {
       FlinkEnvironmentBuilder builder = new FlinkEnvironmentBuilder(errors);
       StatementSet statementSet = executablePlan.accept(builder, null);
+      log.info("Built." + statementSet);
       TableResult result = statementSet.execute();
-      result.await();
+      log.info("result." + result);
+
       log.info("Plan execution complete: {}", result.getResultKind());
     } catch (Exception e) {
+      e.printStackTrace();
       errors.getCatcher().handle(e);
     }
     System.out.println(ErrorPrinter.prettyPrint(errors));

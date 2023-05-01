@@ -10,8 +10,8 @@ services:
     ports:
       - '5432:5432'
     volumes:
-#      - db:/var/lib/postgresql/data
-      - /Users/henneberger/sqrl/sqrl-examples/udf/build/deploy/init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
+      #      - db:/var/lib/postgresql/data
+      - ./init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
 
   flink-jobmanager:
     image: flink:1.16.1-scala_2.12-java11
@@ -40,14 +40,15 @@ services:
       - /Users/henneberger/sqrl/sqrl-examples/udf/data:/Users/henneberger/sqrl/sqrl-examples/udf/data
   servlet:
     image: eclipse-temurin:11
-    command: java -jar /Users/henneberger/sqrl/sqrl-examples/udf/build/deploy/vertx-server.jar
+    command: java -jar vertx-server.jar
     depends_on:
       - db
     ports:
       - "8888:8888"
     volumes:
-      - /Users/henneberger/sqrl/sqrl-examples/udf/data:/Users/henneberger/sqrl/sqrl-examples/udf/data
-      - /Users/henneberger/sqrl/sqrl-examples/udf/build/deploy:/Users/henneberger/sqrl/sqrl-examples/udf/build/deploy
+      - ./model.json:/model.json
+      - ./config.json:/config.json
+      - ./vertx-server.jar:/vertx-server.jar
 
 volumes:
   db:

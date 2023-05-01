@@ -3,11 +3,11 @@
  */
 package com.datasqrl.engine;
 
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -49,6 +49,10 @@ public interface ExecutionEngine {
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink);
+
+  default void generateAssets(Path buildDir) {
+    System.out.println("Skipping engine:" + this.getClass().getName());
+  }
 
   @AllArgsConstructor
   @Getter

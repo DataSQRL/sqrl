@@ -8,8 +8,12 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.auto.service.AutoService;
 import java.io.IOException;
 
-@AutoService(JsonSerializer.class)
-public class NamePathSerializer extends JsonSerializer<NamePath> {
+@AutoService(StdSerializer.class)
+public class NamePathSerializer extends StdSerializer<NamePath> {
+
+  public NamePathSerializer() {
+    super(NamePath.class);
+  }
 
   @Override
   public void serialize(NamePath namePath, JsonGenerator jsonGenerator,

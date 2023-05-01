@@ -1,6 +1,6 @@
 package com.datasqrl;
 
-import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.engine.ExecutionResult;
@@ -13,14 +13,10 @@ import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.PackagerConfig;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.repository.Repository;
-import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Examples;
-import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -40,11 +36,11 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-
+    errors = ErrorCollector.root();
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
-  @Disabled
+//  @Disabled
   @SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(TestScript.ExampleScriptsProvider.class)
@@ -75,22 +71,25 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
 //        .debugger(DebuggerConfig.NONE)
 //        .build(), build.getParent());
 
-    ResourceResolver resourceResolver = new FileResourceResolver(build.getParent());
-//    Compiler compiler = new Compiler();
-//    CompilerResult result = compiler.run(ErrorCollector.root(), resourceResolver, false);
+    Path buildDir = script.getRootPackageDirectory().resolve("build");
+    com.datasqrl.compile.Compiler compiler = new com.datasqrl.compile.Compiler();
+    CompilerResult result = compiler.run(ErrorCollector.root(),
+        buildDir,
+        false, buildDir.resolve("deploy"));
 
-    Path path = build.getParent().resolve("deploy");
-    Files.createDirectories(path);
+    System.out.println(result);
+//    Path path = build.getParent().resolve("deploy");
+//    Files.createDirectories(path);
 
 //    discover(script);
 
     //Run schema script on db
-    Optional<URI> schema = resourceResolver.resolveFile(NamePath.of("deploy", "dbschema.json"));
-    Deserializer deserializer = new Deserializer();
-    List<String> schemaDDL = deserializer.getJsonMapper()
-        .readValue(schema.get().toURL(), new TypeReference<List<String>>(){});
-
-    execute(schemaDDL);
+//    Optional<URI> schema = resourceResolver.resolveFile(NamePath.of("deploy", "dbschema.json"));
+//    Deserializer deserializer = new Deserializer();
+//    List<String> schemaDDL = deserializer.getJsonMapper()
+//        .readValue(schema.get().toURL(), new TypeReference<List<String>>(){});
+//
+//    execute(schemaDDL);
 
 //    FlinkMain flinkMain = new FlinkMain();
 //    flinkMain.run(resourceResolver);

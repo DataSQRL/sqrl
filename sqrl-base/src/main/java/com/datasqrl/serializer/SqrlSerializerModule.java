@@ -1,5 +1,7 @@
 package com.datasqrl.serializer;
 
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -13,8 +15,8 @@ public class SqrlSerializerModule extends SimpleModule {
   }
 
   private void registerSqrlModules() {
-    ServiceLoader<JacksonDeserializer> moduleLoader = ServiceLoader.load(JacksonDeserializer.class);
-    for (JacksonDeserializer deserializer : moduleLoader) {
+    ServiceLoader<JacksonDeserializer> jacksonDeserializers = ServiceLoader.load(JacksonDeserializer.class);
+    for (JacksonDeserializer deserializer : jacksonDeserializers) {
       super.addDeserializer(deserializer.getSuperType(), deserializer);
     }
 
@@ -27,6 +29,16 @@ public class SqrlSerializerModule extends SimpleModule {
     for (StdSerializer serializer : serializers) {
       super.addSerializer(serializer);
     }
+//
+//    ServiceLoader<JsonDeserializer> jsonDeserializer = ServiceLoader.load(JsonDeserializer.class);
+//    for (JsonDeserializer deserializer : jsonDeserializer) {
+//      super.addDeserializer(deserializer.getClass(), deserializer);
+//    }
+//
+//    ServiceLoader<JsonSerializer> jsonSerializer = ServiceLoader.load(JsonSerializer.class);
+//    for (JsonSerializer serializer : jsonSerializer) {
+//      super.addSerializer(serializer);
+//    }
 
    }
 }
