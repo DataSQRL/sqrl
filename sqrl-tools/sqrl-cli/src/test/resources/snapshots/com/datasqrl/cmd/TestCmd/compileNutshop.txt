@@ -1,5 +1,7 @@
 >>>output
 config.json
+flinkPlan.json
+init-schema.sql
 model.json
 >>>build
 build.gradle

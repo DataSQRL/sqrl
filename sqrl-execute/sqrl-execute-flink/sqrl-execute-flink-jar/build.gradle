@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+dependencies {
+    implementation fileTree('lib')
+    implementation files(System.getenv('SQRL_JAR_PATH'))
+}
+
+shadowJar {
+    mergeServiceFiles()
+    manifest {
+        attributes 'Main-Class': 'com.datasqrl.FlinkMain'
+    }
+    from('.') {
+        include '**'
+        exclude 'build.gradle'
+        exclude 'lib'
+        exclude 'gradle'
+        exclude '.gradle'
+        exclude 'build'
+        exclude '.idea'
+        exclude 'gradle*'
+        into('build')
+    }
+
+    zip64=true
+}

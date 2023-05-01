@@ -8,8 +8,12 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.google.auto.service.AutoService;
 import java.io.IOException;
 
-@AutoService(JsonDeserializer.class)
-public class NameDeserializer extends JsonDeserializer<Name> {
+@AutoService(StdDeserializer.class)
+public class NameDeserializer extends StdDeserializer<Name> {
+
+  public NameDeserializer() {
+    super(Name.class);
+  }
 
   @Override
   public Name deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)

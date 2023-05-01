@@ -47,19 +47,8 @@ public abstract class AbstractCommand implements Runnable {
   public void startGraphQLServer(
       RootGraphqlModel model, int port, JdbcDataSystemConnector jdbc) {
     Vertx vertx = Vertx.vertx();
-    SqlClient client;
-    if (jdbc.getDialect().equalsIgnoreCase("postgres")) {
-      client = PgPool.client(vertx, toPgOptions(jdbc), new PgPoolOptions(new PoolOptions()));
-    } else {
-      client = JDBCPool.pool(vertx,
-          new JDBCConnectOptions()
-              .setJdbcUrl(jdbc.getUrl())
-              .setDatabase(jdbc.getDatabase()),
-          new PoolOptions());
-    }
-
     CompletableFuture future = vertx.deployVerticle(new GraphQLServer(
-            model, port, client))
+            model, port, jdbc))
         .toCompletionStage()
         .toCompletableFuture();
     log.info("Server started at: http://localhost:" + port + "/graphiql/");

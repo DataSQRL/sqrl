@@ -1,5 +1,7 @@
 >>>output
 config.json
+flinkPlan.json
+init-schema.sql
 model.json
 >>>build
 build.gradle
@@ -21,3 +23,4 @@ ecommerce-data/product.table.json
 output
 output/system.discover.table.json
 package.json
+schema.graphqls

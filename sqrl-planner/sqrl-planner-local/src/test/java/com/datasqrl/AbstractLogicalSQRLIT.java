@@ -30,7 +30,6 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   public void tearDown() {
     super.tearDown();
     errors = null;
-
   }
 
   public ErrorCollector errors;

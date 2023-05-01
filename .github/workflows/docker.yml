@@ -14,6 +14,14 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+          cache: maven
+      - name: Build SQRL
+        run: mvn -B -U -t 6 -e clean install --no-transfer-progress -DskipTests=true
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -30,13 +38,40 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: datasqrl/datasqrl-cmd:latest
+          tags: datasqrl/cmd:latest
           platforms: linux/amd64,linux/arm64
-      - name: Release Build and Push Docker
+      - name: Build and Push sqrl-execute-http-vertx Docker
+        if: ${{ github.ref == 'refs/heads/main'}}
         uses: docker/build-push-action@v3
-        if: ${{ github.ref != 'refs/heads/main'}}
         with:
-          context: .
-          file: Dockerfile
+          context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx
+          file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/Dockerfile
           push: true
-          tags: datasqrl/datasqrl-cmd:${{ github.ref }}
+          tags: datasqrl/sqrl-execute-http-vertx:latest
+          platforms: linux/amd64,linux/arm64
+      - name: Build and Push sqrl-execute-flink-jar Docker
+        if: ${{ github.ref == 'refs/heads/main'}}
+        uses: docker/build-push-action@v3
+        with:
+          context: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar
+          file: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/Dockerfile
+          push: true
+          tags: datasqrl/sqrl-execute-flink-jar:latest
+          platforms: linux/amd64,linux/arm64
+      - name: Tag and Push Docker Images
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          TAG_NAME=${{ github.event.release.tag_name }}
+          docker tag datasqrl/cmd:latest datasqrl/cmd:$TAG_NAME
+          docker tag datasqrl/sqrl-execute-http-vertx:latest datasqrl/sqrl-execute-http-vertx:$TAG_NAME
+          docker tag datasqrl/sqrl-execute-flink-jar:latest datasqrl/sqrl-execute-flink-jar:$TAG_NAME
+          docker push datasqrl/cmd:$TAG_NAME
+          docker push datasqrl/sqrl-execute-http-vertx:$TAG_NAME
+          docker push datasqrl/sqrl-execute-flink-jar:$TAG_NAME
+      - name: Create GitHub Release
+        if: ${{ github.ref != 'refs/heads/main'}}
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_NOTES.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -24,6 +24,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -211,16 +212,17 @@ public class TableConfig {
   }
 
   public Serialized serialize() {
-    return new Serialized(name,config.serialize(), connectorSettings);
+    return new Serialized(name,(SqrlConfigCommons.Serialized)config.serialize(), connectorSettings);
   }
 
   @AllArgsConstructor
+  @Getter
   @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
   public static class Serialized {
 
     Name name;
-    SerializedSqrlConfig config;
+    SqrlConfigCommons.Serialized config;
     DataSystemConnectorSettings connectorSettings;
 
     public TableConfig deserialize(ErrorCollector errors) {

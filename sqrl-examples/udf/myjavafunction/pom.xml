@@ -15,10 +15,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-common</artifactId>
-      <version>0.1-SNAPSHOT</version>
-      <scope>provided</scope>
+      <groupId>com.google.auto.service</groupId>
+      <artifactId>auto-service</artifactId>
+      <version>1.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>

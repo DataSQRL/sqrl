@@ -48,6 +48,4 @@ public interface ExecutionStage {
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink);
-
-
 }
