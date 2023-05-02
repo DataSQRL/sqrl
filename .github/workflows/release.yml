@@ -38,7 +38,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: sqrl-tools/sqrl-cli
-          file: Dockerfile
+          file: sqrl-tools/sqrl-cli/Dockerfile
           push: true
           tags: datasqrl/cmd:${{ github.ref_name }}
           platforms: linux/amd64,linux/arm64
