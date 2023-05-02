@@ -6,7 +6,7 @@
 
   <groupId>com.myudf</groupId>
   <artifactId>myudf</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.1.0-SNAPSHOT</version>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
