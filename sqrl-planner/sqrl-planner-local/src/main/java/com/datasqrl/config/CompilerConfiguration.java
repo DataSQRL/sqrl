@@ -30,7 +30,7 @@ public class CompilerConfiguration {
   String debugSink = "print";
 
   @Default
-  List<String> tables = List.of();
+  List<String> debugTables = List.of();
 
   public static final String COMPILER_KEY = "compiler";
 
@@ -45,8 +45,8 @@ public class CompilerConfiguration {
   public DebuggerConfig getDebugger() {
     NamePath sinkBasePath = NamePath.parse(debugSink);
     Set<Name> debugTables = null;
-    if (tables!=null && !tables.isEmpty()) {
-      debugTables = tables.stream().map(Name::system).collect(Collectors.toSet());
+    if (this.debugTables !=null && !this.debugTables.isEmpty()) {
+      debugTables = this.debugTables.stream().map(Name::system).collect(Collectors.toSet());
     }
     return DebuggerConfig.builder().enabled(true)
         .sinkBasePath(sinkBasePath)
