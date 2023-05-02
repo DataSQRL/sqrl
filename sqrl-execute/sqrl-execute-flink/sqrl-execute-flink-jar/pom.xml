@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-execute-flink</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
   </parent>
 
   <!--
@@ -95,6 +95,7 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.2.4</version>
         <configuration>
+          <finalName>flink-main</finalName>
           <createDependencyReducedPom>false</createDependencyReducedPom>
         </configuration>
         <executions>

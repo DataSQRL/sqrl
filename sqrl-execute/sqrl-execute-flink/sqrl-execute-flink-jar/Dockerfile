@@ -1,7 +1,7 @@
 FROM gradle:8.1.0-jdk11
 
 # copy built files
-COPY target/sqrl-execute-flink-jar-0.1-SNAPSHOT-shaded.jar /sqrl.jar
+COPY target/flink-main.jar /sqrl.jar
 COPY build.gradle /build.gradle
 COPY entrypoint.sh /entrypoint.sh
 

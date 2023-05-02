@@ -1,8 +1,9 @@
-name: Latest Docker Build and Push
+name: Tag Docker Build and Push
 
 on:
   push:
-    branches: [main]
+    tags:
+      - "v*.*.*"
 
 jobs:
   build:
@@ -21,7 +22,7 @@ jobs:
       - name: Build SQRL
         run: mvn -B -U -T 6 -e clean install --no-transfer-progress -DskipTests=true
 
-      # Set up Docker
+    # Set up Docker
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -34,26 +35,29 @@ jobs:
 
       # Build docker
       - name: Build and Push sqrl-cli Latest
+        if: ${{ github.ref == 'refs/heads/main'}}
         uses: docker/build-push-action@v3
         with:
           context: sqrl-tools/sqrl-cli
-          file: sqrl-tools/sqrl-cli/Dockerfile
+          file: Dockerfile
           push: true
-          tags: datasqrl/cmd:latest
+          tags: datasqrl/cmd:${{ github.ref_name }}
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-http-vertx Docker
+        if: ${{ github.ref == 'refs/heads/main'}}
         uses: docker/build-push-action@v3
         with:
           context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx
           file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/Dockerfile
           push: true
-          tags: datasqrl/sqrl-execute-http-vertx:latest
+          tags: datasqrl/sqrl-execute-http-vertx:${{ github.ref_name }}
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-flink-jar Docker
+        if: ${{ github.ref == 'refs/heads/main'}}
         uses: docker/build-push-action@v3
         with:
           context: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar
           file: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/Dockerfile
           push: true
-          tags: datasqrl/sqrl-execute-flink-jar:latest
+          tags: datasqrl/sqrl-execute-flink-jar:${{ github.ref_name }}
           platforms: linux/amd64,linux/arm64
