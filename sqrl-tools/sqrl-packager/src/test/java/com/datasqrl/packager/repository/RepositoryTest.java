@@ -130,7 +130,6 @@ public class RepositoryTest {
   }
 
   @Test
-  @Disabled("until repository is updated")
   @SneakyThrows
   public void remoteRepoTest() {
     Dependency dependency = new Dependency("datasqrl.seedshop", "0.1.1", "dev");

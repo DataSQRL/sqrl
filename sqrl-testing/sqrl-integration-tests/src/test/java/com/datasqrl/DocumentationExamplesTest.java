@@ -34,7 +34,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * The test only assures that the compile or run command executes successfully.
  * Any more in-depth testing should be done in the core or integration test suite.
  */
-@Disabled ("until repo is fixed after config change")
 public class DocumentationExamplesTest {
 
     public static final String DEFAULT_SINK_DIR = "mysink-output";
