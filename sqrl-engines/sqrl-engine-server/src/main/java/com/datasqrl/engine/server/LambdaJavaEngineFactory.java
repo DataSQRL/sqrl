@@ -3,7 +3,6 @@ package com.datasqrl.engine.server;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.server.LambdaNativeArm64EngineFactory.LambdaNativeArm64Engine;
 import com.google.auto.service.AutoService;
 import lombok.NonNull;
 
