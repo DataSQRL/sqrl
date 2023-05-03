@@ -36,6 +36,9 @@ public class ServiceHandler implements
   //       Check to see impact on postgres, etc
   public static final GenericJdbcClient client = createClient();
   public static Class clazz = createClass();
+  //used for native compilation
+  public static Class h2Driver = org.h2.Driver.class;
+  public static Class postgres = org.postgresql.Driver.class;
   public static final GraphQL graphQL = create(client);
 
   public static final String CONFIG_JSON = "config.json";
@@ -45,7 +48,7 @@ public class ServiceHandler implements
   private static Class createClass() {
     Map jdbcConfig = mapper.readValue(new File(CONFIG_JSON), Map.class);
 
-    clazz = Class.forName((String) jdbcConfig.get("driverName"));
+    clazz = Class.forName((String) jdbcConfig.get("driver"));
 
     return clazz;
   }

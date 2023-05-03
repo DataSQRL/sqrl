@@ -36,6 +36,13 @@
       <artifactId>aws-lambda-java-events</artifactId>
       <version>3.11.0</version>
     </dependency>
+    <!-- sqrl-base logging is not compatible -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.4.6</version>
+    </dependency>
+
 
     <dependency>
       <groupId>org.jooq</groupId>

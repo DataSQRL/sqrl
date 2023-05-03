@@ -14,11 +14,4 @@
     <module>sqrl-execute-flink</module>
     <module>sqrl-execute-http</module>
   </modules>
-
-  <dependencies>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-base</artifactId>
-    </dependency>
-  </dependencies>
 </project>
