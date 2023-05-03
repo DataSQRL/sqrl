@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS "topicsearch$11" ("topicname" CHARACTER VARYING NOT N
         "version" : "0.1.1",
         "variant" : "dev",
         "description" : "Simple e-commerce dataset for the DataSQRL Seed-shop",
-        "file" : "mX9HHbUFTgI8XQiJ8PDKMXD_Kno.zip",
-        "hash" : "56a79531809887f504fb62a667580532",
-        "submissionTime" : "2023-03-14T22:53:24.579297-07:00"
+        "file" : "SIKfcBnr7bJCOldq_bp9Mryqsjw.zip",
+        "hash" : "164b68a31a68a0329a2e93f796f47291",
+        "submissionTime" : "2023-05-03T16:07:49.786037-07:00"
       }
     } ]
   }
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS "topicsearch$11" ("topicname" CHARACTER VARYING NOT N
     "TopicPackages" : [ {
       "topicName" : "example",
       "pkgName" : "datasqrl.example.clickstream",
-      "lastSubmission" : "2023-04-06T03:46:25.260-07:00",
+      "lastSubmission" : "2023-05-03T16:08:29.755-07:00",
       "numSubmissions" : 1,
       "latest" : {
         "version" : "0.1.0",
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS "topicsearch$11" ("topicname" CHARACTER VARYING NOT N
     }, {
       "topicName" : "example",
       "pkgName" : "datasqrl.example.sensors",
-      "lastSubmission" : "2023-04-06T03:50:51.034-07:00",
+      "lastSubmission" : "2023-05-03T16:09:08.884-07:00",
       "numSubmissions" : 1,
       "latest" : {
         "version" : "0.1.0",
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS "topicsearch$11" ("topicname" CHARACTER VARYING NOT N
     }, {
       "topicName" : "example",
       "pkgName" : "datasqrl.seedshop",
-      "lastSubmission" : "2023-03-14T22:53:24.579-07:00",
+      "lastSubmission" : "2023-05-03T16:07:49.786-07:00",
       "numSubmissions" : 1,
       "latest" : {
         "version" : "0.1.1",
@@ -67,10 +67,10 @@ CREATE TABLE IF NOT EXISTS "topicsearch$11" ("topicname" CHARACTER VARYING NOT N
   "data" : {
     "Package" : [ {
       "versions" : [ {
-        "version" : "0.1.0",
-        "file" : "LRlmya89b1u-PMJFFoeoz22Kb7c.zip",
-        "hash" : "4483fd392182318d2d9a3bbee6c99dae",
-        "submissionTime" : "2023-02-27T21:35:13.903106-08:00"
+        "version" : "0.1.1",
+        "file" : "SIKfcBnr7bJCOldq_bp9Mryqsjw.zip",
+        "hash" : "164b68a31a68a0329a2e93f796f47291",
+        "submissionTime" : "2023-05-03T16:07:49.786037-07:00"
       } ]
     } ]
   }

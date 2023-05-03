@@ -42,7 +42,8 @@ public class ValidatePublication implements PublishRepository {
     Publication publication = new Publication(packageConfig, uniqueId, file, hash, authorId, pubTime.toString());
 
     //Write results if outputdir is configured
-    if (outputDir != null && Files.isDirectory(outputDir)) {
+    Preconditions.checkArgument(outputDir==null || Files.isDirectory(outputDir), "Output directory does not exist: " + outputDir);
+    if (outputDir != null) {
       Path destFile = outputDir.resolve(file);
       Path pkgFile = outputDir.resolve(String.format(PUBLICATION_FILENAME_FORMAT, pubTime.toEpochMilli(), uniqueId));
       try {

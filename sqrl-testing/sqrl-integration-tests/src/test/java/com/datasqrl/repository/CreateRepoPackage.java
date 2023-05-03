@@ -10,6 +10,8 @@ import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.repository.ValidatePublication;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.data.Clickstream;
+import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Sensors;
 import com.datasqrl.util.data.UseCaseExample;
 import java.io.IOException;
@@ -30,7 +32,10 @@ import org.junit.jupiter.api.TestInfo;
  */
 public class CreateRepoPackage extends AbstractPhysicalSQRLIT {
 
-  private final Path output = Path.of("../../sqrl-repository/repodata");
+  private final Path output = Path.of("../../../sqrl-repository/repodata");
+
+  private final UseCaseExample[] ALL_USE_CASES = {Quickstart.INSTANCE, Sensors.INSTANCE,
+      Clickstream.INSTANCE};
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {

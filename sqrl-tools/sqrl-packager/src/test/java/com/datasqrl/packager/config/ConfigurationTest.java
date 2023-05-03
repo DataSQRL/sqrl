@@ -49,6 +49,7 @@ public class ConfigurationTest {
     PackageConfiguration pkgConfig = PackageConfiguration.fromRootConfig(config);
     assertEquals("1.0.0", pkgConfig.getVersion());
     assertEquals("dev", pkgConfig.getVariant());
+    assertEquals(3, pkgConfig.getKeywords().size());
 
     assertFalse(errors.hasErrors());
   }

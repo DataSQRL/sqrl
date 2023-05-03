@@ -52,16 +52,39 @@ public class FlexibleTypeMatcher implements Serializable {
       List<Pair<Integer, FieldType>> potentialMatches = new ArrayList<>(
           fieldTypes.size());
       for (FlexibleFieldSchema.FieldType ft : fieldTypes) {
+        BasicType basicFieldType;
+        int distanceAdjustment;
         if (ft.getType() instanceof BasicType) {
-          typeDistanceWithArray(btype, arrayDepth, (BasicType) ft.getType(), ft.getArrayDepth(),
+          basicFieldType = (BasicType) ft.getType();
+          distanceAdjustment = 1;
+        } else { //must be relationtype
+          basicFieldType = getSingletonBasicField((RelationType<FlexibleFieldSchema.Field>) ft.getType())
+              .map(field -> (BasicType)field.getTypes().get(0).getType()).orElse(null);
+          distanceAdjustment = 2; //we penalize matches into a singleton relation type
+        }
+        if (basicFieldType!=null) {
+          typeDistanceWithArray(btype, arrayDepth, basicFieldType, ft.getArrayDepth(),
               force ? settings.maxForceCastingTypeDistance() : settings.maxCastingTypeDistance())
-              .ifPresent(i -> potentialMatches.add(Pair.of(i, ft)));
+              .ifPresent(i -> potentialMatches.add(Pair.of(i*distanceAdjustment, ft)));
         }
       }
       match = potentialMatches.stream().min(Comparator.comparing(Pair::getKey))
           .map(Pair::getValue).orElse(null);
     }
     return match;
+  }
+
+  static Optional<FlexibleTableSchema.Field> getSingletonBasicField(RelationType<FlexibleTableSchema.Field> relationType) {
+    if (relationType.fields.size()==1) {
+      FlexibleTableSchema.Field field = relationType.fields.get(0);
+      if (field.getTypes().size()==1) {
+        FlexibleFieldSchema.FieldType fieldType = field.getTypes().get(0);
+        if (fieldType.getArrayDepth()==0 && fieldType.getType() instanceof BasicType) {
+          return Optional.of(field);
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   private static final int ARRAY_DISTANCE_OFFSET = 100; //Assume maximum array depth is 100
