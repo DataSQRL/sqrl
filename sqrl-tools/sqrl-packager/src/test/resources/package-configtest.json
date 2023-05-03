@@ -4,7 +4,8 @@
     "name": "datasqrl.examples.Nutshop",
     "version": "1.0.0",
     "variant": "dev",
-    "description": "Basic nutshop example"
+    "description": "Basic nutshop example",
+    "keywords": ["example", "tutorial", "ecommerce"]
   },
   "compiler":
   {

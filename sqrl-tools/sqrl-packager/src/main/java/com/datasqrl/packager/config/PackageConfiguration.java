@@ -47,7 +47,7 @@ public class PackageConfiguration {
   @Default
   String description = "";
   @Default
-  List<KeyWord> keywords = List.of();
+  List<String> keywords = List.of();
 
   public static PackageConfiguration fromRootConfig(@NonNull SqrlConfig rootConfig) {
     return rootConfig.getSubConfig(PACKAGE_KEY).allAs(PackageConfiguration.class).get();
@@ -63,14 +63,6 @@ public class PackageConfiguration {
   public Dependency asDependency() {
     checkInitialized();
     return new Dependency(getName(), getVersion(), getVariant());
-  }
-
-  @NoArgsConstructor
-  @Getter
-  public static final class KeyWord {
-
-    String name;
-
   }
 
 

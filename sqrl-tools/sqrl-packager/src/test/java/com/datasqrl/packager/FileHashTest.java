@@ -19,7 +19,7 @@ public class FileHashTest {
     @SneakyThrows
     public void testFileHash() {
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("package-configtest.json");
-        assertEquals("f9d6ac76c70e216728c70dfcd8bf9398", FileHash.getFor(is));
+        assertEquals("9a640f3827a898a5806096db0f18e944", FileHash.getFor(is));
     }
 
     @Test

@@ -11,10 +11,6 @@
     "homepage": "https://www.datasqrl.com/",
     "repository": "https://github.com/DataSQRL/sqrl/tree/main/sqrl-examples/quickstart",
     "readme": "https://raw.githubusercontent.com/DataSQRL/sqrl/07730c5713932b3dd5421c132f890ae415f25a19/sqrl-examples/quickstart/README.md",
-    "keywords": [
-      {"name": "example"},
-      {"name": "tutorial"},
-      {"name": "ecommerce"}
-    ]
+    "keywords": ["example","tutorial","customer360","ecommerce"]
   }
 }

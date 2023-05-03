@@ -182,6 +182,7 @@ public class SqrlConfigCommons implements SqrlConfig {
 
   @Override
   public <T> Value<List<T>> asList(String key, Class<T> clazz) {
+    Preconditions.checkArgument(isBasicClass(clazz),"Not a basic class: " + clazz);
     String fullKey = getFullKey(key);
     List<T> list = List.of();
     if (config.containsKey(fullKey)) {

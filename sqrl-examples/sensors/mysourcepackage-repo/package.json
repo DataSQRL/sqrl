@@ -11,10 +11,6 @@
     "homepage": "https://www.datasqrl.com/",
     "repository": "https://github.com/DataSQRL/sqrl/tree/main/sqrl-examples/sensors",
     "readme": "https://github.com/DataSQRL/sqrl/tree/main/sqrl-examples/sensors/README.md",
-    "keywords": [
-      {"name": "example"},
-      {"name": "tutorial"},
-      {"name": "IoT"}
-    ]
+    "keywords": ["example","tutorial","IoT"]
   }
 }

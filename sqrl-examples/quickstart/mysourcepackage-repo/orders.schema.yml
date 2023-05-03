@@ -1,0 +1,35 @@
+---
+name: "orders"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "customerid"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "time"
+  type: "DATETIME"
+  tests:
+  - "not_null"
+- name: "items"
+  columns:
+  - name: "productid"
+    type: "INTEGER"
+    tests:
+    - "not_null"
+  - name: "quantity"
+    type: "INTEGER"
+    tests:
+    - "not_null"
+  - name: "unit_price"
+    type: "FLOAT"
+    tests:
+    - "not_null"
+  - name: "discount"
+    type: "FLOAT"
+  tests:
+  - "not_null"

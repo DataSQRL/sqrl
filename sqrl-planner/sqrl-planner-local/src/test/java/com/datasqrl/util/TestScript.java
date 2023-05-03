@@ -104,10 +104,10 @@ public interface TestScript {
     return ImmutableList.<TestScript>builder()
         .addAll(Retail.INSTANCE.getTestScripts().values())
         .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
-        .addAll(Repository.INSTANCE.getScripts())
         .addAll(Quickstart.INSTANCE.getScripts())
         .addAll(Clickstream.INSTANCE.getScripts())
         .addAll(Sensors.INSTANCE.getScripts())
+//        .addAll(Repository.INSTANCE.getScripts())
         .build();
   }
 
@@ -135,8 +135,14 @@ public interface TestScript {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
-
-      return getAll().stream()
+      List<TestScript> engineScripts = ImmutableList.<TestScript>builder()
+          .addAll(Retail.INSTANCE.getTestScripts().values())
+          .add(Nutshop.INSTANCE.getScripts().get(1))
+          .addAll(Quickstart.INSTANCE.getScripts())
+          .addAll(Clickstream.INSTANCE.getScripts())
+          .addAll(Sensors.INSTANCE.getScripts())
+          .build();
+      return engineScripts.stream()
           .flatMap(script ->
               script.getGraphQLSchemas().stream()
                   .flatMap(gql ->

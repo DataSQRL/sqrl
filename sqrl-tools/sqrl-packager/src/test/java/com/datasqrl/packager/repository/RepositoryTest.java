@@ -16,6 +16,7 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.StringUtil;
 import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Retail;
+import com.datasqrl.util.data.UseCaseExample;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,7 +56,8 @@ public class RepositoryTest {
 
   @Test
   public void testQuickstartValidatePub() {
-    Publication pub = testValidatePublication(Quickstart.INSTANCE.getDataPackageDirectory());
+    Publication pub = testValidatePublication(Quickstart.INSTANCE.getRootPackageDirectory().resolve(
+        UseCaseExample.DATA_PACKAGE+"-repo"));
     assertEquals("datasqrl.seedshop", pub.getName());
     assertEquals("dev", pub.getVariant());
     assertEquals(true, pub.getLatest());
@@ -128,6 +130,7 @@ public class RepositoryTest {
   }
 
   @Test
+  @Disabled("until repository is updated")
   @SneakyThrows
   public void remoteRepoTest() {
     Dependency dependency = new Dependency("datasqrl.seedshop", "0.1.1", "dev");

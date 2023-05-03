@@ -6,6 +6,7 @@ package com.datasqrl.schema.input;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.SchemaValidator;
+import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
 import com.datasqrl.schema.input.TypeSignature.Simple;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -169,8 +170,17 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
       return result;
     } else {
       if (type instanceof RelationType) {
+        Optional<Field> singletonField;
         if (data instanceof Map) {
           return verifyAndAdjust((Map) data, (RelationType) type, errors);
+        } else if ((singletonField=FlexibleTypeMatcher.getSingletonBasicField(
+            (RelationType<Field>) type)).isPresent()) { //Singleton nested field
+          Field nestedField = singletonField.get();
+          FlexibleFieldSchema.FieldType nestedFieldType = nestedField.getTypes().get(0); //there's only one
+          Map<Name, Object> result = new HashMap<>(1);
+          result.put(FlexibleSchemaHelper.getCombinedName(nestedField, nestedFieldType),
+              verifyAndAdjust(data, nestedFieldType, nestedField, 0, errors));
+          return result;
         } else {
           errors.fatal("Expected composite object [%s]", data);
           return null;
@@ -234,7 +244,7 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
         //Need to nest array to match depth
         data = deepenArray(data, type.getArrayDepth() - detectedArrayDepth);
       } else {
-        errors.fatal("Array [%s] does not same dimension as schema [%s]", data, type);
+        errors.fatal("Array [%s] does not have same dimension as schema [%s]", data, type);
       }
     }
     return data;
