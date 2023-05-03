@@ -26,12 +26,6 @@ public class LambdaNativeEngineFactory extends GraphqlServerEngineFactory {
     return new LambdaNativeEngine();
   }
 
-  public static void main(String[] args) {
-    LambdaNativeEngine engine = new LambdaNativeEngine();
-
-    engine.generateAssets(Path.of("/Users/henneberger/sqrl-repository/sqrl/build"));
-  }
-
   public static class LambdaNativeEngine extends GenericJavaServerEngine {
 
     public LambdaNativeEngine() {
