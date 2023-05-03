@@ -50,6 +50,15 @@ jobs:
           push: true
           tags: datasqrl/sqrl-execute-http-vertx:${{ github.ref_name }}
           platforms: linux/amd64,linux/arm64
+
+      - name: Build and Push sqrl-execute-http-aws-lambda Docker
+        uses: docker/build-push-action@v3
+        with:
+          context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda
+          file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda/Dockerfile
+          push: true
+          tags: datasqrl/sqrl-execute-http-aws-lambda:${{ github.ref_name }}
+          platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-flink-jar Docker
         uses: docker/build-push-action@v3
         with:

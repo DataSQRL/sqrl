@@ -77,6 +77,7 @@ public class GenerateAssetsCommand extends AbstractCommand {
 
     for (ExecutionEngine engine : engines) {
       if (shouldGenerateAssets(targetEngine, engine)) {
+        log.info("Generating assets for engine: " + targetEngine);
         engine.generateAssets(packageFilePath.getParent());
       }
     }

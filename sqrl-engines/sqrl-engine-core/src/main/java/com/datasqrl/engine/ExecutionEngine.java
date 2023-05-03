@@ -51,11 +51,13 @@ public interface ExecutionEngine {
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       RelBuilder relBuilder, TableSink errorSink);
 
+
   default void generateAssets(Path buildDir) {
   }
 
   @AllArgsConstructor
   @Getter
+  @Slf4j
   public static abstract class Base implements ExecutionEngine {
 
     protected final @NonNull String name;
@@ -70,6 +72,10 @@ public interface ExecutionEngine {
     @Override
     public TableConfig getSinkConfig(String sinkName) {
       throw new UnsupportedOperationException("Not a sink");
+    }
+
+    public void generateAssets(Path buildDir) {
+      log.debug("Not generating assets for: " + getName());
     }
   }
 
