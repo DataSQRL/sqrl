@@ -93,9 +93,6 @@ public class PipelineFactory {
   }
 
   public ExecutionPipeline createPipeline() {
-    DatabaseEngine db = getDatabaseEngine();
-    StreamEngine stream = getStreamEngine();
-    Optional<ServerEngine> server = getServerEngine();
-    return SimplePipeline.of(stream, db, server);
+    return SimplePipeline.of(getEngines(), config.getErrorCollector());
   }
 }

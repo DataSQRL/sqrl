@@ -17,16 +17,12 @@ import org.apache.calcite.tools.RelBuilder;
 @Value
 public class EngineStage implements ExecutionStage {
 
+  String name;
   ExecutionEngine engine;
-
-  @Override
-  public String getName() {
-    return engine.getName();
-  }
 
   @Override
   public boolean supports(EngineCapability capability) {
     return engine.supports(capability);
   }
-  
+
 }

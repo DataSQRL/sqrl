@@ -3,13 +3,18 @@
  */
 package com.datasqrl.engine.pipeline;
 
+import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Value;
@@ -38,13 +43,22 @@ public class SimplePipeline implements ExecutionPipeline {
     }
   }
 
-  public static SimplePipeline of(StreamEngine stream, DatabaseEngine db, Optional<ServerEngine> server) {
+  public static SimplePipeline of(Map<String, ExecutionEngine> engines, ErrorCollector errors) {
     List<ExecutionStage> stages = new ArrayList<>();
-    stages.add(new EngineStage(stream));
-    stages.add(new EngineStage(db));
-    server.ifPresent((s)->stages.add(new EngineStage(s)));
-
+    stages.add(getStage(Type.STREAM, engines).orElseThrow(
+        () -> errors.exception("Need to configure a stream engine")));
+    stages.add(getStage(Type.DATABASE, engines).orElseThrow(
+        () -> errors.exception("Need to configure a database engine")));
+    getStage(Type.SERVER, engines).ifPresent(stages::add);
     return new SimplePipeline(stages);
+  }
+
+  private static Optional<EngineStage> getStage(ExecutionEngine.Type engineType,
+      Map<String, ExecutionEngine> engines) {
+    return StreamUtil.getOnlyElement(engines.entrySet().stream()
+        .filter(e -> e.getValue().getType()==engineType)
+        .map(e -> new EngineStage(e.getKey(),e.getValue())));
+
   }
 
   @Override

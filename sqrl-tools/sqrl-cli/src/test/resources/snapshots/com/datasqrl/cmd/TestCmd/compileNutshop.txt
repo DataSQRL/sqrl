@@ -1,7 +1,7 @@
 >>>output
-server-config.json
-flink-plan.json
 database-schema.sql
+flink-plan.json
+server-config.json
 server-model.json
 >>>build
 build.gradle
