@@ -16,5 +16,5 @@ LogicalProject(__pk_0=[$1], category=[$2], num=[$3], time=[$0])
           LogicalTableScan(table=[[product$q$13]])
 
 >>>totals$q$15-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TEMPORAL_JOIN]
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 

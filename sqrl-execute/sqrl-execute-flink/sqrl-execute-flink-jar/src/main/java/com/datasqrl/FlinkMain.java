@@ -29,7 +29,7 @@ public class FlinkMain {
   @SneakyThrows
   public void run(ResourceResolver resourceResolver) {
     log.info("Hello.");
-    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flinkPlan.json"));
+    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flink-plan.json"));
     Preconditions.checkState(flinkPlan.isPresent(), "Could not find flink executable plan.");
 
     Deserializer deserializer = new Deserializer();

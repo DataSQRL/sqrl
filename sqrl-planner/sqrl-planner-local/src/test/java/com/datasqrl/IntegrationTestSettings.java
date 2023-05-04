@@ -58,7 +58,7 @@ public class IntegrationTestSettings {
         break;
     }
     if (!Strings.isNullOrEmpty(streamEngineName)) {
-      config.getSubConfig("stream").setProperty(EngineFactory.ENGINE_NAME_KEY, streamEngineName);
+      config.getSubConfig("streams").setProperty(EngineFactory.ENGINE_NAME_KEY, streamEngineName);
     }
 
     //Database engine

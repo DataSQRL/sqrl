@@ -7,7 +7,7 @@ LogicalProject(_uuid=[$0], id=[$2], order_count=[$7], customerid=[$3], time=[$4]
         LogicalTableScan(table=[[customercount$q$11]])
 
 >>>orderwithcount$q$13-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TEMPORAL_JOIN]
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
 >>>orderwithcount2$q$15-lp-STREAM
 LogicalProject(_uuid=[$0], id=[$2], order_count=[$7], customerid=[$3], time=[$4])
@@ -18,5 +18,5 @@ LogicalProject(_uuid=[$0], id=[$2], order_count=[$7], customerid=[$3], time=[$4]
         LogicalTableScan(table=[[customercount$q$11]])
 
 >>>orderwithcount2$q$15-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TEMPORAL_JOIN]
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 

@@ -73,8 +73,8 @@ import org.apache.commons.io.FileUtils;
 
 @Slf4j
 public class Compiler {
-  public static final String DEFAULT_SERVER_MODEL = "model.json";
-  public static final String DEFAULT_SERVER_CONFIG = "config.json";
+  public static final String DEFAULT_SERVER_MODEL = "-model.json";
+  public static final String DEFAULT_SERVER_CONFIG = "-config.json";
 
   private final Deserializer writer = new Deserializer();
 
@@ -143,102 +143,20 @@ public class Compiler {
 
     PhysicalDAGPlan dag = planner.planDag(ns, pgSchemaBuilder.getApiQueries(), root,
        false);
-    PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, ns, errorSink);
+    PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, errorSink);
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
+
     CompilerResult result = new CompilerResult(root, gqlSchema, plan);
-
-    JdbcDataSystemConnector jdbc = ((JDBCEngine)pipelineFactory.getDatabaseEngine())
-        .getConnector();
-
-    write(result, jdbc, dag, deployDir);
+    writeDeployArtifacts(result, deployDir);
     writeSchema(buildDir, result.getGraphQLSchema());
 
     return result;
   }
 
-
-  @SneakyThrows
-  private void writeSchema(Path rootDir, String schema) {
-    Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
-    Files.deleteIfExists(schemaFile);
-    Files.writeString(schemaFile,
-        schema, StandardOpenOption.CREATE);
-  }
-
-  @SneakyThrows
-  public void write(CompilerResult result, JdbcDataSystemConnector jdbc, PhysicalDAGPlan dag, Path deployDir) {
-
-    writeTo(result, dag, jdbc, deployDir);
-    writeTo(jdbc, deployDir);
-  }
-
-  private void writeTo(JdbcDataSystemConnector jdbc, Path outputDir) throws IOException {
-    writer.writeJson(outputDir.resolve(DEFAULT_SERVER_CONFIG), jdbc, true);
-  }
-
-  public void writeTo(CompilerResult result, PhysicalDAGPlan dag, JdbcDataSystemConnector jdbc, Path outputDir) throws IOException {
-    Files.writeString(outputDir.resolve("init-schema.sql"),
-        createDDL(jdbc, dag.getStagePlans().get(1).getIndexDefinitions(),
-            (result.getPlan().getStagePlans().get(1))));
-
-    writer.writeJson(outputDir.resolve(DEFAULT_SERVER_MODEL), result.getModel(), true);
-
-    //TODO: Add graphql plan as engine, generate all deployment assets
-    FlinkStreamPhysicalPlan plan = (FlinkStreamPhysicalPlan)result.getPlan().getStagePlans().get(0).getPlan();
-    writer.writeJson(outputDir.resolve("flinkPlan.json"), plan.getExecutablePlan());
-//    Files.writeString(outputDir.resolve("flinkPlan.json"),
-//        objWriter.writeValueAsString(plan.getExecutablePlan()), StandardOpenOption.CREATE);
-  }
-
-  //TODO: This moves to engine
-  private String createDDL(JdbcDataSystemConnector jdbc, Collection<IndexDefinition> indexDefinitions, StagePlan plan) {
-    JdbcDDLFactory factory =
-        (new JdbcDDLServiceLoader()).load(jdbc.getDialect())
-            .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
-
-    List<String> statements = ((JDBCPhysicalPlan) plan.getPlan())
-        .getDdlStatements().stream()
-        .map(SqlDDLStatement::toSql)
-        .collect(Collectors.toList());
-
-    //todo bad
-    indexDefinitions.stream()
-        .map(i->factory.createIndex(i))
-        .map(f->f.toSql())
-        .forEach(sql->statements.add(sql));
-
-    return statements.stream()
-        .collect(Collectors.joining("\n"));
-  }
-
-
   private TableSink loadErrorSink(ModuleLoader moduleLoader, @NonNull String errorSinkName, ErrorCollector error) {
     NamePath sinkPath = NamePath.parse(errorSinkName);
     return LoaderUtil.loadSink(sinkPath, error, moduleLoader);
-  }
-
-  @Value
-  public class CompilerResult {
-
-    RootGraphqlModel model;
-    String graphQLSchema;
-    PhysicalPlan plan;
-  }
-
-  private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root,
-      Map<APIQuery, QueryTemplate> queries) {
-    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries);
-    root.accept(replaceGraphqlQueries, null);
-    return root;
-  }
-
-  private PhysicalPlan createPhysicalPlan(PhysicalDAGPlan dag, SqrlQueryPlanner planner,
-      Namespace namespace,
-      TableSink errorSink) {
-    PhysicalPlanner physicalPlanner = new PhysicalPlanner(planner.createRelBuilder(), errorSink);
-    PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
-    return physicalPlan;
   }
 
   @SneakyThrows
@@ -253,6 +171,41 @@ public class Compiler {
         .includeDirectives(false);
 
     return new SchemaPrinter(opts).print(gqlSchema);
+  }
+
+  private PhysicalPlan createPhysicalPlan(PhysicalDAGPlan dag, SqrlQueryPlanner planner,
+      TableSink errorSink) {
+    PhysicalPlanner physicalPlanner = new PhysicalPlanner(planner.createRelBuilder(), errorSink);
+    PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
+    return physicalPlan;
+  }
+
+  private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root,
+      Map<APIQuery, QueryTemplate> queries) {
+    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries);
+    root.accept(replaceGraphqlQueries, null);
+    return root;
+  }
+
+  @Value
+  public class CompilerResult {
+
+    RootGraphqlModel model;
+    String graphQLSchema;
+    PhysicalPlan plan;
+  }
+
+  @SneakyThrows
+  private void writeSchema(Path rootDir, String schema) {
+    Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
+    Files.deleteIfExists(schemaFile);
+    Files.writeString(schemaFile,
+        schema, StandardOpenOption.CREATE);
+  }
+
+  @SneakyThrows
+  public void writeDeployArtifacts(CompilerResult result, Path deployDir) {
+    result.plan.writeTo(deployDir, new Deserializer());
   }
 
 }

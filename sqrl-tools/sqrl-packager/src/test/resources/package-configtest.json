@@ -12,7 +12,7 @@
     "maxApiArguments": 3
   },
   "engines": {
-    "stream": {
+    "streams": {
       "name": "flink"
     },
     "database": {

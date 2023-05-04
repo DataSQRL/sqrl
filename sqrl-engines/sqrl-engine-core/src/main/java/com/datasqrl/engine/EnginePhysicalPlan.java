@@ -3,6 +3,12 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.serializer.Deserializer;
+import java.io.IOException;
+import java.nio.file.Path;
+
 public interface EnginePhysicalPlan {
+
+  void writeTo(Path deployDir, String stageName, Deserializer serializer) throws IOException;
 
 }

@@ -7,5 +7,5 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num_orders=[$3])
           LogicalTableScan(table=[[orders$q$5]])
 
 >>>countstream$q$11-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TO_STREAM]
+Stage [database] does not support capabilities: [TO_STREAM]
 

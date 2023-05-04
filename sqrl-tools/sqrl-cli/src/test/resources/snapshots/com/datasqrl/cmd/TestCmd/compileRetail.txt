@@ -1,8 +1,8 @@
 >>>output
-config.json
-flinkPlan.json
-init-schema.sql
-model.json
+database-schema.sql
+flink-plan.json
+server-config.json
+server-model.json
 >>>build
 build.gradle
 c360-full.sqrl

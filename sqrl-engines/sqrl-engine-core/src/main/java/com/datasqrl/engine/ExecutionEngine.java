@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
@@ -10,6 +11,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -46,10 +48,10 @@ public interface ExecutionEngine {
    */
   TableConfig getSinkConfig(String sinkName);
 
-  ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors);
+  CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink);
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink);
 
 
   default void generateAssets(Path buildDir) {

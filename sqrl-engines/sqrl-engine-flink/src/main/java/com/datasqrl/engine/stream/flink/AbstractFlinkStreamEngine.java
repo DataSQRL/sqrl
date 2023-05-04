@@ -10,6 +10,7 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
@@ -21,6 +22,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
@@ -37,20 +39,22 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
+  public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
     FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
     FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder(errors);
     StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
     TableResult rslt = statementSet.execute();
     rslt.print(); //todo: this just forces print to wait for the async
-    return new ExecutionResult.Message(rslt.getJobClient().get()
+    ExecutionResult result = new ExecutionResult.Message(rslt.getJobClient().get()
         .getJobID().toString());
+    return CompletableFuture.completedFuture(result);
   }
 
   @Override
   public FlinkStreamPhysicalPlan plan(PhysicalDAGPlan.StagePlan plan,
-      List<PhysicalDAGPlan.StageSink> inputs, RelBuilder relBuilder, TableSink errorSink) {
+      List<PhysicalDAGPlan.StageSink> inputs,
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
         plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());

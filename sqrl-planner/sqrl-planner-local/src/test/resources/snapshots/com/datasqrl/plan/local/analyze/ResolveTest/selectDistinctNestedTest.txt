@@ -27,7 +27,7 @@ LogicalProject(_uuid=[$0], _idx=[$6], id=[$2], productid=[$11], time=[$4])
         LogicalTableScan(table=[[productid$q$11]])
 
 >>>productorders$q$13-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TEMPORAL_JOIN]
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
 >>>suborders$q$15-lp-STREAM
 LogicalProject(__pk_0=[$2], orderid=[$11], numOrders=[COUNT() IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], lastOrder=[MAX($4) IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)])
@@ -42,5 +42,5 @@ LogicalProject(__pk_0=[$2], orderid=[$11], numOrders=[COUNT() IGNORE NULLS OVER 
         LogicalTableScan(table=[[productid$q$11]])
 
 >>>suborders$q$15-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TEMPORAL_JOIN]
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 

@@ -8,6 +8,7 @@ import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
@@ -40,6 +41,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.Value;
@@ -63,13 +65,13 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
+  public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink) {
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }
 

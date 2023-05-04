@@ -40,9 +40,15 @@ public class GraphQLServer extends AbstractVerticle {
     this(getModel(), 8888, getClient());
   }
 
+  public GraphQLServer(RootGraphqlModel root,
+      int port, JdbcDataSystemConnector jdbc) {
+    this.root = root;
+    this.port = port;
+    this.jdbc = jdbc;
+  }
+
   @SneakyThrows
   private static RootGraphqlModel getModel() {
-
     ObjectMapper objectMapper = new ObjectMapper();
     return objectMapper.readValue(
         new File("model.json"),
@@ -56,13 +62,6 @@ public class GraphQLServer extends AbstractVerticle {
         new File("config.json"),
         JdbcDataSystemConnector.class);
     return jdbc;
-  }
-
-  public GraphQLServer(RootGraphqlModel root,
-      int port, JdbcDataSystemConnector jdbc) {
-    this.root = root;
-    this.port = port;
-    this.jdbc = jdbc;
   }
 
   @SneakyThrows
@@ -150,4 +149,6 @@ public class GraphQLServer extends AbstractVerticle {
         new VertxContext(new VertxJdbcClient(client)));
     return graphQL;
   }
+
+
 }

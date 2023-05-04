@@ -9,6 +9,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexDefinition;
@@ -16,6 +17,7 @@ import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.apache.calcite.tools.RelBuilder;
 
 /**
@@ -29,13 +31,13 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
+  public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink) {
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }
 

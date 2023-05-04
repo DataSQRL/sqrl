@@ -5,7 +5,7 @@ import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
-import com.datasqrl.engine.server.GraphqlServerEngineFactory;
+import com.datasqrl.engine.server.GenericJavaServerEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.error.ErrorCollector;
@@ -83,11 +83,11 @@ public class PackagerUtil {
         .build()
     );
 
-    SqrlConfig flinkConfig = config.getSubConfig("stream");
+    SqrlConfig flinkConfig = config.getSubConfig("streams");
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
 
     SqrlConfig server = config.getSubConfig("server");
-    server.setProperty(GraphqlServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
+    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
 
     return rootConfig;
   }

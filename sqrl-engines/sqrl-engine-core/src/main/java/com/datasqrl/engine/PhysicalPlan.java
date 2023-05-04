@@ -3,11 +3,14 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.queries.APIQuery;
+import java.io.IOException;
+import java.nio.file.Path;
 import lombok.Value;
 
 import java.util.List;
@@ -28,6 +31,12 @@ public class PhysicalPlan {
 
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(StagePlan::getPlan), clazz);
+  }
+
+  public void writeTo(Path deployDir, Deserializer serializer) throws IOException {
+    for (StagePlan stagePlan : stagePlans) {
+      stagePlan.plan.writeTo(deployDir, stagePlan.stage.getName(), serializer);
+    }
   }
 
   @Value

@@ -17,26 +17,12 @@ import org.apache.calcite.tools.RelBuilder;
 @Value
 public class EngineStage implements ExecutionStage {
 
+  String name;
   ExecutionEngine engine;
-
-  @Override
-  public String getName() {
-    return engine.getName();
-  }
 
   @Override
   public boolean supports(EngineCapability capability) {
     return engine.supports(capability);
   }
 
-  @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
-    return engine.execute(plan, errors);
-  }
-
-  @Override
-  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink) {
-    return engine.plan(plan, inputs, relBuilder, errorSink);
-  }
 }

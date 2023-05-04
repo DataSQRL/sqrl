@@ -17,8 +17,10 @@ line in `ExecutionEnvironmentFactory.java`.
 
 ## Docker
 
-Build docker image for the DataSQRL command:
+Run `mvn package -DskipTests` first.
+
+Build docker image for the DataSQRL command (run in sqrl-tools/sqrl-cli directory):
 
 ```bash
-docker build -t datasqrl/datasqrl-cmd . 
+docker build -t datasqrl/cmd . 
 ```

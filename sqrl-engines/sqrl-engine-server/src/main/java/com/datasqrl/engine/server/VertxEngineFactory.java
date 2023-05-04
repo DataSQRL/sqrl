@@ -5,16 +5,14 @@ import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.ExecutionEngine;
 import com.google.auto.service.AutoService;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import lombok.NonNull;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.startupcheck.OneShotStartupCheckStrategy;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
 @AutoService(EngineFactory.class)
-public class VertxEngineFactory extends GraphqlServerEngineFactory {
+public class VertxEngineFactory extends GenericJavaServerEngineFactory {
 
   public static final String ENGINE_NAME = "vertx";
 
@@ -25,13 +23,13 @@ public class VertxEngineFactory extends GraphqlServerEngineFactory {
 
   @Override
   public ExecutionEngine initialize(@NonNull SqrlConfig config) {
-    return new VertxEngine();
+    return new VertxEngine(config);
   }
 
   public static class VertxEngine extends GenericJavaServerEngine {
 
-    public VertxEngine() {
-      super(ENGINE_NAME);
+    public VertxEngine(@NonNull SqrlConfig config) {
+      super(ENGINE_NAME, config);
     }
 
     @Override
