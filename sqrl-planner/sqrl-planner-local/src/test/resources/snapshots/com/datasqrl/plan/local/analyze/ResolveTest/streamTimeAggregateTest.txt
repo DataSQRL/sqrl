@@ -5,5 +5,5 @@ LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
       LogicalTableScan(table=[[orders$q$5]])
 
 >>>ordertime1$q$11-lp-DATABASE
-Stage [db] does not support capabilities: [EXTENDED_FUNCTIONS]
+Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 

@@ -8,7 +8,7 @@
 # https://www.datasqrl.com/docs/reference/operations/deploy/overview/
 version: "3.8"
 services:
-  db:
+  database:
     image: postgres:14.6-alpine
     restart: always
     environment:
@@ -45,7 +45,7 @@ services:
     image: eclipse-temurin:11
     command: java -jar vertx-server.jar
     depends_on:
-      - db
+      - database
     ports:
       - "8888:8888"
     volumes:
@@ -57,7 +57,7 @@ services:
     image: curlimages/curl:7.80.0
     depends_on:
       - flink-jobmanager
-      - db
+      - database
     volumes:
       - ./flink-job.jar:/flink-job.jar
     entrypoint: /bin/sh -c
@@ -71,5 +71,5 @@ services:
       echo 'Job submitted.'"
 
 volumes:
-  db:
+  database:
     driver: local

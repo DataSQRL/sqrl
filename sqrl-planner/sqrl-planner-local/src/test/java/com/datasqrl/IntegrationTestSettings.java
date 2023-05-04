@@ -63,7 +63,7 @@ public class IntegrationTestSettings {
 
     //Database engine
     DatabaseHandle database = null;
-    SqrlConfig dbconfig = config.getSubConfig("db");
+    SqrlConfig dbconfig = config.getSubConfig("database");
     switch (getDatabase()) {
       case INMEMORY:
         dbconfig.setProperty(InMemoryDatabaseFactory.ENGINE_NAME_KEY, InMemoryDatabaseFactory.ENGINE_NAME);

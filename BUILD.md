@@ -20,5 +20,5 @@ line in `ExecutionEnvironmentFactory.java`.
 Build docker image for the DataSQRL command:
 
 ```bash
-docker build -t datasqrl/datasqrl-cmd . 
+docker build -t datasqrl/cmd . 
 ```

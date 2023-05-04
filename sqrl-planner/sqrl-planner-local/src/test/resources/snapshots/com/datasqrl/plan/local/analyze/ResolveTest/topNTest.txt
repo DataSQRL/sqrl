@@ -17,5 +17,5 @@ LogicalProject(__pk_0=[$6], _uuid=[$0], id=[$2], time=[$4])
         LogicalTableScan(table=[[customer$q$11]])
 
 >>>recentorders$q$13-lp-DATABASE
-Stage [db] does not support capabilities: [TEMPORAL_JOIN]
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
