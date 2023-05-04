@@ -23,13 +23,13 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
 
   @Override
   public ExecutionEngine initialize(@NonNull SqrlConfig config) {
-    return new VertxEngine();
+    return new VertxEngine(config);
   }
 
   public static class VertxEngine extends GenericJavaServerEngine {
 
-    public VertxEngine() {
-      super(ENGINE_NAME);
+    public VertxEngine(@NonNull SqrlConfig config) {
+      super(ENGINE_NAME, config);
     }
 
     @Override

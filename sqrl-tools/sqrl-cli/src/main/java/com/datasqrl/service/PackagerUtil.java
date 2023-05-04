@@ -73,7 +73,7 @@ public class PackagerUtil {
     SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
     SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
 
-    SqrlConfig dbConfig = config.getSubConfig("database");
+    SqrlConfig dbConfig = config.getSubConfig("db");
     dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
     dbConfig.setProperties(JdbcDataSystemConnector.builder()
         .url("jdbc:h2:file:./h2.db")
@@ -83,7 +83,7 @@ public class PackagerUtil {
         .build()
     );
 
-    SqrlConfig flinkConfig = config.getSubConfig("stream");
+    SqrlConfig flinkConfig = config.getSubConfig("streams");
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
 
     SqrlConfig server = config.getSubConfig("server");

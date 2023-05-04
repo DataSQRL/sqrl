@@ -11,7 +11,7 @@ LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER 
         LogicalTableScan(table=[[product$q$11]])
 
 >>>productcount$q$13-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TEMPORAL_JOIN]
+Stage [db] does not support capabilities: [TEMPORAL_JOIN]
 
 >>>countstream$q$15-lp-STREAM
 LogicalProject(_uuid=[$0], _source_time=[$1], productid=[$2], name=[$3], quantity=[$4])
@@ -22,7 +22,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], productid=[$2], name=[$3], quantit
           LogicalTableScan(table=[[productcount$q$13]])
 
 >>>countstream$q$15-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TO_STREAM]
+Stage [db] does not support capabilities: [TO_STREAM]
 
 >>>productcount2$q$17-lp-STREAM
 LogicalProject(productid=[$2], _uuid=[$0], _source_time=[$1], name=[$3], quantity=[$4])

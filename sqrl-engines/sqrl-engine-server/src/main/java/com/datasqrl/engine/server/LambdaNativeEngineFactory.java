@@ -25,13 +25,13 @@ public class LambdaNativeEngineFactory extends GenericJavaServerEngineFactory {
 
   @Override
   public ExecutionEngine initialize(@NonNull SqrlConfig config) {
-    return new LambdaNativeEngine();
+    return new LambdaNativeEngine(config);
   }
 
   public static class LambdaNativeEngine extends GenericJavaServerEngine {
 
-    public LambdaNativeEngine() {
-      super(ENGINE_NAME);
+    public LambdaNativeEngine(@NonNull SqrlConfig config) {
+      super(ENGINE_NAME, config);
     }
 
     @Override

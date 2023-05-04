@@ -17,5 +17,5 @@ LogicalProject(_uuid=[$0], id=[$2], customerid=[$6], time=[$4])
         LogicalTableScan(table=[[customerid$q$11]])
 
 >>>customerorders$q$13-lp-DATABASE
-Stage [hashmap] does not support capabilities: [TEMPORAL_JOIN]
+Stage [db] does not support capabilities: [TEMPORAL_JOIN]
 

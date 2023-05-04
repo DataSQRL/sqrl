@@ -36,6 +36,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -81,7 +82,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
+  public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     Preconditions.checkArgument(plan instanceof JDBCPhysicalPlan);
     JDBCPhysicalPlan jdbcPlan = (JDBCPhysicalPlan) plan;
     List<String> dmls = jdbcPlan.getDdlStatements().stream().map(ddl -> ddl.toSql())
@@ -101,8 +102,9 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     } catch (Exception e) {
       throw new RuntimeException("Could not connect to database", e);
     }
-    return new ExecutionResult.Message(
+    ExecutionResult.Message result = new ExecutionResult.Message(
         String.format("Executed %d DDL statements", jdbcPlan.getDdlStatements().size()));
+    return CompletableFuture.completedFuture(result);
   }
 
   @Override

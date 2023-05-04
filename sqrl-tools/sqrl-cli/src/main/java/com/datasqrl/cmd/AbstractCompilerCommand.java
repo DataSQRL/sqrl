@@ -6,10 +6,12 @@ package com.datasqrl.cmd;
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
@@ -22,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
@@ -44,9 +47,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   @CommandLine.Option(names = {"-t", "--target"}, description = "Target directory for deployment artifacts")
   protected Path targetDir = DEFAULT_DEPLOY_DIR;
-
-  @CommandLine.Option(names = {"-p","--port"}, description = "Port for API server")
-  protected int port = 8888;
 
   @CommandLine.Option(names = {"--nolookup"}, description = "Do not look up package dependencies in the repository",
       scope = ScopeType.INHERIT)
@@ -75,24 +75,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     Compiler.CompilerResult result = compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
 
-    Optional<CompletableFuture> fut = Optional.empty();
-    if (startGraphql) {
-      fut = Optional.of(CompletableFuture.runAsync(()->
-          startGraphQLServer(result.getModel(),
-              port, jdbc)));
-    }
-
     if (execute) {
       executePlan(result.getPlan(), errors);
     }
-
-    fut.map(f-> {
-      try {
-        return f.get();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
 
     if (errors.isFatal()) {
       throw new RuntimeException("Could not run");
@@ -100,7 +85,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   private void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
+    Predicate<ExecutionStage> stageFilter = s -> true;
+    if (!startGraphql) stageFilter = s -> s.getEngine().getType()!= Type.SERVER;
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
+    result.get();
   }
 }

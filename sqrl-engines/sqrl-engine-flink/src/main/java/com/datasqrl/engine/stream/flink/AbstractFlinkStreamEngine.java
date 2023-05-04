@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
@@ -38,15 +39,16 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   }
 
   @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
+  public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
     FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
     FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder(errors);
     StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
     TableResult rslt = statementSet.execute();
     rslt.print(); //todo: this just forces print to wait for the async
-    return new ExecutionResult.Message(rslt.getJobClient().get()
+    ExecutionResult result = new ExecutionResult.Message(rslt.getJobClient().get()
         .getJobID().toString());
+    return CompletableFuture.completedFuture(result);
   }
 
   @Override

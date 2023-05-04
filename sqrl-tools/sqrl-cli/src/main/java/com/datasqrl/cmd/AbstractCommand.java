@@ -43,27 +43,4 @@ public abstract class AbstractCommand implements Runnable {
 
   protected abstract void runCommand(ErrorCollector errors) throws Exception;
 
-  @SneakyThrows
-  public void startGraphQLServer(
-      RootGraphqlModel model, int port, JdbcDataSystemConnector jdbc) {
-    Vertx vertx = Vertx.vertx();
-    CompletableFuture future = vertx.deployVerticle(new GraphQLServer(
-            model, port, jdbc))
-        .toCompletionStage()
-        .toCompletableFuture();
-    log.info("Server started at: http://localhost:" + port + "/graphiql/");
-    future.get();
-  }
-
-  private PgConnectOptions toPgOptions(JdbcDataSystemConnector jdbcConf) {
-    PgConnectOptions options = new PgConnectOptions();
-    options.setDatabase(jdbcConf.getDatabase());
-    options.setHost(jdbcConf.getHost());
-    options.setPort(jdbcConf.getPort());
-    options.setUser(jdbcConf.getUser());
-    options.setPassword(jdbcConf.getPassword());
-    options.setCachePreparedStatements(true);
-    options.setPipeliningLimit(100_000);
-    return options;
-  }
 }

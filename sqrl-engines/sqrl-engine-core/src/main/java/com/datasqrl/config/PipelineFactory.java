@@ -19,6 +19,7 @@ import java.util.Map;
 import lombok.NonNull;
 
 import java.util.Optional;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Configuration for the engines
@@ -70,27 +71,21 @@ public class PipelineFactory {
     return getEngines(Optional.empty());
   }
 
-  public ExecutionEngine getEngine(ExecutionEngine.Type type) {
-    Collection<ExecutionEngine> engines = getEngines(Optional.of(type)).values();
+  public Pair<String,ExecutionEngine> getEngine(ExecutionEngine.Type type) {
+    Map<String,ExecutionEngine> engines = getEngines(Optional.of(type));
     config.getErrorCollector().checkFatal(!engines.isEmpty(), "Need to configure a %s engine", type.name().toLowerCase());
     config.getErrorCollector().checkFatal(engines.size()==1, "Currently support only a single %s engine", type.name().toLowerCase());
-    return engines.iterator().next();
+    return Pair.of(engines.entrySet().iterator().next());
   }
 
   public DatabaseEngine getDatabaseEngine() {
-    return (DatabaseEngine) getEngine(Type.DATABASE);
+    return (DatabaseEngine) getEngine(Type.DATABASE).getRight();
   }
 
   public StreamEngine getStreamEngine() {
-    return (StreamEngine) getEngine(Type.STREAM);
+    return (StreamEngine) getEngine(Type.STREAM).getRight();
   }
 
-  public Optional<ServerEngine> getServerEngine() {
-    Collection<ExecutionEngine> engines = getEngines(Optional.of(Type.SERVER)).values();
-
-    return engines.stream().findFirst()
-        .map(e->(ServerEngine) e);
-  }
 
   public ExecutionPipeline createPipeline() {
     return SimplePipeline.of(getEngines(), config.getErrorCollector());

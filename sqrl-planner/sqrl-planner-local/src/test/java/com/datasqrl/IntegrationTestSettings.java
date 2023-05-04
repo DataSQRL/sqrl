@@ -58,12 +58,12 @@ public class IntegrationTestSettings {
         break;
     }
     if (!Strings.isNullOrEmpty(streamEngineName)) {
-      config.getSubConfig("stream").setProperty(EngineFactory.ENGINE_NAME_KEY, streamEngineName);
+      config.getSubConfig("streams").setProperty(EngineFactory.ENGINE_NAME_KEY, streamEngineName);
     }
 
     //Database engine
     DatabaseHandle database = null;
-    SqrlConfig dbconfig = config.getSubConfig("database");
+    SqrlConfig dbconfig = config.getSubConfig("db");
     switch (getDatabase()) {
       case INMEMORY:
         dbconfig.setProperty(InMemoryDatabaseFactory.ENGINE_NAME_KEY, InMemoryDatabaseFactory.ENGINE_NAME);

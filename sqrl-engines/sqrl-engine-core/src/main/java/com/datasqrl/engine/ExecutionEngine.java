@@ -11,6 +11,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -47,7 +48,7 @@ public interface ExecutionEngine {
    */
   TableConfig getSinkConfig(String sinkName);
 
-  ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors);
+  CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink);
