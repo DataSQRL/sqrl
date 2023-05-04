@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
@@ -49,7 +50,7 @@ public interface ExecutionEngine {
   ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink);
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink);
 
 
   default void generateAssets(Path buildDir) {

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.global;
 
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
@@ -28,6 +29,7 @@ public class PhysicalDAGPlan {
    * Must be in the order of the pipeline stages
    */
   List<StagePlan> stagePlans;
+  ExecutionPipeline pipeline;
 
   public List<ReadQuery> getReadQueries() {
     return getQueriesByType(ReadQuery.class);
@@ -50,6 +52,7 @@ public class PhysicalDAGPlan {
     ExecutionStage stage;
     @NonNull
     List<? extends Query> queries;
+
     Collection<IndexDefinition> indexDefinitions;
 
     Set<URL> jars;

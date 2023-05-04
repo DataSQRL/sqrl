@@ -5,16 +5,14 @@ import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.ExecutionEngine;
 import com.google.auto.service.AutoService;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import lombok.NonNull;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.startupcheck.OneShotStartupCheckStrategy;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
 @AutoService(EngineFactory.class)
-public class VertxEngineFactory extends GraphqlServerEngineFactory {
+public class VertxEngineFactory extends GenericJavaServerEngineFactory {
 
   public static final String ENGINE_NAME = "vertx";
 

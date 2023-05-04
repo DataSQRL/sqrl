@@ -34,14 +34,4 @@ public final class IdealExecutionStage implements ExecutionStage {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, RelBuilder relBuilder,
-      TableSink errorSink) {
-    throw new UnsupportedOperationException();
-  }
 }

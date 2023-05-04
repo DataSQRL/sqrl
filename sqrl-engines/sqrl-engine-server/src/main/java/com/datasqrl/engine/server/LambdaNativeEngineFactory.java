@@ -14,7 +14,7 @@ import org.testcontainers.utility.MountableFile;
 
 @Slf4j
 @AutoService(EngineFactory.class)
-public class LambdaNativeEngineFactory extends GraphqlServerEngineFactory {
+public class LambdaNativeEngineFactory extends GenericJavaServerEngineFactory {
 
   public static final String ENGINE_NAME = "aws-lambda-native";
 

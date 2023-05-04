@@ -34,18 +34,4 @@ public interface ExecutionStage {
 
   ExecutionEngine getEngine();
 
-//  /**
-//   * We currently make the simplifying assumption that an {@link ExecutionPipeline} has a tree
-//   * structure. To generalize this to a DAG structure (e.g. to support multiple database engines) we
-//   * need to make significant changes to the LPConverter and DAGPlanner. See also
-//   * {@link ExecutionPipeline#getStage(ExecutionEngine.Type)}.
-//   *
-//   * @return Next execution stage in this pipeline
-//   */
-//  Optional<ExecutionStage> nextStage();
-
-  ExecutionResult execute(EnginePhysicalPlan plan, ErrorCollector errors);
-
-  EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink);
 }

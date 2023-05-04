@@ -1,8 +1,8 @@
 >>>output
-config.json
-flinkPlan.json
-init-schema.sql
-model.json
+server-config.json
+flink-plan.json
+database-schema.sql
+server-model.json
 >>>build
 build.gradle
 customer360

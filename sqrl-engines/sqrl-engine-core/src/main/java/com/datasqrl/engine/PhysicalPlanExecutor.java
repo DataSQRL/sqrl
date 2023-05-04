@@ -22,7 +22,7 @@ public class PhysicalPlanExecutor {
     //Need to execute plans backwards so all subsequent stages are ready before stage executes
     for (PhysicalPlan.StagePlan stagePlan : Lists.reverse(physicalPlan.getStagePlans())) {
       results.add(
-          new StageResult(stagePlan.getStage(), stagePlan.getStage().execute(stagePlan.getPlan(), errors)));
+          new StageResult(stagePlan.getStage(), stagePlan.getStage().getEngine().execute(stagePlan.getPlan(), errors)));
     }
     return new Result(Lists.reverse(results));
   }

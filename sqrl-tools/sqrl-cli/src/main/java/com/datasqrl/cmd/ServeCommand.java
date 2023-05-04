@@ -7,6 +7,7 @@ import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.service.PackagerUtil;
@@ -32,16 +33,18 @@ public class ServeCommand extends AbstractCommand {
   protected void runCommand(ErrorCollector errors) throws Exception {
     //Get jdbc config from package.json
     SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors);
-    DatabaseEngine dbEngine = PipelineFactory.fromRootConfig(config).getDatabaseEngine();
+    PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
+    DatabaseEngine dbEngine = pipelineFactory.getDatabaseEngine();
+    ServerEngine serverEngine = pipelineFactory.getServerEngine().get();
     errors.checkFatal(dbEngine instanceof JDBCEngine, "Expected configured "
         + "database engine to be a JDBC database: %s");
-    startGraphQLServer(readModel(), port, ((JDBCEngine)dbEngine).getConnector());
+    startGraphQLServer(readModel(serverEngine), port, ((JDBCEngine)dbEngine).getConnector());
   }
 
   @SneakyThrows
-  private RootGraphqlModel readModel() {
+  private RootGraphqlModel readModel(ServerEngine serverEngine) {
     Path outputDir = root.rootDir.resolve(DEFAULT_DEPLOY_DIR);
     ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
-    return mapper.readValue(outputDir.resolve(DEFAULT_SERVER_MODEL).toFile(), RootGraphqlModel.class);
+    return mapper.readValue(outputDir.resolve(serverEngine.getName()+DEFAULT_SERVER_MODEL).toFile(), RootGraphqlModel.class);
   }
 }

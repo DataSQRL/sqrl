@@ -9,6 +9,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexDefinition;
@@ -35,7 +36,7 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
 
   @Override
   public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink) {
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }
 

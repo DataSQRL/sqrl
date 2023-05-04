@@ -14,6 +14,7 @@ import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.ExternalDataType;
@@ -106,7 +107,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 
   @Override
   public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink) {
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
 
     JdbcDDLFactory factory =
         (new JdbcDDLServiceLoader()).load(connector.getDialect())

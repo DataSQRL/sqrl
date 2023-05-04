@@ -10,6 +10,7 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
@@ -50,7 +51,8 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
 
   @Override
   public FlinkStreamPhysicalPlan plan(PhysicalDAGPlan.StagePlan plan,
-      List<PhysicalDAGPlan.StageSink> inputs, RelBuilder relBuilder, TableSink errorSink) {
+      List<PhysicalDAGPlan.StageSink> inputs,
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
     FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
         plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());

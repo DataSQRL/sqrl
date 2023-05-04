@@ -8,6 +8,7 @@ import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.FunctionWithError;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
@@ -69,7 +70,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
 
   @Override
   public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      RelBuilder relBuilder, TableSink errorSink) {
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }
 

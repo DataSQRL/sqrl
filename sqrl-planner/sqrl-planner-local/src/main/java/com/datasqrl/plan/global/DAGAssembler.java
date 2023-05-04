@@ -176,18 +176,18 @@ public class DAGAssembler {
     PhysicalDAGPlan.StagePlan streamPlan = new PhysicalDAGPlan.StagePlan(streamStage, writeDAG,
         null, jars, udfs, null);
 
+    List<PhysicalDAGPlan.StagePlan> allPlans = new ArrayList<>();
+    allPlans.add(streamPlan);
+    allPlans.addAll(databasePlans);
 
     Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);
-    List<PhysicalDAGPlan.StagePlan> basePlans = ListUtils.union(List.of(streamPlan), databasePlans);
-
     if (serverStage.isPresent()) {
       PhysicalDAGPlan.StagePlan serverPlan = new PhysicalDAGPlan.StagePlan(
           serverStage.get(), List.of(), null, jars, udfs, model
       );
-      return new PhysicalDAGPlan(ListUtils.union(basePlans, List.of(serverPlan)));
-    } else {
-      return new PhysicalDAGPlan(basePlans);
+      allPlans.add(serverPlan);
     }
+    return new PhysicalDAGPlan(allPlans, pipeline);
   }
 
   private Pair<RelNode,Integer> produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {

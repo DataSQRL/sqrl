@@ -5,11 +5,20 @@ import static com.datasqrl.engine.EngineCapability.NO_CAPABILITIES;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.serializer.Deserializer;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import org.apache.calcite.tools.RelBuilder;
 
 /**
@@ -28,9 +37,17 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   }
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, RelBuilder relBuilder,
-      TableSink errorSink) {
+  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
+    Set<ExecutionStage> dbStages = pipeline.getUpStreamFrom(plan.getStage());
+    Preconditions.checkArgument(dbStages.size()==1, "Currently only support a single database stage in server");
+    ExecutionEngine engine = Iterables.getOnlyElement(dbStages).getEngine();
+    Preconditions.checkArgument(engine instanceof JDBCEngine, "Currently the server only supports JDBC databases");
+    return new ServerPhysicalPlan(plan.getModel(), ((JDBCEngine)engine).getConnector());
+  }
 
-    return new ServerPhysicalPlan(plan.getModel());
+  @Override
+  public EnginePhysicalPlan readPlanFrom(Path directory, String stageName, Deserializer deserializer) throws IOException {
+    return ServerPhysicalPlan.readFrom(directory, stageName, deserializer);
   }
 }
