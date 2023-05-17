@@ -25,6 +25,8 @@ import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -107,8 +109,6 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private SqlClient getSqlClient() {
-    SqlClient client;
-
     if (jdbc.getDialect().equalsIgnoreCase("postgres")) {
       return PgPool.client(vertx, toPgOptions(jdbc),
           new PgPoolOptions(new PoolOptions()));
@@ -146,7 +146,7 @@ public class GraphQLServer extends AbstractVerticle {
   public GraphQL createGraphQL(SqlClient client) {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client)));
+        new VertxContext(new VertxJdbcClient(client), Map.of()));
     return graphQL;
   }
 

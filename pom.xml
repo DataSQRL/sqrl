@@ -55,6 +55,7 @@
         <lombok.version>1.18.24</lombok.version>
         <junit.jupiter.version>5.8.2</junit.jupiter.version>
         <calcite.version>1.27.0</calcite.version>
+        <graphql-java.version>20.2</graphql-java.version>
 
         <!-- params -->
         <snapshots.update>false</snapshots.update>
@@ -385,6 +386,11 @@
                 <version>2.24.0</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.graphql-java</groupId>
+                <artifactId>graphql-java</artifactId>
+                <version>${graphql-java.version}</version>
+            </dependency>
 
             <!-- Vertx -->
             <dependency>

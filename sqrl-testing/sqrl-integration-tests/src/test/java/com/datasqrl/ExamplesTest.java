@@ -40,7 +40,6 @@ public class ExamplesTest extends AbstractPhysicalSQRLIT {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
-  @Disabled
   @SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(TestScript.ExampleScriptsProvider.class)

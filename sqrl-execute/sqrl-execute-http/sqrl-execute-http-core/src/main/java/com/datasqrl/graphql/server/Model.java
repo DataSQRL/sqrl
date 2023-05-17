@@ -34,13 +34,18 @@ public class Model {
 
     @Singular
     List<Coords> coords;
+    @Singular
+    List<MutationCoords> mutations;
+
     Schema schema;
 
     @JsonCreator
     public RootGraphqlModel(
         @JsonProperty("coords") List<Coords> coords,
+        @JsonProperty("mutations") List<MutationCoords> mutations,
         @JsonProperty("schema") Schema schema) {
       this.coords = coords;
+      this.mutations = mutations;
       this.schema = schema;
     }
 
@@ -80,6 +85,44 @@ public class Model {
     }
   }
 
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "type")
+  @JsonSubTypes({
+      @Type(value = KafkaMutationCoords.class, name = "kafka")
+  })
+  public static abstract class MutationCoords {
+    protected String fieldName;
+    public abstract <R, C> R accept(MutationVisitor<R, C> visitor, C context);
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class KafkaMutationCoords extends MutationCoords {
+    protected String topic;
+    @Builder
+    public KafkaMutationCoords(String topic, String fieldName) {
+      super(fieldName);
+      this.topic = topic;
+    }
+
+    @Override
+    public <R, C> R accept(MutationVisitor<R, C> visitor, C context) {
+      return visitor.visitKafkaMutationCoords(this, context);
+    }
+  }
+
+
+  public interface MutationVisitor<R, C> {
+    R visitKafkaMutationCoords(KafkaMutationCoords coords, C context);
+  }
+
+
   public interface CoordVisitor<R, C> {
 
     R visitArgumentLookup(ArgumentLookupCoords coords, C context);
@@ -103,9 +146,7 @@ public class Model {
     String parentType;
     String fieldName;
 
-    public <R, C> R accept(CoordVisitor<R, C> visitor, C context) {
-      return null;
-    }
+    public abstract <R, C> R accept(CoordVisitor<R, C> visitor, C context);
   }
 
   @Getter
