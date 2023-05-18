@@ -1,6 +1,5 @@
 package com.datasqrl.packager.preprocess.graphql;
 
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.graphql.visitor.GraphqlDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlFieldDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlInputValueDefinitionVisitor;
@@ -8,11 +7,7 @@ import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.graphql.visitor.GraphqlTypeVisitor;
 import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.NotNull;
-import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
-import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
-import com.datasqrl.schema.input.FlexibleTableSchema;
-import com.datasqrl.schema.input.RelationType;
-import com.datasqrl.schema.type.basic.AbstractBasicType;
+import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.schema.type.basic.BooleanType;
 import com.datasqrl.schema.type.basic.FloatType;
 import com.datasqrl.schema.type.basic.IntegerType;
@@ -26,7 +21,6 @@ import graphql.language.ListType;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
-import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -38,17 +32,17 @@ import lombok.Setter;
 
 @AllArgsConstructor
 public class InputFieldToFlexibleSchemaRelation implements
-    GraphqlDefinitionVisitor<List<FlexibleTableSchema>, Object>,
-    GraphqlFieldDefinitionVisitor<FlexibleTableSchema, Object> {
+    GraphqlDefinitionVisitor<List<TableDefinition>, Object>,
+    GraphqlFieldDefinitionVisitor<TableDefinition, Object> {
 
   private final TypeDefinitionRegistry typeDefinitionRegistry;
 
   @Override
-  public List<FlexibleTableSchema> visitObjectTypeDefinition(ObjectTypeDefinition node,
+  public List<TableDefinition> visitObjectTypeDefinition(ObjectTypeDefinition node,
       Object context) {
 
     //node is: mutation
-    List<FlexibleTableSchema> schemas = node.getFieldDefinitions().stream()
+    List<TableDefinition> schemas = node.getFieldDefinitions().stream()
         .map(f->GraphqlSchemaVisitor.accept(this, f, context))
         .collect(Collectors.toList());
 
@@ -56,7 +50,7 @@ public class InputFieldToFlexibleSchemaRelation implements
   }
 
   @Override
-  public FlexibleTableSchema visitFieldDefinition(FieldDefinition node, Object context) {
+  public TableDefinition visitFieldDefinition(FieldDefinition node, Object context) {
 //    validateReturnType(fieldType); todo
 
     Preconditions.checkState(node.getInputValueDefinitions().size() == 1, "Too many arguments for mutation '%s'. Must have exactly one.", node.getName());
@@ -69,57 +63,57 @@ public class InputFieldToFlexibleSchemaRelation implements
         GraphqlSchemaVisitor.accept(new TypeResolver(), ((NonNullType) def.getType()).getType(), typeDefinitionRegistry)
             .orElseThrow(()->new RuntimeException("Could not find type:" + def.getName()));
 
-    Field field = GraphqlSchemaVisitor.accept(new InputObjectToFlexibleRelation(),
+    com.datasqrl.schema.input.external.FieldDefinition field =
+        GraphqlSchemaVisitor.accept(new InputObjectToFlexibleRelation(),
         typeDef, new FieldContext(0, false, node.getName()));
-    Preconditions.checkState(field.getTypes().get(0).getType() instanceof RelationType, "Only input types on mutations are supported.");
-    RelationType relationType = (RelationType)field.getTypes().get(0).getType();
 
-    return new FlexibleTableSchema(
-        Name.system(node.getName()),
-        null,
-        null,
+    return new TableDefinition(node.getName(), null, null, "1",
         false,
-        relationType,
-        List.of()
+        field.getColumns(),
+       null
     );
   }
 
   private class InputObjectToFlexibleRelation implements
-      GraphqlDefinitionVisitor<Field, FieldContext>,
-      GraphqlInputValueDefinitionVisitor<Field, FieldContext>,
-      GraphqlTypeVisitor<Field, FieldContext>
+      GraphqlDefinitionVisitor<com.datasqrl.schema.input.external.FieldDefinition, FieldContext>,
+      GraphqlInputValueDefinitionVisitor<com.datasqrl.schema.input.external.FieldDefinition, FieldContext>,
+      GraphqlTypeVisitor<com.datasqrl.schema.input.external.FieldDefinition, FieldContext>
   {
 
     @Override
-    public Field visitInputObjectTypeDefinition(InputObjectTypeDefinition node,
+    public com.datasqrl.schema.input.external.FieldDefinition visitInputObjectTypeDefinition(InputObjectTypeDefinition node,
         FieldContext context) {
-      List<Field> fields = node.getInputValueDefinitions().stream()
+      List<com.datasqrl.schema.input.external.FieldDefinition> fields = node.getInputValueDefinitions().stream()
           .map(f->GraphqlSchemaVisitor.accept(this, f, context))
           .collect(Collectors.toList());
 
-      return toField(new RelationType<>(fields), context);
+      return new com.datasqrl.schema.input.external.FieldDefinition(
+          context.name, null, null,
+          null, fields, null, null);
     }
 
     @Override
-    public Field visitInputValueDefinition(InputValueDefinition node, FieldContext context) {
+    public com.datasqrl.schema.input.external.FieldDefinition visitInputValueDefinition(InputValueDefinition node, FieldContext context) {
       return GraphqlSchemaVisitor.accept(this, node.getType(),
           new FieldContext(0, false, node.getName()));
     }
 
     @Override
-    public Field visitListType(ListType node, FieldContext context) {
-      context.nestedDepth++;
+    public com.datasqrl.schema.input.external.FieldDefinition visitListType(ListType node, FieldContext context) {
+
+      //nested depth only if the type is a scalar
+//      context.nestedDepth++;
       return GraphqlSchemaVisitor.accept(this, node.getType(), context);
     }
 
     @Override
-    public Field visitNonNullType(NonNullType node, FieldContext context) {
+    public com.datasqrl.schema.input.external.FieldDefinition visitNonNullType(NonNullType node, FieldContext context) {
       context.setNotNull(true);
       return GraphqlSchemaVisitor.accept(this, node.getType(), context);
     }
 
     @Override
-    public Field visitTypeName(TypeName node, FieldContext context) {
+    public com.datasqrl.schema.input.external.FieldDefinition visitTypeName(TypeName node, FieldContext context) {
       TypeDefinition typeDef = typeDefinitionRegistry.getType(node.getName())
           .orElseThrow(()-> new RuntimeException("Could not find node:" + node.getName()));
 
@@ -127,41 +121,44 @@ public class InputFieldToFlexibleSchemaRelation implements
     }
 
     @Override
-    public Field visitEnumValueDefinition(EnumValueDefinition node, FieldContext context) {
-      return toField(new StringType(), context);
+    public com.datasqrl.schema.input.external.FieldDefinition visitEnumValueDefinition(EnumValueDefinition node, FieldContext context) {
+      return toField(new StringType().getName(), context);
     }
 
-    private List<Constraint> getContraintList(FieldContext context) {
-      return context.isNotNull ? List.of(NotNull.INSTANCE) : List.of();
+    private List<String> getContraintList(FieldContext context) {
+      return context.isNotNull ? List.of(NotNull.INSTANCE.getName().getDisplay()) : null;
     }
 
     @Override
-    public Field visitScalarTypeDefinition(ScalarTypeDefinition node, FieldContext context) {
-      AbstractBasicType type;
+    public com.datasqrl.schema.input.external.FieldDefinition visitScalarTypeDefinition(ScalarTypeDefinition node, FieldContext context) {
+      String type;
       switch (node.getName()) {
         case "Int":
-          type = new IntegerType();
+          type = new IntegerType().getName();
           break;
         case "Float":
-          type = new FloatType();
+          type = new FloatType().getName();
           break;
         case "Boolean":
-          type = new BooleanType();
+          type = new BooleanType().getName();
           break;
         case "String":
         case "Id":
         default:
-          type = new StringType();
+          type = new StringType().getName();
           break;
       }
 
       return toField(type, context);
     }
 
-    private Field toField(com.datasqrl.schema.type.Type type, FieldContext context) {
-      return new Field(Name.system(context.name), null, null,
-          List.of(new FieldType(Name.system(context.name), type,
-              context.nestedDepth, getContraintList(context))));
+    private com.datasqrl.schema.input.external.FieldDefinition toField(String type, FieldContext context) {
+      return new com.datasqrl.schema.input.external.FieldDefinition(context.name,
+          null, null,
+          type, null, getContraintList(context), null);
+//          Name.system(context.name), SchemaElementDescription.NONE, null,
+//          List.of(new FieldType(Name.system(context.name), type,
+//              context.nestedDepth, getContraintList(context))));
     }
   }
 

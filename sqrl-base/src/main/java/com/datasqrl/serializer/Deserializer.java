@@ -32,7 +32,11 @@ public class Deserializer {
 
 
     yamlMapper = new YAMLMapper();
-    yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    yamlMapper
+        .registerModule(new JavaTimeModule())
+        .registerModule(module)
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
   }
 
   public <T> T mapJsonFile(URI path, Class<T> clazz) {

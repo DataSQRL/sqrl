@@ -4,7 +4,9 @@
 package com.datasqrl.schema.input.external;
 
 import java.io.Serializable;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 public class AbstractElementDefinition implements Serializable {
 
   public String name;
@@ -14,4 +16,9 @@ public class AbstractElementDefinition implements Serializable {
   //TODO: add hints
 
 
+  public AbstractElementDefinition(String name, String description, Object default_value) {
+    this.name = name;
+    this.description = description;
+    this.default_value = default_value;
+  }
 }
