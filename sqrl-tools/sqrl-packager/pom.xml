@@ -102,6 +102,10 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-discovery</artifactId>
+      </dependency>
     </dependencies>
 
 </project>

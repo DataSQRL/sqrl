@@ -5,6 +5,7 @@ import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
+import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.packager.preprocess.graphql.InputFieldToFlexibleSchemaRelation;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -16,6 +17,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -44,30 +46,57 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
     String schemaName = path.getFileName().toString().split("\\.")[0];
     List<TableDefinition> schemas = GraphqlSchemaVisitor.accept(
         new InputFieldToFlexibleSchemaRelation(registry), mutationType, null);
-    writeTableSchema(schemas, schemaName, context);
+
+    Path dir = Files.createDirectories(
+        Files.createTempDirectory("schemas").resolve(schemaName));
+    writeTableSchema(schemas, dir, schemaName, context);
 
     //After writing the schema, write the source and sink
     SqrlConfig config = context.getSqrlConfig();
     SqrlConfig log = config.getSubConfig(ENGINES_PROPERTY).getSubConfig("log");
 
-    writeSource(schemaName, schemas, log);
-  }
-
-  private void writeSource(String schemaName, List<TableDefinition> schemas, SqrlConfig log) {
-
+    writeSource(dir, schemas, log, context);
+    context.addDependency(dir);
   }
 
   @SneakyThrows
-  private void writeTableSchema(List<TableDefinition> schemas, String schemaName,
+  private void writeSource(Path dir, List<TableDefinition> schemas, SqrlConfig log,
       ProcessorContext context) {
-    var path = Files.createDirectories(
-        Files.createTempDirectory("schemas").resolve(schemaName));
+
+    for (TableDefinition definition : schemas) {
+      Map tableConfig = convertToSourceConfig(definition, log);
+
+      Path f = dir.resolve(definition.name + ".table.json");
+      SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter()
+          .writeValue(f.toFile(), tableConfig);
+    }
+  }
+
+  private Map convertToSourceConfig(TableDefinition tableDefinition, SqrlConfig log) {
+    Map config = Map.of("type", ExternalDataType.source_and_sink.name(),
+        "canonicalizer", "system",
+        "format", Map.of(
+            "name", "json"
+        ),
+        "identifier", tableDefinition.name,
+        "schema", "flexible",
+        "connector", Map.of(
+            "name", "kafka",
+            "topic", tableDefinition.name
+        )
+    );
+
+    return config;
+  }
+
+  @SneakyThrows
+  private void writeTableSchema(List<TableDefinition> schemas, Path dir, String schemaName,
+      ProcessorContext context) {
 
     for (var schema : schemas) {
-      File file = path.resolve(schema.name + ".schema.json").toFile();
+      File file = dir.resolve(schema.name + ".schema.json").toFile();
       SqrlObjectMapper.YAML_INSTANCE.writeValue(file, schema);
     }
 
-    context.addDependency(path);
   }
 }

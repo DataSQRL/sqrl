@@ -14,6 +14,19 @@ columns:
   - name: "address"
     type: "STRING"
 
+{
+  "canonicalizer" : "system",
+  "schema" : "flexible",
+  "connector" : {
+    "topic" : "addCustomer",
+    "name" : "kafka"
+  },
+  "type" : "source_and_sink",
+  "identifier" : "addCustomer",
+  "format" : {
+    "name" : "json"
+  }
+}
 ---
 name: "addCustomer2"
 schema_version: "1"
@@ -30,3 +43,16 @@ columns:
   - name: "address"
     type: "STRING"
 
+{
+  "canonicalizer" : "system",
+  "schema" : "flexible",
+  "connector" : {
+    "topic" : "addCustomer2",
+    "name" : "kafka"
+  },
+  "type" : "source_and_sink",
+  "identifier" : "addCustomer2",
+  "format" : {
+    "name" : "json"
+  }
+}

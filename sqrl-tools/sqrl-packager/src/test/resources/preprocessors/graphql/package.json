@@ -16,7 +16,8 @@
       "name" : "vertx"
     },
     "log" : {
-      "name" : "kafka"
+      "name" : "kafka",
+      "bootstrap.servers" : "localhost:8888"
     }
   },
   "script" : {

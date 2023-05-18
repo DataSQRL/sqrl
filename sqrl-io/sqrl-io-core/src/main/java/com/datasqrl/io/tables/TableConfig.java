@@ -3,18 +3,17 @@
  */
 package com.datasqrl.io.tables;
 
-import com.datasqrl.config.SerializedSqrlConfig;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemConnectorFactory;
+import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.DataSystemImplementationFactory;
 import com.datasqrl.io.formats.FormatFactory;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -22,14 +21,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Strings;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
-
-import java.util.Optional;
 
 @Value
 public class TableConfig {
@@ -46,11 +44,16 @@ public class TableConfig {
     this(name,config,getConnectorSettings(config));
   }
 
-  private TableConfig(@NonNull Name name, @NonNull SqrlConfig config,
+  public TableConfig(@NonNull Name name, @NonNull SqrlConfig config,
+      @NonNull DataSystemConnectorSettings connectorSettings) {
+    this(name, config, config.allAs(BaseTableConfig.class).get(), connectorSettings);
+  }
+
+  public TableConfig(@NonNull Name name, @NonNull SqrlConfig config, @NonNull BaseTableConfig baseTableConfig,
       @NonNull DataSystemConnectorSettings connectorSettings) {
     this.name = name;
     this.config = config;
-    this.base = config.allAs(BaseTableConfig.class).get();
+    this.base = baseTableConfig;
     this.connectorSettings = connectorSettings;
   }
 

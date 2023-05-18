@@ -58,7 +58,6 @@ public class SqrlParserImpl implements SqrlParser {
       .specialRule(SqlBaseParser.RULE_query, "<query>")
       .specialRule(SqlBaseParser.RULE_type, "<type>")
       .specialToken(SqlBaseLexer.INTEGER_VALUE, "<integer>")
-//      .ignoredRule(com.datasqrl.sqml.parser.SqlBaseParser.RULE_nonReserved)
       .build();
 
   @SneakyThrows

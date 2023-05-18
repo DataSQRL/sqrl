@@ -31,7 +31,7 @@ public class KafkaDataSystemFactory implements DataSystemImplementationFactory {
   }
 
   @AutoService(DataSystemConnectorFactory.class)
-  public static class Connector extends KafkaDataSystemFactory
+  public static class KafkaConnector extends KafkaDataSystemFactory
       implements DataSystemConnectorFactory {
 
     @Override
@@ -42,7 +42,7 @@ public class KafkaDataSystemFactory implements DataSystemImplementationFactory {
   }
 
   @AutoService(DataSystemDiscoveryFactory.class)
-  public static class Discovery extends KafkaDataSystemFactory implements
+  public static class KafkaDiscovery extends KafkaDataSystemFactory implements
       DataSystemDiscoveryFactory {
 
     @Override

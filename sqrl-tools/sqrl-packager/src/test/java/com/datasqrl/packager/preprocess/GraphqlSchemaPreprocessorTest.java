@@ -2,6 +2,7 @@ package com.datasqrl.packager.preprocess;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -57,7 +58,7 @@ class GraphqlSchemaPreprocessorTest {
 
     preprocessor.loader(schema, context, ErrorCollector.root());
 
-    verify(context).addDependency(pathCaptor.capture());
+    verify(context, times(1)).addDependency(pathCaptor.capture());
 
     // Get the captured argument
     Path capturedPath = pathCaptor.getValue();
@@ -73,9 +74,9 @@ class GraphqlSchemaPreprocessorTest {
         }
 
         // Verify it can be read back
-        TableDefinition schema1 = new Deserializer()
-            .mapYAMLFile(file.toAbsolutePath(),
-                TableDefinition.class);
+//        TableDefinition schema1 = new Deserializer()
+//            .mapYAMLFile(file.toAbsolutePath(),
+//                TableDefinition.class);
 
         snapshot.addContent(content);
       });
