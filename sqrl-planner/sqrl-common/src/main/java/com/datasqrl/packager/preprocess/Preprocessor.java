@@ -1,7 +1,7 @@
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,15 +16,18 @@ public interface Preprocessor {
 
   @Getter
   public static class ProcessorContext {
-    Set<Path> dependencies = new HashSet<>();
-    Set<Path> libraries = new HashSet<>();
 
-    Path rootDir;
-    Path buildDir;
+    Set<Path> dependencies, libraries;
+    Path rootDir, buildDir;
 
-    public ProcessorContext(Path rootDir, Path buildDir) {
+    SqrlConfig sqrlConfig;
+
+    public ProcessorContext(Path rootDir, Path buildDir, SqrlConfig sqrlConfig) {
       this.rootDir = rootDir;
       this.buildDir = buildDir;
+      this.dependencies = new HashSet<>();
+      this.libraries = new HashSet<>();
+      this.sqrlConfig = sqrlConfig;
     }
 
     public void addDependency(Path dependency) {
@@ -32,9 +35,12 @@ public interface Preprocessor {
     }
 
     public void addDependencies(ProcessorContext context) {
-      context.getDependencies().forEach(dep -> addDependency(dep));
+      dependencies.addAll(context.getDependencies());
     }
 
+    /**
+     * Adds to the 'lib' folder
+     */
     public void addLibrary(Path jarPath) {
       libraries.add(jarPath);
     }

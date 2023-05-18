@@ -3,7 +3,10 @@ package com.datasqrl.packager.preprocess;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
@@ -39,14 +42,19 @@ class GraphqlSchemaPreprocessorTest {
   @SneakyThrows
   @Test
   public void testMutationProcessing() {
+    Path schema = Paths.get(
+        Resources.getResource("preprocessors/graphql/schema.graphqls").toURI());
+    Path packageJson = Paths.get(
+        Resources.getResource("preprocessors/graphql/package.json").toURI());
+
     GraphqlSchemaPreprocessor preprocessor = new GraphqlSchemaPreprocessor();
 
     pathCaptor = ArgumentCaptor.forClass(Path.class);
 
     ProcessorContext context = mock(ProcessorContext.class);
+    SqrlConfig config = SqrlConfigCommons.fromFiles(ErrorCollector.root(), packageJson);
+    when(context.getSqrlConfig()).thenReturn(config);
 
-    Path schema = Paths.get(
-        Resources.getResource("preprocessors/graphql/schema.graphqls").toURI());
     preprocessor.loader(schema, context, ErrorCollector.root());
 
     verify(context).addDependency(pathCaptor.capture());

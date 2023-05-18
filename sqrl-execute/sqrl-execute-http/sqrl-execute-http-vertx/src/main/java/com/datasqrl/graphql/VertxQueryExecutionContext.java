@@ -11,6 +11,7 @@ import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.SneakyThrows;
@@ -51,7 +53,7 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
           f.printStackTrace();
           fut.fail(f);
         });
-    return new CompletableFuture();
+    return null;
   }
 
   @Override
@@ -83,7 +85,7 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
           f.printStackTrace();
           fut.fail(f);
         });
-    return new CompletableFuture();
+    return null;
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {

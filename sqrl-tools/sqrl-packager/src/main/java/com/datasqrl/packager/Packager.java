@@ -84,7 +84,7 @@ public class Packager {
       }
       retrieveDependencies();
       copyFilesToBuildDir();
-      preProcessFiles();
+      preProcessFiles(config);
       writePackageConfig();
       return buildDir.resolve(PACKAGE_FILE_NAME);
     } catch (IOException e) {
@@ -202,7 +202,7 @@ public class Packager {
   /**
    * Helper function to preprocess files.
    */
-  private void preProcessFiles() throws IOException {
+  private void preProcessFiles(SqrlConfig config) throws IOException {
     //Preprocessor will normalize files
     List<Preprocessor> loadedProcessor = ServiceLoaderDiscovery.getAll(Preprocessor.class);
     List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
@@ -212,6 +212,7 @@ public class Packager {
         PreprocessorsContext.builder()
             .rootDir(rootDir)
             .buildDir(buildDir)
+            .config(config)
             .build());
   }
 

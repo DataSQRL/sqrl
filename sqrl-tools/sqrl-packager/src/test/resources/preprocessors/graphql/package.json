@@ -1,0 +1,25 @@
+{
+  "engines" : {
+    "streams" : {
+      "name" : "flink"
+    },
+    "database" : {
+      "name" : "jdbc",
+      "user" : "postgres",
+      "password" : "postgres",
+      "database" : "datasqrl",
+      "dialect" : "postgres",
+      "driver" : "org.postgresql.Driver",
+      "url" : "jdbc:postgresql://db:5432/datasqrl"
+    },
+    "server" : {
+      "name" : "vertx"
+    },
+    "log" : {
+      "name" : "kafka"
+    }
+  },
+  "script" : {
+    "main" : "none.sqrl"
+  }
+}
