@@ -4,7 +4,7 @@ type Event {
 }
 
 type Query {
-  createEvent: [Event]
+  event: [Event]
 }
 
 type Mutation {

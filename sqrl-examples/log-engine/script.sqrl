@@ -1,1 +1,1 @@
-IMPORT schema.createEvent;
+IMPORT schema.createEvent AS event;
