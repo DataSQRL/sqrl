@@ -129,7 +129,10 @@ public class Compiler {
     SqrlSchema schema = injector.getInstance(SqrlSchema.class);
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 
-    InferredSchema inferredSchema = new SchemaInference(gqlSchema, schema,
+    InferredSchema inferredSchema = new SchemaInference(
+        moduleLoader,
+        scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("schema").split("\\.")[0],
+        gqlSchema, schema,
         queryPlanner.createRelBuilder())
         .accept();
 

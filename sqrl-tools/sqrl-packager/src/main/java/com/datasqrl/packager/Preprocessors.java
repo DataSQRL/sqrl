@@ -5,6 +5,8 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -69,16 +71,31 @@ public class Preprocessors {
     Path copyDir = buildDir.resolve(relativeDir);
 
     for (Path file : paths) {
-      copyFile(file, copyDir);
+      copyFileOrDirectory(file, copyDir);
     }
   }
 
   @SneakyThrows
-  private void copyFile(Path file, Path copyDir) {
-    Preconditions.checkArgument(Files.isRegularFile(file), "Is not a file: {}", file);
-    Path copyPath = copyDir.resolve(file.getFileName());
-    Files.createDirectories(copyDir);
-    Files.copy(file, copyPath, StandardCopyOption.REPLACE_EXISTING);
+  private void copyFileOrDirectory(Path fileOrDir, Path copyDir) {
+    if (Files.isDirectory(fileOrDir)) {
+      // This is a directory, so create a new directory in the target location
+      Path targetDir = copyDir.resolve(fileOrDir.getFileName());
+      Files.createDirectories(targetDir);
+
+      // Get the contents of the directory
+      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(fileOrDir)) {
+        for (Path path : directoryStream) {
+          // Copy each item in the directory (could be a file or subdirectory)
+          copyFileOrDirectory(path, targetDir);
+        }
+      }
+    } else if (Files.isRegularFile(fileOrDir)) {
+      // This is a regular file, so copy it to the target location
+      Path copyPath = copyDir.resolve(fileOrDir.getFileName());
+      Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
+    } else {
+      throw new IllegalArgumentException("Not a file or directory: " + fileOrDir);
+    }
   }
 
   /**
@@ -89,7 +106,7 @@ public class Preprocessors {
     if (!libraries.isEmpty()) {
       Path libDir = buildDir.resolve("lib");
       Files.createDirectories(libDir);
-      libraries.forEach(library -> copyFile(library.toAbsolutePath(), libDir));
+      libraries.forEach(library -> copyFileOrDirectory(library.toAbsolutePath(), libDir));
     }
   }
 

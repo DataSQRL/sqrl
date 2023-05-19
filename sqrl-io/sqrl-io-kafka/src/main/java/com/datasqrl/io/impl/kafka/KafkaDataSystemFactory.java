@@ -31,6 +31,17 @@ public class KafkaDataSystemFactory implements DataSystemImplementationFactory {
   }
 
   @AutoService(DataSystemConnectorFactory.class)
+  public static class Connector extends KafkaDataSystemFactory
+      implements DataSystemConnectorFactory {
+
+    @Override
+    public DataSystemConnectorSettings getSettings(@NonNull SqrlConfig connectorConfig) {
+      return DataSystemConnectorSettings.builder().hasSourceTimestamp(true).build();
+    }
+
+  }
+
+  @AutoService(DataSystemConnectorFactory.class)
   public static class KafkaConnector extends KafkaDataSystemFactory
       implements DataSystemConnectorFactory {
 
@@ -42,7 +53,7 @@ public class KafkaDataSystemFactory implements DataSystemImplementationFactory {
   }
 
   @AutoService(DataSystemDiscoveryFactory.class)
-  public static class KafkaDiscovery extends KafkaDataSystemFactory implements
+  public static class Discovery extends KafkaDataSystemFactory implements
       DataSystemDiscoveryFactory {
 
     @Override

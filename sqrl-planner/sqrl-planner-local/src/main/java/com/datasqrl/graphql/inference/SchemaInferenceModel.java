@@ -27,7 +27,7 @@ public class SchemaInferenceModel {
   public static class InferredSchema {
 
     InferredQuery query;
-    Optional<InferredRootObject> mutation;
+    Optional<InferredMutations> mutation;
     Optional<InferredRootObject> subscription;
 
     public <R, C> R accept(InferredSchemaVisitor<R, C> visitor, C context) {
@@ -42,7 +42,6 @@ public class SchemaInferenceModel {
 
   public interface InferredRootObject {
 
-    public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context);
   }
 
   @Value
@@ -52,7 +51,6 @@ public class SchemaInferenceModel {
     ObjectTypeDefinition query;
     List<InferredField> fields;
 
-    @Override
     public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context) {
       return visitor.visitQuery(this, context);
     }
@@ -60,31 +58,37 @@ public class SchemaInferenceModel {
 
   @Value
   @ToString
-  public static class InferredMutation implements InferredRootObject {
+  public static class InferredMutations implements InferredRootObject {
+    List<InferredMutation> mutations;
 
-    @Override
-    public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(InferredMutationObjectVisitor<R, C> visitor, C context) {
       return visitor.visitMutation(this, context);
     }
   }
 
   @Value
   @ToString
+  public static class InferredMutation {
+    String name;
+    String topic; //todo make modular
+  }
+
+  @Value
+  @ToString
   public static class InferredSubscription implements InferredRootObject {
 
-    @Override
-    public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context) {
-      return visitor.visitSubscription(this, context);
-    }
+//    public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context) {
+//      return visitor.visitSubscription(this, context);
+//    }
   }
 
   public interface InferredRootObjectVisitor<R, C> {
 
     R visitQuery(InferredQuery rootObject, C context);
+  }
 
-    R visitMutation(InferredMutation rootObject, C context);
-
-    R visitSubscription(InferredSubscription rootObject, C context);
+  public interface InferredMutationObjectVisitor<R, C> {
+    R visitMutation(InferredMutations rootObject, C context);
   }
 
   public interface InferredField {

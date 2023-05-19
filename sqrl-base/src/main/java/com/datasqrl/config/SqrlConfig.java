@@ -65,10 +65,6 @@ public interface SqrlConfig {
     return as(key, Long.class);
   }
 
-  default Value<Object> asObject(String key) {
-    return as(key, Object.class);
-  }
-
   default Value<Integer> asInt(String key) {
     return as(key, Integer.class);
   }

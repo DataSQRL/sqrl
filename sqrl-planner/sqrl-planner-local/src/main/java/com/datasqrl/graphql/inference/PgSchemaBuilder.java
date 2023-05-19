@@ -6,7 +6,8 @@ package com.datasqrl.graphql.inference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFieldVisitor;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredInterfaceField;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutation;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutations;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutationObjectVisitor;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredObjectField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredPagedField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredQuery;
@@ -14,16 +15,18 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredRootObjectVis
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredScalarField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchemaVisitor;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscription;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.NestedField;
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
 import com.datasqrl.graphql.inference.argument.EqHandler;
 import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
+import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
+import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.QueryBase;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SourceParameter;
@@ -67,6 +70,7 @@ import org.apache.calcite.tools.RelBuilder;
 public class PgSchemaBuilder implements
     InferredSchemaVisitor<RootGraphqlModel, Object>,
     InferredRootObjectVisitor<List<Coords>, Object>,
+    InferredMutationObjectVisitor<List<MutationCoords>, Object>,
     InferredFieldVisitor<Coords, Object> {
 
   private final String stringSchema;
@@ -97,10 +101,14 @@ public class PgSchemaBuilder implements
 
   @Override
   public RootGraphqlModel visitSchema(InferredSchema schema, Object context) {
-    return RootGraphqlModel.builder()
+    RootGraphqlModel.RootGraphqlModelBuilder builder = RootGraphqlModel.builder()
         .schema(StringSchema.builder().schema(stringSchema).build())
-        .coords(schema.getQuery().accept(this, context))
-        .build();
+        .coords(schema.getQuery().accept(this, context));
+
+    schema.getMutation().map(m->
+        builder.mutations(m.accept(this, context)));
+
+    return builder.build();
   }
 
   @Override
@@ -111,13 +119,10 @@ public class PgSchemaBuilder implements
   }
 
   @Override
-  public List<Coords> visitMutation(InferredMutation rootObject, Object context) {
-    throw new RuntimeException("Not supported yet");
-  }
-
-  @Override
-  public List<Coords> visitSubscription(InferredSubscription rootObject, Object context) {
-    throw new RuntimeException("Not supported yet");
+  public List<MutationCoords> visitMutation(InferredMutations rootObject, Object context) {
+    return rootObject.getMutations().stream()
+        .map(m->new KafkaMutationCoords(m.getTopic(), m.getName()))
+        .collect(Collectors.toList());
   }
 
   @Override

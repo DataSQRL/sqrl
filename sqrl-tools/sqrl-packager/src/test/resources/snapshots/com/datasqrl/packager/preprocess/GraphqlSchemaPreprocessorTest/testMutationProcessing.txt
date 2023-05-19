@@ -15,16 +15,17 @@ columns:
     type: "STRING"
 
 {
-  "canonicalizer" : "system",
-  "schema" : "flexible",
-  "connector" : {
-    "topic" : "addCustomer",
-    "name" : "kafka"
-  },
   "type" : "source_and_sink",
   "identifier" : "addCustomer",
   "format" : {
     "name" : "json"
+  },
+  "canonicalizer" : "system",
+  "schema" : "flexible",
+  "connector" : {
+    "name" : "kafka",
+    "bootstrap.servers" : "localhost:8888",
+    "topic" : "addCustomer"
   }
 }
 ---
@@ -44,15 +45,16 @@ columns:
     type: "STRING"
 
 {
-  "canonicalizer" : "system",
-  "schema" : "flexible",
-  "connector" : {
-    "topic" : "addCustomer2",
-    "name" : "kafka"
-  },
   "type" : "source_and_sink",
   "identifier" : "addCustomer2",
   "format" : {
     "name" : "json"
+  },
+  "canonicalizer" : "system",
+  "schema" : "flexible",
+  "connector" : {
+    "name" : "kafka",
+    "bootstrap.servers" : "localhost:8888",
+    "topic" : "addCustomer2"
   }
 }

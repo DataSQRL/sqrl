@@ -16,6 +16,7 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -73,6 +74,13 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
   }
 
   private Map convertToSourceConfig(TableDefinition tableDefinition, SqrlConfig log) {
+    Map connector = new HashMap();
+    for (String key : log.getKeys()) {
+      connector.put(key, log.asString(key).get());
+    }
+    connector.put("name", "kafka");
+    connector.put("topic", tableDefinition.name);
+
     Map config = Map.of("type", ExternalDataType.source_and_sink.name(),
         "canonicalizer", "system",
         "format", Map.of(
@@ -80,10 +88,7 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
         ),
         "identifier", tableDefinition.name,
         "schema", "flexible",
-        "connector", Map.of(
-            "name", "kafka",
-            "topic", tableDefinition.name
-        )
+        "connector", connector
     );
 
     return config;
@@ -94,8 +99,8 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
       ProcessorContext context) {
 
     for (var schema : schemas) {
-      File file = dir.resolve(schema.name + ".schema.json").toFile();
-      SqrlObjectMapper.YAML_INSTANCE.writeValue(file, schema);
+      Path path = dir.resolve(schema.name + ".schema.yml");
+      SqrlObjectMapper.YAML_INSTANCE.writeValue(path.toFile(), schema);
     }
 
   }

@@ -3,6 +3,8 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.graphql.generate.SchemaGeneratorUtil;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.*;
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
@@ -11,6 +13,9 @@ import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.TableSourceNamespaceObject;
+import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
@@ -40,6 +45,8 @@ import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
 @Getter
 public class SchemaInference {
 
+  private final ModuleLoader moduleLoader;
+  private final String schemaName;
   private final TypeDefinitionRegistry registry;
   private final SqrlSchema schema;
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
@@ -48,7 +55,10 @@ public class SchemaInference {
   private Set<FieldDefinition> visited = new HashSet<>();
   private Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference(String gqlSchema, SqrlSchema schema, RelBuilder relBuilder) {
+  public SchemaInference(ModuleLoader moduleLoader, String schemaName, String gqlSchema, SqrlSchema schema,
+      RelBuilder relBuilder) {
+    this.moduleLoader = moduleLoader;
+    this.schemaName = schemaName;
     this.registry = (new SchemaParser()).parse(gqlSchema);
     this.schema = schema;
     RootGraphqlModel.RootGraphqlModelBuilder root = RootGraphqlModel.builder()
@@ -67,7 +77,7 @@ public class SchemaInference {
         .map(q -> resolveQueries((ObjectTypeDefinition) q))
         .orElseThrow(() -> new RuntimeException("Must have a query type"));
 
-    Optional<InferredRootObject> mutation = registry.getType("Mutation")
+    Optional<InferredMutations> mutation = registry.getType("Mutation")
         .map(m -> resolveMutations((ObjectTypeDefinition) m));
 
     Optional<InferredRootObject> subscription = registry.getType("subscription")
@@ -93,7 +103,8 @@ public class SchemaInference {
 
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
-    Optional<SQRLTable> sqrlTable = getTableOfType(fieldDefinition.getType(), fieldDefinition.getName());
+    Optional<SQRLTable> sqrlTable = getTableOfType(fieldDefinition.getType(),
+        fieldDefinition.getName());
     Preconditions.checkState(sqrlTable.isPresent(),
         "Could not find associated SQRL type for field %s on type %s",
         fieldDefinition.getName(), fieldDefinition.getType());
@@ -127,7 +138,7 @@ public class SchemaInference {
   private Optional<ObjectTypeDefinition> lookupType(Type type) {
     Optional<TypeDefinition> t = registry.getType(type);
     return t.filter(o -> o instanceof ObjectTypeDefinition)
-        .map(o->(ObjectTypeDefinition) o);
+        .map(o -> (ObjectTypeDefinition) o);
   }
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
@@ -222,8 +233,24 @@ public class SchemaInference {
     return type;
   }
 
-  private InferredRootObject resolveMutations(ObjectTypeDefinition m) {
-    return null;
+  private InferredMutations resolveMutations(ObjectTypeDefinition m) {
+    List<InferredMutation> mutations = new ArrayList<>();
+    for(FieldDefinition def : m.getFieldDefinitions()) {
+
+      NamespaceObject ns = moduleLoader.getModule(NamePath.of(this.schemaName))
+          .flatMap(mod -> mod.getNamespaceObject(Name.system(def.getName())))
+          .orElseThrow(() ->
+              new RuntimeException(String.format(
+                  "Could not find mutation source: %s.%s", this.schemaName, def.getName())));
+      TableSourceNamespaceObject tsNs = (TableSourceNamespaceObject) ns;
+
+      SqrlConfig config = tsNs.getTable().getConfiguration().getConnectorConfig();
+      String topic = config.asString("topic").get();
+      InferredMutation mutation = new InferredMutation(tsNs.getName().getDisplay(), topic);
+      mutations.add(mutation);
+    }
+
+    return new InferredMutations(mutations);
   }
 
   private InferredRootObject resolveSubscriptions(ObjectTypeDefinition s) {
