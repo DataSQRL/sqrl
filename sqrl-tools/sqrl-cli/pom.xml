@@ -58,6 +58,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-log</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-discovery</artifactId>
     </dependency>
     <dependency>

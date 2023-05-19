@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 
 public class PackagerUtil {
 
@@ -46,17 +47,19 @@ public class PackagerUtil {
 
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_FILE_NAME);
 
-  public static SqrlConfig getOrCreateDefaultConfiguration(RootCommand root, ErrorCollector errors) {
-    List<Path> configFiles = getOrCreateDefaultPackageFiles(root,errors);
+  public static SqrlConfig getOrCreateDefaultConfiguration(RootCommand root, ErrorCollector errors,
+      String kakfaBootstrap) {
+    List<Path> configFiles = getOrCreateDefaultPackageFiles(root, errors, kakfaBootstrap);
     Preconditions.checkArgument(configFiles.size()>=1);
     return SqrlConfigCommons.fromFiles(errors,configFiles.get(0),configFiles.subList(1,configFiles.size()).stream().toArray(Path[]::new));
   }
 
-  public static List<Path> getOrCreateDefaultPackageFiles(RootCommand root, ErrorCollector errors) {
+  public static List<Path> getOrCreateDefaultPackageFiles(RootCommand root, ErrorCollector errors,
+      String kakfaBootstrap) {
     Optional<List<Path>> existingPackageJson = findRootPackageFiles(root);
     return existingPackageJson
             .orElseGet(() -> List.of(writeEngineConfig(root.getRootDir(),
-                    createDefaultConfig(errors))));
+                    createDefaultConfig(errors, kakfaBootstrap))));
   }
 
   @SneakyThrows
@@ -69,8 +72,14 @@ public class PackagerUtil {
     return enginesFile;
   }
 
-  protected static SqrlConfig createDefaultConfig(ErrorCollector errors) {
+  @SneakyThrows
+  protected static SqrlConfig createDefaultConfig(ErrorCollector errors, String kakfaBootstrap) {
     SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+
+    //todo: check for graphqls and add them all
+    SqrlConfig script = rootConfig.getSubConfig("script");
+    script.setProperty("graphql", "schema.graphqls");
+
     SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
 
     SqrlConfig dbConfig = config.getSubConfig("database");
@@ -88,6 +97,25 @@ public class PackagerUtil {
 
     SqrlConfig server = config.getSubConfig("server");
     server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
+
+    SqrlConfig log = config.getSubConfig("log");
+    log.setProperty("name", "kafka");
+    log.setProperty("bootstrap.servers", kakfaBootstrap);
+    log.setProperty("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    log.setProperty("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    log.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "kafka-topic-event-lister");
+    log.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+    log.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+    log.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+    SqrlConfig loglog = server.getSubConfig("log");
+    loglog.setProperty("bootstrap.servers", kakfaBootstrap);
+    loglog.setProperty("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    loglog.setProperty("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    loglog.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "kafka-topic-event-lister");
+    loglog.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+    loglog.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+    loglog.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     return rootConfig;
   }

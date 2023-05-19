@@ -65,7 +65,8 @@ public class DiscoverCommand extends AbstractCommand {
     }
     errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
 
-    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors);
+    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors,
+        null);
     DataDiscovery discovery = DataDiscoveryFactory.fromConfig(config,errors);
 
     //Setup output directory to write to

@@ -45,11 +45,13 @@ public class SimplePipeline implements ExecutionPipeline {
 
   public static SimplePipeline of(Map<String, ExecutionEngine> engines, ErrorCollector errors) {
     List<ExecutionStage> stages = new ArrayList<>();
+    //todo: this logic is too hidden
     stages.add(getStage(Type.STREAM, engines).orElseThrow(
         () -> errors.exception("Need to configure a stream engine")));
     stages.add(getStage(Type.DATABASE, engines).orElseThrow(
         () -> errors.exception("Need to configure a database engine")));
     getStage(Type.SERVER, engines).ifPresent(stages::add);
+    getStage(Type.LOG, engines).ifPresent(stages::add);
     return new SimplePipeline(stages);
   }
 

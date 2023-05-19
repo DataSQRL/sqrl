@@ -3,11 +3,16 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.graphql.kafka.KafkaSinkEmitter;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
+import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.graphql.server.SinkEmitter;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
+import io.netty.handler.codec.DefaultHeaders.ValueValidator;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.web.Router;
@@ -30,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.KafkaProducer;
 
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
@@ -37,16 +43,18 @@ public class GraphQLServer extends AbstractVerticle {
   private final RootGraphqlModel root;
   private final int port;
   private final JdbcDataSystemConnector jdbc;
+  private final Map<String, Object> logEngine;
 
   public GraphQLServer() {
-    this(getModel(), 8888, getClient());
+    this(getModel(), 8888, getClient(), Map.of());
   }
 
   public GraphQLServer(RootGraphqlModel root,
-      int port, JdbcDataSystemConnector jdbc) {
+      int port, JdbcDataSystemConnector jdbc, Map<String, Object> log) {
     this.root = root;
     this.port = port;
     this.jdbc = jdbc;
+    this.logEngine = log;
   }
 
   @SneakyThrows
@@ -84,7 +92,8 @@ public class GraphQLServer extends AbstractVerticle {
       ctx.response().setStatusCode(500).end();
     });
 
-    SqlClient client = getSqlClient();JDBCPool.pool(this.vertx,
+    SqlClient client = getSqlClient();
+    JDBCPool.pool(this.vertx,
         new JDBCConnectOptions()
             .setJdbcUrl(jdbc.getUrl())
             .setDatabase(jdbc.getDatabase())
@@ -146,8 +155,20 @@ public class GraphQLServer extends AbstractVerticle {
   public GraphQL createGraphQL(SqlClient client) {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client), Map.of()));
+        new VertxContext(new VertxJdbcClient(client), constructSinkEmitters(root)));
     return graphQL;
+  }
+
+  private Map<String, SinkEmitter> constructSinkEmitters(RootGraphqlModel root) {
+    Map<String, SinkEmitter> map = new HashMap<>();
+    if (root.getMutations() != null) {
+      for (MutationCoords m : root.getMutations()) {
+        KafkaMutationCoords k = (KafkaMutationCoords) m;
+        map.put(k.getFieldName(), new KafkaSinkEmitter(
+            new KafkaProducer<>(this.logEngine)));
+      }
+    }
+    return map;
   }
 
 

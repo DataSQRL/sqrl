@@ -6,6 +6,7 @@ import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;

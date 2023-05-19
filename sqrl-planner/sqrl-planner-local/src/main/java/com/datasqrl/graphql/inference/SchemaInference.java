@@ -50,10 +50,10 @@ public class SchemaInference {
   private final TypeDefinitionRegistry registry;
   private final SqrlSchema schema;
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
-  List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
-  RelBuilder relBuilder;
-  private Set<FieldDefinition> visited = new HashSet<>();
-  private Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
+  private final List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
+  private final RelBuilder relBuilder;
+  private final Set<FieldDefinition> visited = new HashSet<>();
+  private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
   public SchemaInference(ModuleLoader moduleLoader, String schemaName, String gqlSchema, SqrlSchema schema,
       RelBuilder relBuilder) {
@@ -61,9 +61,8 @@ public class SchemaInference {
     this.schemaName = schemaName;
     this.registry = (new SchemaParser()).parse(gqlSchema);
     this.schema = schema;
-    RootGraphqlModel.RootGraphqlModelBuilder root = RootGraphqlModel.builder()
+    this.root = RootGraphqlModel.builder()
         .schema(StringSchema.builder().schema(gqlSchema).build());
-    this.root = root;
     this.relBuilder = relBuilder;
   }
   //Handles walking the schema completely

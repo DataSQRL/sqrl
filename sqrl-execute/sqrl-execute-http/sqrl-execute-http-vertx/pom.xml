@@ -78,6 +78,12 @@
       <artifactId>reactive-streams</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec</artifactId>
+      <version>4.1.85.Final</version>
+    </dependency>
+
     <!-- TODO: the drivers can be loaded by the jar assembly -->
     <dependency>
       <groupId>com.h2database</groupId>

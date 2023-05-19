@@ -59,6 +59,12 @@ public class TestCmd {
   }
 
   @Test
+  public void executeLog() {
+    execute(Path.of("/Users/henneberger/sqrl/sqrl-examples/log-engine"),
+        "run", "/Users/henneberger/sqrl/sqrl-examples/log-engine/script.sqrl");
+  }
+
+  @Test
   public void discoverNutshop() {
     execute(Nutshop.INSTANCE.getRootPackageDirectory(),
         "discover", Nutshop.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString(), "-l", "3600");

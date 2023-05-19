@@ -61,7 +61,13 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   public void runCommand(ErrorCollector errors) {
-    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors);
+    try {
+      CLUSTER.start();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors, CLUSTER.bootstrapServers());
     Packager packager = PackagerUtil.create(root.rootDir, files, config, errors);
 
     Build build = new Build(errors);
@@ -79,16 +85,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     Compiler.CompilerResult result = compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
 
     if (execute) {
-
-      EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
-      try {
-        CLUSTER.start();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-
       executePlan(result.getPlan(), errors);
-
     }
 
     if (errors.isFatal()) {

@@ -12,6 +12,8 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -21,9 +23,14 @@ import com.google.common.collect.Iterables;
 import io.vertx.core.Vertx;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -39,11 +46,15 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   public static final int PORT_DEFAULT = 8888;
 
   private final int port;
+  private final SqrlConfig config;
 
   public GenericJavaServerEngine(String engineName, @NonNull SqrlConfig config) {
     super(engineName, Type.SERVER, NO_CAPABILITIES);
     this.port = config.asInt(PORT_KEY).withDefault(PORT_DEFAULT).get();
+    this.config = config;
   }
+
+  ExecutorService executorService = Executors.newFixedThreadPool(1);
 
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
@@ -51,11 +62,23 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
     Vertx vertx = Vertx.vertx();
     CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
-            serverPlan.getModel(), port, serverPlan.getJdbc()))
+            serverPlan.getModel(), port, serverPlan.getJdbc(),
+            getLogEngine(serverPlan.getModel())))
         .toCompletionStage()
         .toCompletableFuture();
     log.info("Server started at: http://localhost:" + port + "/graphiql/");
     return future.thenApply(Message::new);
+  }
+
+  public Map<String, Object> getLogEngine(RootGraphqlModel model) {
+    Map<String, Object> map = new HashMap<>();
+    SqrlConfig config1 = this.config.getSubConfig("log");
+    for (String key : config1.getKeys()) {
+      map.put(key, config1.asString(key).get());
+    }
+
+
+    return map;
   }
 
   @Override
