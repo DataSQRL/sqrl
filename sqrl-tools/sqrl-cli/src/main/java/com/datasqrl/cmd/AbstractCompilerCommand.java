@@ -7,6 +7,7 @@ import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZE
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.Compiler;
+import com.datasqrl.compile.DockerCompose;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.ExecutionEngine.Type;
@@ -27,7 +28,6 @@ import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.google.common.base.Preconditions;
-import com.google.common.io.Resources;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -136,12 +136,12 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   //Adds in regardless
   private void addDockerCompose() {
-    //Copy in docker-compose.yaml
-    URL url = Resources.getResource("docker-compose.yml");
+    //Create
+    String yml = DockerCompose.getYml();
     Path toFile = targetDir.resolve("docker-compose.yml");
     try {
       Files.createDirectories(targetDir);
-      Files.copy(Path.of(url.toURI()), toFile);
+      Files.writeString(toFile, yml);
     } catch (Exception e) {
       log.error("Could not copy docker-compose file.");
       throw new RuntimeException(e);
