@@ -20,6 +20,10 @@ public class NameUtil {
 
   @SneakyThrows
   public static Path getCaseInsensitivePath(Path filePath, String name) {
+    //If path doesn't exist, resolve name provided
+    if (!Files.exists(filePath)) {
+      return filePath.resolve(name);
+    }
     //check for exact match
     if (Files.exists(filePath.resolve(name))) {
       return filePath.resolve(name);
