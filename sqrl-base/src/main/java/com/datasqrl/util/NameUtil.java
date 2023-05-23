@@ -10,7 +10,7 @@ public class NameUtil {
     Path filePath = basePath;
     for (int i = 0; i < path.getNames().length; i++) {
       Name name = path.getNames()[i];
-      filePath = filePath.resolve(name.getCanonical());
+      filePath = filePath.resolve(name.getDisplay());
     }
     return filePath;
   }
