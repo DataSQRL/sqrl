@@ -82,9 +82,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   public void runCommand(ErrorCollector errors) {
-//    if (DEFAULT_DEPLOY_DIR.equals(targetDir)) {
-//      targetDir = root.rootDir.resolve(targetDir);
-//    }
+    if (DEFAULT_DEPLOY_DIR.equals(targetDir)) {
+      targetDir = root.rootDir.resolve(targetDir);
+    }
 
     if (forceStartKafka) {
       startKafka();
