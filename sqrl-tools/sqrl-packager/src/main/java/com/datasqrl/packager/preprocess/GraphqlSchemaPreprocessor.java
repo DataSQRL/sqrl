@@ -52,11 +52,6 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
         Files.createTempDirectory("schemas").resolve(schemaName));
     writeTableSchema(schemas, dir, schemaName, context);
 
-    //After writing the schema, write the source and sink
-    SqrlConfig config = context.getSqrlConfig();
-    SqrlConfig log = config.getSubConfig(ENGINES_PROPERTY).getSubConfig("log");
-
-    writeSource(dir, schemas, log, context);
     context.addDependency(dir);
   }
 

@@ -244,8 +244,12 @@ public class SchemaInference {
       TableSourceNamespaceObject tsNs = (TableSourceNamespaceObject) ns;
 
       SqrlConfig config = tsNs.getTable().getConfiguration().getConnectorConfig();
-      String topic = config.asString("topic").get();
-      InferredMutation mutation = new InferredMutation(tsNs.getName().getDisplay(), topic);
+      Map<String, String> kafkaSink = new HashMap<>();
+      for (String key : config.getKeys()) {
+        kafkaSink.put(key, config.asString(key).get());
+      }
+
+      InferredMutation mutation = new InferredMutation(tsNs.getName().getDisplay(), kafkaSink);
       mutations.add(mutation);
     }
 

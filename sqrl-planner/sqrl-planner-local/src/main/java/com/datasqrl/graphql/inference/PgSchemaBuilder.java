@@ -121,7 +121,7 @@ public class PgSchemaBuilder implements
   @Override
   public List<MutationCoords> visitMutation(InferredMutations rootObject, Object context) {
     return rootObject.getMutations().stream()
-        .map(m->new KafkaMutationCoords(m.getTopic(), m.getName()))
+        .map(m->new KafkaMutationCoords(m.getName(), m.getSink()))
         .collect(Collectors.toList());
   }
 

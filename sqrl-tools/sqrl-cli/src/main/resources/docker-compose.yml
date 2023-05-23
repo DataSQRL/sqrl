@@ -49,6 +49,14 @@ services:
       - "kafka_data:/bitnami"
     environment:
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes
+  kafka-setup:
+    image: docker.io/bitnami/kafka:3.4
+    volumes:
+      - './create-topics.sh:/create-topics.sh'
+    command: ['/bin/bash', '/create-topics.sh']
+    depends_on:
+      - kafka
 
   servlet:
     image: eclipse-temurin:11
@@ -67,6 +75,7 @@ services:
     depends_on:
       - flink-jobmanager
       - database
+      - kafka-setup
     volumes:
       - ./flink-job.jar:/flink-job.jar
     entrypoint: /bin/sh -c

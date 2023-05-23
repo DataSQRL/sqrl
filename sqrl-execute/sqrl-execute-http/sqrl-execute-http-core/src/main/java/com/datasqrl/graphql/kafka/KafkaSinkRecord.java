@@ -5,6 +5,5 @@ import lombok.Value;
 
 @Value
 public class KafkaSinkRecord extends SinkRecord {
-  String topic;
   String object;
 }

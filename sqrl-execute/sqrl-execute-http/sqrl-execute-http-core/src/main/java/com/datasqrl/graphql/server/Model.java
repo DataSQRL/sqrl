@@ -102,13 +102,12 @@ public class Model {
 
   @Getter
   @NoArgsConstructor
-  @AllArgsConstructor
   public static class KafkaMutationCoords extends MutationCoords {
-    protected String topic;
+    protected Map<String, String> sinkConfig;
     @Builder
-    public KafkaMutationCoords(String topic, String fieldName) {
+    public KafkaMutationCoords(String fieldName, Map<String, String> sinkConfig) {
       super(fieldName);
-      this.topic = topic;
+      this.sinkConfig = sinkConfig;
     }
 
     @Override

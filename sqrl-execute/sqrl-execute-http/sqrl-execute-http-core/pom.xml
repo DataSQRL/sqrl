@@ -50,9 +50,9 @@
 
     <!-- sinks -->
     <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-      <version>3.4.0</version>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-kafka-client</artifactId>
+      <version>4.3.5</version>
     </dependency>
   </dependencies>
 </project>

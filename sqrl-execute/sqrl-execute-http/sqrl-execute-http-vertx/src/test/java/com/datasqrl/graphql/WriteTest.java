@@ -20,6 +20,7 @@ import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
+import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -36,13 +37,12 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -61,7 +61,7 @@ class WriteTest {
           .withPassword("secret")
           .withDatabaseName("datasqrl");
 
-  KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:6.2.1"));
+  EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
 
   //Todo Add Kafka
 
@@ -90,15 +90,16 @@ class WriteTest {
           .build())
       .mutation(KafkaMutationCoords.builder()
           .fieldName("addCustomer")
-          .topic("topic-1")
+          .sinkConfig(Map.of("topic", "topic-1"))
           .build())
       .build();
   private PgPool client;
+  private KafkaProducer<String, String> kafkaProducer;
 
   @SneakyThrows
   @BeforeEach
   public void init(Vertx vertx) {
-    kafka.start();
+    CLUSTER.start();
 
 
     PgConnectOptions options = new PgConnectOptions();
@@ -112,7 +113,21 @@ class WriteTest {
     options.setPipeliningLimit(100_000);
 
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
+    this.kafkaProducer = KafkaProducer.create(vertx, getKafkaProps());
     this.client = client;
+  }
+
+  private Properties getKafkaProps() {
+    Properties props = new Properties();
+    props.put("bootstrap.servers", CLUSTER.bootstrapServers());
+    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-topic-event-lister");
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+    return props;
   }
 
   @AfterEach
@@ -123,29 +138,17 @@ class WriteTest {
   @SneakyThrows
   @Test
   public void test() {
-    Properties props = new Properties();
-    props.put("bootstrap.servers", kafka.getBootstrapServers());
-    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-topic-event-lister");
-    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-    KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+    KafkaConsumer<String, String> consumer = new KafkaConsumer<>(getKafkaProps());
 
-    try (var admin = AdminClient.create(props)) {
-      admin.createTopics(List.of(new NewTopic("topic-1", Optional.empty(), Optional.empty())));
-    }
+    CLUSTER.createTopic("topic-1");
 
     consumer.subscribe(Collections.singletonList("topic-1"));
-
-    KafkaProducer kafkaProducer = new KafkaProducer<>(props);
 
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
         new VertxContext(new VertxJdbcClient(client),
-            Map.of("addCustomer", new KafkaSinkEmitter(kafkaProducer))));
+            Map.of("addCustomer", new KafkaSinkEmitter(kafkaProducer, "topic-1"))));
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid } }")

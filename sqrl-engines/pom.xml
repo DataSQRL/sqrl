@@ -17,7 +17,6 @@
     <module>sqrl-engine-core</module>
     <module>sqrl-engine-flink</module>
     <module>sqrl-engine-jdbc</module>
-    <module>sqrl-engine-log</module>
     <module>sqrl-engine-server</module>
   </modules>
 </project>

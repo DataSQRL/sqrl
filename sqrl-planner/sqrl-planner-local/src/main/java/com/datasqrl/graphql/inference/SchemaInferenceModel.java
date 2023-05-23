@@ -11,6 +11,7 @@ import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.ToString;
 import lombok.Value;
@@ -70,7 +71,7 @@ public class SchemaInferenceModel {
   @ToString
   public static class InferredMutation {
     String name;
-    String topic; //todo make modular
+    Map<String, String> sink; //todo make modular
   }
 
   @Value

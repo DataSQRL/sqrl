@@ -176,14 +176,9 @@ public class DAGAssembler {
     PhysicalDAGPlan.StagePlan streamPlan = new PhysicalDAGPlan.StagePlan(streamStage, writeDAG,
         null, jars, udfs, null);
 
-    ExecutionStage logStage = pipeline.getStage(Type.LOG).get();
-    PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.StagePlan(logStage, writeDAG,
-        null, null, null, model);
-
     List<PhysicalDAGPlan.StagePlan> allPlans = new ArrayList<>();
     allPlans.add(streamPlan);
     allPlans.addAll(databasePlans);
-    allPlans.add(logPlan);
 
     Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);
     if (serverStage.isPresent()) {

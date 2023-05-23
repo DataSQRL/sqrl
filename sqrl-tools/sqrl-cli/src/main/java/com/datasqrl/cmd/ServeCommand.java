@@ -16,6 +16,7 @@ import com.datasqrl.service.PackagerUtil;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import picocli.CommandLine;
 
 import static com.datasqrl.cmd.AbstractCompilerCommand.DEFAULT_DEPLOY_DIR;
@@ -26,9 +27,13 @@ public class ServeCommand extends AbstractCommand {
 
   @Override
   protected void runCommand(ErrorCollector errors) throws Exception {
+    //Start cluster regardless (revisit this command)
+    EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
+    CLUSTER.start();
+
     //Get jdbc config from package.json
     SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors,
-        null);
+            ()->PackagerUtil.createEmbeddedConfig(root.rootDir, errors));
     PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
     Pair<String, ExecutionEngine> engine = pipelineFactory.getEngine(Type.SERVER);
 

@@ -46,7 +46,7 @@ public class GenerateAssetsCommand extends AbstractCommand {
   @Override
   public void runCommand(ErrorCollector errors) {
     SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors,
-        null);
+            ()->null);
     Packager packager = PackagerUtil.create(root.rootDir, files, config, errors);
 
     Build build = new Build(errors);

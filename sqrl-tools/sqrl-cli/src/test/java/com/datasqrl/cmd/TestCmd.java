@@ -61,7 +61,7 @@ public class TestCmd {
   @Test
   public void executeLog() {
     execute(Path.of("/Users/henneberger/sqrl/sqrl-examples/log-engine"),
-        "run", "/Users/henneberger/sqrl/sqrl-examples/log-engine/script.sqrl");
+        "compile", "/Users/henneberger/sqrl/sqrl-examples/log-engine/script.sqrl");
   }
 
   @Test

@@ -16,6 +16,7 @@ import com.datasqrl.graphql.server.SinkResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
 import java.util.Map;
@@ -65,27 +66,18 @@ public class VertxContext implements Context {
     SinkEmitter emitter = sinks.get(coords.getFieldName());
 
     Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
-
-    ObjectMapper objectMapper = new ObjectMapper();
-
     return VertxDataFetcher.create((env, fut) -> {
       //Rules:
       //Only one argument is allowed, it doesn't matter the name
       //Rule 2: input argument cannot be null.
       Map<String, Object> args = env.getArguments();
 
-      Object entry = args.entrySet().stream()
+      Map<String, Object> entry = (Map<String, Object>)args.entrySet().stream()
           .findFirst().map(Entry::getValue).get();
 
       try {
-        String value = objectMapper.writeValueAsString(entry);
-        CompletableFuture<SinkResult> metadataFuture =
-            emitter.send(new KafkaSinkRecord(coords.getTopic(), value));
-
-        //Todo fix concurrency
-        KafkaSinkResult sinkMetadata = (KafkaSinkResult) metadataFuture.get();
-        //todo add metadata to output event
-        fut.complete(entry);
+        String value = new JsonObject(entry).encode();
+        emitter.send(new KafkaSinkRecord(value), fut, entry);
       } catch (Exception e) {
         fut.fail(e);
       }

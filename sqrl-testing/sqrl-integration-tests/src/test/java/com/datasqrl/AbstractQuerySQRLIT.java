@@ -86,7 +86,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
     this.port = getPort(8888);
     GraphQLServer server = new GraphQLServer(
-        model, port, jdbc, Map.of());
+        model, port, jdbc);
     vertx.deployVerticle(server, c->countDownLatch.countDown());
     countDownLatch.await(10, TimeUnit.SECONDS);
     if (countDownLatch.getCount() != 0) {

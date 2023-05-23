@@ -18,6 +18,8 @@ public abstract class AbstractCommand implements Runnable {
   @CommandLine.ParentCommand
   protected RootCommand root;
   EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
+  protected boolean startKafka;
+
   @SneakyThrows
   public void run() {
     ErrorCollector collector = ErrorCollector.root();
@@ -29,7 +31,9 @@ public abstract class AbstractCommand implements Runnable {
       e.printStackTrace();
       root.statusHook.onFailure();
     } finally {
-      CLUSTER.stop();
+      if (startKafka) {
+        CLUSTER.stop();
+      }
     }
     System.out.println(ErrorPrinter.prettyPrint(collector));
   }

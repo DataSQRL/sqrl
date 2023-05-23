@@ -3,32 +3,28 @@ package com.datasqrl.graphql.kafka;
 import com.datasqrl.graphql.server.SinkEmitter;
 import com.datasqrl.graphql.server.SinkResult;
 import com.datasqrl.graphql.server.SinkRecord;
+import io.vertx.core.Promise;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import lombok.AllArgsConstructor;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
 
 @AllArgsConstructor
 public class KafkaSinkEmitter extends SinkEmitter {
   private final KafkaProducer<String, String> kafkaProducer;
+  private final String topic;
 
   @Override
-  public CompletableFuture<SinkResult> send(SinkRecord data) {
+  public CompletableFuture<SinkResult> send(SinkRecord data, Promise<Object> fut, Object entry) {
     KafkaSinkRecord record = (KafkaSinkRecord) data;
 
-    Future<RecordMetadata> metadataFuture =
-        kafkaProducer.send(new ProducerRecord<>(record.getTopic(), record.getObject()));
+    KafkaProducerRecord<String, String> producerRecord =
+        KafkaProducerRecord.create(topic, record.getObject());
 
-    return CompletableFuture.supplyAsync(()->{
-      try {
-        System.out.println("event emitted..." + record.getTopic());
-        RecordMetadata recordMetadata = metadataFuture.get();
-        return new KafkaSinkResult(recordMetadata);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+    kafkaProducer.send(producerRecord)
+        .onSuccess(f->fut.complete(entry))
+        .onFailure(f->fut.fail(f));
+
+    return null;
   }
 }
