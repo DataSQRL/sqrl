@@ -80,7 +80,6 @@ public class Preprocessors {
 
   @SneakyThrows
   private void copyFileOrDirectory(Path fileOrDir, Path copyDir) {
-    log.info("Copying relative file or dir:" + fileOrDir + " " + copyDir.toAbsolutePath());
     if (Files.isDirectory(fileOrDir)) {
       // This is a directory, so create a new directory in the target location
       Path targetDir = copyDir.resolve(fileOrDir.getFileName());
@@ -97,7 +96,12 @@ public class Preprocessors {
       // This is a regular file, so copy it to the target location
       Path copyPath = copyDir.resolve(fileOrDir.getFileName());
       Files.createDirectories(copyPath);
-      Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
+      log.info("Copying relative file or dir:" + fileOrDir + " " + copyDir.toAbsolutePath());
+      try {
+        Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
+      } catch (Exception e) {
+        log.error("Error", e);
+      }
     } else {
       throw new IllegalArgumentException("Could not copy file or directory: " + fileOrDir);
     }

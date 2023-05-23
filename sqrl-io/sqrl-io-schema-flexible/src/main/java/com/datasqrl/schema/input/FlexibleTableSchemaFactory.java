@@ -27,7 +27,8 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
     Optional<URI> schemaPath = resourceResolver
         .resolveFile(basePath.concat(NamePath.of(getSchemaFilename(tableConfig))));
 
-    errors.checkFatal(schemaPath.isPresent(), "Could not find schema file [%s] for table [%s]", schemaPath, baseURI);
+    errors.checkFatal(schemaPath.isPresent(), "Could not find schema file [%s] for table [%s]",
+        basePath.concat(NamePath.of(getSchemaFilename(tableConfig))), baseURI);
     return create(BaseFileUtil.readFile(schemaPath.get()), tableConfig.getBase().getCanonicalizer());
   }
 
