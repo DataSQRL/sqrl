@@ -96,7 +96,7 @@ public class Preprocessors {
       // This is a regular file, so copy it to the target location
       Path copyPath = copyDir.resolve(fileOrDir.getFileName());
       Files.createDirectories(copyPath);
-      log.info("Copying relative file or dir:" + fileOrDir + " " + copyDir.toAbsolutePath());
+      log.info("Copying relative file or dir:" + fileOrDir + " " + copyPath.toAbsolutePath());
       try {
         Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
       } catch (Exception e) {
