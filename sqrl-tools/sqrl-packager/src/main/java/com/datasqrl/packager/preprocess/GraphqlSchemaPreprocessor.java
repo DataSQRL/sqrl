@@ -1,7 +1,5 @@
 package com.datasqrl.packager.preprocess;
 
-import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
-
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
@@ -13,7 +11,6 @@ import com.google.auto.service.AutoService;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -42,6 +39,7 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
         .getType("Mutation")
         .orElse(null);
     if (mutationType == null) {
+      log.info("No mutations");
       return;
     }
     String schemaName = path.getFileName().toString().split("\\.")[0];
@@ -50,6 +48,7 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
 
     Path dir = Files.createDirectories(
         Files.createTempDirectory("schemas").resolve(schemaName));
+
     writeTableSchema(schemas, dir, schemaName, context);
 
     context.addDependency(dir);
@@ -93,8 +92,10 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
   private void writeTableSchema(List<TableDefinition> schemas, Path dir, String schemaName,
       ProcessorContext context) {
 
-    for (var schema : schemas) {
+    for (TableDefinition schema : schemas) {
       Path path = dir.resolve(schema.name + ".schema.yml");
+      log.info("Writing table schema:" + path);
+
       SqrlObjectMapper.YAML_INSTANCE.writeValue(path.toFile(), schema);
     }
 

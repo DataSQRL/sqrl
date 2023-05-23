@@ -16,8 +16,10 @@ import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 @Value
+@Slf4j
 public class Preprocessors {
 
   public static final Set<String> EXCLUDED_DIRS = Set.of(Packager.BUILD_DIR_NAME, "deploy");
@@ -57,6 +59,7 @@ public class Preprocessors {
    */
   private void invokePreprocessor(Preprocessor preprocessor, Path userDir, PreprocessorsContext ctx) {
     ProcessorContext context = new ProcessorContext(ctx.rootDir, ctx.buildDir, ctx.config);
+    log.info("Invoking preprocessor: " + preprocessor.getClass());
     preprocessor.loader(userDir, context, errors);
     copyRelativeFiles(context.getDependencies(), ctx.rootDir, ctx.buildDir, userDir);
     copy(context.getLibraries(), ctx.buildDir);
@@ -77,6 +80,7 @@ public class Preprocessors {
 
   @SneakyThrows
   private void copyFileOrDirectory(Path fileOrDir, Path copyDir) {
+    log.info("Copying relative file or dir:" + fileOrDir + " " + copyDir);
     if (Files.isDirectory(fileOrDir)) {
       // This is a directory, so create a new directory in the target location
       Path targetDir = copyDir.resolve(fileOrDir.getFileName());
