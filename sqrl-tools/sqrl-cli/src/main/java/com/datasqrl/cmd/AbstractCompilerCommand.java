@@ -136,7 +136,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
   //Adds in regardless
   private void addDockerCompose() {
-    //Create
     String yml = DockerCompose.getYml();
     Path toFile = targetDir.resolve("docker-compose.yml");
     try {

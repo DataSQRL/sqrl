@@ -15,6 +15,7 @@ import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.PackagerConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Resources;
+import java.util.Arrays;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -130,9 +131,9 @@ public class PackagerUtil {
   private static Optional<String> getGraphqlSchema(Path rootDir) {
     try {
       return Files.walk(rootDir)
-              .filter(p -> !Files.isDirectory(p) && p.getFileName().toString().endsWith(".graphqls"))
-              .map(Path::toString)
-              .findFirst();
+          .filter(p -> !Files.isDirectory(p) && p.getFileName().toString().endsWith(".graphqls"))
+          .map(Path::toString)
+          .findFirst();
     } catch (IOException ignore) {
       log.warn("Could not walk root directory");
     }

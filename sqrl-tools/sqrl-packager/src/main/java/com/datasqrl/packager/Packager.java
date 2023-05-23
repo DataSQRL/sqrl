@@ -51,7 +51,7 @@ public class Packager {
   public static final String BUILD_DIR_NAME = "build";
   public static final String PACKAGE_FILE_NAME = "package.json";
 
-  private static final BiPredicate<Path, BasicFileAttributes> FIND_SQLR_SCRIPT = (p, f) ->
+  private static final BiPredicate<Path, BasicFileAttributes> FIND_SQRL_SCRIPT = (p, f) ->
       f.isRegularFile() && p.getFileName().toString().toLowerCase().endsWith(".sqrl");
 
   Repository repository;
@@ -103,7 +103,7 @@ public class Packager {
     ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
 
     // Find all SQRL script files
-    Result allResults = Files.find(rootDir, 128, FIND_SQLR_SCRIPT)
+    Result allResults = Files.find(rootDir, 128, FIND_SQRL_SCRIPT)
         .map(script -> analyzer.analyze(script, errors))
         .reduce(Result.EMPTY, (r1, r2) -> r1.add(r2));
 
