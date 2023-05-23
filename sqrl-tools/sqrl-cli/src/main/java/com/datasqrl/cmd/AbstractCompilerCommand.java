@@ -3,6 +3,8 @@
  */
 package com.datasqrl.cmd;
 
+import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.config.PipelineFactory;
@@ -25,23 +27,22 @@ import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.google.common.base.Preconditions;
-
+import com.google.common.io.Resources;
+import graphql.language.ObjectTypeDefinition;
+import graphql.schema.idl.SchemaParser;
+import graphql.schema.idl.TypeDefinitionRegistry;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import com.google.common.io.Resources;
-import graphql.language.ObjectTypeDefinition;
-import graphql.schema.idl.SchemaParser;
-import graphql.schema.idl.TypeDefinitionRegistry;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -107,6 +108,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     Compiler.CompilerResult result = compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
 
     addDockerCompose();
+    if (isGenerateGraphql()) {
+      addGraphql(packager.getBuildDir(), packager.getRootDir());
+    }
 
     if (execute) {
       executePlan(result.getPlan(), errors);
@@ -115,6 +119,19 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     if (errors.isFatal()) {
       throw new RuntimeException("Could not run");
     }
+  }
+
+  private boolean isGenerateGraphql() {
+    if (generateAPI != null) {
+      return Arrays.stream(generateAPI).anyMatch(APIType.GraphQL::equals);
+    }
+    return false;
+  }
+
+  @SneakyThrows
+  private void addGraphql(Path build, Path rootDir) {
+    Files.copy(build.resolve(GRAPHQL_NORMALIZED_FILE_NAME),
+        rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME));
   }
 
   //Adds in regardless
@@ -126,8 +143,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       Files.createDirectories(targetDir);
       Files.copy(Path.of(url.toURI()), toFile);
     } catch (Exception e) {
-      e.printStackTrace();
       log.error("Could not copy docker-compose file.");
+      throw new RuntimeException(e);
     }
   }
 

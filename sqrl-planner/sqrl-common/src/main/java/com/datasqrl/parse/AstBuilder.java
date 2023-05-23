@@ -939,7 +939,9 @@ class AstBuilder
       case YEAR:
       case MONTH:
       default:
-        throw new RuntimeException("YEAR MONTH WEEK interval not yet supported.");
+        throw new RuntimeException(
+            String.format("Found interval '%s'. YEAR MONTH WEEK interval not yet supported.",
+                timeUnit));
       case DAY:
       case HOUR:
       case MINUTE:

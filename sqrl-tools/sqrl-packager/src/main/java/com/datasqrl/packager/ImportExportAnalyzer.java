@@ -32,7 +32,7 @@ public class ImportExportAnalyzer {
       node = parser.parse(sqrlScript, errors);
     } catch (Exception e) {
       errors.warn("Could not compile SQRL script %s", sqrlScript);
-      return Result.EMPTY;
+      throw e;
     }
 
     return analyze(node);

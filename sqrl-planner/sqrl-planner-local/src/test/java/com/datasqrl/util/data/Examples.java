@@ -153,13 +153,13 @@ public class Examples {
           .dataDir(base.resolve("udf/data"))
           .resultTables(List.of("products", "mytable"))
           .build())
-      .add(TestScript.of(base.resolve("log-engine"),
-              base.resolve("log-engine/script.sqrl"))
-          .dataDir(base.resolve("log-engine/data"))
+      .add(TestScript.of(base.resolve("mutations"),
+              base.resolve("mutations/script.sqrl"))
+          .dataDir(base.resolve("mutations/data"))
           .resultTables(List.of("products"))
           .graphQLSchemas(List.of(
               new TestGraphQLSchema.TestGraphQLSchemaImpl("schema",
-                  base.resolve("log-engine/schema.graphqls"), Map.of())))
+                  base.resolve("mutations/schema.graphqls"), Map.of())))
           .build())
       .build();
 }

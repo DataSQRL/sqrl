@@ -3,6 +3,7 @@
  */
 package com.datasqrl.packager;
 
+import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -43,7 +44,7 @@ public class PackagerTest {
   public void testRetailPackaging() {
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
     Path graphQLSchema = script.getRootPackageDirectory().resolve("c360-full-graphqlv1")
-        .resolve("schema.graphqls");
+        .resolve(GRAPHQL_NORMALIZED_FILE_NAME);
     Path packageFileWithoutScript = script.getRootPackageDirectory()
         .resolve("package-exampleWOscript.json");
     Path packageFileWithScript = script.getRootPackageDirectory()

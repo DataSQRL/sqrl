@@ -45,7 +45,7 @@ Customers.past_purchases :=
 Customers._recent_avg_protein :=
         SELECT SUM(e.quantity * p.weight_in_gram * n.protein)/SUM(e.quantity * p.weight_in_gram)
         FROM @.purchases.items e JOIN e.product p JOIN p.nutrition n
-        WHERE e.parent.date > now() - INTERVAL 6 MONTH;
+        WHERE e.parent.date > now() - INTERVAL 183 DAYS; -- about 6 months
 
 -- @api(paginate=true)
 Customers.products_by_protein :=

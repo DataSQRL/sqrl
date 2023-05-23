@@ -59,9 +59,9 @@ public class TestCmd {
   }
 
   @Test
-  public void executeLog() {
-    execute(Path.of("/Users/henneberger/sqrl/sqrl-examples/log-engine"),
-        "compile", "/Users/henneberger/sqrl/sqrl-examples/log-engine/script.sqrl");
+  public void executeMutations() {
+    execute(Path.of("../../sqrl-tools/sqrl-cli/src/test/resources/examples/mutations"),
+        "compile", "../../sqrl-tools/sqrl-cli/src/test/resources/examples/mutations/script.sqrl");
   }
 
   @Test
@@ -87,7 +87,6 @@ public class TestCmd {
 
   @Test
   @SneakyThrows
-  @Disabled //todo: Test is in error, does not compile
   public void compileNutshopWithSchema() {
     Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
@@ -98,7 +97,8 @@ public class TestCmd {
             script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
             "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
     Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
-    assertTrue(Files.isRegularFile(schemaFile));
+    assertTrue(Files.isRegularFile(schemaFile),
+        () -> String.format("Schema file could not be found: %s", schemaFile));
     Files.deleteIfExists(schemaFile);
     createSnapshot();
   }
@@ -124,7 +124,6 @@ public class TestCmd {
   }
 
   public static void execute(Path rootDir, String... args) {
-    new RootCommand(rootDir).getCmd().execute(args);
+    new RootCommand(rootDir, AssertStatusHook.INSTANCE).getCmd().execute(args);
   }
-
 }

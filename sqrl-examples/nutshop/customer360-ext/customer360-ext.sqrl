@@ -43,14 +43,14 @@ Customers.past_purchases :=
 Customers.recent_avg_protein :=
         SELECT SUM(e.quantity * p.weight_in_gram * n.protein)/SUM(e.quantity * p.weight_in_gram)
         FROM @.purchases.items e JOIN e.product p JOIN p.nutrition n
-        WHERE e.parent.date > now() - INTERVAL 6 MONTH;
+        WHERE e.parent.date > now() - INTERVAL 183 DAYS; -- about 6 months
 
 Customers.products_by_protein :=
         SELECT p.id AS productid, ABS(p.nutrition.protein - @.recent_avg_protein) AS protein_difference FROM Products p
         ORDER BY protein_difference ASC LIMIT 20;
 Customers.products_by_protein.product := JOIN Products ON Products.id = _productid LIMIT 1;
 
-NewCustomerPromotion := SUBSCRIPTION ON ADD AS
+NewCustomerPromotion := STREAM ON ADD AS
 SELECT customerid, total_orders
 FROM Customers WHERE total_orders >= 100;
 

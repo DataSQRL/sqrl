@@ -29,7 +29,7 @@ public abstract class AbstractCommand implements Runnable {
     } catch (Exception e) {
       collector.getCatcher().handle(e);
       e.printStackTrace();
-      root.statusHook.onFailure();
+      root.statusHook.onFailure(e);
     } finally {
       if (startKafka) {
         CLUSTER.stop();

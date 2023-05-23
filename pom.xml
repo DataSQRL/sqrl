@@ -292,6 +292,13 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-cli</artifactId>
+                <type>test-jar</type>
+                <scope>test</scope>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-io-file</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
