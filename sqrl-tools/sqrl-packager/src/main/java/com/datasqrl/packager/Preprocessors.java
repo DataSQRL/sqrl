@@ -80,7 +80,7 @@ public class Preprocessors {
 
   @SneakyThrows
   private void copyFileOrDirectory(Path fileOrDir, Path copyDir) {
-    log.info("Copying relative file or dir:" + fileOrDir + " " + copyDir);
+    log.info("Copying relative file or dir:" + fileOrDir + " " + copyDir.toAbsolutePath());
     if (Files.isDirectory(fileOrDir)) {
       // This is a directory, so create a new directory in the target location
       Path targetDir = copyDir.resolve(fileOrDir.getFileName());

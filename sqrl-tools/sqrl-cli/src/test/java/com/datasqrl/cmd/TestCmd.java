@@ -63,9 +63,7 @@ public class TestCmd {
     Path root = Paths.get("../../sqrl-examples/mutations");
     execute(root,
         "compile", root.resolve("script.sqrl").toString(),
-        root.resolve("schema.graphqls").toString(),
-        "-t", OUTPUT_DIR.toString()
-        );
+        root.resolve("schema.graphqls").toString());
   }
 
   @Test
