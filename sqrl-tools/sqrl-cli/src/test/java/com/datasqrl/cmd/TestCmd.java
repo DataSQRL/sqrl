@@ -60,7 +60,7 @@ public class TestCmd {
 
   @Test
   public void executeMutations() {
-    Path root = Paths.get("../../sqrl-tools/sqrl-cli/src/test/resources/examples/mutations");
+    Path root = Paths.get("../../sqrl-tools/sqrl-cli/src/test/examples/mutations");
     execute(Path.of(root.toAbsolutePath().toString()),
         "compile", root.resolve("script.sqrl").toAbsolutePath().toString());
   }
