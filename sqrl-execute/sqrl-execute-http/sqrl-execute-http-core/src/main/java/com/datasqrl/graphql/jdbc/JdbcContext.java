@@ -8,7 +8,6 @@ import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
-import com.datasqrl.graphql.server.SinkEmitter;
 import graphql.schema.DataFetcher;
 import graphql.schema.PropertyDataFetcher;
 import java.util.Map;

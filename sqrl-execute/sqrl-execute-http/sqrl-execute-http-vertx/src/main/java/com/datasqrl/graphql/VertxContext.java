@@ -1,6 +1,5 @@
 package com.datasqrl.graphql;
 
-import com.datasqrl.graphql.kafka.KafkaSinkResult;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.kafka.KafkaSinkRecord;
@@ -12,8 +11,6 @@ import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.SinkEmitter;
-import com.datasqrl.graphql.server.SinkResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import io.vertx.core.json.JsonObject;
@@ -22,7 +19,6 @@ import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import lombok.Value;
 
 @Value
@@ -68,8 +64,8 @@ public class VertxContext implements Context {
     Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
     return VertxDataFetcher.create((env, fut) -> {
       //Rules:
-      //Only one argument is allowed, it doesn't matter the name
-      //Rule 2: input argument cannot be null.
+      //- Only one argument is allowed, it doesn't matter the name
+      //- input argument cannot be null.
       Map<String, Object> args = env.getArguments();
 
       Map<String, Object> entry = (Map<String, Object>)args.entrySet().stream()

@@ -5,7 +5,6 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.kafka.KafkaSinkEmitter;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
-import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;

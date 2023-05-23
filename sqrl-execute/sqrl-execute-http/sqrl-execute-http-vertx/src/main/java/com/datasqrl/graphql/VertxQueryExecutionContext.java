@@ -11,7 +11,6 @@ import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import graphql.schema.DataFetchingEnvironment;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
@@ -53,7 +52,7 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
           f.printStackTrace();
           fut.fail(f);
         });
-    return null;
+    return new CompletableFuture();
   }
 
   @Override
@@ -85,7 +84,7 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
           f.printStackTrace();
           fut.fail(f);
         });
-    return null;
+    return new CompletableFuture();
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {

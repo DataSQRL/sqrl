@@ -23,8 +23,6 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;

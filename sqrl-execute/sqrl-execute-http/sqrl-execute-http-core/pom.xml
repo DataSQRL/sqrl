@@ -52,7 +52,6 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-kafka-client</artifactId>
-      <version>4.3.5</version>
     </dependency>
   </dependencies>
 </project>
