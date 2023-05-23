@@ -31,7 +31,7 @@ public class NameUtil {
 
     //find first inexact match, or else just the name provided
     return Files.list(filePath)
-        .filter(path -> path.getFileName().toString().toLowerCase().equals(name))
+        .filter(path -> path.getFileName().toString().equalsIgnoreCase(name))
         .findFirst()
         .orElse(filePath.resolve(name));
   }
