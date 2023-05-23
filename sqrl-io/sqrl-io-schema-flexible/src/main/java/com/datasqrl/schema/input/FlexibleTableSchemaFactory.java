@@ -44,7 +44,7 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
 
   @Override
   public String getSchemaFilename(TableConfig tableConfig) {
-    return tableConfig.getName().getCanonical() + SCHEMA_EXTENSION;
+    return tableConfig.getName().getDisplay() + SCHEMA_EXTENSION;
   }
 
   @Override
