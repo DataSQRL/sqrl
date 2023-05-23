@@ -23,20 +23,4 @@ public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
     return new FlinkStreamBuilder(this,
         execFactory.createEnvironment());
   }
-
-  @Override
-  public void generateAssets(Path buildDir) {
-    GenericContainer<?> container =
-        new GenericContainer<>("engine-flink")
-            .withStartupCheckStrategy(new OneShotStartupCheckStrategy()
-                .withTimeout(Duration.ofMinutes(10))
-            );
-    String targetPath = "/build";
-    MountableFile mountableFile = MountableFile.forHostPath(buildDir);
-    container.withFileSystemBind(mountableFile.getResolvedPath(), targetPath);
-
-    container.start();
-    container.stop();
-
-  }
 }

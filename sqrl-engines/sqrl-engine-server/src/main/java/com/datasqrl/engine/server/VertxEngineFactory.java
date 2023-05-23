@@ -31,21 +31,5 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
     public VertxEngine(@NonNull SqrlConfig config) {
       super(ENGINE_NAME, config);
     }
-
-    @Override
-    public void generateAssets(Path buildDir) {
-
-      Path sourcePath = buildDir;
-      String targetPath = "/build";
-      MountableFile mountableFile = MountableFile.forHostPath(sourcePath);
-
-      GenericContainer<?> container = new GenericContainer<>("engine-vertx")
-          .withStartupCheckStrategy(new OneShotStartupCheckStrategy()
-              .withTimeout(Duration.ofMinutes(10)))
-          .withFileSystemBind(mountableFile.getResolvedPath(), targetPath);
-
-      container.start();
-      container.stop();
-    }
   }
 }
