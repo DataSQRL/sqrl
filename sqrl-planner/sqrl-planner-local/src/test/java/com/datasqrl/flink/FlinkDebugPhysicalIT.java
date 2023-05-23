@@ -51,22 +51,22 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
 
   @Test
   public void debugC3602OutputTest() {
+    TestScript script = example.getScript(RetailScriptNames.FULL);
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
           .debugger(DebuggerConfig.of(NamePath.of("output"),null))
-        .build(),(Path) null, Optional.of(outputPath));
-    TestScript script = example.getScript(RetailScriptNames.FULL);
+        .build(),(Path) script.getScriptPath().getParent(), Optional.of(outputPath));
     validateTables(script.getScript(), "order_stats", "order_again");
   }
 
   @Test
   public void debugC3602OutputSelectTablesTest() {
+    TestScript script = example.getScript(RetailScriptNames.FULL);
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
             .debugger(DebuggerConfig.of(NamePath.of("output"),
                 toName("order_stats", "NewCustomerPromotion", "order_again", "total")))
             .build(),
-        (Path) null,
+        (Path) script.getScriptPath().getParent(),
         Optional.of(outputPath));
-    TestScript script = example.getScript(RetailScriptNames.FULL);
     validateTables(script.getScript(),"favorite_categories", "NewCustomerPromotion", "order_again");
   }
 

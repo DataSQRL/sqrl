@@ -107,7 +107,7 @@ public interface TestScript {
         .addAll(Quickstart.INSTANCE.getScripts())
         .addAll(Clickstream.INSTANCE.getScripts())
         .addAll(Sensors.INSTANCE.getScripts())
-//        .addAll(Repository.INSTANCE.getScripts())
+        .addAll(Repository.INSTANCE.getScripts())
         .build();
   }
 

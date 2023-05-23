@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS "total$18" ("__pk_0" CHARACTER VARYING NOT NULL,"pric
       "updatetime" : "2022-02-20T22:40:49-08:00",
       "orders" : [ {
         "id" : 10007543,
-        "time" : "2022-05-19T01:29:39.553244-07:00",
+        "time" : "2023-05-19T01:29:39.553244-07:00",
         "total" : [ {
           "price" : 120.85,
           "discount" : 11.5,
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS "total$18" ("__pk_0" CHARACTER VARYING NOT NULL,"pric
     "orders" : [ {
       "id" : 10007140,
       "customerid" : 1000107,
-      "time" : "2022-05-19T02:28:39.553244-07:00",
+      "time" : "2023-05-19T02:28:39.553244-07:00",
       "entries" : [ {
         "productid" : 1332,
         "quantity" : 8,

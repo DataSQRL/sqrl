@@ -92,9 +92,10 @@ public class Preprocessors {
     } else if (Files.isRegularFile(fileOrDir)) {
       // This is a regular file, so copy it to the target location
       Path copyPath = copyDir.resolve(fileOrDir.getFileName());
+      Files.createDirectories(copyPath);
       Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
     } else {
-      throw new IllegalArgumentException("Not a file or directory: " + fileOrDir);
+      throw new IllegalArgumentException("Could not copy file or directory: " + fileOrDir);
     }
   }
 
