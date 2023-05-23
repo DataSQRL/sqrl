@@ -1,0 +1,84 @@
+>>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWODependencies.json-dir
+build.gradle
+datasqrl
+datasqrl/examples
+datasqrl/examples/Nutshop
+datasqrl/examples/Nutshop/package.json
+main1.sqrl
+package.json
+>>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWODependencies.json-package
+{
+  "package" : {
+    "name" : "datasqrl.test.Foo",
+    "variant" : "dev",
+    "description" : "Basic test example",
+    "version" : "1.0.0"
+  },
+  "compiler" : {
+    "maxApiArguments" : 3
+  },
+  "engines" : {
+    "database" : {
+      "name" : "jdbc",
+      "database" : "sqrl",
+      "dialect" : "H2",
+      "driver" : "org.h2.Driver",
+      "url" : "jdbc:h2:tmp/output"
+    },
+    "streams" : {
+      "name" : "flink"
+    }
+  },
+  "script" : {
+    "main" : "main1.sqrl"
+  },
+  "dependencies" : {
+    "datasqrl.examples.Nutshop" : {
+      "name" : "datasqrl.examples.Nutshop",
+      "variant" : "dev",
+      "version" : "0.1.0"
+    }
+  }
+}
+>>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWDependencies.json-dir
+build.gradle
+datasqrl
+datasqrl/examples
+datasqrl/examples/Nutshop
+datasqrl/examples/Nutshop/package.json
+main1.sqrl
+package.json
+>>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWDependencies.json-package
+{
+  "package" : {
+    "name" : "datasqrl.test.Foo",
+    "variant" : "dev",
+    "description" : "Basic test example",
+    "version" : "1.0.0"
+  },
+  "compiler" : {
+    "maxApiArguments" : 3
+  },
+  "engines" : {
+    "database" : {
+      "name" : "jdbc",
+      "database" : "sqrl",
+      "dialect" : "H2",
+      "driver" : "org.h2.Driver",
+      "url" : "jdbc:h2:tmp/output"
+    },
+    "streams" : {
+      "name" : "flink"
+    }
+  },
+  "script" : {
+    "main" : "main1.sqrl"
+  },
+  "dependencies" : {
+    "datasqrl.examples.Nutshop" : {
+      "variant" : "dev",
+      "name" : "datasqrl.examples.Nutshop",
+      "version" : "0.1.0"
+    }
+  }
+}

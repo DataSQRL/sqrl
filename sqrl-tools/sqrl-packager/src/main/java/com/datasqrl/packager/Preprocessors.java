@@ -4,8 +4,6 @@ import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
-import com.google.common.base.Preconditions;
-import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,7 +57,7 @@ public class Preprocessors {
    */
   private void invokePreprocessor(Preprocessor preprocessor, Path userDir, PreprocessorsContext ctx) {
     ProcessorContext context = new ProcessorContext(ctx.rootDir, ctx.buildDir, ctx.config);
-    log.info("Invoking preprocessor: " + preprocessor.getClass());
+    log.trace("Invoking preprocessor: {}", preprocessor.getClass());
     preprocessor.loader(userDir, context, errors);
     copyRelativeFiles(context.getDependencies(), ctx.rootDir, ctx.buildDir, userDir);
     copy(context.getLibraries(), ctx.buildDir);
@@ -96,12 +94,7 @@ public class Preprocessors {
       // This is a regular file, so copy it to the target location
       Path copyPath = copyDir.resolve(fileOrDir.getFileName());
       Files.createDirectories(copyPath);
-      log.info("Copying relative file or dir:" + fileOrDir + " " + copyPath.toAbsolutePath());
-      try {
-        Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
-      } catch (Exception e) {
-        log.error("Error", e);
-      }
+      Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
     } else {
       throw new IllegalArgumentException("Could not copy file or directory: " + fileOrDir);
     }

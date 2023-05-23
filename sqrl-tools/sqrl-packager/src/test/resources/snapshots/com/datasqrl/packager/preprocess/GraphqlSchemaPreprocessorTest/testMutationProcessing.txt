@@ -1,0 +1,32 @@
+---
+name: "addCustomer"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "customerid"
+  type: "INTEGER"
+- name: "email"
+  type: "STRING"
+- name: "address"
+  columns:
+  - name: "id"
+    type: "STRING"
+  - name: "address"
+    type: "STRING"
+
+---
+name: "addCustomer2"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "customerid"
+  type: "INTEGER"
+- name: "email"
+  type: "STRING"
+- name: "address"
+  columns:
+  - name: "id"
+    type: "STRING"
+  - name: "address"
+    type: "STRING"
+

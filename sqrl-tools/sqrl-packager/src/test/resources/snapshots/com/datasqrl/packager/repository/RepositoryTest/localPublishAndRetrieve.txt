@@ -1,0 +1,14 @@
+>>>localRepo
+datasqrl
+datasqrl/examples
+datasqrl/examples/ecommerce
+datasqrl/examples/ecommerce/1.0.0
+datasqrl/examples/ecommerce/1.0.0/dev.zip
+>>>output
+customer.schema.yml
+customer.table.json
+orders.schema.yml
+orders.table.json
+package.json
+product.schema.yml
+product.table.json

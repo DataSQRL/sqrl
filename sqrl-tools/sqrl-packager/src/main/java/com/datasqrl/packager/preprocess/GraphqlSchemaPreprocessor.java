@@ -39,7 +39,7 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
         .getType("Mutation")
         .orElse(null);
     if (mutationType == null) {
-      log.info("No mutations");
+      log.trace("No mutations");
       return;
     }
     String schemaName = path.getFileName().toString().split("\\.")[0];
@@ -94,7 +94,7 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
 
     for (TableDefinition schema : schemas) {
       Path path = dir.resolve(schema.name + ".schema.yml");
-      log.info("Writing table schema:" + path);
+      log.trace("Writing table schema:" + path);
 
       SqrlObjectMapper.YAML_INSTANCE.writeValue(path.toFile(), schema);
     }

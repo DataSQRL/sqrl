@@ -47,7 +47,6 @@ public class FileResourceResolver implements ResourceResolver {
   @Override
   public Optional<URI> resolveFile(NamePath namePath) {
     Path path = namepath2Path(baseDir, namePath);
-    System.out.println(path.toAbsolutePath());
     if (!Files.exists(path)) {
       return Optional.empty();
     }
