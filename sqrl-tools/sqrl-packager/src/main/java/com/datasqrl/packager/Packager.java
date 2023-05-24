@@ -224,6 +224,8 @@ public class Packager {
           .sorted(Comparator.reverseOrder())
           .map(Path::toFile)
           .forEach(File::delete);
+    } else if (Files.exists(buildDir) && !Files.isDirectory(buildDir)) {
+      buildDir.toFile().delete();
     }
   }
 

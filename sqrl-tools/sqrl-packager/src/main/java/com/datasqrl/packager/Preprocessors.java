@@ -79,7 +79,7 @@ public class Preprocessors {
       return buildDir;
     }
 
-    return buildDir.resolve(relDir);
+    return buildDir.resolve(relDir.getParent());
   }
 
   /**
