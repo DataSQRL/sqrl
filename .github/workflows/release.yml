@@ -34,7 +34,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Copy JAR files
         run: |
-          cp sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/target/flink-main.jar sqrl-tools/sqrl-cli/target/flink-main.jar
+          cp sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/target/flink-job.jar sqrl-tools/sqrl-cli/target/flink-job.jar
           cp sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/target/vertx-server.jar sqrl-tools/sqrl-cli/target/vertx-server.jar
       # Build docker
       - name: Build and Push sqrl-cli Latest
