@@ -19,6 +19,7 @@ import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import lombok.Value;
 
 @Value
