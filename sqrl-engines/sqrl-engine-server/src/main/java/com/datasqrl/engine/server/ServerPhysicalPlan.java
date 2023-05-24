@@ -37,6 +37,7 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
               "/opt/bitnami/kafka/bin/kafka-topics.sh --create --bootstrap-server kafka:9092 " +
                       "--topic %s --partitions 1 --replication-factor 1", k.getSinkConfig().get("topic")));
     }
+    b.append("\nexit 0;");
     Files.writeString(deployDir.resolve("create-topics.sh"), b.toString());
   }
 

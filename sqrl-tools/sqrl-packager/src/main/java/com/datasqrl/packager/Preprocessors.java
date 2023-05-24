@@ -1,14 +1,17 @@
 package com.datasqrl.packager;
 
+import static com.datasqrl.util.NameUtil.namepath2Path;
+
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Builder;
@@ -59,45 +62,41 @@ public class Preprocessors {
     ProcessorContext context = new ProcessorContext(ctx.rootDir, ctx.buildDir, ctx.config);
     log.trace("Invoking preprocessor: {}", preprocessor.getClass());
     preprocessor.loader(userDir, context, errors);
-    copyRelativeFiles(context.getDependencies(), ctx.rootDir, ctx.buildDir, userDir);
+    copyRelativeFiles(context.getDependencies(),
+        getModulePath(context.getName(), ctx.rootDir, ctx.buildDir, userDir));
     copy(context.getLibraries(), ctx.buildDir);
+  }
+
+  private Path getModulePath(Optional<NamePath> name, Path rootDir, Path buildDir, Path userDir) {
+    if (name.isPresent()) {
+      return namepath2Path(buildDir, name.get());
+    }
+
+    Path relDir = rootDir.relativize(userDir);
+
+    //Check if we at the root folder, if so, copy it to the root dir
+    if (relDir.getParent() == null) {
+      return buildDir;
+    }
+
+    return buildDir.resolve(relDir);
   }
 
   /**
    * Copies the given list of relative files from the given root directory to the given build directory.
    */
   @SneakyThrows
-  private void copyRelativeFiles(Set<Path> paths, Path rootDir, Path buildDir, Path userFile) {
-    Path relativeDir = rootDir.relativize(userFile.getParent());
-    Path copyDir = buildDir.resolve(relativeDir);
-
+  private void copyRelativeFiles(Set<Path> paths, Path copyDir) {
     for (Path file : paths) {
-      copyFileOrDirectory(file, copyDir);
+      copy(file, copyDir);
     }
   }
 
   @SneakyThrows
-  private void copyFileOrDirectory(Path fileOrDir, Path copyDir) {
-    if (Files.isDirectory(fileOrDir)) {
-      // This is a directory, so create a new directory in the target location
-      Path targetDir = copyDir.resolve(fileOrDir.getFileName());
-      Files.createDirectories(targetDir);
-
-      // Get the contents of the directory
-      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(fileOrDir)) {
-        for (Path path : directoryStream) {
-          // Copy each item in the directory (could be a file or subdirectory)
-          copyFileOrDirectory(path, targetDir);
-        }
-      }
-    } else if (Files.isRegularFile(fileOrDir)) {
-      // This is a regular file, so copy it to the target location
+  private void copy(Path fileOrDir, Path copyDir) {
+      Files.createDirectories(copyDir);
       Path copyPath = copyDir.resolve(fileOrDir.getFileName());
-      Files.createDirectories(copyPath);
       Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
-    } else {
-      throw new IllegalArgumentException("Could not copy file or directory: " + fileOrDir);
-    }
   }
 
   /**
@@ -108,7 +107,7 @@ public class Preprocessors {
     if (!libraries.isEmpty()) {
       Path libDir = buildDir.resolve("lib");
       Files.createDirectories(libDir);
-      libraries.forEach(library -> copyFileOrDirectory(library.toAbsolutePath(), libDir));
+      libraries.forEach(library -> copy(library.toAbsolutePath(), libDir));
     }
   }
 

@@ -1,6 +1,7 @@
 package com.datasqrl.packager.preprocess;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -55,32 +56,30 @@ class GraphqlSchemaPreprocessorTest {
     ProcessorContext context = mock(ProcessorContext.class);
     SqrlConfig config = SqrlConfigCommons.fromFiles(ErrorCollector.root(), packageJson);
     when(context.getSqrlConfig()).thenReturn(config);
+    when(context.createModuleFolder(any())).thenReturn(context);
 
     preprocessor.loader(schema, context, ErrorCollector.root());
 
-    verify(context, times(1)).addDependency(pathCaptor.capture());
+    verify(context, times(2)).addDependency(pathCaptor.capture());
 
     // Get the captured argument
     Path capturedPath = pathCaptor.getValue();
 
-    if (Files.isDirectory(capturedPath)) {
-      Files.list(capturedPath).sorted().forEach(file -> {
-        // Read the content of each file
-        String content = null;
-        try {
-          content = Files.readString(file);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    Files.list(capturedPath.getParent()).sorted().forEach(file -> {
+      // Read the content of each file
+      String content = null;
+      try {
+        content = Files.readString(file);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
 
-        // Verify it can be read back
-//        TableDefinition schema1 = new Deserializer()
-//            .mapYAMLFile(file.toAbsolutePath(),
-//                TableDefinition.class);
+      TableDefinition schema1 = new Deserializer()
+            .mapYAMLFile(file.toAbsolutePath(),
+                TableDefinition.class);
 
-        snapshot.addContent(content);
-      });
-    }
+      snapshot.addContent(content);
+    });
 
     snapshot.createOrValidate();
   }

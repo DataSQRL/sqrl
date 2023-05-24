@@ -1,5 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
@@ -51,41 +52,6 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
 
     writeTableSchema(schemas, dir, schemaName, context);
 
-    context.addDependency(dir);
-  }
-
-  @SneakyThrows
-  private void writeSource(Path dir, List<TableDefinition> schemas, SqrlConfig log,
-      ProcessorContext context) {
-
-    for (TableDefinition definition : schemas) {
-      Map tableConfig = convertToSourceConfig(definition, log);
-
-      Path f = dir.resolve(definition.name + ".table.json");
-      SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter()
-          .writeValue(f.toFile(), tableConfig);
-    }
-  }
-
-  private Map convertToSourceConfig(TableDefinition tableDefinition, SqrlConfig log) {
-    Map connector = new HashMap();
-    for (String key : log.getKeys()) {
-      connector.put(key, log.asString(key).get());
-    }
-    connector.put("name", "kafka");
-    connector.put("topic", tableDefinition.name);
-
-    Map config = Map.of("type", ExternalDataType.source_and_sink.name(),
-        "canonicalizer", "system",
-        "format", Map.of(
-            "name", "json"
-        ),
-        "identifier", tableDefinition.name,
-        "schema", "flexible",
-        "connector", connector
-    );
-
-    return config;
   }
 
   @SneakyThrows
@@ -97,6 +63,9 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
       log.trace("Writing table schema:" + path);
 
       SqrlObjectMapper.YAML_INSTANCE.writeValue(path.toFile(), schema);
+
+      context.createModuleFolder(NamePath.of(schemaName))
+          .addDependency(path);
     }
 
   }

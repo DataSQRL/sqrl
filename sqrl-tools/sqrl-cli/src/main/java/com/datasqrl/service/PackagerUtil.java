@@ -98,11 +98,11 @@ public class PackagerUtil {
   public static SqrlConfig createDockerConfig(Path rootDir, Path targetDir, ErrorCollector errors) {
     SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
 
-    Optional<String> graphqlSchema = getGraphqlSchema(rootDir);
-    graphqlSchema.ifPresent((schema)->{
-      SqrlConfig script = rootConfig.getSubConfig("script");
-      script.setProperty("graphql", schema);
-    });
+//    Optional<String> graphqlSchema = getGraphqlSchema(rootDir);
+//    graphqlSchema.ifPresent((schema)->{
+//      SqrlConfig script = rootConfig.getSubConfig("script");
+//      script.setProperty("graphql", schema);
+//    });
 
     SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
 
@@ -144,12 +144,12 @@ public class PackagerUtil {
   public static SqrlConfig createEmbeddedConfig(Path rootDir, ErrorCollector errors) {
     SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
 
-    Optional<String> graphqlSchema = getGraphqlSchema(rootDir);
-    graphqlSchema.ifPresent((schema)->{
-      SqrlConfig script = rootConfig.getSubConfig("script");
-      script.setProperty("graphql", schema);
-    });
-
+//    Optional<String> graphqlSchema = getGraphqlSchema(rootDir);
+//    graphqlSchema.ifPresent((schema)->{
+//      SqrlConfig script = rootConfig.getSubConfig("script");
+//      script.setProperty("graphql", schema);
+//    });
+//
     SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
 
     SqrlConfig dbConfig = config.getSubConfig("database");

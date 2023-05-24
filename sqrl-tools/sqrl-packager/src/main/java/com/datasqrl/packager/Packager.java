@@ -216,8 +216,9 @@ public class Packager {
     config.toFile(buildDir.resolve(PACKAGE_FILE_NAME), true);
   }
 
+  //Todo; Something wrong here?
   private void cleanBuildDir() throws IOException {
-    if (Files.exists(buildDir)) {
+    if (Files.exists(buildDir) && Files.isDirectory(buildDir)) {
       Files.walk(buildDir)
           // Sort the paths in reverse order so that directories are deleted last
           .sorted(Comparator.reverseOrder())
