@@ -46,7 +46,7 @@ public abstract class FlexibleFieldSchema implements SchemaField {
         @NonNull
         private List<FieldType> types;
 
-        public Field(Name name, SchemaElementDescription description, Object default_value,
+        public Field(Name name, @NonNull SchemaElementDescription description, Object default_value,
                      List<FieldType> types) {
             super(name, description, default_value);
             this.types = types;

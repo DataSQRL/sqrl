@@ -20,7 +20,6 @@
     <dependency>
       <groupId>com.graphql-java</groupId>
       <artifactId>graphql-java</artifactId>
-      <version>19.3</version>
     </dependency>
 
     <!-- Jackson -->
@@ -47,6 +46,12 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <!-- sinks -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-kafka-client</artifactId>
     </dependency>
   </dependencies>
 </project>

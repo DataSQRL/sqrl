@@ -11,6 +11,9 @@ import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
+import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.MutationCoords;
+import com.datasqrl.graphql.server.Model.MutationVisitor;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
@@ -42,6 +45,7 @@ import java.util.stream.Collectors;
 
 public class BuildGraphQLEngine implements
     RootVisitor<GraphQL, Context>,
+    MutationVisitor<DataFetcher<?>, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     GraphQLArgumentWrapperVisitor<Set<FixedArgument>, Object>,
@@ -66,12 +70,25 @@ public class BuildGraphQLEngine implements
           c.accept(this, context));
     }
 
+    if (root.mutations != null) {
+      for (MutationCoords c : root.mutations) {
+        codeRegistry.dataFetcher(
+            FieldCoordinates.coordinates("Mutation", c.getFieldName()),
+            c.accept(this, context));
+      }
+    }
+
     GraphQLSchema graphQLSchema = new SchemaGenerator()
         .makeExecutableSchema(registry,
             RuntimeWiring.newRuntimeWiring()
                 .codeRegistry(codeRegistry).build());
 
     return GraphQL.newGraphQL(graphQLSchema).build();
+  }
+
+  @Override
+  public DataFetcher<?> visitKafkaMutationCoords(KafkaMutationCoords coords, Context context) {
+    return context.createSinkFetcher(coords);
   }
 
   @Override

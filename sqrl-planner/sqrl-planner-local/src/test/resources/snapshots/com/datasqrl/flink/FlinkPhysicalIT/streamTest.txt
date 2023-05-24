@@ -135,22 +135,22 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
     LogicalTableScan(table=[[updatestream$18]])
 
 >>>customercount-data
-1000101, John Mekker, 3, 2022-05-19T01:29:39.553-07:00
-1000107, Emily F. Ludies, 10, 2022-05-19T02:28:39.553-07:00
-1000121, Michelle Dagnes, 4, 2022-05-19T02:16:39.553-07:00
+1000101, John Mekker, 3, 2023-05-19T01:29:39.553-07:00
+1000107, Emily F. Ludies, 10, 2023-05-19T02:28:39.553-07:00
+1000121, Michelle Dagnes, 4, 2023-05-19T02:16:39.553-07:00
 >>>countstream-data
-2022-05-19T01:29:39.553-07:00, 1000101, John Mekker, 3
-2022-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 3
-2022-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 9
+2023-05-19T01:29:39.553-07:00, 1000101, John Mekker, 3
+2023-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 3
+2023-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 9
 >>>customercount2-data
-1000101, 2022-05-19T01:29:39.553-07:00, John Mekker, 3
-1000107, 2022-05-19T02:28:39.553-07:00, Emily F. Ludies, 9
-1000121, 2022-05-19T02:16:39.553-07:00, Michelle Dagnes, 3
+1000101, 2023-05-19T01:29:39.553-07:00, John Mekker, 3
+1000107, 2023-05-19T02:28:39.553-07:00, Emily F. Ludies, 9
+1000121, 2023-05-19T02:16:39.553-07:00, Michelle Dagnes, 3
 >>>updatestream-data
-2022-05-19T01:29:39.553-07:00, 1000101, John Mekker, 3
-2022-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 3
-2022-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 4
-2022-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 10
-2022-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 9
+2023-05-19T01:29:39.553-07:00, 1000101, John Mekker, 3
+2023-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 3
+2023-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 4
+2023-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 10
+2023-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 9
 >>>export-countstream
 3

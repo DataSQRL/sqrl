@@ -4,6 +4,7 @@ import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
+import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
@@ -48,5 +49,10 @@ public class JdbcContext implements Context {
       CompletableFuture future = resolvedQuery.accept(server, context);
       return future;
     };
+  }
+
+  @Override
+  public DataFetcher<?> createSinkFetcher(KafkaMutationCoords coords) {
+    throw new RuntimeException("Not yet supported");
   }
 }

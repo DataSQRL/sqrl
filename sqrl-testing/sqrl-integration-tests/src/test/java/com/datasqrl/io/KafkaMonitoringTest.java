@@ -3,6 +3,7 @@ package com.datasqrl.io;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.FileTestUtil;
@@ -78,7 +79,7 @@ public class KafkaMonitoringTest extends KafkaBaseTest {
     Path configFile = Files.createTempFile(rootDir, "system.discover.table", ".json");
     config.toFile(configFile);
     try {
-      new RootCommand(rootDir).getCmd().execute("discover",
+      new RootCommand(rootDir, AssertStatusHook.INSTANCE).getCmd().execute("discover",
           configFile.toString(), "-o", writeToDir.toString(), "-l", "7");
     } finally {
       Files.deleteIfExists(configFile);

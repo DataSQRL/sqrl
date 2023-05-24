@@ -93,7 +93,7 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.2.4</version>
         <configuration>
-          <finalName>flink-main</finalName>
+          <finalName>flink-job</finalName>
           <createDependencyReducedPom>false</createDependencyReducedPom>
         </configuration>
         <executions>

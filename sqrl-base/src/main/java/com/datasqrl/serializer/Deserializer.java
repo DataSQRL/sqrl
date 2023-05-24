@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
@@ -26,13 +27,19 @@ public class Deserializer {
   public Deserializer() {
     SimpleModule module = new SqrlSerializerModule();
     jsonMapper = new ObjectMapper()
+        .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
         .registerModule(module)
         .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
 
     yamlMapper = new YAMLMapper();
-    yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    yamlMapper
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule())
+        .registerModule(module)
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
   }
 
   public <T> T mapJsonFile(URI path, Class<T> clazz) {

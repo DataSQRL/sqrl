@@ -1,5 +1,7 @@
 >>>output
+create-topics.sh
 database-schema.sql
+docker-compose.yml
 flink-plan.json
 server-config.json
 server-model.json

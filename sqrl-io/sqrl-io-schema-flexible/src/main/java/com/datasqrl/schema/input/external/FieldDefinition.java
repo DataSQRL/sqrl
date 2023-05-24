@@ -5,7 +5,10 @@ package com.datasqrl.schema.input.external;
 
 import java.util.List;
 import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 public class FieldDefinition extends AbstractElementDefinition implements FieldTypeDefinition {
 
   public String type;
@@ -13,6 +16,16 @@ public class FieldDefinition extends AbstractElementDefinition implements FieldT
   public List<String> tests;
 
   public Map<String, FieldTypeDefinitionImpl> mixed;
+
+  public FieldDefinition(String name, String description, Object default_value, String type,
+      List<FieldDefinition> columns, List<String> tests,
+      Map<String, FieldTypeDefinitionImpl> mixed) {
+    super(name, description, default_value);
+    this.type = type;
+    this.columns = columns;
+    this.tests = tests;
+    this.mixed = mixed;
+  }
 
   @Override
   public String getType() {

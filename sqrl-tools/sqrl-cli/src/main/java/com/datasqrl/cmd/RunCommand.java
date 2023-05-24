@@ -9,7 +9,7 @@ import picocli.CommandLine;
 public class RunCommand extends AbstractCompilerCommand {
 
   protected RunCommand() {
-    super(true, true);
+    super(true, true, true);
   }
 
 }

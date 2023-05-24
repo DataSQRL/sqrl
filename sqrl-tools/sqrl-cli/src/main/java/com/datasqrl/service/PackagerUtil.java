@@ -14,14 +14,21 @@ import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.PackagerConfig;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Resources;
+import java.util.Arrays;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+@Slf4j
 public class PackagerUtil {
 
   @SneakyThrows
@@ -46,17 +53,19 @@ public class PackagerUtil {
 
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_FILE_NAME);
 
-  public static SqrlConfig getOrCreateDefaultConfiguration(RootCommand root, ErrorCollector errors) {
-    List<Path> configFiles = getOrCreateDefaultPackageFiles(root,errors);
+  public static SqrlConfig getOrCreateDefaultConfiguration(RootCommand root, ErrorCollector errors,
+                                                           Supplier<SqrlConfig> defaultConfig) {
+    List<Path> configFiles = getOrCreateDefaultPackageFiles(root, errors, defaultConfig);
     Preconditions.checkArgument(configFiles.size()>=1);
     return SqrlConfigCommons.fromFiles(errors,configFiles.get(0),configFiles.subList(1,configFiles.size()).stream().toArray(Path[]::new));
   }
 
-  public static List<Path> getOrCreateDefaultPackageFiles(RootCommand root, ErrorCollector errors) {
+  public static List<Path> getOrCreateDefaultPackageFiles(RootCommand root, ErrorCollector errors,
+                                                          Supplier<SqrlConfig> defaultConfig) {
     Optional<List<Path>> existingPackageJson = findRootPackageFiles(root);
     return existingPackageJson
             .orElseGet(() -> List.of(writeEngineConfig(root.getRootDir(),
-                    createDefaultConfig(errors))));
+                    defaultConfig.get())));
   }
 
   @SneakyThrows
@@ -67,29 +76,6 @@ public class PackagerUtil {
 
     config.toFile(enginesFile,true);
     return enginesFile;
-  }
-
-  protected static SqrlConfig createDefaultConfig(ErrorCollector errors) {
-    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
-    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
-
-    SqrlConfig dbConfig = config.getSubConfig("database");
-    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
-    dbConfig.setProperties(JdbcDataSystemConnector.builder()
-        .url("jdbc:h2:file:./h2.db")
-        .driver("org.h2.Driver")
-        .dialect("h2")
-        .database("datasqrl")
-        .build()
-    );
-
-    SqrlConfig flinkConfig = config.getSubConfig("streams");
-    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
-
-    SqrlConfig server = config.getSubConfig("server");
-    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
-
-    return rootConfig;
   }
 
   public static Optional<List<Path>> findRootPackageFiles(RootCommand root) {
@@ -109,5 +95,80 @@ public class PackagerUtil {
     }
   }
 
+  public static SqrlConfig createDockerConfig(Path rootDir, Path targetDir, ErrorCollector errors) {
+    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+
+//    Optional<String> graphqlSchema = getGraphqlSchema(rootDir);
+//    graphqlSchema.ifPresent((schema)->{
+//      SqrlConfig script = rootConfig.getSubConfig("script");
+//      script.setProperty("graphql", schema);
+//    });
+
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    SqrlConfig dbConfig = config.getSubConfig("database");
+    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
+    dbConfig.setProperties(JdbcDataSystemConnector.builder()
+            .url("jdbc:postgresql://database:5432/datasqrl")
+            .driver("org.postgresql.Driver")
+            .dialect("postgres")
+            .database("datasqrl")
+            .user("postgres")
+            .password("postgres")
+            .host("database")
+            .port(5432)
+            .build()
+    );
+    SqrlConfig flinkConfig = config.getSubConfig("streams");
+    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+
+    SqrlConfig server = config.getSubConfig("server");
+    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
+
+    return rootConfig;
+  }
+
+  private static Optional<String> getGraphqlSchema(Path rootDir) {
+    try {
+      return Files.walk(rootDir)
+          .filter(p -> !Files.isDirectory(p) && p.getFileName().toString().endsWith(".graphqls"))
+          .map(Path::toString)
+          .findFirst();
+    } catch (IOException ignore) {
+      log.warn("Could not walk root directory");
+    }
+    return Optional.empty();
+  }
+
+  @SneakyThrows
+  public static SqrlConfig createEmbeddedConfig(Path rootDir, ErrorCollector errors) {
+    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+
+//    Optional<String> graphqlSchema = getGraphqlSchema(rootDir);
+//    graphqlSchema.ifPresent((schema)->{
+//      SqrlConfig script = rootConfig.getSubConfig("script");
+//      script.setProperty("graphql", schema);
+//    });
+//
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    SqrlConfig dbConfig = config.getSubConfig("database");
+    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
+    dbConfig.setProperties(JdbcDataSystemConnector.builder()
+            .url("jdbc:h2:file:./h2.db")
+            .driver("org.h2.Driver")
+            .dialect("h2")
+            .database("datasqrl")
+            .build()
+    );
+
+    SqrlConfig flinkConfig = config.getSubConfig("streams");
+    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+
+    SqrlConfig server = config.getSubConfig("server");
+    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
+
+    return rootConfig;
+  }
 
 }

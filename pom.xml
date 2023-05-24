@@ -55,6 +55,7 @@
         <lombok.version>1.18.24</lombok.version>
         <junit.jupiter.version>5.8.2</junit.jupiter.version>
         <calcite.version>1.27.0</calcite.version>
+        <graphql-java.version>19.2</graphql-java.version>
 
         <!-- params -->
         <snapshots.update>false</snapshots.update>
@@ -291,6 +292,13 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-cli</artifactId>
+                <type>test-jar</type>
+                <scope>test</scope>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-io-file</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
@@ -385,8 +393,18 @@
                 <version>2.24.0</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.graphql-java</groupId>
+                <artifactId>graphql-java</artifactId>
+                <version>${graphql-java.version}</version>
+            </dependency>
 
             <!-- Vertx -->
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-kafka-client</artifactId>
+                <version>${vertx.version}</version>
+            </dependency>
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-web-graphql</artifactId>
@@ -588,6 +606,11 @@
             </dependency>
 
             <!-- database: postgres -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec</artifactId>
+                <version>4.1.92.Final</version>
+            </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>

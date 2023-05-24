@@ -2,8 +2,8 @@
 build.gradle
 datasqrl
 datasqrl/examples
-datasqrl/examples/nutshop
-datasqrl/examples/nutshop/package.json
+datasqrl/examples/Nutshop
+datasqrl/examples/Nutshop/package.json
 main1.sqrl
 package.json
 >>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWODependencies.json-package
@@ -44,8 +44,8 @@ package.json
 build.gradle
 datasqrl
 datasqrl/examples
-datasqrl/examples/nutshop
-datasqrl/examples/nutshop/package.json
+datasqrl/examples/Nutshop
+datasqrl/examples/Nutshop/package.json
 main1.sqrl
 package.json
 >>>src/test/resources/dependency/main1.sqrl-src/test/resources/dependency/packageWDependencies.json-package

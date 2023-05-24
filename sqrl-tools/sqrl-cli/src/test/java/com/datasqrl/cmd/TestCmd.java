@@ -59,6 +59,14 @@ public class TestCmd {
   }
 
   @Test
+  public void executeMutations() {
+    Path root = Paths.get("../../sqrl-examples/mutations");
+    execute(root,
+        "compile", root.resolve("script.sqrl").toString(),
+        root.resolve("schema.graphqls").toString());
+  }
+
+  @Test
   public void discoverNutshop() {
     execute(Nutshop.INSTANCE.getRootPackageDirectory(),
         "discover", Nutshop.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString(), "-l", "3600");
@@ -81,7 +89,6 @@ public class TestCmd {
 
   @Test
   @SneakyThrows
-  @Disabled //todo: Test is in error, does not compile
   public void compileNutshopWithSchema() {
     Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
@@ -92,7 +99,8 @@ public class TestCmd {
             script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
             "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
     Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
-    assertTrue(Files.isRegularFile(schemaFile));
+    assertTrue(Files.isRegularFile(schemaFile),
+        () -> String.format("Schema file could not be found: %s", schemaFile));
     Files.deleteIfExists(schemaFile);
     createSnapshot();
   }
@@ -118,7 +126,6 @@ public class TestCmd {
   }
 
   public static void execute(Path rootDir, String... args) {
-    new RootCommand(rootDir).getCmd().execute(args);
+    new RootCommand(rootDir, AssertStatusHook.INSTANCE).getCmd().execute(args);
   }
-
 }

@@ -1,0 +1,17 @@
+type Event {
+  id: String
+  name: String
+}
+
+type Query {
+  event: [Event]
+}
+
+type Mutation {
+  createEvent(event: GenericEvent!): Event
+}
+
+input GenericEvent {
+  id: String
+  name: String
+}

@@ -26,7 +26,6 @@ import com.google.common.base.Preconditions;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -52,7 +51,7 @@ public class Packager {
   public static final String BUILD_DIR_NAME = "build";
   public static final String PACKAGE_FILE_NAME = "package.json";
 
-  private static final BiPredicate<Path, BasicFileAttributes> FIND_SQLR_SCRIPT = (p, f) ->
+  private static final BiPredicate<Path, BasicFileAttributes> FIND_SQRL_SCRIPT = (p, f) ->
       f.isRegularFile() && p.getFileName().toString().toLowerCase().endsWith(".sqrl");
 
   Repository repository;
@@ -73,7 +72,8 @@ public class Packager {
   }
 
   public Path populateBuildDir(boolean inferDependencies) {
-    errors.checkFatal(ScriptConfiguration.fromRootConfig(config).asString(ScriptConfiguration.MAIN_KEY)
+    errors.checkFatal(
+        ScriptConfiguration.fromRootConfig(config).asString(ScriptConfiguration.MAIN_KEY)
             .getOptional().map(StringUtils::isNotBlank).orElse(false),
         "No config or main script specified");
     try {
@@ -84,7 +84,7 @@ public class Packager {
       }
       retrieveDependencies();
       copyFilesToBuildDir();
-      preProcessFiles();
+      preProcessFiles(config);
       writePackageConfig();
       return buildDir.resolve(PACKAGE_FILE_NAME);
     } catch (IOException e) {
@@ -100,11 +100,10 @@ public class Packager {
   private void inferDependencies() throws IOException {
     //Analyze all local SQRL files to discovery transitive or undeclared dependencies
     //At the end, we'll add the new dependencies to the package config.
-    LinkedHashMap<String, Dependency> dependencies = DependencyConfig.fromRootConfig(config);
     ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
 
     // Find all SQRL script files
-    Result allResults = Files.find(rootDir, 128, FIND_SQLR_SCRIPT)
+    Result allResults = Files.find(rootDir, 128, FIND_SQRL_SCRIPT)
         .map(script -> analyzer.analyze(script, errors))
         .reduce(Result.EMPTY, (r1, r2) -> r1.add(r2));
 
@@ -139,7 +138,8 @@ public class Packager {
    */
   private void retrieveDependencies() {
     LinkedHashMap<String, Dependency> dependencies = DependencyConfig.fromRootConfig(config);
-    ErrorCollector depErrors = config.getErrorCollector().resolve(DependencyConfig.DEPENDENCIES_KEY);
+    ErrorCollector depErrors = config.getErrorCollector()
+        .resolve(DependencyConfig.DEPENDENCIES_KEY);
     dependencies.entrySet().stream()
         .map(entry -> rethrowCall(() ->
             retrieveDependency(buildDir, NamePath.parse(entry.getKey()),
@@ -155,12 +155,14 @@ public class Packager {
    */
 
   private void copyFilesToBuildDir() throws IOException {
-    Map<String,Optional<Path>> destinationPaths = copyScriptFilesToBuildDir();
+    Map<String, Optional<Path>> destinationPaths = copyScriptFilesToBuildDir();
     //Files should exist, if error occurs its internal, hence we create root error collector
     PackagerConfig.setScriptFiles(buildDir, ScriptConfiguration.fromRootConfig(config),
-            destinationPaths, ErrorCollector.root());
+        destinationPaths, ErrorCollector.root());
 
-    copyGradleBuildFileToBuildDir();
+    String buildFile = FileUtil.readResource("build.gradle");
+    Files.copy(new ByteArrayInputStream(buildFile.getBytes()),
+        buildDir.resolve("build.gradle"));
   }
 
   /**
@@ -169,9 +171,9 @@ public class Packager {
    *
    * @throws IOException
    */
-  private Map<String,Optional<Path>> copyScriptFilesToBuildDir() throws IOException {
+  private Map<String, Optional<Path>> copyScriptFilesToBuildDir() throws IOException {
     SqrlConfig scriptConfig = ScriptConfiguration.fromRootConfig(config);
-    Map<String,Optional<Path>> destinationPaths = new HashMap<>();
+    Map<String, Optional<Path>> destinationPaths = new HashMap<>();
     for (String fileKey : ScriptConfiguration.FILE_KEYS) {
       Optional<String> configuredFile = scriptConfig.asString(fileKey).getOptional();
       if (configuredFile.isPresent()) {
@@ -190,28 +192,19 @@ public class Packager {
   }
 
   /**
-   * Copies build file to assemble an uber-jar to build directory.
-   */
-  private void copyGradleBuildFileToBuildDir() throws IOException {
-    String gradleBuildFile = "build.gradle";
-    String buildFile = FileUtil.readResource(gradleBuildFile);
-    InputStream buildStream = new ByteArrayInputStream(buildFile.getBytes());
-    Files.copy(buildStream, buildDir.resolve(gradleBuildFile));
-  }
-
-  /**
    * Helper function to preprocess files.
    */
-  private void preProcessFiles() throws IOException {
+  private void preProcessFiles(SqrlConfig config) throws IOException {
     //Preprocessor will normalize files
-    List<Preprocessor> loadedProcessor = ServiceLoaderDiscovery.getAll(Preprocessor.class);
     List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
-        new JarPreprocessor(), new DataSystemPreprocessor()), loadedProcessor);
+            new JarPreprocessor(), new DataSystemPreprocessor()),
+        ServiceLoaderDiscovery.getAll(Preprocessor.class));
     Preprocessors preprocessors = new Preprocessors(processorList, errors);
     preprocessors.handle(
         PreprocessorsContext.builder()
             .rootDir(rootDir)
             .buildDir(buildDir)
+            .config(config)
             .build());
   }
 
@@ -220,17 +213,19 @@ public class Packager {
    * Helper function to update package config.
    */
   private void writePackageConfig() throws IOException {
-    Path packageFile = buildDir.resolve(PACKAGE_FILE_NAME);
-    config.toFile(packageFile, true);
+    config.toFile(buildDir.resolve(PACKAGE_FILE_NAME), true);
   }
 
+  //Todo; Something wrong here?
   private void cleanBuildDir() throws IOException {
-    if (Files.exists(buildDir)) {
+    if (Files.exists(buildDir) && Files.isDirectory(buildDir)) {
       Files.walk(buildDir)
           // Sort the paths in reverse order so that directories are deleted last
           .sorted(Comparator.reverseOrder())
           .map(Path::toFile)
           .forEach(File::delete);
+    } else if (Files.exists(buildDir) && !Files.isDirectory(buildDir)) {
+      buildDir.toFile().delete();
     }
   }
 

@@ -22,7 +22,7 @@ Orders.entries.product := JOIN Product ON Product.productid = @.productid;
 Customer.recent_products := SELECT e.productid, e.product.category AS category,
                                    sum(e.quantity) AS quantity, count(1) AS num_orders
                             FROM @.orders o JOIN o.entries e
-                            WHERE o.time > now() - INTERVAL 2 YEAR
+                            WHERE o.time > now() - INTERVAL 730 DAYS -- about 2 years
                             GROUP BY productid, category ORDER BY num_orders DESC, quantity DESC;
 
 Customer.recent_products_categories :=
@@ -71,7 +71,7 @@ Category.trending := JOIN Product p ON @.name = p.category
 Customer.favorite_categories := SELECT s.category as category_name,
                                         sum(s.total) AS total
                                 FROM @._spending_by_month_category s
-                                WHERE s.month >= now() - INTERVAL 1 YEAR
+                                WHERE s.month >= now() - INTERVAL 365 DAYS -- about 1 YEAR
                                 GROUP BY category_name ORDER BY total DESC LIMIT 5;
 
 Customer.favorite_categories.category := JOIN Category ON @.category_name = Category.name;

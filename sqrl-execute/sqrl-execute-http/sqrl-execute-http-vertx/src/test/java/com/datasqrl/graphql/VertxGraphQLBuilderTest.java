@@ -26,6 +26,7 @@ import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlConnection;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -152,7 +153,7 @@ class VertxGraphQLBuilderTest {
   public void test() {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client)));
+        new VertxContext(new VertxJdbcClient(client), Map.of()));
     ExecutionResult result = graphQL.execute("{\n"
         + "  casc: customer(sort: {customerid: ASC}) {\n"
         + "    customerid\n"

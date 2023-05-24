@@ -78,6 +78,11 @@
       <artifactId>reactive-streams</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec</artifactId>
+    </dependency>
+
     <!-- TODO: the drivers can be loaded by the jar assembly -->
     <dependency>
       <groupId>com.h2database</groupId>
@@ -117,6 +122,45 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-jdbc</artifactId>
+    </dependency>
+
+    <!-- kafka test-->
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <classifier>test</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_${scala.version}</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_${scala.version}</artifactId>
+      <scope>test</scope>
+      <classifier>test</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams</artifactId>
+      <scope>test</scope>
+      <classifier>test</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams-test-utils</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

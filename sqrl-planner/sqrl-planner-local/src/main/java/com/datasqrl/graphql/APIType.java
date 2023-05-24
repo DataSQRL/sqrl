@@ -6,7 +6,7 @@ import java.util.Optional;
 
 public enum APIType {
 
-    GraphQL, REST, gRPC;
+    GraphQL;
 
     public static Optional<APIType> get(String apiType) {
         if (Strings.isNullOrEmpty(apiType)) return Optional.empty();

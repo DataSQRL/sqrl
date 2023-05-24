@@ -9,7 +9,7 @@ import picocli.CommandLine;
 public class PopulateCommand extends AbstractCompilerCommand {
 
   protected PopulateCommand() {
-    super(true, false);
+    super(true, false, false);
   }
 
 }

@@ -58,7 +58,6 @@ public class ClasspathResourceResolver implements ResourceResolver {
 
   @Override
   public List<URI> loadPath(NamePath namePath) {
-    System.out.println(directories);
     Path path = namepath2Path(Path.of(""), namePath);
     return directories.get(path.toString());
   }

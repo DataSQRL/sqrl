@@ -6,7 +6,7 @@ public interface StatusHook {
 
   void onSuccess();
 
-  void onFailure();
+  void onFailure(Exception e);
 
   public static final StatusHook NONE = new StatusHook() {
     @Override
@@ -15,7 +15,7 @@ public interface StatusHook {
     }
 
     @Override
-    public void onFailure() {
+    public void onFailure(Exception e) {
 
     }
   };
@@ -32,7 +32,7 @@ public interface StatusHook {
     }
 
     @Override
-    public void onFailure() {
+    public void onFailure(Exception e) {
       failed = true;
     }
   }

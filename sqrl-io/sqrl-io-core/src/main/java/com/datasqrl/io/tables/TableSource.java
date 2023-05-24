@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NonNull;
 
 /**
- * A {@link TableSource} defines an input source to be imported into an SQML script. A
+ * A {@link TableSource} defines an input source to be imported into an SQRL script. A
  * {@link TableSource} is comprised of records and is the smallest unit of data that one can refer
  * to within an SQRL script.
  */
