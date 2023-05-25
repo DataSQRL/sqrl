@@ -6,6 +6,7 @@ package com.datasqrl.io.tables;
 import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -17,18 +18,12 @@ import lombok.NonNull;
 @Getter
 public class TableSource extends TableInput {
 
-  @NonNull
-  private final TableSchema tableSchema;
+  private final TableSchema schema;
 
   public TableSource(DataSystemConnectorSettings dataset, TableConfig configuration, NamePath path,
       Name name, TableSchema schema) {
-    super(dataset, configuration, path, name);
-    this.tableSchema = schema;
+    super(dataset, configuration, path, name, Optional.of(schema));
+    this.schema = schema;
 //    this.statistic = TableStatistic.of(1000); //TODO: extract from schema
   }
-
-  public TableSchema getSchema() {
-    return tableSchema;
-  }
-
 }

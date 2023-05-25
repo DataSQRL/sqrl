@@ -5,10 +5,14 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.DataSystemDiscovery;
+import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
@@ -67,16 +71,44 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   @SneakyThrows
-  private List<TableSourceNamespaceObject> loadTable(URI uri, NamePath basePath) {
+  private List<TableNamespaceObject> loadTable(URI uri, NamePath basePath) {
     String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(uri),DataSource.TABLE_FILE_SUFFIX);
     TableConfig tableConfig = TableConfig.load(uri, Name.system(tableName), errors);
     TableSchemaFactory tableSchemaFactory = tableConfig.getSchemaFactory().orElseThrow(() ->
             errors.exception("Schema has not been configured for table [%s]", uri));
 
-    TableSchema tableSchema = tableSchemaFactory.create(basePath, FileUtil.getParent(uri), resourceResolver, tableConfig, errors);
+    Optional<TableSchema> tableSchema = tableSchemaFactory.create(basePath, FileUtil.getParent(uri),
+        resourceResolver, tableConfig, errors);
 
-    return new DataSource().readTableSource(tableSchema, tableConfig, errors, basePath)
-            .map(TableSourceNamespaceObject::new).map(List::of).orElse(List.of());
+    if (tableConfig.getBase().getType() == ExternalDataType.source ||
+        tableConfig.getBase().getType() == ExternalDataType.source_and_sink) {
+      errors.checkFatal(tableSchema.isPresent(), "Could not find schema file [%s] for table [%s]",
+          basePath + "/" + tableConfig.getName().getDisplay(), uri);
+    }
+
+    switch (tableConfig.getBase().getType()) {
+      case source:
+        return new DataSource()
+            .readTableSource(tableSchema.get(), tableConfig, errors, basePath)
+            .map(TableSourceNamespaceObject::new)
+            .map(t->(TableNamespaceObject) t)
+            .map(List::of)
+            .orElse(List.of());
+      case sink:
+        return new DataSource()
+            .readTableSink(tableSchema, tableConfig, errors, basePath)
+            .map(TableSinkNamespaceObject::new)
+            .map(t->(TableNamespaceObject) t)
+            .map(List::of).orElse(List.of());
+      case source_and_sink:
+        TableSource source = new DataSource().readTableSource(tableSchema.get(), tableConfig, errors, basePath)
+            .get();
+        TableSink sink = new DataSource().readTableSink(tableSchema, tableConfig, errors, basePath)
+            .get();
+        return List.of(new TableSourceSinkNamespaceObject(source, sink));
+      default:
+        throw new RuntimeException("Unknown table type: "+ tableConfig.getBase().getType());
+    }
   }
 
 

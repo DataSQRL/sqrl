@@ -6,9 +6,10 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.net.URI;
+import java.util.Optional;
 
 public interface TableSchemaFactory {
-  TableSchema create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, ErrorCollector errors);
+  Optional<TableSchema> create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, ErrorCollector errors);
   TableSchema create(String schemaDefinition, NameCanonicalizer nameCanonicalizer);
   String getSchemaFilename(TableConfig tableConfig);
 

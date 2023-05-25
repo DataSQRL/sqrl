@@ -1,10 +1,8 @@
 package com.datasqrl.packager.preprocess;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
-import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.packager.preprocess.graphql.InputFieldToFlexibleSchemaRelation;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -14,9 +12,7 @@ import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +31,16 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
   public void loader(Path path, ProcessorContext context, ErrorCollector errors) {
     String schema = Files.readString(path);
     TypeDefinitionRegistry registry = new SchemaParser().parse(schema);
+    String schemaName = path.getFileName().toString().split("\\.")[0];
+    Path dir = Files.createDirectories(
+        Files.createTempDirectory("schemas").resolve(schemaName));
+
+    writeMutations(registry, path, context, dir, schemaName, errors);
+  }
+
+  @SneakyThrows
+  private void writeMutations(TypeDefinitionRegistry registry, Path path, ProcessorContext context,
+      Path dir, String schemaName, ErrorCollector errors) {
 
     ObjectTypeDefinition mutationType = (ObjectTypeDefinition) registry
         .getType("Mutation")
@@ -43,15 +49,10 @@ public class GraphqlSchemaPreprocessor implements Preprocessor {
       log.trace("No mutations");
       return;
     }
-    String schemaName = path.getFileName().toString().split("\\.")[0];
     List<TableDefinition> schemas = GraphqlSchemaVisitor.accept(
         new InputFieldToFlexibleSchemaRelation(registry), mutationType, null);
 
-    Path dir = Files.createDirectories(
-        Files.createTempDirectory("schemas").resolve(schemaName));
-
     writeTableSchema(schemas, dir, schemaName, context);
-
   }
 
   @SneakyThrows

@@ -8,12 +8,18 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class TableSourceNamespaceObject implements TableNamespaceObject<TableSource> {
+public class TableSourceNamespaceObject implements TableNamespaceObject<TableSource>, TableSourceObject {
 
   private final TableSource table;
+
 
   @Override
   public Name getName() {
     return table.getName();
+  }
+
+  @Override
+  public TableSource getSource() {
+    return table;
   }
 }
