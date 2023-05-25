@@ -59,6 +59,8 @@ public class Namespace implements AbstractNamespace {
   public boolean addNsObject(Name name, NamespaceObject nsObject) {
     if (nsObject instanceof FunctionNamespaceObject) {
       return addFunctionObject(name, (FunctionNamespaceObject) nsObject);
+    } else if (nsObject instanceof TableNamespaceObject) {
+      return addTableObject(name, (TableNamespaceObject) nsObject);
     } else if (nsObject instanceof TableSourceNamespaceObject) {
       return addTableObject(name, (TableSourceNamespaceObject) nsObject);
     } else if (nsObject instanceof TableSinkNamespaceObject) {
