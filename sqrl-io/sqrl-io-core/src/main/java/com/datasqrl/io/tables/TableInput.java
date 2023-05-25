@@ -7,12 +7,16 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.formats.FormatFactory;
+import java.util.Optional;
+import lombok.Getter;
 
+@Getter
 public class TableInput extends AbstractExternalTable {
 
+
   public TableInput(DataSystemConnectorSettings dataset, TableConfig configuration, NamePath path,
-                    Name name) {
-    super(dataset, configuration, path, name);
+                    Name name, Optional<TableSchema> tableSchema) {
+    super(dataset, configuration, path, name, tableSchema);
   }
 
   public DataSystemConnectorSettings getConnectorSettings() {

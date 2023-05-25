@@ -7,6 +7,8 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.io.tables.AbstractExternalTable;
+import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.plan.local.ScriptTableDefinition;
@@ -72,8 +74,9 @@ public class CalciteTableFactory {
 
   public ScriptTableDefinition importTable(TableSource tableSource, Optional<Name> tblAlias) {
 
-    UniversalTable rootTable = SchemaToUniversalTableMapperFactory.load(tableSource.getSchema())
-        .map(tableSource.getSchema(), tableSource.getConnectorSettings(), tblAlias);
+    UniversalTable rootTable = SchemaToUniversalTableMapperFactory.load(
+        tableSource.getTableSchema().get())
+        .map(tableSource.getTableSchema().get(), tableSource.getConnectorSettings(), tblAlias);
 
     RelDataType rootType = convertTable(rootTable, true, true);
     //Currently, we only support imports through the stream engine

@@ -7,6 +7,7 @@ import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import java.util.Optional;
 import lombok.*;
 
 import java.io.Serializable;
@@ -17,7 +18,7 @@ import java.util.List;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString
 @Getter
-public class AbstractExternalTable {
+public abstract class AbstractExternalTable {
 
   @NonNull
   protected final DataSystemConnectorSettings connector;
@@ -28,6 +29,8 @@ public class AbstractExternalTable {
   protected final NamePath path;
   @NonNull
   protected final Name name;
+  @NonNull
+  protected final Optional<TableSchema> tableSchema;
 
   public String qualifiedName() {
     return path.toString();

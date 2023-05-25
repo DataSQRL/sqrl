@@ -1,17 +1,18 @@
 package com.datasqrl.loaders;
 
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.io.tables.AbstractExternalTable;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.TableNamespaceObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class TableSourceNamespaceObject implements TableNamespaceObject<TableSource>, TableSourceObject {
+public class TableSinkNamespaceObject implements TableNamespaceObject<TableSink>, TableSinkObject {
 
-  private final TableSource table;
-
+  private final TableSink table;
 
   @Override
   public Name getName() {
@@ -19,7 +20,7 @@ public class TableSourceNamespaceObject implements TableNamespaceObject<TableSou
   }
 
   @Override
-  public TableSource getSource() {
+  public TableSink getSink() {
     return table;
   }
 }

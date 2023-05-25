@@ -5,6 +5,7 @@ package com.datasqrl.plan.table;
 
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.io.tables.AbstractExternalTable;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;

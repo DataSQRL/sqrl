@@ -14,14 +14,11 @@ import lombok.NonNull;
 @Getter
 public class TableSink extends AbstractExternalTable {
 
-  private final Optional<TableSchema> schema;
-
   public TableSink(@NonNull DataSystemConnectorSettings connector,
       @NonNull TableConfig configuration,
       @NonNull NamePath path, @NonNull Name name,
       Optional<TableSchema> schema) {
-    super(connector, configuration, path, name);
-    this.schema = schema;
+    super(connector, configuration, path, name, schema);
   }
 
   public FormatFactory.Writer getWriter() {

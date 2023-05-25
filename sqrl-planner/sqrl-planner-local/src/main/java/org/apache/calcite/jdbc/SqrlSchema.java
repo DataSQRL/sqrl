@@ -21,6 +21,8 @@ import static java.util.Objects.requireNonNull;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.functions.SqrlFunctionCatalog;
+import com.datasqrl.io.tables.AbstractExternalTable;
+import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.parse.SqrlAstException;

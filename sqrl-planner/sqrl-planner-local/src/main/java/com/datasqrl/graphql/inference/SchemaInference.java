@@ -15,7 +15,9 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.TableSinkObject;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
+import com.datasqrl.loaders.TableSourceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
@@ -249,15 +251,17 @@ public class SchemaInference {
           .orElseThrow(() ->
               new RuntimeException(String.format(
                   "Could not find mutation source: %s.%s", this.schemaName, def.getName())));
-      TableSourceNamespaceObject tsNs = (TableSourceNamespaceObject) ns;
 
-      SqrlConfig config = tsNs.getTable().getConfiguration().getConnectorConfig();
+      Preconditions.checkState(ns instanceof TableSinkObject,
+          "Mutations must be as sink type: " + def.getName());
+      TableSinkObject tsNs = (TableSinkObject) ns;
+      SqrlConfig config = tsNs.getSink().getConfiguration().getConnectorConfig();
       Map<String, String> kafkaSink = new HashMap<>();
       for (String key : config.getKeys()) {
         kafkaSink.put(key, config.asString(key).get());
       }
 
-      InferredMutation mutation = new InferredMutation(tsNs.getName().getDisplay(), kafkaSink);
+      InferredMutation mutation = new InferredMutation(def.getName(), kafkaSink);
       mutations.add(mutation);
     }
 

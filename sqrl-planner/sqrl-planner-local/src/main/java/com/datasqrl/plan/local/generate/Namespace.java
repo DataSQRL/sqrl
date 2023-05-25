@@ -2,7 +2,9 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.function.CalciteFunctionNsObject;
 import com.datasqrl.function.FlinkUdfNsObject;
+import com.datasqrl.loaders.TableSinkNamespaceObject;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
+import com.datasqrl.loaders.TableSourceSinkNamespaceObject;
 import com.datasqrl.module.FunctionNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.TableNamespaceObject;
@@ -59,6 +61,12 @@ public class Namespace implements AbstractNamespace {
       return addFunctionObject(name, (FunctionNamespaceObject) nsObject);
     } else if (nsObject instanceof TableNamespaceObject) {
       return addTableObject(name, (TableNamespaceObject) nsObject);
+    } else if (nsObject instanceof TableSourceNamespaceObject) {
+      return addTableObject(name, (TableSourceNamespaceObject) nsObject);
+    } else if (nsObject instanceof TableSinkNamespaceObject) {
+      throw new RuntimeException("Cannot import a sink directly.");
+    } else if (nsObject instanceof TableSourceSinkNamespaceObject) {
+      return addTableObject(name, (TableSourceSinkNamespaceObject) nsObject);
     } else {
       throw new UnsupportedOperationException("Unexpected namespace object: " + nsObject.getClass());
     }
@@ -99,7 +107,12 @@ public class Namespace implements AbstractNamespace {
     Preconditions.checkNotNull(nsObject.getTable());
     if (nsObject instanceof TableSourceNamespaceObject) {
       TableSourceNamespaceObject tableSourceNamespaceObject = (TableSourceNamespaceObject) nsObject;
-      return schema.addTable(name, tableSourceNamespaceObject.getTable());
+      return schema.addTable(name, tableSourceNamespaceObject.getSource());
+    } else if (nsObject instanceof TableSourceSinkNamespaceObject) {
+      TableSourceSinkNamespaceObject tableSourceNamespaceObject = (TableSourceSinkNamespaceObject) nsObject;
+      return schema.addTable(name, tableSourceNamespaceObject.getSource());
+    } else if (nsObject instanceof TableSinkNamespaceObject) {
+      throw new RuntimeException("Cannot import a sink directly");
     } else if (nsObject instanceof SqrlTableNamespaceObject) {
       SqrlTableNamespaceObject sqrlTable = (SqrlTableNamespaceObject) nsObject;
       schema.registerScriptTable(sqrlTable.getTable());

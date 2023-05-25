@@ -23,13 +23,12 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
   public static final String SCHEMA_TYPE = "flexible";
 
   @Override
-  public TableSchema create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, ErrorCollector errors) {
+  public Optional<TableSchema> create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, ErrorCollector errors) {
     Optional<URI> schemaPath = resourceResolver
         .resolveFile(basePath.concat(NamePath.of(getSchemaFilename(tableConfig))));
 
-    errors.checkFatal(schemaPath.isPresent(), "Could not find schema file [%s] for table [%s]",
-        basePath.concat(NamePath.of(getSchemaFilename(tableConfig))), baseURI);
-    return create(BaseFileUtil.readFile(schemaPath.get()), tableConfig.getBase().getCanonicalizer());
+    return schemaPath.map(s->
+      create(BaseFileUtil.readFile(s), tableConfig.getBase().getCanonicalizer()));
   }
 
   @Override

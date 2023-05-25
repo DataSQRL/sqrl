@@ -147,7 +147,8 @@ public class TableConfig {
     getErrors().checkFatal(base.getType().isSource(), "Table is not a source: %s", name);
     DataSystemConnectorSettings connector = getConnectorSettings();
     Name tableName = getName();
-    return new TableInput(connector, this, basePath.concat(tableName), tableName);
+    return new TableInput(connector, this, basePath.concat(tableName), tableName,
+        Optional.empty());
   }
 
   public TableSink initializeSink(ErrorCollector errors, NamePath basePath,

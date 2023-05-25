@@ -212,7 +212,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .connectorFactory(connectorFactoryClass)
         .formatFactory(tableConfig.getFormat().getClass())
         .schemaFactory(schemaFactoryClass)
-        .schemaDefinition(relationalTable.getTableSource().getTableSchema().getDefinition())
+        .schemaDefinition(relationalTable.getTableSource().getSchema().getDefinition())
         .typeInformation(type.getKey())
         .schema(type.getValue())
         .tableConfig(tableConfig.serialize())
