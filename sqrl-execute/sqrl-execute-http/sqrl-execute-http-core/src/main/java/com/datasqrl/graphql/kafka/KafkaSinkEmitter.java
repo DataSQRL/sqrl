@@ -28,7 +28,7 @@ public class KafkaSinkEmitter extends SinkEmitter {
 
     kafkaProducer.send(producerRecord)
         .onSuccess(f->{
-          ZonedDateTime dateTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(f.getTimestamp()/1000), ZoneId.systemDefault());
+          ZonedDateTime dateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(f.getTimestamp()), ZoneId.systemDefault());
           entry.put("_source_time", dateTime.toLocalDateTime());
           fut.complete(entry);
         })
