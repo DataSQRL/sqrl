@@ -30,6 +30,7 @@ import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
@@ -159,6 +160,9 @@ public class BuildGraphQLEngine implements
   }
 
   private boolean isList(GraphQLOutputType fieldType) {
+    if (fieldType instanceof GraphQLNonNull) {
+      fieldType = (GraphQLOutputType)((GraphQLNonNull) fieldType).getWrappedType();
+    }
     return fieldType.getClass().equals(GraphQLList.class);
   }
 }
