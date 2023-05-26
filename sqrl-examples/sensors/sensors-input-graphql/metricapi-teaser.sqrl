@@ -1,0 +1,11 @@
+IMPORT datasqrl.example.sensors.SensorReading; -- Import sensor data
+IMPORT time.endOfSecond;  -- Import time function
+/* Aggregate sensor readings to second */
+SecReading := SELECT sensorid, endOfSecond(time) as timeSec,
+        avg(temperature) as temp FROM SensorReading
+    GROUP BY sensorid, timeSec;
+/* Get max temperature in last hour */
+SensorLastHour := SELECT sensorid, max(temp) as maxTemp
+    FROM SecReading
+    WHERE timeSec >= now() - INTERVAL 1 HOUR
+    GROUP BY sensorid;
