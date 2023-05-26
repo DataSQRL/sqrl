@@ -1,15 +1,20 @@
 package com.datasqrl.model;
 
 import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 
-@Value
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
 public class LogicalStreamMetaData implements Serializable {
 
-  final int[] keyIdx;
+  int[] keyIdx;
 
-  final int[] selectIdx;
+  int[] selectIdx;
 
-  final int timestampIdx;
+  int timestampIdx;
 
 }
