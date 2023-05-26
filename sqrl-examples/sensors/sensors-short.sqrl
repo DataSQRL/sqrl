@@ -1,0 +1,11 @@
+IMPORT mySourcePackage.*;     -- Import all data
+IMPORT time.*;                -- Import all time functions
+/* Aggregate sensor readings to minute */
+MinReadings := SELECT sensorid, endOfMinute(time) as timeMin,
+        avg(temperature) as temp FROM SensorReading
+    GROUP BY sensorid, timeMin;
+/* Get max temperature in last hour */
+MaxSensorTemp := SELECT sensorid, max(temp) as maxTemp,
+    FROM MinReadings
+    WHERE timeMin >= now() - INTERVAL 1 HOUR
+    GROUP BY sensorid;

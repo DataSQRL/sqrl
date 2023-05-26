@@ -1,0 +1,23 @@
+type MaxSensorTemp {
+  sensorid: Int!
+  maxTemp: Float!
+}
+
+type Query {
+  MaxSensorTemp(sensorid: Int!): MaxSensorTemp!
+}
+
+type Mutation {
+  AddReading(createReading: SensorReading!): CreateReading
+}
+
+input SensorReading {
+  sensorid: Int!
+  temperature: Float!
+  humidity: Float!
+}
+
+type CreateReading {
+  _source_time: String!
+  sensorid: Int!
+}
