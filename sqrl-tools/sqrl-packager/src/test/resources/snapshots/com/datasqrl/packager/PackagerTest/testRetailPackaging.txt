@@ -35,6 +35,8 @@ package.json
 }
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/package-exampleWscript.json-dir
 build.gradle
+c360-full-graphqlv1
+c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -53,14 +55,13 @@ ecommerce-data/product.table.json
 output
 output/system.discover.table.json
 package.json
-schema.graphqls
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/package-exampleWscript.json-package
 {
   "compiler" : {
     "maxApiArguments" : 3
   },
   "script" : {
-    "graphql" : "schema.graphqls",
+    "graphql" : "c360-full-graphqlv1/schema.graphqls",
     "main" : "c360-full.sqrl"
   },
   "package" : {
@@ -72,6 +73,8 @@ schema.graphqls
 }
 >>>../../sqrl-examples/retail/package-exampleWscript.json-dir
 build.gradle
+c360-full-graphqlv1
+c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -90,14 +93,13 @@ ecommerce-data/product.table.json
 output
 output/system.discover.table.json
 package.json
-schema.graphqls
 >>>../../sqrl-examples/retail/package-exampleWscript.json-package
 {
   "compiler" : {
     "maxApiArguments" : 3
   },
   "script" : {
-    "graphql" : "schema.graphqls",
+    "graphql" : "c360-full-graphqlv1/schema.graphqls",
     "main" : "c360-full.sqrl"
   },
   "package" : {
@@ -109,6 +111,8 @@ schema.graphqls
 }
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWOscript.json-dir
 build.gradle
+c360-full-graphqlv1
+c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -127,14 +131,13 @@ ecommerce-data/product.table.json
 output
 output/system.discover.table.json
 package.json
-schema.graphqls
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWOscript.json-package
 {
   "compiler" : {
     "maxApiArguments" : 3
   },
   "script" : {
-    "graphql" : "schema.graphqls",
+    "graphql" : "c360-full-graphqlv1/schema.graphqls",
     "main" : "c360-full.sqrl"
   },
   "package" : {
@@ -146,6 +149,8 @@ schema.graphqls
 }
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWscript.json-dir
 build.gradle
+c360-full-graphqlv1
+c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -164,14 +169,13 @@ ecommerce-data/product.table.json
 output
 output/system.discover.table.json
 package.json
-schema.graphqls
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWscript.json-package
 {
   "compiler" : {
     "maxApiArguments" : 3
   },
   "script" : {
-    "graphql" : "schema.graphqls",
+    "graphql" : "c360-full-graphqlv1/schema.graphqls",
     "main" : "c360-full.sqrl"
   },
   "package" : {
@@ -183,6 +187,8 @@ schema.graphqls
 }
 >>>../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWscript.json-dir
 build.gradle
+c360-full-graphqlv1
+c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
@@ -201,14 +207,13 @@ ecommerce-data/product.table.json
 output
 output/system.discover.table.json
 package.json
-schema.graphqls
 >>>../../sqrl-examples/retail/c360-full-graphqlv1/schema.graphqls-../../sqrl-examples/retail/package-exampleWscript.json-package
 {
   "compiler" : {
     "maxApiArguments" : 3
   },
   "script" : {
-    "graphql" : "schema.graphqls",
+    "graphql" : "c360-full-graphqlv1/schema.graphqls",
     "main" : "c360-full.sqrl"
   },
   "package" : {
