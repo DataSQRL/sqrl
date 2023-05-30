@@ -4,6 +4,7 @@
 package com.datasqrl.cmd;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
@@ -22,6 +23,8 @@ public class RootCommand implements Runnable {
       , scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.EMPTY_LIST;
 
+  List<FeatureFlag> featureFlags = new ArrayList<>();
+
   @Override
   public void run() {
     CommandLine.usage(this, System.out);
@@ -30,6 +33,11 @@ public class RootCommand implements Runnable {
 
   final Path rootDir;
   final StatusHook statusHook;
+
+  public RootCommand(@NonNull Path rootDir, @NonNull StatusHook statusHook, List<FeatureFlag> featureFlags) {
+    this(rootDir, statusHook);
+    this.featureFlags = featureFlags;
+  }
 
   public RootCommand(@NonNull Path rootDir, @NonNull StatusHook statusHook) {
     this.rootDir = rootDir;

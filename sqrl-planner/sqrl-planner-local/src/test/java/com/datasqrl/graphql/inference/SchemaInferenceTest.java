@@ -49,7 +49,8 @@ class SchemaInferenceTest {
             + "}"
             + "type User { id: String }",
         schema,
-        relBuilder
+        relBuilder,
+        null
     );
 
     InferredSchema inferredSchema = schemaInference.accept();
@@ -80,7 +81,8 @@ class SchemaInferenceTest {
             + "type UserExtended implements User { id: String, username: String }"
             + "",
         schema,
-        relBuilder
+        relBuilder,
+        null
     );
 
     InferredSchema inferredSchema = schemaInference.accept();

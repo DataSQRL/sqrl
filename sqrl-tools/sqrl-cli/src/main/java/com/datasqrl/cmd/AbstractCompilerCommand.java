@@ -221,6 +221,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @SneakyThrows
   public void addSubscriptions(TypeDefinitionRegistry registry, String schemaName, Path buildDir,
       Path rootDir, String bootstrapServers) {
+    if (!this.root.featureFlags.contains(FeatureFlag.SUBSCRIPTIONS)) {
+      throw new RuntimeException("Subscriptions not yet supported");
+    }
+
     ObjectTypeDefinition subscriptionType = (ObjectTypeDefinition) registry
             .getType("Subscription")
             .orElse(null);
