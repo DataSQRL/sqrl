@@ -69,7 +69,7 @@ public class TestCmd {
   public void compileSubscriptions() {
     Path root = Paths.get("src/test/resources/subscriptions");
     execute(root,
-        "compile", root.resolve("script.sqrl").toString(),
+        "run", root.resolve("script.sqrl").toString(),
         root.resolve("schema.graphqls").toString());
   }
 

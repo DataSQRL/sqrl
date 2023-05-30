@@ -16,14 +16,12 @@ import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.server.SinkEmitter;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.graph.Graph;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -33,7 +31,6 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
-import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
@@ -53,23 +50,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {
 
-  private final RootGraphqlModel root;
+  private final RootGraphqlModel model;
   private final int port;
   private final JdbcDataSystemConnector jdbc;
 
   public GraphQLServer() {
-    this(getModel(), 8888, getClient());
+    this(readModel(), 8888, createClient());
   }
 
-  public GraphQLServer(RootGraphqlModel root,
+  public GraphQLServer(RootGraphqlModel model,
       int port, JdbcDataSystemConnector jdbc) {
-    this.root = root;
+    this.model = model;
     this.port = port;
     this.jdbc = jdbc;
   }
 
   @SneakyThrows
-  private static RootGraphqlModel getModel() {
+  private static RootGraphqlModel readModel() {
     ObjectMapper objectMapper = new ObjectMapper();
     return objectMapper.readValue(
         new File("model.json"),
@@ -77,7 +74,7 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   @SneakyThrows
-  public static JdbcDataSystemConnector getClient() {
+  public static JdbcDataSystemConnector createClient() {
     ObjectMapper objectMapper = new ObjectMapper();
     JdbcDataSystemConnector jdbc = objectMapper.readValue(
         new File("config.json"),
@@ -85,7 +82,6 @@ public class GraphQLServer extends AbstractVerticle {
     return jdbc;
   }
 
-  @SneakyThrows
   @Override
   public void start(Promise<Void> startPromise) {
     GraphQLHandlerOptions graphQLHandlerOptions = new GraphQLHandlerOptions().setRequestBatchingEnabled(
@@ -104,13 +100,6 @@ public class GraphQLServer extends AbstractVerticle {
     });
 
     SqlClient client = getSqlClient();
-    JDBCPool.pool(this.vertx,
-        new JDBCConnectOptions()
-            .setJdbcUrl(jdbc.getUrl())
-            .setDatabase(jdbc.getDatabase())
-            .setUser(jdbc.getUser())
-            .setPassword(jdbc.getPassword()),
-        new PoolOptions());
 
     GraphQL graphQL = createGraphQL(client);
 
@@ -127,7 +116,7 @@ public class GraphQLServer extends AbstractVerticle {
 
     HttpServerOptions httpServerOptions = new HttpServerOptions();
 
-    if (!getModel().getSubscriptions().isEmpty()) {
+    if (!model.getSubscriptions().isEmpty()) {
       Handler apGraphQLHandler = ApolloWSHandler.create(graphQL);
       router.route("/graphql-ws").handler(apGraphQLHandler);
       httpServerOptions
@@ -180,12 +169,11 @@ public class GraphQLServer extends AbstractVerticle {
     return options;
   }
 
-  @SneakyThrows
   public GraphQL createGraphQL(SqlClient client) {
-    GraphQL graphQL = root.accept(
+    GraphQL graphQL = model.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client), constructSinkEmitters(root, vertx),
-            constructSubscriptions(root, vertx)));
+        new VertxContext(new VertxJdbcClient(client), constructSinkEmitters(model, vertx),
+            constructSubscriptions(model, vertx)));
     return graphQL;
   }
 
