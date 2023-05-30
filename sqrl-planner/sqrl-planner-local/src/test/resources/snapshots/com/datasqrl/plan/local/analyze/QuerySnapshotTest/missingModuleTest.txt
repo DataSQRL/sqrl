@@ -1,0 +1,15 @@
+>>>errors
+[FATAL] Could not find package [nomodule.doesnotexist]. 
+Looking in path: example/uri
+Found files: 
+/example/uri/found.datasystem.json
+Supported files/suffixes:
+system.discover.table.json
+.table.json
+.function.json
+in script:test.sqrl [5:8]:
+IMPORT ecommerce-data.Product;
+IMPORT time.*;
+IMPORT nomodule.doesnotexist;
+-------^
+
