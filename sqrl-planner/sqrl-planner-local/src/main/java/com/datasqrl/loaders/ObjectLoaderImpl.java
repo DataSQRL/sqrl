@@ -53,6 +53,14 @@ public class ObjectLoaderImpl implements ObjectLoader {
             .collect(Collectors.toList());
   }
 
+  @Override
+  public ObjectLoaderMetadata getMetadata(NamePath path) {
+    return new ObjectLoaderMetadata(
+        resourceResolver.loadPath(path),
+        resourceResolver.getResourcePath(path),
+        List.of(DataSource.DATASYSTEM_FILE, DataSource.TABLE_FILE_SUFFIX, FUNCTION_JSON));
+  }
+
   private List<? extends NamespaceObject> load(URI uri, NamePath directory) {
     if (uri.toString().endsWith(DataSource.DATASYSTEM_FILE)) {
       return loadDataSystem(uri, directory);

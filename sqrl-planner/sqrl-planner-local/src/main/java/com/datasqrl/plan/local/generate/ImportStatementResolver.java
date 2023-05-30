@@ -4,7 +4,9 @@ import static com.datasqrl.error.ErrorLabel.GENERIC;
 
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ModuleMetadataPrinter;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.canonicalizer.Name;
@@ -54,7 +56,8 @@ public class ImportStatementResolver extends AbstractStatementResolver {
       Optional<NamespaceObject> nsObject = getNamespaceObject(module, path);
 
       checkState(nsObject.isPresent(), GENERIC, statement.getImportPath()::getParserPosition,
-          () -> String.format("Could not resolve import [%s]", path));
+          () -> String.format("Could not resolve import [%s] \n%s", path,
+              ModuleMetadataPrinter.print(moduleLoader.getModuleMetadata(path))));
 
       // Add the namespace object to the current namespace
       Name objectName = getObjectName(path.getLast(), statement.getAlias());
@@ -122,7 +125,8 @@ public class ImportStatementResolver extends AbstractStatementResolver {
   private SqrlModule getModule(NamePath path) {
     return moduleLoader
         .getModule(path.popLast())
-        .orElseThrow(()-> errors.exception("Could not find module [%s] in: %s", path, moduleLoader));
+        .orElseThrow(()-> errors.exception("Could not find package [%s]. \n%s", path,
+            ModuleMetadataPrinter.print(moduleLoader.getModuleMetadata(path))));
   }
 
   private boolean isAllImport(NamePath path) {

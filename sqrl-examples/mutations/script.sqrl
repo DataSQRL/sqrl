@@ -1,1 +1,1 @@
-IMPORT schema.createEvent AS event;
+IMPORT schemad.createEvent AS event;

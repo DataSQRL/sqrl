@@ -87,6 +87,20 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void missingModuleTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT nomodule.doesnotexist;");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
+  public void missingFileTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT string.missingFile;");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
   public void stringLibTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("IMPORT string.*");

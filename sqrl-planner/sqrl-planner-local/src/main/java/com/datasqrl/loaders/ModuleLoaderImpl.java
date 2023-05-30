@@ -33,6 +33,12 @@ public class ModuleLoaderImpl implements ModuleLoader {
     return Optional.of(new SqrlDirectoryModule(nsObjects));
   }
 
+  @Override
+  public ModuleMetadata getModuleMetadata(NamePath path) {
+    return new ModuleMetadata(path,
+        objectLoader.getMetadata(path.popLast()));
+  }
+
   private static boolean isPrintSink(NamePath namePath) {
     return namePath.size() == 1 && namePath.getLast().getCanonical()
             .equals(PrintDataSystemFactory.SYSTEM_NAME);

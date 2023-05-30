@@ -2,6 +2,7 @@ package com.datasqrl.module.resolver;
 
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.google.common.base.Preconditions;
 import java.net.URI;
@@ -51,5 +52,14 @@ public class FileResourceResolver implements ResourceResolver {
       return Optional.empty();
     }
     return Optional.of(path.toUri());
+  }
+
+  @Override
+  public Path getResourcePath(NamePath path) {
+    Path p = baseDir;
+    for (Name element : path) {
+      p = p.resolve(element.getDisplay());
+    }
+    return p;
   }
 }

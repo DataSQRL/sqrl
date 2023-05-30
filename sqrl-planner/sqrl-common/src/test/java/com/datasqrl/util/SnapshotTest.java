@@ -30,12 +30,6 @@ public class SnapshotTest {
   public static final String SNAPSHOT_EXTENSION = ".txt";
 
 
-  public static void createOrValidateSnapshot(@NonNull String className, @NonNull String fileName,
-      @NonNull String content) {
-    new Snapshot(className, fileName, new StringBuilder(content)).createOrValidate();
-  }
-
-
   private static Path getPath(String[] components) {
     return Paths.get(components[0], Arrays.copyOfRange(components, 1, components.length));
   }

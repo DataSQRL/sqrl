@@ -2,12 +2,11 @@ package com.datasqrl;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.resolver.ClasspathResourceResolver;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Resources;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,16 +19,20 @@ import org.apache.flink.table.api.TableResult;
 @Slf4j
 public class FlinkMain {
   public static void main(String[] args) {
-    ClasspathResourceResolver resourceResolver = new ClasspathResourceResolver();
-
-    log.info("Files:" + resourceResolver.getFiles());
-    (new FlinkMain()).run(resourceResolver);
+    (new FlinkMain()).run();
   }
 
   @SneakyThrows
-  public void run(ResourceResolver resourceResolver) {
+  public void run() {
     log.info("Hello.");
-    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flink-plan.json"));
+    Optional<URI> flinkPlan = Optional.ofNullable(Resources.getResource("build/deploy/flink-plan.json"))
+        .map(u-> {
+          try {
+            return u.toURI();
+          } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+          }
+        });
     Preconditions.checkState(flinkPlan.isPresent(), "Could not find flink executable plan.");
 
     Deserializer deserializer = new Deserializer();

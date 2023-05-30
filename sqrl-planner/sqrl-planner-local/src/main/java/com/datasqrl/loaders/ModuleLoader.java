@@ -9,4 +9,6 @@ import java.util.Optional;
 
 public interface ModuleLoader {
   Optional<SqrlModule> getModule(NamePath namePath);
+
+  ModuleMetadata getModuleMetadata(NamePath path);
 }

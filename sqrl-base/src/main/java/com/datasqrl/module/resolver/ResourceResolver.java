@@ -4,6 +4,7 @@ import com.datasqrl.canonicalizer.NamePath;
 
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,4 +27,5 @@ public interface ResourceResolver {
     return pathSegments[pathSegments.length - 1];
   }
 
+  Path getResourcePath(NamePath path);
 }
