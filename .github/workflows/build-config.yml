@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
     - name: Setup Timezone
       uses: szenius/set-timezone@v1.1
