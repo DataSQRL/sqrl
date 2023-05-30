@@ -25,9 +25,12 @@ import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
+import graphql.language.ImplementingTypeDefinition;
 import graphql.language.InputObjectTypeDefinition;
 import graphql.language.InputValueDefinition;
+import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ListType;
+import graphql.language.NamedNode;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
@@ -45,12 +48,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
 
 @Getter
+@Slf4j
 public class SchemaInference {
 
   private final ModuleLoader moduleLoader;
@@ -110,14 +115,43 @@ public class SchemaInference {
 
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
-    Optional<SQRLTable> sqrlTable = getTableOfType(fieldDefinition.getType(),
-        fieldDefinition.getName());
+
+
+    Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldDefinition.getType())
+        .flatMap(name -> getTableOfType(fieldDefinition.getType(), name));
+    Optional<SQRLTable> sqrlTableByCommonInterface = getTypeName(fieldDefinition.getType())
+        .flatMap(name -> getTableOfCommonInterface(fieldDefinition.getType(), name));
+
+    Optional<SQRLTable> sqrlTable = sqrlTableByFieldType
+        .or(()->sqrlTableByCommonInterface);
     Preconditions.checkState(sqrlTable.isPresent(),
         "Could not find associated SQRL type for field %s on type %s",
         fieldDefinition.getName(), fieldDefinition.getType());
     SQRLTable table = sqrlTable.get();
 
     return inferObjectField(fieldDefinition, table, fields, parent);
+  }
+
+  private Optional<? extends SQRLTable> getTableOfCommonInterface(Type type, String name) {
+    Optional<TypeDefinition> defOpt = registry.getType(type);
+    if (defOpt.isPresent()) {
+      TypeDefinition def = defOpt.get();
+      //Get all extending types, if there is one unique one then return it
+      if (def instanceof ObjectTypeDefinition) {
+        ObjectTypeDefinition objDef = (ObjectTypeDefinition) def;
+        List<SQRLTable> foundTables = objDef.getImplements()
+            .stream()
+            .map(t->getTableOfType(t, getTypeName(t).get()))
+            .filter(o->o.isPresent())
+            .map(f->f.get())
+            .collect(Collectors.toList());
+        if (foundTables.size() == 1) {
+          return Optional.of(foundTables.get(0));
+        }
+      }
+    }
+
+    return Optional.empty();
   }
 
   private Optional<SQRLTable> getTableOfType(Type type, String name) {
@@ -128,6 +162,11 @@ public class SchemaInference {
       }
     }
     return Optional.empty();
+  }
+
+  private Optional<String> getTypeName(Type type) {
+    return registry.getType(type)
+        .map(f->f.getName());
   }
 
   private boolean isNameEqual(String canonical, String graphqlName) {
@@ -142,10 +181,10 @@ public class SchemaInference {
     return StringUtils.stripEnd(graphqlName, "_");
   }
 
-  private Optional<ObjectTypeDefinition> lookupType(Type type) {
-    Optional<TypeDefinition> t = registry.getType(type);
-    return t.filter(o -> o instanceof ObjectTypeDefinition)
-        .map(o -> (ObjectTypeDefinition) o);
+  private Optional<ImplementingTypeDefinition> lookupType(Type type) {
+    return registry.getType(type)
+        .filter(i -> i instanceof ImplementingTypeDefinition)
+        .map(o -> (ImplementingTypeDefinition) o);
   }
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
@@ -202,9 +241,9 @@ public class SchemaInference {
     return new InferredScalarField(fieldDefinition, column, parent);
   }
 
-  private boolean structurallyEqual(ObjectTypeDefinition typeDef, SQRLTable table) {
+  private boolean structurallyEqual(ImplementingTypeDefinition typeDef, SQRLTable table) {
     return typeDef.getFieldDefinitions().stream()
-        .allMatch(f -> table.getField(Name.system(f.getName())).isPresent());
+        .allMatch(f -> table.getField(Name.system(((NamedNode)f).getName())).isPresent());
   }
 
   private List<String> getInvalidFields(ObjectTypeDefinition typeDef, SQRLTable table) {
