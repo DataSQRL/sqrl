@@ -28,12 +28,12 @@ import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.google.common.base.Preconditions;
+import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -175,7 +175,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     Map<String, Optional<String>> scriptFiles = ScriptConfiguration.getFiles(config);
     Optional<URI> graphqlSchema = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
-            .flatMap(file -> resourceResolver.resolveFile(NamePath.of(file)));
+        .flatMap(file -> resourceResolver.resolveFile(NamePath.of(file)));
 
     if (graphqlSchema.isEmpty()) {
       return;
@@ -186,6 +186,20 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     String schema = Files.readString(schemaPath);
     TypeDefinitionRegistry registry = new SchemaParser().parse(schema);
 
+    String bootstrapServers;
+    if (kafkaStarted) {
+      bootstrapServers = CLUSTER.bootstrapServers();
+    } else {
+      bootstrapServers = "kafka:9092";
+    }
+
+    addMutations(registry, schemaName, buildDir, rootDir, bootstrapServers);
+    addSubscriptions(registry, schemaName, buildDir, rootDir, bootstrapServers);
+  }
+
+  @SneakyThrows
+  public void addMutations(TypeDefinitionRegistry registry, String schemaName, Path buildDir,
+      Path rootDir, String bootstrapServers) {
     ObjectTypeDefinition mutationType = (ObjectTypeDefinition) registry
             .getType("Mutation")
             .orElse(null);
@@ -195,29 +209,54 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     Path schemaRoot = buildDir.resolve(schemaName);
     Files.createDirectories(schemaRoot);
+
     for (graphql.language.FieldDefinition definition : mutationType.getFieldDefinitions()) {
-      String bootstrapServers;
       if (kafkaStarted) {
         CLUSTER.createTopic(definition.getName());
-        bootstrapServers = CLUSTER.bootstrapServers();
-      } else {
-        bootstrapServers = "kafka:9092";
       }
-      Map sourceConfig = createSourceConfig(definition.getName(), bootstrapServers);
-
-      //Check local dir to not overwrite
-      String tableName = definition.getName() + ".table.json";
-
-      if (!Files.exists(rootDir.resolve(schemaName).resolve(tableName))) {
-        Path f = schemaRoot.resolve(tableName);
-        SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter()
-                .writeValue(f.toFile(), sourceConfig);
-      }
+      writeConfig(schemaRoot, schemaName, rootDir, ExternalDataType.source_and_sink, definition, bootstrapServers);
     }
   }
 
+  @SneakyThrows
+  public void addSubscriptions(TypeDefinitionRegistry registry, String schemaName, Path buildDir,
+      Path rootDir, String bootstrapServers) {
+    ObjectTypeDefinition subscriptionType = (ObjectTypeDefinition) registry
+            .getType("Subscription")
+            .orElse(null);
+    if (subscriptionType == null) {
+      return;
+    }
 
-  private Map createSourceConfig(String tableName, String bootstrapServers) {
+    Path schemaRoot = buildDir.resolve(schemaName);
+    Files.createDirectories(schemaRoot);
+
+    for (graphql.language.FieldDefinition definition : subscriptionType.getFieldDefinitions()) {
+      if (kafkaStarted) {
+        CLUSTER.createTopic(definition.getName());
+      }
+      writeConfig(schemaRoot, schemaName, rootDir, ExternalDataType.sink, definition, bootstrapServers);
+    }
+  }
+
+  @SneakyThrows
+  private void writeConfig(Path schemaRoot, String schemaName, Path rootDir, ExternalDataType externalDataType, FieldDefinition definition,
+      String bootstrapServers) {
+
+    Map sourceConfig = createConfig(definition.getName(), bootstrapServers,
+        externalDataType);
+
+    String tableName = definition.getName() + ".table.json";
+
+    //Check local dir to not overwrite
+    if (!Files.exists(rootDir.resolve(schemaName).resolve(tableName))) {
+      Path f = schemaRoot.resolve(tableName);
+      SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter()
+          .writeValue(f.toFile(), sourceConfig);
+    }
+  }
+
+  private Map createConfig(String tableName, String bootstrapServers, ExternalDataType type) {
     Map connector = new HashMap();
     connector.put("name", "kafka");
     connector.put("bootstrap.servers", bootstrapServers);
@@ -230,7 +269,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     connector.put("topic", tableName);
 
-    Map config = Map.of("type", ExternalDataType.source_and_sink.name(),
+    Map config = Map.of("type", type.name(),
             "canonicalizer", "system",
             "format", Map.of(
                     "name", "json"

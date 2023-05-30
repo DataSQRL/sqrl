@@ -29,7 +29,7 @@ public class SchemaInferenceModel {
 
     InferredQuery query;
     Optional<InferredMutations> mutation;
-    Optional<InferredRootObject> subscription;
+    Optional<InferredSubscriptions> subscription;
 
     public <R, C> R accept(InferredSchemaVisitor<R, C> visitor, C context) {
       return visitor.visitSchema(this, context);
@@ -76,11 +76,18 @@ public class SchemaInferenceModel {
 
   @Value
   @ToString
-  public static class InferredSubscription implements InferredRootObject {
+  public static class InferredSubscriptions implements InferredRootObject {
+    List<InferredSubscription> subscriptions;
+    List<InferredField> fields;
+    public <R, C> R accept(InferredSubscriptionObjectVisitor<R, C> visitor, C context) {
+      return visitor.visitSubscriptions(this, context);
+    }
+  }
 
-//    public <R, C> R accept(InferredRootObjectVisitor<R, C> visitor, C context) {
-//      return visitor.visitSubscription(this, context);
-//    }
+  @Value
+  public static class InferredSubscription {
+    String name;
+    Map<String, String> subscriptions; //todo modularize
   }
 
   public interface InferredRootObjectVisitor<R, C> {
@@ -92,6 +99,9 @@ public class SchemaInferenceModel {
     R visitMutation(InferredMutations rootObject, C context);
   }
 
+  public interface InferredSubscriptionObjectVisitor<R, C> {
+    R visitSubscriptions(InferredSubscriptions rootObject, C context);
+  }
   public interface InferredField {
 
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context);

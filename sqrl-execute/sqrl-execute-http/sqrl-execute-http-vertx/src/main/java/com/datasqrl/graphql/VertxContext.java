@@ -7,26 +7,35 @@ import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.SinkEmitter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import lombok.Value;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 @Value
 public class VertxContext implements Context {
 
   VertxJdbcClient sqlClient;
   Map<String, SinkEmitter> sinks;
+  Map<String, KafkaConsumer> subscriptions;
 
   @Override
   public JdbcClient getClient() {
@@ -50,7 +59,6 @@ public class VertxContext implements Context {
       if (resolvedQuery == null) {
         throw new RuntimeException("Could not find query");
       }
-
       //Execute
       QueryExecutionContext context = new VertxQueryExecutionContext(this,
           env, argumentSet, fut);
@@ -79,5 +87,49 @@ public class VertxContext implements Context {
         fut.fail(e);
       }
     });
+  }
+
+  @Override
+  public DataFetcher<?> createSubscriptionFetcher(KafkaSubscriptionCoords coords) {
+    ObjectMapper mapper = new ObjectMapper();
+    KafkaConsumer<String, String> consumer = subscriptions.get(coords.getFieldName());
+
+    Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
+
+    return new DataFetcher<>() {
+      @Override
+      public Publisher<Map> get(DataFetchingEnvironment env) throws Exception {
+
+        Publisher<Map> publisher = Flux.create(sink -> {
+          consumer.handler(record -> {
+                try {
+                  Map<String, Object> map = mapper.readValue(record.value(), Map.class);
+                  Map<String, Object> args = env.getArguments();
+                  if (!filterSubscription(map, args)) {
+                    sink.next(map);
+                  }
+                } catch (JsonProcessingException e) {
+                  throw new RuntimeException(e);
+                }
+              }).exceptionHandler(sink::error)
+              .endHandler(done -> sink.complete());
+        });
+        return publisher;
+      }
+
+      private boolean filterSubscription(Map<String, Object> map, Map<String, Object> args) {
+        if (args == null) {
+          return false;
+        }
+        for (Map.Entry<String, Object> arg : args.entrySet()) {
+          Object o = map.get(arg.getKey());
+          if (!arg.getValue().equals(o)) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+    };
   }
 }

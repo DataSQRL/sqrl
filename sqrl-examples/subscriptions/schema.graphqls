@@ -1,0 +1,52 @@
+type Query {
+  getPosts: [Post!]
+}
+
+type Mutation {
+  createPost(input: CreatePostInput!): CreatePostPayload
+  upvotePost(input: UpvotePostInput!): UpvotePostPayload
+}
+
+type Subscription {
+  postCreated: Post
+  postUpvoted: PostUpvoted
+}
+
+type Post {
+  id: String
+  title: String
+  author: String
+  url: String
+  upvote: PostUpvoteCount
+}
+
+type PostUpvoted {
+  id: String
+  upvote: Int
+}
+
+type CreatePostPayload {
+  id: String
+  title: String
+  author: String
+  url: String
+}
+
+type UpvotePostPayload {
+  id: String
+}
+
+type PostUpvoteCount {
+  upvotes: Int
+}
+
+input CreatePostInput {
+  id: String
+  title: String
+  author: String
+  url: String
+}
+
+input UpvotePostInput {
+  id: String
+}

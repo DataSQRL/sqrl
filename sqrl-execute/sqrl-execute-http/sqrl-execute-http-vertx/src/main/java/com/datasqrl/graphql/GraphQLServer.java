@@ -3,27 +3,40 @@
  */
 package com.datasqrl.graphql;
 
+import static io.vertx.core.http.HttpMethod.GET;
+import static io.vertx.core.http.HttpMethod.POST;
+
 import com.datasqrl.graphql.kafka.KafkaSinkEmitter;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.server.SinkEmitter;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.graph.Graph;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.LoggerHandler;
+import io.vertx.ext.web.handler.graphql.ApolloWSHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
+import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
+import io.vertx.kafka.client.consumer.KafkaConsumer;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -99,12 +112,30 @@ public class GraphQLServer extends AbstractVerticle {
             .setPassword(jdbc.getPassword()),
         new PoolOptions());
 
-    GraphQLHandler graphQLHandler = GraphQLHandler.create(createGraphQL(client),
-        graphQLHandlerOptions);
+    GraphQL graphQL = createGraphQL(client);
 
+    router.route().handler(CorsHandler.create()
+        .addOrigin("*")
+        .allowedMethod(GET)
+        .allowedMethod(POST));
+    router.route().handler(BodyHandler.create());
+
+    //Todo: Don't spin up the ws endpoint if there are no subscriptions
+    GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
+        graphQLHandlerOptions);
     router.route("/graphql").handler(graphQLHandler);
 
-    vertx.createHttpServer().requestHandler(router).listen(port)
+    HttpServerOptions httpServerOptions = new HttpServerOptions();
+
+    if (!getModel().getSubscriptions().isEmpty()) {
+      Handler apGraphQLHandler = ApolloWSHandler.create(graphQL);
+      router.route("/graphql-ws").handler(apGraphQLHandler);
+      httpServerOptions
+          .addWebSocketSubProtocol("graphql-transport-ws")
+          .addWebSocketSubProtocol("graphql-ws");
+    }
+
+    vertx.createHttpServer(httpServerOptions).requestHandler(router).listen(port)
         .onFailure((e)-> {
           log.error("Could not start graphql server", e);
           startPromise.fail(e);
@@ -153,8 +184,29 @@ public class GraphQLServer extends AbstractVerticle {
   public GraphQL createGraphQL(SqlClient client) {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client), constructSinkEmitters(root, vertx)));
+        new VertxContext(new VertxJdbcClient(client), constructSinkEmitters(root, vertx),
+            constructSubscriptions(root, vertx)));
     return graphQL;
+  }
+
+  private Map<String, KafkaConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx) {
+    Map<String, KafkaConsumer> subs = new HashMap<>();
+
+    for (SubscriptionCoords coords: root.getSubscriptions()) {
+      KafkaSubscriptionCoords k = (KafkaSubscriptionCoords) coords;
+      String topicName = k.getSinkConfig().get("topic");
+      KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx,  k.getSinkConfig());
+      consumer.subscribe(topicName)
+          .onSuccess(v ->
+              log.info("Subscribed to topic: {}", topicName)
+          ).onFailure(cause ->
+              log.error("Could not subscribe to topic {}. Error {}", topicName,
+                  cause.getMessage())
+          );
+      subs.put(coords.getFieldName(), consumer);
+    }
+
+    return subs;
   }
 
   private Map<String, SinkEmitter> constructSinkEmitters(RootGraphqlModel root, Vertx vertx) {

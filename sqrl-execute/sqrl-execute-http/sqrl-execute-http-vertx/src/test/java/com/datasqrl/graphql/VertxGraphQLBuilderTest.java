@@ -153,7 +153,7 @@ class VertxGraphQLBuilderTest {
   public void test() {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client), Map.of()));
+        new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of()));
     ExecutionResult result = graphQL.execute("{\n"
         + "  casc: customer(sort: {customerid: ASC}) {\n"
         + "    customerid\n"

@@ -21,6 +21,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkStatementVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinitionVisitor;
 import com.datasqrl.FlinkEnvironmentBuilder.PlanContext;
+import com.datasqrl.StreamTableConverter.Inspector;
 import com.datasqrl.config.BaseConnectorFactory;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSinkFactoryContext;
