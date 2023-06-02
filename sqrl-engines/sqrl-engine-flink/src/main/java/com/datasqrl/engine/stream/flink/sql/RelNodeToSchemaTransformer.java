@@ -2,6 +2,7 @@ package com.datasqrl.engine.stream.flink.sql;
 
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.serializer.SerializableSchema;
+import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
@@ -25,6 +26,8 @@ public class RelNodeToSchemaTransformer {
     if (primaryKeyCount != 0) {
       builder.primaryKey(createPrimaryKeyList(relNode, primaryKeyCount));
     }
+
+    builder.waterMarkType(WaterMarkType.NONE);
 
     return builder.build();
   }

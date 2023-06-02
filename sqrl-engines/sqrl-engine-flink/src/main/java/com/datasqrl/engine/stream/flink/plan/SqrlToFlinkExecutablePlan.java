@@ -14,6 +14,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactory;
 import com.datasqrl.config.SinkFactory;
@@ -47,6 +48,7 @@ import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.serializer.SerializableSchema;
+import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.net.URL;
@@ -187,7 +189,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       String tableName = table.getKey();
       registerSourceTable(tableName, table.getValue(),
           Optional.ofNullable(watermarks.getWatermarkColumns().get(tableName)),
-          Optional.ofNullable(watermarks.getWatermarkExpressions().get(tableName)));
+          Optional.ofNullable(watermarks.getWatermarkExpression().get(tableName)));
     }
   }
 
@@ -230,25 +232,35 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     UniversalTable universalTable = SchemaToUniversalTableMapperFactory.load(tableSource.getSchema())
             .map(tableSource.getSchema(), tableSource.getConnectorSettings(), Optional.empty());
 
-    String watermarkName;
-    String watermarkExpr;
-    boolean isWatermarkColumn;
-    if (watermarkExpression.isPresent()) {
-      watermarkExpr = RelToFlinkSql.convertToString(watermarkExpression.get());
-      watermarkName = removeAllQuotes(watermarkExpr);
-      isWatermarkColumn = false;
-    } else {
-      SqlCall column = (SqlCall) watermarkColumn.get();
-      SqlNode name = column.operand(1);
-      SqlNode expr = stripAs(column);
+    final String watermarkName;
+    final String watermarkExpr;
+    final WaterMarkType waterMarkType;
+    if (watermarkColumn.isPresent()) { //watermark is a timestamp column
+      watermarkExpr = null;
+      watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(watermarkColumn.get()));
+      if (ReservedName.SOURCE_TIME.getCanonical().equalsIgnoreCase(watermarkName)) {
+        waterMarkType = WaterMarkType.SOURCE_WATERMARK;
+      } else {
+        waterMarkType = WaterMarkType.COLUMN_BY_NAME;
+      }
+    } else { //watermark is a timestamp expression
+      Preconditions.checkArgument(watermarkExpression.isPresent());
+      SqlCall call = (SqlCall) watermarkExpression.get();
+      SqlNode name = call.operand(1);
+      SqlNode expr = stripAs(call);
 
       watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(name));
       watermarkExpr = RelToFlinkSql.convertToString(expr);
-      isWatermarkColumn = true;
+
+      if (expr instanceof SqlIdentifier && ((SqlIdentifier)expr).getSimple().equalsIgnoreCase(ReservedName.SOURCE_TIME.getCanonical())) {
+        waterMarkType = WaterMarkType.SOURCE_WATERMARK;
+      } else {
+        waterMarkType = WaterMarkType.COLUMN_BY_NAME;
+      }
     }
 
     SerializableSchema flinkSchema = convertSchema(universalTable, watermarkName, watermarkExpr,
-        isWatermarkColumn);
+        waterMarkType);
 
     TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()
         .convertSchema(universalTable);
@@ -265,9 +277,9 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   @Value
   private static class WatermarkCollector {
 
-    //Bookkeeping
+    //Bookkeeping of watermarks across all tables
+    final Map<String, SqlNode> watermarkExpression = new HashMap<>();
     final Map<String, SqlNode> watermarkColumns = new HashMap<>();
-    final Map<String, SqlNode> watermarkExpressions = new HashMap<>();
   }
 
   private void checkQueriesAreWriteQuery(List<? extends Query> queries) {
@@ -445,18 +457,18 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       public RelNode visit(TableScan scan) {
         Optional<WatermarkHint> opt = SqrlHint.fromRel(scan, WatermarkHint.CONSTRUCTOR);
         if (opt.isPresent()) {
-          addWatermarkExpression(opt.get(), scan.getTable().getRowType(),
+          addWatermarkColumn(opt.get(), scan.getTable().getRowType(),
               getName(scan.getTable().getQualifiedName()));
         }
 
         return super.visit(scan);
       }
 
-      private void addWatermarkExpression(WatermarkHint watermarkHint, RelDataType rowType,
-          String name) {
+      private void addWatermarkColumn(WatermarkHint watermarkHint, RelDataType rowType,
+          String tableName) {
         int index = watermarkHint.getTimestampIdx();
         RelDataTypeField field = rowType.getFieldList().get(index);
-        watermarks.watermarkExpressions.put(name,
+        watermarks.watermarkColumns.put(tableName,
             new SqlIdentifier(field.getName(), SqlParserPos.ZERO));
       }
 
@@ -473,13 +485,13 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
           SqlNode column = select.getSelectList().get(index);
           List<String> tableName = project.getInput().getTable().getQualifiedName();
           if (column.getKind() != SqlKind.AS) {
-            addWatermarkExpression(opt.get(), project.getRowType(), getName(tableName));
+            addWatermarkColumn(opt.get(), project.getRowType(), getName(tableName));
           } else {
             Preconditions.checkState(column.getKind() == SqlKind.AS,
                 "[Watermark rewriting] Watermark should be aliased");
             Preconditions.checkState(project.getInput() instanceof TableScan,
                 "[Watermark rewriting] Watermarks should be above tablescan");
-            watermarks.watermarkColumns.put(getName(tableName), column);
+            watermarks.watermarkExpression.put(getName(tableName), column);
           }
         }
 
@@ -489,12 +501,12 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   }
 
   private SerializableSchema convertSchema(UniversalTable universalTable, String watermarkName,
-      String watermarkExpression, boolean isWatermarkColumn) {
+      String watermarkExpression, WaterMarkType waterMarkType) {
     List<Pair<String, DataType>> columns = universalTable.convert(new UniversalTable2FlinkSchema());
 
     return SerializableSchema.builder()
         .columns(columns)
-        .isWatermarkColumn(isWatermarkColumn)
+        .waterMarkType(waterMarkType)
         .watermarkName(watermarkName)
         .watermarkExpression(watermarkExpression)
         .build();

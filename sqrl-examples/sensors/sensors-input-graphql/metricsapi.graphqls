@@ -1,6 +1,7 @@
 type Query {
   SecReading(sensorid: Int!): [SecReading!]
   SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]
+  SensorReading: [SensorReading!]
 }
 
 type SecReading {
@@ -14,11 +15,17 @@ type SensorMaxTemp {
   maxTemp: Float!
 }
 
-type Mutation {
-  AddReading(metric: SensorReading!): CreatedReading
+type SensorReading {
+    sensorid: Int!
+    temperature: Float!
+    _source_time: String!
 }
 
-input SensorReading {
+type Mutation {
+  AddReading(metric: ReadingInput!): CreatedReading
+}
+
+input ReadingInput {
   sensorid: Int!
   temperature: Float!
 }

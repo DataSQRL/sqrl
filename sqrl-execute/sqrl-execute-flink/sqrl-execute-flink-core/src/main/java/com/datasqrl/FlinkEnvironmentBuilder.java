@@ -50,6 +50,8 @@ import com.datasqrl.StreamTableConverter.RowMapper;
 import com.datasqrl.model.StreamType;
 import com.datasqrl.io.tables.SchemaValidator;
 import com.datasqrl.serializer.SerializableSchema;
+import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
+import com.google.common.base.Strings;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -296,14 +298,20 @@ public class FlinkEnvironmentBuilder implements
       builder.column(column.getKey(), column.getValue());
     }
 
-    if (schema.getIsWatermarkColumn() != null) {
-      if (!schema.getIsWatermarkColumn()) {
-        builder.watermark(schema.getWatermarkName(), schema.getWatermarkExpression());
-      } else {
-        builder
-            .columnByExpression(schema.getWatermarkName(), schema.getWatermarkExpression())
-            .watermark(schema.getWatermarkName(), "`" + schema.getWatermarkName() + "`");
-      }
+    //TODO: make configurable
+    String boundedUnorderedNess = " - INTERVAL '1' SECOND";
+
+    if (!Strings.isNullOrEmpty(schema.getWatermarkExpression())) {
+      builder.columnByExpression(schema.getWatermarkName(), schema.getWatermarkExpression());
+    }
+
+    switch (schema.getWaterMarkType()) {
+      case COLUMN_BY_NAME:
+        builder.watermark(schema.getWatermarkName(), schema.getWatermarkName() + boundedUnorderedNess);
+        break;
+      case SOURCE_WATERMARK:
+        builder.watermark(schema.getWatermarkName(), "SOURCE_WATERMARK()");
+        break;
     }
     if (schema.getPrimaryKey() != null && !schema.getPrimaryKey().isEmpty()) {
       builder.primaryKey(schema.getPrimaryKey());
