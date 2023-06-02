@@ -30,7 +30,7 @@ type lastHour {
 
 
 type Mutation {
-  AddReading(createReading: SensorReading!): CreateReading
+  AddReading(metric: SensorReading!): CreatedReading
 }
 
 input SensorReading {
@@ -38,7 +38,7 @@ input SensorReading {
   temperature: Float!
 }
 
-type CreateReading {
+type CreatedReading {
   _source_time: String!
   sensorid: Int!
 }
