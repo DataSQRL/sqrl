@@ -307,7 +307,7 @@ public class FlinkEnvironmentBuilder implements
 
     switch (schema.getWaterMarkType()) {
       case COLUMN_BY_NAME:
-        builder.watermark(schema.getWatermarkName(), schema.getWatermarkName() + boundedUnorderedNess);
+        builder.watermark(schema.getWatermarkName(), "`" + schema.getWatermarkName() + "`" + boundedUnorderedNess);
         break;
       case SOURCE_WATERMARK:
         builder.watermark(schema.getWatermarkName(), "SOURCE_WATERMARK()");
