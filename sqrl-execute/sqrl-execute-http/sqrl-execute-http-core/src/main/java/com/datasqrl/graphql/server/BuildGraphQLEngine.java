@@ -11,20 +11,23 @@ import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
+import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.MutationVisitor;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
-import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
-import com.datasqrl.graphql.server.Model.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
+import com.datasqrl.graphql.server.Model.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.Model.ResolvedQueryVisitor;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.RootVisitor;
 import com.datasqrl.graphql.server.Model.SchemaVisitor;
 import com.datasqrl.graphql.server.Model.StringSchema;
+import com.datasqrl.graphql.server.Model.SubscriptionCoords;
+import com.datasqrl.graphql.server.Model.SubscriptionVisitor;
 import graphql.GraphQL;
 import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
@@ -43,10 +46,13 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 public class BuildGraphQLEngine implements
     RootVisitor<GraphQL, Context>,
     MutationVisitor<DataFetcher<?>, Context>,
+    SubscriptionVisitor<DataFetcher<?>, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     GraphQLArgumentWrapperVisitor<Set<FixedArgument>, Object>,
@@ -75,6 +81,14 @@ public class BuildGraphQLEngine implements
       for (MutationCoords c : root.mutations) {
         codeRegistry.dataFetcher(
             FieldCoordinates.coordinates("Mutation", c.getFieldName()),
+            c.accept(this, context));
+      }
+    }
+
+    if (root.subscriptions != null) {
+      for (SubscriptionCoords c : root.subscriptions) {
+        codeRegistry.dataFetcher(
+            FieldCoordinates.coordinates("Subscription", c.getFieldName()),
             c.accept(this, context));
       }
     }
@@ -164,5 +178,11 @@ public class BuildGraphQLEngine implements
       fieldType = (GraphQLOutputType)((GraphQLNonNull) fieldType).getWrappedType();
     }
     return fieldType.getClass().equals(GraphQLList.class);
+  }
+
+  @Override
+  public DataFetcher<?> visitKafkaSubscriptionCoords(KafkaSubscriptionCoords coords,
+      Context context) {
+    return context.createSubscriptionFetcher(coords);
   }
 }

@@ -55,7 +55,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     //Inference
     SchemaInference inference = new SchemaInference(null, "schema", schemaStr,
         planner.getSchema(),
-        planner.createRelBuilder());
+        planner.createRelBuilder(), ns);
     InferredSchema inferredSchema = inference.accept();
 
     //Build queries

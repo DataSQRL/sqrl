@@ -15,11 +15,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -29,7 +29,6 @@ public class TestCmd {
 
   protected Path buildDir = null;
   SnapshotTest.Snapshot snapshot;
-
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
@@ -59,8 +58,16 @@ public class TestCmd {
   }
 
   @Test
-  public void executeMutations() {
+  public void compileMutations() {
     Path root = Paths.get("../../sqrl-examples/mutations");
+    execute(root,
+        "compile", root.resolve("script.sqrl").toString(),
+        root.resolve("schema.graphqls").toString());
+  }
+
+  @Test
+  public void compileSubscriptions() {
+    Path root = Paths.get("src/test/resources/subscriptions");
     execute(root,
         "compile", root.resolve("script.sqrl").toString(),
         root.resolve("schema.graphqls").toString());
@@ -126,6 +133,6 @@ public class TestCmd {
   }
 
   public static void execute(Path rootDir, String... args) {
-    new RootCommand(rootDir, AssertStatusHook.INSTANCE).getCmd().execute(args);
+    new RootCommand(rootDir, AssertStatusHook.INSTANCE, List.of(FeatureFlag.SUBSCRIPTIONS)).getCmd().execute(args);
   }
 }

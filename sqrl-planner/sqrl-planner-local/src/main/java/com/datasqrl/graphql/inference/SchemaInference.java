@@ -16,9 +16,9 @@ import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.TableSinkObject;
-import com.datasqrl.loaders.TableSourceNamespaceObject;
-import com.datasqrl.loaders.TableSourceObject;
 import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
@@ -39,6 +39,7 @@ import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,11 +66,12 @@ public class SchemaInference {
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
   private final List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
   private final RelBuilder relBuilder;
-  private final Set<FieldDefinition> visited = new HashSet<>();
+  private final Namespace ns;
+  private Set<FieldDefinition> visited = new HashSet<>();
   private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
   public SchemaInference(ModuleLoader moduleLoader, String schemaName, String gqlSchema, SqrlSchema schema,
-      RelBuilder relBuilder) {
+      RelBuilder relBuilder, Namespace ns) {
     this.moduleLoader = moduleLoader;
     this.schemaName = schemaName;
     this.registry = (new SchemaParser()).parse(gqlSchema);
@@ -77,6 +79,7 @@ public class SchemaInference {
     this.root = RootGraphqlModel.builder()
         .schema(StringSchema.builder().schema(gqlSchema).build());
     this.relBuilder = relBuilder;
+    this.ns = ns;
   }
   //Handles walking the schema completely
 
@@ -92,7 +95,7 @@ public class SchemaInference {
     Optional<InferredMutations> mutation = registry.getType("Mutation")
         .map(m -> resolveMutations((ObjectTypeDefinition) m));
 
-    Optional<InferredRootObject> subscription = registry.getType("subscription")
+    Optional<InferredSubscriptions> subscription = registry.getType("Subscription")
         .map(s -> resolveSubscriptions((ObjectTypeDefinition) s));
 
     InferredSchema inferredSchema = new InferredSchema(query, mutation, subscription);
@@ -417,38 +420,6 @@ public class SchemaInference {
 
     return found;
   }
-//
-//  @Value
-//  class StructuralTypeCheckerContext {
-//    Type type;
-//  }
-//  @Value
-//  class StructuralTypeChecker implements GraphqlTypeVisitor<Boolean, InputValueDefinition> {
-//    FieldDefinition defRoot;
-//
-//    @Override
-//    public Boolean visitListType(ListType node, InputValueDefinition context) {
-//      context.getType()
-//
-//      GraphqlSchemaVisitor.accept(this, node.getType(), context);
-//
-////      if (!(context.type instanceof ListType && context.subType instanceof ListType)) {
-////        throw new RuntimeException("Not structurally equal, found ");
-////      }
-//
-//      return null;
-//    }
-//
-//    @Override
-//    public Boolean visitNonNullType(NonNullType node, InputValueDefinition context) {
-//      return null;
-//    }
-//
-//    @Override
-//    public Boolean visitTypeName(TypeName node, InputValueDefinition context) {
-//      return null;
-//    }
-//  }
 
   private ObjectTypeDefinition getValidMutationReturnType(FieldDefinition def) {
     Type type = def.getType();
@@ -483,8 +454,65 @@ public class SchemaInference {
     return (InputObjectTypeDefinition) typeDef;
   }
 
-  private InferredRootObject resolveSubscriptions(ObjectTypeDefinition s) {
+  private InferredSubscriptions resolveSubscriptions(ObjectTypeDefinition s) {
+    List<InferredSubscription> subscriptions = new ArrayList<>();
+    //todo validation and nested queries
+    List<InferredField> fields = new ArrayList<>();
 
-    return null;
+    for(FieldDefinition def : s.getFieldDefinitions()) {
+      NamespaceObject ns = moduleLoader.getModule(NamePath.of(this.schemaName))
+          .flatMap(mod -> mod.getNamespaceObject(Name.system(def.getName())))
+          .orElseThrow(() ->
+              new RuntimeException(String.format(
+                  "Could not find subscription source: %s.%s", this.schemaName, def.getName())));
+      Preconditions.checkState(ns instanceof TableSinkObject,
+          "Subscriptions must be as sink type: " + def.getName());
+      TableSinkObject tsNs = (TableSinkObject) ns;
+      SqrlConfig config = tsNs.getSink().getConfiguration().getConnectorConfig();
+      Map<String, String> kafkaSink = new HashMap<>();
+      for (String key : config.getKeys()) {
+        kafkaSink.put(key, config.asString(key).get());
+      }
+
+      //Resolve the queries for all nested entries, validate all fields are sqrl fields
+      ResolvedExport export = findResolvedExport(this.ns, schemaName, def.getName());
+      SQRLTable table = export.getTable().getSqrlTable();
+      TypeDefinition returnType = registry.getType(def.getType())
+          .orElseThrow(()->new RuntimeException("Could not find type"));
+      //todo check before cast
+      ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) returnType;
+
+      for (FieldDefinition definition : objectTypeDefinition.getFieldDefinitions()) {
+        Field field = table.getField(Name.system(definition.getName()))
+            .orElseThrow(() -> new RuntimeException("Unrecognized field " + definition.getName() +
+                " in " + objectTypeDefinition.getName()));
+        InferredField inferredField = walk(definition, field, fields, objectTypeDefinition);
+        fields.add(inferredField);
+      }
+
+      InferredSubscription subscription = new InferredSubscription(def.getName(), kafkaSink);
+      subscriptions.add(subscription);
+    }
+
+    return new InferredSubscriptions(subscriptions, fields);
+  }
+
+  private ResolvedExport findResolvedExport(Namespace ns, String schemaName, String name) {
+    ResolvedExport found = null;
+    for (ResolvedExport export : ns.getExports()) {
+      if (NamePath.of(schemaName, name).equals(export.getSink().getPath())) {
+        if (found != null) {
+          throw new RuntimeException("Multiple tables sink to the same event, this is not yet supported");
+        } else {
+          found = export;
+        }
+      }
+    }
+
+    if (found == null) {
+      throw new RuntimeException("Could not find sink for subscription " + name);
+    }
+
+    return found;
   }
 }

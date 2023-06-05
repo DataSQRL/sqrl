@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFieldVisitor;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredInterfaceField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutations;
@@ -15,22 +16,25 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredRootObjectVis
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredScalarField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchemaVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptionObjectVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptions;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.NestedField;
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
 import com.datasqrl.graphql.inference.argument.EqHandler;
 import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
-import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.QueryBase;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.StringSchema;
+import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.OptimizationStage;
@@ -71,6 +75,7 @@ public class PgSchemaBuilder implements
     InferredSchemaVisitor<RootGraphqlModel, Object>,
     InferredRootObjectVisitor<List<Coords>, Object>,
     InferredMutationObjectVisitor<List<MutationCoords>, Object>,
+    InferredSubscriptionObjectVisitor<List<SubscriptionCoords>, Object>,
     InferredFieldVisitor<Coords, Object> {
 
   private final String stringSchema;
@@ -108,6 +113,17 @@ public class PgSchemaBuilder implements
     schema.getMutation().map(m->
         builder.mutations(m.accept(this, context)));
 
+    schema.getSubscription().map(m->
+        builder.subscriptions(m.accept(this, context)));
+
+    if (schema.getSubscription().isPresent()) {
+      InferredSubscriptions s = schema.getSubscription().get();
+      for (InferredField field : s.getFields()) {
+        builder.coord(field.accept(this, context));
+      }
+    }
+
+
     return builder.build();
   }
 
@@ -122,6 +138,14 @@ public class PgSchemaBuilder implements
   public List<MutationCoords> visitMutation(InferredMutations rootObject, Object context) {
     return rootObject.getMutations().stream()
         .map(m->new KafkaMutationCoords(m.getName(), m.getSink()))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<SubscriptionCoords> visitSubscriptions(InferredSubscriptions rootObject,
+      Object context) {
+    return rootObject.getSubscriptions().stream()
+        .map(m->new KafkaSubscriptionCoords(m.getName(), m.getSubscriptions()))
         .collect(Collectors.toList());
   }
 

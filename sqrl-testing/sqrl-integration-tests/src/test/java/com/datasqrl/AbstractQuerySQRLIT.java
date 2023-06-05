@@ -15,6 +15,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APIQuery;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -69,8 +70,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(
         physicalPlan.getDatabaseQueries());
 
-    FlinkStreamPhysicalPlan plan = (FlinkStreamPhysicalPlan)physicalPlan.getStagePlans().get(0).getPlan();
-
     model.accept(replaceGraphqlQueries, null);
 
     snapshot.addContent(
@@ -85,8 +84,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
 
     this.port = getPort(8888);
-    GraphQLServer server = new GraphQLServer(
-        model, port, jdbc);
+    GraphQLServer server = new GraphQLServer(model, port, jdbc);
     vertx.deployVerticle(server, c->countDownLatch.countDown());
     countDownLatch.await(10, TimeUnit.SECONDS);
     if (countDownLatch.getCount() != 0) {

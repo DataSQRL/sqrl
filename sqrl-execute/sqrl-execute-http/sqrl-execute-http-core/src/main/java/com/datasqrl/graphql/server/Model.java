@@ -36,6 +36,8 @@ public class Model {
     List<Coords> coords;
     @Singular
     List<MutationCoords> mutations;
+    @Singular
+    List<SubscriptionCoords> subscriptions;
 
     Schema schema;
 
@@ -43,9 +45,11 @@ public class Model {
     public RootGraphqlModel(
         @JsonProperty("coords") List<Coords> coords,
         @JsonProperty("mutations") List<MutationCoords> mutations,
+        @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
         @JsonProperty("schema") Schema schema) {
       this.coords = coords;
-      this.mutations = mutations;
+      this.mutations = mutations == null ? List.of() : mutations;
+      this.subscriptions = subscriptions == null ? List.of() : subscriptions;
       this.schema = schema;
     }
 
@@ -119,6 +123,42 @@ public class Model {
 
   public interface MutationVisitor<R, C> {
     R visitKafkaMutationCoords(KafkaMutationCoords coords, C context);
+  }
+
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @JsonTypeInfo(
+      use = JsonTypeInfo.Id.NAME,
+      include = JsonTypeInfo.As.PROPERTY,
+      property = "type")
+  @JsonSubTypes({
+      @Type(value = KafkaSubscriptionCoords.class, name = "kafka")
+  })
+  public static abstract class SubscriptionCoords {
+    protected String fieldName;
+    public abstract <R, C> R accept(SubscriptionVisitor<R, C> visitor, C context);
+  }
+
+  @Getter
+  @NoArgsConstructor
+  public static class KafkaSubscriptionCoords extends SubscriptionCoords {
+    protected Map<String, String> sinkConfig;
+    @Builder
+    public KafkaSubscriptionCoords(String fieldName, Map<String, String> sinkConfig) {
+      super(fieldName);
+      this.sinkConfig = sinkConfig;
+    }
+
+    @Override
+    public <R, C> R accept(SubscriptionVisitor<R, C> visitor, C context) {
+      return visitor.visitKafkaSubscriptionCoords(this, context);
+    }
+  }
+
+
+  public interface SubscriptionVisitor<R, C> {
+    R visitKafkaSubscriptionCoords(KafkaSubscriptionCoords coords, C context);
   }
 
 

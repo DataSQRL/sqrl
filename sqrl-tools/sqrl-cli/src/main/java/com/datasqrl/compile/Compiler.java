@@ -133,7 +133,8 @@ public class Compiler {
         moduleLoader,
         scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("schema").split("\\.")[0],
         gqlSchema, schema,
-        queryPlanner.createRelBuilder())
+        queryPlanner.createRelBuilder(),
+        ns)
         .accept();
 
     PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(gqlSchema,

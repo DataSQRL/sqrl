@@ -148,7 +148,7 @@ class WriteTest {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
         new VertxContext(new VertxJdbcClient(client),
-            Map.of("addCustomer", new KafkaSinkEmitter(kafkaProducer, "topic-1"))));
+            Map.of("addCustomer", new KafkaSinkEmitter(kafkaProducer, "topic-1")), Map.of()));
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid } }")
