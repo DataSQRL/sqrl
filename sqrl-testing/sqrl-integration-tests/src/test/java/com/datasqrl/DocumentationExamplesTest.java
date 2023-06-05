@@ -73,6 +73,11 @@ public class DocumentationExamplesTest {
         Execution.BOTH.of(Quickstart.INSTANCE,"quickstart-export.sqrl"),
         Execution.COMPILE.of(Quickstart.INSTANCE,"quickstart-docs.sqrl"),
         Execution.BOTH.of(Sensors.INSTANCE,"sensors-teaser-docs.sqrl"),
+        Execution.COMPILE.of(Sensors.INSTANCE,"sensors-short.sqrl"),
+        Execution.COMPILE.of(Sensors.INSTANCE,"sensors-short.sqrl"),
+        Execution.COMPILE.of(Sensors.INSTANCE,"metrics-teaser.sqrl"),
+        Execution.COMPILE.of(Sensors.INSTANCE,"metrics-teaser.sqrl", "metricsapi-teaser.graphqls"),
+        Execution.COMPILE.of(Sensors.INSTANCE,"metrics-mutation.sqrl", "metricsapi.graphqls"),
         Execution.BOTH.of(Clickstream.INSTANCE,"clickstream-teaser-docs.sqrl"),
     };
 

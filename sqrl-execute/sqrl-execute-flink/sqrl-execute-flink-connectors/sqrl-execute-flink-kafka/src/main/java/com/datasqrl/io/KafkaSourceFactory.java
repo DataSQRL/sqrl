@@ -37,6 +37,7 @@ public class KafkaSourceFactory implements DataStreamSourceFactory {
         new KafkaTimeValueDeserializationSchemaWrapper<>(new SimpleStringSchema()));
 
     return ctx.getEnv().fromSource(builder.build(),
-        WatermarkStrategy.noWatermarks(), ctx.getFlinkName());
+        WatermarkStrategy.noWatermarks(),
+        ctx.getFlinkName());
   }
 }

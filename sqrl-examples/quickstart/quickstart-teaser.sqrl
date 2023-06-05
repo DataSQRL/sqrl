@@ -6,6 +6,6 @@ Users := SELECT DISTINCT customerid AS id FROM Orders;
 Users.purchases := JOIN Orders ON Orders.customerid = @.id;
 /* Aggregate the purchase history for each user by week */
 Users.spending := SELECT endOfWeek(p.time) AS week,
-         sum(i.quantity * i.unit_price) AS spend,
+         sum(i.quantity * i.unit_price) AS spend
       FROM @.purchases p JOIN p.items i
       GROUP BY week ORDER BY week DESC;
