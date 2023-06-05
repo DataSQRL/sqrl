@@ -14,6 +14,7 @@ import com.datasqrl.util.data.Retail;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +40,10 @@ public class KafkaMonitoringTest extends KafkaBaseTest {
   @AfterEach
   @SneakyThrows
   public void tearDown() {
-    FileTestUtil.readAllFilesInDirectory(writeToDir, ".yml").forEach((name, content) -> snapshot.addContent(content, name));
+    FileTestUtil.readAllFilesInDirectory(writeToDir, ".yml")
+        .entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(entry -> snapshot.addContent(entry.getValue(), entry.getKey()));
     FileUtil.deleteDirectory(writeToDir);
     snapshot.createOrValidate();
   }
