@@ -1,8 +1,0 @@
-IMPORT metricstest.AddReading AS SensorReading;
-IMPORT time.endOfSecond;  -- Import time function
-SecReading := SELECT sensorid, endOfSecond(_source_time) as timeSec,
-        avg(temperature) as temp FROM SensorReading
-    GROUP BY sensorid, timeSec;
-
-EXPORT SensorReading TO print.sensorreading;
-EXPORT SecReading TO print.secreading;

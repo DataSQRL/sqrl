@@ -6,6 +6,9 @@ import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
+import com.datasqrl.timestamp.ProgressingMonotonicEventTimeWatermarks;
+import java.time.Clock;
+import java.time.Duration;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.connector.kafka.source.KafkaSourceBuilder;
@@ -37,7 +40,9 @@ public class KafkaSourceFactory implements DataStreamSourceFactory {
         new KafkaTimeValueDeserializationSchemaWrapper<>(new SimpleStringSchema()));
 
     return ctx.getEnv().fromSource(builder.build(),
-        WatermarkStrategy.noWatermarks(),
+        ProgressingMonotonicEventTimeWatermarks.<TimeAnnotatedRecord<String>>of(Duration.ofMillis(1000))
+            .withTimestampAssigner((record, timestamp) -> record.getSourceTime().toEpochMilli())
+            .withIdleness(Duration.ofMillis(5000)),
         ctx.getFlinkName());
   }
 }

@@ -83,6 +83,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   public void runCommand(ErrorCollector errors) {
+    System.out.println("Compiling script and building deployment assets...this takes about a minute");
     if (DEFAULT_DEPLOY_DIR.equals(targetDir)) {
       targetDir = root.rootDir.resolve(targetDir);
     }
