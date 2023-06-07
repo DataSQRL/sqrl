@@ -7,6 +7,7 @@ import com.datasqrl.FlinkExecutablePlan.*;
 import com.datasqrl.FlinkEnvironmentBuilder;
 import com.datasqrl.model.LogicalStreamMetaData;
 import com.datasqrl.serializer.SerializableSchema;
+import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -96,6 +97,7 @@ class FlinkExecutablePlanTest {
                         .column(Pair.of("id", DataTypes.STRING()))
                         .column(Pair.of("updatedTime", DataTypes.TIMESTAMP_LTZ()))
                         .column(Pair.of("type", DataTypes.STRING()))
+                        .waterMarkType(WaterMarkType.NONE)
                         .build())
                   .name("product$stream")
                   .build()

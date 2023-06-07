@@ -18,7 +18,8 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
           cache: maven
-      - name: Build SQRL
+      # Build DataSQRL (mvn package -DskipTests)
+      - name: Build DataSQRL
         run: mvn -B -U -T 6 -e clean install --no-transfer-progress -DskipTests=true
 
       # Set up Docker
@@ -35,7 +36,7 @@ jobs:
         run: |
           cp sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/target/flink-job.jar sqrl-tools/sqrl-cli/target/flink-job.jar
           cp sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/target/vertx-server.jar sqrl-tools/sqrl-cli/target/vertx-server.jar
-      # Build docker
+      # Build docker (cd sqrl-tools/sqrl-cli; docker build -t datasqrl/cmd . )
       - name: Build and Push sqrl-cli Latest
         uses: docker/build-push-action@v3
         with:

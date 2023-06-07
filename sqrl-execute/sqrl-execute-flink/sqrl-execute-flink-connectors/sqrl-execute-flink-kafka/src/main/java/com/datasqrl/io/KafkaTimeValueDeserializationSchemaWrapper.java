@@ -32,7 +32,7 @@ public class KafkaTimeValueDeserializationSchemaWrapper<T> implements
       throws IOException {
     T result = deserializationSchema.deserialize(message.value());
     if (result != null) {
-      out.collect(new TimeAnnotatedRecord<>(result, Instant.ofEpochSecond(message.timestamp())));
+      out.collect(new TimeAnnotatedRecord<>(result, Instant.ofEpochMilli(message.timestamp())));
     }
   }
 

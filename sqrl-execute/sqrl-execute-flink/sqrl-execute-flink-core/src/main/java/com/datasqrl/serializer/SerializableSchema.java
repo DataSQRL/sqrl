@@ -19,8 +19,16 @@ public class SerializableSchema implements Serializable {
 
   @Singular
   List<Pair<String, DataType>> columns;
-  Boolean isWatermarkColumn;
+  List<String> primaryKey;
+  WaterMarkType waterMarkType;
   String watermarkName;
   String watermarkExpression;
-  List<String> primaryKey;
+
+  public enum WaterMarkType {
+
+    NONE, //Table has no watermark
+    COLUMN_BY_NAME, //Table has watermark that's based on the column 'watermarkName'
+    SOURCE_WATERMARK; //Table has watermark that is inherited from source data stream
+
+  }
 }

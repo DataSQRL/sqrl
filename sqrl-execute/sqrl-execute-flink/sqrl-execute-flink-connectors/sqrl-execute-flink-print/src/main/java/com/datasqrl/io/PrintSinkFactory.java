@@ -20,6 +20,6 @@ public class PrintSinkFactory implements TableDescriptorSinkFactory {
     TableConfig tblConfig = context.getTableConfig();
     String identifier = tblConfig.getConnectorConfig().asString(PrintDataSystemDiscovery.PREFIX_KEY).withDefault("").get();
     return TableDescriptor.forConnector("print")
-        .option("print-identifier", identifier);
+        .option("print-identifier", identifier + tblConfig.getName().getDisplay());
   }
 }

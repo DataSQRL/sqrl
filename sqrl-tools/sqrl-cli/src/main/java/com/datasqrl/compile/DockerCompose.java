@@ -65,7 +65,7 @@ public class DockerCompose {
         + "    depends_on:\n"
         + "      - kafka\n"
         + "\n"
-        + "  servlet:\n"
+        + "  server:\n"
         + "    image: eclipse-temurin:11\n"
         + "    command: java -jar vertx-server.jar\n"
         + "    depends_on:\n"

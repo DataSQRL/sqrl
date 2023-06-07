@@ -2,6 +2,7 @@ IMPORT datasqrl.seedshop.Orders TIMESTAMP time + INTERVAL 8 DAY AS time;
 IMPORT datasqrl.seedshop.Products;
 IMPORT time.*;
 IMPORT mySourcePackage.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp;
+IMPORT seedshop.ProductVisit;
 
 Orders.items.discount := discount?0.0;
 Orders.items.total := quantity * unit_price - discount;
@@ -27,11 +28,14 @@ Users.past_purchases := SELECT i.productid, count(1) as num_orders,
       GROUP BY i.productid
       ORDER BY num_orders DESC, total_quantity DESC;
 
+Users.product_visits := SELECT productid, count(1) as visits
+      FROM @ JOIN ProductVisit v ON @.id = v.userid
+      WHERE v._source_time > now() - INTERVAL 90 DAY
+      GROUP BY productid ORDER BY visits DESC;
+
 Products := DISTINCT Products ON id ORDER BY updated DESC;
 Orders.items.product := JOIN Products ON Products.id = @.productid LIMIT 1;
 Products.ordered_items := JOIN Orders.items i ON i.productid = @.id;
-
---
 
 -- aggregating by country
 Products.volume_10day := SELECT u.country, sum(i.quantity) as quantity,

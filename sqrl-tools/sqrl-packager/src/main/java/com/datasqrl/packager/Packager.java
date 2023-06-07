@@ -177,14 +177,8 @@ public class Packager {
     for (String fileKey : ScriptConfiguration.FILE_KEYS) {
       Optional<String> configuredFile = scriptConfig.asString(fileKey).getOptional();
       if (configuredFile.isPresent()) {
-        Path path = rootDir.resolve(configuredFile.get());
-        Optional<String> normFile = ScriptConfiguration.NORMALIZED_FILE_NAMES.get(fileKey);
-        Path destinationPath;
-        if (normFile.isPresent()) {
-          destinationPath = copyFile(path, buildDir, Path.of(normFile.get()));
-        } else {
-          destinationPath = copyRelativeFile(rootDir.resolve(configuredFile.get()), rootDir, buildDir);
-        }
+        Path destinationPath = copyRelativeFile(rootDir.resolve(configuredFile.get()), rootDir,
+            buildDir);
         destinationPaths.put(fileKey,Optional.of(destinationPath));
       }
     }
