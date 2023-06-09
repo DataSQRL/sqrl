@@ -17,6 +17,7 @@ import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlDIModule;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
 import com.datasqrl.graphql.inference.PgSchemaBuilder;
 import com.datasqrl.graphql.inference.SchemaInference;
@@ -107,7 +108,7 @@ public class Compiler {
 
     SqrlPhysicalPlan planner = injector.getInstance(SqrlPhysicalPlan.class);
     GraphQLMutationExtraction preAnalysis = injector.getInstance(GraphQLMutationExtraction.class);
-    APIConnectorManager apiManager = injector.getInstance(APIConnectorManager.class);
+    APIConnectorManager apiManager = injector.getInstance(APIConnectorManagerImpl.class);
 
     Map<String, Optional<String>> scriptFiles = ScriptConfiguration.getFiles(config);
     Preconditions.checkArgument(!scriptFiles.isEmpty());
@@ -123,7 +124,7 @@ public class Compiler {
     Namespace ns = planner.plan(FileUtil.readFile(mainScript), List.of(apiManager.getAsModuleLoader()));
 
     APISource apiSchema = apiSchemaOpt.orElseGet(() ->
-        new APISource(Name.system("schema"),"", inferGraphQLSchema(ns.getSchema())));
+        new APISource(Name.system("schema"), inferGraphQLSchema(ns.getSchema())));
 
     SqrlSchema schema = injector.getInstance(SqrlSchema.class);
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);

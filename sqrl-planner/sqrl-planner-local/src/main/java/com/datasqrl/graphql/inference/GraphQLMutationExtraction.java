@@ -28,8 +28,8 @@ public class GraphQLMutationExtraction {
   private final NameCanonicalizer canonicalizer;
 
   @Inject
-  public GraphQLMutationExtraction(SqrlSchema sqrlSchema, NameCanonicalizer nameCanonicalizer) {
-    this.typeFactory = sqrlSchema.getTypeFactory();
+  public GraphQLMutationExtraction(RelDataTypeFactory typeFactory, NameCanonicalizer nameCanonicalizer) {
+    this.typeFactory = typeFactory;
     this.canonicalizer = nameCanonicalizer;
   }
 

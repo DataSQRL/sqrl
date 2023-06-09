@@ -6,6 +6,7 @@ package com.datasqrl.graphql;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
@@ -15,6 +16,8 @@ import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
+import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.formats.JsonLineFormat;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -28,6 +31,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+import kafka.utils.Json;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -89,6 +93,8 @@ class WriteTest {
   private PgPool client;
   private KafkaProducer<String, String> kafkaProducer;
 
+  private FormatFactory.Writer<String> jsonFormat = new JsonLineFormat().getWriter(SqrlConfig.EMPTY);
+
   @SneakyThrows
   @BeforeEach
   public void init(Vertx vertx) {
@@ -141,7 +147,7 @@ class WriteTest {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
         new VertxContext(new VertxJdbcClient(client),
-            Map.of("addCustomer", new KafkaSinkProducer(kafkaProducer, "topic-1")), Map.of()));
+            Map.of("addCustomer", new KafkaSinkProducer("topic-1", kafkaProducer, jsonFormat)), Map.of()));
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid } }")

@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.data.Retail;
@@ -29,10 +30,10 @@ class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void testC360Inference() {
-    Pair<InferredSchema, List<APIQuery>> result = inferSchemaAndQueries(
+    Pair<InferredSchema, APIConnectorManager> result = inferSchemaAndQueries(
         example.getScript(RetailScriptNames.FULL),
         Path.of("src/test/resources/c360bundle/schema.full.graphqls"));
     assertEquals(60, result.getKey().getQuery().getFields().size());
-    assertEquals(336, result.getValue().size());
+    assertEquals(336, result.getValue().getQueries().size());
   }
 }

@@ -4,6 +4,7 @@ import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.schema.TableSchemaExporterFactory;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
+import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.google.auto.service.AutoService;
 
 
@@ -11,7 +12,7 @@ import com.google.auto.service.AutoService;
 public class FlexibleSchemaExporter implements TableSchemaExporterFactory {
 
   @Override
-  public TableSchema convert(UniversalTable tableSchema) {
+  public FlexibleTableSchemaHolder convert(UniversalTable tableSchema) {
     return UtbToFlexibleSchema.createFlexibleSchema(tableSchema);
   }
 

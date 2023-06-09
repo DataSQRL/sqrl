@@ -15,7 +15,7 @@ import java.util.List;
 
 public class UtbToFlexibleSchema {
 
-  public static TableSchema createFlexibleSchema(UniversalTable table) {
+  public static FlexibleTableSchemaHolder createFlexibleSchema(UniversalTable table) {
     FlexibleTableSchema schema = new FlexibleTableSchema(
         table.getName(), new SchemaElementDescription(""), null, false,
         createFields(table),

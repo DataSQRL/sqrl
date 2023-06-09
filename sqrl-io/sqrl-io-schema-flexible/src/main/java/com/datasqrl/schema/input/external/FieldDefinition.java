@@ -17,16 +17,6 @@ public class FieldDefinition extends AbstractElementDefinition implements FieldT
 
   public Map<String, FieldTypeDefinitionImpl> mixed;
 
-  public FieldDefinition(String name, String description, Object default_value, String type,
-      List<FieldDefinition> columns, List<String> tests,
-      Map<String, FieldTypeDefinitionImpl> mixed) {
-    super(name, description, default_value);
-    this.type = type;
-    this.columns = columns;
-    this.tests = tests;
-    this.mixed = mixed;
-  }
-
   @Override
   public String getType() {
     return type;
