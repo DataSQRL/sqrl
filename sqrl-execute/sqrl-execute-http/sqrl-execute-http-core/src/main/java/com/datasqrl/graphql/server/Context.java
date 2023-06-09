@@ -1,9 +1,9 @@
 package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
-import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
+import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
+import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import graphql.schema.DataFetcher;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +17,7 @@ public interface Context {
 
   DataFetcher<?> createArgumentLookupFetcher(BuildGraphQLEngine server, Map<Set<Argument>, ResolvedQuery> lookupMap);
 
-  DataFetcher<?> createSinkFetcher(KafkaMutationCoords coords);
+  DataFetcher<?> createSinkFetcher(MutationCoords coords);
 
-  DataFetcher<?> createSubscriptionFetcher(KafkaSubscriptionCoords coords);
+  DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords);
 }

@@ -2,6 +2,9 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.function.CalciteFunctionNsObject;
 import com.datasqrl.function.FlinkUdfNsObject;
+import com.datasqrl.io.tables.AbstractExternalTable;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.TableSinkNamespaceObject;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.loaders.TableSourceSinkNamespaceObject;
@@ -9,6 +12,13 @@ import com.datasqrl.module.FunctionNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.plan.queries.APIConnector;
+import com.datasqrl.plan.queries.APIConnectors;
+import com.datasqrl.plan.queries.APIMutation;
+import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISubscription;
+import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.net.URL;
 import java.util.ArrayList;
@@ -22,6 +32,7 @@ import lombok.Getter;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 
@@ -31,6 +42,10 @@ public class Namespace implements AbstractNamespace {
 
   @Getter
   private Map<String, UserDefinedFunction> udfs = new HashMap<>();
+
+  private Map<APIMutation, TableSink> mutations2Table = new HashMap<>();
+
+  private Map<APISubscription, Pair<TableSource, SQRLTable>> subscriptions2Table = new HashMap<>();
 
   @Getter
   private Set<URL> jars;
@@ -127,6 +142,8 @@ public class Namespace implements AbstractNamespace {
     return getSchema().getFunctionCatalog().getOperatorTable();
   }
 
+
+
   @Override
   public SqrlSchema getSchema() {
     return schema;
@@ -140,5 +157,27 @@ public class Namespace implements AbstractNamespace {
   @Override
   public void addExport(ResolvedExport resolvedExport) {
     exports.add(resolvedExport);
+  }
+
+  @Override
+  public Optional<TableSink> getMutationTable(APISource source, Name name) {
+    return StreamUtil.getOnlyElement(mutations2Table.entrySet().stream()
+        .filter(entry -> APIConnectors.equals(entry.getKey(), source, name))
+        .map(Map.Entry::getValue));
+  }
+
+  public void addMutationTable(APIMutation mutation, TableSink sink) {
+    mutations2Table.put(mutation, sink);
+  }
+
+  @Override
+  public Optional<Pair<TableSource, SQRLTable>> getSubscription(APISource source, Name name) {
+    return StreamUtil.getOnlyElement(subscriptions2Table.entrySet().stream()
+        .filter(entry -> APIConnectors.equals(entry.getKey(), source, name))
+        .map(Map.Entry::getValue));
+  }
+
+  public void addSubscriptionTable(APISubscription subscription, TableSource source, SQRLTable table) {
+    subscriptions2Table.put(subscription, Pair.of(source, table));
   }
 }

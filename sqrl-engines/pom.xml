@@ -18,5 +18,6 @@
     <module>sqrl-engine-flink</module>
     <module>sqrl-engine-jdbc</module>
     <module>sqrl-engine-server</module>
+    <module>sqrl-engine-kafka</module>
   </modules>
 </project>

@@ -5,6 +5,7 @@ package com.datasqrl.io.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
@@ -151,7 +152,7 @@ public class TableConfig {
         Optional.empty());
   }
 
-  public TableSink initializeSink(ErrorCollector errors, NamePath basePath,
+  public TableSink initializeSink(NamePath basePath,
       Optional<TableSchema> schema) {
     validateTable();
     getErrors().checkFatal(base.getType().isSink(), "Table is not a sink: %s", name);
@@ -216,7 +217,7 @@ public class TableConfig {
   }
 
   public Serialized serialize() {
-    return new Serialized(name,(SqrlConfigCommons.Serialized)config.serialize(), connectorSettings);
+    return new Serialized(name,config.serialize(), connectorSettings);
   }
 
   @AllArgsConstructor
@@ -226,7 +227,7 @@ public class TableConfig {
   public static class Serialized {
 
     Name name;
-    SqrlConfigCommons.Serialized config;
+    SerializedSqrlConfig config;
     DataSystemConnectorSettings connectorSettings;
 
     public TableConfig deserialize(ErrorCollector errors) {

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.global;
 
+import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -45,21 +46,59 @@ public class PhysicalDAGPlan {
         .collect(Collectors.toList());
   }
 
+  public interface StagePlan {
+
+    ExecutionStage getStage();
+
+    default List<? extends Query> getQueries() {
+      return List.of();
+    }
+
+  }
+
   @Value
-  public static class StagePlan {
+  public static class StreamStagePlan implements StagePlan {
 
     @NonNull
     ExecutionStage stage;
     @NonNull
     List<? extends Query> queries;
 
-    Collection<IndexDefinition> indexDefinitions;
-
     Set<URL> jars;
 
     Map<String, UserDefinedFunction> udfs;
 
+  }
+
+  @Value
+  public static class DatabaseStagePlan implements StagePlan {
+
+    @NonNull
+    ExecutionStage stage;
+    @NonNull
+    List<? extends Query> queries;
+    @NonNull
+    Collection<IndexDefinition> indexDefinitions;
+
+  }
+
+  @Value
+  public static class ServerStagePlan implements StagePlan {
+
+    @NonNull
+    ExecutionStage stage;
+
     RootGraphqlModel model;
+  }
+
+  @Value
+  public static class LogStagePlan implements StagePlan {
+
+    @NonNull
+    ExecutionStage stage;
+    @NonNull
+    List<Log> logs;
+
   }
 
   public interface Query {

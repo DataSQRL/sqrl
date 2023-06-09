@@ -18,9 +18,14 @@
   <!-- Minimal dependency pom for lightweight jars-->
   <dependencies>
     <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-base</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.graphql-java</groupId>
       <artifactId>graphql-java</artifactId>
     </dependency>
+
 
     <!-- Jackson -->
     <dependency>
@@ -48,15 +53,6 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
 
-    <!-- sinks -->
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-kafka-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.projectreactor</groupId>
-      <artifactId>reactor-core</artifactId>
-    </dependency>
 
   </dependencies>
 </project>

@@ -111,7 +111,7 @@ public class ReplaceGraphqlQueries implements
   }
 
   @Override
-  public Object visitArgumentLookup(ArgumentLookupCoords coords, Object context) {
+  public Object visitArgumentLookup(ArgumentLookupQueryCoords coords, Object context) {
     coords.getMatchs().forEach(c -> {
       JdbcQuery query = c.getQuery().accept(this, context);
       c.setQuery(query);
@@ -120,7 +120,7 @@ public class ReplaceGraphqlQueries implements
   }
 
   @Override
-  public Object visitFieldLookup(FieldLookupCoords coords, Object context) {
+  public Object visitFieldLookup(FieldLookupQueryCoords coords, Object context) {
     return null;
   }
 

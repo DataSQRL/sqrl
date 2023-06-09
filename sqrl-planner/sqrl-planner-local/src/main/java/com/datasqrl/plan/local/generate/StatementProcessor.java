@@ -3,6 +3,7 @@ package com.datasqrl.plan.local.generate;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.local.generate.StatementProcessor.ProcessorContext;
 import com.google.inject.Inject;
@@ -56,7 +57,6 @@ public class StatementProcessor implements StatementVisitor<Void, ProcessorConte
     exportStatementResolver.resolve(statement, ctx.namespace);
     return null;
   }
-
 
   @Override
   public Void visit(ExpressionAssignment statement, ProcessorContext ctx) {

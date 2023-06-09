@@ -25,30 +25,6 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
   public void writeTo(Path deployDir, String stageName, Deserializer serializer) throws IOException {
     serializer.writeJson(deployDir.resolve(getModelFileName(stageName)), model, true);
     serializer.writeJson(deployDir.resolve(getConfigFilename(stageName)), jdbc, true);
-    createTopicSh(deployDir, model.getMutations(), model.getSubscriptions());
-  }
-
-  @SneakyThrows
-  private void createTopicSh(Path deployDir, List<MutationCoords> mutations,
-      List<SubscriptionCoords> subscriptions) {
-    StringBuilder b = new StringBuilder();
-    b.append("#!/bin/bash");
-    for (Model.MutationCoords coord : mutations) {
-      Model.KafkaMutationCoords k = (Model.KafkaMutationCoords)coord;
-      b.append("\n");
-      b.append(String.format(
-              "/opt/bitnami/kafka/bin/kafka-topics.sh --create --bootstrap-server kafka:9092 " +
-                      "--topic %s --partitions 1 --replication-factor 1", k.getSinkConfig().get("topic")));
-    }
-    for (Model.SubscriptionCoords coord : subscriptions) {
-      Model.KafkaSubscriptionCoords k = (Model.KafkaSubscriptionCoords)coord;
-      b.append("\n");
-      b.append(String.format(
-              "/opt/bitnami/kafka/bin/kafka-topics.sh --create --bootstrap-server kafka:9092 " +
-                      "--topic %s --partitions 1 --replication-factor 1", k.getSinkConfig().get("topic")));
-    }
-    b.append("\nexit 0;");
-    Files.writeString(deployDir.resolve("create-topics.sh"), b.toString());
   }
 
   public static ServerPhysicalPlan readFrom(Path deployDir, String stageName, Deserializer serializer) {

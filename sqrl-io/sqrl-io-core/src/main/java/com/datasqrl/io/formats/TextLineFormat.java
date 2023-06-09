@@ -6,6 +6,8 @@ package com.datasqrl.io.formats;
 import com.datasqrl.config.SqrlConfig;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Map;
+
 import lombok.NonNull;
 
 public interface TextLineFormat extends FormatFactory {
@@ -13,16 +15,14 @@ public interface TextLineFormat extends FormatFactory {
   @Override
   Parser getParser(@NonNull SqrlConfig config);
 
-  interface Parser extends FormatFactory.Parser {
-
-    Result parse(@NonNull String line);
+  interface Parser extends FormatFactory.Parser<String> {
 
   }
 
   @Override
   Writer getWriter(@NonNull SqrlConfig config);
 
-  interface Writer extends FormatFactory.Writer {
+  interface Writer extends FormatFactory.Writer<String> {
 
 
   }

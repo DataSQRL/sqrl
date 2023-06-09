@@ -70,12 +70,13 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   @Inject
   public SqrlSchema(CalciteTableFactory tableFactory, SqrlFunctionCatalog functionCatalog,
-      ExecutionPipeline pipeline) {
-    this(CalciteSchema.createRootSchema(false, false).plus(), tableFactory, functionCatalog, pipeline);
+      ExecutionPipeline pipeline, RelDataTypeFactory typeFactory) {
+    this(CalciteSchema.createRootSchema(false, false).plus(),
+        tableFactory, functionCatalog, pipeline, typeFactory);
   }
 
   public SqrlSchema(Schema schema, CalciteTableFactory tableFactory,
-      SqrlFunctionCatalog functionCatalog, ExecutionPipeline pipeline) {
+      SqrlFunctionCatalog functionCatalog, ExecutionPipeline pipeline, RelDataTypeFactory typeFactory) {
     super(null, schema, "");
     this.tableFactory = tableFactory;
     this.functionCatalog = functionCatalog;
@@ -92,7 +93,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
     this.planner = planner;
     this.cluster = cluster;
-    this.typeFactory = TypeFactory.getTypeFactory();
+    this.typeFactory = typeFactory;
   }
 
   public List<SQRLTable> getRootTables() {

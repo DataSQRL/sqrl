@@ -3,12 +3,13 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFieldVisitor;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredInterfaceField;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutations;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutationObjectVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutations;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredObjectField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredPagedField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredQuery;
@@ -23,14 +24,12 @@ import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
 import com.datasqrl.graphql.inference.argument.EqHandler;
 import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
-import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.Model.Coords;
-import com.datasqrl.graphql.server.Model.FieldLookupCoords;
+import com.datasqrl.graphql.server.Model.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.Model.FieldLookupQueryCoords;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
-import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
-import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.QueryBase;
+import com.datasqrl.graphql.server.Model.QueryCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.StringSchema;
@@ -38,10 +37,11 @@ import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.OptimizationStage;
-import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.SQRLTable;
@@ -73,12 +73,12 @@ import org.apache.calcite.tools.RelBuilder;
 
 public class PgSchemaBuilder implements
     InferredSchemaVisitor<RootGraphqlModel, Object>,
-    InferredRootObjectVisitor<List<Coords>, Object>,
+    InferredRootObjectVisitor<List<QueryCoords>, Object>,
     InferredMutationObjectVisitor<List<MutationCoords>, Object>,
     InferredSubscriptionObjectVisitor<List<SubscriptionCoords>, Object>,
-    InferredFieldVisitor<Coords, Object> {
+    InferredFieldVisitor<QueryCoords, Object> {
 
-  private final String stringSchema;
+  private final APISource source;
   private final TypeDefinitionRegistry registry;
   private final SqrlSchema schema;
   private final RelBuilder relBuilder;
@@ -90,24 +90,24 @@ public class PgSchemaBuilder implements
   List<ArgumentHandler> argumentHandlers = List.of(
       new EqHandler(), new LimitOffsetHandler()
   );
-  @Getter
-  private List<APIQuery> apiQueries = new ArrayList<>();
+  private final APIConnectorManager apiManager;
 
-  public PgSchemaBuilder(String gqlSchema, SqrlSchema schema, RelBuilder relBuilder,
+  public PgSchemaBuilder(APISource source, SqrlSchema schema, RelBuilder relBuilder,
       SqrlQueryPlanner planner,
-      SqlOperatorTable operatorTable) {
-    this.stringSchema = gqlSchema;
-    this.registry = (new SchemaParser()).parse(gqlSchema);
+      SqlOperatorTable operatorTable, APIConnectorManager apiManager) {
+    this.source = source;
+    this.registry = (new SchemaParser()).parse(source.getSchemaDefinition());
     this.schema = schema;
     this.relBuilder = relBuilder;
     this.operatorTable = operatorTable;
     this.planner = planner;
+    this.apiManager = apiManager;
   }
 
   @Override
   public RootGraphqlModel visitSchema(InferredSchema schema, Object context) {
     RootGraphqlModel.RootGraphqlModelBuilder builder = RootGraphqlModel.builder()
-        .schema(StringSchema.builder().schema(stringSchema).build())
+        .schema(StringSchema.builder().schema(source.getSchemaDefinition()).build())
         .coords(schema.getQuery().accept(this, context));
 
     schema.getMutation().map(m->
@@ -128,7 +128,7 @@ public class PgSchemaBuilder implements
   }
 
   @Override
-  public List<Coords> visitQuery(InferredQuery rootObject, Object context) {
+  public List<QueryCoords> visitQuery(InferredQuery rootObject, Object context) {
     return rootObject.getFields().stream()
         .map(f -> f.accept(this, rootObject.getQuery()))
         .collect(Collectors.toList());
@@ -137,7 +137,7 @@ public class PgSchemaBuilder implements
   @Override
   public List<MutationCoords> visitMutation(InferredMutations rootObject, Object context) {
     return rootObject.getMutations().stream()
-        .map(m->new KafkaMutationCoords(m.getName(), m.getSink()))
+        .map(mut->new MutationCoords(mut.getName(), mut.getSinkConfig()))
         .collect(Collectors.toList());
   }
 
@@ -145,17 +145,17 @@ public class PgSchemaBuilder implements
   public List<SubscriptionCoords> visitSubscriptions(InferredSubscriptions rootObject,
       Object context) {
     return rootObject.getSubscriptions().stream()
-        .map(m->new KafkaSubscriptionCoords(m.getName(), m.getSubscriptions()))
+        .map(sub->new SubscriptionCoords(sub.getName(), sub.getSinkConfig()))
         .collect(Collectors.toList());
   }
 
   @Override
-  public Coords visitInterfaceField(InferredInterfaceField field, Object context) {
+  public QueryCoords visitInterfaceField(InferredInterfaceField field, Object context) {
     throw new RuntimeException("Not supported yet");
   }
 
   @Override
-  public Coords visitObjectField(InferredObjectField field, Object context) {
+  public QueryCoords visitObjectField(InferredObjectField field, Object context) {
     //todo Project out only the needed columns and primary keys (requires looking at sql to
     // determine full scope.
 //    List<String> projectedColumns = new ArrayList<>();
@@ -223,17 +223,17 @@ public class PgSchemaBuilder implements
         .isPresent();
   }
 
-  private ArgumentLookupCoords buildArgumentQuerySet(Set<ArgumentSet> possibleArgCombinations,
+  private ArgumentLookupQueryCoords buildArgumentQuerySet(Set<ArgumentSet> possibleArgCombinations,
       ObjectTypeDefinition parent, FieldDefinition fieldDefinition,
       List<JdbcParameterHandler> existingHandlers) {
-    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
+    ArgumentLookupQueryCoords.ArgumentLookupQueryCoordsBuilder coordsBuilder = ArgumentLookupQueryCoords.builder()
         .parentType(parent.getName()).fieldName(fieldDefinition.getName());
 
     for (ArgumentSet argumentSet : possibleArgCombinations) {
       //Add api query
       RelNode relNode = optimize(argumentSet.getRelNode());
       APIQuery query = new APIQuery(UUID.randomUUID().toString(), relNode);
-      apiQueries.add(query);
+      apiManager.addQuery(query);
 
       List<JdbcParameterHandler> argHandler = new ArrayList<>();
       argHandler.addAll(existingHandlers);
@@ -268,13 +268,13 @@ public class PgSchemaBuilder implements
   }
 
   @Override
-  public Coords visitComputedField(InferredComputedField field, Object context) {
+  public QueryCoords visitComputedField(InferredComputedField field, Object context) {
     return null;
   }
 
   @Override
-  public Coords visitScalarField(InferredScalarField field, Object context) {
-    return FieldLookupCoords.builder()
+  public QueryCoords visitScalarField(InferredScalarField field, Object context) {
+    return FieldLookupQueryCoords.builder()
         .parentType(field.getParent().getName())
         .fieldName(field.getFieldDefinition().getName())
         .columnName(field.getColumn().getShadowedName().getCanonical())
@@ -282,12 +282,12 @@ public class PgSchemaBuilder implements
   }
 
   @Override
-  public Coords visitPagedField(InferredPagedField field, Object context) {
+  public QueryCoords visitPagedField(InferredPagedField field, Object context) {
     return null;
   }
 
   @Override
-  public Coords visitNestedField(NestedField field, Object context) {
+  public QueryCoords visitNestedField(NestedField field, Object context) {
     InferredObjectField objectField = (InferredObjectField) field.getInferredField();
 
     RelPair relPair = createNestedRelNode(field.getRelationship());

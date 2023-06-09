@@ -10,6 +10,7 @@ import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.schema.SQRLTable;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,15 +40,16 @@ public class ExportStatementResolver extends AbstractStatementResolver {
     exportTable(table, sinkPath, ns, statement, errors);
   }
 
-  public void exportTable(SQRLTable table, NamePath sinkPath, Namespace ns,
+  private void exportTable(SQRLTable table, NamePath sinkPath, Namespace ns,
       ExportDefinition statement, ErrorCollector errors) {
-
     ErrorCollector sinkErrors = errors.withLocation(atPosition(errors,
         statement.getSinkPath().getParserPosition()));
     TableSink sink = LoaderUtil.loadSink(sinkPath, sinkErrors, moduleLoader);
+    ns.addExport(exportTable(table,sink,planner.createRelBuilder()));
+  }
 
-    RelBuilder relBuilder = planner.createRelBuilder()
-        .scan(table.getVt().getNameId());
+  public static ResolvedExport exportTable(SQRLTable table, TableSink sink, RelBuilder relBuilder) {
+    relBuilder.scan(table.getVt().getNameId());
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
     table.getVisibleColumns().stream().forEach(c -> {
@@ -55,7 +57,6 @@ public class ExportStatementResolver extends AbstractStatementResolver {
       fieldNames.add(c.getName().getDisplay());
     });
     relBuilder.project(selects, fieldNames);
-    ns.addExport(new ResolvedExport(table.getVt(), relBuilder.build(), sink));
-
+    return new ResolvedExport(table.getVt(), relBuilder.build(), sink);
   }
 }

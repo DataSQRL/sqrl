@@ -6,14 +6,15 @@ package com.datasqrl.graphql;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
 
-import com.datasqrl.graphql.kafka.KafkaSinkEmitter;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.io.SinkConsumer;
+import com.datasqrl.graphql.io.SinkProducer;
+import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
+import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
-import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
-import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
-import com.datasqrl.graphql.server.SinkEmitter;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
@@ -33,8 +34,6 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.kafka.client.consumer.KafkaConsumer;
-import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
@@ -53,6 +52,8 @@ public class GraphQLServer extends AbstractVerticle {
   private final RootGraphqlModel model;
   private final int port;
   private final JdbcDataSystemConnector jdbc;
+
+  private final ErrorCollector errors = ErrorCollector.root();
 
   public GraphQLServer() {
     this(readModel(), 8888, createClient());
@@ -172,44 +173,27 @@ public class GraphQLServer extends AbstractVerticle {
   public GraphQL createGraphQL(SqlClient client) {
     GraphQL graphQL = model.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client), constructSinkEmitters(model, vertx),
+        new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
             constructSubscriptions(model, vertx)));
     return graphQL;
   }
 
-  private Map<String, KafkaConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx) {
-    Map<String, KafkaConsumer> subs = new HashMap<>();
-
-    for (SubscriptionCoords coords: root.getSubscriptions()) {
-      KafkaSubscriptionCoords k = (KafkaSubscriptionCoords) coords;
-      String topicName = k.getSinkConfig().get("topic");
-      KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx,  k.getSinkConfig());
-      consumer.subscribe(topicName)
-          .onSuccess(v ->
-              log.info("Subscribed to topic: {}", topicName)
-          ).onFailure(cause ->
-              log.error("Could not subscribe to topic {}. Error {}", topicName,
-                  cause.getMessage())
-          );
-      subs.put(coords.getFieldName(), consumer);
+  private Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx) {
+    Map<String, SinkConsumer> consumers = new HashMap<>();
+    for (SubscriptionCoords sub: root.getSubscriptions()) {
+      consumers.put(sub.getFieldName(), KafkaSinkConsumer.createFromConfig(vertx,
+          sub.getSinkConfig().deserialize(errors)));
     }
-
-    return subs;
+    return consumers;
   }
 
-  private Map<String, SinkEmitter> constructSinkEmitters(RootGraphqlModel root, Vertx vertx) {
-
-    Map<String, SinkEmitter> map = new HashMap<>();
-    if (root.getMutations() != null) {
-      for (MutationCoords m : root.getMutations()) {
-        KafkaMutationCoords k = (KafkaMutationCoords) m;
-        KafkaProducer<String, String> producer =
-                KafkaProducer.create(vertx, k.getSinkConfig());
-        map.put(k.getFieldName(), new KafkaSinkEmitter(producer,
-                k.getSinkConfig().get("topic")));
-      }
+  private Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
+    Map<String, SinkProducer> producers = new HashMap<>();
+    for (MutationCoords mut : root.getMutations()) {
+      producers.put(mut.getFieldName(), KafkaSinkProducer.createFromConfig(vertx,
+          mut.getSinkConfig().deserialize(errors)));
     }
-    return map;
+    return producers;
   }
 
 

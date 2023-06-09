@@ -19,9 +19,9 @@ public class LoaderUtil {
         .map(s -> ((DataSystemNsObject) s).getDiscovery())
         .flatMap(dataSystem -> dataSystem.discoverSink(sinkPath.getLast(), errors))
         .map(tblConfig ->
-            tblConfig.initializeSink(errors, sinkPath, Optional.empty()));
+            tblConfig.initializeSink(sinkPath, Optional.empty()));
 
-      //Attempt to load and convert a table source
+      //Attempt to load and convert a table sink
       if (sink.isEmpty()) {
         Optional<TableSink> sink2 = moduleLoader.getModule(sinkPath.popLast())
             .flatMap(m -> m.getNamespaceObject(sinkPath.getLast()))

@@ -96,14 +96,14 @@ public class ObjectLoaderImpl implements ObjectLoader {
             .orElse(List.of());
       case sink:
         return new DataSource()
-            .readTableSink(tableSchema, tableConfig, errors, basePath)
+            .readTableSink(tableSchema, tableConfig, basePath)
             .map(TableSinkNamespaceObject::new)
             .map(t->(TableNamespaceObject) t)
             .map(List::of).orElse(List.of());
       case source_and_sink:
         TableSource source = new DataSource().readTableSource(tableSchema.get(), tableConfig, errors, basePath)
             .get();
-        TableSink sink = new DataSource().readTableSink(tableSchema, tableConfig, errors, basePath)
+        TableSink sink = new DataSource().readTableSink(tableSchema, tableConfig, basePath)
             .get();
         return List.of(new TableSourceSinkNamespaceObject(source, sink));
       default:

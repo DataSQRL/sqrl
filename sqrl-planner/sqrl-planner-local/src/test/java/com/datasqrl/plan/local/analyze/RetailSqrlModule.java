@@ -15,6 +15,7 @@ import com.datasqrl.module.SqrlModule;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.schema.converters.UtbToFlexibleSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.google.auto.service.AutoService;
 import java.time.LocalDateTime;
@@ -22,8 +23,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Value;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 

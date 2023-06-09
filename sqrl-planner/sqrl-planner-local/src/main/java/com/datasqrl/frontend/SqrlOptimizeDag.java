@@ -1,6 +1,7 @@
 package com.datasqrl.frontend;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -32,12 +33,12 @@ public class SqrlOptimizeDag extends SqrlPlan {
     super(parser, errors, nsFactory, moduleLoader, nameCanonicalizer, statementProcessor, planner, debuggerConfig);
   }
 
-  public PhysicalDAGPlan planDag(Namespace ns, Collection<APIQuery> queries, RootGraphqlModel model,
+  public PhysicalDAGPlan planDag(Namespace ns, APIConnectorManager apiManager, RootGraphqlModel model,
       boolean includeJars) {
     DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
         ns.getSchema().getPipeline(), getDebugger(), errors);
     CalciteSchema relSchema = planner.getSchema();
-    return dagPlanner.plan(relSchema, queries, ns.getExports(), includeJars ? ns.getJars() : Set.of(),
+    return dagPlanner.plan(relSchema, apiManager, ns.getExports(), includeJars ? ns.getJars() : Set.of(),
         ns.getUdfs(), model);
   }
 }

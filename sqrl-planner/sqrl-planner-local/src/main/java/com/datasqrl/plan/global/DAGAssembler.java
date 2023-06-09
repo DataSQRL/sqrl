@@ -8,6 +8,7 @@ import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.canonicalizer.Name;
@@ -61,7 +62,7 @@ public class DAGAssembler {
 
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model) {
+      RootGraphqlModel model, APIConnectorManager apiManager) {
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();
@@ -137,8 +138,7 @@ public class DAGAssembler {
           .flatMap(List::stream).collect(Collectors.toList());
       Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(indexCalls)
           .keySet();
-      databasePlans.add(new PhysicalDAGPlan.StagePlan(database, readDAG, indexDefinitions,
-          null, null, null));
+      databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, readDAG, indexDefinitions));
     }
 
     //Add exported tables
@@ -173,8 +173,8 @@ public class DAGAssembler {
               expandedRelNode));
         });
 
-    PhysicalDAGPlan.StagePlan streamPlan = new PhysicalDAGPlan.StagePlan(streamStage, writeDAG,
-        null, jars, udfs, null);
+    PhysicalDAGPlan.StagePlan streamPlan = new PhysicalDAGPlan.StreamStagePlan(streamStage, writeDAG,
+        jars, udfs);
 
     List<PhysicalDAGPlan.StagePlan> allPlans = new ArrayList<>();
     allPlans.add(streamPlan);
@@ -182,11 +182,17 @@ public class DAGAssembler {
 
     Optional<ExecutionStage> serverStage = pipeline.getStage(Type.SERVER);
     if (serverStage.isPresent()) {
-      PhysicalDAGPlan.StagePlan serverPlan = new PhysicalDAGPlan.StagePlan(
-          serverStage.get(), List.of(), null, jars, udfs, model
-      );
+      PhysicalDAGPlan.StagePlan serverPlan = new PhysicalDAGPlan.ServerStagePlan(
+          serverStage.get(), model);
       allPlans.add(serverPlan);
     }
+    Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);
+    if (logStage.isPresent()) {
+      PhysicalDAGPlan.StagePlan logPlan = new PhysicalDAGPlan.LogStagePlan(
+          logStage.get(), apiManager.getLogs());
+      allPlans.add(logPlan);
+    }
+
     return new PhysicalDAGPlan(allPlans, pipeline);
   }
 

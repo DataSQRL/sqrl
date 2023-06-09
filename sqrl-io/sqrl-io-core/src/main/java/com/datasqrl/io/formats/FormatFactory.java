@@ -34,7 +34,9 @@ public interface FormatFactory extends Serializable {
 
   Parser getParser(@NonNull SqrlConfig config);
 
-  interface Parser extends Serializable {
+  interface Parser<IN> extends Serializable {
+
+    Result parse(@NonNull IN input);
 
     @Value
     class Result {
@@ -91,7 +93,9 @@ public interface FormatFactory extends Serializable {
 
   Writer getWriter(@NonNull SqrlConfig config);
 
-  interface Writer {
+  interface Writer<OUT> {
+
+    public OUT write(Map<String, Object> record) throws Exception;
 
   }
 

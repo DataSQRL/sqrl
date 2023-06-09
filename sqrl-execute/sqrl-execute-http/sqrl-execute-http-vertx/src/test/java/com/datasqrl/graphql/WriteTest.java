@@ -5,14 +5,14 @@ package com.datasqrl.graphql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
-import com.datasqrl.graphql.kafka.KafkaSinkEmitter;
-import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.Model.ArgumentLookupQueryCoords;
 import com.datasqrl.graphql.server.Model.ArgumentSet;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
-import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
+import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import graphql.ExecutionInput;
@@ -26,13 +26,9 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import lombok.SneakyThrows;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -79,7 +75,7 @@ class WriteTest {
           + "type Customer {"
           + "  customerid: Int "
           + "}").build())
-      .coord(ArgumentLookupCoords.builder()
+      .coord(ArgumentLookupQueryCoords.builder()
           .parentType("Query")
           .fieldName("customer")
           .match(ArgumentSet.builder()
@@ -88,10 +84,7 @@ class WriteTest {
                   .build())
               .build())
           .build())
-      .mutation(KafkaMutationCoords.builder()
-          .fieldName("addCustomer")
-          .sinkConfig(Map.of("topic", "topic-1"))
-          .build())
+      .mutation(new MutationCoords("addCustomer", SqrlConfigCommons.EMPTY.serialize()))
       .build();
   private PgPool client;
   private KafkaProducer<String, String> kafkaProducer;
@@ -148,7 +141,7 @@ class WriteTest {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
         new VertxContext(new VertxJdbcClient(client),
-            Map.of("addCustomer", new KafkaSinkEmitter(kafkaProducer, "topic-1")), Map.of()));
+            Map.of("addCustomer", new KafkaSinkProducer(kafkaProducer, "topic-1")), Map.of()));
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid } }")

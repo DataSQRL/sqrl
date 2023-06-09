@@ -24,7 +24,7 @@ import org.apache.calcite.tools.RelBuilder;
 public interface ExecutionEngine {
 
   public enum Type {
-    STREAM, DATABASE, SERVER;
+    STREAM, DATABASE, SERVER, LOG;
 
     public boolean isWrite() {
       return this == STREAM;

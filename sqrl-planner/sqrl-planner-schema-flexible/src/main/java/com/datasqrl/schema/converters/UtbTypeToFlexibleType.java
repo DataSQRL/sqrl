@@ -1,4 +1,4 @@
-package com.datasqrl.plan.local.analyze;
+package com.datasqrl.schema.converters;
 
 import com.datasqrl.schema.UniversalTable.Column;
 import com.datasqrl.schema.type.Type;

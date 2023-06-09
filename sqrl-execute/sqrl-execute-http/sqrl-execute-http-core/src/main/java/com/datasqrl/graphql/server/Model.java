@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.server;
 
+import com.datasqrl.config.SerializedSqrlConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,7 +34,7 @@ public class Model {
   public static class RootGraphqlModel {
 
     @Singular
-    List<Coords> coords;
+    List<QueryCoords> coords;
     @Singular
     List<MutationCoords> mutations;
     @Singular
@@ -43,7 +44,7 @@ public class Model {
 
     @JsonCreator
     public RootGraphqlModel(
-        @JsonProperty("coords") List<Coords> coords,
+        @JsonProperty("coords") List<QueryCoords> coords,
         @JsonProperty("mutations") List<MutationCoords> mutations,
         @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
         @JsonProperty("schema") Schema schema) {
@@ -92,81 +93,25 @@ public class Model {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
-      property = "type")
-  @JsonSubTypes({
-      @Type(value = KafkaMutationCoords.class, name = "kafka")
-  })
-  public static abstract class MutationCoords {
+  public static class MutationCoords {
     protected String fieldName;
-    public abstract <R, C> R accept(MutationVisitor<R, C> visitor, C context);
-  }
-
-  @Getter
-  @NoArgsConstructor
-  public static class KafkaMutationCoords extends MutationCoords {
-    protected Map<String, String> sinkConfig;
-    @Builder
-    public KafkaMutationCoords(String fieldName, Map<String, String> sinkConfig) {
-      super(fieldName);
-      this.sinkConfig = sinkConfig;
-    }
-
-    @Override
-    public <R, C> R accept(MutationVisitor<R, C> visitor, C context) {
-      return visitor.visitKafkaMutationCoords(this, context);
-    }
-  }
-
-
-  public interface MutationVisitor<R, C> {
-    R visitKafkaMutationCoords(KafkaMutationCoords coords, C context);
+    protected SerializedSqrlConfig sinkConfig;
   }
 
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
-      property = "type")
-  @JsonSubTypes({
-      @Type(value = KafkaSubscriptionCoords.class, name = "kafka")
-  })
-  public static abstract class SubscriptionCoords {
+  public static class SubscriptionCoords {
     protected String fieldName;
-    public abstract <R, C> R accept(SubscriptionVisitor<R, C> visitor, C context);
-  }
-
-  @Getter
-  @NoArgsConstructor
-  public static class KafkaSubscriptionCoords extends SubscriptionCoords {
-    protected Map<String, String> sinkConfig;
-    @Builder
-    public KafkaSubscriptionCoords(String fieldName, Map<String, String> sinkConfig) {
-      super(fieldName);
-      this.sinkConfig = sinkConfig;
-    }
-
-    @Override
-    public <R, C> R accept(SubscriptionVisitor<R, C> visitor, C context) {
-      return visitor.visitKafkaSubscriptionCoords(this, context);
-    }
-  }
-
-
-  public interface SubscriptionVisitor<R, C> {
-    R visitKafkaSubscriptionCoords(KafkaSubscriptionCoords coords, C context);
+    protected SerializedSqrlConfig sinkConfig;
   }
 
 
   public interface CoordVisitor<R, C> {
 
-    R visitArgumentLookup(ArgumentLookupCoords coords, C context);
+    R visitArgumentLookup(ArgumentLookupQueryCoords coords, C context);
 
-    R visitFieldLookup(FieldLookupCoords coords, C context);
+    R visitFieldLookup(FieldLookupQueryCoords coords, C context);
   }
 
   @Getter
@@ -177,10 +122,10 @@ public class Model {
       include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
-      @Type(value = ArgumentLookupCoords.class, name = "args"),
-      @Type(value = FieldLookupCoords.class, name = "field")
+      @Type(value = ArgumentLookupQueryCoords.class, name = "args"),
+      @Type(value = FieldLookupQueryCoords.class, name = "field")
   })
-  public static abstract class Coords {
+  public static abstract class QueryCoords {
 
     String parentType;
     String fieldName;
@@ -190,14 +135,14 @@ public class Model {
 
   @Getter
   @NoArgsConstructor
-  public static class FieldLookupCoords extends Coords {
+  public static class FieldLookupQueryCoords extends QueryCoords {
 
     @JsonIgnore
     final String type = "field";
     String columnName;
 
     @Builder
-    public FieldLookupCoords(String parentType, String fieldName,
+    public FieldLookupQueryCoords(String parentType, String fieldName,
         String columnName) {
       super(parentType, fieldName);
       this.columnName = columnName;
@@ -210,14 +155,14 @@ public class Model {
 
   @Getter
   @NoArgsConstructor
-  public static class ArgumentLookupCoords extends Coords {
+  public static class ArgumentLookupQueryCoords extends QueryCoords {
 
     @JsonIgnore
     final String type = "args";
     Set<ArgumentSet> matchs;
 
     @Builder
-    public ArgumentLookupCoords(String parentType, String fieldName,
+    public ArgumentLookupQueryCoords(String parentType, String fieldName,
         @Singular Set<ArgumentSet> matchs) {
       super(parentType, fieldName);
       this.matchs = matchs;

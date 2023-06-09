@@ -55,6 +55,8 @@ public interface SqrlConfig {
 
   Map<String, Object> toMap();
 
+  Map<String, String> toStringMap();
+
   SerializedSqrlConfig serialize(); //TODO: add secrets injector
 
   default Value<String> asString(String key) {
