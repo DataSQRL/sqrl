@@ -305,10 +305,8 @@ public class SchemaInference {
     for(FieldDefinition def : m.getFieldDefinitions()) {
       validateStructurallyEqualMutation(def, getValidMutationReturnType(def), getValidMutationInput(def),
           List.of(ReservedName.SOURCE_TIME.getCanonical()));
-      TableSink tableSink = this.ns.getMutationTable(source, Name.system(def.getName()))
-          .orElseThrow(() -> new RuntimeException(String.format(
-                  "Could not find mutation source: %s.%s", source, def.getName())));
-
+      TableSink tableSink = apiManager.getMutationSource(source, Name.system(def.getName()));
+      Preconditions.checkArgument(tableSink!=null, "Could not find mutation source: %s.%s", source, def.getName());
       //TODO: validate that tableSink schema matches Input type
       SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();
       InferredMutation mutation = new InferredMutation(def.getName(), config);

@@ -1,14 +1,18 @@
 package com.datasqrl.plan.local.analyze;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.schema.SQRLTable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.Value;
@@ -23,6 +27,11 @@ public class MockAPIConnectorManager implements APIConnectorManager {
   @Override
   public void addMutation(APIMutation mutation) {
     mutations.add(mutation);
+  }
+
+  @Override
+  public TableSink getMutationSource(APISource source, Name mutationName) {
+    return null;
   }
 
   @Override
@@ -42,11 +51,11 @@ public class MockAPIConnectorManager implements APIConnectorManager {
 
   @Override
   public List<Log> getLogs() {
-    throw new UnsupportedOperationException();
+    return List.of();
   }
 
   @Override
   public Map<SQRLTable, Log> getExports() {
-    throw new UnsupportedOperationException();
+    return Collections.emptyMap();
   }
 }

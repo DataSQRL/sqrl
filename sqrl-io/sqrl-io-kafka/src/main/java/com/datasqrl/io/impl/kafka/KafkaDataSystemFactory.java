@@ -61,10 +61,15 @@ public class KafkaDataSystemFactory implements DataSystemImplementationFactory {
   }
 
   public static TableConfig.Builder getKafkaConfig(@NonNull String name, @NonNull String servers, String prefix) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(servers));
     BaseTableConfig baseTable = BaseTableConfig.builder()
         .type(ExternalDataType.source_and_sink.name())
         .build();
+    return getKafkaConfig(name, baseTable, servers, prefix);
+  }
+
+  public static TableConfig.Builder getKafkaConfig(@NonNull String name, @NonNull BaseTableConfig baseTable,
+                                                   @NonNull String servers, String prefix) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(servers));
     TableConfig.Builder tblBuilder = TableConfig.builder(Name.system(name)).base(baseTable);
     SqrlConfig connectorConfig = tblBuilder.getConnectorConfig();
     connectorConfig.setProperty(SYSTEM_NAME_KEY, SYSTEM_NAME);

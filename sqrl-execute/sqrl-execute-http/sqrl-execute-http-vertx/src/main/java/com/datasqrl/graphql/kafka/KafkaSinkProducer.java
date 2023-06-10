@@ -19,8 +19,10 @@ import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.checkerframework.checker.units.qual.K;
 
 @AllArgsConstructor
@@ -46,8 +48,11 @@ public class KafkaSinkProducer<OUT> implements SinkProducer {
 
   public static KafkaSinkProducer<?> createFromConfig(Vertx vertx, SqrlConfig config) {
     KafkaConfig kafkaConfig = getKafkaConfig(config);
+    Map<String,String> settings = kafkaConfig.settings;
+    settings.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
 
     if (kafkaConfig.formatFactory instanceof TextLineFormat) {
+      settings.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
       KafkaProducer<String, String> producer =
           KafkaProducer.create(vertx, kafkaConfig.settings);
       TextLineFormat.Writer serializer = ((TextLineFormat) kafkaConfig.formatFactory)

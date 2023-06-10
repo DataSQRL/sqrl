@@ -4,16 +4,25 @@ import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
 import com.datasqrl.engine.server.GenericJavaServerEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
+import com.datasqrl.io.tables.BaseTableConfig;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.PackagerConfig;
+import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.google.common.base.Preconditions;
+import com.datasqrl.kafka.KafkaLogEngineFactory;
 import com.google.common.io.Resources;
 import java.util.Arrays;
 import lombok.SneakyThrows;
@@ -124,6 +133,17 @@ public class PackagerUtil {
 
     SqrlConfig server = config.getSubConfig("server");
     server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
+
+    SqrlConfig logConfig = config.getSubConfig("log");
+    logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
+    BaseTableConfig baseTable = BaseTableConfig.builder()
+            .schema(FlexibleTableSchemaFactory.SCHEMA_TYPE)
+            .type(ExternalDataType.source_and_sink.name())
+            .build();
+    TableConfig.Builder tblBuilder = KafkaDataSystemFactory.getKafkaConfig(KafkaLogEngineFactory.ENGINE_NAME,
+            baseTable, "kafka:9092", null);
+    tblBuilder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
+    logConfig.copy(tblBuilder.getConfig());
 
     return rootConfig;
   }

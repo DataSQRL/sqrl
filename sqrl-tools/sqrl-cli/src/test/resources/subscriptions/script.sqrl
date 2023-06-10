@@ -8,6 +8,3 @@ Post.upvote := SELECT COALESCE(count(*), 0) AS upvotes
 UpvotedPosts := STREAM ON UPDATE AS
   SELECT id, COALESCE(count(*), 0) AS upvote
   FROM Upvote GROUP BY id;
-
-EXPORT UpvotedPosts TO schema.postUpvoted
-EXPORT Post TO schema.postCreated;

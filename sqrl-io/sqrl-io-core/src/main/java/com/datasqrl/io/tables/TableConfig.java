@@ -96,9 +96,16 @@ public class TableConfig {
     return getConnectorConfig().asString(DataSystemImplementationFactory.SYSTEM_NAME_KEY).get();
   }
 
+  public Optional<String> getSchemaType() {
+    if (hasFormat() && getFormat().hasSchemaFactory()) {
+      return Optional.of(getFormat().getName());
+    } else {
+      return Optional.ofNullable(base.getSchema());
+    }
+  }
+
   public Optional<TableSchemaFactory> getSchemaFactory() {
-    Optional<TableSchemaFactory> factory = hasFormat()?getFormat().getSchemaFactory():Optional.empty();
-    return factory.or(() -> Optional.ofNullable(base.getSchema()).map(TableSchemaFactory::load));
+    return getSchemaType().map(TableSchemaFactory::load);
   }
 
   /**
@@ -208,6 +215,10 @@ public class TableConfig {
 
     public SqrlConfig getFormatConfig() {
       return config.getSubConfig(TableConfig.FORMAT_KEY);
+    }
+
+    public SqrlConfig getConfig() {
+      return config;
     }
 
     public TableConfig build() {

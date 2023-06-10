@@ -86,6 +86,12 @@ public class InputFieldToFlexibleSchemaRelation implements
       if (context.parent!=null) {
         //making it a singleton to keep primary keys at 0
         table = new UniversalTable(tableName, context.parent.getPath().concat(tableName), context.parent, true, false);
+
+        Preconditions.checkArgument(context.listDepth<=1, "Do not support multi-dimensional arrays of types");
+        Multiplicity multiplicity = Multiplicity.ZERO_ONE;
+        if (context.listDepth>0) multiplicity = Multiplicity.MANY;
+        else if (context.isNotNull) multiplicity = Multiplicity.ONE;
+        context.parent.addChild(context.name, table, multiplicity);
       } else {
        table = new UniversalTable(tableName, NamePath.of(tableName), 0, false);
       }
@@ -117,16 +123,10 @@ public class InputFieldToFlexibleSchemaRelation implements
 
     @Override
     public UniversalTable visitTypeName(TypeName node, FieldContext context) {
-      Preconditions.checkArgument(context.listDepth<=1, "Do not support multi-dimensional arrays of types");
       TypeDefinition typeDef = typeDefinitionRegistry.getType(node.getName())
           .orElseThrow(()-> new RuntimeException("Could not find node:" + node.getName()));
 
-      Multiplicity multiplicity = Multiplicity.ZERO_ONE;
-      if (context.listDepth>0) multiplicity = Multiplicity.MANY;
-      else if (context.isNotNull) multiplicity = Multiplicity.ONE;
-      UniversalTable nestedTable = GraphqlSchemaVisitor.accept(this, typeDef, context);
-      context.parent.addChild(context.name, nestedTable, multiplicity);
-      return context.parent;
+      return GraphqlSchemaVisitor.accept(this, typeDef, context);
     }
 
     @Override
@@ -162,9 +162,7 @@ public class InputFieldToFlexibleSchemaRelation implements
     }
 
     private RelDataType addContextToType(RelDataType type, FieldContext context) {
-      if (context.isNotNull) {
-        type = TypeUtil.withNullable(typeFactory, type, false);
-      }
+      type = TypeUtil.withNullable(typeFactory, type, !context.isNotNull);
       //wrap in array of nested depth;
       for (int i = 0; i < context.listDepth; i++) {
         type = typeFactory.createArrayType(type, -1L);

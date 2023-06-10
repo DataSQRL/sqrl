@@ -96,6 +96,11 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   }
 
   @Override
+  public TableSink getMutationSource(APISource source, Name mutationName) {
+    return mutations.get(new APIMutation(mutationName, source, null));
+  }
+
+  @Override
   public TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable) {
     errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
     errors.checkFatal(sqrlTable.getVt().getRoot().getBase().getType()== TableType.STREAM,

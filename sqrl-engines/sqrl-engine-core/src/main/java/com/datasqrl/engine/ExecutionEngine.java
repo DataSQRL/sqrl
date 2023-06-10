@@ -33,6 +33,8 @@ public interface ExecutionEngine {
     public boolean isRead() {
       return this == DATABASE || this == SERVER;
     }
+
+    public boolean isCompute() { return this != LOG; }
   }
 
   boolean supports(EngineCapability capability);

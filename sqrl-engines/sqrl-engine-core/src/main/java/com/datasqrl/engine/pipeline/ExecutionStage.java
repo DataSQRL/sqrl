@@ -32,6 +32,8 @@ public interface ExecutionStage {
     return getEngine().getType().isWrite();
   }
 
+  default boolean isCompute() { return getEngine().getType().isCompute(); }
+
   ExecutionEngine getEngine();
 
 }

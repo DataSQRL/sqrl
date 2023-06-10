@@ -43,6 +43,8 @@ public interface APIConnectorManager {
    */
   void addMutation(APIMutation mutation);
 
+  TableSink getMutationSource(APISource source, Name mutationName);
+
   TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable);
 
   void addQuery(APIQuery query);

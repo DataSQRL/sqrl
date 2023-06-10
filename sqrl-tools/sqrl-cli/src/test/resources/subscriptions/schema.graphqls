@@ -8,8 +8,8 @@ type Mutation {
 }
 
 type Subscription {
-  postCreated: Post
-  postUpvoted: PostUpvoted
+  post: Post
+  UpvotedPosts: UpvotedPosts
 }
 
 type Post {
@@ -20,7 +20,7 @@ type Post {
   upvote: PostUpvoteCount
 }
 
-type PostUpvoted {
+type UpvotedPosts {
   id: String
   upvote: Int
 }

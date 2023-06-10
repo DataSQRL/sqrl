@@ -13,12 +13,12 @@ type Mutation {
 }
 
 input AddCustomerEvent {
-  customerid: Int
+  customerid: Int!
   email: String
   address: [CustomerAddress]
 }
 
 input CustomerAddress {
-  id: ID
+  id: ID!
   address: String
 }

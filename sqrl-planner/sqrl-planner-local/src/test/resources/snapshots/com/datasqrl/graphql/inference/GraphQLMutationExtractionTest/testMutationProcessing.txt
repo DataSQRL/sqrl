@@ -1,3 +1,4 @@
+>>>schema.addCustomer
 ---
 name: "addCustomer"
 schema_version: "1"
@@ -5,15 +6,20 @@ partial_schema: false
 columns:
 - name: "customerid"
   type: "INTEGER"
+  tests:
+  - "not_null"
 - name: "email"
   type: "STRING"
 - name: "address"
   columns:
   - name: "id"
     type: "STRING"
+    tests:
+    - "not_null"
   - name: "address"
     type: "STRING"
 
+>>>schema.addCustomer2
 ---
 name: "addCustomer2"
 schema_version: "1"
@@ -21,12 +27,16 @@ partial_schema: false
 columns:
 - name: "customerid"
   type: "INTEGER"
+  tests:
+  - "not_null"
 - name: "email"
   type: "STRING"
 - name: "address"
   columns:
   - name: "id"
     type: "STRING"
+    tests:
+    - "not_null"
   - name: "address"
     type: "STRING"
 

@@ -1,16 +1,16 @@
 package com.datasqrl.frontend;
 
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.local.generate.NamespaceFactory;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
-import com.datasqrl.plan.local.generate.StatementProcessor;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.google.inject.Inject;
 import lombok.Getter;
 
@@ -24,10 +24,10 @@ public class SqrlPhysicalPlan extends SqrlOptimizeDag {
       NamespaceFactory nsFactory,
       ModuleLoader moduleLoader,
       NameCanonicalizer nameCanonicalizer,
-      StatementProcessor statementProcessor,
+      CalciteTableFactory tableFactory,
       SqrlQueryPlanner planner, DebuggerConfig debuggerConfig,
       ErrorSink errorSink) {
-    super(parser, errors, nsFactory, moduleLoader, nameCanonicalizer, statementProcessor, planner, debuggerConfig);
+    super(parser, errors, nsFactory, moduleLoader, nameCanonicalizer, tableFactory, planner, debuggerConfig);
     physicalPlanner = new PhysicalPlanner(planner.createRelBuilder(), errorSink.getErrorSink());
   }
 

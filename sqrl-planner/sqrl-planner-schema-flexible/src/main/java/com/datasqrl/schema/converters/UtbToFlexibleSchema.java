@@ -1,5 +1,6 @@
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.canonicalizer.SpecialName;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
@@ -40,7 +41,7 @@ public class UtbToFlexibleSchema {
             new SchemaElementDescription(""),
             null,
             List.of(new FieldType(
-                column.getName(),
+                SpecialName.SINGLETON,
                 UtbTypeToFlexibleType.toType(column), //other types
                 0,
                 column.isNullable() ? List.of() : List.of(NotNull.INSTANCE) //not null
@@ -55,7 +56,7 @@ public class UtbToFlexibleSchema {
             new SchemaElementDescription(""),
             null,
             List.of(new FieldType(
-                field.getName(),
+                SpecialName.SINGLETON,
                 relType,
                 rel.getMultiplicity() == Multiplicity.MANY ? 1 : 0, //todo Array
                 List.of()// : List.of(NotNull.INSTANCE)
