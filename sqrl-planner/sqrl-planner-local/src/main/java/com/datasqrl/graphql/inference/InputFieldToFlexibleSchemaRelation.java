@@ -93,7 +93,7 @@ public class InputFieldToFlexibleSchemaRelation implements
         else if (context.isNotNull) multiplicity = Multiplicity.ONE;
         context.parent.addChild(context.name, table, multiplicity);
       } else {
-       table = new UniversalTable(tableName, NamePath.of(tableName), 0, false);
+        table = new UniversalTable(tableName, NamePath.of(tableName), 0, false);
       }
 
       FieldContext nestedContext = new FieldContext(null, table, 0, false);

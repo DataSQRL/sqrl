@@ -3,8 +3,6 @@
  */
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
-
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.DockerCompose;
 import com.datasqrl.config.SqrlConfig;
@@ -14,22 +12,21 @@ import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
-import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Preconditions;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
+import picocli.CommandLine.ScopeType;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import picocli.CommandLine;
-import picocli.CommandLine.ScopeType;
+
+import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {

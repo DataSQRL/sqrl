@@ -24,12 +24,12 @@ import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
 import com.datasqrl.graphql.inference.argument.EqHandler;
 import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
-import com.datasqrl.graphql.server.Model.ArgumentLookupQueryCoords;
-import com.datasqrl.graphql.server.Model.FieldLookupQueryCoords;
+import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.QueryBase;
-import com.datasqrl.graphql.server.Model.QueryCoords;
+import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.StringSchema;
@@ -59,7 +59,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.Getter;
+
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.RelNode;
@@ -73,10 +73,10 @@ import org.apache.calcite.tools.RelBuilder;
 
 public class PgSchemaBuilder implements
     InferredSchemaVisitor<RootGraphqlModel, Object>,
-    InferredRootObjectVisitor<List<QueryCoords>, Object>,
+    InferredRootObjectVisitor<List<Coords>, Object>,
     InferredMutationObjectVisitor<List<MutationCoords>, Object>,
     InferredSubscriptionObjectVisitor<List<SubscriptionCoords>, Object>,
-    InferredFieldVisitor<QueryCoords, Object> {
+    InferredFieldVisitor<Coords, Object> {
 
   private final APISource source;
   private final TypeDefinitionRegistry registry;
@@ -128,7 +128,7 @@ public class PgSchemaBuilder implements
   }
 
   @Override
-  public List<QueryCoords> visitQuery(InferredQuery rootObject, Object context) {
+  public List<Coords> visitQuery(InferredQuery rootObject, Object context) {
     return rootObject.getFields().stream()
         .map(f -> f.accept(this, rootObject.getQuery()))
         .collect(Collectors.toList());
@@ -150,12 +150,12 @@ public class PgSchemaBuilder implements
   }
 
   @Override
-  public QueryCoords visitInterfaceField(InferredInterfaceField field, Object context) {
+  public Coords visitInterfaceField(InferredInterfaceField field, Object context) {
     throw new RuntimeException("Not supported yet");
   }
 
   @Override
-  public QueryCoords visitObjectField(InferredObjectField field, Object context) {
+  public Coords visitObjectField(InferredObjectField field, Object context) {
     //todo Project out only the needed columns and primary keys (requires looking at sql to
     // determine full scope.
 //    List<String> projectedColumns = new ArrayList<>();
@@ -223,10 +223,10 @@ public class PgSchemaBuilder implements
         .isPresent();
   }
 
-  private ArgumentLookupQueryCoords buildArgumentQuerySet(Set<ArgumentSet> possibleArgCombinations,
-      ObjectTypeDefinition parent, FieldDefinition fieldDefinition,
-      List<JdbcParameterHandler> existingHandlers) {
-    ArgumentLookupQueryCoords.ArgumentLookupQueryCoordsBuilder coordsBuilder = ArgumentLookupQueryCoords.builder()
+  private ArgumentLookupCoords buildArgumentQuerySet(Set<ArgumentSet> possibleArgCombinations,
+                                                     ObjectTypeDefinition parent, FieldDefinition fieldDefinition,
+                                                     List<JdbcParameterHandler> existingHandlers) {
+    ArgumentLookupCoords.ArgumentLookupQueryCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
         .parentType(parent.getName()).fieldName(fieldDefinition.getName());
 
     for (ArgumentSet argumentSet : possibleArgCombinations) {
@@ -268,13 +268,13 @@ public class PgSchemaBuilder implements
   }
 
   @Override
-  public QueryCoords visitComputedField(InferredComputedField field, Object context) {
+  public Coords visitComputedField(InferredComputedField field, Object context) {
     return null;
   }
 
   @Override
-  public QueryCoords visitScalarField(InferredScalarField field, Object context) {
-    return FieldLookupQueryCoords.builder()
+  public Coords visitScalarField(InferredScalarField field, Object context) {
+    return FieldLookupCoords.builder()
         .parentType(field.getParent().getName())
         .fieldName(field.getFieldDefinition().getName())
         .columnName(field.getColumn().getShadowedName().getCanonical())
@@ -282,12 +282,12 @@ public class PgSchemaBuilder implements
   }
 
   @Override
-  public QueryCoords visitPagedField(InferredPagedField field, Object context) {
+  public Coords visitPagedField(InferredPagedField field, Object context) {
     return null;
   }
 
   @Override
-  public QueryCoords visitNestedField(NestedField field, Object context) {
+  public Coords visitNestedField(NestedField field, Object context) {
     InferredObjectField objectField = (InferredObjectField) field.getInferredField();
 
     RelPair relPair = createNestedRelNode(field.getRelationship());

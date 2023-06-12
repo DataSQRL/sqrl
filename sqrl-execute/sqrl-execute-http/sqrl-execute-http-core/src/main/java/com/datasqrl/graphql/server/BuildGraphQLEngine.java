@@ -4,9 +4,9 @@
 package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.CoordVisitor;
-import com.datasqrl.graphql.server.Model.FieldLookupQueryCoords;
+import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
@@ -14,7 +14,7 @@ import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
-import com.datasqrl.graphql.server.Model.QueryCoords;
+import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
@@ -65,7 +65,7 @@ public class BuildGraphQLEngine implements
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
     codeRegistry.defaultDataFetcher(env ->
         context.createPropertyFetcher(env.getFieldDefinition().getName()));
-    for (QueryCoords qc : root.coords) {
+    for (Coords qc : root.coords) {
       codeRegistry.dataFetcher(
           FieldCoordinates.coordinates(qc.getParentType(), qc.getFieldName()),
           qc.accept(this, context));
@@ -107,7 +107,7 @@ public class BuildGraphQLEngine implements
   }
 
   @Override
-  public DataFetcher<?> visitArgumentLookup(ArgumentLookupQueryCoords coords, Context ctx) {
+  public DataFetcher<?> visitArgumentLookup(ArgumentLookupCoords coords, Context ctx) {
     //Map ResolvedQuery to precompute as much as possible
     Map<Set<Argument>, ResolvedQuery> lookupMap = coords.getMatchs().stream()
         .collect(Collectors.toMap(c -> c.arguments, c -> c.query.accept(this, ctx)));
@@ -118,7 +118,7 @@ public class BuildGraphQLEngine implements
   }
 
   @Override
-  public DataFetcher<?> visitFieldLookup(FieldLookupQueryCoords coords, Context context) {
+  public DataFetcher<?> visitFieldLookup(FieldLookupCoords coords, Context context) {
     return context.createPropertyFetcher(coords.getColumnName());
   }
 

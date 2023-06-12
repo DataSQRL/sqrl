@@ -10,7 +10,7 @@ import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
-import com.datasqrl.graphql.server.Model.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.ArgumentSet;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.MutationCoords;
@@ -31,7 +31,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
-import kafka.utils.Json;
+
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -79,7 +79,7 @@ class WriteTest {
           + "type Customer {"
           + "  customerid: Int "
           + "}").build())
-      .coord(ArgumentLookupQueryCoords.builder()
+      .coord(ArgumentLookupCoords.builder()
           .parentType("Query")
           .fieldName("customer")
           .match(ArgumentSet.builder()

@@ -41,10 +41,10 @@ public class SqrlPlan extends SqrlParse {
   public Namespace plan(ScriptNode node, List<ModuleLoader> additionalModules) {
     ModuleLoader updatedModuleLoader = this.moduleLoader;
     if (!additionalModules.isEmpty()) {
-      updatedModuleLoader = ModuleLoaderComposite.builder().
-          moduleLoader(this.moduleLoader).
-          moduleLoaders(additionalModules).
-          build();
+      updatedModuleLoader = ModuleLoaderComposite.builder()
+              .moduleLoader(this.moduleLoader)
+              .moduleLoaders(additionalModules)
+              .build();
     }
     Resolve resolve = new Resolve(this.nsFactory, updatedModuleLoader,
         this.nameCanonicalizer, this.errors,

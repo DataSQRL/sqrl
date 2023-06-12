@@ -53,8 +53,6 @@ public class GraphQLServer extends AbstractVerticle {
   private final int port;
   private final JdbcDataSystemConnector jdbc;
 
-  private final ErrorCollector errors = ErrorCollector.root();
-
   public GraphQLServer() {
     this(readModel(), 8888, createClient());
   }
@@ -182,7 +180,7 @@ public class GraphQLServer extends AbstractVerticle {
     Map<String, SinkConsumer> consumers = new HashMap<>();
     for (SubscriptionCoords sub: root.getSubscriptions()) {
       consumers.put(sub.getFieldName(), KafkaSinkConsumer.createFromConfig(vertx,
-          sub.getSinkConfig().deserialize(errors)));
+          sub.getSinkConfig().deserialize(ErrorCollector.root())));
     }
     return consumers;
   }
@@ -191,7 +189,7 @@ public class GraphQLServer extends AbstractVerticle {
     Map<String, SinkProducer> producers = new HashMap<>();
     for (MutationCoords mut : root.getMutations()) {
       producers.put(mut.getFieldName(), KafkaSinkProducer.createFromConfig(vertx,
-          mut.getSinkConfig().deserialize(errors)));
+          mut.getSinkConfig().deserialize(ErrorCollector.root())));
     }
     return producers;
   }

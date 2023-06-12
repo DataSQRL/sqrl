@@ -34,7 +34,7 @@ public class Model {
   public static class RootGraphqlModel {
 
     @Singular
-    List<QueryCoords> coords;
+    List<Coords> coords;
     @Singular
     List<MutationCoords> mutations;
     @Singular
@@ -44,7 +44,7 @@ public class Model {
 
     @JsonCreator
     public RootGraphqlModel(
-        @JsonProperty("coords") List<QueryCoords> coords,
+        @JsonProperty("coords") List<Coords> coords,
         @JsonProperty("mutations") List<MutationCoords> mutations,
         @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
         @JsonProperty("schema") Schema schema) {
@@ -106,12 +106,11 @@ public class Model {
     protected SerializedSqrlConfig sinkConfig;
   }
 
-
   public interface CoordVisitor<R, C> {
 
-    R visitArgumentLookup(ArgumentLookupQueryCoords coords, C context);
+    R visitArgumentLookup(ArgumentLookupCoords coords, C context);
 
-    R visitFieldLookup(FieldLookupQueryCoords coords, C context);
+    R visitFieldLookup(FieldLookupCoords coords, C context);
   }
 
   @Getter
@@ -122,10 +121,10 @@ public class Model {
       include = JsonTypeInfo.As.PROPERTY,
       property = "type")
   @JsonSubTypes({
-      @Type(value = ArgumentLookupQueryCoords.class, name = "args"),
-      @Type(value = FieldLookupQueryCoords.class, name = "field")
+      @Type(value = ArgumentLookupCoords.class, name = "args"),
+      @Type(value = FieldLookupCoords.class, name = "field")
   })
-  public static abstract class QueryCoords {
+  public static abstract class Coords {
 
     String parentType;
     String fieldName;
@@ -135,15 +134,15 @@ public class Model {
 
   @Getter
   @NoArgsConstructor
-  public static class FieldLookupQueryCoords extends QueryCoords {
+  public static class FieldLookupCoords extends Coords {
 
     @JsonIgnore
     final String type = "field";
     String columnName;
 
     @Builder
-    public FieldLookupQueryCoords(String parentType, String fieldName,
-        String columnName) {
+    public FieldLookupCoords(String parentType, String fieldName,
+                             String columnName) {
       super(parentType, fieldName);
       this.columnName = columnName;
     }
@@ -155,15 +154,15 @@ public class Model {
 
   @Getter
   @NoArgsConstructor
-  public static class ArgumentLookupQueryCoords extends QueryCoords {
+  public static class ArgumentLookupCoords extends Coords {
 
     @JsonIgnore
     final String type = "args";
     Set<ArgumentSet> matchs;
 
     @Builder
-    public ArgumentLookupQueryCoords(String parentType, String fieldName,
-        @Singular Set<ArgumentSet> matchs) {
+    public ArgumentLookupCoords(String parentType, String fieldName,
+                                @Singular Set<ArgumentSet> matchs) {
       super(parentType, fieldName);
       this.matchs = matchs;
     }

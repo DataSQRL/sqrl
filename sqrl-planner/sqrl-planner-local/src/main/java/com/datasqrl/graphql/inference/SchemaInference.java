@@ -17,9 +17,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.plan.local.generate.ExportStatementResolver;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.local.generate.StatementProcessor.ProcessorContext;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.schema.Column;
@@ -54,7 +52,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
 
 @Getter
@@ -122,24 +119,11 @@ public class SchemaInference {
 
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
-
-
-    Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldDefinition.getType())
-        .flatMap(name -> getTableOfType(fieldDefinition.getType(), name));
-    Optional<SQRLTable> sqrlTableByCommonInterface = getTypeName(fieldDefinition.getType())
-        .flatMap(name -> getTableOfCommonInterface(fieldDefinition.getType(), name));
-
-    Optional<SQRLTable> sqrlTable = sqrlTableByFieldType
-        .or(()->sqrlTableByCommonInterface);
-    Preconditions.checkState(sqrlTable.isPresent(),
-        "Could not find associated SQRL type for field %s on type %s",
-        fieldDefinition.getName(), fieldDefinition.getType());
-    SQRLTable table = resolveSQRLTable(fieldDefinition.getType(), fieldDefinition.getName(), "Query");
-
+    SQRLTable table = resolveRootSQRLTable(fieldDefinition.getType(), fieldDefinition.getName(), "Query");
     return inferObjectField(fieldDefinition, table, fields, parent);
   }
 
-  private SQRLTable resolveSQRLTable(Type fieldType, String fieldName, String rootType) {
+  private SQRLTable resolveRootSQRLTable(Type fieldType, String fieldName, String rootType) {
     Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)
         .flatMap(name -> getTableOfType(fieldType, name));
     Optional<SQRLTable> sqrlTableByCommonInterface = getTypeName(fieldType)
@@ -466,7 +450,7 @@ public class SchemaInference {
     List<InferredField> fields = new ArrayList<>();
 
     for(FieldDefinition def : s.getFieldDefinitions()) {
-      SQRLTable table = resolveSQRLTable(def.getType(), def.getName(), "Subscription");
+      SQRLTable table = resolveRootSQRLTable(def.getType(), def.getName(), "Subscription");
       APISubscription subscriptionDef = new APISubscription(Name.system(def.getName()),source);
       TableSource tableSource = apiManager.addSubscription(subscriptionDef, table);
       SerializedSqrlConfig kafkaSource = tableSource.getConfiguration().getConfig().serialize();
