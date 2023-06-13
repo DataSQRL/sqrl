@@ -1,7 +1,7 @@
 IMPORT datasqrl.seedshop.Orders TIMESTAMP time + INTERVAL 8 DAY AS time;
 IMPORT datasqrl.seedshop.Products;
 IMPORT time.*;
-IMPORT mySourcePackage.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp;
+IMPORT datasqrl.seedshop.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp;
 
 Orders.items.discount := discount?0.0;
 Orders.items.total := quantity * unit_price - discount;
@@ -36,16 +36,16 @@ Products.volume_10day := SELECT u.country, sum(i.quantity) as quantity,
       WHERE o.time > now() - INTERVAL 10 DAY GROUP BY u.country;
 
 --
-Users.order_stats := SELECT sum(t.price) as spend, sum(t.saving) as saved,
-                            count(1) as num_orders
+Users.order_stats := SELECT min(o.time) as first_order,
+         sum(t.price) as spend, sum(t.saving) as saved, count(1) as num_orders
       FROM @.purchases o JOIN o.totals t;
 
 HighSpendingUsers := SELECT id, email FROM Users WHERE order_stats.spend > 1000;
 
 UserPromotion := STREAM ON ADD AS
-  SELECT u.id, u.first_name, u.last_name, u.email, s.spend
+  SELECT u.id, u.first_name, u.last_name, u.email, s.first_order, s.spend
   FROM Users u JOIN u.order_stats s WHERE s.spend >= 100;
 
 EXPORT UserPromotion TO print.promotion;
 
-EXPORT UserPromotion TO mySinkPackage.promotion;
+--EXPORT UserPromotion TO mySinkPackage.promotion;

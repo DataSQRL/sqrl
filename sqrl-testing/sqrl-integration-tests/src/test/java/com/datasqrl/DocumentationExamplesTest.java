@@ -64,6 +64,7 @@ public class DocumentationExamplesTest {
         TestCase.of(Quickstart.INSTANCE,"quickstart-sqrl.sqrl"),
         TestCase.of(Quickstart.INSTANCE,"quickstart-user.sqrl"),
         TestCase.of(Quickstart.INSTANCE,"quickstart-user.sqrl", "quickstart-user-paging.graphqls"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-mutation.sqrl", "seedshop.graphqls"),
         TestCase.of(Quickstart.INSTANCE,"quickstart-export.sqrl"),
         TestCase.of(Quickstart.INSTANCE,"quickstart-docs.sqrl"),
         TestCase.of(Sensors.INSTANCE,"sensors-teaser-docs.sqrl"),
