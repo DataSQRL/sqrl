@@ -60,7 +60,7 @@ public class DocumentationExamplesTest {
 
     public static final TestCase[] CASES = {
         TestCase.of(Quickstart.INSTANCE,"quickstart-teaser.sqrl"),
-        TestCase.of(Quickstart.INSTANCE,"quickstart-teaser.sqrl", "quickstart-teaser.graphqls"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-intro.sqrl", "quickstart-intro.graphqls"),
         TestCase.of(Quickstart.INSTANCE,"quickstart-sqrl.sqrl"),
         TestCase.of(Quickstart.INSTANCE,"quickstart-user.sqrl"),
         TestCase.of(Quickstart.INSTANCE,"quickstart-user.sqrl", "quickstart-user-paging.graphqls"),

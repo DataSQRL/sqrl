@@ -1,0 +1,15 @@
+IMPORT datasqrl.seedshop.Orders;
+IMPORT time.endOfWeek;
+
+Orders.items.total := quantity * unit_price - discount?0.0;
+Orders.totals := SELECT sum(total) as price,
+                  sum(discount?0.0) as saving FROM @.items;
+
+Users := SELECT DISTINCT customerid AS id FROM Orders;
+
+Users.purchases := JOIN Orders ON Orders.customerid = @.id;
+
+Users.spending := SELECT endOfWeek(p.time) AS week,
+         sum(t.price) AS spend, sum(t.saving) AS saved
+      FROM @.purchases p JOIN p.totals t
+      GROUP BY week ORDER BY week DESC;
