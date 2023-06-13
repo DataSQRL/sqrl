@@ -6,18 +6,15 @@ package com.datasqrl.graphql.server;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.CoordVisitor;
-import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
-import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
-import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.Model.MutationCoords;
-import com.datasqrl.graphql.server.Model.MutationVisitor;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
+import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
@@ -27,7 +24,6 @@ import com.datasqrl.graphql.server.Model.RootVisitor;
 import com.datasqrl.graphql.server.Model.SchemaVisitor;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
-import com.datasqrl.graphql.server.Model.SubscriptionVisitor;
 import graphql.GraphQL;
 import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
@@ -51,8 +47,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BuildGraphQLEngine implements
     RootVisitor<GraphQL, Context>,
-    MutationVisitor<DataFetcher<?>, Context>,
-    SubscriptionVisitor<DataFetcher<?>, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     GraphQLArgumentWrapperVisitor<Set<FixedArgument>, Object>,
@@ -71,25 +65,25 @@ public class BuildGraphQLEngine implements
     GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
     codeRegistry.defaultDataFetcher(env ->
         context.createPropertyFetcher(env.getFieldDefinition().getName()));
-    for (Coords c : root.coords) {
+    for (Coords qc : root.coords) {
       codeRegistry.dataFetcher(
-          FieldCoordinates.coordinates(c.getParentType(), c.getFieldName()),
-          c.accept(this, context));
+          FieldCoordinates.coordinates(qc.getParentType(), qc.getFieldName()),
+          qc.accept(this, context));
     }
 
     if (root.mutations != null) {
-      for (MutationCoords c : root.mutations) {
+      for (MutationCoords mc : root.mutations) {
         codeRegistry.dataFetcher(
-            FieldCoordinates.coordinates("Mutation", c.getFieldName()),
-            c.accept(this, context));
+            FieldCoordinates.coordinates("Mutation", mc.getFieldName()),
+            context.createSinkFetcher(mc));
       }
     }
 
     if (root.subscriptions != null) {
-      for (SubscriptionCoords c : root.subscriptions) {
+      for (SubscriptionCoords sc : root.subscriptions) {
         codeRegistry.dataFetcher(
-            FieldCoordinates.coordinates("Subscription", c.getFieldName()),
-            c.accept(this, context));
+            FieldCoordinates.coordinates("Subscription", sc.getFieldName()),
+            context.createSubscriptionFetcher(sc));
       }
     }
 
@@ -99,11 +93,6 @@ public class BuildGraphQLEngine implements
                 .codeRegistry(codeRegistry).build());
 
     return GraphQL.newGraphQL(graphQLSchema).build();
-  }
-
-  @Override
-  public DataFetcher<?> visitKafkaMutationCoords(KafkaMutationCoords coords, Context context) {
-    return context.createSinkFetcher(coords);
   }
 
   @Override
@@ -180,9 +169,4 @@ public class BuildGraphQLEngine implements
     return fieldType.getClass().equals(GraphQLList.class);
   }
 
-  @Override
-  public DataFetcher<?> visitKafkaSubscriptionCoords(KafkaSubscriptionCoords coords,
-      Context context) {
-    return context.createSubscriptionFetcher(coords);
-  }
 }

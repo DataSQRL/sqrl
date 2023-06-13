@@ -9,6 +9,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.*;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.plan.local.generate.StatementProcessor.ProcessorContext;
+import com.datasqrl.plan.queries.APIConnectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.ScriptNode;

@@ -45,6 +45,7 @@ public class SimplePipeline implements ExecutionPipeline {
 
   public static SimplePipeline of(Map<String, ExecutionEngine> engines, ErrorCollector errors) {
     List<ExecutionStage> stages = new ArrayList<>();
+    getStage(Type.LOG, engines).ifPresent(stages::add);
     stages.add(getStage(Type.STREAM, engines).orElseThrow(
         () -> errors.exception("Need to configure a stream engine")));
     stages.add(getStage(Type.DATABASE, engines).orElseThrow(

@@ -3,51 +3,30 @@
  */
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
-
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.DockerCompose;
-import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
-import com.datasqrl.engine.database.DatabaseEngine;
-import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
-import com.datasqrl.module.resolver.FileResourceResolver;
-import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.packager.config.ScriptConfiguration;
-import com.datasqrl.service.Build;
 import com.datasqrl.service.PackagerUtil;
-import com.datasqrl.util.SqrlObjectMapper;
 import com.google.common.base.Preconditions;
-import graphql.language.FieldDefinition;
-import graphql.language.ObjectTypeDefinition;
-import graphql.schema.idl.SchemaParser;
-import graphql.schema.idl.TypeDefinitionRegistry;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
@@ -71,10 +50,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"--nolookup"}, description = "Do not look up package dependencies in the repository",
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
-  @CommandLine.Option(names = {"-k", "--kafka"}, description = "Force start a local embedded kafka",
-      scope = ScopeType.INHERIT)
-  protected boolean forceStartKafka = false;
-  private boolean kafkaStarted = false;
 
   protected AbstractCompilerCommand(boolean execute, boolean startGraphql, boolean startKafka) {
     this.execute = execute;
@@ -86,38 +61,22 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     if (DEFAULT_DEPLOY_DIR.equals(targetDir)) {
       targetDir = root.rootDir.resolve(targetDir);
     }
-
-    if (forceStartKafka) {
-      startKafka();
-    }
-    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors, getDefaultConfig(startKafka, root.rootDir, errors));
+    DefaultConfigSupplier configSupplier = new DefaultConfigSupplier(errors);
+    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors, configSupplier);
 
     Packager packager = PackagerUtil.create(root.rootDir, files, config, errors);
+    packager.cleanUp();
+    Path packageFilePath =  packager.populateBuildDir(!noinfer);
 
-    Build build = new Build(errors);
-    Path packageFilePath = build.build(packager, !noinfer);
-    PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
-    DatabaseEngine dbEngine = pipelineFactory.getDatabaseEngine();
-    errors.checkFatal(dbEngine instanceof JDBCEngine, "Expected configured "
-        + "database engine to be a JDBC database: %s");
-    JdbcDataSystemConnector jdbc = ((JDBCEngine)dbEngine).getConnector();
-    createGraphqlKafkaSources(root.rootDir, packageFilePath.getParent(), config);
     Compiler compiler = new Compiler();
-
     Preconditions.checkArgument(Files.isRegularFile(packageFilePath));
     Compiler.CompilerResult result = compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
 
-    addDockerCompose();
+    if (configSupplier.usesDefault) {
+      addDockerCompose();
+    }
     if (isGenerateGraphql()) {
       addGraphql(packager.getBuildDir(), packager.getRootDir());
-    }
-
-    if (execute) {
-      executePlan(result.getPlan(), errors);
-    }
-
-    if (errors.isFatal()) {
-      throw new RuntimeException("Could not run");
     }
   }
 
@@ -147,144 +106,20 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
   }
 
-  private Supplier<SqrlConfig> getDefaultConfig(boolean startKafka, Path rootDir, ErrorCollector errors) {
-    if (startKafka) {
-      startKafka();
-      return ()->PackagerUtil.createEmbeddedConfig(root.rootDir, errors);
+  private class DefaultConfigSupplier implements Supplier<SqrlConfig> {
+
+    boolean usesDefault = false;
+    final ErrorCollector errors;
+
+    private DefaultConfigSupplier(ErrorCollector errors) {
+      this.errors = errors;
     }
 
-    //Generate docker config
-    return ()->PackagerUtil.createDockerConfig(root.rootDir, targetDir, errors);
-  }
-
-  private void startKafka() {
-    //We're generating an embedded config, start the cluster
-    try {
-      if (!kafkaStarted) {
-        CLUSTER.start();
-      }
-      this.kafkaStarted = true;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    @Override
+    public SqrlConfig get() {
+      usesDefault = true;
+      return PackagerUtil.createDockerConfig(root.rootDir, targetDir, errors);
     }
-  }
-
-  @SneakyThrows
-  private void createGraphqlKafkaSources(Path rootDir, Path buildDir, SqrlConfig config) {
-    ResourceResolver resourceResolver = new FileResourceResolver(buildDir);
-
-    Map<String, Optional<String>> scriptFiles = ScriptConfiguration.getFiles(config);
-    Optional<URI> graphqlSchema = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
-        .flatMap(file -> resourceResolver.resolveFile(NamePath.of(file)));
-
-    if (graphqlSchema.isEmpty()) {
-      return;
-    }
-    Path schemaPath = Paths.get(graphqlSchema.get());
-    String schemaName = schemaPath.getFileName().toString().split("\\.")[0];
-
-    String schema = Files.readString(schemaPath);
-    TypeDefinitionRegistry registry = new SchemaParser().parse(schema);
-
-    String bootstrapServers;
-    if (kafkaStarted) {
-      bootstrapServers = CLUSTER.bootstrapServers();
-    } else {
-      bootstrapServers = "kafka:9092";
-    }
-
-    addMutations(registry, schemaName, buildDir, rootDir, bootstrapServers);
-    addSubscriptions(registry, schemaName, buildDir, rootDir, bootstrapServers);
-  }
-
-  @SneakyThrows
-  public void addMutations(TypeDefinitionRegistry registry, String schemaName, Path buildDir,
-      Path rootDir, String bootstrapServers) {
-    ObjectTypeDefinition mutationType = (ObjectTypeDefinition) registry
-            .getType("Mutation")
-            .orElse(null);
-    if (mutationType == null) {
-      return;
-    }
-
-    Path schemaRoot = buildDir.resolve(schemaName);
-    Files.createDirectories(schemaRoot);
-
-    for (graphql.language.FieldDefinition definition : mutationType.getFieldDefinitions()) {
-      if (kafkaStarted) {
-        CLUSTER.createTopic(definition.getName());
-      }
-      writeConfig(schemaRoot, schemaName, rootDir, ExternalDataType.source_and_sink, definition, bootstrapServers);
-    }
-  }
-
-  @SneakyThrows
-  public void addSubscriptions(TypeDefinitionRegistry registry, String schemaName, Path buildDir,
-      Path rootDir, String bootstrapServers) {
-
-    ObjectTypeDefinition subscriptionType = (ObjectTypeDefinition) registry
-            .getType("Subscription")
-            .orElse(null);
-    if (subscriptionType == null) {
-      return;
-    }
-
-    if (!this.root.featureFlags.contains(FeatureFlag.SUBSCRIPTIONS)) {
-      throw new RuntimeException("Subscriptions not yet supported");
-    }
-
-    Path schemaRoot = buildDir.resolve(schemaName);
-    Files.createDirectories(schemaRoot);
-
-    for (graphql.language.FieldDefinition definition : subscriptionType.getFieldDefinitions()) {
-      if (kafkaStarted) {
-        CLUSTER.createTopic(definition.getName());
-      }
-      writeConfig(schemaRoot, schemaName, rootDir, ExternalDataType.sink, definition, bootstrapServers);
-    }
-  }
-
-  @SneakyThrows
-  private void writeConfig(Path schemaRoot, String schemaName, Path rootDir, ExternalDataType externalDataType, FieldDefinition definition,
-      String bootstrapServers) {
-
-    Map sourceConfig = createConfig(definition.getName(), bootstrapServers,
-        externalDataType);
-
-    String tableName = definition.getName() + ".table.json";
-
-    //Check local dir to not overwrite
-    if (!Files.exists(rootDir.resolve(schemaName).resolve(tableName))) {
-      Path f = schemaRoot.resolve(tableName);
-      SqrlObjectMapper.INSTANCE.writerWithDefaultPrettyPrinter()
-          .writeValue(f.toFile(), sourceConfig);
-    }
-  }
-
-  private Map createConfig(String tableName, String bootstrapServers, ExternalDataType type) {
-    Map connector = new HashMap();
-    connector.put("name", "kafka");
-    connector.put("bootstrap.servers", bootstrapServers);
-    connector.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    connector.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    connector.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-topic-event-lister");
-    connector.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-    connector.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
-    connector.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-    connector.put("topic", tableName);
-
-    Map config = Map.of("type", type.name(),
-            "canonicalizer", "system",
-            "format", Map.of(
-                    "name", "json"
-            ),
-            "identifier", tableName,
-            "schema", "flexible",
-            "connector", connector
-    );
-
-    return config;
   }
 
   private void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {

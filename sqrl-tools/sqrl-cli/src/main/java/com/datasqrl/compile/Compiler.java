@@ -3,47 +3,45 @@
  */
 package com.datasqrl.compile;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.JDBCEngine;
-import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
-import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
-import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
-import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
-import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlDIModule;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
+import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
 import com.datasqrl.graphql.inference.PgSchemaBuilder;
 import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
+import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.ObjectLoaderImpl;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
+import com.datasqrl.plan.queries.APIConnectors;
+import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
-import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -54,16 +52,14 @@ import com.google.inject.Injector;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -107,51 +103,57 @@ public class Compiler {
     TableSink errorSink = loadErrorSink(moduleLoader, compilerConfig.getErrorSink(), errors);
 
     SqrlDIModule module = new SqrlDIModule(pipelineFactory.createPipeline(), debugger,
-        moduleLoader,
-        new ErrorSink(errorSink));
+        moduleLoader, new ErrorSink(errorSink), errors);
     Injector injector = Guice.createInjector(module);
+
+    SqrlPhysicalPlan planner = injector.getInstance(SqrlPhysicalPlan.class);
+    GraphQLMutationExtraction preAnalysis = injector.getInstance(GraphQLMutationExtraction.class);
+    APIConnectorManager apiManager = injector.getInstance(APIConnectorManagerImpl.class);
 
     Map<String, Optional<String>> scriptFiles = ScriptConfiguration.getFiles(config);
     Preconditions.checkArgument(!scriptFiles.isEmpty());
-
     URI mainScript = resourceResolver
         .resolveFile(NamePath.of(scriptFiles.get(ScriptConfiguration.MAIN_KEY).get()))
         .orElseThrow();
+    Optional<APISource> apiSchemaOpt = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
+        .map(file -> APISource.of(file, preAnalysis.getCanonicalizer(), resourceResolver));
 
-    Optional<URI> graphqlSchema = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
-        .flatMap(file -> resourceResolver.resolveFile(NamePath.of(file)));
+    apiSchemaOpt.ifPresent(api -> preAnalysis.analyze(api, apiManager));
 
-    SqrlPhysicalPlan planner = injector.getInstance(SqrlPhysicalPlan.class);
-    Namespace ns = planner.plan(FileUtil.readFile(mainScript));
 
-    String gqlSchema = inferOrGetSchema(ns.getSchema(), graphqlSchema);
+    Namespace ns = planner.plan(FileUtil.readFile(mainScript), List.of(apiManager.getAsModuleLoader()));
+
+    APISource apiSchema = apiSchemaOpt.orElseGet(() ->
+        new APISource(Name.system("schema"), inferGraphQLSchema(ns.getSchema())));
 
     SqrlSchema schema = injector.getInstance(SqrlSchema.class);
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 
     InferredSchema inferredSchema = new SchemaInference(
         moduleLoader,
-        scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("schema").split("\\.")[0],
-        gqlSchema, schema,
+        apiSchema,
+        schema,
         queryPlanner.createRelBuilder(),
-        ns)
+        ns,
+        apiManager)
         .accept();
 
-    PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(gqlSchema,
+    PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(apiSchema,
         ns.getSchema(),
         queryPlanner.createRelBuilder(),
         queryPlanner,
-        ns.getOperatorTable());
+        ns.getOperatorTable(),
+        apiManager);
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    PhysicalDAGPlan dag = planner.planDag(ns, pgSchemaBuilder.getApiQueries(), root,
+    PhysicalDAGPlan dag = planner.planDag(ns, apiManager, root,
        false);
     PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, errorSink);
 
     root = updateGraphqlPlan(root, plan.getDatabaseQueries());
 
-    CompilerResult result = new CompilerResult(root, gqlSchema, plan);
+    CompilerResult result = new CompilerResult(root, apiSchema.getSchemaDefinition(), plan);
     writeDeployArtifacts(result, deployDir);
     writeSchema(buildDir, result.getGraphQLSchema());
 
@@ -164,10 +166,7 @@ public class Compiler {
   }
 
   @SneakyThrows
-  public static String inferOrGetSchema(SqrlSchema schema, Optional<URI> graphqlSchema) {
-    if (graphqlSchema.isPresent()) {
-      return FileUtil.readFile(graphqlSchema.get());
-    }
+  public static String inferGraphQLSchema(SqrlSchema schema) {
     GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()

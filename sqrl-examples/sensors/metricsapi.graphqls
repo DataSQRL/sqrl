@@ -1,7 +1,10 @@
 type Query {
   SecReading(sensorid: Int!): [SecReading!]
   SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]
-  SensorReading: [SensorReading!]
+}
+
+type Subscription {
+  SecReading(sensorid: Int): SecReading
 }
 
 type SecReading {
@@ -13,12 +16,6 @@ type SecReading {
 type SensorMaxTemp {
   sensorid: Int!
   maxTemp: Float!
-}
-
-type SensorReading {
-    sensorid: Int!
-    temperature: Float!
-    _source_time: String!
 }
 
 type Mutation {

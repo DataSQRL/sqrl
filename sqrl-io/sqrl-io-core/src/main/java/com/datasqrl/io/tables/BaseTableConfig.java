@@ -23,6 +23,8 @@ public class BaseTableConfig implements Serializable {
 
   public static final String SCHEMA_KEY = "schema";
 
+  public static final String IDENTIFIER_KEY = "identifier";
+
   String type;
   @Default
   String canonicalizer = DEFAULT_CANONICALIZER;

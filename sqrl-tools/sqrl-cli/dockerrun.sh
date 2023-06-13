@@ -1,6 +1,6 @@
 #!/bin/bash
 cd /build
-echo 'Compiling...this takes about 15 seconds'
+echo 'Compiling...this takes about 10 seconds'
 java -jar /usr/src/app/sqrl-cli.jar ${@}
 
 FILE=/build/build/deploy/flink-plan.json

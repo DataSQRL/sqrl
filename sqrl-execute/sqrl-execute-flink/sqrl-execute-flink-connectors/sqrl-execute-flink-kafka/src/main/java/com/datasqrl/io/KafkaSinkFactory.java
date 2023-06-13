@@ -19,22 +19,22 @@ public class KafkaSinkFactory
 
   @Override
   public TableDescriptor.Builder create(FlinkSinkFactoryContext context) {
-    context.getTableConfig().getConfig().asString("");
-    SqrlConfig config = context.getTableConfig().getConnectorConfig();
-    System.out.println();
+    SqrlConfig connector = context.getTableConfig().getConnectorConfig();
+    String topic = context.getTableConfig().getBase().getIdentifier();
+
 
     TableDescriptor.Builder builder = TableDescriptor.forConnector("kafka")
-        .option("topic", config.asString("topic").get())
-        .option("properties.bootstrap.servers", config.asString("bootstrap.servers").get())
+        .option("topic", topic)
+        .option("properties.bootstrap.servers", connector.asString("bootstrap.servers").get())
         .format(context.getFormatFactory().getName());
 
-    config.asString("scan.startup.mode").getOptional()
+    connector.asString("scan.startup.mode").getOptional()
         .ifPresent(c->builder.option("scan.startup.mode", c));
-    config.asString("scan.startup.specific-offsets").getOptional()
+    connector.asString("scan.startup.specific-offsets").getOptional()
         .ifPresent(c->builder.option("scan.startup.specific-offsets", c));
-    config.asString("scan.startup.timestamp-millis").getOptional()
+    connector.asString("scan.startup.timestamp-millis").getOptional()
         .ifPresent(c->builder.option("scan.startup.timestamp-millis", c));
-    config.asString("sink.partitioner").getOptional()
+    connector.asString("sink.partitioner").getOptional()
         .ifPresent(c->builder.option("sink.partitioner", c));
 
     return builder;

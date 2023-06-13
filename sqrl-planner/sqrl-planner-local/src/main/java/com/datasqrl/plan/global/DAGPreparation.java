@@ -1,6 +1,9 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.plan.local.generate.ExportStatementResolver;
+import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.VirtualRelationalTable;
@@ -27,7 +30,12 @@ public class DAGPreparation {
 
   private final ErrorCollector errors;
 
-  public Collection<AnalyzedAPIQuery> prepareInputs(CalciteSchema relSchema, Collection<APIQuery> queries) {
+  public Collection<AnalyzedAPIQuery> prepareInputs(CalciteSchema relSchema, APIConnectorManager apiManager,
+      Collection<ResolvedExport> exports) {
+    //Add subscriptions as exports
+    apiManager.getExports().forEach((sqrlTable, log) ->
+        exports.add(ExportStatementResolver.exportTable(sqrlTable, log.getSink(), relBuilder)));
+
     List<ScriptRelationalTable> scriptTables = CalciteUtil.getTables(relSchema,
         ScriptRelationalTable.class);
     //Assign timestamps to imports which should propagate and set all remaining timestamps
@@ -47,7 +55,7 @@ public class DAGPreparation {
         });
 
     //Replace default joins with inner joins for API queries
-    return queries.stream().map(apiQuery -> {
+    return apiManager.getQueries().stream().map(apiQuery -> {
       return new AnalyzedAPIQuery(apiQuery.getNameId(), APIQueryRewriter.rewrite(relBuilder, apiQuery.getRelNode()));
     }).collect(Collectors.toList());
   }

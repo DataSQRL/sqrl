@@ -1,0 +1,44 @@
+<script>
+const socket = new WebSocket('ws://localhost:8888/graphql-ws');
+
+// Connection opened
+socket.addEventListener('open', (event) => {
+  socket.send(JSON.stringify({
+    type: 'connection_init',
+    payload: {}
+  }));
+
+// After connection initialized, send the subscription message
+setTimeout(() => {
+  socket.send(JSON.stringify({
+    id: '1',
+    type: 'start',
+    payload: {
+    query: `subscription {
+                  SecReading {
+                      sensorid
+                      timeSec
+                      temp
+                  }
+              }`,
+    variables: {}
+    }}));
+  }, 1000);
+});
+
+// Listen for messages
+socket.addEventListener('message', (event) => {
+  console.log('Message from server:', JSON.parse(event.data));
+});
+
+// Connection closed
+socket.addEventListener('close', (event) => {
+  console.log('Server closed connection: ', event);
+});
+
+// Connection error
+socket.addEventListener('error', (event) => {
+  console.log('Error from server: ', event);
+});
+
+</script>

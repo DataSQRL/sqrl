@@ -26,6 +26,7 @@ import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.StreamUtil;
@@ -110,7 +111,8 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   @Override
   public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
       ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
-
+    Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
+    DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
     JdbcDDLFactory factory =
         (new JdbcDDLServiceLoader()).load(connector.getDialect())
             .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
@@ -120,12 +122,12 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         .map(factory::createTable)
         .collect(Collectors.toList());
 
-    plan.getIndexDefinitions().stream()
+    dbPlan.getIndexDefinitions().stream()
             .map(factory::createIndex)
             .forEach(ddlStatements::add);
 
     QueryBuilder queryBuilder = new QueryBuilder(relBuilder.getRexBuilder());
-    Map<APIQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(plan.getQueries());
+    Map<APIQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(dbPlan.getQueries());
     return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
   }
 }

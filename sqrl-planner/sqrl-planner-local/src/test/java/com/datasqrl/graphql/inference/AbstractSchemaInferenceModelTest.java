@@ -6,6 +6,7 @@ package com.datasqrl.graphql.inference;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.plan.global.DAGPlanner;
@@ -13,10 +14,12 @@ import com.datasqrl.plan.global.IndexCall;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.TestScript;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,51 +42,52 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
   }
 
   @SneakyThrows
-  public Pair<InferredSchema, List<APIQuery>> inferSchemaAndQueries(TestScript script,
+  public Pair<InferredSchema, APIConnectorManager> inferSchemaAndQueries(TestScript script,
       Path schemaPath) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
     String schemaStr = Files.readString(schemaPath);
     ns = plan(script.getScript());
-    Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(
+    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
         planner,
         schemaStr);
     return Pair.of(result.getLeft(), result.getRight());
   }
 
-  private Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> inferSchemaModelQueries(
+  private Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
       SqrlQueryPlanner planner, String schemaStr) {
+    APIConnectorManager apiManager = new MockAPIConnectorManager();
+    APISource source = APISource.of(schemaStr);
     //Inference
-    SchemaInference inference = new SchemaInference(null, "schema", schemaStr,
+    SchemaInference inference = new SchemaInference(null, source,
         planner.getSchema(),
-        planner.createRelBuilder(), ns);
+        planner.createRelBuilder(), ns, apiManager);
     InferredSchema inferredSchema = inference.accept();
 
     //Build queries
-    PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(schemaStr,
+    PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(source,
         planner.getSchema(),
         planner.createRelBuilder(),
         planner,
-        ns.getOperatorTable());
+        ns.getOperatorTable(), apiManager);
 
     RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
 
-    List<APIQuery> queries = pgSchemaBuilder.getApiQueries();
-    return Triple.of(inferredSchema, root, queries);
+    return Triple.of(inferredSchema, root, apiManager);
   }
 
-  public Pair<RootGraphqlModel, List<APIQuery>> getModelAndQueries(SqrlQueryPlanner planner,
+  public Pair<RootGraphqlModel, APIConnectorManager> getModelAndQueries(SqrlQueryPlanner planner,
       String schemaStr) {
-    Triple<InferredSchema, RootGraphqlModel, List<APIQuery>> result = inferSchemaModelQueries(
+    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
         planner, schemaStr);
     return Pair.of(result.getMiddle(), result.getRight());
   }
 
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
-    List<APIQuery> queries = inferSchemaAndQueries(script, schemaPath).getValue();
+    APIConnectorManager apiManager = inferSchemaAndQueries(script, schemaPath).getValue();
     /// plan dag
     DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
         ns.getSchema().getPipeline(), Debugger.NONE, errors);
-    PhysicalDAGPlan dag = dagPlanner.plan(ns.getSchema(), queries, ns.getExports(), ns.getJars(),
+    PhysicalDAGPlan dag = dagPlanner.plan(ns.getSchema(), apiManager, ns.getExports(), ns.getJars(),
         ns.getUdfs(), null);
 
     IndexSelector indexSelector = new IndexSelector(ns.getSchema().getPlanner(),

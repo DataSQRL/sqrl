@@ -1,0 +1,24 @@
+type Customer {
+  customerid: Int
+  email: String
+}
+
+type Query {
+  customer(email: String): [Customer]
+}
+
+type Mutation {
+  addCustomer(event: AddCustomerEvent!): Customer
+  addCustomer2(event: AddCustomerEvent!): Customer
+}
+
+input AddCustomerEvent {
+  customerid: Int!
+  email: String
+  address: [CustomerAddress]
+}
+
+input CustomerAddress {
+  id: ID!
+  address: String
+}

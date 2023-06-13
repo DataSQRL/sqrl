@@ -23,18 +23,22 @@ public interface FormatFactory extends Serializable {
   String getName();
 
   /**
-   * If this format has an associated schema, this method
-   * returns the schema factory for that format. Otherwise empty.
+   * Whether this format has an associated schema. If so, it can
+   * be service loaded with the same name {@link #getName()} as the format.
    *
-   * @return optional {@link TableSchemaFactory} associated with this format
+   * Otherwise, the schema must be configured explicitly.
+   *
+   * @return true if this format has a schema, else false
    */
-  default Optional<TableSchemaFactory> getSchemaFactory() {
-    return Optional.empty();
+  default boolean hasSchemaFactory() {
+    return false;
   }
 
   Parser getParser(@NonNull SqrlConfig config);
 
-  interface Parser extends Serializable {
+  interface Parser<IN> extends Serializable {
+
+    Result parse(@NonNull IN input);
 
     @Value
     class Result {
@@ -91,7 +95,9 @@ public interface FormatFactory extends Serializable {
 
   Writer getWriter(@NonNull SqrlConfig config);
 
-  interface Writer {
+  interface Writer<OUT> {
+
+    public OUT write(Map<String, Object> record) throws Exception;
 
   }
 

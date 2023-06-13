@@ -7,6 +7,7 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -59,7 +60,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     Namespace ns = plan(script);
 
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
-    Pair<RootGraphqlModel, List<APIQuery>> modelAndQueries = t
+    Pair<RootGraphqlModel, APIConnectorManager> modelAndQueries = t
         .getModelAndQueries(planner, schema);
 
     PhysicalDAGPlan dag = physicalPlanner.planDag(ns, modelAndQueries.getRight(), modelAndQueries.getLeft(), true);

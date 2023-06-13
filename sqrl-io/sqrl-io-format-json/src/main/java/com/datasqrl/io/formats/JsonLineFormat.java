@@ -42,7 +42,13 @@ public class JsonLineFormat implements TextLineFormat {
 
   @Override
   public Writer getWriter(@NonNull SqrlConfig config) {
-    throw new NotYetImplementedException("JSON writing not yet supported");
+    final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
+    return new Writer() {
+      @Override
+      public String write(Map<String, Object> record) throws Exception {
+        return mapper.writeValueAsString(record);
+      }
+    };
   }
 
   @NoArgsConstructor

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.server;
 
+import com.datasqrl.config.SerializedSqrlConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -92,75 +93,18 @@ public class Model {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
-      property = "type")
-  @JsonSubTypes({
-      @Type(value = KafkaMutationCoords.class, name = "kafka")
-  })
-  public static abstract class MutationCoords {
+  public static class MutationCoords {
     protected String fieldName;
-    public abstract <R, C> R accept(MutationVisitor<R, C> visitor, C context);
-  }
-
-  @Getter
-  @NoArgsConstructor
-  public static class KafkaMutationCoords extends MutationCoords {
-    protected Map<String, String> sinkConfig;
-    @Builder
-    public KafkaMutationCoords(String fieldName, Map<String, String> sinkConfig) {
-      super(fieldName);
-      this.sinkConfig = sinkConfig;
-    }
-
-    @Override
-    public <R, C> R accept(MutationVisitor<R, C> visitor, C context) {
-      return visitor.visitKafkaMutationCoords(this, context);
-    }
-  }
-
-
-  public interface MutationVisitor<R, C> {
-    R visitKafkaMutationCoords(KafkaMutationCoords coords, C context);
+    protected SerializedSqrlConfig sinkConfig;
   }
 
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  @JsonTypeInfo(
-      use = JsonTypeInfo.Id.NAME,
-      include = JsonTypeInfo.As.PROPERTY,
-      property = "type")
-  @JsonSubTypes({
-      @Type(value = KafkaSubscriptionCoords.class, name = "kafka")
-  })
-  public static abstract class SubscriptionCoords {
+  public static class SubscriptionCoords {
     protected String fieldName;
-    public abstract <R, C> R accept(SubscriptionVisitor<R, C> visitor, C context);
+    protected SerializedSqrlConfig sinkConfig;
   }
-
-  @Getter
-  @NoArgsConstructor
-  public static class KafkaSubscriptionCoords extends SubscriptionCoords {
-    protected Map<String, String> sinkConfig;
-    @Builder
-    public KafkaSubscriptionCoords(String fieldName, Map<String, String> sinkConfig) {
-      super(fieldName);
-      this.sinkConfig = sinkConfig;
-    }
-
-    @Override
-    public <R, C> R accept(SubscriptionVisitor<R, C> visitor, C context) {
-      return visitor.visitKafkaSubscriptionCoords(this, context);
-    }
-  }
-
-
-  public interface SubscriptionVisitor<R, C> {
-    R visitKafkaSubscriptionCoords(KafkaSubscriptionCoords coords, C context);
-  }
-
 
   public interface CoordVisitor<R, C> {
 
@@ -198,7 +142,7 @@ public class Model {
 
     @Builder
     public FieldLookupCoords(String parentType, String fieldName,
-        String columnName) {
+                             String columnName) {
       super(parentType, fieldName);
       this.columnName = columnName;
     }
@@ -218,7 +162,7 @@ public class Model {
 
     @Builder
     public ArgumentLookupCoords(String parentType, String fieldName,
-        @Singular Set<ArgumentSet> matchs) {
+                                @Singular Set<ArgumentSet> matchs) {
       super(parentType, fieldName);
       this.matchs = matchs;
     }

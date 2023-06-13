@@ -64,6 +64,10 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-jdbc</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-kafka</artifactId>
+    </dependency>
 
 
     <!-- For the time being, include all connectors -->

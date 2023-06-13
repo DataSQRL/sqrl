@@ -27,6 +27,7 @@
     </dependency>
 
 
+
     <!-- Vertx -->
     <dependency>
       <groupId>io.vertx</groupId>
@@ -78,9 +79,33 @@
       <artifactId>reactive-streams</artifactId>
     </dependency>
 
+    <!-- sinks -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-kafka-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec</artifactId>
+    </dependency>
+
+    <!-- io -->
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-format-json</artifactId>
     </dependency>
 
     <!-- TODO: the drivers can be loaded by the jar assembly -->
@@ -119,12 +144,15 @@
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-jdbc</artifactId>
-    </dependency>
+
+
 
     <!-- kafka test-->
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-kafka</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>

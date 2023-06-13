@@ -114,6 +114,7 @@ public class DAGBuilder {
       Function<ExecutionStage, RelNode> planner) {
     Map<ExecutionStage, StageAnalysis> stageAnalysis = new LinkedHashMap<>();
     for (ExecutionStage stage : stages) {
+      if (!stage.isCompute()) continue;
       StageAnalysis result;
       try {
         RelNode relNode = planner.apply(stage);

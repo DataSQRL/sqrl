@@ -1,31 +1,28 @@
 package com.datasqrl.graphql;
 
+import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.graphql.io.SinkConsumer;
+import com.datasqrl.graphql.io.SinkProducer;
+import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
-import com.datasqrl.graphql.kafka.KafkaSinkRecord;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
-import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
-import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
+import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
+import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.BuildGraphQLEngine;
-import com.datasqrl.graphql.server.SinkEmitter;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
-import io.vertx.kafka.client.consumer.KafkaConsumer;
-import java.util.List;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.UUID;
 import lombok.Value;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -34,8 +31,8 @@ import reactor.core.publisher.Flux;
 public class VertxContext implements Context {
 
   VertxJdbcClient sqlClient;
-  Map<String, SinkEmitter> sinks;
-  Map<String, KafkaConsumer> subscriptions;
+  Map<String, SinkProducer> sinks;
+  Map<String, SinkConsumer> subscriptions;
 
   @Override
   public JdbcClient getClient() {
@@ -67,8 +64,8 @@ public class VertxContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createSinkFetcher(KafkaMutationCoords coords) {
-    SinkEmitter emitter = sinks.get(coords.getFieldName());
+  public DataFetcher<?> createSinkFetcher(MutationCoords coords) {
+    SinkProducer emitter = sinks.get(coords.getFieldName());
 
     Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
     return VertxDataFetcher.create((env, fut) -> {
@@ -80,39 +77,32 @@ public class VertxContext implements Context {
       Map<String, Object> entry = (Map<String, Object>)args.entrySet().stream()
           .findFirst().map(Entry::getValue).get();
 
-      try {
-        String value = new JsonObject(entry).encode();
-        emitter.send(new KafkaSinkRecord(value), fut, entry);
-      } catch (Exception e) {
-        fut.fail(e);
-      }
+      emitter.send(entry)
+          .onSuccess(sinkResult->{
+            ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
+            entry.put(ReservedName.SOURCE_TIME.getCanonical(), dateTime.toLocalDateTime());
+            fut.complete(entry);
+          })
+          .onFailure(fut::fail);
     });
   }
 
   @Override
-  public DataFetcher<?> createSubscriptionFetcher(KafkaSubscriptionCoords coords) {
-    ObjectMapper mapper = new ObjectMapper();
-    KafkaConsumer<String, String> consumer = subscriptions.get(coords.getFieldName());
-
+  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords) {
+    SinkConsumer consumer = subscriptions.get(coords.getFieldName());
     Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
 
     return new DataFetcher<>() {
       @Override
-      public Publisher<Map> get(DataFetchingEnvironment env) throws Exception {
+      public Publisher<Map<String,Object>> get(DataFetchingEnvironment env) throws Exception {
 
-        Publisher<Map> publisher = Flux.create(sink -> {
-          consumer.handler(record -> {
-                try {
-                  Map<String, Object> map = mapper.readValue(record.value(), Map.class);
-                  Map<String, Object> args = env.getArguments();
-                  if (!filterSubscription(map, args)) {
-                    sink.next(map);
-                  }
-                } catch (JsonProcessingException e) {
-                  throw new RuntimeException(e);
+        Publisher<Map<String,Object>> publisher = Flux.create(sink -> {
+          consumer.listen(entry -> {
+                Map<String, Object> args = env.getArguments();
+                if (!filterSubscription(entry, args)) {
+                  sink.next(entry);
                 }
-              }).exceptionHandler(sink::error)
-              .endHandler(done -> sink.complete());
+              }, sink::error, done -> sink.complete());
         });
         return publisher;
       }
@@ -127,7 +117,6 @@ public class VertxContext implements Context {
             return true;
           }
         }
-
         return false;
       }
     };

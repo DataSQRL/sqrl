@@ -273,6 +273,15 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   @Override
+  public Map<String, String> toStringMap() {
+    LinkedHashMap<String, String> map = new LinkedHashMap<>();
+    toMap().forEach((k,v) -> map.put(k,String.valueOf(v)));
+    return map;
+  }
+
+
+
+  @Override
   public SerializedSqrlConfig serialize() {
     Map<String, Object> map = new HashMap<>();
     config.getKeys(prefix).forEachRemaining(key -> {
@@ -372,7 +381,6 @@ public class SqrlConfigCommons implements SqrlConfig {
   @AllArgsConstructor
   @Getter
   @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
   public static class Serialized implements SerializedSqrlConfig {
 
     String configFilename;

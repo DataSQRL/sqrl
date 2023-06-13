@@ -13,6 +13,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.file.FilePath;
@@ -21,6 +22,7 @@ import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
@@ -115,7 +117,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     Namespace ns = plan(script);
 
     //We add a scan query for every query table
-    List<APIQuery> queries = new ArrayList<APIQuery>();
+    APIConnectorManager apiManager = new MockAPIConnectorManager();
     CalciteSchema relSchema = planner.getSchema();
     for (String tableName : queryTables) {
       Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(relSchema, tableName,
@@ -123,10 +125,10 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       Preconditions.checkArgument(vtOpt.isPresent(), "No such table: %s", tableName);
       VirtualRelationalTable vt = vtOpt.get();
       RelNode rel = planner.createRelBuilder().scan(vt.getNameId()).build();
-      queries.add(new APIQuery(tableName, rel));
+      apiManager.addQuery(new APIQuery(tableName, rel));
     }
 
-    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, queries, null, true);
+    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, apiManager, null, true);
     addContent(dag);
 
     PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
@@ -142,7 +144,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         .getUrl(), dbEngine.getConnector().getUser(),
         dbEngine.getConnector().getPassword());
 
-    for (APIQuery query : queries) {
+    for (APIQuery query : apiManager.getQueries()) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
       String sqlQuery = RelToFlinkSql.convertToString(template.getRelNode());
       log.info("Executing query for {}: {}", query.getNameId(), sqlQuery);

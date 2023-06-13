@@ -18,6 +18,7 @@ import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.EnumSet;
@@ -52,13 +53,14 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   }
 
   @Override
-  public FlinkStreamPhysicalPlan plan(PhysicalDAGPlan.StagePlan plan,
+  public FlinkStreamPhysicalPlan plan(PhysicalDAGPlan.StagePlan stagePlan,
       List<PhysicalDAGPlan.StageSink> inputs,
       ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
-    FlinkStreamPhysicalPlan streamPlan = new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
+    Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
+    StreamStagePlan plan = (StreamStagePlan) stagePlan;
+    return new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
         plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
-    return streamPlan;
   }
 
   public abstract FlinkStreamBuilder createJob();

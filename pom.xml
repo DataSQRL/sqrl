@@ -116,6 +116,11 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-engine-kafka</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-engine-server</artifactId>
                 <version>${project.version}</version>
             </dependency>

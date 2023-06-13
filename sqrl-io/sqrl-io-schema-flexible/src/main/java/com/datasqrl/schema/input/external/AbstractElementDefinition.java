@@ -15,10 +15,4 @@ public class AbstractElementDefinition implements Serializable {
   public Object default_value;
   //TODO: add hints
 
-
-  public AbstractElementDefinition(String name, String description, Object default_value) {
-    this.name = name;
-    this.description = description;
-    this.default_value = default_value;
-  }
 }

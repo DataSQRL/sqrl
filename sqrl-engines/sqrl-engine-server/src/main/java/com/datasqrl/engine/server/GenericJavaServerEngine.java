@@ -13,6 +13,8 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.serializer.Deserializer;
@@ -61,12 +63,13 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
       ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
+    Preconditions.checkArgument(plan instanceof ServerStagePlan);
     Set<ExecutionStage> dbStages = pipeline.getStages().stream().filter(s -> s.getEngine().getType()==Type.DATABASE).collect(
         Collectors.toSet());
     Preconditions.checkArgument(dbStages.size()==1, "Currently only support a single database stage in server");
     ExecutionEngine engine = Iterables.getOnlyElement(dbStages).getEngine();
     Preconditions.checkArgument(engine instanceof JDBCEngine, "Currently the server only supports JDBC databases");
-    return new ServerPhysicalPlan(plan.getModel(), ((JDBCEngine)engine).getConnector());
+    return new ServerPhysicalPlan(((ServerStagePlan) plan).getModel(), ((JDBCEngine)engine).getConnector());
   }
 
   @Override

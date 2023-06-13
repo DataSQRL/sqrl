@@ -1,11 +1,15 @@
-IMPORT datasqrl.seedshop.Orders;  -- Import orders stream
-IMPORT time.endOfWeek;            -- Import time function
-/* Create new table of unique customers */
+IMPORT datasqrl.seedshop.Orders;
+IMPORT time.endOfWeek;
+
+Orders.items.total := quantity * unit_price - discount?0.0;
+Orders.totals := SELECT sum(total) as price,
+                  sum(discount?0.0) as saving FROM @.items;
+
 Users := SELECT DISTINCT customerid AS id FROM Orders;
-/* Create relationship between customers and orders */
+
 Users.purchases := JOIN Orders ON Orders.customerid = @.id;
-/* Aggregate the purchase history for each user by week */
+
 Users.spending := SELECT endOfWeek(p.time) AS week,
-         sum(i.quantity * i.unit_price) AS spend
-      FROM @.purchases p JOIN p.items i
+         sum(t.price) AS spend, sum(t.saving) AS saved
+      FROM @.purchases p JOIN p.totals t
       GROUP BY week ORDER BY week DESC;

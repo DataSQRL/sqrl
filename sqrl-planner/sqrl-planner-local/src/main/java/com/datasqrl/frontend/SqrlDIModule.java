@@ -9,7 +9,9 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
+import com.datasqrl.schema.TypeFactory;
 import com.google.inject.AbstractModule;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 public class SqrlDIModule extends AbstractModule {
 
@@ -17,22 +19,24 @@ public class SqrlDIModule extends AbstractModule {
   private final DebuggerConfig debugConfig;
   private final ModuleLoader moduleLoader;
   private final ErrorSink errorSink;
+  private final ErrorCollector errors;
 
   public SqrlDIModule(
       ExecutionPipeline pipeline,
       DebuggerConfig debugConfig,
       ModuleLoader moduleLoader,
-      ErrorSink errorSink) {
+      ErrorSink errorSink,
+      ErrorCollector errors) {
     this.pipeline = pipeline;
     this.debugConfig = debugConfig;
     this.moduleLoader = moduleLoader;
     this.errorSink = errorSink;
+    this.errors = errors;
   }
 
   @Override
   protected void configure() {
-    ErrorCollector errors = ErrorCollector.root();
-
+    bind(RelDataTypeFactory.class).toInstance(TypeFactory.getTypeFactory());
     bind(ModuleLoader.class).toInstance(moduleLoader);
     bind(ErrorCollector.class).toInstance(errors);
     bind(NameCanonicalizer.class).toInstance(NameCanonicalizer.SYSTEM);

@@ -1,14 +1,14 @@
 package com.datasqrl.graphql.jdbc;
 
+import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
-import com.datasqrl.graphql.server.Model.KafkaMutationCoords;
-import com.datasqrl.graphql.server.Model.KafkaSubscriptionCoords;
+import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
+import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import graphql.schema.DataFetcher;
 import graphql.schema.PropertyDataFetcher;
 import java.util.Map;
@@ -53,12 +53,12 @@ public class JdbcContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createSinkFetcher(KafkaMutationCoords coords) {
+  public DataFetcher<?> createSinkFetcher(MutationCoords coords) {
     throw new RuntimeException("Mutations not yet supported");
   }
 
   @Override
-  public DataFetcher<?> createSubscriptionFetcher(KafkaSubscriptionCoords coords) {
+  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords) {
     throw new RuntimeException("Subscriptions not yet supported");
   }
 }

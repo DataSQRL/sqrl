@@ -19,6 +19,10 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-base</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-core</artifactId>
+    </dependency>
 
     <!-- Flink -->
     <!-- TODO: We only use calcite in this dep as the classes are not shaded and

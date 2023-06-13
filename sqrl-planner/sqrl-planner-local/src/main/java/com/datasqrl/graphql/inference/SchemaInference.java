@@ -3,9 +3,9 @@
  */
 package com.datasqrl.graphql.inference;
 
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SerializedSqrlConfig;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.generate.SchemaGeneratorUtil;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.*;
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
@@ -14,11 +14,12 @@ import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.TableSinkObject;
-import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
@@ -28,7 +29,6 @@ import graphql.language.FieldDefinition;
 import graphql.language.ImplementingTypeDefinition;
 import graphql.language.InputObjectTypeDefinition;
 import graphql.language.InputValueDefinition;
-import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ListType;
 import graphql.language.NamedNode;
 import graphql.language.NonNullType;
@@ -39,7 +39,6 @@ import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,33 +52,35 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.flink.calcite.shaded.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 
 @Getter
 @Slf4j
 public class SchemaInference {
 
   private final ModuleLoader moduleLoader;
-  private final String schemaName;
+  private final APISource source;
   private final TypeDefinitionRegistry registry;
   private final SqrlSchema schema;
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
   private final List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
   private final RelBuilder relBuilder;
   private final Namespace ns;
+  private final APIConnectorManager apiManager;
   private Set<FieldDefinition> visited = new HashSet<>();
   private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference(ModuleLoader moduleLoader, String schemaName, String gqlSchema, SqrlSchema schema,
-      RelBuilder relBuilder, Namespace ns) {
+  public SchemaInference(ModuleLoader moduleLoader, APISource apiSchema, SqrlSchema schema,
+      RelBuilder relBuilder, Namespace ns, APIConnectorManager apiManager) {
     this.moduleLoader = moduleLoader;
-    this.schemaName = schemaName;
-    this.registry = (new SchemaParser()).parse(gqlSchema);
+    this.source = apiSchema;
+    this.registry = (new SchemaParser()).parse(apiSchema.getSchemaDefinition());
     this.schema = schema;
     this.root = RootGraphqlModel.builder()
-        .schema(StringSchema.builder().schema(gqlSchema).build());
+        .schema(StringSchema.builder().schema(apiSchema.getSchemaDefinition()).build());
     this.relBuilder = relBuilder;
     this.ns = ns;
+    this.apiManager = apiManager;
   }
   //Handles walking the schema completely
 
@@ -118,21 +119,22 @@ public class SchemaInference {
 
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
+    SQRLTable table = resolveRootSQRLTable(fieldDefinition.getType(), fieldDefinition.getName(), "Query");
+    return inferObjectField(fieldDefinition, table, fields, parent);
+  }
 
-
-    Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldDefinition.getType())
-        .flatMap(name -> getTableOfType(fieldDefinition.getType(), name));
-    Optional<SQRLTable> sqrlTableByCommonInterface = getTypeName(fieldDefinition.getType())
-        .flatMap(name -> getTableOfCommonInterface(fieldDefinition.getType(), name));
+  private SQRLTable resolveRootSQRLTable(Type fieldType, String fieldName, String rootType) {
+    Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)
+        .flatMap(name -> getTableOfType(fieldType, name));
+    Optional<SQRLTable> sqrlTableByCommonInterface = getTypeName(fieldType)
+        .flatMap(name -> getTableOfCommonInterface(fieldType, name));
 
     Optional<SQRLTable> sqrlTable = sqrlTableByFieldType
         .or(()->sqrlTableByCommonInterface);
     Preconditions.checkState(sqrlTable.isPresent(),
-        "Could not find associated SQRL type for field %s on type %s",
-        fieldDefinition.getName(), fieldDefinition.getType());
-    SQRLTable table = sqrlTable.get();
-
-    return inferObjectField(fieldDefinition, table, fields, parent);
+        "Could not find associated SQRL type for %s field %s on type %s",
+        rootType, fieldName, fieldType);
+    return sqrlTable.get();
   }
 
   private Optional<? extends SQRLTable> getTableOfCommonInterface(Type type, String name) {
@@ -287,23 +289,11 @@ public class SchemaInference {
     for(FieldDefinition def : m.getFieldDefinitions()) {
       validateStructurallyEqualMutation(def, getValidMutationReturnType(def), getValidMutationInput(def),
           List.of(ReservedName.SOURCE_TIME.getCanonical()));
-
-      NamespaceObject ns = moduleLoader.getModule(NamePath.of(this.schemaName))
-          .flatMap(mod -> mod.getNamespaceObject(Name.system(def.getName())))
-          .orElseThrow(() ->
-              new RuntimeException(String.format(
-                  "Could not find mutation source: %s.%s", this.schemaName, def.getName())));
-
-      Preconditions.checkState(ns instanceof TableSinkObject,
-          "Mutations must be as sink type: " + def.getName());
-      TableSinkObject tsNs = (TableSinkObject) ns;
-      SqrlConfig config = tsNs.getSink().getConfiguration().getConnectorConfig();
-      Map<String, String> kafkaSink = new HashMap<>();
-      for (String key : config.getKeys()) {
-        kafkaSink.put(key, config.asString(key).get());
-      }
-
-      InferredMutation mutation = new InferredMutation(def.getName(), kafkaSink);
+      TableSink tableSink = apiManager.getMutationSource(source, Name.system(def.getName()));
+      Preconditions.checkArgument(tableSink!=null, "Could not find mutation source: %s.%s", source, def.getName());
+      //TODO: validate that tableSink schema matches Input type
+      SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();
+      InferredMutation mutation = new InferredMutation(def.getName(), config);
       mutations.add(mutation);
     }
 
@@ -460,23 +450,11 @@ public class SchemaInference {
     List<InferredField> fields = new ArrayList<>();
 
     for(FieldDefinition def : s.getFieldDefinitions()) {
-      NamespaceObject ns = moduleLoader.getModule(NamePath.of(this.schemaName))
-          .flatMap(mod -> mod.getNamespaceObject(Name.system(def.getName())))
-          .orElseThrow(() ->
-              new RuntimeException(String.format(
-                  "Could not find subscription source: %s.%s", this.schemaName, def.getName())));
-      Preconditions.checkState(ns instanceof TableSinkObject,
-          "Subscriptions must be as sink type: " + def.getName());
-      TableSinkObject tsNs = (TableSinkObject) ns;
-      SqrlConfig config = tsNs.getSink().getConfiguration().getConnectorConfig();
-      Map<String, String> kafkaSink = new HashMap<>();
-      for (String key : config.getKeys()) {
-        kafkaSink.put(key, config.asString(key).get());
-      }
-
+      SQRLTable table = resolveRootSQRLTable(def.getType(), def.getName(), "Subscription");
+      APISubscription subscriptionDef = new APISubscription(Name.system(def.getName()),source);
+      TableSource tableSource = apiManager.addSubscription(subscriptionDef, table);
+      SerializedSqrlConfig kafkaSource = tableSource.getConfiguration().getConfig().serialize();
       //Resolve the queries for all nested entries, validate all fields are sqrl fields
-      ResolvedExport export = findResolvedExport(this.ns, schemaName, def.getName());
-      SQRLTable table = export.getTable().getSqrlTable();
       TypeDefinition returnType = registry.getType(def.getType())
           .orElseThrow(()->new RuntimeException("Could not find type"));
       //todo check before cast
@@ -490,29 +468,11 @@ public class SchemaInference {
         fields.add(inferredField);
       }
 
-      InferredSubscription subscription = new InferredSubscription(def.getName(), kafkaSink);
+      InferredSubscription subscription = new InferredSubscription(def.getName(), kafkaSource);
       subscriptions.add(subscription);
     }
-
     return new InferredSubscriptions(subscriptions, fields);
   }
 
-  private ResolvedExport findResolvedExport(Namespace ns, String schemaName, String name) {
-    ResolvedExport found = null;
-    for (ResolvedExport export : ns.getExports()) {
-      if (NamePath.of(schemaName, name).equals(export.getSink().getPath())) {
-        if (found != null) {
-          throw new RuntimeException("Multiple tables sink to the same event, this is not yet supported");
-        } else {
-          found = export;
-        }
-      }
-    }
 
-    if (found == null) {
-      throw new RuntimeException("Could not find sink for subscription " + name);
-    }
-
-    return found;
-  }
 }

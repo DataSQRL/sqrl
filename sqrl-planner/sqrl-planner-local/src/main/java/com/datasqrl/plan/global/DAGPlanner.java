@@ -7,6 +7,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.local.generate.Debugger;
@@ -54,10 +55,10 @@ public class DAGPlanner {
     this.errors = errors;
   }
 
-  public SqrlDAG build(CalciteSchema relSchema, Collection<APIQuery> queries,
+  public SqrlDAG build(CalciteSchema relSchema, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports) {
     //Prepare the inputs
-    Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, queries);
+    Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, apiManager, exports);
 
     //Assemble DAG
     SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(analyzedQueries, exports);
@@ -86,19 +87,19 @@ public class DAGPlanner {
     }
   }
 
-  public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag, APIConnectorManager apiManager,
+      Set<URL> jars, Map<String, UserDefinedFunction> udfs, RootGraphqlModel model) {
     //Stitch DAG together
     DAGAssembler assembler = new DAGAssembler(planner, sqrlConverter, pipeline, debugger, errors);
-    return assembler.assemble(dag, jars, udfs, model);
+    return assembler.assemble(dag, jars, udfs, model, apiManager);
   }
 
-  public PhysicalDAGPlan plan(CalciteSchema relSchema, Collection<APIQuery> queries,
+  public PhysicalDAGPlan plan(CalciteSchema relSchema, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
       RootGraphqlModel model) {
 
-    SqrlDAG dag = build(relSchema, queries, exports);
+    SqrlDAG dag = build(relSchema, apiManager, exports);
     optimize(dag);
-    return assemble(dag,jars, udfs, model);
+    return assemble(dag, apiManager, jars, udfs, model);
   }
 }

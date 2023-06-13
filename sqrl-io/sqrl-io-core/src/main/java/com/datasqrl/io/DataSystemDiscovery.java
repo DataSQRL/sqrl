@@ -46,6 +46,12 @@ public interface DataSystemDiscovery {
 
     protected TableConfig.Builder copyGeneric(@NonNull Name tableName,
         @NonNull String identifier, @NonNull ExternalDataType type) {
+      return copyGeneric(genericTable, tableName, identifier, type);
+    }
+
+    public static TableConfig.Builder copyGeneric(@NonNull TableConfig genericTable,
+        @NonNull Name tableName,
+        @NonNull String identifier, @NonNull ExternalDataType type) {
       TableConfig.Builder builder = TableConfig.builder(tableName);
       builder.copyFrom(genericTable);
       BaseTableConfig base = genericTable.getBase().toBuilder()

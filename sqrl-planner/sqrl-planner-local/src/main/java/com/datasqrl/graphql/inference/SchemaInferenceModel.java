@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Relationship;
@@ -71,7 +72,7 @@ public class SchemaInferenceModel {
   @ToString
   public static class InferredMutation {
     String name;
-    Map<String, String> sink; //todo make modular
+    SerializedSqrlConfig sinkConfig;
   }
 
   @Value
@@ -87,7 +88,7 @@ public class SchemaInferenceModel {
   @Value
   public static class InferredSubscription {
     String name;
-    Map<String, String> subscriptions; //todo modularize
+    SerializedSqrlConfig sinkConfig;
   }
 
   public interface InferredRootObjectVisitor<R, C> {

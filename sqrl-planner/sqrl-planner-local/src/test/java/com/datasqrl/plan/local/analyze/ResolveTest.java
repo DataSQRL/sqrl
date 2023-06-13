@@ -13,6 +13,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
 import com.datasqrl.plan.table.CalciteTableFactory;
@@ -602,7 +603,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   private void createSnapshots() {
     new DAGPreparation(planner.createRelBuilder(), errors).prepareInputs(planner.getSchema(),
-        Collections.EMPTY_LIST);
+        new MockAPIConnectorManager(), Collections.EMPTY_LIST);
     DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(planner.createRelBuilder()),
         namespace.getSchema().getPipeline(), errors);
     validatedTables.forEach((table, execType) -> {

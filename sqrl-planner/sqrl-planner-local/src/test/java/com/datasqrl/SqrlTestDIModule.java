@@ -25,8 +25,8 @@ public class SqrlTestDIModule extends SqrlDIModule {
         settings.getDebugger(),
         createModuleLoader(rootDir, addlModules, errors, errorDir),
         createErrorSink(settings.getErrorSink(), errors,
-            createModuleLoader(rootDir, addlModules, errors, errorDir))
-        );
+            createModuleLoader(rootDir, addlModules, errors, errorDir)),
+        errors);
   }
 
   private static ErrorSink createErrorSink(NamePath errorSink, ErrorCollector errors,

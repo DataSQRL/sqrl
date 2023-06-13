@@ -19,6 +19,7 @@ import com.datasqrl.util.DatabaseHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
@@ -71,7 +72,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
 
   protected Namespace plan(String query) {
-    return sqrlPlanner.plan(query);
+    return sqrlPlanner.plan(query, List.of());
   }
 
 }
