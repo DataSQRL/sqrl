@@ -226,7 +226,7 @@ public class PgSchemaBuilder implements
   private ArgumentLookupCoords buildArgumentQuerySet(Set<ArgumentSet> possibleArgCombinations,
                                                      ObjectTypeDefinition parent, FieldDefinition fieldDefinition,
                                                      List<JdbcParameterHandler> existingHandlers) {
-    ArgumentLookupCoords.ArgumentLookupQueryCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
+    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
         .parentType(parent.getName()).fieldName(fieldDefinition.getName());
 
     for (ArgumentSet argumentSet : possibleArgCombinations) {

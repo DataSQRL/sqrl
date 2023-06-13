@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
+
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -51,64 +51,39 @@ public class DocumentationExamplesTest {
         execute(root, "compile", script, graphQL);
     }
 
-    @ParameterizedTest
-    @Disabled("port binding issues")
-    @ArgumentsSource(RunProvider.class)
-    public void runTutorials(@NonNull Path root, @NonNull String script, String graphQL) {
-        execute(root, "run", script, graphQL);
-    }
 
     @Test
     @Disabled
     public void runIndividual() {
-        runTutorials(Clickstream.INSTANCE.getRootPackageDirectory(), "clickstream-teaser-docs.sqrl", null);
+        compileTutorials(Clickstream.INSTANCE.getRootPackageDirectory(), "clickstream-teaser-docs.sqrl", null);
     }
 
     public static final TestCase[] CASES = {
-        Execution.BOTH.of(Quickstart.INSTANCE,"quickstart-teaser.sqrl"),
-        Execution.RUN.of(Quickstart.INSTANCE,"quickstart-teaser.sqrl", "quickstart-teaser.graphqls"),
-        Execution.COMPILE.of(Quickstart.INSTANCE,"quickstart-sqrl.sqrl"),
-        Execution.COMPILE.of(Quickstart.INSTANCE,"quickstart-user.sqrl"),
-        Execution.BOTH.of(Quickstart.INSTANCE,"quickstart-user.sqrl", "quickstart-user-paging.graphqls"),
-        Execution.BOTH.of(Quickstart.INSTANCE,"quickstart-export.sqrl"),
-        Execution.COMPILE.of(Quickstart.INSTANCE,"quickstart-docs.sqrl"),
-        Execution.BOTH.of(Sensors.INSTANCE,"sensors-teaser-docs.sqrl"),
-        Execution.COMPILE.of(Sensors.INSTANCE,"sensors-short.sqrl"),
-        Execution.COMPILE.of(Sensors.INSTANCE,"sensors-short.sqrl"),
-        Execution.COMPILE.of(Sensors.INSTANCE,"metrics-teaser.sqrl"),
-        Execution.COMPILE.of(Sensors.INSTANCE,"metrics-teaser.sqrl", "metricsapi-teaser.graphqls"),
-        Execution.COMPILE.of(Sensors.INSTANCE,"metrics-mutation.sqrl", "metricsapi.graphqls"),
-        Execution.BOTH.of(Clickstream.INSTANCE,"clickstream-teaser-docs.sqrl"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-teaser.sqrl"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-teaser.sqrl", "quickstart-teaser.graphqls"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-sqrl.sqrl"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-user.sqrl"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-user.sqrl", "quickstart-user-paging.graphqls"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-export.sqrl"),
+        TestCase.of(Quickstart.INSTANCE,"quickstart-docs.sqrl"),
+        TestCase.of(Sensors.INSTANCE,"sensors-teaser-docs.sqrl"),
+        TestCase.of(Sensors.INSTANCE,"sensors-short.sqrl"),
+        TestCase.of(Sensors.INSTANCE,"sensors-short.sqrl"),
+        TestCase.of(Sensors.INSTANCE,"metrics-teaser.sqrl"),
+        TestCase.of(Sensors.INSTANCE,"metrics-teaser.sqrl", "metricsapi-teaser.graphqls"),
+        TestCase.of(Sensors.INSTANCE,"metrics-mutation.sqrl", "metricsapi.graphqls"),
+        TestCase.of(Clickstream.INSTANCE,"clickstream-teaser-docs.sqrl"),
     };
 
-    @AllArgsConstructor
-    abstract static class ExecutionProvider implements ArgumentsProvider {
-
-        final Execution execution;
+    static class CompileProvider implements ArgumentsProvider {
 
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
             throws Exception {
-            Path root = Quickstart.INSTANCE.getRootPackageDirectory();
             return Arrays.stream(CASES)
-                .filter(c -> c.getExecution().matches(execution))
                 .map( c -> Arguments.of(c.rootDir, c.script,
                         Strings.isNullOrEmpty(c.graphQLSchema)?null:c.graphQLSchema)
                 );
-        }
-    }
-
-    static class CompileProvider extends ExecutionProvider {
-
-        public CompileProvider() {
-            super(Execution.COMPILE);
-        }
-    }
-
-    static class RunProvider extends ExecutionProvider {
-
-        public RunProvider() {
-            super(Execution.RUN);
         }
     }
 
@@ -151,25 +126,16 @@ public class DocumentationExamplesTest {
         @NonNull Path rootDir;
         @NonNull String script;
         String graphQLSchema;
-        @NonNull Execution execution;
 
-    }
-
-    public enum Execution {
-        COMPILE, RUN, BOTH;
-
-        public TestCase of(UseCaseExample example, String script, String graphQLSchema) {
-            return new TestCase(example.getRootPackageDirectory(), script, graphQLSchema, this);
+        public static TestCase of(UseCaseExample example, String script, String graphQLSchema) {
+            return new TestCase(example.getRootPackageDirectory(), script, graphQLSchema);
         }
 
-        public TestCase of(UseCaseExample example, String script) {
+        public static TestCase of(UseCaseExample example, String script) {
             return of(example, script, null);
         }
 
-        public boolean matches(Execution other) {
-            if (other==BOTH || this==BOTH) return true;
-            return this==other;
-        }
+
     }
 
 }

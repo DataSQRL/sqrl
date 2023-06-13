@@ -70,6 +70,7 @@ public class DockerCompose {
         + "    command: java -jar vertx-server.jar\n"
         + "    depends_on:\n"
         + "      - database\n"
+        + "      - kafka-setup\n"
         + "    ports:\n"
         + "      - \"8888:8888\"\n"
         + "    volumes:\n"

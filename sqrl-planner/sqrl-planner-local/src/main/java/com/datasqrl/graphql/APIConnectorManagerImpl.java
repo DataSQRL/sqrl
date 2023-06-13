@@ -152,7 +152,6 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
     return mutation.getSource().getName().getCanonical() + "-" + mutation.getName().getCanonical();
   }
 
-
   private class LogModule implements SqrlModule {
 
     Map<Name, Log> entries = new HashMap<>();

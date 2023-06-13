@@ -149,6 +149,11 @@
 
     <!-- kafka test-->
     <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-kafka</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
     </dependency>

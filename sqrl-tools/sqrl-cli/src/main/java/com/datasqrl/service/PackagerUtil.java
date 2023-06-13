@@ -136,14 +136,8 @@ public class PackagerUtil {
 
     SqrlConfig logConfig = config.getSubConfig("log");
     logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
-    BaseTableConfig baseTable = BaseTableConfig.builder()
-            .schema(FlexibleTableSchemaFactory.SCHEMA_TYPE)
-            .type(ExternalDataType.source_and_sink.name())
-            .build();
-    TableConfig.Builder tblBuilder = KafkaDataSystemFactory.getKafkaConfig(KafkaLogEngineFactory.ENGINE_NAME,
-            baseTable, "kafka:9092", null);
-    tblBuilder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
-    logConfig.copy(tblBuilder.getConfig());
+    logConfig.copy(KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, "kafka:9092",
+            JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
 
     return rootConfig;
   }

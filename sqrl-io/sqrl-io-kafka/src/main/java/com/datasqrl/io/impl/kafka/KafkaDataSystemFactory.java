@@ -9,6 +9,7 @@ import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.DataSystemImplementationFactory;
 import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.tables.BaseTableConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.google.auto.service.AutoService;
@@ -65,6 +66,26 @@ public class KafkaDataSystemFactory implements DataSystemImplementationFactory {
         .type(ExternalDataType.source_and_sink.name())
         .build();
     return getKafkaConfig(name, baseTable, servers, prefix);
+  }
+
+  public static SqrlConfig getKafkaEngineConfig(@NonNull String name, @NonNull String server,
+                                                @NonNull String format, @NonNull String schema) {
+    BaseTableConfig baseTable = BaseTableConfig.builder()
+            .schema(schema)
+            .type(ExternalDataType.source_and_sink.name())
+            .build();
+    TableConfig.Builder tblBuilder = KafkaDataSystemFactory.getKafkaConfig(name,
+            baseTable, server, null);
+    tblBuilder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, format);
+    return tblBuilder.getConfig();
+  }
+
+  public static SqrlConfig getKafkaEngineConfigWithTopic(@NonNull String name, @NonNull String server,
+                                                         @NonNull String topic,
+                                                         @NonNull String format, @NonNull String schema) {
+    SqrlConfig config = getKafkaEngineConfig(name, server, format, schema);
+    config.setProperty(BaseTableConfig.IDENTIFIER_KEY, topic);
+    return config;
   }
 
   public static TableConfig.Builder getKafkaConfig(@NonNull String name, @NonNull BaseTableConfig baseTable,

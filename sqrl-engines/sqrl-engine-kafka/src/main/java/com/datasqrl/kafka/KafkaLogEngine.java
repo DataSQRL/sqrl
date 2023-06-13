@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.kafka.common.internals.Topic;
 
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
@@ -58,12 +59,26 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public Log createLog(String logId, UniversalTable schema) {
+    String topicName = sanitizeName(logId);
+    Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
     TableSchema tblSchema = schemaFactory.convert(schema);
-    TableConfig.Builder tblBuilder = DataSystemDiscovery.Base.copyGeneric(config, schema.getName(), logId, ExternalDataType.source_and_sink);
+    TableConfig.Builder tblBuilder = DataSystemDiscovery.Base.copyGeneric(config, schema.getName(), topicName, ExternalDataType.source_and_sink);
     TableConfig logConfig = tblBuilder.build();
     NamePath path = schema.getName().toNamePath();
-    return new KafkaTopic(logId,
+    return new KafkaTopic(topicName,
         logConfig.initializeSource(path, tblSchema),
         logConfig.initializeSink(path, Optional.of(tblSchema)));
   }
+
+  static String sanitizeName(String logId) {
+    String sanitizedName = logId;
+    for (char invalidChar : REPLACE_CHARS) {
+      sanitizedName = sanitizedName.replace(invalidChar,REPLACE_WITH);
+    }
+    return sanitizedName;
+  }
+
+  public static final char[] REPLACE_CHARS = {'$'};
+  public static final char REPLACE_WITH = '-';
+
 }

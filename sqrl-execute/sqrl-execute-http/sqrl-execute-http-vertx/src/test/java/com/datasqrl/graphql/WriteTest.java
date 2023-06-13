@@ -8,6 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.io.SinkConsumer;
+import com.datasqrl.graphql.io.SinkProducer;
+import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
@@ -18,6 +22,7 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.formats.JsonLineFormat;
+import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -65,35 +70,12 @@ class WriteTest {
 
   //Todo Add Kafka
 
-  private RootGraphqlModel root = RootGraphqlModel.builder()
-      .schema(StringSchema.builder().schema(""
-          + "type Query { "
-          + "  customer: Customer "
-          + "} "
-          + "type Mutation {"
-          + "  addCustomer(event: CreateCustomerEvent): Customer"
-          + "} "
-          + "input CreateCustomerEvent {"
-          + "  customerid: Int"
-          + "} "
-          + "type Customer {"
-          + "  customerid: Int "
-          + "}").build())
-      .coord(ArgumentLookupCoords.builder()
-          .parentType("Query")
-          .fieldName("customer")
-          .match(ArgumentSet.builder()
-              .query(JdbcQuery.builder()
-                  .sql("SELECT customerid FROM Customer")
-                  .build())
-              .build())
-          .build())
-      .mutation(new MutationCoords("addCustomer", SqrlConfigCommons.EMPTY.serialize()))
-      .build();
   private PgPool client;
-  private KafkaProducer<String, String> kafkaProducer;
+  Map<String, SinkProducer> mutations;
+  Map<String, SinkConsumer> subscriptions;
 
-  private FormatFactory.Writer<String> jsonFormat = new JsonLineFormat().getWriter(SqrlConfig.EMPTY);
+  RootGraphqlModel model;
+  String topicName = "topic-1";
 
   @SneakyThrows
   @BeforeEach
@@ -112,21 +94,54 @@ class WriteTest {
     options.setPipeliningLimit(100_000);
 
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
-    this.kafkaProducer = KafkaProducer.create(vertx, getKafkaProps());
     this.client = client;
+    this.model = getCustomerModel();
+    this.mutations = GraphQLServer.constructSinkProducers(model, vertx);
+    this.subscriptions = GraphQLServer.constructSubscriptions(model, vertx);
+  }
+
+  private SqrlConfig getKafkaConfig() {
+    return KafkaDataSystemFactory.getKafkaEngineConfigWithTopic("kafka", CLUSTER.bootstrapServers(),topicName,
+            JsonLineFormat.NAME, "flexible");
   }
 
   private Properties getKafkaProps() {
     Properties props = new Properties();
     props.put("bootstrap.servers", CLUSTER.bootstrapServers());
-    props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-topic-event-lister");
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-test-listener");
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
     return props;
+  }
+
+  private RootGraphqlModel getCustomerModel() {
+    return RootGraphqlModel.builder()
+            .schema(StringSchema.builder().schema(""
+                    + "type Query { "
+                    + "  customer: Customer "
+                    + "} "
+                    + "type Mutation {"
+                    + "  addCustomer(event: CreateCustomerEvent): Customer"
+                    + "} "
+                    + "input CreateCustomerEvent {"
+                    + "  customerid: Int"
+                    + "} "
+                    + "type Customer {"
+                    + "  customerid: Int "
+                    + "}").build())
+            .coord(ArgumentLookupCoords.builder()
+                    .parentType("Query")
+                    .fieldName("customer")
+                    .match(ArgumentSet.builder()
+                            .query(JdbcQuery.builder()
+                                    .sql("SELECT customerid FROM Customer")
+                                    .build())
+                            .build())
+                    .build())
+            .mutation(new MutationCoords("addCustomer", getKafkaConfig().serialize()))
+            .build();
   }
 
   @AfterEach
@@ -140,14 +155,13 @@ class WriteTest {
 
     KafkaConsumer<String, String> consumer = new KafkaConsumer<>(getKafkaProps());
 
-    CLUSTER.createTopic("topic-1");
+    CLUSTER.createTopic(topicName);
 
-    consumer.subscribe(Collections.singletonList("topic-1"));
+    consumer.subscribe(Collections.singletonList(topicName));
 
-    GraphQL graphQL = root.accept(
+    GraphQL graphQL = model.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client),
-            Map.of("addCustomer", new KafkaSinkProducer("topic-1", kafkaProducer, jsonFormat)), Map.of()));
+        new VertxContext(new VertxJdbcClient(client), mutations, subscriptions));
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid } }")

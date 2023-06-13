@@ -50,10 +50,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"--nolookup"}, description = "Do not look up package dependencies in the repository",
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
-  @CommandLine.Option(names = {"-k", "--kafka"}, description = "Force start a local embedded kafka",
-      scope = ScopeType.INHERIT)
-  protected boolean forceStartKafka = false;
-  private boolean kafkaStarted = false;
 
   protected AbstractCompilerCommand(boolean execute, boolean startGraphql, boolean startKafka) {
     this.execute = execute;

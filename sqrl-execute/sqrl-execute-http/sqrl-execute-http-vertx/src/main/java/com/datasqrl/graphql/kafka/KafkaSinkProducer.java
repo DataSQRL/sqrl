@@ -17,12 +17,14 @@ import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.checkerframework.checker.units.qual.K;
 
 @AllArgsConstructor
@@ -48,13 +50,13 @@ public class KafkaSinkProducer<OUT> implements SinkProducer {
 
   public static KafkaSinkProducer<?> createFromConfig(Vertx vertx, SqrlConfig config) {
     KafkaConfig kafkaConfig = getKafkaConfig(config);
-    Map<String,String> settings = kafkaConfig.settings;
-    settings.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+    Map<String,String> settings = new HashMap<>(kafkaConfig.settings);
+    settings.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
 
     if (kafkaConfig.formatFactory instanceof TextLineFormat) {
-      settings.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
+      settings.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
       KafkaProducer<String, String> producer =
-          KafkaProducer.create(vertx, kafkaConfig.settings);
+          KafkaProducer.create(vertx, settings);
       TextLineFormat.Writer serializer = ((TextLineFormat) kafkaConfig.formatFactory)
           .getWriter(kafkaConfig.formatConfig);
       return new KafkaSinkProducer<>(kafkaConfig.topic, producer, serializer);

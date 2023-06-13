@@ -176,7 +176,7 @@ public class GraphQLServer extends AbstractVerticle {
     return graphQL;
   }
 
-  private Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx) {
+  static Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx) {
     Map<String, SinkConsumer> consumers = new HashMap<>();
     for (SubscriptionCoords sub: root.getSubscriptions()) {
       consumers.put(sub.getFieldName(), KafkaSinkConsumer.createFromConfig(vertx,
@@ -185,7 +185,7 @@ public class GraphQLServer extends AbstractVerticle {
     return consumers;
   }
 
-  private Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
+  static Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
     Map<String, SinkProducer> producers = new HashMap<>();
     for (MutationCoords mut : root.getMutations()) {
       producers.put(mut.getFieldName(), KafkaSinkProducer.createFromConfig(vertx,
