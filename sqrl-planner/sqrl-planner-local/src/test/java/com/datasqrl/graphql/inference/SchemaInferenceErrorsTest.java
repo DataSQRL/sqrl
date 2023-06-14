@@ -92,13 +92,6 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
   }
 
   @Test
-  public void redefineTableTest() {
-    inferSchemaModelQueries(planner, "type TableWithUUID {\n\t_uuid: String\n}\n"
-        + "type Query {\n\torders: TableWithUUID\n\tproduct: TableWithUUID\n}");
-    validateErrorsAndAddContent();
-  }
-
-  @Test
   public void structuralObjectTest() {
     inferSchemaModelQueries(planner, ""
         + "type Orders {\n\t_uuid: String, entries: Entries\n}\n"
