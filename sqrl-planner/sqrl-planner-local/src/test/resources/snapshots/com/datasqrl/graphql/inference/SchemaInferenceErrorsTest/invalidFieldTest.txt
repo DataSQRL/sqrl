@@ -1,7 +1,7 @@
-[FATAL] Could not find associated SQRL type for field orders on type TypeName{name='Orders'}
+[FATAL] Could not find associated SQRL type for field orders on type Orders. Check that the type has all the necessary fields.
 in script:<schema> [5:3]:
 }
 type Query {
-	orders: Orders
+  orders: Orders
 --^
 

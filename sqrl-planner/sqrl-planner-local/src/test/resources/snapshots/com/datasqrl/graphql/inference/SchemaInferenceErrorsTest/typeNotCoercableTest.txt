@@ -1,6 +1,6 @@
 [FATAL] Expected SQRL boolean type, found: BIGINT
 in script:<schema> [2:7]:
 type Orders {
-	id: Boolean
+  id: Boolean
 ------^
 

@@ -141,10 +141,10 @@ public class SchemaInference {
 
     if (sqrlTable.isEmpty()) {
       throw new SqrlAstException(ErrorLabel.GENERIC,
-          new SqlParserPos(fieldDefinition.getSourceLocation().getLine(),
-              fieldDefinition.getSourceLocation().getColumn()),
-          "Could not find associated SQRL type for field %s on type %s",
-          fieldDefinition.getName(), fieldDefinition.getType().toString());
+          toParserPos(fieldDefinition.getSourceLocation()),
+          "Could not find associated SQRL type for field %s on type %s. Check that the type has all the necessary fields.",
+          fieldDefinition.getName(), fieldDefinition.getType() instanceof TypeName ?
+          ((TypeName) fieldDefinition.getType()).getName() : fieldDefinition.getType().toString());
     }
     return sqrlTable.get();
   }
@@ -228,8 +228,7 @@ public class SchemaInference {
   private void checkState(boolean b, SourceLocation sourceLocation, String message, String... args) {
     if (!b) {
       throw new SqrlAstException(ErrorLabel.GENERIC,
-          new SqlParserPos(sourceLocation.getLine(),
-              sourceLocation.getColumn()),
+          toParserPos(sourceLocation),
           message, args);
     }
   }
@@ -315,7 +314,7 @@ public class SchemaInference {
   }
 
   private SqlParserPos toParserPos(SourceLocation sourceLocation) {
-    return new SqlParserPos(sourceLocation.getLine(), sourceLocation.getColumn());
+    return new SqlParserPos(sourceLocation.getLine(), sourceLocation.getColumn() - 1);
   }
 
   private void checkValidArrayNonNullType(Type type) {
@@ -358,7 +357,8 @@ public class SchemaInference {
     Optional<TypeDefinition> typeDef = this.registry.getType(type);
 
     checkState(typeDef.isPresent(), type.getSourceLocation(),
-        "Could not find Object type [%s]", type.toString());
+        "Could not find Object type [%s]", type instanceof TypeName ?
+            ((TypeName) type).getName() : type.toString());
 
     return typeDef.get();
   }
@@ -380,7 +380,10 @@ public class SchemaInference {
       validateStructurallyEqualMutation(def, getValidMutationReturnType(def), getValidMutationInput(def),
           List.of(ReservedName.SOURCE_TIME.getCanonical()));
       TableSink tableSink = apiManager.getMutationSource(source, Name.system(def.getName()));
-      Preconditions.checkArgument(tableSink!=null, "Could not find mutation source: %s.%s", source, def.getName());
+      if (tableSink==null) {
+        throw new SqrlAstException(ErrorLabel.GENERIC, toParserPos(m.getSourceLocation()),
+            "Could not find mutation source: %s.%s", def.getName());
+      }
       //TODO: validate that tableSink schema matches Input type
       SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();
       InferredMutation mutation = new InferredMutation(def.getName(), config);
@@ -518,20 +521,20 @@ public class SchemaInference {
   }
 
   private InputObjectTypeDefinition getValidMutationInput(FieldDefinition def) {
-    Preconditions.checkState(!(def.getInputValueDefinitions().size() == 0), def.getName() + " has too few arguments. Must have one non-null input type argument.");
-    Preconditions.checkState(def.getInputValueDefinitions().size() == 1, def.getName() + " has too many arguments. Must have one non-null input type argument.");
-    Preconditions.checkState(def.getInputValueDefinitions().get(0).getType() instanceof NonNullType,
-        "[" + def.getName() + "] " + def.getInputValueDefinitions().get(0).getName() + "Must be non-null.");
-
+    checkState(!(def.getInputValueDefinitions().size() == 0), def.getSourceLocation(), def.getName() + " has too few arguments. Must have one non-null input type argument.");
+    checkState(def.getInputValueDefinitions().size() == 1, def.getSourceLocation(), def.getName() + " has too many arguments. Must have one non-null input type argument.");
+    checkState(def.getInputValueDefinitions().get(0).getType() instanceof NonNullType, def.getSourceLocation(),
+        "[" + def.getName() + "] " + def.getInputValueDefinitions().get(0).getName()
+              + "Must be non-null.");
     NonNullType nonNullType = (NonNullType)def.getInputValueDefinitions().get(0).getType();
-    Preconditions.checkState(nonNullType.getType() instanceof TypeName, "Must be a singular value");
+    checkState(nonNullType.getType() instanceof TypeName, def.getSourceLocation(), "Must be a singular value");
     TypeName name = (TypeName) nonNullType.getType();
 
-    TypeDefinition typeDef = registry.getType(name)
-        .orElseThrow(()->new RuntimeException("Could not find input type:" + name.getName()));
-    Preconditions.checkState(typeDef instanceof InputObjectTypeDefinition, "Input must be an input object type:" + def.getName());
+    Optional<TypeDefinition> typeDef = registry.getType(name);
+    checkState(typeDef.isPresent(), def.getSourceLocation(), "Could not find input type:" + name.getName());
+    checkState(typeDef.get() instanceof InputObjectTypeDefinition, def.getSourceLocation(), "Input must be an input object type:" + def.getName());
 
-    return (InputObjectTypeDefinition) typeDef;
+    return (InputObjectTypeDefinition) typeDef.get();
   }
 
   private InferredSubscriptions resolveSubscriptions(ObjectTypeDefinition s) {

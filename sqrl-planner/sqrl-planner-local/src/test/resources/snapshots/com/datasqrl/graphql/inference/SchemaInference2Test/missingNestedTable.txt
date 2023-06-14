@@ -1,3 +1,0 @@
-[FATAL] Could not find Object type
-in script:schema:
-

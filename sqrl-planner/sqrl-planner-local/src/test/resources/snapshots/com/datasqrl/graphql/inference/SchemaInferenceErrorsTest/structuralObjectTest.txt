@@ -2,6 +2,6 @@
 in script:<schema> [5:3]:
 }
 type Entries {
-	invalidField: String
+  invalidField: String
 --^
 

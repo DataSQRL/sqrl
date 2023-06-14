@@ -1,3 +1,0 @@
-[FATAL] Could not find mutation source: schema.addOrder
-in script:schema:
-

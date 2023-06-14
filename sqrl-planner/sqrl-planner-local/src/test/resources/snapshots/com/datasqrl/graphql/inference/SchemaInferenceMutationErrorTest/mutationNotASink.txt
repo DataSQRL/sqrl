@@ -1,6 +1,6 @@
 [FATAL] Expected SQRL String or Date type, found: BIGINT
 in script:<schema> [2:7]:
 type Orders {
-	id: String
+  id: String
 ------^
 
