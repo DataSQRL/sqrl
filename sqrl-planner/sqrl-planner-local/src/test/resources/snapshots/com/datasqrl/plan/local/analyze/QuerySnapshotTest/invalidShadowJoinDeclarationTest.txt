@@ -1,5 +1,5 @@
 >>>errors
-[FATAL] 
+[FATAL] Attempting to shadow relationship [Product.joinDeclaration]
 in script:test.sqrl [3:1]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;

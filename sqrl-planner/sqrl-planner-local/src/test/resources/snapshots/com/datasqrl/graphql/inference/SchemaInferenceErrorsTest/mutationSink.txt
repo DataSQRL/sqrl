@@ -1,0 +1,3 @@
+[FATAL] Must have a query type
+in script:schema:
+

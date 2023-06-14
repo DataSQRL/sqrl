@@ -27,6 +27,7 @@ public class SchemaInferenceModel {
   @Value
   @ToString
   public static class InferredSchema {
+    String name;
 
     InferredQuery query;
     Optional<InferredMutations> mutation;

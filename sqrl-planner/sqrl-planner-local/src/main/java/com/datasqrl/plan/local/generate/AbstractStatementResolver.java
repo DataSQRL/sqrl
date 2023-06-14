@@ -32,8 +32,8 @@ public abstract class AbstractStatementResolver {
   }
 
   protected SqlNode transpile(SqrlStatement sqlNode, Namespace ns) {
-    Transpiler transpiler = new Transpiler(errors);
-    return transpiler.transpile(sqlNode, ns);
+    Transpiler transpiler = new Transpiler();
+    return transpiler.transpile(sqlNode, ns, errors);
   }
 
   protected void addColumn(NamePath namePath, Namespace ns, RelNode relNode, boolean lockTimestamp) {

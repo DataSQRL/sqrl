@@ -75,8 +75,4 @@ public class MockModuleLoader implements ModuleLoader {
         .equals("output");
   }
 
-  @Override
-  public String toString() {
-    return objLoader.toString();
-  }
 }

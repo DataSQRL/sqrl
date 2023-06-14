@@ -22,6 +22,10 @@ public class SQRLConverter {
 
   private RelBuilder relBuilder;
 
+  public SQRLConverter(RelBuilder relBuilder) {
+    this.relBuilder = relBuilder;
+  }
+
   public AnnotatedLP convert(final RelNode relNode, Config config, ErrorCollector errors) {
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
     SQRLLogicalPlanRewriter sqrl2sql = new SQRLLogicalPlanRewriter(relBuilder, exec,

@@ -84,7 +84,6 @@ class ErrorLocationImpl implements ErrorLocation {
 
   @Override
   public ErrorLocation withSourceMap(SourceMap map) {
-    Preconditions.checkArgument(sourceMap==null);
     Preconditions.checkArgument(!hasFile());
     return new ErrorLocationImpl(prefix, map, null, names);
   }

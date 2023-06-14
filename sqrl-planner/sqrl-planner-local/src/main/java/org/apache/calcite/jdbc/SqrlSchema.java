@@ -18,6 +18,7 @@ package org.apache.calcite.jdbc;
 
 import static java.util.Objects.requireNonNull;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.functions.SqrlFunctionCatalog;
@@ -26,6 +27,8 @@ import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.schema.Column;
+import com.datasqrl.schema.Field;
 import com.datasqrl.schema.TypeFactory;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
@@ -39,6 +42,7 @@ import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -179,5 +183,41 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public void addFunction(String name, UserDefinedFunction function) {
     functionCatalog.addNativeFunction(name, function);
+  }
+
+  public Optional<List<Object>> walk(NamePath path) {
+    if (path.isEmpty()) {
+      return Optional.empty();
+    }
+    //get first table
+    Optional<SQRLTable> table = Optional.ofNullable(getTable(path.get(0).getCanonical(), false))
+        .filter(e -> e.getTable() instanceof SQRLTable)
+        .map(e -> (SQRLTable) e.getTable());
+
+    if (table.isEmpty()) {
+      return Optional.empty();
+    }
+
+    List<Object> fields = new ArrayList<>();
+    SQRLTable t = table.get();
+    fields.add(t);
+    Name[] names = path.popFirst().getNames();
+    for (int i = 0; i < names.length; i++) {
+      Optional<Field> field = t.getField(names[i]);
+      if (field.isPresent()) {
+        fields.add(field.get());
+        if (field.get() instanceof Relationship) {
+          t = ((Relationship) field.get()).getToTable();
+        } else if (field.get() instanceof Column) {
+          if (i != names.length - 1) {
+            return Optional.empty();
+          }
+        }
+      } else {
+        return Optional.empty();
+      }
+    }
+
+    return Optional.of(fields);
   }
 }

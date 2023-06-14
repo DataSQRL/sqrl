@@ -6,6 +6,7 @@ package com.datasqrl.parse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.datasqrl.error.ErrorCollector;
 import java.util.List;
 import org.apache.calcite.sql.ExportDefinition;
 import org.apache.calcite.sql.SqrlStatement;
@@ -17,7 +18,8 @@ class ExportTest {
   public void exportTest() {
     SqrlParser parser = new SqrlParserImpl();
     // cannot use ANTLR defined keywords e.g. 'table' or 'source'
-    SqrlStatement sqrlStatement = parser.parseStatement("EXPORT UserAlerts TO file-output.Alerts");
+    SqrlStatement sqrlStatement = parser.parseStatement("EXPORT UserAlerts TO file-output.Alerts",
+        ErrorCollector.root());
     assertTrue(sqrlStatement instanceof ExportDefinition);
     ExportDefinition exportDefinition = (ExportDefinition) sqrlStatement;
 

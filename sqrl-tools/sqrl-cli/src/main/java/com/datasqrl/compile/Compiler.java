@@ -130,6 +130,7 @@ public class Compiler {
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 
     InferredSchema inferredSchema = new SchemaInference(
+        scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>").split("\\.")[0],
         moduleLoader,
         apiSchema,
         schema,

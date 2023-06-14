@@ -330,7 +330,8 @@ public class AnalyzeStatement implements
         return Optional.empty();
       }
 
-      List<Field> fields = base.get().walkField(id.names.subList(1, id.names.size()));
+      List<Field> fields = base.get().walkField(id.names.subList(1, id.names.size()).stream()
+          .map(Name::system).collect(Collectors.toList()));
       if (fields.get(fields.size() - 1) instanceof Relationship) {
         return Optional.of(new AbsoluteResolvedTable(fields.stream()
             .map(e -> (Relationship) e)

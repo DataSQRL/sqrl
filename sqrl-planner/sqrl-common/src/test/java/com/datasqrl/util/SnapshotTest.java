@@ -82,6 +82,10 @@ public class SnapshotTest {
       return of(testClass.getName(), testInfo, null);
     }
 
+    public static Snapshot of(String displayName, Class<?> testClass) {
+      return new Snapshot(testClass.getName(), displayName, new StringBuilder());
+    }
+
     public String getContent() {
       return content.toString();
     }

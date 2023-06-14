@@ -43,7 +43,7 @@ public class IntegrationTestSettings {
   final NamePath errorSink = NamePath.of("print","errors");
 
 
-  Pair<DatabaseHandle, PipelineFactory> getSqrlSettings() {
+  public Pair<DatabaseHandle, PipelineFactory> getSqrlSettings() {
     ErrorCollector errors = ErrorCollector.root();
     SqrlConfig config = SqrlConfigCommons.create(errors);
 

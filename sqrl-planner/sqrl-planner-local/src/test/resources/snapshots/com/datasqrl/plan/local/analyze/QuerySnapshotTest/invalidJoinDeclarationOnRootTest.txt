@@ -1,5 +1,6 @@
 >>>errors
-[FATAL] Could not find field: [@, productid]
+[FATAL] Could not find field: [@.productid]
+Possible fields include: Product._uuid, Product._ingest_time, Product.productid, Product.name, Product.description, Product.category
 in script:test.sqrl [2:29]:
 IMPORT ecommerce-data.Product;
 Product2 := JOIN Product ON @.productid = Product.productid;
