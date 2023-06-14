@@ -276,8 +276,7 @@ public class SchemaInference {
     Preconditions.checkState(type instanceof ScalarTypeDefinition,
         "Unknown type found");
     ScalarTypeDefinition scalarTypeDefinition = (ScalarTypeDefinition) type;
-    SqlParserPos pos = new SqlParserPos(fieldDefinition.getType().getSourceLocation().getLine(),
-        fieldDefinition.getType().getSourceLocation().getColumn());
+    SqlParserPos pos = toParserPos(fieldDefinition.getType().getSourceLocation());
 
     switch (scalarTypeDefinition.getName()) {
       case "Int":
@@ -308,11 +307,15 @@ public class SchemaInference {
       case "ID":
       default:
         throw new SqrlAstException(ErrorLabel.GENERIC,
-            new SqlParserPos(type.getSourceLocation().getLine(), type.getSourceLocation().getColumn()),
+            toParserPos(type.getSourceLocation()),
             "Unrecognized type: %s", column.getType().getSqlTypeName().getName());
     }
 
     return new InferredScalarField(fieldDefinition, column, parent);
+  }
+
+  private SqlParserPos toParserPos(SourceLocation sourceLocation) {
+    return new SqlParserPos(sourceLocation.getLine(), sourceLocation.getColumn());
   }
 
   private void checkValidArrayNonNullType(Type type) {
@@ -328,7 +331,7 @@ public class SchemaInference {
     }
     if (!(type instanceof TypeName)) {
       throw new SqrlAstException(ErrorLabel.GENERIC,
-          new SqlParserPos(root.getSourceLocation().getLine(), root.getSourceLocation().getColumn()),
+          toParserPos(root.getSourceLocation()),
           "Type must be a non-null array, array, or non-null");
     }
   }

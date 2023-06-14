@@ -16,6 +16,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class SqrlAstException extends RuntimeException {
 
   private final ErrorLabel errorLabel;
+  //todo: migrate to sqrl parser pos
   private final SqlParserPos pos;
   private final String message;
 
