@@ -3,6 +3,7 @@
  */
 package com.datasqrl.cmd;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.packager.config.ScriptConfiguration;
@@ -96,6 +97,20 @@ public class TestCmd {
 
   @Test
   @SneakyThrows
+  public void compileError() {
+    Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
+    buildDir = rootDir.resolve("build");
+
+    TestScript script = Nutshop.INSTANCE.getScripts().get(1);
+
+    int statusCode = execute(rootDir, StatusHook.NONE,"compile",
+        script.getScriptPath().toString(),
+        "doesNotExist.graphql");
+    assertEquals(1, statusCode, "Non-zero status code expected");
+  }
+
+  @Test
+  @SneakyThrows
   public void compileNutshopWithSchema() {
     Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
@@ -132,7 +147,10 @@ public class TestCmd {
     createSnapshot();
   }
 
-  public static void execute(Path rootDir, String... args) {
-    new RootCommand(rootDir, AssertStatusHook.INSTANCE, List.of(FeatureFlag.SUBSCRIPTIONS)).getCmd().execute(args);
+  public static int execute(Path rootDir, String... args) {
+    return execute(rootDir, AssertStatusHook.INSTANCE, args);
+  }
+  public static int execute(Path rootDir, StatusHook hook, String... args) {
+    return new RootCommand(rootDir,hook).getCmd().execute(args);
   }
 }
