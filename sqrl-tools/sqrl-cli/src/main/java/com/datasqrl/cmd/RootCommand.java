@@ -4,7 +4,6 @@
 package com.datasqrl.cmd;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
@@ -14,16 +13,13 @@ import picocli.CommandLine.ScopeType;
 
 @CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "0.1",
     subcommands = {CompilerCommand.class, RunCommand.class, DiscoverCommand.class, PopulateCommand.class,
-        ServeCommand.class, PublishCommand.class},
-    exitCodeOnInvalidInput = 1, exitCodeOnExecutionException = 1)
+        ServeCommand.class, PublishCommand.class})
 @Getter
 public class RootCommand implements Runnable {
 
   @CommandLine.Option(names = {"-c", "--config"}, description = "Package configuration file(s)"
       , scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.EMPTY_LIST;
-
-  List<FeatureFlag> featureFlags = new ArrayList<>();
 
   @Override
   public void run() {
@@ -33,11 +29,6 @@ public class RootCommand implements Runnable {
 
   final Path rootDir;
   final StatusHook statusHook;
-
-  public RootCommand(@NonNull Path rootDir, @NonNull StatusHook statusHook, List<FeatureFlag> featureFlags) {
-    this(rootDir, statusHook);
-    this.featureFlags = featureFlags;
-  }
 
   public RootCommand(@NonNull Path rootDir, @NonNull StatusHook statusHook) {
     this.rootDir = rootDir;

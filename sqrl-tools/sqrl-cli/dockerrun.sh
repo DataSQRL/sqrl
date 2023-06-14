@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 cd /build
 echo 'Compiling...this takes about 10 seconds'
 java -jar /usr/src/app/sqrl-cli.jar ${@}

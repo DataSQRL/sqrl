@@ -5,20 +5,22 @@ package com.datasqrl.cmd;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import java.nio.file.Files;
-import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import picocli.CommandLine;
+import picocli.CommandLine.IExitCodeGenerator;
 
 @Slf4j
-public abstract class AbstractCommand implements Runnable {
+public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
 
   @CommandLine.ParentCommand
   protected RootCommand root;
   EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
   protected boolean startKafka;
+  public AtomicInteger exitCode = new AtomicInteger(0);
+
 
   @SneakyThrows
   public void run() {
@@ -35,9 +37,16 @@ public abstract class AbstractCommand implements Runnable {
         CLUSTER.stop();
       }
     }
-    System.out.println(ErrorPrinter.prettyPrint(collector));
+    if (collector.hasErrors()) {
+      exitCode.set(1);
+      System.out.println(ErrorPrinter.prettyPrint(collector));
+    }
   }
 
   protected abstract void runCommand(ErrorCollector errors) throws Exception;
 
+  @Override
+  public int getExitCode() {
+    return exitCode.get();
+  }
 }
