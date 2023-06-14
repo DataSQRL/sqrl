@@ -70,11 +70,6 @@ public class SqrlParserImpl implements SqrlParser {
     return scriptNode;
   }
 
-  @Override
-  public ScriptNode parse(String fileName, String script, ErrorCollector collector) {
-    return null;
-  }
-
   public ScriptNode parse(String sql, ErrorCollector errors) {
     try {
       ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);

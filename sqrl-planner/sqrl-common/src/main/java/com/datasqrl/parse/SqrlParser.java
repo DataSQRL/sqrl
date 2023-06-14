@@ -12,6 +12,4 @@ public interface SqrlParser {
   SqrlStatement parseStatement(String sql, ErrorCollector errors);
 
   ScriptNode parse(Path scriptPath, ErrorCollector errors);
-
-  ScriptNode parse(String fileName, String script, ErrorCollector collector);
 }

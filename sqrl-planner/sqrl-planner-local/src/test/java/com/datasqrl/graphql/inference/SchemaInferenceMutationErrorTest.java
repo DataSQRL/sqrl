@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.util.Optional;
@@ -67,23 +66,5 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
         + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
         + "type Query {\n\torders: Orders\n}");
     validateErrorsAndAddContent();
-  }
-
-  @Test
-  public void infer() {
-
-    // STOPSHIP: 5/31/23 fix me
-//    List<TableDefinition> schemas = GraphqlSchemaVisitor.accept(
-//        new InputFieldToFlexibleSchemaRelation(registry), mutationType, null);
-
-
-//    String schema = ""
-//        + "type Orders {\n\tid: String\n}\n"
-//        + "input OrderInput {\n\tid: String!\n}\n"
-//        + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
-//        + "type Query {\n\torders: Orders\n}";
-//    Collector<InferredSchema> error = sqrl.inferMutationSinksSources(schema)
-//        .planSchema(schema);
-//    validateErrorsAndAddContent();
   }
 }

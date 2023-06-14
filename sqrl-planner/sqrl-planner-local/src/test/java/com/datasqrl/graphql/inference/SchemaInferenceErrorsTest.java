@@ -93,11 +93,9 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void redefineTableTest() {
-    //todo: how to redefine a table with new inference?
-//    Collector<InferredSchema> error = sqrl.inferSchema("<schema>", ""
-//        + "type TableWithUUID {\n\t_uuid: String\n}\n"
-//        + "type Query {\n\torders: TableWithUUID\n\tproduct: TableWithUUID\n}");
-//    validateErrorsAndAddContent();
+    inferSchemaModelQueries(planner, "type TableWithUUID {\n\t_uuid: String\n}\n"
+        + "type Query {\n\torders: TableWithUUID\n\tproduct: TableWithUUID\n}");
+    validateErrorsAndAddContent();
   }
 
   @Test
