@@ -14,7 +14,11 @@ import com.datasqrl.schema.Column;
 import com.datasqrl.schema.SQRLTable;
 import java.util.List;
 import java.util.Optional;
+import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
+import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apiguardian.api.API;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +44,8 @@ class SchemaInferenceTest {
     when(table.getName()).thenReturn(Name.system("User"));
 
     Column field = mock(Column.class);
+    when(field.getType()).thenReturn(new JavaTypeFactoryImpl()
+        .createSqlType(SqlTypeName.VARCHAR));
     when(table.getField(Name.system("id"))).thenReturn(Optional.of(field));
 
     /*
@@ -52,7 +58,7 @@ class SchemaInferenceTest {
         + "type User { id: String }");
 
     SchemaInference schemaInference = new SchemaInference(
-        loader, gql,
+        "schema", loader, gql,
         schema,
         relBuilder,
         null, new MockAPIConnectorManager()
@@ -68,8 +74,12 @@ class SchemaInferenceTest {
     when(table.getName()).thenReturn(Name.system("User"));
 
     Column field = mock(Column.class);
+    when(field.getType()).thenReturn(new JavaTypeFactoryImpl()
+        .createSqlType(SqlTypeName.VARCHAR));
     when(table.getField(Name.system("id"))).thenReturn(Optional.of(field));
     Column username = mock(Column.class);
+    when(username.getType()).thenReturn(new JavaTypeFactoryImpl()
+        .createSqlType(SqlTypeName.VARCHAR));
     when(table.getField(Name.system("username"))).thenReturn(Optional.of(username));
 
 
@@ -84,7 +94,7 @@ class SchemaInferenceTest {
      * IMPORT User;
      */
     SchemaInference schemaInference = new SchemaInference(
-        loader, gql,
+        "schema", loader, gql,
         schema,
         relBuilder,
         null, new MockAPIConnectorManager()

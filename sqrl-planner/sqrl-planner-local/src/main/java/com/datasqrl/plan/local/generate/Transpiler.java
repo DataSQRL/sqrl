@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.DistinctAssignment;
 import org.apache.calcite.sql.ExpressionAssignment;
@@ -32,14 +31,21 @@ import org.apache.calcite.sql.SqrlStatement;
 import org.apache.calcite.sql.StreamAssignment;
 import org.apache.calcite.sql.validate.SqlValidator;
 
-@AllArgsConstructor
 public class Transpiler {
 
-  ErrorCollector errors;
+  public SqlNode transpile(SqrlStatement query, Namespace ns, ErrorCollector errors) {
+    try {
+      return transpileHelper(query, ns, errors);
+    } catch (Exception e) {
+      throw errors.handle(e);
+    }
+  }
 
-  public SqlNode transpile(SqrlStatement query, Namespace ns) {
+  public SqlNode transpileHelper(SqrlStatement query, Namespace ns, ErrorCollector errors) {
+    checkPathWritable(ns, query);
+
     Optional<SQRLTable> table = getContext(ns, query);
-    table.ifPresent(t -> checkPathWritable(ns, query.getNamePath().popLast()));
+
     Optional<VirtualRelationalTable> context = table.map(SQRLTable::getVt);
 
     SqlTransformer transformer = createTransformer(query, ns.getSchema(), table, ns);
@@ -75,7 +81,8 @@ public class Transpiler {
   private SqlTransformer createTransformer(SqrlStatement query, SqrlSchema schema, Optional<SQRLTable> table,
       Namespace ns) {
     List<String> assignmentPath = getAssignmentPath(query);
-    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(schema, assignmentPath, table, ns).accept(node);
+    Function<SqlNode, Analysis> analyzer = (node) -> new AnalyzeStatement(schema, assignmentPath, table, ns)
+        .accept(node);
     return SqlTransformerFactory.create(analyzer, table.isPresent());
   }
 
@@ -156,22 +163,55 @@ public class Transpiler {
     NamePath childPath = namePath.popFirst();
     return table.flatMap(t -> t.walkTable(childPath));
   }
-  private void checkPathWritable(Namespace ns, NamePath path) {
-    Optional<SQRLTable> table = Optional.ofNullable(
-            ns.getSchema().getTable(path.get(0).getCanonical(), false))
-        .filter(e -> e.getTable() instanceof SQRLTable)
-        .map(e -> (SQRLTable) e.getTable());
-    Optional<Field> field = table
-        .map(t -> t.walkField(path.popFirst()))
-        .stream()
-        .flatMap(f->f.stream())
-        .filter(f -> f instanceof Relationship && (
-            ((Relationship) f).getJoinType() == Relationship.JoinType.JOIN
-                || ((Relationship) f).getJoinType() == Relationship.JoinType.PARENT))
-        .findAny();
-    errors.checkFatal(field.isEmpty(), ErrorCode.PATH_CONTAINS_RELATIONSHIP,
-          "Path is not writable %s", path);
+
+  private void checkPathWritable(Namespace ns, SqrlStatement query) {
+    if (query instanceof ImportDefinition) {
+      return;
+    }
+    NamePath assign = query.getNamePath().popLast();
+    NamePath full = query.getNamePath();
+
+    Optional<List<Object>> assignPath = ns.getSchema().walk(assign);
+    Optional<List<Object>> fullPath = ns.getSchema().walk(full);
+
+    //always writable
+    if (full.size() == 1) {
+      return;
+    }
+
+    if (assignPath.isPresent()) {
+      //Assure we can write to it (no JOIN or PARENT rels)
+      List<Object> p = assignPath.get();
+      Optional<Object> hasJoin = p.stream()
+          .filter(f -> f instanceof Relationship && (
+              ((Relationship) f).getJoinType() == Relationship.JoinType.JOIN
+                  || ((Relationship) f).getJoinType() == Relationship.JoinType.PARENT))
+          .findAny();
+      if (hasJoin.isPresent()) {
+        throw new SqrlAstException(ErrorCode.PATH_NOT_WRITABLE, query.getParserPosition(),
+            "Assignment path contains a join declaration or a reference to parent. [%s]", full.getDisplay());
+      }
+    }
+
+    if (assignPath.isEmpty()) {
+      if (full.size() == 1) {
+        throw new SqrlAstException(ErrorCode.MISSING_DEST_TABLE,
+            query.getParserPosition(),
+            "Base relation does not exist [%s]. Cannot assign statement to a missing relation.",
+            full.getNames()[0].getDisplay());
+      } else {
+        throw new SqrlAstException(ErrorCode.MISSING_TABLE, query.getParserPosition(),
+            "Could not find table path [%s]", assign.getDisplay());
+      }
+    }
+
+    //check to see if we're shadowing a relationship
+    if (fullPath.isPresent() && fullPath.get().get(fullPath.get().size() - 1) instanceof Relationship) {
+        throw new SqrlAstException(ErrorCode.CANNOT_SHADOW_RELATIONSHIP, query.getParserPosition(),
+            "Attempting to shadow relationship [%s]", full.getDisplay());
+    }
   }
+
   private SqlValidator createValidator(Namespace ns) {
     return SqlValidatorUtil.createSqlValidator(ns.getSchema(),
         ns.getOperatorTable());

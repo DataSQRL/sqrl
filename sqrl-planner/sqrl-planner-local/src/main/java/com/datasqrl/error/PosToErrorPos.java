@@ -5,6 +5,10 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class PosToErrorPos {
 
+  public static ErrorLocation atPosition(ErrorLocation location, SqlParserPos pos) {
+    return location.atFile(new FileRange(pos.getLineNum(), pos.getColumnNum() + 1, pos.getEndLineNum(), pos.getEndColumnNum() + 1));
+  }
+
   public static ErrorLocation atPosition(ErrorCollector errors, SqlParserPos pos) {
     return errors.getLocation().atFile(new FileRange(pos.getLineNum(), pos.getColumnNum() + 1, pos.getEndLineNum(), pos.getEndColumnNum() + 1));
   }

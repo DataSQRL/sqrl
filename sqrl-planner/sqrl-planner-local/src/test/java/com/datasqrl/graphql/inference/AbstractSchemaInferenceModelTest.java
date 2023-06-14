@@ -6,6 +6,7 @@ package com.datasqrl.graphql.inference;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -32,13 +33,15 @@ import org.apache.commons.lang3.tuple.Triple;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
-  private Namespace ns;
+  protected Namespace ns;
 
   public AbstractSchemaInferenceModelTest(Namespace ns) {
     this.ns = ns;
+    this.errors = ErrorCollector.root();
   }
 
   public AbstractSchemaInferenceModelTest() {
+    this(null);
   }
 
   @SneakyThrows
@@ -53,15 +56,22 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     return Pair.of(result.getLeft(), result.getRight());
   }
 
-  private Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
+  protected Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
       SqrlQueryPlanner planner, String schemaStr) {
     APIConnectorManager apiManager = new MockAPIConnectorManager();
     APISource source = APISource.of(schemaStr);
     //Inference
-    SchemaInference inference = new SchemaInference(null, source,
+    this.errors = errors.withSchema("<schema>",source.getSchemaDefinition());
+    SchemaInference inference = new SchemaInference("<schema>", null,source,
         planner.getSchema(),
         planner.createRelBuilder(), ns, apiManager);
-    InferredSchema inferredSchema = inference.accept();
+    InferredSchema inferredSchema;
+    try {
+      inferredSchema = inference.accept();
+    } catch (Exception e) {
+      errors.handle(e);
+      return null;
+    }
 
     //Build queries
     PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(source,

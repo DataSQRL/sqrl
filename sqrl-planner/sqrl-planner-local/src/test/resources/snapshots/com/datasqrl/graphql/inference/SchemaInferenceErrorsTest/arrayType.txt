@@ -1,0 +1,7 @@
+[FATAL] Type must be a non-null array, array, or non-null
+in script:<schema> [5:11]:
+}
+type Query {
+  orders: [[Orders]]
+----------^
+

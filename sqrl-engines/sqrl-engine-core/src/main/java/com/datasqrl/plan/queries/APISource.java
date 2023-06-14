@@ -19,7 +19,8 @@ public class APISource {
   String schemaDefinition;
 
   public static APISource of(String schemaDefinition) {
-    return new APISource(Name.system("schema"),schemaDefinition);
+    return new APISource(Name.system("schema"),schemaDefinition
+        .replaceAll("\t", "  "));
   }
 
   @Override

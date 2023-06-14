@@ -9,7 +9,6 @@ import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.util.SnapshotTest;
-import org.apache.calcite.sql.ScriptNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,17 +62,15 @@ public class ParserErrorTest {
     ErrorCollector errorCollector = ErrorCollector.root()
         .withSource(str);
 
-//    errorCollector.registerHandler(ParsingException.class, new ParsingExceptionHandler());
-
     SqrlParser parser = new SqrlParserImpl();
 
     try {
-      ScriptNode n = parser.parse(str, errorCollector);
-      fail();
+      parser.parse(str, errorCollector);
+      fail("Error should have been thrown");
     } catch (CollectedException e) {
-      //Do nothing, error should be collected
+      snapshot.addContent(ErrorPrinter.prettyPrint(errorCollector));
+    } catch (Exception e) {
+      fail("Uncaught error", e);
     }
-
-    snapshot.addContent(ErrorPrinter.prettyPrint(errorCollector));
   }
 }

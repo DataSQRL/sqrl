@@ -6,6 +6,7 @@ package com.datasqrl.graphql.inference;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.graphql.generate.SchemaGeneratorUtil;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.*;
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
@@ -20,6 +21,7 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
@@ -34,6 +36,7 @@ import graphql.language.NamedNode;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
+import graphql.language.SourceLocation;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
@@ -50,6 +53,8 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Preconditions;
@@ -58,6 +63,7 @@ import com.google.common.base.Preconditions;
 @Slf4j
 public class SchemaInference {
 
+  private final String name;
   private final ModuleLoader moduleLoader;
   private final APISource source;
   private final TypeDefinitionRegistry registry;
@@ -70,8 +76,9 @@ public class SchemaInference {
   private Set<FieldDefinition> visited = new HashSet<>();
   private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference(ModuleLoader moduleLoader, APISource apiSchema, SqrlSchema schema,
+  public SchemaInference(String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchema schema,
       RelBuilder relBuilder, Namespace ns, APIConnectorManager apiManager) {
+    this.name = name;
     this.moduleLoader = moduleLoader;
     this.source = apiSchema;
     this.registry = (new SchemaParser()).parse(apiSchema.getSchemaDefinition());
@@ -82,7 +89,6 @@ public class SchemaInference {
     this.ns = ns;
     this.apiManager = apiManager;
   }
-  //Handles walking the schema completely
 
   public InferredSchema accept() {
 
@@ -99,7 +105,7 @@ public class SchemaInference {
     Optional<InferredSubscriptions> subscription = registry.getType("Subscription")
         .map(s -> resolveSubscriptions((ObjectTypeDefinition) s));
 
-    InferredSchema inferredSchema = new InferredSchema(query, mutation, subscription);
+    InferredSchema inferredSchema = new InferredSchema(name, query, mutation, subscription);
     return inferredSchema;
   }
 
@@ -119,11 +125,12 @@ public class SchemaInference {
 
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
-    SQRLTable table = resolveRootSQRLTable(fieldDefinition.getType(), fieldDefinition.getName(), "Query");
+    SQRLTable table = resolveRootSQRLTable(fieldDefinition, fieldDefinition.getType(), fieldDefinition.getName(), "Query");
     return inferObjectField(fieldDefinition, table, fields, parent);
   }
 
-  private SQRLTable resolveRootSQRLTable(Type fieldType, String fieldName, String rootType) {
+  private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
+      Type fieldType, String fieldName, String rootType) {
     Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)
         .flatMap(name -> getTableOfType(fieldType, name));
     Optional<SQRLTable> sqrlTableByCommonInterface = getTypeName(fieldType)
@@ -131,9 +138,14 @@ public class SchemaInference {
 
     Optional<SQRLTable> sqrlTable = sqrlTableByFieldType
         .or(()->sqrlTableByCommonInterface);
-    Preconditions.checkState(sqrlTable.isPresent(),
-        "Could not find associated SQRL type for %s field %s on type %s",
-        rootType, fieldName, fieldType);
+
+    if (sqrlTable.isEmpty()) {
+      throw new SqrlAstException(ErrorLabel.GENERIC,
+          toParserPos(fieldDefinition.getSourceLocation()),
+          "Could not find associated SQRL type for field %s on type %s. Check that the type has all the necessary fields.",
+          fieldDefinition.getName(), fieldDefinition.getType() instanceof TypeName ?
+          ((TypeName) fieldDefinition.getType()).getName() : fieldDefinition.getType().toString());
+    }
     return sqrlTable.get();
   }
 
@@ -194,12 +206,15 @@ public class SchemaInference {
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
       List<InferredField> fields, ObjectTypeDefinition parent) {
+    checkValidArrayNonNullType(fieldDefinition.getType());
     TypeDefinition typeDef = unwrapObjectType(fieldDefinition.getType());
 
     if (typeDef instanceof ObjectTypeDefinition) {
       ObjectTypeDefinition obj = (ObjectTypeDefinition) typeDef;
-      Preconditions.checkState(visitedObj.get(obj) == null || visitedObj.get(obj) == table,
-          "Cannot redefine a type to point to a different SQRL table. Use an interface instead.");
+      checkState(visitedObj.get(obj) == null || visitedObj.get(obj) == table, typeDef.getSourceLocation(),
+          "Cannot redefine a type to point to a different SQRL table. Use an interface instead.\n"
+              + "Table [%s] points to a different SQRL table.",
+          table.getName().getDisplay());
       visitedObj.put(obj, table);
       InferredObjectField inferredObjectField = new InferredObjectField(parent, fieldDefinition,
           (ObjectTypeDefinition) typeDef, table);
@@ -210,10 +225,23 @@ public class SchemaInference {
     }
   }
 
+  private void checkState(boolean b, SourceLocation sourceLocation, String message, String... args) {
+    if (!b) {
+      throw new SqrlAstException(ErrorLabel.GENERIC,
+          toParserPos(sourceLocation),
+          message, args);
+    }
+  }
+
   private List<InferredField> walkChildren(ObjectTypeDefinition typeDef, SQRLTable table,
       List<InferredField> fields) {
-    Preconditions.checkState(structurallyEqual(typeDef, table), "Field(s) not allowed [%s]",
-        getInvalidFields(typeDef, table), typeDef.getName());
+    List<FieldDefinition> invalidFields = getInvalidFields(typeDef, table);
+    //todo clean up, add lazy evaluation
+    checkState(structurallyEqual(typeDef, table),
+        invalidFields.isEmpty() ? typeDef.getSourceLocation() : invalidFields.get(invalidFields.size()-1).getSourceLocation(), "Field(s) not allowed [%s]",
+        String.join(",", invalidFields.stream()
+            .map(e->e.getName())
+            .collect(Collectors.toList())), typeDef.getName());
 
     return typeDef.getFieldDefinitions().stream()
         .filter(f -> !visited.contains(f))
@@ -240,10 +268,71 @@ public class SchemaInference {
 
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,
       ObjectTypeDefinition parent) {
-    /*
-     * Check to see what types are compatible
-     */
+    checkValidArrayNonNullType(fieldDefinition.getType());
+    TypeDefinition type = unwrapObjectType(fieldDefinition.getType());
+    //Todo: expand server to allow type coercion
+    //Todo: enums
+    Preconditions.checkState(type instanceof ScalarTypeDefinition,
+        "Unknown type found");
+    ScalarTypeDefinition scalarTypeDefinition = (ScalarTypeDefinition) type;
+    SqlParserPos pos = toParserPos(fieldDefinition.getType().getSourceLocation());
+
+    switch (scalarTypeDefinition.getName()) {
+      case "Int":
+        if (!SqlTypeName.INT_TYPES.contains(column.getType().getSqlTypeName())) {
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Int type, found: %s",
+              column.getType().getSqlTypeName().getName());
+        }
+        break;
+      case "Float":
+        if (!SqlTypeName.NUMERIC_TYPES.contains(column.getType().getSqlTypeName())) {
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Numeric type, found: %s",
+              column.getType().getSqlTypeName().getName());
+        }
+        break;
+      case "String":
+        if (!SqlTypeName.STRING_TYPES.contains(column.getType().getSqlTypeName()) &&
+            !SqlTypeName.DATETIME_TYPES.contains(column.getType().getSqlTypeName())) {
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL String or Date type, found: %s",
+              column.getType().getSqlTypeName().getName());
+        }
+        break;
+      case "Boolean":
+        if (!SqlTypeName.BOOLEAN_TYPES.contains(column.getType().getSqlTypeName())) {
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL boolean type, found: %s",
+              column.getType().getSqlTypeName().getName());
+        }
+        break;
+      case "ID":
+      default:
+        throw new SqrlAstException(ErrorLabel.GENERIC,
+            toParserPos(type.getSourceLocation()),
+            "Unrecognized type: %s", column.getType().getSqlTypeName().getName());
+    }
+
     return new InferredScalarField(fieldDefinition, column, parent);
+  }
+
+  private SqlParserPos toParserPos(SourceLocation sourceLocation) {
+    return new SqlParserPos(sourceLocation.getLine(), sourceLocation.getColumn() - 1);
+  }
+
+  private void checkValidArrayNonNullType(Type type) {
+    Type root = type;
+    if (type instanceof NonNullType) {
+      type = ((NonNullType) type).getType();
+    }
+    if (type instanceof ListType) {
+      type = ((ListType) type).getType();
+    }
+    if (type instanceof NonNullType) {
+      type = ((NonNullType) type).getType();
+    }
+    if (!(type instanceof TypeName)) {
+      throw new SqrlAstException(ErrorLabel.GENERIC,
+          toParserPos(root.getSourceLocation()),
+          "Type must be a non-null array, array, or non-null");
+    }
   }
 
   private boolean structurallyEqual(ImplementingTypeDefinition typeDef, SQRLTable table) {
@@ -251,10 +340,9 @@ public class SchemaInference {
         .allMatch(f -> table.getField(Name.system(((NamedNode)f).getName())).isPresent());
   }
 
-  private List<String> getInvalidFields(ObjectTypeDefinition typeDef, SQRLTable table) {
+  private List<FieldDefinition> getInvalidFields(ObjectTypeDefinition typeDef, SQRLTable table) {
     return typeDef.getFieldDefinitions().stream()
         .filter(f -> table.getField(Name.system(f.getName())).isEmpty())
-        .map(FieldDefinition::getName)
         .collect(Collectors.toList());
   }
 
@@ -268,7 +356,9 @@ public class SchemaInference {
 
     Optional<TypeDefinition> typeDef = this.registry.getType(type);
 
-    Preconditions.checkState(typeDef.isPresent(), "Could not find Object type");
+    checkState(typeDef.isPresent(), type.getSourceLocation(),
+        "Could not find Object type [%s]", type instanceof TypeName ?
+            ((TypeName) type).getName() : type.toString());
 
     return typeDef.get();
   }
@@ -290,7 +380,10 @@ public class SchemaInference {
       validateStructurallyEqualMutation(def, getValidMutationReturnType(def), getValidMutationInput(def),
           List.of(ReservedName.SOURCE_TIME.getCanonical()));
       TableSink tableSink = apiManager.getMutationSource(source, Name.system(def.getName()));
-      Preconditions.checkArgument(tableSink!=null, "Could not find mutation source: %s.%s", source, def.getName());
+      if (tableSink==null) {
+        throw new SqrlAstException(ErrorLabel.GENERIC, toParserPos(m.getSourceLocation()),
+            "Could not find mutation source: %s.%s", def.getName());
+      }
       //TODO: validate that tableSink schema matches Input type
       SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();
       InferredMutation mutation = new InferredMutation(def.getName(), config);
@@ -428,20 +521,20 @@ public class SchemaInference {
   }
 
   private InputObjectTypeDefinition getValidMutationInput(FieldDefinition def) {
-    Preconditions.checkState(!(def.getInputValueDefinitions().size() == 0), def.getName() + " has too few arguments. Must have one non-null input type argument.");
-    Preconditions.checkState(def.getInputValueDefinitions().size() == 1, def.getName() + " has too many arguments. Must have one non-null input type argument.");
-    Preconditions.checkState(def.getInputValueDefinitions().get(0).getType() instanceof NonNullType,
-        "[" + def.getName() + "] " + def.getInputValueDefinitions().get(0).getName() + "Must be non-null.");
-
+    checkState(!(def.getInputValueDefinitions().size() == 0), def.getSourceLocation(), def.getName() + " has too few arguments. Must have one non-null input type argument.");
+    checkState(def.getInputValueDefinitions().size() == 1, def.getSourceLocation(), def.getName() + " has too many arguments. Must have one non-null input type argument.");
+    checkState(def.getInputValueDefinitions().get(0).getType() instanceof NonNullType, def.getSourceLocation(),
+        "[" + def.getName() + "] " + def.getInputValueDefinitions().get(0).getName()
+              + "Must be non-null.");
     NonNullType nonNullType = (NonNullType)def.getInputValueDefinitions().get(0).getType();
-    Preconditions.checkState(nonNullType.getType() instanceof TypeName, "Must be a singular value");
+    checkState(nonNullType.getType() instanceof TypeName, def.getSourceLocation(), "Must be a singular value");
     TypeName name = (TypeName) nonNullType.getType();
 
-    TypeDefinition typeDef = registry.getType(name)
-        .orElseThrow(()->new RuntimeException("Could not find input type:" + name.getName()));
-    Preconditions.checkState(typeDef instanceof InputObjectTypeDefinition, "Input must be an input object type:" + def.getName());
+    Optional<TypeDefinition> typeDef = registry.getType(name);
+    checkState(typeDef.isPresent(), def.getSourceLocation(), "Could not find input type:" + name.getName());
+    checkState(typeDef.get() instanceof InputObjectTypeDefinition, def.getSourceLocation(), "Input must be an input object type:" + def.getName());
 
-    return (InputObjectTypeDefinition) typeDef;
+    return (InputObjectTypeDefinition) typeDef.get();
   }
 
   private InferredSubscriptions resolveSubscriptions(ObjectTypeDefinition s) {
@@ -450,7 +543,7 @@ public class SchemaInference {
     List<InferredField> fields = new ArrayList<>();
 
     for(FieldDefinition def : s.getFieldDefinitions()) {
-      SQRLTable table = resolveRootSQRLTable(def.getType(), def.getName(), "Subscription");
+      SQRLTable table = resolveRootSQRLTable(def, def.getType(), def.getName(), "Subscription");
       APISubscription subscriptionDef = new APISubscription(Name.system(def.getName()),source);
       TableSource tableSource = apiManager.addSubscription(subscriptionDef, table);
       SerializedSqrlConfig kafkaSource = tableSource.getConfiguration().getConfig().serialize();

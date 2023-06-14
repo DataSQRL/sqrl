@@ -1,4 +1,4 @@
-Assignment path contains a join declaration or a reference to parent.
+Cannot create assignment. Path does not target a writable relation. 
 
 Erroneous code example:
 ```

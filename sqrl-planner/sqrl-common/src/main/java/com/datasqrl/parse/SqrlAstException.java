@@ -16,14 +16,15 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class SqrlAstException extends RuntimeException {
 
   private final ErrorLabel errorLabel;
+  //todo: migrate to sqrl parser pos
   private final SqlParserPos pos;
   private final String message;
 
-  public SqrlAstException(ErrorLabel errorLabel, SqlParserPos pos, String message) {
+  public SqrlAstException(ErrorLabel errorLabel, SqlParserPos pos, String message, String... args) {
     super(message);
     this.errorLabel = errorLabel;
     this.pos = pos;
-    this.message = message;
+    this.message = String.format(message, (Object[]) args);
   }
 
   public ErrorLocation.FileLocation getLocation() {

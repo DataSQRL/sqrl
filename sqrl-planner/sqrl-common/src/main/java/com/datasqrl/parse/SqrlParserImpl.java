@@ -81,8 +81,12 @@ public class SqrlParserImpl implements SqrlParser {
     }
   }
 
-  public SqrlStatement parseStatement(String sql) {
-    return (SqrlStatement) invokeParser("statement", sql, SqlBaseParser::singleStatement);
+  public SqrlStatement parseStatement(String sql, ErrorCollector errors) {
+    try {
+      return (SqrlStatement) invokeParser("statement", sql, SqlBaseParser::singleStatement);
+    } catch (Exception e) {
+      throw errors.handle(e);
+    }
   }
 
   private SqlNode invokeParser(String name, String sql,

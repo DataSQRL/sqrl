@@ -1,0 +1,7 @@
+[FATAL] Type must be a non-null array, array, or non-null
+in script:<schema> [3:12]:
+type Orders {
+  _uuid: String
+  entries: [[Entries]]
+-----------^
+

@@ -1,0 +1,27 @@
+type Orders {
+  customerid: Int!
+  entries(discount: Float, productid: Int, quantity: Int, unit_price: Float): [entries!]
+  id: Int!
+  time: String!
+}
+
+type Product {
+  category: String!
+  description: String!
+  name: String!
+  productid: Int!
+}
+
+type Query {
+  Orders(customerid: Int, id: Int, time: String): [Orders!]
+  Product(category: String, description: String, name: String, productid: Int): [Product!]
+}
+
+type entries {
+  discount: Float
+  parent: Orders!
+  productid: Int!
+  quantity: Int!
+  unit_price: Float!
+}
+

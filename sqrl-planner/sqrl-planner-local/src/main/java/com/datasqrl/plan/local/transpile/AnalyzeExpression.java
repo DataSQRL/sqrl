@@ -14,6 +14,7 @@ import com.datasqrl.schema.Multiplicity;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -69,7 +70,12 @@ public class AnalyzeExpression extends SqlBasicVisitor<ExpressionContext> {
     Optional<ResolvedTableField> field = context.resolveField(id, id.names);
     if (field.isEmpty()) {
       throw new SqrlAstException(ErrorCode.MISSING_FIELD, id.getParserPosition(),
-          "Could not find field: " + id.names);
+          "Could not find field: [%s]\nPossible fields include: %s",
+          id.names.stream()
+            .collect(Collectors.joining(".")),
+          context.fields.stream().filter(f->f.getField().isScalar())
+              .map(f->f.getAlias() + "." + f.getField().getName())
+              .collect(Collectors.joining(", ")));
     }
     Optional<Field> hasToMany = field.get().path.stream()
         .filter(f -> f instanceof Relationship)

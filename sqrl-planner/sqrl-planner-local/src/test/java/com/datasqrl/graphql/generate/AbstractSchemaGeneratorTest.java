@@ -26,7 +26,7 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
 
   protected String generateSchema(String sqrlScript) {
     Namespace ns = plan(sqrlScript);
-    GraphQLSchema schema = new SchemaGenerator().generate(planner.getSchema());
+    GraphQLSchema schema = new SchemaGenerator().generate(ns.getSchema());
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)

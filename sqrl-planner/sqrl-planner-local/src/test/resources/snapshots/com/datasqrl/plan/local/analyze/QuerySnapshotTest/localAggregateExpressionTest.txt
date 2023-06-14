@@ -1,5 +1,6 @@
 >>>errors
-[FATAL] Could not find field: [Product, productid]
+[FATAL] Could not find field: [Product.productid]
+Possible fields include: @._uuid, @._ingest_time, @.productid, @.name, @.description, @.category
 in script:test.sqrl [2:22]:
 IMPORT ecommerce-data.Product;
 Product.total := SUM(Product.productid);

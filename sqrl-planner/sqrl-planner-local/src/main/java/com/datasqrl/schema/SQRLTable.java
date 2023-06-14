@@ -271,17 +271,31 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
         .collect(Collectors.toList());
   }
 
-  public List<Field> walkField(NamePath path) {
-    return walkField(path.stream()
-        .map(Name::getCanonical)
-        .collect(Collectors.toList()));
+  public Optional<Field> getField(NamePath names) {
+    if (names.isEmpty()) {
+      return Optional.empty();
+    }
+    SQRLTable t = this;
+    for (Name n : names.popLast()) {
+      Optional<Field> field = t.getField(n);
+      if (field.isPresent() && field.get() instanceof Relationship) {
+        t = ((Relationship) field.get()).getToTable();
+      } else {
+        return Optional.empty();
+      }
+    }
+    return t.getField(names.getLast());
   }
 
-  public List<Field> walkField(List<String> names) {
+  public List<Field> walkField(NamePath path) {
+    return walkField(List.of(path.getNames()));
+  }
+
+  public List<Field> walkField(List<Name> names) {
     List<Field> fields = new ArrayList<>();
     SQRLTable t = this;
-    for (String n : names) {
-      Field field = t.getField(Name.system(n)).get();
+    for (Name n : names) {
+      Field field = t.getField(n).get();
       fields.add(field);
       if (field instanceof Relationship) {
         t = ((Relationship) field).getToTable();
