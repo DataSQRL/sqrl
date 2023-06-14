@@ -16,8 +16,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 @Value
+@Slf4j
 public class FilePathConfig implements Serializable {
 
   @NonNull
@@ -76,8 +78,8 @@ public class FilePathConfig implements Serializable {
         return null;
       }
     } catch (IOException e) {
-      errors.fatal("%s [%s] could not be accessed: %s", fieldName, uri, e);
-      return null;
+      //If it cannot be accessed at compile time, move on
+      log.info("{} [{}] could not be accessed at compile time: {}", fieldName, uri, e);
     }
     return filepath;
   }
