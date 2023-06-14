@@ -61,7 +61,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     APIConnectorManager apiManager = new MockAPIConnectorManager();
     APISource source = APISource.of(schemaStr);
     //Inference
-    this.errors = errors.withScript("<schema>",schemaStr);
+    this.errors = errors.withSchema("<schema>",schemaStr);
     SchemaInference inference = new SchemaInference("<schema>", null,source,
         planner.getSchema(),
         planner.createRelBuilder(), ns, apiManager);

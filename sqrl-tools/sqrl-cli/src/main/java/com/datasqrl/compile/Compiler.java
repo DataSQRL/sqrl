@@ -49,6 +49,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
@@ -123,31 +124,41 @@ public class Compiler {
 
     Namespace ns = planner.plan(FileUtil.readFile(mainScript), List.of(apiManager.getAsModuleLoader()));
 
+    Name graphqlName = Name.system(scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>")
+        .split("\\.")[0]);
     APISource apiSchema = apiSchemaOpt.orElseGet(() ->
-        new APISource(Name.system("schema"), inferGraphQLSchema(ns.getSchema())));
+        new APISource(graphqlName, inferGraphQLSchema(ns.getSchema())));
 
     SqrlSchema schema = injector.getInstance(SqrlSchema.class);
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 
-    InferredSchema inferredSchema = new SchemaInference(
-        scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>").split("\\.")[0],
-        moduleLoader,
-        apiSchema,
-        schema,
-        queryPlanner.createRelBuilder(),
-        ns,
-        apiManager)
-        .accept();
+    ErrorCollector collector = injector.getInstance(ErrorCollector.class);
+    collector = collector.withSchema(apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
 
-    PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(apiSchema,
-        ns.getSchema(),
-        queryPlanner.createRelBuilder(),
-        queryPlanner,
-        ns.getOperatorTable(),
-        apiManager);
+    RootGraphqlModel root;
+    //todo: move
+    try {
+      InferredSchema inferredSchema = new SchemaInference(
+          apiSchema.getName().getDisplay(),
+          moduleLoader,
+          apiSchema,
+          schema,
+          queryPlanner.createRelBuilder(),
+          ns,
+          apiManager)
+          .accept();
 
-    RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
+      PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(apiSchema,
+          ns.getSchema(),
+          queryPlanner.createRelBuilder(),
+          queryPlanner,
+          ns.getOperatorTable(),
+          apiManager);
 
+      root = inferredSchema.accept(pgSchemaBuilder, null);
+    } catch (Exception e) {
+      throw collector.handle(e);
+    }
     PhysicalDAGPlan dag = planner.planDag(ns, apiManager, root,
        false);
     PhysicalPlan plan = createPhysicalPlan(dag, queryPlanner, errorSink);
