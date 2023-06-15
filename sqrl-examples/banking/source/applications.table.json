@@ -1,0 +1,13 @@
+{
+  "format" : {
+    "name" : "json"
+  },
+  "schema" : "flexible",
+  "identifier" : "applications",
+  "type" : "source",
+  "connector" : {
+    "name" : "file",
+    "directoryURI" : "/Users/matthias/git/sqml/sqrl-examples/banking/data"
+  },
+  "canonicalizer" : "system"
+}

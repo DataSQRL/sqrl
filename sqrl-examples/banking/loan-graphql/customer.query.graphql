@@ -1,0 +1,4 @@
+{
+Customers(id: 2) {
+    first_name
+}}
