@@ -3,6 +3,8 @@ IMPORT source.Applications;
 IMPORT source.Application_updates AS ApplicationUpdates;
 IMPORT source.Loan_types AS LoanTypes;
 
+EXPORT LoanTypes TO print.loantypes;
+
 Customers := DISTINCT Customers ON id ORDER BY updated_on DESC;
 Applications := DISTINCT Applications ON id ORDER BY updated_at DESC;
 LoanTypes := DISTINCT LoanTypes ON id ORDER BY updated_at DESC;

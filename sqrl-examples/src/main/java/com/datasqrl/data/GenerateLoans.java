@@ -37,12 +37,12 @@ public class GenerateLoans extends AbstractGenerateCommand {
     List<LoanApplicationUpdate> updates = new ArrayList<>();
     for (int i = 1; i < numLoans; i++) {
       LoanType loanType = loanTypes[sampler.nextInt(0, loanTypes.length)];
-      int customerid = sampler.nextInt(0,config.numCustomers);
+      int customerid = sampler.nextInt(0,config.numCustomers)+1;
       Instant appTime = sampler.nextTimestamp(startTime, endTime);
       LoanApplication app = new LoanApplication(i,customerid, loanType.id, loanType.generateAmount(sampler),
           loanType.generateDuration(sampler), appTime.toString(), appTime.toString());
       applications.add(app);
-      int numUpdates = sampler.nextInt(0,config.review_steps.length);
+      int numUpdates = sampler.nextInt(1,config.review_steps.length);
       Instant nextTime = appTime;
       for (int j = 0; j < numUpdates; j++) {
         String step = config.review_steps[j];
@@ -158,7 +158,6 @@ public class GenerateLoans extends AbstractGenerateCommand {
 
     @Override
     public void scale(long scaleFactor, long number) {
-      numCustomers = numCustomers * (int)Math.max(scaleFactor,1000000);
     }
   }
 

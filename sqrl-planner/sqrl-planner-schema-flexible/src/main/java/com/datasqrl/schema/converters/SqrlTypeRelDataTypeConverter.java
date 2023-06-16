@@ -54,6 +54,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
   @Override
   public RelDataType visitFloatType(FloatType type, Void context) {
     return typeFactory.createSqlType(SqlTypeName.DOUBLE);
+//    return typeFactory.createSqlType(SqlTypeName.DECIMAL, 30, 9);
   }
 
   @Override

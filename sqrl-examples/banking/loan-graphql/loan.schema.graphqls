@@ -11,6 +11,14 @@ type Applications {
   loanType: LoanTypes!
 }
 
+type ApplicationUpdates {
+  loan_application_id: Int!
+  status: String!
+  message: String!
+  timestamp: String!
+  application: Applications!
+}
+
 type Customers {
   id: Int!
   first_name: String!
