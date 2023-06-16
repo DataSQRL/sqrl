@@ -223,12 +223,12 @@ LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 10008231, 1000121
 10008434, 1000107
 >>>entries-data
-0, 1332, 8, 8.49, null, 0, 67.92
-0, 3571, 1, 41.95, 0, 0, 41.95
-0, 7235, 1, 17.35, 0, 0, 17.35
-0, 7552, 3, 25.5, 15, 15, 61.5
-1, 3225, 1, 105, 0, 0, 105
-1, 3571, 1, 41.95, 5, 5, 36.95
+0, 1332, 8, 8.49, null, 0.0, 67.92
+0, 3571, 1, 41.95, 0.0, 0.0, 41.95
+0, 7235, 1, 17.35, 0.0, 0.0, 17.35
+0, 7552, 3, 25.5, 15.0, 15.0, 61.5
+1, 3225, 1, 105.0, 0.0, 0.0, 105.0
+1, 3571, 1, 41.95, 5.0, 5.0, 36.95
 1, 8757, 2, 57.5, 11.5, 11.5, 103.5
 >>>customer-data
 1000101, john.mekker@gmail.com, John Mekker, 1645396849
@@ -247,10 +247,10 @@ Personal Care
 7552, Simer Garden Hose 50ft, Long garden hose that rolls up, House & Garden
 8757, Original German Nutcracker 3ft, Hand-made nutcracker is the perfect Christmas decoration, Decoration
 >>>total-data
-104.87, 5, 2
+104.87, 5.0, 2
 120.85, 11.5, 2
-166.5, 15, 2
-41.95, 0, 1
+166.5, 15.0, 2
+41.95, 0.0, 1
 >>>order_again-data
 1332, 8, 1
 3225, 1, 1
@@ -260,8 +260,8 @@ Personal Care
 8757, 2, 1
 >>>_spending_by_month_category-data
 Decoration, 120.85, 11.5
-House & Garden, 166.5, 15
-Personal Care, 146.82, 5
+House & Garden, 166.5, 15.0
+Personal Care, 146.82, 5.0
 >>>favorite_categories-data
 Decoration, 120.85
 House & Garden, 166.5

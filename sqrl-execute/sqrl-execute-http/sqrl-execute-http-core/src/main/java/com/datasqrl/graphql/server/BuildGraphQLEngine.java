@@ -25,6 +25,7 @@ import com.datasqrl.graphql.server.Model.SchemaVisitor;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import graphql.GraphQL;
+import graphql.language.ScalarTypeDefinition;
 import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLCodeRegistry;
@@ -90,6 +91,7 @@ public class BuildGraphQLEngine implements
     GraphQLSchema graphQLSchema = new SchemaGenerator()
         .makeExecutableSchema(registry,
             RuntimeWiring.newRuntimeWiring()
+                .scalar(CustomScalars.Double)
                 .codeRegistry(codeRegistry).build());
 
     return GraphQL.newGraphQL(graphQLSchema).build();
