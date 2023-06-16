@@ -4,6 +4,7 @@
 package com.datasqrl.util;
 
 import com.google.common.base.Predicates;
+import java.math.BigDecimal;
 import lombok.SneakyThrows;
 
 import java.io.ByteArrayOutputStream;
@@ -43,8 +44,10 @@ public class ResultSetPrinter {
           out.print(", ");
         }
         Object o = resultSet.getObject(i);
-        if (o instanceof Float || o instanceof Double) {
-          o = String.format("%.3f", o);
+        if (o instanceof Double) {
+          //We convert to string to strip some irrelevant double digits during the conversion
+          BigDecimal bigDecimal = new BigDecimal(Double.toString((double)o));
+          o = bigDecimal.stripTrailingZeros().toPlainString();
         }
         out.print(o);
       }

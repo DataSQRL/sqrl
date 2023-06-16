@@ -7,7 +7,7 @@ LogicalProject(__pk_0=[$0], total=[$1], num=[$2], hour=[$3])
           LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
             LogicalProject(__pk_0=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
               LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-                LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DECIMAL(10, 5))], total=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
+                LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DOUBLE)], total=[-(*($8, $9), coalesce($10, 0.0:DOUBLE))])
                   LogicalCorrelate(correlation=[$cor9], joinType=[inner], requiredColumns=[{5}])
                     LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                     Uncollect
@@ -33,7 +33,7 @@ LogicalProject(__pk_0=[$0], total=[$1], num=[$2], hour=[$3])
           LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
             LogicalProject(__pk_0=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
               LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-                LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DECIMAL(10, 5))], total=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
+                LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DOUBLE)], total=[-(*($8, $9), coalesce($10, 0.0:DOUBLE))])
                   LogicalCorrelate(correlation=[$cor9], joinType=[inner], requiredColumns=[{5}])
                     LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                     Uncollect
@@ -56,7 +56,7 @@ LogicalProject(__pk_0=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
     LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000]]
       LogicalProject(__pk_0=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
         LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DECIMAL(10, 5))], total=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DOUBLE)], total=[-(*($8, $9), coalesce($10, 0.0:DOUBLE))])
             LogicalCorrelate(correlation=[$cor9], joinType=[inner], requiredColumns=[{5}])
               LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
               Uncollect
@@ -81,7 +81,7 @@ LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=
       LogicalTableScan(table=[[customer$i$1]])
 
 >>>entries$10-lp-stream
-LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DECIMAL(10, 5))], total=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))], time=[$4])
+LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DOUBLE)], total=[-(*($8, $9), coalesce($10, 0.0:DOUBLE))], time=[$4])
   LogicalCorrelate(correlation=[$cor12], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     Uncollect
@@ -102,7 +102,7 @@ LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], descrip
 LogicalProject(__pk_0=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
   LogicalProject(__pk_0=[$0], price=[$2], discount=[$3], num=[$4], time=[$1])
     LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
-      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DECIMAL(10, 5))], total=[-(*($8, $9), coalesce($10, 0.0:DECIMAL(10, 5)))])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount$0=[coalesce($10, 0.0:DOUBLE)], total=[-(*($8, $9), coalesce($10, 0.0:DOUBLE))])
         LogicalCorrelate(correlation=[$cor11], joinType=[inner], requiredColumns=[{5}])
           LogicalTableScan(table=[[orders$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
           Uncollect

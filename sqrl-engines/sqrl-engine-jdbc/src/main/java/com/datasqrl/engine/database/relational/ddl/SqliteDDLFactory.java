@@ -70,9 +70,10 @@ public class SqliteDDLFactory implements JdbcDDLFactory {
       case VARCHAR:
         return "VARCHAR";
       case DECIMAL:
+        return "NUMERIC";
       case FLOAT:
       case DOUBLE:
-        return "NUMERIC";
+        return "DOUBLE";
       case DATE:
         return "DATE";
       case TIME:

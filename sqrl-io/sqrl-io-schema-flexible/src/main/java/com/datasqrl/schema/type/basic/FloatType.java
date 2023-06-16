@@ -6,12 +6,11 @@ package com.datasqrl.schema.type.basic;
 import com.datasqrl.schema.type.SqrlTypeVisitor;
 import com.google.common.collect.ImmutableSet;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
-public class FloatType extends AbstractBasicType<BigDecimal> {
+public class FloatType extends AbstractBasicType<Double> {
 
   public static final FloatType INSTANCE = new FloatType();
 
@@ -21,16 +20,16 @@ public class FloatType extends AbstractBasicType<BigDecimal> {
   }
 
   @Override
-  public TypeConversion<BigDecimal> conversion() {
+  public TypeConversion<Double> conversion() {
     return new Conversion();
   }
 
-  public static class Conversion extends SimpleBasicType.Conversion<BigDecimal> {
+  public static class Conversion extends SimpleBasicType.Conversion<Double> {
 
     private static final Set<Class> FLOAT_CLASSES = ImmutableSet.of(Float.class, Double.class);
 
     public Conversion() {
-      super(BigDecimal.class, s -> new BigDecimal(s));
+      super(Double.class, s -> new Double(s));
     }
 
     @Override
@@ -38,19 +37,18 @@ public class FloatType extends AbstractBasicType<BigDecimal> {
       return FLOAT_CLASSES;
     }
 
-    public BigDecimal convert(Object o) {
+    public Double convert(Object o) {
       if (o instanceof Double) {
-        return BigDecimal.valueOf((Double)o);
+        return Double.valueOf((Double)o);
       }
       if (o instanceof Number) {
-        return BigDecimal.valueOf(((Number) o).doubleValue());
+        return Double.valueOf(((Number) o).doubleValue());
       }
       if (o instanceof Boolean) {
-        return ((Boolean) o).booleanValue() ? BigDecimal.ONE : BigDecimal.ZERO;
+        return ((Boolean) o).booleanValue() ? 1d : 0d;
       }
       if (o instanceof Duration) {
-        return BigDecimal.valueOf(((Duration) o).toMillis())
-            .divide(BigDecimal.valueOf(1000.0));
+        return ((Duration) o).toMillis() / 1000.0d;
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }

@@ -39,9 +39,10 @@ public class FlinkTypeInfoSchemaGenerator implements
       case BOOLEAN:
         return BasicTypeInfo.BOOLEAN_TYPE_INFO;
       case DECIMAL:
+        return BasicTypeInfo.BIG_DEC_TYPE_INFO;
       case REAL:
       case DOUBLE:
-        return BasicTypeInfo.BIG_DEC_TYPE_INFO;
+        return BasicTypeInfo.DOUBLE_TYPE_INFO;
       case FLOAT:
         return BasicTypeInfo.FLOAT_TYPE_INFO;
       case DATE:

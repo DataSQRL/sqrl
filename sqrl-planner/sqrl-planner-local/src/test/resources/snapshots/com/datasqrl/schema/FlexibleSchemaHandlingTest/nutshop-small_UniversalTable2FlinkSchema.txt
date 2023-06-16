@@ -6,7 +6,7 @@
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` BIGINT NOT NULL,
-  `items` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DECIMAL(10, 5) NOT NULL, `discount` DECIMAL(10, 5)> NOT NULL> NOT NULL
+  `items` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
 )
 >>>orders
 (
@@ -15,7 +15,7 @@
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` BIGINT NOT NULL,
-  `items` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DECIMAL(10, 5) NOT NULL, `discount` DECIMAL(10, 5)> NOT NULL> NOT NULL
+  `items` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
 )
 >>>products-hasTimestamp
 (

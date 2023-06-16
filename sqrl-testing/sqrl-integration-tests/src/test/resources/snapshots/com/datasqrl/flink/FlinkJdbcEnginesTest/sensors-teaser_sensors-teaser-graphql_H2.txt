@@ -3,15 +3,15 @@ CREATE INDEX IF NOT EXISTS "machine$16_btree_c1c2" ON "machine$16" USING btree (
 CREATE INDEX IF NOT EXISTS "machine$16_hash_c2" ON "machine$16" USING hash ("avgtemp");
 CREATE INDEX IF NOT EXISTS "sensors$14_btree_c3c4" ON "sensors$14" USING btree ("machineid","placed");
 CREATE INDEX IF NOT EXISTS "sensors$14_hash_c4" ON "sensors$14" USING hash ("placed");
-CREATE TABLE IF NOT EXISTS "machine$16" ("machineid" BIGINT NOT NULL,"maxtemp" DECFLOAT(8) NOT NULL,"avgtemp" DECFLOAT(8) NOT NULL,"timemin" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("machineid"));
-CREATE TABLE IF NOT EXISTS "minreadings$12" ("sensorid" BIGINT NOT NULL,"timemin" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"temp" DECFLOAT(8) NOT NULL , PRIMARY KEY ("sensorid","timemin"));
+CREATE TABLE IF NOT EXISTS "machine$16" ("machineid" BIGINT NOT NULL,"maxtemp" DOUBLE PRECISION NOT NULL,"avgtemp" DOUBLE PRECISION NOT NULL,"timemin" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("machineid"));
+CREATE TABLE IF NOT EXISTS "minreadings$12" ("sensorid" BIGINT NOT NULL,"timemin" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timemin"));
 CREATE TABLE IF NOT EXISTS "sensors$14" ("id" BIGINT NOT NULL,"_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"machineid" BIGINT NOT NULL,"placed" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 >>>query-machine
 {
   "data" : {
     "Machine" : [ {
-      "maxTemp" : 19.507746,
-      "avgTemp" : 17.981122
+      "maxTemp" : 19.50774586678461,
+      "avgTemp" : 17.981121232472532
     } ]
   }
 }
@@ -23,31 +23,31 @@ CREATE TABLE IF NOT EXISTS "sensors$14" ("id" BIGINT NOT NULL,"_uuid" CHARACTER 
       "machineid" : 0,
       "readings" : [ {
         "timeMin" : "2023-04-04T00:00:59.999-07:00",
-        "temp" : 19.987373
+        "temp" : 19.987373656963634
       }, {
         "timeMin" : "2023-04-04T00:01:59.999-07:00",
-        "temp" : 16.415954
+        "temp" : 16.41595296641952
       }, {
         "timeMin" : "2023-04-04T00:02:59.999-07:00",
-        "temp" : 19.949893
+        "temp" : 19.94989258642152
       }, {
         "timeMin" : "2023-04-04T00:03:59.999-07:00",
-        "temp" : 18.036033
+        "temp" : 18.03603315576582
       }, {
         "timeMin" : "2023-04-04T00:04:59.999-07:00",
-        "temp" : 17.132023
+        "temp" : 17.13202311592691
       }, {
         "timeMin" : "2023-04-04T00:05:59.999-07:00",
-        "temp" : 20.240243
+        "temp" : 20.240243869080178
       }, {
         "timeMin" : "2023-04-04T00:06:59.999-07:00",
-        "temp" : 19.383995
+        "temp" : 19.383994628941434
       }, {
         "timeMin" : "2023-04-04T00:07:59.999-07:00",
-        "temp" : 18.855442
+        "temp" : 18.855441967092148
       }, {
         "timeMin" : "2023-04-04T00:08:59.999-07:00",
-        "temp" : 18.237065
+        "temp" : 18.237065359270602
       } ]
     } ]
   }
