@@ -22,8 +22,7 @@ public class CustomScalars {
                 .stripTrailingZeros();
             return bd;
           } else {
-            throw new CoercingSerializeException(
-                "Unable to serialize " + dataFetcherResult + " as a double");
+            return Scalars.GraphQLFloat.getCoercing().serialize(dataFetcherResult);
           }
         }
 
