@@ -34,7 +34,6 @@ public class CustomScalars {
 
         @Override
         public Object parseLiteral(Object input) {
-          // Implement this if you need to handle input from inline arguments
           return Scalars.GraphQLFloat.getCoercing().parseLiteral(input);
         }
       })
