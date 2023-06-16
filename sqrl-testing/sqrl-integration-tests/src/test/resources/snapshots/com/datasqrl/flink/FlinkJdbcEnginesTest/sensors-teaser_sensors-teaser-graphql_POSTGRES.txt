@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS sensors$14 (id BIGINT NOT NULL,_uuid VARCHAR NOT NULL
 {
   "data" : {
     "Machine" : [ {
-      "maxTemp" : 19.50774586678461,
-      "avgTemp" : 17.981121232472532
+      "maxTemp" : 19.50774587,
+      "avgTemp" : 17.98112123
     } ]
   }
 }
@@ -23,31 +23,31 @@ CREATE TABLE IF NOT EXISTS sensors$14 (id BIGINT NOT NULL,_uuid VARCHAR NOT NULL
       "machineid" : 0,
       "readings" : [ {
         "timeMin" : "2023-04-04T07:00:59.999Z",
-        "temp" : 19.987373656963634
+        "temp" : 19.98737366
       }, {
         "timeMin" : "2023-04-04T07:01:59.999Z",
-        "temp" : 16.41595296641952
+        "temp" : 16.41595297
       }, {
         "timeMin" : "2023-04-04T07:02:59.999Z",
-        "temp" : 19.94989258642152
+        "temp" : 19.94989259
       }, {
         "timeMin" : "2023-04-04T07:03:59.999Z",
-        "temp" : 18.03603315576582
+        "temp" : 18.03603316
       }, {
         "timeMin" : "2023-04-04T07:04:59.999Z",
-        "temp" : 17.13202311592691
+        "temp" : 17.13202312
       }, {
         "timeMin" : "2023-04-04T07:05:59.999Z",
-        "temp" : 20.240243869080178
+        "temp" : 20.24024387
       }, {
         "timeMin" : "2023-04-04T07:06:59.999Z",
-        "temp" : 19.383994628941434
+        "temp" : 19.38399463
       }, {
         "timeMin" : "2023-04-04T07:07:59.999Z",
-        "temp" : 18.855441967092148
+        "temp" : 18.85544197
       }, {
         "timeMin" : "2023-04-04T07:08:59.999Z",
-        "temp" : 18.237065359270602
+        "temp" : 18.23706536
       } ]
     } ]
   }

@@ -10,16 +10,17 @@ import java.math.RoundingMode;
 public class CustomScalars {
 
   public static final GraphQLScalarType Double = GraphQLScalarType.newScalar()
-      .name("Double")
-      .description("A Double with rounding applied")
+      .name("Float")
+      .description("A Float with rounding applied")
       .coercing(new Coercing() {
         @Override
         public Object serialize(Object dataFetcherResult) {
           if (dataFetcherResult instanceof Double) {
             Double doubleValue = (Double) dataFetcherResult;
             BigDecimal bd = new BigDecimal(doubleValue)
-                .setScale(8, RoundingMode.HALF_UP);
-            return bd.doubleValue();
+                .setScale(8, RoundingMode.HALF_UP)
+                .stripTrailingZeros();
+            return bd;
           } else {
             throw new CoercingSerializeException(
                 "Unable to serialize " + dataFetcherResult + " as a double");

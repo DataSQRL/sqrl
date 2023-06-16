@@ -15,10 +15,10 @@ CREATE TABLE IF NOT EXISTS volume_by_day$19 (__pk_0 BIGINT NOT NULL,day TIMESTAM
     "Customers" : [ {
       "id" : 1,
       "spending_by_month" : [ {
-        "total_spend" : 225.76999999999998,
+        "total_spend" : 225.77,
         "total_savings" : 14.73
       }, {
-        "total_spend" : 95.52999999999999,
+        "total_spend" : 95.53,
         "total_savings" : 1.24
       } ]
     }, {
@@ -27,23 +27,23 @@ CREATE TABLE IF NOT EXISTS volume_by_day$19 (__pk_0 BIGINT NOT NULL,day TIMESTAM
         "total_spend" : 336.64,
         "total_savings" : 50.49
       }, {
-        "total_spend" : 139.85999999999999,
+        "total_spend" : 139.86,
         "total_savings" : 29.08
       } ]
     }, {
       "id" : 3,
       "spending_by_month" : [ {
         "total_spend" : 20.64,
-        "total_savings" : 0.0
+        "total_savings" : 0
       }, {
         "total_spend" : 53.94,
-        "total_savings" : 0.0
+        "total_savings" : 0
       } ]
     }, {
       "id" : 4,
       "spending_by_month" : [ {
         "total_spend" : 98.75,
-        "total_savings" : 7.0
+        "total_savings" : 7
       }, {
         "total_spend" : 118.5,
         "total_savings" : 18.28
@@ -51,10 +51,10 @@ CREATE TABLE IF NOT EXISTS volume_by_day$19 (__pk_0 BIGINT NOT NULL,day TIMESTAM
     }, {
       "id" : 5,
       "spending_by_month" : [ {
-        "total_spend" : 149.07999999999998,
+        "total_spend" : 149.08,
         "total_savings" : 4.43
       }, {
-        "total_spend" : 105.55000000000001,
+        "total_spend" : 105.55,
         "total_savings" : 65.73
       } ]
     }, {
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS volume_by_day$19 (__pk_0 BIGINT NOT NULL,day TIMESTAM
         "total_savings" : 7.94
       }, {
         "total_spend" : 23.83,
-        "total_savings" : 0.0
+        "total_savings" : 0
       } ]
     }, {
       "id" : 8,
@@ -91,13 +91,13 @@ CREATE TABLE IF NOT EXISTS volume_by_day$19 (__pk_0 BIGINT NOT NULL,day TIMESTAM
         "total_savings" : 5.95
       }, {
         "total_spend" : 94.36,
-        "total_savings" : 21.880000000000003
+        "total_savings" : 21.88
       } ]
     }, {
       "id" : 10,
       "spending_by_month" : [ {
-        "total_spend" : 104.33000000000001,
-        "total_savings" : 35.410000000000004
+        "total_spend" : 104.33,
+        "total_savings" : 35.41
       }, {
         "total_spend" : 84.18,
         "total_savings" : 4.24
@@ -111,8 +111,8 @@ CREATE TABLE IF NOT EXISTS volume_by_day$19 (__pk_0 BIGINT NOT NULL,day TIMESTAM
     "Customers" : [ {
       "id" : 10,
       "spending_by_month" : [ {
-        "total_spend" : 104.33000000000001,
-        "total_savings" : 35.410000000000004
+        "total_spend" : 104.33,
+        "total_savings" : 35.41
       }, {
         "total_spend" : 84.18,
         "total_savings" : 4.24
