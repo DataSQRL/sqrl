@@ -7,7 +7,7 @@
   "type" : "source",
   "connector" : {
     "name" : "file",
-    "directoryURI" : "/Users/matthias/git/sqml/sqrl-examples/banking/data"
+    "directoryURI" : "../../sqrl-examples/banking/data"
   },
   "canonicalizer" : "system"
 }
