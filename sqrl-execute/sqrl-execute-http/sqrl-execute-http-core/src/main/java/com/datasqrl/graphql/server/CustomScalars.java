@@ -17,9 +17,8 @@ public class CustomScalars {
         public Object serialize(Object dataFetcherResult) {
           if (dataFetcherResult instanceof Double) {
             Double doubleValue = (Double) dataFetcherResult;
-            BigDecimal bd = new BigDecimal(doubleValue);
-            bd = bd.setScale(8, RoundingMode.HALF_UP)
-                .stripTrailingZeros();
+            BigDecimal bd = new BigDecimal(doubleValue)
+                .setScale(8, RoundingMode.HALF_UP);
             return bd.doubleValue();
           } else {
             throw new CoercingSerializeException(
