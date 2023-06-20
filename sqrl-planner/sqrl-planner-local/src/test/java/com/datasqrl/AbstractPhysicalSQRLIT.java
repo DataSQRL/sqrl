@@ -22,6 +22,7 @@ import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.plan.local.analyze.FuzzingRetailSqrlModule;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
@@ -81,7 +82,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
     Map<NamePath, SqrlModule> addlModules = Map.of();
     if (rootDir == null) {
-      addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule());
+      addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule(),
+          NamePath.of("ecommerce-data-large"), new FuzzingRetailSqrlModule());
     }
     Pair<DatabaseHandle, PipelineFactory> engines = settings.getSqrlSettings();
     this.database = engines.getLeft();

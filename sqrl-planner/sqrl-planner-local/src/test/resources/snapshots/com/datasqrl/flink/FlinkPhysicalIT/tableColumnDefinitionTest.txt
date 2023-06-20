@@ -5,7 +5,7 @@ LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=
       LogicalTableScan(table=[[customer$i$1]])
 
 >>>entries$7-lp-stream
-LogicalProject(_uuid=[$0], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount2=[COALESCE($11, 0.0:DECIMAL(10, 5))], time=[$4])
+LogicalProject(_uuid=[$0], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount2=[COALESCE($11, 0.0:DOUBLE)], time=[$4])
   LogicalCorrelate(correlation=[$cor12], joinType=[inner], requiredColumns=[{5}])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
       LogicalTableScan(table=[[orders$i$4]])
@@ -27,7 +27,7 @@ LogicalProject(_uuid=[$0], _idx=[$1], price=[$2], time=[$3])
 LogicalProject(_uuid=[$0], _idx=[$1], id=[$2], name=[$3], customerid=[$4], col1=[$5], discount2=[$6], time=[$7])
   LogicalProject(_uuid=[$0], _idx=[$7], id=[$2], name=[$17], customerid=[$3], col1=[$6], discount2=[$12], time=[$4])
     LogicalJoin(condition=[=($3, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount2=[COALESCE($11, 0.0:DECIMAL(10, 5))])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount2=[COALESCE($11, 0.0:DOUBLE)])
         LogicalCorrelate(correlation=[$cor11], joinType=[inner], requiredColumns=[{5}])
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
             LogicalTableScan(table=[[orders$i$4]])

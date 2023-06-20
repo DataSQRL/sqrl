@@ -75,11 +75,10 @@ public class H2DDLFactory implements JdbcDDLFactory {
         return H2Type.VARCHAR.getName();
       case VARCHAR:
         return H2Type.VARCHAR.getName();
-      case DECIMAL:
-//        return H2Type.DOUBLE_PRECISION.getName();
       case FLOAT:
-//        return H2Type.DOUBLE_PRECISION.getName();
       case DOUBLE:
+        return H2Type.DOUBLE_PRECISION.getName();
+      case DECIMAL:
         return "DECFLOAT(8)";
       case DATE:
         return H2Type.DATE.getName();

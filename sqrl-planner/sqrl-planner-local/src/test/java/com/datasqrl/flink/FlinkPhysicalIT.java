@@ -157,7 +157,10 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @Test
   public void topNTest() {
     ScriptBuilder builder = example.getImports();
+    topNTest(builder);
+  }
 
+  public void topNTest(ScriptBuilder builder) {
     builder.add("Customer.updateTime := epochToTimestamp(lastUpdated)");
     builder.add("CustomerDistinct := DISTINCT Customer ON customerid ORDER BY updateTime DESC;");
     builder.add(
@@ -176,6 +179,17 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
     validateTables(builder.getScript(), "customerdistinct", "customerid", "customerorders",
         "distinctorders", "distinctorderstime", "orders", "entries");
+  }
+
+  @Test
+  public void fuzzedValuesTest() {
+    ScriptBuilder builder = new ScriptBuilder();
+    builder.append("IMPORT ecommerce-data-large.Customer");
+    builder.append("IMPORT ecommerce-data-large.Orders");
+    builder.append("IMPORT ecommerce-data-large.Product");
+    builder.append("IMPORT time.*");
+
+    topNTest(builder);
   }
 
   @Test

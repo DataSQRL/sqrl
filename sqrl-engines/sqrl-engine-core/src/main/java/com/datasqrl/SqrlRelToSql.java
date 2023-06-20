@@ -60,9 +60,10 @@ public class SqrlRelToSql {
       case VARCHAR:
         return "VARCHAR";
       case DECIMAL:
+        return "DECIMAL";
       case FLOAT:
       case DOUBLE:
-        return "DECIMAL";
+        return "DOUBLE PRECISION";
       case DATE:
         return "DATE";
       case TIME:
