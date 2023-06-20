@@ -151,17 +151,6 @@ public interface TestScript {
     }
   }
 
-  public class ExampleScriptsProvider implements ArgumentsProvider {
-
-    @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
-        throws Exception {
-
-      return Examples.scriptList.stream()
-          .map(script->Arguments.of(script));
-    }
-  }
-
   List<DatabaseEngine> jdbcEngines = List.of(DatabaseEngine.H2,
       DatabaseEngine.POSTGRES, DatabaseEngine.SQLITE);
 
