@@ -20,7 +20,8 @@ public class CustomScalars {
             BigDecimal bd = new BigDecimal(doubleValue)
                 .setScale(8, RoundingMode.HALF_UP)
                 .stripTrailingZeros();
-            return bd;
+            //Convert back to normal readable number
+            return new BigDecimal(bd.toPlainString());
           } else {
             return Scalars.GraphQLFloat.getCoercing().serialize(dataFetcherResult);
           }
