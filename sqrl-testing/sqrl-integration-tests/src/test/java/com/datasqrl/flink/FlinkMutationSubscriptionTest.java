@@ -9,6 +9,7 @@ import com.datasqrl.FlinkExecutablePlan;
 import com.datasqrl.FlinkExecutablePlan.FlinkBase;
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.ExecutionResult;
@@ -41,6 +42,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
+import org.apache.calcite.config.CalciteSystemProperty;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.Test;
@@ -92,7 +94,7 @@ public class FlinkMutationSubscriptionTest {
     Path deployDir = rootDir.resolve("build").resolve("deploy");
 
     //This is a bit manual, needs abstracting
-    //
+    PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
 
     SqrlConfig eng = config.getSubConfig("engines");
     List<SqlDDLStatement> schema = Arrays.stream(Files.readString(deployDir.resolve("database-schema.sql")).split("\n"))
