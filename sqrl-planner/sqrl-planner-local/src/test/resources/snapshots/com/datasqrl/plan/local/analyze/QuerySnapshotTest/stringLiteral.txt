@@ -1,4 +1,4 @@
 >>>product$q$2
-LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], url=[_UTF-16LE'test'])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], url=['test'])
   LogicalTableScan(table=[[product$i$1]])
 

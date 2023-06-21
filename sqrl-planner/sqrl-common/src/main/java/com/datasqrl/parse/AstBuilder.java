@@ -881,7 +881,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitUnicodeStringLiteral(UnicodeStringLiteralContext context) {
-    return SqlLiteral.createBinaryString(decodeUnicodeLiteral(context), getLocation(context));
+    return SqlLiteral.createCharString(decodeUnicodeLiteral(context), getLocation(context));
   }
 
   @Override
