@@ -1,12 +1,12 @@
 >>>package$7-lp-stream
 LogicalProject(name=[$0], submissiontime=[$1])
   LogicalProject(name=[$2], submissiontime=[$17])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], files=[$18], keywords=[$19], variant$0=[COALESCE($4, _UTF-16LE'default')], repourl=[CONCAT(_UTF-16LE'https://repository.datasqrl.com/', $14)]) hints[WatermarkHint options:[17]]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], files=[$18], keywords=[$19], variant$0=[COALESCE($4, 'default')], repourl=[CONCAT('https://repository.datasqrl.com/', $14)]) hints[WatermarkHint options:[17]]
       LogicalTableScan(table=[[submission$i$1]])
 
 >>>submission$3-lp-stream
 LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], variant$0=[$20], repourl=[$21])
-  LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], files=[$18], keywords=[$19], variant$0=[COALESCE($4, _UTF-16LE'default')], repourl=[CONCAT(_UTF-16LE'https://repository.datasqrl.com/', $14)]) hints[WatermarkHint options:[17]]
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueid=[$13], file=[$14], hash=[$15], authorid=[$16], submissiontime=[$17], files=[$18], keywords=[$19], variant$0=[COALESCE($4, 'default')], repourl=[CONCAT('https://repository.datasqrl.com/', $14)]) hints[WatermarkHint options:[17]]
     LogicalTableScan(table=[[submission$i$1]])
 
 >>>package-lp-database
