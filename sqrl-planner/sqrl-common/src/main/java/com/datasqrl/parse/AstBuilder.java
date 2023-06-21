@@ -876,12 +876,12 @@ class AstBuilder
 
   @Override
   public SqlNode visitBasicStringLiteral(BasicStringLiteralContext context) {
-    return SqlLiteral.createCharString(unquote(context.STRING().getText()), "ISO-8859-1", getLocation(context));
+    return SqlLiteral.createCharString(unquote(context.STRING().getText()), getLocation(context));
   }
 
   @Override
   public SqlNode visitUnicodeStringLiteral(UnicodeStringLiteralContext context) {
-    return SqlLiteral.createCharString(decodeUnicodeLiteral(context), "ISO-8859-1", getLocation(context));
+    return SqlLiteral.createCharString(decodeUnicodeLiteral(context), getLocation(context));
   }
 
   @Override
