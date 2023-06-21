@@ -4,10 +4,16 @@ type Query {
 }
 
 type Subscription {
-  SecReading(sensorid: Int): SecReading
+  HighTempAlert(sensorid: Int): HighTempAlert
 }
 
 type SecReading {
+  sensorid: Int!
+  timeSec: String!
+  temp: Float!
+}
+
+type HighTempAlert {
   sensorid: Int!
   timeSec: String!
   temp: Float!

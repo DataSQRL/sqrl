@@ -1,3 +1,30 @@
+type ApplicationAlert {
+  id: Int!
+  loan_type_id: Int!
+  customer_id: Int!
+  max_amount: Float!
+  min_amount: Float!
+  amount: Float!
+}
+
+type ApplicationStatus {
+  status: String!
+  message: String!
+  timestamp: String!
+  id: Int!
+  customer_id: Int!
+  loan_type_id: Int!
+  amount: Float!
+  duration: Int!
+}
+
+type ApplicationUpdates {
+  loan_application_id: Int!
+  status: String!
+  message: String!
+  timestamp: String!
+  application: Applications!
+}
 
 type Applications {
   id: Int!
@@ -11,14 +38,6 @@ type Applications {
   loanType: LoanTypes!
 }
 
-type ApplicationUpdates {
-  loan_application_id: Int!
-  status: String!
-  message: String!
-  timestamp: String!
-  application: Applications!
-}
-
 type Customers {
   id: Int!
   first_name: String!
@@ -30,6 +49,7 @@ type Customers {
   updated_on: String!
   applications(limit: Int = 20, offset: Int = 0): [Applications!]
   overview: [overview!]
+  recentFunding: recentFunding
 }
 
 type LoanTypes {
@@ -56,3 +76,11 @@ type overview {
   total_loans: Int!
 }
 
+type recentFunding {
+  total_amount: Float!
+  total_loans: Int!
+}
+
+type Subscription {
+  ApplicationAlert: ApplicationAlert!
+}

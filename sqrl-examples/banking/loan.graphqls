@@ -65,7 +65,6 @@ type LoanTypes {
 }
 
 type Query {
-  ApplicationAlert: [ApplicationAlert!]
   Applications(id: Int!): [Applications!]
   Customers(id: Int!): [Customers!]
   LoanTypes(id: Int): [LoanTypes!]
@@ -80,4 +79,8 @@ type overview {
 type recentFunding {
   total_amount: Float!
   total_loans: Int!
+}
+
+type Subscription {
+  ApplicationAlert: ApplicationAlert!
 }

@@ -10,3 +10,5 @@ SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
     FROM SecReading
     WHERE timeSec >= now() - INTERVAL 1 MINUTE
     GROUP BY sensorid;
+/* Alert on high temperatures */
+HighTempAlert := SELECT * FROM SecReading WHERE temp > 50;
