@@ -50,7 +50,7 @@ public class DocumentationExamplesTest {
 
 
     @Test
-//    @Disabled
+    @Disabled
     public void runIndividual() {
         compileTutorials(Banking.INSTANCE.getRootPackageDirectory(),"loan.sqrl", "loan.graphqls");
     }
