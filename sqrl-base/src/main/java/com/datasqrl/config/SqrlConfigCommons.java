@@ -170,7 +170,11 @@ public class SqrlConfigCommons implements SqrlConfig {
           configValue.withDefault(field.get(value));
         }
         configValue = Constraints.addConstraints(field, configValue);
-        field.set(value, configValue.get());
+        try {
+          field.set(value, configValue.get());
+        } catch (Exception e) {
+          System.out.println();
+        }
       }
       return new ValueImpl<>(prefix, errors, Optional.of(value));
     } catch (Exception e) {

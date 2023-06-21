@@ -5,6 +5,7 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.ExecutionResult.Message;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -24,10 +25,14 @@ import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.internals.Topic;
 
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
@@ -44,17 +49,28 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan,
       ErrorCollector errors) {
-    //TODO: connect to Kafka cluster and create topics
-    throw new NotYetImplementedException("Topic creation not yet implemented");
+    //todo pass as map
+    CreateTopicsResult result;
+    try (Admin admin = Admin.create(
+        Map.of("bootstrap.servers", config.getConfig()
+            .getSubConfig("connector").asString("bootstrap.servers").get()))) {
+      KafkaPhysicalPlan kafkaPhysicalPlan = (KafkaPhysicalPlan) plan;
+      result = admin.createTopics(kafkaPhysicalPlan.getTopics());
+    }
+
+    return result.all().toCompletionStage().toCompletableFuture()
+        .thenApply(f->new ExecutionResult.Message("COMPLETE"));
   }
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
       RelBuilder relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(plan instanceof LogStagePlan);
-    return new KafkaPhysicalPlan(
+    return new KafkaPhysicalPlan(this.config.getConfig(),
         ((LogStagePlan) plan).getLogs().stream()
-            .map(log -> (KafkaTopic)log).collect(Collectors.toList()));
+            .map(log -> (KafkaTopic)log)
+            .map(t->new NewTopic(t.getTopicName(), Optional.empty(), Optional.empty()))
+            .collect(Collectors.toList()));
   }
 
   @Override

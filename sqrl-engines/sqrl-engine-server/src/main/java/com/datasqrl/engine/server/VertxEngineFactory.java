@@ -1,5 +1,8 @@
 package com.datasqrl.engine.server;
 
+import static com.datasqrl.engine.server.GenericJavaServerEngine.PORT_DEFAULT;
+import static com.datasqrl.engine.server.GenericJavaServerEngine.PORT_KEY;
+
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.ExecutionEngine;
@@ -22,14 +25,14 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
   }
 
   @Override
-  public ExecutionEngine initialize(@NonNull SqrlConfig config) {
-    return new VertxEngine(config);
+  public VertxEngine initialize(@NonNull SqrlConfig config) {
+    return new VertxEngine(config.asInt(PORT_KEY).withDefault(PORT_DEFAULT).get());
   }
 
   public static class VertxEngine extends GenericJavaServerEngine {
 
-    public VertxEngine(@NonNull SqrlConfig config) {
-      super(ENGINE_NAME, config);
+    public VertxEngine(@NonNull int port) {
+      super(ENGINE_NAME, port);
     }
   }
 }

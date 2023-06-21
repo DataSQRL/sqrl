@@ -42,9 +42,9 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   private final int port;
 
-  public GenericJavaServerEngine(String engineName, @NonNull SqrlConfig config) {
+  public GenericJavaServerEngine(String engineName, @NonNull int port) {
     super(engineName, Type.SERVER, NO_CAPABILITIES);
-    this.port = config.asInt(PORT_KEY).withDefault(PORT_DEFAULT).get();
+    this.port = port;
   }
 
   @Override

@@ -53,6 +53,7 @@ import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerRes
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;

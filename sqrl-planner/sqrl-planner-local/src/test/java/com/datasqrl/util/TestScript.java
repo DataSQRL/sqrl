@@ -5,7 +5,6 @@ package com.datasqrl.util;
 
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.util.data.Clickstream;
-import com.datasqrl.util.data.Examples;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Repository;
