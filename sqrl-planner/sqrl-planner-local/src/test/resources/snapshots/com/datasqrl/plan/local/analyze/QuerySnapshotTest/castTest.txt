@@ -10,7 +10,7 @@ LogicalProject(_uuid=[$0], cast5=[1970-01-01 00:00:00.001:TIMESTAMP_WITH_LOCAL_T
   LogicalTableScan(table=[[orders$q$2]])
 
 >>>x$q$5
-LogicalProject(_uuid=[$0], cast1=[_UTF-16LE'1':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"], time=[$4])
+LogicalProject(_uuid=[$0], cast1=['1':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"], time=[$4])
   LogicalTableScan(table=[[orders$q$2]])
 
 >>>x$q$7
