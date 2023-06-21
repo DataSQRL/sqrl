@@ -62,6 +62,7 @@ public class SqrlRelToSql {
       case DECIMAL:
         return "DECIMAL";
       case FLOAT:
+        return "FLOAT";
       case DOUBLE:
         return "DOUBLE PRECISION";
       case DATE:

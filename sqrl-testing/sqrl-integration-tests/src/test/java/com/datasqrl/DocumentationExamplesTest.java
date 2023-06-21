@@ -6,10 +6,7 @@ import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
 import com.datasqrl.cmd.StatusHook.Impl;
 import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.data.Clickstream;
-import com.datasqrl.util.data.Quickstart;
-import com.datasqrl.util.data.Sensors;
-import com.datasqrl.util.data.UseCaseExample;
+import com.datasqrl.util.data.*;
 import com.google.common.base.Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,7 +52,7 @@ public class DocumentationExamplesTest {
     @Test
     @Disabled
     public void runIndividual() {
-        compileTutorials(Clickstream.INSTANCE.getRootPackageDirectory(), "clickstream-teaser-docs.sqrl", null);
+        compileTutorials(Banking.INSTANCE.getRootPackageDirectory(),"loan.sqrl", "loan.graphqls");
     }
 
     public static final TestCase[] CASES = {

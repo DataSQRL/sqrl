@@ -1,0 +1,24 @@
+{
+Customers(id: 2) {
+    first_name
+    email
+    overview {
+        loan_type_id
+        total_amount
+        total_loans
+    }
+    applications(limit: 10) {
+        id
+        loanType {
+            id
+            name
+        }
+        amount
+        duration
+        application_date
+        updates {
+            status
+            timestamp
+        }
+    }
+}}

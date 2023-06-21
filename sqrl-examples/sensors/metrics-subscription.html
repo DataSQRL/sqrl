@@ -51,7 +51,7 @@
         type: 'start',
         payload: {
           query: `subscription {
-                            SecReading {
+                            HighTempAlert {
                                 sensorid
                                 timeSec
                                 temp
@@ -68,8 +68,8 @@
     const data = JSON.parse(event.data);
     console.log('Message from server:', data);
 
-    if (data.type === 'data' && data.payload.data.SecReading) {
-      const reading = data.payload.data.SecReading;
+    if (data.type === 'data' && data.payload.data.HighTempAlert) {
+      const reading = data.payload.data.HighTempAlert;
       const tableBody = document.getElementById('tableBody');
       const newRow = tableBody.insertRow();
 

@@ -37,6 +37,14 @@ public class RandomSampler {
     return random.longs(1,minInclusive,maxExclusive).findFirst().getAsLong();
   }
 
+  public double nextDouble(double minInclusive, double maxExclusive) {
+    return random.nextDouble()*(maxExclusive-minInclusive) + minInclusive;
+  }
+
+  public boolean flipCoin(double likelihood) {
+    return random.nextDouble()<likelihood;
+  }
+
   public Set<Integer> withoutReplacement(int number, int minInclusive, int maxExclusive) {
     int delta = maxExclusive-minInclusive;
     Preconditions.checkArgument(number <= delta);
@@ -86,6 +94,14 @@ public class RandomSampler {
     }
     long sample = nextLong(0,boundMillis);
     return base.plus(sample,ChronoUnit.MILLIS);
+  }
+
+  public Instant nextTimestamp(Instant startInclusive, Instant endTimeExclusive) {
+    Preconditions.checkArgument(endTimeExclusive.compareTo(startInclusive)>0,
+        "End time %s needs to be after start time %s", endTimeExclusive, startInclusive);
+    long deltaMillis = endTimeExclusive.toEpochMilli() - startInclusive.toEpochMilli();
+    long sample = nextLong(0,deltaMillis);
+    return startInclusive.plus(sample,ChronoUnit.MILLIS);
   }
 
   public static final long MILLIS_IN_SEC = 1000;

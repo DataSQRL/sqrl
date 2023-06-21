@@ -1,0 +1,41 @@
+---
+name: "loan_types"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "name"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "description"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "interest_rate"
+  type: "FLOAT"
+  tests:
+  - "not_null"
+- name: "max_amount"
+  type: "FLOAT"
+  tests:
+  - "not_null"
+- name: "min_amount"
+  type: "FLOAT"
+  tests:
+  - "not_null"
+- name: "max_duration"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "min_duration"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "updated_at"
+  type: "DATETIME"
+  tests:
+  - "not_null"

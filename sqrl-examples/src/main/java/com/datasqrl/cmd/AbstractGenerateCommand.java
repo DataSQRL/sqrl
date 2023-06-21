@@ -55,7 +55,7 @@ public abstract class AbstractGenerateCommand implements Runnable {
     }
   }
 
-  protected Instant getStartTime(long numDaysInPast) {
+  public static Instant getStartTime(long numDaysInPast) {
     return ZonedDateTime.ofInstant(Instant.now(), ZoneOffset.UTC).truncatedTo(
         ChronoUnit.DAYS).minus(numDaysInPast,ChronoUnit.DAYS).toInstant();
   }
