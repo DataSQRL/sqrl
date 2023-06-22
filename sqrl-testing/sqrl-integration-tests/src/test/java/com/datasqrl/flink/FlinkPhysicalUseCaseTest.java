@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Set;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,11 @@ public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
+  }
+
+  @AfterEach
+  public void tearDown() {
+    super.tearDown();
   }
 
   @SneakyThrows
