@@ -27,7 +27,7 @@ public class FlinkMutationSubscriptionTest extends SubscriptionTest {
     Path rootDir = Path.of("../../sqrl-examples/mutations");
 
     compile(rootDir, "script.sqrl", "schema.graphqls");
-    CompletableFuture<ExecutionResult> fut = deserializePipeline(rootDir);
+    CompletableFuture<ExecutionResult> fut = executePipeline(rootDir);
 
     CountDownLatch countDownLatch = new CountDownLatch(3);
     listenOnWebsocket("subscription { receiveEvent { id name } }", (t) -> {

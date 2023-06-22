@@ -42,10 +42,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -159,7 +157,7 @@ public abstract class SubscriptionTest {
 
   //TODO: Migrate to pipeline deserializer
   @SneakyThrows
-  protected CompletableFuture<ExecutionResult> deserializePipeline(Path rootDir) {
+  protected CompletableFuture<ExecutionResult> executePipeline(Path rootDir) {
     SqrlConfig config = SqrlConfigCommons.fromFiles(ErrorCollector.root(),
         rootDir.resolve("build").resolve("package.json"));
 
