@@ -43,9 +43,7 @@ jobs:
           context: sqrl-tools/sqrl-cli
           file: sqrl-tools/sqrl-cli/Dockerfile
           push: true
-          tags:
-            - datasqrl/cmd:${{ github.ref_name }}
-            - datasqrl/cmd:latest
+          tags: datasqrl/cmd:${{ github.ref_name }},datasqrl/cmd:latest
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-http-vertx Docker
         uses: docker/build-push-action@v3
@@ -53,9 +51,7 @@ jobs:
           context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx
           file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/Dockerfile
           push: true
-          tags:
-            - datasqrl/engine-vertx:${{ github.ref_name }}
-            - datasqrl/engine-vertx:latest
+          tags: datasqrl/engine-vertx:${{ github.ref_name }},datasqrl/engine-vertx:latest
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-http-aws-lambda Docker
         uses: docker/build-push-action@v3
@@ -63,9 +59,7 @@ jobs:
           context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda
           file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda/Dockerfile
           push: true
-          tags:
-            - datasqrl/engine-aws-lambda:${{ github.ref_name }}
-            - datasqrl/engine-aws-lambda:latest
+          tags: datasqrl/engine-aws-lambda:${{ github.ref_name }},datasqrl/engine-aws-lambda:latest
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-flink-jar Docker
         uses: docker/build-push-action@v3
@@ -73,7 +67,5 @@ jobs:
           context: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar
           file: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/Dockerfile
           push: true
-          tags:
-            - datasqrl/engine-flink:${{ github.ref_name }}
-            - datasqrl/engine-flink:latest
+          tags: datasqrl/engine-flink:${{ github.ref_name }},datasqrl/engine-flink:latest
           platforms: linux/amd64,linux/arm64
