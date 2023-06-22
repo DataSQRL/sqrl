@@ -13,6 +13,5 @@
 
   <modules>
     <module>sqrl-integration-tests</module>
-    <module>sqrl-integration-tests2</module>
   </modules>
 </project>
