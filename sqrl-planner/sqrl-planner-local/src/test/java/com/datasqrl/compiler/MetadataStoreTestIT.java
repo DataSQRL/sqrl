@@ -36,6 +36,7 @@ public class MetadataStoreTestIT extends AbstractEngineIT {
 
   @AfterEach
   public void tearDown() {
+    super.tearDown();
     meta.close();
   }
 

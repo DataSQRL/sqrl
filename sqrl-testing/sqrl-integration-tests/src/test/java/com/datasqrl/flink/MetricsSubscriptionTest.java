@@ -19,7 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 @ExtendWith(VertxExtension.class)
-public class MetricsSubscriptionTest extends SubscriptionTest {
+public class MetricsSubscriptionTest extends AbstractSubscriptionTest {
 
   @SneakyThrows
   @Test

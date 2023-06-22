@@ -59,7 +59,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
-public abstract class SubscriptionTest {
+public abstract class AbstractSubscriptionTest {
 
   public static final Consumer<HttpResponse<JsonObject>> NO_HANDLER = (h)->{};
   public static final Consumer<JsonObject> NO_WS_HANDLER = (h)->{};

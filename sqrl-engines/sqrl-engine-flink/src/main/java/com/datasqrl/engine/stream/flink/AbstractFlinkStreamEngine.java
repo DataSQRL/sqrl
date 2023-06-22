@@ -34,10 +34,12 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
 
   public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = STANDARD_STREAM;
   final ExecutionEnvironmentFactory execFactory;
+  private final SqrlConfig config;
 
   public AbstractFlinkStreamEngine(ExecutionEnvironmentFactory execFactory, SqrlConfig config) {
     super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
     this.execFactory = execFactory;
+    this.config = config;
   }
 
   @Override
@@ -65,7 +67,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
     return new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
-        plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
+        this.config, plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
   }
 
   public abstract FlinkStreamBuilder createJob();

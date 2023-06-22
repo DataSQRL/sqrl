@@ -5,6 +5,7 @@ package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.FlinkExecutablePlan;
 import com.datasqrl.FlinkExecutablePlan.FlinkBase;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import java.net.URL;
@@ -28,10 +29,10 @@ public class FlinkPhysicalPlanner {
 
   @SneakyThrows
   public FlinkStreamPhysicalPlan createStreamGraph(
-      List<? extends Query> streamQueries, TableSink errorSink, Set<URL> jars,
+      SqrlConfig config, List<? extends Query> streamQueries, TableSink errorSink, Set<URL> jars,
       Map<String, UserDefinedFunction> udfs) {
     SqrlToFlinkExecutablePlan sqrlToFlinkExecutablePlan = new SqrlToFlinkExecutablePlan(errorSink);
-    FlinkBase flinkBase = sqrlToFlinkExecutablePlan.create(streamQueries, udfs, jars);
+    FlinkBase flinkBase = sqrlToFlinkExecutablePlan.create(config, streamQueries, udfs, jars);
     return new FlinkStreamPhysicalPlan(new FlinkExecutablePlan(flinkBase));
   }
 }

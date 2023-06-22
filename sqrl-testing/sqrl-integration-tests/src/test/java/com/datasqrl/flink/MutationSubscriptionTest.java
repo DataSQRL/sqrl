@@ -19,7 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 @ExtendWith(VertxExtension.class)
-public class MutationSubscriptionTest extends SubscriptionTest {
+public class MutationSubscriptionTest extends AbstractSubscriptionTest {
 
   @SneakyThrows
   @Test
