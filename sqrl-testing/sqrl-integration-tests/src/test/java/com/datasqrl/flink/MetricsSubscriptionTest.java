@@ -18,13 +18,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
-@ExtendWith(VertxExtension.class)
+
 public class MetricsSubscriptionTest extends AbstractSubscriptionTest {
 
   @SneakyThrows
   @Test
-  @Disabled
   public void runMetricsMutation() {
     Path rootDir = Path.of("../../sqrl-examples/sensors");
 
