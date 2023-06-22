@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.logging.log4j.util.Strings;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.testcontainers.containers.KafkaContainer;
@@ -77,6 +78,12 @@ public abstract class SubscriptionTest {
   public void setup(TestInfo testInfo, Vertx vertx) {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     this.vertx = vertx;
+  }
+
+  @AfterEach
+  public void tearDown() {
+    testDatabase.stop();
+    kafka.stop();
   }
 
   protected void executeRequests(String query, JsonObject input,
@@ -220,7 +227,8 @@ public abstract class SubscriptionTest {
         FlinkExecutablePlan.class);
     FlinkStreamPhysicalPlan plan = new FlinkStreamPhysicalPlan(flinkPlan);
     LocalFlinkStreamEngineImpl localFlinkStreamEngine = new LocalFlinkStreamEngineImpl(
-        new ExecutionEnvironmentFactory(Map.of()));
+        new ExecutionEnvironmentFactory(Map.of()), config.getSubConfig("engines")
+        .getSubConfig("stream"));
     CompletableFuture<com.datasqrl.engine.ExecutionResult> fut = localFlinkStreamEngine.execute(
         plan, ErrorCollector.root());
 

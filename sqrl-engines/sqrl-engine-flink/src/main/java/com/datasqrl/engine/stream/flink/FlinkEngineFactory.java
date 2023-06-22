@@ -26,7 +26,8 @@ public class FlinkEngineFactory implements EngineFactory {
 
   @Override
   public AbstractFlinkStreamEngine initialize(@NonNull SqrlConfig config) {
-    return new LocalFlinkStreamEngineImpl(new ExecutionEnvironmentFactory(getFlinkConfiguration(config)));
+    return new LocalFlinkStreamEngineImpl(new ExecutionEnvironmentFactory(getFlinkConfiguration(config)),
+        config);
   }
 
   public Map<String,String> getFlinkConfiguration(@NonNull SqrlConfig config) {

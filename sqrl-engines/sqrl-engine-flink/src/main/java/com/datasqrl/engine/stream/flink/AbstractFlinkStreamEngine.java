@@ -6,6 +6,7 @@ package com.datasqrl.engine.stream.flink;
 import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 
 import com.datasqrl.FlinkEnvironmentBuilder;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -34,7 +35,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = STANDARD_STREAM;
   final ExecutionEnvironmentFactory execFactory;
 
-  public AbstractFlinkStreamEngine(ExecutionEnvironmentFactory execFactory) {
+  public AbstractFlinkStreamEngine(ExecutionEnvironmentFactory execFactory, SqrlConfig config) {
     super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
     this.execFactory = execFactory;
   }

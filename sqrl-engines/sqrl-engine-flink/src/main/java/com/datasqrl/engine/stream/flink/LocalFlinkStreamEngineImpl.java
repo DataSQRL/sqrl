@@ -3,20 +3,15 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
+import com.datasqrl.config.SqrlConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.startupcheck.OneShotStartupCheckStrategy;
-import org.testcontainers.utility.MountableFile;
 
 @Slf4j
 public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
-  public LocalFlinkStreamEngineImpl(ExecutionEnvironmentFactory execFactory) {
-    super(execFactory);
+  public LocalFlinkStreamEngineImpl(ExecutionEnvironmentFactory execFactory,
+      SqrlConfig config) {
+    super(execFactory, config);
   }
 
   public FlinkStreamBuilder createJob() {
