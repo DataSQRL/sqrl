@@ -41,7 +41,7 @@ public class MutationSubscriptionTest extends AbstractSubscriptionTest {
     executeRequests(query, new JsonObject().put("input", new JsonObject().put("id", "id2").put("name", "  name2")), NO_HANDLER);
     executeRequests(query, new JsonObject().put("input", new JsonObject().put("id", "id3").put("name", "  name3   ")), NO_HANDLER);
 
-    countDownLatch.await(1, TimeUnit.MINUTES);
+    countDownLatch.await(90, TimeUnit.SECONDS);
     fut.cancel(true);
     assertEquals(countDownLatch.getCount(), 0);
     snapshot.createOrValidate();

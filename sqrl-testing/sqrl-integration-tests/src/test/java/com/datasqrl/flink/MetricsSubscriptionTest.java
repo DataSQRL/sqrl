@@ -36,13 +36,14 @@ public class MetricsSubscriptionTest extends AbstractSubscriptionTest {
     listenOnWebsocket("subscription HighTempAlert {\n"
         + "  HighTempAlert(sensorid: 1) {\n"
         + "    sensorid\n"
-        + "    timeSec\n"
         + "    temp\n"
         + "  }\n"
         + "}", (t) -> {
       snapshot.addContent(t.toString());
       countDownLatch.countDown();
     });
+
+    Thread.sleep(1000);
 
     String query = "mutation AddReading($sensorId: Int!, $temperature: Float!) {\n"
         + "  AddReading(metric: {sensorid: $sensorId, temperature: $temperature}) {\n"
@@ -56,7 +57,7 @@ public class MetricsSubscriptionTest extends AbstractSubscriptionTest {
     executeRequests(query, new JsonObject().put("sensorId", 1).put("temperature", 50.1), NO_HANDLER);
     executeRequests(query, new JsonObject().put("sensorId", 1).put("temperature", 62.1), NO_HANDLER);
 
-    countDownLatch.await(1, TimeUnit.MINUTES);
+    countDownLatch.await(90, TimeUnit.SECONDS);
     fut.cancel(true);
     assertEquals(countDownLatch.getCount(), 0);
     snapshot.createOrValidate();

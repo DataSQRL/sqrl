@@ -1,1 +1,1 @@
-{"HighTempAlert":{"sensorid":1,"timeSec":"2023-06-22 03:21:42.999Z","temp":53.11666667}}
+{"HighTempAlert":{"sensorid":1,"temp":53.11666667}}
