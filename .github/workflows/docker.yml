@@ -43,7 +43,8 @@ jobs:
           context: sqrl-tools/sqrl-cli
           file: sqrl-tools/sqrl-cli/Dockerfile
           push: true
-          tags: datasqrl/cmd:dev
+          tags:
+          - datasqrl/cmd:dev
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-http-vertx Docker
         uses: docker/build-push-action@v3
@@ -51,7 +52,8 @@ jobs:
           context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx
           file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/Dockerfile
           push: true
-          tags: datasqrl/engine-vertx:dev
+          tags:
+          - datasqrl/engine-vertx:dev
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-http-aws-lambda Docker
         uses: docker/build-push-action@v3
@@ -59,7 +61,8 @@ jobs:
           context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda
           file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda/Dockerfile
           push: true
-          tags: datasqrl/engine-aws-lambda:dev
+          tags:
+          - datasqrl/engine-aws-lambda:dev
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-flink-jar Docker
         uses: docker/build-push-action@v3
@@ -67,5 +70,6 @@ jobs:
           context: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar
           file: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/Dockerfile
           push: true
-          tags: datasqrl/engine-flink:dev
+          tags:
+          - datasqrl/engine-flink:dev
           platforms: linux/amd64,linux/arm64
