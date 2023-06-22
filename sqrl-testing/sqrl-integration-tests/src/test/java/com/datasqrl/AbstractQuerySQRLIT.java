@@ -28,6 +28,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -79,7 +80,12 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
             .sorted().collect(Collectors.joining(System.lineSeparator())), "database");
 
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    executor.execute(physicalPlan, errors);
+    PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
+    CompletableFuture[] completableFutures = result.getResults().stream()
+        .map(s->s.getResult())
+        .toArray(CompletableFuture[]::new);
+    CompletableFuture.allOf(completableFutures)
+        .get();
 
     CountDownLatch countDownLatch = new CountDownLatch(1);
 

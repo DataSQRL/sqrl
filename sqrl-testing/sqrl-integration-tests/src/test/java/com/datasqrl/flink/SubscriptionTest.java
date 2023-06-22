@@ -83,7 +83,7 @@ public abstract class SubscriptionTest {
       Consumer<HttpResponse<JsonObject>> callback) {
     WebClient client = WebClient.create(vertx);
     JsonObject graphqlQuery = new JsonObject().put("query", query)
-        .put("variables", new JsonObject().put("input", input));
+        .put("variables", input);
 
     client.post(8888, "localhost", "/graphql").putHeader("Content-Type", "application/json")
         .as(BodyCodec.jsonObject()).sendJsonObject(graphqlQuery, ar -> {

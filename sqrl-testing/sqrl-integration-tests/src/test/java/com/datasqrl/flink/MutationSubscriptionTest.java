@@ -19,11 +19,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 @ExtendWith(VertxExtension.class)
-public class FlinkMutationSubscriptionTest extends SubscriptionTest {
+public class MutationSubscriptionTest extends SubscriptionTest {
 
   @SneakyThrows
   @Test
-  public void runTest() {
+  public void runMutationTest() {
     Path rootDir = Path.of("../../sqrl-examples/mutations");
 
     compile(rootDir);
@@ -37,9 +37,9 @@ public class FlinkMutationSubscriptionTest extends SubscriptionTest {
     });
 
     String query = "mutation ($input: GenericEvent!) { createEvent(event: $input) { id } }";
-    executeRequests(query, new JsonObject().put("id", "id1").put("name", "name1"), NO_HANDLER);
-    executeRequests(query, new JsonObject().put("id", "id2").put("name", "  name2"), NO_HANDLER);
-    executeRequests(query, new JsonObject().put("id", "id3").put("name", "  name3   "), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("input", new JsonObject().put("id", "id1").put("name", "name1")), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("input", new JsonObject().put("id", "id2").put("name", "  name2")), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("input", new JsonObject().put("id", "id3").put("name", "  name3   ")), NO_HANDLER);
 
     countDownLatch.await(1, TimeUnit.MINUTES);
     fut.cancel(true);

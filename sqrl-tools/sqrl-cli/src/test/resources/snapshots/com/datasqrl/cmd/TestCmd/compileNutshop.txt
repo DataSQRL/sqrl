@@ -3,6 +3,7 @@ create-topics.sh
 database-schema.sql
 docker-compose.yml
 flink-plan.json
+kafka-plan.json
 server-config.json
 server-model.json
 >>>build
