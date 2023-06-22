@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -136,6 +137,12 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
+    CompletableFuture[] completableFutures = result.getResults().stream()
+        .map(s->s.getResult())
+        .toArray(CompletableFuture[]::new);
+    CompletableFuture.allOf(completableFutures)
+        .get();
+
     //todo: filter out jdbc engine
     StagePlan db = physicalPlan.getStagePlans().stream()
         .filter(e-> e.getStage().getEngine() instanceof JDBCEngine)

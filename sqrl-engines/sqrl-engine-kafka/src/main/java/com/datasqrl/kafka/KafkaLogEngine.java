@@ -49,7 +49,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan,
       ErrorCollector errors) {
-    //todo pass as map
     CreateTopicsResult result;
     try (Admin admin = Admin.create(
         Map.of("bootstrap.servers", config.getConfig()
