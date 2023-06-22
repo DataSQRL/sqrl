@@ -94,7 +94,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         connector.getPassword())) {
       for (String dml : dmls) {
         try (Statement stmt = conn.createStatement()) {
-          log.trace("Creating: " + dml);
+          log.info("Creating: " + dml);
           stmt.executeUpdate(dml);
         } catch (SQLException e) {
           throw new RuntimeException("Could not execute SQL query", e);

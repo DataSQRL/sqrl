@@ -1,0 +1,3 @@
+{"receiveEvent":{"id":"id1","name":"name1"}}
+{"receiveEvent":{"id":"id2","name":"name2"}}
+{"receiveEvent":{"id":"id3","name":"name3"}}

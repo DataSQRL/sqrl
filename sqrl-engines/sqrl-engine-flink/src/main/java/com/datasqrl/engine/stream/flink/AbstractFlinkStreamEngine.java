@@ -43,13 +43,17 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
     FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
-    FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder(errors);
-    StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
-    TableResult rslt = statementSet.execute();
-    rslt.print(); //todo: this just forces print to wait for the async
-    ExecutionResult result = new ExecutionResult.Message(rslt.getJobClient().get()
-        .getJobID().toString());
-    return CompletableFuture.completedFuture(result);
+
+    return CompletableFuture.supplyAsync(()->{
+      FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder(errors);
+      StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
+
+      TableResult rslt = statementSet.execute();
+      rslt.print(); //todo: this just forces print to wait for the async
+      ExecutionResult result = new ExecutionResult.Message(rslt.getJobClient().get()
+          .getJobID().toString());
+      return result;
+    });
   }
 
   @Override

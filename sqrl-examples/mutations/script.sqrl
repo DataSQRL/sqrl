@@ -1,1 +1,2 @@
 IMPORT schema.createEvent AS event;
+event.name := RTRIM(LTRIM(name));
