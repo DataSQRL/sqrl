@@ -265,7 +265,7 @@ public abstract class AbstractSubscriptionTest {
   private Path createPackageOverride(EmbeddedKafkaCluster kafka, PostgreSQLContainer testDatabase) {
     Map overrideConfig = Map.of("engines",
         Map.of("log", Map.of("connector",
-            Map.of("bootstrap.servers", "localhost:" + kafka.bootstrapServers().split(":")[2])),
+            Map.of("bootstrap.servers", kafka.bootstrapServers())),
         "database", toDbMap(testDatabase)));
     return writeJson(overrideConfig);
   }
