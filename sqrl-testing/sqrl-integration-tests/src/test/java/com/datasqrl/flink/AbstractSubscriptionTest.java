@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.apache.logging.log4j.util.Strings;
@@ -60,6 +61,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
+@Slf4j
 public abstract class AbstractSubscriptionTest {
 
   public static final Consumer<HttpResponse<JsonObject>> NO_HANDLER = (h)->{};
@@ -68,7 +70,6 @@ public abstract class AbstractSubscriptionTest {
   protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
       DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
       .withPassword("secret").withDatabaseName("datasqrl");
-
 
   public static final EmbeddedKafkaCluster kafka = new EmbeddedKafkaCluster(1);
 
@@ -98,14 +99,14 @@ public abstract class AbstractSubscriptionTest {
     client.post(8888, "localhost", "/graphql").putHeader("Content-Type", "application/json")
         .as(BodyCodec.jsonObject()).sendJsonObject(graphqlQuery, ar -> {
           if (ar.succeeded()) {
-            System.out.println("Received response with status code" + ar.result().statusCode());
-            System.out.println("Response Body: " + ar.result().body());
+            log.info("Received response with status code" + ar.result().statusCode());
+            log.info("Response Body: " + ar.result().body());
             if (ar.result().statusCode() != 200 || ar.result().body().toString().contains("errors")) {
               fail(ar.result().body().toString());
             }
             callback.accept(ar.result());
           } else {
-            System.out.println("Something went wrong " + ar.cause().getMessage());
+            log.info("Something went wrong " + ar.cause().getMessage());
             fail();
           }
         });
@@ -138,22 +139,22 @@ public abstract class AbstractSubscriptionTest {
           String messageType = jsonMessage.getString("type");
           switch (messageType) {
             case "connection_ack":
-              System.out.println("Connection acknowledged");
+              log.info("Connection acknowledged");
               break;
             case "data":
               JsonObject result = jsonMessage.getJsonObject("payload").getJsonObject("data");
-              System.out.println("Data: " + result);
+              log.info("Data: " + result);
               successHandler.accept(result);
               break;
             case "complete":
-              System.out.println("Server indicated subscription complete");
+              log.info("Server indicated subscription complete");
               break;
             default:
-              System.out.println("Received message: " + message);
+              log.info("Received message: " + message);
           }
         });
       } else {
-        System.out.println("Failed to connect " + websocketRes.cause());
+        log.info("Failed to connect " + websocketRes.cause());
         fail();
       }
     });
