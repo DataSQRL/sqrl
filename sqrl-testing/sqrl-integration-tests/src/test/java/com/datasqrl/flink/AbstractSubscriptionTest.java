@@ -37,6 +37,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.codec.BodyCodec;
+import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,11 +51,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
-import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
@@ -67,15 +68,17 @@ public abstract class AbstractSubscriptionTest {
   protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
       DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
       .withPassword("secret").withDatabaseName("datasqrl");
-  @Container
-  protected final KafkaContainer kafka = new KafkaContainer(
-      DockerImageName.parse("confluentinc/cp-kafka:7.4.0"));
+
+
+  public static final EmbeddedKafkaCluster kafka = new EmbeddedKafkaCluster(1);
+
   protected SnapshotTest.Snapshot snapshot;
   protected Vertx vertx;
   ObjectMapper mapper = new Deserializer().getJsonMapper();
 
   @BeforeEach
-  public void setup(TestInfo testInfo, Vertx vertx) {
+  public void setup(TestInfo testInfo, Vertx vertx) throws IOException {
+    kafka.start();
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     this.vertx = vertx;
   }
@@ -253,10 +256,10 @@ public abstract class AbstractSubscriptionTest {
     return defaultPackage;
   }
 
-  private Path createPackageOverride(KafkaContainer kafka, PostgreSQLContainer testDatabase) {
+  private Path createPackageOverride(EmbeddedKafkaCluster kafka, PostgreSQLContainer testDatabase) {
     Map overrideConfig = Map.of("engines",
         Map.of("log", Map.of("connector",
-            Map.of("bootstrap.servers", "localhost:" + kafka.getBootstrapServers().split(":")[2])),
+            Map.of("bootstrap.servers", "localhost:" + kafka.bootstrapServers().split(":")[2])),
         "database", toDbMap(testDatabase)));
     return writeJson(overrideConfig);
   }

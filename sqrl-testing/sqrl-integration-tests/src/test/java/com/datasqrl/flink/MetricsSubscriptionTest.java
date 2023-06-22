@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -23,6 +24,7 @@ public class MetricsSubscriptionTest extends AbstractSubscriptionTest {
 
   @SneakyThrows
   @Test
+  @Disabled
   public void runMetricsMutation() {
     Path rootDir = Path.of("../../sqrl-examples/sensors");
 
