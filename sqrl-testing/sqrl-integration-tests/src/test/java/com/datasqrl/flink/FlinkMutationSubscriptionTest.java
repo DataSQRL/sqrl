@@ -26,7 +26,8 @@ public class FlinkMutationSubscriptionTest extends SubscriptionTest {
   public void runTest() {
     Path rootDir = Path.of("../../sqrl-examples/mutations");
 
-    compile(rootDir, "script.sqrl", "schema.graphqls");
+    compile(rootDir);
+
     CompletableFuture<ExecutionResult> fut = executePipeline(rootDir);
 
     CountDownLatch countDownLatch = new CountDownLatch(3);
@@ -36,9 +37,9 @@ public class FlinkMutationSubscriptionTest extends SubscriptionTest {
     });
 
     String query = "mutation ($input: GenericEvent!) { createEvent(event: $input) { id } }";
-    executeRequests(query, new JsonObject().put("id", "id1").put("name", "name1"));
-    executeRequests(query, new JsonObject().put("id", "id2").put("name", "  name2"));
-    executeRequests(query, new JsonObject().put("id", "id3").put("name", "  name3   "));
+    executeRequests(query, new JsonObject().put("id", "id1").put("name", "name1"), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("id", "id2").put("name", "  name2"), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("id", "id3").put("name", "  name3   "), NO_HANDLER);
 
     countDownLatch.await(1, TimeUnit.MINUTES);
     fut.cancel(true);

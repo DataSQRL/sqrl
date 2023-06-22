@@ -34,13 +34,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.codec.BodyCodec;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -57,6 +60,8 @@ import org.testcontainers.utility.DockerImageName;
 
 public abstract class SubscriptionTest {
 
+  public static final Consumer<HttpResponse<JsonObject>> NO_HANDLER = (h)->{};
+  public static final Consumer<JsonObject> NO_WS_HANDLER = (h)->{};
   @Container
   protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
       DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
@@ -74,7 +79,8 @@ public abstract class SubscriptionTest {
     this.vertx = vertx;
   }
 
-  protected void executeRequests(String query, JsonObject input) {
+  protected void executeRequests(String query, JsonObject input,
+      Consumer<HttpResponse<JsonObject>> callback) {
     WebClient client = WebClient.create(vertx);
     JsonObject graphqlQuery = new JsonObject().put("query", query)
         .put("variables", new JsonObject().put("input", input));
@@ -87,6 +93,7 @@ public abstract class SubscriptionTest {
             if (ar.result().statusCode() != 200 || ar.result().body().toString().contains("errors")) {
               fail(ar.result().body().toString());
             }
+            callback.accept(ar.result());
           } else {
             System.out.println("Something went wrong " + ar.cause().getMessage());
             fail();
@@ -142,10 +149,17 @@ public abstract class SubscriptionTest {
     });
   }
 
-  protected void compile(Path rootDir, String sqrl, String gql) {
-    Path script = rootDir.resolve(sqrl);
-    Path graphql = rootDir.resolve(gql);
+  protected void compile(Path rootDir) {
+    Optional<Path> script = findFile(rootDir, ".sqrl");
+    Optional<Path> graphql = findFile(rootDir, ".graphqls");
 
+    if (script.isEmpty() && graphql.isEmpty()) {
+      throw new RuntimeException("Could not find file: script<" + script + "> graphqls<" + graphql + ">");
+    }
+    compile(rootDir, script.get(), graphql.get());
+  }
+
+  protected void compile(Path rootDir, Path script, Path graphql) {
     Path override = createPackageOverride(kafka, testDatabase);
     Path defaultPackage = createDefaultPackage(rootDir, script, graphql);
 
@@ -153,6 +167,18 @@ public abstract class SubscriptionTest {
     int code = rootCommand.execute("compile", script.toString(), graphql.toString(), "-c",
         defaultPackage.toAbsolutePath().toString(), "-c", override.toAbsolutePath().toString());
     assertEquals(0, code, "Non-zero exit code");
+  }
+
+  @SneakyThrows
+  private Optional<Path> findFile(Path rootDir, String postfix) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(rootDir)) {
+      for (Path file : stream) {
+        if (!Files.isDirectory(file) && file.getFileName().toString().endsWith(postfix)) {
+          return Optional.of(file);
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   //TODO: Migrate to pipeline deserializer
