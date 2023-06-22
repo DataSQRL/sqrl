@@ -37,13 +37,14 @@ jobs:
           cp sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/target/flink-job.jar sqrl-tools/sqrl-cli/target/flink-job.jar
           cp sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/target/vertx-server.jar sqrl-tools/sqrl-cli/target/vertx-server.jar
       # Build docker (cd sqrl-tools/sqrl-cli; docker build -t datasqrl/cmd . )
-      - name: Build and Push sqrl-cli Latest
+      - name: Build and Push sqrl-cli Dev
         uses: docker/build-push-action@v3
         with:
           context: sqrl-tools/sqrl-cli
           file: sqrl-tools/sqrl-cli/Dockerfile
           push: true
-          tags: datasqrl/cmd:latest
+          tags:
+          - datasqrl/cmd:dev
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-http-vertx Docker
         uses: docker/build-push-action@v3
@@ -51,7 +52,8 @@ jobs:
           context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx
           file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-vertx/Dockerfile
           push: true
-          tags: datasqrl/engine-vertx:latest
+          tags:
+          - datasqrl/engine-vertx:dev
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-http-aws-lambda Docker
         uses: docker/build-push-action@v3
@@ -59,7 +61,8 @@ jobs:
           context: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda
           file: sqrl-execute/sqrl-execute-http/sqrl-execute-http-aws-lambda/Dockerfile
           push: true
-          tags: datasqrl/engine-aws-lambda:latest
+          tags:
+          - datasqrl/engine-aws-lambda:dev
           platforms: linux/amd64,linux/arm64
       - name: Build and Push sqrl-execute-flink-jar Docker
         uses: docker/build-push-action@v3
@@ -67,5 +70,6 @@ jobs:
           context: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar
           file: sqrl-execute/sqrl-execute-flink/sqrl-execute-flink-jar/Dockerfile
           push: true
-          tags: datasqrl/engine-flink:latest
+          tags:
+          - datasqrl/engine-flink:dev
           platforms: linux/amd64,linux/arm64
