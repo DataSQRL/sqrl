@@ -186,7 +186,7 @@ public abstract class AbstractSubscriptionTest {
 
     picocli.CommandLine rootCommand = new RootCommand(rootDir, AssertStatusHook.INSTANCE).getCmd();
     int code = rootCommand.execute("compile", script.toString(), graphql.toString(), "-c",
-        defaultPackage.toAbsolutePath().toString(), "-c", override.toAbsolutePath().toString());
+        defaultPackage.toAbsolutePath().toString(), "-c", override.toAbsolutePath().toString(), "--nolookup");
     assertEquals(0, code, "Non-zero exit code");
   }
 

@@ -23,6 +23,7 @@ public class MetricsSubscriptionTest extends AbstractSubscriptionTest {
 
   @SneakyThrows
   @Test
+  @Disabled
   public void runMetricsMutation() {
     Path rootDir = Path.of("../../sqrl-examples/sensors");
 

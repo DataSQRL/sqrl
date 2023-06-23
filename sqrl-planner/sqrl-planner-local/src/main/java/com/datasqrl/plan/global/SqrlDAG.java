@@ -70,7 +70,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
   }
 
   @AllArgsConstructor
-  public abstract static class SqrlNode implements Node, Comparable<SqrlNode> {
+  public abstract static class SqrlNode implements AbstractDAG.Node, Comparable<SqrlNode> {
 
     private final Map<ExecutionStage, StageAnalysis> stageAnalysis;
 

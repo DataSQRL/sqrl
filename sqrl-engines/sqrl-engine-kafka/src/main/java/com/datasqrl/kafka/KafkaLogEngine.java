@@ -55,10 +55,12 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan,
       ErrorCollector errors) {
     CreateTopicsResult result;
+    log.info("Connecting to admin");
     try (Admin admin = Admin.create(
         Map.of("bootstrap.servers", config.getConfig()
             .getSubConfig("connector").asString("bootstrap.servers").get()))) {
       KafkaPhysicalPlan kafkaPhysicalPlan = (KafkaPhysicalPlan) plan;
+      log.info("Creating topics");
       result = admin.createTopics(kafkaPhysicalPlan.getTopics());
       try {//debug
         result.all().get(10, TimeUnit.SECONDS);
