@@ -245,12 +245,12 @@ public abstract class AbstractSubscriptionTest {
         .getSubConfig("stream"));
     CompletableFuture<com.datasqrl.engine.ExecutionResult> fut = localFlinkStreamEngine.execute(
         plan, ErrorCollector.root());
-
-    try {
-      fut.get(10, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      //give flink some time to start
-    }
+//
+//    try {
+//      fut.get(10, TimeUnit.SECONDS);
+//    } catch (Exception e) {
+//      //give flink some time to start
+//    }
 
     return fut;
   }
