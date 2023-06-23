@@ -31,8 +31,10 @@ import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.impl.future.PromiseImpl;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
@@ -96,8 +98,13 @@ public abstract class AbstractSubscriptionTest {
   public void tearDown() {
     testDatabase.stop();
     kafka.stop();
-    vertx.close()
-        .toCompletionStage().toCompletableFuture().get(4, TimeUnit.SECONDS);
+    try {
+      for (String id : vertx.deploymentIDs()) {
+        vertx.undeploy(id).toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      }
+      vertx.close().toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    } catch (Exception e) {
+    }
   }
 
   protected void executeRequests(String query, JsonObject input,
@@ -122,7 +129,8 @@ public abstract class AbstractSubscriptionTest {
         });
   }
 
-  protected void listenOnWebsocket(String query, Consumer<JsonObject> successHandler) {
+  protected PromiseImpl listenOnWebsocket(String query, Consumer<JsonObject> successHandler) {
+    PromiseImpl p = new PromiseImpl();
     vertx.createHttpClient().webSocket(8888, "localhost", "/graphql-ws", websocketRes -> {
       if (websocketRes.succeeded()) {
         WebSocket websocket = websocketRes.result();
@@ -163,11 +171,14 @@ public abstract class AbstractSubscriptionTest {
               log.info("Received message: " + message);
           }
         });
+        p.complete();
       } else {
         log.info("Failed to connect " + websocketRes.cause());
         fail();
+        p.fail("Failed");
       }
     });
+    return p;
   }
 
   protected void compile(Path rootDir) {
@@ -234,7 +245,7 @@ public abstract class AbstractSubscriptionTest {
         deployDir.resolve("server-config.json").toFile(), JdbcDataSystemConnector.class);
     ServerPhysicalPlan serverPhysicalPlan = new ServerPhysicalPlan(model, jdbc);
     VertxEngineFactory vertxEngineFactory = new VertxEngineFactory();
-    VertxEngine vertxEngine = vertxEngineFactory.initialize(eng.getSubConfig("server"));
+    VertxEngine vertxEngine = vertxEngineFactory.initialize(eng.getSubConfig("server"), vertx);
     vertxEngine.execute(serverPhysicalPlan, ErrorCollector.root()).get();
 
     FlinkExecutablePlan flinkPlan = mapper.readValue(deployDir.resolve("flink-plan.json").toFile(),

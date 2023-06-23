@@ -10,6 +10,8 @@ import com.google.auto.service.AutoService;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
+
 @Slf4j
 @AutoService(EngineFactory.class)
 public class AwsLambdaEngineFactory extends GenericJavaServerEngineFactory {
@@ -29,7 +31,7 @@ public class AwsLambdaEngineFactory extends GenericJavaServerEngineFactory {
   public static class LambdaNativeEngine extends GenericJavaServerEngine {
 
     public LambdaNativeEngine(@NonNull int port) {
-      super(ENGINE_NAME, port);
+      super(ENGINE_NAME, port, Optional.empty());
     }
   }
 }

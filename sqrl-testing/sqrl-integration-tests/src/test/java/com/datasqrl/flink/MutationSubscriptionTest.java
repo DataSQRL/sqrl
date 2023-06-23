@@ -22,6 +22,48 @@ public class MutationSubscriptionTest extends AbstractSubscriptionTest {
 
   @SneakyThrows
   @Test
+  public void runMetricsMutation() {
+    Path rootDir = Path.of("../../sqrl-examples/sensors");
+
+    compile(rootDir,
+            rootDir.resolve("metrics-mutation.sqrl"),
+            rootDir.resolve("metricsapi.graphqls"));
+
+    CompletableFuture<ExecutionResult> fut = executePipeline(rootDir);
+
+    CountDownLatch countDownLatch = new CountDownLatch(1);
+    listenOnWebsocket("subscription HighTempAlert {\n"
+            + "  HighTempAlert(sensorid: 1) {\n"
+            + "    sensorid\n"
+            + "    temp\n"
+            + "  }\n"
+            + "}", (t) -> {
+      snapshot.addContent(t.toString());
+      countDownLatch.countDown();
+    }).future().toCompletionStage().toCompletableFuture().get();
+
+    Thread.sleep(1000);
+
+    String query = "mutation AddReading($sensorId: Int!, $temperature: Float!) {\n"
+            + "  AddReading(metric: {sensorid: $sensorId, temperature: $temperature}) {\n"
+            + "    _source_time\n"
+            + "  }\n"
+            + "}";
+    executeRequests(query, new JsonObject().put("sensorId", 1).put("temperature", 41.2), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("sensorId", 1).put("temperature", 45.1), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("sensorId", 1).put("temperature", 55.1), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("sensorId", 1).put("temperature", 65.1), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("sensorId", 1).put("temperature", 50.1), NO_HANDLER);
+    executeRequests(query, new JsonObject().put("sensorId", 1).put("temperature", 62.1), NO_HANDLER);
+
+    countDownLatch.await(120, TimeUnit.SECONDS);
+    fut.cancel(true);
+    assertEquals(countDownLatch.getCount(), 0);
+    snapshot.createOrValidate();
+  }
+
+  @SneakyThrows
+  @Test
   public void runMutationTest() {
     Path rootDir = Path.of("../../sqrl-examples/mutations");
 
@@ -33,7 +75,7 @@ public class MutationSubscriptionTest extends AbstractSubscriptionTest {
     listenOnWebsocket("subscription { receiveEvent { id name } }", (t) -> {
       snapshot.addContent(t.toString());
       countDownLatch.countDown();
-    });
+    }).future().toCompletionStage().toCompletableFuture().get();
 
     String query = "mutation ($input: GenericEvent!) { createEvent(event: $input) { id } }";
     executeRequests(query, new JsonObject().put("input", new JsonObject().put("id", "id1").put("name", "name1")), NO_HANDLER);
