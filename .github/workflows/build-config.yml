@@ -22,4 +22,4 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Build SQRL
-      run: mvn -pl sqrl-integration-tests -Dtest=MutationSubscriptionTest#runMutationTest -T 1 -B -U -e clean install --no-transfer-progress
+      run: mvn -T 1 -B -U -e clean install --no-transfer-progress
