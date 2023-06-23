@@ -85,14 +85,19 @@ public abstract class AbstractSubscriptionTest {
   @BeforeEach
   public void setup(TestInfo testInfo, Vertx vertx) throws IOException {
     kafka.start();
+    log.info("Kafka started: " + kafka.getAllTopicsInCluster());
+
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     this.vertx = vertx;
   }
 
+  @SneakyThrows
   @AfterEach
   public void tearDown() {
     testDatabase.stop();
     kafka.stop();
+    vertx.close()
+        .toCompletionStage().toCompletableFuture().get(4, TimeUnit.SECONDS);
   }
 
   protected void executeRequests(String query, JsonObject input,
@@ -242,7 +247,7 @@ public abstract class AbstractSubscriptionTest {
         plan, ErrorCollector.root());
 
     try {
-      fut.get(5, TimeUnit.SECONDS);
+      fut.get(10, TimeUnit.SECONDS);
     } catch (Exception e) {
       //give flink some time to start
     }
@@ -265,7 +270,7 @@ public abstract class AbstractSubscriptionTest {
   private Path createPackageOverride(EmbeddedKafkaCluster kafka, PostgreSQLContainer testDatabase) {
     Map overrideConfig = Map.of("engines",
         Map.of("log", Map.of("connector",
-            Map.of("bootstrap.servers", kafka.bootstrapServers())),
+            Map.of("bootstrap.servers", "localhost:" + kafka.bootstrapServers().split(":")[1])),
         "database", toDbMap(testDatabase)));
     return writeJson(overrideConfig);
   }

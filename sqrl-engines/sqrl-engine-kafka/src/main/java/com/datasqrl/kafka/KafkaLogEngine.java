@@ -28,13 +28,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.internals.Topic;
 
+@Slf4j
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   private final TableConfig config;
@@ -46,6 +50,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     this.schemaFactory = schemaFactory;
   }
 
+  @SneakyThrows
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan,
       ErrorCollector errors) {
@@ -55,7 +60,14 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .getSubConfig("connector").asString("bootstrap.servers").get()))) {
       KafkaPhysicalPlan kafkaPhysicalPlan = (KafkaPhysicalPlan) plan;
       result = admin.createTopics(kafkaPhysicalPlan.getTopics());
+      try {//debug
+        result.all().get(10, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        log.error("Could not create topics.");
+      }
+      log.info("Topics created: " + admin.listTopics().names().get());
     }
+
 
     return result.all().toCompletionStage().toCompletableFuture()
         .thenApply(f->new ExecutionResult.Message("COMPLETE"));
