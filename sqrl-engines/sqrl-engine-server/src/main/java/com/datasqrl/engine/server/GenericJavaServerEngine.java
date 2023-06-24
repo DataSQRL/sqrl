@@ -2,7 +2,6 @@ package com.datasqrl.engine.server;
 
 import static com.datasqrl.engine.EngineCapability.NO_CAPABILITIES;
 
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -13,7 +12,6 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
@@ -24,6 +22,7 @@ import io.vertx.core.Vertx;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -41,17 +40,19 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   public static final int PORT_DEFAULT = 8888;
 
   private final int port;
+  private final Optional<Vertx> vertx;
 
-  public GenericJavaServerEngine(String engineName, @NonNull SqrlConfig config) {
+  public GenericJavaServerEngine(String engineName, @NonNull int port, Optional<Vertx> vertx) {
     super(engineName, Type.SERVER, NO_CAPABILITIES);
-    this.port = config.asInt(PORT_KEY).withDefault(PORT_DEFAULT).get();
+    this.port = port;
+    this.vertx = vertx;
   }
 
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     Preconditions.checkArgument(plan instanceof ServerPhysicalPlan);
     ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
-    Vertx vertx = Vertx.vertx();
+    Vertx vertx = this.vertx.orElseGet(Vertx::vertx);
     CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
             serverPlan.getModel(), port, serverPlan.getJdbc()))
         .toCompletionStage()

@@ -19,6 +19,7 @@ import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactory;
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SourceFactory;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.TableDescriptorSourceFactory;
 import com.datasqrl.engine.stream.flink.sql.ExtractUniqueSourceVisitor;
 import com.datasqrl.engine.stream.flink.sql.FlinkConnectorServiceLoader;
@@ -109,7 +110,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   private final List<FlinkQuery> queries = new ArrayList<>();
   private final FlinkRelToSqlConverter relToSqlConverter = new FlinkRelToSqlConverter(queries);
 
-  public FlinkBase create(List<? extends Query> queries, Map<String, UserDefinedFunction> udfs,
+  public FlinkBase create(SqrlConfig config, List<? extends Query> queries, Map<String, UserDefinedFunction> udfs,
       Set<URL> jars) {
     checkQueriesAreWriteQuery(queries);
 
@@ -132,9 +133,8 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     return FlinkBase.builder()
         .config(DefaultFlinkConfig.builder()
-            .streamExecutionEnvironmentConfig(Map.of("taskmanager.memory.network.max", "1g"))
-            .tableEnvironmentConfig(new HashMap<>())
-            //todo: get flink config
+            .streamExecutionEnvironmentConfig(getStreamConfig(config))
+            .tableEnvironmentConfig(getTableConfig(config))
             .build())
         .statements(this.statements)
         .functions(this.functions)
@@ -143,6 +143,32 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .queries(this.queries)
         .errorSink(createErrorSink(errorSink))
         .build();
+  }
+
+  private Map<String, String> getTableConfig(SqrlConfig config) {
+    Map<String, String> conf = new HashMap<>();
+    for (Map.Entry<String, String> entry : config.toStringMap().entrySet()) {
+      if (entry.getKey().contains(".") && isTableConfigValue(entry.getKey())) {
+        conf.put(entry.getKey(), entry.getValue());
+      }
+    }
+
+    return conf;
+  }
+
+  private boolean isTableConfigValue(String key) {
+    return key.startsWith("table.") || key.startsWith("sql-client.");
+  }
+
+  private Map<String, String> getStreamConfig(SqrlConfig config) {
+    Map<String, String> conf = new HashMap<>();
+    for (Map.Entry<String, String> entry : config.toStringMap().entrySet()) {
+      if (entry.getKey().contains(".") && !isTableConfigValue(entry.getKey())) {
+        conf.put(entry.getKey(), entry.getValue());
+      }
+    }
+
+    return conf;
   }
 
   private void registerJars(Set<URL> jars) {

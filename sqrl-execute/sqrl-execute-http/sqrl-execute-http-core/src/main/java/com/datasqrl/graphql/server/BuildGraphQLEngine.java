@@ -25,7 +25,8 @@ import com.datasqrl.graphql.server.Model.SchemaVisitor;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import graphql.GraphQL;
-import graphql.language.ScalarTypeDefinition;
+import graphql.language.InterfaceTypeDefinition;
+import graphql.language.TypeDefinition;
 import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLCodeRegistry;
@@ -88,13 +89,27 @@ public class BuildGraphQLEngine implements
       }
     }
 
+    RuntimeWiring wiring = createWiring(registry, codeRegistry);
     GraphQLSchema graphQLSchema = new SchemaGenerator()
-        .makeExecutableSchema(registry,
-            RuntimeWiring.newRuntimeWiring()
-                .scalar(CustomScalars.Double)
-                .codeRegistry(codeRegistry).build());
+        .makeExecutableSchema(registry, wiring);
 
     return GraphQL.newGraphQL(graphQLSchema).build();
+  }
+
+  private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
+    RuntimeWiring.Builder wiring = RuntimeWiring.newRuntimeWiring()
+        .codeRegistry(codeRegistry)
+        .scalar(CustomScalars.Double);
+
+    for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
+      if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {
+        //create a superficial resolver
+        //TODO: interfaces and unions as return types
+        wiring.type(typeEntry.getKey(), (builder)-> builder
+            .typeResolver(env1 -> null));
+      }
+    }
+    return wiring.build();
   }
 
   @Override

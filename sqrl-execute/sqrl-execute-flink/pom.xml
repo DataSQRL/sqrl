@@ -9,6 +9,12 @@
 
   <artifactId>sqrl-execute-flink</artifactId>
   <packaging>pom</packaging>
+    <properties>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
   <modules>
     <module>sqrl-execute-flink-connectors</module>
     <module>sqrl-execute-flink-core</module>

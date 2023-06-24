@@ -6,6 +6,7 @@ package com.datasqrl.engine.stream.flink;
 import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 
 import com.datasqrl.FlinkEnvironmentBuilder;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -33,23 +34,29 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
 
   public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = STANDARD_STREAM;
   final ExecutionEnvironmentFactory execFactory;
+  private final SqrlConfig config;
 
-  public AbstractFlinkStreamEngine(ExecutionEnvironmentFactory execFactory) {
+  public AbstractFlinkStreamEngine(ExecutionEnvironmentFactory execFactory, SqrlConfig config) {
     super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
     this.execFactory = execFactory;
+    this.config = config;
   }
 
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
     Preconditions.checkArgument(plan instanceof FlinkStreamPhysicalPlan);
     FlinkStreamPhysicalPlan flinkPlan = (FlinkStreamPhysicalPlan) plan;
-    FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder(errors);
-    StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
-    TableResult rslt = statementSet.execute();
-    rslt.print(); //todo: this just forces print to wait for the async
-    ExecutionResult result = new ExecutionResult.Message(rslt.getJobClient().get()
-        .getJobID().toString());
-    return CompletableFuture.completedFuture(result);
+
+    return CompletableFuture.supplyAsync(()->{
+      FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder(errors);
+      StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
+
+      TableResult rslt = statementSet.execute();
+      rslt.print(); //todo: this just forces print to wait for the async
+      ExecutionResult result = new ExecutionResult.Message(rslt.getJobClient().get()
+          .getJobID().toString());
+      return result;
+    });
   }
 
   @Override
@@ -60,7 +67,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
     return new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
-        plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
+        this.config, plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
   }
 
   public abstract FlinkStreamBuilder createJob();

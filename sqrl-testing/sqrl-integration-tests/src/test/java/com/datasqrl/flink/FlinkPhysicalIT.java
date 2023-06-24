@@ -39,6 +39,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   @AfterEach
   @SneakyThrows
   public void cleanupDirectory() {
+    super.tearDown();
     //Contents written to exportPath are validated in validateTables()
     if (Files.isDirectory(exportPath)) {
       FileUtils.deleteDirectory(exportPath.toFile());

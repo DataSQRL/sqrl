@@ -5,7 +5,6 @@ package com.datasqrl.util;
 
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.util.data.Clickstream;
-import com.datasqrl.util.data.Examples;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Repository;
@@ -148,17 +147,6 @@ public interface TestScript {
                   .flatMap(gql ->
                           jdbcEngines.stream()
                                   .map(e -> Arguments.of(script, gql, e))));
-    }
-  }
-
-  public class ExampleScriptsProvider implements ArgumentsProvider {
-
-    @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
-        throws Exception {
-
-      return Examples.scriptList.stream()
-          .map(script->Arguments.of(script));
     }
   }
 

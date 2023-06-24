@@ -58,7 +58,14 @@ public class IntegrationTestSettings {
         break;
     }
     if (!Strings.isNullOrEmpty(streamEngineName)) {
-      config.getSubConfig("streams").setProperty(EngineFactory.ENGINE_NAME_KEY, streamEngineName);
+      config.getSubConfig("streams")
+          .setProperty(EngineFactory.ENGINE_NAME_KEY, streamEngineName);
+    }
+
+    //Flink config
+    if (getStream() == StreamEngine.FLINK) {
+      SqrlConfig stream = config.getSubConfig("streams");
+//      stream.setProperty("taskmanager.memory.network.max", "800m");
     }
 
     //Database engine

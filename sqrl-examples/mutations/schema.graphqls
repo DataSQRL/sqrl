@@ -11,6 +11,10 @@ type Mutation {
   createEvent(event: GenericEvent!): Event
 }
 
+type Subscription {
+  receiveEvent: Event
+}
+
 input GenericEvent {
   id: String
   name: String

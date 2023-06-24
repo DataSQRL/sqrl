@@ -30,7 +30,7 @@ public class JDBCEngineFactory implements DatabaseEngineFactory {
   }
 
   @Override
-  public DatabaseEngine initialize(@NonNull SqrlConfig config) {
+  public JDBCEngine initialize(@NonNull SqrlConfig config) {
     return new JDBCEngine(getConnector(config));
   }
 

@@ -34,7 +34,7 @@ public class KafkaLogEngineFactory implements EngineFactory {
   }
 
   @Override
-  public ExecutionEngine initialize(@NonNull SqrlConfig config) {
+  public KafkaLogEngine initialize(@NonNull SqrlConfig config) {
     TableConfig tableConfig = new TableConfig(Name.system(ENGINE_NAME), config);
     Optional<String> schemaType = tableConfig.getSchemaType();
     Preconditions.checkArgument(schemaType.isPresent(), "Need to configure schema for log engine");

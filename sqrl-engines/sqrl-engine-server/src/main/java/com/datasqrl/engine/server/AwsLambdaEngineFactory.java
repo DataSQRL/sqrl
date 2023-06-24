@@ -1,11 +1,16 @@
 package com.datasqrl.engine.server;
 
+import static com.datasqrl.engine.server.GenericJavaServerEngine.PORT_DEFAULT;
+import static com.datasqrl.engine.server.GenericJavaServerEngine.PORT_KEY;
+
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.ExecutionEngine;
 import com.google.auto.service.AutoService;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
 
 @Slf4j
 @AutoService(EngineFactory.class)
@@ -20,13 +25,13 @@ public class AwsLambdaEngineFactory extends GenericJavaServerEngineFactory {
 
   @Override
   public ExecutionEngine initialize(@NonNull SqrlConfig config) {
-    return new LambdaNativeEngine(config);
+    return new LambdaNativeEngine(config.asInt(PORT_KEY).withDefault(PORT_DEFAULT).get());
   }
 
   public static class LambdaNativeEngine extends GenericJavaServerEngine {
 
-    public LambdaNativeEngine(@NonNull SqrlConfig config) {
-      super(ENGINE_NAME, config);
+    public LambdaNativeEngine(@NonNull int port) {
+      super(ENGINE_NAME, port, Optional.empty());
     }
   }
 }

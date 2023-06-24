@@ -92,7 +92,7 @@ public class FileTestUtil {
   }
 
   private static final ObjectMapper jsonMapper = SqrlObjectMapper.INSTANCE;
-  private static final YAMLMapper yamlMapper = new YAMLMapper();
+  private static final ObjectMapper yamlMapper = SqrlObjectMapper.YAML_INSTANCE;
 
   static {
     jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
