@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import com.datasqrl.FlinkEnvironmentBuilder.PlanContext;
 import com.datasqrl.FlinkExecutablePlan.DefaultFlinkConfig;
 import com.datasqrl.FlinkExecutablePlan.FlinkBase;
 import com.datasqrl.FlinkExecutablePlan.FlinkBaseVisitor;
@@ -20,8 +21,12 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSqlTableApiDefinition;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatementVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinitionVisitor;
-import com.datasqrl.FlinkEnvironmentBuilder.PlanContext;
-import com.datasqrl.StreamTableConverter.Inspector;
+import com.datasqrl.InputError.InputErrorMessage;
+import com.datasqrl.InputError.Map2InputErrorMessage;
+import com.datasqrl.StreamTableConverter.ConvertToStream;
+import com.datasqrl.StreamTableConverter.EmitFirstInsertOrUpdate;
+import com.datasqrl.StreamTableConverter.KeyedIndexSelector;
+import com.datasqrl.StreamTableConverter.RowMapper;
 import com.datasqrl.config.BaseConnectorFactory;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSinkFactoryContext;
@@ -30,8 +35,6 @@ import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.config.TableDescriptorSourceFactory;
 import com.datasqrl.engine.stream.FunctionWithError;
-import com.datasqrl.InputError.InputErrorMessage;
-import com.datasqrl.InputError.Map2InputErrorMessage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.error.NotYetImplementedException;
@@ -39,19 +42,14 @@ import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.SourceRecord.Named;
 import com.datasqrl.io.SourceRecord.Raw;
 import com.datasqrl.io.formats.FormatFactory;
+import com.datasqrl.io.tables.SchemaValidator;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.model.LogicalStreamMetaData;
-import com.datasqrl.StreamTableConverter.ConvertToStream;
-import com.datasqrl.StreamTableConverter.EmitFirstInsertOrUpdate;
-import com.datasqrl.StreamTableConverter.KeyedIndexSelector;
-import com.datasqrl.StreamTableConverter.RowMapper;
 import com.datasqrl.model.StreamType;
-import com.datasqrl.io.tables.SchemaValidator;
 import com.datasqrl.serializer.SerializableSchema;
-import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.google.common.base.Strings;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -69,7 +67,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SideOutputDataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -158,7 +155,7 @@ public class FlinkEnvironmentBuilder implements
   }
 
   private Optional<DataStream<InputError>> createErrorStream(PlanContext planCtx) {
-    List<SideOutputDataStream> errorStreams = planCtx.getErrorStreams();
+    List<DataStream> errorStreams = planCtx.getErrorStreams();
     if (errorStreams.size() > 0) {
       DataStream<InputError> combinedStream = errorStreams.get(0);
       if (errorStreams.size() > 1) {
@@ -348,7 +345,7 @@ public class FlinkEnvironmentBuilder implements
     public static class SourceResultResult {
 
       DataStream dataStream;
-      List<SideOutputDataStream> errorStream;
+      List<DataStream> errorStream;
     }
   }
 
@@ -360,7 +357,7 @@ public class FlinkEnvironmentBuilder implements
       String schemaDefinition,
       TypeInformation outputSchema,
       PlanContext context) {
-    final List<SideOutputDataStream> errorSideChannels = new ArrayList<>();
+    final List<DataStream> errorSideChannels = new ArrayList<>();
 
     SingleOutputStreamOperator<TimeAnnotatedRecord<String>> stream =
         sourceFactory.create(new FlinkSourceFactoryContext(context.getSEnv(), tableConfig.getName().getCanonical(),
@@ -499,7 +496,7 @@ public class FlinkEnvironmentBuilder implements
 
     StatementSet statementSet;
 
-    List<SideOutputDataStream> errorStreams = new ArrayList<>();
+    List<DataStream> errorStreams = new ArrayList<>();
     AtomicInteger errorTagCount = new AtomicInteger(0);
 
     public OutputTag<InputError> createErrorTag() {
