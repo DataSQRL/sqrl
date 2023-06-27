@@ -24,8 +24,8 @@ public class NewTopicSerializer<T extends Serializable> extends StdSerializer<Ne
       throws IOException {
     gen.writeStartObject();
     gen.writeStringField("name", newTopic.name());
-    gen.writeObjectField("numPartitions", newTopic.numPartitions());
-    gen.writeObjectField("replicationFactor", newTopic.replicationFactor());
+    gen.writeObjectField("numPartitions", newTopic.numPartitions() == -1 ? 1 : newTopic.numPartitions());
+    gen.writeObjectField("replicationFactor", newTopic.replicationFactor() == -1 ? 1 : newTopic.replicationFactor());
     gen.writeObjectField("replicasAssignments", newTopic.replicasAssignments());
     gen.writeObjectField("configs", newTopic.configs());
     gen.writeEndObject();
