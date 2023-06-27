@@ -89,14 +89,16 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
     CountDownLatch countDownLatch = new CountDownLatch(1);
 
-
     this.port = getPort(8888);
     GraphQLServer server = new GraphQLServer(model, port, jdbc);
     vertx.deployVerticle(server, c->countDownLatch.countDown());
     countDownLatch.await(10, TimeUnit.SECONDS);
     if (countDownLatch.getCount() != 0) {
-      throw new RuntimeException();
+      throw new RuntimeException("Could not start vertx");
     }
+
+    //Testing short sleep for failing test
+    Thread.sleep(2000);
 
     for (Map.Entry<String, String> query : queries.entrySet()) {
       HttpResponse<String> response = testQuery(query.getValue());
