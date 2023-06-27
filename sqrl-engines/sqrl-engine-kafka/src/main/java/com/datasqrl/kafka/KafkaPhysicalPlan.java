@@ -36,8 +36,8 @@ public class KafkaPhysicalPlan implements EnginePhysicalPlan {
               "--topic %s --partitions %s --replication-factor %s",
           this.config.getSubConfig("connector").asString("bootstrap.servers").get(),
           topic.name(),
-          topic.numPartitions(),
-          topic.replicationFactor()
+          topic.numPartitions() == -1 ? 1 : topic.numPartitions(),
+          topic.replicationFactor() == -1 ? 1 : topic.replicationFactor()
           ));
     }
     b.append("\nexit 0;");
