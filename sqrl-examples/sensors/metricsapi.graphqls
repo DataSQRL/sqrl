@@ -3,17 +3,7 @@ type Query {
   SensorMaxTemp(sensorid: Int): [SensorMaxTemp!]
 }
 
-type Subscription {
-  HighTempAlert(sensorid: Int): HighTempAlert
-}
-
 type SecReading {
-  sensorid: Int!
-  timeSec: String!
-  temp: Float!
-}
-
-type HighTempAlert {
   sensorid: Int!
   timeSec: String!
   temp: Float!
@@ -36,4 +26,14 @@ input ReadingInput {
 type CreatedReading {
   _source_time: String!
   sensorid: Int!
+}
+
+type Subscription {
+  HighTempAlert(sensorid: Int): HighTempAlert
+}
+
+type HighTempAlert {
+  sensorid: Int!
+  timeSec: String!
+  temp: Float!
 }
