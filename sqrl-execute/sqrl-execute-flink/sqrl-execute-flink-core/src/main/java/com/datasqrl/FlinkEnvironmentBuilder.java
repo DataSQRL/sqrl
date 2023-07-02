@@ -370,7 +370,7 @@ public class FlinkEnvironmentBuilder implements
         new MapWithErrorProcess<>(formatErrorTag, formatStream,
             ErrorPrefix.INPUT_DATA.resolve("format")),
         TypeInformation.of(Raw.class));
-    errorSideChannels.add(process.getSideOutput(formatErrorTag));
+//    errorSideChannels.add(process.getSideOutput(formatErrorTag));
 
     //todo validator may be optional
     TableSchema schema = factory.create(schemaDefinition, tableConfig.getBase().getCanonicalizer());
@@ -386,8 +386,8 @@ public class FlinkEnvironmentBuilder implements
             new InputValidatorFunction(schemaValidator),
             ErrorPrefix.INPUT_DATA.resolve("schemaValidation")),
         TypeInformation.of(Named.class));
-    errorSideChannels.add(
-        schemaValidatedStream.getSideOutput(errorTag));
+//    errorSideChannels.add(
+//        schemaValidatedStream.getSideOutput(errorTag));
 
     //Map rows (from factory)
     com.datasqrl.engine.stream.RowMapper mapper = schema.getRowMapper(

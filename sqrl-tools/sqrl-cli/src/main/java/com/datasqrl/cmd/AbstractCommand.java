@@ -33,7 +33,7 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
       e.printStackTrace();
       root.statusHook.onFailure(e);
     } finally {
-      if (startKafka) {
+      if (CLUSTER != null && startKafka) {
         CLUSTER.stop();
       }
     }
