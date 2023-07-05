@@ -156,6 +156,10 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       }
     }
 
+    if (!conf.containsKey("table.exec.source.idle-timeout")) {
+      conf.put("table.exec.source.idle-timeout", "5000");
+    }
+
     return conf;
   }
 
