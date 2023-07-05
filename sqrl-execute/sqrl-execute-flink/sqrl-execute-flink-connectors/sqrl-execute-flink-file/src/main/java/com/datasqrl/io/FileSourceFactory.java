@@ -13,12 +13,14 @@ import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.tables.BaseTableConfig;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
+import com.datasqrl.timestamp.ProgressingMonotonicEventTimeWatermarks;
 import com.datasqrl.util.FileStreamUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -30,6 +32,8 @@ import org.apache.flink.connector.file.src.reader.StreamFormat;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.util.Collector;
+
+import static java.time.temporal.ChronoUnit.SECONDS;
 
 
 @AutoService(SourceFactory.class)
@@ -72,9 +76,7 @@ public class FileSourceFactory implements DataStreamSourceFactory {
                 tableConfig.getFormat(),
                 FileDataSystemConfig.fromConfig(tableConfig));
         builder.setFileEnumerator(fileEnumerator);
-        if (monitorDuration != null) {
-          builder.monitorContinuously(Duration.ofSeconds(10));
-        }
+        builder.monitorContinuously(Duration.ofSeconds(10));
       } else {
         Path[] inputPaths = pathConfig.getFiles(ctx.getTableConfig()).stream()
             .map(FilePath::toFlinkPath).toArray(size -> new Path[size]);
@@ -83,10 +85,11 @@ public class FileSourceFactory implements DataStreamSourceFactory {
                 charset), inputPaths);
       }
 
-      return ctx.getEnv().fromSource(builder.build(),
+      return ctx.getEnv().fromSource(builder
+                              .build(),
           WatermarkStrategy.noWatermarks(), ctx.getFlinkName())
           .map(new NoTimedRecord())
-//          .setParallelism(4)//todo config
+          .setParallelism(1)//todo config
           ;
     }
   }

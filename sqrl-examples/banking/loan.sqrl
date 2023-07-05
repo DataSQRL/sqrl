@@ -1,8 +1,9 @@
 IMPORT source.Customers;
-IMPORT source.Applications;
+IMPORT loan.Applications;
 IMPORT loan.ApplicationUpdates;
 IMPORT source.Loan_types AS LoanTypes;
 
+Applications.updated_at := _source_time;
 ApplicationUpdates.timestamp := _source_time;
 
 Customers := DISTINCT Customers ON id ORDER BY updated_on DESC;

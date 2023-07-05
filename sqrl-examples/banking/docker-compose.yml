@@ -25,10 +25,12 @@ services:
     ports:
       - "8081:8081"
     command: jobmanager
+    user: root
     environment:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
+      - TZ:"America/Los_Angeles"
     volumes:
       - /Users/henneberger/sqrl/sqrl-examples/banking/data:/sqrl-examples/banking/data
 
@@ -37,11 +39,13 @@ services:
     depends_on:
       - flink-jobmanager
     command: taskmanager
+    user: root
     environment:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 1
+      - TZ:"America/Los_Angeles"
     volumes:
       - /Users/henneberger/sqrl/sqrl-examples/banking/data:/sqrl-examples/banking/data
 

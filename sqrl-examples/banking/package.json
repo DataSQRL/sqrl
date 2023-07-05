@@ -28,7 +28,7 @@
     },
     "streams" : {
       "name" : "flink",
-      "table.exec.source.idle-timeout": "1s"
+      "table.exec.source.idle-timeout": "5000"
 
     }
   },

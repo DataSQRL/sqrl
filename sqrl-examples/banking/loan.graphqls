@@ -83,6 +83,7 @@ type Subscription {
 type Mutation {
   ApplicationUpdates(event: ApplicationUpdateEvent!): ApplicationUpdateEventResult!
   Applications(event: ApplicationEvent!): ApplicationEventResult!
+  LoanTypes(event: LoanTypesEvent!): LoanTypesEventResult!
 }
 
 input ApplicationUpdateEvent {
@@ -106,4 +107,19 @@ input ApplicationEvent {
 
 type ApplicationEventResult {
   id: Int!
+}
+
+input LoanTypesEvent {
+  id: Int!
+  name: String!
+  description: String!
+  interest_rate: Float!
+  max_amount: Float!
+  min_amount: Float!
+  max_duration: Int!
+  min_duration: Int!
+}
+
+type LoanTypesEventResult {
+ id: Int!
 }

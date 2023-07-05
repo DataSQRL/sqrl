@@ -197,6 +197,7 @@ public abstract class AbstractSubscriptionTest {
 
   protected void compile(Path rootDir, Path script, Path graphql) {
     Path override = createPackageOverride(kafka, testDatabase);
+
     Path defaultPackage = createDefaultPackage(rootDir, script, graphql);
 
     picocli.CommandLine rootCommand = new RootCommand(rootDir, AssertStatusHook.INSTANCE).getCmd();
