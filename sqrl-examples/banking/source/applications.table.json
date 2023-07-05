@@ -6,8 +6,8 @@
   "identifier" : "applications",
   "type" : "source",
   "connector" : {
-    "name" : "file",
-    "directoryURI" : "../../sqrl-examples/banking/data"
+    "directoryURI" : "../../sqrl-examples/banking/data",
+    "name" : "file"
   },
   "canonicalizer" : "system"
 }

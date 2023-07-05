@@ -30,7 +30,7 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
     volumes:
-      - /Users/matthias/git/sqml/sqrl-examples/banking:/Users/matthias/git/sqml/sqrl-examples/banking
+      - /Users/henneberger/sqrl/sqrl-examples/banking/data:/sqrl-examples/banking/data
 
   flink-taskmanager:
     image: flink:1.16.1-scala_2.12-java11
@@ -43,7 +43,7 @@ services:
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 1
     volumes:
-      - /Users/matthias/git/sqml/sqrl-examples/banking:/Users/matthias/git/sqml/sqrl-examples/banking
+      - /Users/henneberger/sqrl/sqrl-examples/banking/data:/sqrl-examples/banking/data
 
   kafka:
     image: docker.io/bitnami/kafka:3.4

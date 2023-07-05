@@ -29,6 +29,7 @@ import org.apache.calcite.rel.core.Uncollect;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexFieldAccess;
@@ -47,11 +48,14 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSnapshot;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
+
+import static org.apache.calcite.sql.type.SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
 
 @Getter
 public class FlinkRelToSqlConverter extends RelToSqlConverter {
@@ -265,8 +269,71 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     return this.result(as, List.of(Clause.FROM), null, null, Map.of());
   }
 
+  private Project addCasts(Project project) {
+    long numTimestamps = project.getRowType().getFieldList().stream()
+            .filter(f->f.getType().getSqlTypeName() == TIMESTAMP_WITH_LOCAL_TIME_ZONE)
+            .count();
+
+    int tsIndex = getTimestampIndex(project.getRowType().getFieldList());
+    if (tsIndex == -1 || numTimestamps < 2) {
+      return project;
+    }
+    RexBuilder rexBuilder = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
+            FlinkTypeSystem.INSTANCE));
+    //Cast all other timestamps
+    List<RexNode> rex = new ArrayList<>();
+    List<String> names = new ArrayList<>();
+    for (int i = 0; i < project.getRowType().getFieldList().size(); i++) {
+      RelDataTypeField field = project.getRowType().getFieldList().get(i);
+      RexNode node = project.getProjects().get(i);
+      if (field.getType().getSqlTypeName() == TIMESTAMP_WITH_LOCAL_TIME_ZONE && i != tsIndex) {
+        RexNode casted = rexBuilder.makeCast(field.getType(),
+                node, true);
+        rex.add(casted);
+      } else {
+        rex.add(node);
+      }
+      names.add(field.getName());
+    }
+
+    LogicalProject p = new LogicalProject(project.getCluster(),
+            project.getTraitSet(), project.getHints(), project.getInput(),
+            rex, project.getRowType());
+    return p;
+  }
+
+  private int getTimestampIndex(List<RelDataTypeField> fieldList) {
+    //Look for in order:
+    // the latest 'timestamp'*
+    // a '_source_time'
+
+    for (int i = fieldList.size() - 1; i >= 0; i--) {
+      if (fieldList.get(i).getType().getSqlTypeName() == TIMESTAMP_WITH_LOCAL_TIME_ZONE
+              && fieldList.get(i).getName().startsWith("timestamp")) {
+        return i;
+      }
+    }
+    for (int i = fieldList.size() - 1; i >= 0; i--) {
+      if (fieldList.get(i).getType().getSqlTypeName() == TIMESTAMP_WITH_LOCAL_TIME_ZONE
+              && fieldList.get(i).getName().equalsIgnoreCase("_source_time")) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  public boolean isTop = true;
+
   @Override
   public Result visit(Project project) {
+    //At the last second, do a flink rule event-time cast. we need to know if we're at the top too
+    if (isTop) {
+      project = addCasts(project);
+    }
+    isTop = false;
+
+
     Result result = super.visit(project);
     Optional<WatermarkHint> watermark = SqrlHint.fromRel(project, WatermarkHint.CONSTRUCTOR);
     /*
@@ -282,13 +349,20 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
       SqlNode node = select.getSelectList().get(index);
       //If it is a call, rewrite it to an identifier
       if (node instanceof SqlCall) {
-        SqlCall call = (SqlCall) node;
-        Preconditions.checkState(call.getKind() == SqlKind.AS);
-        SqlIdentifier identifier = (SqlIdentifier) call.getOperandList().get(1);
 
-        SqlIdentifier newItem = new SqlIdentifier(List.of(//result.neededAlias,
-            identifier.names.get(identifier.names.size() - 1)), SqlParserPos.ZERO);
-        select.getSelectList().set(index, newItem);
+        SqlCall call = (SqlCall) node;
+        //hack skip for now
+        if (call.getOperandList().get(0) instanceof SqlCall && ((SqlCall)call.getOperandList().get(0)).getOperator() == SqlStdOperatorTable.CAST) {
+
+        } else {
+          Preconditions.checkState(call.getKind() == SqlKind.AS);
+          SqlIdentifier identifier = (SqlIdentifier) call.getOperandList().get(1);
+
+          SqlIdentifier newItem = new SqlIdentifier(List.of(//result.neededAlias,
+              identifier.names.get(identifier.names.size() - 1)), SqlParserPos.ZERO);
+          select.getSelectList().set(index, newItem);
+
+        }
       }
     }
 

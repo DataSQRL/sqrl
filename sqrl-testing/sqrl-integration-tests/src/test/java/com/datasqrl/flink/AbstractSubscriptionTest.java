@@ -25,13 +25,13 @@ import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.kafka.KafkaLogEngine;
 import com.datasqrl.kafka.KafkaLogEngineFactory;
 import com.datasqrl.kafka.KafkaPhysicalPlan;
+import com.datasqrl.kafka.NewTopic;
 import com.datasqrl.packager.PackagerConfig;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.service.PackagerUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.impl.future.PromiseImpl;
@@ -52,9 +52,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.AfterEach;
@@ -71,7 +71,10 @@ import org.testcontainers.utility.DockerImageName;
 @ExtendWith(VertxExtension.class)
 public abstract class AbstractSubscriptionTest {
 
-  public static final Consumer<HttpResponse<JsonObject>> NO_HANDLER = (h)->{};
+  public static final Consumer<HttpResponse<JsonObject>> FAIL_HANDLER = (h)->{
+    if(h.statusCode() != 200 || h.body().containsKey("errors")) fail();
+  };
+
   public static final Consumer<JsonObject> NO_WS_HANDLER = (h)->{};
   @Container
   protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
@@ -132,6 +135,7 @@ public abstract class AbstractSubscriptionTest {
   protected PromiseImpl listenOnWebsocket(String query, Consumer<JsonObject> successHandler) {
     PromiseImpl p = new PromiseImpl();
     vertx.createHttpClient().webSocket(8888, "localhost", "/graphql-ws", websocketRes -> {
+      log.info("Websocket connected: " + websocketRes.succeeded());
       if (websocketRes.succeeded()) {
         WebSocket websocket = websocketRes.result();
 

@@ -41,6 +41,7 @@ public class RelToFlinkSql {
   }
 
   public static String convertToSql(FlinkRelToSqlConverter converter, RelNode optimizedNode) {
+    converter.isTop = true;
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
     QueryPipelineItem query = converter.getOrCreate(QueryType.ROOT, sqlNode, optimizedNode, null);
     return query.getTableName();

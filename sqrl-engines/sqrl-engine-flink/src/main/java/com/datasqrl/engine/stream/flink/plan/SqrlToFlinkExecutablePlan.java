@@ -1,6 +1,7 @@
 package com.datasqrl.engine.stream.flink.plan;
 
 import static org.apache.calcite.sql.SqlUtil.stripAs;
+import static org.apache.calcite.sql.type.SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
 
 import com.datasqrl.FlinkExecutablePlan.DefaultFlinkConfig;
 import com.datasqrl.FlinkExecutablePlan.FlinkBase;
@@ -21,11 +22,7 @@ import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.TableDescriptorSourceFactory;
-import com.datasqrl.engine.stream.flink.sql.ExtractUniqueSourceVisitor;
-import com.datasqrl.engine.stream.flink.sql.FlinkConnectorServiceLoader;
-import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
-import com.datasqrl.engine.stream.flink.sql.RelNodeToTypeInformationTransformer;
-import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.engine.stream.flink.sql.*;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandTemporalJoinRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
@@ -65,8 +62,11 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.plan.RelOptCluster;
+import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.Snapshot;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
@@ -87,8 +87,11 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -331,8 +334,10 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private WriteQuery applyFlinkCompatibilityRules(WriteQuery query) {
     RelNode relNode = query.getRelNode();
+
     Program program = Programs.hep(
         List.of(
+            CastEventTimestampRule.Config.DEFAULT.toRule(),
             PushDownWatermarkHintRule.Config.DEFAULT.toRule(),
             PushWatermarkHintToTableScanRule.Config.DEFAULT.toRule(),
             new ExpandTemporalJoinRule(),
