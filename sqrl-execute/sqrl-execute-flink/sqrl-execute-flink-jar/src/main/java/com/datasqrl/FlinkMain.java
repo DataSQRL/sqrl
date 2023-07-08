@@ -44,7 +44,6 @@ public class FlinkMain {
       TableResult result = statementSet.execute();
       log.info("Plan execution complete: {}", result.getResultKind());
     } catch (Exception e) {
-      log.error("Error:", e);
       errors.getCatcher().handle(e);
     }
     if (errors.hasErrors()) {
