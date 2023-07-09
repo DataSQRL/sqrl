@@ -23,6 +23,8 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Supplier;
+
 import lombok.Value;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -31,8 +33,8 @@ import reactor.core.publisher.Flux;
 public class VertxContext implements Context {
 
   VertxJdbcClient sqlClient;
-  Map<String, SinkProducer> sinks;
-  Map<String, SinkConsumer> subscriptions;
+  Map<String, Supplier<SinkProducer>> sinks;
+  Map<String, Supplier<SinkConsumer>> subscriptions;
 
   @Override
   public JdbcClient getClient() {
@@ -65,7 +67,7 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<?> createSinkFetcher(MutationCoords coords) {
-    SinkProducer emitter = sinks.get(coords.getFieldName());
+    Supplier<SinkProducer> emitter = sinks.get(coords.getFieldName());
 
     Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
     return VertxDataFetcher.create((env, fut) -> {
@@ -77,7 +79,7 @@ public class VertxContext implements Context {
       Map<String, Object> entry = (Map<String, Object>)args.entrySet().stream()
           .findFirst().map(Entry::getValue).get();
 
-      emitter.send(entry)
+      emitter.get().send(entry)
           .onSuccess(sinkResult->{
             ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
             entry.put(ReservedName.SOURCE_TIME.getCanonical(), dateTime.toLocalDateTime());
@@ -89,7 +91,7 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords) {
-    SinkConsumer consumer = subscriptions.get(coords.getFieldName());
+    Supplier<SinkConsumer> consumer = subscriptions.get(coords.getFieldName());
     Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
 
     return new DataFetcher<>() {
@@ -97,7 +99,7 @@ public class VertxContext implements Context {
       public Publisher<Map<String,Object>> get(DataFetchingEnvironment env) throws Exception {
 
         Publisher<Map<String,Object>> publisher = Flux.create(sink -> {
-          consumer.listen(entry -> {
+          consumer.get().listen(entry -> {
                 Map<String, Object> args = env.getArguments();
                 if (!filterSubscription(entry, args)) {
                   sink.next(entry);

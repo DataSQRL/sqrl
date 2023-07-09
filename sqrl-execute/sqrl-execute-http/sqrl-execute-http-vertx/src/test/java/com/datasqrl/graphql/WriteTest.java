@@ -7,12 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigCommons;
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
-import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
-import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.ArgumentSet;
@@ -20,7 +16,6 @@ import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
-import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 import graphql.ExecutionInput;
@@ -28,7 +23,6 @@ import graphql.ExecutionResult;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
-import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -36,6 +30,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -71,8 +66,8 @@ class WriteTest {
   //Todo Add Kafka
 
   private PgPool client;
-  Map<String, SinkProducer> mutations;
-  Map<String, SinkConsumer> subscriptions;
+  Map<String, Supplier<SinkProducer>> mutations;
+  Map<String, Supplier<SinkConsumer>> subscriptions;
 
   RootGraphqlModel model;
   String topicName = "topic-1";
