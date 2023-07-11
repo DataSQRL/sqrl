@@ -30,7 +30,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
-import java.util.function.Supplier;
 
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerConfig;

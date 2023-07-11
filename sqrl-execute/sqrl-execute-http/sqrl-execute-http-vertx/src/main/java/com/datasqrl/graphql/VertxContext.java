@@ -23,15 +23,12 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 @Value
-@Slf4j
 public class VertxContext implements Context {
 
   VertxJdbcClient sqlClient;

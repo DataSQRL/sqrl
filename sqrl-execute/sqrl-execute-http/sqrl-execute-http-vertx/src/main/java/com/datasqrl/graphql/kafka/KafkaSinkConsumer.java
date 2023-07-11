@@ -9,12 +9,10 @@ import com.datasqrl.io.formats.FormatFactory.Parser;
 import com.datasqrl.io.formats.TextLineFormat;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
-import io.vertx.kafka.client.producer.KafkaProducer;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +33,6 @@ public class KafkaSinkConsumer<IN> implements SinkConsumer {
         listener.accept(result.getRecord());
       } else if (result.isError()) {
         errorHandler.accept(new IllegalArgumentException(result.getErrorMsg()));
-        log.error("error! " + result.getErrorMsg());
       }
       //TODO: error handling
     }).exceptionHandler(errorHandler::accept)
