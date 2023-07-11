@@ -61,7 +61,7 @@ public class KafkaBaseTest extends AbstractEngineIT {
     CLUSTER.deleteAllTopicsAndWait(0L);
   }
 
-  public Properties getAdminProps() {
+  public static Properties getAdminProps() {
     Properties props = new Properties();
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
     return props;
@@ -75,7 +75,7 @@ public class KafkaBaseTest extends AbstractEngineIT {
     return props;
   }
 
-  public Properties getConsumerProps(String groupId) {
+  public static Properties getConsumerProps(String groupId) {
     Properties props = getAdminProps();
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());

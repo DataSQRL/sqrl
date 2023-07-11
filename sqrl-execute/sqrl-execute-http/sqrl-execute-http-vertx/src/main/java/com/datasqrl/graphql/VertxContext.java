@@ -26,15 +26,17 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 @Value
+@Slf4j
 public class VertxContext implements Context {
 
   VertxJdbcClient sqlClient;
-  Map<String, Supplier<SinkProducer>> sinks;
-  Map<String, Supplier<SinkConsumer>> subscriptions;
+  Map<String, SinkProducer> sinks;
+  Map<String, SinkConsumer> subscriptions;
 
   @Override
   public JdbcClient getClient() {
@@ -67,7 +69,7 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<?> createSinkFetcher(MutationCoords coords) {
-    Supplier<SinkProducer> emitter = sinks.get(coords.getFieldName());
+    SinkProducer emitter = sinks.get(coords.getFieldName());
 
     Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
     return VertxDataFetcher.create((env, fut) -> {
@@ -79,7 +81,7 @@ public class VertxContext implements Context {
       Map<String, Object> entry = (Map<String, Object>)args.entrySet().stream()
           .findFirst().map(Entry::getValue).get();
 
-      emitter.get().send(entry)
+      emitter.send(entry)
           .onSuccess(sinkResult->{
             ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
             entry.put(ReservedName.SOURCE_TIME.getCanonical(), dateTime.toLocalDateTime());
@@ -91,22 +93,17 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords) {
-    Supplier<SinkConsumer> consumer = subscriptions.get(coords.getFieldName());
+    SinkConsumer consumer = subscriptions.get(coords.getFieldName());
     Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
+
+    Flux<Map<String, Object>> deferredFlux = Flux.<Map<String, Object>>create(sink -> {
+      consumer.listen(sink::next, sink::error, (x) -> sink.complete());
+    }).share();
 
     return new DataFetcher<>() {
       @Override
       public Publisher<Map<String,Object>> get(DataFetchingEnvironment env) throws Exception {
-
-        Publisher<Map<String,Object>> publisher = Flux.create(sink -> {
-          consumer.get().listen(entry -> {
-                Map<String, Object> args = env.getArguments();
-                if (!filterSubscription(entry, args)) {
-                  sink.next(entry);
-                }
-              }, sink::error, done -> sink.complete());
-        });
-        return publisher;
+        return deferredFlux.filter(entry -> !filterSubscription(entry, env.getArguments()));
       }
 
       private boolean filterSubscription(Map<String, Object> map, Map<String, Object> args) {

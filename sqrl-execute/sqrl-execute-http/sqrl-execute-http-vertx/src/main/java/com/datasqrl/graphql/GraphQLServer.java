@@ -43,7 +43,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -178,19 +177,19 @@ public class GraphQLServer extends AbstractVerticle {
     return graphQL;
   }
 
-  static Map<String, Supplier<SinkConsumer>> constructSubscriptions(RootGraphqlModel root, Vertx vertx) {
-    Map<String, Supplier<SinkConsumer>> consumers = new HashMap<>();
+  static Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx) {
+    Map<String, SinkConsumer> consumers = new HashMap<>();
     for (SubscriptionCoords sub: root.getSubscriptions()) {
-      consumers.put(sub.getFieldName(), ()->KafkaSinkConsumer.createFromConfig(vertx,
+      consumers.put(sub.getFieldName(), KafkaSinkConsumer.createFromConfig(vertx,
           sub.getSinkConfig().deserialize(ErrorCollector.root())));
     }
     return consumers;
   }
 
-  static Map<String, Supplier<SinkProducer>> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
-    Map<String, Supplier<SinkProducer>> producers = new HashMap<>();
+  static Map<String, SinkProducer> constructSinkProducers(RootGraphqlModel root, Vertx vertx) {
+    Map<String, SinkProducer> producers = new HashMap<>();
     for (MutationCoords mut : root.getMutations()) {
-      producers.put(mut.getFieldName(), ()->KafkaSinkProducer.createFromConfig(vertx,
+      producers.put(mut.getFieldName(), KafkaSinkProducer.createFromConfig(vertx,
           mut.getSinkConfig().deserialize(ErrorCollector.root())));
     }
     return producers;

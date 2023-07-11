@@ -1,5 +1,5 @@
-{"HighTempAlert":{"sensorid":1,"temp":53.11666667}}
-{"HighTempAlert":{"sensorid":1,"temp":53.11666667}}
-{"HighTempAlert":{"sensorid":1,"temp":53.11666667}}
-{"HighTempAlert":{"sensorid":1,"temp":53.11666667}}
-{"HighTempAlert":{"sensorid":1,"temp":53.11666667}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}

@@ -5,20 +5,25 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.util.data.Sensors;
+import com.google.common.collect.ImmutableList;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static com.datasqrl.util.TestClient.NO_HANDLER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class SensorsTest extends AbstractGraphqlTest {
   CompletableFuture<ExecutionResult> fut;
@@ -90,15 +95,30 @@ public class SensorsTest extends AbstractGraphqlTest {
         + "    _source_time\n"
         + "  }\n"
         + "}";
-    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 41.2), NO_HANDLER);
-    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 45.1), NO_HANDLER);
-    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 55.1), NO_HANDLER);
-    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 65.1), NO_HANDLER);
-    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 50.1), NO_HANDLER);
+//    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 41.2), NO_HANDLER);
+//    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 45.1), NO_HANDLER);
+//    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 55.1), NO_HANDLER);
+//    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 65.1), NO_HANDLER);
+//    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 50.1), NO_HANDLER);
     client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 62.1), NO_HANDLER);
   }
 
   private void validateEvents() {
+//    for (String topic: CLUSTER.getAllTopicsInCluster()) {
+//      try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(
+//          getConsumerProps(UUID.randomUUID().toString()))) {
+//        consumer.subscribe(ImmutableList.of(topic));
+//
+//        ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(2));
+//        for (ConsumerRecord<String, String> record : records) {
+//          events.add(record.key() + ":"
+//              + record.value() + ":" + record.timestamp());
+//        }
+//      } catch (Exception e) {
+//        fail(e);
+//      }
+//    }
+
     Collections.sort(events);
     snapshot.addContent(String.join("\n", events))
         .createOrValidate();

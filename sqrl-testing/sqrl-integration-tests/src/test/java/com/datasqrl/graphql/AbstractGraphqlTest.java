@@ -1,6 +1,7 @@
 package com.datasqrl.graphql;
 
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.io.KafkaBaseTest;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestClient;
 import com.datasqrl.util.TestCompiler;
@@ -31,14 +32,12 @@ import static com.datasqrl.util.TestPackager.createPackageOverride;
 @Slf4j
 @Testcontainers
 @ExtendWith(VertxExtension.class)
-public abstract class AbstractGraphqlTest {
+public abstract class AbstractGraphqlTest extends KafkaBaseTest {
 
   @Container
   protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
       DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
       .withPassword("secret").withDatabaseName("datasqrl");
-
-  public static final EmbeddedKafkaCluster kafka = new EmbeddedKafkaCluster(1);
 
   protected SnapshotTest.Snapshot snapshot;
   protected Vertx vertx;
@@ -49,9 +48,9 @@ public abstract class AbstractGraphqlTest {
 
   @BeforeEach
   public void setup(TestInfo testInfo, Vertx vertx) throws IOException {
-    kafka.start();
-    log.info("Kafka started: " + kafka.getAllTopicsInCluster());
-    packageOverride = createPackageOverride(kafka, testDatabase);
+    CLUSTER.start();
+    log.info("Kafka started: " + CLUSTER.getAllTopicsInCluster());
+    packageOverride = createPackageOverride(CLUSTER, testDatabase);
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     this.vertx = vertx;
@@ -63,8 +62,8 @@ public abstract class AbstractGraphqlTest {
   @SneakyThrows
   @AfterEach
   public void tearDown() {
+    super.tearDown();
     testDatabase.stop();
-    kafka.stop();
     try {
       for (String id : vertx.deploymentIDs()) {
         vertx.undeploy(id).toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);

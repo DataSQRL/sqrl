@@ -35,6 +35,7 @@ public class KafkaSinkConsumer<IN> implements SinkConsumer {
         listener.accept(result.getRecord());
       } else if (result.isError()) {
         errorHandler.accept(new IllegalArgumentException(result.getErrorMsg()));
+        log.error("error! " + result.getErrorMsg());
       }
       //TODO: error handling
     }).exceptionHandler(errorHandler::accept)

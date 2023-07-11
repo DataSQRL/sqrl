@@ -66,8 +66,8 @@ class WriteTest {
   //Todo Add Kafka
 
   private PgPool client;
-  Map<String, Supplier<SinkProducer>> mutations;
-  Map<String, Supplier<SinkConsumer>> subscriptions;
+  Map<String, SinkProducer> mutations;
+  Map<String, SinkConsumer> subscriptions;
 
   RootGraphqlModel model;
   String topicName = "topic-1";
