@@ -257,6 +257,9 @@ public class Model {
     R visitVariableArgument(VariableArgument variableArgument, C context);
   }
 
+  /**
+   * A variable argument
+   */
   @Builder
   @Getter
   @AllArgsConstructor
@@ -304,6 +307,9 @@ public class Model {
     R visitFixedArgument(FixedArgument fixedArgument, C context);
   }
 
+  /**
+   * An argument with a scalar value
+   */
   @Builder
   @Getter
   @AllArgsConstructor

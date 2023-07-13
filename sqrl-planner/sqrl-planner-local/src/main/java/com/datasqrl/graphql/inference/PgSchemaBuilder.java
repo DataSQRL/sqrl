@@ -277,7 +277,7 @@ public class PgSchemaBuilder implements
     return FieldLookupCoords.builder()
         .parentType(field.getParent().getName())
         .fieldName(field.getFieldDefinition().getName())
-        .columnName(field.getColumn().getShadowedName().getCanonical())
+        .columnName(field.getColumn().getVtName().getCanonical())
         .build();
   }
 

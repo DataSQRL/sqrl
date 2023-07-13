@@ -13,6 +13,7 @@ import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -34,17 +35,8 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelProtoDataType;
-import org.apache.calcite.schema.Function;
-import org.apache.calcite.schema.ScannableTable;
-import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.schema.SchemaVersion;
-import org.apache.calcite.schema.Statistic;
-import org.apache.calcite.schema.Statistics;
-import org.apache.calcite.schema.Table;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
-import org.apache.calcite.sql.TableFunctionArgument;
+import org.apache.calcite.schema.*;
+import org.apache.calcite.sql.*;
 
 /**
  * A {@link SQRLTable} represents a logical table in the SQRL script which contains fields that are
@@ -63,7 +55,6 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
 
   private RelDataType fullDataType;
   private Optional<SQRLTable> parent;
-  private Optional<List<TableFunctionArgument>> tableArguments = Optional.empty();
   private VirtualRelationalTable vt;
 
   public SQRLTable() {
@@ -374,6 +365,7 @@ public class SQRLTable implements Table, org.apache.calcite.schema.Schema, Scann
 
     return name;
   }
+
   public interface SqrlTableVisitor<R, C> extends TableVisitor<R, C> {
     R visit(SQRLTable table, C context);
   }

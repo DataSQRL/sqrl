@@ -6,6 +6,10 @@ package com.datasqrl.graphql.inference.argument;
 import com.datasqrl.graphql.inference.ArgumentSet;
 import java.util.Set;
 
+/**
+ * Argument handler matches a single argument. It is responsible
+ * for permuting arguments in the context.
+ */
 public interface ArgumentHandler {
 
   //Eventually public api

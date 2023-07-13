@@ -43,7 +43,7 @@ public class ReplaceGraphqlQueries implements
 
     SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
     DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
-    String query = convertDynamicParams(writer, template.getRelNode());
+    String query = convertDynamicParamsWithWriter(writer, template.getRelNode());
     return JdbcQuery.builder()
         .parameters(apiQueryBase.getParameters())
         .sql(query)
@@ -57,7 +57,7 @@ public class ReplaceGraphqlQueries implements
     //todo builder
     SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
     DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
-    String query = convertDynamicParams(writer, template.getRelNode());
+    String query = convertDynamicParamsWithWriter(writer, template.getRelNode());
     if (writer.dynamicParameters.size() > 0) {
       Preconditions.checkState(
           Collections.max(writer.dynamicParameters) < apiQueryBase.getParameters().size());
@@ -69,7 +69,7 @@ public class ReplaceGraphqlQueries implements
         apiQueryBase.getParameters());
   }
 
-  private String convertDynamicParams(DynamicParamSqlPrettyWriter writer, RelNode relNode) {
+  private String convertDynamicParamsWithWriter(DynamicParamSqlPrettyWriter writer, RelNode relNode) {
     SqlNode node = SqrlRelToSql.convertToSqlNode(relNode);
     node.unparse(writer, 0, 0);
     return writer.toSqlString().getSql();

@@ -11,14 +11,12 @@ import com.datasqrl.util.SqlNodePrinter;
 @Getter
 public class JoinAssignment extends Assignment {
 
-  private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode query;
 
   public JoinAssignment(SqlParserPos location,
       SqlIdentifier identifier, NamePath namePath, Optional<List<TableFunctionArgument>> tableArgs, SqlNode query,
       Optional<SqlNodeList> hints) {
-    super(location, identifier, namePath, hints);
-    this.tableArgs = tableArgs;
+    super(location, identifier, namePath, hints, tableArgs);
     this.query = query;
   }
 
