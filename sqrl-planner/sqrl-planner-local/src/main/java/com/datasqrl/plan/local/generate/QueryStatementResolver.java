@@ -44,10 +44,10 @@ public class QueryStatementResolver extends AbstractQueryStatementResolver {
 
     if (isAccessTableFunction(ns, statement, analyzedLP)) {
       SQRLTable table = getSqrlTable(ns, statement);
-      return new AccessTableFunction(analyzedLP, params, table.getVt().getRoot().getBase());
+      return new AccessTableFunction(analyzedLP, params, table, table.getVt().getRoot().getBase());
     } else {
       SqrlTableNamespaceObject t = super.createTable(ns, statement, analyzedLP);
-      return new ComputeTableFunction(analyzedLP, params, t.getTable().getBaseTable());
+      return new ComputeTableFunction(analyzedLP, params, t.getTable().getTable(), t.getTable().getBaseTable());
     }
   }
 

@@ -2,21 +2,19 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.table.ScriptRelationalTable;
-import lombok.AllArgsConstructor;
-import org.apache.calcite.rel.RelNode;
+import com.datasqrl.schema.SQRLTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Optional;
 
 
 public class ComputeTableFunction extends TableFunctionBase {
 
-  public ComputeTableFunction(LPAnalysis lpAnalysis, List<FunctionParameter> params, ScriptRelationalTable q) {
-    super(lpAnalysis, params, q);
+  public ComputeTableFunction(LPAnalysis lpAnalysis, List<FunctionParameter> params, SQRLTable table, ScriptRelationalTable q) {
+    super(lpAnalysis, params, table, q);
   }
 
   @Override
