@@ -43,6 +43,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -193,6 +194,4 @@ public class GraphQLServer extends AbstractVerticle {
     }
     return producers;
   }
-
-
 }

@@ -23,6 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import lombok.Value;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -92,19 +93,14 @@ public class VertxContext implements Context {
     SinkConsumer consumer = subscriptions.get(coords.getFieldName());
     Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
 
+    Flux<Map<String, Object>> deferredFlux = Flux.<Map<String, Object>>create(sink -> {
+      consumer.listen(sink::next, sink::error, (x) -> sink.complete());
+    }).share();
+
     return new DataFetcher<>() {
       @Override
       public Publisher<Map<String,Object>> get(DataFetchingEnvironment env) throws Exception {
-
-        Publisher<Map<String,Object>> publisher = Flux.create(sink -> {
-          consumer.listen(entry -> {
-                Map<String, Object> args = env.getArguments();
-                if (!filterSubscription(entry, args)) {
-                  sink.next(entry);
-                }
-              }, sink::error, done -> sink.complete());
-        });
-        return publisher;
+        return deferredFlux.filter(entry -> !filterSubscription(entry, env.getArguments()));
       }
 
       private boolean filterSubscription(Map<String, Object> map, Map<String, Object> args) {

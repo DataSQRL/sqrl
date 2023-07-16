@@ -31,6 +31,7 @@ public class UseCaseExample implements TestDataset {
   protected final ListMultimap<String,String> scriptsWithTables;
 
   protected final String variant;
+  protected final String graphqlSchema;
 
   protected UseCaseExample(Set<String> tableNames) {
     this(tableNames, ArrayListMultimap.create());
@@ -43,11 +44,18 @@ public class UseCaseExample implements TestDataset {
 
   protected UseCaseExample(String variant, Set<String> tableNames,
       ListMultimap<String,String> scriptsWithTables) {
+    this(variant, tableNames, scriptsWithTables, null);
+  }
+
+  protected UseCaseExample(String variant, Set<String> tableNames,
+                           ListMultimap<String,String> scriptsWithTables,
+                           String graphqlSchema) {
     this.name = getClass().getSimpleName().toLowerCase();
     this.basePath = BASE_PATH.resolve(name);
     this.tableNames = tableNames;
     this.scriptsWithTables = scriptsWithTables;
     this.variant = variant;
+    this.graphqlSchema = graphqlSchema;
     Preconditions.checkArgument(scriptsWithTables.keySet().stream()
         .noneMatch(s -> s.endsWith("sqrl")),"Scripts should"
         + "be listed without .sqrl extension");
@@ -130,4 +138,8 @@ public class UseCaseExample implements TestDataset {
     return result;
   }
 
+  public Path getGraphqlSchemaPath() {
+    return getRootPackageDirectory()
+        .resolve(graphqlSchema);
+  }
 }

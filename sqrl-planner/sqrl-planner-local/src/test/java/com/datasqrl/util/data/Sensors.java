@@ -11,10 +11,18 @@ public class Sensors extends UseCaseExample {
   public static final Sensors INSTANCE = new Sensors("");
 
   public static final Sensors INSTANCE_EPOCH = new Sensors("epoch");
+  public static final Sensors INSTANCE_MUTATION
+      = new Sensors("mutation", "metricsapi.graphqls");
 
 
   protected Sensors(String variant) {
     super(variant, Set.of("sensors","sensorreading","machinegroup"),
         script("sensors-teaser","machine","minreadings"));
+  }
+
+  protected Sensors(String variant, String graphql) {
+    super(variant, Set.of("sensormaxtemp"),
+        script("metrics","sensormaxtemp"),
+        graphql);
   }
 }
