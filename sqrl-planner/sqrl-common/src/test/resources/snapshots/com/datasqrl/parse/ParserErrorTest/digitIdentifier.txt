@@ -1,5 +1,4 @@
 [FATAL] mismatched input at '0'. Expecting: '(', <identifier>
-in script:<schema> [1:31]:
 Test.example := SELECT * FROM 0test;
 ------------------------------^
 

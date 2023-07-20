@@ -1,5 +1,4 @@
 [FATAL] mismatched input at '$'. Expecting: '/*+', 'EXPORT', 'IMPORT', <identifier>
-in script:<schema> [1:5]:
 Test$0.example := SELECT * FROM x;
 ----^
 

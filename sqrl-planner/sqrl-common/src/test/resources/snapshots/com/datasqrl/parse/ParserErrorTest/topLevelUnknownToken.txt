@@ -1,5 +1,4 @@
 [FATAL] mismatched input at 'package'. Expecting: '/*+', 'EXPORT', 'IMPORT', <identifier>
-in script:<schema> [1:14]:
 UNKNOWNTOKEN package;
 -------------^
 
