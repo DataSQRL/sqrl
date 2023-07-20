@@ -21,11 +21,7 @@ import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.TableDescriptorSourceFactory;
-import com.datasqrl.engine.stream.flink.sql.ExtractUniqueSourceVisitor;
-import com.datasqrl.engine.stream.flink.sql.FlinkConnectorServiceLoader;
-import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
-import com.datasqrl.engine.stream.flink.sql.RelNodeToTypeInformationTransformer;
-import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.engine.stream.flink.sql.*;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandTemporalJoinRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
@@ -91,6 +87,7 @@ import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
@@ -151,6 +148,10 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       if (entry.getKey().contains(".") && isTableConfigValue(entry.getKey())) {
         conf.put(entry.getKey(), entry.getValue());
       }
+    }
+
+    if (!conf.containsKey(ExecutionConfigOptions.TABLE_EXEC_SOURCE_IDLE_TIMEOUT.key())) {
+      conf.put(ExecutionConfigOptions.TABLE_EXEC_SOURCE_IDLE_TIMEOUT.key(), "5000");
     }
 
     return conf;
@@ -331,6 +332,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private WriteQuery applyFlinkCompatibilityRules(WriteQuery query) {
     RelNode relNode = query.getRelNode();
+
     Program program = Programs.hep(
         List.of(
             PushDownWatermarkHintRule.Config.DEFAULT.toRule(),

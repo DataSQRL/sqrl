@@ -15,7 +15,6 @@ public class ExecutionEnvironmentFactory {
 
   public StreamExecutionEnvironment createEnvironment() {
     Map conf = new HashMap(flinkConf);
-    //conf.put("taskmanager.memory.network.max", "1g"); -- Add if tests fail with buffer exhaustion
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
         org.apache.flink.configuration.Configuration.fromMap(conf));

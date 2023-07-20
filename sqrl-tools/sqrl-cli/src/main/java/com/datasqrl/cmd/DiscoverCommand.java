@@ -19,6 +19,7 @@ import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Stopwatch;
+import org.apache.flink.connector.file.table.FileSystemConnectorOptions;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -53,6 +54,7 @@ public class DiscoverCommand extends AbstractCommand {
     TableConfig discoveryConfig = null;
     if (inputFile != null && Files.isRegularFile(inputFile)) {
       discoveryConfig = TableConfig.load(inputFile, Name.system(inputFile.getFileName().toString()), errors);
+      applyConnectorOverrides(discoveryConfig.getConnectorConfig());
     } else if (inputFile != null && Files.isDirectory(inputFile)) {
       discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile, ExternalDataType.source).build();
     } else {
@@ -123,5 +125,9 @@ public class DiscoverCommand extends AbstractCommand {
     } else {
       writeOutput.run();
     }
+  }
+
+  private void applyConnectorOverrides(SqrlConfig connectorConfig) {
+    connectorConfig.setProperty(FileSystemConnectorOptions.SOURCE_MONITOR_INTERVAL.key(), "0");
   }
 }

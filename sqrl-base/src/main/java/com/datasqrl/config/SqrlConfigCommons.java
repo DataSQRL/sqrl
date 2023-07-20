@@ -2,7 +2,6 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -38,12 +37,10 @@ import org.apache.commons.configuration2.BaseHierarchicalConfiguration;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.JSONConfiguration;
-import org.apache.commons.configuration2.MapConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.configuration2.io.FileOptionsProvider;
 import org.apache.commons.configuration2.tree.NodeCombiner;
 import org.apache.commons.configuration2.tree.OverrideCombiner;
 
@@ -54,6 +51,8 @@ import org.apache.commons.configuration2.tree.OverrideCombiner;
 public class SqrlConfigCommons implements SqrlConfig {
 
   private static final char DELIMITER = '.';
+  private static final String POJO_DOT_DELIMITER = "$$";
+  private static final String POJO_DASH_DELIMITER = "$";
   private static final String DELIMITER_STR = DELIMITER+"";
   private static final String DOUBLE_DELIMITER = DELIMITER_STR + DELIMITER_STR;
 
@@ -72,6 +71,8 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   private String getFullKey(String key) {
+    key = key.replace(POJO_DOT_DELIMITER,DELIMITER_STR);
+    key = key.replace(POJO_DASH_DELIMITER,"-");
     key = key.replace(DELIMITER_STR,DOUBLE_DELIMITER);
     return expandKey(key);
   }

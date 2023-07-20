@@ -4,13 +4,12 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.print.PrintDataSystemFactory;
-import com.datasqrl.loaders.DataSystemNsObject;
-import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ObjectLoaderImpl;
-import com.datasqrl.loaders.SqrlDirectoryModule;
-import com.datasqrl.loaders.StandardLibraryLoader;
+import com.datasqrl.loaders.*;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
+import com.datasqrl.module.TableNamespaceObject;
+import org.apache.flink.connector.file.table.FileSystemConnectorOptions;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,8 @@ public class MockModuleLoader implements ModuleLoader {
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
     if (objLoader != null && !objLoader.load(namePath).isEmpty()) {
-      return Optional.of(new SqrlDirectoryModule(objLoader.load(namePath)));
+      return Optional.of(new SqrlDirectoryModule(
+          applyTestSettings(objLoader.load(namePath))));
     }
 
     if (tables.containsKey(namePath)) {
@@ -63,6 +63,19 @@ public class MockModuleLoader implements ModuleLoader {
 
     return Optional.of(
         new SqrlDirectoryModule(objects));
+  }
+
+  private List<NamespaceObject> applyTestSettings(List<NamespaceObject> objects) {
+    for (NamespaceObject object : objects) {
+      if (object instanceof TableSourceNamespaceObject) {
+        TableSourceNamespaceObject s = (TableSourceNamespaceObject) object;
+        s.getTable().getConfiguration()
+            .getConnectorConfig()
+            .setProperty(FileSystemConnectorOptions.SOURCE_MONITOR_INTERVAL.key(), "0");
+      }
+    }
+
+    return objects;
   }
 
 

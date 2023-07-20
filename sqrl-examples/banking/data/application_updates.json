@@ -565,3 +565,4 @@
 {"loan_application_id":45,"status":"closing","message":"May the hair on your toes never fall out!","timestamp":"2023-06-16T00:25:19.999Z"}
 {"loan_application_id":31,"status":"processing","message":"Never laugh at live dragons, Bilbo you fool!","timestamp":"2023-06-16T00:25:20.341Z"}
 {"loan_application_id":34,"status":"closing","message":"The road goes ever on and on","timestamp":"2023-06-16T00:25:20.463Z"}
+{"loan_application_id":101,"status":"underwriting","message":"The road goes ever on and on","timestamp":"2023-06-19T00:56:29.447Z"}

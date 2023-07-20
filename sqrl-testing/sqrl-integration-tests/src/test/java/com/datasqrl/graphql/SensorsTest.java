@@ -22,7 +22,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SensorsTest extends AbstractGraphqlTest {
   CompletableFuture<ExecutionResult> fut;
-  private List<String> events;
+
+  String alert = "subscription HighTempAlert {\n"
+      + "  HighTempAlert(sensorid: 1) {\n"
+      + "    sensorid\n"
+      + "    temp\n"
+      + "  }\n"
+      + "}";
+  String addReading = "mutation AddReading($sensorId: Int!, $temperature: Float!) {\n"
+      + "  AddReading(metric: {sensorid: $sensorId, temperature: $temperature}) {\n"
+      + "    _source_time\n"
+      + "  }\n"
+      + "}";
+
+  JsonObject triggerAlertJson = new JsonObject().put("sensorId", 1).put("temperature", 62.1);
 
   @BeforeEach
   void setUp() {
@@ -33,11 +46,11 @@ public class SensorsTest extends AbstractGraphqlTest {
   @SneakyThrows
   @Test
   public void singleSubscriptionMutationTest() {
-    CountDownLatch countDownLatch = subscribeToAlert();
+    CountDownLatch countDownLatch = subscribeToAlert(alert);
 
     Thread.sleep(1000);
 
-    triggerAlert();
+    executeMutation(addReading, triggerAlertJson);
 
     countDownLatch.await(120, TimeUnit.SECONDS);
     fut.cancel(true);
@@ -51,13 +64,14 @@ public class SensorsTest extends AbstractGraphqlTest {
   public void multipleSubscribersTest() {
     List<CountDownLatch> latches = new ArrayList<>();
     for (int i = 0; i < 5; i++) {
-      latches.add(subscribeToAlert());
+      latches.add(subscribeToAlert(alert));
     }
 
     Thread.sleep(1000);
 
-    triggerAlert();
+    executeMutation(addReading, triggerAlertJson);
 
+    // Wait a long time for the first latch, the rest should complete soon after
     int timeout = 120;
     for (CountDownLatch latch : latches) {
       latch.await(timeout, TimeUnit.SECONDS);
@@ -67,36 +81,5 @@ public class SensorsTest extends AbstractGraphqlTest {
     fut.cancel(true);
 
     validateEvents();
-  }
-
-  @SneakyThrows
-  private CountDownLatch subscribeToAlert() {
-    CountDownLatch countDownLatch = new CountDownLatch(1);
-    client.listen("subscription HighTempAlert {\n"
-        + "  HighTempAlert(sensorid: 1) {\n"
-        + "    sensorid\n"
-        + "    temp\n"
-        + "  }\n"
-        + "}", (t) -> {
-      events.add(t.toString());
-      countDownLatch.countDown();
-    }).future().toCompletionStage().toCompletableFuture().get();
-    return countDownLatch;
-  }
-
-  private void triggerAlert() {
-    String query = "mutation AddReading($sensorId: Int!, $temperature: Float!) {\n"
-        + "  AddReading(metric: {sensorid: $sensorId, temperature: $temperature}) {\n"
-        + "    _source_time\n"
-        + "  }\n"
-        + "}";
-    client.query(query, new JsonObject().put("sensorId", 1).put("temperature", 62.1), NO_HANDLER);
-  }
-
-  private void validateEvents() {
-    Collections.sort(events);
-    snapshot.addContent(String.join("\n", events))
-        .createOrValidate();
-    snapshot.createOrValidate();
   }
 }

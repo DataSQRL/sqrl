@@ -26,7 +26,11 @@ public interface TestDataset {
 
   default TableConfig getDiscoveryConfig() {
     return FileDataSystemFactory.getFileDiscoveryConfig(getName(),
-            FileDataSystemConfig.builder().directoryURI(getDataDirectory().toString()).build()).build();
+            FileDataSystemConfig.builder()
+                .directoryURI(getDataDirectory().toString())
+                .source$$monitor$interval("0")
+                .build())
+        .build();
   }
 
   Set<String> getTables();

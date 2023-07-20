@@ -77,7 +77,9 @@ public class SqrlParserImpl implements SqrlParser {
       scriptNode.setScriptPath(Optional.empty());
       return scriptNode;
     } catch (Exception e) {
-      throw errors.handle(e);
+      throw errors
+              .withSchema("<schema>", sql)//todo fix me again
+              .handle(e);
     }
   }
 

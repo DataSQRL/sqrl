@@ -8,6 +8,8 @@ import com.datasqrl.util.TestCompiler;
 import com.datasqrl.util.TestExecutor;
 import com.datasqrl.util.data.UseCaseExample;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.VertxExtension;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +26,22 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
+import static com.datasqrl.util.TestClient.NO_HANDLER;
 import static com.datasqrl.util.TestPackager.createPackageOverride;
 
 @Slf4j
 @Testcontainers
 @ExtendWith(VertxExtension.class)
 public abstract class AbstractGraphqlTest extends KafkaBaseTest {
+  protected List<String> events = new ArrayList<>();
 
   @Container
   protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
@@ -87,5 +96,31 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
         packageOverride,
         example.getScripts().get(0).getScriptPath(),
         example.getGraphqlSchemaPath()));
+  }
+
+
+  @SneakyThrows
+  protected CountDownLatch subscribeToAlert(String query) {
+    CountDownLatch countDownLatch = new CountDownLatch(1);
+    client.listen(query, (t) -> {
+      events.add(t.toString());
+      countDownLatch.countDown();
+    }).future().toCompletionStage().toCompletableFuture().get();
+    return countDownLatch;
+  }
+
+  protected void executeMutation(String query, JsonObject input) {
+    executeMutation(query, input, NO_HANDLER);
+  }
+
+  protected void executeMutation(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback) {
+    client.query(query, input, callback);
+  }
+
+  protected void validateEvents() {
+    Collections.sort(events);
+    snapshot.addContent(String.join("\n", events))
+        .createOrValidate();
+    snapshot.createOrValidate();
   }
 }

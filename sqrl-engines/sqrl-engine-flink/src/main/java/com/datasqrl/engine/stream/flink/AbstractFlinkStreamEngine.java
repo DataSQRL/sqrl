@@ -25,10 +25,13 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
 
+@Slf4j
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
     StreamEngine {
 
@@ -51,11 +54,17 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
       FlinkEnvironmentBuilder executablePlanVisitor = new FlinkEnvironmentBuilder(errors);
       StatementSet statementSet = flinkPlan.getExecutablePlan().accept(executablePlanVisitor, null);
 
-      TableResult rslt = statementSet.execute();
-      rslt.print(); //todo: this just forces print to wait for the async
-      ExecutionResult result = new ExecutionResult.Message(rslt.getJobClient().get()
-          .getJobID().toString());
-      return result;
+      try {
+        TableResult rslt = statementSet.execute();
+        rslt.print(); //todo: this just forces print to wait for the async
+        ExecutionResult result = new ExecutionResult.Message(rslt.getJobClient().get()
+                .getJobID().toString());
+        return result;
+      } catch (Exception e) {
+        log.error("Execution error", e);
+        throw e;
+      }
+
     });
   }
 

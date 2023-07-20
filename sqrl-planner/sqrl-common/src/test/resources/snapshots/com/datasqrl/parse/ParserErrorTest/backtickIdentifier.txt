@@ -1,4 +1,5 @@
 [FATAL] identifiers '`x$0`' must not contain special token ($).
+in script:<schema> [1:31]:
 Test.example := SELECT * FROM `x$0`;
 ------------------------------^
 

@@ -19,11 +19,11 @@ import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.kafka.KafkaLogEngine;
 import com.datasqrl.kafka.KafkaLogEngineFactory;
 import com.datasqrl.kafka.KafkaPhysicalPlan;
+import com.datasqrl.kafka.NewTopic;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.logging.log4j.util.Strings;
 
 import java.nio.file.Files;
