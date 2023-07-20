@@ -15,9 +15,7 @@ public class TestPackager {
     Map overrideConfig = Map.of("engines",
         Map.of("log", Map.of("connector",
                 Map.of("bootstrap.servers", "localhost:" + kafka.bootstrapServers().split(":")[1])),
-            "database", toDbMap(testDatabase),
-            "streams", Map.of(
-            "taskmanager.memory.network.max", "800mb"))
+            "database", toDbMap(testDatabase))
         );
     return writeJson(overrideConfig);
   }
