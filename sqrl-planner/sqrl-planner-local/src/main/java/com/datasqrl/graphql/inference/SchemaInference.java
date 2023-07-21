@@ -314,7 +314,7 @@ public class SchemaInference {
   }
 
   private SqlParserPos toParserPos(SourceLocation sourceLocation) {
-    return new SqlParserPos(sourceLocation.getLine(), Math.max(sourceLocation.getColumn() - 1, -1));
+    return new SqlParserPos(sourceLocation.getLine(), sourceLocation.getColumn());
   }
 
   private void checkValidArrayNonNullType(Type type) {
