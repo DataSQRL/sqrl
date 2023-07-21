@@ -28,6 +28,20 @@ public class KafkaSinkFactory
         .option("properties.bootstrap.servers", connector.asString("bootstrap.servers").get())
         .format(context.getFormatFactory().getName());
 
+
+    // Flink takes them as properties
+    // TODO: full list of properties
+    connector.asString("security.protocol").getOptional()
+            .ifPresent(c->builder.option("properties.security.protocol", c));
+    connector.asString("sasl.mechanism").getOptional()
+            .ifPresent(c->builder.option("properties.sasl.mechanism", c));
+    connector.asString("group.id").getOptional()
+            .ifPresent(c->builder.option("properties.group.id", c));
+    connector.asString("sasl.jaas.config").getOptional()
+            .ifPresent(c->builder.option("properties.sasl.jaas.config", c));
+    connector.asString("sasl.client.callback.handler.class").getOptional()
+            .ifPresent(c->builder.option("properties.sasl.client.callback.handler.class", c));
+
     connector.asString("scan.startup.mode").getOptional()
         .ifPresent(c->builder.option("scan.startup.mode", c));
     connector.asString("scan.startup.specific-offsets").getOptional()

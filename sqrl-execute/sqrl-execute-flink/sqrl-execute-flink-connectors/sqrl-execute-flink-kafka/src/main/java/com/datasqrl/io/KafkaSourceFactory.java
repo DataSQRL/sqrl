@@ -26,15 +26,26 @@ public class KafkaSourceFactory implements DataStreamSourceFactory {
   @Override
   public SingleOutputStreamOperator<TimeAnnotatedRecord<String>> create(FlinkSourceFactoryContext ctx) {
     TableConfig tableConfig = ctx.getTableConfig();
-    SqrlConfig connectorConfig = tableConfig.getConnectorConfig();
+    SqrlConfig connector = tableConfig.getConnectorConfig();
     String topic = tableConfig.getBase().getIdentifier();
     String groupId = ctx.getFlinkName() + "-" + ctx.getUuid();
 
     KafkaSourceBuilder<TimeAnnotatedRecord<String>> builder = org.apache.flink.connector.kafka.source.KafkaSource.<TimeAnnotatedRecord<String>>builder()
-        .setBootstrapServers(connectorConfig.asString(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG).get())
+        .setBootstrapServers(connector.asString(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG).get())
         .setTopics(topic)
         .setStartingOffsets(OffsetsInitializer.earliest()) //TODO: work with commits
         .setGroupId(groupId);
+
+    connector.asString("security.protocol").getOptional()
+            .ifPresent(c->builder.setProperty("security.protocol", c));
+    connector.asString("sasl.mechanism").getOptional()
+            .ifPresent(c->builder.setProperty("sasl.mechanism", c));
+    connector.asString("group.id").getOptional()
+            .ifPresent(c->builder.setProperty("group.id", c));
+    connector.asString("sasl.jaas.config").getOptional()
+            .ifPresent(c->builder.setProperty("sasl.jaas.config", c));
+    connector.asString("sasl.client.callback.handler.class").getOptional()
+            .ifPresent(c->builder.setProperty("sasl.client.callback.handler.class", c));
 
     builder.setDeserializer(
         new KafkaTimeValueDeserializationSchemaWrapper<>(new SimpleStringSchema()));
