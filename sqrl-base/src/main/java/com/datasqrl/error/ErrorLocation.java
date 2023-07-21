@@ -92,7 +92,7 @@ public interface ErrorLocation extends Serializable {
       this.toLine = toLine;
       this.fromOffset = fromOffset;
       this.toOffset = toOffset;
-      Preconditions.checkArgument(fromLine>0 && toLine>0 && fromOffset>0 && toOffset>0, "Invalid file: %s",this);
+      Preconditions.checkArgument(fromLine>0 && toLine>0 && fromOffset>=0 && toOffset>=0, "Invalid file: %s",this);
       Preconditions.checkArgument(fromLine<=toLine && (fromLine!=toLine || fromOffset<=toOffset), "Invalid file: %s",this);
     }
 
@@ -107,9 +107,9 @@ public interface ErrorLocation extends Serializable {
 
     @Override
     public String toString() {
-      String result = fromLine+":"+fromOffset;
+      String result = fromLine+":"+(fromOffset+1);
       if (!isLocation()) {
-        result += "-" + toLine+":"+toOffset;
+        result += "-" + toLine+":"+(toOffset+1);
       }
       return result;
     }

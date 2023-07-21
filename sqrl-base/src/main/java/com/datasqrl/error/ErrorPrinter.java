@@ -54,17 +54,17 @@ public class ErrorPrinter {
       FileRange fileRange = location.getFile();
       if (fileRange.isLocation()) {
         String codeSnippet = location.getSourceMap().getRange(new FileRange(Math.max(1,
-            fileRange.getFromLine()-LINES_BEFORE_LOCATION),1,
+            fileRange.getFromLine()-LINES_BEFORE_LOCATION),0,
             fileRange.getToLine(), Integer.MAX_VALUE));
         b.append(codeSnippet);
-        b.append("-".repeat(fileRange.getFromOffset()-1));
+        b.append("-".repeat(fileRange.getFromOffset()));
         b.append("^\n");
       } else {
         //print arrow pointing down to offset
         //print range starting at fromOffset=0
-        b.append("-".repeat(fileRange.getFromOffset()-1));
+        b.append("-".repeat(fileRange.getFromOffset()));
         b.append("v\n");
-        String codeSnippet = location.getSourceMap().getRange(new FileRange(fileRange.getFromLine(),1,
+        String codeSnippet = location.getSourceMap().getRange(new FileRange(fileRange.getFromLine(),0,
             fileRange.getToLine(), fileRange.getToOffset()));
         b.append(codeSnippet).append("\n");
         addSeparator = true;
