@@ -51,8 +51,6 @@ import org.apache.commons.configuration2.tree.OverrideCombiner;
 public class SqrlConfigCommons implements SqrlConfig {
 
   private static final char DELIMITER = '.';
-  private static final String POJO_DOT_DELIMITER = "$$";
-  private static final String POJO_DASH_DELIMITER = "$";
   private static final String DELIMITER_STR = DELIMITER+"";
   private static final String DOUBLE_DELIMITER = DELIMITER_STR + DELIMITER_STR;
 
@@ -71,8 +69,6 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   private String getFullKey(String key) {
-    key = key.replace(POJO_DOT_DELIMITER,DELIMITER_STR);
-    key = key.replace(POJO_DASH_DELIMITER,"-");
     key = key.replace(DELIMITER_STR,DOUBLE_DELIMITER);
     return expandKey(key);
   }

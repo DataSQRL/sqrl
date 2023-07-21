@@ -26,16 +26,12 @@ import lombok.NoArgsConstructor;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
 import org.apache.flink.connector.file.src.reader.StreamFormat;
 import org.apache.flink.connector.file.table.FileSystemConnectorOptions;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.util.Collector;
-import org.apache.flink.util.TimeUtils;
-
 
 @AutoService(SourceFactory.class)
 public class FileSourceFactory implements DataStreamSourceFactory {
@@ -78,13 +74,13 @@ public class FileSourceFactory implements DataStreamSourceFactory {
             FileDataSystemConfig.fromConfig(tableConfig));
         builder.setFileEnumerator(fileEnumerator);
 
-        Optional<String> monitorInterval = tableConfig.getConnectorConfig()
-            .asString(FileSystemConnectorOptions.SOURCE_MONITOR_INTERVAL.key())
+        Optional<Integer> monitorInterval = tableConfig.getConnectorConfig()
+            .asInt(FileSystemConnectorOptions.SOURCE_MONITOR_INTERVAL.key())
             .getOptional();
         if (isMonitor(monitorInterval)) {
           Duration duration = monitorInterval
-              .map(TimeUtils::parseDuration)
-              .orElse(Duration.ofSeconds(10));
+              .map(this::parseDuration)
+              .orElse(defaultDuration());
           builder.monitorContinuously(duration);
         }
       } else {
@@ -103,12 +99,20 @@ public class FileSourceFactory implements DataStreamSourceFactory {
     }
   }
 
+  private Duration parseDuration(Integer d) {
+    return Duration.ofMillis(d);
+  }
+
+  private Duration defaultDuration() {
+    return Duration.ofMillis(10000);
+  }
+
   /**
    * Monitor if configuration is missing or non zero
    */
-  private boolean isMonitor(Optional<String> monitorInterval) {
+  private boolean isMonitor(Optional<Integer> monitorInterval) {
     return monitorInterval
-        .map(s -> !TimeUtils.parseDuration(s).equals(Duration.ZERO))
+        .map(s -> parseDuration(s).equals(Duration.ZERO))
         .orElse(true);
   }
 

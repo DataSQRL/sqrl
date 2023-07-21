@@ -48,7 +48,7 @@ public class FileDataSystemFactory implements DataSystemImplementationFactory {
     String name = path.getFileName().toString();
     return getFileDiscoveryConfig(name, type,
         FileDataSystemConfig.builder().directoryURI(path.toString())
-            .source$$monitor$interval("0").build());
+            .monitorIntervalMs("0").build());
   }
 
   public static TableConfig.Builder getFileSinkConfig(Path path) {

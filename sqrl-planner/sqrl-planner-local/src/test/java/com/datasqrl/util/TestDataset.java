@@ -3,7 +3,6 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
@@ -28,7 +27,7 @@ public interface TestDataset {
     return FileDataSystemFactory.getFileDiscoveryConfig(getName(),
             FileDataSystemConfig.builder()
                 .directoryURI(getDataDirectory().toString())
-                .source$$monitor$interval("0")
+                .monitorIntervalMs("0")
                 .build())
         .build();
   }

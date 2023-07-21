@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import org.apache.flink.connector.file.table.FileSystemConnectorOptions;
 
 @Builder
 @AllArgsConstructor
@@ -31,8 +30,8 @@ public class FileDataSystemConfig implements Serializable {
   String filenamePattern = DEFAULT_FILENAME_PATTERN;
 
   @Default
-  @JsonProperty("source.monitor-interval")
-  String source$$monitor$interval = "10s";
+  @JsonProperty("monitorIntervalMs")
+  String monitorIntervalMs = "10000";
 
   public static FileDataSystemConfig fromConfig(@NonNull TableConfig config) {
     return config.getConnectorConfig().allAs(FileDataSystemConfig.class).get();
