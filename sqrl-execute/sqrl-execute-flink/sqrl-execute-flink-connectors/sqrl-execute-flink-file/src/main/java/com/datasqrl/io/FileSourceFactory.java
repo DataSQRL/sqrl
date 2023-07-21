@@ -112,7 +112,7 @@ public class FileSourceFactory implements DataStreamSourceFactory {
    */
   private boolean isMonitor(Optional<Integer> monitorInterval) {
     return monitorInterval
-        .map(s -> parseDuration(s).equals(Duration.ZERO))
+        .map(s -> !parseDuration(s).equals(Duration.ZERO))
         .orElse(true);
   }
 
