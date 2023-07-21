@@ -20,7 +20,7 @@ jobs:
           distribution: 'adopt'
           cache: maven
       - name: Build SQRL
-        run: mvn -B -U -T 6 -e clean install --no-transfer-progress -DskipTests=true
+        run: mvn -B -U -T 6 -e clean install -DskipTests=true
 
       # Set up Docker
       - name: Set up QEMU
