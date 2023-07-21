@@ -274,7 +274,7 @@ class AstBuilder
 
   public static SqlParserPos getLocation(Token token) {
     requireNonNull(token, "token is null");
-    return new SqlParserPos(token.getLine(), token.getCharPositionInLine());
+    return new SqlParserPos(token.getLine(), Math.max(token.getCharPositionInLine() + 1, 1));
   }
 
   private static ParsingException parseError(String message, ParserRuleContext context) {
