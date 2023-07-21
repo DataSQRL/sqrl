@@ -6,6 +6,8 @@ import com.datasqrl.io.tables.TableConfig;
 import java.io.Serializable;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -27,6 +29,10 @@ public class FileDataSystemConfig implements Serializable {
   @Default
   String filenamePattern = DEFAULT_FILENAME_PATTERN;
 
+  @Default
+  @JsonProperty("monitorIntervalMs")
+  String monitorIntervalMs = "10000";
+
   public static FileDataSystemConfig fromConfig(@NonNull TableConfig config) {
     return config.getConnectorConfig().allAs(FileDataSystemConfig.class).get();
   }
@@ -43,6 +49,6 @@ public class FileDataSystemConfig implements Serializable {
     if (!regex.endsWith("$")) {
       regex += "$";
     }
-    return Pattern.compile(regex);  }
-
+    return Pattern.compile(regex);
+  }
 }

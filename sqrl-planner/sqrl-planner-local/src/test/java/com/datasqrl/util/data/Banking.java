@@ -11,7 +11,8 @@ public class Banking extends UseCaseExample {
   public static final Banking INSTANCE = new Banking();
 
   protected Banking() {
-    super(Set.of("customers","applications", "application_updates", "loan_types"),
-        script("loan","overview","applicationupdates"));
+    super("", Set.of("customers","applications", "application_updates", "loan_types"),
+        script("loan","overview","applicationupdates"),
+        "loan.graphqls");
   }
 }

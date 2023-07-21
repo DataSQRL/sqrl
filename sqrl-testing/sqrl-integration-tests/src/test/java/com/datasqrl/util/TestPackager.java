@@ -15,7 +15,8 @@ public class TestPackager {
     Map overrideConfig = Map.of("engines",
         Map.of("log", Map.of("connector",
                 Map.of("bootstrap.servers", "localhost:" + kafka.bootstrapServers().split(":")[1])),
-            "database", toDbMap(testDatabase)));
+            "database", toDbMap(testDatabase))
+        );
     return writeJson(overrideConfig);
   }
 

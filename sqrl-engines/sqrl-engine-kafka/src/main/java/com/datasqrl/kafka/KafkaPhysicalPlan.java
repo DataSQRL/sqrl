@@ -2,20 +2,14 @@ package com.datasqrl.kafka;
 
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.graphql.server.Model;
-import com.datasqrl.graphql.server.Model.MutationCoords;
-import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.serializer.Deserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Value;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import lombok.SneakyThrows;
-import lombok.Value;
-import org.apache.kafka.clients.admin.NewTopic;
 
 @Value
 public class KafkaPhysicalPlan implements EnginePhysicalPlan {
@@ -35,9 +29,9 @@ public class KafkaPhysicalPlan implements EnginePhysicalPlan {
           "/opt/bitnami/kafka/bin/kafka-topics.sh --create --bootstrap-server %s " +
               "--topic %s --partitions %s --replication-factor %s",
           this.config.getSubConfig("connector").asString("bootstrap.servers").get(),
-          topic.name(),
-          topic.numPartitions() == -1 ? 1 : topic.numPartitions(),
-          topic.replicationFactor() == -1 ? 1 : topic.replicationFactor()
+          topic.getName(),
+              Math.max(topic.getNumPartitions(), 1),
+              Math.max(topic.getReplicationFactor(), 1)
           ));
     }
     b.append("\nexit 0;");

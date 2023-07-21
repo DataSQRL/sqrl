@@ -77,7 +77,13 @@ public class SqrlParserImpl implements SqrlParser {
       scriptNode.setScriptPath(Optional.empty());
       return scriptNode;
     } catch (Exception e) {
-      throw errors.handle(e);
+      if (errors.getLocation().getSourceMap() == null) {
+        errors = errors
+            .withSchema("<schema>", sql);
+      }
+
+      throw errors
+              .handle(e);
     }
   }
 

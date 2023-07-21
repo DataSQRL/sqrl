@@ -2,7 +2,6 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -38,12 +37,10 @@ import org.apache.commons.configuration2.BaseHierarchicalConfiguration;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.JSONConfiguration;
-import org.apache.commons.configuration2.MapConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.configuration2.io.FileOptionsProvider;
 import org.apache.commons.configuration2.tree.NodeCombiner;
 import org.apache.commons.configuration2.tree.OverrideCombiner;
 

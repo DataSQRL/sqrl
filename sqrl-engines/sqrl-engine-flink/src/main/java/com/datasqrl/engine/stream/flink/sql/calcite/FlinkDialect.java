@@ -1,5 +1,6 @@
 package com.datasqrl.engine.stream.flink.sql.calcite;
 
+import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.validate.SqlConformance;
 
@@ -19,6 +20,11 @@ public class FlinkDialect extends SqlDialect {
         .withLiteralEscapedQuoteString("`")
         .withIdentifierQuoteString("`");
     DEFAULT = new FlinkDialect(DEFAULT_CONTEXT);
+  }
+
+  @Override
+  public boolean supportsImplicitTypeCoercion(RexCall call) {
+    return false;
   }
 
   public static class FlinkConformance implements SqlConformance {

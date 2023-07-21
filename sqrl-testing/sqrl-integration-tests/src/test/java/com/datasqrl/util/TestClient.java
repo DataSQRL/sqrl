@@ -17,6 +17,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class TestClient {
 
   public static final Consumer<HttpResponse<JsonObject>> NO_HANDLER = (h)->{};
+  public static final Consumer<HttpResponse<JsonObject>> FAIL_HANDLER = (h)->{
+    if (h.statusCode() >= 300) {
+      fail(h.statusMessage());
+    }};
   public static final Consumer<JsonObject> NO_WS_HANDLER = (h)->{};
   private final Vertx vertx;
 

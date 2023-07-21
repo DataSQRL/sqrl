@@ -139,6 +139,7 @@ public class UseCaseExample implements TestDataset {
   }
 
   public Path getGraphqlSchemaPath() {
+    Preconditions.checkNotNull(graphqlSchema, "Expected graphql schema, found none.");
     return getRootPackageDirectory()
         .resolve(graphqlSchema);
   }

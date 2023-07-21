@@ -10,7 +10,6 @@ type ApplicationAlert {
 type ApplicationStatus {
   status: String!
   message: String!
-  timestamp: String!
   id: Int!
   customer_id: Int!
   loan_type_id: Int!
@@ -22,7 +21,7 @@ type ApplicationUpdates {
   loan_application_id: Int!
   status: String!
   message: String!
-  timestamp: String!
+  _source_time: String!
   application: Applications!
 }
 
@@ -49,7 +48,6 @@ type Customers {
   updated_on: String!
   applications(limit: Int = 20, offset: Int = 0): [Applications!]
   overview: [overview!]
-  recentFunding: recentFunding
 }
 
 type LoanTypes {
@@ -65,9 +63,11 @@ type LoanTypes {
 }
 
 type Query {
+  ApplicationStatus: [ApplicationStatus!]
   Applications(id: Int!): [Applications!]
   Customers(id: Int!): [Customers!]
   LoanTypes(id: Int): [LoanTypes!]
+  ApplicationAlert: [ApplicationAlert!]
 }
 
 type overview {
@@ -76,11 +76,20 @@ type overview {
   total_loans: Int!
 }
 
-type recentFunding {
-  total_amount: Float!
-  total_loans: Int!
-}
-
 type Subscription {
   ApplicationAlert: ApplicationAlert!
+}
+
+type Mutation {
+  ApplicationUpdates(event: ApplicationUpdateEvent!): ApplicationUpdateEventResult!
+}
+
+input ApplicationUpdateEvent {
+  loan_application_id: Int!
+  status: String!
+  message: String!
+}
+
+type ApplicationUpdateEventResult {
+  loan_application_id: Int!
 }

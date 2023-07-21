@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -27,10 +28,10 @@ import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.connector.file.src.enumerate.NonSplittingRecursiveEnumerator;
 import org.apache.flink.connector.file.src.reader.StreamFormat;
+import org.apache.flink.connector.file.table.FileSystemConnectorOptions;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.util.Collector;
-
 
 @AutoService(SourceFactory.class)
 public class FileSourceFactory implements DataStreamSourceFactory {
@@ -67,13 +68,20 @@ public class FileSourceFactory implements DataStreamSourceFactory {
         builder = org.apache.flink.connector.file.src.FileSource.forRecordStreamFormat(
             format,
             FilePath.toFlinkPath(pathConfig.getDirectory()));
-        Duration monitorDuration = null;
+
         FileEnumeratorProvider fileEnumerator = new FileEnumeratorProvider(tableConfig.getBase(),
-                tableConfig.getFormat(),
-                FileDataSystemConfig.fromConfig(tableConfig));
+            tableConfig.getFormat(),
+            FileDataSystemConfig.fromConfig(tableConfig));
         builder.setFileEnumerator(fileEnumerator);
-        if (monitorDuration != null) {
-          builder.monitorContinuously(Duration.ofSeconds(10));
+
+        Optional<Integer> monitorInterval = tableConfig.getConnectorConfig()
+            .asInt(FileConfigOptions.MONITOR_INTERVAL_MS)
+            .getOptional();
+        if (isMonitor(monitorInterval)) {
+          Duration duration = monitorInterval
+              .map(this::parseDuration)
+              .orElse(defaultDuration());
+          builder.monitorContinuously(duration);
         }
       } else {
         Path[] inputPaths = pathConfig.getFiles(ctx.getTableConfig()).stream()
@@ -89,6 +97,23 @@ public class FileSourceFactory implements DataStreamSourceFactory {
 //          .setParallelism(4)//todo config
           ;
     }
+  }
+
+  private Duration parseDuration(Integer d) {
+    return Duration.ofMillis(d);
+  }
+
+  private Duration defaultDuration() {
+    return Duration.ofMillis(10000);
+  }
+
+  /**
+   * Monitor if configuration is missing or non zero
+   */
+  private boolean isMonitor(Optional<Integer> monitorInterval) {
+    return monitorInterval
+        .map(s -> !parseDuration(s).equals(Duration.ZERO))
+        .orElse(true);
   }
 
   @NoArgsConstructor
