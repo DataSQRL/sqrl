@@ -71,7 +71,7 @@ public class MockModuleLoader implements ModuleLoader {
         TableSourceNamespaceObject s = (TableSourceNamespaceObject) object;
         s.getTable().getConfiguration()
             .getConnectorConfig()
-            .setProperty(FileSystemConnectorOptions.SOURCE_MONITOR_INTERVAL.key(), "0");
+            .setProperty("monitorIntervalMs" /*file-io not guaranteed to be on classpath*/, "0");
       }
     }
 

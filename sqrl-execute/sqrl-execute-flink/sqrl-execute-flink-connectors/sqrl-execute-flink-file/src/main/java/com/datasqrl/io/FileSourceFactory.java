@@ -75,7 +75,7 @@ public class FileSourceFactory implements DataStreamSourceFactory {
         builder.setFileEnumerator(fileEnumerator);
 
         Optional<Integer> monitorInterval = tableConfig.getConnectorConfig()
-            .asInt(FileSystemConnectorOptions.SOURCE_MONITOR_INTERVAL.key())
+            .asInt(FileConfigOptions.MONITOR_INTERVAL_MS)
             .getOptional();
         if (isMonitor(monitorInterval)) {
           Duration duration = monitorInterval

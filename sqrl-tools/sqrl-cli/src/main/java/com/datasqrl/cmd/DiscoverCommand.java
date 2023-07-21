@@ -13,6 +13,7 @@ import com.datasqrl.engine.stream.monitor.DataMonitor.Job.Status;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.io.FileConfigOptions;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
@@ -128,6 +129,6 @@ public class DiscoverCommand extends AbstractCommand {
   }
 
   private void applyConnectorOverrides(SqrlConfig connectorConfig) {
-    connectorConfig.setProperty(FileSystemConnectorOptions.SOURCE_MONITOR_INTERVAL.key(), "0");
+    connectorConfig.setProperty(FileConfigOptions.MONITOR_INTERVAL_MS, "0");
   }
 }
