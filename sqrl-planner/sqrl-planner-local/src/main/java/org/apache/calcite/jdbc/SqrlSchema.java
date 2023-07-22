@@ -51,10 +51,9 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.calcite.plan.Contexts;
-import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.plan.RelOptPlanner;
+import org.apache.calcite.plan.*;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
+import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.schema.Schema;
@@ -86,7 +85,10 @@ public class SqrlSchema extends SimpleCalciteSchema {
     this.functionCatalog = functionCatalog;
     this.pipeline = pipeline;
 
-    RelOptPlanner planner = new VolcanoPlanner(null, Contexts.empty());
+    VolcanoPlanner planner = new VolcanoPlanner(null, Contexts.empty());
+    planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
+    planner.addRelTraitDef(RelCollationTraitDef.INSTANCE);
+    RelOptUtil.registerDefaultRules(planner,true, true);
 
     RelOptCluster cluster = RelOptCluster.create(
         requireNonNull(planner, "planner"),

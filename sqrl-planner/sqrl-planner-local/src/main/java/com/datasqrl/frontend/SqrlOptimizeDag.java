@@ -34,7 +34,7 @@ public class SqrlOptimizeDag extends SqrlPlan {
 
   public PhysicalDAGPlan planDag(Namespace ns, APIConnectorManager apiManager, RootGraphqlModel model,
       boolean includeJars) {
-    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
+    DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), planner, ns.getSchema().getPlanner(),
         ns.getSchema().getPipeline(), getDebugger(), errors);
     CalciteSchema relSchema = planner.getSchema();
     return dagPlanner.plan(relSchema, apiManager, ns.getExports(), includeJars ? ns.getJars() : Set.of(),

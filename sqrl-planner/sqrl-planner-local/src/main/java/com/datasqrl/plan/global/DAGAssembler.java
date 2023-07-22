@@ -1,8 +1,5 @@
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.plan.OptimizationStage.READ_DAG_STITCHING;
-import static com.datasqrl.plan.OptimizationStage.WRITE_DAG_STITCHING;
-
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -13,6 +10,7 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.RelStageRunner;
+import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
@@ -45,13 +43,15 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
+
+import static com.datasqrl.plan.OptimizationStage.*;
 
 @Value
 public class DAGAssembler {
 
+  private final SqrlQueryPlanner queryPlanner;
   private final RelOptPlanner planner;
   private final SQRLConverter sqrlConverter;
   private final ExecutionPipeline pipeline;

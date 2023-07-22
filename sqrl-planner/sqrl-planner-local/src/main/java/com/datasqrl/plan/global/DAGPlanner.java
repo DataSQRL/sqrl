@@ -9,6 +9,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
@@ -30,6 +31,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class DAGPlanner {
   private final RelBuilder relBuilder;
 
+  private final SqrlQueryPlanner queryPlanner;
   private final RelOptPlanner planner;
   private final ExecutionPipeline pipeline;
 
@@ -42,9 +44,10 @@ public class DAGPlanner {
   private final ExecutionStage streamStage;
   private final ExecutionStage databaseStage;
 
-  public DAGPlanner(RelBuilder relBuilder, RelOptPlanner planner,
+  public DAGPlanner(RelBuilder relBuilder, SqrlQueryPlanner queryPlanner, RelOptPlanner planner,
       ExecutionPipeline pipeline, Debugger debugger, ErrorCollector errors) {
     this.relBuilder = relBuilder;
+    this.queryPlanner = queryPlanner;
     this.planner = planner;
     this.pipeline = pipeline;
     this.sqrlConverter = new SQRLConverter(relBuilder);
@@ -90,7 +93,7 @@ public class DAGPlanner {
   public PhysicalDAGPlan assemble(SqrlDAG dag, APIConnectorManager apiManager,
       Set<URL> jars, Map<String, UserDefinedFunction> udfs, RootGraphqlModel model) {
     //Stitch DAG together
-    DAGAssembler assembler = new DAGAssembler(planner, sqrlConverter, pipeline, debugger, errors);
+    DAGAssembler assembler = new DAGAssembler(queryPlanner, planner, sqrlConverter, pipeline, debugger, errors);
     return assembler.assemble(dag, jars, udfs, model, apiManager);
   }
 
