@@ -65,7 +65,7 @@ public class IntegrationTestSettings {
     //Flink config
     if (getStream() == StreamEngine.FLINK) {
       SqrlConfig stream = config.getSubConfig("streams");
-      stream.setProperty("taskmanager.memory.network.max", "800m");
+      //stream.setProperty("taskmanager.memory.network.max", "800m");
     }
 
     //Database engine
