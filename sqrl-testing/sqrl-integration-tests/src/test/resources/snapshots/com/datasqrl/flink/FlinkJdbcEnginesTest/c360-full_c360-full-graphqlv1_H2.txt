@@ -3,7 +3,8 @@ CREATE INDEX IF NOT EXISTS "customer$12_btree_c3c4" ON "customer$12" USING btree
 CREATE INDEX IF NOT EXISTS "customer$12_hash_c4" ON "customer$12" USING hash ("name");
 CREATE INDEX IF NOT EXISTS "newcustomerpromotion$28_hash_c2" ON "newcustomerpromotion$28" USING hash ("customerid");
 CREATE INDEX IF NOT EXISTS "order_again$20_hash_c0c3" ON "order_again$20" USING hash ("__pk_0","num_orders");
-CREATE INDEX IF NOT EXISTS "orders$9_hash_c2" ON "orders$9" USING hash ("id");
+CREATE INDEX IF NOT EXISTS "orders$9_btree_c2c4" ON "orders$9" USING btree ("id","time");
+CREATE INDEX IF NOT EXISTS "orders$9_hash_c4" ON "orders$9" USING hash ("time");
 CREATE INDEX IF NOT EXISTS "product$16_hash_c3" ON "product$16" USING hash ("name");
 CREATE TABLE IF NOT EXISTS "category$14" ("name" CHARACTER VARYING NOT NULL,"updatetime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
 CREATE TABLE IF NOT EXISTS "customer$12" ("customerid" BIGINT NOT NULL,"_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"email" CHARACTER VARYING NOT NULL,"name" CHARACTER VARYING NOT NULL,"lastupdated" BIGINT NOT NULL,"updatetime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));

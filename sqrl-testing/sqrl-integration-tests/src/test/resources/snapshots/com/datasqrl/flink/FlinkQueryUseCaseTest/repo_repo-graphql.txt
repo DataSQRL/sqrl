@@ -1,4 +1,6 @@
 >>>database
+CREATE INDEX IF NOT EXISTS submission$3_btree_c3c18 ON submission$3 USING btree (version,variant$0);
+CREATE INDEX IF NOT EXISTS submission$3_hash_c18 ON submission$3 USING hash (variant$0);
 CREATE INDEX IF NOT EXISTS topicpackages$9_hash_c1 ON topicpackages$9 USING hash (topicname);
 CREATE TABLE IF NOT EXISTS keywords$5 (_uuid VARCHAR NOT NULL,_idx BIGINT NOT NULL,name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid,_idx));
 CREATE TABLE IF NOT EXISTS package$7 (name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));

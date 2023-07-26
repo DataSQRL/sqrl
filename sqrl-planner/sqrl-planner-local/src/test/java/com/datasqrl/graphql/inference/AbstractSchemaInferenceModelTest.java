@@ -105,6 +105,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     List<IndexCall> allIndexes = new ArrayList<>();
     for (PhysicalDAGPlan.ReadQuery query : dag.getReadQueries()) {
       List<IndexCall> indexCall = indexSelector.getIndexSelection(query);
+      System.out.println(indexCall);
       allIndexes.addAll(indexCall);
     }
     return indexSelector.optimizeIndexes(allIndexes);

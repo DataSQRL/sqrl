@@ -25,6 +25,7 @@ public class SqrlHintStrategyTable {
       .hintStrategy(SlidingAggregationHint.HINT_NAME, HintPredicates.AGGREGATE)
       .hintStrategy(TumbleAggregationHint.HINT_NAME, HintPredicates.AGGREGATE)
       .hintStrategy(TemporalJoinHint.HINT_NAME, HintPredicates.JOIN)
+      .hintStrategy(DedupHint.HINT_NAME, HintPredicates.JOIN)
       .hintStrategy(INTERVAL_JOIN.getHintName(), HintPredicates.JOIN)
       .build();
 

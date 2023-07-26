@@ -1,5 +1,6 @@
 >>>database
 CREATE INDEX IF NOT EXISTS "orders$6_hash_c2" ON "orders$6" USING hash ("id");
+CREATE INDEX IF NOT EXISTS "orders$6_hash_c5" ON "orders$6" USING hash ("timestamp");
 CREATE INDEX IF NOT EXISTS "products$11_hash_c3" ON "products$11" USING hash ("name");
 CREATE TABLE IF NOT EXISTS "customers$13" ("id" BIGINT NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "items$7" ("_uuid" CHARACTER VARYING NOT NULL,"_idx" INTEGER NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"unit_price" DOUBLE PRECISION NOT NULL,"discount" DOUBLE PRECISION ,"discount$0" DOUBLE PRECISION NOT NULL,"total" DOUBLE PRECISION NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_idx"));

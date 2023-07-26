@@ -1,6 +1,8 @@
 >>>database
 CREATE INDEX IF NOT EXISTS machine$16_btree_c1c2 ON machine$16 USING btree (maxtemp,avgtemp);
 CREATE INDEX IF NOT EXISTS machine$16_hash_c2 ON machine$16 USING hash (avgtemp);
+CREATE INDEX IF NOT EXISTS minreadings$12_btree_c1c2 ON minreadings$12 USING btree (timemin,temp);
+CREATE INDEX IF NOT EXISTS minreadings$12_btree_c2c0 ON minreadings$12 USING btree (temp,sensorid);
 CREATE INDEX IF NOT EXISTS sensors$14_btree_c3c4 ON sensors$14 USING btree (machineid,placed);
 CREATE INDEX IF NOT EXISTS sensors$14_hash_c4 ON sensors$14 USING hash (placed);
 CREATE TABLE IF NOT EXISTS machine$16 (machineid BIGINT NOT NULL,maxtemp DOUBLE PRECISION NOT NULL,avgtemp DOUBLE PRECISION NOT NULL,timemin TIMESTAMPTZ NOT NULL , PRIMARY KEY (machineid));

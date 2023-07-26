@@ -15,6 +15,7 @@ import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
