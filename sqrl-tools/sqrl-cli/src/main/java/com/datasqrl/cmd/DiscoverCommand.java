@@ -57,7 +57,7 @@ public class DiscoverCommand extends AbstractCommand {
       discoveryConfig = TableConfig.load(inputFile, Name.system(inputFile.getFileName().toString()), errors);
       applyConnectorOverrides(discoveryConfig.getConnectorConfig());
     } else if (inputFile != null && Files.isDirectory(inputFile)) {
-      discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile, ExternalDataType.source).build();
+      discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig(inputFile.toAbsolutePath().normalize(), ExternalDataType.source).build();
     } else {
       errors.fatal("Could not find data system configuration or directory at: %s", inputFile);
     }

@@ -91,7 +91,8 @@ public class TestCmd {
         script.getScriptPath().toString(),
         script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
         "-t", OUTPUT_DIR.toString(),
-        "--nolookup");
+        "--nolookup",
+        "--mnt", rootDir.toString());
     createSnapshot();
   }
 
