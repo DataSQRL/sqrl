@@ -823,7 +823,7 @@ class AstBuilder
       throw new RuntimeException("Unknown function ast");
     }
 
-    //special case: count(*)
+    //special case: fnc(*)
     if (context.ASTERISK() != null) {
       args = List.of(SqlIdentifier.star(SqlParserPos.ZERO));
     }

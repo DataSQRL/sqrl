@@ -343,7 +343,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Disabled
   public void ordersNewIdTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;");
+    builder.add("Orders.newid := SELECT NOW() AS now, TIMESTAMPTOSTRING(EPOCHTOTIMESTAMP(100)) AS n FROM Orders;");
     validateScript(builder.getScript());
   }
 

@@ -20,17 +20,15 @@ import org.apache.calcite.tools.RelBuilder;
 @Getter
 public class SqrlQueryPlanner {
   private final SqrlSchema schema;
-  private final SqrlFunctionCatalog functionCatalog;
 
   @Inject
-  public SqrlQueryPlanner(SqrlSchema schema, SqrlFunctionCatalog functionCatalog) {
+  public SqrlQueryPlanner(SqrlSchema schema) {
     this.schema = schema;
-    this.functionCatalog = functionCatalog;
   }
 
   public RelNode planQuery(SqlNode node) {
     SqlValidator sqlValidator = SqlValidatorUtil.createSqlValidator(schema,
-        functionCatalog.getOperatorTable());
+        schema.getOperatorTable());
     SqlNode validatedNode = sqlValidator.validate(node);
 
     SqrlToRelConverter sqlToRelConverter = new SqrlToRelConverter(schema);
@@ -53,7 +51,7 @@ public class SqrlQueryPlanner {
 
   private SqlValidator createValidator() {
     return SqlValidatorUtil.createSqlValidator(schema,
-        functionCatalog.getOperatorTable());
+        schema.getOperatorTable());
   }
 
   public SqrlSchema getSchema() {

@@ -1,7 +1,7 @@
 >>>customer$9-lp-stream
 LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
   LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[EpochToTimestamp($5)]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[customer$i$5]])
 
 >>>orders$3-lp-stream
@@ -12,7 +12,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
 LogicalProject(__pk_0=[$0], hour=[$1], total_price=[$2], total_num=[$3])
   LogicalProject(__pk_0=[$0], hour=[$1], total_price=[$2], total_num=[$3])
     LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 3600000]]
-      LogicalProject(__pk_0=[$6], hour=[endOfHour($3)], price=[$4], num=[$5], _uuid=[$0])
+      LogicalProject(__pk_0=[$6], hour=[EndOfHour($3)], price=[$4], num=[$5], _uuid=[$0])
         LogicalJoin(condition=[=($2, $6)], joinType=[inner]) hints[TemporalJoinHint options:[3, 6, 0]]
           LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], time=[$4], price=[$7], num=[$8])
             LogicalJoin(condition=[AND(=($0, $6), =($10, $4))], joinType=[inner]) hints[IntervalJoin]
@@ -28,7 +28,7 @@ LogicalProject(__pk_0=[$0], hour=[$1], total_price=[$2], total_num=[$3])
           LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
             LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
               LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-                LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+                LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[EpochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                   LogicalTableScan(table=[[customer$i$5]])
 
 >>>ordersinline$13-lp-stream

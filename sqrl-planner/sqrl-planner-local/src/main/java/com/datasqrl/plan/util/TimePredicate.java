@@ -12,11 +12,11 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 /**
  * Represents a timestamp predicate that is normalized into the form: smallerIndex <=/= largerIndex

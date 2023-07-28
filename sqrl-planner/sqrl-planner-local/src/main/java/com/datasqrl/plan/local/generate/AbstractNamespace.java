@@ -31,8 +31,6 @@ public interface AbstractNamespace {
   public boolean addFunctionObject(Name name,
       FunctionNamespaceObject<UserDefinedFunction> nsObject);
 
-  Optional<SqlFunction> translateFunction(Name name);
-
   SqlOperatorTable getOperatorTable();
 
   SqrlSchema getSchema();

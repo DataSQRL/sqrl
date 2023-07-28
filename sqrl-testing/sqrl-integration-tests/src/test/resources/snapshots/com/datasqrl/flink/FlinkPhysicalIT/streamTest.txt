@@ -15,7 +15,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                     LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[EpochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[customer$i$1]])
 
 >>>countstream$16$1-lp-stream
@@ -35,7 +35,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                     LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[EpochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[customer$i$1]])
 
 >>>countstream$16$2-lp-stream
@@ -55,7 +55,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                     LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[EpochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[customer$i$1]])
 
 >>>customercount$14-lp-stream
@@ -70,7 +70,7 @@ LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3])
       LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
         LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
           LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[EpochToTimestamp($5)]) hints[WatermarkHint options:[6]]
               LogicalTableScan(table=[[customer$i$1]])
 
 >>>customercount2$20-lp-stream
@@ -91,7 +91,7 @@ LogicalProject(customerid=[$0], _uuid=[$1], _source_time=[$2], name=[$3], quanti
                   LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                     LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                       LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-                        LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+                        LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[EpochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                           LogicalTableScan(table=[[customer$i$1]])
 
 >>>updatestream$18-lp-stream
@@ -111,7 +111,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                     LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
-                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+                      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[EpochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[customer$i$1]])
 
 >>>countstream-lp-database

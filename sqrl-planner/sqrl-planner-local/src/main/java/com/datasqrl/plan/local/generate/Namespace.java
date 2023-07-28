@@ -2,7 +2,6 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.function.CalciteFunctionNsObject;
 import com.datasqrl.function.FlinkUdfNsObject;
-import com.datasqrl.io.tables.AbstractExternalTable;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.TableSinkNamespaceObject;
@@ -12,7 +11,6 @@ import com.datasqrl.module.FunctionNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.plan.queries.APIConnector;
 import com.datasqrl.plan.queries.APIConnectors;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APISource;
@@ -52,8 +50,6 @@ public class Namespace implements AbstractNamespace {
 
   private List<ResolvedExport> exports = new ArrayList<>();
 
-  private Map<Name, SqlFunction> systemProvidedFunctionMap = new HashMap<>();
-
   public Namespace(SqrlSchema schema) {
     this.schema = schema;
     this.jars = new HashSet<>();
@@ -89,25 +85,16 @@ public class Namespace implements AbstractNamespace {
 
   public boolean addFunctionObject(Name name, FunctionNamespaceObject nsObject) {
     if (nsObject instanceof CalciteFunctionNsObject) {
-      systemProvidedFunctionMap.put(name, ((CalciteFunctionNsObject) nsObject).getFunction());
+      schema.getSqrlOperatorTable().addSystemFunction(name, ((CalciteFunctionNsObject) nsObject).getFunction());
     } else if (nsObject instanceof FlinkUdfNsObject) {
       FlinkUdfNsObject fctObject = (FlinkUdfNsObject) nsObject;
       udfs.put(name.getCanonical(), fctObject.getFunction());
-      schema.addFunction(name.getCanonical(), fctObject.getFunction());
+      schema.addFlinkFunction(name.getDisplay(), fctObject.getFunction());
       fctObject.getJarUrl().map(j -> jars.add(j));
     } else {
       throw new UnsupportedOperationException("Unexpected function object: " + nsObject.getClass());
     }
     return true;
-  }
-
-  /**
-   * Checks if a function translates to a system defined function. Used for aliasing
-   * system functions.
-   */
-  @Override
-  public Optional<SqlFunction> translateFunction(Name name) {
-    return Optional.ofNullable(systemProvidedFunctionMap.get(name));
   }
 
   /**
@@ -139,10 +126,8 @@ public class Namespace implements AbstractNamespace {
 
   @Override
   public SqlOperatorTable getOperatorTable() {
-    return getSchema().getFunctionCatalog().getOperatorTable();
+    return getSchema().getOperatorTable();
   }
-
-
 
   @Override
   public SqrlSchema getSchema() {

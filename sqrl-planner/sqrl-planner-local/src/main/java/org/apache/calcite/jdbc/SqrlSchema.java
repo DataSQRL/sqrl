@@ -18,12 +18,12 @@ package org.apache.calcite.jdbc;
 
 import static java.util.Objects.requireNonNull;
 
+import com.datasqrl.TimeFunctions;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCode;
-import com.datasqrl.functions.SqrlFunctionCatalog;
-import com.datasqrl.io.tables.AbstractExternalTable;
-import com.datasqrl.io.tables.TableInput;
+import com.datasqrl.function.StdTimeLibraryImpl;
+import com.datasqrl.functions.SqrlOperatorTable;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.parse.SqrlAstException;
@@ -58,32 +58,38 @@ import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.schema.Schema;
+import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.util.SqlOperatorTables;
+import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
+import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 @Singleton
 @Getter
 public class SqrlSchema extends SimpleCalciteSchema {
 
   private final CalciteTableFactory tableFactory;
-  private final SqrlFunctionCatalog functionCatalog;
   private final ExecutionPipeline pipeline;
 
   private final RelOptPlanner planner;
   private final RelOptCluster cluster;
   private final RelDataTypeFactory typeFactory;
+  private final SqlOperatorTable operatorTable;
+  private final SqrlOperatorTable sqrlOperatorTable;
 
   @Inject
-  public SqrlSchema(CalciteTableFactory tableFactory, SqrlFunctionCatalog functionCatalog,
+  public SqrlSchema(CalciteTableFactory tableFactory,
       ExecutionPipeline pipeline, RelDataTypeFactory typeFactory) {
     this(CalciteSchema.createRootSchema(false, false).plus(),
-        tableFactory, functionCatalog, pipeline, typeFactory);
+        tableFactory, pipeline, typeFactory);
   }
 
   public SqrlSchema(Schema schema, CalciteTableFactory tableFactory,
-      SqrlFunctionCatalog functionCatalog, ExecutionPipeline pipeline, RelDataTypeFactory typeFactory) {
+      ExecutionPipeline pipeline, RelDataTypeFactory typeFactory) {
     super(null, schema, "");
     this.tableFactory = tableFactory;
-    this.functionCatalog = functionCatalog;
     this.pipeline = pipeline;
 
     RelOptPlanner planner = new VolcanoPlanner(null, Contexts.empty());
@@ -95,6 +101,20 @@ public class SqrlSchema extends SimpleCalciteSchema {
     cluster.setMetadataQuerySupplier(SqrlRelMetadataQuery::new);
     cluster.setHintStrategies(SqrlHintStrategyTable.getHintStrategyTable());
 
+    this.sqrlOperatorTable = new SqrlOperatorTable();
+    //Default Functions
+    this.sqrlOperatorTable.addFlinkFunction(
+        TimeFunctions.NOW.getFunctionName().getDisplay(), TimeFunctions.NOW);
+    //TODO: Shouldn't be here, should be imports or fully sqrl standardized
+    BuiltInFunctionDefinitions.getDefinitions().stream()
+        .filter(f->f.getKind() != FunctionKind.TABLE_AGGREGATE)
+        .filter(f->f.getKind() != FunctionKind.AGGREGATE)
+        .forEach(this.sqrlOperatorTable::addFlinkFunction);
+
+    this.operatorTable = SqlOperatorTables.chain(
+        sqrlOperatorTable,
+        FlinkSqlOperatorTable.instance()
+    );
     this.planner = planner;
     this.cluster = cluster;
     this.typeFactory = typeFactory;
@@ -181,8 +201,8 @@ public class SqrlSchema extends SimpleCalciteSchema {
     return visitor.visit(this, context);
   }
 
-  public void addFunction(String name, UserDefinedFunction function) {
-    functionCatalog.addNativeFunction(name, function);
+  public void addFlinkFunction(String name, UserDefinedFunction function) {
+    sqrlOperatorTable.addFlinkFunction(name, function);
   }
 
   public Optional<List<Object>> walk(NamePath path) {

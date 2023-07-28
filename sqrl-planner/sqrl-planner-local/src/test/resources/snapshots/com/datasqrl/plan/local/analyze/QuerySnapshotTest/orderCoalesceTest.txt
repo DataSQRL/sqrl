@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[customer$i$1]])
 
 >>>discount$q$11
-LogicalProject(__pk_0=[$0], __pk_1=[$6], _uuid0=[$11], _idx0=[$17], discount=[coalesce($21, 0.0:DOUBLE)], __timestamp=[CASE(<($4, $15), $15, $4)])
+LogicalProject(__pk_0=[$0], __pk_1=[$6], _uuid0=[$11], _idx0=[$17], discount=[COALESCE($21, 0.0:DOUBLE)], __timestamp=[CASE(<($4, $15), $15, $4)])
   LogicalJoin(condition=[true], joinType=[inner])
     LogicalCorrelate(correlation=[$cor2], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$5]])

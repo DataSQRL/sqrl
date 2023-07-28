@@ -17,8 +17,7 @@ public class SqlTransformerFactory {
         FlattenFieldPaths::new,
         FlattenTablePaths::new,
         ReplaceWithVirtualTable::new,
-        AllowMixedFieldUnions::new,
-        MapSystemFunctions::new
+        AllowMixedFieldUnions::new
     );
   }
 }

@@ -2,8 +2,6 @@ package com.datasqrl.frontend;
 
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.functions.FlinkBackedFunctionCatalog;
-import com.datasqrl.functions.SqrlFunctionCatalog;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.parse.SqrlParser;
@@ -40,7 +38,6 @@ public class SqrlDIModule extends AbstractModule {
     bind(ModuleLoader.class).toInstance(moduleLoader);
     bind(ErrorCollector.class).toInstance(errors);
     bind(NameCanonicalizer.class).toInstance(NameCanonicalizer.SYSTEM);
-    bind(SqrlFunctionCatalog.class).toInstance(new FlinkBackedFunctionCatalog());
     bind(SqrlParser.class).toInstance(new SqrlParserImpl());
     bind(ExecutionPipeline.class).toInstance(pipeline);
     bind(DebuggerConfig.class).toInstance(debugConfig);
