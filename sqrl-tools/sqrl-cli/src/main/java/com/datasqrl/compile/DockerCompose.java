@@ -1,10 +1,16 @@
 package com.datasqrl.compile;
 
 import java.net.URL;
+import java.nio.file.Path;
+import java.util.Optional;
 
 public class DockerCompose {
 
-  public static String getYml() {
+  public static String getYml(Optional<Path> mountDir) {
+    String volumneMnt = mountDir.map(dir -> dir.toAbsolutePath().normalize())
+        .map( dir -> "    volumes:\n"
+        + "      - " + dir.toAbsolutePath() + ":/build\n").orElse("");
+
     return "# This is a docker-compose template for starting a DataSQRL compiled data pipeline\n"
         + "# This template uses the Apache Flink as the stream engine, Postgres as the database engine, and Vertx as the server engine.\n"
         + "# It assumes that:\n"
@@ -36,6 +42,7 @@ public class DockerCompose {
         + "      - |\n"
         + "        FLINK_PROPERTIES=\n"
         + "        jobmanager.rpc.address: flink-jobmanager\n"
+        + volumneMnt
         + "\n"
         + "  flink-taskmanager:\n"
         + "    image: flink:1.16.1-scala_2.12-java11\n"
@@ -47,6 +54,7 @@ public class DockerCompose {
         + "        FLINK_PROPERTIES=\n"
         + "        jobmanager.rpc.address: flink-jobmanager\n"
         + "        taskmanager.numberOfTaskSlots: 1\n"
+        + volumneMnt
         + "\n"
         + "  kafka:\n"
         + "    image: docker.io/bitnami/kafka:3.4\n"

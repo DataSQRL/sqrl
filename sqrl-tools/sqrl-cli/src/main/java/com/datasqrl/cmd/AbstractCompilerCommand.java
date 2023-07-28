@@ -15,6 +15,7 @@ import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Preconditions;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -47,6 +48,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"-t", "--target"}, description = "Target directory for deployment artifacts")
   protected Path targetDir = DEFAULT_DEPLOY_DIR;
 
+  @CommandLine.Option(names = {"--mnt"}, description = "Local directory to mount for data access")
+  protected Path mountDirectory = null;
+
   @CommandLine.Option(names = {"--nolookup"}, description = "Do not look up package dependencies in the repository",
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
@@ -73,7 +77,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     Compiler.CompilerResult result = compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
 
     if (configSupplier.usesDefault) {
-      addDockerCompose();
+      addDockerCompose(Optional.ofNullable(mountDirectory));
     }
     if (isGenerateGraphql()) {
       addGraphql(packager.getBuildDir(), packager.getRootDir());
@@ -94,8 +98,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   //Adds in regardless
-  private void addDockerCompose() {
-    String yml = DockerCompose.getYml();
+  private void addDockerCompose(Optional<Path> mountDir) {
+    String yml = DockerCompose.getYml(mountDir);
     Path toFile = targetDir.resolve("docker-compose.yml");
     try {
       Files.createDirectories(targetDir);
