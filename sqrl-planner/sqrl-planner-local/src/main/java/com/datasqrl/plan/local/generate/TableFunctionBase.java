@@ -1,6 +1,7 @@
 package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.schema.SQRLTable;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,6 @@ public abstract class TableFunctionBase implements TableFunction, ScriptTable {
 
   Name functionName;
   List<FunctionParameter> params;
-  RelNode relNode;
   SQRLTable table;
 
   @Override
@@ -29,14 +29,11 @@ public abstract class TableFunctionBase implements TableFunction, ScriptTable {
     return functionName.getCanonical();
   }
 
+  public abstract LPAnalysis getAnalyzedLP();
+
   @Override
   public Name getTableName() {
     return functionName;
-  }
-
-  @Override
-  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
-    return relNode.getRowType();
   }
 
   @Override

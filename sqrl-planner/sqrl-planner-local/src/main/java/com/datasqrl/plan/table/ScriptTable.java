@@ -26,6 +26,8 @@ public interface ScriptTable {
 
   void assignStage(ExecutionStage stage);
 
+  Optional<ExecutionStage> getAssignedStage();
+
   RelNode getPlannedRelNode();
 
   void setPlannedRelNode(RelNode plannedRelNode);

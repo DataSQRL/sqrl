@@ -17,7 +17,8 @@ public class Sensors extends UseCaseExample {
 
   protected Sensors(String variant) {
     super(variant, Set.of("sensors","sensorreading","machinegroup"),
-        script("sensors-teaser","machine","minreadings"));
+        scripts().add("sensors-teaser","machine","minreadings")
+            .add("metrics-function", "secreading", "sensormaxtemp").build());
   }
 
   protected Sensors(String variant, String graphql) {

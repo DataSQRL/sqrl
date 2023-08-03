@@ -27,6 +27,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.util.SqrlRexUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
@@ -260,8 +261,9 @@ public class DAGAssembler {
 
     @Override
     public RelNode visit(TableFunctionScan scan) {
-      throw new NotYetImplementedException("extract function and add to set");
-      //return super.visit(scan);
+      SqrlRexUtil.getCustomTableFunction(scan).filter(TableFunctionBase.class::isInstance)
+          .map(TableFunctionBase.class::cast).ifPresent(scanFunctions::add);
+      return super.visit(scan);
     }
   }
 

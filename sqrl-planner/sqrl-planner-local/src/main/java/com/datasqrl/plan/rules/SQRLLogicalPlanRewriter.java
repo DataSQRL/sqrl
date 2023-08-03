@@ -21,6 +21,9 @@ import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.hints.TemporalJoinHint;
 import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.hints.TumbleAggregationHint;
+import com.datasqrl.plan.local.generate.AccessTableFunction;
+import com.datasqrl.plan.local.generate.ComputeTableFunction;
+import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.model.LogicalStreamMetaData;
 import com.datasqrl.plan.rules.JoinTable.NormType;
@@ -28,6 +31,7 @@ import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.AddedColumn;
 import com.datasqrl.plan.table.NowFilter;
 import com.datasqrl.plan.table.PullupOperator;
+import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.SortOrder;
 import com.datasqrl.plan.table.TableType;
@@ -91,6 +95,7 @@ import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexWindowBounds;
+import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlKind;
 import com.datasqrl.model.StreamType;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -176,9 +181,41 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   public RelNode visit(TableFunctionScan functionScan) {
-    exec.require(EngineCapability.TABLE_FUNCTION_SCAN);
+    exec.require(EngineCapability.TABLE_FUNCTION_SCAN); //We only support table functions on the read side
+    Optional<TableFunction> tableFunction = SqrlRexUtil.getCustomTableFunction(functionScan);
+    errors.checkFatal(tableFunction.isPresent() && tableFunction.get() instanceof TableFunctionBase,
+        "Invalid table function encountered in query: %s", functionScan);
+    TableFunctionBase tblFct = (TableFunctionBase) tableFunction.get();
+    config.getSourceTableConsumer().accept(tblFct);
+    AnnotatedLP inputALP = tblFct.getAnalyzedLP().getConvertedRelnode();
+    //TODO: We don't currently support nested types for table functions and hence don't have to do shredding
+    Preconditions.checkArgument(!CalciteUtil.hasNesting(inputALP.getRelNode().getRowType()));
 
-    return setRelHolder(null);
+    final int numPrimaryKeys, numColumns, targetLength = inputALP.getRelNode().getRowType().getFieldCount();
+    final TimestampHolder.Derived timestamp;
+    if (tblFct instanceof AccessTableFunction) {
+      AccessTableFunction accessFct = (AccessTableFunction) tblFct;
+      VirtualRelationalTable vTable = accessFct.getTable().getVt();
+      Preconditions.checkArgument(vTable.isRoot());
+      numColumns = vTable.getNumColumns();
+      numPrimaryKeys = vTable.getNumPrimaryKeys();
+      timestamp = TimestampHolder.Base.ofDerived(inputALP.getTimestamp()).getDerived();
+    } else {
+      ComputeTableFunction computeFct = (ComputeTableFunction) tblFct;
+      QueryRelationalTable queryTable = computeFct.getQueryTable();
+      numPrimaryKeys = queryTable.getNumPrimaryKeys();
+      numColumns = queryTable.getNumColumns();
+      timestamp = queryTable.getTimestamp().getDerived();
+    }
+
+    return setRelHolder(new AnnotatedLP(functionScan, inputALP.getType(),
+        ContinuousIndexMap.identity(numPrimaryKeys, targetLength),
+        timestamp,
+        ContinuousIndexMap.identity(numColumns, targetLength),
+        (tblFct instanceof AccessTableFunction? inputALP.getJoinTables():Collections.EMPTY_LIST),
+        Optional.of(inputALP.primaryKey.getSourceLength()),
+        NowFilter.EMPTY, TopNConstraint.EMPTY, //Can ignore those since they will be inlined
+        inputALP.getSort(), List.of()));
   }
 
   private AnnotatedLP denormalizeTable(ScriptRelationalTable queryTable,

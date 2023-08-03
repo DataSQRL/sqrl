@@ -41,7 +41,7 @@ public class SQRLConverter {
 
   public RelNode convertAPI(AnalyzedAPIQuery query, ExecutionStage stage, ErrorCollector errors) {
     AnnotatedLP alp = convert(query.getRelNode(), query.getBaseConfig().withStage(stage), errors);
-    //Rewrite query
+    //Rewrite query to inline sort or use a default sort
     alp = alp.withDefaultSort().inlineSort(relBuilder, ExecutionAnalysis.of(stage));
     assert alp.getPullups().isEmpty();
     return alp.getRelNode();
@@ -58,7 +58,7 @@ public class SQRLConverter {
       return convert((ProxyImportRelationalTable) table, exec, addWatermark);
     } else if (table instanceof AccessTableFunction) {
       AccessTableFunction tblFct = (AccessTableFunction) table;
-      AnnotatedLP alp = convert(tblFct.getRelNode(), config, errors);
+      AnnotatedLP alp = convert(tblFct.getAnalyzedLP().getOriginalRelnode(), config, errors);
       return alp.getRelNode();
     } else { //either QueryRelationalTable or ComputeTableFunction
       QueryRelationalTable queryTable = (table instanceof ComputeTableFunction)

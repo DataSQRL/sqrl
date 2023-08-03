@@ -7,7 +7,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.SortOrder;
 import com.datasqrl.schema.SQRLTable;
 import java.util.Optional;
 import lombok.Getter;
@@ -23,23 +23,20 @@ import java.util.List;
 @Getter
 public class AccessTableFunction extends TableFunctionBase {
 
+  private final LPAnalysis analyzedLP;
+
   private Optional<ExecutionStage> assignedStage = Optional.empty();
   @Setter
   private RelNode plannedRelNode = null;
 
-
-  public AccessTableFunction(Name functionName, List<FunctionParameter> params, RelNode originalRelNode, SQRLTable table) {
-    super(functionName, params, originalRelNode, table);
+  public AccessTableFunction(Name functionName, List<FunctionParameter> params, LPAnalysis analyzedLP, SQRLTable table) {
+    super(functionName, params, table);
+    this.analyzedLP = analyzedLP;
   }
 
   @Override
-  public Type getElementType(List<Object> list) {
-    return Object.class;
-  }
-
-  @Override
-  public List<FunctionParameter> getParameters() {
-    return params;
+  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
+    return analyzedLP.getConvertedRelnode().getRelNode().getRowType();
   }
 
   @Override

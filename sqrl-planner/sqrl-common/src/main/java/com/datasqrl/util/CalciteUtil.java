@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -24,6 +25,7 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -222,6 +224,25 @@ public class CalciteUtil {
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
       return super.visitChild(parent.accept(rexShuttle), i, child);
     }
+  }
+
+  public static RelNode replaceParameters(@NonNull RelNode node, @NonNull List<RexNode> parameters) {
+    return applyRexShuttleRecursively(node, new RexParameterReplacer(parameters, node));
+  }
+
+  @Value
+  private static class RexParameterReplacer extends RexShuttle {
+
+    private final List<RexNode> parameters;
+    private final RelNode relNode;
+
+    public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
+      int index = dynamicParam.getIndex();
+      Preconditions.checkArgument(index>=0 && index<parameters.size(),
+          "Query parameter index [%s] is out of bounds [%s] in: %s", relNode);
+      return parameters.get(index);
+    }
+
   }
 
   public static RexNode makeTimeInterval(long interval_ms, RexBuilder rexBuilder) {

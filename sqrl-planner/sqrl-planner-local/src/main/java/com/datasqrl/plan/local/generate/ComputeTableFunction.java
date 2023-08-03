@@ -9,6 +9,7 @@ import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
 import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.SQRLTable;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
@@ -25,25 +26,25 @@ public class ComputeTableFunction extends TableFunctionBase {
 
   QueryRelationalTable queryTable;
 
-  public ComputeTableFunction(Name name, List<FunctionParameter> params, RelNode relNode, SQRLTable table,
+  public ComputeTableFunction(Name name, List<FunctionParameter> params, SQRLTable table,
       QueryRelationalTable queryTable) {
-    super(name, params, relNode, table);
+    super(name, params, table);
     this.queryTable = queryTable;
   }
 
   @Override
-  public Type getElementType(List<Object> list) {
-    return Object.class;
-  }
-
-  @Override
-  public List<FunctionParameter> getParameters() {
-    return params;
+  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
+    return queryTable.getRowType();
   }
 
   @Override
   public String getNameId() {
     return queryTable.getNameId();
+  }
+
+  @Override
+  public LPAnalysis getAnalyzedLP() {
+    return queryTable.getAnalyzedLP();
   }
 
   @Override
@@ -61,6 +62,11 @@ public class ComputeTableFunction extends TableFunctionBase {
   @Override
   public void assignStage(ExecutionStage stage) {
     queryTable.assignStage(stage);
+  }
+
+  @Override
+  public Optional<ExecutionStage> getAssignedStage() {
+    return queryTable.getAssignedStage();
   }
 
   @Override

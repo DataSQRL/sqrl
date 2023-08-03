@@ -4,7 +4,6 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.QueryRelationalTable;
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import org.apache.calcite.util.Litmus;
 
 public class QueryStatementResolver extends AbstractQueryStatementResolver {
 
@@ -46,10 +44,10 @@ public class QueryStatementResolver extends AbstractQueryStatementResolver {
     TableFunctionBase tableFunction;
     if (accessTable.isPresent()) {
       SQRLTable table = accessTable.get();
-      tableFunction = new AccessTableFunction(functionName, params, analyzedLP.getOriginalRelnode(), table);
+      tableFunction = new AccessTableFunction(functionName, params, analyzedLP, table);
     } else {
       SqrlTableNamespaceObject t = super.createTableInternal(ns, statement, analyzedLP);
-      tableFunction = new ComputeTableFunction(functionName, params, analyzedLP.getOriginalRelnode(), t.getTable().getTable(),
+      tableFunction = new ComputeTableFunction(functionName, params, t.getTable().getTable(),
           (QueryRelationalTable) t.getTable().getBaseTable());
     }
     return new TableFunctionNamespaceObject(functionName, tableFunction);

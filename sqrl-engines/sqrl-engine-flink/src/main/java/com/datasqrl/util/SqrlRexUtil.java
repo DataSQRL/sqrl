@@ -26,6 +26,7 @@ import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalProject;
@@ -41,11 +42,13 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.rex.RexWindowBounds;
+import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
@@ -337,6 +340,14 @@ public class SqrlRexUtil {
     return collation.getFieldCollations().stream()
         .map(col -> getFieldName(col.getFieldIndex(),relNode) + " " + col.direction.name())
         .collect(Collectors.joining(","));
+  }
+
+  public static Optional<TableFunction> getCustomTableFunction(TableFunctionScan fctScan) {
+    RexCall call = (RexCall) fctScan.getCall();
+    if (call.getOperator() instanceof SqlUserDefinedTableFunction) {
+      return Optional.of(((SqlUserDefinedTableFunction)call.getOperator()).getFunction());
+    }
+    return Optional.empty();
   }
 
 

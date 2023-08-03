@@ -83,6 +83,7 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable impl
    *
    * @return the assigned execution stage or empty if no stage has been assigned yet
    */
+  @Override
   public Optional<ExecutionStage> getAssignedStage() {
     return assignedStage;
   }

@@ -130,12 +130,29 @@ public class UseCaseExample implements TestDataset {
   }
 
   public static ListMultimap script(String scriptName, String... resultTables) {
-    Preconditions.checkArgument(resultTables.length>0, "Need to specify result tables");
+    return scripts().add(scriptName, resultTables).build();
+  }
+
+  public static ScriptBuilder scripts() {
+    return new ScriptBuilder();
+  }
+
+  public static class ScriptBuilder {
+
     ListMultimap<String,String> result = ArrayListMultimap.create();
-    for (String resultTable : resultTables) {
-      result.put(scriptName,resultTable);
+
+    public ScriptBuilder add(String scriptName, String... resultTables) {
+      Preconditions.checkArgument(resultTables.length>0, "Need to specify result tables");
+      for (String resultTable : resultTables) {
+        result.put(scriptName,resultTable);
+      }
+      return this;
     }
-    return result;
+
+    public ListMultimap build() {
+      return result;
+    }
+
   }
 
   public Path getGraphqlSchemaPath() {
