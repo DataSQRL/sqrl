@@ -132,6 +132,10 @@ public class Namespace implements AbstractNamespace {
       SqrlTableNamespaceObject sqrlTable = (SqrlTableNamespaceObject) nsObject;
       schema.registerScriptTable(sqrlTable.getTable());
       return true;
+    } else if (nsObject instanceof TableFunctionNamespaceObject) {
+      TableFunctionNamespaceObject fct = (TableFunctionNamespaceObject) nsObject;
+      schema.registerTableFunction(fct.getName(), fct.getTable());
+      return true;
     } else {
       throw new RuntimeException("unknown");
     }

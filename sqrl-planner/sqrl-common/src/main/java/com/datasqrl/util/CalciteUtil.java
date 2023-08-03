@@ -155,14 +155,6 @@ public class CalciteUtil {
     return builder.build();
   }
 
-  public static <C extends org.apache.calcite.schema.Table> List<C> getTables(CalciteSchema schema,
-      Class<C> clazz) {
-    return schema.getTableNames().stream()
-        .map(s -> schema.getTable(s, true).getTable())
-        .filter(clazz::isInstance).map(clazz::cast)
-        .collect(Collectors.toList());
-  }
-
   public static void addIdentityProjection(RelBuilder relBuilder, int numColumns) {
     addProjection(relBuilder, ContiguousSet.closedOpen(0, numColumns).asList(), null, true);
   }

@@ -14,16 +14,8 @@ public interface ExecutionPipeline {
 
   List<ExecutionStage> getStages();
 
-  default List<ExecutionStage> getFrontendStages() {
-    return getStages().stream().filter(s -> {
-      switch (s.getEngine().getType()) {
-        case DATABASE:
-        case SERVER:
-          return true;
-        default:
-          return false;
-      }
-    }).collect(Collectors.toList());
+  default List<ExecutionStage> getReadStages() {
+    return getStages().stream().filter(ExecutionStage::isRead).collect(Collectors.toList());
   }
 
   Set<ExecutionStage> getUpStreamFrom(ExecutionStage stage);

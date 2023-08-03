@@ -73,6 +73,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalFilter;
@@ -171,6 +172,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         return createAnnotatedChildTableScan(queryTable, numColumns, vtable, numRootPks);
       }
     }
+  }
+
+  @Override
+  public RelNode visit(TableFunctionScan functionScan) {
+    exec.require(EngineCapability.TABLE_FUNCTION_SCAN);
+
+    return setRelHolder(null);
   }
 
   private AnnotatedLP denormalizeTable(ScriptRelationalTable queryTable,

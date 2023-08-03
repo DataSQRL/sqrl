@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
@@ -23,7 +24,7 @@ public class PhysicalPlan {
 
   List<StagePlan> stagePlans;
 
-  public Map<APIQuery, QueryTemplate> getDatabaseQueries() {
+  public Map<IdentifiedQuery, QueryTemplate> getDatabaseQueries() {
     return getPlans(DatabasePhysicalPlan.class).flatMap(
             dbPlan -> dbPlan.getQueries().entrySet().stream())
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

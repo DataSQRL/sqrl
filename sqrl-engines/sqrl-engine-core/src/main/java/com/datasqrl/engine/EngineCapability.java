@@ -27,6 +27,8 @@ public enum EngineCapability {
   EXTENDED_FUNCTIONS,
   //Engine supports user defined functions
   CUSTOM_FUNCTIONS,
+  //Engine can inline table functions
+  TABLE_FUNCTION_SCAN,
   //Engine can export data to TableSink
   EXPORT,
   //Whether pulling up now-filters and topN leads to better performance
@@ -41,7 +43,7 @@ public enum EngineCapability {
       EXPORT, PULLUP_OPTIMIZATION, DATA_MONITORING);
 
   public static EnumSet<EngineCapability> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
-      MULTI_RANK);
+      MULTI_RANK, TABLE_FUNCTION_SCAN);
 
   public static EnumSet<EngineCapability> NO_CAPABILITIES = EnumSet.noneOf(EngineCapability.class);
 }

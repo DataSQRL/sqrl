@@ -25,6 +25,7 @@ import com.datasqrl.functions.SqrlFunctionCatalog;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.TypeFactory;
@@ -38,22 +39,26 @@ import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import org.apache.calcite.plan.Contexts;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Schema;
+import org.apache.calcite.schema.Table;
+import org.apache.calcite.schema.TableFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Singleton
@@ -96,12 +101,28 @@ public class SqrlSchema extends SimpleCalciteSchema {
     this.typeFactory = typeFactory;
   }
 
+  public<T extends Table> Stream<T> getTableStream(Class<T> clazz) {
+    return StreamUtil.filterByClass(getTableNames().stream()
+        .map(name -> getTable(name, false).getTable()), clazz);
+  }
+
+  public<T extends Table> List<T> getTables(Class<T> clazz) {
+    return getTableStream(clazz).collect(Collectors.toList());
+  }
+
+  public<T extends TableFunction> Stream<T> getFunctionStream(Class<T> clazz) {
+    return StreamUtil.filterByClass(getFunctionNames().stream()
+        .flatMap(name -> getFunctions(name, false).stream()), clazz);
+  }
+
+  public Optional<TableFunctionBase> getTableFunction(String name) {
+    return StreamUtil.getOnlyElement(
+        StreamUtil.filterByClass(
+            getFunctions(name, false).stream(), TableFunctionBase.class));
+  }
+
   public List<SQRLTable> getRootTables() {
-    return getTableNames().stream()
-        .map(name -> getTable(name, false).getTable())
-        .filter(t -> t instanceof SQRLTable)
-        .map(t -> (SQRLTable) t)
-        .collect(Collectors.toList());
+    return getTables(SQRLTable.class);
   }
 
   public List<SQRLTable> getAllTables() {
@@ -170,6 +191,12 @@ public class SqrlSchema extends SimpleCalciteSchema {
       add(tblDef.getTable().getName().getDisplay(), (org.apache.calcite.schema.Table)
           tblDef.getTable());
     }
+  }
+
+  public void registerTableFunction(Name name, TableFunctionBase tableFunction) {
+    Preconditions.checkArgument(getFunctionStream(TableFunctionBase.class)
+        .noneMatch(fct -> fct.getFunctionName().equals(name)),"A function with the name %s already exists", name);
+    plus().add(name.getDisplay(), tableFunction);
   }
 
 

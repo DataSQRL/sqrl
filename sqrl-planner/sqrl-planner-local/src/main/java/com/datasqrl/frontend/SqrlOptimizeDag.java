@@ -17,6 +17,7 @@ import com.google.inject.Inject;
 import org.apache.calcite.jdbc.CalciteSchema;
 
 import java.util.Set;
+import org.apache.calcite.jdbc.SqrlSchema;
 
 public class SqrlOptimizeDag extends SqrlPlan {
 
@@ -36,7 +37,7 @@ public class SqrlOptimizeDag extends SqrlPlan {
       boolean includeJars) {
     DAGPlanner dagPlanner = new DAGPlanner(planner.createRelBuilder(), ns.getSchema().getPlanner(),
         ns.getSchema().getPipeline(), getDebugger(), errors);
-    CalciteSchema relSchema = planner.getSchema();
+    SqrlSchema relSchema = planner.getSchema();
     return dagPlanner.plan(relSchema, apiManager, ns.getExports(), includeJars ? ns.getJars() : Set.of(),
         ns.getUdfs(), model);
   }

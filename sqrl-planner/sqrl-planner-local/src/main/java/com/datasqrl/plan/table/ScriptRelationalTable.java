@@ -32,7 +32,7 @@ import org.apache.calcite.util.ImmutableBitSet;
  * This is a physical relation that gets materialized in the write DAG or computed in the read DAG.
  */
 @Getter
-public abstract class ScriptRelationalTable extends AbstractRelationalTable {
+public abstract class ScriptRelationalTable extends AbstractRelationalTable implements ScriptTable {
 
   //Name assigned by user - different from nameId which is unique
   @NonNull
@@ -51,7 +51,7 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable {
   //of the rowtype after any columns (like timestamps and sorts) that have been added
   //in the planning
   @Setter
-  protected RelNode convertedRelNode;
+  protected RelNode plannedRelNode;
 
   private final List<Simple> addedColumns = new ArrayList<>();
 
@@ -95,9 +95,9 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable {
     this.assignedStage = Optional.of(stage);
   }
 
-  public RelNode getConvertedRelNode() {
-    Preconditions.checkState(convertedRelNode != null, "Table has not been planned");
-    return convertedRelNode;
+  public RelNode getPlannedRelNode() {
+    Preconditions.checkState(plannedRelNode != null, "Table has not been planned");
+    return plannedRelNode;
   }
 
   public int getNumColumns() {

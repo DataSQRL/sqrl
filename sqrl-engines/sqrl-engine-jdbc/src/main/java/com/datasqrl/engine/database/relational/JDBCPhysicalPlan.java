@@ -12,6 +12,7 @@ import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.serializer.Deserializer;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,7 +28,7 @@ import java.util.Map;
 public class JDBCPhysicalPlan implements DatabasePhysicalPlan {
 
   List<SqlDDLStatement> ddlStatements;
-  Map<APIQuery, QueryTemplate> queries;
+  Map<IdentifiedQuery, QueryTemplate> queries;
 
   @Override
   public void writeTo(Path deployDir, String stageName, Deserializer serializer)

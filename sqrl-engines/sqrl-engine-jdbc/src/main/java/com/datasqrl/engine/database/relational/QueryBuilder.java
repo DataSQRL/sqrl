@@ -4,6 +4,8 @@
 package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
+import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.queries.APIQuery;
@@ -27,13 +29,11 @@ public class QueryBuilder {
 
   private RexBuilder rexBuilder;
 
-  public Map<APIQuery, QueryTemplate> planQueries(
-      List<? extends PhysicalDAGPlan.Query> databaseQueries) {
-    Map<APIQuery, QueryTemplate> resultQueries = new HashMap<>();
-    for (PhysicalDAGPlan.Query query : databaseQueries) {
-      Preconditions.checkArgument(query instanceof PhysicalDAGPlan.ReadQuery);
-      PhysicalDAGPlan.ReadQuery rquery = (PhysicalDAGPlan.ReadQuery) query;
-      resultQueries.put(rquery.getQuery(), planQuery(rquery));
+  public Map<IdentifiedQuery, QueryTemplate> planQueries(
+      List<ReadQuery> databaseQueries) {
+    Map<IdentifiedQuery, QueryTemplate> resultQueries = new HashMap<>();
+    for (PhysicalDAGPlan.ReadQuery query : databaseQueries) {
+      resultQueries.put(query.getQuery(), planQuery(query));
     }
     return resultQueries;
   }

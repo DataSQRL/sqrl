@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -36,11 +37,7 @@ public class DAGPlanner {
   private final SQRLConverter sqrlConverter;
 
   private final Debugger debugger;
-
   private final ErrorCollector errors;
-
-  private final ExecutionStage streamStage;
-  private final ExecutionStage databaseStage;
 
   public DAGPlanner(RelBuilder relBuilder, RelOptPlanner planner,
       ExecutionPipeline pipeline, Debugger debugger, ErrorCollector errors) {
@@ -49,13 +46,11 @@ public class DAGPlanner {
     this.pipeline = pipeline;
     this.sqrlConverter = new SQRLConverter(relBuilder);
 
-    streamStage = pipeline.getStage(ExecutionEngine.Type.STREAM).get();
-    databaseStage = pipeline.getStage(ExecutionEngine.Type.DATABASE).get();
     this.debugger = debugger;
     this.errors = errors;
   }
 
-  public SqrlDAG build(CalciteSchema relSchema, APIConnectorManager apiManager,
+  public SqrlDAG build(SqrlSchema relSchema, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports) {
     //Prepare the inputs
     Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, apiManager, exports);
@@ -94,7 +89,7 @@ public class DAGPlanner {
     return assembler.assemble(dag, jars, udfs, model, apiManager);
   }
 
-  public PhysicalDAGPlan plan(CalciteSchema relSchema, APIConnectorManager apiManager,
+  public PhysicalDAGPlan plan(SqrlSchema relSchema, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
       RootGraphqlModel model) {
 

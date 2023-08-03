@@ -9,6 +9,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import java.net.URL;
 import java.util.Collection;
@@ -76,7 +77,7 @@ public class PhysicalDAGPlan {
     @NonNull
     ExecutionStage stage;
     @NonNull
-    List<? extends Query> queries;
+    List<ReadQuery> queries;
     @NonNull
     Collection<IndexDefinition> indexDefinitions;
 
@@ -89,6 +90,8 @@ public class PhysicalDAGPlan {
     ExecutionStage stage;
 
     RootGraphqlModel model;
+
+    List<ReadQuery> queries;
   }
 
   @Value
@@ -167,7 +170,7 @@ public class PhysicalDAGPlan {
   @Value
   public static class ReadQuery implements Query {
 
-    APIQuery query;
+    IdentifiedQuery query;
     RelNode relNode;
     public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);

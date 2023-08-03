@@ -4,6 +4,7 @@
 package com.datasqrl.plan.rules;
 
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.table.TableType;
@@ -27,17 +28,22 @@ class SimpleCostModel implements ComputeCost {
 
   public static SimpleCostModel of(ExecutionEngine.Type engineType, RelNode relNode) {
     double cost = 1.0;
-    if (engineType.isRead()) {
-      //Currently we make the simplifying assumption that read execution is the baseline and we compare
-      //the stream cost against it
-    } else if (engineType.isWrite()) {
-      Preconditions.checkArgument(engineType == ExecutionEngine.Type.STREAM);
-      //We assume that pre-computing is generally cheaper (by factor of 10) unless (standard) joins are
-      //involved which can lead to combinatorial explosion. So, we primarily cost the joins
-      cost = joinCost(relNode);
-      cost = cost / 10;
-    } else {
-      throw new UnsupportedOperationException("Unsupported engine type: " + engineType);
+    switch (engineType) {
+      case DATABASE:
+        //Currently we make the simplifying assumption that database execution is the baseline and we compare
+        //other engines against it
+        break;
+      case STREAM:
+        //We assume that pre-computing is generally cheaper (by factor of 10) unless (standard) joins are
+        //involved which can lead to combinatorial explosion. So, we primarily cost the joins
+        cost = joinCost(relNode);
+        cost = cost / 10;
+        break;
+      case SERVER:
+        cost = cost * 2;
+        break;
+      default:
+        throw new UnsupportedOperationException("Unsupported engine type: " + engineType);
     }
     return new SimpleCostModel(cost);
   }

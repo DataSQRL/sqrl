@@ -38,11 +38,14 @@ public abstract class AbstractQueryStatementResolver extends AbstractStatementRe
     createTable(ns, statement, analyzedLP);
   }
 
-  protected SqrlTableNamespaceObject createTable(Namespace ns, Assignment statement, LPAnalysis analyzedLP) {
-    SqrlTableNamespaceObject table = tableFactory.createTable(statement.getNamePath(), analyzedLP,
+  protected SqrlTableNamespaceObject createTableInternal(Namespace ns, Assignment statement, LPAnalysis analyzedLP) {
+    return tableFactory.createTable(statement.getNamePath(), analyzedLP,
         getContext(ns, statement.getNamePath()));
+  }
+
+  protected void createTable(Namespace ns, Assignment statement, LPAnalysis analyzedLP) {
+    SqrlTableNamespaceObject table = createTableInternal(ns, statement, analyzedLP);
     ns.addNsObject(table);
-    return table;
   }
 
 }

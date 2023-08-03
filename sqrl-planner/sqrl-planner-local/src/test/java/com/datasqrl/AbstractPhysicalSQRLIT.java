@@ -64,6 +64,7 @@ import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -121,9 +122,9 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     //We add a scan query for every query table
     APIConnectorManager apiManager = new MockAPIConnectorManager();
-    CalciteSchema relSchema = planner.getSchema();
+    SqrlSchema sqrlSchema = planner.getSchema();
     for (String tableName : queryTables) {
-      Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(relSchema, tableName,
+      Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(sqrlSchema, tableName,
           VirtualRelationalTable.class);
       Preconditions.checkArgument(vtOpt.isPresent(), "No such table: %s", tableName);
       VirtualRelationalTable vt = vtOpt.get();

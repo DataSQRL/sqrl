@@ -8,6 +8,7 @@ import com.datasqrl.graphql.server.Model.*;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.SqrlRelToSql;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,9 +31,9 @@ public class ReplaceGraphqlQueries implements
     ResolvedQueryVisitor<Object, Object>,
     ParameterHandlerVisitor<Object, Object> {
 
-  private final Map<APIQuery, QueryTemplate> queries;
+  private final Map<IdentifiedQuery, QueryTemplate> queries;
 
-  public ReplaceGraphqlQueries(Map<APIQuery, QueryTemplate> queries) {
+  public ReplaceGraphqlQueries(Map<IdentifiedQuery, QueryTemplate> queries) {
 
     this.queries = queries;
   }

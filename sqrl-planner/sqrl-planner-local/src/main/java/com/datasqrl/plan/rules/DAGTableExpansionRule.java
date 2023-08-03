@@ -3,6 +3,9 @@
  */
 package com.datasqrl.plan.rules;
 
+import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.ExecutionEngine.Type;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.SourceRelationalTableImpl;
 import com.datasqrl.plan.table.VirtualRelationalTable;
@@ -16,9 +19,9 @@ import org.apache.calcite.tools.RelBuilder;
 /**
  *
  */
-public abstract class DAGExpansionRule extends RelOptRule {
+public abstract class DAGTableExpansionRule extends RelOptRule {
 
-  public DAGExpansionRule() {
+  public DAGTableExpansionRule() {
     super(operand(LogicalTableScan.class, any()));
 
   }
@@ -28,7 +31,14 @@ public abstract class DAGExpansionRule extends RelOptRule {
   }
 
 
-  public static class ReadOnly extends DAGExpansionRule {
+
+  public static class Read extends DAGTableExpansionRule {
+
+    private final ExecutionEngine.Type engineType;
+
+    public Read(Type engineType) {
+      this.engineType = engineType;
+    }
 
     @Override
     public void onMatch(RelOptRuleCall call) {
@@ -37,15 +47,16 @@ public abstract class DAGExpansionRule extends RelOptRule {
           .unwrap(VirtualRelationalTable.class);
       Preconditions.checkArgument(vTable != null);
       ScriptRelationalTable queryTable = vTable.getRoot().getBase();
-      if (queryTable.getAssignedStage().get().isRead()) {
+      ExecutionStage stage = queryTable.getAssignedStage().get();
+      if (stage.isRead() && stage.getEngine().getType()==engineType) {
         Preconditions.checkArgument(!CalciteUtil.hasNesting(queryTable.getRowType()));
-        call.transformTo(queryTable.getConvertedRelNode());
+        call.transformTo(queryTable.getPlannedRelNode());
       }
     }
 
   }
 
-  public static class WriteOnly extends DAGExpansionRule {
+  public static class Write extends DAGTableExpansionRule {
 
     @Override
     public void onMatch(RelOptRuleCall call) {
@@ -56,7 +67,7 @@ public abstract class DAGExpansionRule extends RelOptRule {
       Preconditions.checkArgument(queryTable != null ^ sourceTable != null);
       if (queryTable != null) {
         RelBuilder relBuilder = getBuilder(table);
-        relBuilder.push(queryTable.getConvertedRelNode());
+        relBuilder.push(queryTable.getPlannedRelNode());
         call.transformTo(relBuilder.build());
       }
       if (sourceTable != null) {

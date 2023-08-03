@@ -17,6 +17,7 @@ import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
 import com.datasqrl.plan.global.SqrlDAG.TableNode;
 import com.datasqrl.plan.global.StageAnalysis.Cost;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.table.ScriptTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.Collection;
@@ -44,14 +45,14 @@ public class DAGBuilder {
 
   public SqrlDAG build(Collection<AnalyzedAPIQuery> queries,
       Collection<ResolvedExport> exports) {
-    Map<ScriptRelationalTable, TableNode> table2Node = new HashMap<>();
+    Map<ScriptTable, TableNode> table2Node = new HashMap<>();
     Multimap<SqrlNode, SqrlNode> dagInputs = HashMultimap.create();
     //1. Add all queries as sinks
-    List<ExecutionStage> frontendStages = pipeline.getFrontendStages();
-    errors.checkFatal(!frontendStages.isEmpty(), "Configured Pipeline does not include"
-        + " any frontend stages to execute API queries: %s",pipeline);
+    List<ExecutionStage> readStages = pipeline.getReadStages();
+    errors.checkFatal(!readStages.isEmpty(), "Configured Pipeline does not include"
+        + " any read stages to execute API queries: %s",pipeline);
     for (AnalyzedAPIQuery query : queries) {
-      add2DAG(query.getRelNode(), query.getBaseConfig(), frontendStages, dagInputs,
+      add2DAG(query.getRelNode(), query.getBaseConfig(), readStages, dagInputs,
           stageAnalysis -> new QueryNode(stageAnalysis, query), table2Node);
     }
     //2. Add all exports as sinks
@@ -71,8 +72,8 @@ public class DAGBuilder {
   private void add2DAG(RelNode relnode, Config baseConfig,
       List<ExecutionStage> stages, Multimap<SqrlNode, SqrlNode> dagInputs,
       Function<Map<ExecutionStage, StageAnalysis>,SqrlNode> nodeConstructor,
-      Map<ScriptRelationalTable, TableNode> table2Node) {
-    Set<ScriptRelationalTable> inputTables = new LinkedHashSet<>();
+      Map<ScriptTable, TableNode> table2Node) {
+    Set<ScriptTable> inputTables = new LinkedHashSet<>();
     Config.ConfigBuilder configBuilder = baseConfig.toBuilder()
         .sourceTableConsumer(inputTables::add);
 
@@ -85,11 +86,11 @@ public class DAGBuilder {
         dagInputs.put(node,input));
   }
 
-  private SqrlDAG.TableNode getInputTable(ScriptRelationalTable table,
+  private SqrlDAG.TableNode getInputTable(ScriptTable table,
       Multimap<SqrlNode, SqrlNode> dagInputs,
-      Map<ScriptRelationalTable, TableNode> table2Node) {
+      Map<ScriptTable, TableNode> table2Node) {
     if (table2Node.containsKey(table)) return table2Node.get(table);
-    Set<ScriptRelationalTable> inputTables = new LinkedHashSet<>();
+    Set<ScriptTable> inputTables = new LinkedHashSet<>();
     SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
     configBuilder.sourceTableConsumer(inputTables::add);
     List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
@@ -103,7 +104,7 @@ public class DAGBuilder {
     return node;
   }
 
-  public Map<ExecutionStage, StageAnalysis> planStages(ScriptRelationalTable table) {
+  public Map<ExecutionStage, StageAnalysis> planStages(ScriptTable table) {
     SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
     List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     return tryStages(stages, stage ->

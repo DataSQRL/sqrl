@@ -3,8 +3,11 @@
  */
 package com.datasqrl.plan;
 
+import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.plan.memory.rule.SqrlDataSourceToEnumerableConverterRule;
-import com.datasqrl.plan.rules.DAGExpansionRule;
+import com.datasqrl.plan.rules.DAGFunctionExpansionRule;
+import com.datasqrl.plan.rules.DAGTableExpansionRule.Read;
+import com.datasqrl.plan.rules.DAGTableExpansionRule.Write;
 import com.datasqrl.plan.rules.SQRLPrograms;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import lombok.Value;
@@ -58,14 +61,20 @@ public class OptimizationStage {
       ), false, DefaultRelMetadataProvider.INSTANCE),
       Optional.empty());
 
-  public static final OptimizationStage READ_DAG_STITCHING = new OptimizationStage(
-      "ReadDAGExpansion",
-      Programs.hep(List.of(new DAGExpansionRule.ReadOnly()),
+  public static final OptimizationStage DATABASE_DAG_STITCHING = new OptimizationStage(
+      "DatabaseDAGExpansion",
+      Programs.hep(List.of(new Read(Type.DATABASE), new DAGFunctionExpansionRule(Type.DATABASE)),
           false, SqrlRelMetadataProvider.INSTANCE), Optional.empty());
 
-  public static final OptimizationStage WRITE_DAG_STITCHING = new OptimizationStage(
-      "WriteDAGExpansion",
-      Programs.hep(List.of(new DAGExpansionRule.WriteOnly()), false,
+
+  public static final OptimizationStage SERVER_DAG_STITCHING = new OptimizationStage(
+      "ServerDAGExpansion",
+      Programs.hep(List.of(new Read(Type.SERVER), new DAGFunctionExpansionRule(Type.SERVER)),
+          false, SqrlRelMetadataProvider.INSTANCE), Optional.empty());
+
+  public static final OptimizationStage STREAM_DAG_STITCHING = new OptimizationStage(
+      "StreamDAGExpansion",
+      Programs.hep(List.of(new Write()), false,
           SqrlRelMetadataProvider.INSTANCE),
       Optional.empty());
 
