@@ -9,7 +9,9 @@ import com.datasqrl.calcite.testTables.EntriesTable;
 import com.datasqrl.calcite.testTables.Orders;
 import com.datasqrl.calcite.testTables.Product;
 import com.datasqrl.calcite.type.MyVectorType;
+import com.datasqrl.flink.ArrayToMyVectorFunction;
 import com.datasqrl.flink.FlinkConverter;
+import com.datasqrl.flink.MyVectorToArrayFunction;
 import com.datasqrl.util.DataContextImpl;
 import lombok.SneakyThrows;
 import org.apache.calcite.adapter.enumerable.EnumerableRel;
@@ -57,11 +59,17 @@ class SqrlPlannerTest {
     SqlFunction myVector = flinkConverter
         .convertFunction("MyVector","MyVector", new MySimpleVector());
 
+    SqlFunction myVectorUpcast = flinkConverter
+        .convertFunction("ArrayToMyVector","ArrayToMyVectorFunction", new ArrayToMyVectorFunction());
+
+    SqlFunction myVectorDowncast = flinkConverter
+        .convertFunction("MyVectorToArray","MyVectorToArrayFunction", new MyVectorToArrayFunction());
+
     SqlFunction myCosineDistance = flinkConverter
         .convertFunction("MyCosineDistance","MyCosineDistance", new MyCosineDistance());
 
     RelDataType myVectorType = flinkConverter
-        .convertType(DataTypes.of(MyVectorType.class));
+        .convertType(DataTypes.of(MyVectorType.class), myVectorUpcast, myVectorDowncast);
 
     framework.getSqrlOperatorTable()
         .addFunction("myFnc", function);

@@ -20,6 +20,7 @@ package com.datasqrl.flink;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.TypeFactory;
+import com.datasqrl.calcite.type.BridgingFlinkType;
 import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import com.datasqrl.calcite.type.EngineRelDataTypeFactory;
 import com.datasqrl.util.SqrlServiceLoader;
@@ -106,10 +107,18 @@ public class FlinkConverter {
   }
 
   //This is not strictly necessary for anything
-  public RelDataType convertType(UnresolvedDataType type) {
+  public RelDataType convertType(UnresolvedDataType type, SqlFunction downcastFunction, SqlFunction upcastFunction) {
     DataType dataType = type.toDataType(catalogManager.getDataTypeFactory());
-
-    return flinkTypeFactory
+    RelDataType flinkType = flinkTypeFactory
         .createFieldTypeFromLogicalType(dataType.getLogicalType());
+
+    BridgingFlinkType bridgingFlinkType =
+        new BridgingFlinkType(
+            flinkType,
+            dataType.getConversionClass(),
+            downcastFunction,
+            upcastFunction);
+
+    return bridgingFlinkType;
   }
 }

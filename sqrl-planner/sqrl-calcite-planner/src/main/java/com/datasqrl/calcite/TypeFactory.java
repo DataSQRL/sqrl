@@ -1,11 +1,13 @@
 
 package com.datasqrl.calcite;
 
+import com.datasqrl.calcite.type.DelegatingDataType;
 import org.apache.calcite.avatica.util.ByteString;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
 import org.apache.calcite.runtime.Geometries;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
@@ -25,8 +27,17 @@ public class TypeFactory extends JavaTypeFactoryImpl {
   }
 
   public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
-    RelDataType sqrlType = engineType;
-    return sqrlType;
+    for (RelDataType type : types) {
+      if (type.equals(engineType)) {
+        return type;
+      }
+    }
+
+    if (engineType instanceof DelegatingDataType) {
+      throw new RuntimeException("Could not find type: " + engineType);
+    }
+
+    return engineType;
   }
 
   /**
@@ -35,9 +46,8 @@ public class TypeFactory extends JavaTypeFactoryImpl {
   @Override
   public Type getJavaClass(RelDataType type) {
     //Flink wrapped types
-    if (type instanceof StructuredRelDataType) {
-      return ((StructuredRelDataType)type).getStructuredType().getImplementationClass()
-          .get();
+    if (type instanceof DelegatingDataType) {
+      return ((DelegatingDataType) type).getConversionClass();
     }
 
     //Need to get raw data type mapping for the particular engine
@@ -123,7 +133,6 @@ public class TypeFactory extends JavaTypeFactoryImpl {
   }
 
   /**
-   * Registration for flink
    */
   public void registerType(RelDataType type) {
     this.types.add(type);

@@ -16,4 +16,8 @@ public class MyVectorType {
   public String toString() {
     return "<" + Arrays.toString(vector) + ", " + input + ", " + modelClass + ">";
   }
+
+  public double[] toArray() {
+    return vector;
+  }
 }
