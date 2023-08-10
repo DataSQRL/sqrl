@@ -16,6 +16,7 @@
   </properties>
 
   <modules>
+    <module>sqrl-calcite-planner</module>
     <module>sqrl-common</module>
     <module>sqrl-planner-local</module>
     <module>sqrl-planner-schema-flexible</module>
