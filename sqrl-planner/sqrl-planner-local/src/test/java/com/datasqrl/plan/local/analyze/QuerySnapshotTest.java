@@ -118,6 +118,20 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void accessTableFunctionTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("X(id: INTEGER) := SELECT * FROM Customer WHERE customerid = :id");
+    validateScript(builder.getScript());
+  }
+
+  @Test
+  public void createTableFunctionTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("X(id: INTEGER) := SELECT *, 1 AS x FROM Customer WHERE customerid = :id");
+    validateScript(builder.getScript());
+  }
+
+  @Test
   public void customerTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("X := SELECT * FROM Customer");

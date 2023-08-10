@@ -32,12 +32,12 @@ public class EqHandler implements ArgumentHandler {
       RelBuilder relBuilder = context.getRelBuilder();
       relBuilder.push(args.getRelNode());
 
-      Column shadowedField = (Column) context.getTable()
+      Column vtField = (Column) context.getTable()
           .getField(Name.system(context.getArg().getName()))
           .orElseThrow(
               () -> new RuntimeException("Could not find field: " + context.getArg().getName()));
       RelDataTypeField field = relBuilder.peek().getRowType()
-          .getField(shadowedField.getShadowedName().getCanonical(), false, false);
+          .getField(vtField.getVtName().getCanonical(), false, false);
       RexDynamicParam dynamicParam = rexBuilder.makeDynamicParam(field.getType(),
           context.getSourceHandlers().size() + args.getArgumentHandlers().size());
       RelNode rel = relBuilder.filter(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS,

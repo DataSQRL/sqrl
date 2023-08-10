@@ -19,7 +19,7 @@ import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
-import com.datasqrl.graphql.inference.PgSchemaBuilder;
+import com.datasqrl.graphql.inference.SchemaBuilder;
 import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
@@ -144,14 +144,14 @@ public class Compiler {
           apiManager)
           .accept();
 
-      PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(apiSchema,
+      SchemaBuilder schemaBuilder = new SchemaBuilder(apiSchema,
           ns.getSchema(),
           queryPlanner.createRelBuilder(),
           queryPlanner,
           ns.getOperatorTable(),
           apiManager);
 
-      root = inferredSchema.accept(pgSchemaBuilder, null);
+      root = inferredSchema.accept(schemaBuilder, null);
     } catch (Exception e) {
       throw collector.handle(e);
     }

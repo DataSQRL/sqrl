@@ -35,12 +35,12 @@ importDefinition
     ;
 
 statement
-    : IMPORT importDefinition                                                      # importStatement
-    | EXPORT exportDefinition                                                      # exportStatement
-    | hint? qualifiedName tableFunction? ':=' joinSpecification                          # joinAssignment
-    | hint? qualifiedName tableFunction? ':=' expression                                 # expressionAssign
-    | hint? qualifiedName tableFunction? ':=' query                                      # queryAssign
-    | hint? qualifiedName tableFunction? ':=' streamQuery                                # streamAssign
+    : IMPORT importDefinition                                                            # importStatement
+    | EXPORT exportDefinition                                                            # exportStatement
+    | hint? qualifiedName tableFunctionDef? ':=' joinSpecification                       # joinAssignment
+    | hint? qualifiedName                   ':=' expression                              # expressionAssign
+    | hint? qualifiedName tableFunctionDef? ':=' query                                   # queryAssign
+    | hint? qualifiedName                   ':=' streamQuery                             # streamAssign
     | hint? qualifiedName ':=' DISTINCT table=identifier (AS? distinctAlias=identifier)?
                                ON onList
                                (ORDER BY orderExpr=expression ordering=DESC?)?           # distinctAssignment
@@ -50,12 +50,12 @@ onList
    : '('? expression (',' expression)* ')'?
    ;
 
-tableFunction
-   : '(' functionArgument (',' functionArgument)* ')'
+tableFunctionDef
+   : '(' functionArgumentDef (',' functionArgumentDef)* ')'
    ;
 
-functionArgument
-   : name=identifier ':' typeName=type
+functionArgumentDef
+   : name=identifier (':' typeName=type)?
    ;
 
 hint
@@ -173,9 +173,14 @@ aliasedRelation
     ;
 
 relationPrimary
-    : qualifiedName  #tableName
-    | '(' query ')'   #subqueryRelation
+    : qualifiedName                               #tableName
+    | '(' query ')'                               #subqueryRelation
+    | identifier tableFunctionExpression          #tableFunction
     ;
+
+tableFunctionExpression
+   : '(' expression (',' expression)* ')'
+   ;
 
 expression
     : booleanExpression

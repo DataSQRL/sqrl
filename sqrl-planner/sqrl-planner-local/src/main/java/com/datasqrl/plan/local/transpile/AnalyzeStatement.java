@@ -28,23 +28,10 @@ import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Table;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlUtil;
-import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec.SqrlJoinDeclarationVisitor;
-import org.apache.calcite.sql.SqrlJoinPath;
-import org.apache.calcite.sql.SqrlJoinSetOperation;
 import org.apache.calcite.sql.SqrlJoinTerm.SqrlJoinTermVisitor;
-import org.apache.calcite.sql.UnboundJoin;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -146,6 +133,8 @@ public class AnalyzeStatement implements
       case JOIN_DECLARATION:
         SqrlJoinDeclarationSpec spec = (SqrlJoinDeclarationSpec) node;
         return spec.accept(this, context);
+      case COLLECTION_TABLE:
+        //todo
       default:
         throw new SqrlAstException(ErrorLabel.GENERIC, node.getParserPosition(),
             "unknown ast node:" + node.getClass());
@@ -249,7 +238,6 @@ public class AnalyzeStatement implements
   }
 
   private Optional<ResolvedTable> resolve(SqlIdentifier id, Context context) {
-
     //_
     Optional<ResolvedTable> selfTable = resolveSelfTable(id, context);
     if (selfTable.isPresent()) {
@@ -340,19 +328,6 @@ public class AnalyzeStatement implements
     }
 
     return Optional.empty();
-  }
-
-  private List<Field> toVtFields(VirtualRelationalTable vt) {
-    List<Field> fields = new ArrayList<>();
-    for (RelDataTypeField f : vt.getRowType().getFieldList()) {
-      if (vt.getSqrlTable().getField(Name.system(f.getName())).isEmpty()) {
-        fields.add(
-            new Column(Name.system(f.getName()), Name.system(f.getName()), 0, false, f.getType()));
-      }
-    }
-
-    fields.addAll(vt.getSqrlTable().getFields().getAccessibleFields());
-    return fields;
   }
 
   @Value
@@ -842,7 +817,7 @@ public class AnalyzeStatement implements
       Preconditions.checkState(path.size() == 1);
       Preconditions.checkState(path.get(0) instanceof Column,
           "Unexpected column type. Expected a column, got: %s", path.get(0));
-      names.add(((Column) path.get(0)).getShadowedName().getDisplay());
+      names.add(((Column) path.get(0)).getVtName().getDisplay());
 
       return new SqlIdentifier(names, original.getParserPosition());
     }

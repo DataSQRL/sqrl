@@ -7,13 +7,9 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.io.tables.AbstractExternalTable;
-import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.plan.local.ScriptTableDefinition;
-import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.local.generate.SqrlTableNamespaceObject;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.LPAnalysis;
@@ -41,6 +37,7 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.sql.TableFunctionArgument;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -93,7 +90,7 @@ public class CalciteTableFactory {
   }
 
   public ScriptTableDefinition defineTable(NamePath tablePath, LPAnalysis analyzedLP,
-      List<Name> fieldNames, Optional<SQRLTable> parentTable) {
+                                           List<Name> fieldNames, Optional<SQRLTable> parentTable) {
     ContinuousIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
@@ -113,6 +110,7 @@ public class CalciteTableFactory {
     );
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable,
         parent);
+
     ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
     //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
     //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
@@ -297,14 +295,13 @@ public class CalciteTableFactory {
         Relationship.JoinType.CHILD, multiplicity, Optional.empty());
   }
 
-  public NamespaceObject createTable(SqrlQueryPlanner planner, Namespace ns, NamePath namePath, LPAnalysis analyzedLP,
-      Optional<SQRLTable> parentTable) {
+  public SqrlTableNamespaceObject createTable(NamePath namePath, LPAnalysis analyzedLP,
+                                      Optional<SQRLTable> parentTable) {
     return new SqrlTableNamespaceObject(namePath.getLast(),
-        createScriptDef(planner, ns, namePath, analyzedLP, parentTable));
+        createScriptDef(namePath, analyzedLP, parentTable));
   }
 
-  public ScriptTableDefinition createScriptDef(SqrlQueryPlanner planner, Namespace ns, NamePath namePath,
-      LPAnalysis analyzedLP, Optional<SQRLTable> parentTable) {
+  public ScriptTableDefinition createScriptDef(NamePath namePath, LPAnalysis analyzedLP, Optional<SQRLTable> parentTable) {
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()

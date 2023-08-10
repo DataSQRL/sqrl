@@ -5,12 +5,10 @@ import static com.datasqrl.error.PosToErrorPos.atPosition;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.DataSystemNsObject;
 import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.schema.SQRLTable;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +51,7 @@ public class ExportStatementResolver extends AbstractStatementResolver {
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
     table.getVisibleColumns().stream().forEach(c -> {
-      selects.add(relBuilder.field(c.getShadowedName().getCanonical()));
+      selects.add(relBuilder.field(c.getVtName().getCanonical()));
       fieldNames.add(c.getName().getDisplay());
     });
     relBuilder.project(selects, fieldNames);

@@ -10,13 +10,11 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 @Getter
 public class QueryAssignment extends Assignment {
 
-  private final Optional<List<TableFunctionArgument>> tableArgs;
-  private final SqlNode query;
+  protected final SqlNode query;
 
   public QueryAssignment(SqlParserPos location, SqlIdentifier identifier, NamePath namePath,
       Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, Optional<SqlNodeList> hints) {
-    super(location, identifier, namePath, hints);
-    this.tableArgs = tableArgs;
+    super(location, identifier, namePath, hints, tableArgs);
     this.query = query;
   }
 

@@ -14,14 +14,12 @@ import org.apache.calcite.util.Litmus;
 @Getter
 public class ExpressionAssignment extends Assignment {
 
-  private final Optional<List<TableFunctionArgument>> tableArgs;
   private final SqlNode expression;
 
   public ExpressionAssignment(SqlParserPos location,
-      SqlIdentifier identifier, NamePath namePath, Optional<List<TableFunctionArgument>> tableArgs, SqlNode expression,
+      SqlIdentifier identifier, NamePath namePath, SqlNode expression,
       Optional<SqlNodeList> hints) {
-    super(location, identifier, namePath, hints);
-    this.tableArgs = tableArgs;
+    super(location, identifier, namePath, hints, Optional.empty());
     this.expression = expression;
   }
 

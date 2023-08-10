@@ -18,7 +18,9 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.plan.local.generate.AccessTableFunction;
 import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.parse.SqrlAstException;
@@ -26,6 +28,7 @@ import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
+import com.google.common.base.Function;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.ImplementingTypeDefinition;
@@ -131,6 +134,19 @@ public class SchemaInference {
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
       Type fieldType, String fieldName, String rootType) {
+    if (!schema.getFunction(fieldName)
+        .isEmpty()) {
+      org.apache.calcite.schema.Function f =  schema.getFunctions(fieldName, false)
+          .stream().findFirst().get();
+
+      TableFunctionBase functionBase = (TableFunctionBase) f;
+      return functionBase.getTable();
+    }
+    /**
+     * Change inference rules:
+     * It is by name,
+     */
+
     Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)
         .flatMap(name -> getTableOfType(fieldType, name));
     Optional<SQRLTable> sqrlTableByCommonInterface = getTypeName(fieldType)

@@ -19,7 +19,6 @@ import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
-import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.TestScript;
 import java.nio.file.Files;
@@ -74,13 +73,13 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     }
 
     //Build queries
-    PgSchemaBuilder pgSchemaBuilder = new PgSchemaBuilder(source,
+    SchemaBuilder schemaBuilder = new SchemaBuilder(source,
         planner.getSchema(),
         planner.createRelBuilder(),
         planner,
         ns.getOperatorTable(), apiManager);
 
-    RootGraphqlModel root = inferredSchema.accept(pgSchemaBuilder, null);
+    RootGraphqlModel root = inferredSchema.accept(schemaBuilder, null);
 
     return Triple.of(inferredSchema, root, apiManager);
   }

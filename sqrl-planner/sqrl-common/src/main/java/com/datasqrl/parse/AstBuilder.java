@@ -513,6 +513,26 @@ class AstBuilder
   }
 
   @Override
+  public SqlNode visitTableFunction(TableFunctionContext ctx) {
+    SqlIdentifier name = (SqlIdentifier)visit(ctx.identifier());
+
+    List<SqlNode> args = visit(ctx.tableFunctionExpression().expression(), SqlNode.class);
+
+    SqlUnresolvedFunction function = new SqlUnresolvedFunction(name,
+        null, null, null, null,
+        SqlFunctionCategory.USER_DEFINED_FUNCTION);
+
+    return SqlStdOperatorTable.COLLECTION_TABLE
+        .createCall(getLocation(ctx),
+            function.createCall(getLocation(ctx), args));
+  }
+
+  @Override
+  public SqlNode visitTableFunctionExpression(TableFunctionExpressionContext ctx) {
+    return super.visitTableFunctionExpression(ctx);
+  }
+
+  @Override
   public SqlNode visitSubqueryRelation(SubqueryRelationContext ctx) {
     return visit(ctx.query());
   }
@@ -1105,7 +1125,7 @@ class AstBuilder
 
     return new JoinAssignment(getLocation(ctx), name,
         toNamePath(name),
-        getTableArgs(ctx.tableFunction()),
+        getTableArgs(ctx.tableFunctionDef()),
         join,
         emptyListToEmptyOptional(getHints(ctx.hint())));
   }
@@ -1116,18 +1136,18 @@ class AstBuilder
         .collect(toList()));
   }
 
-  private Optional<List<TableFunctionArgument>> getTableArgs(TableFunctionContext ctx) {
+  private Optional<List<TableFunctionArgument>> getTableArgs(TableFunctionDefContext ctx) {
     if (ctx == null) {
       return Optional.empty();
     }
-    List<TableFunctionArgument> args = ctx.functionArgument().stream()
+    List<TableFunctionArgument> args = ctx.functionArgumentDef().stream()
         .map(arg -> toFunctionArg(arg))
         .collect(toList());
 
     return Optional.of(args);
   }
 
-  private TableFunctionArgument toFunctionArg(FunctionArgumentContext ctx) {
+  private TableFunctionArgument toFunctionArg(FunctionArgumentDefContext ctx) {
     return new TableFunctionArgument(
         (SqlIdentifier) visit(ctx.name),
         getType(ctx.typeName)
@@ -1163,7 +1183,7 @@ class AstBuilder
     SqlNode query = visit(ctx.query());
     return new QueryAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
         toNamePath(getNamePath(ctx.qualifiedName())),
-        getTableArgs(ctx.tableFunction()),
+        getTableArgs(ctx.tableFunctionDef()),
         query,
         emptyListToEmptyOptional(getHints(ctx.hint())));
   }
@@ -1176,7 +1196,6 @@ class AstBuilder
         ctx.streamQuery().subscriptionType().getText());
     return new StreamAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
         toNamePath(getNamePath(ctx.qualifiedName())),
-        getTableArgs(ctx.tableFunction()),
         query,
         type,
         emptyListToEmptyOptional(getHints(ctx.hint())));
@@ -1202,7 +1221,6 @@ class AstBuilder
     SqlNode expr = visit(ctx.expression());
     return new ExpressionAssignment(getLocation(ctx), name,
         toNamePath(name),
-        getTableArgs(ctx.tableFunction()),
         expr,
         emptyListToEmptyOptional(getHints(ctx.hint())));
   }

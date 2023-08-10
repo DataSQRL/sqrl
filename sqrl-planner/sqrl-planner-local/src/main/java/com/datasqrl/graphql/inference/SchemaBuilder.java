@@ -24,6 +24,7 @@ import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
 import com.datasqrl.graphql.inference.argument.EqHandler;
 import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
+import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
@@ -36,8 +37,9 @@ import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
-import com.datasqrl.plan.OptimizationStage;
+import com.datasqrl.plan.*;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
+import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
@@ -45,33 +47,52 @@ import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.schema.TypeFactory;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import lombok.SneakyThrows;
 import lombok.Value;
+import org.apache.calcite.DataContext;
+import org.apache.calcite.config.CalciteConnectionConfigImpl;
+import org.apache.calcite.config.CalciteConnectionProperty;
+import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.linq4j.Enumerable;
+import org.apache.calcite.linq4j.Linq4j;
+import org.apache.calcite.linq4j.tree.Types;
+import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.*;
+import org.apache.calcite.schema.impl.AbstractSchema;
+import org.apache.calcite.schema.impl.AbstractTable;
+import org.apache.calcite.schema.impl.TableFunctionImpl;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.util.SqlOperatorTables;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
-public class PgSchemaBuilder implements
+public class SchemaBuilder implements
     InferredSchemaVisitor<RootGraphqlModel, Object>,
     InferredRootObjectVisitor<List<Coords>, Object>,
     InferredMutationObjectVisitor<List<MutationCoords>, Object>,
@@ -92,9 +113,9 @@ public class PgSchemaBuilder implements
   );
   private final APIConnectorManager apiManager;
 
-  public PgSchemaBuilder(APISource source, SqrlSchema schema, RelBuilder relBuilder,
-      SqrlQueryPlanner planner,
-      SqlOperatorTable operatorTable, APIConnectorManager apiManager) {
+  public SchemaBuilder(APISource source, SqrlSchema schema, RelBuilder relBuilder,
+                       SqrlQueryPlanner planner,
+                       SqlOperatorTable operatorTable, APIConnectorManager apiManager) {
     this.source = source;
     this.registry = (new SchemaParser()).parse(source.getSchemaDefinition());
     this.schema = schema;
@@ -154,42 +175,73 @@ public class PgSchemaBuilder implements
     throw new RuntimeException("Not supported yet");
   }
 
+  @SneakyThrows
   @Override
   public Coords visitObjectField(InferredObjectField field, Object context) {
-    //todo Project out only the needed columns and primary keys (requires looking at sql to
-    // determine full scope.
-//    List<String> projectedColumns = new ArrayList<>();
-//    field.getFieldDefinition().getInputValueDefinitions().forEach(fieldDefinition -> {
-//      projectedColumns.add(fieldDefinition.getName());
-//      field.getChildren().forEach(child -> {
-//        projectedColumns.add(child.getFieldDefinition().getName());
-//      });
-//    });
+    Set<ArgumentSet> possibleArgCombinations;
 
-    RelNode relNode = relBuilder
-        .scan(field.getTable().getVt().getNameId())
+    if (hasMatchingTableFunction(schema, field)) {
+      TableFunctionBase b = (TableFunctionBase)schema.getFunctions(field.getFieldDefinition().getName(), false)
+          .stream().findFirst().get();
+
+      RelDataTypeFactory factory = schema.getCluster().getTypeFactory();
+      AtomicInteger i = new AtomicInteger();
+      List<RexNode> rexNodes = b.getParameters().stream()
+          .map(p->p.getType(factory))
+          .map(t->relBuilder.getRexBuilder()
+              .makeDynamicParam(t, i.getAndIncrement()))
+          .collect(Collectors.toList());
+
+      String params = rexNodes.stream()
+          .map(e-> "?")
+          .collect(Collectors.joining(","));
+
+      RelNode relNode = planner.plan(SqlParser.create(
+          String.format("SELECT * FROM table(\"%s\"(%s))", field.getFieldDefinition().getName(), params)).parseQuery());
+
+      FunctionParameter p = b.getParameters().get(0);
+      Set<Model.Argument> newHandlers = new LinkedHashSet<>();
+      newHandlers.add(Model.VariableArgument.builder().path(p.getName()).build());
+
+      List<Model.ArgumentParameter> parameters = new ArrayList<>();
+      parameters.add(Model.ArgumentParameter.builder().path(p.getName()).build());
+
+      possibleArgCombinations = Set.of(new ArgumentSet(relNode,
+          newHandlers, parameters, false));
+    } else {
+      RelNode relNode = relBuilder
+          .scan(field.getTable().getVt().getNameId())
 //        .project(projectedColumns)
-        .build();
+          .build();
 
-    Set<ArgumentSet> possibleArgCombinations = createArgumentSuperset(
-        field.getTable(),
-        relNode, new ArrayList<>(),
-        field.getFieldDefinition().getInputValueDefinitions(),
-        field.getFieldDefinition());
+      possibleArgCombinations = createArgumentSuperset(
+          field.getTable(),
+          relNode, new ArrayList<>(),
+          field.getFieldDefinition().getInputValueDefinitions(),
+          field.getFieldDefinition());
 
-    //Todo: Project out only the needed columns. This requires visiting all it's children so we know
-    // what other fields they need
-
+      //Todo: Project out only the needed columns. This requires visiting all it's children so we know
+      // what other fields they need
+    }
     return buildArgumentQuerySet(possibleArgCombinations,
         field.getParent(),
         field.getFieldDefinition(), new ArrayList<>());
+  }
+
+  private boolean hasMatchingTableFunction(SqrlSchema schema, InferredObjectField field) {
+    return schema.getFunctionNames().contains(
+        field.getFieldDefinition().getName())
+        /*TODO: also has matching arguments*/;
   }
 
   //Creates a superset of all possible arguments w/ their respective query
   private Set<ArgumentSet> createArgumentSuperset(SQRLTable sqrlTable,
       RelNode relNode, List<JdbcParameterHandler> existingHandlers,
       List<InputValueDefinition> inputArgs, FieldDefinition fieldDefinition) {
-    //todo: table functions
+    /**
+     * 1. Enumerate table functions and match with graphql (root and join declarations)
+     *
+     */
 
     Set<ArgumentSet> args = new HashSet<>();
     //TODO: remove if not used by final query set (has required params)
@@ -213,14 +265,6 @@ public class PgSchemaBuilder implements
     }
 
     return args;
-  }
-
-  private boolean hasAnyRequiredArgs(List<InputValueDefinition> args) {
-    //Todo: also check for table functions
-    return args.stream()
-        .filter(a -> a.getType() instanceof NonNullType)
-        .findAny()
-        .isPresent();
   }
 
   private ArgumentLookupCoords buildArgumentQuerySet(Set<ArgumentSet> possibleArgCombinations,
@@ -277,7 +321,7 @@ public class PgSchemaBuilder implements
     return FieldLookupCoords.builder()
         .parentType(field.getParent().getName())
         .fieldName(field.getFieldDefinition().getName())
-        .columnName(field.getColumn().getShadowedName().getCanonical())
+        .columnName(field.getColumn().getVtName().getCanonical())
         .build();
   }
 

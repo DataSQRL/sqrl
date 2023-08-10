@@ -11,16 +11,12 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 @Getter
 public class StreamAssignment extends QueryAssignment {
 
-  private final Optional<List<TableFunctionArgument>> tableArgs;
-  private final SqlNode query;
   private final StreamType type;
 
   public StreamAssignment(SqlParserPos location, SqlIdentifier identifier, NamePath namePath,
-      Optional<List<TableFunctionArgument>> tableArgs, SqlNode query, StreamType type,
+      SqlNode query, StreamType type,
       Optional<SqlNodeList> hints) {
-    super(location, identifier, namePath, tableArgs, query, hints);
-    this.tableArgs = tableArgs;
-    this.query = query;
+    super(location, identifier, namePath, Optional.empty(), query, hints);
     this.type = type;
   }
 

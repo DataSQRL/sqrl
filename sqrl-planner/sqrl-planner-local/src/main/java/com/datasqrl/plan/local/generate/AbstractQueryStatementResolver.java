@@ -11,8 +11,7 @@ import org.apache.calcite.sql.SqlNode;
 
 public abstract class AbstractQueryStatementResolver extends AbstractStatementResolver {
 
-
-  private final CalciteTableFactory tableFactory;
+  protected final CalciteTableFactory tableFactory;
 
   protected AbstractQueryStatementResolver(ErrorCollector errors,
       NameCanonicalizer nameCanonicalizer, SqrlQueryPlanner planner, CalciteTableFactory tableFactory) {
@@ -36,8 +35,14 @@ public abstract class AbstractQueryStatementResolver extends AbstractStatementRe
     StatementSQRLConverter converter = new StatementSQRLConverter();
     LPAnalysis analyzedLP = converter.convert(planner, relNode, setOriginalFieldnames(), ns, statement.getHints(), errors);
 
-    NamespaceObject table = tableFactory.createTable(planner, ns, statement.getNamePath(), analyzedLP, getContext(ns, statement.getNamePath()));
+    createTable(ns, statement, analyzedLP);
+  }
+
+  protected SqrlTableNamespaceObject createTable(Namespace ns, Assignment statement, LPAnalysis analyzedLP) {
+    SqrlTableNamespaceObject table = tableFactory.createTable(statement.getNamePath(), analyzedLP,
+        getContext(ns, statement.getNamePath()));
     ns.addNsObject(table);
+    return table;
   }
 
 }
