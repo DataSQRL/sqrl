@@ -69,7 +69,9 @@ class SqrlPlannerTest {
         .convertFunction("MyCosineDistance","MyCosineDistance", new MyCosineDistance());
 
     RelDataType myVectorType = flinkConverter
-        .convertType(DataTypes.of(MyVectorType.class), myVectorUpcast, myVectorDowncast);
+        .convertType(DataTypes.of(MyVectorType.class),
+            myVectorUpcast, myVectorDowncast,
+            Map.of(Dialect.POSTGRES, "vector"));
 
     framework.getSqrlOperatorTable()
         .addFunction("myFnc", function);

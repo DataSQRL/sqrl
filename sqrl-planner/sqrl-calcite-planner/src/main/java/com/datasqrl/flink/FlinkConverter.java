@@ -43,6 +43,8 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.UnresolvedDataType;
 import org.apache.flink.table.types.inference.TypeInference;
 
+import java.util.Map;
+
 @AllArgsConstructor
 public class FlinkConverter {
 
@@ -107,7 +109,10 @@ public class FlinkConverter {
   }
 
   //This is not strictly necessary for anything
-  public RelDataType convertType(UnresolvedDataType type, SqlFunction downcastFunction, SqlFunction upcastFunction) {
+  public RelDataType convertType(UnresolvedDataType type,
+                                 SqlFunction downcastFunction,
+                                 SqlFunction upcastFunction,
+                                 Map<Dialect, String> physicalTypeName) {
     DataType dataType = type.toDataType(catalogManager.getDataTypeFactory());
     RelDataType flinkType = flinkTypeFactory
         .createFieldTypeFromLogicalType(dataType.getLogicalType());
@@ -117,7 +122,8 @@ public class FlinkConverter {
             flinkType,
             dataType.getConversionClass(),
             downcastFunction,
-            upcastFunction);
+            upcastFunction,
+            physicalTypeName);
 
     return bridgingFlinkType;
   }
