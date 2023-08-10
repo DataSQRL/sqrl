@@ -40,13 +40,8 @@ import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Stack;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.plan.Contexts;
@@ -56,6 +51,7 @@ import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Schema;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -219,5 +215,9 @@ public class SqrlSchema extends SimpleCalciteSchema {
     }
 
     return Optional.of(fields);
+  }
+
+  public Collection<Function> getFunction(String name) {
+    return getFunctions(name, false);
   }
 }

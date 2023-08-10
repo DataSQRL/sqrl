@@ -1,19 +1,20 @@
 package com.datasqrl.graphql.inference;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.SQRLTable;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
+
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
@@ -21,8 +22,14 @@ import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apiguardian.api.API;
+import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 class SchemaInferenceTest {
   ModuleLoader loader;
@@ -32,10 +39,14 @@ class SchemaInferenceTest {
 
   @BeforeEach
   public void before() {
+    MockitoAnnotations.initMocks(this);
     loader = mock(ModuleLoader.class);
     schema = mock(SqrlSchema.class);
     relBuilder = mock(RelBuilder.class);
     table = mock(SQRLTable.class);
+
+    when(schema.getFunction(anyString()))
+        .thenReturn(new ArrayList<>());
   }
 
   @Test
