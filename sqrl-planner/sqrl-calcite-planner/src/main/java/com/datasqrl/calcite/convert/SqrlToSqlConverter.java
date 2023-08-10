@@ -74,8 +74,8 @@ public class SqrlToSqlConverter {
                 call.operand(1),
                 call.operand(2),
                 SqlStdOperatorTable.LATERAL.createCall(SqlParserPos.ZERO, rightNode), //all joins converted to later
-                call.operand(4),
-                call.operand(5));
+                call.operand(4).equals(JoinConditionType.NONE.symbol(SqlParserPos.ZERO)) ? JoinConditionType.ON.symbol(SqlParserPos.ZERO) : call.operand(4)  ,
+                call.operand(4).equals(JoinConditionType.NONE.symbol(SqlParserPos.ZERO)) ? SqlLiteral.createBoolean(true, SqlParserPos.ZERO) :call.operand(4));
 
           case AS:
             SqlNode rewritten = call.operand(0).accept(this);

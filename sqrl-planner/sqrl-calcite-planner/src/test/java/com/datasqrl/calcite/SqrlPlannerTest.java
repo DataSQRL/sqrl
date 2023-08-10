@@ -109,7 +109,7 @@ class SqrlPlannerTest {
         "SELECT e._uuid, p.id, p.name, \n" +
             "       MyCosineDistance(MyVector('jim'), MyVector(p.name)) AS cosine \n" +
             "FROM Orders.entries e \n" +
-            "JOIN e.product(100) p ON e.productid = p.id \n" +
+            "JOIN e.product(100) p \n" +
             "ORDER BY cosine DESC");
   }
 
