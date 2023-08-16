@@ -132,11 +132,10 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
       List<RexNode> projects = new ArrayList<>(((LogicalProject)input).getProjects());
       projects.set(timestampIdx,
           rexBuilder.makeInputRef(input.getInput(0),  tumbleHint.getInputTimestampIdx()));
-      long intervalMs = tumbleHint.getIntervalMS();
       relBuilder.project(projects, inputType.getFieldNames(), true);
 
-      long[] intervalsMs = new long[]{intervalMs};
-      makeWindow(relBuilder, windowFunction, timestampIdx, intervalsMs);
+      long[] windowDef = new long[]{tumbleHint.getWindowWidthMs(), tumbleHint.getWindowOffsetMs()};
+      makeWindow(relBuilder, windowFunction, timestampIdx, windowDef);
 
     } else if (tumbleHint.getType() == TumbleAggregationHint.Type.INSTANT) {
       relBuilder.push(input);

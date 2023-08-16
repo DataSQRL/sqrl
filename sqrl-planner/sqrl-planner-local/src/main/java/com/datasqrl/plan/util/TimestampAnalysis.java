@@ -49,7 +49,7 @@ public class TimestampAnalysis {
       return true;
     }
     Optional<TimestampPreservingFunction> fnc = Optional.of(operator)
-        .flatMap(f-> StdTimeLibraryImpl.lookupTimeFunction(operator))
+        .flatMap(f-> StdTimeLibraryImpl.lookupSQRLFunction(operator))
         .filter(op -> op instanceof TimestampPreservingFunction)
         .map(op -> (TimestampPreservingFunction) op)
         .filter(TimestampPreservingFunction::isTimestampPreserving);

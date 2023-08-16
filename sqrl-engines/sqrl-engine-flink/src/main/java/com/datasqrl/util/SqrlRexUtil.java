@@ -133,7 +133,7 @@ public class SqrlRexUtil {
     return new RexFinder<Void>() {
       @Override
       public Void visitCall(RexCall call) {
-        if (StdTimeLibraryImpl.lookupTimeFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
+        if (StdTimeLibraryImpl.lookupSQRLFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
           throw Util.FoundOne.NULL;
         }
         return super.visitCall(call);

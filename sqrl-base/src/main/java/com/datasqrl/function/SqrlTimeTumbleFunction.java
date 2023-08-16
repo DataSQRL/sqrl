@@ -9,7 +9,9 @@ public interface SqrlTimeTumbleFunction extends TimestampPreservingFunction {
 
   interface Specification {
 
-    long getBucketWidthMillis();
+    long getWindowWidthMillis();
+
+    long getWindowOffsetMillis();
 
   }
 

@@ -94,7 +94,7 @@ public class TimePredicateAnalyzer {
     }
     if (rexNode instanceof RexCall) {
       RexCall call = (RexCall) rexNode;
-      if (StdTimeLibraryImpl.lookupTimeFunction(call.getOperator())
+      if (StdTimeLibraryImpl.lookupSQRLFunction(call.getOperator())
           .filter(op -> op instanceof NOW).isPresent()) {
         return Pair.of(Set.of(TimePredicate.NOW_INDEX),
             rexBuilder.makeZeroLiteral(rexNode.getType()));

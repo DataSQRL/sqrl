@@ -30,7 +30,7 @@ public class TimeTumbleFunctionCall {
           return Optional.empty();
       }
     RexCall call = (RexCall) rexNode;
-    Optional<SqrlTimeTumbleFunction> fnc = StdTimeLibraryImpl.lookupTimeFunction(call.getOperator())
+    Optional<SqrlTimeTumbleFunction> fnc = StdTimeLibraryImpl.lookupSQRLFunction(call.getOperator())
         .filter(o -> o instanceof SqrlTimeTumbleFunction)
         .map(o -> (SqrlTimeTumbleFunction) o);
       if (fnc.isEmpty()) {

@@ -22,22 +22,25 @@ public class TumbleAggregationHint implements SqrlHint {
   @Getter
   final int inputTimestampIdx;
   @Getter
-  final long intervalMS;
+  final long windowWidthMs;
+  @Getter
+  final long windowOffsetMs;
 
   public static TumbleAggregationHint instantOf(int timestampIdx) {
-    return new TumbleAggregationHint(timestampIdx, Type.INSTANT, -1, 1);
+    return new TumbleAggregationHint(timestampIdx, Type.INSTANT, -1, 1, 0);
   }
 
   public static TumbleAggregationHint functionOf(int timestampIdx, int inputTimestampIdx,
-      long intervalMS) {
-    return new TumbleAggregationHint(timestampIdx, Type.FUNCTION, inputTimestampIdx, intervalMS);
+      long windowWidthMs, long windowOffsetMs) {
+    return new TumbleAggregationHint(timestampIdx, Type.FUNCTION, inputTimestampIdx, windowWidthMs, windowOffsetMs);
   }
 
   @Override
   public RelHint getHint() {
     return RelHint.builder(getHintName())
         .hintOptions(List.of(String.valueOf(timestampIdx), String.valueOf(type),
-            String.valueOf(inputTimestampIdx), String.valueOf(intervalMS))).build();
+            String.valueOf(inputTimestampIdx), String.valueOf(windowWidthMs),
+            String.valueOf(windowOffsetMs))).build();
   }
 
   public static final String HINT_NAME = TumbleAggregationHint.class.getSimpleName();
@@ -59,10 +62,10 @@ public class TumbleAggregationHint implements SqrlHint {
     @Override
     public TumbleAggregationHint fromHint(RelHint hint) {
       List<String> options = hint.listOptions;
-      Preconditions.checkArgument(options.size() == 4, "Invalid hint: %s", hint);
+      Preconditions.checkArgument(options.size() == 5, "Invalid hint: %s", hint);
       return new TumbleAggregationHint(Integer.valueOf(options.get(0)),
           Type.valueOf(options.get(1)),
-          Integer.valueOf(options.get(2)), Long.valueOf(options.get(3)));
+          Integer.valueOf(options.get(2)), Long.valueOf(options.get(3)), Long.valueOf(options.get(4)));
     }
   }
 

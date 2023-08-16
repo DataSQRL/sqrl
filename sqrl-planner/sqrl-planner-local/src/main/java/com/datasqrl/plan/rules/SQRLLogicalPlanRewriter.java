@@ -13,6 +13,7 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.hints.SlidingAggregationHint;
 import com.datasqrl.plan.hints.SqrlHint;
@@ -542,7 +543,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
             Optional<TimeTumbleFunctionCall> bucketFct = TimeTumbleFunctionCall.from(mapRex,
                 rexUtil.getBuilder());
             if (bucketFct.isPresent()) {
-              long intervalExpansion = bucketFct.get().getSpecification().getBucketWidthMillis();
+              long intervalExpansion = bucketFct.get().getSpecification().getWindowWidthMillis();
               nowFilter = input.nowFilter.map(tp -> new TimePredicate(tp.getSmallerIndex(),
                   exp.i, tp.getComparison(), tp.getIntervalLength() + intervalExpansion));
             } else {
@@ -1206,9 +1207,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     RelBuilder relB = makeRelBuilder();
     relB.push(input.relNode);
     relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
+    SqrlTimeTumbleFunction.Specification windowSpec = bucketFct.getSpecification();
     TumbleAggregationHint.functionOf(keyCandidate.getIndex(),
         bucketFct.getTimestampColumnIndex(),
-        bucketFct.getSpecification().getBucketWidthMillis()).addTo(relB);
+        windowSpec.getWindowWidthMillis(), windowSpec.getWindowOffsetMillis()).addTo(relB);
     PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
 
     /* TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,

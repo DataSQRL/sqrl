@@ -1,12 +1,13 @@
 package com.datasqrl;
 
-import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -51,7 +52,50 @@ public class TimeFunctions {
   public static final EndOfMonth END_OF_MONTH = new EndOfMonth();
   public static final EndOfYear END_OF_YEAR = new EndOfYear();
 
+  public static final EndOfInterval END_OF_INTERVAL = new EndOfInterval();
+
   private static final Instant DEFAULT_DOC_TIMESTAMP = Instant.parse("2023-03-12T18:23:34.083Z");
+
+
+
+  public static class EndOfInterval extends ScalarFunction implements SqrlFunction,
+      SqrlTimeTumbleFunction {
+
+    @Override
+    public String getDocumentation() {
+      return "Rounds timestamp to the end of the given interval and offset.";
+    }
+
+    public Instant eval(Instant instant, Integer width, Integer offset) {
+      throw new NotYetImplementedException("testing");
+    }
+
+    @Override
+    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
+      return TypeInference.newBuilder()
+          .typedArguments(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+              DataTypes.INT(), DataTypes.INT())
+          .outputTypeStrategy(nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
+          .build();
+    }
+
+    @Override
+    public Specification getSpecification(long[] arguments) {
+      Preconditions.checkArgument(arguments.length == 2);
+      return new Specification() {
+        @Override
+        public long getWindowWidthMillis() {
+          return arguments[0]*1000;
+        }
+
+        @Override
+        public long getWindowOffsetMillis() {
+          return arguments[1]*1000;
+        }
+      };
+    }
+
+  }
 
   private interface TimeWindowBucketFunctionEval {
 
@@ -81,6 +125,12 @@ public class TimeFunctions {
     }
 
     @Override
+    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
+      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+    }
+
+    @Override
     public Specification getSpecification(long[] arguments) {
       Preconditions.checkArgument(arguments.length == 0);
       return new Specification();
@@ -89,8 +139,13 @@ public class TimeFunctions {
     private class Specification implements SqrlTimeTumbleFunction.Specification {
 
       @Override
-      public long getBucketWidthMillis() {
+      public long getWindowWidthMillis() {
         return timeUnit.getDuration().toMillis();
+      }
+
+      @Override
+      public long getWindowOffsetMillis() {
+        return 0;
       }
     }
 
@@ -108,11 +163,6 @@ public class TimeFunctions {
           .toInstant();
     }
 
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
 
   }
 
@@ -126,12 +176,6 @@ public class TimeFunctions {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
           .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
           .toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
   }
@@ -148,12 +192,6 @@ public class TimeFunctions {
           .toInstant();
     }
 
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
   }
 
   public static class EndOfDay extends TimeWindowBucketFunction {
@@ -166,12 +204,6 @@ public class TimeFunctions {
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
           .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
           .toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
 
@@ -192,12 +224,6 @@ public class TimeFunctions {
           .toInstant();
     }
 
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
 
   }
 
@@ -214,13 +240,6 @@ public class TimeFunctions {
           .toInstant();
     }
 
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
-
   }
 
   public static class EndOfYear extends TimeWindowBucketFunction {
@@ -234,12 +253,6 @@ public class TimeFunctions {
           .with(TemporalAdjusters.firstDayOfNextYear()).truncatedTo(ChronoUnit.DAYS)
           .minus(1, ChronoUnit.NANOS)
           .toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
 
