@@ -1,0 +1,17 @@
+>>>product$10-lp-stream
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], badwords=[$6], searchresult=[$7], format=[$8])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], badwords=[bannedWordsFilter($3)], searchresult=[textsearch('garden gnome', $4, $3)], format=[format('Go buy: %s in %s with id=%s', $3, $5, CAST($2):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)]) hints[WatermarkHint options:[1]]
+    LogicalTableScan(table=[[product$i$8]])
+
+>>>product-lp-database
+LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], badwords=[$6], searchresult=[$7], format=[$8])
+    LogicalTableScan(table=[[product$10]])
+
+>>>product-data
+1332, Heavy Duty Butt Wipes, Wipes for hardiest of messes, Personal Care, false, 0, Go buy: Heavy Duty Butt Wipes in Personal Care with id=1332
+3225, 4ft Garden Gnome, A real-sized garden gnome adds character to your outdoor space, House & Garden, true, 1, Go buy: 4ft Garden Gnome in House & Garden with id=3225
+3571, Poptech Blow 500, High powered blowdryer for any hair, Personal Care, true, 0, Go buy: Poptech Blow 500 in Personal Care with id=3571
+7235, Aachen Snow Globe, Picturesque city in a beautiful snow globe, Decoration, true, 0, Go buy: Aachen Snow Globe in Decoration with id=7235
+7552, Simer Garden Hose 50ft, Long garden hose that rolls up, House & Garden, true, 0.5, Go buy: Simer Garden Hose 50ft in House & Garden with id=7552
+8757, Original German Nutcracker 3ft, Hand-made nutcracker is the perfect Christmas decoration, Decoration, true, 0, Go buy: Original German Nutcracker 3ft in Decoration with id=8757

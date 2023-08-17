@@ -1,13 +1,12 @@
 package com.datasqrl;
 
+import com.datasqrl.SqrlFunctions.VariableArguments;
 import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
-import java.lang.reflect.Field;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -16,23 +15,14 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
-import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.types.inference.ArgumentCount;
-import org.apache.flink.table.types.inference.CallContext;
-import org.apache.flink.table.types.inference.InputTypeStrategy;
-import org.apache.flink.table.types.inference.Signature;
 import org.apache.flink.table.types.inference.TypeInference;
-import org.apache.flink.table.types.inference.TypeStrategy;
-import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
 public class TimeFunctions {
   //
@@ -52,13 +42,13 @@ public class TimeFunctions {
   public static final EndOfMonth END_OF_MONTH = new EndOfMonth();
   public static final EndOfYear END_OF_YEAR = new EndOfYear();
 
-  public static final EndOfInterval END_OF_INTERVAL = new EndOfInterval();
+  public static final EndOfSeconds END_OF_INTERVAL = new EndOfSeconds();
 
   private static final Instant DEFAULT_DOC_TIMESTAMP = Instant.parse("2023-03-12T18:23:34.083Z");
 
 
 
-  public static class EndOfInterval extends ScalarFunction implements SqrlFunction,
+  public static class EndOfSeconds extends ScalarFunction implements SqrlFunction,
       SqrlTimeTumbleFunction {
 
     @Override
@@ -73,15 +63,20 @@ public class TimeFunctions {
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return TypeInference.newBuilder()
-          .typedArguments(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-              DataTypes.INT(), DataTypes.INT())
-          .outputTypeStrategy(nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
+          .inputTypeStrategy(VariableArguments.builder()
+              .staticType(DataTypes.INT())
+              .variableType(DataTypes.INT())
+              .minVariableArguments(0)
+              .maxVariableArguments(1)
+              .build())
+          .outputTypeStrategy(
+              SqrlFunctions.nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
           .build();
     }
 
     @Override
     public Specification getSpecification(long[] arguments) {
-      Preconditions.checkArgument(arguments.length == 2);
+      Preconditions.checkArgument(arguments.length == 1 || arguments.length == 2);
       return new Specification() {
         @Override
         public long getWindowWidthMillis() {
@@ -90,7 +85,7 @@ public class TimeFunctions {
 
         @Override
         public long getWindowOffsetMillis() {
-          return arguments[1]*1000;
+          return arguments.length>1?arguments[1]*1000:0;
         }
       };
     }
@@ -126,7 +121,7 @@ public class TimeFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
+      return SqrlFunctions.basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
           DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
@@ -270,7 +265,7 @@ public class TimeFunctions {
       return TypeInference.newBuilder()
           .typedArguments(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.STRING())
           .outputTypeStrategy(callContext -> {
-            DataType type = getFirstArgumentType(callContext);
+            DataType type = SqrlFunctions.getFirstArgumentType(callContext);
             if (type.getLogicalType().isNullable()) {
               return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
             }
@@ -295,7 +290,7 @@ public class TimeFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.STRING(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return SqrlFunctions.basicNullInference(DataTypes.STRING(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
 
@@ -321,10 +316,14 @@ public class TimeFunctions {
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return TypeInference.newBuilder()
-          .inputTypeStrategy(stringToTimestampInputTypeStrategy())
-//          .typedArguments(DataTypes.STRING(), DataTypes.STRING().nullable())
+          .inputTypeStrategy(VariableArguments.builder()
+              .staticType(DataTypes.STRING())
+              .variableType(DataTypes.STRING())
+              .minVariableArguments(0)
+              .maxVariableArguments(1)
+              .build())
           .outputTypeStrategy(
-              nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
+              SqrlFunctions.nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
           .build();
     }
 
@@ -335,48 +334,7 @@ public class TimeFunctions {
     }
   }
 
-  public static InputTypeStrategy stringToTimestampInputTypeStrategy() {
-    return new InputTypeStrategy() {
 
-      @Override
-      public ArgumentCount getArgumentCount() {
-        return new ArgumentCount() {
-          @Override
-          public boolean isValidCount(int count) {
-            return count == 1 || count == 2;
-          }
-
-          @Override
-          public Optional<Integer> getMinCount() {
-            return Optional.of(1);
-          }
-
-          @Override
-          public Optional<Integer> getMaxCount() {
-            return Optional.of(2);
-          }
-        };
-      }
-
-      @Override
-      public Optional<List<DataType>> inferInputTypes(CallContext callContext,
-          boolean throwOnFailure) {
-        if (callContext.getArgumentDataTypes().size() == 1) {
-          return Optional.of(List.of(DataTypes.STRING()));
-        } else if (callContext.getArgumentDataTypes().size() == 2) {
-          return Optional.of(List.of(DataTypes.STRING(), DataTypes.STRING()));
-        }
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<Signature> getExpectedSignatures(FunctionDefinition definition) {
-        return List.of(Signature.of(Signature.Argument.of("STRING"),
-            Signature.Argument.of("STRING")));
-      }
-    };
-  }
 
   @AllArgsConstructor
   private abstract static class AbstractTimestampToEpoch extends ScalarFunction implements SqrlFunction {
@@ -391,7 +349,7 @@ public class TimeFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.BIGINT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return SqrlFunctions.basicNullInference(DataTypes.BIGINT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
     @Override
@@ -438,7 +396,7 @@ public class TimeFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.BIGINT());
+      return SqrlFunctions.basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.BIGINT());
     }
 
     @Override
@@ -482,42 +440,6 @@ public class TimeFunctions {
       return "Special timestamp function that evaluates to the current time on the timeline.";
     }
   }
-
-
-  public static TypeStrategy nullPreservingOutputStrategy(DataType outputType) {
-    return callContext -> {
-      DataType type = getFirstArgumentType(callContext);
-
-      if (type.getLogicalType().isNullable()) {
-        return Optional.of(outputType.nullable());
-      }
-
-      return Optional.of(outputType.notNull());
-    };
-  }
-
-  public static TypeInference basicNullInference(DataType outputType, DataType inputType) {
-    return TypeInference.newBuilder()
-        .typedArguments(inputType)
-        .outputTypeStrategy(nullPreservingOutputStrategy(outputType))
-        .build();
-  }
-
-  @SneakyThrows
-  public static DataType getFirstArgumentType(CallContext callContext) {
-    if (callContext instanceof AdaptedCallContext) {
-      Field privateField = AdaptedCallContext.class.getDeclaredField("originalContext");
-      privateField.setAccessible(true);
-      CallContext originalContext = (CallContext) privateField.get(callContext);
-
-      return originalContext
-          .getArgumentDataTypes()
-          .get(0);
-    } else {
-      return callContext.getArgumentDataTypes().get(0);
-    }
-  }
-
 
 
 }
