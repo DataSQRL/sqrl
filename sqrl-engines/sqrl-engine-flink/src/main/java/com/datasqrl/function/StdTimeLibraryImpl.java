@@ -7,7 +7,6 @@ import static com.datasqrl.NamespaceObjectUtil.createFunctionFromFlink;
 import static com.datasqrl.TimeFunctions.AT_ZONE;
 import static com.datasqrl.TimeFunctions.END_OF_DAY;
 import static com.datasqrl.TimeFunctions.END_OF_HOUR;
-import static com.datasqrl.TimeFunctions.END_OF_INTERVAL;
 import static com.datasqrl.TimeFunctions.END_OF_MINUTE;
 import static com.datasqrl.TimeFunctions.END_OF_MONTH;
 import static com.datasqrl.TimeFunctions.END_OF_SECOND;
@@ -49,8 +48,7 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLib
       END_OF_DAY,
       END_OF_WEEK,
       END_OF_MONTH,
-      END_OF_YEAR,
-      END_OF_INTERVAL
+      END_OF_YEAR
   );
 
   private static List<NamespaceObject> SQL_FUNCTIONS = List.of(

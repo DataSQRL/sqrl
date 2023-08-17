@@ -130,7 +130,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     ScriptBuilder builder = example.getImports();
     //temporal state
     builder.append(
-        "OrderAgg1 := SELECT o.customerid as customer, endOfHour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "OrderAgg1 := SELECT o.customerid as customer, endOfHour(o.\"time\", 1, 15) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     builder.append("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o");
     //time window
     builder.append(

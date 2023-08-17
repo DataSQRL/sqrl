@@ -5,8 +5,8 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=
 >>>orderagg1$12-lp-stream
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
-    LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 0]]
-      LogicalProject(customer=[$3], bucket=[endOfHour($4)], _uuid=[$0])
+    LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 900000]]
+      LogicalProject(customer=[$3], bucket=[endOfHour($4, 1:BIGINT, 15:BIGINT)], _uuid=[$0])
         LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>orderagg2$14-lp-stream
@@ -112,10 +112,10 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
     LogicalTableScan(table=[[ordertime1$16]])
 
 >>>orderagg1-data
-1000101, 2023-05-19T01:59:59.999-07:00, 1
-1000107, 2023-05-19T01:59:59.999-07:00, 1
-1000107, 2023-05-19T02:59:59.999-07:00, 1
-1000121, 2023-05-19T02:59:59.999-07:00, 1
+1000101, 2023-05-19T02:14:59.999-07:00, 1
+1000107, 2023-05-19T02:14:59.999-07:00, 1
+1000107, 2023-05-19T03:14:59.999-07:00, 1
+1000121, 2023-05-19T03:14:59.999-07:00, 1
 >>>orderagg2-data
 1, 4, 2023-05-19T02:28:39.553-07:00
 >>>ordertime1-data

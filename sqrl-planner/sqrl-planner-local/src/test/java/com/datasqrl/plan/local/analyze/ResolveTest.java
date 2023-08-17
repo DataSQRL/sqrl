@@ -288,11 +288,15 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "Ordertime1 := SELECT o.customerid as customer, endOfsecond(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     builder.add(
-        "Ordertime2 := SELECT o.customerid as customer, endOfInterval(o.time, INTERVAL 60 SECOND, INTERVAL 15 SECOND) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "Ordertime2 := SELECT o.customerid as customer, endOfMinute(o.time, 1, 15) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+    builder.add(
+        "Ordertime3 := SELECT o.customerid as customer, endOfHour(o.time, 5, 30) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     plan(builder.toString());
     validateQueryTable("ordertime1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1));
     validateQueryTable("ordertime2", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
+        TimestampTest.fixed(1));
+    validateQueryTable("ordertime3", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1));
   }
 
