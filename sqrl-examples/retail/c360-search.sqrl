@@ -1,0 +1,10 @@
+IMPORT text.textSearch;
+
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time AS updateTime;
+
+Product := DISTINCT Product ON productid ORDER BY updateTime DESC;
+
+ProductSearch(query: String) := SELECT * FROM Product WHERE textSearch(:query, name, description, category) > 0;
+
+ProductSearchWithId(query: String, id: Integer) := SELECT * FROM Product WHERE textSearch(:query, name, description, category) > 0
+                                               AND productid > :id;
