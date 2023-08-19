@@ -5,6 +5,7 @@ package com.datasqrl.plan.util;
 
 import com.datasqrl.TimeFunctions.NOW;
 import com.datasqrl.function.StdTimeLibraryImpl;
+import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.collect.Iterables;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
@@ -94,7 +95,7 @@ public class TimePredicateAnalyzer {
     }
     if (rexNode instanceof RexCall) {
       RexCall call = (RexCall) rexNode;
-      if (StdTimeLibraryImpl.lookupSQRLFunction(call.getOperator())
+      if (SqrlRexUtil.getSqrlFunction(call.getOperator())
           .filter(op -> op instanceof NOW).isPresent()) {
         return Pair.of(Set.of(TimePredicate.NOW_INDEX),
             rexBuilder.makeZeroLiteral(rexNode.getType()));

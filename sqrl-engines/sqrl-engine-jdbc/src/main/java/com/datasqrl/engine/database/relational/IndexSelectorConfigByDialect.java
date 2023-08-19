@@ -5,6 +5,7 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.function.IndexType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -12,15 +13,16 @@ import lombok.Value;
 
 import java.util.EnumSet;
 
-import static com.datasqrl.plan.global.IndexDefinition.Type.BTREE;
-import static com.datasqrl.plan.global.IndexDefinition.Type.HASH;
+import static com.datasqrl.function.IndexType.BTREE;
+import static com.datasqrl.function.IndexType.HASH;
+import static com.datasqrl.function.IndexType.TEXT;
 
 @Value
 @Builder
 public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
 
   public static final double DEFAULT_COST_THRESHOLD = 0.95;
-  public static final int MAX_INDEX_COLUMNS = 6;
+  public static final int MAX_INDEX_COLUMNS = 3;
 
   @Getter
   @Builder.Default
@@ -32,14 +34,15 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
 
   @Override
   public int maxIndexColumnSets() {
-    return 100;
+    return 40;
   }
 
   @Override
-  public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
+  public EnumSet<IndexType> supportedIndexTypes() {
     switch (dialect.toUpperCase()) {
       case "POSTGRES":
       case "MYSQL":
+        return EnumSet.of(HASH, BTREE, TEXT);
       case "H2":
       case "SQLITE":
         return EnumSet.of(HASH, BTREE);
@@ -49,7 +52,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   }
 
   @Override
-  public int maxIndexColumns(IndexDefinition.Type indexType) {
+  public int maxIndexColumns(IndexType indexType) {
     switch (dialect.toUpperCase()) {
       case "POSTGRES":
         switch (indexType) {

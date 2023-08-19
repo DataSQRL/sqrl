@@ -5,14 +5,16 @@ package com.datasqrl.plan.global;
 
 import static com.datasqrl.plan.OptimizationStage.READ_QUERY_OPTIMIZATION;
 
+import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.OptimizationStage;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.SqrlPlannerConfigFactory;
+import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.util.SqrlRexUtil;
 import com.datasqrl.util.ArrayUtil;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,9 +22,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
@@ -46,18 +47,21 @@ public class IndexSelector {
   private final RelOptPlanner planner;
   private final IndexSelectorConfig config;
 
-  public List<IndexCall> getIndexSelection(PhysicalDAGPlan.ReadQuery query) {
+  public List<QueryIndexSummary> getIndexSelection(PhysicalDAGPlan.ReadQuery query) {
     RelNode optimized = RelStageRunner.runStage(READ_QUERY_OPTIMIZATION, query.getRelNode(), planner);
 //        System.out.println(optimized.explain());
     IndexFinder indexFinder = new IndexFinder();
     return indexFinder.find(optimized);
   }
 
-  public Map<IndexDefinition, Double> optimizeIndexes(Collection<IndexCall> indexes) {
+  public Map<IndexDefinition, Double> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
     //Prune down to database indexes and remove duplicates
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
-    Multimap<VirtualRelationalTable, IndexCall> callsByTable = HashMultimap.create();
-    indexes.forEach(idx -> callsByTable.put(idx.getTable(), idx));
+    HashMultimap<VirtualRelationalTable, QueryIndexSummary> callsByTable = HashMultimap.create();
+    queryIndexSummaries.forEach(idx -> {
+      //TODO: Add up counts so we preserve relative frequency
+      callsByTable.put(idx.getTable(), idx);
+    });
 
     for (VirtualRelationalTable table : callsByTable.keySet()) {
       optIndexes.putAll(optimizeIndexes(table, callsByTable.get(table)));
@@ -66,29 +70,47 @@ public class IndexSelector {
   }
 
   private Map<IndexDefinition, Double> optimizeIndexes(VirtualRelationalTable table,
-                                                       Collection<IndexCall> indexes) {
-    //Check how many unique column combinations we have on this table
-    Set<Set<Integer>> columnIndexSets = indexes.stream().map(idx -> idx.getColumnIndexes()).collect(Collectors.toSet());
-    if (columnIndexSets.size()>config.maxIndexColumnSets()) {
+                                                       Set<QueryIndexSummary> queryIndexSummaries) {
+    //Check how many unique QueryConjunctions we have on this table
+    if (queryIndexSummaries.size()>config.maxIndexColumnSets()) {
       //Generate individual indexes so the database can combine them on-demand at query time
-      Set<Integer> indexedColumns = columnIndexSets.stream().flatMap(s -> s.stream()).collect(Collectors.toSet());
-      IndexDefinition.Type genericType = config.getPreferredGenericIndexType();
-      return indexedColumns.stream().map(
-              col -> new IndexDefinition(table.getNameId(), List.of(col), table.getRowType().getFieldNames(), genericType)
-      ).collect(Collectors.toMap(Function.identity(),x -> 0.0));
+      //1) Generate an index for each column
+      Set<Integer> indexedColumns = new HashSet<>();
+      Set<IndexableFunctionCall> indexedFunctions = new HashSet<>();
+      for (QueryIndexSummary conj : queryIndexSummaries) {
+        indexedColumns.addAll(conj.equalityColumns);
+        indexedColumns.addAll(conj.inequalityColumns);
+        indexedFunctions.addAll(conj.functionCalls);
+      }
+      IndexType genericType = config.getPreferredGenericIndexType();
+      Map<IndexDefinition, Double> indexes = new HashMap<>();
+      for (int colIndex : indexedColumns) {
+        indexes.put(new IndexDefinition(table.getNameId(), List.of(colIndex),
+            table.getRowType().getFieldNames(), genericType), 0.0);
+      }
+      indexedFunctions.stream().map(fcall -> getIndexDefinition(fcall, table)).flatMap(Optional::stream)
+          .forEach(idxDef -> indexes.put(idxDef, 0.0));
+      return indexes;
     } else {
-      return optimizeIndexesWithCostMinimization(table, indexes);
+      return optimizeIndexesWithCostMinimization(table, queryIndexSummaries);
     }
   }
 
+  private Optional<IndexDefinition> getIndexDefinition(IndexableFunctionCall fcall, VirtualRelationalTable table) {
+    Optional<IndexType> specialType = config.getPreferredSpecialIndexType(fcall.getFunction()
+        .getSupportedIndexes());
+    return specialType.map(idxType -> new IndexDefinition(table.getNameId(), fcall.getColumnIndexes(),
+        table.getRowType().getFieldNames(), idxType));
+  }
+
   private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(VirtualRelationalTable table,
-      Collection<IndexCall> indexes) {
+      Collection<QueryIndexSummary> indexes) {
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
     //The baseline cost is the cost of doing the lookup with the primary key index
-    Map<IndexCall, Double> currentCost = new HashMap<>();
+    Map<QueryIndexSummary, Double> currentCost = new HashMap<>();
     IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(),
         table.getNumPrimaryKeys(), table.getRowType().getFieldNames());
-    for (IndexCall idx : indexes) {
+    for (QueryIndexSummary idx : indexes) {
       currentCost.put(idx, idx.getCost(pkIdx));
     }
     //Determine which index candidates reduce the cost the most
@@ -98,10 +120,10 @@ public class IndexSelector {
     double beforeTotal = total(currentCost);
     for (; ; ) {
       IndexDefinition bestCandidate = null;
-      Map<IndexCall, Double> bestCosts = null;
+      Map<QueryIndexSummary, Double> bestCosts = null;
       double bestTotal = Double.POSITIVE_INFINITY;
       for (IndexDefinition candidate : candidates) {
-        Map<IndexCall, Double> costs = new HashMap<>();
+        Map<QueryIndexSummary, Double> costs = new HashMap<>();
         currentCost.forEach((call, cost) -> {
           double newcost = call.getCost(candidate);
             if (newcost > cost) {
@@ -153,44 +175,44 @@ public class IndexSelector {
         index.getColumns()); //Add an epsilon that is insignificant but keeps index order stable
   }
 
-  private static final double total(Map<?, Double> costs) {
-    return costs.values().stream().reduce(0.0d, (a, b) -> a + b);
+  private static double total(Map<?, Double> costs) {
+    return costs.values().stream().reduce(0.0d, Double::sum);
   }
 
-  public Set<IndexDefinition> generateIndexCandidates(IndexCall indexCall) {
-    List<Integer> eqCols = new ArrayList<>(), comparisons = new ArrayList<>();
-    indexCall.getColumns().forEach(c -> {
-      switch (c.getType()) {
-        case EQUALITY:
-          eqCols.add(c.getColumnIndex());
-          break;
-        case COMPARISON:
-          comparisons.add(c.getColumnIndex());
-          break;
-        default:
-          throw new IllegalStateException(c.getType().name());
-      }
-    });
+  public Set<IndexDefinition> generateIndexCandidates(QueryIndexSummary queryIndexSummary) {
+    List<Integer> eqCols = ImmutableList.copyOf(queryIndexSummary.equalityColumns),
+        inequality = ImmutableList.copyOf(queryIndexSummary.inequalityColumns);
     Set<IndexDefinition> result = new HashSet<>();
 
-    for (IndexDefinition.Type indexType : config.supportedIndexTypes()) {
+    for (IndexType indexType : config.supportedIndexTypes()) {
       List<List<Integer>> colPermutations = new ArrayList<>();
+      int maxIndexCols = eqCols.size();
       switch (indexType) {
         case HASH:
-          generatePermutations(new int[Math.min(eqCols.size(), config.maxIndexColumns(indexType))],
-              0, eqCols, List.of(), colPermutations);
+          maxIndexCols = Math.min(maxIndexCols, config.maxIndexColumns(indexType));
+          if (maxIndexCols>0) {
+            generatePermutations(new int[maxIndexCols],
+                0, eqCols, List.of(), colPermutations);
+          }
           break;
         case BTREE:
-          generatePermutations(new int[Math.min(eqCols.size() + (comparisons.isEmpty() ? 0 : 1),
-                  config.maxIndexColumns(indexType))],
-              0, eqCols, comparisons, colPermutations);
+          maxIndexCols = Math.min(maxIndexCols + (inequality.isEmpty() ? 0 : 1),
+              config.maxIndexColumns(indexType));
+          if (maxIndexCols>0) {
+            generatePermutations(new int[maxIndexCols],
+                0, eqCols, inequality, colPermutations);
+          }
+          break;
+        case TEXT:
+          queryIndexSummary.functionCalls.stream().map(fcall -> this.getIndexDefinition(fcall,
+              queryIndexSummary.getTable())).flatMap(Optional::stream).forEach(result::add);
           break;
         default:
           throw new IllegalStateException(indexType.name());
       }
       colPermutations.forEach(
-          cols -> result.add(new IndexDefinition(indexCall.getTable().getNameId(), cols,
-              indexCall.getTable().getRowType().getFieldNames(), indexType)));
+          cols -> result.add(new IndexDefinition(queryIndexSummary.getTable().getNameId(), cols,
+              queryIndexSummary.getTable().getRowType().getFieldNames(), indexType)));
     }
     return result;
   }
@@ -229,7 +251,7 @@ public class IndexSelector {
 
     private static final int PARAM_OFFSET = 10000;
 
-    List<IndexCall> indexes = new ArrayList<>();
+    List<QueryIndexSummary> queryIndexSummaries = new ArrayList<>();
     int paramIndex = PARAM_OFFSET;
     SqrlRexUtil rexUtil = new SqrlRexUtil(SqrlPlannerConfigFactory.createSqrlTypeFactory());
 
@@ -248,7 +270,7 @@ public class IndexSelector {
         VirtualRelationalTable table = ((TableScan) node).getTable()
             .unwrap(VirtualRelationalTable.class);
         Filter filter = (Filter) parent;
-        IndexCall.of(table, filter.getCondition(), rexUtil).map(indexes::add);
+        QueryIndexSummary.of(table, filter.getCondition(), rexUtil).map(queryIndexSummaries::add);
       } else {
         super.visit(node, ordinal, parent);
       }
@@ -261,9 +283,9 @@ public class IndexSelector {
               join.getRight()));
     }
 
-    List<IndexCall> find(RelNode node) {
+    List<QueryIndexSummary> find(RelNode node) {
       go(node);
-      return indexes;
+      return queryIndexSummaries;
     }
 
     @AllArgsConstructor

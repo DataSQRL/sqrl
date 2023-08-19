@@ -1,6 +1,8 @@
 package com.datasqrl;
 
 import com.datasqrl.SqrlFunctions.VariableArguments;
+import com.datasqrl.function.IndexType;
+import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.SqrlFunction;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
@@ -9,10 +11,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.function.Predicate;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
@@ -88,7 +92,7 @@ public class TextFunctions {
 
   }
 
-  public static class TextSearch extends ScalarFunction implements SqrlFunction {
+  public static class TextSearch extends ScalarFunction implements SqrlFunction, IndexableFunction {
 
     public Double eval(String query, String... texts) {
       if (query==null) return null;
@@ -129,6 +133,21 @@ public class TextFunctions {
     @Override
     public String getDocumentation() {
       return "Replaces the placeholders in the first argument with the remaining arguments in order";
+    }
+
+    @Override
+    public Predicate<Integer> getOperandSelector() {
+      return idx -> idx>0;
+    }
+
+    @Override
+    public double estimateSelectivity() {
+      return 0.1;
+    }
+
+    @Override
+    public EnumSet<IndexType> getSupportedIndexes() {
+      return EnumSet.of(IndexType.TEXT);
     }
   }
 

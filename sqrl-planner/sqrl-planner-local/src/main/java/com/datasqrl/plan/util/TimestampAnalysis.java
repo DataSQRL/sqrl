@@ -7,6 +7,7 @@ import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.plan.table.TimestampHolder;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +50,7 @@ public class TimestampAnalysis {
       return true;
     }
     Optional<TimestampPreservingFunction> fnc = Optional.of(operator)
-        .flatMap(f-> StdTimeLibraryImpl.lookupSQRLFunction(operator))
+        .flatMap(f-> SqrlRexUtil.getSqrlFunction(operator))
         .filter(op -> op instanceof TimestampPreservingFunction)
         .map(op -> (TimestampPreservingFunction) op)
         .filter(TimestampPreservingFunction::isTimestampPreserving);

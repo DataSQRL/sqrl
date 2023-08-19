@@ -73,26 +73,5 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLib
   public NamePath getPath() {
     return LIB_NAME;
   }
-  /* ========
-      Function Class Implementations
-     ========
-   */
-  public static Optional<SqrlFunction> lookupSQRLFunction(SqlOperator operator) {
-    if (operator.getName().equalsIgnoreCase("now")) {
-      return Optional.of(NOW);
-    }
-    //lookup time fnc
-    Optional<NamespaceObject> ns = stdTimeLibrary.getNamespaceObject(Name.system(operator.getName()));
-    if (ns.isPresent()) {
-      return ns.filter(n->n instanceof FunctionNamespaceObject)
-          .map(n->((FunctionNamespaceObject)n).getFunction())
-          .filter(f->f instanceof SqrlFunction)
-          .map(f->(SqrlFunction)f);
-    }
-
-    if (operator instanceof SqrlFunction) {
-      return Optional.of((SqrlFunction)operator);
-    }
-    return Optional.empty();
-  }
+  
 }

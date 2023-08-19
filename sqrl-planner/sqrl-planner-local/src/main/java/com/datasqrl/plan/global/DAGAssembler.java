@@ -9,13 +9,11 @@ import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.RelStageRunner;
-import com.datasqrl.plan.global.DatabaseQuery.Instance;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
@@ -161,9 +159,10 @@ public class DAGAssembler {
       //Pick index structures for database tables based on the database queries
       IndexSelector indexSelector = new IndexSelector(planner,
           ((DatabaseEngine) database.getEngine()).getIndexSelectorConfig());
-      Collection<IndexCall> indexCalls = readDAG.stream().map(indexSelector::getIndexSelection)
+      Collection<QueryIndexSummary> queryIndexSummaries = readDAG.stream().map(indexSelector::getIndexSelection)
           .flatMap(List::stream).collect(Collectors.toList());
-      Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(indexCalls)
+      Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(
+              queryIndexSummaries)
           .keySet();
       databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, readDAG, indexDefinitions));
     }

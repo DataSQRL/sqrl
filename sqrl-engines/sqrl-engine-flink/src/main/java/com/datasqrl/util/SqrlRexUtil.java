@@ -8,6 +8,7 @@ import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,6 +47,7 @@ import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -53,7 +55,10 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.table.catalog.ContextResolvedFunction;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 public class SqrlRexUtil {
@@ -136,12 +141,24 @@ public class SqrlRexUtil {
     return new RexFinder<Void>() {
       @Override
       public Void visitCall(RexCall call) {
-        if (StdTimeLibraryImpl.lookupSQRLFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
+        if (getSqrlFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
           throw Util.FoundOne.NULL;
         }
         return super.visitCall(call);
       }
     };
+  }
+
+  public static Optional<SqrlFunction> getSqrlFunction(SqlOperator operator) {
+    if (operator instanceof BridgingSqlFunction) {
+      ContextResolvedFunction ctxFunction = ((BridgingSqlFunction)operator).getResolvedFunction();
+      FunctionDefinition function = ctxFunction.getDefinition();
+      if (function instanceof SqrlFunction) {
+        return Optional.of((SqrlFunction) function);
+      }
+    }
+    return Optional.empty();
+//    return StdTimeLibraryImpl.lookupSQRLFunction(operator);
   }
 
   public static RexFinder<RexInputRef> findRexInputRefByIndex(final int index) {
@@ -155,6 +172,16 @@ public class SqrlRexUtil {
       }
     };
   }
+
+  public static Optional<Integer> findSingleReferenceColumnIndex(RexCall call) {
+    Set<Integer> inputRefs = findAllInputRefs(call.getOperands());
+    if (inputRefs.size() == 1) {
+      return Optional.of(Iterables.getOnlyElement(inputRefs));
+    }
+    return Optional.empty();
+  }
+
+
 
   public static Set<Integer> findAllInputRefs(@NonNull Iterable<RexNode> nodes) {
     RexInputRefFinder refFinder = new RexInputRefFinder();

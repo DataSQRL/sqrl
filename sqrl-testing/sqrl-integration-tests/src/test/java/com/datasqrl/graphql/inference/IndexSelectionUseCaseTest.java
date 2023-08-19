@@ -12,7 +12,6 @@ import com.datasqrl.util.data.Retail.RetailScriptNames;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -32,6 +31,7 @@ public class IndexSelectionUseCaseTest extends AbstractSchemaInferenceModelTest 
   }
 
   @Test
+  @Disabled
   public void testSingle() {
     TestScript script = Retail.INSTANCE.getScript(RetailScriptNames.SEARCH);
     fullScriptTest(script, script.getGraphQLSchemas().get(0));

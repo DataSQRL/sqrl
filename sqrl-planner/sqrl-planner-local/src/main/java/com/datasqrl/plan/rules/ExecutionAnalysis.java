@@ -10,6 +10,7 @@ import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.util.SqrlRexUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -92,7 +93,7 @@ public class ExecutionAnalysis {
 
     @Override
     public Void visitCall(RexCall call) {
-      Optional<SqrlFunction> sqrlFunction = StdTimeLibraryImpl.lookupSQRLFunction(call.getOperator());
+      Optional<SqrlFunction> sqrlFunction = SqrlRexUtil.getSqrlFunction(call.getOperator());
       if (sqrlFunction.filter(func -> func instanceof NOW).isPresent()) {
         capabilities.add(EngineCapability.NOW);
       } else if (sqrlFunction.filter(func -> func instanceof TimestampPreservingFunction)
