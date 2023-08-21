@@ -26,12 +26,11 @@ import org.apache.calcite.sql.SqlKind;
 import java.util.*;
 
 /**
- * A query conjunction represents the potentially indexable predicates of a query.
+ * This class represents the potentially indexable filters and sorts of a query.
  * Those include equality and inequality constraints on a single column and {@link IndexableFunction}
- * calls.
- *
+ * calls. <br />
  * This class provides the methods to create a {@link QueryIndexSummary} from a WHERE clause (i.e. {@link org.apache.calcite.rel.logical.LogicalFilter})
- * and estimating the cost of a query conjunction against an {@link IndexDefinition}.
+ * and estimating the cost of a {@link QueryIndexSummary} against an {@link IndexDefinition}.
  */
 @AllArgsConstructor
 @Getter
@@ -51,6 +50,8 @@ public class QueryIndexSummary {
   Set<Integer> inequalityColumns;
   @Include
   Set<IndexableFunctionCall> functionCalls;
+  //TODO: add support for sort orders
+  //List<IndexableSort> sorts;
 
   /**
    * Keeps track of the relative frequency of query conjunctions as we reduce them

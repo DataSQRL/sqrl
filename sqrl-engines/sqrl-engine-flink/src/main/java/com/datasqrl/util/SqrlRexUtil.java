@@ -37,6 +37,7 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexShuttle;
@@ -54,6 +55,7 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
@@ -202,6 +204,10 @@ public class SqrlRexUtil {
       return input;
     }
   }
+
+
+
+
 
 
   public List<RexNode> getIdentityProject(RelNode input) {
