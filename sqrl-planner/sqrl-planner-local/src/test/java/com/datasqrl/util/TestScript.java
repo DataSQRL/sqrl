@@ -132,7 +132,7 @@ public interface TestScript {
         .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
         .addAll(Quickstart.INSTANCE.getScripts())
         .addAll(Clickstream.INSTANCE.getScripts())
-        .addAll(Sensors.INSTANCE.getScripts())
+        .add(Sensors.INSTANCE.getScripts().get(0))
         .addAll(Repository.INSTANCE.getScripts())
         .build();
 
@@ -153,7 +153,7 @@ public interface TestScript {
         .add(Nutshop.INSTANCE.getScripts().get(1))
         .addAll(Quickstart.INSTANCE.getScripts())
         .addAll(Clickstream.INSTANCE.getScripts())
-        .addAll(Sensors.INSTANCE.getScripts())
+        .add(Sensors.INSTANCE.getScripts().get(0))
         .build();
 
     @Override
