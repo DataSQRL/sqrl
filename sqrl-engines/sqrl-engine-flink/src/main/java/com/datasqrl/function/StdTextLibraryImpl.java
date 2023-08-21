@@ -3,9 +3,6 @@
  */
 package com.datasqrl.function;
 
-import static com.datasqrl.NamespaceObjectUtil.createFunctionFromFlink;
-import static com.datasqrl.TimeFunctions.NOW;
-
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.TextFunctions;
 import com.datasqrl.canonicalizer.NamePath;

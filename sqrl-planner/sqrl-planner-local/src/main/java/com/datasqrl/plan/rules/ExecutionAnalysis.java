@@ -3,12 +3,10 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.TimeFunctions.NOW;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
-import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.SqrlRexUtil;
 import java.util.Arrays;
@@ -93,12 +91,14 @@ public class ExecutionAnalysis {
 
     @Override
     public Void visitCall(RexCall call) {
-      Optional<SqrlFunction> sqrlFunction = SqrlRexUtil.getSqrlFunction(call.getOperator());
-      if (sqrlFunction.filter(func -> func instanceof NOW).isPresent()) {
+      if (SqrlRexUtil.isNOW(call.getOperator())) {
         capabilities.add(EngineCapability.NOW);
-      } else if (sqrlFunction.filter(func -> func instanceof TimestampPreservingFunction)
-          .isPresent()) {
-        capabilities.add(EngineCapability.EXTENDED_FUNCTIONS);
+      } else {
+        Optional<SqrlFunction> sqrlFunction = SqrlRexUtil.getSqrlFunction(call.getOperator());
+        if (sqrlFunction.filter(func -> func instanceof TimestampPreservingFunction)
+            .isPresent()) {
+          capabilities.add(EngineCapability.EXTENDED_FUNCTIONS);
+        }
       }
       return super.visitCall(call);
     }

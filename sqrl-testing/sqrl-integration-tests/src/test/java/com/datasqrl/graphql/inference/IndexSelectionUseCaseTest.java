@@ -7,6 +7,7 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
+import com.datasqrl.util.TestScript.QueryUseCaseProvider;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Retail.RetailScriptNames;
 import java.util.stream.Collectors;
@@ -18,7 +19,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 public class IndexSelectionUseCaseTest extends AbstractSchemaInferenceModelTest {
 
   @ParameterizedTest
-  @ArgumentsSource(TestScript.AllScriptsWithGraphQLSchemaProvider.class)
+  @ArgumentsSource(QueryUseCaseProvider.class)
   public void fullScriptTest(TestScript script, TestGraphQLSchema graphQLSchema) {
     SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(),
         graphQLSchema.getName());

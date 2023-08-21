@@ -3,23 +3,20 @@
  */
 package com.datasqrl.plan.util;
 
-import com.datasqrl.TimeFunctions.NOW;
-import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.collect.Iterables;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class TimePredicateAnalyzer {
 
@@ -95,8 +92,7 @@ public class TimePredicateAnalyzer {
     }
     if (rexNode instanceof RexCall) {
       RexCall call = (RexCall) rexNode;
-      if (SqrlRexUtil.getSqrlFunction(call.getOperator())
-          .filter(op -> op instanceof NOW).isPresent()) {
+      if (SqrlRexUtil.isNOW(call.getOperator())) {
         return Pair.of(Set.of(TimePredicate.NOW_INDEX),
             rexBuilder.makeZeroLiteral(rexNode.getType()));
       } else {

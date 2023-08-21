@@ -7,7 +7,7 @@ import com.datasqrl.AbstractPhysicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
-import com.datasqrl.util.data.RetailNested;
+import com.datasqrl.util.TestScript.PhysicalUseCaseProvider;
 import com.datasqrl.util.data.Sensors;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
@@ -43,7 +43,7 @@ public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(TestScript.AllScriptsProvider.class)
+  @ArgumentsSource(PhysicalUseCaseProvider.class)
   public void fullScriptTest(TestScript script) {
     scriptTest(script, true, script.dataSnapshot());
   }

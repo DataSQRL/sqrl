@@ -61,6 +61,7 @@ import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 public class SqrlRexUtil {
@@ -135,15 +136,19 @@ public class SqrlRexUtil {
 
   }
 
-  public static RexFinder findFunction(SqrlFunction operator) {
-    return findFunction(o -> o.equals(operator));
+  public static boolean isNOW(SqlOperator operator) {
+    return operator.equals(FlinkSqlOperatorTable.NOW);
   }
 
-  public static RexFinder findFunction(Predicate<SqrlFunction> operatorMatch) {
+  public static RexFinder findFunction(SqrlFunction operator) {
+    return findFunction(o -> getSqrlFunction(o).filter(f -> operator.getClass().isInstance(f)).isPresent());
+  }
+
+  public static RexFinder findFunction(Predicate<SqlOperator> operatorMatch) {
     return new RexFinder<Void>() {
       @Override
       public Void visitCall(RexCall call) {
-        if (getSqrlFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
+        if (operatorMatch.test(call.getOperator())) {
           throw Util.FoundOne.NULL;
         }
         return super.visitCall(call);

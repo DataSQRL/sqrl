@@ -5,7 +5,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
 >>>spending$10-lp-stream
 LogicalProject(__pk_0=[$0], week=[$1], spend=[$2], saved=[$3])
   LogicalProject(__pk_0=[$0], week=[$1], spend=[$2], saved=[$3])
-    LogicalAggregate(group=[{0, 1}], spend=[SUM($2)], saved=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 604800000]]
+    LogicalAggregate(group=[{0, 1}], spend=[SUM($2)], saved=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 604800000, 0]]
       LogicalProject(__pk_0=[$6], week=[endOfWeek($4)], price=[$10], saving=[$11], _uuid=[$0])
         LogicalJoin(condition=[AND(=($0, $9), =($12, $4))], joinType=[inner]) hints[IntervalJoin]
           LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
@@ -15,7 +15,7 @@ LogicalProject(__pk_0=[$0], week=[$1], spend=[$2], saved=[$3])
                 LogicalProject(id=[$3], time=[$4])
                   LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
           LogicalProject(__pk_0=[$0], price=[$2], saving=[$3], time=[$1])
-            LogicalAggregate(group=[{0, 4}], price=[SUM($1)], saving=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
+            LogicalAggregate(group=[{0, 4}], price=[SUM($1)], saving=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
               LogicalProject(__pk_0=[$0], total=[-(*($8, $9), CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE))], $f2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], _idx=[$6], time=[$4])
                 LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
@@ -26,7 +26,7 @@ LogicalProject(__pk_0=[$0], week=[$1], spend=[$2], saved=[$3])
 >>>totals$6-lp-stream
 LogicalProject(__pk_0=[$0], price=[$1], saving=[$2], time=[$3])
   LogicalProject(__pk_0=[$0], price=[$2], saving=[$3], time=[$1])
-    LogicalAggregate(group=[{0, 4}], price=[SUM($1)], saving=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1]]
+    LogicalAggregate(group=[{0, 4}], price=[SUM($1)], saving=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
       LogicalProject(__pk_0=[$0], total=[-(*($8, $9), CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE))], $f2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], _idx=[$6], time=[$4])
         LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
           LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]

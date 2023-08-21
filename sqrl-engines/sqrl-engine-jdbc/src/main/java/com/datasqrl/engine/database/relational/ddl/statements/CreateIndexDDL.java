@@ -31,7 +31,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
         break;
       default:
         columnExpression = String.join(",", columns);
-        indexType = type.name().toUpperCase();
+        indexType = type.name().toLowerCase();
     }
 
     String createTable = "CREATE INDEX IF NOT EXISTS %s ON %s USING %s (%s);";

@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.rules;
 
-import static com.datasqrl.TimeFunctions.NOW;
 import static com.datasqrl.error.ErrorCode.DISTINCT_ON_TIMESTAMP;
 import static com.datasqrl.error.ErrorCode.NOT_YET_IMPLEMENTED;
 import static com.datasqrl.error.ErrorCode.WRONG_INTERVAL_JOIN;
@@ -103,6 +102,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 @Value
 public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP> {
@@ -413,8 +413,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
   }
 
-  private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(
-      NOW);
+  private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
 
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {

@@ -14,7 +14,6 @@ import static com.datasqrl.TimeFunctions.END_OF_WEEK;
 import static com.datasqrl.TimeFunctions.END_OF_YEAR;
 import static com.datasqrl.TimeFunctions.EPOCH_MILLI_TO_TIMESTAMP;
 import static com.datasqrl.TimeFunctions.EPOCH_TO_TIMESTAMP;
-import static com.datasqrl.TimeFunctions.NOW;
 import static com.datasqrl.TimeFunctions.STRING_TO_TIMESTAMP;
 import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_EPOCH;
 import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_STRING;
@@ -35,7 +34,6 @@ import org.apache.commons.collections.ListUtils;
 public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLibrary {
   public static final NamePath LIB_NAME = NamePath.of("time");
   public static final List<SqrlFunction> SQRL_FUNCTIONS = List.of(
-//      NOW,
       EPOCH_TO_TIMESTAMP,
       EPOCH_MILLI_TO_TIMESTAMP,
       TIMESTAMP_TO_EPOCH,
@@ -73,5 +71,5 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLib
   public NamePath getPath() {
     return LIB_NAME;
   }
-  
+
 }

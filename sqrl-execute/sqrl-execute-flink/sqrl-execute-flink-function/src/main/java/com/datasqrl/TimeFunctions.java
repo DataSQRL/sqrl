@@ -26,8 +26,6 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.TypeInference;
 
 public class TimeFunctions {
-  //
-  public static final NOW NOW = new NOW();
   public static final EpochToTimestamp EPOCH_TO_TIMESTAMP = new EpochToTimestamp();
   public static final EpochMilliToTimestamp EPOCH_MILLI_TO_TIMESTAMP = new EpochMilliToTimestamp();
   public static final TimestampToEpoch TIMESTAMP_TO_EPOCH = new TimestampToEpoch();
@@ -492,18 +490,6 @@ public class TimeFunctions {
     }
   }
 
-  public static class NOW extends ScalarFunction implements SqrlFunction {
-
-    public Instant eval() {
-      return Instant.now();
-    }
-
-
-    @Override
-    public String getDocumentation() {
-      return "Special timestamp function that evaluates to the current time on the timeline.";
-    }
-  }
 
 
 }

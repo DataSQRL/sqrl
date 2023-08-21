@@ -9,6 +9,7 @@ import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Quickstart;
 import com.datasqrl.util.data.Repository;
 import com.datasqrl.util.data.Retail;
+import com.datasqrl.util.data.Retail.RetailScriptNames;
 import com.datasqrl.util.data.Sensors;
 import com.datasqrl.util.junit.ArgumentProvider;
 import com.google.common.collect.ImmutableList;
@@ -99,49 +100,67 @@ public interface TestScript {
     === STATIC METHODS ===
      */
 
-  static List<TestScript> getAll() {
-    return ImmutableList.<TestScript>builder()
-        .addAll(Retail.INSTANCE.getTestScripts().values())
+
+
+  class PhysicalUseCaseProvider implements ArgumentsProvider {
+
+    private static List<TestScript> SCRIPTS = ImmutableList.<TestScript>builder()
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
         .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
         .addAll(Quickstart.INSTANCE.getScripts())
         .addAll(Clickstream.INSTANCE.getScripts())
         .addAll(Sensors.INSTANCE.getScripts())
         .addAll(Repository.INSTANCE.getScripts())
         .build();
-  }
-
-  class AllScriptsProvider implements ArgumentsProvider {
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
-      return ArgumentProvider.of(getAll());
+      return ArgumentProvider.of(SCRIPTS);
     }
   }
 
-  public class AllScriptsWithGraphQLSchemaProvider implements ArgumentsProvider {
+  public class QueryUseCaseProvider implements ArgumentsProvider {
+
+    private static List<TestScript> SCRIPTS = ImmutableList.<TestScript>builder()
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.SEARCH))
+        .addAll(Nutshop.INSTANCE.getScripts().subList(0, 2))
+        .addAll(Quickstart.INSTANCE.getScripts())
+        .addAll(Clickstream.INSTANCE.getScripts())
+        .addAll(Sensors.INSTANCE.getScripts())
+        .addAll(Repository.INSTANCE.getScripts())
+        .build();
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
-      return getAll().stream().flatMap(script ->
+      return SCRIPTS.stream().flatMap(script ->
           script.getGraphQLSchemas().stream().map(gql -> Arguments.of(script, gql)));
     }
   }
 
-  public class AllScriptsWithAllEnginesProvider implements ArgumentsProvider {
+  class AllScriptsWithAllEnginesProvider implements ArgumentsProvider {
+
+    private static List<TestScript> SCRIPTS = ImmutableList.<TestScript>builder()
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.ORDER_STATS))
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.FULL))
+        .add(Retail.INSTANCE.getTestScripts().get(RetailScriptNames.RECOMMEND))
+        .add(Nutshop.INSTANCE.getScripts().get(1))
+        .addAll(Quickstart.INSTANCE.getScripts())
+        .addAll(Clickstream.INSTANCE.getScripts())
+        .addAll(Sensors.INSTANCE.getScripts())
+        .build();
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
-      List<TestScript> engineScripts = ImmutableList.<TestScript>builder()
-          .addAll(Retail.INSTANCE.getTestScripts().values())
-          .add(Nutshop.INSTANCE.getScripts().get(1))
-          .addAll(Quickstart.INSTANCE.getScripts())
-          .addAll(Clickstream.INSTANCE.getScripts())
-          .addAll(Sensors.INSTANCE.getScripts())
-          .build();
-      return engineScripts.stream()
+
+      return SCRIPTS.stream()
           .flatMap(script ->
               script.getGraphQLSchemas().stream()
                   .flatMap(gql ->

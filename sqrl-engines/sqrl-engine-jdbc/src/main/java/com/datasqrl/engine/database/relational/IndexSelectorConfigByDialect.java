@@ -34,7 +34,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
 
   @Override
   public int maxIndexColumnSets() {
-    return 40;
+    return 50;
   }
 
   @Override

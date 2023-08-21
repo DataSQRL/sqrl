@@ -89,7 +89,7 @@ public class IndexSelector {
             table.getRowType().getFieldNames(), genericType), 0.0);
       }
       indexedFunctions.stream().map(fcall -> getIndexDefinition(fcall, table)).flatMap(Optional::stream)
-          .forEach(idxDef -> indexes.put(idxDef, 0.0));
+          .forEach(idxDef -> indexes.put(idxDef, Double.NaN));
       return indexes;
     } else {
       return optimizeIndexesWithCostMinimization(table, queryIndexSummaries);
