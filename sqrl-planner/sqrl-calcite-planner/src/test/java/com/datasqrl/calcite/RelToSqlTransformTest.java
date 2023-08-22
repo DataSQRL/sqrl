@@ -52,13 +52,10 @@ class RelToSqlTransformTest {
                     rexBuilder.makeZeroLiteral(framework.getTypeFactory().createSqlType(SqlTypeName.BIGINT))))
         .build();
 
-    List<RelRule> rules = new TextSearch().transform(Dialect.POSTGRES, fnc);
+    SqlNode node = this.framework.getQueryPlanner()
+        .convertToDialect(Dialect.POSTGRES, relNode);
 
-    relNode = Programs.hep(rules, false, null)
-        .run(framework.getQueryPlanner().getPlanner(), relNode, relNode.getTraitSet(),
-            List.of(), List.of());
-
-    System.out.println(converter.visitRoot(relNode).asStatement().toSqlString(PostgresqlSqlDialect.DEFAULT));
+    System.out.println(node.toSqlString(PostgresqlSqlDialect.DEFAULT));
   }
 
   @Test
@@ -74,12 +71,9 @@ class RelToSqlTransformTest {
         .sort(0)
         .build();
 
-    List<RelRule> rules = new TextSearch().transform(Dialect.POSTGRES, fnc);
+    SqlNode node = this.framework.getQueryPlanner()
+        .convertToDialect(Dialect.POSTGRES, relNode);
 
-    relNode = Programs.hep(rules, false, null)
-        .run(framework.getQueryPlanner().getPlanner(), relNode, relNode.getTraitSet(),
-            List.of(), List.of());
-
-    System.out.println(converter.visitRoot(relNode).asStatement().toSqlString(PostgresqlSqlDialect.DEFAULT));
+    System.out.println(node.toSqlString(PostgresqlSqlDialect.DEFAULT));
   }
 }
