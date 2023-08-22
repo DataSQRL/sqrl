@@ -1,12 +1,13 @@
 package com.datasqrl;
 
-import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.SqrlFunctions.VariableArguments;
+import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
-import java.lang.reflect.Field;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -15,27 +16,16 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
-import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.types.inference.ArgumentCount;
-import org.apache.flink.table.types.inference.CallContext;
-import org.apache.flink.table.types.inference.InputTypeStrategy;
-import org.apache.flink.table.types.inference.Signature;
 import org.apache.flink.table.types.inference.TypeInference;
-import org.apache.flink.table.types.inference.TypeStrategy;
-import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
 public class TimeFunctions {
-  //
-  public static final NOW NOW = new NOW();
   public static final EpochToTimestamp EPOCH_TO_TIMESTAMP = new EpochToTimestamp();
   public static final EpochMilliToTimestamp EPOCH_MILLI_TO_TIMESTAMP = new EpochMilliToTimestamp();
   public static final TimestampToEpoch TIMESTAMP_TO_EPOCH = new TimestampToEpoch();
@@ -50,23 +40,74 @@ public class TimeFunctions {
   public static final EndOfWeek END_OF_WEEK = new EndOfWeek();
   public static final EndOfMonth END_OF_MONTH = new EndOfMonth();
   public static final EndOfYear END_OF_YEAR = new EndOfYear();
-
   private static final Instant DEFAULT_DOC_TIMESTAMP = Instant.parse("2023-03-12T18:23:34.083Z");
 
-  private interface TimeWindowBucketFunctionEval {
 
-    Instant eval(Instant instant);
+
+  public static class EndOfSeconds extends ScalarFunction implements SqrlFunction,
+      SqrlTimeTumbleFunction {
+
+    @Override
+    public String getDocumentation() {
+      return "Rounds timestamp to the end of the given interval and offset.";
+    }
+
+    public Instant eval(Instant instant, Integer width, Integer offset) {
+      throw new NotYetImplementedException("testing");
+    }
+
+    @Override
+    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
+      return TypeInference.newBuilder()
+          .inputTypeStrategy(VariableArguments.builder()
+              .staticType(DataTypes.INT())
+              .variableType(DataTypes.INT())
+              .minVariableArguments(0)
+              .maxVariableArguments(1)
+              .build())
+          .outputTypeStrategy(
+              SqrlFunctions.nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
+          .build();
+    }
+
+    @Override
+    public Specification getSpecification(long[] arguments) {
+      Preconditions.checkArgument(arguments.length == 1 || arguments.length == 2);
+      return new Specification() {
+        @Override
+        public long getWindowWidthMillis() {
+          return arguments[0]*1000;
+        }
+
+        @Override
+        public long getWindowOffsetMillis() {
+          return arguments.length>1?arguments[1]*1000:0;
+        }
+      };
+    }
 
   }
 
+  private interface TimeWindowBucketFunctionEval {
+
+    Instant eval(Instant instant, Long multiple, Long offset);
+
+    default Instant eval(Instant instant, Long multiple) {
+      return eval(instant, multiple, 0l);
+    }
+
+    default Instant eval(Instant instant) {
+      return eval(instant, 1l);
+    }
+
+  }
+
+  @AllArgsConstructor
   public abstract static class TimeWindowBucketFunction extends ScalarFunction implements SqrlFunction,
       SqrlTimeTumbleFunction, TimeWindowBucketFunctionEval {
 
     protected final ChronoUnit timeUnit;
-
-    public TimeWindowBucketFunction(ChronoUnit timeUnit) {
-      this.timeUnit = timeUnit;
-    }
+    protected final ChronoUnit offsetUnit;
 
     @Override
     public String getDocumentation() {
@@ -76,22 +117,86 @@ public class TimeFunctions {
           STRING_TO_TIMESTAMP.getFunctionName().getDisplay(),
           DEFAULT_DOC_TIMESTAMP.toString());
       String result = this.eval(DEFAULT_DOC_TIMESTAMP).toString();
-      return String.format("Time window function that returns the end of %s for the timestamp argument.<br />E.g. `%s` returns the timestamp `%s`",
-          StringUtil.removeFromEnd(timeUnit.toString().toLowerCase(),"s"), functionCall, result);
+
+      String timeUnitName = timeUnit.toString().toLowerCase();
+      String timeUnitNameSingular = StringUtil.removeFromEnd(timeUnitName,"s");
+      String offsetUnitName = offsetUnit.toString().toLowerCase();
+      return String.format("Time window function that returns the end of %s for the timestamp argument."
+              + "<br />E.g. `%s` returns the timestamp `%s`."
+              + "<br />An optional second argument specifies the time window width as multiple %s, e.g. if the argument is 5 the function returns the end of the next 5 %s. 1 is the default."
+              + "<br />An optional third argument specifies the time window offset in %s, e.g. if the argument is 2 the function returns the end of the time window offset by 2 %s",
+          timeUnitNameSingular,
+          functionCall, result,
+          timeUnitName, timeUnitName,
+          offsetUnitName, offsetUnitName);
+    }
+
+    @Override
+    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
+      return TypeInference.newBuilder()
+          .inputTypeStrategy(VariableArguments.builder()
+              .staticType(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))
+              .variableType(DataTypes.BIGINT())
+              .minVariableArguments(0)
+              .maxVariableArguments(2)
+              .build())
+          .outputTypeStrategy(
+              SqrlFunctions.nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
+          .build();
     }
 
     @Override
     public Specification getSpecification(long[] arguments) {
-      Preconditions.checkArgument(arguments.length == 0);
-      return new Specification();
+      Preconditions.checkArgument(arguments!= null);
+      return new Specification(arguments.length>0?arguments[0]:1,
+          arguments.length>1?arguments[1]:0);
     }
 
+    @AllArgsConstructor
     private class Specification implements SqrlTimeTumbleFunction.Specification {
 
+      final long widthMultiple;
+      final long offsetMultiple;
+
       @Override
-      public long getBucketWidthMillis() {
-        return timeUnit.getDuration().toMillis();
+      public long getWindowWidthMillis() {
+        return timeUnit.getDuration().multipliedBy(widthMultiple).toMillis();
       }
+
+      @Override
+      public long getWindowOffsetMillis() {
+        return offsetUnit.getDuration().multipliedBy(offsetMultiple).toMillis();
+      }
+    }
+
+    @Override
+    public Instant eval(Instant instant, Long multiple, Long offset) {
+      if (multiple==null) multiple=1l;
+      Preconditions.checkArgument(multiple>0, "Window width must be positive: %s", multiple);
+      if (offset==null) offset=0l;
+      Preconditions.checkArgument(offset>=0, "Invalid window offset: %s", offset);
+      Preconditions.checkArgument(offsetUnit.getDuration().multipliedBy(offset).compareTo(timeUnit.getDuration())<0,
+          "Offset of %s %s is larger than %s", offset, offsetUnit, timeUnit);
+
+      ZonedDateTime time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+      ZonedDateTime truncated = time.minus(offset, offsetUnit).truncatedTo(timeUnit);
+
+      long multipleToAdd = 1;
+      if (multiple>1) {
+        ZonedDateTime truncatedBase = truncated.with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
+        ZonedDateTime timeBase = time.with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
+        if (!timeBase.equals(truncatedBase)) {
+          //We slipped into the prior base unit (i.e. year) due to offset.
+          return timeBase.plus(offset, offsetUnit).minus(1, ChronoUnit.NANOS)
+              .toInstant();
+        }
+        Duration timeToBase = Duration.between(truncatedBase, truncated);
+        long numberToBase = timeToBase.dividedBy(timeUnit.getDuration());
+        multipleToAdd = multiple - (numberToBase % multiple);
+      }
+
+      return truncated.plus(multipleToAdd, timeUnit).plus(offset, offsetUnit).minus(1, ChronoUnit.NANOS)
+          .toInstant();
     }
 
   }
@@ -99,39 +204,16 @@ public class TimeFunctions {
   public static class EndOfSecond extends TimeWindowBucketFunction {
 
     public EndOfSecond() {
-      super(ChronoUnit.SECONDS);
+      super(ChronoUnit.SECONDS, ChronoUnit.MILLIS);
     }
 
-    public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
-          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
-          .toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
 
   }
 
   public static class EndOfMinute extends TimeWindowBucketFunction {
 
     public EndOfMinute() {
-      super(ChronoUnit.MINUTES);
-    }
-
-    public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
-          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
-          .toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      super(ChronoUnit.MINUTES, ChronoUnit.SECONDS);
     }
 
   }
@@ -139,19 +221,7 @@ public class TimeFunctions {
   public static class EndOfHour extends TimeWindowBucketFunction {
 
     public EndOfHour() {
-      super(ChronoUnit.HOURS);
-    }
-
-    public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
-          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
-          .toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      super(ChronoUnit.HOURS, ChronoUnit.MINUTES);
     }
 
   }
@@ -159,19 +229,7 @@ public class TimeFunctions {
   public static class EndOfDay extends TimeWindowBucketFunction {
 
     public EndOfDay() {
-      super(ChronoUnit.DAYS);
-    }
-
-    public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(timeUnit)
-          .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
-          .toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      super(ChronoUnit.DAYS, ChronoUnit.HOURS);
     }
 
 
@@ -180,22 +238,23 @@ public class TimeFunctions {
   public static class EndOfWeek extends TimeWindowBucketFunction {
 
     public EndOfWeek() {
-      super(ChronoUnit.WEEKS);
+      super(ChronoUnit.WEEKS, ChronoUnit.DAYS);
     }
 
-    public Instant eval(Instant instant) {
+    @Override
+    public Instant eval(Instant instant, Long multiple, Long offset) {
+      if (multiple==null) multiple=1l;
+      Preconditions.checkArgument(multiple==1, "Time window width must be 1. Use endofDay instead for flexible window widths.");
+      if (offset==null) offset=0l;
+      Preconditions.checkArgument(offset>=0 && offset<=6, "Invalid offset in days: %s", offset);
+
       ZonedDateTime time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
-      int daysToSubtract = time.getDayOfWeek().getValue()-1;
+      int daysToSubtract = time.getDayOfWeek().getValue()-1-offset.intValue();
+      if (daysToSubtract<0) daysToSubtract = 7+daysToSubtract;
       return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS)
           .minus(daysToSubtract, ChronoUnit.DAYS)
           .plus(1,timeUnit).minus(1, ChronoUnit.NANOS)
           .toInstant();
-    }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
 
@@ -204,29 +263,29 @@ public class TimeFunctions {
   public static class EndOfMonth extends TimeWindowBucketFunction {
 
     public EndOfMonth() {
-      super(ChronoUnit.MONTHS);
+      super(ChronoUnit.MONTHS, ChronoUnit.DAYS);
     }
 
-    public Instant eval(Instant instant) {
-      return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
-          .with(TemporalAdjusters.firstDayOfNextMonth()).truncatedTo(ChronoUnit.DAYS)
-          .minus(1, ChronoUnit.NANOS)
+    public Instant eval(Instant instant, Long multiple, Long offset) {
+      if (multiple==null) multiple=1l;
+      Preconditions.checkArgument(multiple==1, "Time window width must be 1. Use endofDay instead for flexible window widths.");
+      if (offset==null) offset=0l;
+      Preconditions.checkArgument(offset>=0 && offset<=28, "Invalid offset in days: %s", offset);
+
+      ZonedDateTime time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS);
+      if (time.getDayOfMonth() > offset) time =  time.with(TemporalAdjusters.firstDayOfNextMonth());
+      else time = time.with(TemporalAdjusters.firstDayOfMonth());
+      time = time.plus(offset, ChronoUnit.DAYS);
+      return time.minus(1, ChronoUnit.NANOS)
           .toInstant();
     }
-
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
-    }
-
 
   }
 
   public static class EndOfYear extends TimeWindowBucketFunction {
 
     public EndOfYear() {
-      super(ChronoUnit.YEARS);
+      super(ChronoUnit.YEARS, ChronoUnit.DAYS);
     }
 
     public Instant eval(Instant instant) {
@@ -236,10 +295,21 @@ public class TimeFunctions {
           .toInstant();
     }
 
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3),
-          DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+    public Instant eval(Instant instant, Long multiple, Long offset) {
+      if (multiple==null) multiple=1l;
+      Preconditions.checkArgument(multiple>0 && multiple<Integer.MAX_VALUE, "Window width must be a positive integer value: %s", multiple);
+      if (offset==null) offset=0l;
+      Preconditions.checkArgument(offset>=0 && offset<365, "Invalid offset in days: %s", offset);
+
+      ZonedDateTime time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS);
+      if (time.getDayOfYear() > offset) time =  time.with(TemporalAdjusters.firstDayOfNextYear());
+      else time = time.with(TemporalAdjusters.firstDayOfYear());
+      int modulus = multiple.intValue();
+      int yearsToAdd = (modulus - time.getYear()%modulus)%modulus;
+
+      time = time.plus(yearsToAdd, ChronoUnit.YEARS).plus(offset, ChronoUnit.DAYS);
+      return time.minus(1, ChronoUnit.NANOS)
+          .toInstant();
     }
 
 
@@ -257,7 +327,7 @@ public class TimeFunctions {
       return TypeInference.newBuilder()
           .typedArguments(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.STRING())
           .outputTypeStrategy(callContext -> {
-            DataType type = getFirstArgumentType(callContext);
+            DataType type = SqrlFunctions.getFirstArgumentType(callContext);
             if (type.getLogicalType().isNullable()) {
               return Optional.of(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
             }
@@ -282,7 +352,7 @@ public class TimeFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.STRING(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return SqrlFunctions.basicNullInference(DataTypes.STRING(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
 
@@ -308,10 +378,14 @@ public class TimeFunctions {
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return TypeInference.newBuilder()
-          .inputTypeStrategy(stringToTimestampInputTypeStrategy())
-//          .typedArguments(DataTypes.STRING(), DataTypes.STRING().nullable())
+          .inputTypeStrategy(VariableArguments.builder()
+              .staticType(DataTypes.STRING())
+              .variableType(DataTypes.STRING())
+              .minVariableArguments(0)
+              .maxVariableArguments(1)
+              .build())
           .outputTypeStrategy(
-              nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
+              SqrlFunctions.nullPreservingOutputStrategy(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)))
           .build();
     }
 
@@ -322,48 +396,7 @@ public class TimeFunctions {
     }
   }
 
-  public static InputTypeStrategy stringToTimestampInputTypeStrategy() {
-    return new InputTypeStrategy() {
 
-      @Override
-      public ArgumentCount getArgumentCount() {
-        return new ArgumentCount() {
-          @Override
-          public boolean isValidCount(int count) {
-            return count == 1 || count == 2;
-          }
-
-          @Override
-          public Optional<Integer> getMinCount() {
-            return Optional.of(1);
-          }
-
-          @Override
-          public Optional<Integer> getMaxCount() {
-            return Optional.of(2);
-          }
-        };
-      }
-
-      @Override
-      public Optional<List<DataType>> inferInputTypes(CallContext callContext,
-          boolean throwOnFailure) {
-        if (callContext.getArgumentDataTypes().size() == 1) {
-          return Optional.of(List.of(DataTypes.STRING()));
-        } else if (callContext.getArgumentDataTypes().size() == 2) {
-          return Optional.of(List.of(DataTypes.STRING(), DataTypes.STRING()));
-        }
-
-        return Optional.empty();
-      }
-
-      @Override
-      public List<Signature> getExpectedSignatures(FunctionDefinition definition) {
-        return List.of(Signature.of(Signature.Argument.of("STRING"),
-            Signature.Argument.of("STRING")));
-      }
-    };
-  }
 
   @AllArgsConstructor
   private abstract static class AbstractTimestampToEpoch extends ScalarFunction implements SqrlFunction {
@@ -378,7 +411,7 @@ public class TimeFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.BIGINT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
+      return SqrlFunctions.basicNullInference(DataTypes.BIGINT(), DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3));
     }
 
     @Override
@@ -425,7 +458,7 @@ public class TimeFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.BIGINT());
+      return SqrlFunctions.basicNullInference(DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3), DataTypes.BIGINT());
     }
 
     @Override
@@ -454,54 +487,6 @@ public class TimeFunctions {
 
     public EpochMilliToTimestamp() {
       super(true);
-    }
-  }
-
-  public static class NOW extends ScalarFunction implements SqrlFunction {
-
-    public Instant eval() {
-      return Instant.now();
-    }
-
-
-    @Override
-    public String getDocumentation() {
-      return "Special timestamp function that evaluates to the current time on the timeline.";
-    }
-  }
-
-
-  public static TypeStrategy nullPreservingOutputStrategy(DataType outputType) {
-    return callContext -> {
-      DataType type = getFirstArgumentType(callContext);
-
-      if (type.getLogicalType().isNullable()) {
-        return Optional.of(outputType.nullable());
-      }
-
-      return Optional.of(outputType.notNull());
-    };
-  }
-
-  public static TypeInference basicNullInference(DataType outputType, DataType inputType) {
-    return TypeInference.newBuilder()
-        .typedArguments(inputType)
-        .outputTypeStrategy(nullPreservingOutputStrategy(outputType))
-        .build();
-  }
-
-  @SneakyThrows
-  public static DataType getFirstArgumentType(CallContext callContext) {
-    if (callContext instanceof AdaptedCallContext) {
-      Field privateField = AdaptedCallContext.class.getDeclaredField("originalContext");
-      privateField.setAccessible(true);
-      CallContext originalContext = (CallContext) privateField.get(callContext);
-
-      return originalContext
-          .getArgumentDataTypes()
-          .get(0);
-    } else {
-      return callContext.getArgumentDataTypes().get(0);
     }
   }
 

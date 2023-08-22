@@ -40,6 +40,7 @@ import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -192,7 +193,7 @@ public class Compiler {
   }
 
   private RootGraphqlModel updateGraphqlPlan(RootGraphqlModel root,
-      Map<APIQuery, QueryTemplate> queries) {
+      Map<IdentifiedQuery, QueryTemplate> queries) {
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries);
     root.accept(replaceGraphqlQueries, null);
     return root;

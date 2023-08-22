@@ -9,6 +9,11 @@ import lombok.NonNull;
 
 import java.util.List;
 
+/**
+ * An abstract source table that represents the source of table data.
+ *
+ * This class is wrapped by a {@link ProxyImportRelationalTable} to be used in Calcite schema
+ */
 public abstract class SourceRelationalTableImpl extends AbstractRelationalTable implements
     SourceRelationalTable {
 

@@ -5,6 +5,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.util.AbstractDAG;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -125,10 +126,10 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
   @Getter
   public static class TableNode extends SqrlNode {
 
-    private final ScriptRelationalTable table;
+    private final ScriptTable table;
 
     public TableNode(Map<ExecutionStage, StageAnalysis> stageAnalysis,
-        ScriptRelationalTable table) {
+        ScriptTable table) {
       super(stageAnalysis);
       this.table = table;
     }

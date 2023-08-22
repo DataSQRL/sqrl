@@ -1,10 +1,12 @@
 package com.datasqrl.plan.local.generate;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.rules.LPAnalysis;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.schema.SQRLTable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
@@ -15,17 +17,23 @@ import java.util.List;
 
 @AllArgsConstructor
 @Getter
-public abstract class TableFunctionBase implements TableFunction {
+public abstract class TableFunctionBase implements TableFunction, ScriptTable {
 
-  LPAnalysis lpAnalysis;
+  Name functionName;
   List<FunctionParameter> params;
   SQRLTable table;
-  ScriptRelationalTable q;
 
   @Override
-  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
-    return lpAnalysis.getOriginalRelnode()
-        .getRowType();
+  public String getNameId() {
+    //TODO: should this include parameters or is a function uniquely defined by it's name alone?
+    return functionName.getCanonical();
+  }
+
+  public abstract LPAnalysis getAnalyzedLP();
+
+  @Override
+  public Name getTableName() {
+    return functionName;
   }
 
   @Override

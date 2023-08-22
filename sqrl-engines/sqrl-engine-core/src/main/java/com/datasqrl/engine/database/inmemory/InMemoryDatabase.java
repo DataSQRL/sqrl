@@ -14,6 +14,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.EnumSet;
 import java.util.List;
@@ -55,12 +56,12 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
       }
 
       @Override
-      public EnumSet<IndexDefinition.Type> supportedIndexTypes() {
-        return EnumSet.of(IndexDefinition.Type.HASH, IndexDefinition.Type.BTREE);
+      public EnumSet<IndexType> supportedIndexTypes() {
+        return EnumSet.of(IndexType.HASH, IndexType.BTREE);
       }
 
       @Override
-      public int maxIndexColumns(IndexDefinition.Type indexType) {
+      public int maxIndexColumns(IndexType indexType) {
         switch (indexType) {
           case HASH:
             return 1;

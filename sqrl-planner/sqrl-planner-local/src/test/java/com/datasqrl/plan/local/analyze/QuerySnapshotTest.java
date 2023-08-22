@@ -13,10 +13,12 @@ import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.ScriptBuilder;
@@ -24,6 +26,7 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import com.datasqrl.util.SqlNodePrinter;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,17 +66,15 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   protected void validateScript(String script) {
     Namespace ns = plan(script);
     SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
-    ns.getSchema().plus().getTableNames().stream()
-        .map(n->ns.getSchema().getTable(n, false))
-        .filter(f->f.getTable() instanceof ScriptRelationalTable)
-        .sorted(Comparator.comparing(f->f.name))
-        .forEach(t-> {
-          ScriptRelationalTable table = (ScriptRelationalTable) t.getTable();
+    Stream.concat(ns.getSchema().getFunctionStream(TableFunctionBase.class).map(ScriptTable.class::cast),
+        ns.getSchema().getTableStream(ScriptRelationalTable.class).map(ScriptTable.class::cast))
+        .sorted(Comparator.comparing(f->f.getNameId()))
+        .forEach(table-> {
           SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE)
               .addTimestamp2NormalizedChildTable(false).build();
           snapshot.addContent(
               sqrlConverter.convert(table, config, false, errors).explain(),
-              t.name);
+              table.getNameId());
         });
     ns.getSchema().getAllTables().stream()
         .flatMap(t->t.getAllRelationships())
@@ -125,7 +126,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void createTableFunctionTest() {
+  public void computeTableFunctionTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("X(id: INTEGER) := SELECT *, 1 AS x FROM Customer WHERE customerid = :id");
     validateScript(builder.getScript());

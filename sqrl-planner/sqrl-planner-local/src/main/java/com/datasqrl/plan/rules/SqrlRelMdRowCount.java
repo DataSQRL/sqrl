@@ -4,7 +4,7 @@
 package com.datasqrl.plan.rules;
 
 import com.datasqrl.plan.table.VirtualRelationalTable;
-import com.datasqrl.plan.global.IndexCall;
+import com.datasqrl.plan.global.QueryIndexSummary;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Filter;
@@ -12,9 +12,7 @@ import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.metadata.*;
 import org.apache.calcite.util.BuiltInMethod;
 
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class SqrlRelMdRowCount extends RelMdRowCount
@@ -49,11 +47,9 @@ public class SqrlRelMdRowCount extends RelMdRowCount
   }
 
   public static Double getRowCount(VirtualRelationalTable table,
-      List<IndexCall.IndexColumn> constraints) {
-    Set<Integer> equalCols = constraints.stream()
-        .filter(c -> c.getType() == IndexCall.CallType.EQUALITY)
-        .map(IndexCall.IndexColumn::getColumnIndex).collect(Collectors.toSet());
-    if (IntStream.range(0, table.getNumPrimaryKeys()).allMatch(idx -> equalCols.contains(idx))) {
+      QueryIndexSummary constraints) {
+    Set<Integer> equalCols = constraints.getEqualityColumns();
+    if (IntStream.range(0, table.getNumPrimaryKeys()).allMatch(equalCols::contains)) {
       return 1.0;
     }
     return getRowCount(table) * SqrlRelMdSelectivity.getSelectivity(table, constraints);

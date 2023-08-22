@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -24,12 +25,16 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.StructKind;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOrderBy;
@@ -155,14 +160,6 @@ public class CalciteUtil {
     return builder.build();
   }
 
-  public static <C extends org.apache.calcite.schema.Table> List<C> getTables(CalciteSchema schema,
-      Class<C> clazz) {
-    return schema.getTableNames().stream()
-        .map(s -> schema.getTable(s, true).getTable())
-        .filter(clazz::isInstance).map(clazz::cast)
-        .collect(Collectors.toList());
-  }
-
   public static void addIdentityProjection(RelBuilder relBuilder, int numColumns) {
     addProjection(relBuilder, ContiguousSet.closedOpen(0, numColumns).asList(), null, true);
   }
@@ -221,6 +218,12 @@ public class CalciteUtil {
     return node.accept(new RexShuttleApplier(rexShuttle));
   }
 
+  public interface InjectParentRelNode {
+
+    public void setParentRelNode(RelNode relNode);
+
+  }
+
   @Value
   private static class RexShuttleApplier extends RelShuttleImpl {
 
@@ -228,8 +231,30 @@ public class CalciteUtil {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
+      if (rexShuttle instanceof InjectParentRelNode) {
+        ((InjectParentRelNode)rexShuttle).setParentRelNode(parent);
+      }
       return super.visitChild(parent.accept(rexShuttle), i, child);
     }
+  }
+
+  public static RelNode replaceParameters(@NonNull RelNode node, @NonNull List<RexNode> parameters) {
+    return applyRexShuttleRecursively(node, new RexParameterReplacer(parameters, node));
+  }
+
+  @Value
+  private static class RexParameterReplacer extends RexShuttle {
+
+    private final List<RexNode> parameters;
+    private final RelNode relNode;
+
+    public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
+      int index = dynamicParam.getIndex();
+      Preconditions.checkArgument(index>=0 && index<parameters.size(),
+          "Query parameter index [%s] is out of bounds [%s] in: %s", relNode);
+      return parameters.get(index);
+    }
+
   }
 
   public static RexNode makeTimeInterval(long interval_ms, RexBuilder rexBuilder) {
@@ -262,6 +287,39 @@ public class CalciteUtil {
     } else {
       return call;
     }
+  }
+
+  /**
+   * If the given RexNode is a comparison with the literal '0', this method returns
+   * the RexNode on the other side of the comparison and an integer that
+   *
+   * @param rexNode
+   * @return
+   */
+  public static Optional<RexNode> isGreaterZero(RexNode rexNode) {
+    if (rexNode.isA(SqlKind.BINARY_COMPARISON)) {
+      Preconditions.checkArgument(rexNode instanceof RexCall);
+      List<RexNode> operands = ((RexCall)rexNode).getOperands();
+      Preconditions.checkArgument(operands.size()==2);
+      if (isZero(operands.get(0))) {
+        if (rexNode.isA(SqlKind.NOT_EQUALS) || rexNode.isA(SqlKind.LESS_THAN)) {
+          return Optional.of(operands.get(1));
+        }
+      } else if (isZero(operands.get(1))) {
+        if (rexNode.isA(SqlKind.NOT_EQUALS) || rexNode.isA(SqlKind.GREATER_THAN)) {
+          return Optional.of(operands.get(0));
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  public static boolean isZero(RexNode rexNode) {
+    if ((rexNode instanceof RexLiteral) && !RexLiteral.isNullLiteral(rexNode)) {
+      RexLiteral literal = (RexLiteral) rexNode;
+      return RexLiteral.intValue(literal) == 0;
+    }
+    return false;
   }
 
 }

@@ -1,0 +1,26 @@
+>>>secreading$12-lp-stream
+LogicalProject(sensorid=[$0], timesec=[$1], temp=[$2])
+  LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2])
+    LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 1000, 0]]
+      LogicalProject(sensorid=[$2], timeSec=[endOfSecond($3)], temperature=[$4], _uuid=[$0])
+        LogicalTableScan(table=[[sensorreading$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+
+>>>sensormaxtemp$14-lp-stream
+LogicalProject(sensorid=[$0], maxtemp=[$1], timesec=[$2])
+  LogicalProject(sensorid=[$0], maxTemp=[$2], timeSec=[$1])
+    LogicalAggregate(group=[{0, 1}], maxTemp=[MAX($2)]) hints[SlidingAggregationHint options:[1, 60000, 1200]]
+      LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2])
+        LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 1000, 0]]
+          LogicalProject(sensorid=[$2], timeSec=[endOfSecond($3)], temperature=[$4], _uuid=[$0])
+            LogicalTableScan(table=[[sensorreading$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+
+>>>secreading-lp-database
+LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(sensorid=[$0], timesec=[$1], temp=[$2])
+    LogicalTableScan(table=[[secreading$12]])
+
+>>>sensormaxtemp-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(sensorid=[$0], maxtemp=[$1], timesec=[$2])
+    LogicalTableScan(table=[[sensormaxtemp$14]])
+

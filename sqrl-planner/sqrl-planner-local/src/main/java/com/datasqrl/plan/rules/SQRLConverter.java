@@ -3,11 +3,14 @@ package com.datasqrl.plan.rules;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.WatermarkHint;
+import com.datasqrl.plan.local.generate.AccessTableFunction;
+import com.datasqrl.plan.local.generate.ComputeTableFunction;
 import com.datasqrl.plan.table.AddedColumn;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
+import com.datasqrl.plan.table.ScriptTable;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.function.Consumer;
@@ -36,28 +39,33 @@ public class SQRLConverter {
     return alp;
   }
 
-  public RelNode convert(AnalyzedAPIQuery query, ExecutionStage stage, ErrorCollector errors) {
+  public RelNode convertAPI(AnalyzedAPIQuery query, ExecutionStage stage, ErrorCollector errors) {
     AnnotatedLP alp = convert(query.getRelNode(), query.getBaseConfig().withStage(stage), errors);
-    //Rewrite query
+    //Rewrite query to inline sort or use a default sort
     alp = alp.withDefaultSort().inlineSort(relBuilder, ExecutionAnalysis.of(stage));
     assert alp.getPullups().isEmpty();
     return alp.getRelNode();
   }
 
-  public RelNode convert(ScriptRelationalTable table, Config config, ErrorCollector errors) {
+  public RelNode convert(ScriptTable table, Config config, ErrorCollector errors) {
     return convert(table,config,true,errors);
   }
 
-  public RelNode convert(ScriptRelationalTable table, Config config,
+  public RelNode convert(ScriptTable table, Config config,
       boolean addWatermark, ErrorCollector errors) {
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
     if (table instanceof ProxyImportRelationalTable) {
       return convert((ProxyImportRelationalTable) table, exec, addWatermark);
-    } else {
-      QueryRelationalTable queryTable = (QueryRelationalTable) table;
+    } else if (table instanceof AccessTableFunction) {
+      AccessTableFunction tblFct = (AccessTableFunction) table;
+      AnnotatedLP alp = convert(tblFct.getAnalyzedLP().getOriginalRelnode(), config, errors);
+      return alp.getRelNode();
+    } else { //either QueryRelationalTable or ComputeTableFunction
+      QueryRelationalTable queryTable = (table instanceof ComputeTableFunction)
+          ?((ComputeTableFunction)table).getQueryTable():(QueryRelationalTable) table;
       AnnotatedLP alp = convert(queryTable.getOriginalRelnode(), config, errors);
       RelBuilder builder = relBuilder.push(alp.getRelNode());
-      addColumns(builder, table.getAddedColumns(), exec);
+      addColumns(builder, queryTable.getAddedColumns(), exec);
       return builder.build();
     }
   }
@@ -94,7 +102,7 @@ public class SQRLConverter {
     ExecutionStage stage;
 
     @Builder.Default
-    Consumer<ScriptRelationalTable> sourceTableConsumer = (t) -> {};
+    Consumer<ScriptTable> sourceTableConsumer = (t) -> {};
     @Builder.Default
     int slideWindowPanes = DEFAULT_SLIDING_WINDOW_PANES;
 

@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.rules;
 
-import static com.datasqrl.TimeFunctions.NOW;
 import static com.datasqrl.error.ErrorCode.DISTINCT_ON_TIMESTAMP;
 import static com.datasqrl.error.ErrorCode.NOT_YET_IMPLEMENTED;
 import static com.datasqrl.error.ErrorCode.WRONG_INTERVAL_JOIN;
@@ -13,6 +12,7 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.hints.SlidingAggregationHint;
 import com.datasqrl.plan.hints.SqrlHint;
@@ -20,6 +20,9 @@ import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.hints.TemporalJoinHint;
 import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.hints.TumbleAggregationHint;
+import com.datasqrl.plan.local.generate.AccessTableFunction;
+import com.datasqrl.plan.local.generate.ComputeTableFunction;
+import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.model.LogicalStreamMetaData;
 import com.datasqrl.plan.rules.JoinTable.NormType;
@@ -27,6 +30,7 @@ import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.AddedColumn;
 import com.datasqrl.plan.table.NowFilter;
 import com.datasqrl.plan.table.PullupOperator;
+import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.SortOrder;
 import com.datasqrl.plan.table.TableType;
@@ -72,6 +76,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalFilter;
@@ -89,6 +94,7 @@ import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexWindowBounds;
+import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlKind;
 import com.datasqrl.model.StreamType;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -96,6 +102,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.mapping.IntPair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 @Value
 public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP> {
@@ -170,6 +177,45 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         return createAnnotatedChildTableScan(queryTable, numColumns, vtable, numRootPks);
       }
     }
+  }
+
+  @Override
+  public RelNode visit(TableFunctionScan functionScan) {
+    exec.require(EngineCapability.TABLE_FUNCTION_SCAN); //We only support table functions on the read side
+    Optional<TableFunction> tableFunction = SqrlRexUtil.getCustomTableFunction(functionScan);
+    errors.checkFatal(tableFunction.isPresent() && tableFunction.get() instanceof TableFunctionBase,
+        "Invalid table function encountered in query: %s", functionScan);
+    TableFunctionBase tblFct = (TableFunctionBase) tableFunction.get();
+    config.getSourceTableConsumer().accept(tblFct);
+    AnnotatedLP inputALP = tblFct.getAnalyzedLP().getConvertedRelnode();
+    //TODO: We don't currently support nested types for table functions and hence don't have to do shredding
+    Preconditions.checkArgument(!CalciteUtil.hasNesting(inputALP.getRelNode().getRowType()));
+
+    final int numPrimaryKeys, numColumns, targetLength = inputALP.getRelNode().getRowType().getFieldCount();
+    final TimestampHolder.Derived timestamp;
+    if (tblFct instanceof AccessTableFunction) {
+      AccessTableFunction accessFct = (AccessTableFunction) tblFct;
+      VirtualRelationalTable vTable = accessFct.getTable().getVt();
+      Preconditions.checkArgument(vTable.isRoot());
+      numColumns = vTable.getNumColumns();
+      numPrimaryKeys = vTable.getNumPrimaryKeys();
+      timestamp = TimestampHolder.Base.ofDerived(inputALP.getTimestamp()).getDerived();
+    } else {
+      ComputeTableFunction computeFct = (ComputeTableFunction) tblFct;
+      QueryRelationalTable queryTable = computeFct.getQueryTable();
+      numPrimaryKeys = queryTable.getNumPrimaryKeys();
+      numColumns = queryTable.getNumColumns();
+      timestamp = queryTable.getTimestamp().getDerived();
+    }
+
+    return setRelHolder(new AnnotatedLP(functionScan, inputALP.getType(),
+        ContinuousIndexMap.identity(numPrimaryKeys, targetLength),
+        timestamp,
+        ContinuousIndexMap.identity(numColumns, targetLength),
+        (tblFct instanceof AccessTableFunction? inputALP.getJoinTables():Collections.EMPTY_LIST),
+        Optional.of(inputALP.primaryKey.getSourceLength()),
+        NowFilter.EMPTY, TopNConstraint.EMPTY, //Can ignore those since they will be inlined
+        inputALP.getSort(), List.of()));
   }
 
   private AnnotatedLP denormalizeTable(ScriptRelationalTable queryTable,
@@ -367,8 +413,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
   }
 
-  private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(
-      NOW);
+  private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
 
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {
@@ -542,7 +587,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
             Optional<TimeTumbleFunctionCall> bucketFct = TimeTumbleFunctionCall.from(mapRex,
                 rexUtil.getBuilder());
             if (bucketFct.isPresent()) {
-              long intervalExpansion = bucketFct.get().getSpecification().getBucketWidthMillis();
+              long intervalExpansion = bucketFct.get().getSpecification().getWindowWidthMillis();
               nowFilter = input.nowFilter.map(tp -> new TimePredicate(tp.getSmallerIndex(),
                   exp.i, tp.getComparison(), tp.getIntervalLength() + intervalExpansion));
             } else {
@@ -1206,9 +1251,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     RelBuilder relB = makeRelBuilder();
     relB.push(input.relNode);
     relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
+    SqrlTimeTumbleFunction.Specification windowSpec = bucketFct.getSpecification();
     TumbleAggregationHint.functionOf(keyCandidate.getIndex(),
         bucketFct.getTimestampColumnIndex(),
-        bucketFct.getSpecification().getBucketWidthMillis()).addTo(relB);
+        windowSpec.getWindowWidthMillis(), windowSpec.getWindowOffsetMillis()).addTo(relB);
     PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
 
     /* TODO: this type of streaming aggregation requires a post-filter in the database (in physical model) to filter out "open" time buckets,

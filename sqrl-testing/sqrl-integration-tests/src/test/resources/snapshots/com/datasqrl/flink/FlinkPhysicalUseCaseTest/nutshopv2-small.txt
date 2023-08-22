@@ -43,7 +43,7 @@ LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], sizing=[$4], w
 >>>spending_by_month$15-lp-stream
 LogicalProject(__pk_0=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
   LogicalProject(__pk_0=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
-    LogicalAggregate(group=[{0, 1}], total_spend=[SUM($2)], total_savings=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 6, 2629746000]]
+    LogicalAggregate(group=[{0, 1}], total_spend=[SUM($2)], total_savings=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 6, 2629746000, 0]]
       LogicalProject(__pk_0=[$7], month=[endOfMonth($6)], price=[$11], savings=[$12], _uuid=[$0])
         LogicalJoin(condition=[AND(=($0, $10), =($13, $6))], joinType=[inner]) hints[IntervalJoin]
           LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[TemporalJoinHint options:[6, 1, 0]]
@@ -55,7 +55,7 @@ LogicalProject(__pk_0=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
                   LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
                     LogicalTableScan(table=[[orders$i$4]])
           LogicalProject(__pk_0=[$0], price=[$2], savings=[$3], timestamp=[$1])
-            LogicalAggregate(group=[{0, 6}], price=[SUM($13)], savings=[SUM($12)]) hints[TumbleAggregationHint options:[6, INSTANT, -1, 1]]
+            LogicalAggregate(group=[{0, 6}], price=[SUM($13)], savings=[SUM($12)]) hints[TumbleAggregationHint options:[6, INSTANT, -1, 1, 0]]
               LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount$0=[coalesce($11, 0.0:DOUBLE)], total=[-(*($9, $10), coalesce($11, 0.0:DOUBLE))])
                 LogicalCorrelate(correlation=[$cor15], joinType=[inner], requiredColumns=[{5}])
                   LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
@@ -67,7 +67,7 @@ LogicalProject(__pk_0=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
 >>>totals$9-lp-stream
 LogicalProject(__pk_0=[$0], price=[$1], savings=[$2], timestamp=[$3])
   LogicalProject(__pk_0=[$0], price=[$2], savings=[$3], timestamp=[$1])
-    LogicalAggregate(group=[{0, 6}], price=[SUM($13)], savings=[SUM($12)]) hints[TumbleAggregationHint options:[6, INSTANT, -1, 1]]
+    LogicalAggregate(group=[{0, 6}], price=[SUM($13)], savings=[SUM($12)]) hints[TumbleAggregationHint options:[6, INSTANT, -1, 1, 0]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount$0=[coalesce($11, 0.0:DOUBLE)], total=[-(*($9, $10), coalesce($11, 0.0:DOUBLE))])
         LogicalCorrelate(correlation=[$cor15], joinType=[inner], requiredColumns=[{5}])
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
@@ -79,7 +79,7 @@ LogicalProject(__pk_0=[$0], price=[$1], savings=[$2], timestamp=[$3])
 >>>volume_by_day$19-lp-stream
 LogicalProject(__pk_0=[$0], day=[$1], quantity=[$2], total=[$3], total_weight=[$4])
   LogicalProject(__pk_0=[$0], day=[$1], quantity=[$2], total=[$3], total_weight=[$4])
-    LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], total=[SUM($3)], total_weight=[SUM($4)]) hints[TumbleAggregationHint options:[1, FUNCTION, 6, 86400000]]
+    LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], total=[SUM($3)], total_weight=[SUM($4)]) hints[TumbleAggregationHint options:[1, FUNCTION, 6, 86400000, 0]]
       LogicalProject(__pk_0=[$14], day=[endOfDay($6)], quantity=[$9], total=[$13], $f4=[*($9, $19)], _uuid=[$0], _idx=[$7])
         LogicalJoin(condition=[=($8, $14)], joinType=[inner]) hints[TemporalJoinHint options:[6, 9, 0]]
           LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount$0=[coalesce($11, 0.0:DOUBLE)], total=[-(*($9, $10), coalesce($11, 0.0:DOUBLE))])

@@ -11,7 +11,7 @@ LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
 >>>streamcount$11-lp-stream
 LogicalProject(hour=[$0], num=[$1])
   LogicalProject(hour=[$0], num=[$1])
-    LogicalAggregate(group=[{0}], num=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 3600000]]
+    LogicalAggregate(group=[{0}], num=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 3600000, 0]]
       LogicalProject(hour=[endOfHour($2)], _uuid=[$0])
         LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
           LogicalUnion(all=[true])

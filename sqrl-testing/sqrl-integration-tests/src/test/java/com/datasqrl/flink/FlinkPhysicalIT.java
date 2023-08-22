@@ -73,6 +73,16 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   }
 
   @Test
+  public void functionTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT text.*");
+    builder.add("Product.badWords := bannedWordsFilter(name)");
+    builder.add("Product.searchResult := textsearch('garden gnome', description, name)");
+    builder.add("Product.format := format('Go buy: %s in %s with id=%s', name, category, CAST(productid AS STRING))");
+    validateTables(builder.getScript(), "product");
+  }
+
+  @Test
   public void nestedAggregationandSelfJoinTest() {
     ScriptBuilder builder = new ScriptBuilder();
     builder.add("IMPORT time.*");
@@ -120,7 +130,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     ScriptBuilder builder = example.getImports();
     //temporal state
     builder.append(
-        "OrderAgg1 := SELECT o.customerid as customer, endOfHour(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "OrderAgg1 := SELECT o.customerid as customer, endOfHour(o.\"time\", 1, 15) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     builder.append("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o");
     //time window
     builder.append(

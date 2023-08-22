@@ -134,13 +134,9 @@ public class SchemaInference {
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
       Type fieldType, String fieldName, String rootType) {
-    if (!schema.getFunction(fieldName)
-        .isEmpty()) {
-      org.apache.calcite.schema.Function f =  schema.getFunctions(fieldName, false)
-          .stream().findFirst().get();
-
-      TableFunctionBase functionBase = (TableFunctionBase) f;
-      return functionBase.getTable();
+    Optional<TableFunctionBase> tableFunction = schema.getTableFunction(fieldName);
+    if (tableFunction.isPresent()) {
+      return tableFunction.get().getTable();
     }
     /**
      * Change inference rules:

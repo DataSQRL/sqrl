@@ -29,6 +29,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.queries.APIQuery;
+import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.sql.Connection;
@@ -127,7 +128,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
             .forEach(ddlStatements::add);
 
     QueryBuilder queryBuilder = new QueryBuilder(relBuilder.getRexBuilder());
-    Map<APIQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(dbPlan.getQueries());
+    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(dbPlan.getQueries());
     return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
   }
 }

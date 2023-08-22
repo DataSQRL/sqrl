@@ -45,9 +45,7 @@ public interface SqrlRelShuttle extends RelShuttle {
     throw new UnsupportedOperationException("Not yet supported.");
   }
 
-    /*
-    ====== Rel Nodes that do not occur in SQRL =====
-     */
+
 
   @Override
   default RelNode visit(RelNode relNode) {
@@ -57,13 +55,16 @@ public interface SqrlRelShuttle extends RelShuttle {
     if (relNode instanceof Snapshot) {
       return visit((Snapshot) relNode);
     }
+    if (relNode instanceof TableFunctionScan) {
+      return visit((TableFunctionScan) relNode);
+    }
     throw new UnsupportedOperationException("Unexpected rel node: " + relNode);
   }
 
-  @Override
-  default RelNode visit(TableFunctionScan tableFunctionScan) {
-    return visit((RelNode) tableFunctionScan);
-  }
+
+  /*
+  ====== Rel Nodes that do not occur in SQRL =====
+  */
 
   @Override
   default RelNode visit(LogicalCorrelate logicalCorrelate) {

@@ -12,7 +12,7 @@ import org.apache.calcite.rel.RelNode;
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString
-public class APIQuery {
+public class APIQuery implements IdentifiedQuery {
 
   @Include
   private final String nameId;

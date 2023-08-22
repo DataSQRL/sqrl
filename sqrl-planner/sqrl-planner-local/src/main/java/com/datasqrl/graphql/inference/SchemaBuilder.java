@@ -113,6 +113,8 @@ public class SchemaBuilder implements
   );
   private final APIConnectorManager apiManager;
 
+  private final AtomicInteger queryCounter = new AtomicInteger();
+
   public SchemaBuilder(APISource source, SqrlSchema schema, RelBuilder relBuilder,
                        SqrlQueryPlanner planner,
                        SqlOperatorTable operatorTable, APIConnectorManager apiManager) {
@@ -276,7 +278,8 @@ public class SchemaBuilder implements
     for (ArgumentSet argumentSet : possibleArgCombinations) {
       //Add api query
       RelNode relNode = optimize(argumentSet.getRelNode());
-      APIQuery query = new APIQuery(UUID.randomUUID().toString(), relNode);
+      String nameId = parent.getName() + "." + fieldDefinition.getName() + "-" + queryCounter.incrementAndGet();
+      APIQuery query = new APIQuery(nameId, relNode);
       apiManager.addQuery(query);
 
       List<JdbcParameterHandler> argHandler = new ArrayList<>();

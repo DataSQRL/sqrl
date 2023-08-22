@@ -15,6 +15,11 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
+/**
+ * An source table that represents the source of table data from an external system.
+ *
+ * This class is wrapped by a {@link ProxyImportRelationalTable} to be used in Calcite schema
+ */
 @Value
 public class ImportedRelationalTableImpl extends SourceRelationalTableImpl implements
     ImportedRelationalTable {

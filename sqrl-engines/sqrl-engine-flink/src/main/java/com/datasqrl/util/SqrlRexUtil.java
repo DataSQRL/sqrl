@@ -8,6 +8,7 @@ import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,7 @@ import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalProject;
@@ -35,22 +37,31 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.rex.RexWindowBounds;
+import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.IntPair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.table.catalog.ContextResolvedFunction;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 public class SqrlRexUtil {
@@ -125,20 +136,36 @@ public class SqrlRexUtil {
 
   }
 
-  public static RexFinder findFunction(SqrlFunction operator) {
-    return findFunction(o -> o.equals(operator));
+  public static boolean isNOW(SqlOperator operator) {
+    return operator.equals(FlinkSqlOperatorTable.NOW);
   }
 
-  public static RexFinder findFunction(Predicate<SqrlFunction> operatorMatch) {
+  public static RexFinder findFunction(SqrlFunction operator) {
+    return findFunction(o -> getSqrlFunction(o).filter(f -> operator.getClass().isInstance(f)).isPresent());
+  }
+
+  public static RexFinder findFunction(Predicate<SqlOperator> operatorMatch) {
     return new RexFinder<Void>() {
       @Override
       public Void visitCall(RexCall call) {
-        if (StdTimeLibraryImpl.lookupTimeFunction(call.getOperator()).filter(operatorMatch).isPresent()) {
+        if (operatorMatch.test(call.getOperator())) {
           throw Util.FoundOne.NULL;
         }
         return super.visitCall(call);
       }
     };
+  }
+
+  public static Optional<SqrlFunction> getSqrlFunction(SqlOperator operator) {
+    if (operator instanceof BridgingSqlFunction) {
+      ContextResolvedFunction ctxFunction = ((BridgingSqlFunction)operator).getResolvedFunction();
+      FunctionDefinition function = ctxFunction.getDefinition();
+      if (function instanceof SqrlFunction) {
+        return Optional.of((SqrlFunction) function);
+      }
+    }
+    return Optional.empty();
+//    return StdTimeLibraryImpl.lookupSQRLFunction(operator);
   }
 
   public static RexFinder<RexInputRef> findRexInputRefByIndex(final int index) {
@@ -152,6 +179,16 @@ public class SqrlRexUtil {
       }
     };
   }
+
+  public static Optional<Integer> findSingleReferenceColumnIndex(RexCall call) {
+    Set<Integer> inputRefs = findAllInputRefs(call.getOperands());
+    if (inputRefs.size() == 1) {
+      return Optional.of(Iterables.getOnlyElement(inputRefs));
+    }
+    return Optional.empty();
+  }
+
+
 
   public static Set<Integer> findAllInputRefs(@NonNull Iterable<RexNode> nodes) {
     RexInputRefFinder refFinder = new RexInputRefFinder();
@@ -172,6 +209,10 @@ public class SqrlRexUtil {
       return input;
     }
   }
+
+
+
+
 
 
   public List<RexNode> getIdentityProject(RelNode input) {
@@ -337,6 +378,14 @@ public class SqrlRexUtil {
     return collation.getFieldCollations().stream()
         .map(col -> getFieldName(col.getFieldIndex(),relNode) + " " + col.direction.name())
         .collect(Collectors.joining(","));
+  }
+
+  public static Optional<TableFunction> getCustomTableFunction(TableFunctionScan fctScan) {
+    RexCall call = (RexCall) fctScan.getCall();
+    if (call.getOperator() instanceof SqlUserDefinedTableFunction) {
+      return Optional.of(((SqlUserDefinedTableFunction)call.getOperator()).getFunction());
+    }
+    return Optional.empty();
   }
 
 

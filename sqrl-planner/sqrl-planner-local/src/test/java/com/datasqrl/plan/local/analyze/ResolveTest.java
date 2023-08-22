@@ -14,11 +14,15 @@ import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.plan.local.generate.AccessTableFunction;
+import com.datasqrl.plan.local.generate.ComputeTableFunction;
+import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PullupOperator;
 import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.plan.table.TableType;
 import com.datasqrl.plan.table.TimestampHolder;
 import com.datasqrl.plan.global.DAGBuilder;
@@ -30,6 +34,7 @@ import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.StreamUtil;
 import com.datasqrl.util.TestRelWriter;
 import com.datasqrl.util.data.Retail;
 import java.io.IOException;
@@ -39,6 +44,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -57,7 +63,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private SqrlSchema schema;
   private Namespace namespace;
 
-  private Map<ScriptRelationalTable, ExecutionEngine.Type> validatedTables;
+  private Map<ScriptTable, ExecutionEngine.Type> validatedTables;
 
   private Path exportPath = Retail.INSTANCE.getRootPackageDirectory().resolve("export-data");
   @BeforeEach
@@ -287,8 +293,16 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add(
         "Ordertime1 := SELECT o.customerid as customer, endOfsecond(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+    builder.add(
+        "Ordertime2 := SELECT o.customerid as customer, endOfMinute(o.time, 1, 15) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+    builder.add(
+        "Ordertime3 := SELECT o.customerid as customer, endOfHour(o.time, 5, 30) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     plan(builder.toString());
     validateQueryTable("ordertime1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
+        TimestampTest.fixed(1));
+    validateQueryTable("ordertime2", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
+        TimestampTest.fixed(1));
+    validateQueryTable("ordertime3", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1));
   }
 
@@ -526,6 +540,23 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         TimestampTest.fixed(1));
   }
 
+  /*
+  ===== TABLE FUNCTIONS TESTS ======
+  */
+
+  @Test
+  public void tableFunctionsBasic() {
+    ScriptBuilder builder = imports();
+    builder.add(
+        "OrdersIDRange(idLower: INTEGER) := SELECT * FROM Orders WHERE id > :idLower");
+    builder.add(
+        "Orders2(idLower: INTEGER) := SELECT id, id - :idLower AS delta, time FROM Orders WHERE id > :idLower");
+    plan(builder.toString());
+    validateAccessTableFunction("ordersidrange", "orders", Type.DATABASE);
+    validateTableFunction("orders2", TableType.STREAM, Type.DATABASE, 4, 1,
+        TimestampTest.fixed(3), PullupTest.EMPTY);
+  }
+
 
   /*
   ===== HINT TESTS ======
@@ -576,30 +607,62 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private void validateQueryTable(String tableName, TableType tableType, ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys, TimestampTest timestampTest,
       PullupTest pullupTest) {
-    CalciteSchema relSchema = this.schema;
-    ScriptRelationalTable table = getLatestTable(relSchema, tableName,
+    ScriptRelationalTable table = getLatestTable(this.schema, tableName,
         ScriptRelationalTable.class).get();
+    validateScriptRelationalTable(table, tableType, numCols, numPrimaryKeys, timestampTest, pullupTest);
+    validatedTables.put(table, execType);
+  }
+
+  private void validateTableFunction(String tableName, TableType tableType, ExecutionEngine.Type execType,
+      int numCols, int numPrimaryKeys, TimestampTest timestampTest,
+      PullupTest pullupTest) {
+    ComputeTableFunction tblFct = getLatestTableFunction(schema, tableName,
+        ComputeTableFunction.class).get();
+    ScriptRelationalTable table = tblFct.getQueryTable();
+    validateScriptRelationalTable(table, tableType, numCols, numPrimaryKeys, timestampTest, pullupTest);
+    validatedTables.put(tblFct, execType);
+  }
+
+  private void validateScriptRelationalTable(ScriptRelationalTable table, TableType tableType,
+      int numCols, int numPrimaryKeys, TimestampTest timestampTest,
+      PullupTest pullupTest) {
     assertEquals(tableType, table.getType(), "table type");
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys(), "primary key size");
     assertEquals(numCols, table.getRowType().getFieldCount(), "field count");
     timestampTest.test(table.getTimestamp());
     pullupTest.test(table.getPullups());
-    validatedTables.put(table, execType);
   }
 
   public static <T extends AbstractRelationalTable> Optional<T> getLatestTable(
-      CalciteSchema relSchema, String tableName, Class<T> tableClass) {
+      SqrlSchema sqrlSchema, String tableName, Class<T> tableClass) {
     String normalizedName = Name.system(tableName).getCanonical();
     //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
-    return relSchema.getTableNames().stream().filter(s -> s.indexOf(Name.NAME_DELIMITER) != -1)
+    return sqrlSchema.getTableNames().stream().filter(s -> s.indexOf(Name.NAME_DELIMITER) != -1)
         .filter(s -> s.substring(0, s.indexOf(Name.NAME_DELIMITER)).equals(normalizedName))
         .filter(s ->
-            tableClass.isInstance(relSchema.getTable(s, true).getTable()))
+            tableClass.isInstance(sqrlSchema.getTable(s, true).getTable()))
         //Get most recently added table
         .sorted((a, b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),
             CalciteTableFactory.getTableOrdinal(b)))
-        .findFirst().map(s -> tableClass.cast(relSchema.getTable(s, true).getTable()));
+        .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, true).getTable()))
+        .or(() -> getLatestTableFunction(sqrlSchema, tableName,
+            ComputeTableFunction.class).map(tblFct -> tableClass.cast(tblFct.getQueryTable())));
   }
+
+  private void validateAccessTableFunction(String tableName, String baseTableName, ExecutionEngine.Type execType) {
+    AccessTableFunction tblFct = getLatestTableFunction(this.schema, tableName,
+        AccessTableFunction.class).get();
+    assertTrue(baseTableName.equalsIgnoreCase(tblFct.getTable().getName().getCanonical()), "Base table name");
+    validatedTables.put(tblFct, execType);
+  }
+
+  public static <T extends TableFunctionBase> Optional<T> getLatestTableFunction(
+      SqrlSchema sqrlSchema, String tableName, Class<T> tableFctClass) {
+    return StreamUtil.getOnlyElement(sqrlSchema.getFunctionStream(tableFctClass)
+        .filter(fct -> fct.getTableName().getCanonical().equalsIgnoreCase(tableName)));
+  }
+
+
 
   private void createSnapshots() {
     new DAGPreparation(planner.createRelBuilder(), errors).prepareInputs(planner.getSchema(),
@@ -608,8 +671,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         namespace.getSchema().getPipeline(), errors);
     validatedTables.forEach((table, execType) -> {
       Map<ExecutionStage, StageAnalysis> stageAnalysis = dagBuilder.planStages(table);
-      assertEquals(SqrlDAG.SqrlNode.findCheapestStage(stageAnalysis).getStage().getEngine().getType(),
-          execType, "execution type");
+      assertEquals(execType, SqrlDAG.SqrlNode.findCheapestStage(stageAnalysis).getStage().getEngine().getType(),
+          "execution type");
       stageAnalysis.forEach( (stage, analysis) -> {
         String content;
         if (analysis instanceof Cost) {

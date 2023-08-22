@@ -11,7 +11,7 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.plan.global.DAGPlanner;
-import com.datasqrl.plan.global.IndexCall;
+import com.datasqrl.plan.global.QueryIndexSummary;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
@@ -101,10 +101,10 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
     IndexSelector indexSelector = new IndexSelector(ns.getSchema().getPlanner(),
         IndexSelectorConfigByDialect.of("POSTGRES"));
-    List<IndexCall> allIndexes = new ArrayList<>();
+    List<QueryIndexSummary> allIndexes = new ArrayList<>();
     for (PhysicalDAGPlan.ReadQuery query : dag.getReadQueries()) {
-      List<IndexCall> indexCall = indexSelector.getIndexSelection(query);
-      allIndexes.addAll(indexCall);
+      List<QueryIndexSummary> queryIndexSummary = indexSelector.getIndexSelection(query);
+      allIndexes.addAll(queryIndexSummary);
     }
     return indexSelector.optimizeIndexes(allIndexes);
   }

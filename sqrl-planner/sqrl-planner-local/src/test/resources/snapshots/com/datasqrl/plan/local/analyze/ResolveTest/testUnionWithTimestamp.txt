@@ -16,7 +16,7 @@ LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
 
 >>>streamcount$q$13-lp-STREAM
 LogicalProject(day=[$0], num=[$1])
-  LogicalAggregate(group=[{0}], num=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 86400000]]
+  LogicalAggregate(group=[{0}], num=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 86400000, 0]]
     LogicalProject(day=[endOfDay($2)], _uuid=[$0])
       LogicalTableScan(table=[[combinedstream$q$11]])
 

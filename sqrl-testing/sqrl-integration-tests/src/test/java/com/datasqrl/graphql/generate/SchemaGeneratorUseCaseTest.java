@@ -8,6 +8,7 @@ import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZE
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.StringUtil;
 import com.datasqrl.util.TestScript;
+import com.datasqrl.util.TestScript.PhysicalUseCaseProvider;
 import com.datasqrl.util.data.Sensors;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,7 +32,7 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   }
 
   @ParameterizedTest
-  @ArgumentsSource(TestScript.AllScriptsProvider.class)
+  @ArgumentsSource(PhysicalUseCaseProvider.class)
   public void fullScriptTest(TestScript script) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
     snapshotTest(script.getScript());

@@ -45,6 +45,11 @@ public class Retail implements TestDataset {
         TestScript.of(this, BASE_PATH.resolve("c360-recommend.sqrl"),
             "orders", "entries", "customer", "category", "product", "total",
             "_sales_by_hour", "_sales_24h", "_sales_72h", "_sales_trend").build());
+    linkedHashMap.put(RetailScriptNames.SEARCH,
+        TestScript.of(this, BASE_PATH.resolve("c360-search.sqrl"),
+                "product")
+            .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("c360-search-graphql")))
+            .build());
     return linkedHashMap;
   }
 
@@ -87,7 +92,7 @@ public class Retail implements TestDataset {
   }
 
   public enum RetailScriptNames {
-    ORDER_STATS, FULL, RECOMMEND
+    ORDER_STATS, FULL, RECOMMEND, SEARCH
   }
 
 }
