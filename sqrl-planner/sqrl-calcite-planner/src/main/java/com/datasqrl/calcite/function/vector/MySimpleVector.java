@@ -1,15 +1,9 @@
-package com.datasqrl.calcite.function.builtin;
+package com.datasqrl.calcite.function.vector;
 
-import com.datasqrl.calcite.function.ITransformation;
 import com.datasqrl.calcite.type.MyVectorType;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.ScalarFunction;
 
-import java.util.List;
-
-public class MySimpleVector extends ScalarFunction implements ITransformation {
+public class MySimpleVector extends ScalarFunction {
 
   /**
    * This code snippet will turn an input string into a 26-dimensional vector,
@@ -31,16 +25,5 @@ public class MySimpleVector extends ScalarFunction implements ITransformation {
     }
 
     return new MyVectorType(vector, input, null);
-  }
-
-  @Override
-  public SqlNode apply(String dialect, SqlOperator op, SqlParserPos pos, List<SqlNode> nodeList) {
-//    switch (dialect) {
-//      case "POSTGRES":
-//      default:
-//        return new SqrlUnresolvedFunction("NOW2")
-//            .createCall(pos, nodeList);
-//    }
-    return null;
   }
 }

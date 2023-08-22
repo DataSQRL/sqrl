@@ -18,11 +18,12 @@
 //Copied from flink as we incrementally phase out flink code for sqrl code
 package com.datasqrl.flink.function;
 
-import com.datasqrl.calcite.function.ITransformation;
+import com.datasqrl.calcite.function.RuleTransform;
 import org.apache.calcite.adapter.enumerable.CallImplementor;
 import org.apache.calcite.adapter.enumerable.NullPolicy;
 import org.apache.calcite.adapter.enumerable.ReflectiveCallNotNullImplementor;
 import org.apache.calcite.adapter.enumerable.RexImpTable;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.ImplementableFunction;
@@ -38,12 +39,11 @@ import org.apache.flink.table.types.inference.TypeInference;
 
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Bridges a Flink function to calcite
  */
-public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements ITransformation {
+public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements RuleTransform {
   private final String flinkName;
   private final DataTypeFactory dataTypeFactory;
   private final FlinkTypeFactory flinkTypeFactory;
@@ -142,13 +142,11 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
   }
 
   @Override
-  public SqlNode apply(String dialect, SqlOperator op, SqlParserPos pos, List<SqlNode> nodeList) {
-    if (definition instanceof ITransformation) {
-      return ((ITransformation)definition).apply(dialect, op, pos, nodeList);
+  public List<RelRule> transform(SqlDialect dialect, SqlOperator operator) {
+    if (definition instanceof RuleTransform) {
+      return ((RuleTransform) definition).transform(dialect, this);
     }
-    return new SqlUnresolvedFunction(new SqlIdentifier(this.flinkName, SqlParserPos.ZERO),
-        null, null, null, null,
-        SqlFunctionCategory.USER_DEFINED_FUNCTION)
-        .createCall(pos, nodeList);
+
+    return null;
   }
 }

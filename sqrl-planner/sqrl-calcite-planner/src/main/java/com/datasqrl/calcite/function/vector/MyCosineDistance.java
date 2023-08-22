@@ -1,17 +1,10 @@
 
-package com.datasqrl.calcite.function.builtin;
+package com.datasqrl.calcite.function.vector;
 
-import com.datasqrl.calcite.function.ITransformation;
 import com.datasqrl.calcite.type.MyVectorType;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.ScalarFunction;
 
-import java.util.List;
-import java.util.Random;
-
-public class MyCosineDistance extends ScalarFunction implements ITransformation {
+public class MyCosineDistance extends ScalarFunction {
 
   public double eval(MyVectorType l, MyVectorType r) {
     double[] lhs = l.vector;
@@ -37,16 +30,5 @@ public class MyCosineDistance extends ScalarFunction implements ITransformation 
 
     double cosineSimilarity = dotProduct / denominator;
     return 1.0 - cosineSimilarity;
-  }
-
-  @Override
-  public SqlNode apply(String dialect, SqlOperator op, SqlParserPos pos, List<SqlNode> nodeList) {
-//    switch (dialect) {
-//      case "POSTGRES":
-//      default:
-//        return new SqrlUnresolvedFunction("NOW2")
-//            .createCall(pos, nodeList);
-//    }
-    return null;
   }
 }
