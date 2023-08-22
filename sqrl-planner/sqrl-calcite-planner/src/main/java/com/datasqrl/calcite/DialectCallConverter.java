@@ -42,7 +42,7 @@ public class DialectCallConverter {
     relNode.accept(new RelShuttleImpl() {
       @Override
       protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-        child.accept(new RexShuttle(){
+        parent.accept(new RexShuttle(){
           @Override
           public RexNode visitCall(RexCall call) {
             if (call.getOperator() instanceof RuleTransform) {
