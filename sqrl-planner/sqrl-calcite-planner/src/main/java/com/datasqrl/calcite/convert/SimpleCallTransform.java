@@ -39,9 +39,6 @@ public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
     RelNode newFilter = filter.accept(new RexShuttle() {
       @Override
       public RexNode visitCall(RexCall call) {
-        /**
-         * Predicate transforms checks if current operator is a boolean and one of the operands is said function
-         */
         if (call.getOperator().equals(operator)) {
           hasTransformed.set(true);
           return transform.transform(rexBuilder, call);
