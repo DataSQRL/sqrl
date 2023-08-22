@@ -162,6 +162,8 @@ joinType
     : INNER?
     | TEMPORAL?
     | INTERVAL?
+    | LEFT  (OUTER|TEMPORAL|INTERVAL)
+    | RIGHT (OUTER|TEMPORAL|INTERVAL)
     ;
 
 joinCondition
