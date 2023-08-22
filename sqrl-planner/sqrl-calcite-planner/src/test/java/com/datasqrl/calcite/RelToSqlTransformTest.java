@@ -52,7 +52,7 @@ class RelToSqlTransformTest {
                     rexBuilder.makeZeroLiteral(framework.getTypeFactory().createSqlType(SqlTypeName.BIGINT))))
         .build();
 
-    List<RelRule> rules = new TextSearch().transform(PostgresqlSqlDialect.DEFAULT, fnc);
+    List<RelRule> rules = new TextSearch().transform(Dialect.POSTGRES, fnc);
 
     relNode = Programs.hep(rules, false, null)
         .run(framework.getQueryPlanner().getPlanner(), relNode, relNode.getTraitSet(),
@@ -74,7 +74,7 @@ class RelToSqlTransformTest {
         .sort(0)
         .build();
 
-    List<RelRule> rules = new TextSearch().transform(PostgresqlSqlDialect.DEFAULT, fnc);
+    List<RelRule> rules = new TextSearch().transform(Dialect.POSTGRES, fnc);
 
     relNode = Programs.hep(rules, false, null)
         .run(framework.getQueryPlanner().getPlanner(), relNode, relNode.getTraitSet(),

@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.function.vector;
 
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform;
 import com.datasqrl.calcite.function.RuleTransform;
 import com.datasqrl.calcite.convert.SimplePredicateTransform;
@@ -18,7 +19,11 @@ public class TextSearch extends ScalarFunction implements RuleTransform {
   }
 
   @Override
-  public List<RelRule> transform(SqlDialect dialect, SqlOperator operator) {
+  public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+    if (dialect != Dialect.POSTGRES) {
+      return List.of();
+    }
+
     return List.of(
         new SimplePredicateTransform(operator, (rexBuilder, predicate) -> {
           RexCall call = (RexCall) predicate.getOperands().get(0);

@@ -18,6 +18,7 @@
 //Copied from flink as we incrementally phase out flink code for sqrl code
 package com.datasqrl.flink.function;
 
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.function.RuleTransform;
 import org.apache.calcite.adapter.enumerable.CallImplementor;
 import org.apache.calcite.adapter.enumerable.NullPolicy;
@@ -142,7 +143,7 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
   }
 
   @Override
-  public List<RelRule> transform(SqlDialect dialect, SqlOperator operator) {
+  public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
     if (definition instanceof RuleTransform) {
       return ((RuleTransform) definition).transform(dialect, this);
     }
