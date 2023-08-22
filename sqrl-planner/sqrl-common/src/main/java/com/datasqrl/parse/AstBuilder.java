@@ -594,14 +594,30 @@ class AstBuilder
         condition);
   }
 
-  public JoinType toJoinType(JoinTypeContext joinTypeContext) {
+  public JoinType toJoinType(JoinTypeContext ctx) {
     JoinType joinType;
 
-    if (joinTypeContext.INNER() != null) {
+    if (ctx.LEFT() != null) {
+      if (ctx.TEMPORAL() != null) {
+        joinType = JoinType.LEFT_TEMPORAL;
+      } else if (ctx.INTERVAL() != null) {
+        joinType = JoinType.LEFT_INTERVAL;
+      } else {
+        joinType = JoinType.LEFT;
+      }
+    } else if (ctx.RIGHT() != null) {
+      if (ctx.TEMPORAL() != null) {
+        joinType = JoinType.RIGHT_TEMPORAL;
+      } else if (ctx.INTERVAL() != null) {
+        joinType = JoinType.RIGHT_INTERVAL;
+      } else {
+        joinType = JoinType.RIGHT;
+      }
+    } else if (ctx.INNER() != null) {
       joinType = JoinType.INNER;
-    } else if (joinTypeContext.TEMPORAL() != null) {
+    } else if (ctx.TEMPORAL() != null) {
       joinType = JoinType.TEMPORAL;
-    } else if (joinTypeContext.INTERVAL() != null) {
+    } else if (ctx.INTERVAL() != null) {
       joinType = JoinType.INTERVAL;
     } else {
       joinType = JoinType.DEFAULT;

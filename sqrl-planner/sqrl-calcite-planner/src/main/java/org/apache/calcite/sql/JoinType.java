@@ -70,7 +70,12 @@ public enum JoinType implements Symbolizable {
   TEMPORAL,
   INTERVAL,
   DEFAULT,
-  IMPLICIT;
+  IMPLICIT,
+  LEFT_TEMPORAL,
+  LEFT_INTERVAL,
+  RIGHT_TEMPORAL,
+  RIGHT_INTERVAL,
+  ;
 
   /** Lower-case name. */
   public final String lowerName = name().toLowerCase(Locale.ROOT);
