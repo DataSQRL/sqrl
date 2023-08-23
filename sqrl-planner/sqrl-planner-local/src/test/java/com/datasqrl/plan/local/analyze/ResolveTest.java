@@ -217,6 +217,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add(
         "OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
+    builder.add(
+        "OrderCustomerLeft := SELECT o.id, c.name, o.customerid FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;");
     plan(builder.toString());
     validateQueryTable("ordercustomer", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
         TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp

@@ -3,7 +3,10 @@
  */
 package com.datasqrl.plan.rules;
 
+import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
+
 import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.table.NowFilter;
 import com.datasqrl.plan.table.PullupOperator;
@@ -313,7 +316,7 @@ public class AnnotatedLP implements RelHolder {
    * @return
    */
   public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, List<String> fieldNames,
-      ExecutionAnalysis exec) {
+      ExecutionAnalysis exec, ErrorCollector errors) {
     if (fieldNames == null) { //Use existing fieldnames
       fieldNames = Collections.nCopies(select.getSourceLength(), null);
     }
@@ -393,6 +396,14 @@ public class AnnotatedLP implements RelHolder {
     relBuilder.push(input.relNode);
     relBuilder.project(projects, updatedFieldNames, true); //Force to make sure fields are renamed
     RelNode relNode = relBuilder.build();
+
+    //Verify that all primary key columns are not null which is required by databases
+    List<RelDataTypeField> relTypes = relNode.getRowType().getFieldList();
+    for (int i = 0; i < primaryKey.getSourceLength(); i++) {
+      RelDataTypeField field = relTypes.get(i);
+      errors.checkFatal(!field.getType().isNullable(), PRIMARY_KEY_NULLABLE, "The primary key field %s is nullable", field.getName());
+    }
+
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
         input.timestamp.restrictTo(candidates), updatedSelect,null,

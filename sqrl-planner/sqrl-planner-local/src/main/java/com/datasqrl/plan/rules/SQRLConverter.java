@@ -35,7 +35,7 @@ public class SQRLConverter {
         errors, config);
     RelNode converted = relNode.accept(sqrl2sql);
     AnnotatedLP alp = sqrl2sql.getRelHolder(converted);
-    alp = alp.postProcess(relBuilder, config.getFieldNames(relNode), exec);
+    alp = alp.postProcess(relBuilder, config.getFieldNames(relNode), exec, errors);
     return alp;
   }
 
