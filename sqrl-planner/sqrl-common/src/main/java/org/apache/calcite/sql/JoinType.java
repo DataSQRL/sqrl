@@ -71,8 +71,10 @@ public enum JoinType implements Symbolizable {
   INTERVAL,
   DEFAULT,
   IMPLICIT,
+  LEFT_DEFAULT,
   LEFT_TEMPORAL,
   LEFT_INTERVAL,
+  RIGHT_DEFAULT,
   RIGHT_TEMPORAL,
   RIGHT_INTERVAL,
   ;

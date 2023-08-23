@@ -37,8 +37,8 @@ class ParseTest {
   @Test
   public void testJoinTypes() {
     Set<String> types = Set.of(
-        "LEFT OUTER", "LEFT TEMPORAL", "LEFT INTERVAL",
-        "RIGHT OUTER", "RIGHT TEMPORAL", "RIGHT INTERVAL",
+        "LEFT", "LEFT OUTER", "LEFT TEMPORAL", "LEFT INTERVAL",
+        "RIGHT", "RIGHT OUTER", "RIGHT TEMPORAL", "RIGHT INTERVAL",
         "TEMPORAL",
         "INTERVAL",
         "INNER",
