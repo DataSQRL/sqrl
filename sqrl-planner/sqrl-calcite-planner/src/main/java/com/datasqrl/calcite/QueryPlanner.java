@@ -140,6 +140,9 @@ public class QueryPlanner {
   /* Convert */
 
   public SqlNode convertToDialect(Dialect dialect, RelNode relNode) {
+    relNode = new DialectCallConverter(planner)
+        .convert(dialect, relNode);
+
     switch (dialect) {
       case POSTGRES:
         return new PostgresSqlConverter()

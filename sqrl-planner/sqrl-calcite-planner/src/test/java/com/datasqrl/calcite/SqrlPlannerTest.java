@@ -2,34 +2,25 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.convert.SchemaMetadata;
 import com.datasqrl.calcite.convert.SqrlToSqlConverter;
-import com.datasqrl.calcite.function.builtin.MyCosineDistance;
-import com.datasqrl.calcite.function.builtin.MySimpleVector;
+import com.datasqrl.calcite.function.vector.MyCosineDistance;
+import com.datasqrl.calcite.function.vector.MySimpleVector;
 import com.datasqrl.calcite.function.builtin.NOW;
-import com.datasqrl.calcite.testTables.EntriesTable;
-import com.datasqrl.calcite.testTables.Orders;
-import com.datasqrl.calcite.testTables.Product;
 import com.datasqrl.calcite.type.MyVectorType;
 import com.datasqrl.flink.ArrayToMyVectorFunction;
 import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.flink.MyVectorToArrayFunction;
 import com.datasqrl.util.DataContextImpl;
-import lombok.SneakyThrows;
 import org.apache.calcite.adapter.enumerable.EnumerableRel;
 import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.flink.table.api.DataTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.xml.validation.Schema;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 class SqrlPlannerTest {
 
@@ -40,18 +31,9 @@ class SqrlPlannerTest {
 
   @BeforeEach
   public void before() {
-    framework = new SqrlFramework();
+    framework = CalciteTestUtil.createEcommerceFramework();
     planner = framework.getQueryPlanner();
     flinkConverter = new FlinkConverter(planner.createRexBuilder(), planner.getTypeFactory());
-
-    framework.getSchema()
-        .add("ENTRIES$", new EntriesTable());
-
-    framework.getSchema()
-        .add("ORDERS$", new Orders());
-
-    framework.getSchema()
-        .add("PRODUCT$", new Product());
 
     SqlFunction function = flinkConverter
         .convertFunction("myFnc","NOW", new NOW());
