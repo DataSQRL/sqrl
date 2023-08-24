@@ -218,10 +218,20 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
     builder.add(
-        "OrderCustomerLeft := SELECT o.id, c.name, o.customerid FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;");
+        "OrderCustomerLeft := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;");
+    builder.add(
+        "OrderCustomerLeftExcluded := SELECT o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c._uuid IS NULL;");
+    builder.add(
+        "OrderCustomerRight := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;");
     plan(builder.toString());
     validateQueryTable("ordercustomer", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
         TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
+    validateQueryTable("ordercustomerleft", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
+        TimestampTest.fixed(5));
+    validateQueryTable("ordercustomerleftexcluded", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 1,
+        TimestampTest.fixed(4));
+    validateQueryTable("ordercustomerright", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
+        TimestampTest.fixed(5));
   }
 
   @Test
@@ -231,6 +241,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INTERVAL JOIN Customer c on o.customerid = c.customerid "
             +
             "AND o.\"time\" > c.\"_ingest_time\" AND o.\"time\" <= c.\"_ingest_time\" + INTERVAL 31 DAYS;");
+
     builder.add(
         "OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid "
             +

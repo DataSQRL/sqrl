@@ -735,7 +735,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
 
     final int leftSideMaxIdx = leftInput.getFieldLength();
-    ContinuousIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx);
+    ContinuousIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx, joinAnalysis.isFlipped());
     RexNode condition = joinedIndexMap.map(logicalJoin.getCondition());
     exec.requireRex(condition);
     //TODO: pull now() conditions up as a nowFilter and move nested now filters through
@@ -754,6 +754,9 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       errors.checkFatal(JoinTable.getRoots(rightInput.joinTables).size() == 1,
           ErrorCode.NOT_YET_IMPLEMENTED,
           "Current assuming a single table on the right for self-join elimination.");
+      errors.checkFatal(!joinAnalysis.isFlipped(),
+          ErrorCode.NOT_YET_IMPLEMENTED,
+          "RIGHT joins not yet supported between parent and child tables. Convert to LEFT join.");
 
       //Determine if we can map the tables from both branches of the join onto each-other
       Map<JoinTable, JoinTable> right2left;

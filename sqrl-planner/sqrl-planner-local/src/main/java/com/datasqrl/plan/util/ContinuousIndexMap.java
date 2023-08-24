@@ -65,13 +65,16 @@ public class ContinuousIndexMap implements IndexMap, Serializable {
     return ArrayUtils.contains(targets, targetIndex);
   }
 
-  public ContinuousIndexMap join(ContinuousIndexMap right, int leftSideWidth) {
+  public ContinuousIndexMap join(ContinuousIndexMap right, int leftSideWidth, boolean isFlipped) {
     int[] combined = new int[targets.length + right.targets.length];
     //Left map doesn't change
-    System.arraycopy(targets, 0, combined, 0, targets.length);
-    int offset = targets.length;
-    for (int i = 0; i < right.targets.length; i++) {
-      combined[offset + i] = leftSideWidth + right.targets[i];
+    int offset=0;
+    int[][] arrsToCopy = isFlipped?new int[][]{right.targets,targets}:new int[][]{targets, right.targets};
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < arrsToCopy[i].length; j++) {
+        combined[offset + j] = ((isFlipped ^ i==1)?leftSideWidth:0) + arrsToCopy[i][j];
+      }
+      offset += arrsToCopy[i].length;
     }
     return new ContinuousIndexMap(combined);
   }

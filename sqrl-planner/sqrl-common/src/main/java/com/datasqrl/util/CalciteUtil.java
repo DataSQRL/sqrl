@@ -165,8 +165,11 @@ public class CalciteUtil {
   }
 
   public static Optional<Integer> isCoalescedWithConstant(RexNode rexNode) {
-    if (!rexNode.isA(SqlKind.COALESCE)) return Optional.empty();
-    List<RexNode> operands = ((RexCall) rexNode).getOperands();
+    if (!(rexNode instanceof RexCall)) return Optional.empty();
+    //if (!rexNode.isA(SqlKind.COALESCE)) return Optional.empty(); Doesn't work for Flink functions
+    RexCall call = (RexCall)rexNode;
+    if (!call.getOperator().isName("coalesce", false)) return Optional.empty();
+    List<RexNode> operands = call.getOperands();
     if (operands.size()!=2) return Optional.empty();
     if (!(operands.get(1) instanceof RexLiteral)) return Optional.empty();
     if (!(operands.get(0) instanceof RexInputRef)) return Optional.empty();
