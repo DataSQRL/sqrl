@@ -45,8 +45,8 @@ public abstract class AddedColumn {
       return expression.getType();
     }
 
-    public RexNode getExpression(IndexMap indexMap) {
-      return indexMap.map(expression);
+    public RexNode getExpression(IndexMap indexMap, @NonNull RelDataType type) {
+      return indexMap.map(expression, type);
     }
 
     public RexNode getBaseExpression() {

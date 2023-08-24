@@ -220,18 +220,22 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "OrderCustomerLeft := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;");
     builder.add(
-        "OrderCustomerLeftExcluded := SELECT o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c._uuid IS NULL;");
+        "OrderCustomerLeftExcluded := SELECT o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c._uuid IS NULL;");
     builder.add(
         "OrderCustomerRight := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;");
+    builder.add(
+        "OrderCustomerRightExcluded := SELECT c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o._uuid IS NULL;");
     plan(builder.toString());
     validateQueryTable("ordercustomer", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
         TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
     validateQueryTable("ordercustomerleft", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
         TimestampTest.fixed(5));
-    validateQueryTable("ordercustomerleftexcluded", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 1,
-        TimestampTest.fixed(4));
+    validateQueryTable("ordercustomerleftexcluded", TableType.STATE, ExecutionEngine.Type.DATABASE, 4, 1,
+        TimestampTest.fixed(3));
     validateQueryTable("ordercustomerright", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
         TimestampTest.fixed(5));
+    validateQueryTable("ordercustomerrightexcluded", TableType.STATE, ExecutionEngine.Type.DATABASE, 4, 1,
+        TimestampTest.fixed(3));
   }
 
   @Test
@@ -278,9 +282,22 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid");
     builder.add("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
         "FROM @.orders o JOIN o.entries e JOIN e.product p WHERE o.\"time\" >= now() - INTERVAL 1 DAY GROUP BY category");
+    builder.add("OrderCustomer := SELECT o.id, c.name FROM Orders o LEFT JOIN Customer c ON o.customerid = c.customerid");
+    builder.add("OrderCustomer2 := SELECT o.id, c.name FROM Orders o LEFT TEMPORAL JOIN Customer c ON o.customerid = c.customerid");
+    builder.add("OrderCustomer3 := SELECT o.id, c.name FROM Customer c RIGHT JOIN Orders o ON o.customerid = c.customerid");
+    builder.add("OrderCustomer4 := SELECT o.id, c.name FROM Orders o LEFT OUTER JOIN Customer c ON o.customerid = c.customerid");
+
     plan(builder.toString());
     validateQueryTable("totals", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 4, 2,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("ordercustomer", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
+        TimestampTest.fixed(3));
+    validateQueryTable("ordercustomer2", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
+        TimestampTest.fixed(3));
+    validateQueryTable("ordercustomer3", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
+        TimestampTest.fixed(3));
+    validateQueryTable("ordercustomer4", TableType.STATE, Type.DATABASE, 4, 1,
+        TimestampTest.fixed(3));
   }
 
 

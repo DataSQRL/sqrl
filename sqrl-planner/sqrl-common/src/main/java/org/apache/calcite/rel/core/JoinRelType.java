@@ -92,7 +92,8 @@ public enum JoinRelType {
    * right-hand side.
    */
   public boolean generatesNullsOnRight() {
-    return (this == LEFT) || (this == FULL);
+    return (this == LEFT) || (this == FULL)
+        || (this == LEFT_DEFAULT) || (this==LEFT_TEMPORAL) || (this==LEFT_INTERVAL);
   }
 
   /**
@@ -100,7 +101,8 @@ public enum JoinRelType {
    * left-hand side.
    */
   public boolean generatesNullsOnLeft() {
-    return (this == RIGHT) || (this == FULL);
+    return (this == RIGHT) || (this == FULL)
+        || (this == RIGHT_DEFAULT) || (this==RIGHT_TEMPORAL) || (this==RIGHT_INTERVAL);
   }
 
   /**
@@ -108,7 +110,7 @@ public enum JoinRelType {
    * generate NULL values, either on the left-hand side or right-hand side.
    */
   public boolean isOuterJoin() {
-    return (this == LEFT) || (this == RIGHT) || (this == FULL);
+    return generatesNullsOnRight() || generatesNullsOnLeft();
   }
 
   /**
@@ -118,8 +120,20 @@ public enum JoinRelType {
     switch (this) {
       case LEFT:
         return RIGHT;
+      case LEFT_DEFAULT:
+        return RIGHT_DEFAULT;
+      case LEFT_INTERVAL:
+        return RIGHT_INTERVAL;
+      case LEFT_TEMPORAL:
+        return RIGHT_TEMPORAL;
       case RIGHT:
         return LEFT;
+      case RIGHT_DEFAULT:
+        return LEFT_DEFAULT;
+      case RIGHT_INTERVAL:
+        return LEFT_INTERVAL;
+      case RIGHT_TEMPORAL:
+        return LEFT_TEMPORAL;
       default:
         return this;
     }
@@ -143,6 +157,12 @@ public enum JoinRelType {
     switch (this) {
       case RIGHT:
         return INNER;
+      case RIGHT_DEFAULT:
+        return DEFAULT;
+      case RIGHT_INTERVAL:
+        return INTERVAL;
+      case RIGHT_TEMPORAL:
+        return TEMPORAL;
       case FULL:
         return LEFT;
       default:
@@ -158,6 +178,12 @@ public enum JoinRelType {
         return INNER;
       case FULL:
         return RIGHT;
+      case LEFT_DEFAULT:
+        return DEFAULT;
+      case LEFT_INTERVAL:
+        return INTERVAL;
+      case LEFT_TEMPORAL:
+        return TEMPORAL;
       default:
         return this;
     }

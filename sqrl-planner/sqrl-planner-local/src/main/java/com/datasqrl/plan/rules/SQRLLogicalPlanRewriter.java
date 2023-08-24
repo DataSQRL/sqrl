@@ -64,6 +64,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -104,6 +105,7 @@ import com.datasqrl.model.StreamType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.mapping.IntPair;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
@@ -396,7 +398,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     for (AddedColumn column : vtable.getAddedColumns()) {
       //How do columns impact materialization preference (e.g. contain function that cannot be computed in DB) if they might get projected out again
       AddedColumn.Simple simpleCol = (AddedColumn.Simple) column;
-      RexNode added = simpleCol.getExpression(path.mapLeafTable());
+      RexNode added = simpleCol.getExpression(path.mapLeafTable(), builder.peek().getRowType());
       rexUtil.appendColumn(builder, added, simpleCol.getNameId());
     }
   }
@@ -424,7 +426,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     AnnotatedLP input = getRelHolder(logicalFilter.getInput().accept(this));
     input = input.inlineTopN(makeRelBuilder(), exec); //Filtering doesn't preserve deduplication
     RexNode condition = logicalFilter.getCondition();
-    condition = input.select.map(condition);
+    condition = input.select.map(condition, input.relNode.getRowType());
     TimestampHolder.Derived timestamp = input.timestamp;
     NowFilter nowFilter = input.nowFilter;
 
@@ -587,7 +589,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     List<TimestampHolder.Derived.Candidate> timeCandidates = new ArrayList<>();
     NowFilter nowFilter = NowFilter.EMPTY;
     for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
-      RexNode mapRex = input.select.map(exp.e);
+      RexNode mapRex = input.select.map(exp.e, input.relNode.getRowType());
       updatedProjects.add(exp.i, mapRex);
       updatedNames.add(exp.i, logicalProject.getRowType().getFieldNames().get(exp.i));
       int originalIndex = -1;
@@ -718,6 +720,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   public RelNode visit(LogicalJoin logicalJoin) {
     AnnotatedLP leftIn = getRelHolder(logicalJoin.getLeft().accept(this));
     AnnotatedLP rightIn = getRelHolder(logicalJoin.getRight().accept(this));
+    List<RelDataTypeField> inputFields = ListUtils.union(leftIn.relNode.getRowType().getFieldList(),
+        rightIn.relNode.getRowType().getFieldList());
 
     AnnotatedLP leftInput = leftIn.inlineTopN(makeRelBuilder(), exec);
     AnnotatedLP rightInput = rightIn.inlineTopN(makeRelBuilder(), exec);
@@ -736,7 +740,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     final int leftSideMaxIdx = leftInput.getFieldLength();
     ContinuousIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx, joinAnalysis.isFlipped());
-    RexNode condition = joinedIndexMap.map(logicalJoin.getCondition());
+    RexNode condition = joinedIndexMap.map(logicalJoin.getCondition(), inputFields);
     exec.requireRex(condition);
     //TODO: pull now() conditions up as a nowFilter and move nested now filters through
     errors.checkFatal(!FIND_NOW.foundIn(condition),
@@ -946,14 +950,17 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     ContinuousIndexMap.Builder concatPkBuilder;
     int numberOfRightPks = rightInputF.primaryKey.getSourceLength();
+    Side singletonSide = Side.NONE;
     if (isPKConstrained.get(Side.RIGHT)) {
       //Use only left side for pk
       concatPkBuilder = ContinuousIndexMap.builder(leftInputF.primaryKey, 0);
+      singletonSide = Side.RIGHT;
     } else {
       if (isPKConstrained.get(Side.LEFT)) {
         errors.checkFatal(!joinAnalysis.isA(Side.LEFT), "A %s join is not valid when all the primary "
             + "key columns on that side of the join are constrained: %s", joinAnalysis.getOriginalSide(), logicalJoin);
         assert joinAnalysis.isA(Side.NONE);
+        singletonSide = Side.LEFT;
         concatPkBuilder = ContinuousIndexMap.builder(numberOfRightPks);
       } else {
         //Need to concatenate primary keys from both sides
@@ -1078,11 +1085,9 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     //Default inner join creates a state table
     relB.join(joinAnalysis.export(), condition);
-    if (!isPKConstrained.values().stream().reduce(false, (a, b) -> a || b)) { //if neither side is pk-constrained
-      //Default joins without primary key constraints can be expensive, so we create a hint for the cost model
-      new JoinCostHint(leftInputF.type, rightInputF.type, eqDecomp.getEqualities().size()).addTo(
-          relB);
-    }
+    //Default joins without primary key constraints can be expensive, so we create a hint for the cost model
+    new JoinCostHint(leftInputF.type, rightInputF.type, eqDecomp.getEqualities().size(), singletonSide).addTo(
+        relB);
 
     //Determine timestamps for each side and add the max of those two as the resulting timestamp
     TimestampHolder.Derived.Candidate leftBest = leftInputF.timestamp.getBestCandidate();

@@ -87,7 +87,8 @@ public enum JoinType implements Symbolizable {
    * left-hand side.
    */
   public boolean generatesNullsOnLeft() {
-    return this == RIGHT || this == FULL;
+    return (this == RIGHT) || (this == FULL)
+        || (this == RIGHT_DEFAULT) || (this==RIGHT_TEMPORAL) || (this==RIGHT_INTERVAL);
   }
 
   /**
@@ -95,6 +96,7 @@ public enum JoinType implements Symbolizable {
    * right-hand side.
    */
   public boolean generatesNullsOnRight() {
-    return this == LEFT || this == FULL;
+    return (this == LEFT) || (this == FULL)
+        || (this == LEFT_DEFAULT) || (this==LEFT_TEMPORAL) || (this==LEFT_INTERVAL);
   }
 }
