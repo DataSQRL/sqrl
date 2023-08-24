@@ -66,7 +66,6 @@ public class DiscoverCommand extends AbstractCommand {
       errors.warn("Data sinks don't have statistics. Statistics flag is ignored.");
       statistics = false;
     }
-    errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
 
     SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors,
                 ()-> PackagerUtil.createEmbeddedConfig(root.rootDir, errors));
