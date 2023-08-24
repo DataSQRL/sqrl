@@ -14,6 +14,9 @@ import com.datasqrl.discovery.DataDiscovery;
 import com.datasqrl.discovery.DataDiscoveryFactory;
 import com.datasqrl.discovery.TableWriter;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.impl.file.FileDataSystemConfig;
+import com.datasqrl.io.impl.file.FileDataSystemFactory;
+import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.schema.input.external.SchemaExport;
@@ -128,6 +131,25 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
     List<TableSource> tables = discoverSchema(example);
     TableWriter writer = new TableWriter();
     writer.writeToFile(example.getDataPackageDirectory(), tables);
+  }
+
+  @Test
+  @Disabled("For testing with local data")
+  public void generateSchemaFromDir() {
+    initialize(IntegrationTestSettings.getInMemory());
+    ErrorCollector errors = ErrorCollector.root();
+    DataDiscovery discovery = DataDiscoveryFactory.fromPipeline(pipelineFactory, errors);
+    TableConfig discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig("testrun",
+        FileDataSystemConfig.builder()
+            .directoryURI("dataDir")
+//            .filenamePattern("")
+            .build()).build();
+    List<TableSource> sourceTables = discovery.runFullDiscovery(discoveryConfig);
+    assertFalse(errors.isFatal(), errors.toString());
+    for (TableSource source : sourceTables) {
+      System.out.println(source.getName());
+      System.out.println(source.getSchema().getDefinition());
+    }
   }
 
 }

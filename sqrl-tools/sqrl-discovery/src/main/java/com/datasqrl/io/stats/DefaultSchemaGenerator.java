@@ -17,6 +17,7 @@ import com.datasqrl.schema.input.SchemaAdjustmentSettings;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
 import com.datasqrl.schema.type.basic.BasicTypeManager;
+import com.datasqrl.schema.type.basic.StringType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -91,95 +92,102 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
     }
     List<FlexibleFieldSchema.FieldType> types = merge(
         fieldStats != null ? fieldStats.types.keySet() : Collections.EMPTY_SET,
-        fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, statsNotNull, errors);
+        fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, statsNotNull, fieldName, errors);
     builder.setTypes(types);
     return builder.build();
   }
 
   List<FlexibleFieldSchema.FieldType> merge(@NonNull Set<FieldTypeStats> statTypes,
                                             @NonNull List<FlexibleFieldSchema.FieldType> fieldTypes, boolean statsNotNull,
-                                            @NonNull ErrorCollector errors) {
+                                            @NonNull Name fieldName, @NonNull ErrorCollector errors) {
     if (fieldTypes.isEmpty()) {
       /* Need to generate single type from statistics. First, we check if there is one family of detected types.
          If not (or if there is ambiguity), we combine all of the raw types.
          This provides a defensive approach (i.e. we don't force type combination on detected types) with user friendliness
          in cases where the detected type is obvious.
        */
-      Preconditions.checkArgument(!statTypes.isEmpty() && !isComplete);
+      errors.checkFatal(!isComplete, "Schema marked as complete but found additional field: %s", fieldName);
       FlexibleFieldSchema.FieldType result = null;
       List<Constraint> constraints =
           statsNotNull ? List.of(NotNull.INSTANCE) : Collections.EMPTY_LIST;
       int maxArrayDepth = 0;
-      BasicType type = null;
-      for (FieldTypeStats fts : statTypes) {
-        Type td = fts.getDetected();
-        if (td instanceof BasicType) {
-          if (type == null) {
-            type = (BasicType) td;
-          } else {
-            type = BasicTypeManager.combine(type, (BasicType) td, settings.maxCastingTypeDistance())
-                .orElse(null);
-          }
-          maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
-        } else {
-          type = null; //abort type finding since it's a nested relation
-        }
-        if (type == null) {
-          break; //abort
-        }
-      }
-      if (type != null) {
-        //We have found a shared detected type
-        result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
-            constraints);
+      if (statTypes.isEmpty()) { //All field values where null, use String as default type
+        Preconditions.checkArgument(!statsNotNull);
+        result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, StringType.INSTANCE,
+            maxArrayDepth, constraints);
       } else {
-        //Combine all of the encountered raw types
-        maxArrayDepth = 0;
-        type = null;
-        int nestedRelationArrayDepth = 0;
-        RelationStats nested = null;
+        BasicType type = null;
         for (FieldTypeStats fts : statTypes) {
-          Type td = fts.raw;
+          Type td = fts.getDetected();
           if (td instanceof BasicType) {
             if (type == null) {
               type = (BasicType) td;
             } else {
-              type = BasicTypeManager.combineForced(type, (BasicType) td);
+              type = BasicTypeManager.combine(type, (BasicType) td,
+                      settings.maxCastingTypeDistance())
+                  .orElse(null);
             }
             maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
           } else {
-            assert fts.nestedRelationStats != null;
-            if (nested == null) {
-              nested = fts.nestedRelationStats.clone();
-            } else {
-              nested.merge(fts.nestedRelationStats);
-            }
-            nestedRelationArrayDepth = Math.max(nestedRelationArrayDepth, fts.getArrayDepth());
+            type = null; //abort type finding since it's a nested relation
+          }
+          if (type == null) {
+            break; //abort
           }
         }
         if (type != null) {
+          //We have found a shared detected type
           result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
               constraints);
-        }
-        if (nested != null) {
-          RelationType<FlexibleFieldSchema.Field> nestedType = merge(nested,
-              RelationType.EMPTY, errors);
-          if (result != null) {
-            //Need to embed basictype into nested relation as value
-            FlexibleFieldSchema.Field.Builder b = new FlexibleFieldSchema.Field.Builder();
-            b.setName(SpecialName.VALUE);
-            b.setTypes(Collections.singletonList(result));
-            nestedType = RelationType.<FlexibleFieldSchema.Field>build()
-                .addAll(nestedType)
-                .add(b.build())
-                .build();
+        } else {
+          //Combine all of the encountered raw types
+          maxArrayDepth = 0;
+          type = null;
+          int nestedRelationArrayDepth = 0;
+          RelationStats nested = null;
+          for (FieldTypeStats fts : statTypes) {
+            Type td = fts.raw;
+            if (td instanceof BasicType) {
+              if (type == null) {
+                type = (BasicType) td;
+              } else {
+                type = BasicTypeManager.combineForced(type, (BasicType) td);
+              }
+              maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
+            } else {
+              assert fts.nestedRelationStats != null;
+              if (nested == null) {
+                nested = fts.nestedRelationStats.clone();
+              } else {
+                nested.merge(fts.nestedRelationStats);
+              }
+              nestedRelationArrayDepth = Math.max(nestedRelationArrayDepth, fts.getArrayDepth());
+            }
           }
-          if (nestedRelationArrayDepth == 0) {
-            constraints = new ArrayList<>(constraints);
-            constraints.add(new Cardinality(0, 1));
+          if (type != null) {
+            result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, type, maxArrayDepth,
+                constraints);
           }
-          result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, nestedType,
-              1, constraints);
+          if (nested != null) {
+            RelationType<FlexibleFieldSchema.Field> nestedType = merge(nested,
+                RelationType.EMPTY, errors);
+            if (result != null) {
+              //Need to embed basictype into nested relation as value
+              FlexibleFieldSchema.Field.Builder b = new FlexibleFieldSchema.Field.Builder();
+              b.setName(SpecialName.VALUE);
+              b.setTypes(Collections.singletonList(result));
+              nestedType = RelationType.<FlexibleFieldSchema.Field>build()
+                  .addAll(nestedType)
+                  .add(b.build())
+                  .build();
+            }
+            if (nestedRelationArrayDepth == 0) {
+              constraints = new ArrayList<>(constraints);
+              constraints.add(new Cardinality(0, 1));
+            }
+            result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, nestedType,
+                1, constraints);
+          }
         }
       }
       assert result != null;
