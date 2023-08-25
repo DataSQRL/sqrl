@@ -917,6 +917,72 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void leftJoinWithoutCoalesce() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o LEFT JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void leftRightWithoutCoalesce() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o RIGHT JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void normalJoins() {
+    validateScript("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders1 := SELECT o.id, c.name FROM Orders o INNER JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders2 := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name FROM Orders o LEFT JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders3 := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name FROM Orders o RIGHT JOIN Customer c ON o.customerid=c.customerid;\n"
+    );
+  }
+
+  @Test
+  public void intervalJoins() {
+    validateScript("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders1 := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
+        + "CustomerOrders2 := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name FROM Orders o LEFT INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
+        + "CustomerOrders1 := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name FROM Orders o RIGHT INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
+    );
+  }
+
+
+  @Test
+  public void intervalJoinWithoutTimeBound() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void intervalJoinOnState() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void temporalJoins() {
+    validateScript("IMPORT ecommerce-data.*;\n"
+        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o LEFT TEMPORAL JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Customer c RIGHT TEMPORAL JOIN Orders o ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void temporalJoinOnStreams() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void temporalJoinNotPKConstrained() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid > c.customerid;");
+  }
+
+  @Test
   @Disabled
   //Automatically determining the order by statement not yet supported
   public void distinctOnTest() {
