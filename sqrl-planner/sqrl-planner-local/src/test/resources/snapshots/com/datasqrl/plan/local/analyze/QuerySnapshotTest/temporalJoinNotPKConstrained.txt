@@ -1,5 +1,5 @@
 >>>errors
-[FATAL] Expected join condition to be equality condition on state's primary key: rel#28:LogicalJoin.(left=LogicalTableScan#20,right=LogicalTableScan#22,condition=>($3, $5),joinType=temporal)
+[FATAL] Expected join condition to be equality condition on state's primary key.
 in script:test.sqrl [3:1]:
 IMPORT ecommerce-data.*;
 Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;

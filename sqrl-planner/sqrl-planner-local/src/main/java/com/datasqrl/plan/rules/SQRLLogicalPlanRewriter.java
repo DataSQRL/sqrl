@@ -921,13 +921,12 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
               .numRootPks(leftInput.numRootPks).nowFilter(leftInput.nowFilter).sort(leftInput.sort)
               .build());
         } else if (joinAnalysis.isA(Type.TEMPORAL)) {
-          errors.fatal("Expected join condition to be equality condition on state's primary key: %s",
-                  logicalJoin);
+          errors.fatal("Expected join condition to be equality condition on state's primary key.");
         }
       } else if (joinAnalysis.isA(Type.TEMPORAL)) {
         JoinAnalysis.Side side = joinAnalysis.getOriginalSide();
-        errors.fatal("Expected %s side of the join to be stream and the other temporal state: %s",
-                side==Side.NONE?"one":side.toString().toLowerCase(), logicalJoin);
+        errors.fatal("Expected %s side of the join to be stream and the other temporal state.",
+                side==Side.NONE?"one":side.toString().toLowerCase());
       }
 
     }
@@ -1073,11 +1072,11 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
             concatPk, joinTimestamp, joinedIndexMap,
             List.of(leftInputF, rightInputF)).numRootPks(numRootPks).sort(joinedSort).build());
       } else if (joinAnalysis.isA(Type.INTERVAL)) {
-        errors.fatal("Interval joins require time bounds on the timestamp columns in the join condition: " + logicalJoin);
+        errors.fatal("Interval joins require time bounds on the timestamp columns in the join condition.");
       }
     } else if (joinAnalysis.isA(Type.INTERVAL)) {
       errors.fatal(
-          "Interval joins are only supported between two streams: " + logicalJoin);
+          "Interval joins are only supported between two streams.");
     }
 
     //We detected no special time-based joins, so make it a generic join
