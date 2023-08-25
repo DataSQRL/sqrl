@@ -8,8 +8,13 @@ LogicalTableScan(table=[[orders$i$4]])
 LogicalTableScan(table=[[product$i$8]])
 
 >>>x$q$11
-LogicalProject(_uuid=[$0], _idx=[$6], _uuid0=[$11], _idx0=[$17], _uuid1=[$23], _idx1=[$29], discount=[$33], __timestamp34=[CASE(<($22, $27), $27, $22)])
+LogicalProject(_uuid=[$0], _idx=[$6], _uuid0=[$11], _idx0=[$17], _uuid00=[$22], _idx00=[$28], discount=[$10], __timestamp34=[CASE(<($4, $33), $33, $4)])
   LogicalJoin(condition=[true], joinType=[inner])
+    LogicalCorrelate(correlation=[$cor11], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$5]])
+      Uncollect
+        LogicalProject($f0=[$cor11.entries])
+          LogicalValues(tuples=[[{ 0 }]])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], _uuid0=[$11], _ingest_time0=[$12], id0=[$13], customerid0=[$14], time0=[$15], entries0=[$16], _idx0=[$17], productid0=[$18], quantity0=[$19], unit_price0=[$20], discount0=[$21], __timestamp=[CASE(<($4, $15), $15, $4)])
       LogicalJoin(condition=[true], joinType=[inner])
         LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
@@ -22,9 +27,4 @@ LogicalProject(_uuid=[$0], _idx=[$6], _uuid0=[$11], _idx0=[$17], _uuid1=[$23], _
           Uncollect
             LogicalProject($f0=[$cor9.entries])
               LogicalValues(tuples=[[{ 0 }]])
-    LogicalCorrelate(correlation=[$cor11], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$q$5]])
-      Uncollect
-        LogicalProject($f0=[$cor11.entries])
-          LogicalValues(tuples=[[{ 0 }]])
 
