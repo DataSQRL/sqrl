@@ -1,0 +1,17 @@
+---
+name: "authTokens"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "value"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "timestamp"
+  type: "DATETIME"
+  tests:
+  - "not_null"

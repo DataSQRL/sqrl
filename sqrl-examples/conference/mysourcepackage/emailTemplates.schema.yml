@@ -1,0 +1,25 @@
+---
+name: "emailTemplates"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "last_updated"
+  type: "DATETIME"
+  tests:
+  - "not_null"
+- name: "title"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "fromEmail"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "textBody"
+  type: "STRING"
+  tests:
+  - "not_null"
