@@ -18,3 +18,52 @@ LogicalProject(__pk_0=[$1], category=[$2], num=[$3], time=[$0])
 >>>totals$q$15-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
+>>>ordercustomer$q$17-lp-STREAM
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+  LogicalJoin(condition=[=($3, $6)], joinType=[left]) hints[TemporalJoinHint options:[4, 2, 0]]
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$11]])
+
+>>>ordercustomer$q$17-lp-DATABASE
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
+
+>>>ordercustomer2$q$19-lp-STREAM
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+  LogicalJoin(condition=[=($3, $6)], joinType=[left]) hints[TemporalJoinHint options:[4, 2, 0]]
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$11]])
+
+>>>ordercustomer2$q$19-lp-DATABASE
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
+
+>>>ordercustomer3$q$21-lp-STREAM
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+  LogicalJoin(condition=[=($3, $6)], joinType=[left]) hints[TemporalJoinHint options:[4, 2, 0]]
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$11]])
+
+>>>ordercustomer3$q$21-lp-DATABASE
+Stage [database] does not support capabilities: [TEMPORAL_JOIN]
+
+>>>ordercustomer4$q$23-lp-STREAM
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], __timestamp=[CASE(<($4, $8), $8, $4)])
+  LogicalJoin(condition=[=($3, $6)], joinType=[left]) hints[JoinCostHint options:[STREAM, DEDUP_STREAM, 1, RIGHT]]
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$11]])
+
+>>>ordercustomer4$q$23-lp-DATABASE
+LogicalProject(_uuid=[$0], id=[$2], name=[$9], __timestamp=[CASE(<($4, $7), $7, $4)])
+  LogicalJoin(condition=[=($3, $5)], joinType=[left]) hints[JoinCostHint options:[STREAM, DEDUP_STREAM, 1, RIGHT]]
+    LogicalTableScan(table=[[orders$6]])
+    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$12]])
+

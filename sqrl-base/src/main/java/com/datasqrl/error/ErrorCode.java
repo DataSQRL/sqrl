@@ -25,6 +25,7 @@ public enum ErrorCode implements ErrorLabel {
   WRONG_TABLE_TYPE,
   WRONG_INTERVAL_JOIN,
   CONFIG_EXCEPTION,
+  PRIMARY_KEY_NULLABLE,
   NOT_YET_IMPLEMENTED;
 
   @Override

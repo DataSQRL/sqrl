@@ -602,16 +602,20 @@ class AstBuilder
         joinType = JoinType.LEFT_TEMPORAL;
       } else if (ctx.INTERVAL() != null) {
         joinType = JoinType.LEFT_INTERVAL;
-      } else {
+      } else if (ctx.OUTER() != null){
         joinType = JoinType.LEFT;
+      } else  {
+        joinType = JoinType.LEFT_DEFAULT;
       }
     } else if (ctx.RIGHT() != null) {
       if (ctx.TEMPORAL() != null) {
         joinType = JoinType.RIGHT_TEMPORAL;
       } else if (ctx.INTERVAL() != null) {
         joinType = JoinType.RIGHT_INTERVAL;
-      } else {
+      } else if (ctx.OUTER() != null){
         joinType = JoinType.RIGHT;
+      } else  {
+        joinType = JoinType.RIGHT_DEFAULT;
       }
     } else if (ctx.INNER() != null) {
       joinType = JoinType.INNER;

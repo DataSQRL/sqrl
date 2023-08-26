@@ -3070,6 +3070,18 @@ public class SqlToRelConverter {
         return JoinRelType.INTERVAL;
       case DEFAULT:
         return JoinRelType.DEFAULT;
+      case LEFT_DEFAULT:
+        return JoinRelType.LEFT_DEFAULT;
+      case LEFT_TEMPORAL:
+        return JoinRelType.LEFT_TEMPORAL;
+      case LEFT_INTERVAL:
+        return JoinRelType.LEFT_INTERVAL;
+      case RIGHT_DEFAULT:
+        return JoinRelType.RIGHT_DEFAULT;
+      case RIGHT_TEMPORAL:
+        return JoinRelType.RIGHT_TEMPORAL;
+      case RIGHT_INTERVAL:
+        return JoinRelType.RIGHT_INTERVAL;
       default:
         throw Util.unexpected(joinType);
     }

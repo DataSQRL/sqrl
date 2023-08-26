@@ -8,6 +8,8 @@ import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -23,8 +25,12 @@ public interface IndexMap {
 
   int map(int index);
 
-  default RexNode map(@NonNull RexNode node) {
-    return node.accept(new RexIndexMapShuttle(this));
+  default RexNode map(@NonNull RexNode node, @NonNull RelDataType inputType) {
+    return map(node, inputType.getFieldList());
+  }
+
+  default RexNode map(@NonNull RexNode node, @NonNull List<RelDataTypeField> inputFields) {
+    return node.accept(new RexIndexMapShuttle(this, inputFields));
   }
 
   default RelCollation map(RelCollation collation) {
@@ -36,10 +42,13 @@ public interface IndexMap {
   class RexIndexMapShuttle extends RexShuttle {
 
     private final IndexMap map;
+    private final List<RelDataTypeField> inputFields;
 
     @Override
     public RexNode visitInputRef(RexInputRef input) {
-      return new RexInputRef(map.map(input.getIndex()), input.getType());
+      int inputIdx = map.map(input.getIndex());
+      Preconditions.checkArgument(inputIdx>=0 && inputIdx < inputFields.size());
+      return new RexInputRef(inputIdx, inputFields.get(inputIdx).getType());
     }
   }
 

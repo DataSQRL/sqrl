@@ -125,12 +125,12 @@ LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[DESC])
     LogicalTableScan(table=[[_sales_by_hour$20]])
 
 >>>_sales_trend-lp-database
-LogicalSort(sort0=[$0], sort1=[$1], sort2=[$2], dir0=[ASC], dir1=[ASC], dir2=[ASC])
-  LogicalProject(__pk_0=[$0], __pk_00=[$1], __pk_000=[$2], increase=[$3], __timestamp19=[$4])
-    LogicalProject(__pk_0=[$0], __pk_00=[$8], __pk_000=[$13], increase=[+(/(*($9, 1.5:DECIMAL(2, 1)), greatest($14, 500.0:DECIMAL(4, 1))), /(*($10, 1.5:DECIMAL(2, 1)), greatest($15, 100.0:DECIMAL(4, 1))))], __timestamp17=[CASE(<($12, $16), $16, $12)])
-      LogicalJoin(condition=[=($0, $13)], joinType=[inner]) hints[JoinCostHint options:[STATE, DEDUP_STREAM, 1]]
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(__pk_0=[$0], increase=[$1], __timestamp19=[$2])
+    LogicalProject(__pk_0=[$0], increase=[+(/(*($9, 1.5:DECIMAL(2, 1)), greatest($14, 500.0:DECIMAL(4, 1))), /(*($10, 1.5:DECIMAL(2, 1)), greatest($15, 100.0:DECIMAL(4, 1))))], __timestamp17=[CASE(<($12, $16), $16, $12)])
+      LogicalJoin(condition=[=($0, $13)], joinType=[inner]) hints[JoinCostHint options:[STATE, DEDUP_STREAM, 1, RIGHT]]
         LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[$7], __pk_0=[$8], total=[$9], num=[$10], hour=[$11], __timestamp=[CASE(<($6, $11), $11, $6)])
-          LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1]]
+          LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1, RIGHT]]
             LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
               LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                 LogicalTableScan(table=[[product$16]])

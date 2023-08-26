@@ -1,0 +1,37 @@
+>>>customer$q$11
+LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5])
+  LogicalTableScan(table=[[customer$q$9]])
+
+>>>customer$q$9
+LogicalTableScan(table=[[customer$i$8]])
+
+>>>customerorders$q$13
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+  LogicalJoin(condition=[=($3, $6)], joinType=[inner])
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)])
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$11]])
+
+>>>customerorders$q$15
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+  LogicalJoin(condition=[=($3, $6)], joinType=[left])
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)])
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$11]])
+
+>>>customerorders$q$17
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+  LogicalJoin(condition=[=($3, $6)], joinType=[left])
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)])
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$11]])
+
+>>>orders$q$5
+LogicalTableScan(table=[[orders$i$4]])
+
+>>>product$q$2
+LogicalTableScan(table=[[product$i$1]])
+

@@ -292,7 +292,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = example.getImports();
     builder.add("Customer.orders := JOIN Orders ON Orders.customerid = @.customerid;");
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid LIMIT 1;");
-    builder.add("Customer.recent_products := SELECT e.productid, e.product.category AS category,\n"
+    builder.add("Customer.recent_products := SELECT e.productid, coalesce(e.product.category,'') AS category,\n"
         + "                                       sum(e.quantity) AS quantity, count(1) AS num_orders\n"
         + "                                FROM @.orders.entries AS e\n"
         + "                                WHERE e.parent.time > now() - INTERVAL 365 DAYS\n"
@@ -349,8 +349,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void ordersEntriesXTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid LIMIT 1;\n"
-        + "Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM @;\n");
+    builder.add("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n");
+    builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid LIMIT 1");
+    builder.add("Orders.entries.dProduct := SELECT unit_price, product.category, product.name FROM @");
     validateScript(builder.getScript());
   }
 
@@ -910,8 +911,75 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void inlinePathMultiplicityTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON true LIMIT 1;\n"
+        + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
+        + "Product.joinDeclaration := JOIN Product p ON @.productid = p.productid LIMIT 1;\n"
         + "Product2 := SELECT joinDeclaration.productid, productid FROM Product;\n");
+  }
+
+  @Test
+  public void leftJoinWithoutCoalesce() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o LEFT JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void leftRightWithoutCoalesce() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o RIGHT JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void normalJoins() {
+    validateScript("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders1 := SELECT o.id, c.name FROM Orders o INNER JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders2 := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name FROM Orders o LEFT JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders3 := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name FROM Orders o RIGHT JOIN Customer c ON o.customerid=c.customerid;\n"
+    );
+  }
+
+  @Test
+  public void intervalJoins() {
+    validateScript("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders1 := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
+        + "CustomerOrders2 := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name FROM Orders o LEFT INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
+        + "CustomerOrders1 := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name FROM Orders o RIGHT INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
+    );
+  }
+
+
+  @Test
+  public void intervalJoinWithoutTimeBound() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void intervalJoinOnState() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void temporalJoins() {
+    validateScript("IMPORT ecommerce-data.*;\n"
+        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o LEFT TEMPORAL JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Customer c RIGHT TEMPORAL JOIN Orders o ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void temporalJoinOnStreams() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid=c.customerid;");
+  }
+
+  @Test
+  public void temporalJoinNotPKConstrained() {
+    validateScriptInvalid("IMPORT ecommerce-data.*;\n"
+        + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
+        + "CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid > c.customerid;");
   }
 
   @Test
@@ -948,9 +1016,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void nestedGroupByTest() {
     validateScript(
         "IMPORT ecommerce-data.Orders;\n"
-            + "Orders.entries_2 := SELECT e.discount, count(1) AS cnt "
+            + "Orders.entries_2 := SELECT coalesce(discount,0) AS discount, count(1) AS cnt "
             + "                    FROM @ JOIN @.entries e"
-            + "                    GROUP BY e.discount;\n");
+            + "                    GROUP BY discount;\n");
   }
 
   @Test
@@ -965,7 +1033,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void countFncTest() {
     validateScript(
         "IMPORT ecommerce-data.Orders;\n"
-            + "Orders.entries_2 := SELECT discount, count(*) AS cnt "
+            + "Orders.entries_2 := SELECT coalesce(discount,0) AS discount, count(*) AS cnt "
             + "                    FROM @.entries "
             + "                    GROUP BY discount;\n");
   }

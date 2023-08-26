@@ -1,21 +1,27 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>dproduct$q$11
-LogicalProject(__pk_0=[$0], __pk_1=[$6], unit_price=[$9], category=[$16], name=[$14], __timestamp=[CASE(<($4, $12), $12, $4)])
-  LogicalJoin(condition=[=($13, $7)], joinType=[left])
+>>>dproduct$q$13
+LogicalProject(__pk_0=[$0], __pk_1=[$6], unit_price=[$9], category=[$16], name=[$14], __timestamp=[CASE(<($4, $13), $13, $4)])
+  LogicalJoin(condition=[=($11, $7)], joinType=[left])
     LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$5]])
       Uncollect
         LogicalProject($f0=[$cor1.entries])
           LogicalValues(tuples=[[{ 0 }]])
-    LogicalTableScan(table=[[product$q$9]])
+    LogicalFilter(condition=[=($6, 1)])
+      LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[product$q$11]])
 
 >>>orders$q$5
 LogicalTableScan(table=[[orders$i$4]])
+
+>>>product$q$11
+LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5])
+  LogicalTableScan(table=[[product$q$9]])
 
 >>>product$q$9
 LogicalTableScan(table=[[product$i$8]])
 
 >>>join-declaration-product
-JOIN PATH ON ("entries$7" AS "@") ON ("product$10" AS "Product") USING "Product"."productid" = "@"."productid" FETCH 1
+JOIN PATH ON ("entries$7" AS "@") ON ("product$12" AS "Product") USING "Product"."productid" = "@"."productid" FETCH 1

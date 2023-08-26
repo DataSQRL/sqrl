@@ -164,6 +164,27 @@ public class CalciteUtil {
     addProjection(relBuilder, ContiguousSet.closedOpen(0, numColumns).asList(), null, true);
   }
 
+  public static Optional<Integer> isCoalescedWithConstant(RexNode rexNode) {
+    if (!(rexNode instanceof RexCall)) return Optional.empty();
+    //if (!rexNode.isA(SqlKind.COALESCE)) return Optional.empty(); Doesn't work for Flink functions
+    RexCall call = (RexCall)rexNode;
+    if (!call.getOperator().isName("coalesce", false)) return Optional.empty();
+    List<RexNode> operands = call.getOperands();
+    if (operands.size()!=2) return Optional.empty();
+    if (!(operands.get(1) instanceof RexLiteral)) return Optional.empty();
+    if (!(operands.get(0) instanceof RexInputRef)) return Optional.empty();
+    return Optional.of(((RexInputRef)operands.get(0)).getIndex());
+  }
+
+  public static Optional<Integer> isEqualToConstant(RexNode rexNode) {
+    if (!rexNode.isA(SqlKind.EQUALS) && !rexNode.isA(SqlKind.IS_NULL)) return Optional.empty();
+    List<RexNode> operands = ((RexCall) rexNode).getOperands();
+    if (!(operands.get(0) instanceof RexInputRef)) return Optional.empty();
+    RexInputRef ref = (RexInputRef) operands.get(0);
+    if (rexNode.isA(SqlKind.EQUALS) && !(operands.get(1) instanceof RexLiteral)) return Optional.empty();
+    return Optional.of(ref.getIndex());
+  }
+
   public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
       List<String> fieldNames) {
     addProjection(relBuilder, selectIdx, fieldNames, false);

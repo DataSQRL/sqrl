@@ -35,7 +35,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
     LogicalStream(stream=[ADD])
       LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[$7], __pk_0=[$8], total_spend=[$9], num_orders=[$10], time=[$11], $f4=[$12], __timestamp=[CASE(<($6, $11), $11, $6)])
-        LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1]]
+        LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1, RIGHT]]
           LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
             LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
               LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])
@@ -66,7 +66,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=
 LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
   LogicalStream(stream=[ADD])
     LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[$7], __pk_0=[$8], total_spend=[$9], num_orders=[$10], time=[$11], $f4=[$12], __timestamp=[CASE(<($6, $11), $11, $6)])
-      LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1]]
+      LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1, RIGHT]]
         LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
           LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
             LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6])

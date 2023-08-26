@@ -7,6 +7,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.rules.JoinAnalysis.Side;
 import com.datasqrl.plan.table.TableType;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
@@ -67,9 +68,13 @@ class SimpleCostModel implements ComputeCost {
           if (costHintOpt.isPresent()) {
             double localCost = 0.0;
             JoinCostHint jch = costHintOpt.get();
-            localCost += perSideCost(jch.getLeftType());
-            localCost += perSideCost(jch.getRightType());
-            if (jch.getNumEqualities() == 0) {
+            if (jch.getSingletonSide()!= Side.LEFT) {
+              localCost += perSideCost(jch.getLeftType());
+            }
+            if (jch.getSingletonSide()!= Side.RIGHT) {
+              localCost += perSideCost(jch.getRightType());
+            }
+            if (jch.getSingletonSide()==Side.NONE && jch.getNumEqualities() == 0) {
               localCost *= 100;
             }
             assert localCost >= 1;

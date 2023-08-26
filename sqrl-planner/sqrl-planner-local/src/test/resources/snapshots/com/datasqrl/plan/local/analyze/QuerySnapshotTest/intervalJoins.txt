@@ -1,0 +1,27 @@
+>>>customer$q$9
+LogicalTableScan(table=[[customer$i$8]])
+
+>>>customerorders1$q$11
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], _ingest_time0=[$7])
+  LogicalJoin(condition=[AND(<($1, $7), <($7, +($1, 31504464000:INTERVAL SECOND(11))))], joinType=[inner])
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[customer$q$9]])
+
+>>>customerorders1$q$15
+LogicalProject(_uuid=[$0], ouuid=[coalesce($6, '')], id=[$8], name=[$4], _ingest_time=[$1])
+  LogicalJoin(condition=[AND(<($7, $1), <($1, +($7, 31504464000:INTERVAL SECOND(11))))], joinType=[left])
+    LogicalTableScan(table=[[customer$q$9]])
+    LogicalTableScan(table=[[orders$q$5]])
+
+>>>customerorders2$q$13
+LogicalProject(_uuid=[$0], cuuid=[coalesce($6, '')], id=[$2], name=[$10], _ingest_time=[$1])
+  LogicalJoin(condition=[AND(<($1, $7), <($7, +($1, 31504464000:INTERVAL SECOND(11))))], joinType=[left])
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[customer$q$9]])
+
+>>>orders$q$5
+LogicalTableScan(table=[[orders$i$4]])
+
+>>>product$q$2
+LogicalTableScan(table=[[product$i$1]])
+
