@@ -74,6 +74,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     if (configSupplier.usesDefault) {
       addDockerCompose();
+      addFlinkExecute();
     }
     if (isGenerateGraphql()) {
       addGraphql(packager.getBuildDir(), packager.getRootDir());
@@ -100,6 +101,18 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     try {
       Files.createDirectories(targetDir);
       Files.writeString(toFile, yml);
+    } catch (Exception e) {
+      log.error("Could not copy docker-compose file.");
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void addFlinkExecute() {
+    String sh = DockerCompose.getFlinkExecute();
+    Path toFile = targetDir.resolve("submit-flink-job.sh");
+    try {
+      Files.createDirectories(targetDir);
+      Files.writeString(toFile, sh);
     } catch (Exception e) {
       log.error("Could not copy docker-compose file.");
       throw new RuntimeException(e);
