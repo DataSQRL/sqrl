@@ -2,7 +2,7 @@ name: Build and test SQRL with Maven
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "v0.2.1-hotfix", "v0.2.1" ]
 
 jobs:
   build:
