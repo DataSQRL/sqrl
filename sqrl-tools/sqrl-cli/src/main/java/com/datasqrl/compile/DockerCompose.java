@@ -49,7 +49,7 @@ public class DockerCompose {
         + "        taskmanager.numberOfTaskSlots: 1\n"
         + "\n"
         + "  kafka:\n"
-        + "    image: docker.io/bitnami/kafka:3.4\n"
+        + "    image: docker.io/bitnami/kafka:3.4.0-debian-11-r38\n"
         + "    ports:\n"
         + "      - \"9092:9092\"\n"
         + "    volumes:\n"
@@ -58,7 +58,7 @@ public class DockerCompose {
         + "      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true\n"
         + "      - ALLOW_PLAINTEXT_LISTENER=yes\n"
         + "  kafka-setup:\n"
-        + "    image: docker.io/bitnami/kafka:3.4\n"
+        + "    image: docker.io/bitnami/kafka:3.4.0-debian-11-r38\n"
         + "    volumes:\n"
         + "      - './create-topics.sh:/create-topics.sh'\n"
         + "    command: ['/bin/bash', '/create-topics.sh']\n"
@@ -87,8 +87,7 @@ public class DockerCompose {
         + "    volumes:\n"
         + "      - ./flink-job.jar:/flink-job.jar\n"
         + "      - ./submit-flink-job.sh:/submit-flink-job.sh\n"
-        + "    entrypoint: /bin/sh -c\n"
-        + "    command: /bin/sh submit-flink-job.sh\n"
+        + "    entrypoint: /submit-flink-job.sh\n"
         + "\n"
         + "volumes:\n"
         + "  database:\n"
@@ -98,7 +97,9 @@ public class DockerCompose {
   }
 
   public static String getFlinkExecute() {
-    return "while ! curl -s http://flink-jobmanager:8081/overview | grep -q '\"taskmanagers\":1'; do\n"
+    return "#!/bin/sh\n"
+        + "\n"
+        + "while ! curl -s http://flink-jobmanager:8081/overview | grep -q '\"taskmanagers\":1'; do\n"
         + "  echo 'Waiting for Flink JobManager REST API...';\n"
         + "  sleep 5;\n"
         + "done;\n"
