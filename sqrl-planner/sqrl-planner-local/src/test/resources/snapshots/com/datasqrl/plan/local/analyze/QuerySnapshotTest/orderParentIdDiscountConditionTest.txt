@@ -8,7 +8,7 @@ LogicalTableScan(table=[[orders$i$4]])
 LogicalTableScan(table=[[product$i$8]])
 
 >>>x$q$11
-LogicalProject(__pk_0=[$6], __pk_1=[$12], _uuid0=[$17], _idx0=[$23], id=[CAST($2):BIGINT], discount=[$16], __timestamp29=[CASE(<($4, $28), $28, $4)])
+LogicalProject(_uuid2=[$0], __pk_1=[$12], _uuid0=[$17], _idx0=[$23], __pk_0=[$6], id=[CAST($2):BIGINT], discount=[$16], __timestamp29=[CASE(<($4, $28), $28, $4)])
   LogicalJoin(condition=[=($6, $0)], joinType=[inner])
     LogicalFilter(condition=[=($2, 1)])
       LogicalTableScan(table=[[orders$q$5]])

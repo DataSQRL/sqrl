@@ -4,9 +4,9 @@
 package com.datasqrl.util;
 
 import com.datasqrl.function.SqrlFunction;
-import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
@@ -37,7 +37,6 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexShuttle;
@@ -54,8 +53,6 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
-import org.apache.calcite.util.mapping.IntPair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
@@ -92,22 +89,22 @@ public class SqrlRexUtil {
     return RelOptUtil.conjunctions(condition);
   }
 
-  public EqualityComparisonDecomposition decomposeEqualityComparison(RexNode condition) {
+  public JoinConditionDecomposition decomposeJoinCondition(RexNode condition, int leftSideMaxIdx) {
     List<RexNode> conjunctions = getConjunctions(condition);
-    List<IntPair> equalities = new ArrayList<>();
+    List<EqualityCondition> equalities = new ArrayList<>();
     List<RexNode> remaining = new ArrayList<>();
     for (RexNode rex : conjunctions) {
-      Optional<IntPair> eq = getEqualityComparison(rex);
+      Optional<EqualityCondition> eq = decomposeEqualityCondition(rex, leftSideMaxIdx);
         if (eq.isPresent()) {
             equalities.add(eq.get());
         } else {
             remaining.add(rex);
         }
     }
-    return new EqualityComparisonDecomposition(equalities, remaining);
+    return new JoinConditionDecomposition(equalities, remaining);
   }
 
-  private Optional<IntPair> getEqualityComparison(RexNode predicate) {
+  private Optional<EqualityCondition> decomposeEqualityCondition(RexNode predicate, int leftSideMaxIdx) {
     if (predicate.isA(SqlKind.EQUALS)) {
       RexCall equality = (RexCall) predicate;
       Optional<Integer> leftIndex = getInputRefIndex(equality.getOperands().get(0));
@@ -115,7 +112,28 @@ public class SqrlRexUtil {
       if (leftIndex.isPresent() && rightIndex.isPresent()) {
         int leftIdx = Math.min(leftIndex.get(), rightIndex.get());
         int rightIdx = Math.max(leftIndex.get(), rightIndex.get());
-        return Optional.of(IntPair.of(leftIdx, rightIdx));
+        if (leftIdx < leftSideMaxIdx && rightIdx >= leftSideMaxIdx) {
+          return Optional.of(new EqualityCondition(leftIdx, rightIdx));
+        } else {
+          return Optional.empty();
+        }
+      }
+      RexNode otherSide;
+      int constrainedIdx;
+      if (leftIndex.isPresent()) {
+        otherSide = equality.getOperands().get(1);
+        constrainedIdx = leftIndex.get();
+      } else if (rightIndex.isPresent()) {
+        otherSide = equality.getOperands().get(0);
+        constrainedIdx = rightIndex.get();
+      } else {
+        return Optional.empty();
+      }
+      Set<Integer> refs = findAllInputRefs(List.of(otherSide));
+      if (constrainedIdx<leftSideMaxIdx && refs.stream().allMatch(idx -> idx >= leftSideMaxIdx)) {
+        return Optional.of(new EqualityCondition(constrainedIdx, EqualityCondition.NO_INDEX));
+      } else if (constrainedIdx>=leftSideMaxIdx && refs.stream().allMatch(idx -> idx<leftSideMaxIdx)) {
+        return Optional.of(new EqualityCondition(EqualityCondition.NO_INDEX, constrainedIdx));
       }
     }
     return Optional.empty();
@@ -129,10 +147,43 @@ public class SqrlRexUtil {
   }
 
   @Value
-  public static final class EqualityComparisonDecomposition {
+  public static final class JoinConditionDecomposition {
 
-    List<IntPair> equalities;
+    List<EqualityCondition> equalities;
     List<RexNode> remainingPredicates;
+
+    public List<EqualityCondition> getTwoSidedEqualities() {
+      ArrayList<EqualityCondition> result = new ArrayList<>();
+      equalities.stream().filter(EqualityCondition::isTwoSided).forEach(result::add);
+      return result;
+    }
+
+
+    @Value
+    public static final class EqualityCondition {
+
+      public static final int NO_INDEX = -1;
+
+      public int leftIndex;
+      public int rightIndex;
+
+      public EqualityCondition(int leftIndex, int rightIndex) {
+        Preconditions.checkArgument(leftIndex<rightIndex);
+        Preconditions.checkArgument(leftIndex>=0 || rightIndex>=0);
+        this.leftIndex = leftIndex;
+        this.rightIndex = rightIndex;
+      }
+
+      public boolean isTwoSided() {
+        return leftIndex>=0 && rightIndex>=0;
+      }
+
+      public int getOneSidedIndex() {
+        Preconditions.checkArgument(!isTwoSided());
+        return (leftIndex>=0)?leftIndex:rightIndex;
+      }
+
+    }
 
   }
 

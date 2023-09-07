@@ -10,7 +10,7 @@ LogicalTableScan(table=[[product$i$8]])
 >>>recent_products$q$11
 LogicalProject(__pk_0=[$0], productid=[$1], category=[$2], quantity=[$3], num_orders=[$4], __timestamp=[$5])
   LogicalAggregate(group=[{0, 1, 2}], quantity=[SUM($3)], num_orders=[COUNT()], __timestamp=[MAX($7)])
-    LogicalProject(__pk_0=[$6], productid=[$19], category=[coalesce($29, '')], quantity=[$20], _uuid0=[$12], _idx=[$18], _uuid1=[$24], __timestamp31=[CASE(<($4, $30), $30, $4)])
+    LogicalProject(__pk_0=[$6], productid=[$19], category=[coalesce($29, '')], quantity=[$20], _uuid3=[$0], _idx=[$18], _uuid1=[$24], __timestamp31=[CASE(<($4, $30), $30, $4)])
       LogicalJoin(condition=[=($12, $0)], joinType=[inner])
         LogicalFilter(condition=[<(NOW(), +($4, 31536000000:INTERVAL SECOND(11)))])
           LogicalTableScan(table=[[orders$q$5]])

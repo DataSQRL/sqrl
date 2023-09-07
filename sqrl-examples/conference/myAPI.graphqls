@@ -17,7 +17,7 @@ interface AbstractEvents {
 }
 
 type LikeCount {
-    num : Int!
+    num : Int
 }
 
 type Events implements AbstractEvents{

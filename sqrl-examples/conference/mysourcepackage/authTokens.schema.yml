@@ -11,7 +11,7 @@ columns:
   type: "STRING"
   tests:
   - "not_null"
-- name: "timestamp"
+- name: "last_updated"
   type: "DATETIME"
   tests:
   - "not_null"
