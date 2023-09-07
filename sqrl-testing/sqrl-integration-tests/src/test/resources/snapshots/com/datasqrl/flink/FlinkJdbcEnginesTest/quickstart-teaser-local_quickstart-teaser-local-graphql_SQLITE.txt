@@ -1,10 +1,11 @@
 >>>database
+CREATE INDEX IF NOT EXISTS orders$3_hash_c3 ON orders$3 ("customerid")
 CREATE INDEX IF NOT EXISTS orders$3_hash_c4 ON orders$3 ("time")
-CREATE TABLE IF NOT EXISTS "items$4" ("_uuid" VARCHAR NOT NULL,"_idx" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"unit_price" DOUBLE NOT NULL,"discount" DOUBLE ,"total" DOUBLE NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("_uuid","_idx"));
-CREATE TABLE IF NOT EXISTS "orders$3" ("_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "spending$10" ("__pk_0" BIGINT NOT NULL,"week" INTEGER NOT NULL,"spend" DOUBLE NOT NULL,"saved" DOUBLE NOT NULL , PRIMARY KEY ("__pk_0","week"));
-CREATE TABLE IF NOT EXISTS "totals$6" ("__pk_0" VARCHAR NOT NULL,"price" DOUBLE NOT NULL,"saving" DOUBLE NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("__pk_0"));
-CREATE TABLE IF NOT EXISTS "users$8" ("id" BIGINT NOT NULL,"time" INTEGER NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "items$4" ("_uuid" varchar not null,"_idx" bigint not null,"productid" bigint not null,"quantity" bigint not null,"unit_price" double not null,"discount" double,"total" double not null,"time" integer not null , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS "orders$3" ("_uuid" varchar not null,"_ingest_time" integer not null,"id" bigint not null,"customerid" bigint not null,"time" integer not null , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "spending$10" ("__id$pk$1" bigint not null,"week" integer not null,"spend" double not null,"saved" double not null , PRIMARY KEY ("__id$pk$1","week"));
+CREATE TABLE IF NOT EXISTS "totals$6" ("___uuid$pk$1" varchar not null,"price" double not null,"saving" double not null,"time" integer not null , PRIMARY KEY ("___uuid$pk$1"));
+CREATE TABLE IF NOT EXISTS "users$8" ("id" bigint not null,"time" integer not null , PRIMARY KEY ("id"));
 >>>query-orders
 {
   "data" : {

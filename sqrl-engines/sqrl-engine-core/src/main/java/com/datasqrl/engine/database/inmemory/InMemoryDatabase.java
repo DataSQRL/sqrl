@@ -5,6 +5,7 @@ package com.datasqrl.engine.database.inmemory;
 
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -19,7 +20,6 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import org.apache.calcite.tools.RelBuilder;
 
 /**
  * Just a stub for now - not yet functional
@@ -38,7 +38,7 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
 
   @Override
   public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
+                                 ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }
 

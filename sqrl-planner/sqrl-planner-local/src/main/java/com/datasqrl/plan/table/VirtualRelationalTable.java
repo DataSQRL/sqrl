@@ -3,13 +3,17 @@
  */
 package com.datasqrl.plan.table;
 
+import com.datasqrl.calcite.ModifiableSqrlTable;
+import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.plan.table.AddedColumn.Simple;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.schema.TableVisitor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,16 +22,21 @@ import java.util.Optional;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import org.apache.calcite.linq4j.QueryProvider;
+import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.QueryableTable;
+import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.util.ImmutableBitSet;
 
 /**
  * A relational table that represents the relational equivalent of a
- * {@link com.datasqrl.schema.SQRLTable}.
+ * {@link SQRLTable}.
  * <p>
  * While the SQRLTable represents the logical table that a user defines in an SQRL script, the
  * associated {@link VirtualRelationalTable} represents the relational representation of that same
@@ -36,7 +45,9 @@ import org.apache.calcite.util.ImmutableBitSet;
  * on SQRLTables are converted to JOINs between virtual tables.
  */
 @Getter
-public abstract class VirtualRelationalTable extends AbstractRelationalTable {
+public abstract class VirtualRelationalTable extends AbstractRelationalTable implements
+    QueryableTable,
+    ModifiableSqrlTable {
 
   protected final int numLocalPks;
   @NonNull
@@ -134,9 +145,27 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
 
   public abstract TableStatistic getTableStatistic();
 
+  @Override
+  public void addColumn(String name, RexNode column, RelDataTypeFactory typeFactory) {
+    Optional<Integer> timestampScore = CalciteTableFactory.getTimestampScore(
+        Name.system(name), column.getType());
+
+    addColumn(new Simple(name, column), typeFactory, timestampScore);
+  }
+
+  @Override
+  public <T> Queryable<T> asQueryable(QueryProvider queryProvider, SchemaPlus schemaPlus,
+      String s) {
+    return null;
+  }
+
+  @Override
+  public Type getElementType() {
+    return null;
+  }
 
   @Getter
-  public static class Root extends VirtualRelationalTable {
+  public static class Root extends VirtualRelationalTable implements TimestampAssignableTable {
 
     @NonNull
     final ScriptRelationalTable base;
@@ -182,6 +211,12 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable {
 
     public <R, C> R accept(RootVirtualTableVisitor<R, C> visitor, C context) {
       return visitor.visit(this, context);
+    }
+
+    @Override
+    public void
+    assignTimestamp(int index) {
+      getBase().getTimestamp().getCandidateByIndex(index == -1 ? getBase().getNumColumns() - 1 : index).lockTimestamp();
     }
 
     public interface RootVirtualTableVisitor<R, C> extends TableVisitor<R, C> {

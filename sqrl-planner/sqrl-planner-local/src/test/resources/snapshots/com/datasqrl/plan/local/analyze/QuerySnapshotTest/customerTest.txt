@@ -8,6 +8,6 @@ LogicalTableScan(table=[[orders$i$4]])
 LogicalTableScan(table=[[product$i$8]])
 
 >>>x$q$11
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5])
   LogicalTableScan(table=[[customer$q$2]])
 

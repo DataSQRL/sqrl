@@ -1,10 +1,8 @@
 package com.datasqrl.kafka;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.engine.EngineCapability;
-import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.*;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -22,7 +20,6 @@ import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.common.internals.Topic;
@@ -78,7 +75,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      RelBuilder relBuilder, TableSink errorSink) {
+      SqrlFramework relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(plan instanceof LogStagePlan);
     return new KafkaPhysicalPlan(this.config.getConfig(),
         ((LogStagePlan) plan).getLogs().stream()

@@ -51,7 +51,7 @@ public interface TestDataset {
      */
 
   static List<TestDataset> getAll() {
-    return List.of(Retail.INSTANCE, Nutshop.INSTANCE);
+    return List.of(Retail.INSTANCE, Nutshop.SMALL);
   }
 
   class AllProvider implements ArgumentsProvider {

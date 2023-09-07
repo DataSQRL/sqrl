@@ -22,8 +22,8 @@ LogicalProject(_uuid=[$0], id=[$1], customerid=[$2], time=[$3])
               LogicalTableScan(table=[[customer$i$1]])
 
 >>>distinctorders$20-lp-stream
-LogicalProject(__pk_0=[$0], id=[$1], time=[$2])
-  LogicalProject(__pk_0=[$6], id=[$2], time=[$4])
+LogicalProject(__customerid$pk$1=[$0], id=[$1], time=[$2])
+  LogicalProject(__customerid$pk$1=[$6], id=[$2], time=[$4])
     LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
       LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
       LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
@@ -33,8 +33,8 @@ LogicalProject(__pk_0=[$0], id=[$1], time=[$2])
               LogicalTableScan(table=[[customer$i$1]])
 
 >>>distinctorderstime$22-lp-stream
-LogicalProject(__pk_0=[$0], id=[$1], time=[$2])
-  LogicalProject(__pk_0=[$6], id=[$2], time=[$4])
+LogicalProject(__customerid$pk$1=[$0], id=[$1], time=[$2])
+  LogicalProject(__customerid$pk$1=[$6], id=[$2], time=[$4])
     LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
       LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
       LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
@@ -78,16 +78,16 @@ LogicalSort(sort0=[$3], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 
 >>>distinctorders-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(__pk_0=[$0], id=[$1], time=[$2])
+  LogicalProject(__customerid$pk$1=[$0], id=[$1], time=[$2])
     LogicalFilter(condition=[AND(=($3, $4), <=($5, 10))])
-      LogicalProject(__pk_0=[$0], id=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)], $f4=[RANK() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)], $f5=[DENSE_RANK() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)])
+      LogicalProject(__customerid$pk$1=[$0], id=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)], $f4=[RANK() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)], $f5=[DENSE_RANK() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)])
         LogicalTableScan(table=[[distinctorders$20]])
 
 >>>distinctorderstime-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], sort2=[$2], dir0=[ASC], dir1=[ASC], dir2=[ASC])
-  LogicalProject(__pk_0=[$0], id=[$1], time=[$2])
+  LogicalProject(__customerid$pk$1=[$0], id=[$1], time=[$2])
     LogicalFilter(condition=[AND(=($3, $4), <=($5, 10))])
-      LogicalProject(__pk_0=[$0], id=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)], $f4=[RANK() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)], $f5=[DENSE_RANK() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)])
+      LogicalProject(__customerid$pk$1=[$0], id=[$1], time=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)], $f4=[RANK() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)], $f5=[DENSE_RANK() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)])
         LogicalTableScan(table=[[distinctorderstime$22]])
 
 >>>entries-lp-database

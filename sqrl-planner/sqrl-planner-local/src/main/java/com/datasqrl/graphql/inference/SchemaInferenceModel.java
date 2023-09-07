@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.SqrlSchemaFunction;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.schema.Column;
@@ -12,8 +13,8 @@ import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+
 import lombok.ToString;
 import lombok.Value;
 
@@ -141,6 +142,7 @@ public class SchemaInferenceModel {
   @ToString
   public static class InferredObjectField implements InferredField {
 
+    SQRLTable parentTable;
     ObjectTypeDefinition parent;
     FieldDefinition fieldDefinition;
     ObjectTypeDefinition objectTypeDefinition;
@@ -149,6 +151,20 @@ public class SchemaInferenceModel {
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
       return visitor.visitObjectField(this, context);
+    }
+  }
+  @Value
+  @ToString
+  public static class InferredFunctionField implements InferredField {
+
+    ObjectTypeDefinition parent;
+    FieldDefinition fieldDefinition;
+    ObjectTypeDefinition objectTypeDefinition;
+    SqrlSchemaFunction function;
+
+    @Override
+    public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
+      return visitor.visitFunctionField(this, context);
     }
   }
 
@@ -200,6 +216,8 @@ public class SchemaInferenceModel {
     R visitPagedField(InferredPagedField field, C context);
 
     R visitNestedField(NestedField field, C context);
+
+    R visitFunctionField(InferredFunctionField inferredFunctionField, C context);
   }
 
   @Value

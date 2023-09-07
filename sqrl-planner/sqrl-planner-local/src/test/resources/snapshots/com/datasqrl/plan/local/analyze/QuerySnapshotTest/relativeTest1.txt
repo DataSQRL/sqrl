@@ -1,5 +1,5 @@
 >>>d2$q$5
-LogicalProject(__pk_0=[$0], __pk_1=[$6], discount=[$10], time=[$4])
+LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], discount=[$10], time=[$4])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])
     Uncollect

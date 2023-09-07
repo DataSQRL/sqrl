@@ -14,6 +14,7 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
@@ -37,6 +38,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   public static final String FUNCTION_JSON = ".function.json";
   ResourceResolver resourceResolver;
   ErrorCollector errors;
+  CalciteTableFactory tableFactory;
 
   final static Deserializer SERIALIZER = new Deserializer();
 
@@ -90,7 +92,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
       case source:
         return new DataSource()
             .readTableSource(tableSchema.get(), tableConfig, errors, basePath)
-            .map(TableSourceNamespaceObject::new)
+            .map(t->new TableSourceNamespaceObject(t, tableFactory))
             .map(t->(TableNamespaceObject) t)
             .map(List::of)
             .orElse(List.of());
@@ -105,7 +107,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
             .get();
         TableSink sink = new DataSource().readTableSink(tableSchema, tableConfig, basePath)
             .get();
-        return List.of(new TableSourceSinkNamespaceObject(source, sink));
+        return List.of(new TableSourceSinkNamespaceObject(source, sink, tableFactory));
       default:
         throw new RuntimeException("Unknown table type: "+ tableConfig.getBase().getType());
     }

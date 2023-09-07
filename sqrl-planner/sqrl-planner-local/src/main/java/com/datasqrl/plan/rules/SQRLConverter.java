@@ -4,11 +4,10 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.WatermarkHint;
 import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.table.AddedColumn;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.QueryRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
 import com.datasqrl.plan.table.ScriptTable;
 import com.google.common.base.Preconditions;
@@ -61,8 +60,8 @@ public class SQRLConverter {
       AnnotatedLP alp = convert(tblFct.getAnalyzedLP().getOriginalRelnode(), config, errors);
       return alp.getRelNode();
     } else { //either QueryRelationalTable or ComputeTableFunction
-      QueryRelationalTable queryTable = (table instanceof ComputeTableFunction)
-          ?((ComputeTableFunction)table).getQueryTable():(QueryRelationalTable) table;
+      QueryRelationalTable queryTable = (table instanceof QueryTableFunction)
+          ?((QueryTableFunction)table).getQueryTable():(QueryRelationalTable) table;
       AnnotatedLP alp = convert(queryTable.getOriginalRelnode(), config, errors);
       RelBuilder builder = relBuilder.push(alp.getRelNode());
       addColumns(builder, queryTable.getAddedColumns(), exec);

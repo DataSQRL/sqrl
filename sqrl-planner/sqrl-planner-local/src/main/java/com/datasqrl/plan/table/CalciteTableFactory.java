@@ -3,12 +3,12 @@
  */
 package com.datasqrl.plan.table;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.plan.local.generate.SqrlTableNamespaceObject;
 import com.datasqrl.plan.rules.AnnotatedLP;
@@ -18,50 +18,50 @@ import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
-import com.datasqrl.schema.TypeFactory;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.sql.TableFunctionArgument;
+import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-@Singleton
 public class CalciteTableFactory {
+  @Getter
+  SqrlFramework framework;
 
-  private final AtomicInteger tableIdCounter = new AtomicInteger(0);
-  private final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM; //TODO: make constructor argument and configure correctly
+  @Getter
+  private final NameCanonicalizer canonicalizer;
   private final RelDataTypeFactory typeFactory;
 
   @Inject
-  public CalciteTableFactory() {
-    this.typeFactory = TypeFactory.getTypeFactory();
+  public CalciteTableFactory(SqrlFramework framework, NameCanonicalizer nameCanonicalizer) {
+    this.typeFactory = framework.getTypeFactory();
+    this.framework = framework;
+    this.canonicalizer = nameCanonicalizer;
   }
 
-  private Name getTableId(@NonNull Name name) {
-    return getTableId(name, null);
+  private Name createTableId(@NonNull Name name) {
+    return createTableId(name, null);
   }
 
-  private Name getTableId(@NonNull Name name, String type) {
+  private Name createTableId(@NonNull Name name, String type) {
     if (!StringUtils.isEmpty(type)) {
       name = name.suffix(type);
     }
-    return name.suffix(Integer.toString(tableIdCounter.incrementAndGet()));
+    return name.suffix(Integer.toString(framework.getUniqueTableInt().incrementAndGet()));
   }
 
   public static int getTableOrdinal(String tableId) {
@@ -78,9 +78,9 @@ public class CalciteTableFactory {
     RelDataType rootType = convertTable(rootTable, true, true);
     //Currently, we only support imports through the stream engine
     ImportedRelationalTableImpl source = new ImportedRelationalTableImpl(
-        getTableId(rootTable.getName(), "i"), rootType, tableSource);
+        createTableId(rootTable.getName(), "i"), rootType, tableSource);
     ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(
-        getTableId(rootTable.getName(), "q"), rootTable.getName(),
+        createTableId(rootTable.getName(), "q"), rootTable.getName(),
         getTimestampHolder(rootTable), rootType, source,
         TableStatistic.of(1000));
 
@@ -94,7 +94,7 @@ public class CalciteTableFactory {
     ContinuousIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
-    Name tableid = getTableId(tablePath.getLast(), "q");
+    Name tableid = createTableId(tablePath.getLast(), "q");
     ScriptRelationalTable baseTable = new QueryRelationalTable(tableid, tablePath.getLast(), analyzedLP);
 
     LinkedHashMap<Integer, Name> index2Name = new LinkedHashMap<>();
@@ -105,7 +105,7 @@ public class CalciteTableFactory {
         baseTable.getNumPrimaryKeys(), index2Name);
 
     Optional<Pair<SQRLTable, Multiplicity>> parent = parentTable.map(pp ->
-        Pair.of(pp, pp.getVt().getNumPrimaryKeys() == baseTable.getNumPrimaryKeys() ?
+        Pair.of(pp, pp.getNumPrimaryKeys() == baseTable.getNumPrimaryKeys() ?
             Multiplicity.ZERO_ONE : Multiplicity.MANY)
     );
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable,
@@ -208,20 +208,24 @@ public class CalciteTableFactory {
     }
   }
 
-  @Value
+  @Getter
   private final class VirtualTableConstructor {
 
     ScriptRelationalTable baseTable;
 
+    public VirtualTableConstructor(ScriptRelationalTable baseTable) {
+      this.baseTable = baseTable;
+    }
+
     public VirtualRelationalTable make(@NonNull UniversalTable tblBuilder) {
       RelDataType rowType = convertTable(tblBuilder, false, false);
-      return new VirtualRelationalTable.Root(getTableId(tblBuilder.getName()), rowType, baseTable);
+      return new VirtualRelationalTable.Root(createTableId(tblBuilder.getName()), rowType, baseTable);
     }
 
     public VirtualRelationalTable make(@NonNull UniversalTable tblBuilder,
         VirtualRelationalTable parent, Name shredFieldName) {
       RelDataType rowType = convertTable(tblBuilder, false, false);
-      return VirtualRelationalTable.Child.of(getTableId(tblBuilder.getName()), rowType, parent,
+      return VirtualRelationalTable.Child.of(createTableId(tblBuilder.getName()), rowType, parent,
           shredFieldName.getCanonical());
     }
   }
@@ -252,7 +256,7 @@ public class CalciteTableFactory {
     } else {
       vTable = vtableBuilder.make(builder, vParent, childRel.getId());
     }
-    SQRLTable tbl = new SQRLTable(builder.getPath());
+    SQRLTable tbl = new SQRLTable(builder.getPath(), vTable, vTable.getNumPrimaryKeys());
     createdTables.put(tbl, vTable);
     if (parent != null) {
       //Add child relationship
@@ -282,7 +286,7 @@ public class CalciteTableFactory {
     if (childTable.getField(parentRelationshipName).isEmpty()) {
       return Optional.of(childTable.addRelationship(parentRelationshipName, parentTable,
           Relationship.JoinType.PARENT,
-          Multiplicity.ONE, Optional.empty()));
+          Multiplicity.ONE));
     }
     return Optional.empty();
   }
@@ -292,13 +296,13 @@ public class CalciteTableFactory {
       SQRLTable parentTable,
       Multiplicity multiplicity) {
     return parentTable.addRelationship(childName, childTable,
-        Relationship.JoinType.CHILD, multiplicity, Optional.empty());
+        Relationship.JoinType.CHILD, multiplicity);
   }
 
   public SqrlTableNamespaceObject createTable(NamePath namePath, LPAnalysis analyzedLP,
-                                      Optional<SQRLTable> parentTable) {
+                                      Optional<SQRLTable> parentTable, SqrlTableFunctionDef args) {
     return new SqrlTableNamespaceObject(namePath.getLast(),
-        createScriptDef(namePath, analyzedLP, parentTable));
+        createScriptDef(namePath, analyzedLP, parentTable), this, args);
   }
 
   public ScriptTableDefinition createScriptDef(NamePath namePath, LPAnalysis analyzedLP, Optional<SQRLTable> parentTable) {

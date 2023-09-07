@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.util.StreamUtil;
@@ -14,7 +15,7 @@ import org.apache.calcite.tools.RelBuilder;
 
 @AllArgsConstructor
 public class PhysicalPlanner {
-  RelBuilder relBuilder;
+  SqrlFramework framework;
   TableSink errorSink;
 
   public PhysicalPlan plan(PhysicalDAGPlan plan) {
@@ -27,7 +28,7 @@ public class PhysicalPlanner {
           .filter(sink -> sink.getStage().equals(stagePlan.getStage()))
           .collect(Collectors.toList());
       EnginePhysicalPlan physicalPlan = stagePlan.getStage().getEngine().plan(stagePlan, inputs,
-          plan.getPipeline(), relBuilder, errorSink);
+          plan.getPipeline(), framework, errorSink);
       physicalStages.add(new PhysicalPlan.StagePlan(stagePlan.getStage(), physicalPlan));
     }
 

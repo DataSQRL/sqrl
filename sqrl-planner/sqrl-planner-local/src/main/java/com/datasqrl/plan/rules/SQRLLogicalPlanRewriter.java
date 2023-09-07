@@ -21,7 +21,7 @@ import com.datasqrl.plan.hints.TemporalJoinHint;
 import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.hints.TumbleAggregationHint;
 import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.model.LogicalStreamMetaData;
@@ -66,7 +66,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -201,13 +200,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     final TimestampHolder.Derived timestamp;
     if (tblFct instanceof AccessTableFunction) {
       AccessTableFunction accessFct = (AccessTableFunction) tblFct;
-      VirtualRelationalTable vTable = accessFct.getTable().getVt();
+      VirtualRelationalTable vTable = (VirtualRelationalTable) accessFct.getTable().getVt();
       Preconditions.checkArgument(vTable.isRoot());
       numColumns = vTable.getNumColumns();
       numPrimaryKeys = vTable.getNumPrimaryKeys();
       timestamp = TimestampHolder.Base.ofDerived(inputALP.getTimestamp()).getDerived();
     } else {
-      ComputeTableFunction computeFct = (ComputeTableFunction) tblFct;
+      QueryTableFunction computeFct = (QueryTableFunction) tblFct;
       QueryRelationalTable queryTable = computeFct.getQueryTable();
       numPrimaryKeys = queryTable.getNumPrimaryKeys();
       numColumns = queryTable.getNumColumns();

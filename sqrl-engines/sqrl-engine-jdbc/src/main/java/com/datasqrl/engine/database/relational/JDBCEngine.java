@@ -5,6 +5,7 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -28,7 +29,6 @@ import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -36,13 +36,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.tools.RelBuilder;
 
 @Slf4j
 public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
@@ -110,8 +108,9 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   }
 
   @Override
-  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
+  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan,
+      List<PhysicalDAGPlan.StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
+      TableSink errorSink) {
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
     DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
     JdbcDDLFactory factory =
@@ -127,8 +126,10 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
             .map(factory::createIndex)
             .forEach(ddlStatements::add);
 
-    QueryBuilder queryBuilder = new QueryBuilder(relBuilder.getRexBuilder());
-    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(dbPlan.getQueries());
+    QueryBuilder queryBuilder = new QueryBuilder(framework.getQueryPlanner().getRexBuilder());
+    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(
+        dbPlan.getQueries());
+
     return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
   }
 }

@@ -1,6 +1,6 @@
 >>>database
-CREATE TABLE IF NOT EXISTS "recommendation$9" ("url" VARCHAR NOT NULL,"rec" VARCHAR NOT NULL,"frequency" BIGINT NOT NULL,"timestamp" INTEGER NOT NULL , PRIMARY KEY ("url","rec"));
-CREATE TABLE IF NOT EXISTS "trending$5" ("url" VARCHAR NOT NULL,"total" BIGINT NOT NULL,"timestamp" INTEGER NOT NULL , PRIMARY KEY ("url"));
+CREATE TABLE IF NOT EXISTS "recommendation$9" ("url" varchar not null,"rec" varchar not null,"frequency" bigint not null,"timestamp" integer not null , PRIMARY KEY ("url","rec"));
+CREATE TABLE IF NOT EXISTS "trending$5" ("url" varchar not null,"total" bigint not null,"timestamp" integer not null , PRIMARY KEY ("url"));
 >>>query-recommendation
 {
   "data" : {

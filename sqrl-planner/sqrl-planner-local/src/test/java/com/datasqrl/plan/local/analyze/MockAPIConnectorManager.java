@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.Value;
-import org.apache.commons.lang3.tuple.Pair;
 
 @Value
 public class MockAPIConnectorManager implements APIConnectorManager {

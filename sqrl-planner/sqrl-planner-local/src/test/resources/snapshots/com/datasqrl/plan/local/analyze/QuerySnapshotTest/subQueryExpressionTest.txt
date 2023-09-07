@@ -5,9 +5,7 @@ LogicalTableScan(table=[[product$i$1]])
 LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
   LogicalFilter(condition=[=($2, $SCALAR_QUERY({
 LogicalProject(productid=[$2])
-  LogicalTableScan(table=[[product$3]])
+  LogicalTableFunctionScan(invocation=[Product$1()], rowType=[RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, BIGINT productid, VARCHAR(32767) name, VARCHAR(32767) description, VARCHAR(32767) category)], elementType=[class java.lang.Object])
 }))])
     LogicalTableScan(table=[[product$q$2]])
 
->>>join-declaration-joinDeclaration
-JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "Product") USING "@"."productid" = "Product"."productid"

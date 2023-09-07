@@ -6,13 +6,10 @@ package com.datasqrl.plan.table;
 import com.datasqrl.canonicalizer.Name;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
-import org.apache.calcite.linq4j.QueryProvider;
-import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.QueryableTable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.impl.AbstractTable;
@@ -24,7 +21,7 @@ import org.apache.calcite.schema.impl.AbstractTable;
  * logical SQRL tables that users import or define in their scripts.
  */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public abstract class AbstractRelationalTable extends AbstractTable implements QueryableTable,
+public abstract class AbstractRelationalTable extends AbstractTable implements
     TableWithPK, Comparable<AbstractRelationalTable> {
 
   @EqualsAndHashCode.Include
@@ -51,18 +48,6 @@ public abstract class AbstractRelationalTable extends AbstractTable implements Q
 
   public Expression getExpression(SchemaPlus schema, String tableName, Class clazz) {
     return Schemas.tableExpression(schema, Object[].class, tableName, clazz);
-  }
-
-  //This is only here so calcite can set up the correct model
-  @Override
-  public <T> Queryable<T> asQueryable(QueryProvider queryProvider, SchemaPlus schema,
-      String tableName) {
-    throw new RuntimeException("");
-  }
-
-  @Override
-  public java.lang.reflect.Type getElementType() {
-    return Object[].class;
   }
 
   @Override

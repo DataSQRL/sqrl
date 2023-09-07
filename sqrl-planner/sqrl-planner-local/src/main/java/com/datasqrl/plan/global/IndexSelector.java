@@ -5,10 +5,10 @@ package com.datasqrl.plan.global;
 
 import static com.datasqrl.plan.OptimizationStage.READ_QUERY_OPTIMIZATION;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.OptimizationStage;
 import com.datasqrl.plan.RelStageRunner;
-import com.datasqrl.plan.SqrlPlannerConfigFactory;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.util.SqrlRexUtil;
@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.adapter.enumerable.EnumerableCalc;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.plan.RelOptPlanner;
@@ -44,11 +45,12 @@ public class IndexSelector {
 
   private static final double EPSILON = 0.00001d;
 
-  private final RelOptPlanner planner;
+  private final SqrlFramework framework;
   private final IndexSelectorConfig config;
 
   public List<QueryIndexSummary> getIndexSelection(PhysicalDAGPlan.ReadQuery query) {
-    RelNode optimized = RelStageRunner.runStage(READ_QUERY_OPTIMIZATION, query.getRelNode(), planner);
+    RelNode optimized = RelStageRunner.runStage(READ_QUERY_OPTIMIZATION, query.getRelNode(), framework.getQueryPlanner()
+        .getPlanner());
 //        System.out.println(optimized.explain());
     IndexFinder indexFinder = new IndexFinder();
     return indexFinder.find(optimized);
@@ -253,7 +255,7 @@ public class IndexSelector {
 
     List<QueryIndexSummary> queryIndexSummaries = new ArrayList<>();
     int paramIndex = PARAM_OFFSET;
-    SqrlRexUtil rexUtil = new SqrlRexUtil(SqrlPlannerConfigFactory.createSqrlTypeFactory());
+    SqrlRexUtil rexUtil = new SqrlRexUtil(framework.getTypeFactory());
 
     @Override
     public void visit(RelNode node, int ordinal, RelNode parent) {
@@ -264,7 +266,8 @@ public class IndexSelector {
         //Push join filter into right
         RexNode nestedCondition = pushJoinConditionIntoRight(join);
         right = EnumerableFilter.create(right, nestedCondition);
-        right = RelStageRunner.runStage(OptimizationStage.PUSH_DOWN_FILTERS, right, planner);
+        right = RelStageRunner.runStage(OptimizationStage.PUSH_DOWN_FILTERS, right, framework.getQueryPlanner()
+            .getPlanner());
         visit(right, 1, node);
       } else if (node instanceof TableScan && parent instanceof Filter) {
         VirtualRelationalTable table = ((TableScan) node).getTable()

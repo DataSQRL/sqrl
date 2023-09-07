@@ -33,6 +33,12 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
     return elements;
   }
 
+  public List<String> toStringList() {
+    return Arrays.stream(this.elements)
+        .map(n->n.getDisplay())
+        .collect(Collectors.toList());
+  }
+
   private static final class Constructor extends AbstractPath.Constructor<Name, NamePath> {
 
     @Override

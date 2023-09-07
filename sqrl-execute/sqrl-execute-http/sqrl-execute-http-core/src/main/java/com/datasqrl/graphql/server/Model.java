@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Singular;
+import lombok.ToString;
 
 public class Model {
 
@@ -177,6 +178,7 @@ public class Model {
   @Setter
   @AllArgsConstructor
   @NoArgsConstructor
+  @ToString
   public static class ArgumentSet {
 
     //The may be empty for no-args
@@ -314,6 +316,7 @@ public class Model {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
+  @ToString
   public static class FixedArgument implements Argument {
 
     final String type = "fixed";
@@ -373,6 +376,7 @@ public class Model {
   @AllArgsConstructor
   @NoArgsConstructor
   @Builder
+  @ToString
   public static class SourceParameter implements JdbcParameterHandler {
 
     final String type = "source";
@@ -387,6 +391,7 @@ public class Model {
   @AllArgsConstructor
   @NoArgsConstructor
   @Builder
+  @ToString
   public static class ArgumentParameter implements JdbcParameterHandler {
 
     final String type = "arg";

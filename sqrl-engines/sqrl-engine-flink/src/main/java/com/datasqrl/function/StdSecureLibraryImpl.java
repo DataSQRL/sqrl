@@ -5,7 +5,6 @@ package com.datasqrl.function;
 
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.SecureFunctions;
-import com.datasqrl.TextFunctions;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.NamespaceObject;
 import com.google.auto.service.AutoService;

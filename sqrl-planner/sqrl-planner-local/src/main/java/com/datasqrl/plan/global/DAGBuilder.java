@@ -10,7 +10,6 @@ import com.datasqrl.plan.rules.ExecutionAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.rules.SimpleCostModel;
-import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.global.SqrlDAG.QueryNode;
 import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
@@ -31,6 +30,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
+
+import static com.datasqrl.plan.global.DAGAssembler.getExportBaseConfig;
 
 /**
  * Assembles the DAG from the sinks and tables
@@ -62,8 +63,8 @@ public class DAGBuilder {
     errors.checkFatal(!exportStages.isEmpty(), "Configured Pipeline does not include "
         + "any stages that support export: %s",pipeline);
     for (ResolvedExport export : exports) {
-      String name = Name.addSuffix(export.getTable().getNameId(), String.valueOf(numExports++));
-      add2DAG(export.getRelNode(), export.getBaseConfig(), exportStages, dagInputs,
+      String name = Name.addSuffix(export.getTable(), String.valueOf(numExports++));
+      add2DAG(export.getRelNode(), getExportBaseConfig(), exportStages, dagInputs,
           stageAnalysis -> new ExportNode(stageAnalysis, export, name), table2Node);
     }
     return new SqrlDAG(dagInputs);

@@ -1,15 +1,32 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.module.TableNamespaceObject;
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.local.ScriptTableDefinition;
-import lombok.NonNull;
-import lombok.Value;
+import com.datasqrl.plan.table.CalciteTableFactory;
+import lombok.Getter;
 
-@Value
-public class SqrlTableNamespaceObject implements TableNamespaceObject<ScriptTableDefinition> {
-  @NonNull
-  Name name;
-  @NonNull
-  ScriptTableDefinition table;
+import java.util.Optional;
+import org.apache.calcite.sql.SqrlTableFunctionDef;
+
+@Getter
+public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<ScriptTableDefinition> {
+  private final Name name;
+  private final ScriptTableDefinition table;
+  private final SqrlTableFunctionDef args;
+
+  public SqrlTableNamespaceObject(Name name, ScriptTableDefinition table, CalciteTableFactory tableFactory,
+      SqrlTableFunctionDef args) {
+    super(tableFactory, Optional.of(args));
+    this.name = name;
+    this.table = table;
+    this.args = args;
+  }
+
+  @Override
+  public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
+    registerScriptTable(table, framework);
+    return true;
+  }
 }

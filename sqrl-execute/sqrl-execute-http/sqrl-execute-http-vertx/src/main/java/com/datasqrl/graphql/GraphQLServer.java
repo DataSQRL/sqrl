@@ -6,6 +6,7 @@ package com.datasqrl.graphql;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
 
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
@@ -53,16 +54,18 @@ public class GraphQLServer extends AbstractVerticle {
   private final RootGraphqlModel model;
   private final int port;
   private final JdbcDataSystemConnector jdbc;
+  private final NameCanonicalizer canonicalizer;
 
   public GraphQLServer() {
-    this(readModel(), 8888, createClient());
+    this(readModel(), 8888, createClient(), NameCanonicalizer.SYSTEM);
   }
 
   public GraphQLServer(RootGraphqlModel model,
-      int port, JdbcDataSystemConnector jdbc) {
+      int port, JdbcDataSystemConnector jdbc, NameCanonicalizer canonicalizer) {
     this.model = model;
     this.port = port;
     this.jdbc = jdbc;
+    this.canonicalizer = canonicalizer;
   }
 
   @SneakyThrows
@@ -173,7 +176,7 @@ public class GraphQLServer extends AbstractVerticle {
     GraphQL graphQL = model.accept(
         new BuildGraphQLEngine(),
         new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
-            constructSubscriptions(model, vertx)));
+            constructSubscriptions(model, vertx), canonicalizer));
     return graphQL;
   }
 

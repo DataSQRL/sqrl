@@ -1,8 +1,0 @@
->>>errors
-[FATAL] Complex columns not yet supported
-in script:test.sqrl [3:1]:
-IMPORT ecommerce-data.Product;
-Product.joinDeclaration := JOIN Product ON @.productid = Product.productid LIMIT 1;
-Product.total := COALESCE(joinDeclaration.productid, 1000);
-^
-

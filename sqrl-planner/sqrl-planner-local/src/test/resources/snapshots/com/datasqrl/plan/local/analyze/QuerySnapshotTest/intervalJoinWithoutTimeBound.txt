@@ -1,7 +1,0 @@
->>>errors
-[FATAL] Interval joins require time bounds on the timestamp columns in the join condition.
-in script:test.sqrl [2:1]:
-IMPORT ecommerce-data.*;
-CustomerOrders := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o.customerid=c.customerid;
-^
-

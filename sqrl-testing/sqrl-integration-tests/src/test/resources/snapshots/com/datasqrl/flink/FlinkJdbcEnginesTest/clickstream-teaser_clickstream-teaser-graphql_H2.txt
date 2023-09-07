@@ -1,6 +1,6 @@
 >>>database
-CREATE TABLE IF NOT EXISTS "recommendation$9" ("url" CHARACTER VARYING NOT NULL,"rec" CHARACTER VARYING NOT NULL,"frequency" BIGINT NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("url","rec"));
-CREATE TABLE IF NOT EXISTS "trending$5" ("url" CHARACTER VARYING NOT NULL,"total" BIGINT NOT NULL,"timestamp" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("url"));
+CREATE TABLE IF NOT EXISTS "recommendation$9" ("url" character varying not null,"rec" character varying not null,"frequency" bigint not null,"timestamp" timestamp(9) with time zone not null , PRIMARY KEY ("url","rec"));
+CREATE TABLE IF NOT EXISTS "trending$5" ("url" character varying not null,"total" bigint not null,"timestamp" timestamp(9) with time zone not null , PRIMARY KEY ("url"));
 >>>query-recommendation
 {
   "data" : {

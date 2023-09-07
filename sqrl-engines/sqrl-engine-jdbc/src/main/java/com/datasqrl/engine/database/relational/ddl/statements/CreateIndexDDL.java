@@ -6,6 +6,7 @@ package com.datasqrl.engine.database.relational.ddl.statements;
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.function.IndexType;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.Value;
 
 import java.util.List;
@@ -17,7 +18,6 @@ public class CreateIndexDDL implements SqlDDLStatement {
   String tableName;
   List<String> columns;
   IndexType type;
-
 
   @Override
   public String toSql() {

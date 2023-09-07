@@ -3,9 +3,6 @@
  */
 package com.datasqrl.util.data;
 
-import com.datasqrl.io.impl.file.FileDataSystemConfig;
-import com.datasqrl.io.impl.file.FileDataSystemFactory;
-import com.datasqrl.io.tables.TableConfig;
 import java.util.Set;
 
 public class Conference extends UseCaseExample {

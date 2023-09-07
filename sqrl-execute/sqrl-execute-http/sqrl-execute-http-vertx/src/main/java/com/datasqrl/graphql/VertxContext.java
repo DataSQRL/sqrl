@@ -1,5 +1,6 @@
 package com.datasqrl.graphql;
 
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
@@ -34,6 +35,7 @@ public class VertxContext implements Context {
   VertxJdbcClient sqlClient;
   Map<String, SinkProducer> sinks;
   Map<String, SinkConsumer> subscriptions;
+  NameCanonicalizer canonicalizer;
 
   @Override
   public JdbcClient getClient() {
@@ -42,7 +44,7 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<Object> createPropertyFetcher(String name) {
-    return VertxPropertyDataFetcher.create(name);
+    return VertxPropertyDataFetcher.create(canonicalizer.getCanonical(name));
   }
 
   @Override
@@ -55,7 +57,7 @@ public class VertxContext implements Context {
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
       if (resolvedQuery == null) {
-        throw new RuntimeException("Could not find query");
+        throw new RuntimeException("Could not find query: " + env.getArguments());
       }
       //Execute
       QueryExecutionContext context = new VertxQueryExecutionContext(this,

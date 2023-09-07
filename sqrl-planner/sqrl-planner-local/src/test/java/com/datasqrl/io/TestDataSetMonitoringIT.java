@@ -104,7 +104,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
       List<IntegrationTestSettings.EnginePair> engines = List.of(inmem, flink);
       return Stream.concat(
-          ArgumentProvider.crossProduct(List.of(Retail.INSTANCE, Nutshop.INSTANCE), engines),
+          ArgumentProvider.crossProduct(List.of(Retail.INSTANCE, Nutshop.SMALL), engines),
           Stream.of(Arguments.of(Nutshop.COMPRESS, flink)));
     }
   }

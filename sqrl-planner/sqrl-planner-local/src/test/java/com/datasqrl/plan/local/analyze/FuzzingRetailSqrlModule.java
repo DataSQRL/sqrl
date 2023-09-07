@@ -16,6 +16,7 @@ import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.local.analyze.RetailSqrlModule.Orders;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.schema.converters.UtbToFlexibleSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.google.auto.service.AutoService;
@@ -99,10 +100,11 @@ public class FuzzingRetailSqrlModule implements SqrlModule {
   private static final Map<Name, NamespaceObject> tables = new HashMap<>();
   private static final Map<String, List<?>> tableData = new HashMap<>();
 
-  static {
+
+  public void init(CalciteTableFactory tableFactory) {
     dataByClass.forEach((clazz,data)-> {
       NamespaceObject obj = new TableSourceNamespaceObject(
-              createTableSource(clazz, DATASET_NAME));
+              createTableSource(clazz, DATASET_NAME), tableFactory);
       tables.put(obj.getName(), obj);
       tableData.put(obj.getName().getCanonical(), data);
     });

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.error.ErrorCollector;
@@ -109,13 +110,14 @@ public class FlexibleSchemaHandlingTest {
   }
 
   static class SchemaConverterProvider implements ArgumentsProvider {
+    CalciteTableFactory calciteTableFactory = new CalciteTableFactory(new SqrlFramework(),
+        NameCanonicalizer.SYSTEM);
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
       List<SchemaConverterTestCase> converters = new ArrayList<>();
 
-      CalciteTableFactory calciteTableFactory = new CalciteTableFactory();
 //      SqrlQueryPlanner planner = new SqrlQueryPlanner(new SqrlSchema(), new FlinkBackedFunctionCatalog());
       //Calcite
       CalciteTableFactory.UTB2RelDataTypeConverter converter = calciteTableFactory.new UTB2RelDataTypeConverter();

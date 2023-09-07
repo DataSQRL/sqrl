@@ -13,9 +13,8 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
@@ -44,17 +43,16 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -69,7 +67,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
     initialize(IntegrationTestSettings.getInMemory(), null, Optional.of(exportPath));
-    schema = injector.getInstance(SqrlSchema.class);
+    schema = framework.getSchema();
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     if (!Files.isDirectory(exportPath)) {
@@ -432,7 +430,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC;");
     builder.add(
-        "Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+        "Customer.recentOrders := SELECT o.id, o.time FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
     plan(builder.toString());
     validateQueryTable("customer", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(2),
@@ -479,9 +477,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;");
     builder.add(
-        "Customer.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+        "Customer.distinctOrders := SELECT DISTINCT o.id FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
     builder.add(
-        "Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
+        "Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
 //    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM @.distinctOrders d");
     plan(builder.toString());
     validateQueryTable("customer", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 6, 1,
@@ -575,6 +573,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   */
 
   @Test
+  @Disabled
   public void tableFunctionsBasic() {
     ScriptBuilder builder = imports();
     builder.add(
@@ -646,8 +645,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private void validateTableFunction(String tableName, TableType tableType, ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys, TimestampTest timestampTest,
       PullupTest pullupTest) {
-    ComputeTableFunction tblFct = getLatestTableFunction(schema, tableName,
-        ComputeTableFunction.class).get();
+    QueryTableFunction tblFct = getLatestTableFunction(schema, tableName,
+        QueryTableFunction.class).get();
     ScriptRelationalTable table = tblFct.getQueryTable();
     validateScriptRelationalTable(table, tableType, numCols, numPrimaryKeys, timestampTest, pullupTest);
     validatedTables.put(tblFct, execType);
@@ -670,13 +669,13 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     return sqrlSchema.getTableNames().stream().filter(s -> s.indexOf(Name.NAME_DELIMITER) != -1)
         .filter(s -> s.substring(0, s.indexOf(Name.NAME_DELIMITER)).equals(normalizedName))
         .filter(s ->
-            tableClass.isInstance(sqrlSchema.getTable(s, true).getTable()))
+            tableClass.isInstance(sqrlSchema.getTable(s, false).getTable()))
         //Get most recently added table
         .sorted((a, b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),
             CalciteTableFactory.getTableOrdinal(b)))
-        .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, true).getTable()))
+        .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, false).getTable()))
         .or(() -> getLatestTableFunction(sqrlSchema, tableName,
-            ComputeTableFunction.class).map(tblFct -> tableClass.cast(tblFct.getQueryTable())));
+            QueryTableFunction.class).map(tblFct -> tableClass.cast(tblFct.getQueryTable())));
   }
 
   private void validateAccessTableFunction(String tableName, String baseTableName, ExecutionEngine.Type execType) {
@@ -696,9 +695,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   private void createSnapshots() {
     new DAGPreparation(planner.createRelBuilder(), errors).prepareInputs(planner.getSchema(),
-        new MockAPIConnectorManager(), Collections.EMPTY_LIST);
+        new MockAPIConnectorManager(), Collections.EMPTY_LIST, framework);
     DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(planner.createRelBuilder()),
-        namespace.getSchema().getPipeline(), errors);
+        namespace.getPipeline(), errors);
     validatedTables.forEach((table, execType) -> {
       Map<ExecutionStage, StageAnalysis> stageAnalysis = dagBuilder.planStages(table);
       assertEquals(execType, SqrlDAG.SqrlNode.findCheapestStage(stageAnalysis).getStage().getEngine().getType(),

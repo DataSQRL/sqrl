@@ -3,6 +3,9 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.SqrlRelBuilder;
+import com.datasqrl.calcite.schema.SqrlTableFunction;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -18,17 +21,15 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
-import com.google.common.base.Function;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.ImplementingTypeDefinition;
@@ -58,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Preconditions;
@@ -66,6 +68,7 @@ import com.google.common.base.Preconditions;
 @Slf4j
 public class SchemaInference {
 
+  private final SqrlFramework framework;
   private final String name;
   private final ModuleLoader moduleLoader;
   private final APISource source;
@@ -74,13 +77,13 @@ public class SchemaInference {
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
   private final List<ArgumentHandler> argumentHandlers = List.of(new EqHandler(), new LimitOffsetHandler());
   private final RelBuilder relBuilder;
-  private final Namespace ns;
   private final APIConnectorManager apiManager;
   private Set<FieldDefinition> visited = new HashSet<>();
   private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference(String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchema schema,
-      RelBuilder relBuilder, Namespace ns, APIConnectorManager apiManager) {
+  public SchemaInference(SqrlFramework framework, String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchema schema,
+                         RelBuilder relBuilder, APIConnectorManager apiManager) {
+    this.framework = framework;
     this.name = name;
     this.moduleLoader = moduleLoader;
     this.source = apiSchema;
@@ -89,12 +92,10 @@ public class SchemaInference {
     this.root = RootGraphqlModel.builder()
         .schema(StringSchema.builder().schema(apiSchema.getSchemaDefinition()).build());
     this.relBuilder = relBuilder;
-    this.ns = ns;
     this.apiManager = apiManager;
   }
 
   public InferredSchema accept() {
-
     //resolve additional types
     resolveTypes();
 
@@ -129,36 +130,35 @@ public class SchemaInference {
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
     SQRLTable table = resolveRootSQRLTable(fieldDefinition, fieldDefinition.getType(), fieldDefinition.getName(), "Query");
-    return inferObjectField(fieldDefinition, table, fields, parent);
+    return inferObjectField(fieldDefinition, table, fields, parent, null);
   }
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
       Type fieldType, String fieldName, String rootType) {
-    Optional<TableFunctionBase> tableFunction = schema.getTableFunction(fieldName);
-    if (tableFunction.isPresent()) {
-      return tableFunction.get().getTable();
-    }
-    /**
-     * Change inference rules:
-     * It is by name,
-     */
+    SqlUserDefinedTableFunction function = SqrlRelBuilder
+        .getSqrlTableFunction(framework.getQueryPlanner(), List.of(fieldName));
 
-    Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)
-        .flatMap(name -> getTableOfType(fieldType, name));
-    Optional<SQRLTable> sqrlTableByCommonInterface = getTypeName(fieldType)
-        .flatMap(name -> getTableOfCommonInterface(fieldType, name));
+    if (function == null) {
+      Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)
+          .flatMap(name -> getTableOfType(fieldType, name));
+      if (sqrlTableByFieldType.isPresent()) {
+        return sqrlTableByFieldType.get();
+      }
 
-    Optional<SQRLTable> sqrlTable = sqrlTableByFieldType
-        .or(()->sqrlTableByCommonInterface);
-
-    if (sqrlTable.isEmpty()) {
       throw new SqrlAstException(ErrorLabel.GENERIC,
           toParserPos(fieldDefinition.getSourceLocation()),
-          "Could not find associated SQRL type for field %s on type %s. Check that the type has all the necessary fields.",
+          "Could not find associated SQRL table for field %s on type %s.",
           fieldDefinition.getName(), fieldDefinition.getType() instanceof TypeName ?
           ((TypeName) fieldDefinition.getType()).getName() : fieldDefinition.getType().toString());
     }
-    return sqrlTable.get();
+
+    SqrlTableFunction tableFunction = (SqrlTableFunction)function.getFunction();
+
+    //TODO: Validate all fields are there
+
+    return framework.getCatalogReader().getSqrlTable(List.of(fieldName))
+        .unwrap(VirtualRelationalTable.class)
+        .getSqrlTable();
   }
 
   private Optional<? extends SQRLTable> getTableOfCommonInterface(Type type, String name) {
@@ -217,7 +217,7 @@ public class SchemaInference {
   }
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
-      List<InferredField> fields, ObjectTypeDefinition parent) {
+      List<InferredField> fields, ObjectTypeDefinition parent, SQRLTable parentTable) {
     checkValidArrayNonNullType(fieldDefinition.getType());
     TypeDefinition typeDef = unwrapObjectType(fieldDefinition.getType());
 
@@ -228,12 +228,12 @@ public class SchemaInference {
               + "Table [%s] points to a different SQRL table.",
           table.getName().getDisplay());
       visitedObj.put(obj, table);
-      InferredObjectField inferredObjectField = new InferredObjectField(parent, fieldDefinition,
+      InferredObjectField inferredObjectField = new InferredObjectField(parentTable, parent, fieldDefinition,
           (ObjectTypeDefinition) typeDef, table);
       fields.addAll(walkChildren((ObjectTypeDefinition) typeDef, table, fields));
       return inferredObjectField;
     } else {
-      throw new RuntimeException("Tbd");
+      throw new RuntimeException("Could not infer non-object type on graphql schema: " + fieldDefinition.getName());
     }
   }
 
@@ -275,7 +275,7 @@ public class SchemaInference {
       List<InferredField> fields, ObjectTypeDefinition parent) {
     return new NestedField(relationship,
         inferObjectField(fieldDefinition, relationship.getToTable(),
-            fields, parent));
+            fields, parent, relationship.getFromTable()));
   }
 
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,

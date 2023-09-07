@@ -2,3 +2,7 @@
 LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], descriptionlength=[CHAR_LENGTH($4)], descriptionlength$0=[CHAR_LENGTH($4)])
   LogicalTableScan(table=[[product$i$1]])
 
+>>>x$q$4
+LogicalProject(_uuid=[$0], descriptionLength=[$7], _ingest_time=[$1])
+  LogicalTableScan(table=[[product$q$2]])
+

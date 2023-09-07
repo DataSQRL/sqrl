@@ -3,7 +3,7 @@ package com.datasqrl.plan.global;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SQRLConverter;
@@ -37,7 +37,7 @@ public interface DatabaseQuery {
       AccessTableFunction accessFct = (AccessTableFunction) function;
       assignedStage = accessFct.getAssignedStage().get();
     } else {
-      ComputeTableFunction computeFct = (ComputeTableFunction) function;
+      QueryTableFunction computeFct = (QueryTableFunction) function;
       assignedStage = computeFct.getQueryTable().getAssignedStage().get();
     }
     return new Instance(function.getNameId(), function.getPlannedRelNode(), assignedStage);

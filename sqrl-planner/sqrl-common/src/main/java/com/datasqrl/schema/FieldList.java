@@ -29,16 +29,8 @@ public class FieldList {
     return new ArrayList<>(fields);
   }
 
-  public Field atIndex(int index) {
-    return fields.get(index);
-  }
-
-  public int numFields() {
-    return fields.size();
-  }
 
   public void addField(Field field) {
-//        Preconditions.checkArgument(field.getVersion()>=nextVersion(field.getName()));
     fields.add(field);
   }
 

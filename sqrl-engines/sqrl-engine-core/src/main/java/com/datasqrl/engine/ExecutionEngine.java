@@ -3,20 +3,19 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
-import java.nio.file.Path;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.tools.RelBuilder;
 
 /**
  * Describes a physical execution engine and it's capabilities.
@@ -53,7 +52,7 @@ public interface ExecutionEngine {
   CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
   EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink);
+      ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink);
 
   @AllArgsConstructor
   @Getter

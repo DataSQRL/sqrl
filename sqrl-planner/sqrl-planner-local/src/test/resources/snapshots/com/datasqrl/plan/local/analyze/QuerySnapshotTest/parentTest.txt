@@ -1,5 +1,5 @@
 >>>newproduct$q$8
-LogicalProject(_uuid=[$0], _uuid0=[$6], _idx=[$12], customerid=[$21], __timestamp24=[CASE(<($17, $22), $22, $17)])
+LogicalProject(_uuid=[$0], _uuid0=[$6], _idx=[$12], customerid=[$21], __timestamp$0=[CASE(<($17, $22), $22, $17)])
   LogicalJoin(condition=[=($6, $18)], joinType=[left])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _uuid0=[$6], _ingest_time0=[$7], id=[$8], customerid=[$9], time=[$10], entries=[$11], _idx=[$12], productid0=[$13], quantity=[$14], unit_price=[$15], discount=[$16], __timestamp=[CASE(<($1, $10), $10, $1)])
       LogicalJoin(condition=[=($2, $13)], joinType=[inner])
@@ -17,5 +17,3 @@ LogicalTableScan(table=[[orders$i$1]])
 >>>product$q$6
 LogicalTableScan(table=[[product$i$5]])
 
->>>join-declaration-orders_entries
-JOIN PATH ON ("product$7" AS "@") ON ("orders$3" AS "_g2" DEFAULT JOIN "entries$4" AS "e" ON "_g2"."_uuid" = "e"."_uuid") USING "@"."productid" = "e"."productid"

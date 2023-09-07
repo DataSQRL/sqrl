@@ -6,11 +6,9 @@ package com.datasqrl.engine.stream.flink;
 import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 
 import com.datasqrl.FlinkEnvironmentBuilder;
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.engine.EngineCapability;
-import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.engine.*;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
@@ -27,7 +25,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
 
@@ -70,13 +67,14 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
 
   @Override
   public FlinkStreamPhysicalPlan plan(PhysicalDAGPlan.StagePlan stagePlan,
-      List<PhysicalDAGPlan.StageSink> inputs,
-      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
+      List<PhysicalDAGPlan.StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
+      TableSink errorSink) {
     Preconditions.checkArgument(inputs.isEmpty());
     Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
-    return new FlinkPhysicalPlanner(relBuilder).createStreamGraph(
-        this.config, plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
+    return new FlinkPhysicalPlanner(
+        framework.getQueryPlanner().getRelBuilder()).createStreamGraph(this.config,
+        plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
   }
 
   public abstract FlinkStreamBuilder createJob();

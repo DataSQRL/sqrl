@@ -8,12 +8,15 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestGraphQLSchema;
+import com.datasqrl.util.TestGraphQLSchema.Directory;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.TestScript.QueryUseCaseProvider;
+import com.datasqrl.util.data.Conference;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Retail.RetailScriptNames;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,7 +41,9 @@ public class FlinkQueryUseCaseTest extends AbstractQuerySQRLIT {
   @Test
   public void runSpecificTest(Vertx vertx,
       VertxTestContext testContext) {
-    TestScript script = Retail.INSTANCE.getScript(RetailScriptNames.SEARCH);
-    fullScriptTest(script, script.getGraphQLSchemas().get(0), vertx, testContext);
+    TestScript script = Conference.INSTANCE.getScripts().get(0);
+    fullScriptTest(script, new Directory(
+        Path.of("/Users/henneberger/sqrl/sqrl-examples/conference/myAPI")),
+        vertx, testContext);
   }
 }

@@ -4,16 +4,20 @@
 
 package com.datasqrl.graphql.util;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.calcite.SqrlRelBuilder;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.graphql.server.Model.*;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.SqrlRelToSql;
-import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
@@ -32,19 +36,31 @@ public class ReplaceGraphqlQueries implements
     ParameterHandlerVisitor<Object, Object> {
 
   private final Map<IdentifiedQuery, QueryTemplate> queries;
+  private final QueryPlanner planner;
 
-  public ReplaceGraphqlQueries(Map<IdentifiedQuery, QueryTemplate> queries) {
+  public ReplaceGraphqlQueries(Map<IdentifiedQuery, QueryTemplate> queries, QueryPlanner planner) {
 
     this.queries = queries;
+    this.planner = planner;
   }
 
   @Override
   public JdbcQuery visitApiQuery(ApiQueryBase apiQueryBase, Object context) {
     QueryTemplate template = queries.get(apiQueryBase.getQuery());
 
-    SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
-    DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
-    String query = convertDynamicParamsWithWriter(writer, template.getRelNode());
+//    SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
+//    DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
+
+    SqrlRelBuilder builder = planner.getSqrlRelBuilder();
+    RelNode c = builder.push(template.getRelNode())
+        .project(builder.fields(), template.getRelNode().getRowType().getFieldNames().stream()
+            .map(n-> Name.system(n).getCanonical())
+            .collect(Collectors.toList()), true)
+        .build();
+    String query = planner.relToString(Dialect.POSTGRES,
+        planner.convertRelToDialect(Dialect.POSTGRES, c));
+
+//    String query = convertDynamicParamsWithWriter(writer, template.getRelNode());
     return JdbcQuery.builder()
         .parameters(apiQueryBase.getParameters())
         .sql(query)
@@ -80,7 +96,7 @@ public class ReplaceGraphqlQueries implements
    * Writes postgres style dynamic params `$1` instead of `?`. Assumes the index field is the index
    * of the parameter.
    */
-  public class DynamicParamSqlPrettyWriter extends SqlPrettyWriter {
+  public static class DynamicParamSqlPrettyWriter extends SqlPrettyWriter {
 
     @Getter
     private List<Integer> dynamicParameters = new ArrayList<>();

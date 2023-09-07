@@ -62,6 +62,7 @@
           <version>${antlr.version}</version>
           <executions>
             <execution>
+              <phase>generate-sources</phase>
               <goals>
                 <goal>antlr4</goal>
               </goals>

@@ -7,10 +7,10 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
           LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], $f4=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
             LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
               LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-                LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                   Uncollect
-                    LogicalProject($f0=[$cor5.entries])
+                    LogicalProject($f0=[$cor3.entries])
                       LogicalValues(tuples=[[{ 0 }]])
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -27,10 +27,10 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
           LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], $f4=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
             LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
               LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-                LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                   Uncollect
-                    LogicalProject($f0=[$cor5.entries])
+                    LogicalProject($f0=[$cor3.entries])
                       LogicalValues(tuples=[[{ 0 }]])
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -47,10 +47,10 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
           LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], $f4=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
             LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
               LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-                LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                   Uncollect
-                    LogicalProject($f0=[$cor5.entries])
+                    LogicalProject($f0=[$cor3.entries])
                       LogicalValues(tuples=[[{ 0 }]])
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -62,10 +62,10 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
 LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3])
   LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
     LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-      LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+      LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
         LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
         Uncollect
-          LogicalProject($f0=[$cor5.entries])
+          LogicalProject($f0=[$cor3.entries])
             LogicalValues(tuples=[[{ 0 }]])
       LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
         LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -83,10 +83,10 @@ LogicalProject(customerid=[$0], _uuid=[$1], _source_time=[$2], name=[$3], quanti
             LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], $f4=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
               LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
                 LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-                  LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
                     LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                     Uncollect
-                      LogicalProject($f0=[$cor5.entries])
+                      LogicalProject($f0=[$cor3.entries])
                         LogicalValues(tuples=[[{ 0 }]])
                   LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                     LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -103,10 +103,10 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
           LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], $f4=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
             LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
               LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-                LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                   Uncollect
-                    LogicalProject($f0=[$cor5.entries])
+                    LogicalProject($f0=[$cor3.entries])
                       LogicalValues(tuples=[[{ 0 }]])
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])

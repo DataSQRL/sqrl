@@ -230,7 +230,6 @@ public class CalciteUtil {
     }
 
     public RelDataTypeBuilder add(RelDataTypeField field) {
-      //TODO: Do we need to do a deep clone or is this kosher since fields are immutable?
       fieldBuilder.add(field);
       return this;
     }

@@ -1,6 +1,6 @@
 >>>product$10-lp-stream
 LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], badwords=[$6], searchresult=[$7], format=[$8])
-  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], badwords=[bannedWordsFilter($3)], searchresult=[textsearch('garden gnome', $4, $3)], format=[format('Go buy: %s in %s with id=%s', $3, $5, CAST($2):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)]) hints[WatermarkHint options:[1]]
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], badwords=[bannedWordsFilter($3)], searchresult=[textSearch('garden gnome', $4, $3)], format=[format('Go buy: %s in %s with id=%s', $3, $5, CAST($2):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)]) hints[WatermarkHint options:[1]]
     LogicalTableScan(table=[[product$i$8]])
 
 >>>product-lp-database

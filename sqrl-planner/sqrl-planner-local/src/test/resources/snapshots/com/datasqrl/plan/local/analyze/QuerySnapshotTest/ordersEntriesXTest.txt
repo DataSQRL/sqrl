@@ -2,8 +2,8 @@
 LogicalTableScan(table=[[customer$i$1]])
 
 >>>dproduct$q$13
-LogicalProject(__pk_0=[$0], __pk_1=[$6], unit_price=[$9], category=[$16], name=[$14], __timestamp=[CASE(<($4, $13), $13, $4)])
-  LogicalJoin(condition=[=($11, $7)], joinType=[left])
+LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], unit_price=[$9], category=[$16], name=[$14], time=[$4])
+  LogicalJoin(condition=[=($7, $11)], joinType=[left])
     LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$5]])
       Uncollect
@@ -23,5 +23,3 @@ LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], descrip
 >>>product$q$9
 LogicalTableScan(table=[[product$i$8]])
 
->>>join-declaration-product
-JOIN PATH ON ("entries$7" AS "@") ON ("product$12" AS "Product") USING "Product"."productid" = "@"."productid" FETCH 1

@@ -9,7 +9,7 @@ LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=
       LogicalTableScan(table=[[customer$3]])
 
 >>>recentorders$q$13-lp-STREAM
-LogicalProject(__pk_0=[$6], _uuid=[$0], id=[$2], time=[$4])
+LogicalProject(__customerid$pk$1=[$6], _uuid=[$0], id=[$2], time=[$4])
   LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]

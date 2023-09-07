@@ -3,10 +3,20 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.SqrlRelBuilder;
+import com.datasqrl.calcite.schema.SqrlListUtil;
+import com.datasqrl.calcite.schema.SqrlTableFunction;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.function.SqrlInternalFunctionParameter;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFieldVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFunctionField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredInterfaceField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutationObjectVisitor;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutations;
@@ -26,71 +36,56 @@ import com.datasqrl.graphql.inference.argument.EqHandler;
 import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
 import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.QueryBase;
-import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
-import com.datasqrl.plan.*;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
-import com.datasqrl.plan.local.generate.TableFunctionBase;
-import com.datasqrl.plan.local.transpile.ConvertJoinDeclaration;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.SQRLTable;
-import com.datasqrl.schema.TypeFactory;
+import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
-import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.calcite.DataContext;
-import org.apache.calcite.config.CalciteConnectionConfigImpl;
-import org.apache.calcite.config.CalciteConnectionProperty;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.linq4j.Enumerable;
-import org.apache.calcite.linq4j.Linq4j;
-import org.apache.calcite.linq4j.tree.Types;
-import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.schema.*;
-import org.apache.calcite.schema.impl.AbstractSchema;
-import org.apache.calcite.schema.impl.AbstractTable;
-import org.apache.calcite.schema.impl.TableFunctionImpl;
+import org.apache.calcite.schema.Function;
+import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
-import org.apache.calcite.sql.SqrlJoinDeclarationSpec;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
-import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.util.SqlOperatorTables;
-import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
+import org.apache.commons.collections.ListUtils;
 
 public class SchemaBuilder implements
     InferredSchemaVisitor<RootGraphqlModel, Object>,
@@ -99,6 +94,7 @@ public class SchemaBuilder implements
     InferredSubscriptionObjectVisitor<List<SubscriptionCoords>, Object>,
     InferredFieldVisitor<Coords, Object> {
 
+  private final SqrlFramework framework;
   private final APISource source;
   private final TypeDefinitionRegistry registry;
   private final SqrlSchema schema;
@@ -106,7 +102,6 @@ public class SchemaBuilder implements
 
   private final SqlOperatorTable operatorTable;
 
-  private final SqrlQueryPlanner planner;
   //todo: migrate out
   List<ArgumentHandler> argumentHandlers = List.of(
       new EqHandler(), new LimitOffsetHandler()
@@ -115,15 +110,15 @@ public class SchemaBuilder implements
 
   private final AtomicInteger queryCounter = new AtomicInteger();
 
-  public SchemaBuilder(APISource source, SqrlSchema schema, RelBuilder relBuilder,
-                       SqrlQueryPlanner planner,
-                       SqlOperatorTable operatorTable, APIConnectorManager apiManager) {
+  public SchemaBuilder(SqrlFramework framework, APISource source, SqrlSchema schema, RelBuilder relBuilder,
+                              SqrlQueryPlanner planner,
+                              SqlOperatorTable operatorTable, APIConnectorManager apiManager) {
+    this.framework = framework;
     this.source = source;
     this.registry = (new SchemaParser()).parse(source.getSchemaDefinition());
     this.schema = schema;
     this.relBuilder = relBuilder;
     this.operatorTable = operatorTable;
-    this.planner = planner;
     this.apiManager = apiManager;
   }
 
@@ -145,7 +140,6 @@ public class SchemaBuilder implements
         builder.coord(field.accept(this, context));
       }
     }
-
 
     return builder.build();
   }
@@ -179,60 +173,155 @@ public class SchemaBuilder implements
 
   @SneakyThrows
   @Override
+  /**
+   * Do permutation path if there are no non-internal arguments on the sqrl function
+   *
+   * If there are arguments on the sqrl function:
+   * 1.
+   *
+   *
+   */
   public Coords visitObjectField(InferredObjectField field, Object context) {
-    Set<ArgumentSet> possibleArgCombinations;
+    List<String> currentPath;
+    if (field.getParentTable() == null) {
+      currentPath = field.getTable().getPath()
+          .toStringList();
+    } else {
+      currentPath = field.getParentTable().getPath().concat(Name.system(field.getFieldDefinition().getName())).toStringList();
+    }
 
-    if (hasMatchingTableFunction(schema, field)) {
-      TableFunctionBase b = (TableFunctionBase)schema.getFunctions(field.getFieldDefinition().getName(), false)
-          .stream().findFirst().get();
+    SqlUserDefinedTableFunction op = SqrlRelBuilder.getSqrlTableFunction(framework.getQueryPlanner(), currentPath);
+    TableFunction function = op.getFunction();
 
-      RelDataTypeFactory factory = schema.getCluster().getTypeFactory();
-      AtomicInteger i = new AtomicInteger();
-      List<RexNode> rexNodes = b.getParameters().stream()
-          .map(p->p.getType(factory))
-          .map(t->relBuilder.getRexBuilder()
-              .makeDynamicParam(t, i.getAndIncrement()))
+    System.out.println(field.getFieldDefinition().getName() + " " + field.getParent().getName());
+    List<FunctionParameter> userProvidedSqrlArgs = function.getParameters().stream().filter(f->!((SqrlFunctionParameter)f).isInternal())
+        .collect(Collectors.toList());
+
+    //allow variable args for undefined params
+    if (userProvidedSqrlArgs.size() == 0) {
+//      Preconditions.checkState(function.getParameters().size() == 0, "Can only permute base tables");
+      SqrlRelBuilder builder = framework.getQueryPlanner().getSqrlRelBuilder();
+
+      //add internal args to function
+      List<RexNode> args = function.getParameters().stream()
+          .map(param -> new RexDynamicParam(param.getType(null), param.getOrdinal()))
           .collect(Collectors.toList());
 
-      String params = rexNodes.stream()
-          .map(e-> "?")
-          .collect(Collectors.joining(","));
+      builder.functionScan(op, 0, args);
+      RelNode relNode = builder.buildAndUnshadow();
 
-      RelNode relNode = planner.plan(SqlParser.create(
-          String.format("SELECT * FROM table(\"%s\"(%s))", field.getFieldDefinition().getName(), params)).parseQuery());
-
-      FunctionParameter p = b.getParameters().get(0);
-      Set<Model.Argument> newHandlers = new LinkedHashSet<>();
-      newHandlers.add(Model.VariableArgument.builder().path(p.getName()).build());
-
-      List<Model.ArgumentParameter> parameters = new ArrayList<>();
-      parameters.add(Model.ArgumentParameter.builder().path(p.getName()).build());
-
-      possibleArgCombinations = Set.of(new ArgumentSet(relNode,
-          newHandlers, parameters, false));
-    } else {
-      RelNode relNode = relBuilder
-          .scan(field.getTable().getVt().getNameId())
-//        .project(projectedColumns)
-          .build();
-
-      possibleArgCombinations = createArgumentSuperset(
+      Set<ArgumentSet> possibleArgCombinations = createArgumentSuperset(
           field.getTable(),
           relNode, new ArrayList<>(),
           field.getFieldDefinition().getInputValueDefinitions(),
           field.getFieldDefinition());
 
+      //add source parameters
+      List<Model.JdbcParameterHandler> parameters = function.getParameters().stream()
+          .map(p->
+              (((SqrlFunctionParameter)p).isInternal())
+                  ? SourceParameter.builder()
+                  .key(p.getName().substring(1))
+                  .build()
+                  :
+                      Model.ArgumentParameter.builder()
+                          .path(p.getName().substring(1))
+                          .build())
+          .collect(Collectors.toList());
+
       //Todo: Project out only the needed columns. This requires visiting all it's children so we know
       // what other fields they need
+      ArgumentLookupCoords argumentLookupCoords = buildArgumentQuerySet(possibleArgCombinations,
+          field.getParent(),
+          field.getFieldDefinition(), parameters);
+      System.out.println( "Generated Query: " + framework.getQueryPlanner().relToString(Dialect.CALCITE, relNode));
+      System.out.println(argumentLookupCoords.getMatchs());
+      return argumentLookupCoords;
     }
-    return buildArgumentQuerySet(possibleArgCombinations,
-        field.getParent(),
-        field.getFieldDefinition(), new ArrayList<>());
+
+
+    SqrlRelBuilder builder = framework.getQueryPlanner().getSqrlRelBuilder();
+
+    //todo
+    List<InputValueDefinition> defs = field.getFieldDefinition().getInputValueDefinitions();
+
+    List<RexNode> args = function.getParameters().stream()
+        .map(param -> new RexInputRef(param.getOrdinal(), param.getType(null)))
+        .collect(Collectors.toList());
+
+    builder.functionScan(op, 0, args);
+
+    Set<Model.Argument> newHandlers = function.getParameters().stream()
+        .filter(f->!((SqrlFunctionParameter)f).isInternal())
+        .map(p->
+            Model.VariableArgument.builder()
+            .path(p.getName().substring(1))
+            .build())
+        .collect(Collectors.toSet());
+
+    List<Model.JdbcParameterHandler> parameters = function.getParameters().stream()
+        .map(p->
+             (((SqrlFunctionParameter)p).isInternal())
+                 ? SourceParameter.builder()
+                     .key(p.getName().substring(1))
+                         .build()
+                 :
+            Model.ArgumentParameter.builder()
+            .path(p.getName().substring(1))
+            .build())
+        .collect(Collectors.toList());
+
+    RelNode relNode = builder.buildAndUnshadow();
+
+    System.out.println( "Generated Query: " + framework.getQueryPlanner().relToString(Dialect.CALCITE, relNode));
+    System.out.println(newHandlers);
+    System.out.println(parameters);
+
+    ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
+        .parentType(field.getParent().getName()).fieldName(field.getFieldDefinition().getName());
+
+    String nameId = field.getParent().getName() + "." + field.getFieldDefinition().getName() + "-" + queryCounter.incrementAndGet();
+    APIQuery query = new APIQuery(nameId, relNode);
+    apiManager.addQuery(query);
+
+    ArgumentSet argSet = new ArgumentSet(relNode, newHandlers, parameters, false);
+
+    QueryBase base = ApiQueryBase.builder()
+        .query(query)
+        .relNode(relNode)
+        .relAndArg(argSet)
+        .parameters(parameters)
+        .build();
+
+    return coordsBuilder
+        .match(Model.ArgumentSet.builder()
+          .arguments(argSet.getArgumentHandlers())
+          .query(base)
+          .build())
+        .build();
+
+//      RelNode relNode = relBuilder
+//          .scan(((VirtualRelationalTable)field.getTable().getVt()).getNameId())
+////        .project(projectedColumns)
+//          .build();
+//
+//      possibleArgCombinations = createArgumentSuperset(
+//          field.getTable(),
+//          relNode, new ArrayList<>(),
+//          field.getFieldDefinition().getInputValueDefinitions(),
+//          field.getFieldDefinition());
+//
+//      //Todo: Project out only the needed columns. This requires visiting all it's children so we know
+//      // what other fields they need
+//    }
+//    return buildArgumentQuerySet(possibleArgCombinations,
+//        field.getParent(),
+//        field.getFieldDefinition(), new ArrayList<>());
   }
 
   private boolean hasMatchingTableFunction(SqrlSchema schema, InferredObjectField field) {
     return schema.getFunctionNames().contains(
-        field.getFieldDefinition().getName())
+        Name.system(field.getFieldDefinition().getName()).getCanonical() + "$")
         /*TODO: also has matching arguments*/;
   }
 
@@ -240,11 +329,6 @@ public class SchemaBuilder implements
   private Set<ArgumentSet> createArgumentSuperset(SQRLTable sqrlTable,
       RelNode relNode, List<JdbcParameterHandler> existingHandlers,
       List<InputValueDefinition> inputArgs, FieldDefinition fieldDefinition) {
-    /**
-     * 1. Enumerate table functions and match with graphql (root and join declarations)
-     *
-     */
-
     Set<ArgumentSet> args = new HashSet<>();
     //TODO: remove if not used by final query set (has required params)
     args.add(new ArgumentSet(relNode, new LinkedHashSet<>(), new ArrayList<>(), false));
@@ -277,7 +361,7 @@ public class SchemaBuilder implements
 
     for (ArgumentSet argumentSet : possibleArgCombinations) {
       //Add api query
-      RelNode relNode = optimize(argumentSet.getRelNode());
+      RelNode relNode = argumentSet.getRelNode();
       String nameId = parent.getName() + "." + fieldDefinition.getName() + "-" + queryCounter.incrementAndGet();
       APIQuery query = new APIQuery(nameId, relNode);
       apiManager.addQuery(query);
@@ -309,10 +393,10 @@ public class SchemaBuilder implements
     return coordsBuilder.build();
   }
 
-  private RelNode optimize(RelNode relNode) {
-    return planner.runStage(OptimizationStage.PUSH_DOWN_FILTERS,
-        relNode);
-  }
+//  private RelNode optimize(RelNode relNode) {
+//    return planner.runStage(OptimizationStage.PUSH_DOWN_FILTERS,
+//        relNode);
+//  }
 
   @Override
   public Coords visitComputedField(InferredComputedField field, Object context) {
@@ -336,87 +420,91 @@ public class SchemaBuilder implements
   @Override
   public Coords visitNestedField(NestedField field, Object context) {
     InferredObjectField objectField = (InferredObjectField) field.getInferredField();
-
-    RelPair relPair = createNestedRelNode(field.getRelationship());
-
-    Set<ArgumentSet> possibleArgCombinations = createArgumentSuperset(
-        objectField.getTable(),
-        relPair.getRelNode(),
-        relPair.getHandlers(),
-        objectField.getFieldDefinition().getInputValueDefinitions(),
-        objectField.getFieldDefinition());
+    return visitObjectField(objectField, context);
+//    RelPair relPair = createNestedRelNode(field.getRelationship());
+//
+//    Set<ArgumentSet> possibleArgCombinations = createArgumentSuperset(
+//        objectField.getTable(),
+//        relPair.getRelNode(),
+//        relPair.getHandlers(),
+//        objectField.getFieldDefinition().getInputValueDefinitions(),
+//        objectField.getFieldDefinition());
 
     //Todo: Project out only the needed columns. This requires visiting all it's children so we know
     // what other fields they need
 
-    return buildArgumentQuerySet(possibleArgCombinations,
-        objectField.getParent(),
-        objectField.getFieldDefinition(), relPair.getHandlers());
+//    return buildArgumentQuerySet(possibleArgCombinations,
+//        objectField.getParent(),
+//        objectField.getFieldDefinition(), relPair.getHandlers());
+  }
+
+  @Override
+  public Coords visitFunctionField(InferredFunctionField inferredFunctionField, Object context) {
+    return null;
   }
 
   private RelPair createNestedRelNode(Relationship r) {
     //If there's a join declaration, add source handlers for all @. fields
     //Add default sorting
-    if (r.getJoin().isPresent()) {
-      SqrlJoinDeclarationSpec spec = r.getJoin().get();
-      //Todo: build a more concise plan.
-      // There could be other column references to the SELF relation (like in the ORDER or in
-      //  a join condition that would have to be extracted into the where clause after conversion to
-      //  a CNF.
-      SqlNode query = toQuery(spec, r.getFromTable().getVt());
+    NamePath path = r.getFromTable().getPath().concat(r.getName());
+    List<String> pathStr = path.toStringList();
+
+    SqrlTableFunction tableFunctionMacro =(SqrlTableFunction) SqrlRelBuilder.getSqrlTableFunction(framework.getQueryPlanner(),
+        pathStr).getFunction();
+
+    if (tableFunctionMacro != null) {
+
+      SqlNode query = tableFunctionMacro.getNode();
 
       RelNode relNode = plan(query);
 
       RelBuilder builder = relBuilder.push(relNode);
       List<JdbcParameterHandler> handlers = new ArrayList<>();
-      List<String> primaryKeyNames = r.getFromTable().getVt().getPrimaryKeyNames();
-      for (int i = 0; i < primaryKeyNames.size(); i++) {
-        String pkName = primaryKeyNames.get(i);
-        //by convention: the primary key field is the first n fields
-        RelDataTypeField field = relBuilder.peek().getRowType().getFieldList().get(i);
-        RexDynamicParam dynamicParam = relBuilder.getRexBuilder()
-            .makeDynamicParam(field.getType(),
-                handlers.size());
-        builder = relBuilder.filter(relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
-            relBuilder.getRexBuilder().makeInputRef(relBuilder.peek(), field.getIndex()),
-            dynamicParam));
-        handlers.add(new SourceParameter(pkName));
-      }
+//      handlers.add(new SourceParameter(pkName));
+//      for (int i = 0; i < tableFunctionMacro.getInternalFields().size(); i++) {
+//        String pkName = tableFunctionMacro.getInternalFields().get(i);
+//        by convention: the primary key field is the first n fields
+//        RelDataTypeField field = relBuilder.peek().getRowType().getFieldList().get(i);
+//        RexDynamicParam dynamicParam = relBuilder.getRexBuilder()
+//            .makeDynamicParam(field.getType(),
+//                handlers.size());
+//        builder = relBuilder.filter(relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
+//            relBuilder.getRexBuilder().makeInputRef(relBuilder.peek(), field.getIndex()),
+//            dynamicParam));
+//        handlers.add(new SourceParameter(pkName));
+//      }
       return new RelPair(builder.build(), handlers);
     } else {
-      RelBuilder builder = relBuilder.scan(r.getToTable().getVt().getNameId());
-      SQRLTable formTable = null;
-      if (r.getJoinType() == JoinType.PARENT) {
-        formTable = r.getToTable();
-      } else if (r.getJoinType() == JoinType.CHILD) {
-        formTable = r.getFromTable();
-      } else {
-        throw new RuntimeException("Unknown join type");
-      }
-
-      List<JdbcParameterHandler> handlers = new ArrayList<>();
-      for (int i = 0; i < formTable.getVt().getPrimaryKeyNames().size(); i++) {
-        RelDataTypeField field = relBuilder.peek().getRowType().getFieldList()
-            .get(i);
-        RexDynamicParam dynamicParam = relBuilder.getRexBuilder()
-            .makeDynamicParam(field.getType(),
-                handlers.size());
-        builder = relBuilder.filter(relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
-            relBuilder.getRexBuilder().makeInputRef(relBuilder.peek(), field.getIndex()),
-            dynamicParam));
-        handlers.add(new SourceParameter(formTable.getVt().getPrimaryKeyNames().get(i)));
-      }
-      return new RelPair(builder.build(), handlers);
+      throw new RuntimeException("Here");
+//
+//      RelBuilder builder = relBuilder.scan(((VirtualRelationalTable)r.getToTable().getVt()).getNameId());
+//      SQRLTable formTable = null;
+//      if (r.getJoinType() == JoinType.PARENT) {
+//        formTable = r.getToTable();
+//      } else if (r.getJoinType() == JoinType.CHILD) {
+//        formTable = r.getFromTable();
+//      } else {
+//        throw new RuntimeException("Unknown join type");
+//      }
+//
+//      List<JdbcParameterHandler> handlers = new ArrayList<>();
+//      for (int i = 0; i < ((VirtualRelationalTable)formTable.getVt()).getPrimaryKeyNames().size(); i++) {
+//        RelDataTypeField field = relBuilder.peek().getRowType().getFieldList()
+//            .get(i);
+//        RexDynamicParam dynamicParam = relBuilder.getRexBuilder()
+//            .makeDynamicParam(field.getType(),
+//                handlers.size());
+//        builder = relBuilder.filter(relBuilder.getRexBuilder().makeCall(SqlStdOperatorTable.EQUALS,
+//            relBuilder.getRexBuilder().makeInputRef(relBuilder.peek(), field.getIndex()),
+//            dynamicParam));
+//        handlers.add(new SourceParameter(((VirtualRelationalTable)formTable.getVt()).getPrimaryKeyNames().get(i)));
+//      }
+//      return new RelPair(builder.build(), handlers);
     }
   }
 
-  private SqlNode toQuery(SqrlJoinDeclarationSpec spec, VirtualRelationalTable vt) {
-    ConvertJoinDeclaration convert = new ConvertJoinDeclaration(Optional.of(vt));
-    return spec.accept(convert);
-  }
-
   private RelNode plan(SqlNode node) {
-    return planner.planQuery(node);
+    return framework.getQueryPlanner().plan(Dialect.CALCITE, node);
   }
 
   @Value

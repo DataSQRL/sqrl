@@ -47,8 +47,8 @@ Customer.favorite_categories.category := JOIN Category ON @.category_name = Cate
 
 -- Create stream for customer spending more than $100 so we can send them a coupon --
 
-Customer.order_stats := SELECT sum(o.total.price) as total_spend, count(1) as num_orders
-                        FROM @.orders o;
+Customer.order_stats := SELECT sum(t.price) as total_spend, count(1) as num_orders
+                        FROM @.orders o JOIN o.total t;
 
 NewCustomerPromotion := STREAM ON ADD AS
 SELECT c.customerid, c.email, c.name, o.total_spend, o.num_orders FROM Customer c JOIN c.order_stats o

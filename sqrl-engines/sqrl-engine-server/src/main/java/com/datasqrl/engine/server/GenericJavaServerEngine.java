@@ -2,6 +2,8 @@ package com.datasqrl.engine.server;
 
 import static com.datasqrl.engine.EngineCapability.NO_CAPABILITIES;
 
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -28,7 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.tools.RelBuilder;
 
 /**
  * A no-feature java server engine.
@@ -54,7 +55,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
     Vertx vertx = this.vertx.orElseGet(Vertx::vertx);
     CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
-            serverPlan.getModel(), port, serverPlan.getJdbc()))
+            serverPlan.getModel(), port, serverPlan.getJdbc(), NameCanonicalizer.SYSTEM))
         .toCompletionStage()
         .toCompletableFuture();
     log.info("Server started at: http://localhost:" + port + "/graphiql/");
@@ -62,8 +63,8 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   }
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
+  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
+      SqrlFramework relBuilder, TableSink errorSink) {
     Preconditions.checkArgument(plan instanceof ServerStagePlan);
     Set<ExecutionStage> dbStages = pipeline.getStages().stream().filter(s -> s.getEngine().getType()==Type.DATABASE).collect(
         Collectors.toSet());

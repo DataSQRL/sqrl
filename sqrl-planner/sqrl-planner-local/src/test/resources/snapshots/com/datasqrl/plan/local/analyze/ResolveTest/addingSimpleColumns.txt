@@ -3,7 +3,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
   LogicalTableScan(table=[[orders$i$1]])
 
 >>>orderentry$q$5-lp-STREAM
-LogicalProject(_uuid=[$0], _idx=[$7], col1=[$6], time=[$4], productid=[$8], discount2=[coalesce($11, 0.0:DOUBLE)], _ingest_time=[$1])
+LogicalProject(_uuid=[$0], _idx=[$7], col1=[$6], time=[$4], productid=[$8], discount2=[COALESCE($11, 0.0:DOUBLE)], _ingest_time=[$1])
   LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])
     Uncollect

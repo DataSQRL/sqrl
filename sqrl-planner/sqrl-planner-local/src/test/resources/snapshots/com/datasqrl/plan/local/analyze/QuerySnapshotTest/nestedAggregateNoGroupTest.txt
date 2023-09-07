@@ -1,5 +1,5 @@
 >>>entries_2$q$5
-LogicalProject(__pk_0=[$0], cnt=[$2], time=[$1])
+LogicalProject(___uuid$pk$1=[$0], cnt=[$2], time=[$1])
   LogicalAggregate(group=[{0, 4}], cnt=[COUNT()])
     LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$2]])

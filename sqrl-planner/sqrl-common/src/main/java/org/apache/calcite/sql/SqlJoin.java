@@ -238,6 +238,24 @@ public class SqlJoin extends SqlCall {
         case INTERVAL:
           writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "INTERVAL JOIN");
           break;
+        case LEFT_DEFAULT:
+          writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "LEFT DEFAULT JOIN");
+          break;
+        case LEFT_TEMPORAL:
+          writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "LEFT TEMPORAL JOIN");
+          break;
+        case LEFT_INTERVAL:
+          writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "LEFT INTERVAL JOIN");
+          break;
+        case RIGHT_DEFAULT:
+          writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "RIGHT DEFAULT JOIN");
+          break;
+        case RIGHT_TEMPORAL:
+          writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "RIGHT TEMPORAL JOIN");
+          break;
+        case RIGHT_INTERVAL:
+          writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "RIGHT INTERVAL JOIN");
+          break;
         default:
           throw Util.unexpected(join.getJoinType());
       }

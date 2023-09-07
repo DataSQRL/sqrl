@@ -1,7 +1,3 @@
 >>>product$q$2
 LogicalTableScan(table=[[product$i$1]])
 
->>>join-declaration-joinDeclaration
-JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "Product") USING "@"."productid" = "Product"."productid"
->>>join-declaration-joinDeclaration2
-JOIN PATH ON ("product$3" AS "@") ON ("product$3" AS "j") USING "@"."productid" = "j"."productid" AND "@"."productid" = "j"."productid"
