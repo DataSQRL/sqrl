@@ -6,6 +6,7 @@ package com.datasqrl.plan.rules;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.util.AbstractPath;
+import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.Iterables;
@@ -27,7 +28,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.util.mapping.IntPair;
 
 @AllArgsConstructor
 @Getter
@@ -123,19 +123,19 @@ public class JoinTable implements Comparable<JoinTable> {
   }
 
   public static Map<JoinTable, JoinTable> joinListMap(List<JoinTable> left, int rightOffset,
-      List<JoinTable> right, List<IntPair> equalities) {
+      List<JoinTable> right, List<EqualityCondition> equalities) {
     Preconditions.checkArgument(!equalities.isEmpty() && valid(left) && valid(right));
     Preconditions.checkArgument(Stream.concat(left.stream(),right.stream())
         .allMatch(jt -> jt.normType == NormType.NORMALIZED));
     Preconditions.checkArgument(right.size()==1); //Assumption checked prior
     JoinTable rightTbl = Iterables.getOnlyElement(right);
     //Check if equality condition are on primary key prefix for rightTbl
-    if (!isPKPrefixConstraint(rightTbl,equalities, p -> p.target, rightOffset)) {
+    if (!isPKPrefixConstraint(rightTbl,equalities, EqualityCondition::getRightIndex, rightOffset)) {
       return Collections.EMPTY_MAP;
     }
     //Find join table from left matches the constraints on pk prefix
     for (JoinTable leftTbl : left) {
-      if (isPKPrefixConstraint(leftTbl, equalities, p -> p.source, 0)
+      if (isPKPrefixConstraint(leftTbl, equalities, EqualityCondition::getLeftIndex, 0)
           && leftTbl.isJoinCompatible(rightTbl)) {
         Map<JoinTable, JoinTable> result = new HashMap<>(1);
         result.put(rightTbl, leftTbl);
@@ -145,8 +145,8 @@ public class JoinTable implements Comparable<JoinTable> {
     return Collections.EMPTY_MAP;
   }
 
-  private static boolean isPKPrefixConstraint(JoinTable tbl, List<IntPair> equalities,
-      Function<IntPair,Integer> getIdx, int offset) {
+  private static boolean isPKPrefixConstraint(JoinTable tbl, List<EqualityCondition> equalities,
+      Function<EqualityCondition,Integer> getIdx, int offset) {
     List<Integer> pkList = ContiguousSet.closedOpen(0,
             Math.min(tbl.getNumPkNormalized(),equalities.size())).stream()
         .map(idx -> idx + tbl.offset + offset) //offset to actual index in relnode
@@ -168,21 +168,21 @@ public class JoinTable implements Comparable<JoinTable> {
    * @return
    */
   public static Map<JoinTable, JoinTable> joinTreeMap(List<JoinTable> left, int rightOffset,
-      List<JoinTable> right, List<IntPair> equalities) {
+      List<JoinTable> right, List<EqualityCondition> equalities) {
     Preconditions.checkArgument(!equalities.isEmpty() && valid(left) && valid(right));
     Preconditions.checkArgument(Stream.concat(left.stream(),right.stream())
         .allMatch(jt -> jt.normType == NormType.DENORMALIZED));
     equalities = new ArrayList<>(equalities);
     LinkedHashMap<JoinTable, JoinTable> right2Left = new LinkedHashMap<>();
     //By sorting we make sure we can map from root to leaf and therefore that parents are mapped first
-    Collections.sort(equalities, (a, b) -> Integer.compare(a.target, b.target));
-    Iterator<IntPair> eqIter = equalities.listIterator();
+    Collections.sort(equalities, (a, b) -> Integer.compare(a.getRightIndex(), b.getRightIndex()));
+    Iterator<EqualityCondition> eqIter = equalities.listIterator();
     while (eqIter.hasNext()) {
-      IntPair current = eqIter.next();
-      JoinTable rt = find(right, current.target - rightOffset).get();
-      JoinTable lt = find(left, current.source).get();
+      EqualityCondition current = eqIter.next();
+      JoinTable rt = find(right, current.getRightIndex() - rightOffset).get();
+      JoinTable lt = find(left, current.getLeftIndex()).get();
       if (rt.table.equals(lt.table) //Make sure tables map onto the same underlying table...
-          && rt.getLocalIndex(current.target - rightOffset) == 0
+          && rt.getLocalIndex(current.getRightIndex() - rightOffset) == 0
           // and index is first local primary key column
           && (rt.parent == null || right2Left.containsKey(rt.parent)) //and parent was mapped
           && lt.isJoinCompatible(rt) //and the join types are compatible
@@ -197,8 +197,8 @@ public class JoinTable implements Comparable<JoinTable> {
             }
           }
           //Make sure the equality constrains the same local primary key columns in order
-          if (rt.getLocalIndex(current.target - rightOffset) != i
-              || lt.getLocalIndex(current.source) != i) {
+          if (rt.getLocalIndex(current.getRightIndex() - rightOffset) != i
+              || lt.getLocalIndex(current.getLeftIndex()) != i) {
             return Collections.EMPTY_MAP;
           }
           current = null;

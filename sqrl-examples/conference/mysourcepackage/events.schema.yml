@@ -1,0 +1,45 @@
+---
+name: "events"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "last_updated"
+  type: "DATETIME"
+  tests:
+  - "not_null"
+- name: "time"
+  type: "DATETIME"
+  tests:
+  - "not_null"
+- name: "title"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "location"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "speakers"
+  columns:
+  - name: "name"
+    type: "STRING"
+    tests:
+    - "not_null"
+  - name: "title"
+    type: "STRING"
+    tests:
+    - "not_null"
+  - name: "company"
+    type: "STRING"
+    tests:
+    - "not_null"
+  tests:
+  - "not_null"
+- name: "description"
+  type: "STRING"
+  tests:
+  - "not_null"

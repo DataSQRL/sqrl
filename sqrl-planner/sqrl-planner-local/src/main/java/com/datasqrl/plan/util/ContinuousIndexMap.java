@@ -126,7 +126,8 @@ public class ContinuousIndexMap implements IndexMap, Serializable {
   }
 
   public static ContinuousIndexMap of(Collection<Integer> indexes) {
-    return builder(indexes.size()).addAll(indexes).build();
+    List<Integer> sortedIdx = indexes.stream().sorted().collect(Collectors.toUnmodifiableList());
+    return builder(sortedIdx.size()).addAll(sortedIdx).build();
   }
 
   public static final class Builder {

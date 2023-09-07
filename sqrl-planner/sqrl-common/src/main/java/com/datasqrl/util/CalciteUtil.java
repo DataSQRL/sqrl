@@ -31,6 +31,7 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexVariable;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
@@ -181,8 +182,13 @@ public class CalciteUtil {
     List<RexNode> operands = ((RexCall) rexNode).getOperands();
     if (!(operands.get(0) instanceof RexInputRef)) return Optional.empty();
     RexInputRef ref = (RexInputRef) operands.get(0);
-    if (rexNode.isA(SqlKind.EQUALS) && !(operands.get(1) instanceof RexLiteral)) return Optional.empty();
+    if (rexNode.isA(SqlKind.EQUALS) &&
+        !isConstant(operands.get(1))) return Optional.empty();
     return Optional.of(ref.getIndex());
+  }
+
+  public static boolean isConstant(RexNode rexNode) {
+    return rexNode instanceof RexLiteral || rexNode instanceof RexDynamicParam;
   }
 
   public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,

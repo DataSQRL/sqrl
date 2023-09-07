@@ -52,7 +52,7 @@ public class DocumentationExamplesTest {
     @Test
     @Disabled
     public void runIndividual() {
-        compileTutorials(Banking.INSTANCE.getRootPackageDirectory(),"loan.sqrl", "loan.graphqls");
+        compileTutorials(Conference.INSTANCE.getRootPackageDirectory(),"app.sqrl", "myAPI.graphqls");
     }
 
     public static final TestCase[] CASES = {
