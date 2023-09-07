@@ -49,8 +49,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final AtomicInteger pkId = new AtomicInteger(0);
 
   public Result rewrite(SqlNode query, boolean materializeSelf, List<String> currentPath,
-      Optional<SqrlTableFunctionDef> tableArgs) {
-    Context context = new Context(materializeSelf, currentPath, false, currentPath.size() > 0, false, tableArgs);
+      Optional<SqrlTableFunctionDef> tableArgs, boolean isJoinDeclaration) {
+    Context context = new Context(materializeSelf, currentPath, false, currentPath.size() > 0, false, tableArgs, isJoinDeclaration);
 
     Result result = SqlNodeVisitor.accept(this, query, context);
     CalciteFixes.appendSelectLists(result.getSqlNode());
@@ -62,7 +62,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     boolean isAggregating = hasAggs(call.getSelectList().getList());
     // Copy query specification with new RelNode.
     Context newContext = new Context(context.materializeSelf, context.currentPath, isAggregating,
-        context.isNested,call.getFetch() != null, context.tableFunctionDef);
+        context.isNested,call.getFetch() != null, context.tableFunctionDef, context.isJoinDeclaration);
     Result result = SqlNodeVisitor.accept(this, call.getFrom(), newContext);
 
     //retain distinct hint too
@@ -87,7 +87,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
           ;
 
       return new Result(topSelect.build(),
-          result.getCurrentPath(), List.of());
+          result.getCurrentPath(), List.of(), List.of());
     }
 
     SqlSelectBuilder select = new SqlSelectBuilder(call)
@@ -95,7 +95,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .rewriteExpressions(new WalkSubqueries(planner, newContext));
     pullUpKeys(select, result.keysToPullUp, isAggregating);
 
-    return new Result(select.build(), result.getCurrentPath(), List.of());
+
+    return new Result(select.build(), result.getCurrentPath(), List.of(), List.of());
   }
 
   private void pullUpKeys(SqlSelectBuilder inner, List<String> keysToPullUp, boolean isAggregating) {
@@ -150,7 +151,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     SqlNode newNode = aliasBuilder.setTable(result.getSqlNode())
         .build();
 
-    return new Result(newNode, result.getCurrentPath(), result.keysToPullUp);
+    return new Result(newNode, result.getCurrentPath(), result.keysToPullUp, List.of());
   }
 
   @Override
@@ -180,7 +181,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     if (item.getKind() == SqlKind.SELECT) {
       SqrlToSql sqrlToSql = new SqrlToSql(planner);
       Result rewrite = sqrlToSql.rewrite(item, false, context.currentPath,
-          context.tableFunctionDef);
+          context.tableFunctionDef, false);
       RelNode relNode = planner.plan(Dialect.CALCITE, rewrite.getSqlNode());
       builder.push(rewrite.getSqlNode(), relNode.getRowType());
     } else if (isSchemaTable) {
@@ -257,7 +258,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
 
-    return new Result(sqlNode, pathWalker.getAbsolutePath(), pullupColumns);
+    return new Result(sqlNode, pathWalker.getAbsolutePath(), pullupColumns, List.of());
   }
 
   private List<SqlNode> replaceSelfFieldsWithInputParams(List<SqlNode> sqlIdentifiers,
@@ -299,7 +300,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .lateral()
         .build();
 
-    return new Result(join, rightNode.getCurrentPath(), leftNode.keysToPullUp);
+    return new Result(join, rightNode.getCurrentPath(), leftNode.keysToPullUp, List.of());
   }
 
   @Override
@@ -309,6 +310,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
             node.getOperandList().stream()
             .map(o->SqlNodeVisitor.accept(this, o, context).getSqlNode())
             .collect(Collectors.toList())),
+        List.of(),
         List.of(),
         List.of());
   }
@@ -321,7 +323,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     public SqlNode visit(SqlCall call) {
       if (call.getKind() == SqlKind.SELECT) {
         SqrlToSql sqrlToSql = new SqrlToSql(planner);
-        Result result = sqrlToSql.rewrite(call, false, context.currentPath, context.tableFunctionDef);
+        Result result = sqrlToSql.rewrite(call, false, context.currentPath, context.tableFunctionDef,
+            false);
 
         return result.getSqlNode();
       }
@@ -335,6 +338,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     SqlNode sqlNode;
     List<String> currentPath;
     List<String> keysToPullUp;
+    List<List<String>> tableReferences;
   }
 
   @Value
@@ -348,6 +352,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     public boolean isLimit;
 
     Optional<SqrlTableFunctionDef> tableFunctionDef;
+    public boolean isJoinDeclaration;
 
     public void addAlias(String alias, List<String> currentPath) {
       aliasPathMap.put(alias, currentPath);

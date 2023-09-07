@@ -12,21 +12,17 @@ import org.apache.calcite.sql.SqrlTableFunctionDef;
 @Getter
 public class LogicalCreateReference extends LogicalCreateAlias implements LogicalOp {
 
-  final String name;
-  private final TableFunction fnc;
+
   private final List<String> fromPath;
-  private final List<String> toPath;
-  private final SqrlTableFunctionDef argNames;
+  private final List<List<String>> tableReferences;
+  private final SqrlTableFunctionDef def;
 
   public LogicalCreateReference(RelOptCluster cluster, RelTraitSet traitSet,
-      List<String> fromPath, List<String> toPath,
-      String name, SqrlTableFunctionDef argNames, RelNode relNode, TableFunction fnc) {
+      List<String> fromPath, List<List<String>> tableReferences, SqrlTableFunctionDef def, RelNode relNode) {
     super(cluster, traitSet, null, relNode);
     this.fromPath = fromPath;
-    this.toPath = toPath;
-    this.argNames = argNames;
-    this.name = name;
-    this.fnc = fnc;
+    this.tableReferences = tableReferences;
+    this.def = def;
   }
 
   @Override

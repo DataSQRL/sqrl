@@ -2,6 +2,7 @@ package com.datasqrl.calcite.schema;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableSqrlTable;
+import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.TimestampAssignableTable;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
@@ -45,6 +47,7 @@ import org.apache.calcite.sql.SqrlTableParamDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.Util;
 
 @AllArgsConstructor
 public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
@@ -141,23 +144,35 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
 
   @Override
   public Object visit(LogicalCreateReference relNode, Object context) {
+    QueryPlanner planner = framework.getQueryPlanner();
+
+    SqlNode node = planner.relToSql(Dialect.CALCITE, relNode.getInput());
+    //todo: assure select * gets smushed
+    System.out.println(node);
+
+    PreparingTable relOptTable = planner.getCatalogReader().getSqrlTable(relNode.getTableReferences().get(0));
+    TableFunction function = ScriptPlanner.createFunction(planner.createSqlValidator(),
+        relNode.getDef(), relOptTable.getRowType(),
+        node, relOptTable.getQualifiedName().get(0), planner.getCatalogReader());
+
     String name = framework.getSchema().getUniqueFunctionName(relNode.getFromPath());
-    framework.getSchema().plus().add(name, relNode.getFnc());
+    framework.getSchema().plus().add(name, function);
 
     if (relNode.getFromPath().size() > 1) {
       SQRLTable table = framework.getQueryPlanner().getCatalogReader()
           .getSqrlTable(SqrlListUtil.popLast(relNode.getFromPath()))
           .unwrap(ModifiableSqrlTable.class).getSqrlTable();
-      SQRLTable toTable = framework.getQueryPlanner().getCatalogReader()
-          .getSqrlTable(relNode.getToPath())
-          .unwrap(ModifiableSqrlTable.class).getSqrlTable();
-      table.addRelationship(nameUtil.toName(relNode.name), toTable, JoinType.CHILD, Multiplicity.MANY);
+      SQRLTable toTable = relOptTable.unwrap(ModifiableSqrlTable.class).getSqrlTable();
+
+      table.addRelationship(nameUtil.toName(Util.last(relNode.getFromPath())), toTable, JoinType.CHILD, Multiplicity.MANY);
       this.framework.getSchema().addRelationship(
           relNode.getFromPath(), toTable.getPath().toStringList());
     }
 
     return null;
   }
+
+
 
   @Override
   public Object visit(LogicalCreateAlias relNode, Object context) {

@@ -3,6 +3,8 @@ package com.datasqrl.calcite;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.LogicalAddColumnOp;
 import com.datasqrl.calcite.schema.LogicalAssignTimestampOp;
+import com.datasqrl.calcite.schema.LogicalCreateReference;
+import com.datasqrl.calcite.schema.LogicalOp;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -58,6 +60,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
+import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -68,6 +71,7 @@ import org.apache.calcite.tools.RelBuilder.Config;
 import org.apache.calcite.tools.RelBuilder.GroupKey;
 import org.apache.calcite.util.Holder;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.Mapping;
 import org.apache.calcite.util.mapping.Mappings.TargetMapping;
 import org.apache.commons.collections.ListUtils;
@@ -1119,5 +1123,15 @@ public class SqrlRelBuilder {
       return relNode.getInput(0);
     }
     return relNode;
+  }
+
+  public SqrlRelBuilder createReferenceOp(List<String> path,
+      List<List<String>> tableReferences, SqrlTableFunctionDef def) {
+    RelNode relNode = build();
+
+    RelNode op = new LogicalCreateReference(this.planner.getCluster(), null,
+        path, tableReferences, def, relNode);
+    push(op);
+    return this;
   }
 }

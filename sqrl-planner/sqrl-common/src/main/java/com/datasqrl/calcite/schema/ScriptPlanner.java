@@ -76,26 +76,20 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
 
   @Override
   public LogicalOp visit(SqrlJoinQuery query, Void context) {
-    //we can resolve type by looking at the lhs relopttable
-    SqrlPreparingTable table = planner.getCatalogReader()
-        .getSqrlTable(SqrlListUtil.popLast(query.getIdentifier().names));
-
-    TableResult result = planTable(query, query.getQuery(), false,
+    TableResult result = planTable(query, query.getQuery(), false, true,
         query.getTableArgs());
-    SqlValidator validator = planner.createSqlValidator();
 
     SqrlPreparingTable toTable = planner.getCatalogReader()
         .getSqrlTable(result.getResult().getCurrentPath());
 
-    SqlNode node = planner.relToSql(Dialect.CALCITE, result.getRelNode());
-    TableFunction function = createFunction(validator, result.def, toTable.getRowType(),
-        node, toTable.getQualifiedName().get(0), planner.getCatalogReader());
-
-    return new LogicalCreateReference(this.planner.getCluster(), null,
-        query.getIdentifier().names, result.getResult().getCurrentPath(),
-        Util.last(query.getIdentifier().names), result.getDef(), result.getRelNode(),
-        function
-    );
+    return (LogicalOp) planner.getSqrlRelBuilder()
+        .push(result.getRelNode())
+        .projectLast(List.of(), toTable.getRowType().getFieldNames())
+        .createReferenceOp(
+            query.getIdentifier().names,
+            List.of(result.getResult().getCurrentPath()),
+            result.getDef())
+        .build();
   }
 
   @Override
@@ -166,7 +160,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
   }
 
   private LogicalCreateTableOp createTable(SqrlAssignment node, SqlNode query) {
-    TableResult result = planTable(node, query, true, node.getTableArgs());
+    TableResult result = planTable(node, query, true, false, node.getTableArgs());
 
     RelOptTable fromRelOptTable = null;
     List<SqrlTableParamDef> params = new ArrayList<>();
@@ -196,11 +190,11 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
   }
 
   private TableResult planTable(SqrlAssignment node, SqlNode query, boolean materialSelfTable,
-      Optional<SqrlTableFunctionDef> argDef) {
+      boolean isJoinDeclaration, Optional<SqrlTableFunctionDef> argDef) {
     List<String> currentPath = SqrlListUtil.popLast(node.getIdentifier().names);
 
     SqrlToSql sqrlToSql = new SqrlToSql(this.planner);
-    Result result = sqrlToSql.rewrite(query, materialSelfTable, currentPath, argDef);
+    Result result = sqrlToSql.rewrite(query, materialSelfTable, currentPath, argDef, isJoinDeclaration);
 
     Optional<SqrlPreparingTable> parentTable = node.getIdentifier().names.size() == 1
         ? Optional.empty()
@@ -261,10 +255,15 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     RelNode relNode;
     SqlNode sqlNode;
     SqrlTableFunctionDef def;
+    List<List<String>> tableReferences;
 
     public static TableResult of(Result result, RelNode relNode, SqlNode sqlNode,
         SqrlTableFunctionDef def) {
-      return new TableResult(result, relNode, sqlNode, def);
+      return new TableResult(result, relNode, sqlNode, def, List.of());
+    }
+
+    public List<List<String>> getTableReferences() {
+      return tableReferences;
     }
   }
 }
