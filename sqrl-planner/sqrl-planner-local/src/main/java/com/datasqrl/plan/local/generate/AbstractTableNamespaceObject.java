@@ -2,6 +2,7 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.schema.ScriptExecutor;
 import com.datasqrl.calcite.schema.ScriptPlanner;
 import com.datasqrl.calcite.schema.SqlDataTypeSpecFactory;
 import com.datasqrl.calcite.schema.SqrlListUtil;
@@ -118,7 +119,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         node.setSelectList(new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO));
 
         SqlValidator validator = tableFactory.getFramework().getQueryPlanner().createSqlValidator();
-        TableFunction function = ScriptPlanner.createFunction(validator,
+        TableFunction function = ScriptExecutor.createFunction(validator,
             args.orElse(new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())),
             rel.getRowType(), node, entry.getValue().getNameId(),
             framework.getQueryPlanner().getCatalogReader());
@@ -176,7 +177,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       }
 
       SqlValidator validator = tableFactory.getFramework().getQueryPlanner().createSqlValidator();
-      TableFunction function = ScriptPlanner.createFunction(validator,
+      TableFunction function = ScriptExecutor.createFunction(validator,
           new SqrlTableFunctionDef(SqlParserPos.ZERO, params),
           relNode.getRowType(), node, scanName, framework.getQueryPlanner().getCatalogReader());
 

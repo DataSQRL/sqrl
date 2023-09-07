@@ -29,6 +29,7 @@ import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 
 @AllArgsConstructor
@@ -106,14 +107,11 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
   @Override
   public LogicalOp visit(SqrlExportDefinition node, Void context) {
     RelOptTable table = planner.getCatalogReader().getSqrlTable(node.getIdentifier().names);
-
-    RelNode exportRel = planner.getSqrlRelBuilder()
-        .scanSqrl(node.getIdentifier().names)
-        .projectAll(false)
-        .buildAndUnshadow();
-
-    List<String> path = node.getSinkPath().names;
-    return new LogicalExportOp(planner.getCluster(), null, exportRel, table, path);
+    return (LogicalOp) planner.getSqrlRelBuilder()
+        .scan(table.getQualifiedName())
+        .projectAll()
+        .export(node.getSinkPath().names)
+        .build();
   }
 
   @Override
@@ -131,9 +129,6 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
 
     relNode = RelOptUtil.propagateRelHints(relNode, false);
 
-    System.out.println(planner.relToString(Dialect.CALCITE, relNode));
-    System.out.println(relNode.explain());
-    System.out.println();
     return new LogicalCreateTableOp(planner.getCluster(), null,
         relNode,
         createHints(node.getHints()), node.getHints(), node.getIdentifier().names, false, null,
@@ -144,14 +139,13 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
   public LogicalOp visit(SqrlStreamQuery node, Void context) {
     LogicalCreateTableOp relNode = createTable(node, node.getQuery());
 
-    RelNode logicalStream = planner.getSqrlRelBuilder()
+    return (LogicalOp) planner.getSqrlRelBuilder()
         .push(relNode.getInput(0))
         .stream(node.getType())
+        .createStreamOp(node.getIdentifier().names, node.getHints(),
+            node.getTableArgs().orElse(new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())),
+            relNode.fromRelOptTable)
         .build();
-
-    return new LogicalCreateStreamOp(planner.getCluster(), null,(LogicalStream) logicalStream,
-        node.getIdentifier().names, relNode.fromRelOptTable, node.getHints(),
-        node.getTableArgs().orElse(new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
   }
 
   @Override
@@ -205,40 +199,20 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqlNode sqlNode = result.getSqlNode().accept(transform);
     SqrlTableFunctionDef newArguments = transform.getArgumentDef();
 
-    System.out.println("Transformed: " + planner.sqlToString(Dialect.CALCITE, sqlNode));
     RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
-    SqrlRelBuilder builder = planner.getSqrlRelBuilder();
-    relNode = builder.push(relNode)
+    relNode = planner.getSqrlRelBuilder()
+        .push(relNode)
         .buildAndUnshadow();//todo get original names
-    System.out.println("Planned: " + planner.relToString(Dialect.CALCITE, relNode));
-    System.out.println();
     return TableResult.of(result, relNode, sqlNode, newArguments);
   }
 
   @Override
   public LogicalOp visit(SqrlExpressionQuery node, Void context) {
-    SqrlRelBuilder builder = planner.getSqrlRelBuilder()
-        .scanSqrl(SqrlListUtil.popLast(node.getIdentifier().names));
-
-    builder.addColumnOp(builder.evaluateExpression(node.getExpression()), Util.last(node.getIdentifier().names));
-    return (LogicalOp) builder.build();
-  }
-
-  public static TableFunction createFunction(SqlValidator validator, SqrlTableFunctionDef def, RelDataType type,
-      SqlNode node, String tableName, CatalogReader catalogReader) {
-    SqrlTableFunction tableFunction = new SqrlTableFunction(toParams(def.getParameters(), validator),
-        node, tableName, catalogReader);
-    return tableFunction;
-  }
-
-  private static List<FunctionParameter> toParams(List<SqrlTableParamDef> params,
-      SqlValidator validator) {
-    List<FunctionParameter> parameters = params.stream()
-        .map(p->new SqrlFunctionParameter(p.getName().getSimple(), p.getDefaultValue(),
-            p.getType(), p.getIndex(), p.getType().deriveType(validator),p.isInternal()))
-        .collect(Collectors.toList());
-    return parameters;
-
+    SqrlRelBuilder builder = planner.getSqrlRelBuilder();
+    return (LogicalOp) builder
+        .scanSqrl(SqrlListUtil.popLast(node.getIdentifier().names))
+        .addColumnOp(builder.evaluateExpression(node.getExpression()), Util.last(node.getIdentifier().names))
+        .build();
   }
 
   private List<RelHint> createHints(Optional<SqlNodeList> hints) {
@@ -255,15 +229,10 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     RelNode relNode;
     SqlNode sqlNode;
     SqrlTableFunctionDef def;
-    List<List<String>> tableReferences;
 
     public static TableResult of(Result result, RelNode relNode, SqlNode sqlNode,
         SqrlTableFunctionDef def) {
-      return new TableResult(result, relNode, sqlNode, def, List.of());
-    }
-
-    public List<List<String>> getTableReferences() {
-      return tableReferences;
+      return new TableResult(result, relNode, sqlNode, def);
     }
   }
 }

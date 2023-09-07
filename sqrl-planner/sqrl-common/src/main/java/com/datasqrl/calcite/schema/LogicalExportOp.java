@@ -11,14 +11,17 @@ import org.apache.calcite.rel.SingleRel;
 @Getter
 public class LogicalExportOp extends SingleRel implements LogicalOp {
 
-  final RelOptTable table;
   final List<String> sinkPath;
 
-  public LogicalExportOp(RelOptCluster cluster, RelTraitSet traitSet, RelNode input,
-      RelOptTable table, List<String> sinkPath) {
+  public LogicalExportOp(RelOptCluster cluster, RelTraitSet traitSet, RelNode input, List<String> sinkPath) {
     super(cluster, traitSet, input);
-    this.table = table;
     this.sinkPath = sinkPath;
+  }
+
+  @Override
+  public RelOptTable getTable() {
+    //always wrapped in a project
+    return input.getInput(0).getTable();
   }
 
   @Override

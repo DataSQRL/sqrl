@@ -4,9 +4,10 @@ import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.LogicalAddColumnOp;
 import com.datasqrl.calcite.schema.LogicalAssignTimestampOp;
 import com.datasqrl.calcite.schema.LogicalCreateReference;
-import com.datasqrl.calcite.schema.LogicalOp;
+import com.datasqrl.calcite.schema.LogicalCreateStreamOp;
+import com.datasqrl.calcite.schema.LogicalCreateTableOp;
+import com.datasqrl.calcite.schema.LogicalExportOp;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.model.StreamType;
 import com.datasqrl.plan.rel.LogicalStream;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.function.UnaryOperator;
@@ -29,6 +31,7 @@ import org.apache.calcite.plan.Contexts;
 import org.apache.calcite.plan.Convention;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptTable.ToRelContext;
 import org.apache.calcite.plan.ViewExpanders;
 import org.apache.calcite.rel.RelCollation;
@@ -58,6 +61,7 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
@@ -71,7 +75,6 @@ import org.apache.calcite.tools.RelBuilder.Config;
 import org.apache.calcite.tools.RelBuilder.GroupKey;
 import org.apache.calcite.util.Holder;
 import org.apache.calcite.util.ImmutableBitSet;
-import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.Mapping;
 import org.apache.calcite.util.mapping.Mappings.TargetMapping;
 import org.apache.commons.collections.ListUtils;
@@ -1131,6 +1134,25 @@ public class SqrlRelBuilder {
 
     RelNode op = new LogicalCreateReference(this.planner.getCluster(), null,
         path, tableReferences, def, relNode);
+    push(op);
+    return this;
+  }
+
+  public SqrlRelBuilder export(List<String> path) {
+    RelNode relNode = build();
+
+    LogicalExportOp exportOp = new LogicalExportOp(planner.getCluster(), null, relNode,
+        path);
+    push(exportOp);
+    return this;
+  }
+
+  public SqrlRelBuilder createStreamOp(List<String> path, Optional<SqlNodeList> hints,
+      SqrlTableFunctionDef sqrlTableFunctionDef, RelOptTable fromRelOptTable) {
+    LogicalStream relNode = (LogicalStream)build();
+
+    LogicalCreateStreamOp op = new LogicalCreateStreamOp(planner.getCluster(), null,
+        relNode, path, fromRelOptTable, hints, sqrlTableFunctionDef);
     push(op);
     return this;
   }

@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.schema;
 
+import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.QueryPlanner;
@@ -11,6 +12,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
@@ -30,10 +32,12 @@ import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.CalciteFixes;
@@ -46,6 +50,7 @@ import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.SqrlTableParamDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 
@@ -122,24 +127,10 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
     TableSink sink = LoaderUtil.loadSink(nameUtil.toNamePath(relNode.getSinkPath()), errors,
         moduleLoader);
 
-    framework.getSchema().add(exportTable(relNode.getTable(), sink, framework.getQueryPlanner().getRelBuilder()));
+    ResolvedExport export = new ResolvedExport(relNode.getTable().getQualifiedName().get(0), relNode.getInput(), sink);
+    framework.getSchema().add(export);
 
     return null;
-  }
-
-  public static ResolvedExport exportTable(RelOptTable table, TableSink sink, RelBuilder relBuilder) {
-
-    relBuilder.scan(table.getQualifiedName());
-    List<RexNode> selects = new ArrayList<>();
-    List<String> fieldNames = new ArrayList<>();
-    table.getRowType().getFieldNames().stream()
-//        .filter(f->!f.startsWith("_"))
-        .forEach(c -> {
-      selects.add(relBuilder.field(c));
-      fieldNames.add(c);
-    });
-    relBuilder.project(selects, fieldNames);
-    return new ResolvedExport(table.getQualifiedName().get(0), relBuilder.build(), sink);
   }
 
   @Override
@@ -151,7 +142,7 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
     System.out.println(node);
 
     PreparingTable relOptTable = planner.getCatalogReader().getSqrlTable(relNode.getTableReferences().get(0));
-    TableFunction function = ScriptPlanner.createFunction(planner.createSqlValidator(),
+    TableFunction function = createFunction(planner.createSqlValidator(),
         relNode.getDef(), relOptTable.getRowType(),
         node, relOptTable.getQualifiedName().get(0), planner.getCatalogReader());
 
@@ -230,5 +221,21 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
 
   private void createTable(LogicalCreateTableOp op) {
     tableFactory.createTable(op.path, op.input, op.hints, op.setFieldNames, op.getOpHints(), op.getArgs());
+  }
+
+  public static TableFunction createFunction(SqlValidator validator, SqrlTableFunctionDef def, RelDataType type,
+      SqlNode node, String tableName, CatalogReader catalogReader) {
+    SqrlTableFunction tableFunction = new SqrlTableFunction(toParams(def.getParameters(), validator),
+        node, tableName, catalogReader);
+    return tableFunction;
+  }
+
+  private static List<FunctionParameter> toParams(List<SqrlTableParamDef> params,
+      SqlValidator validator) {
+    List<FunctionParameter> parameters = params.stream()
+        .map(p->new SqrlFunctionParameter(p.getName().getSimple(), p.getDefaultValue(),
+            p.getType(), p.getIndex(), p.getType().deriveType(validator),p.isInternal()))
+        .collect(Collectors.toList());
+    return parameters;
   }
 }
