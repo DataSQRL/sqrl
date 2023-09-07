@@ -66,6 +66,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -957,6 +958,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       } else {
         joinedPKIdx.remove(eq.getOneSidedIndex());
       }
+
     }
     Side singletonSide = Side.NONE;
     for (Side side : new Side[]{Side.LEFT, Side.RIGHT}) {
