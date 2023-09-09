@@ -201,24 +201,7 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
   }
 
   public static String uniquifyColumnName(String name, List<String> names) {
-    String version = name + "$" + SqrlRelBuilder.getNextVersion(names, name);
-    return version;
-//
-//    name = name + "$" + 0;
-//    names = names.stream()
-//        .map(n->n.toLowerCase())
-//        .collect(Collectors.toList());;
-//        name = name.toLowerCase();
-//
-//    if (names.contains(name)) {
-//      return org.apache.calcite.sql.validate.SqlValidatorUtil.uniquify(
-//          name,
-//          new HashSet<>(names),
-//          //Renamed columns to names the user cannot address to prevent collisions
-//          (original, attempt, size) -> original + "$" + attempt);
-//    }
-
-//    return name;
+    return name + "$" + SqrlRelBuilder.getNextVersion(names, name);
   }
 
   private void createTable(LogicalCreateTableOp op) {

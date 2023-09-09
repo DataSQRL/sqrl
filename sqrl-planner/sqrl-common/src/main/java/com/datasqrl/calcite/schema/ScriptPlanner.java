@@ -82,7 +82,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
 
     return (LogicalOp) planner.getSqrlRelBuilder()
         .push(result.getRelNode())
-        .projectLast(List.of(), toTable.getRowType().getFieldNames())
+        .projectRange(List.of(), toTable.getRowType().getFieldNames())
         .createReferenceOp(
             query.getIdentifier().names,
             List.of(result.getResult().getCurrentPath()),
@@ -122,12 +122,11 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqrlRelBuilder builder = planner.getSqrlRelBuilder();
     RelNode relNode = builder
         .scan(table.getInternalTable().getQualifiedName())
-        .projectAllPrefixDistinct(builder.evaluateExpressionsShadowing(node.getOperands(), sqrlTableName))
-        //todo: shadowing here too
+        .projectAllPrefixDistinct(builder.evaluateExpressions(node.getOperands(), sqrlTableName))
         .sortLimit(0, 1, builder.evaluateOrderExpression(node.getOrder(), sqrlTableName))
-        .projectAll() //wrong
+        .projectAll()
         .distinctOnHint(node.getOperands().size())
-        .buildAndUnshadow(); //
+        .buildAndUnshadow();
 
     System.out.println(relNode.explain());
     System.out.println(planner.relToString(Dialect.CALCITE, relNode));
@@ -207,13 +206,10 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqlNode sqlNode = result.getSqlNode().accept(transform);
     SqrlTableFunctionDef newArguments = transform.getArgumentDef();
 
-    System.out.println("ToPlan: "+planner.sqlToString(Dialect.CALCITE, sqlNode));
     RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
-    System.out.println("Planned: "+planner.relToString(Dialect.CALCITE, relNode));
     relNode = planner.getSqrlRelBuilder()
         .push(relNode)
         .buildAndUnshadow();//todo get original names
-    System.out.println("Planned2: "+planner.relToString(Dialect.CALCITE, relNode));
     return TableResult.of(result, relNode, sqlNode, newArguments);
   }
 

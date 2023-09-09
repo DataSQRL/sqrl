@@ -12,7 +12,6 @@ import com.datasqrl.model.StreamType;
 import com.datasqrl.plan.rel.LogicalStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -844,26 +843,7 @@ public class SqrlRelBuilder {
     builder.clear();
   }
 
-  public SqrlRelBuilder projectAll(boolean hidden) {
-    List<RelDataTypeField> fields = builder.peek().getRowType().getFieldList();
-
-    List<RexNode> selects = new ArrayList<>();
-    List<String> fieldNames = new ArrayList<>();
-    for (RelDataTypeField f : fields) {
-      if (!f.getName().startsWith("_")) {
-        selects.add(builder.field(f.getName()));
-        fieldNames.add(f.getName());
-      }
-    }
-
-    builder.project(selects, fieldNames);
-    return this;
-  }
-
-
-  public SqrlRelBuilder scanSqrl(String name) {
-    return scanSqrl(List.of(name));
-  }
+  //Start SQRL additions:
 
   public static SqlUserDefinedTableFunction getSqrlTableFunction(QueryPlanner planner, List<String> path) {
     List<SqlOperator> result = new ArrayList<>();
@@ -873,7 +853,6 @@ public class SqrlRelBuilder {
     if (latestVersionName == null) {
       //todo return optional
       return null;
-//      throw new RuntimeException("Could not find function: " + path);
     }
     planner.getOperatorTable().lookupOperatorOverloads(new SqlIdentifier(List.of(latestVersionName), SqlParserPos.ZERO),
         SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, result, planner.getCatalogReader().nameMatcher());
@@ -987,18 +966,6 @@ public class SqrlRelBuilder {
     return planner.planExpression(node, builder.peek().getRowType(), tableName);
   }
 
-  public List<RexNode> evaluateExpressionsShadowing(List<SqlNode> node, String tableName) {
-    List<RexNode> projectExprs = new ArrayList<>();
-    RelDataType shadow = builder.peek().getRowType();
-    for (SqlNode expr : node) {
-
-      RexNode rexNode = planner.planExpression(expr, shadow, tableName);
-      projectExprs.add(rexNode);
-    }
-
-    return projectExprs;
-
-  }
   public List<RexNode> evaluateExpressions(List<SqlNode> node, String tableName) {
     List<RexNode> projectExprs = new ArrayList<>();
     for (SqlNode expr : node) {
@@ -1047,31 +1014,21 @@ public class SqrlRelBuilder {
     return this;
   }
 
-  public SqrlRelBuilder topNHint(int size) {
-    RelHint hint = RelHint.builder("TOP_N")
-        .hintOptions(IntStream.range(0, size)
-            .mapToObj(Integer::toString)
-            .collect(Collectors.toList()))
-        .build();
-    hints(hint);
-    return this;
-  }
-
   public SqrlRelBuilder projectAll() {
     project(fields(), peek().getRowType().getFieldNames(), true);
     return this;
   }
 
-  public SqrlRelBuilder projectLast(List<String> firstNames, List<String> names) {
-    List<RexNode> first = IntStream.range(0, firstNames.size())
+  public SqrlRelBuilder projectRange(List<String> start, List<String> end) {
+    List<RexNode> first = IntStream.range(0, start.size())
         .mapToObj(i->field(i))
         .collect(Collectors.toList());
 
     List<RexNode> proj = builder.fields(
-        ImmutableBitSet.range(builder.peek().getRowType().getFieldCount() - names.size(),
+        ImmutableBitSet.range(builder.peek().getRowType().getFieldCount() - end.size(),
             builder.peek().getRowType().getFieldCount()));
 
-    project(ListUtils.union(first, proj), ListUtils.union(firstNames, names), true);
+    project(ListUtils.union(first, proj), ListUtils.union(start, end), true);
     return this;
   }
 
@@ -1159,22 +1116,6 @@ public class SqrlRelBuilder {
     LogicalCreateStreamOp op = new LogicalCreateStreamOp(planner.getCluster(), null,
         relNode, path, fromRelOptTable, hints, sqrlTableFunctionDef);
     push(op);
-    return this;
-  }
-
-  public SqrlRelBuilder projectAllResetNames() {
-    RelDataType type = builder.peek().getRowType();
-    Set<String> names = new LinkedHashSet<>();
-    List<RexNode> nodes = new ArrayList<>();
-    for (RelDataTypeField field : type.getFieldList()) {
-      String n = field.getName().split("\\$")[0];
-      if (!names.contains(n)) {
-        names.add(n);
-        nodes.add(field(field.getIndex()));
-      }
-    }
-
-    projectNamed(nodes, names, true);
     return this;
   }
 }

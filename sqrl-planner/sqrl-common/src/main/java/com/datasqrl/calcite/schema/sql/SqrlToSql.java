@@ -218,7 +218,6 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
           RelOptTable table = planner.getCatalogReader().getSqrlTable(pathWalker.getAbsolutePath());
           pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
               .mapToObj(i -> "__" + ((SqrlPreparingTable) table).getInternalTable().getRowType().getFieldList().get(i).getName() + "$pk$" + pkId.incrementAndGet())
-//              .mapToObj(i -> ((SqrlPreparingTable) table).getInternalTable().getRowType().getFieldList().get(i).getName())
               .collect(Collectors.toList());
         }
       } else { //treat self as a parameterized binding to the next function
@@ -233,9 +232,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         } else {
           RelDataType type = planner.getCatalogReader().getSqrlTable(context.currentPath)
               .getRowType();
-          List<SqlNode> args = replaceSelfFieldsWithInputParams(
-              rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(),
-                  (SqrlTableFunction) fnc.getFunction()), type);
+          List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(),
+                  (SqrlTableFunction) fnc.getFunction());
 
           builder.scanFunction(fnc, args);
         }
@@ -266,13 +264,6 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
 
     return new Result(sqlNode, pathWalker.getAbsolutePath(), pullupColumns, List.of());
-  }
-
-  private List<SqlNode> replaceSelfFieldsWithInputParams(List<SqlNode> sqlIdentifiers,
-      RelDataType type) {
-    return sqlIdentifiers.stream()
-        //todo: not right
-        .collect(Collectors.toList());
   }
 
   private List<SqlNode> rewriteArgs(String alias, SqrlTableFunction function) {
