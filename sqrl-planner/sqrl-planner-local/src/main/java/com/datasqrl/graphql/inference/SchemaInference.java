@@ -292,7 +292,7 @@ public class SchemaInference {
     switch (scalarTypeDefinition.getName()) {
       case "Int":
         if (!SqlTypeName.INT_TYPES.contains(column.getType().getSqlTypeName())) {
-          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Int type, found: %s",
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, parent.getName() + ":"+fieldDefinition.getName()+"  expected SQRL Int type, found: %s",
               column.getType().getSqlTypeName().getName());
         }
         break;

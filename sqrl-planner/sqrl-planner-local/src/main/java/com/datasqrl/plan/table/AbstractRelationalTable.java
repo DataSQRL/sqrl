@@ -28,7 +28,7 @@ import org.apache.calcite.schema.impl.AbstractTableQueryable;
  */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public abstract class AbstractRelationalTable extends AbstractTable implements
-    TableWithPK, Comparable<AbstractRelationalTable>, QueryableTable {
+    Comparable<AbstractRelationalTable>, QueryableTable {
 
   @EqualsAndHashCode.Include
   protected final String nameId;

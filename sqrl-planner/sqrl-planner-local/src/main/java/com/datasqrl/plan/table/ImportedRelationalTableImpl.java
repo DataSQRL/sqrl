@@ -43,10 +43,4 @@ public class ImportedRelationalTableImpl extends SourceRelationalTableImpl imple
     return baseRowType;
   }
 
-  @Override
-  public List<String> getPrimaryKeyNames() {
-    return List.of(ReservedName.UUID.getCanonical());
-  }
-
-
 }

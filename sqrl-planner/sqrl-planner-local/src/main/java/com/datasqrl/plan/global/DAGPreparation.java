@@ -15,6 +15,7 @@ import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -73,8 +74,11 @@ public class DAGPreparation {
     relBuilder.scan(table1.getQualifiedName());
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
+
+    //todo: remove for latest columns
+    AtomicInteger i = new AtomicInteger();
     table.getVisibleColumns().stream().forEach(c -> {
-      selects.add(relBuilder.field(c.getVtName().getCanonical()));
+      selects.add(relBuilder.field(i.getAndIncrement()));//c.getVtName().getCanonical()));
       fieldNames.add(c.getName().getDisplay());
     });
     relBuilder.project(selects, fieldNames);

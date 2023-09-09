@@ -12,9 +12,6 @@ import com.datasqrl.model.StreamType;
 import com.datasqrl.plan.rel.LogicalStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +33,6 @@ import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptTable.ToRelContext;
 import org.apache.calcite.plan.ViewExpanders;
-import org.apache.calcite.prepare.Prepare;
-import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelDistribution;
 import org.apache.calcite.rel.RelNode;
@@ -53,8 +48,6 @@ import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
-import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexInputRef;
@@ -951,22 +944,39 @@ public class SqrlRelBuilder {
 
   // SELECT key1, key2, * EXCEPT [key1 key2]
   public SqrlRelBuilder projectAllPrefixDistinct(List<RexNode> firstNodes) {
-    Set<String> names = new LinkedHashSet<>();
+
+    List<String> stripped = stripShadowed(builder.peek().getRowType());
+
+    for (RexNode n : firstNodes) {
+      if (n instanceof RexInputRef) {
+        stripped.remove(builder.peek().getRowType().getFieldNames().get(((RexInputRef) n).getIndex()));
+      }
+    }
 
     List<RexNode> project = new ArrayList<>();
     project.addAll(firstNodes);
-    for (RelDataTypeField field : builder.peek().getRowType().getFieldList()) {
-      RexNode f = builder.field(field.getName());
-      String name = field.getName().split("\\$")[0];
-      //todo: wrong, we need latest field after the prefix fields
-      if (!firstNodes.contains(f)) {
-        project.add(f);
-        names.add(name);
-      }
+    for (String field : stripped) {
+      RexNode f = builder.field(field);
+      project.add(f);
     }
 
     builder.project(project);
     return this;
+  }
+
+  private List<String> stripShadowed(RelDataType fieldList) {
+    List<String> names = new ArrayList<>();
+    for (RelDataTypeField field : fieldList.getFieldList()) {
+      String latest = getLatestVersion(fieldList.getFieldNames(),
+          field.getName().split("\\$")[0]);
+      if (latest != null
+          && !latest.equals(field.getName())) {
+        continue;
+      }
+      names.add(field.getName());
+    }
+
+    return names;
   }
 
   public RexNode evaluateExpression(SqlNode node) {
@@ -1100,9 +1110,10 @@ public class SqrlRelBuilder {
     return relNode;
   }
 
-  public SqrlRelBuilder addColumnOp(RexNode rexNode, String name) {
+  public SqrlRelBuilder addColumnOp(RexNode rexNode, String name, SqrlPreparingTable toTable) {
     RelNode node = stripProject(build()); //remove sqrl fields from shadowing
-    LogicalAddColumnOp op = new LogicalAddColumnOp(planner.getCluster(), null, node, rexNode, name);
+    LogicalAddColumnOp op = new LogicalAddColumnOp(planner.getCluster(), null, node, rexNode, name,
+        toTable);
     push(op);
     return this;
   }

@@ -2,6 +2,7 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,20 @@ public class SqrlNameMatcher implements SqlNameMatcher {
       return null;
     }
     return relDataType.getField(name, false, false);
+  }
+
+  @Override
+  public int indexOf(Iterable<String> names, String name) {
+    List<String> n = new ArrayList<>();
+    names.iterator().forEachRemaining(n::add);
+
+    if (n.contains(name)) {
+      return n.indexOf(name);
+    }
+
+    String versioned = SqrlRelBuilder.getLatestVersion(n, name);
+
+    return n.indexOf(versioned);
   }
 
   @Override

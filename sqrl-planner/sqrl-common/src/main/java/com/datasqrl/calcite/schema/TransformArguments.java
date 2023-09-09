@@ -56,10 +56,7 @@ public class TransformArguments extends SqlShuttle {
 
       SqlDynamicParam param = new SqlDynamicParam(index, SqlParserPos.ZERO);
       SqlDataTypeSpec spec = new SqlDataTypeSpec(new SqlBasicTypeNameSpec(
-          rowType.getFieldList().stream()
-              .filter(f->f.getName().equalsIgnoreCase(id.names.get(1)))
-              .findFirst()
-              .get().getType().getSqlTypeName(), SqlParserPos.ZERO), SqlParserPos.ZERO);
+          rowType.getFieldList().get(index).getType().getSqlTypeName(), SqlParserPos.ZERO), SqlParserPos.ZERO);
 
       args.add(new SqrlTableParamDef(SqlParserPos.ZERO,
           new SqlIdentifier(variableName, SqlParserPos.ZERO), spec,

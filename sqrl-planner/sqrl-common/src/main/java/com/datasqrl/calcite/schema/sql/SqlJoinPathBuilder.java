@@ -93,7 +93,7 @@ public class SqlJoinPathBuilder {
   public SqlNode buildAndProjectLast(List<String> pullupCols) {
     Frame frame = stack.pop();
     Frame lastTable = tableHistory.get(tableHistory.size()-1);
-
+//
     if (!pullupCols.isEmpty()) {
       SqlSelectBuilder select = new SqlSelectBuilder()
           .setFrom(frame.getNode());

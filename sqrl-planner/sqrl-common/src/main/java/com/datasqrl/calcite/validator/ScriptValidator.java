@@ -85,6 +85,8 @@ public class ScriptValidator implements SqrlStatementVisitor<Void, Void> {
    * Warn if args are not used in query
    * Warn if AS is used to name an expression
    *
+   * Cannot shadow a table's primary key
+   *
    */
   @Override
   public Void visit(SqrlExpressionQuery statement, Void context) {

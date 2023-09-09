@@ -13,6 +13,7 @@ import com.datasqrl.calcite.validator.ScriptValidator;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
@@ -26,6 +27,7 @@ import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
@@ -74,7 +76,9 @@ import java.util.Set;
 import java.util.StringJoiner;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -91,51 +95,62 @@ public class AbstractTest {
     //Do all the things, get all the queries, execute them all
     SqrlFramework framework = new SqrlFramework(new SqrlRelMetadataProvider(),
         SqrlHintStrategyTable.getHintStrategyTable(), NameCanonicalizer.SYSTEM);
+    SqlFunction function = new FlinkConverter(framework.getQueryPlanner().getRexBuilder(), framework.getTypeFactory())
+        .convertFunction("COALESCE", "COALESCE", BuiltInFunctionDefinitions.COALESCE);
+    framework.getSqrlOperatorTable().addFunction("COALESCE", function);
 
     ResourceResolver resolver = new FileResourceResolver(
         Path.of("/Users/henneberger/sqrl/sqrl-examples/conference"));
     ObjectLoader objectLoader = new ObjectLoaderImpl(resolver, ErrorCollector.root(), new CalciteTableFactory(framework, NameCanonicalizer.SYSTEM));
-
     String gqlSchema = "scalar DateTime\n"
         + "\n"
         + "type Query {\n"
         + "    PersonalizedEvents( userid: String!, tolerance: Float!, afterTime: DateTime!): [PersonalizedEvents!]\n"
         + "    EventsAfterTime(afterTime: DateTime!): [Events!]!\n"
-        + "    EventSearch( query: String!, afterTime: DateTime!): [Events!]!\n"
+        + "    EventSearch( query: String!, afterTime: DateTime!): [EventSearchResult!]!\n"
         + "}\n"
         + "\n"
         + "interface AbstractEvents {\n"
-        + "    id : Int!\n"
+        + "    String : Int!\n"
         + "    time : String!\n"
         + "    location: String!\n"
         + "    title : String!\n"
         + "    description : String!\n"
         + "    name : String!\n"
-        + "    likeCount : LikeCount\n"
+//        + "    likeCount : LikeCount\n"
         + "}\n"
         + "\n"
         + "type LikeCount {\n"
         + "    num : Int\n"
         + "}\n"
         + "\n"
-        + "type Events implements AbstractEvents{\n"
-        + "    id : Int!\n"
+        + "type EventSearchResult {\n"
+        + "    id : String!\n"
         + "    time : String!\n"
         + "    location: String!\n"
         + "    title : String!\n"
         + "    description : String!\n"
         + "    name : String!\n"
-        + "    likeCount : LikeCount\n"
+//        + "    likeCount : LikeCount\n"
+        + "}\n"
+        + "type Events implements AbstractEvents{\n"
+        + "    id : String!\n"
+        + "    time : String!\n"
+        + "    location: String!\n"
+        + "    title : String!\n"
+        + "    description : String!\n"
+        + "    name : String!\n"
+//        + "    likeCount : LikeCount\n"
         + "}\n"
         + "\n"
         + "type PersonalizedEvents implements AbstractEvents{\n"
-        + "    id : Int!\n"
+        + "    id : String!\n"
         + "    time : String!\n"
         + "    location: String!\n"
         + "    title : String!\n"
         + "    description : String!\n"
         + "    name : String!\n"
-        + "    likeCount : LikeCount\n"
+//        + "    likeCount : LikeCount\n"
         + "    liked: Int!\n"
         + "    score: Float!\n"
         + "}\n"
@@ -297,7 +312,7 @@ public class AbstractTest {
         + "\n"
         + "AuthorizedEventRemoval := SELECT r.* FROM EventRemoval r TEMPORAL JOIN AuthTokens a ON a.id = 'removal' AND a.value = r.auth_token;\n"
         + "\n"
-        + "FilteredEventUpdate := SELECT v.*, coalesce(r._uuid, '') AS removalId, ((r._uuid IS NOT NULL ) OR (NOT bannedWordsFilter(v.name))\n"
+        + "FilteredEventUpdate := SELECT v.*, coalesce(r._uuid, '') AS removalId, ((NOT bannedWordsFilter(v.name))\n"
         + "                            OR (NOT bannedWordsFilter(v.description)) OR (NOT bannedWordsFilter(v.location))) AS removed\n"
         + "                       FROM VerifiedEventUpdate v LEFT INTERVAL JOIN AuthorizedEventRemoval r ON v.id = r.eventId AND v.timestamp < r._source_time;\n"
         + "\n"
@@ -339,8 +354,8 @@ public class AbstractTest {
         + "\n"
         + "EventSearch(@query: String, @afterTime: DateTime) := SELECT * FROM Events WHERE\n"
         + "                        time >= @afterTime AND textsearch(@query, title, description) > 0\n"
-        + "                        AND NOT removed\n"
-        + "                        ORDER BY textsearch(@query, title, description) DESC;\n"
+        + "                        AND NOT removed\n;"
+//        + "                        ORDER BY textsearch(@query, title, description) DESC;\n"
         + "\n"
         + "-- Events that the user liked or that are similar to users interests (requires vector search)\n"
         + "\n"

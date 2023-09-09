@@ -187,10 +187,10 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
   }
 
   private void addColumn(LogicalAddColumnOp op) {
-    RelOptTable table = op.getTable();
-    if (table.unwrap(ModifiableSqrlTable.class) != null) {
-      ModifiableSqrlTable table1 = (ModifiableSqrlTable) table.unwrap(Table.class);
-      String name = uniquifyColumnName(op.getName(), table.getRowType().getFieldNames());
+//    RelOptTable table = op.getTable();
+    if (op.getToTable().unwrap(ModifiableSqrlTable.class) != null) {
+      ModifiableSqrlTable table1 = (ModifiableSqrlTable) op.getToTable().unwrap(Table.class);
+      String name = uniquifyColumnName(op.getName(), op.getToTable().getRowType().getFieldNames());
       table1.addColumn(nameUtil.toName(name).getCanonical(), op.getColumn(), framework.getTypeFactory());
       SQRLTable sqrlTable = table1.getSqrlTable();
       sqrlTable.addColumn(Name.system(op.getName()), nameUtil.toName(name),

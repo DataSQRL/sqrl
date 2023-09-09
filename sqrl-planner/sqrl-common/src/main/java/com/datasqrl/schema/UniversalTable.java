@@ -86,9 +86,23 @@ public class UniversalTable {
 
   public void addColumn(Name colName, RelDataType type, boolean visible) {
     colName = Name.system(colName.getDisplay().split("\\$")[0]);
+    int version = fields.nextVersion(colName);
+
+    if (version != 0) {
+      for (int i = 0; i < getNumPrimaryKeys(); i++) {
+        //field is already a primary key, cannot shadow
+        if (this.getFields().getFields().get(i)
+            .getName().equals(colName)) {
+          Name newName = Name.system(ReservedName.HIDDEN_PREFIX).append(colName);
+          int version2 = fields.nextVersion(newName);
+
+          fields.addField(
+              new Column(newName, version2, type, visible));
+        }
+      }
+    }
 
     //A name may clash with a previously added name, hence we increase the version
-    int version = fields.nextVersion(colName);
     fields.addField(new Column(colName, version, type, visible));
   }
 

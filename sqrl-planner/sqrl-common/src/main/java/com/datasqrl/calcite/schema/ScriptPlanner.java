@@ -22,7 +22,6 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
-import org.apache.calcite.rel.metadata.RelMetadataProvider;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -58,11 +57,13 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
 
     RexNode node = builder.evaluateExpression(query.getTimestamp());
     if (!(node instanceof RexInputRef) && query.getTimestampAlias().isEmpty()) {
-      builder.addColumnOp(node, "_time") //assign a hidden timestamp field for expressions
+      builder.addColumnOp(node, "_time",
+              planner.getCatalogReader().getSqrlTable(tableName)) //assign a hidden timestamp field for expressions
           .assignTimestampOp(-1);
     } else if (query.getTimestampAlias().isPresent()) {
       //otherwise, add new column
-      builder.addColumnOp(node, query.getTimestampAlias().get().getSimple())
+      builder.addColumnOp(node, query.getTimestampAlias().get().getSimple(),
+              planner.getCatalogReader().getSqrlTable(tableName))
           .assignTimestampOp(-1);
     } else {
       builder.assignTimestampOp(((RexInputRef) node).getIndex());
@@ -206,11 +207,13 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqlNode sqlNode = result.getSqlNode().accept(transform);
     SqrlTableFunctionDef newArguments = transform.getArgumentDef();
 
-    System.out.println(planner.sqlToString(Dialect.CALCITE, sqlNode));
+    System.out.println("ToPlan: "+planner.sqlToString(Dialect.CALCITE, sqlNode));
     RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
+    System.out.println("Planned: "+planner.relToString(Dialect.CALCITE, relNode));
     relNode = planner.getSqrlRelBuilder()
         .push(relNode)
         .buildAndUnshadow();//todo get original names
+    System.out.println("Planned2: "+planner.relToString(Dialect.CALCITE, relNode));
     return TableResult.of(result, relNode, sqlNode, newArguments);
   }
 
@@ -219,7 +222,9 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqrlRelBuilder builder = planner.getSqrlRelBuilder();
     return (LogicalOp) builder
         .scanSqrl(SqrlListUtil.popLast(node.getIdentifier().names))
-        .addColumnOp(builder.evaluateExpression(node.getExpression()), Util.last(node.getIdentifier().names))
+        .addColumnOp(builder.evaluateExpression(node.getExpression()),
+            Util.last(node.getIdentifier().names),
+            planner.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(node.getIdentifier().names)))
         .build();
   }
 
