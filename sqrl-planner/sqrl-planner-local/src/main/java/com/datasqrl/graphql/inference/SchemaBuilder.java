@@ -222,7 +222,7 @@ public class SchemaBuilder implements
           .filter(this::isOptional)
           .collect(Collectors.toList());
 
-      Set<ArgumentSet> set = new HashSet<>();
+      Set<ArgumentSet> set = new LinkedHashSet<>();
       List<List<InputValueDefinition>> combination = createCombination(optional);
       for (List<InputValueDefinition> c : combination) {
         Set<Argument> newHandlers = new LinkedHashSet<>();
@@ -287,13 +287,13 @@ public class SchemaBuilder implements
 
     builder.functionScan(op, 0, args);
 
-    Set<Model.Argument> newHandlers = function.getParameters().stream()
+    List<Model.Argument> newHandlers = function.getParameters().stream()
         .filter(f->!((SqrlFunctionParameter)f).isInternal())
         .map(p->
             Model.VariableArgument.builder()
             .path(p.getName().substring(1))
             .build())
-        .collect(Collectors.toSet());
+        .collect(Collectors.toList());
 
     List<Model.JdbcParameterHandler> parameters = function.getParameters().stream()
         .map(p->
@@ -320,7 +320,7 @@ public class SchemaBuilder implements
     APIQuery query = new APIQuery(nameId, relNode);
     apiManager.addQuery(query);
 
-    ArgumentSet argSet = new ArgumentSet(relNode, newHandlers, parameters, false);
+    ArgumentSet argSet = new ArgumentSet(relNode,new LinkedHashSet<>( newHandlers), parameters, false);
 
     QueryBase base = ApiQueryBase.builder()
         .query(query)

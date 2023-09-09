@@ -18,6 +18,7 @@ import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
+import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
@@ -98,7 +99,7 @@ public class AbstractTest {
     ScriptValidator validator = new ScriptValidator(framework, moduleLoader);
     String script = "IMPORT starwars.Human;\n"
         + "State := DISTINCT Human ON name ORDER BY _ingest_time;"
-        + "NEW := SELECT * FROM Human h TEMPORAL JOIN State h2 ON h.name = h2.name;";
+        + "NEW := SELECT h.nAmE AS name, h2.NaMe AS name0 FROM Human h TEMPORAL JOIN State h2 ON h.name = h2.name;";
     validator.validate(script);
 
     ScriptNode node = (ScriptNode)framework.getQueryPlanner().parse(Dialect.SQRL, script);
@@ -178,6 +179,10 @@ public class AbstractTest {
 
     snapshot.addContent(script+ "\n", "Script");
     snapshot.addContent(schema+ "\n", "Schema");
+    snapshot.addContent("\n", "DDL");
+
+    plan.getPlans(JDBCPhysicalPlan.class).findAny().get().getDdlStatements().stream()
+        .forEach(ddl->snapshot.addContent(ddl.toSql()));
 
     root.getCoords().stream()
         .filter(f->f instanceof ArgumentLookupCoords)
