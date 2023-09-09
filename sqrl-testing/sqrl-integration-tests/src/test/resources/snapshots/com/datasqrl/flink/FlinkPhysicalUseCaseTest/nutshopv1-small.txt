@@ -27,7 +27,7 @@ LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], sizing=[$4], w
 LogicalProject(__id$pk$1=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
   LogicalProject(__id$pk$1=[$0], month=[$1], total_spend=[$2], total_savings=[$3])
     LogicalAggregate(group=[{0, 1}], total_spend=[SUM($2)], total_savings=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 6, 2629746000, 0]]
-      LogicalProject(__id$pk$1=[$7], month=[endOfMonth($6)], price=[$11], savings=[$12], _uuid=[$0], time=[$4])
+      LogicalProject(__id$pk$1=[$7], month=[endOfMonth($6)], price=[$11], savings=[$12], _uuid=[$0])
         LogicalJoin(condition=[AND(=($0, $10), =($13, $6))], joinType=[inner]) hints[IntervalJoin]
           LogicalJoin(condition=[=($7, $3)], joinType=[inner]) hints[TemporalJoinHint options:[6, 1, 0]]
             LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]

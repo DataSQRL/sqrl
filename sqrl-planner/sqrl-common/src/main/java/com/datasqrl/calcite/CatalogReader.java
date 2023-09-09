@@ -40,7 +40,7 @@ public class CatalogReader extends CalciteCatalogReader {
    */
   public SqrlPreparingTable getSqrlTable(List<String> names) {
     List<String> absolutePath = getSqrlAbsolutePath(names);
-    String sysTableName = nameMatcher().get(schema.getInternalTables(), names, List.of());
+    String sysTableName = nameMatcher().get(schema.getInternalTables(), List.of(), absolutePath);
     if (sysTableName == null) {
       return null;
     }

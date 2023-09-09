@@ -3,8 +3,7 @@ package com.datasqrl.plan.local.generate;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.schema.ScriptExecutor;
-import com.datasqrl.calcite.schema.ScriptPlanner;
-import com.datasqrl.calcite.schema.SqlDataTypeSpecFactory;
+import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableSource;
@@ -170,7 +169,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         RelDataTypeField lhs = fromTable.getRowType().getFieldList().get(i);
         params.add(new SqrlTableParamDef(SqlParserPos.ZERO,
             new SqlIdentifier("@"+lhs.getName(), SqlParserPos.ZERO),
-            SqlDataTypeSpecFactory.create(lhs.getType()),
+            SqlDataTypeSpecBuilder.create(lhs.getType()),
             Optional.of(new SqlDynamicParam(lhs.getIndex(),SqlParserPos.ZERO)),
             params.size(),
             true));

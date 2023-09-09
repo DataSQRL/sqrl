@@ -45,16 +45,5 @@ public class GraphQLMutationExtraction {
               mutationType, null)
           .forEach(utb -> apiManager.addMutation(new APIMutation(utb.getName(), apiSource, utb)));
     }
-
-//    List<graphql.language.FieldDefinition> subscriptions = registry
-//        .getType("Subscription")
-//        .map(sub -> ((ObjectTypeDefinition)sub).getFieldDefinitions())
-//        .orElse(List.of());
-//    if (subscriptions.isEmpty()) log.trace("No subscriptions in {}", apiSource);
-//    for (graphql.language.FieldDefinition definition : subscriptions) {
-//      builder.subscription(new APISubscription(canonicalizer.name(definition.getName()), apiSource));
-//    }
-//    return builder.build();
   }
-
 }

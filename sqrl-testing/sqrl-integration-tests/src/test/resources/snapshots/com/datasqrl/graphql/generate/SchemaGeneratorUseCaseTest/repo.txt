@@ -5,8 +5,8 @@ type Package {
 }
 
 type Query {
-  Package(name: String): [Package!]
   Submission(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  Package(name: String): [Package!]
   TopicPackages(pkgName: String, topicName: String, numSubmissions: Int, lastSubmission: String): [TopicPackages!]
   TopicSearch(topicName: String, numPackages: Int): [TopicSearch!]
 }
@@ -27,8 +27,8 @@ type Submission {
   hash: String!
   authorid: String!
   submissionTime: String!
-  files(filename: String, filesize: Int): [files!]
   keywords(name: String): [keywords!]
+  files(filename: String, filesize: Int): [files!]
   variant: String!
   repoURL: String!
 }

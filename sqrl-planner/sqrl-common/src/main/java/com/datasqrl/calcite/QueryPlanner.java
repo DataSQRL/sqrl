@@ -87,7 +87,9 @@ public class QueryPlanner {
     planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
     planner.addRelTraitDef(RelCollationTraitDef.INSTANCE);
     RelOptUtil.registerDefaultRules(planner, true, true);
-//    RelOptRules.CALC_RULES.forEach(planner::addRule);
+    RelOptRules.CALC_RULES.forEach(planner::addRule);
+    EnumerableRules.rules().forEach(planner::addRule);
+
     RelOptRules.MATERIALIZATION_RULES.forEach(planner::addRule);
     EnumerableRules.ENUMERABLE_RULES.forEach(planner::addRule);
 
@@ -137,7 +139,7 @@ public class QueryPlanner {
   public RelNode plan(Dialect dialect, SqlNode query) {
     switch (dialect) {
       case SQRL:
-        ScriptPlanner scriptPlanner = new ScriptPlanner(this, metadataProvider);
+        ScriptPlanner scriptPlanner = new ScriptPlanner(this);
         return scriptPlanner.plan(query);
       case CALCITE:
         return planCalcite(query);

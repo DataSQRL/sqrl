@@ -50,6 +50,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -196,6 +197,10 @@ public class DAGAssembler {
           TableSink sink = debugger.getDebugSink(debugSinkName, errors);
           RelNode convertedRelNode = table.getPlannedRelNode();
           RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode, planner);
+          expandedRelNode = framework.getQueryPlanner().run(expandedRelNode,
+              CoreRules.PROJECT_MERGE, CoreRules.PROJECT_REMOVE,
+              CoreRules.PROJECT_JOIN_JOIN_REMOVE, CoreRules.PROJECT_JOIN_REMOVE);
+
           streamQueries.add(new PhysicalDAGPlan.WriteQuery(
               new PhysicalDAGPlan.ExternalSink(debugSinkName.getCanonical(), sink),
               expandedRelNode));

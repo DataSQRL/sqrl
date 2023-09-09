@@ -1,0 +1,9 @@
+---
+name: "human"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "name"
+  type: "STRING"
+  tests:
+  - "not_null"

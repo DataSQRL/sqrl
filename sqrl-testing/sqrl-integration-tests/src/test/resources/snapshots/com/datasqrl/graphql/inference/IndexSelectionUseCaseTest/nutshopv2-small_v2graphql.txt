@@ -1,2 +1,3 @@
+orders$6_btree_c3c5 - 1947.500
 orders$6_hash_c2 - 950.000
 products$11_hash_c3 - 950.000

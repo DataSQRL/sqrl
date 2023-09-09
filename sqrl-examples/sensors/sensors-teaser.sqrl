@@ -6,7 +6,7 @@ MinReadings := SELECT sensorid, endOfMinute(time) as timeMin,
     GROUP BY sensorid, timeMin;
 /* Create table of sensors and relate to readings */
 Sensors := DISTINCT Sensors ON id  ORDER BY placed DESC;
-Sensors.readings := JOIN MinReadings r ON r.sensorid = @.id ORDER BY placed ASC;
+Sensors.readings := JOIN MinReadings r ON r.sensorid = @.id;
 /* Create table of machines with recent temperature */
 Machine := SELECT s.machineid, max(temp) as maxTemp,
     avg(temp) as avgTemp

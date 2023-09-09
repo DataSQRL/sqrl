@@ -1,6 +1,9 @@
 customer$12_btree_c3c4 - 1947.500
 customer$12_hash_c4 - 950.000
-newcustomerpromotion$28_hash_c2 - 321972.627
+newcustomerpromotion$28_hash_c2 - 40579.102
 order_again$20_btree_c0c3 - 1068.750
+orders$9_btree_c3c2c4 - 3897.375
+orders$9_btree_c3c4 - 47.500
 orders$9_hash_c2 - 950.000
-product$16_hash_c3 - 950.000
+product$16_btree_c3c5 - 1947.500
+product$16_hash_c5 - 950.000

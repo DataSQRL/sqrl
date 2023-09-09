@@ -9,12 +9,12 @@ type Orders {
   customerid: Int!
   time: String!
   entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, price: Float): [entries!]
-  totals: totals
+  totals(price: Float, number: Int, savings: Float): [totals!]
 }
 
 type Query {
-  CustomerOrderStats(customerid: Int, total_price: Float, num_orders: Int): [CustomerOrderStats!]
   Orders(id: Int, customerid: Int, time: String): [Orders!]
+  CustomerOrderStats(customerid: Int, total_price: Float, num_orders: Int): [CustomerOrderStats!]
 }
 
 type entries {

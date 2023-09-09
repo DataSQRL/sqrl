@@ -17,5 +17,5 @@ products$11_btree_c6 - 0.000
 products$11_btree_c7 - 0.000
 products$11_btree_c8 - 0.000
 products$11_btree_c9 - 0.000
-spending_by_month$15_btree_c0c2c3 - 27729.053
-spending_by_month$15_btree_c0c3 - 13526.367
+spending_by_month$15_btree_c0c2c3 - 493.328
+spending_by_month$15_btree_c0c3 - 240.469

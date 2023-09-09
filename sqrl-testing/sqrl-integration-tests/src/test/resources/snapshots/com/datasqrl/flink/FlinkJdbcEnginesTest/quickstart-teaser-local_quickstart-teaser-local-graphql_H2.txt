@@ -1,11 +1,11 @@
 >>>database
 CREATE INDEX IF NOT EXISTS "orders$3_hash_c3" ON "orders$3" USING hash ("customerid");
 CREATE INDEX IF NOT EXISTS "orders$3_hash_c4" ON "orders$3" USING hash ("time");
-CREATE TABLE IF NOT EXISTS "items$4" ("_uuid" character varying not null,"_idx" integer not null,"productid" bigint not null,"quantity" bigint not null,"unit_price" double precision not null,"discount" double precision,"total" double precision not null,"time" timestamp(9) with time zone not null , PRIMARY KEY ("_uuid","_idx"));
-CREATE TABLE IF NOT EXISTS "orders$3" ("_uuid" character varying not null,"_ingest_time" timestamp(9) with time zone not null,"id" bigint not null,"customerid" bigint not null,"time" timestamp(9) with time zone not null , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "spending$10" ("__id$pk$1" bigint not null,"week" timestamp(9) with time zone not null,"spend" double precision not null,"saved" double precision not null , PRIMARY KEY ("__id$pk$1","week"));
-CREATE TABLE IF NOT EXISTS "totals$6" ("___uuid$pk$1" character varying not null,"price" double precision not null,"saving" double precision not null,"time" timestamp(9) with time zone not null , PRIMARY KEY ("___uuid$pk$1"));
-CREATE TABLE IF NOT EXISTS "users$8" ("id" bigint not null,"time" timestamp(9) with time zone not null , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "items$4" ("_uuid" CHARACTER VARYING NOT NULL,"_idx" INTEGER NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"unit_price" DOUBLE PRECISION NOT NULL,"discount" DOUBLE PRECISION ,"total" DOUBLE PRECISION NOT NULL,"time" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS "orders$3" ("_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"id" BIGINT NOT NULL,"customerid" BIGINT NOT NULL,"time" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "spending$10" ("__id$pk$1" BIGINT NOT NULL,"week" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"spend" DOUBLE PRECISION NOT NULL,"saved" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("__id$pk$1","week"));
+CREATE TABLE IF NOT EXISTS "totals$6" ("___uuid$pk$1" CHARACTER VARYING NOT NULL,"price" DOUBLE PRECISION NOT NULL,"saving" DOUBLE PRECISION NOT NULL,"time" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("___uuid$pk$1"));
+CREATE TABLE IF NOT EXISTS "users$8" ("id" BIGINT NOT NULL,"time" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 >>>query-orders
 {
   "data" : {

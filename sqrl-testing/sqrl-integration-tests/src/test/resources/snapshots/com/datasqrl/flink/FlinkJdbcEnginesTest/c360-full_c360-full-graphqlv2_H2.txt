@@ -1,10 +1,10 @@
 >>>database
 CREATE INDEX IF NOT EXISTS "product$16_hash_c5" ON "product$16" USING hash ("category");
-CREATE TABLE IF NOT EXISTS "category$14" ("name" character varying not null,"updatetime" timestamp(9) with time zone not null , PRIMARY KEY ("name"));
-CREATE TABLE IF NOT EXISTS "customer$12" ("customerid" bigint not null,"_uuid" character varying not null,"_ingest_time" timestamp(9) with time zone not null,"email" character varying not null,"name" character varying not null,"lastupdated" bigint not null,"updatetime" timestamp(9) with time zone not null , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "favorite_categories$24" ("__customerid$pk$1" bigint not null,"category_name" character varying not null,"total" double precision not null,"month" timestamp(9) with time zone not null , PRIMARY KEY ("__customerid$pk$1","category_name"));
-CREATE TABLE IF NOT EXISTS "order_again$20" ("__customerid$pk$1" bigint not null,"productid" bigint not null,"quantity" bigint not null,"num_orders" bigint not null,"most_recent" timestamp(9) with time zone not null , PRIMARY KEY ("__customerid$pk$1","productid"));
-CREATE TABLE IF NOT EXISTS "product$16" ("productid" bigint not null,"_uuid" character varying not null,"_ingest_time" timestamp(9) with time zone not null,"name" character varying not null,"description" character varying not null,"category" character varying not null,"updatetime" timestamp(9) with time zone not null , PRIMARY KEY ("productid"));
+CREATE TABLE IF NOT EXISTS "category$14" ("name" CHARACTER VARYING NOT NULL,"updatetime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
+CREATE TABLE IF NOT EXISTS "customer$12" ("customerid" BIGINT NOT NULL,"_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"email" CHARACTER VARYING NOT NULL,"name" CHARACTER VARYING NOT NULL,"lastupdated" BIGINT NOT NULL,"updatetime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "favorite_categories$24" ("__customerid$pk$1" BIGINT NOT NULL,"category_name" CHARACTER VARYING NOT NULL,"total" DOUBLE PRECISION NOT NULL,"month" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$pk$1","category_name"));
+CREATE TABLE IF NOT EXISTS "order_again$20" ("__customerid$pk$1" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"num_orders" BIGINT NOT NULL,"most_recent" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$pk$1","productid"));
+CREATE TABLE IF NOT EXISTS "product$16" ("productid" BIGINT NOT NULL,"_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"name" CHARACTER VARYING NOT NULL,"description" CHARACTER VARYING NOT NULL,"category" CHARACTER VARYING NOT NULL,"updatetime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("productid"));
 >>>query-category
 {
   "data" : {

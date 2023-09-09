@@ -173,11 +173,16 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   public GraphQL createGraphQL(SqlClient client) {
-    GraphQL graphQL = model.accept(
-        new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
-            constructSubscriptions(model, vertx), canonicalizer));
-    return graphQL;
+    try {
+      GraphQL graphQL = model.accept(
+          new BuildGraphQLEngine(),
+          new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
+              constructSubscriptions(model, vertx), canonicalizer));
+      return graphQL;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   static Map<String, SinkConsumer> constructSubscriptions(RootGraphqlModel root, Vertx vertx) {

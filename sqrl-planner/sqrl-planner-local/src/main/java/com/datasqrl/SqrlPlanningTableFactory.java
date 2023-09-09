@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.schema.SqrlListUtil;
@@ -47,7 +48,8 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     NamePath names = new SqlNameUtil(nameCanonicalizer).toNamePath(path);
     Optional<SQRLTable> parent = names.size() == 1
         ? Optional.empty()
-        : Optional.of(framework.getSchema().getSqrlTable(names.popLast()));
+        : Optional.of(framework.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(path))
+            .unwrap(ModifiableSqrlTable.class).getSqrlTable());
 
     SqrlTableNamespaceObject nsObj = new CalciteTableFactory(framework, nameCanonicalizer)
         .createTable(names, analyzedLP, parent, args);

@@ -3,7 +3,7 @@ type Orders {
   customerid: Int!
   time: String!
   items(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [items!]
-  totals: totals
+  totals(price: Float, saving: Float): [totals!]
 }
 
 type Query {

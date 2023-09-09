@@ -38,7 +38,7 @@ public class EqHandler implements ArgumentHandler {
           .orElseThrow(
               () -> new RuntimeException("Could not find field: " + context.getArg().getName()));
       RelDataTypeField field = relBuilder.peek().getRowType()
-          .getField(vtField.getVtName().getCanonical(), false, false);
+          .getField(vtField.getName().getCanonical(), false, false);
       RexDynamicParam dynamicParam = rexBuilder.makeDynamicParam(field.getType(),
           context.getSourceHandlers().size() + args.getArgumentHandlers().size());
       RelNode rel = relBuilder.filter(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS,

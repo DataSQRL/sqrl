@@ -35,7 +35,9 @@ import com.datasqrl.graphql.inference.argument.ArgumentHandlerContextV1;
 import com.datasqrl.graphql.inference.argument.EqHandler;
 import com.datasqrl.graphql.inference.argument.LimitOffsetHandler;
 import com.datasqrl.graphql.server.Model;
+import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
@@ -45,25 +47,33 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
+import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.util.ContinuousIndexMap;
+import com.datasqrl.plan.util.ContinuousIndexMap.Builder;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.SQRLTable;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
+import graphql.language.ListType;
+import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
+import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -173,14 +183,6 @@ public class SchemaBuilder implements
 
   @SneakyThrows
   @Override
-  /**
-   * Do permutation path if there are no non-internal arguments on the sqrl function
-   *
-   * If there are arguments on the sqrl function:
-   * 1.
-   *
-   *
-   */
   public Coords visitObjectField(InferredObjectField field, Object context) {
     List<String> currentPath;
     if (field.getParentTable() == null) {
@@ -207,34 +209,68 @@ public class SchemaBuilder implements
           .map(param -> new RexDynamicParam(param.getType(null), param.getOrdinal()))
           .collect(Collectors.toList());
 
-      builder.functionScan(op, 0, args);
-      RelNode relNode = builder.buildAndUnshadow();
+      List<List<InputValueDefinition>> defs = generateCombinations(field.getFieldDefinition()
+          .getInputValueDefinitions());
 
-      Set<ArgumentSet> possibleArgCombinations = createArgumentSuperset(
-          field.getTable(),
-          relNode, new ArrayList<>(),
-          field.getFieldDefinition().getInputValueDefinitions(),
-          field.getFieldDefinition());
+      List<InputValueDefinition> required = field.getFieldDefinition().getInputValueDefinitions()
+          .stream()
+          .filter(f -> !isOptional(f))
+          .collect(Collectors.toList());
+
+      List<InputValueDefinition> optional = field.getFieldDefinition().getInputValueDefinitions()
+          .stream()
+          .filter(this::isOptional)
+          .collect(Collectors.toList());
+
+      Set<ArgumentSet> set = new HashSet<>();
+      List<List<InputValueDefinition>> combination = createCombination(optional);
+      for (List<InputValueDefinition> c : combination) {
+        Set<Argument> newHandlers = new LinkedHashSet<>();
+        List<JdbcParameterHandler> parameters = new ArrayList<>();
+
+        builder.functionScan(op, 0, args);
+        List<InputValueDefinition> inputs = ListUtils.union(required, c);
+        boolean limitOffsetFlag = false;
+        for (InputValueDefinition r : inputs) {
+          if (r.getName().equalsIgnoreCase("limit") || r.getName().equalsIgnoreCase("offset")) {
+            limitOffsetFlag = true;
+            continue;
+          }
+
+          RelDataTypeField f = builder.peek().getRowType()
+              .getField(r.getName(), false, false);
+          RexDynamicParam dynamicParam = builder.getRexBuilder().makeDynamicParam(f.getType(),
+              newHandlers.size() + parameters.size());
+          //if limit/offset, create handler
+          builder.filter(builder.call(SqlStdOperatorTable.EQUALS,
+              //todo canonical name?
+              builder.field(r.getName().toLowerCase()), dynamicParam));
+          newHandlers.add(VariableArgument.builder().path(r.getName()).build());
+          parameters.add(ArgumentParameter.builder().path(r.getName()).build());
+        }
+        RelNode relNode = builder.buildAndUnshadow();
+        System.out.println("Generated Query: " + framework.getQueryPlanner()
+            .relToString(Dialect.CALCITE, relNode));
+        set.add(new ArgumentSet(relNode, newHandlers, parameters, limitOffsetFlag));
+      }
 
       //add source parameters
       List<Model.JdbcParameterHandler> parameters = function.getParameters().stream()
           .map(p->
               (((SqrlFunctionParameter)p).isInternal())
                   ? SourceParameter.builder()
-                  .key(p.getName().substring(1))
-                  .build()
-                  :
-                      Model.ArgumentParameter.builder()
-                          .path(p.getName().substring(1))
-                          .build())
+                    .key(p.getName().substring(1))
+                    .build()
+                  : Model.ArgumentParameter.builder()
+                    .path(p.getName().substring(1))
+                    .build())
           .collect(Collectors.toList());
 
       //Todo: Project out only the needed columns. This requires visiting all it's children so we know
       // what other fields they need
-      ArgumentLookupCoords argumentLookupCoords = buildArgumentQuerySet(possibleArgCombinations,
+      ArgumentLookupCoords argumentLookupCoords = buildArgumentQuerySet(set,
           field.getParent(),
           field.getFieldDefinition(), parameters);
-      System.out.println( "Generated Query: " + framework.getQueryPlanner().relToString(Dialect.CALCITE, relNode));
       System.out.println(argumentLookupCoords.getMatchs());
       return argumentLookupCoords;
     }
@@ -317,6 +353,79 @@ public class SchemaBuilder implements
 //    return buildArgumentQuerySet(possibleArgCombinations,
 //        field.getParent(),
 //        field.getFieldDefinition(), new ArrayList<>());
+  }
+
+
+  public static List<List<InputValueDefinition>> generateCombinations(List<InputValueDefinition> input) {
+    List<List<InputValueDefinition>> result = new ArrayList<>();
+
+    // Starting with an empty combination
+    result.add(new ArrayList<>());
+
+    for (InputValueDefinition definition : input) {
+      List<List<InputValueDefinition>> newCombinations = new ArrayList<>();
+
+      for (List<InputValueDefinition> existing : result) {
+        // Handling NonNull or List<NonNull>
+        if (definition.getType() instanceof GraphQLNonNull || definition.getType() instanceof GraphQLList) {
+          existing.add(definition);
+          newCombinations.add(new ArrayList<>(existing));
+        } else {
+          // Without current item
+          newCombinations.add(new ArrayList<>(existing));
+
+          // With current item
+          existing.add(definition);
+          newCombinations.add(existing);
+
+          // If has defaultValue, create another with defaultValue
+          if (definition.getDefaultValue() != null) {
+            List<InputValueDefinition> withDefault = new ArrayList<>(existing);
+            // Assuming you have a method to clone the definition and replace the value
+            withDefault.set(withDefault.size() - 1, replaceWithValue(definition, definition.getDefaultValue()));
+            newCombinations.add(withDefault);
+          }
+        }
+      }
+
+      result = newCombinations;
+    }
+
+    return result;
+  }
+
+  public static InputValueDefinition replaceWithValue(InputValueDefinition definition, graphql.language.Value newValue) {
+    return definition.deepCopy().transform((b)->b.defaultValue(newValue));
+  }
+
+  private boolean isOptional(InputValueDefinition f) {
+    return !(f.getType() instanceof NonNullType || (f.getType() instanceof ListType && ((ListType)f.getType()).getType() instanceof NonNullType)) &&
+        f.getDefaultValue() == null;
+  }
+
+  private <T> List<List<T>> createCombination(
+      List<T> input) {
+    List<List<T>> result = new ArrayList<>();
+
+    // Starting with an empty combination
+    result.add(new ArrayList<>());
+
+    for (T item : input) {
+      List<List<T>> newCombinations = new ArrayList<>();
+
+      for (List<T> existing : result) {
+        // Without current item
+        newCombinations.add(new ArrayList<>(existing));
+
+        // With current item
+        existing.add(item);
+        newCombinations.add(existing);
+      }
+
+      result = newCombinations;
+    }
+
+    return result;
   }
 
   private boolean hasMatchingTableFunction(SqrlSchema schema, InferredObjectField field) {

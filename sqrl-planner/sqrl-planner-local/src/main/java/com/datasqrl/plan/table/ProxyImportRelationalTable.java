@@ -10,13 +10,21 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.calcite.linq4j.Enumerator;
+import org.apache.calcite.linq4j.Linq4j;
+import org.apache.calcite.linq4j.QueryProvider;
+import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.QueryableTable;
+import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.impl.AbstractTableQueryable;
 
 /**
  * A relational table that is defined by the imported data from a {@link TableSource}.
@@ -62,5 +70,4 @@ public class ProxyImportRelationalTable extends ScriptRelationalTable {
     getAssignedStage().ifPresent(stage -> builder.stage(stage));
     return builder;
   }
-
 }

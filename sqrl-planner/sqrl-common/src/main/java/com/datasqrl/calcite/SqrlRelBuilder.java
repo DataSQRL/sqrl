@@ -1,12 +1,11 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
-import com.datasqrl.calcite.schema.LogicalAddColumnOp;
-import com.datasqrl.calcite.schema.LogicalAssignTimestampOp;
-import com.datasqrl.calcite.schema.LogicalCreateReference;
-import com.datasqrl.calcite.schema.LogicalCreateStreamOp;
-import com.datasqrl.calcite.schema.LogicalCreateTableOp;
-import com.datasqrl.calcite.schema.LogicalExportOp;
+import com.datasqrl.calcite.schema.op.LogicalAddColumnOp;
+import com.datasqrl.calcite.schema.op.LogicalAssignTimestampOp;
+import com.datasqrl.calcite.schema.op.LogicalCreateReferenceOp;
+import com.datasqrl.calcite.schema.op.LogicalCreateStreamOp;
+import com.datasqrl.calcite.schema.op.LogicalExportOp;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.model.StreamType;
@@ -925,20 +924,6 @@ public class SqrlRelBuilder {
     return this;
   }
 
-
-//  public SqrlRelBuilder functionScanSqrl(List<String> absolutePath, SqrlTableFunctionMacro macro,
-//      List<RexNode> args) {
-//    refreshMacro(absolutePath, macro);
-//    functionScan(macro, 0, args);
-//    return this;
-//  }
-
-//  public SqrlRelBuilder functionScanSqrl(List<String> absolutePath, SqrlTableFunctionMacro macro) {
-//    refreshMacro(absolutePath, macro);
-//    functionScan(macro, 0);
-//    return this;
-//  }
-
   // SELECT key1, key2, * EXCEPT [key1 key2]
   public SqrlRelBuilder projectAllPrefixDistinct(List<RexNode> firstNodes) {
 
@@ -1132,7 +1117,7 @@ public class SqrlRelBuilder {
       List<List<String>> tableReferences, SqrlTableFunctionDef def) {
     RelNode relNode = build();
 
-    RelNode op = new LogicalCreateReference(this.planner.getCluster(), null,
+    RelNode op = new LogicalCreateReferenceOp(this.planner.getCluster(), null,
         path, tableReferences, def, relNode);
     push(op);
     return this;

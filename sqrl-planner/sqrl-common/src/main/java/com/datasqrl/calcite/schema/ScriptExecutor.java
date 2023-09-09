@@ -7,10 +7,20 @@ import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.TimestampAssignableTable;
+import com.datasqrl.calcite.schema.op.LogicalAddColumnOp;
+import com.datasqrl.calcite.schema.op.LogicalAssignTimestampOp;
+import com.datasqrl.calcite.schema.op.LogicalCreateAliasOp;
+import com.datasqrl.calcite.schema.op.LogicalCreateReferenceOp;
+import com.datasqrl.calcite.schema.op.LogicalCreateStreamOp;
+import com.datasqrl.calcite.schema.op.LogicalCreateTableOp;
+import com.datasqrl.calcite.schema.op.LogicalExportOp;
+import com.datasqrl.calcite.schema.op.LogicalImportOp;
+import com.datasqrl.calcite.schema.op.LogicalOp;
+import com.datasqrl.calcite.schema.op.LogicalOpVisitor;
+import com.datasqrl.calcite.schema.op.LogicalSchemaModifyOps;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.io.tables.TableSink;
@@ -23,7 +33,6 @@ import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -33,25 +42,13 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexDynamicParam;
-import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
-import org.apache.calcite.sql.CalciteFixes;
-import org.apache.calcite.sql.SqlBasicTypeNameSpec;
-import org.apache.calcite.sql.SqlDataTypeSpec;
-import org.apache.calcite.sql.SqlDynamicParam;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.SqrlTableParamDef;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 
 @AllArgsConstructor
@@ -134,7 +131,7 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
   }
 
   @Override
-  public Object visit(LogicalCreateReference relNode, Object context) {
+  public Object visit(LogicalCreateReferenceOp relNode, Object context) {
     QueryPlanner planner = framework.getQueryPlanner();
 
     SqlNode node = planner.relToSql(Dialect.CALCITE, relNode.getInput());
@@ -166,7 +163,7 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
 
 
   @Override
-  public Object visit(LogicalCreateAlias relNode, Object context) {
+  public Object visit(LogicalCreateAliasOp relNode, Object context) {
     return null;
   }
 
@@ -196,7 +193,7 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
       table1.addColumn(nameUtil.toName(name).getCanonical(), op.getColumn(), framework.getTypeFactory());
       SQRLTable sqrlTable = table1.getSqrlTable();
       sqrlTable.addColumn(Name.system(op.getName()), nameUtil.toName(name),
-          true, op.column.getType());
+          true, op.getColumn().getType());
     } else {
       throw new RuntimeException();
     }
@@ -220,7 +217,7 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
   }
 
   private void createTable(LogicalCreateTableOp op) {
-    tableFactory.createTable(op.path, op.input, op.hints, op.setFieldNames, op.getOpHints(), op.getArgs());
+    tableFactory.createTable(op.getPath(), op.getInput(), op.getHints(), op.isSetFieldNames(), op.getOpHints(), op.getArgs());
   }
 
   public static TableFunction createFunction(SqlValidator validator, SqrlTableFunctionDef def, RelDataType type,

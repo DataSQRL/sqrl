@@ -1,13 +1,16 @@
 package com.datasqrl.calcite.schema;
 
-import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlPreparingTable;
 import com.datasqrl.calcite.SqrlRelBuilder;
-import com.datasqrl.calcite.schema.SqrlToSql.Result;
-import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.plan.rel.LogicalStream;
+import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
+import com.datasqrl.calcite.schema.sql.SqrlToSql;
+import com.datasqrl.calcite.schema.sql.SqrlToSql.Result;
+import com.datasqrl.calcite.schema.op.LogicalCreateTableOp;
+import com.datasqrl.calcite.schema.op.LogicalImportOp;
+import com.datasqrl.calcite.schema.op.LogicalOp;
+import com.datasqrl.calcite.schema.op.LogicalSchemaModifyOps;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,24 +23,17 @@ import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 
 @AllArgsConstructor
 public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
 
   private QueryPlanner planner;
-
-  RelMetadataProvider relMetadataProvider;
 
   public RelNode plan(SqlNode query) {
     if (query instanceof ScriptNode) {
@@ -109,7 +105,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     RelOptTable table = planner.getCatalogReader().getSqrlTable(node.getIdentifier().names);
     return (LogicalOp) planner.getSqrlRelBuilder()
         .scan(table.getQualifiedName())
-        .projectAll()
+        .projectAll() //todo remove hidden fields
         .export(node.getSinkPath().names)
         .build();
   }
@@ -144,7 +140,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
         .stream(node.getType())
         .createStreamOp(node.getIdentifier().names, node.getHints(),
             node.getTableArgs().orElse(new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())),
-            relNode.fromRelOptTable)
+            relNode.getFromRelOptTable())
         .build();
   }
 
@@ -166,7 +162,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
         RelDataTypeField lhs = fromRelOptTable.getRowType().getFieldList().get(i);
         params.add(new SqrlTableParamDef(SqlParserPos.ZERO,
             new SqlIdentifier("@"+lhs.getName(), SqlParserPos.ZERO),
-            SqlDataTypeSpecFactory.create(lhs.getType()),
+            SqlDataTypeSpecBuilder.create(lhs.getType()),
                 Optional.of(new SqlDynamicParam(lhs.getIndex(),SqlParserPos.ZERO)),
             params.size(), true));
       }
