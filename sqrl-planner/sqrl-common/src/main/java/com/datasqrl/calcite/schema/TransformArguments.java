@@ -2,7 +2,9 @@ package com.datasqrl.calcite.schema;
 
 import com.datasqrl.calcite.SqrlPreparingTable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
@@ -25,6 +27,9 @@ public class TransformArguments extends SqlShuttle {
   AtomicInteger argCount = new AtomicInteger(0);
 
   List<SqrlTableParamDef> args = new ArrayList<>();
+
+  //Calcite needs all matching dynamic params to resolve to the same instance
+  Map<Integer, SqlDynamicParam> paramMap = new HashMap<>();
 
   public TransformArguments(Optional<SqrlPreparingTable> parentTable, Optional<SqrlTableFunctionDef> tableDef,
       boolean materialSelfTable, SqlNameMatcher sqlNameMatcher) {
@@ -54,7 +59,9 @@ public class TransformArguments extends SqlShuttle {
         throw new RuntimeException("Could not find field: " + id);
       }
 
-      SqlDynamicParam param = new SqlDynamicParam(index, SqlParserPos.ZERO);
+      SqlDynamicParam param = paramMap.computeIfAbsent(index, (i)->new SqlDynamicParam(i, SqlParserPos.ZERO));
+
+//      SqlDynamicParam param = new SqlDynamicParam(index, SqlParserPos.ZERO);
       SqlDataTypeSpec spec = new SqlDataTypeSpec(new SqlBasicTypeNameSpec(
           rowType.getFieldList().get(index).getType().getSqlTypeName(), SqlParserPos.ZERO), SqlParserPos.ZERO);
 
@@ -71,7 +78,9 @@ public class TransformArguments extends SqlShuttle {
           .filter(e->e.getName().names.get(0).equalsIgnoreCase(ident.names.get(0)))
           .findFirst().get();
 
-      return new SqlDynamicParam(param.getIndex(), SqlParserPos.ZERO);
+      return paramMap.computeIfAbsent(param.getIndex(), (i)->new SqlDynamicParam(i, SqlParserPos.ZERO));
+
+//      return new SqlDynamicParam(param.getIndex(), SqlParserPos.ZERO);
     }
 
     return super.visit(id);
