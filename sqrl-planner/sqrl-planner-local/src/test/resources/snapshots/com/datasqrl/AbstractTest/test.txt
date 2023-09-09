@@ -1,0 +1,100 @@
+>>>Script
+IMPORT starwars.Human;
+State := DISTINCT Human ON name ORDER BY _ingest_time;NEW := SELECT * FROM Human h TEMPORAL JOIN State h2 ON h.name = h2.name;
+
+>>>Schema
+type Human {
+  name: String!
+}
+
+type NEW {
+  name: String!
+  name0: String!
+}
+
+type Query {
+  Human(name: String): [Human!]
+  State(name: String): [State!]
+  NEW(name: String, name0: String): [NEW!]
+}
+
+type State {
+  name: String!
+}
+
+
+>>>DDL
+
+
+CREATE TABLE IF NOT EXISTS human$3 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL , PRIMARY KEY (_uuid));
+CREATE TABLE IF NOT EXISTS new$7 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,name0 VARCHAR NOT NULL,_uuid0 VARCHAR NOT NULL,_ingest_time0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid));
+CREATE TABLE IF NOT EXISTS state$5 (name VARCHAR NOT NULL,_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));
+CREATE INDEX IF NOT EXISTS human$3_hash_c2 ON human$3 USING hash (name);
+CREATE INDEX IF NOT EXISTS new$7_btree_c2c3 ON new$7 USING btree (name,name0);
+CREATE INDEX IF NOT EXISTS new$7_hash_c3 ON new$7 USING hash (name0);
+Query:Human()  =  SELECT *
+FROM (SELECT "_uuid", "_ingest_time", "name"
+  FROM "human$3"
+  ORDER BY "_ingest_time" DESC NULLS LAST, "_uuid") AS "t0"
+
+Query:Human(name)  =  SELECT *
+FROM (SELECT "_uuid", "_ingest_time", "name"
+  FROM "human$3"
+  WHERE "name" = $1
+  ORDER BY "_ingest_time" DESC NULLS LAST, "_uuid") AS "t1"
+
+Query:State()  =  SELECT *
+FROM (SELECT "name", "_uuid", "_ingest_time"
+  FROM "state$5"
+  ORDER BY "name") AS "t0"
+
+Query:State(name)  =  SELECT *
+FROM (SELECT "name", "_uuid", "_ingest_time"
+  FROM "state$5"
+  WHERE "name" = $1
+  ORDER BY "name") AS "t1"
+
+Query:NEW()  =  SELECT *
+FROM (SELECT "_uuid", "_ingest_time", "name", "name0", "_uuid0", "_ingest_time0"
+  FROM "new$7"
+  ORDER BY "_ingest_time" DESC NULLS LAST, "_uuid") AS "t0"
+
+Query:NEW(name0)  =  SELECT *
+FROM (SELECT "_uuid", "_ingest_time", "name", "name0", "_uuid0", "_ingest_time0"
+  FROM "new$7"
+  WHERE "name0" = $1
+  ORDER BY "_ingest_time" DESC NULLS LAST, "_uuid") AS "t1"
+
+Query:NEW(name)  =  SELECT *
+FROM (SELECT "_uuid", "_ingest_time", "name", "name0", "_uuid0", "_ingest_time0"
+  FROM "new$7"
+  WHERE "name" = $1
+  ORDER BY "_ingest_time" DESC NULLS LAST, "_uuid") AS "t1"
+
+Query:NEW(name, name0)  =  SELECT *
+FROM (SELECT "_uuid", "_ingest_time", "name", "name0", "_uuid0", "_ingest_time0"
+  FROM (SELECT *
+    FROM "new$7"
+    WHERE "name" = $1) AS "t"
+  WHERE "name0" = $3
+  ORDER BY "_ingest_time" DESC NULLS LAST, "_uuid") AS "t2"
+
+>>>Queries
+
+
+root$1 = SELECT *
+FROM `human$i$1`
+
+query$2 = SELECT *
+FROM (SELECT `name`, `_uuid`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `name` ORDER BY `_ingest_time` DESC NULLS LAST) AS `$f3`
+  FROM (SELECT `name`, `_uuid`, `_ingest_time`
+    FROM `human$i$1`) AS `t0`) AS `t1`
+WHERE `$f3` = 1
+
+root$3 = SELECT `$cor0`.`_uuid`, `$cor0`.`_ingest_time`, `$cor0`.`name`, `t2`.`name` AS `name0`, `t2`.`_uuid` AS `_uuid0`, `t2`.`_ingest_time` AS `_ingest_time0`
+FROM `human$i$1` AS `$cor0`
+ INNER JOIN `query$2` FOR SYSTEM_TIME AS OF `$cor0`.`_ingest_time` AS `t2` ON `$cor0`.`name` = `t2`.`name`
+
+root$4 = SELECT `name`, `_uuid`, `_ingest_time`
+FROM `human$i$1`
+
