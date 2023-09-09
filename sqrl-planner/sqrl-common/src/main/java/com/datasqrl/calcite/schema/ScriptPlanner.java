@@ -54,7 +54,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     List<String> tableName = query.getAlias().orElse(query.getIdentifier()).names;
 
     SqrlRelBuilder builder = planner.getSqrlRelBuilder()
-        .scanSqrl(tableName);
+        .scan(planner.getCatalogReader().getSqrlTable(tableName).getInternalTable().getQualifiedName());
 
     RexNode node = builder.evaluateExpression(query.getTimestamp());
     if (!(node instanceof RexInputRef) && query.getTimestampAlias().isEmpty()) {
@@ -110,18 +110,27 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
         .build();
   }
 
+  /**
+   * I need to retain all of the original names
+   */
   @Override
   public LogicalOp visit(SqrlDistinctQuery node, Void context) {
     String sqrlTableName = ((SqlIdentifier) node.getTable()).names.get(0);
 
+    SqrlPreparingTable table = planner.getCatalogReader().getSqrlTable(((SqlIdentifier) node.getTable()).names);
     SqrlRelBuilder builder = planner.getSqrlRelBuilder();
     RelNode relNode = builder
-        .scanSqrl(sqrlTableName)
-        .projectAllPrefixDistinct(builder.evaluateExpressions(node.getOperands(), sqrlTableName))
+        .scan(table.getInternalTable().getQualifiedName())
+        .projectAllPrefixDistinct(builder.evaluateExpressionsShadowing(node.getOperands(), sqrlTableName))
+        //todo: shadowing here too
         .sortLimit(0, 1, builder.evaluateOrderExpression(node.getOrder(), sqrlTableName))
-        .projectAll()
+        .projectAll() //wrong
         .distinctOnHint(node.getOperands().size())
-        .buildAndUnshadow();
+        .buildAndUnshadow(); //
+
+    System.out.println(relNode.explain());
+    System.out.println(planner.relToString(Dialect.CALCITE, relNode));
+
 
     relNode = RelOptUtil.propagateRelHints(relNode, false);
 
@@ -172,6 +181,8 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
         .orElse(new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of()))
         .getParameters());
 
+    System.out.println(result.relNode.explain());
+    System.out.println(planner.relToString(Dialect.CALCITE, result.relNode));
     return new LogicalCreateTableOp(planner.getCluster(), null,
         result.getRelNode(),
         createHints(node.getHints()),
@@ -195,6 +206,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqlNode sqlNode = result.getSqlNode().accept(transform);
     SqrlTableFunctionDef newArguments = transform.getArgumentDef();
 
+    System.out.println(planner.sqlToString(Dialect.CALCITE, sqlNode));
     RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
     relNode = planner.getSqrlRelBuilder()
         .push(relNode)

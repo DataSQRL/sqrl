@@ -23,9 +23,9 @@ public abstract class Field {
   }
 
   public Name getId() {
-    if (version == 0) {
-      return name;
-    }
+//    if (version == 0) {
+//      return name;
+//    }
     return name.suffix(Integer.toString(version));
   }
 

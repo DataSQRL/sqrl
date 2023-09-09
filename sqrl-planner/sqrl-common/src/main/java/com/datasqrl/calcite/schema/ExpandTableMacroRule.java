@@ -4,17 +4,20 @@ package com.datasqrl.calcite.schema;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 
 public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
@@ -39,6 +42,17 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
 
       relNode = CalciteUtil.applyRexShuttleRecursively(relNode,
           new ReplaceArgumentWithOperand(((RexCall) node.getCall()).getOperands()));
+
+      //Strip trivial projection
+      if (relNode instanceof LogicalProject && RexUtil.isIdentity(((LogicalProject) relNode).getProjects(),
+          relNode.getInput(0).getRowType())) {
+        relNode = relNode.getInput(0);
+      }
+      Preconditions.checkState(relNode.getRowType()
+              .equalsSansFieldNames(node.getRowType()),
+          "Not equal: " + relNode.getRowType() +" : "+
+              node.getRowType()
+      );
 
       relOptRuleCall.transformTo(relNode);
     }

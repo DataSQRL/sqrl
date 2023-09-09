@@ -5,6 +5,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.calcite.schema.op.LogicalAddColumnOp;
@@ -200,20 +201,24 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
   }
 
   public static String uniquifyColumnName(String name, List<String> names) {
-    names = names.stream()
-        .map(n->n.toLowerCase())
-        .collect(Collectors.toList());;
-        name = name.toLowerCase();
+    String version = name + "$" + SqrlRelBuilder.getNextVersion(names, name);
+    return version;
+//
+//    name = name + "$" + 0;
+//    names = names.stream()
+//        .map(n->n.toLowerCase())
+//        .collect(Collectors.toList());;
+//        name = name.toLowerCase();
+//
+//    if (names.contains(name)) {
+//      return org.apache.calcite.sql.validate.SqlValidatorUtil.uniquify(
+//          name,
+//          new HashSet<>(names),
+//          //Renamed columns to names the user cannot address to prevent collisions
+//          (original, attempt, size) -> original + "$" + attempt);
+//    }
 
-    if (names.contains(name)) {
-      return org.apache.calcite.sql.validate.SqlValidatorUtil.uniquify(
-          name,
-          new HashSet<>(names),
-          //Renamed columns to names the user cannot address to prevent collisions
-          (original, attempt, size) -> original + "$" + attempt);
-    }
-
-    return name;
+//    return name;
   }
 
   private void createTable(LogicalCreateTableOp op) {

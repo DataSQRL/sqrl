@@ -26,7 +26,7 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
   public DataType convertBasic(RelDataType datatype) {
     switch (datatype.getSqlTypeName()) {
       case VARCHAR:
-        return DataTypes.VARCHAR(32767);
+        return DataTypes.VARCHAR(Integer.MAX_VALUE);
       case CHAR:
         return DataTypes.CHAR(datatype.getPrecision());
       case TIMESTAMP:

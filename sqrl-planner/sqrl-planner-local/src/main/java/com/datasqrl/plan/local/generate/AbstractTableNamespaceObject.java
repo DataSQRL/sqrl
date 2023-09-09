@@ -161,6 +161,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         .build();
 
     SqlNode node = framework.getQueryPlanner().relToSql(Dialect.CALCITE, relNode);
+    System.out.println("X"+node);
 
     if (Math.min(fromTable.getNumPrimaryKeys(), toTable.getNumPrimaryKeys()) != 0) {
       List<SqrlTableParamDef> params = new ArrayList<>();

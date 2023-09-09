@@ -11,8 +11,11 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.model.StreamType;
 import com.datasqrl.plan.rel.LogicalStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,6 +36,8 @@ import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptTable.ToRelContext;
 import org.apache.calcite.plan.ViewExpanders;
+import org.apache.calcite.prepare.Prepare;
+import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelDistribution;
 import org.apache.calcite.rel.RelNode;
@@ -887,7 +892,7 @@ public class SqrlRelBuilder {
     return (SqlUserDefinedTableFunction)result.get(0);
   }
 
-  public static String getLatestVersion(Set<String> functionNames, String prefix) {
+  public static String getLatestVersion(Collection<String> functionNames, String prefix) {
     //todo: use name comparator
     Set<String> functionNamesCanon = functionNames.stream().map(f-> Name.system(f).getCanonical())
         .collect(Collectors.toSet());
@@ -907,6 +912,26 @@ public class SqrlRelBuilder {
     return maxVersion != -1 ? prefix + "$" + maxVersion : null;
   }
 
+  public static int getNextVersion(Collection<String> functionNames, String prefix) {
+    //todo: use name comparator
+    Set<String> functionNamesCanon = functionNames.stream().map(f-> Name.system(f).getCanonical())
+        .collect(Collectors.toSet());
+    String prefixCanon = Name.system(prefix).getCanonical();
+
+    Pattern pattern = Pattern.compile("^"+Pattern.quote(prefixCanon) + "\\$(\\d+)");
+    int maxVersion = -1;
+
+    for (String function : functionNamesCanon) {
+      Matcher matcher = pattern.matcher(function);
+      if (matcher.find()) {
+        int version = Integer.parseInt(matcher.group(1));
+        maxVersion = Math.max(maxVersion, version);
+      }
+    }
+
+    return maxVersion != -1 ? maxVersion + 1 : 0;
+  }
+
   /**
    * Returns a sqrl version of this table
    */
@@ -915,7 +940,7 @@ public class SqrlRelBuilder {
     if (relOptTable == null) {
       throw new RuntimeException("Could not find table: " + names);
     }
-    RelDataType shadowed = shadow(relOptTable.getRelDataType());
+    RelDataType shadowed = relOptTable.getRelDataType();
 
     scan(relOptTable.internalTable.getQualifiedName())
         .project(relOptTable.getInternalTable().getRowType().getFieldList().stream()
@@ -926,39 +951,22 @@ public class SqrlRelBuilder {
 
   // SELECT key1, key2, * EXCEPT [key1 key2]
   public SqrlRelBuilder projectAllPrefixDistinct(List<RexNode> firstNodes) {
+    Set<String> names = new LinkedHashSet<>();
 
     List<RexNode> project = new ArrayList<>();
     project.addAll(firstNodes);
     for (RelDataTypeField field : builder.peek().getRowType().getFieldList()) {
       RexNode f = builder.field(field.getName());
+      String name = field.getName().split("\\$")[0];
+      //todo: wrong, we need latest field after the prefix fields
       if (!firstNodes.contains(f)) {
         project.add(f);
+        names.add(name);
       }
     }
 
     builder.project(project);
     return this;
-  }
-
-  public static RelDataType shadow(RelDataType relDataType) {
-    /*
-     * Converts field to $$ + index if shadowed
-     */
-    List<RelDataTypeField> fields = new ArrayList<>();
-    Set<String> seenFields = new HashSet<>();
-    for (int i = relDataType.getFieldCount() - 1; i >= 0; i--) {
-      RelDataTypeField field = relDataType.getFieldList().get(i);
-      String fieldName = field.getName().split("\\$")[0];
-      if (seenFields.contains(fieldName)) {
-        fieldName = fieldName + "$$" + i;
-      } else {
-        seenFields.add(fieldName);
-      }
-      fields.add(new RelDataTypeFieldImpl(fieldName, i, field.getType()));
-    }
-
-    Collections.reverse(fields);
-    return new RelRecordType(fields);
   }
 
   public RexNode evaluateExpression(SqlNode node) {
@@ -969,6 +977,18 @@ public class SqrlRelBuilder {
     return planner.planExpression(node, builder.peek().getRowType(), tableName);
   }
 
+  public List<RexNode> evaluateExpressionsShadowing(List<SqlNode> node, String tableName) {
+    List<RexNode> projectExprs = new ArrayList<>();
+    RelDataType shadow = builder.peek().getRowType();
+    for (SqlNode expr : node) {
+
+      RexNode rexNode = planner.planExpression(expr, shadow, tableName);
+      projectExprs.add(rexNode);
+    }
+
+    return projectExprs;
+
+  }
   public List<RexNode> evaluateExpressions(List<SqlNode> node, String tableName) {
     List<RexNode> projectExprs = new ArrayList<>();
     for (SqlNode expr : node) {
@@ -1030,17 +1050,6 @@ public class SqrlRelBuilder {
   public SqrlRelBuilder projectAll() {
     project(fields(), peek().getRowType().getFieldNames(), true);
     return this;
-  }
-
-  public RelDataTypeField convertSqrlField(String fieldName) {
-    RelDataType type = shadow(peek().getRowType());
-    for (RelDataTypeField field : type.getFieldList()) {
-      if (field.getName().equalsIgnoreCase(fieldName)) {
-        return peek().getRowType().getFieldList().get(field.getIndex());
-      }
-    }
-
-    throw new RuntimeException("Could not find field:" + fieldName);
   }
 
   public SqrlRelBuilder projectLast(List<String> firstNames, List<String> names) {
@@ -1139,6 +1148,22 @@ public class SqrlRelBuilder {
     LogicalCreateStreamOp op = new LogicalCreateStreamOp(planner.getCluster(), null,
         relNode, path, fromRelOptTable, hints, sqrlTableFunctionDef);
     push(op);
+    return this;
+  }
+
+  public SqrlRelBuilder projectAllResetNames() {
+    RelDataType type = builder.peek().getRowType();
+    Set<String> names = new LinkedHashSet<>();
+    List<RexNode> nodes = new ArrayList<>();
+    for (RelDataTypeField field : type.getFieldList()) {
+      String n = field.getName().split("\\$")[0];
+      if (!names.contains(n)) {
+        names.add(n);
+        nodes.add(field(field.getIndex()));
+      }
+    }
+
+    projectNamed(nodes, names, true);
     return this;
   }
 }

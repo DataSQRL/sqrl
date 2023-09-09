@@ -147,11 +147,15 @@ public class InputFieldToFlexibleSchemaRelation implements
         case "Boolean":
           type = typeFactory.createSqlType(SqlTypeName.BOOLEAN);
           break;
+        case "DateTime":
+          type = typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 9);
+          break;
         case "String":
-        case "Id":
-        default:
+        case "ID":
           type = typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE);
           break;
+        default:
+          throw new RuntimeException("Unknown Type");
       }
       return addColumn(type, context);
     }

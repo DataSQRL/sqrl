@@ -19,6 +19,7 @@ import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
@@ -92,13 +93,20 @@ public class SqlJoinPathBuilder {
   public SqlNode buildAndProjectLast(List<String> pullupCols) {
     Frame frame = stack.pop();
     Frame lastTable = tableHistory.get(tableHistory.size()-1);
-    SqlSelect select = new SqlSelectBuilder()
-        .setFrom(frame.getNode())
-        .setSelectList(ListUtils.union(rename(createSelectList(tableHistory.get(0), pullupCols.size()), pullupCols),
-            createSelectList(lastTable, lastTable.type.getFieldCount())))
-        .build();
 
-    return select;
+    if (!pullupCols.isEmpty()) {
+      SqlSelectBuilder select = new SqlSelectBuilder()
+          .setFrom(frame.getNode());
+        select.setSelectList(ListUtils.union(
+          rename(createSelectList(tableHistory.get(0), pullupCols.size()), pullupCols),
+          createSelectList(lastTable, lastTable.type.getFieldCount())));
+      return select.build();
+    }
+
+    if (frame.getNode().getKind() == SqlKind.AS) {
+      return ((SqlCall)frame.getNode()).getOperandList().get(0);
+    }
+    return frame.getNode();
   }
 
   private List rename(List<SqlIdentifier> selectList, List<String> pullupCols) {
@@ -129,22 +137,25 @@ public class SqlJoinPathBuilder {
       throw new RuntimeException("Could not find table: " + currentPath);
     }
     String tableName = relOptTable.getQualifiedName().get(0);
-    SqlIdentifier table = new SqlIdentifier(tableName, SqlParserPos.ZERO);
+    SqlNode table = //SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO,
+        new SqlIdentifier(tableName, SqlParserPos.ZERO)
+//    )
+        ;
 
-    SqlSelect select = new SqlSelectBuilder()
-        .setFrom(table)
-        .setSelectList(SqrlRelBuilder.shadow(relOptTable.getRowType()).getFieldList()
-            .stream()
-            .map(f-> (SqlNode)SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-                new SqlIdentifier(relOptTable.getInternalTable().getRowType().getFieldList().get(f.getIndex()).getName(), SqlParserPos.ZERO),
-                new SqlIdentifier(f.getName(), SqlParserPos.ZERO)))
-            .collect(Collectors.toList()))
-        .build();
+//    SqlSelect select = new SqlSelectBuilder()
+//        .setFrom(table)
+//        .setSelectList(SqrlRelBuilder.shadow(relOptTable.getRowType()).getFieldList()
+//            .stream()
+//            .map(f-> (SqlNode)SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+//                new SqlIdentifier(relOptTable.getInternalTable().getRowType().getFieldList().get(f.getIndex()).getName(), SqlParserPos.ZERO),
+//                new SqlIdentifier(f.getName(), SqlParserPos.ZERO)))
+//            .collect(Collectors.toList()))
+//        .build();
 
     String alias = "_t"+aliasInt.incrementAndGet();
 
-    SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, select, new SqlIdentifier(alias, SqlParserPos.ZERO));
-    Frame frame = new Frame(SqrlRelBuilder.shadow(relOptTable.getRowType()), aliasedCall, alias);
+    SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, table, new SqlIdentifier(alias, SqlParserPos.ZERO));
+    Frame frame = new Frame(relOptTable.getInternalTable().getRowType(), aliasedCall, alias);
     stack.push(frame);
     tableHistory.add(frame);
 

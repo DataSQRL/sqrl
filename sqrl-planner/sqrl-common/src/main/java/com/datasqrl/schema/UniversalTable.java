@@ -84,13 +84,17 @@ public class UniversalTable {
     addColumn(colName, type, true);
   }
 
-  public void addColumn(final Name colName, RelDataType type, boolean visible) {
+  public void addColumn(Name colName, RelDataType type, boolean visible) {
+    colName = Name.system(colName.getDisplay().split("\\$")[0]);
+
     //A name may clash with a previously added name, hence we increase the version
     int version = fields.nextVersion(colName);
     fields.addField(new Column(colName, version, type, visible));
   }
 
   public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
+    name = Name.system(name.getDisplay().split("\\$")[0]);
+
     int version = fields.nextVersion(name);
     fields.addField(new ChildRelationship(name, version, child, multiplicity));
   }

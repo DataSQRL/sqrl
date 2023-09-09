@@ -2,6 +2,7 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import java.util.Objects;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptTable;
@@ -15,14 +16,20 @@ import java.util.List;
 
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
+import org.apache.calcite.sql.validate.SqlNameMatchers;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 public class CatalogReader extends CalciteCatalogReader {
 
   private final SqrlSchema schema;
 
   public CatalogReader(SqrlSchema rootSchema, RelDataTypeFactory typeFactory, CalciteConnectionConfig config) {
-    super(rootSchema, List.of(), typeFactory, config);
+    super(rootSchema, createNameMatcher(), ImmutableList.of(List.of(), ImmutableList.of()), typeFactory, config);
     this.schema = rootSchema;
+  }
+
+  private static SqlNameMatcher createNameMatcher() {
+    return new SqrlNameMatcher(NameCanonicalizer.SYSTEM);
   }
 
   @Override
@@ -46,7 +53,7 @@ public class CatalogReader extends CalciteCatalogReader {
     }
 
     RelOptTable internalTable = getTable(List.of(sysTableName));
-    RelDataType sqrlType = SqrlRelBuilder.shadow(internalTable.getRowType());
+    RelDataType sqrlType = internalTable.getRowType();
 
     return new SqrlPreparingTable(this,
         absolutePath, sqrlType, internalTable);

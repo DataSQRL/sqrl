@@ -2,6 +2,7 @@ package com.datasqrl.calcite.schema.sql;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.calcite.SqrlPreparingTable;
 import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.SqrlTableFunction;
@@ -216,7 +217,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         if (isNested) {
           RelOptTable table = planner.getCatalogReader().getSqrlTable(pathWalker.getAbsolutePath());
           pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
-              .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$" + pkId.incrementAndGet())
+              .mapToObj(i -> "__" + ((SqrlPreparingTable) table).getInternalTable().getRowType().getFieldList().get(i).getName() + "$pk$" + pkId.incrementAndGet())
+//              .mapToObj(i -> ((SqrlPreparingTable) table).getInternalTable().getRowType().getFieldList().get(i).getName())
               .collect(Collectors.toList());
         }
       } else { //treat self as a parameterized binding to the next function

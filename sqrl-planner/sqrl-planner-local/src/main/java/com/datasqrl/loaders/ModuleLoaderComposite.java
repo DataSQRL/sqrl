@@ -4,12 +4,14 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.SqrlModule;
 import java.util.List;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
 
 @Value
 @Builder
+@AllArgsConstructor
 public class ModuleLoaderComposite implements ModuleLoader {
 
   @Singular
