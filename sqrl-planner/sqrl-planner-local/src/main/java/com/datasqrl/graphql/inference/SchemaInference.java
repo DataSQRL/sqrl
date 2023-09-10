@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.SqrlPreparingTable;
 import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.schema.SqrlTableFunction;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -155,10 +156,18 @@ public class SchemaInference {
     SqrlTableFunction tableFunction = (SqrlTableFunction)function.getFunction();
 
     //TODO: Validate all fields are there
-
-    return framework.getCatalogReader().getSqrlTable(List.of(fieldName))
-        .unwrap(VirtualRelationalTable.class)
-        .getSqrlTable();
+    SqrlPreparingTable table = framework.getCatalogReader().getSqrlTable(List.of(fieldName));
+    //wrong
+    if (table != null) {
+      return framework.getCatalogReader().getSqrlTable(List.of(fieldName))
+          .unwrap(VirtualRelationalTable.class)
+          .getSqrlTable();
+    } else {
+      System.out.println();
+      return framework.getSchema().getRootTables().stream()
+          .filter(f->f.getName().getCanonical().equals(fieldName.toLowerCase()))
+          .findAny().get();
+    }
   }
 
   private Optional<? extends SQRLTable> getTableOfCommonInterface(Type type, String name) {

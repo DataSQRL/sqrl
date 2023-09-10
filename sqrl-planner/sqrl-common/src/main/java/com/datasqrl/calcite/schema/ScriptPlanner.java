@@ -28,6 +28,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.Util;
+import org.apache.flink.table.api.TableResult;
 
 @AllArgsConstructor
 public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
@@ -159,35 +160,48 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
   }
 
   private LogicalCreateTableOp createTable(SqrlAssignment node, SqlNode query) {
-    TableResult result = planTable(node, query, true, false, node.getTableArgs());
+    if (node.getTableArgs().isPresent()) {
 
-    RelOptTable fromRelOptTable = null;
-    List<SqrlTableParamDef> params = new ArrayList<>();
-    if (node.getIdentifier().names.size() > 1) {
-      fromRelOptTable = planner.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(node.getIdentifier().names));
+      TableResult result = planTable(node, query, false, false, node.getTableArgs());
 
-      for (int i = 0; i < fromRelOptTable.getKeys().get(0).asSet().size(); i++) {
-        //create equality constraint of primary keys
-        RelDataTypeField lhs = fromRelOptTable.getRowType().getFieldList().get(i);
-        params.add(new SqrlTableParamDef(SqlParserPos.ZERO,
-            new SqlIdentifier("@"+lhs.getName(), SqlParserPos.ZERO),
-            SqlDataTypeSpecBuilder.create(lhs.getType()),
-                Optional.of(new SqlDynamicParam(lhs.getIndex(),SqlParserPos.ZERO)),
-            params.size(), true));
+      return new LogicalCreateTableOp(planner.getCluster(), null,
+          result.getRelNode(),
+          createHints(node.getHints()),
+          node.getHints(), node.getIdentifier().names,
+          true, null,node.getTableArgs().get());
+    } else {
+
+      TableResult result = planTable(node, query, true, false, node.getTableArgs());
+
+      RelOptTable fromRelOptTable = null;
+      List<SqrlTableParamDef> params = new ArrayList<>();
+      if (node.getIdentifier().names.size() > 1) {
+        fromRelOptTable = planner.getCatalogReader()
+            .getSqrlTable(SqrlListUtil.popLast(node.getIdentifier().names));
+
+        for (int i = 0; i < fromRelOptTable.getKeys().get(0).asSet().size(); i++) {
+          //create equality constraint of primary keys
+          RelDataTypeField lhs = fromRelOptTable.getRowType().getFieldList().get(i);
+          params.add(new SqrlTableParamDef(SqlParserPos.ZERO,
+              new SqlIdentifier("@" + lhs.getName(), SqlParserPos.ZERO),
+              SqlDataTypeSpecBuilder.create(lhs.getType()),
+              Optional.of(new SqlDynamicParam(lhs.getIndex(), SqlParserPos.ZERO)),
+              params.size(), true));
+        }
       }
+
+      params.addAll(node.getTableArgs()
+          .orElse(new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of()))
+          .getParameters());
+
+      System.out.println(result.relNode.explain());
+      System.out.println(planner.relToString(Dialect.CALCITE, result.relNode));
+      return new LogicalCreateTableOp(planner.getCluster(), null,
+          result.getRelNode(),
+          createHints(node.getHints()),
+          node.getHints(), node.getIdentifier().names,
+          true, fromRelOptTable, new SqrlTableFunctionDef(SqlParserPos.ZERO, params));
     }
-
-    params.addAll(node.getTableArgs()
-        .orElse(new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of()))
-        .getParameters());
-
-    System.out.println(result.relNode.explain());
-    System.out.println(planner.relToString(Dialect.CALCITE, result.relNode));
-    return new LogicalCreateTableOp(planner.getCluster(), null,
-        result.getRelNode(),
-        createHints(node.getHints()),
-        node.getHints(), node.getIdentifier().names,
-        true, fromRelOptTable,new SqrlTableFunctionDef(SqlParserPos.ZERO, params) );
   }
 
   private TableResult planTable(SqrlAssignment node, SqlNode query, boolean materialSelfTable,
@@ -206,7 +220,6 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqlNode sqlNode = result.getSqlNode().accept(transform);
     SqrlTableFunctionDef newArguments = transform.getArgumentDef();
 
-    System.out.println(sqlNode);
     RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
     relNode = planner.getSqrlRelBuilder()
         .push(relNode)

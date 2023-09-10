@@ -282,7 +282,7 @@ public class SchemaBuilder implements
     List<InputValueDefinition> defs = field.getFieldDefinition().getInputValueDefinitions();
 
     List<RexNode> args = function.getParameters().stream()
-        .map(param -> new RexInputRef(param.getOrdinal(), param.getType(null)))
+        .map(param -> new RexDynamicParam(param.getType(null), param.getOrdinal()))
         .collect(Collectors.toList());
 
     builder.functionScan(op, 0, args);

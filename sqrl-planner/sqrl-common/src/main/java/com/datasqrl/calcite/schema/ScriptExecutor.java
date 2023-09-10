@@ -43,12 +43,14 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.SqrlTableParamDef;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.util.Util;
 
@@ -205,13 +207,39 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
   }
 
   private void createTable(LogicalCreateTableOp op) {
-    tableFactory.createTable(op.getPath(), op.getInput(), op.getHints(), op.isSetFieldNames(), op.getOpHints(), op.getArgs());
+    if (op.getArgs().getParameters().isEmpty() || !hasPublicArgs(op.getArgs().getParameters())) {
+      tableFactory.createTable(op.getPath(), op.getInput(), op.getHints(), op.isSetFieldNames(),
+          op.getOpHints(), op.getArgs());
+    } else {
+      SqlNode node = framework.getQueryPlanner().relToSql(Dialect.CALCITE, op.getInput());
+
+      TableFunction function = ScriptExecutor.createFunction(
+          this.framework.getQueryPlanner().createSqlValidator(),
+          op.getArgs(),
+          op.getInput().getRowType(), node, op.getPath().get(0) + "$" + 0,
+          framework.getQueryPlanner().getCatalogReader());
+
+      this.framework.getSchema().plus().add(op.getPath().get(0) + "$" + 0, function);
+      SQRLTable sqrlTable = new SQRLTable(
+          NamePath.of(op.getPath().toArray(String[]::new)), null, 0);
+      for (RelDataTypeField name : op.getInput().getRowType().getFieldList()) {
+        sqrlTable.addColumn(Name.system(name.getName().split("\\$")[0]), Name.system(name.getName()), true,
+            name.getType());
+      }
+
+      framework.getSchema().addSqrlTable(sqrlTable);
+    }
+  }
+
+  private boolean hasPublicArgs(List<SqrlTableParamDef> parameters) {
+    return parameters.stream()
+        .anyMatch(f->!f.isInternal());
   }
 
   public static TableFunction createFunction(SqlValidator validator, SqrlTableFunctionDef def, RelDataType type,
       SqlNode node, String tableName, CatalogReader catalogReader) {
     SqrlTableFunction tableFunction = new SqrlTableFunction(toParams(def.getParameters(), validator),
-        node, tableName, catalogReader);
+        node, tableName, catalogReader, Optional.ofNullable(type));
     return tableFunction;
   }
 

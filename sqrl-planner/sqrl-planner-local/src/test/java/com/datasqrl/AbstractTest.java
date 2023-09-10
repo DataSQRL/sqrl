@@ -369,7 +369,7 @@ public class AbstractTest {
         + "    LEFT JOIN UserInterests i ON i.userid = @userid\n"
         + "    WHERE e.time > @afterTime AND NOT removed\n"
         + "          AND (l.liked = 1 OR (i.interestVector IS NOT NULL AND\n"
-        + "                               i.interestVector / e.embedding >= @tolerance))\n"
+        + "                               i.interestVector / CAST(e.embedding AS float) >= @tolerance))\n"
         + "--                               cosineSimilarity(i.interestVector, e.embedding) >= @tolerance))\n"
         + "    ORDER BY e.time ASC\n"
         + "\n"

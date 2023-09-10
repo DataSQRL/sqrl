@@ -60,8 +60,6 @@ public class TransformArguments extends SqlShuttle {
       }
 
       SqlDynamicParam param = paramMap.computeIfAbsent(index, (i)->new SqlDynamicParam(i, SqlParserPos.ZERO));
-
-//      SqlDynamicParam param = new SqlDynamicParam(index, SqlParserPos.ZERO);
       SqlDataTypeSpec spec = new SqlDataTypeSpec(new SqlBasicTypeNameSpec(
           rowType.getFieldList().get(index).getType().getSqlTypeName(), SqlParserPos.ZERO), SqlParserPos.ZERO);
 
@@ -79,8 +77,6 @@ public class TransformArguments extends SqlShuttle {
           .findFirst().get();
 
       return paramMap.computeIfAbsent(param.getIndex(), (i)->new SqlDynamicParam(i, SqlParserPos.ZERO));
-
-//      return new SqlDynamicParam(param.getIndex(), SqlParserPos.ZERO);
     }
 
     return super.visit(id);

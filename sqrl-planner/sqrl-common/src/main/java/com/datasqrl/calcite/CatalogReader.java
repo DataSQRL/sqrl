@@ -3,6 +3,7 @@ package com.datasqrl.calcite;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import java.util.Objects;
+import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptTable;
@@ -21,6 +22,7 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 public class CatalogReader extends CalciteCatalogReader {
 
+  @Getter
   private final SqrlSchema schema;
 
   public CatalogReader(SqrlSchema rootSchema, RelDataTypeFactory typeFactory, CalciteConnectionConfig config) {

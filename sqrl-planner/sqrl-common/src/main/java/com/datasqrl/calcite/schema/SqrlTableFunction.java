@@ -4,9 +4,11 @@ import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.calcite.SqrlRelBuilder;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
+import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -25,18 +27,26 @@ public class SqrlTableFunction implements TableFunction, CustomColumnResolvingTa
   SqlNode node;
   private final String tableName;
   private final CatalogReader catalogReader;
+  private final Optional<RelDataType> typeOptional;
 
   public SqrlTableFunction(List<FunctionParameter> parameters, SqlNode node,
-      String tableName, CatalogReader catalogReader) {
+      String tableName, CatalogReader catalogReader, Optional<RelDataType> typeOptional) {
     this.parameters = parameters;
     this.node = node;
     this.tableName = tableName;
     this.catalogReader = catalogReader;
+    this.typeOptional = typeOptional;
   }
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
-    return catalogReader.getTable(List.of(tableName)).getRowType();
+    PreparingTable table = catalogReader.getTable(List.of(tableName));
+    ;
+    if (table != null) {
+      return table.getRowType();
+    } else {
+      return typeOptional.get();
+    }
   }
 
   @Override
