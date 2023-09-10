@@ -44,7 +44,7 @@ public class SqrlTypeSystem extends RelDataTypeSystemImpl {
       case VARCHAR:
       case VARBINARY:
         // Calcite will limit the length of the VARCHAR field to 65536
-        return Integer.MAX_VALUE;
+        return Integer.MAX_VALUE;//Integer.MAX_VALUE;
       case TIMESTAMP:
         // by default we support timestamp with microseconds precision (Timestamp(6))
         return TimestampType.DEFAULT_PRECISION;
@@ -63,7 +63,7 @@ public class SqrlTypeSystem extends RelDataTypeSystemImpl {
       case CHAR:
       case VARBINARY:
       case BINARY:
-        return Integer.MAX_VALUE;
+        return Integer.MAX_VALUE;//Integer.MAX_VALUE;
 
       case TIMESTAMP:
         // The maximum precision of TIMESTAMP is 3 in Calcite,

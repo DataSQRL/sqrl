@@ -64,7 +64,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
 
   @Override
   public RelDataType visitStringType(StringType type, Void context) {
-    return typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE);
+    return typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
   }
 
   @Override

@@ -295,7 +295,7 @@ public class AbstractTest {
         + "EmailTemplates := DISTINCT EmailTemplates ON id ORDER BY last_updated DESC;\n"
         + "AuthTokens := DISTINCT AuthTokens ON id ORDER BY last_updated DESC;\n"
         + "\n"
-        + "EventPosts := SELECT * FROM EventUpdate WHERE id IS NOT NULL;\n"
+        + "EventPosts := SELECT * FROM EventUpdate WHERE id IS NULL;\n"
         + "\n"
         + "EventPosts.id := randomID(12);\n"
         + "EventPosts.secret := randomID(10);\n"
@@ -369,7 +369,7 @@ public class AbstractTest {
         + "    LEFT JOIN UserInterests i ON i.userid = @userid\n"
         + "    WHERE e.time > @afterTime AND NOT removed\n"
         + "          AND (l.liked = 1 OR (i.interestVector IS NOT NULL AND\n"
-        + "                               i.interestVector / CAST(e.embedding AS float) >= @tolerance))\n"
+        + "                               i.interestVector / CAST(e.embedding AS Float) >= @tolerance))\n"
         + "--                               cosineSimilarity(i.interestVector, e.embedding) >= @tolerance))\n"
         + "    ORDER BY e.time ASC\n"
         + "\n"
@@ -382,7 +382,7 @@ public class AbstractTest {
         + "                  TEMPORAL JOIN Events e ON r.eventid = e.id\n"
         + "                  TEMPORAL JOIN EmailTemplates t ON t.id = 'eventflag';\n"
         + "\n"
-        + "EXPORT FlaggedEventEmail TO print.flaggedEventEmail;\n";
+        + "EXPORT FlaggedEventEmail TO print.flaggedEventEmail;";
     validator.validate(script);
 
     ScriptNode node = (ScriptNode)framework.getQueryPlanner().parse(Dialect.SQRL, script);

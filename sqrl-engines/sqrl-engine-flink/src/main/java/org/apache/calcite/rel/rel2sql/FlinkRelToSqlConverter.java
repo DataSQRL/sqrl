@@ -1,5 +1,6 @@
 package org.apache.calcite.rel.rel2sql;
 
+import com.datasqrl.calcite.TypeFactory;
 import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.FlinkExecutablePlan.FlinkQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlQuery;
@@ -327,7 +328,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
 
     Context context = x.qualifiedContext();
     RexBuilder rex = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
-        FlinkTypeSystem.INSTANCE));
+        TypeFactory.getTypeSystem2()));
     //The first flink operand is referencing something else
     // replace it with a placeholder then replace it with the sql node
     RexCall call = (RexCall) e.getCall();

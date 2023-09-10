@@ -3,6 +3,7 @@
  */
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.calcite.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.schema.converters.SqrlTypeRelDataTypeConverter;
@@ -26,7 +27,7 @@ public class FlexibleTable2UTBConverter implements
   private final Deque<UniversalTable> stack = new ArrayDeque<>();
 
   public FlexibleTable2UTBConverter(boolean hasSourceTimestamp) {
-    this(new JavaTypeFactoryImpl(), hasSourceTimestamp);
+    this(TypeFactory.getTypeFactory(), hasSourceTimestamp);
   }
 
   public FlexibleTable2UTBConverter(RelDataTypeFactory typeFactory, boolean hasSourceTimestamp) {

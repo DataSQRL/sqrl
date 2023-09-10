@@ -5,12 +5,12 @@ import com.datasqrl.calcite.type.DelegatingDataType;
 import org.apache.calcite.avatica.util.ByteString;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
+import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.runtime.Geometries;
-import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
-import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -40,6 +40,13 @@ public class TypeFactory extends JavaTypeFactoryImpl {
     return engineType;
   }
 
+  public static RelDataTypeSystem getTypeSystem2() {
+    return new SqrlTypeSystem();
+  }
+
+  public static RelDataTypeFactory getTypeFactory() {
+    return new TypeFactory();
+  }
   /**
    * Provides mapping to java types for execution
    */

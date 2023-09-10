@@ -152,7 +152,7 @@ public class InputFieldToFlexibleSchemaRelation implements
           break;
         case "String":
         case "ID":
-          type = typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE);
+          type = typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
           break;
         default:
           throw new RuntimeException("Unknown Type");
