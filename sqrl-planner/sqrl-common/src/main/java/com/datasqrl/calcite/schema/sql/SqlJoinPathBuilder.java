@@ -94,19 +94,19 @@ public class SqlJoinPathBuilder {
     Frame frame = stack.pop();
     Frame lastTable = tableHistory.get(tableHistory.size()-1);
 //
-    if (!pullupCols.isEmpty()) {
+//    if (!pullupCols.isEmpty()) {
       SqlSelectBuilder select = new SqlSelectBuilder()
           .setFrom(frame.getNode());
         select.setSelectList(ListUtils.union(
           rename(createSelectList(tableHistory.get(0), pullupCols.size()), pullupCols),
           createSelectList(lastTable, lastTable.type.getFieldCount())));
       return select.build();
-    }
-
-    if (frame.getNode().getKind() == SqlKind.AS) {
-      return ((SqlCall)frame.getNode()).getOperandList().get(0);
-    }
-    return frame.getNode();
+//    }
+//
+//    if (frame.getNode().getKind() == SqlKind.AS) {
+//      return ((SqlCall)frame.getNode()).getOperandList().get(0);
+//    }
+//    return frame.getNode();
   }
 
   private List rename(List<SqlIdentifier> selectList, List<String> pullupCols) {

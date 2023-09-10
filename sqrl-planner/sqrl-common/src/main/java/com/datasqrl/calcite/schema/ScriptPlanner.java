@@ -220,6 +220,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqlNode sqlNode = result.getSqlNode().accept(transform);
     SqrlTableFunctionDef newArguments = transform.getArgumentDef();
 
+    System.out.println(sqlNode);
     RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
     relNode = planner.getSqrlRelBuilder()
         .push(relNode)
