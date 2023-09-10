@@ -38,6 +38,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.core.RelFactories.Struct;
 import org.apache.calcite.rel.core.RelFactories.TableScanFactory;
@@ -61,6 +62,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -922,24 +924,28 @@ public class SqrlRelBuilder {
   }
 
   // SELECT key1, key2, * EXCEPT [key1 key2]
-  public SqrlRelBuilder projectAllPrefixDistinct(List<RexNode> firstNodes) {
-
+  public SqrlRelBuilder projectAllPrefixDistinct(Project firstNodes) {
     List<String> stripped = stripShadowed(builder.peek().getRowType());
 
-    for (RexNode n : firstNodes) {
+    for (RexNode n : firstNodes.getProjects()) {
       if (n instanceof RexInputRef) {
-        stripped.remove(builder.peek().getRowType().getFieldNames().get(((RexInputRef) n).getIndex()));
+        String name = builder.peek().getRowType().getFieldNames()
+            .get(((RexInputRef) n).getIndex());
+        stripped.remove(name);
       }
     }
 
+    List<String> names = new ArrayList<>();
     List<RexNode> project = new ArrayList<>();
-    project.addAll(firstNodes);
+    project.addAll(firstNodes.getProjects());
+    names.addAll(firstNodes.getRowType().getFieldNames());
     for (String field : stripped) {
       RexNode f = builder.field(field);
       project.add(f);
+      names.add(field);
     }
 
-    builder.project(project);
+    builder.project(project, names, true);
     return this;
   }
 
@@ -966,13 +972,11 @@ public class SqrlRelBuilder {
     return planner.planExpression(node, builder.peek().getRowType(), tableName);
   }
 
-  public List<RexNode> evaluateExpressions(List<SqlNode> node, String tableName) {
-    List<RexNode> projectExprs = new ArrayList<>();
-    for (SqlNode expr : node) {
-      projectExprs.add(evaluateExpression(expr, tableName));
-    }
+  public Project evaluateExpressions(List<SqlNode> node, String tableName) {
+    Project project = planner.planExpressions(node, new TemporaryViewTable(builder.peek().getRowType()),
+        tableName);
 
-    return projectExprs;
+    return project;
   }
 
   public List<RexNode> evaluateOrderExpression(List<SqlNode> order,

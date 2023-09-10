@@ -23,6 +23,7 @@ import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
@@ -188,6 +189,32 @@ public class QueryPlanner {
 
   public RexNode planExpression(SqlNode node, RelDataType type, String name) {
     return planExpression(node, new TemporaryViewTable(type), name);
+  }
+
+  public Project planExpressions(List<SqlNode> nodes, Table table, String name) {
+    try {
+      schema.add(name, table);
+      SqlValidator sqlValidator = createSqlValidator();
+
+      SqlSelect select = new SqlSelect(SqlParserPos.ZERO,
+          null,
+          new SqlNodeList(nodes, SqlParserPos.ZERO),
+          new SqlIdentifier(name, SqlParserPos.ZERO),
+          null, null, null, null, null, null, null, SqlNodeList.EMPTY
+      );
+      SqlNode validated = sqlValidator.validate(select);
+
+      SqlToRelConverter sqlToRelConverter = createSqlToRelConverter(sqlValidator);
+      RelRoot root;
+      root = sqlToRelConverter.convertQuery(validated, false, true);
+      if (!(root.rel instanceof LogicalProject)) {
+        throw new RuntimeException("Could not plan expression");
+      }
+
+      return ((LogicalProject) root.rel);
+    } finally {
+      schema.removeTable("@");
+    }
   }
 
   public RexNode planExpression(SqlNode node, Table table, String name) {

@@ -74,7 +74,7 @@ distinctQuerySpec
    ;
 
 onExpr
-   : '('? expression (',' expression)* ')'?;
+   : '('? selectItem (',' selectItem)* ')'?;
 
 streamQuerySpec
     : ON subscriptionType AS query;

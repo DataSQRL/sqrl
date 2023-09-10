@@ -1043,7 +1043,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void distinctOnWithExpressionAliasTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product2 := DISTINCT Product ON Product.productid / 10 ORDER BY _ingest_time DESC;\n");
+            + "Product2 := DISTINCT Product ON Product.productid / 10 AS pid ORDER BY _ingest_time DESC;\n");
   }
 
   @Test

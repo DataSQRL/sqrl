@@ -391,8 +391,8 @@ class AstBuilder
 
     List<SqlNode> expressions = new ArrayList<>();
 
-    for (int i = 0; i < ctx.distinctQuerySpec().onExpr().expression().size(); i++) {
-      SqlNode expr = visit(ctx.distinctQuerySpec().onExpr().expression(i));
+    for (int i = 0; i < ctx.distinctQuerySpec().onExpr().selectItem().size(); i++) {
+      SqlNode expr = visit(ctx.distinctQuerySpec().onExpr().selectItem(i));
       expressions.add(expr);
     }
 
