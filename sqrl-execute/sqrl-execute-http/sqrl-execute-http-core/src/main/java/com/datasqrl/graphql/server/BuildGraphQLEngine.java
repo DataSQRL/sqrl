@@ -99,7 +99,8 @@ public class BuildGraphQLEngine implements
   private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
     RuntimeWiring.Builder wiring = RuntimeWiring.newRuntimeWiring()
         .codeRegistry(codeRegistry)
-        .scalar(CustomScalars.Double);
+        .scalar(CustomScalars.Double)
+        .scalar(CustomScalars.DATETIME);
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {

@@ -78,6 +78,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     }
 
     String sql = RelToFlinkSql.convertToString(node);
+
     QueryPipelineItem q;
     if (queryType == QueryType.STREAM) {
       q = new StreamPipelineItem(queryType.name().toLowerCase(), node, sql,

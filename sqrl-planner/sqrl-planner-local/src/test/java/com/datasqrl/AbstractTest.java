@@ -295,7 +295,7 @@ public class AbstractTest {
         + "EmailTemplates := DISTINCT EmailTemplates ON id ORDER BY last_updated DESC;\n"
         + "AuthTokens := DISTINCT AuthTokens ON id ORDER BY last_updated DESC;\n"
         + "\n"
-        + "EventPosts := SELECT * FROM EventUpdate WHERE id IS NULL;\n"
+        + "EventPosts := SELECT * FROM EventUpdate WHERE id IS NOT NULL;\n"
         + "\n"
         + "EventPosts.id := randomID(12);\n"
         + "EventPosts.secret := randomID(10);\n"
@@ -382,7 +382,7 @@ public class AbstractTest {
         + "                  TEMPORAL JOIN Events e ON r.eventid = e.id\n"
         + "                  TEMPORAL JOIN EmailTemplates t ON t.id = 'eventflag';\n"
         + "\n"
-        + "EXPORT FlaggedEventEmail TO print.flaggedEventEmail;";
+        + "EXPORT FlaggedEventEmail TO print.flaggedEventEmail;\n";
     validator.validate(script);
 
     ScriptNode node = (ScriptNode)framework.getQueryPlanner().parse(Dialect.SQRL, script);

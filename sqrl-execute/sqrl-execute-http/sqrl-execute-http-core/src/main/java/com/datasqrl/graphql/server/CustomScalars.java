@@ -1,11 +1,13 @@
 package com.datasqrl.graphql.server;
 
 import graphql.Scalars;
+import graphql.language.StringValue;
 import graphql.schema.Coercing;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.OffsetDateTime;
 
 public class CustomScalars {
 
@@ -35,6 +37,28 @@ public class CustomScalars {
         @Override
         public Object parseLiteral(Object input) {
           return Scalars.GraphQLFloat.getCoercing().parseLiteral(input);
+        }
+      })
+      .build();
+
+
+  public static final GraphQLScalarType DATETIME = GraphQLScalarType.newScalar()
+      .name("DateTime")
+      .description("A basic date time")
+      .coercing(new Coercing() {
+        @Override
+        public Object serialize(Object dataFetcherResult) {
+          return Scalars.GraphQLString.getCoercing().serialize(dataFetcherResult);
+        }
+
+        @Override
+        public Object parseValue(Object input) {
+          return OffsetDateTime.parse(((StringValue)input).getValue());
+        }
+
+        @Override
+        public Object parseLiteral(Object input) {
+          return OffsetDateTime.parse(((StringValue)input).getValue());
         }
       })
       .build();
