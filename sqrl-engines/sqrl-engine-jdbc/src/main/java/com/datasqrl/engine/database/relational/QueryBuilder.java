@@ -65,16 +65,16 @@ public class QueryBuilder {
         int precision = datatype.getPrecision();
         operator = SqlStdOperatorTable.CURRENT_TIMESTAMP;
       } else if (call.isA(SqlKind.BINARY_COMPARISON)) {
-        Optional<RexNode> greaterZero = CalciteUtil.isGreaterZero(call);
-        if (greaterZero.isPresent() && greaterZero.get() instanceof RexCall) {
-          RexCall distanceCall = (RexCall) greaterZero.get();
-          if (distanceCall.getOperator().isName("textsearch", false)) {
-            //TODO: if RexNode is a call to textSearch, replace with predicate for a special postgres function
-            update[0] = true;
-            operator = SqlStdOperatorTable.NOT_EQUALS;
-            clonedOperands = List.of(distanceCall.operands.get(0),rexBuilder.makeLiteral(""));
-          }
-        }
+//        Optional<RexNode> greaterZero = CalciteUtil.isGreaterZero(call);
+//        if (greaterZero.isPresent() && greaterZero.get() instanceof RexCall) {
+//          RexCall distanceCall = (RexCall) greaterZero.get();
+//          if (distanceCall.getOperator().isName("textsearch", false)) {
+//            //TODO: if RexNode is a call to textSearch, replace with predicate for a special postgres function
+//            update[0] = true;
+//            operator = SqlStdOperatorTable.NOT_EQUALS;
+//            clonedOperands = List.of(distanceCall.operands.get(0),rexBuilder.makeLiteral(""));
+//          }
+//        }
 
       }
 

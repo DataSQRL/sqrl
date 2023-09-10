@@ -52,13 +52,13 @@ public class ReplaceGraphqlQueries implements
 //    DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
 
     SqrlRelBuilder builder = planner.getSqrlRelBuilder();
-    RelNode c = builder.push(template.getRelNode())
-        .project(builder.fields(), template.getRelNode().getRowType().getFieldNames().stream()
-            .map(n-> Name.system(n).getCanonical())
-            .collect(Collectors.toList()), true)
-        .build();
+//    RelNode c = builder.push(template.getRelNode())
+//        .project(builder.fields(), template.getRelNode().getRowType().getFieldNames().stream()
+//            .map(n-> Name.system(n).getCanonical())
+//            .collect(Collectors.toList()), true)
+//        .build();
     String query = planner.relToString(Dialect.POSTGRES,
-        planner.convertRelToDialect(Dialect.POSTGRES, c));
+        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()));
 
 //    String query = convertDynamicParamsWithWriter(writer, template.getRelNode());
     return JdbcQuery.builder()
