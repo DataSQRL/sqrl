@@ -5,6 +5,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.schema.ScriptExecutor;
+import com.datasqrl.calcite.validator.ScriptValidator;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -20,6 +21,7 @@ import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 
 import java.util.List;
+import org.apache.calcite.sql.SqrlStatement;
 
 public class SqrlPlan extends SqrlParse {
 
@@ -66,8 +68,13 @@ public class SqrlPlan extends SqrlParse {
     QueryPlanner qPlanner = framework.getQueryPlanner();
     ScriptExecutor executor = new ScriptExecutor(new SqrlPlanningTableFactory(framework, nameCanonicalizer), framework,
         new SqlNameUtil(nameCanonicalizer), updatedModuleLoader, errors);
+
     for (SqlNode statement : node.getStatements()) {
-      RelNode relNode = qPlanner.plan(Dialect.SQRL, statement);
+      ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(),
+          updatedModuleLoader, errors, new SqlNameUtil(nameCanonicalizer));
+      validator.validateStatement((SqrlStatement) statement);
+
+      RelNode relNode = qPlanner.planSqrl(statement, validator);
       executor.apply(relNode);
     }
 

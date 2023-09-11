@@ -103,23 +103,6 @@ public class SQRLTable {
     return t.getField(names.getLast());
   }
 
-  public List<Field> walkField(NamePath path) {
-    return walkField(List.of(path.getNames()));
-  }
-
-  public List<Field> walkField(List<Name> names) {
-    List<Field> fields = new ArrayList<>();
-    SQRLTable t = this;
-    for (Name n : names) {
-      Field field = t.getField(n).get();
-      fields.add(field);
-      if (field instanceof Relationship) {
-        t = ((Relationship) field).getToTable();
-      }
-    }
-    return fields;
-  }
-
   public <R, C> R accept(SqrlTableVisitor<R, C> visitor, C context) {
     return visitor.visit(this, context);
   }

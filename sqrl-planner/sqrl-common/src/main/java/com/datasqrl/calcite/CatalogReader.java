@@ -2,7 +2,10 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.schema.SQRLTable;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -49,7 +52,16 @@ public class CatalogReader extends CalciteCatalogReader {
    */
   public SqrlPreparingTable getSqrlTable(List<String> names) {
     List<String> absolutePath = getSqrlAbsolutePath(names);
-    String sysTableName = nameMatcher().get(schema.getInternalTables(), List.of(), absolutePath);
+    for (SQRLTable table : schema.getSqrlTables()) {
+      System.out.println(table);
+      System.out.println(table.getVt());
+    }
+    Map<List<String>, String> collect = schema.getSqrlTables().stream()
+        .filter(f->f.getVt() != null) //todo: Need to register query access tables for planning
+        .collect(Collectors.toMap(f -> f.getPath().toStringList(),
+            f -> ((ModifiableSqrlTable)f.getVTable()).getName()));
+
+    String sysTableName = nameMatcher().get(collect, List.of(), absolutePath);
     if (sysTableName == null) {
       return null;
     }

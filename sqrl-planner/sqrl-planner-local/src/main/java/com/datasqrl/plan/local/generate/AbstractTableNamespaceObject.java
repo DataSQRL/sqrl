@@ -85,7 +85,6 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       VirtualRelationalTable vt = entry.getValue();
 
       List<String> path = SqlNameUtil.toStringList(table.getPath());
-      framework.getSchema().addTableMapping(path, entry.getValue().getNameId());
 
       VirtualRelationalTable childVt;
       VirtualRelationalTable parentVt;
@@ -124,10 +123,10 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
             framework.getQueryPlanner().getCatalogReader());
 
         if (tblDef.getBaseTable() instanceof QueryRelationalTable) {
-          QueryTableFunction queryTableFunction = new QueryTableFunction(
-              Name.system(String.join(".", path)+"$"),
-              function.getParameters(), table, (QueryRelationalTable) tblDef.getBaseTable());
-          framework.getSchema().addPlannerTableFunction(queryTableFunction.getFunctionName().getCanonical(), queryTableFunction);
+//          QueryTableFunction queryTableFunction = new QueryTableFunction(
+//              Name.system(String.join(".", path)+"$"),
+//              function.getParameters(), table, (QueryRelationalTable) tblDef.getBaseTable());
+//          framework.getSchema().addPlannerTableFunction(queryTableFunction.getFunctionName().getCanonical(), queryTableFunction);
         }
 
         String name = framework.getSchema().getUniqueFunctionName(path);

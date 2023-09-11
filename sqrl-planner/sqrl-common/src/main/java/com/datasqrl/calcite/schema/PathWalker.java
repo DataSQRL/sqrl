@@ -32,6 +32,7 @@ public class PathWalker {
   }
 
   public void walk(String next) {
+    System.out.println("walking:" + next );
     this.path.clear();
     this.path.addAll(absolutePath);
     this.path.add(next);

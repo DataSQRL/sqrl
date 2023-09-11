@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.schema.op;
 
+import com.datasqrl.calcite.validator.ScriptValidator.QualifiedExport;
 import java.util.List;
 import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;
@@ -11,11 +12,11 @@ import org.apache.calcite.rel.SingleRel;
 @Getter
 public class LogicalExportOp extends SingleRel implements LogicalOp {
 
-  final List<String> sinkPath;
+  final QualifiedExport export;
 
-  public LogicalExportOp(RelOptCluster cluster, RelTraitSet traitSet, RelNode input, List<String> sinkPath) {
+  public LogicalExportOp(RelOptCluster cluster, RelTraitSet traitSet, RelNode input, QualifiedExport export) {
     super(cluster, traitSet, input);
-    this.sinkPath = sinkPath;
+    this.export = export;
   }
 
   @Override

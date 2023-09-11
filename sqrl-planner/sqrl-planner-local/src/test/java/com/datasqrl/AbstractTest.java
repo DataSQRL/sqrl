@@ -29,6 +29,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.frontend.ErrorSink;
+import com.datasqrl.frontend.SqrlParse;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
@@ -54,6 +55,7 @@ import com.datasqrl.loaders.ObjectLoader;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
@@ -78,6 +80,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqrlStatement;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -277,7 +280,8 @@ public class AbstractTest {
     ScriptExecutor executor = new ScriptExecutor(tableFactory, framework, new SqlNameUtil(NameCanonicalizer.SYSTEM),
         moduleLoader, ErrorCollector.root());
 
-    ScriptValidator validator = new ScriptValidator(framework, moduleLoader);
+    ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(), moduleLoader,
+        errors, new SqlNameUtil(NameCanonicalizer.SYSTEM));
     String script = "IMPORT mysourcepackage.Events AS ConferenceEvents TIMESTAMP last_updated AS timestamp;\n"
         + "IMPORT mysourcepackage.AuthTokens;\n"
         + "IMPORT mysourcepackage.EmailTemplates\n"
@@ -295,7 +299,7 @@ public class AbstractTest {
         + "EmailTemplates := DISTINCT EmailTemplates ON id ORDER BY last_updated DESC;\n"
         + "AuthTokens := DISTINCT AuthTokens ON id ORDER BY last_updated DESC;\n"
         + "\n"
-        + "EventPosts := SELECT * FROM EventUpdate WHERE id IS NULL;\n"
+        + "EventPosts := SELECT * FROM EventUpdate WHERE id IS NOT NULL;\n"
         + "\n"
         + "EventPosts.id := randomID(12);\n"
         + "EventPosts.secret := randomID(10);\n"
@@ -383,11 +387,11 @@ public class AbstractTest {
         + "                  TEMPORAL JOIN EmailTemplates t ON t.id = 'eventflag';\n"
         + "\n"
         + "EXPORT FlaggedEventEmail TO print.flaggedEventEmail;";
-    validator.validate(script);
-
     ScriptNode node = (ScriptNode)framework.getQueryPlanner().parse(Dialect.SQRL, script);
     for (SqlNode statement : node.getStatements()) {
-      RelNode relNode = framework.getQueryPlanner().plan(Dialect.SQRL, statement);
+      validator.validateStatement((SqrlStatement) statement);
+
+      RelNode relNode = framework.getQueryPlanner().planSqrl(statement, validator);
       executor.apply(relNode);
     }
 

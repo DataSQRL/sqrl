@@ -28,7 +28,7 @@ import org.apache.calcite.schema.impl.AbstractTableQueryable;
  */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public abstract class AbstractRelationalTable extends AbstractTable implements
-    Comparable<AbstractRelationalTable>, QueryableTable {
+    Comparable<AbstractRelationalTable> {
 
   @EqualsAndHashCode.Include
   protected final String nameId;
@@ -59,23 +59,5 @@ public abstract class AbstractRelationalTable extends AbstractTable implements
   @Override
   public int compareTo(AbstractRelationalTable other) {
     return this.getNameId().compareTo(other.getNameId());
-  }
-
-  @Override
-  public <T> Queryable<T> asQueryable(QueryProvider queryProvider, SchemaPlus schema,
-      String tableName) {
-    return (Queryable<T>) new AbstractTableQueryable<Object[]>(queryProvider, schema, this, tableName) {
-      @Override
-      public Enumerator<Object[]> enumerator() {
-        return null;
-//        return Linq4j.asEnumerable(List.of(new Object[]{}))
-//            .enumerator();
-      }
-    };
-  }
-
-  @Override
-  public Type getElementType() {
-    return Object[].class;
   }
 }

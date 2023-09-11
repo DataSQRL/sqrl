@@ -1,6 +1,8 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.schema.ScriptPlanner;
+import com.datasqrl.calcite.validator.ScriptValidator;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqrlParserImpl;
@@ -137,10 +139,14 @@ public class QueryPlanner {
 
   }
 
+  public RelNode planSqrl(SqlNode query, ScriptValidator validator) {
+    ScriptPlanner scriptPlanner = new ScriptPlanner(this, validator);
+    return scriptPlanner.plan(query);
+  }
   public RelNode plan(Dialect dialect, SqlNode query) {
     switch (dialect) {
       case SQRL:
-        ScriptPlanner scriptPlanner = new ScriptPlanner(this);
+        ScriptPlanner scriptPlanner = new ScriptPlanner(this, null);
         return scriptPlanner.plan(query);
       case CALCITE:
         return planCalcite(query);

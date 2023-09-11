@@ -1,6 +1,7 @@
 package com.datasqrl.calcite.schema.sql;
 
 import org.apache.calcite.sql.JoinConditionType;
+import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
@@ -12,6 +13,11 @@ public class SqlJoinBuilder {
 
   private final SqlJoin join;
 
+  public SqlJoinBuilder() {
+    this(new SqlJoin(SqlParserPos.ZERO, null, SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+        JoinType.DEFAULT.symbol(SqlParserPos.ZERO),null,
+        JoinConditionType.NONE.symbol(SqlParserPos.ZERO),null));
+  }
   public SqlJoinBuilder(SqlJoin call) {
     this.join = new SqlJoin(SqlParserPos.ZERO,
         call.operand(0),

@@ -35,8 +35,12 @@ public class SqrlImportDefinition extends SqrlStatement {
   }
 
   @Override
-  public SqlNode clone(SqlParserPos sqlParserPos) {
-    return null;
+  public SqrlImportDefinition clone(SqlParserPos sqlParserPos) {
+    return new SqrlImportDefinition(sqlParserPos, importPath, alias);
+  }
+
+  public SqrlImportDefinition clone(SqlIdentifier importPath, Optional<SqlIdentifier> alias) {
+    return new SqrlImportDefinition(this.pos, importPath, alias);
   }
 
   @Override

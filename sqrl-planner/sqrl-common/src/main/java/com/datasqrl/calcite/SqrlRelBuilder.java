@@ -6,6 +6,7 @@ import com.datasqrl.calcite.schema.op.LogicalAssignTimestampOp;
 import com.datasqrl.calcite.schema.op.LogicalCreateReferenceOp;
 import com.datasqrl.calcite.schema.op.LogicalCreateStreamOp;
 import com.datasqrl.calcite.schema.op.LogicalExportOp;
+import com.datasqrl.calcite.validator.ScriptValidator.QualifiedExport;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.model.StreamType;
@@ -62,7 +63,6 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -1104,7 +1104,7 @@ public class SqrlRelBuilder {
     return this;
   }
 
-  public SqrlRelBuilder export(List<String> path) {
+  public SqrlRelBuilder export(QualifiedExport path) {
     RelNode relNode = build();
 
     LogicalExportOp exportOp = new LogicalExportOp(planner.getCluster(), null, relNode,

@@ -90,7 +90,7 @@ FROM Events e
     LEFT JOIN UserInterests i ON i.userid = @userid
     WHERE e.time > @afterTime AND NOT removed
           AND (l.liked = 1 OR (i.interestVector IS NOT NULL AND
-                               i.interestVector / CAST(e.embedding AS float) >= @tolerance))
+                               i.interestVector / CAST(e.embedding AS Float) >= @tolerance))
 --                               cosineSimilarity(i.interestVector, e.embedding) >= @tolerance))
     ORDER BY e.time ASC
 
@@ -104,7 +104,6 @@ FlaggedEventEmail := SELECT t.toEmail, t.fromEmail, t.title,
                   TEMPORAL JOIN EmailTemplates t ON t.id = 'eventflag';
 
 EXPORT FlaggedEventEmail TO print.flaggedEventEmail;
-
 
 >>>Schema
 scalar DateTime
@@ -232,21 +231,22 @@ type CreatedLiked {
 CREATE TABLE IF NOT EXISTS events$51 (id$0 VARCHAR NOT NULL,_uuid$0 VARCHAR NOT NULL,removalid$0 VARCHAR NOT NULL,timestamp$0 TIMESTAMPTZ NOT NULL,time$0 TIMESTAMPTZ NOT NULL,title$0 VARCHAR NOT NULL,description$0 VARCHAR NOT NULL,name$0 VARCHAR NOT NULL,location$0 VARCHAR NOT NULL,removed$0 BOOLEAN NOT NULL,embedding$0 BIGINT NOT NULL , PRIMARY KEY (id$0));
 CREATE TABLE IF NOT EXISTS userinterests$53 (userid$0 VARCHAR NOT NULL,interestvector$0 BIGINT NOT NULL,_source_time$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (userid$0));
 CREATE TABLE IF NOT EXISTS userlikes$55 (userid$0 VARCHAR NOT NULL,eventid$0 VARCHAR NOT NULL,_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,_source_time$0 TIMESTAMPTZ NOT NULL,liked$0 BIGINT NOT NULL , PRIMARY KEY (userid$0,eventid$0));
-CREATE INDEX IF NOT EXISTS events$51_text_c5c6 ON events$51 USING GIN (to_tsvector('english', coalesce(title$0, '') || ' ' || coalesce(description$0, '') ));
 CREATE INDEX IF NOT EXISTS events$51_btree_c4 ON events$51 USING btree (time$0);
-Query:PersonalizedEvents(userid, tolerance, afterTime)  =  SELECT "id$0", COALESCE("eventid$0", '') AS "shouldRemove1", "_uuid$0", "removalid$0", "timestamp$0", "time$0", "title$0", "description$0", "name$0", "location$0", "removed$0", "embedding$0", "liked$0" AS "liked", "interestvector$0" / "embedding$0" AS "score", "__timestamp$0"
-FROM (SELECT "t1"."id$0", "t1"."_uuid$0", "t1"."removalid$0", "t1"."timestamp$0", "t1"."time$0", "t1"."title$0", "t1"."description$0", "t1"."name$0", "t1"."location$0", "t1"."removed$0", "t1"."embedding$0", "t1"."userid$0", "t1"."eventid$0", "t1"."_uuid$00", "t1"."_ingest_time$0", "t1"."_source_time$0", "t1"."liked$0", "t1"."eventid$0$0", "t1"."eventid$0$1", "t1"."__timestamp", "t2"."userid$0" AS "userid$00", "t2"."interestvector$0", "t2"."_source_time$0" AS "_source_time$00", CASE WHEN "t1"."__timestamp" < "t2"."_source_time$0" THEN "t2"."_source_time$0" ELSE "t1"."__timestamp" END AS "__timestamp$0"
-  FROM (SELECT *
-    FROM (SELECT "events$51"."id$0", "events$51"."_uuid$0", "events$51"."removalid$0", "events$51"."timestamp$0", "events$51"."time$0", "events$51"."title$0", "events$51"."description$0", "events$51"."name$0", "events$51"."location$0", "events$51"."removed$0", "events$51"."embedding$0", "t"."userid$0", "t"."eventid$0", "t"."_uuid$0" AS "_uuid$00", "t"."_ingest_time$0", "t"."_source_time$0", "t"."liked$0", "t"."eventid$0$0", "t"."eventid$0$1", CASE WHEN "events$51"."timestamp$0" < "t"."_source_time$0" THEN "t"."_source_time$0" ELSE "events$51"."timestamp$0" END AS "__timestamp"
+CREATE INDEX IF NOT EXISTS events$51_text_c5c6 ON events$51 USING GIN (to_tsvector('english', coalesce(title$0, '') || ' ' || coalesce(description$0, '') ));
+Query:PersonalizedEvents(userid, tolerance, afterTime)  =  SELECT "id$0", "_uuid$0", "removalid$0", "timestamp$0", "time$0", "title$0", "description$0", "name$0", "location$0", "removed$0", "embedding$0", "liked$0" AS "liked", COALESCE("eventid$0", '') AS "shouldRemove1", "interestvector$0" / "embedding$0" AS "score", "__timestamp$0"
+FROM (SELECT "t1"."id$0", "t1"."_uuid$0", "t1"."removalid$0", "t1"."timestamp$0", "t1"."time$0", "t1"."title$0", "t1"."description$0", "t1"."name$0", "t1"."location$0", "t1"."removed$0", "t1"."embedding$0", "t1"."userid$0", "t1"."eventid$0", "t1"."_uuid$00", "t1"."_ingest_time$0", "t1"."_source_time$0", "t1"."liked$0", "t1"."__timestamp", "t2"."userid$0" AS "userid$00", "t2"."interestvector$0", "t2"."_source_time$0" AS "_source_time$00", CASE WHEN "t1"."__timestamp" < "t2"."_source_time$0" THEN "t2"."_source_time$0" ELSE "t1"."__timestamp" END AS "__timestamp$0"
+  FROM (SELECT "t"."id$0", "t"."_uuid$0", "t"."removalid$0", "t"."timestamp$0", "t"."time$0", "t"."title$0", "t"."description$0", "t"."name$0", "t"."location$0", "t"."removed$0", "t"."embedding$0", "t0"."userid$0", "t0"."eventid$0", "t0"."_uuid$0" AS "_uuid$00", "t0"."_ingest_time$0", "t0"."_source_time$0", "t0"."liked$0", CASE WHEN "t"."timestamp$0" < "t0"."_source_time$0" THEN "t0"."_source_time$0" ELSE "t"."timestamp$0" END AS "__timestamp"
+    FROM (SELECT *
       FROM "events$51"
-       LEFT JOIN (SELECT "userid$0", "eventid$0", "_uuid$0", "_ingest_time$0", "_source_time$0", "liked$0", CAST("eventid$0" AS VARCHAR(65536)) AS "eventid$0$0", CAST("eventid$0" AS VARCHAR(10485760)) AS "eventid$0$1"
-        FROM "userlikes$55") AS "t" ON "events$51"."id$0" = "t"."eventid$0$1" AND "t"."userid$0" = $1) AS "t0"
-    WHERE "t0"."time$0" > $3 AND NOT "t0"."removed$0") AS "t1"
+      WHERE "time$0" > $3 AND NOT "removed$0") AS "t"
+     LEFT JOIN (SELECT *
+      FROM "userlikes$55"
+      WHERE "userid$0" = $1) AS "t0" ON "t"."id$0" = "t0"."eventid$0") AS "t1"
    LEFT JOIN (SELECT *
     FROM "userinterests$53"
     WHERE "userid$0" = $1) AS "t2" ON TRUE) AS "t3"
 WHERE "t3"."liked$0" = 1 OR "t3"."interestvector$0" / CAST("t3"."embedding$0" AS FLOAT) >= $2
-ORDER BY "time$0", "id$0", COALESCE("eventid$0", '')
+ORDER BY "time$0", "id$0"
 
 Query:EventsAfterTime(afterTime)  =  SELECT *
 FROM "events$51"
@@ -270,84 +270,83 @@ WHERE `$f13` = 1
 query$2 = SELECT *
 FROM (SELECT `id$0`, `_uuid$0`, `_ingest_time$0`, `value$0`, `last_updated$0`, ROW_NUMBER() OVER (PARTITION BY `id$0` ORDER BY `last_updated$0` DESC NULLS LAST) AS `$f5`
   FROM (SELECT `id$0`, `_uuid$0`, `_ingest_time$0`, `value$0`, `last_updated$0`
-    FROM `authtokens$i$5`) AS `t7`) AS `t8`
+    FROM `authtokens$i$5`) AS `t6`) AS `t7`
 WHERE `$f5` = 1
 
-query$3 = SELECT `$cor3`.`_uuid$0` AS `___uuid$0$pk$1`, CHAR_LENGTH(`t160`.`name$0`) + CHAR_LENGTH(`t160`.`title$0`) + CHAR_LENGTH(`t160`.`company$0`) AS `$f0`, `t160`.`_idx$0`, `$cor3`.`timestamp$0`
+query$3 = SELECT `$cor3`.`_uuid$0` AS `___uuid$0$pk$1`, CHAR_LENGTH(`t150`.`name$0`) + CHAR_LENGTH(`t150`.`title$0`) + CHAR_LENGTH(`t150`.`company$0`) AS `$f0`, `t150`.`_idx$0`, `$cor3`.`timestamp$0`
 FROM (SELECT `_uuid$0`, `_ingest_time$0`, `id$0`, `last_updated$0`, `time$0`, `title$0`, `location$0`, `speakers$0`, `description$0`, `timestamp$0`
   FROM `conferenceevents$i$1`) AS `$cor3`,
- UNNEST(`$cor3`.`speakers$0`) AS `t160`
+ UNNEST(`$cor3`.`speakers$0`) AS `t150`
 
 root$4 = SELECT `id$0`, `_uuid$0`, `removalId` AS `removalid$0`, `timestamp$0`, `time$0`, `title$0`, `description$0`, `name$0`, `location$0`, `removed` AS `removed$0`, CHAR_LENGTH(`description$0`) AS `embedding$0`
-FROM (SELECT `t6`.`_uuid$0`, COALESCE(`t10`.`_uuid$0`, '') AS `removalId`, `t6`.`timestamp$0`, `t6`.`id$0`, `t6`.`time$0`, `t6`.`title$0`, `t6`.`description$0`, `t6`.`name$0`, `t6`.`location$0`, NOT BANNEDWORDSFILTER(`t6`.`name$0`) OR NOT BANNEDWORDSFILTER(`t6`.`description$0`) OR NOT BANNEDWORDSFILTER(`t6`.`location$0`) AS `removed`
+FROM (SELECT `t5`.`_uuid$0`, COALESCE(`t9`.`_uuid$0`, '') AS `removalId`, `t5`.`timestamp$0`, `t5`.`id$0`, `t5`.`time$0`, `t5`.`title$0`, `t5`.`description$0`, `t5`.`name$0`, `t5`.`location$0`, NOT BANNEDWORDSFILTER(`t5`.`name$0`) OR NOT BANNEDWORDSFILTER(`t5`.`description$0`) OR NOT BANNEDWORDSFILTER(`t5`.`location$0`) AS `removed`
    FROM (SELECT `$cor4`.`_uuid$0`, `$cor4`.`_ingest_time$0`, `$cor4`.`_source_time$0`, `$cor4`.`userid$0`, `$cor4`.`id$0`, `$cor4`.`name$0`, `$cor4`.`email$0`, `$cor4`.`location$0`, `$cor4`.`time$0`, `$cor4`.`title$0`, `$cor4`.`description$0`, `$cor4`.`secret$0`, `$cor4`.`timestamp$0`
-     FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `userid$0`, `id$0`, `name$0`, `email$0`, `location$0`, `time$0`, `title$0`, `description$0`, `secret$0`, `timestamp$0`, CAST(`id$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `id$0$0`, CAST(`secret$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `secret$0$0`
+     FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `userid$0`, `id$0`, `name$0`, `email$0`, `location$0`, `time$0`, `title$0`, `description$0`, `secret$0`, `timestamp$0`
        FROM `eventupdate$i$11`) AS `$cor4`
-      INNER JOIN `query$1` FOR SYSTEM_TIME AS OF `$cor4`.`timestamp$0` AS `t3` ON `$cor4`.`id$0$0` = `t3`.`id$1` AND `$cor4`.`secret$0$0` = `t3`.`secret$1`) AS `t6`
+      INNER JOIN `query$1` FOR SYSTEM_TIME AS OF `$cor4`.`timestamp$0` AS `t3` ON `$cor4`.`id$0` = `t3`.`id$1` AND `$cor4`.`secret$0` = `t3`.`secret$1`) AS `t5`
     LEFT JOIN (SELECT `$cor5`.`_uuid$0`, `$cor5`.`_ingest_time$0`, `$cor5`.`_source_time$0`, `$cor5`.`eventid$0`, `$cor5`.`auth_token$0`
      FROM `eventremoval$i$23` AS `$cor5`
-      INNER JOIN `query$2` FOR SYSTEM_TIME AS OF `$cor5`.`_source_time$0` AS `t9` ON `t9`.`id$0` = 'removal' AND `t9`.`value$0` = `$cor5`.`auth_token$0`) AS `t10` ON `t6`.`id$0` = `t10`.`eventid$0` AND `t6`.`timestamp$0` < `t10`.`_source_time$0` AND `t10`.`_source_time$0` < (`t6`.`timestamp$0` + INTERVAL '5' SECOND(1))
+      INNER JOIN `query$2` FOR SYSTEM_TIME AS OF `$cor5`.`_source_time$0` AS `t8` ON `t8`.`id$0` = 'removal' AND `t8`.`value$0` = `$cor5`.`auth_token$0`) AS `t9` ON `t5`.`id$0` = `t9`.`eventid$0` AND `t5`.`timestamp$0` < `t9`.`_source_time$0` AND `t9`.`_source_time$0` < (`t5`.`timestamp$0` + INTERVAL '5' SECOND(1))
    UNION ALL
-   SELECT `t13`.`_uuid$0` AS `_uuid`, '' AS `removalId`, `t13`.`timestamp$0` AS `timestamp`, CAST(`t13`.`id$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `EXPR$3`, `t13`.`time$0` AS `time`, `t13`.`title$0` AS `title`, `t13`.`description$0` AS `description`, `t21`.`name`, `t13`.`location$0` AS `location`, FALSE AS `removed`
+   SELECT `t12`.`_uuid$0` AS `_uuid`, '' AS `removalId`, `t12`.`timestamp$0` AS `timestamp`, CAST(`t12`.`id$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `EXPR$3`, `t12`.`time$0` AS `time`, `t12`.`title$0` AS `title`, `t12`.`description$0` AS `description`, `t20`.`name`, `t12`.`location$0` AS `location`, FALSE AS `removed`
    FROM (SELECT `_uuid$0`, `_ingest_time$0`, `id$0`, `last_updated$0`, `time$0`, `title$0`, `location$0`, `speakers$0`, `description$0`, `timestamp$0`
-     FROM `conferenceevents$i$1`) AS `t13`
+     FROM `conferenceevents$i$1`) AS `t12`
     INNER JOIN (SELECT `___uuid$0$pk$1`, CONCAT('speakerlength', SUM(`$f0`)) AS `name`, `window_time` AS `timestamp$0`
-     FROM TABLE(TUMBLE(TABLE `query$3`, DESCRIPTOR(`timestamp$0`), INTERVAL '0.001' SECOND(1))) AS `t18`
-     GROUP BY `___uuid$0$pk$1`, `window_start`, `window_end`, `window_time`) AS `t21` ON `t13`.`_uuid$0` = `t21`.`___uuid$0$pk$1` AND `t13`.`timestamp$0` = `t21`.`timestamp$0`) AS `t24`
+     FROM TABLE(TUMBLE(TABLE `query$3`, DESCRIPTOR(`timestamp$0`), INTERVAL '0.001' SECOND(1))) AS `t17`
+     GROUP BY `___uuid$0$pk$1`, `window_start`, `window_end`, `window_time`) AS `t20` ON `t12`.`_uuid$0` = `t20`.`___uuid$0$pk$1` AND `t12`.`timestamp$0` = `t20`.`timestamp$0`) AS `t23`
 
 root$5 = SELECT `userid$0`, AVG(`embedding$0`) OVER (PARTITION BY `userid$0` ORDER BY `_source_time$0` ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `interestvector$0`, `_source_time$0`
 FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `text$0`, `userid$0`, CHAR_LENGTH(`text$0`) AS `embedding$0`
-  FROM `addinterest$i$20`) AS `t28`
+  FROM `addinterest$i$20`) AS `t27`
 
 root$6 = SELECT `userid$0`, `eventid$0`, `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `liked$0`
 FROM `likes$i$14`
 
 root$7 = SELECT `_uuid$0`, `removalId` AS `removalid$0`, `_ingest_time$0`, `_source_time$0`, `userid$0`, `id$0`, `name$0`, `email$0`, `location$0`, `time$0`, `title$0`, `description$0`, `secret$0`, `timestamp$0`, `removed` AS `removed$0`
-FROM (SELECT `t40`.`_uuid$0`, COALESCE(`t44`.`_uuid$0`, '') AS `removalId`, `t40`.`_ingest_time$0`, `t40`.`_source_time$0`, `t40`.`userid$0`, `t40`.`id$0`, `t40`.`name$0`, `t40`.`email$0`, `t40`.`location$0`, `t40`.`time$0`, `t40`.`title$0`, `t40`.`description$0`, `t40`.`secret$0`, `t40`.`timestamp$0`, NOT BANNEDWORDSFILTER(`t40`.`name$0`) OR NOT BANNEDWORDSFILTER(`t40`.`description$0`) OR NOT BANNEDWORDSFILTER(`t40`.`location$0`) AS `removed`
+FROM (SELECT `t38`.`_uuid$0`, COALESCE(`t42`.`_uuid$0`, '') AS `removalId`, `t38`.`_ingest_time$0`, `t38`.`_source_time$0`, `t38`.`userid$0`, `t38`.`id$0`, `t38`.`name$0`, `t38`.`email$0`, `t38`.`location$0`, `t38`.`time$0`, `t38`.`title$0`, `t38`.`description$0`, `t38`.`secret$0`, `t38`.`timestamp$0`, NOT BANNEDWORDSFILTER(`t38`.`name$0`) OR NOT BANNEDWORDSFILTER(`t38`.`description$0`) OR NOT BANNEDWORDSFILTER(`t38`.`location$0`) AS `removed`
   FROM (SELECT `$cor6`.`_uuid$0`, `$cor6`.`_ingest_time$0`, `$cor6`.`_source_time$0`, `$cor6`.`userid$0`, `$cor6`.`id$0`, `$cor6`.`name$0`, `$cor6`.`email$0`, `$cor6`.`location$0`, `$cor6`.`time$0`, `$cor6`.`title$0`, `$cor6`.`description$0`, `$cor6`.`secret$0`, `$cor6`.`timestamp$0`
-    FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `userid$0`, `id$0`, `name$0`, `email$0`, `location$0`, `time$0`, `title$0`, `description$0`, `secret$0`, `timestamp$0`, CAST(`id$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `id$0$0`, CAST(`secret$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `secret$0$0`
+    FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `userid$0`, `id$0`, `name$0`, `email$0`, `location$0`, `time$0`, `title$0`, `description$0`, `secret$0`, `timestamp$0`
       FROM `eventupdate$i$11`) AS `$cor6`
-     INNER JOIN `query$1` FOR SYSTEM_TIME AS OF `$cor6`.`timestamp$0` AS `t37` ON `$cor6`.`id$0$0` = `t37`.`id$1` AND `$cor6`.`secret$0$0` = `t37`.`secret$1`) AS `t40`
+     INNER JOIN `query$1` FOR SYSTEM_TIME AS OF `$cor6`.`timestamp$0` AS `t36` ON `$cor6`.`id$0` = `t36`.`id$1` AND `$cor6`.`secret$0` = `t36`.`secret$1`) AS `t38`
    LEFT JOIN (SELECT `$cor7`.`_uuid$0`, `$cor7`.`_ingest_time$0`, `$cor7`.`_source_time$0`, `$cor7`.`eventid$0`, `$cor7`.`auth_token$0`
     FROM `eventremoval$i$23` AS `$cor7`
-     INNER JOIN `query$2` FOR SYSTEM_TIME AS OF `$cor7`.`_source_time$0` AS `t43` ON `t43`.`id$0` = 'removal' AND `t43`.`value$0` = `$cor7`.`auth_token$0`) AS `t44` ON `t40`.`id$0` = `t44`.`eventid$0` AND `t40`.`timestamp$0` < `t44`.`_source_time$0` AND `t44`.`_source_time$0` < (`t40`.`timestamp$0` + INTERVAL '5' SECOND(1))) AS `t45`
-WHERE NOT `t45`.`removed`
+     INNER JOIN `query$2` FOR SYSTEM_TIME AS OF `$cor7`.`_source_time$0` AS `t41` ON `t41`.`id$0` = 'removal' AND `t41`.`value$0` = `$cor7`.`auth_token$0`) AS `t42` ON `t38`.`id$0` = `t42`.`eventid$0` AND `t38`.`timestamp$0` < `t42`.`_source_time$0` AND `t42`.`_source_time$0` < (`t38`.`timestamp$0` + INTERVAL '5' SECOND(1))) AS `t43`
+WHERE NOT `t43`.`removed`
 
 query$8 = SELECT *
 FROM (SELECT `id$0`, `_uuid$0`, `_ingest_time$0`, `last_updated$0`, `title$0`, `fromemail$0`, `toemail$0`, `textbody$0`, ROW_NUMBER() OVER (PARTITION BY `id$0` ORDER BY `last_updated$0` DESC NULLS LAST) AS `$f8`
   FROM (SELECT `id$0`, `_uuid$0`, `_ingest_time$0`, `last_updated$0`, `title$0`, `fromemail$0`, `toemail$0`, `textbody$0`
-    FROM `emailtemplates$i$8`) AS `t49`) AS `t50`
+    FROM `emailtemplates$i$8`) AS `t47`) AS `t48`
 WHERE `$f8` = 1
 
-root$9 = SELECT `$cor8`.`_uuid$0`, `$cor8`.`email$0` AS `toemail$0`, `t51`.`fromemail$0`, `t51`.`title$0`, FORMAT(`t51`.`textbody$0`, `$cor8`.`name$0`, `$cor8`.`id$1`, `$cor8`.`secret$1`) AS `textbody$0`, `$cor8`.`timestamp$0`
+root$9 = SELECT `$cor8`.`_uuid$0`, `$cor8`.`email$0` AS `toemail$0`, `t49`.`fromemail$0`, `t49`.`title$0`, FORMAT(`t49`.`textbody$0`, `$cor8`.`name$0`, `$cor8`.`id$1`, `$cor8`.`secret$1`) AS `textbody$0`, `$cor8`.`timestamp$0`
 FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `userid$0`, `id$0`, `name$0`, `email$0`, `location$0`, `time$0`, `title$0`, `description$0`, `secret$0`, `timestamp$0`, RANDOMID(12) AS `id$1`, RANDOMID(10) AS `secret$1`
   FROM `eventupdate$i$11`) AS `$cor8`
- INNER JOIN `query$8` FOR SYSTEM_TIME AS OF `$cor8`.`timestamp$0` AS `t51` ON `t51`.`id$0` = 'confirmpost'
+ INNER JOIN `query$8` FOR SYSTEM_TIME AS OF `$cor8`.`timestamp$0` AS `t49` ON `t49`.`id$0` = 'confirmpost'
 
 query$10 = SELECT *
 FROM (SELECT `id`, `_uuid`, `removalId`, `timestamp`, `time`, `title`, `description`, `name`, `location`, `removed`, `embedding$0`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST) AS `$f11`
   FROM (SELECT `id$0` AS `id`, `_uuid$0` AS `_uuid`, `removalId`, `timestamp$0` AS `timestamp`, `time$0` AS `time`, `title$0` AS `title`, `description$0` AS `description`, `name$0` AS `name`, `location$0` AS `location`, `removed`, CHAR_LENGTH(`description$0`) AS `embedding$0`
-    FROM (SELECT `t66`.`_uuid$0`, COALESCE(`t70`.`_uuid$0`, '') AS `removalId`, `t66`.`timestamp$0`, `t66`.`id$0`, `t66`.`time$0`, `t66`.`title$0`, `t66`.`description$0`, `t66`.`name$0`, `t66`.`location$0`, NOT BANNEDWORDSFILTER(`t66`.`name$0`) OR NOT BANNEDWORDSFILTER(`t66`.`description$0`) OR NOT BANNEDWORDSFILTER(`t66`.`location$0`) AS `removed`
+    FROM (SELECT `t63`.`_uuid$0`, COALESCE(`t67`.`_uuid$0`, '') AS `removalId`, `t63`.`timestamp$0`, `t63`.`id$0`, `t63`.`time$0`, `t63`.`title$0`, `t63`.`description$0`, `t63`.`name$0`, `t63`.`location$0`, NOT BANNEDWORDSFILTER(`t63`.`name$0`) OR NOT BANNEDWORDSFILTER(`t63`.`description$0`) OR NOT BANNEDWORDSFILTER(`t63`.`location$0`) AS `removed`
        FROM (SELECT `$cor11`.`_uuid$0`, `$cor11`.`_ingest_time$0`, `$cor11`.`_source_time$0`, `$cor11`.`userid$0`, `$cor11`.`id$0`, `$cor11`.`name$0`, `$cor11`.`email$0`, `$cor11`.`location$0`, `$cor11`.`time$0`, `$cor11`.`title$0`, `$cor11`.`description$0`, `$cor11`.`secret$0`, `$cor11`.`timestamp$0`
-         FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `userid$0`, `id$0`, `name$0`, `email$0`, `location$0`, `time$0`, `title$0`, `description$0`, `secret$0`, `timestamp$0`, CAST(`id$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `id$0$0`, CAST(`secret$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `secret$0$0`
+         FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `userid$0`, `id$0`, `name$0`, `email$0`, `location$0`, `time$0`, `title$0`, `description$0`, `secret$0`, `timestamp$0`
            FROM `eventupdate$i$11`) AS `$cor11`
-          INNER JOIN `query$1` FOR SYSTEM_TIME AS OF `$cor11`.`timestamp$0` AS `t63` ON `$cor11`.`id$0$0` = `t63`.`id$1` AND `$cor11`.`secret$0$0` = `t63`.`secret$1`) AS `t66`
+          INNER JOIN `query$1` FOR SYSTEM_TIME AS OF `$cor11`.`timestamp$0` AS `t61` ON `$cor11`.`id$0` = `t61`.`id$1` AND `$cor11`.`secret$0` = `t61`.`secret$1`) AS `t63`
         LEFT JOIN (SELECT `$cor12`.`_uuid$0`, `$cor12`.`_ingest_time$0`, `$cor12`.`_source_time$0`, `$cor12`.`eventid$0`, `$cor12`.`auth_token$0`
          FROM `eventremoval$i$23` AS `$cor12`
-          INNER JOIN `query$2` FOR SYSTEM_TIME AS OF `$cor12`.`_source_time$0` AS `t69` ON `t69`.`id$0` = 'removal' AND `t69`.`value$0` = `$cor12`.`auth_token$0`) AS `t70` ON `t66`.`id$0` = `t70`.`eventid$0` AND `t66`.`timestamp$0` < `t70`.`_source_time$0` AND `t70`.`_source_time$0` < (`t66`.`timestamp$0` + INTERVAL '5' SECOND(1))
+          INNER JOIN `query$2` FOR SYSTEM_TIME AS OF `$cor12`.`_source_time$0` AS `t66` ON `t66`.`id$0` = 'removal' AND `t66`.`value$0` = `$cor12`.`auth_token$0`) AS `t67` ON `t63`.`id$0` = `t67`.`eventid$0` AND `t63`.`timestamp$0` < `t67`.`_source_time$0` AND `t67`.`_source_time$0` < (`t63`.`timestamp$0` + INTERVAL '5' SECOND(1))
        UNION ALL
-       SELECT `t73`.`_uuid$0` AS `_uuid`, '' AS `removalId`, `t73`.`timestamp$0` AS `timestamp`, CAST(`t73`.`id$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `EXPR$3`, `t73`.`time$0` AS `time`, `t73`.`title$0` AS `title`, `t73`.`description$0` AS `description`, `t81`.`name`, `t73`.`location$0` AS `location`, FALSE AS `removed`
+       SELECT `t70`.`_uuid$0` AS `_uuid`, '' AS `removalId`, `t70`.`timestamp$0` AS `timestamp`, CAST(`t70`.`id$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `EXPR$3`, `t70`.`time$0` AS `time`, `t70`.`title$0` AS `title`, `t70`.`description$0` AS `description`, `t78`.`name`, `t70`.`location$0` AS `location`, FALSE AS `removed`
        FROM (SELECT `_uuid$0`, `_ingest_time$0`, `id$0`, `last_updated$0`, `time$0`, `title$0`, `location$0`, `speakers$0`, `description$0`, `timestamp$0`
-         FROM `conferenceevents$i$1`) AS `t73`
+         FROM `conferenceevents$i$1`) AS `t70`
         INNER JOIN (SELECT `___uuid$0$pk$1`, CONCAT('speakerlength', SUM(`$f0`)) AS `name`, `window_time` AS `timestamp$0`
-         FROM TABLE(TUMBLE(TABLE `query$3`, DESCRIPTOR(`timestamp$0`), INTERVAL '0.001' SECOND(1))) AS `t78`
-         GROUP BY `___uuid$0$pk$1`, `window_start`, `window_end`, `window_time`) AS `t81` ON `t73`.`_uuid$0` = `t81`.`___uuid$0$pk$1` AND `t73`.`timestamp$0` = `t81`.`timestamp$0`) AS `t84`) AS `t86`) AS `t87`
+         FROM TABLE(TUMBLE(TABLE `query$3`, DESCRIPTOR(`timestamp$0`), INTERVAL '0.001' SECOND(1))) AS `t75`
+         GROUP BY `___uuid$0$pk$1`, `window_start`, `window_end`, `window_time`) AS `t78` ON `t70`.`_uuid$0` = `t78`.`___uuid$0$pk$1` AND `t70`.`timestamp$0` = `t78`.`timestamp$0`) AS `t81`) AS `t83`) AS `t84`
 WHERE `$f11` = 1
 
-root$11 = SELECT `$cor9`.`_uuid$0`, `t58`.`toemail$0`, `t58`.`fromemail$0`, `t58`.`title$0`, FORMAT(`t58`.`textbody$0`, `$cor9`.`eventid$0`, `$cor9`.`title`, `$cor9`.`description`, `$cor9`.`name`) AS `textbody$0`, `$cor9`.`_source_time$0`
+root$11 = SELECT `$cor9`.`_uuid$0`, `t56`.`toemail$0`, `t56`.`fromemail$0`, `t56`.`title$0`, FORMAT(`t56`.`textbody$0`, `$cor9`.`eventid$0`, `$cor9`.`title`, `$cor9`.`description`, `$cor9`.`name`) AS `textbody$0`, `$cor9`.`_source_time$0`
 FROM (SELECT *
-  FROM (SELECT `_uuid$0`, `_ingest_time$0`, `_source_time$0`, `eventid$0`, `userid$0`, CAST(`eventid$0` AS VARCHAR(65536) CHARACTER SET `UTF-16LE`) AS `eventid$0$0`
-    FROM `reportevent$i$17`) AS `$cor10`
-   INNER JOIN `query$10` FOR SYSTEM_TIME AS OF `$cor10`.`_source_time$0` AS `t88` ON `$cor10`.`eventid$0$0` = `t88`.`id`) AS `$cor9`
- INNER JOIN `query$8` FOR SYSTEM_TIME AS OF `$cor9`.`_source_time$0` AS `t58` ON `t58`.`id$0` = 'eventflag'
+  FROM `reportevent$i$17` AS `$cor10`
+   INNER JOIN `query$10` FOR SYSTEM_TIME AS OF `$cor10`.`_source_time$0` AS `t85` ON `$cor10`.`eventid$0` = `t85`.`id`) AS `$cor9`
+ INNER JOIN `query$8` FOR SYSTEM_TIME AS OF `$cor9`.`_source_time$0` AS `t56` ON `t56`.`id$0` = 'eventflag'
 

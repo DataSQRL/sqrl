@@ -9,15 +9,15 @@ import java.util.function.Supplier;
 
 public class CheckUtil {
 
-  public static void checkState(SqlNode node, boolean check, String message) {
+  public static void checkState(SqlNode node, boolean check, String message, String... format) {
     if (!check) {
-      throw createAstException(ErrorLabel.GENERIC, ()->node.getParserPosition(), ()->message);
+      throw createAstException(ErrorLabel.GENERIC, ()->node.getParserPosition(),
+          ()->String.format(message, format));
     }
   }
 
-
-  public static <X extends RuntimeException> X fatal(SqlNode node, String message) {
-    throw createAstException(ErrorLabel.GENERIC, ()->node.getParserPosition(), ()->message);
+  public static <X extends RuntimeException> X fatal(SqlNode node, String message, String... format) {
+    throw createAstException(ErrorLabel.GENERIC, ()->node.getParserPosition(), ()->String.format(message, format));
   }
 
   public static RuntimeException createAstException(ErrorLabel label, Supplier<SqlParserPos> pos,

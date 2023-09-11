@@ -10,4 +10,6 @@ public interface ModifiableSqrlTable extends Table {
 
   SQRLTable getSqrlTable();
 
+  String getName();
+
 }

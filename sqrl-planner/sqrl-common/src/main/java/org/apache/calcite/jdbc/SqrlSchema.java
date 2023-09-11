@@ -33,7 +33,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
   private final List<ResolvedExport> exports = new ArrayList<>();
   private final List<SQRLTable> sqrlTables = new ArrayList<>();
   private final Map<List<String>, List<String>> relationships = new HashMap();
-  private final Map<List<String>, String> internalTables = new HashMap();
   private final Set<URL> jars = new HashSet<>();
 
   public SqrlSchema(SqrlFramework framework) {
@@ -114,16 +113,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public void addRelationship(List<String> from, List<String> to) {
     this.relationships.put(from, to);
-  }
-
-  public void addTableMapping(List<String> path, String nameId) {
-    this.internalTables.put(path, nameId);
-  }
-
-  public void addPlannerTableFunction(String name,
-      TableFunction tableFunction) {
-
-//    plus().add(name, tableFunction);
   }
 
   public String getUniqueFunctionName(List<String> path) {

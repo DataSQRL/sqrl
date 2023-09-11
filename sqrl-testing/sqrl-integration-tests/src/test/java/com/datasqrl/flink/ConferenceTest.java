@@ -33,7 +33,7 @@ public class ConferenceTest extends AbstractGraphqlTest {
 
   @SneakyThrows
   @Test
-  @Disabled
+//  @Disabled
   public void run() {
     CountDownLatch countDownLatch = new CountDownLatch(1);
 

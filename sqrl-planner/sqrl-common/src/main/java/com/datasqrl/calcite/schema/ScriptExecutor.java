@@ -21,25 +21,20 @@ import com.datasqrl.calcite.schema.op.LogicalOpVisitor;
 import com.datasqrl.calcite.schema.op.LogicalSchemaModifyOps;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.module.NamespaceObject;
-import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -50,7 +45,6 @@ import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.SqrlTableParamDef;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.util.Util;
 
@@ -82,31 +76,8 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
 
   @Override
   public Object visit(LogicalImportOp relNode, Object context) {
-    NamePath path = nameUtil.toNamePath(relNode.getImportPath());
-
-    SqrlModule module = moduleLoader.getModule(path.popLast()).orElseThrow(
-        () -> errors.exception("Could not find module [%s] in: %s", path, moduleLoader));
-
-    boolean loaded;
-    if (path.getLast().equals(ReservedName.ALL)) {
-      loaded = module.getNamespaceObjects().stream()
-          .allMatch(obj -> obj.apply(Optional.empty(), framework, errors));
-    } else {
-      // Get the namespace object specified in the import statement
-      NamespaceObject obj = module.getNamespaceObject(path.getLast()).orElseThrow(
-          () -> new RuntimeException(String.format("Could not resolve import [%s]", path)));
-
-      //Keep original casing
-      String objectName = relNode.getAlias().orElse(path.getLast().getDisplay());
-
-      // Add the namespace object to the current namespace
-      loaded = obj.apply(Optional.of(objectName), framework, errors);
-    }
-
-    // Check if import loaded successfully
-    if (!loaded || errors.hasErrors()) {
-      throw new RuntimeException(String.format("Could not load import [%s]", path));
-    }
+    relNode.getImportList()
+        .forEach(i->i.getObject().apply(i.getAlias(), framework, errors));
 
     return null;
   }
@@ -124,10 +95,8 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
 
   @Override
   public Object visit(LogicalExportOp relNode, Object context) {
-    TableSink sink = LoaderUtil.loadSink(nameUtil.toNamePath(relNode.getSinkPath()), errors,
-        moduleLoader);
-
-    ResolvedExport export = new ResolvedExport(relNode.getTable().getQualifiedName().get(0), relNode.getInput(), sink);
+    ResolvedExport export = new ResolvedExport(relNode.getTable().getQualifiedName().get(0),
+        relNode.getInput(), relNode.getExport().getSink());
     framework.getSchema().add(export);
 
     return null;

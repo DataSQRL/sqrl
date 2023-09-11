@@ -69,6 +69,11 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
   @Setter
   private SQRLTable sqrlTable;
 
+  @Override
+  public String getName() {
+    return nameId;
+  }
+
   protected VirtualRelationalTable(Name nameId, @NonNull RelDataType rowType,
       @NonNull RelDataType queryRowType, int numLocalPks) {
     super(nameId);

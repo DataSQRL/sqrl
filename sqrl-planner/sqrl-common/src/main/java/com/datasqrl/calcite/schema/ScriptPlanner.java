@@ -11,6 +11,8 @@ import com.datasqrl.calcite.schema.op.LogicalCreateTableOp;
 import com.datasqrl.calcite.schema.op.LogicalImportOp;
 import com.datasqrl.calcite.schema.op.LogicalOp;
 import com.datasqrl.calcite.schema.op.LogicalSchemaModifyOps;
+import com.datasqrl.calcite.validator.ScriptValidator;
+import com.datasqrl.calcite.validator.ScriptValidator.QualifiedExport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +36,7 @@ import org.apache.flink.table.api.TableResult;
 public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
 
   private QueryPlanner planner;
+  private ScriptValidator validator;
 
   public RelNode plan(SqlNode query) {
     if (query instanceof ScriptNode) {
@@ -99,16 +102,18 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
   @Override
   public LogicalOp visit(SqrlImportDefinition node, Void context) {
     return new LogicalImportOp(planner.getCluster(), null, node.getImportPath().names,
-        node.getAlias().map(SqlIdentifier::getSimple));
+        node.getAlias().map(SqlIdentifier::getSimple),
+        validator.getImportOps().get(node));
   }
 
   @Override
   public LogicalOp visit(SqrlExportDefinition node, Void context) {
-    RelOptTable table = planner.getCatalogReader().getSqrlTable(node.getIdentifier().names);
+    QualifiedExport export = validator.getExportOps().get(node);
+    SqrlPreparingTable table = planner.getCatalogReader().getSqrlTable(export.getTable());
     return (LogicalOp) planner.getSqrlRelBuilder()
-        .scan(table.getQualifiedName())
+        .scan(table.getInternalTable().getQualifiedName())
         .projectAll() //todo remove hidden fields
-        .export(node.getSinkPath().names)
+        .export(export)
         .build();
   }
 
