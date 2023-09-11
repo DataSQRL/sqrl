@@ -7,6 +7,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.TypeSignature;
+import com.datasqrl.schema.input.TypeSignature.Simple;
 import com.datasqrl.schema.input.TypeSignatureUtil;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
@@ -16,6 +17,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 import lombok.NonNull;
@@ -83,13 +85,14 @@ public class FieldStats implements Serializable {
   public void add(Object o, @NonNull String displayName, NameCanonicalizer canonicalizer) {
     count++;
     addNameCount(displayName, 1);
-    if (o == null) {
-      numNulls++;
+    Optional<Simple> typeSignatureOpt = TypeSignatureUtil.detectSimpleTypeSignature(o, BasicTypeManager::detectType,
+        BasicTypeManager::detectType);
+    if (typeSignatureOpt.isEmpty()) {
+      if (o == null) numNulls++;
     } else {
-      TypeSignature.Simple typeSignature = TypeSignatureUtil.detectTypeSignature(o, BasicTypeManager::detectType,
-          BasicTypeManager::detectType);
+      Simple typeSignature = typeSignatureOpt.get();
       FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(typeSignature));
-      if (TypeSignatureUtil.isArray(o)) {
+      if (TypeSignatureUtil.isArray(o)) { //Processes nested maps if any
         Iterator<Object> arrIter = TypeSignatureUtil.flatMapArray(o).getLeft().iterator();
         int numElements = 0;
         while (arrIter.hasNext()) {

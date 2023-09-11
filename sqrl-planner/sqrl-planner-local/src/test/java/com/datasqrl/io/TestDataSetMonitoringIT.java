@@ -22,6 +22,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.schema.input.external.SchemaExport;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
+import com.datasqrl.util.data.Books;
 import com.datasqrl.util.data.Conference;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
@@ -116,7 +117,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
   public void generateSchema() {
 //    generateTableConfigAndSchemaInDataDir(RetailNested.INSTANCE,
 //        IntegrationTestSettings.getInMemory());
-    generateTableConfigAndSchemaInDataDir(Conference.INSTANCE,
+    generateTableConfigAndSchemaInDataDir(Books.INSTANCE,
         IntegrationTestSettings.getFlinkWithDB());
 //    generateTableConfigAndSchemaInDataDir(TestDataset.ofSingleFile(Path.of("../../sqrl-repository/repodata/package_mX9HHbUFTgI8XQiJ8PDKMXD_Kno.json")),
 //        IntegrationTestSettings.getFlinkWithDB());

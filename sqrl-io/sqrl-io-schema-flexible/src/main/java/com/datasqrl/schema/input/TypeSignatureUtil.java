@@ -1,6 +1,7 @@
 package com.datasqrl.schema.input;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.schema.input.TypeSignature.Simple;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BasicType;
 import com.datasqrl.schema.type.basic.BasicTypeManager;
@@ -9,6 +10,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -18,9 +21,10 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class TypeSignatureUtil {
 
-  public static TypeSignature.Simple detectTypeSignature(Object o,
+  public static Optional<Simple> detectSimpleTypeSignature(Object o,
       Function<String, BasicType> detectFromString,
       Function<Map<String, Object>, BasicType> detectFromComposite) {
+    if (o == null) return Optional.empty();
     Type rawType = null;
     BasicType detectedType = null;
     int arrayDepth = 0;
@@ -64,6 +68,10 @@ public class TypeSignatureUtil {
         }
         numElements++;
       }
+      if (numElements==0) {
+        //empty array/list
+        return Optional.empty();
+      }
     } else {
       //Single element
       if (o instanceof Map) {
@@ -78,8 +86,8 @@ public class TypeSignatureUtil {
         }
       }
     }
-    return new TypeSignature.Simple(rawType, detectedType == null ? rawType : detectedType,
-        arrayDepth);
+    return Optional.of(new TypeSignature.Simple(rawType, detectedType == null ? rawType : detectedType,
+        arrayDepth));
   }
 
   public static boolean isArray(Object arr) {
