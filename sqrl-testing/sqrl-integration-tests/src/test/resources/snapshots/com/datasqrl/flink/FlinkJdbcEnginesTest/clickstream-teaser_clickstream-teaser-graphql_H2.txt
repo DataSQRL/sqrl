@@ -89,6 +89,9 @@ CREATE TABLE IF NOT EXISTS "trending$6" ("url$0" CHARACTER VARYING NOT NULL,"tot
       "rec" : "kogan_page/tender_is_the_night",
       "frequency" : 3
     }, {
+      "rec" : "mascot_books/a_time_of_gifts",
+      "frequency" : 3
+    }, {
       "rec" : "university_of_minnesota_press/to_a_god_unknown",
       "frequency" : 3
     }, {
