@@ -20,7 +20,7 @@ public class PagedApiQueryBase implements QueryBase {
   final String type = "pagedPgQuery";
   APIQuery query;
   RelNode relNode;
-  ArgumentSet relAndArg;
+//  ArgumentSet relAndArg;
   @Singular
   List<JdbcParameterHandler> parameters;
 

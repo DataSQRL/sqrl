@@ -25,7 +25,7 @@ public class ApiQueryBase implements QueryBase {
   final String type = "pgQuery";
   APIQuery query;
   RelNode relNode;
-  ArgumentSet relAndArg;
+//  ArgumentSet relAndArg;
   @Singular
   List<JdbcParameterHandler> parameters;
 

@@ -51,7 +51,7 @@ public class ReplaceGraphqlQueries implements
 //    SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
 //    DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
 
-    SqrlRelBuilder builder = planner.getSqrlRelBuilder();
+//    SqrlRelBuilder builder = planner.getSqrlRelBuilder();
 //    RelNode c = builder.push(template.getRelNode())
 //        .project(builder.fields(), template.getRelNode().getRowType().getFieldNames().stream()
 //            .map(n-> Name.system(n).getCanonical())

@@ -5,7 +5,6 @@ package com.datasqrl.graphql.inference;
 
 import com.datasqrl.SqrlSchemaFunction;
 import com.datasqrl.config.SerializedSqrlConfig;
-import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
@@ -218,13 +217,5 @@ public class SchemaInferenceModel {
     R visitNestedField(NestedField field, C context);
 
     R visitFunctionField(InferredFunctionField inferredFunctionField, C context);
-  }
-
-  @Value
-  @ToString
-  public static class InferredArgument {
-
-    InputValueDefinition argDefinition;
-    ArgumentHandler handler;
   }
 }

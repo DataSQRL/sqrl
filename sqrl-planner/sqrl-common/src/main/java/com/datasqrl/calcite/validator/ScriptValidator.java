@@ -185,7 +185,7 @@ public class ScriptValidator implements SqrlStatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlExportDefinition statement, Void context) {
     RelOptTable table = framework.getCatalogReader()
-        .getTable(statement.getIdentifier().names);
+        .getSqrlTable(statement.getIdentifier().names);
 
     if (table == null) {
       errorCollector.exception(ErrorCode.GENERIC,
@@ -263,6 +263,8 @@ public class ScriptValidator implements SqrlStatementVisitor<Void, Void> {
    */
   @Override
   public Void visit(SqrlSqlQuery statement, Void context) {
+
+
     validateTable(statement, statement.getQuery());
 
     return null;
@@ -648,7 +650,7 @@ public class ScriptValidator implements SqrlStatementVisitor<Void, Void> {
     SqlSelectBuilder sqlSelectBuilder = new SqlSelectBuilder(statement.getQuery());
     sqlSelectBuilder.setFrom(joinBuilder.build());
 
-    RelDataType type = validateTable(statement, sqlSelectBuilder.build());
+//    RelDataType type = validateTable(statement, sqlSelectBuilder.build());
 
     return null;
   }
@@ -708,9 +710,6 @@ public class ScriptValidator implements SqrlStatementVisitor<Void, Void> {
   }
 
   public void validateStatement(SqrlStatement sqlNode) {
-//    for (SqlNode sqlNode : script.getStatements()) {
-      sqlNode.accept(this, null);
-//    }
+    sqlNode.accept(this, null);
   }
-
 }
