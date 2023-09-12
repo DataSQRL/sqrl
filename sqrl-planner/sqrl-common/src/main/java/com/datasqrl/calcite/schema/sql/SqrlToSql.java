@@ -2,7 +2,6 @@ package com.datasqrl.calcite.schema.sql;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.SqrlTableFunction;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
@@ -205,7 +204,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
       pathWalker.walk(nextIdentifier);
 
-      SqlUserDefinedTableFunction fnc = SqrlRelBuilder.getSqrlTableFunction(planner, pathWalker.getPath());
+      SqlUserDefinedTableFunction fnc = planner.getTableFunction(pathWalker.getPath());
       if (fnc == null) {
         builder.scanNestedTable(pathWalker.getPath());
       } else {
@@ -228,7 +227,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
             .orElseThrow(()->new RuntimeException("Subqueries are not yet implemented"));
         pathWalker.walk(nextIdentifier);
 
-        SqlUserDefinedTableFunction fnc = SqrlRelBuilder.getSqrlTableFunction(planner, pathWalker.getAbsolutePath());
+        SqlUserDefinedTableFunction fnc = planner.getTableFunction(pathWalker.getAbsolutePath());
         if (fnc == null) {
           builder.scanNestedTable(pathWalker.getPath());
         } else {
@@ -251,7 +250,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       pathWalker.walk(nextIdentifier);
 
       String alias = builder.getLatestAlias();
-      SqlUserDefinedTableFunction fnc = SqrlRelBuilder.getSqrlTableFunction(planner, pathWalker.getPath());
+      SqlUserDefinedTableFunction fnc = planner.getTableFunction(pathWalker.getPath());
       if (fnc == null) {
         builder.scanNestedTable(pathWalker.getPath());
       } else {

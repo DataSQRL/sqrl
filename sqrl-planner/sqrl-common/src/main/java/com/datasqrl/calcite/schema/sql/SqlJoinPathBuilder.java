@@ -1,7 +1,6 @@
 package com.datasqrl.calcite.schema.sql;
 
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import java.util.ArrayList;
@@ -20,10 +19,8 @@ import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -41,7 +38,7 @@ public class SqlJoinPathBuilder {
    *
    */
   public SqlJoinPathBuilder scanFunction(List<String> path, List<SqlNode> args) {
-    SqlUserDefinedTableFunction op = SqrlRelBuilder.getSqrlTableFunction(planner, path);
+    SqlUserDefinedTableFunction op = planner.getTableFunction(path);
     if (op == null && args.isEmpty()) {
       scanNestedTable(path);
       return this;
@@ -145,7 +142,7 @@ public class SqlJoinPathBuilder {
 
 //    SqlSelect select = new SqlSelectBuilder()
 //        .setFrom(table)
-//        .setSelectList(SqrlRelBuilder.shadow(relOptTable.getRowType()).getFieldList()
+//        .setSelectList(RelBuilder.shadow(relOptTable.getRowType()).getFieldList()
 //            .stream()
 //            .map(f-> (SqlNode)SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
 //                new SqlIdentifier(relOptTable.getInternalTable().getRowType().getFieldList().get(f.getIndex()).getName(), SqlParserPos.ZERO),

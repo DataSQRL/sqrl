@@ -4,7 +4,7 @@ import com.datasqrl.SqrlPlanningTableFactory;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.schema.ScriptExecutor;
+import com.datasqrl.calcite.schema.ScriptPlanner;
 import com.datasqrl.calcite.validator.ScriptValidator;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -65,17 +65,17 @@ public class SqrlPlan extends SqrlParse {
           .build();
     }
 
-    QueryPlanner qPlanner = framework.getQueryPlanner();
-    ScriptExecutor executor = new ScriptExecutor(new SqrlPlanningTableFactory(framework, nameCanonicalizer), framework,
-        new SqlNameUtil(nameCanonicalizer), updatedModuleLoader, errors);
-
     for (SqlNode statement : node.getStatements()) {
       ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(),
           updatedModuleLoader, errors, new SqlNameUtil(nameCanonicalizer));
       validator.validateStatement((SqrlStatement) statement);
 
-      RelNode relNode = qPlanner.planSqrl(statement, validator);
-      executor.apply(relNode);
+      ScriptPlanner planner = new ScriptPlanner(
+          framework.getQueryPlanner(), validator,
+          new SqrlPlanningTableFactory(framework, nameCanonicalizer), framework,
+          new SqlNameUtil(nameCanonicalizer), updatedModuleLoader, errors);
+
+      planner.plan(statement);
     }
 
     return new Namespace(framework, pipeline);

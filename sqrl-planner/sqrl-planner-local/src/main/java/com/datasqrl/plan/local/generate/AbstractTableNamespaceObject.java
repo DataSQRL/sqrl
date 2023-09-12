@@ -2,9 +2,8 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.schema.ScriptExecutor;
+import com.datasqrl.calcite.schema.ScriptPlanner;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
-import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.TableNamespaceObject;
@@ -12,13 +11,11 @@ import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.plan.table.AbstractRelationalTable;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.table.VirtualRelationalTable.Child;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
-import com.datasqrl.util.SqlNameUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
@@ -84,17 +81,19 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       SQRLTable table = entry.getKey();
       VirtualRelationalTable vt = entry.getValue();
 
-      List<String> path = SqlNameUtil.toStringList(table.getPath());
+      //add parent/child relationship implicitly
 
+
+      List<String> path = table.getPath().toStringList();
       VirtualRelationalTable childVt;
       VirtualRelationalTable parentVt;
       //create parent/child nodes
-      if (!vt.isRoot() || path.size() > 1) {
+      if (!vt.isRoot() || table.getPath().size() > 1) {
         if (vt instanceof Child) {
           childVt = (Child) vt;
           parentVt = ((Child) vt).getParent();
         } else {
-          parentVt = framework.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(path))
+          parentVt = framework.getCatalogReader().getSqrlTable(table.getPath().popLast().toStringList())
               .unwrap(VirtualRelationalTable.class);
           childVt = framework.getCatalogReader().getSqrlTable(path)
               .unwrap(VirtualRelationalTable.class);
@@ -117,7 +116,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         node.setSelectList(new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO));
 
         SqlValidator validator = tableFactory.getFramework().getQueryPlanner().createSqlValidator();
-        TableFunction function = ScriptExecutor.createFunction(validator,
+        TableFunction function = ScriptPlanner.createFunction(validator,
             args.orElse(new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())),
             rel.getRowType(), node, entry.getValue().getNameId(),
             framework.getQueryPlanner().getCatalogReader());
@@ -169,7 +168,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       }
 
       SqlValidator validator = tableFactory.getFramework().getQueryPlanner().createSqlValidator();
-      TableFunction function = ScriptExecutor.createFunction(validator,
+      TableFunction function = ScriptPlanner.createFunction(validator,
           new SqrlTableFunctionDef(SqlParserPos.ZERO, params),
           relNode.getRowType(), node, scanName, framework.getQueryPlanner().getCatalogReader());
 

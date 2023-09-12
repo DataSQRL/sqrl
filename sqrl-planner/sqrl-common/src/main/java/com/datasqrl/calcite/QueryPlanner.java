@@ -1,5 +1,6 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.ScriptPlanner;
 import com.datasqrl.calcite.validator.ScriptValidator;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -8,6 +9,8 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.calcite.convert.PostgresSqlConverter;
+import com.datasqrl.util.SqlNameUtil;
+import java.util.ArrayList;
 import java.util.Arrays;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -29,6 +32,7 @@ import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
+import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
@@ -39,6 +43,7 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql2rel.RelDecorrelator;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -76,16 +81,16 @@ public class QueryPlanner {
   private final AtomicInteger uniqueMacroInt;
   private final HintStrategyTable hintStrategyTable;
   private final RelMetadataProvider metadataProvider;
+  private final SqrlFramework framework;
 
-  public QueryPlanner(CatalogReader catalogReader, OperatorTable operatorTable,
-      TypeFactory typeFactory, SqrlSchema schema, RelMetadataProvider metadataProvider,
-      AtomicInteger uniqueMacroInt, HintStrategyTable hintStrategyTable) {
-    this.catalogReader = catalogReader;
-    this.operatorTable = operatorTable;
-    this.schema = schema;
-    this.metadataProvider = metadataProvider;
-    this.uniqueMacroInt = uniqueMacroInt;
-    this.hintStrategyTable = hintStrategyTable;
+  public QueryPlanner(SqrlFramework framework) {
+    this.framework = framework;
+    this.catalogReader = framework.getCatalogReader();
+    this.operatorTable = framework.getSqrlOperatorTable();
+    this.schema = framework.getSchema();
+    this.metadataProvider = framework.getRelMetadataProvider();
+    this.uniqueMacroInt = framework.getUniqueMacroInt();
+    this.hintStrategyTable = framework.getHintStrategyTable();
     this.planner = new VolcanoPlanner(null, Contexts.empty());
     planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
     planner.addRelTraitDef(RelCollationTraitDef.INSTANCE);
@@ -96,9 +101,9 @@ public class QueryPlanner {
     RelOptRules.MATERIALIZATION_RULES.forEach(planner::addRule);
     EnumerableRules.ENUMERABLE_RULES.forEach(planner::addRule);
 
-    this.cluster = RelOptCluster.create(planner, new RexBuilder(typeFactory));
+    this.cluster = RelOptCluster.create(planner, new RexBuilder(framework.getTypeFactory()));
     this.convertletTable = new ConvertletTable();
-    this.typeFactory = typeFactory;
+    this.typeFactory = framework.getTypeFactory();
     this.defaultClassDir = new File("build/calcite/classes");
     cluster.setMetadataProvider(this.metadataProvider);
     cluster.setHintStrategies(hintStrategyTable);
@@ -139,15 +144,8 @@ public class QueryPlanner {
 
   }
 
-  public RelNode planSqrl(SqlNode query, ScriptValidator validator) {
-    ScriptPlanner scriptPlanner = new ScriptPlanner(this, validator);
-    return scriptPlanner.plan(query);
-  }
   public RelNode plan(Dialect dialect, SqlNode query) {
     switch (dialect) {
-      case SQRL:
-        ScriptPlanner scriptPlanner = new ScriptPlanner(this, null);
-        return scriptPlanner.plan(query);
       case CALCITE:
         return planCalcite(query);
       case FLINK:
@@ -404,10 +402,6 @@ public class QueryPlanner {
     return new RelBuilder(null, this.cluster, this.catalogReader){};
   }
 
-  public SqrlRelBuilder getSqrlRelBuilder() {
-    return new SqrlRelBuilder(getRelBuilder(), this.catalogReader, this);
-  }
-
   public RexBuilder getRexBuilder() {
     return new RexBuilder(typeFactory);
   }
@@ -440,5 +434,36 @@ public class QueryPlanner {
 
   public String relToString(Dialect dialect, RelNode relNode) {
     return sqlToString(dialect, relToSql(dialect, relNode));
+  }
+
+  public SqlUserDefinedTableFunction getTableFunction(List<String> path) {
+    List<SqlOperator> result = new ArrayList<>();
+    String tableFunctionName = String.join(".", path);
+    //get latest function
+    String latestVersionName = SqrlNameMatcher.getLatestVersion(schema.plus().getFunctionNames(), tableFunctionName);
+    if (latestVersionName == null) {
+      //todo return optional
+      return null;
+    }
+    operatorTable.lookupOperatorOverloads(new SqlIdentifier(List.of(latestVersionName), SqlParserPos.ZERO),
+        SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, result, catalogReader.nameMatcher());
+
+    if (result.size() != 1) {
+      throw new RuntimeException("Could not resolve table: " + path);
+    }
+
+    return (SqlUserDefinedTableFunction)result.get(0);
+  }
+
+  public RelNode expandMacros(RelNode relNode) {
+    //Before macro expansion, clean up the rel
+    relNode = run(relNode,
+        CoreRules.FILTER_INTO_JOIN,
+        new ExpandTableMacroRule(this),
+        CoreRules.FILTER_INTO_JOIN);
+
+    //Convert lateral joins
+    relNode = RelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
+    return relNode;
   }
 }

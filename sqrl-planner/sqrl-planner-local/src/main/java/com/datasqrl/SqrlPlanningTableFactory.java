@@ -15,6 +15,7 @@ import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
@@ -26,6 +27,7 @@ import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
@@ -52,7 +54,12 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
             .unwrap(ModifiableSqrlTable.class).getSqrlTable());
 
     SqrlTableNamespaceObject nsObj = new CalciteTableFactory(framework, nameCanonicalizer)
-        .createTable(names, analyzedLP, parent, args);
+        .createTable(names, analyzedLP, args);
+//
+//    Optional<Pair<SQRLTable, Multiplicity>> parent = parentTable.map(pp ->
+//        Pair.of(pp, pp.getNumPrimaryKeys() == baseTable.getNumPrimaryKeys() ?
+//            Multiplicity.ZERO_ONE : Multiplicity.MANY)
+//    );
 
     nsObj.apply(Optional.empty(), framework, ErrorCollector.root());
   }

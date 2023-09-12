@@ -1,10 +1,15 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -48,7 +53,7 @@ public class SqrlNameMatcher implements SqlNameMatcher {
       return f;
     }
 
-    String name = SqrlRelBuilder.getLatestVersion(relDataType.getFieldNames(), s);
+    String name = getLatestVersion(relDataType.getFieldNames(), s);
     if (name == null) {
       return null;
     }
@@ -64,7 +69,7 @@ public class SqrlNameMatcher implements SqlNameMatcher {
       return n.indexOf(name);
     }
 
-    String versioned = SqrlRelBuilder.getLatestVersion(n, name);
+    String versioned = getLatestVersion(n, name);
 
     return n.indexOf(versioned);
   }
@@ -78,4 +83,46 @@ public class SqrlNameMatcher implements SqlNameMatcher {
   public Set<String> createSet() {
     return delegate.createSet();
   }
+
+
+  public static String getLatestVersion(Collection<String> functionNames, String prefix) {
+    //todo: use name comparator
+    Set<String> functionNamesCanon = functionNames.stream().map(f-> Name.system(f).getCanonical())
+        .collect(Collectors.toSet());
+    String prefixCanon = Name.system(prefix).getCanonical();
+
+    Pattern pattern = Pattern.compile("^"+Pattern.quote(prefixCanon) + "\\$(\\d+)");
+    int maxVersion = -1;
+
+    for (String function : functionNamesCanon) {
+      Matcher matcher = pattern.matcher(function);
+      if (matcher.find()) {
+        int version = Integer.parseInt(matcher.group(1));
+        maxVersion = Math.max(maxVersion, version);
+      }
+    }
+
+    return maxVersion != -1 ? prefix + "$" + maxVersion : null;
+  }
+
+  public static int getNextVersion(Collection<String> functionNames, String prefix) {
+    //todo: use name comparator
+    Set<String> functionNamesCanon = functionNames.stream().map(f-> Name.system(f).getCanonical())
+        .collect(Collectors.toSet());
+    String prefixCanon = Name.system(prefix).getCanonical();
+
+    Pattern pattern = Pattern.compile("^"+Pattern.quote(prefixCanon) + "\\$(\\d+)");
+    int maxVersion = -1;
+
+    for (String function : functionNamesCanon) {
+      Matcher matcher = pattern.matcher(function);
+      if (matcher.find()) {
+        int version = Integer.parseInt(matcher.group(1));
+        maxVersion = Math.max(maxVersion, version);
+      }
+    }
+
+    return maxVersion != -1 ? maxVersion + 1 : 0;
+  }
+
 }

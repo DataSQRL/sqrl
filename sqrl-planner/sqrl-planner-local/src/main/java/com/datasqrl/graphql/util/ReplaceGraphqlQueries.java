@@ -6,8 +6,6 @@ package com.datasqrl.graphql.util;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.SqrlRelBuilder;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.graphql.server.Model.*;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.SqrlRelToSql;
@@ -17,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
@@ -51,7 +48,7 @@ public class ReplaceGraphqlQueries implements
 //    SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
 //    DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
 
-//    SqrlRelBuilder builder = planner.getSqrlRelBuilder();
+//    RelBuilder builder = planner.getRelBuilder();
 //    RelNode c = builder.push(template.getRelNode())
 //        .project(builder.fields(), template.getRelNode().getRowType().getFieldNames().stream()
 //            .map(n-> Name.system(n).getCanonical())

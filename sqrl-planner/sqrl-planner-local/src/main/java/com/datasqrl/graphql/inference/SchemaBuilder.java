@@ -4,7 +4,6 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -160,7 +159,7 @@ public class SchemaBuilder implements
       currentPath = field.getParentTable().getPath().concat(Name.system(field.getFieldDefinition().getName())).toStringList();
     }
 
-    SqlUserDefinedTableFunction op = SqrlRelBuilder.getSqrlTableFunction(framework.getQueryPlanner(), currentPath);
+    SqlUserDefinedTableFunction op = framework.getQueryPlanner().getTableFunction(currentPath);
     TableFunction function = op.getFunction();
 
     Set<String> limitOffset = Set.of("limit", "offset");
@@ -176,7 +175,7 @@ public class SchemaBuilder implements
         .fieldName(field.getFieldDefinition().getName());
 
     for (List<InputValueDefinition> arg : argCombinations) {
-      SqrlRelBuilder builder = framework.getQueryPlanner().getSqrlRelBuilder();
+      RelBuilder builder = framework.getQueryPlanner().getRelBuilder();
 
       AtomicInteger uniqueOrdinal = new AtomicInteger(0);
       //Anticipate all args being found
@@ -242,7 +241,8 @@ public class SchemaBuilder implements
       }
       //
       //add defaults
-      RelNode relNode = builder.buildAndExpandMacros();
+
+      RelNode relNode = framework.getQueryPlanner().expandMacros(builder.build());
 
       String nameId = field.getParent().getName() + "." + field.getFieldDefinition().getName() + "-" + queryCounter.incrementAndGet();
       APIQuery query = new APIQuery(nameId, relNode);
@@ -322,4 +322,4 @@ public class SchemaBuilder implements
     InferredObjectField objectField = (InferredObjectField) field.getInferredField();
     return visitObjectField(objectField, context);
   }
-  }
+}

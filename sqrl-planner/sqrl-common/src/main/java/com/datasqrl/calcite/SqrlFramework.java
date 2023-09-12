@@ -50,8 +50,7 @@ public class SqrlFramework {
   }
 
   public QueryPlanner resetPlanner() {
-    this.queryPlanner = new QueryPlanner(catalogReader, sqrlOperatorTable, typeFactory, schema,
-        relMetadataProvider, uniqueMacroInt, hintStrategyTable);
+    this.queryPlanner = new QueryPlanner(this);
     return this.queryPlanner;
   }
 }

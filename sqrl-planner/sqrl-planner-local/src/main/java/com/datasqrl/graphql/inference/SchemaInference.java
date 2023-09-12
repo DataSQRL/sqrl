@@ -4,7 +4,6 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.schema.SqrlTableFunction;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.SerializedSqrlConfig;
@@ -131,8 +130,7 @@ public class SchemaInference {
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
       Type fieldType, String fieldName, String rootType) {
-    SqlUserDefinedTableFunction function = SqrlRelBuilder
-        .getSqrlTableFunction(framework.getQueryPlanner(), List.of(fieldName));
+    SqlUserDefinedTableFunction function = framework.getQueryPlanner().getTableFunction(List.of(fieldName));
 
     if (function == null) {
       Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)

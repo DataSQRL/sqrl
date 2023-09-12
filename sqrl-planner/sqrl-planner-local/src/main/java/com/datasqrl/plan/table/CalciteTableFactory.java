@@ -87,13 +87,12 @@ public class CalciteTableFactory {
         getTimestampHolder(rootTable), rootType, source,
         TableStatistic.of(1000));
 
-    Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable,
-        Optional.empty());
+    Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable);
     return new ScriptTableDefinition(impTable, tables);
   }
 
   public ScriptTableDefinition defineTable(NamePath tablePath, LPAnalysis analyzedLP,
-                                           List<Name> fieldNames, Optional<SQRLTable> parentTable) {
+                                           List<Name> fieldNames) {
     ContinuousIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
@@ -107,12 +106,7 @@ public class CalciteTableFactory {
     UniversalTable rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
         baseTable.getNumPrimaryKeys(), index2Name);
 
-    Optional<Pair<SQRLTable, Multiplicity>> parent = parentTable.map(pp ->
-        Pair.of(pp, pp.getNumPrimaryKeys() == baseTable.getNumPrimaryKeys() ?
-            Multiplicity.ZERO_ONE : Multiplicity.MANY)
-    );
-    Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable,
-        parent);
+    Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable);
 
     ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
     //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
@@ -161,9 +155,8 @@ public class CalciteTableFactory {
   }
 
   public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTable rootTable,
-      ScriptRelationalTable baseTable,
-      Optional<Pair<SQRLTable, Multiplicity>> parent) {
-    return build(rootTable, new VirtualTableConstructor(baseTable), parent);
+      ScriptRelationalTable baseTable) {
+    return build(rootTable, new VirtualTableConstructor(baseTable));
   }
 
   public RelDataType convertTable(UniversalTable tblBuilder, boolean includeNested,
@@ -234,17 +227,9 @@ public class CalciteTableFactory {
   }
 
   public Map<SQRLTable, VirtualRelationalTable> build(UniversalTable builder,
-      VirtualTableConstructor vtableBuilder,
-      Optional<Pair<SQRLTable, Multiplicity>> parent) {
+      VirtualTableConstructor vtableBuilder) {
     Map<SQRLTable, VirtualRelationalTable> createdTables = new HashMap<>();
     build(builder, null, null, null, vtableBuilder, createdTables);
-    if (parent.isPresent()) {
-      SQRLTable root = createdTables.keySet().stream().filter(t -> t.getParent().isEmpty())
-          .findFirst().get();
-      SQRLTable parentTbl = parent.get().getKey();
-      createChildRelationship(root.getName(), root, parentTbl, parent.get().getValue());
-      createParentRelationship(root, parentTbl);
-    }
     return createdTables;
   }
 
@@ -304,19 +289,18 @@ public class CalciteTableFactory {
         Relationship.JoinType.CHILD, multiplicity);
   }
 
-  public SqrlTableNamespaceObject createTable(NamePath namePath, LPAnalysis analyzedLP,
-                                      Optional<SQRLTable> parentTable, SqrlTableFunctionDef args) {
+  public SqrlTableNamespaceObject createTable(NamePath namePath, LPAnalysis analyzedLP, SqrlTableFunctionDef args) {
     return new SqrlTableNamespaceObject(namePath.getLast(),
-        createScriptDef(namePath, analyzedLP, parentTable), this, args);
+        createScriptDef(namePath, analyzedLP), this, args);
   }
 
-  public ScriptTableDefinition createScriptDef(NamePath namePath, LPAnalysis analyzedLP, Optional<SQRLTable> parentTable) {
+  public ScriptTableDefinition createScriptDef(NamePath namePath, LPAnalysis analyzedLP) {
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
         .map(idx -> relFieldNames.get(idx))
         .map(n -> Name.system(n)).collect(Collectors.toList());
 
-    return defineTable(namePath, analyzedLP, fieldNames, parentTable);
+    return defineTable(namePath, analyzedLP, fieldNames);
   }
 }
