@@ -5,9 +5,6 @@ CREATE TABLE IF NOT EXISTS trending$6 (url$0 VARCHAR NOT NULL,total$0 BIGINT NOT
 {
   "data" : {
     "Recommendation" : [ {
-      "rec" : "mascot_books/a_time_of_gifts",
-      "frequency" : 132
-    }, {
       "rec" : "schocken_books/arms_and_the_man",
       "frequency" : 18
     }, {
@@ -90,6 +87,9 @@ CREATE TABLE IF NOT EXISTS trending$6 (url$0 VARCHAR NOT NULL,total$0 BIGINT NOT
       "frequency" : 3
     }, {
       "rec" : "kogan_page/tender_is_the_night",
+      "frequency" : 3
+    }, {
+      "rec" : "mascot_books/a_time_of_gifts",
       "frequency" : 3
     }, {
       "rec" : "university_of_minnesota_press/to_a_god_unknown",

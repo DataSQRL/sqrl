@@ -8,6 +8,7 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.TestScript.PhysicalUseCaseProvider;
+import com.datasqrl.util.data.Clickstream;
 import com.datasqrl.util.data.Sensors;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
   @Test
   @Disabled
   public void forDebuggingIndividualUseCases() {
-    scriptTest(Sensors.INSTANCE.getScripts().get(1), false, false);
+    scriptTest(Clickstream.INSTANCE.getScripts().get(0), true, false);
   }
 
 }
