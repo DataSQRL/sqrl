@@ -1,4 +1,4 @@
-package com.datasqrl;
+package com.datasqrl.functions;
 
 import com.datasqrl.function.SqrlFunction;
 import com.google.common.base.Preconditions;

@@ -20,17 +20,4 @@ public class SqrlDistinctQuery extends SqrlAssignment {
     this.operands = operands;
     this.order = order;
   }
-
-  @Override
-  public void unparse(SqlWriter sqlWriter, int i, int i1) {
-    super.unparse(sqlWriter, i, i1);
-    sqlWriter.keyword("DISTINCT");
-    table.unparse(sqlWriter, i, i1);
-    sqlWriter.print("ON ...");
-  }
-
-  @Override
-  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
-    return visitor.visit(this, context);
-  }
 }

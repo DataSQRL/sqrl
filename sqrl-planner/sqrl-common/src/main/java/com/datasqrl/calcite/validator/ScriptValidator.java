@@ -701,11 +701,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
   public void validate(ScriptNode script) {
     for (SqlNode sqlNode : script.getStatements()) {
-      ((SqrlStatement) sqlNode).accept(this, null);
+      validateStatement((SqrlStatement)sqlNode);
     }
   }
 
   public void validateStatement(SqrlStatement sqlNode) {
-    sqlNode.accept(this, null);
+    SqlNodeVisitor.accept(this, sqlNode, null);
   }
 }

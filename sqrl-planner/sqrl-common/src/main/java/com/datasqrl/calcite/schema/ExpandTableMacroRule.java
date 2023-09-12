@@ -44,15 +44,12 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
           new ReplaceArgumentWithOperand(((RexCall) node.getCall()).getOperands()));
 
       //Strip trivial projection
-      if (relNode instanceof LogicalProject && RexUtil.isIdentity(((LogicalProject) relNode).getProjects(),
-          relNode.getInput(0).getRowType())) {
-        relNode = relNode.getInput(0);
-      }
-      Preconditions.checkState(relNode.getRowType()
-              .equalsSansFieldNames(node.getRowType()),
-          "Not equal: " + relNode.getRowType() +" : "+
-              node.getRowType()
-      );
+//      if (relNode instanceof LogicalProject && RexUtil.isIdentity(((LogicalProject) relNode).getProjects(),
+//          relNode.getInput(0).getRowType())) {
+//        relNode = relNode.getInput(0);
+//      }
+      Preconditions.checkState(relNode.getRowType().equalsSansFieldNames(node.getRowType()),
+          "Not equal: " + relNode.getRowType() + " : " + node.getRowType());
 
       relOptRuleCall.transformTo(relNode);
     }

@@ -10,7 +10,7 @@ import org.apache.calcite.util.Litmus;
 import java.util.Optional;
 
 @Getter
-public class SqrlTableParamDef extends SqlNode {
+public class SqrlTableParamDef extends SqrlSqlNode {
 
   private final SqlIdentifier name;
   private final SqlDataTypeSpec type;
@@ -26,30 +26,5 @@ public class SqrlTableParamDef extends SqlNode {
     this.defaultValue = literal;
     this.index = index;
     this.isInternal = isInternal;
-  }
-
-  @Override
-  public SqlNode clone(SqlParserPos sqlParserPos) {
-    return null;
-  }
-
-  @Override
-  public void unparse(SqlWriter sqlWriter, int i, int i1) {
-
-  }
-
-  @Override
-  public void validate(SqlValidator sqlValidator, SqlValidatorScope sqlValidatorScope) {
-
-  }
-
-  @Override
-  public <R> R accept(SqlVisitor<R> sqlVisitor) {
-    return null;
-  }
-
-  @Override
-  public boolean equalsDeep(SqlNode sqlNode, Litmus litmus) {
-    return false;
   }
 }

@@ -1,5 +1,6 @@
-package com.datasqrl;
+package com.datasqrl.functions;
 
+import com.datasqrl.functions.SqrlFunctions.VariableArguments;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimplePredicateTransform;
 import com.datasqrl.calcite.function.RuleTransform;
@@ -7,7 +8,6 @@ import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
-import com.datasqrl.functions.SqrlFunctions.VariableArguments;
 import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
 import java.time.Duration;

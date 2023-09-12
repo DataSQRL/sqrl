@@ -85,41 +85,6 @@ public class CalciteUtil {
         && !datatype.isNullable();
   }
 
-  private static SqlSelect stripOrderBy(SqlNode query) {
-    if (query instanceof SqlSelect) {
-      return (SqlSelect) query;
-    } else if (query instanceof SqlOrderBy) {
-      return (SqlSelect) ((SqlOrderBy) query).query;
-    }
-    return null;
-  }
-
-  public static void removeKeywords(SqlSelect select) {
-    select.setOperand(0, SqlNodeList.EMPTY);
-  }
-
-  public static void wrapSelectInProject(SqlSelect select) {
-    SqlSelect innerSelect = (SqlSelect) select.clone(select.getParserPosition());
-
-    SqlNodeList columnNames = new SqlNodeList(List.of(SqlIdentifier.STAR),
-        select.getSelectList().getParserPosition());
-
-    select.setOperand(0, SqlNodeList.EMPTY);
-    select.setOperand(1, columnNames);
-    select.setOperand(2, innerSelect);
-    select.setOperand(3, null);
-    select.setOperand(4, null);
-    select.setOperand(5, null);
-    select.setOperand(6, SqlNodeList.EMPTY);
-    select.setOperand(7, null);
-    select.setOperand(8, null);
-    select.setOperand(9, null);
-  }
-
-  public static void setHint(SqlSelect select, SqlHint hint) {
-    select.setHints(new SqlNodeList(List.of(hint), SqlParserPos.ZERO));
-  }
-
   public interface RelDataTypeBuilder {
 
     public default RelDataTypeBuilder add(Name name, RelDataType type) {

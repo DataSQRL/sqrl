@@ -14,6 +14,7 @@ import com.datasqrl.calcite.schema.sql.SqrlToSql;
 import com.datasqrl.calcite.schema.sql.SqrlToSql.Result;
 import com.datasqrl.calcite.validator.ScriptValidator;
 import com.datasqrl.calcite.validator.ScriptValidator.QualifiedExport;
+import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
@@ -94,7 +95,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           .collect(Collectors.toList());
       return null;
     } else if (query instanceof SqrlStatement) {
-      return ((SqrlStatement) query).accept(this, null);
+      return SqlNodeVisitor.accept(this, query, null);
     }
 
     throw new RuntimeException("Unrecognized operator:" + query);

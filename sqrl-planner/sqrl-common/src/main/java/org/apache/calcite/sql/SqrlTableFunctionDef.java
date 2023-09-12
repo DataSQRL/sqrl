@@ -10,37 +10,12 @@ import org.apache.calcite.util.Litmus;
 import java.util.List;
 
 @Getter
-public class SqrlTableFunctionDef extends SqlNode {
+public class SqrlTableFunctionDef extends SqrlSqlNode {
 
   private final List<SqrlTableParamDef> parameters;
 
   public SqrlTableFunctionDef(SqlParserPos location, List<SqrlTableParamDef> parameters) {
     super(location);
     this.parameters = parameters;
-  }
-
-  @Override
-  public SqlNode clone(SqlParserPos sqlParserPos) {
-    return null;
-  }
-
-  @Override
-  public void unparse(SqlWriter sqlWriter, int i, int i1) {
-
-  }
-
-  @Override
-  public void validate(SqlValidator sqlValidator, SqlValidatorScope sqlValidatorScope) {
-
-  }
-
-  @Override
-  public <R> R accept(SqlVisitor<R> sqlVisitor) {
-    return null;
-  }
-
-  @Override
-  public boolean equalsDeep(SqlNode sqlNode, Litmus litmus) {
-    return false;
   }
 }
