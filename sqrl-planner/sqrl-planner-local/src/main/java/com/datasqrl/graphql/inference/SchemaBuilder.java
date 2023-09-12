@@ -50,6 +50,7 @@ import graphql.schema.GraphQLList;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -187,7 +188,8 @@ public class SchemaBuilder implements
       Model.ArgumentSet.ArgumentSetBuilder matchSet = Model.ArgumentSet.builder();
       ApiQueryBaseBuilder queryParams = ApiQueryBase.builder();
 
-      Map<List<String>, InputValueDefinition> argMap = Maps.uniqueIndex(arg, n->List.of(n.getName()));
+      //modifiable since we'll subtract the args we find
+      Map<List<String>, InputValueDefinition> argMap = new HashMap<>(Maps.uniqueIndex(arg, n->List.of(n.getName())));
 
       //Iterate over all required args in the function
       for (FunctionParameter p : op.getFunction().getParameters()) {
@@ -196,8 +198,11 @@ public class SchemaBuilder implements
         InputValueDefinition def;
         if (parameter.isInternal()) {
           queryParams.parameter(new SourceParameter(p.getName()));//todo: get name of lhs
-        } else if ((def = matcher.get(argMap, List.<String>of(), List.of(parameter.getName())))
+        } else if ((def = matcher.get(argMap, List.<String>of(), List.of(parameter.getName().substring(1))))
               != null) {
+          argMap.remove(List.of(def.getName()));
+          queryParams.parameter(new ArgumentParameter(def.getName()));//todo: get name of lhs
+          matchSet.argument(new VariableArgument(def.getName(), null));
             //param found,
         } else {
           //param not in list, attempt to get default value.
