@@ -117,10 +117,6 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
     public static final SqlBinaryOperator EuclideanDistance = new SqlBinaryOperator("<->",
         SqlKind.OTHER_FUNCTION, 22, true, ReturnTypes.explicit(SqlTypeName.DOUBLE),
         null, null);
-//    public static final SqlUserDefinedFunction ManhattenDistance = new SqlUserDefinedFunction(
-//        new SqlIdentifier("l1_distance", SqlParserPos.ZERO),
-//        SqlKind.OTHER_FUNCTION, ReturnTypes.explicit(SqlTypeName.DOUBLE),
-//        null, null, null);
 
     private static SqlUnresolvedFunction op(String name) {
       return new SqlUnresolvedFunction(new SqlIdentifier(name, SqlParserPos.ZERO),
