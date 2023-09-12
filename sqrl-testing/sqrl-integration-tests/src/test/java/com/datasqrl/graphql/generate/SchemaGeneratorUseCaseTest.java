@@ -9,6 +9,7 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.StringUtil;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.TestScript.PhysicalUseCaseProvider;
+import com.datasqrl.util.data.Books;
 import com.datasqrl.util.data.Sensors;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,7 +48,7 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   @Test
   @Disabled
   public void writeSchemaFile() {
-    TestScript script = Sensors.INSTANCE.getScripts().get(0);
+    TestScript script = Books.INSTANCE.getScripts().get(0);
     String schema = produceSchemaString(script);
     writeSchemaFile(script, schema);
   }

@@ -7,7 +7,7 @@ Trending := SELECT url, count(1) AS total
 VisitAfter := SELECT b.url AS beforeURL, a.url AS afterURL,
     a.timestamp AS timestamp
     FROM Click b JOIN Click a ON b.userid=a.userid AND
-        b.timestamp <= a.timestamp AND
+        b.timestamp < a.timestamp AND
         b.timestamp >= a.timestamp - INTERVAL 10 MINUTE;
 /* Recommend pages that are visited shortly after */
 Recommendation := SELECT beforeURL AS url, afterURL AS rec,

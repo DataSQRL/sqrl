@@ -88,7 +88,7 @@ public class FieldStats implements Serializable {
     Optional<Simple> typeSignatureOpt = TypeSignatureUtil.detectSimpleTypeSignature(o, BasicTypeManager::detectType,
         BasicTypeManager::detectType);
     if (typeSignatureOpt.isEmpty()) {
-      if (o == null) numNulls++;
+      numNulls++;
     } else {
       Simple typeSignature = typeSignatureOpt.get();
       FieldTypeStats fieldStats = setOrGet(FieldTypeStats.of(typeSignature));
