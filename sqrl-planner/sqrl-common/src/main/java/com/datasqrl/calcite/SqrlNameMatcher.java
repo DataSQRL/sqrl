@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +11,16 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 
+/**
+ * Allows for choosing the most recent canonicalize column in a table.
+ * e.g. NAME -> name$1
+ */
 @AllArgsConstructor
 public class SqrlNameMatcher implements SqlNameMatcher {
   NameCanonicalizer canonicalizer;
+
   final SqlNameMatcher delegate = SqlNameMatchers.withCaseSensitive(false);
+
   @Override
   public boolean isCaseSensitive() {
     return false;
@@ -28,8 +33,6 @@ public class SqrlNameMatcher implements SqlNameMatcher {
 
   @Override
   public <K extends List<String>, V> V get(Map<K, V> map, List<String> list, List<String> list1) {
-
-
     return delegate.get(map, list, list1);
   }
 

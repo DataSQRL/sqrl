@@ -2,7 +2,6 @@ package com.datasqrl.calcite.schema;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.SqrlPreparingTable;
 import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.schema.sql.SqrlToSql;
@@ -30,10 +29,9 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.Util;
-import org.apache.flink.table.api.TableResult;
 
 @AllArgsConstructor
-public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
+public class ScriptPlanner implements StatementVisitor<LogicalOp, Void> {
 
   private QueryPlanner planner;
   private ScriptValidator validator;
@@ -57,7 +55,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     List<String> tableName = query.getAlias().orElse(query.getIdentifier()).names;
 
     SqrlRelBuilder builder = planner.getSqrlRelBuilder()
-        .scan(planner.getCatalogReader().getSqrlTable(tableName).getInternalTable().getQualifiedName());
+        .scan(planner.getCatalogReader().getSqrlTable(tableName).getQualifiedName());
 
     RexNode node = builder.evaluateExpression(query.getTimestamp());
     if (!(node instanceof RexInputRef) && query.getTimestampAlias().isEmpty()) {
@@ -81,7 +79,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     TableResult result = planTable(query, query.getQuery(), false, true,
         query.getTableArgs());
 
-    SqrlPreparingTable toTable = planner.getCatalogReader()
+    RelOptTable toTable = planner.getCatalogReader()
         .getSqrlTable(result.getResult().getCurrentPath());
 
     return (LogicalOp) planner.getSqrlRelBuilder()
@@ -109,9 +107,9 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
   @Override
   public LogicalOp visit(SqrlExportDefinition node, Void context) {
     QualifiedExport export = validator.getExportOps().get(node);
-    SqrlPreparingTable table = planner.getCatalogReader().getSqrlTable(export.getTable());
+    RelOptTable table = planner.getCatalogReader().getSqrlTable(export.getTable());
     return (LogicalOp) planner.getSqrlRelBuilder()
-        .scan(table.getInternalTable().getQualifiedName())
+        .scan(table.getQualifiedName())
         .projectAll() //todo remove hidden fields
         .export(export)
         .build();
@@ -124,19 +122,15 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
   public LogicalOp visit(SqrlDistinctQuery node, Void context) {
     String sqrlTableName = ((SqlIdentifier) node.getTable()).names.get(0);
 
-    SqrlPreparingTable table = planner.getCatalogReader().getSqrlTable(((SqlIdentifier) node.getTable()).names);
+    RelOptTable table = planner.getCatalogReader().getSqrlTable(((SqlIdentifier) node.getTable()).names);
     SqrlRelBuilder builder = planner.getSqrlRelBuilder();
     RelNode relNode = builder
-        .scan(table.getInternalTable().getQualifiedName())
+        .scan(table.getQualifiedName())
         .projectAllPrefixDistinct(builder.evaluateExpressions(node.getOperands(), sqrlTableName))
         .sortLimit(0, 1, builder.evaluateOrderExpression(node.getOrder(), sqrlTableName))
         .projectAll()
         .distinctOnHint(node.getOperands().size())
-        .buildAndUnshadow();
-
-    System.out.println(relNode.explain());
-    System.out.println(planner.relToString(Dialect.CALCITE, relNode));
-
+        .buildAndExpandMacros();
 
     relNode = RelOptUtil.propagateRelHints(relNode, false);
 
@@ -216,7 +210,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     SqrlToSql sqrlToSql = new SqrlToSql(this.planner);
     Result result = sqrlToSql.rewrite(query, materialSelfTable, currentPath, argDef, isJoinDeclaration);
 
-    Optional<SqrlPreparingTable> parentTable = node.getIdentifier().names.size() == 1
+    Optional<RelOptTable> parentTable = node.getIdentifier().names.size() == 1
         ? Optional.empty()
         : Optional.of(planner.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(node.getIdentifier().names)));
 
@@ -229,7 +223,7 @@ public class ScriptPlanner implements SqrlStatementVisitor<LogicalOp, Void> {
     RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
     relNode = planner.getSqrlRelBuilder()
         .push(relNode)
-        .buildAndUnshadow();//todo get original names
+        .buildAndExpandMacros();//todo get original names
     return TableResult.of(result, relNode, sqlNode, newArguments);
   }
 

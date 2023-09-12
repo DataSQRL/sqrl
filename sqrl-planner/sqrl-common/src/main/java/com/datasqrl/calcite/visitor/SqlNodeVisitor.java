@@ -4,7 +4,7 @@ import org.apache.calcite.sql.*;
 
 public abstract class SqlNodeVisitor<R, C> implements
   SqlRelationVisitor<R, C>,
-    SqrlStatementVisitor<R, C> {
+    StatementVisitor<R, C> {
   public static <R, C> R accept(SqlRelationVisitor<R, C> visitor, SqlNode node, C context) {
     if (node.getKind() == SqlKind.AS) {
       return visitor.visitAliasedRelation((SqlCall) node, context);

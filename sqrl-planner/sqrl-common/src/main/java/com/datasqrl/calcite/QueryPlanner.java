@@ -245,7 +245,7 @@ public class QueryPlanner {
 
       return ((LogicalProject) root.rel).getProjects().get(0);
     } finally {
-      schema.removeTable("@");
+      schema.removeTable(name);
     }
   }
 

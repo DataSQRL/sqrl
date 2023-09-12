@@ -21,7 +21,7 @@ import org.apache.flink.util.function.QuadFunction;
 
 //TODO: This is a copy of org.apache.flink.table.planner.calcite.FlinkTypeSystem, we'll port to sqrl types soon
 public class SqrlTypeSystem extends RelDataTypeSystemImpl {
-  public static final RelDataTypeSystem INSTANCE =
+  public static final SqrlTypeSystem INSTANCE =
       new SqrlTypeSystem();
   public static final DecimalType DECIMAL_SYSTEM_DEFAULT =
       new DecimalType(DecimalType.MAX_PRECISION, 18);

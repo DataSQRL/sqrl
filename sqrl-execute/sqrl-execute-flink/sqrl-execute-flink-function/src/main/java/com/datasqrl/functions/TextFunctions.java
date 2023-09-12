@@ -1,11 +1,10 @@
-package com.datasqrl;
+package com.datasqrl.functions;
 
-import com.datasqrl.SqrlFunctions.VariableArguments;
+import com.datasqrl.functions.SqrlFunctions.VariableArguments;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform;
 import com.datasqrl.calcite.convert.SimplePredicateTransform;
 import com.datasqrl.calcite.function.RuleTransform;
-import com.datasqrl.calcite.function.vector.TsVectorOperatorTable;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.SqrlFunction;

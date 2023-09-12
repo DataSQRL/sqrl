@@ -50,7 +50,6 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 
@@ -326,9 +325,8 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     SqlSelect select = x.asSelect();
     QueryPipelineItem queries1 = getOrCreate(QueryType.QUERY, select, e.getInput(0), null);
 
-    Context context = x.qualifiedContext();
     RexBuilder rex = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
-        TypeFactory.getTypeSystem2()));
+        TypeFactory.getSqrlTypeSystem()));
     //The first flink operand is referencing something else
     // replace it with a placeholder then replace it with the sql node
     RexCall call = (RexCall) e.getCall();

@@ -29,9 +29,11 @@ import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -126,9 +128,8 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
             .map(factory::createIndex)
             .forEach(ddlStatements::add);
 
-    QueryBuilder queryBuilder = new QueryBuilder(framework.getQueryPlanner().getRexBuilder());
-    Map<IdentifiedQuery, QueryTemplate> databaseQueries = queryBuilder.planQueries(
-        dbPlan.getQueries());
+    Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
+        .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
 
     return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
   }

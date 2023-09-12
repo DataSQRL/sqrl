@@ -20,11 +20,11 @@ import java.util.List;
 
 
 @Getter
-public class QueryTableFunction extends TableFunctionBase {
+public class ComputeTableFunction extends TableFunctionBase {
 
   QueryRelationalTable queryTable;
 
-  public QueryTableFunction(Name name, List<FunctionParameter> params, SQRLTable table,
+  public ComputeTableFunction(Name name, List<FunctionParameter> params, SQRLTable table,
       QueryRelationalTable queryTable) {
     super(name, params, table);
     this.queryTable = queryTable;

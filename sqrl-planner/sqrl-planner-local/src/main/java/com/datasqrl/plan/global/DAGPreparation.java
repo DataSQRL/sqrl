@@ -4,7 +4,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.plan.local.generate.ComputeTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
@@ -50,8 +50,8 @@ public class DAGPreparation {
         .forEach(this::finalizeSourceTable);
     //Check that all script tables and the query tables of ComputeTableFunctions have timestamps
     Preconditions.checkArgument(Stream.concat(scriptTables.stream(),
-        sqrlSchema.getFunctionStream(QueryTableFunction.class).map(
-            QueryTableFunction::getQueryTable))
+        sqrlSchema.getFunctionStream(ComputeTableFunction.class).map(
+            ComputeTableFunction::getQueryTable))
         .allMatch(table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
 
     //Append timestamp column to nested, normalized tables, so we can propagate it

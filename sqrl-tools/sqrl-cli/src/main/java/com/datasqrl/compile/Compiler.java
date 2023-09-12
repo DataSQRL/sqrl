@@ -20,6 +20,7 @@ import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlDIModule;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
+import com.datasqrl.functions.DefaultFunctions;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
@@ -69,10 +70,7 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.sql.SqlFunction;
 import org.apache.commons.io.FileUtils;
-import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 @Slf4j
 public class Compiler {
@@ -109,16 +107,14 @@ public class Compiler {
     ResourceResolver resourceResolver = new FileResourceResolver(buildDir);
     SqrlFramework framework = new SqrlFramework(SqrlRelMetadataProvider.INSTANCE,
         SqrlHintStrategyTable.getHintStrategyTable(), nameCanonicalizer);
-    SqlFunction coalesce = new FlinkConverter(framework.getQueryPlanner().getRexBuilder(), framework.getTypeFactory())
-        .convertFunction("COALESCE", "COALESCE", BuiltInFunctionDefinitions.COALESCE);
-    framework.getSqrlOperatorTable().addFunction("COALESCE", coalesce);
-    framework.getSqrlOperatorTable().addFunction("NOW", FlinkSqlOperatorTable.NOW);
-    SqlFunction greatest = new FlinkConverter(framework.getQueryPlanner().getRexBuilder(), framework.getTypeFactory())
-        .convertFunction("GREATEST", "GREATEST", BuiltInFunctionDefinitions.GREATEST);
-    framework.getSqrlOperatorTable().addFunction("GREATEST", greatest);
 
+    DefaultFunctions functions = new DefaultFunctions(new FlinkConverter(framework.getQueryPlanner().getRexBuilder(),
+        framework.getTypeFactory()));
+    functions.getDefaultFunctions()
+        .forEach((key, value) -> framework.getSqrlOperatorTable().addFunction(key, value));
 
-    ModuleLoader moduleLoader = new ModuleLoaderImpl(new ObjectLoaderImpl(resourceResolver, errors, new CalciteTableFactory(framework, nameCanonicalizer)));
+    ModuleLoader moduleLoader = new ModuleLoaderImpl(new ObjectLoaderImpl(resourceResolver, errors,
+        new CalciteTableFactory(framework, nameCanonicalizer)));
     TableSink errorSink = loadErrorSink(moduleLoader, compilerConfig.getErrorSink(), errors);
 
     SqrlDIModule module = new SqrlDIModule(pipelineFactory.createPipeline(), debugger,

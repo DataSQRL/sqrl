@@ -1,21 +1,20 @@
 package com.datasqrl.util;
 
-import static com.datasqrl.TimeFunctions.END_OF_DAY;
-import static com.datasqrl.TimeFunctions.END_OF_HOUR;
-import static com.datasqrl.TimeFunctions.END_OF_MINUTE;
-import static com.datasqrl.TimeFunctions.END_OF_MONTH;
-import static com.datasqrl.TimeFunctions.END_OF_SECOND;
-import static com.datasqrl.TimeFunctions.END_OF_WEEK;
-import static com.datasqrl.TimeFunctions.END_OF_YEAR;
-import static com.datasqrl.TimeFunctions.EPOCH_MILLI_TO_TIMESTAMP;
-import static com.datasqrl.TimeFunctions.EPOCH_TO_TIMESTAMP;
-import static com.datasqrl.TimeFunctions.STRING_TO_TIMESTAMP;
-import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_EPOCH;
-import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_EPOCH_MILLI;
-import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_STRING;
+import static com.datasqrl.functions.TimeFunctions.END_OF_DAY;
+import static com.datasqrl.functions.TimeFunctions.END_OF_HOUR;
+import static com.datasqrl.functions.TimeFunctions.END_OF_MINUTE;
+import static com.datasqrl.functions.TimeFunctions.END_OF_MONTH;
+import static com.datasqrl.functions.TimeFunctions.END_OF_SECOND;
+import static com.datasqrl.functions.TimeFunctions.END_OF_WEEK;
+import static com.datasqrl.functions.TimeFunctions.END_OF_YEAR;
+import static com.datasqrl.functions.TimeFunctions.EPOCH_MILLI_TO_TIMESTAMP;
+import static com.datasqrl.functions.TimeFunctions.EPOCH_TO_TIMESTAMP;
+import static com.datasqrl.functions.TimeFunctions.STRING_TO_TIMESTAMP;
+import static com.datasqrl.functions.TimeFunctions.TIMESTAMP_TO_EPOCH;
+import static com.datasqrl.functions.TimeFunctions.TIMESTAMP_TO_EPOCH_MILLI;
+import static com.datasqrl.functions.TimeFunctions.TIMESTAMP_TO_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.datasqrl.TimeFunctions.TimeWindowBucketFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

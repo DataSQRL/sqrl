@@ -1,6 +1,5 @@
 package com.datasqrl.calcite.schema;
 
-import com.datasqrl.calcite.SqrlPreparingTable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -20,7 +20,7 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 @Getter
 public class TransformArguments extends SqlShuttle {
 
-  private final Optional<SqrlPreparingTable> parentTable;
+  private final Optional<RelOptTable> parentTable;
   private final Optional<SqrlTableFunctionDef> tableDef;
   private final boolean materialSelfTable;
   private final SqlNameMatcher sqlNameMatcher;
@@ -31,7 +31,7 @@ public class TransformArguments extends SqlShuttle {
   //Calcite needs all matching dynamic params to resolve to the same instance
   Map<Integer, SqlDynamicParam> paramMap = new HashMap<>();
 
-  public TransformArguments(Optional<SqrlPreparingTable> parentTable, Optional<SqrlTableFunctionDef> tableDef,
+  public TransformArguments(Optional<RelOptTable> parentTable, Optional<SqrlTableFunctionDef> tableDef,
       boolean materialSelfTable, SqlNameMatcher sqlNameMatcher) {
     this.parentTable = parentTable;
     this.tableDef = tableDef;

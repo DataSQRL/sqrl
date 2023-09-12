@@ -22,4 +22,5 @@ public interface NameCanonicalizer extends Serializable {
   NameCanonicalizer AS_IS = new IdentityCanonicalizer();
 
   NameCanonicalizer SYSTEM = LOWERCASE_ENGLISH;
+
 }

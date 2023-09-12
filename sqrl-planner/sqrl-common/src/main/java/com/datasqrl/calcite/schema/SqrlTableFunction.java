@@ -22,67 +22,28 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.util.Pair;
 
 @Getter
-public class SqrlTableFunction implements TableFunction, CustomColumnResolvingTable {
-  List<FunctionParameter> parameters;
-  SqlNode node;
+@AllArgsConstructor
+public class SqrlTableFunction implements TableFunction {
+  private final List<FunctionParameter> parameters;
+  private final SqlNode node;
   private final String tableName;
   private final CatalogReader catalogReader;
   private final Optional<RelDataType> typeOptional;
 
-  public SqrlTableFunction(List<FunctionParameter> parameters, SqlNode node,
-      String tableName, CatalogReader catalogReader, Optional<RelDataType> typeOptional) {
-    this.parameters = parameters;
-    this.node = node;
-    this.tableName = tableName;
-    this.catalogReader = catalogReader;
-    this.typeOptional = typeOptional;
-  }
-
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
+    //Look up most recent table
     PreparingTable table = catalogReader.getTable(List.of(tableName));
-    ;
     if (table != null) {
       return table.getRowType();
     } else {
+      //here for query access tables (not registered as a table)
       return typeOptional.get();
     }
   }
 
   @Override
   public Type getElementType(List<Object> list) {
-    return Object.class;
-  }
-
-  @Override
-  public List<Pair<RelDataTypeField, List<String>>> resolveColumn(RelDataType relDataType,
-      RelDataTypeFactory relDataTypeFactory, List<String> list) {
-    return null;
-  }
-
-  @Override
-  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
-    return getRowType(relDataTypeFactory, List.of());
-  }
-
-  @Override
-  public Statistic getStatistic() {
-    return null;
-  }
-
-  @Override
-  public TableType getJdbcTableType() {
-    return null;
-  }
-
-  @Override
-  public boolean isRolledUp(String s) {
-    return false;
-  }
-
-  @Override
-  public boolean rolledUpColumnValidInsideAgg(String s, SqlCall sqlCall, SqlNode sqlNode,
-      CalciteConnectionConfig calciteConnectionConfig) {
-    return false;
+    return Object[].class;
   }
 }

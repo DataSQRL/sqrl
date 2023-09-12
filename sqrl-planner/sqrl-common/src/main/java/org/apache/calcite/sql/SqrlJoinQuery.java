@@ -41,7 +41,7 @@ public class SqrlJoinQuery extends SqrlAssignment {
   }
 
   @Override
-  public <R, C> R accept(SqrlStatementVisitor<R, C> visitor, C context) {
+  public <R, C> R accept(StatementVisitor<R, C> visitor, C context) {
     return visitor.visit(this, context);
   }
 }

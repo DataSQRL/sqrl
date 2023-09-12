@@ -1,8 +1,8 @@
 package com.datasqrl.calcite.schema.sql;
 
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.SqrlPreparingTable;
 import com.datasqrl.calcite.SqrlRelBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.sql.JoinConditionType;
@@ -132,7 +133,7 @@ public class SqlJoinPathBuilder {
   }
 
   public void scanNestedTable(List<String> currentPath) {
-    SqrlPreparingTable relOptTable = planner.getCatalogReader().getSqrlTable(currentPath);
+    RelOptTable relOptTable = planner.getCatalogReader().getSqrlTable(currentPath);
     if (relOptTable == null) {
       throw new RuntimeException("Could not find table: " + currentPath);
     }
@@ -155,7 +156,7 @@ public class SqlJoinPathBuilder {
     String alias = "_t"+aliasInt.incrementAndGet();
 
     SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, table, new SqlIdentifier(alias, SqlParserPos.ZERO));
-    Frame frame = new Frame(relOptTable.getInternalTable().getRowType(), aliasedCall, alias);
+    Frame frame = new Frame(relOptTable.getRowType(), aliasedCall, alias);
     stack.push(frame);
     tableHistory.add(frame);
 

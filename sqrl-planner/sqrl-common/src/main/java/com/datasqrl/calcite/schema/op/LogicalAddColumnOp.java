@@ -1,6 +1,5 @@
 package com.datasqrl.calcite.schema.op;
 
-import com.datasqrl.calcite.SqrlPreparingTable;
 import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable;
@@ -19,10 +18,10 @@ public class LogicalAddColumnOp extends AbstractRelNode implements LogicalOp {
 
   //column name
   final String name;
-  private final SqrlPreparingTable toTable;
+  private final RelOptTable toTable;
 
   public LogicalAddColumnOp(RelOptCluster cluster, RelTraitSet traits, RelNode input, RexNode column, String name,
-      SqrlPreparingTable toTable) {
+      RelOptTable toTable) {
     super(cluster, traits);
     this.input = input;
     this.column = column;

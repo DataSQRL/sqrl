@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -110,7 +111,7 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
     //todo: assure select * gets smushed
     System.out.println(node);
 
-    PreparingTable relOptTable = planner.getCatalogReader().getSqrlTable(relNode.getTableReferences().get(0));
+    RelOptTable relOptTable = planner.getCatalogReader().getSqrlTable(relNode.getTableReferences().get(0));
     TableFunction function = createFunction(planner.createSqlValidator(),
         relNode.getDef(), relOptTable.getRowType(),
         node, relOptTable.getQualifiedName().get(0), planner.getCatalogReader());
@@ -158,7 +159,6 @@ public class ScriptExecutor implements LogicalOpVisitor<Object, Object> {
   }
 
   private void addColumn(LogicalAddColumnOp op) {
-//    RelOptTable table = op.getTable();
     if (op.getToTable().unwrap(ModifiableSqrlTable.class) != null) {
       ModifiableSqrlTable table1 = (ModifiableSqrlTable) op.getToTable().unwrap(Table.class);
       String name = uniquifyColumnName(op.getName(), op.getToTable().getRowType().getFieldNames());

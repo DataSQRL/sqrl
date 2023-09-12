@@ -4,30 +4,27 @@
 package com.datasqrl.function;
 
 import static com.datasqrl.NamespaceObjectUtil.createFunctionFromFlink;
-import static com.datasqrl.TimeFunctions.AT_ZONE;
-import static com.datasqrl.TimeFunctions.END_OF_DAY;
-import static com.datasqrl.TimeFunctions.END_OF_HOUR;
-import static com.datasqrl.TimeFunctions.END_OF_MINUTE;
-import static com.datasqrl.TimeFunctions.END_OF_MONTH;
-import static com.datasqrl.TimeFunctions.END_OF_SECOND;
-import static com.datasqrl.TimeFunctions.END_OF_WEEK;
-import static com.datasqrl.TimeFunctions.END_OF_YEAR;
-import static com.datasqrl.TimeFunctions.EPOCH_MILLI_TO_TIMESTAMP;
-import static com.datasqrl.TimeFunctions.EPOCH_TO_TIMESTAMP;
-import static com.datasqrl.TimeFunctions.STRING_TO_TIMESTAMP;
-import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_EPOCH;
-import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_STRING;
+import static com.datasqrl.functions.TimeFunctions.AT_ZONE;
+import static com.datasqrl.functions.TimeFunctions.END_OF_DAY;
+import static com.datasqrl.functions.TimeFunctions.END_OF_HOUR;
+import static com.datasqrl.functions.TimeFunctions.END_OF_MINUTE;
+import static com.datasqrl.functions.TimeFunctions.END_OF_MONTH;
+import static com.datasqrl.functions.TimeFunctions.END_OF_SECOND;
+import static com.datasqrl.functions.TimeFunctions.END_OF_WEEK;
+import static com.datasqrl.functions.TimeFunctions.END_OF_YEAR;
+import static com.datasqrl.functions.TimeFunctions.EPOCH_MILLI_TO_TIMESTAMP;
+import static com.datasqrl.functions.TimeFunctions.EPOCH_TO_TIMESTAMP;
+import static com.datasqrl.functions.TimeFunctions.NOW;
+import static com.datasqrl.functions.TimeFunctions.STRING_TO_TIMESTAMP;
+import static com.datasqrl.functions.TimeFunctions.TIMESTAMP_TO_EPOCH;
+import static com.datasqrl.functions.TimeFunctions.TIMESTAMP_TO_STRING;
 
 import com.datasqrl.NamespaceObjectUtil;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.FunctionNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.google.auto.service.AutoService;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.commons.collections.ListUtils;
 
 @AutoService(StdLibrary.class)

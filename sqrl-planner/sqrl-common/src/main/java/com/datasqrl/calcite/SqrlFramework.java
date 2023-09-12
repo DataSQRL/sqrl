@@ -16,7 +16,6 @@ public class SqrlFramework {
 
   private final CatalogReader catalogReader;
   private final TypeFactory typeFactory;
-  private final SqrlTypeSystem dataTypeSystem;
   private final OperatorTable sqrlOperatorTable;
   private final SqrlSchema schema;
   private final HintStrategyTable hintStrategyTable;
@@ -38,21 +37,16 @@ public class SqrlFramework {
 
     //todo: service load
     this.typeFactory = new TypeFactory();
-    this.dataTypeSystem = new SqrlTypeSystem();
 
     Properties info = new Properties();
     info.setProperty("caseSensitive", "false");
     CalciteConnectionConfigImpl config = new CalciteConnectionConfigImpl(info);
 
     this.nameCanonicalizer = nameCanonicalizer;
-    this.catalogReader = new CatalogReader(schema, typeFactory, config);
+    SqrlNameMatcher nameMatcher = new SqrlNameMatcher(nameCanonicalizer);
+    this.catalogReader = new CatalogReader(schema, typeFactory, config, nameMatcher);
     this.sqrlOperatorTable = new OperatorTable(catalogReader, SqlStdOperatorTable.instance());
-    this.queryPlanner = new QueryPlanner(catalogReader, sqrlOperatorTable, typeFactory, schema,
-        relMetadataProvider, uniqueMacroInt, hintStrategyTable);
-  }
-
-  public AtomicInteger uniqueInt() {
-    return uniqueMacroInt;
+    this.queryPlanner = resetPlanner();
   }
 
   public QueryPlanner resetPlanner() {

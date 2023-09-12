@@ -21,7 +21,7 @@ import com.datasqrl.plan.hints.TemporalJoinHint;
 import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.hints.TumbleAggregationHint;
 import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.plan.local.generate.ComputeTableFunction;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.model.LogicalStreamMetaData;
@@ -206,7 +206,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       numPrimaryKeys = vTable.getNumPrimaryKeys();
       timestamp = TimestampHolder.Base.ofDerived(inputALP.getTimestamp()).getDerived();
     } else {
-      QueryTableFunction computeFct = (QueryTableFunction) tblFct;
+      ComputeTableFunction computeFct = (ComputeTableFunction) tblFct;
       QueryRelationalTable queryTable = computeFct.getQueryTable();
       numPrimaryKeys = queryTable.getNumPrimaryKeys();
       numColumns = queryTable.getNumColumns();

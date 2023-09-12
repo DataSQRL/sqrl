@@ -6,12 +6,11 @@ import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.SqrlListUtil;
-import com.datasqrl.calcite.schema.sql.SqlAliasCallBuilder;
-import com.datasqrl.calcite.schema.sql.SqlJoinBuilder;
-import com.datasqrl.calcite.schema.sql.SqlSelectBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCode;
@@ -22,7 +21,6 @@ import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
-import com.datasqrl.plan.util.ContinuousIndexMap.Builder;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import java.lang.reflect.Type;
@@ -67,12 +65,11 @@ import org.apache.calcite.sql.SqrlImportDefinition;
 import org.apache.calcite.sql.SqrlJoinQuery;
 import org.apache.calcite.sql.SqrlSqlQuery;
 import org.apache.calcite.sql.SqrlStatement;
-import org.apache.calcite.sql.SqrlStatementVisitor;
+import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.sql.SqrlStreamQuery;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.ExplicitOperandTypeInference;
 import org.apache.calcite.sql.type.SqlOperandMetadata;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -99,7 +96,7 @@ import org.apache.calcite.sql.validate.SqlValidator;
  */
 @AllArgsConstructor
 @Getter
-public class ScriptValidator implements SqrlStatementVisitor<Void, Void> {
+public class ScriptValidator implements StatementVisitor<Void, Void> {
   private final SqrlFramework framework;
   private final QueryPlanner planner;
   private final ModuleLoader moduleLoader;
@@ -362,7 +359,6 @@ public class ScriptValidator implements SqrlStatementVisitor<Void, Void> {
       Iterator<SqlNode> input = node.getItems().iterator();
       PathWalker pathWalker = new PathWalker(planner);
 
-      System.out.println(node.getDisplay());
       SqlNode item = input.next();
 
       String identifier = getIdentifier(item)

@@ -1,6 +1,9 @@
-package com.datasqrl;
+package com.datasqrl.functions;
 
-import com.datasqrl.SqrlFunctions.VariableArguments;
+import com.datasqrl.functions.SqrlFunctions.VariableArguments;
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.convert.SimplePredicateTransform;
+import com.datasqrl.calcite.function.RuleTransform;
 import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
@@ -16,9 +19,13 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
@@ -26,6 +33,7 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.TypeInference;
 
 public class TimeFunctions {
+  public static final Now NOW = new Now();
   public static final EpochToTimestamp EPOCH_TO_TIMESTAMP = new EpochToTimestamp();
   public static final EpochMilliToTimestamp EPOCH_MILLI_TO_TIMESTAMP = new EpochMilliToTimestamp();
   public static final TimestampToEpoch TIMESTAMP_TO_EPOCH = new TimestampToEpoch();
@@ -473,6 +481,32 @@ public class TimeFunctions {
           functionCall, result);
     }
 
+  }
+
+  public static class Now extends ScalarFunction implements RuleTransform, SqrlFunction {
+
+    public Now() {
+    }
+
+    public Instant eval() {
+       return Instant.now();
+    }
+
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      if (dialect == Dialect.POSTGRES) {
+        return List.of(new SimplePredicateTransform(operator,
+            (rexBuilder, predicate) -> rexBuilder.makeCall(SqlStdOperatorTable.CURRENT_TIMESTAMP)));
+      }
+
+      return List.of();
+    }
+
+    @Override
+    public String getDocumentation() {
+      return "";
+    }
   }
 
   public static class EpochToTimestamp extends AbstractEpochToTimestamp {

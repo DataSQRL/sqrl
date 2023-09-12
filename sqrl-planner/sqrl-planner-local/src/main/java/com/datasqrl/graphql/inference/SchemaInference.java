@@ -4,7 +4,6 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.SqrlPreparingTable;
 import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.schema.SqrlTableFunction;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -54,6 +53,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -151,7 +151,7 @@ public class SchemaInference {
     SqrlTableFunction tableFunction = (SqrlTableFunction)function.getFunction();
 
     //TODO: Validate all fields are there
-    SqrlPreparingTable table = framework.getCatalogReader().getSqrlTable(List.of(fieldName));
+    RelOptTable table = framework.getCatalogReader().getSqrlTable(List.of(fieldName));
     //wrong
     if (table != null) {
       return framework.getCatalogReader().getSqrlTable(List.of(fieldName))

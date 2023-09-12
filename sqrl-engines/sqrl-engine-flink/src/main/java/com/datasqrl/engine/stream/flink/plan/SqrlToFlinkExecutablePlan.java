@@ -348,54 +348,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     return new WriteQuery(query.getSink(), relNode);
   }
 
-//  private RelNode rewriteIntervals(RelNode relNode) {
-//    RexBuilder rexBuilder = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
-//        FlinkTypeSystem.INSTANCE));
-//    return relNode.accept(
-//        new RelShuttleImpl() {
-//
-//          @Override
-//          public RelNode visit(RelNode other) {
-//            if (other instanceof LogicalStream) {
-//              return visit((LogicalStream) other);
-//            }
-//            if (other instanceof Snapshot) {
-//              return visit((Snapshot) other);
-//            }
-//            if (other instanceof LogicalTableFunctionScan) {
-//              return visit((LogicalTableFunctionScan) other);
-//            }
-//
-//            return super.visit(other);
-//          }
-//
-//          public RelNode visit(Snapshot stream) {
-//            return this.visitChildren(stream);
-//          }
-//
-//
-//          public RelNode visit(LogicalStream stream) {
-//            return this.visitChildren(stream);
-//          }
-//
-//          @Override
-//          public RelNode visit(TableFunctionScan scan) {
-//            LogicalTableFunctionScan node = (LogicalTableFunctionScan)
-//                scan.accept(new RewriteIntervalRexShuttle(rexBuilder));
-//
-//            return super.visit(node);
-//          }
-//
-//          @Override
-//          public RelNode visit(LogicalProject project) {
-//            LogicalProject node = (LogicalProject)project.accept(new RewriteIntervalRexShuttle(rexBuilder));
-//
-//            return super.visit(node);
-//          }
-//        }
-//    );
-//  }
-
   @AllArgsConstructor
   public static class RewriteIntervalRexShuttle extends RexShuttle {
     RexBuilder rexBuilder;

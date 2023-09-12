@@ -242,7 +242,7 @@ public final class SqlParserUtil {
     int[] ret;
     try {
       ret = intervalQualifier.evaluateIntervalLiteral(literal,
-          intervalQualifier.getParserPosition(), TypeFactory.getTypeSystem2());
+          intervalQualifier.getParserPosition(), TypeFactory.getSqrlTypeSystem());
       assert ret != null;
     } catch (CalciteContextException e) {
       throw new RuntimeException("while parsing day-to-second interval "
@@ -282,7 +282,7 @@ public final class SqlParserUtil {
     int[] ret;
     try {
       ret = intervalQualifier.evaluateIntervalLiteral(literal,
-          intervalQualifier.getParserPosition(), TypeFactory.getTypeSystem2());
+          intervalQualifier.getParserPosition(), TypeFactory.getSqrlTypeSystem());
       assert ret != null;
     } catch (CalciteContextException e) {
       throw new RuntimeException("Error while parsing year-to-month interval "

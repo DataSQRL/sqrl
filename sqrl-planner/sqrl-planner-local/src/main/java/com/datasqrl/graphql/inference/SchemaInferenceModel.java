@@ -3,13 +3,11 @@
  */
 package com.datasqrl.graphql.inference;
 
-import com.datasqrl.SqrlSchemaFunction;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import graphql.language.FieldDefinition;
-import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;
 import java.util.Optional;
@@ -152,20 +150,6 @@ public class SchemaInferenceModel {
       return visitor.visitObjectField(this, context);
     }
   }
-  @Value
-  @ToString
-  public static class InferredFunctionField implements InferredField {
-
-    ObjectTypeDefinition parent;
-    FieldDefinition fieldDefinition;
-    ObjectTypeDefinition objectTypeDefinition;
-    SqrlSchemaFunction function;
-
-    @Override
-    public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
-      return visitor.visitFunctionField(this, context);
-    }
-  }
 
   @Value
   @ToString
@@ -215,7 +199,5 @@ public class SchemaInferenceModel {
     R visitPagedField(InferredPagedField field, C context);
 
     R visitNestedField(NestedField field, C context);
-
-    R visitFunctionField(InferredFunctionField inferredFunctionField, C context);
   }
 }

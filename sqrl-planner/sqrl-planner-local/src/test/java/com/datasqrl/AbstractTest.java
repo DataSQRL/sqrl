@@ -30,6 +30,7 @@ import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlParse;
+import com.datasqrl.functions.DefaultFunctions;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
@@ -98,9 +99,10 @@ public class AbstractTest {
     //Do all the things, get all the queries, execute them all
     SqrlFramework framework = new SqrlFramework(new SqrlRelMetadataProvider(),
         SqrlHintStrategyTable.getHintStrategyTable(), NameCanonicalizer.SYSTEM);
-    SqlFunction function = new FlinkConverter(framework.getQueryPlanner().getRexBuilder(), framework.getTypeFactory())
-        .convertFunction("COALESCE", "COALESCE", BuiltInFunctionDefinitions.COALESCE);
-    framework.getSqrlOperatorTable().addFunction("COALESCE", function);
+    DefaultFunctions functions = new DefaultFunctions(new FlinkConverter(framework.getQueryPlanner().getRexBuilder(),
+        framework.getTypeFactory()));
+    functions.getDefaultFunctions()
+        .forEach((key, value) -> framework.getSqrlOperatorTable().addFunction(key, value));
 
     ResourceResolver resolver = new FileResourceResolver(
         Path.of("/Users/henneberger/sqrl/sqrl-examples/conference"));

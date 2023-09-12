@@ -1,4 +1,4 @@
-package com.datasqrl;
+package com.datasqrl.functions;
 
 public class FlinkFunctionUtil {
 

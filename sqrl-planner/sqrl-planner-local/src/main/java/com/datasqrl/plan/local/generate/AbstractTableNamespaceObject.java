@@ -122,13 +122,6 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
             rel.getRowType(), node, entry.getValue().getNameId(),
             framework.getQueryPlanner().getCatalogReader());
 
-        if (tblDef.getBaseTable() instanceof QueryRelationalTable) {
-//          QueryTableFunction queryTableFunction = new QueryTableFunction(
-//              Name.system(String.join(".", path)+"$"),
-//              function.getParameters(), table, (QueryRelationalTable) tblDef.getBaseTable());
-//          framework.getSchema().addPlannerTableFunction(queryTableFunction.getFunctionName().getCanonical(), queryTableFunction);
-        }
-
         String name = framework.getSchema().getUniqueFunctionName(path);
         framework.getSchema().plus().add(name, function);
       }

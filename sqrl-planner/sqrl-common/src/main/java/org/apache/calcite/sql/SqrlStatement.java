@@ -20,5 +20,5 @@ public abstract class SqrlStatement extends SqlNode {
     this.hints = hints;
   }
 
-  public abstract <R, C> R accept(SqrlStatementVisitor<R, C> visitor, C context);
+  public abstract <R, C> R accept(StatementVisitor<R, C> visitor, C context);
 }

@@ -2,10 +2,12 @@ package com.datasqrl.calcite.schema.sql;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.SqrlPreparingTable;
 import com.datasqrl.calcite.SqrlRelBuilder;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.SqrlTableFunction;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqrlToSql.Context;
 import com.datasqrl.calcite.schema.sql.SqrlToSql.Result;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
@@ -217,7 +219,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         if (isNested) {
           RelOptTable table = planner.getCatalogReader().getSqrlTable(pathWalker.getAbsolutePath());
           pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
-              .mapToObj(i -> "__" + ((SqrlPreparingTable) table).getInternalTable().getRowType().getFieldList().get(i).getName() + "$pk$" + pkId.incrementAndGet())
+              .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$" + pkId.incrementAndGet())
               .collect(Collectors.toList());
         }
       } else { //treat self as a parameterized binding to the next function

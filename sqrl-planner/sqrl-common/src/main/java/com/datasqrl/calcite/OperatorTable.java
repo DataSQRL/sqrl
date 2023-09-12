@@ -1,20 +1,16 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.plan.util.ContinuousIndexMap.Builder;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
-import org.apache.calcite.sql.validate.SqlUserDefinedFunction;
-import org.apache.commons.collections.map.CaseInsensitiveMap;
 
-import java.net.URL;
 import java.util.*;
 
 public class OperatorTable implements SqlOperatorTable {
   private final Map<List<String>, SqlFunction> udf = new HashMap<>();
   private final Map<List<String>, SqlFunction> internalNames = new HashMap<>();
   private final SqlOperatorTable[] chain;
-  private final Map<String, SqlFunction> planningFncs = new HashMap<>();
+  private final Map<String, SqlFunction> validatorFncs = new HashMap<>();
 
   public OperatorTable(SqlOperatorTable... chain) {
     this.chain = chain;
@@ -22,8 +18,9 @@ public class OperatorTable implements SqlOperatorTable {
 
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
-    if (planningFncs.containsKey(sqlIdentifier.names.get(0))) {
-      list.add(planningFncs.get(sqlIdentifier.names.get(0)));
+    //If we find a function that we used for validation, return early
+    if (validatorFncs.containsKey(sqlIdentifier.names.get(0))) {
+      list.add(validatorFncs.get(sqlIdentifier.names.get(0)));
       return;
     }
 
@@ -66,6 +63,6 @@ public class OperatorTable implements SqlOperatorTable {
   }
 
   public void addPlanningFnc(List<SqlFunction> fncs) {
-    fncs.forEach(f->this.planningFncs.put(f.getName(), f));
+    fncs.forEach(f->this.validatorFncs.put(f.getName(), f));
   }
 }

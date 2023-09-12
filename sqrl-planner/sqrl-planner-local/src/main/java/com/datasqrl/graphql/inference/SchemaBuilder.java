@@ -11,7 +11,6 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFieldVisitor;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFunctionField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredInterfaceField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutationObjectVisitor;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutations;
@@ -243,7 +242,7 @@ public class SchemaBuilder implements
       }
       //
       //add defaults
-      RelNode relNode = builder.buildAndUnshadow();
+      RelNode relNode = builder.buildAndExpandMacros();
 
       String nameId = field.getParent().getName() + "." + field.getFieldDefinition().getName() + "-" + queryCounter.incrementAndGet();
       APIQuery query = new APIQuery(nameId, relNode);
@@ -323,9 +322,4 @@ public class SchemaBuilder implements
     InferredObjectField objectField = (InferredObjectField) field.getInferredField();
     return visitObjectField(objectField, context);
   }
-
-  @Override
-  public Coords visitFunctionField(InferredFunctionField inferredFunctionField, Object context) {
-    return null;
   }
-}

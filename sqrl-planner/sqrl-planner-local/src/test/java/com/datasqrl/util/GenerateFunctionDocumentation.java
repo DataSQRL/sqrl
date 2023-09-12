@@ -1,6 +1,6 @@
 package com.datasqrl.util;
 
-import com.datasqrl.TimeFunctions.TimeWindowBucketFunction;
+import com.datasqrl.functions.TimeFunctions.TimeWindowBucketFunction;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.StdStringLibraryImpl;
 import com.datasqrl.function.StdTimeLibraryImpl;

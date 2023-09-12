@@ -244,12 +244,6 @@ public class CalciteUtil {
     return node.accept(new RexShuttleApplier(rexShuttle));
   }
 
-  public interface InjectParentRelNode {
-
-    public void setParentRelNode(RelNode relNode);
-
-  }
-
   @Value
   private static class RexShuttleApplier extends RelShuttleImpl {
 
@@ -257,9 +251,6 @@ public class CalciteUtil {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-      if (rexShuttle instanceof InjectParentRelNode) {
-        ((InjectParentRelNode)rexShuttle).setParentRelNode(parent);
-      }
       return super.visitChild(parent.accept(rexShuttle), i, child);
     }
   }

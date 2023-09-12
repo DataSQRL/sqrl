@@ -1,4 +1,4 @@
-package com.datasqrl.calcite.function.vector;
+package com.datasqrl.functions;
 
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;

@@ -910,22 +910,21 @@ public class SqrlRelBuilder {
    * Returns a sqrl version of this table
    */
   public SqrlRelBuilder scanSqrl(List<String> names) {
-    SqrlPreparingTable relOptTable = this.catalogReader.getSqrlTable(names);
+    RelOptTable relOptTable = this.catalogReader.getSqrlTable(names);
     if (relOptTable == null) {
       throw new RuntimeException("Could not find table: " + names);
     }
-    RelDataType shadowed = relOptTable.getRelDataType();
 
-    scan(relOptTable.internalTable.getQualifiedName())
-        .project(relOptTable.getInternalTable().getRowType().getFieldList().stream()
-            .map(f->field(f.getIndex())).collect(Collectors.toList()), shadowed.getFieldNames(), true);
+    scan(relOptTable.getQualifiedName())
+        .project(relOptTable.getRowType().getFieldList().stream()
+            .map(f->field(f.getIndex())).collect(Collectors.toList()), relOptTable.getRowType().getFieldNames(), true);
 
     return this;
   }
 
   // SELECT key1, key2, * EXCEPT [key1 key2]
   public SqrlRelBuilder projectAllPrefixDistinct(Project firstNodes) {
-    List<String> stripped = stripShadowed(builder.peek().getRowType());
+    List<String> stripped = getLatestColumns(builder.peek().getRowType());
 
     for (RexNode n : firstNodes.getProjects()) {
       if (n instanceof RexInputRef) {
@@ -949,19 +948,15 @@ public class SqrlRelBuilder {
     return this;
   }
 
-  private List<String> stripShadowed(RelDataType fieldList) {
-    List<String> names = new ArrayList<>();
-    for (RelDataTypeField field : fieldList.getFieldList()) {
-      String latest = getLatestVersion(fieldList.getFieldNames(),
-          field.getName().split("\\$")[0]);
-      if (latest != null
-          && !latest.equals(field.getName())) {
-        continue;
-      }
-      names.add(field.getName());
-    }
-
-    return names;
+  private List<String> getLatestColumns(RelDataType fieldList) {
+    return fieldList.getFieldList().stream()
+        .map(RelDataTypeField::getName)
+        .filter(fieldName -> {
+          String latest = getLatestVersion(fieldList.getFieldNames(),
+              fieldName.split("\\$")[0]);
+          return latest == null || latest.equals(fieldName);
+        })
+        .collect(Collectors.toList());
   }
 
   public RexNode evaluateExpression(SqlNode node) {
@@ -1056,7 +1051,7 @@ public class SqrlRelBuilder {
     return this;
   }
 
-  public RelNode buildAndUnshadow() {
+  public RelNode buildAndExpandMacros() {
     RelNode relNode = build();
 
     //Before macro expansion, clean up the rel
@@ -1071,7 +1066,7 @@ public class SqrlRelBuilder {
     return relNode;
   }
 
-  public SqrlRelBuilder addColumnOp(RexNode rexNode, String name, SqrlPreparingTable toTable) {
+  public SqrlRelBuilder addColumnOp(RexNode rexNode, String name, RelOptTable toTable) {
     RelNode node = stripProject(build()); //remove sqrl fields from shadowing
     LogicalAddColumnOp op = new LogicalAddColumnOp(planner.getCluster(), null, node, rexNode, name,
         toTable);

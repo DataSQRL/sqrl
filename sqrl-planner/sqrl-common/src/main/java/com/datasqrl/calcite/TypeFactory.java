@@ -40,7 +40,7 @@ public class TypeFactory extends JavaTypeFactoryImpl {
     return engineType;
   }
 
-  public static RelDataTypeSystem getTypeSystem2() {
+  public static RelDataTypeSystem getSqrlTypeSystem() {
     return new SqrlTypeSystem();
   }
 

@@ -14,7 +14,7 @@ import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.plan.local.generate.ComputeTableFunction;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
@@ -645,8 +645,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private void validateTableFunction(String tableName, TableType tableType, ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys, TimestampTest timestampTest,
       PullupTest pullupTest) {
-    QueryTableFunction tblFct = getLatestTableFunction(schema, tableName,
-        QueryTableFunction.class).get();
+    ComputeTableFunction tblFct = getLatestTableFunction(schema, tableName,
+        ComputeTableFunction.class).get();
     ScriptRelationalTable table = tblFct.getQueryTable();
     validateScriptRelationalTable(table, tableType, numCols, numPrimaryKeys, timestampTest, pullupTest);
     validatedTables.put(tblFct, execType);
@@ -675,7 +675,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
             CalciteTableFactory.getTableOrdinal(b)))
         .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, false).getTable()))
         .or(() -> getLatestTableFunction(sqrlSchema, tableName,
-            QueryTableFunction.class).map(tblFct -> tableClass.cast(tblFct.getQueryTable())));
+            ComputeTableFunction.class).map(tblFct -> tableClass.cast(tblFct.getQueryTable())));
   }
 
   private void validateAccessTableFunction(String tableName, String baseTableName, ExecutionEngine.Type execType) {
