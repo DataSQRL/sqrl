@@ -19,6 +19,8 @@ import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.UniversalTable.ChildRelationship;
+import com.datasqrl.schema.UniversalTable.Column;
 import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -34,6 +36,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -263,12 +266,14 @@ public class CalciteTableFactory {
       createChildRelationship(childRel.getName(), tbl, parent, childRel.getMultiplicity());
     }
     //Add all fields to proxy
-    for (Field field : builder.getAllFields()) {
-      if (field instanceof UniversalTable.Column) {
-        UniversalTable.Column c = (UniversalTable.Column) field;
-        tbl.addColumn(c.getName(), c.getName(), c.isVisible(), c.getType());
+    List<Field> allFields = builder.getAllFields();
+    for (int i = 0; i < allFields.size(); i++) {
+      Field field = allFields.get(i);
+      if (field instanceof Column) {
+        Column c = (Column) field;
+        tbl.addColumn(c.getName(), c.getId(), c.isVisible(), c.getType());
       } else {
-        UniversalTable.ChildRelationship child = (UniversalTable.ChildRelationship) field;
+        ChildRelationship child = (ChildRelationship) field;
         build(child.getChildTable(), tbl, vTable, child, vtableBuilder, createdTables);
       }
     }

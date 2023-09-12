@@ -93,6 +93,7 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
         .map(Row::toJson)
         .collect(Collectors.toList());
 
+    System.out.println(o);
     return isList
         ? o
         : (o.size() > 0 ? o.get(0) : null);

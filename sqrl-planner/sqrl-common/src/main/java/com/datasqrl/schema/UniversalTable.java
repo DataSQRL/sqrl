@@ -90,15 +90,11 @@ public class UniversalTable {
 
     if (version != 0) {
       for (int i = 0; i < getNumPrimaryKeys(); i++) {
-        //field is already a primary key, cannot shadow
-        if (this.getFields().getFields().get(i)
-            .getName().equals(colName)) {
-          Name newName = Name.system(ReservedName.HIDDEN_PREFIX).append(colName);
-          int version2 = fields.nextVersion(newName);
+        Name newName = Name.system(ReservedName.HIDDEN_PREFIX).append(colName);
+        int version2 = fields.nextVersion(newName);
 
-          fields.addField(
-              new Column(newName, version2, type, visible));
-        }
+        fields.addField(
+            new Column(newName, version2, type, visible));
       }
     }
 

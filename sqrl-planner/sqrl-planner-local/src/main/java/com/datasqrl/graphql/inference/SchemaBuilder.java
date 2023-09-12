@@ -195,13 +195,22 @@ public class SchemaBuilder implements
       for (FunctionParameter p : op.getFunction().getParameters()) {
         SqrlFunctionParameter parameter = (SqrlFunctionParameter) p;
         //check parameter is in the arg list, if so then dynamic param
+        String paramName = parameter.getName().substring(1);
         InputValueDefinition def;
         if (parameter.isInternal()) {
-          queryParams.parameter(new SourceParameter(p.getName()));//todo: get name of lhs
-        } else if ((def = matcher.get(argMap, List.<String>of(), List.of(parameter.getName().substring(1))))
-              != null) {
+//          int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), paramName);
+//          Preconditions.checkState(fieldIndex != -1);
+//          String fieldName = builder.peek().getRowType().getFieldNames().get(fieldIndex);
+
+          queryParams.parameter(new SourceParameter(paramName+"$0")); //todo get lhs
+        } else if ((def = matcher.get(argMap, List.<String>of(), List.of(paramName))) != null) {
           argMap.remove(List.of(def.getName()));
-          queryParams.parameter(new ArgumentParameter(def.getName()));//todo: get name of lhs
+
+//          int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), p.getName());
+//          Preconditions.checkState(fieldIndex != -1);
+//          String fieldName = builder.peek().getRowType().getFieldNames().get(fieldIndex);
+
+          queryParams.parameter(new ArgumentParameter(paramName));
           matchSet.argument(new VariableArgument(def.getName(), null));
             //param found,
         } else {
@@ -221,7 +230,6 @@ public class SchemaBuilder implements
         if (fieldIndex == -1) {
           throw new RuntimeException("Could not find field: " + args.getKey().get(0));
         }
-
         RexInputRef lhs = builder.field(fieldIndex);
 
         RexDynamicParam rhs = new RexDynamicParam(lhs.getType(), uniqueOrdinal.getAndIncrement());
