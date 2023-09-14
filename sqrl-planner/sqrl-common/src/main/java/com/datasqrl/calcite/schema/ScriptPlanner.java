@@ -2,6 +2,7 @@ package com.datasqrl.calcite.schema;
 
 import static com.datasqrl.plan.ScriptValidator.isSelfField;
 import static com.datasqrl.plan.ScriptValidator.isSelfTable;
+import static com.datasqrl.plan.ScriptValidator.isVariable;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableSqrlTable;
@@ -34,6 +35,7 @@ import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +54,7 @@ import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Function;
@@ -193,12 +196,26 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       } else {
         RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),
             null, isASqrl, parameters, nodeSupplier);
+
+        List<String> fieldNames = relNode.getRowType().getFieldNames().stream()
+            .map(f->f.contains("$") ? f.split("\\$")[0] : f)
+            .collect(Collectors.toList());
+        for (int i = 0; i < fieldNames.size(); i++) {
+          String name = fieldNames.get(i);
+          RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
+          sqrlTable.addColumn(framework, nameUtil.toName(name), nameUtil.toName(field.getName()), true,
+              field.getType());
+        }
+
         planner.getSchema().addSqrlTable(sqrlTable);
+//        tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
+//            assignment.getHints(), parameters, isA,
+//            materializeSelf, Optional.of(nodeSupplier));
       }
     } else {
       tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
           assignment.getHints(), parameters, isA,
-          materializeSelf, sql);
+          materializeSelf, Optional.empty());
     }
 
     return null;
@@ -342,7 +359,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
         //get latest fields not in select list
 
-        List<Column> columns = planner.getCatalogReader().getSqrlTable(result.getCurrentPath()).unwrap(ModifiableSqrlTable.class)
+        List<Column> columns = planner.getCatalogReader().getSqrlTable(result.getCurrentPath())
+            .unwrap(ModifiableSqrlTable.class)
             .getSqrlTable().getFields().getColumns(true);
 
         for (Column column : columns) {
@@ -668,8 +686,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     @Override
     public SqlNode visit(SqlIdentifier id) {
       if (validator.getDynamicParam().get(id) != null) {
-        return validator.getDynamicParam().get(id);
+        SqlDynamicParam dynamicParam = validator.getDynamicParam().get(id);
+        return dynamicParam;
       }
+
+      Preconditions.checkState(!isVariable(id.names), "Found variable when expecting one.");
       return super.visit(id);
     }
   }

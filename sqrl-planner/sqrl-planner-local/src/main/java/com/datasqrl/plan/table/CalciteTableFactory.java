@@ -36,11 +36,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -97,13 +100,14 @@ public class CalciteTableFactory {
         TableStatistic.of(1000));
 
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty(),
-        true, Optional.empty());
+        true, Optional.empty(), Optional.empty(), Optional.empty());
     return new ScriptTableDefinition(impTable, tables);
   }
 
   public ScriptTableDefinition defineTable(NamePath tablePath, LPAnalysis analyzedLP,
       List<Name> fieldNames, Optional<SQRLTable> parent, boolean materializeSelf,
-      Optional<SqlNode> node) {
+      Optional<Supplier<RelNode>> relNodeSupplier,
+      Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
     ContinuousIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
@@ -118,7 +122,7 @@ public class CalciteTableFactory {
         baseTable.getNumPrimaryKeys(), index2Name);
 
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable,
-        parent, materializeSelf, node);
+        parent, materializeSelf, relNodeSupplier, parameters, isA);
 
     ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
     //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
@@ -168,11 +172,13 @@ public class CalciteTableFactory {
 
   public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTable rootTable,
       ScriptRelationalTable baseTable, Optional<SQRLTable> parent, boolean materializeSelf,
-      Optional<SqlNode> node) {
+      Optional<Supplier<RelNode>> relNodeSupplier,
+      Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
     VirtualTableConstructor vtableBuilder = new VirtualTableConstructor(baseTable);
     Map<SQRLTable, VirtualRelationalTable> createdTables = new HashMap<>();
     build(rootTable, Optional.empty(), Optional.empty(),
-        Optional.of(rootTable.getName()),null, vtableBuilder, createdTables, parent, node);
+        Optional.of(rootTable.getName()),null, vtableBuilder, createdTables, parent, relNodeSupplier,
+        parameters, isA);
     return createdTables;
   }
 
@@ -243,30 +249,23 @@ public class CalciteTableFactory {
     }
   }
 
-  /**
-   * Things we're building:
-   * 1. a Join declaration-> points to a table, only a relationship gets added ?
-   * 2. a Query table function -> Creates a virtual table, table can be added to etc, ??
-   * 3. a normal table -> vt, rels, normal process
-   * 4. a nested table -> relationship on parent, normal process
-   * 5.
-   *
-   *
-   */
   private void build(UniversalTable builder, Optional<SQRLTable> parent,
       Optional<VirtualRelationalTable> vParent,
       Optional<Name> fieldName,
       UniversalTable.ChildRelationship childRel,
       VirtualTableConstructor vtableBuilder,
       Map<SQRLTable, VirtualRelationalTable> createdTables, Optional<SQRLTable> sqrlParent,
-      Optional<SqlNode> node) {
+      Optional<Supplier<RelNode>> relNodeSupplier,
+      Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
     VirtualRelationalTable vTable = vParent.map(table -> vtableBuilder.make(builder, table, childRel.getId()))
         .orElseGet(() -> vtableBuilder.make(builder));
     SQRLTable tbl;
     if (sqrlParent.isEmpty()) {
       Preconditions.checkState(builder.getPath().size() == 1);
-      tbl = new RootSqrlTable(builder.getPath().getFirst(), vTable, List.of(), List.of(),
-          ()->framework.getQueryPlanner().getRelBuilder().scan(vTable.getNameId()).build());
+      tbl = new RootSqrlTable(builder.getPath().getFirst(), vTable, isA.orElse(List.of()),
+          parameters.orElse(List.of()),
+          relNodeSupplier.orElse(
+              ()->framework.getQueryPlanner().getRelBuilder().scan(vTable.getNameId()).build()));
       framework.getSchema().addSqrlTable(tbl);
     } else {
       tbl = new SQRLTable(builder.getPath(), vTable, List.of());
@@ -298,7 +297,7 @@ public class CalciteTableFactory {
         ChildRelationship child = (ChildRelationship) field;
         build(child.getChildTable(), Optional.of(tbl),
             Optional.of(vTable), Optional.of(child.getName()), child, vtableBuilder, createdTables,
-            Optional.of(tbl), Optional.empty());
+            Optional.of(tbl), Optional.empty(), Optional.empty(), Optional.empty());
       }
     }
     //Add parent relationship if not overwriting column

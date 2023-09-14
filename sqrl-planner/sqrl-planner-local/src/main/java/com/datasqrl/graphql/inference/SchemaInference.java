@@ -147,41 +147,7 @@ public class SchemaInference {
     }
 
     SqrlTableMacro tableFunction = (SqrlTableMacro)function.getFunction();
-
-    //TODO: Validate all fields are there
-    RelOptTable table = framework.getCatalogReader().getSqrlTable(List.of(fieldName));
-    //wrong
-    if (table != null) {
-      return framework.getCatalogReader().getSqrlTable(List.of(fieldName))
-          .unwrap(VirtualRelationalTable.class)
-          .getSqrlTable();
-    } else {
-      return framework.getSchema().getRootTables().stream()
-          .filter(f->f.getName().getCanonical().equals(fieldName.toLowerCase()))
-          .findAny().get();
-    }
-  }
-
-  private Optional<? extends SQRLTable> getTableOfCommonInterface(Type type, String name) {
-    Optional<TypeDefinition> defOpt = registry.getType(type);
-    if (defOpt.isPresent()) {
-      TypeDefinition def = defOpt.get();
-      //Get all extending types, if there is one unique one then return it
-      if (def instanceof ObjectTypeDefinition) {
-        ObjectTypeDefinition objDef = (ObjectTypeDefinition) def;
-        List<SQRLTable> foundTables = objDef.getImplements()
-            .stream()
-            .map(t->getTableOfType(t, getTypeName(t).get()))
-            .filter(o->o.isPresent())
-            .map(f->f.get())
-            .collect(Collectors.toList());
-        if (foundTables.size() == 1) {
-          return Optional.of(foundTables.get(0));
-        }
-      }
-    }
-
-    return Optional.empty();
+    return tableFunction.getSqrlTable();
   }
 
   private Optional<SQRLTable> getTableOfType(Type type, String name) {
@@ -249,8 +215,9 @@ public class SchemaInference {
   private List<InferredField> walkChildren(ObjectTypeDefinition typeDef, SQRLTable table,
       List<InferredField> fields) {
     List<FieldDefinition> invalidFields = getInvalidFields(typeDef, table);
+    boolean structurallyEqual = structurallyEqual(typeDef, table);
     //todo clean up, add lazy evaluation
-    checkState(structurallyEqual(typeDef, table),
+    checkState(structurallyEqual,
         invalidFields.isEmpty() ? typeDef.getSourceLocation() : invalidFields.get(invalidFields.size()-1).getSourceLocation(), "Field(s) not allowed [%s]",
         String.join(",", invalidFields.stream()
             .map(e->e.getName())
@@ -299,21 +266,21 @@ public class SchemaInference {
         break;
       case "Float":
         if (!SqlTypeName.NUMERIC_TYPES.contains(column.getType().getSqlTypeName())) {
-          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Numeric type, found: %s",
-              column.getType().getSqlTypeName().getName());
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Numeric type, found: %s %s",
+              column.getType().getSqlTypeName().getName(), column.getName().getDisplay());
         }
         break;
       case "String":
         if (!SqlTypeName.STRING_TYPES.contains(column.getType().getSqlTypeName()) &&
             !SqlTypeName.DATETIME_TYPES.contains(column.getType().getSqlTypeName())) {
-          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL String or Date type, found: %s",
-              column.getType().getSqlTypeName().getName());
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL String or Date type, found: %s %s",
+              column.getType().getSqlTypeName().getName(), column.getName().getDisplay());
         }
         break;
       case "Boolean":
         if (!SqlTypeName.BOOLEAN_TYPES.contains(column.getType().getSqlTypeName())) {
-          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL boolean type, found: %s",
-              column.getType().getSqlTypeName().getName());
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL boolean type, found: %s %s",
+              column.getType().getSqlTypeName().getName(), column.getName().getDisplay());
         }
         break;
       case "ID":

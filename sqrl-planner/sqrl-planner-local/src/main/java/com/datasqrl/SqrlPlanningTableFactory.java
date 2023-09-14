@@ -1,8 +1,10 @@
 package com.datasqrl;
 
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -16,7 +18,6 @@ import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
-import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
@@ -24,6 +25,7 @@ import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
@@ -50,7 +52,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
   public void createTable(List<String> path, RelNode input, List<RelHint> hints,
       boolean setFieldNames, Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      Optional<SqlNode> node) {
+      Optional<Supplier<RelNode>> relNodeSupplier) {
     framework.resetPlanner();
     LPAnalysis analyzedLP = convertToVanillaSQL(
         input, setFieldNames, framework.getQueryPlanner().getRelBuilder(),
@@ -66,6 +68,11 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
       parent = Optional.of(sqrlTable.getSqrlTable());
     }
 
+    List<SQRLTable> isATable = isA.stream()
+        .map(f->(SqrlTableMacro) f)
+        .map(f->f.getSqrlTable())
+        .collect(Collectors.toList());
+
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
 
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
@@ -74,7 +81,8 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
         .map(n -> nameUtil.toName(n)).collect(Collectors.toList());
 
     ScriptTableDefinition scriptTableDefinition = new CalciteTableFactory(framework, nameCanonicalizer)
-        .defineTable(names, analyzedLP, fieldNames, parent, materializeSelf, node);
+        .defineTable(names, analyzedLP, fieldNames, parent, materializeSelf, relNodeSupplier,
+            Optional.of(parameters), Optional.of(isATable));
 
     SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(), scriptTableDefinition,
         null, null, parameters, isA, materializeSelf);

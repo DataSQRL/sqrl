@@ -7,7 +7,7 @@ type Query {
 }
 
 interface AbstractEvents {
-    id : String!
+    id : Int!
     time : String!
     location: String!
     title : String!
@@ -20,7 +20,7 @@ type LikeCount {
 }
 
 type EventSearchResult {
-    id : String!
+    id : Int!
     time : String!
     location: String!
     title : String!
@@ -28,7 +28,7 @@ type EventSearchResult {
     name : String!
 }
 type Events implements AbstractEvents{
-    id : String!
+    id : Int!
     time : String!
     location: String!
     title : String!
@@ -37,7 +37,7 @@ type Events implements AbstractEvents{
 }
 
 type PersonalizedEvents implements AbstractEvents{
-    id : String!
+    id : Int!
     time : String!
     location: String!
     title : String!
@@ -47,9 +47,6 @@ type PersonalizedEvents implements AbstractEvents{
     score: Float!
 }
 
-type Subscription {
-    EventNotification: Events
-}
 
 
 type Mutation {

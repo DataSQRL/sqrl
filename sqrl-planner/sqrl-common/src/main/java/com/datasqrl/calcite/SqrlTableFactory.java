@@ -4,6 +4,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 
@@ -18,7 +19,7 @@ public interface SqrlTableFactory {
   void createTable(List<String> path, RelNode input, List<RelHint> hints,
       boolean setFieldNames, Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      Optional<SqlNode> node);
+      Optional<Supplier<RelNode>> nodeSupplier);
 
   Relationship createParent(NamePath path, SQRLTable parent, SQRLTable sqrlTable);
 }

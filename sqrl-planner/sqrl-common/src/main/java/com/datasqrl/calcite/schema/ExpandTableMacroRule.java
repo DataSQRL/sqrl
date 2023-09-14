@@ -45,7 +45,7 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
 //        relNode = relNode.getInput(0);
 //      }
       Preconditions.checkState(relNode.getRowType().equalsSansFieldNames(node.getRowType()),
-          "Not equal: " + relNode.getRowType() + " : " + node.getRowType());
+          "Not equal:\n " + relNode.getRowType() + " \n " + node.getRowType());
 
       relOptRuleCall.transformTo(relNode);
     }

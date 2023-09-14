@@ -28,7 +28,7 @@ public class RootSqrlTable extends SQRLTable implements SqrlTableMacro {
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
-    return relOptTable.getRowType(null);
+    return viewTransform.get().getRowType();
   }
 
   @Override

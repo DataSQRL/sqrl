@@ -115,6 +115,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   private final Map<SqrlAssignment, SqlNode> preprocessSql = new HashMap<>();
   private final Map<SqrlAssignment, Boolean> isMaterializeTable = new HashMap<>();
   private final Map<SqrlAssignment, Boolean> setFieldNames = new HashMap<>();
+  private final Map<SqrlAssignment, List<String>> fieldNames = new HashMap<>();
   private final ArrayListMultimap<SqlNode, Function> isA = ArrayListMultimap.create();
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
 
@@ -444,13 +445,16 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       @Override
       public SqlNode visitQuerySpecification(SqlSelect node, Object context) {
         return new SqlSelectBuilder(node)
+            .setFrom(SqlNodeVisitor.accept(this, node.getFrom(), null))
             .rewriteExpressions(rewriteVariables(parameterList, materializeSelf))
             .build();
       }
 
       @Override
       public SqlNode visitAliasedRelation(SqlCall node, Object context) {
-        return node;
+        return node.getOperator().createCall(node.getParserPosition(),
+            SqlNodeVisitor.accept(this, node.getOperandList().get(0), null),
+            node.getOperandList().get(1));
       }
 
       @Override
@@ -460,7 +464,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       @Override
       public SqlNode visitJoin(SqlJoin node, Object context) {
-        return node;
+        return new SqlJoinBuilder(node)
+            .setLeft(SqlNodeVisitor.accept(this, node.getLeft(), null))
+            .setRight(SqlNodeVisitor.accept(this, node.getRight(), null))
+            .rewriteExpressions(rewriteVariables(parameterList, materializeSelf))
+            .build();
       }
 
       @Override
@@ -488,7 +496,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
             if (s.isInternal() && s.getName().equalsIgnoreCase(name)) {
               //already exists, return dynamic param of index
               if (paramMapping.get(p) != null) {
-                return paramMapping.get(p);
+                SqlDynamicParam dynamicParam1 = paramMapping.get(p);
+                dynamicParam.put(id, dynamicParam1);
+                return dynamicParam1;
               } else {
                 throw new RuntimeException("unknown param");
               }
@@ -514,24 +524,25 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           }
 
           List<FunctionParameter> defs = parameterList.stream()
-              .filter(f->nameUtil.toName(f.getName()).equals(id.getSimple()))
+              .filter(f->f.getName().equalsIgnoreCase(id.getSimple()))
               .collect(Collectors.toList());
 
           if (defs.size() > 1) {
-            addError(ErrorLabel.GENERIC, id, "Too many matching table arguments");
+            throw addError(ErrorLabel.GENERIC, id, "Too many matching table arguments");
           }
 
           if (defs.size() != 1) {
-            addError(ErrorLabel.GENERIC, id, "Could not find matching table arguments");
+            throw addError(ErrorLabel.GENERIC, id, "Could not find matching table arguments");
           }
 
           FunctionParameter param = defs.get(0);
 
-          //todo: wrong, need to deep equals
-          if (paramMapping.get(param) != null) {
-            return paramMapping.get(id);
-          }
 
+          if (paramMapping.get(param) != null) {
+            SqlDynamicParam dynamicParam1 = paramMapping.get(param);
+            dynamicParam.put(id, dynamicParam1);
+            return dynamicParam1;
+          }
 
           int index = param.getOrdinal();
 
@@ -548,10 +559,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
 
 
-      private boolean isVariable(ImmutableList<String> names) {
-        return names.get(0).startsWith("@") && names.get(0).length() > 1;
-      }
+
     };
+  }
+  public static boolean isVariable(ImmutableList<String> names) {
+    return names.get(0).startsWith("@") && names.get(0).length() > 1;
   }
   public static boolean isSelfField(ImmutableList<String> names) {
     return names.get(0).equalsIgnoreCase("@") && names.size() > 1;
