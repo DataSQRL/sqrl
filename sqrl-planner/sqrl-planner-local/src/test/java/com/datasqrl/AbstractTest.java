@@ -268,14 +268,6 @@ public class AbstractTest {
 
     SqrlTableFactory tableFactory = new SqrlPlanningTableFactory(framework, NameCanonicalizer.SYSTEM);
 
-    ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(), moduleLoader,
-        errors, new SqlNameUtil(NameCanonicalizer.SYSTEM));
-
-    ScriptPlanner planner = new ScriptPlanner(
-        framework.getQueryPlanner(), validator,
-        new SqrlPlanningTableFactory(framework, NameCanonicalizer.SYSTEM), framework,
-        new SqlNameUtil(NameCanonicalizer.SYSTEM), moduleLoader, errors);
-
     String script = "IMPORT mysourcepackage.Events AS ConferenceEvents TIMESTAMP last_updated AS timestamp;\n"
         + "IMPORT mysourcepackage.AuthTokens;\n"
         + "IMPORT mysourcepackage.EmailTemplates\n"
@@ -381,6 +373,15 @@ public class AbstractTest {
         + "                  TEMPORAL JOIN EmailTemplates t ON t.id = 'eventflag';\n"
         + "\n"
         + "EXPORT FlaggedEventEmail TO print.flaggedEventEmail;";
+
+    ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(), moduleLoader,
+        errors.withSchema("<script>", script), new SqlNameUtil(NameCanonicalizer.SYSTEM));
+
+    ScriptPlanner planner = new ScriptPlanner(
+        framework.getQueryPlanner(), validator,
+        new SqrlPlanningTableFactory(framework, NameCanonicalizer.SYSTEM), framework,
+        new SqlNameUtil(NameCanonicalizer.SYSTEM), moduleLoader, errors);
+
     ScriptNode node = (ScriptNode)framework.getQueryPlanner().parse(Dialect.SQRL, script);
     for (SqlNode statement : node.getStatements()) {
       validator.validateStatement((SqrlStatement) statement);

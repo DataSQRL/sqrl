@@ -1,15 +1,11 @@
->>>customer$q$2
-LogicalTableScan(table=[[customer$i$1]])
+>>>errors
+[FATAL] Alias by itself.
+in script:<schema> [5:36]:
+IMPORT ecommerce-data.Product;
+IMPORT time.*;
+Orders.x := SELECT x.* FROM @ JOIN @ AS x;
+-----------------------------------^
 
->>>orders$q$5
-LogicalTableScan(table=[[orders$i$4]])
-
->>>product$q$9
-LogicalTableScan(table=[[product$i$8]])
-
->>>x$q$11
-LogicalProject(___uuid$pk$1=[$0], _uuid=[$6], _ingest_time=[$7], id=[$8], customerid=[$9], time=[$10], __timestamp=[CASE(<($4, $10), $10, $4)])
-  LogicalJoin(condition=[true], joinType=[inner])
-    LogicalTableScan(table=[[orders$q$5]])
-    LogicalTableScan(table=[[orders$q$5]])
+[FATAL] Alias by itself.
+in script:<schema>:
 

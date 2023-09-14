@@ -69,14 +69,12 @@ public class FieldList {
   }
 
   public List<Column> getColumns(boolean onlyVisible) {
-    Map<Name, Field> fieldsByName = getFields(onlyVisible)
+    Map<Name, Column> fieldsByName = getFields(onlyVisible)
+        .filter(f->f instanceof Column)
+        .map(f->(Column)f)
         .collect(Collectors.toMap(Field::getName, Function.identity(),
             BinaryOperator.maxBy(Comparator.comparing(Field::getVersion))));
-    return getFields(onlyVisible)
-        .filter(f->f instanceof Collection)
-        .filter(f -> fieldsByName.get(f.getName()).equals(f))
-        .map(f->(Column)f)
-        .collect(Collectors.toList());
+    return new ArrayList<>(fieldsByName.values());
   }
 
   @Value

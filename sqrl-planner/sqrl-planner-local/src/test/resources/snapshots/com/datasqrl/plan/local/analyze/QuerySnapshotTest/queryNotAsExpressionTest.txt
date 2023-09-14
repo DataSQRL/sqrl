@@ -1,5 +1,5 @@
->>>example$q$4
-LogicalProject(___uuid$pk$1=[$0], _uuid0=[$6], productid=[$8], __timestamp=[CASE(<($1, $7), $7, $1)])
+>>>example$q$5
+LogicalProject(___uuid$0$pk$1=[$0], _uuid$00=[$6], productid=[$8], __timestamp=[CASE(<($1, $7), $7, $1)])
   LogicalJoin(condition=[true], joinType=[inner])
     LogicalTableScan(table=[[product$q$2]])
     LogicalTableScan(table=[[product$q$2]])

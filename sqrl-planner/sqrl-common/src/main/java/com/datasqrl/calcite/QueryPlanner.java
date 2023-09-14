@@ -170,6 +170,7 @@ public class QueryPlanner {
   }
 
   protected RelRoot planRoot(SqlValidator validator, SqlNode sqlNode) {
+    System.out.println(sqlNode);
     sqlNode = validator.validate(sqlNode);
 
     SqlToRelConverter sqlToRelConverter = createSqlToRelConverter(validator);
@@ -448,7 +449,6 @@ public class QueryPlanner {
 
     if (result.size() != 1) {
       return null;
-//      throw new RuntimeException("Could not resolve table: " + path);
     }
 
     return (SqlUserDefinedTableFunction)result.get(0);

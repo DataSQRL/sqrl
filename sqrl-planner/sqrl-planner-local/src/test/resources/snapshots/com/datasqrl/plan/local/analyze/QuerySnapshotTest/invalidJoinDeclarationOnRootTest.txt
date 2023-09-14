@@ -1,0 +1,4 @@
+>>>errors
+[FATAL] Invalid name: 
+in script:<schema>:
+

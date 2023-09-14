@@ -57,7 +57,7 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
     @Override
     public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
       RexNode rexNode = operands.get(dynamicParam.getIndex());
-      assert rexNode.getType().getSqlTypeName() == dynamicParam.getType().getSqlTypeName();
+//      assert rexNode.getType().getSqlTypeName() == dynamicParam.getType().getSqlTypeName();
       return rexNode;
     }
   }

@@ -1,7 +1,10 @@
 package com.datasqrl;
 
+import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
+import com.datasqrl.calcite.schema.SqrlListUtil;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
@@ -14,6 +17,9 @@ import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.schema.Relationship;
+import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;
@@ -23,6 +29,8 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.TableFunction;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -30,30 +38,54 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
   private final SqrlFramework framework;
   private final NameCanonicalizer nameCanonicalizer;
+  private final SqlNameUtil nameUtil;
 
   public SqrlPlanningTableFactory(SqrlFramework framework, NameCanonicalizer nameCanonicalizer) {
     this.framework = framework;
     this.nameCanonicalizer = nameCanonicalizer;
+    this.nameUtil = new SqlNameUtil(nameCanonicalizer);
   }
 
   @Override
   public void createTable(List<String> path, RelNode input, List<RelHint> hints,
       boolean setFieldNames, Optional<SqlNodeList> opHints,
-      List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf) {
+      List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
+      Optional<SqlNode> node) {
     framework.resetPlanner();
     LPAnalysis analyzedLP = convertToVanillaSQL(
         input, setFieldNames, framework.getQueryPlanner().getRelBuilder(),
         opHints, ErrorCollector.root());
 
-    NamePath names = new SqlNameUtil(nameCanonicalizer).toNamePath(path);
+    NamePath names = nameUtil.toNamePath(path);
+
+    Optional<SQRLTable> parent = Optional.empty();
+    if (path.size() > 1) {
+      TableFunction function = framework.getQueryPlanner()
+          .getTableFunction(SqrlListUtil.popLast(path)).getFunction();
+      ModifiableSqrlTable sqrlTable = (ModifiableSqrlTable)function;
+      parent = Optional.of(sqrlTable.getSqrlTable());
+    }
+
+    AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
+
+    List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
+    List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
+        .map(idx -> relFieldNames.get(idx))
+        .map(n -> nameUtil.toName(n)).collect(Collectors.toList());
 
     ScriptTableDefinition scriptTableDefinition = new CalciteTableFactory(framework, nameCanonicalizer)
-        .createScriptDef(names, analyzedLP);
+        .defineTable(names, analyzedLP, fieldNames, parent, materializeSelf, node);
 
     SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(), scriptTableDefinition,
         null, null, parameters, isA, materializeSelf);
 
     nsObj.apply(Optional.empty(), framework, ErrorCollector.root());
+  }
+
+  @Override
+  public Relationship createParent(NamePath path, SQRLTable parent, SQRLTable sqrlTable) {
+    return new CalciteTableFactory(framework, nameCanonicalizer)
+        .createParent(path, parent, (VirtualRelationalTable)parent.getVt(), sqrlTable, (VirtualRelationalTable)sqrlTable.getVt());
   }
 
   //Converts SQRL statements into vanilla SQL

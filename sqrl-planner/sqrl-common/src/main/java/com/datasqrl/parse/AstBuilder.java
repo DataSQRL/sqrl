@@ -386,8 +386,11 @@ class AstBuilder
 
   @Override
   public SqlNode visitDistinctQuery(DistinctQueryContext ctx) {
+    SqlIdentifier identifier = (SqlIdentifier)visit(ctx.distinctQuerySpec().identifier());
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
-    SqlIdentifier table = (SqlIdentifier)visit(ctx.distinctQuerySpec().identifier());
+    SqlNode table = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+        new SqrlCompoundIdentifier(getLocation(ctx),
+        List.of(identifier)),identifier);
 
     List<SqlNode> expressions = new ArrayList<>();
 

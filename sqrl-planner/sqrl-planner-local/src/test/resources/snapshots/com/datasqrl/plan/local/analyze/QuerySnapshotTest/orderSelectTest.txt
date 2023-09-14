@@ -1,15 +1,15 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>o2$q$11
-LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], __timestamp=[CASE(<($4, $10), $10, $4)])
+>>>o2$q$16
+LogicalProject(_uuid$0=[$0], _uuid$00=[$6], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalJoin(condition=[true], joinType=[inner])
-    LogicalTableScan(table=[[orders$q$5]])
-    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[orders$q$6]])
+    LogicalTableScan(table=[[orders$q$6]])
 
->>>orders$q$5
-LogicalTableScan(table=[[orders$i$4]])
+>>>orders$q$6
+LogicalTableScan(table=[[orders$i$5]])
 
->>>product$q$9
-LogicalTableScan(table=[[product$i$8]])
+>>>product$q$13
+LogicalTableScan(table=[[product$i$12]])
 

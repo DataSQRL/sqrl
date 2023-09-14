@@ -3,6 +3,7 @@
  */
 package com.datasqrl.schema;
 
+import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
@@ -15,6 +16,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Table;
 
 /**
@@ -27,12 +30,27 @@ import org.apache.calcite.schema.Table;
 @Getter
 @ToString
 @AllArgsConstructor
-public class SQRLTable {
+public class SQRLTable implements ModifiableSqrlTable {
   protected final NamePath path;
   protected Table relOptTable;
   protected final FieldList fields = new FieldList();
 
-  protected final List<String> isTypeOf;
+  protected final List<SQRLTable> isTypeOf;
+
+  @Override
+  public void addColumn(String name, RexNode column, RelDataTypeFactory typeFactory) {
+    //add column logic
+  }
+
+  @Override
+  public SQRLTable getSqrlTable() {
+    return this;
+  }
+
+  @Override
+  public String getNameId() {
+    return ((NamedTable)getVt()).getNameId();
+  }
 
   public Name getName() {
     return path.getLast();
@@ -44,22 +62,22 @@ public class SQRLTable {
   }
 
   public Column addColumn(SqrlFramework framework, Name name, Name vtName, boolean visible, RelDataType type) {
-    Column col = new Column(name, vtName, framework.getUniqueColumnInt().incrementAndGet(),
+    Column col = new Column(name, vtName, getNextFieldVersion(name),
         visible, type);
     fields.addField(col);
     return col;
   }
 
-  public Relationship addRelationship(Name name, SQRLTable toTable, JoinType joinType,
-      Multiplicity multiplicity) {
-
-
-//    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType,
-//        multiplicity, null, null);
-//    fields.addField(rel);
-//    return rel;
-    return null;
-  }
+//  public Relationship addRelationship(Name name, SQRLTable toTable, JoinType joinType,
+//      Multiplicity multiplicity) {
+//
+//
+////    Relationship rel = new Relationship(name, getNextFieldVersion(name), this, toTable, joinType,
+////        multiplicity, null, null);
+////    fields.addField(rel);
+////    return rel;
+//    return null;
+//  }
 
   public Optional<Field> getField(Name name) {
     return fields.getAccessibleField(name);

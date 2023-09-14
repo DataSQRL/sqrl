@@ -1,8 +1,8 @@
 >>>product$q$2
-LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], descriptionlength=[CHAR_LENGTH($4)], descriptionlength$0=[CHAR_LENGTH($4)])
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], descriptionlength$1=[CHAR_LENGTH($4)], descriptionlength$2=[CHAR_LENGTH($4)])
   LogicalTableScan(table=[[product$i$1]])
 
->>>x$q$4
-LogicalProject(_uuid=[$0], descriptionLength=[$7], _ingest_time=[$1])
+>>>x$q$5
+LogicalProject(_uuid$0=[$0], descriptionLength=[$7], _ingest_time$0=[$1])
   LogicalTableScan(table=[[product$q$2]])
 

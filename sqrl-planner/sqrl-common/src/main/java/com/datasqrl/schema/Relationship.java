@@ -3,19 +3,21 @@
  */
 package com.datasqrl.schema;
 
+import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.google.common.base.Supplier;
 import java.util.List;
+import java.util.function.Supplier;
 import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.FunctionParameter;
 
 @Getter
-public class Relationship extends Field implements SqrlTableMacro {
+public class Relationship extends Field implements SqrlTableMacro, ModifiableSqrlTable {
   private final NamePath path;
 
   private final SQRLTable fromTable;
@@ -26,7 +28,7 @@ public class Relationship extends Field implements SqrlTableMacro {
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
 
-  public Relationship(Name name, int version, SQRLTable fromTable,
+  public Relationship(Name name, NamePath path, int version, SQRLTable fromTable,
       JoinType joinType, Multiplicity multiplicity, List<SQRLTable> isA, List<FunctionParameter> parameters,
       Supplier<RelNode> viewTransform) {
     super(name, version);
@@ -36,7 +38,7 @@ public class Relationship extends Field implements SqrlTableMacro {
     this.viewTransform = viewTransform;
     this.joinType = joinType;
     this.multiplicity = multiplicity;
-    this.path = fromTable.getPath().concat(name);
+    this.path = path;
   }
 
   @Override
@@ -46,6 +48,21 @@ public class Relationship extends Field implements SqrlTableMacro {
 
   public SQRLTable getToTable() {
     return isA.get(0);
+  }
+
+  @Override
+  public void addColumn(String name, RexNode column, RelDataTypeFactory typeFactory) {
+    getToTable().addColumn(name, column, typeFactory);
+  }
+
+  @Override
+  public SQRLTable getSqrlTable() {
+    return getToTable();
+  }
+
+  @Override
+  public String getNameId() {
+    return getToTable().getNameId();
   }
 
   public enum JoinType {

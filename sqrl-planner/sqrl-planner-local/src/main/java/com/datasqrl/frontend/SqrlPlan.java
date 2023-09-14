@@ -72,6 +72,7 @@ public class SqrlPlan extends SqrlBase {
           updatedModuleLoader, collector, new SqlNameUtil(nameCanonicalizer));
       validator.validateStatement((SqrlStatement) statement);
       if (collector.hasErrors()) {
+        System.out.println(ErrorPrinter.prettyPrint(collector));
         throw new CollectedException(new RuntimeException("Script cannot validate"));
       }
 

@@ -1,10 +1,8 @@
 >>>errors
-[FATAL] Nested variables not yet implemented
-in script:<schema> [2:44]:
+[FATAL] Could not plan expression: At line 3, column 24: Column 'joinDeclaration' not found in any table
+in script:<schema> [3:1]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
--------------------------------------------^
-
-[FATAL] At line 2, column 44: Table '@' not found
-in script:<schema>:
+Product.total := COUNT(joinDeclaration);
+^
 

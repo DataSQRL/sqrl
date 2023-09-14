@@ -32,9 +32,9 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     scriptTableDefinition.getShredTableMap().entrySet().stream()
         .filter(f->f.getKey() instanceof RootSqrlTable)
         .forEach(f->{
-          framework.getSchema().addSqrlTable(f.getKey());
-          framework.getSchema().plus().add(f.getKey().getPath().toString() + "$" + framework.getUniqueMacroInt().incrementAndGet(),
-              (RootSqrlTable)f.getKey());
+//          framework.getSchema().addSqrlTable(f.getKey());
+//          framework.getSchema().plus().add(f.getKey().getPath().toString() + "$" + framework.getUniqueMacroInt().incrementAndGet(),
+//              (RootSqrlTable)f.getKey());
         });
 
     return true;
@@ -49,17 +49,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       entry.getValue().setSqrlTable(entry.getKey());
       entry.getKey().setVtTable(entry.getValue());
 
-      framework.getSchema().addSqrlTable(entry.getKey());
-
-      for (Field field : entry.getKey().getFields().getFields()) {
-        if (field instanceof Relationship) {
-          Relationship rel = (Relationship)field;
-          framework.getSchema().plus().add(rel.getPath().toString() + "$" + framework.getUniqueMacroInt().incrementAndGet(),
-              rel);
-          framework.getSchema().getRelationships().put(rel.getPath().toStringList(),
-              rel.getToTable().getPath().toStringList());
-        }
-      }
+//      framework.getSchema().addSqrlTable(entry.getKey());
     }
 
     if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {

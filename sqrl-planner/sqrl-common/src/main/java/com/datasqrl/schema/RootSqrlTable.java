@@ -2,28 +2,28 @@ package com.datasqrl.schema;
 
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
-import com.google.common.base.Supplier;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.function.Supplier;
 import lombok.Getter;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
-import org.apache.calcite.schema.TableFunction;
 
 @Getter
 public class RootSqrlTable extends SQRLTable implements SqrlTableMacro {
   private final Name name;
   private final List<FunctionParameter> parameters;
+  private final Supplier<RelNode> viewTransform;
 
-  public RootSqrlTable(Name name, Table internalTable, List<String> isTypeOf,
-      List<FunctionParameter> parameters) {
+  public RootSqrlTable(Name name, Table internalTable, List<SQRLTable> isTypeOf,
+      List<FunctionParameter> parameters, Supplier<RelNode> viewTransform) {
     super(name.toNamePath(), internalTable, isTypeOf);
     this.name = name;
     this.parameters = parameters;
+    this.viewTransform = viewTransform;
   }
 
   @Override
@@ -38,6 +38,6 @@ public class RootSqrlTable extends SQRLTable implements SqrlTableMacro {
 
   @Override
   public Supplier<RelNode> getViewTransform() {
-    return ()->null;
+    return viewTransform;
   }
 }

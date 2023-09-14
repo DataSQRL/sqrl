@@ -1,6 +1,5 @@
 package com.datasqrl.calcite.schema.sql;
 
-import com.datasqrl.parse.SqlDistinctKeyword;
 import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.google.common.base.Preconditions;
@@ -8,11 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -22,7 +19,6 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.Symbolizable;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -232,9 +228,9 @@ public class SqlBuilders {
       return this;
     }
 
-    public SqlSelectBuilder setDistinctHint(List<Integer> hintOps) {
+    public SqlSelectBuilder setDistinctOnHint(List<Integer> hintOps) {
       List<SqlNode> range = hintOps.stream()
-          .map(i -> SqlLiteral.createCharString(Integer.toString(i), SqlParserPos.ZERO))
+          .map(i -> new SqlIdentifier(Integer.toString(i), SqlParserPos.ZERO))
           .collect(Collectors.toList());
       SqlHint hint = new SqlHint(SqlParserPos.ZERO, new SqlIdentifier("DISTINCT_ON", SqlParserPos.ZERO),
           new SqlNodeList(range, SqlParserPos.ZERO), HintOptionFormat.ID_LIST);

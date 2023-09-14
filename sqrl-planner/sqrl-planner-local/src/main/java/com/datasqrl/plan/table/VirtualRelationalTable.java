@@ -70,7 +70,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
   private SQRLTable sqrlTable;
 
   @Override
-  public String getName() {
+  public String getNameId() {
     return nameId;
   }
 

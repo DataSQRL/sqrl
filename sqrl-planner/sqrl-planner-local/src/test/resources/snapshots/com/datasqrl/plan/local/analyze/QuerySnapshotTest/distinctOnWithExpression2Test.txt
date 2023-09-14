@@ -1,9 +1,7 @@
 >>>orders$q$2
 LogicalTableScan(table=[[orders$i$1]])
 
->>>product2$q$5
-LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], customerid=[$3], time=[$4], entries=[$5])
-  LogicalFilter(condition=[=($6, 1)])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[orders$q$2]])
+>>>product2$q$8
+LogicalProject(id$0=[$2], customerid$0=[$3], time$0=[$4], _uuid$0=[$0], _ingest_time$0=[$1])
+  LogicalTableScan(table=[[orders$q$2]])
 

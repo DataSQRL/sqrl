@@ -88,6 +88,10 @@ public class SqlJoinPathBuilder {
     return this;
   }
 
+  public SqlNode build() {
+    Frame frame = stack.pop();
+    return frame.getNode();
+  }
   public SqlNode buildAndProjectLast(List<String> pullupCols) {
     Frame frame = stack.pop();
     Frame lastTable = tableHistory.get(tableHistory.size()-1);

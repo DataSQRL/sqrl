@@ -1,13 +1,13 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>orders$q$5
-LogicalTableScan(table=[[orders$i$4]])
+>>>orders$q$6
+LogicalTableScan(table=[[orders$i$5]])
 
->>>product$q$9
-LogicalTableScan(table=[[product$i$8]])
+>>>product$q$13
+LogicalTableScan(table=[[product$i$12]])
 
->>>x$q$11
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5])
+>>>x$q$16
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5])
   LogicalTableScan(table=[[customer$q$2]])
 

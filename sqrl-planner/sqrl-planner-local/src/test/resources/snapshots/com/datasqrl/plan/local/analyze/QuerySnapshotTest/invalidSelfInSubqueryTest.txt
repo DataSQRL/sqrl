@@ -1,10 +1,11 @@
 >>>errors
-[FATAL] Nested variables not yet implemented
-in script:<schema> [2:44]:
+[FATAL] Could not find table: SELECT
+in script:<schema> [3:42]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
--------------------------------------------^
+Product.table := SELECT * FROM Product, (SELECT MIN(productid) FROM @.parent);
+-----------------------------------------^
 
-[FATAL] At line 2, column 44: Table '@' not found
+[FATAL] Could not find table: SELECT
 in script:<schema>:
 

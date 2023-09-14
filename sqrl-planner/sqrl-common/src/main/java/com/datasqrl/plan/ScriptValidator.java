@@ -11,6 +11,7 @@ import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
+import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
 import com.datasqrl.canonicalizer.NamePath;
@@ -24,7 +25,8 @@ import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
-import com.datasqrl.parse.SqlDistinctKeyword;
+import com.datasqrl.schema.Relationship;
+import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
 import java.lang.reflect.Type;
@@ -85,6 +87,7 @@ import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlOperandMetadata;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -110,7 +113,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   private final Map<SqlNode, SqlDynamicParam> dynamicParam = new HashMap<>();
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping = new HashMap<>();
   private final Map<SqrlAssignment, SqlNode> preprocessSql = new HashMap<>();
-  private final Map<SqrlAssignment, Boolean> isMaterializeSelf = new HashMap<>();
+  private final Map<SqrlAssignment, Boolean> isMaterializeTable = new HashMap<>();
   private final Map<SqrlAssignment, Boolean> setFieldNames = new HashMap<>();
   private final ArrayListMultimap<SqlNode, Function> isA = ArrayListMultimap.create();
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
@@ -209,13 +212,22 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
   @Override
   public Void visit(SqrlAssignment assignment, Void context) {
+    if (assignment.getIdentifier().names.size() > 1) {
+      TableFunction function = framework.getQueryPlanner()
+          .getTableFunction(SqrlListUtil.popLast(assignment.getIdentifier().names)).getFunction();
+      if (function instanceof Relationship && ((Relationship) function).getJoinType() != JoinType.CHILD) {
+        addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Cannot assign query to table");
+      }
+    }
+
+
     return null;
   }
 
   @Override
   public Void visit(SqrlStreamQuery node, Void context) {
     boolean materializeSelf = materializeSelfQuery(node);
-    isMaterializeSelf.put(node,materializeSelf);
+    isMaterializeTable.put(node,materializeSelf);
 
 
     visit((SqrlAssignment) node, null);
@@ -238,7 +250,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       addError(ErrorLabel.GENERIC, node, "Table arguments for expressions not implemented yet.");
     }
 
-    Optional<RelOptTable> table = resolveModifableTable(node, node.getIdentifier().names);
+    Optional<RelOptTable> table = resolveModifableTable(node, SqrlListUtil.popLast(node.getIdentifier().names));
     table.ifPresent((t) -> {
       if (t.unwrap(ModifiableSqrlTable.class) == null) {
         addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: ", t.getQualifiedName());
@@ -272,7 +284,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlSqlQuery node, Void context) {
     boolean materializeSelf = materializeSelfQuery(node);
-    isMaterializeSelf.put(node,materializeSelf);
+    isMaterializeTable.put(node,materializeSelf);
 
     visit((SqrlAssignment) node, null);
     setFieldNames.put(node, true);
@@ -427,8 +439,45 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   private Pair<List<FunctionParameter>, SqlNode> transformArgs(SqlNode query, boolean materializeSelf, SqrlTableFunctionDef sqrlTableFunctionDef) {
     List<FunctionParameter> parameterList = toParams(sqrlTableFunctionDef.getParameters(), planner.createSqlValidator());
 
-    return Pair.of(parameterList, query.accept(new SqlShuttle(){
+    SqlNode node = SqlNodeVisitor.accept(new SqlRelationVisitor<>() {
 
+      @Override
+      public SqlNode visitQuerySpecification(SqlSelect node, Object context) {
+        return new SqlSelectBuilder(node)
+            .rewriteExpressions(rewriteVariables(parameterList, materializeSelf))
+            .build();
+      }
+
+      @Override
+      public SqlNode visitAliasedRelation(SqlCall node, Object context) {
+        return node;
+      }
+
+      @Override
+      public SqlNode visitTable(SqrlCompoundIdentifier node, Object context) {
+        return node;
+      }
+
+      @Override
+      public SqlNode visitJoin(SqlJoin node, Object context) {
+        return node;
+      }
+
+      @Override
+      public SqlNode visitSetOperation(SqlCall node, Object context) {
+        return node.getOperator().createCall(node.getParserPosition(),
+            node.getOperandList().stream()
+                .map(o->SqlNodeVisitor.accept(this, o, context))
+                .collect(Collectors.toList()));
+      }
+    }, query, null);
+
+    return Pair.of(parameterList, node);
+
+  }
+
+  public SqlShuttle rewriteVariables(List<FunctionParameter> parameterList, boolean materializeSelf) {
+    return new SqlShuttle(){
       @Override
       public SqlNode visit(SqlIdentifier id) {
         if (isSelfField(id.names) && !materializeSelf) {
@@ -447,8 +496,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           }
 
           //todo: Type?
+          RelDataType anyType = planner.getTypeFactory().createSqlType(SqlTypeName.ANY);
           SqrlFunctionParameter functionParameter = new SqrlFunctionParameter(name,
-              Optional.empty(), null, parameterList.size(), null,
+              Optional.empty(), SqlDataTypeSpecBuilder
+                .create(anyType), parameterList.size(), anyType,
               true);
           parameterList.add(functionParameter);
           SqlDynamicParam param = new SqlDynamicParam(functionParameter.getOrdinal(), id.getParserPosition());
@@ -495,17 +546,16 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         return super.visit(id);
       }
 
-      private boolean isSelfField(ImmutableList<String> names) {
-        return names.get(0).equalsIgnoreCase("@");
-      }
+
 
       private boolean isVariable(ImmutableList<String> names) {
         return names.get(0).startsWith("@") && names.get(0).length() > 1;
       }
-    }));
-
+    };
   }
-
+  public static boolean isSelfField(ImmutableList<String> names) {
+    return names.get(0).equalsIgnoreCase("@") && names.size() > 1;
+  }
   @AllArgsConstructor
   public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     final QueryPlanner planner;
@@ -837,7 +887,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     visit((SqrlAssignment) node, null);
     setFieldNames.put(node, true);
     boolean materializeSelf = node.getQuery().getFetch() != null;
-    isMaterializeSelf.put(node, materializeSelf);
+    isMaterializeTable.put(node, materializeSelf);
     checkAssignable(node);
 
     /**
@@ -903,16 +953,24 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
   private void checkAssignable(SqrlAssignment node) {
     List<String> path = SqrlListUtil.popLast(node.getIdentifier().names);
+    if (path.isEmpty()) {
+      return;
+    }
+
     SqlUserDefinedTableFunction tableFunction = planner.getTableFunction(path);
-    if (!(tableFunction instanceof ModifiableSqrlTable)) {
+    if (tableFunction == null) {
       addError(ErrorLabel.GENERIC, node, "Cannot column or query to table");
+      return;
+    }
+    if (!(tableFunction.getFunction() instanceof ModifiableSqrlTable)) {
+      addError(ErrorLabel.GENERIC, node, "Table not modifiable %s", path);
     }
 
   }
 
   @Override
   public Void visit(SqrlFromQuery node, Void context) {
-    isMaterializeSelf.put(node, false);
+    isMaterializeTable.put(node, false);
 
     visit((SqrlAssignment) node, null);
     setFieldNames.put(node, true);
@@ -934,7 +992,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
    */
   @Override
   public Void visit(SqrlDistinctQuery node, Void context) {
-    isMaterializeSelf.put(node, false);
+    isMaterializeTable.put(node, true);
     setFieldNames.put(node, false);
     if (node.getOrder().isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Order by statement must be specified");
@@ -946,7 +1004,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
 
     SqlSelect select = new SqlSelectBuilder(node.getParserPosition())
-        .setKeyword(SqlDistinctKeyword.DISTINCT_ON)
+        .setDistinctOnHint(List.of())
         .setSelectList(node.getOperands())
         .setFrom(node.getTable())
         .setOrder(node.getOrder())
@@ -988,7 +1046,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  private Optional<RelOptTable> resolveModifableTable(SqlNode node, ImmutableList<String> names) {
+  private Optional<RelOptTable> resolveModifableTable(SqlNode node, List<String> names) {
     Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader().getSqrlTable(names));
     if (table.isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Could not find table: %s", names);
