@@ -4,6 +4,7 @@
 package com.datasqrl.flink;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.graphql.AbstractGraphqlTest;
@@ -37,18 +38,20 @@ public class ConferenceTest extends AbstractGraphqlTest {
   public void run() {
     CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    Thread.sleep(1000);
-    executeQuery("query {"
-        + "EventSearch(query: \"test\", afterTime: \"0\") {"
-        + " title"
-        + "}"
-        + "}", null, new Consumer<HttpResponse<JsonObject>>() {
-      @Override
-      public void accept(HttpResponse<JsonObject> jsonObjectHttpResponse) {
-        System.out.println(jsonObjectHttpResponse);
-        countDownLatch.countDown();
-      }
-    });
+    Thread.sleep(5000);
+    executeQuery("query q {\n"
+        + " EventsAfterTime(afterTime: \"2007-12-03T10:15:30+01:00\"){\n"
+        + "  description\n"
+        + "  id\n"
+        + "\n"
+        + " }"
+        + "}", null, jsonObjectHttpResponse -> {
+          log.info("Got response " + jsonObjectHttpResponse.body().encode());
+          if (jsonObjectHttpResponse.statusCode() != 200) {
+            fail(String.format("%s", jsonObjectHttpResponse.body()));
+          }
+          countDownLatch.countDown();
+        });
     countDownLatch.await();
   }
 }
