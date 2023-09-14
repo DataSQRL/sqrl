@@ -18,7 +18,7 @@ public class TableSourceSinkNamespaceObject extends AbstractTableNamespaceObject
   private final TableSink sink;
 
   public TableSourceSinkNamespaceObject(TableSource source, TableSink sink, CalciteTableFactory tableFactory) {
-    super(tableFactory, Optional.empty());
+    super(tableFactory);
     this.table = source;
     this.sink = sink;
   }

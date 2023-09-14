@@ -1,5 +1,6 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class SqrlFramework {
   private RelMetadataProvider relMetadataProvider;
   private AtomicInteger uniqueMacroInt = new AtomicInteger(0);
   private AtomicInteger uniqueTableInt = new AtomicInteger(0);
+  private AtomicInteger uniqueColumnInt = new AtomicInteger(0);
 
   public SqrlFramework() {
     this(null, HintStrategyTable.builder().build(), NameCanonicalizer.SYSTEM);

@@ -1,8 +1,10 @@
 package com.datasqrl.plan.rel;
 
+import static com.datasqrl.calcite.type.TypeFactory.makeTimestampType;
+import static com.datasqrl.calcite.type.TypeFactory.makeUuidType;
+
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.model.LogicalStreamMetaData;
-import com.datasqrl.schema.TypeUtil;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -71,8 +73,8 @@ public class LogicalStream extends SingleRel {
     RelDataTypeFactory.Builder builder = typeFactory.builder();
     Set<String> containedNames = new HashSet();
 
-    builder.add(ReservedName.UUID.getCanonical(), TypeUtil.makeUuidType(typeFactory, false));
-    builder.add(ReservedName.SOURCE_TIME.getCanonical(), TypeUtil.makeTimestampType(typeFactory,false));
+    builder.add(ReservedName.UUID.getCanonical(), makeUuidType(typeFactory, false));
+    builder.add(ReservedName.SOURCE_TIME.getCanonical(), makeTimestampType(typeFactory,false));
     containedNames.add(ReservedName.UUID.getCanonical());
     containedNames.add(ReservedName.SOURCE_TIME.getCanonical());
 

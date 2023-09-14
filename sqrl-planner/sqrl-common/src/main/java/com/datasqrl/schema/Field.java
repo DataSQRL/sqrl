@@ -23,9 +23,6 @@ public abstract class Field {
   }
 
   public Name getId() {
-//    if (version == 0) {
-//      return name;
-//    }
     return name.suffix(Integer.toString(version));
   }
 
@@ -38,11 +35,5 @@ public abstract class Field {
     return getId().toString();
   }
 
-  public abstract FieldKind getKind();
-
   public abstract <R, C> R accept(FieldVisitor<R, C> visitor, C context);
-
-  public boolean isScalar() {
-    return this instanceof Column;
-  }
 }

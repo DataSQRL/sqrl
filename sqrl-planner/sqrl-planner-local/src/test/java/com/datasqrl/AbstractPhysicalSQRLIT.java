@@ -9,11 +9,13 @@ import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
+import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
@@ -142,7 +144,9 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
         apiManager, null, true);
     addContent(dag);
 
-    PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
+    ErrorSink errorSink = injector.getInstance(ErrorSink.class);
+    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+        .plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
     CompletableFuture[] completableFutures = result.getResults().stream()

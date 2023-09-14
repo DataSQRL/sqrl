@@ -19,11 +19,9 @@
 package com.datasqrl.flink;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.TypeFactory;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.calcite.type.BridgingFlinkType;
 import com.datasqrl.flink.function.BridgingSqlScalarFunction;
-import com.datasqrl.calcite.type.EngineRelDataTypeFactory;
-import com.datasqrl.util.SqrlServiceLoader;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
@@ -39,13 +37,12 @@ import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.UnresolvedDataType;
 import org.apache.flink.table.types.inference.TypeInference;
 
-import java.net.URL;
 import java.util.Map;
-import java.util.Optional;
 
 @AllArgsConstructor
 public class FlinkConverter {
@@ -66,8 +63,8 @@ public class FlinkConverter {
 
   TypeFactory typeFactory;
 
-  static FlinkTypeFactory flinkTypeFactory = (FlinkTypeFactory)SqrlServiceLoader.loadService(EngineRelDataTypeFactory.class, "flink")
-      .orElseThrow();
+  static FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(FlinkConverter.class.getClassLoader(),
+      FlinkTypeSystem.INSTANCE);
 
   public SqlFunction convertFunction(String sqrlName, String flinkName, FunctionDefinition definition) {
     final TypeInference typeInference;

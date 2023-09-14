@@ -6,7 +6,9 @@ package com.datasqrl;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
+import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
+import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
@@ -65,7 +67,9 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     PhysicalDAGPlan dag = physicalPlanner.planDag(framework, ns.getPipeline(), modelAndQueries.getRight(),
         modelAndQueries.getMiddle(), true);
 
-    PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
+    ErrorSink errorSink = injector.getInstance(ErrorSink.class);
+    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+        .plan(dag);
 
     RootGraphqlModel model = modelAndQueries.getMiddle();
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(

@@ -1,5 +1,6 @@
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -9,7 +10,6 @@ import com.datasqrl.graphql.visitor.GraphqlInputValueDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.graphql.visitor.GraphqlTypeVisitor;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.TypeUtil;
 import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
 import graphql.language.EnumValueDefinition;
@@ -166,7 +166,7 @@ public class InputFieldToFlexibleSchemaRelation implements
     }
 
     private RelDataType addContextToType(RelDataType type, FieldContext context) {
-      type = TypeUtil.withNullable(typeFactory, type, !context.isNotNull);
+      type = TypeFactory.withNullable(typeFactory, type, !context.isNotNull);
       //wrap in array of nested depth;
       for (int i = 0; i < context.listDepth; i++) {
         type = typeFactory.createArrayType(type, -1L);

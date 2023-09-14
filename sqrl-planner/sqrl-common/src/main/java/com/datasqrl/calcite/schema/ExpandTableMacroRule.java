@@ -1,8 +1,8 @@
 package com.datasqrl.calcite.schema;
 
 
-import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import java.util.List;
@@ -10,14 +10,12 @@ import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 
 public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
@@ -35,12 +33,10 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
     LogicalTableFunctionScan node = relOptRuleCall.rel(0);
     RexCall call = (RexCall) node.getCall();
     if (call.getOperator() instanceof SqlUserDefinedTableFunction &&
-        ((SqlUserDefinedTableFunction) call.getOperator()).getFunction() instanceof SqrlTableFunction
-    ) {
-      SqrlTableFunction function = (SqrlTableFunction)((SqlUserDefinedTableFunction) call.getOperator()).getFunction();
-      RelNode relNode = planner.plan(Dialect.CALCITE, function.getNode());
+        ((SqlUserDefinedTableFunction) call.getOperator()).getFunction() instanceof SqrlTableMacro) {
+      SqrlTableMacro function = (SqrlTableMacro)((SqlUserDefinedTableFunction) call.getOperator()).getFunction();
 
-      relNode = CalciteUtil.applyRexShuttleRecursively(relNode,
+      RelNode relNode = CalciteUtil.applyRexShuttleRecursively(function.getViewTransform().get(),
           new ReplaceArgumentWithOperand(((RexCall) node.getCall()).getOperands()));
 
       //Strip trivial projection

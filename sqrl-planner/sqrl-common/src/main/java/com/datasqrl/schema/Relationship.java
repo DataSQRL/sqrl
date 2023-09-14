@@ -3,38 +3,49 @@
  */
 package com.datasqrl.schema;
 
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
-import com.google.common.base.Preconditions;
+import com.datasqrl.canonicalizer.NamePath;
+import com.google.common.base.Supplier;
+import java.util.List;
 import lombok.Getter;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.FunctionParameter;
 
 @Getter
-public class Relationship extends Field {
+public class Relationship extends Field implements SqrlTableMacro {
+  private final NamePath path;
 
   private final SQRLTable fromTable;
-  private final SQRLTable toTable;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
 
-  public Relationship(Name name, int version, SQRLTable fromTable, SQRLTable toTable,
-      JoinType joinType,
-      Multiplicity multiplicity) {
+  private final List<SQRLTable> isA;
+  private final List<FunctionParameter> parameters;
+  private final Supplier<RelNode> viewTransform;
+
+  public Relationship(Name name, int version, SQRLTable fromTable,
+      JoinType joinType, Multiplicity multiplicity, List<SQRLTable> isA, List<FunctionParameter> parameters,
+      Supplier<RelNode> viewTransform) {
     super(name, version);
     this.fromTable = fromTable;
-    this.toTable = toTable;
-    Preconditions.checkNotNull(toTable);
+    this.isA = isA;
+    this.parameters = parameters;
+    this.viewTransform = viewTransform;
     this.joinType = joinType;
     this.multiplicity = multiplicity;
+    this.path = fromTable.getPath().concat(name);
   }
 
   @Override
-  public String toString() {
-    return name.getCanonical() + " : " + fromTable.getName() + " -> " + toTable.getName()
-        + " [" + joinType + "," + multiplicity + "]";
+  public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
+    return viewTransform.get().getRowType();
   }
 
-  @Override
-  public FieldKind getKind() {
-    return FieldKind.RELATIONSHIP;
+  public SQRLTable getToTable() {
+    return isA.get(0);
   }
 
   public enum JoinType {

@@ -1,13 +1,12 @@
 package com.datasqrl;
 
-import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
-import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.OptimizerHint;
+import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.plan.local.generate.SqrlTableNamespaceObject;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.IdealExecutionStage;
@@ -15,8 +14,6 @@ import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;
@@ -24,10 +21,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
+import org.apache.calcite.schema.Function;
+import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
@@ -41,25 +38,20 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
   @Override
   public void createTable(List<String> path, RelNode input, List<RelHint> hints,
-      boolean setFieldNames, Optional<SqlNodeList> opHints, SqrlTableFunctionDef args) {
+      boolean setFieldNames, Optional<SqlNodeList> opHints,
+      List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf) {
     framework.resetPlanner();
     LPAnalysis analyzedLP = convertToVanillaSQL(
         input, setFieldNames, framework.getQueryPlanner().getRelBuilder(),
         opHints, ErrorCollector.root());
 
     NamePath names = new SqlNameUtil(nameCanonicalizer).toNamePath(path);
-    Optional<SQRLTable> parent = names.size() == 1
-        ? Optional.empty()
-        : Optional.of(framework.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(path))
-            .unwrap(ModifiableSqrlTable.class).getSqrlTable());
 
-    SqrlTableNamespaceObject nsObj = new CalciteTableFactory(framework, nameCanonicalizer)
-        .createTable(names, analyzedLP, args);
-//
-//    Optional<Pair<SQRLTable, Multiplicity>> parent = parentTable.map(pp ->
-//        Pair.of(pp, pp.getNumPrimaryKeys() == baseTable.getNumPrimaryKeys() ?
-//            Multiplicity.ZERO_ONE : Multiplicity.MANY)
-//    );
+    ScriptTableDefinition scriptTableDefinition = new CalciteTableFactory(framework, nameCanonicalizer)
+        .createScriptDef(names, analyzedLP);
+
+    SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(), scriptTableDefinition,
+        null, null, parameters, isA, materializeSelf);
 
     nsObj.apply(Optional.empty(), framework, ErrorCollector.root());
   }

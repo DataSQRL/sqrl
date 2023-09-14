@@ -1,0 +1,4 @@
+>>>errors
+[FATAL] At line 1, column 82: Column 'parent' not found in table 'e'
+in script:<schema>:
+

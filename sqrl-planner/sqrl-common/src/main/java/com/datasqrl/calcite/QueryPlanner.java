@@ -1,15 +1,13 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
-import com.datasqrl.calcite.schema.ScriptPlanner;
-import com.datasqrl.calcite.validator.ScriptValidator;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.calcite.convert.PostgresSqlConverter;
-import com.datasqrl.util.SqlNameUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import lombok.Getter;
@@ -32,6 +30,7 @@ import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
+import org.apache.calcite.rel.rel2sql.RelToSqlConverterWithHints;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
@@ -45,12 +44,13 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.calcite.sql2rel.RelDecorrelator;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
+import org.apache.calcite.sql2rel.SqrlSqlToRelConverter;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.javac.JaninoCompiler;
-import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
 import java.io.File;
 import java.io.Serializable;
@@ -226,12 +226,10 @@ public class QueryPlanner {
       schema.add(name, table);
       SqlValidator sqlValidator = createSqlValidator();
 
-      SqlSelect select = new SqlSelect(SqlParserPos.ZERO,
-          null,
-          new SqlNodeList(List.of(node), SqlParserPos.ZERO),
-          new SqlIdentifier(name, SqlParserPos.ZERO),
-          null, null, null, null, null, null, null, SqlNodeList.EMPTY
-      );
+      SqlSelect select = new SqlSelectBuilder(node.getParserPosition())
+          .setSelectList(List.of(node))
+          .setFrom(new SqlIdentifier(name, SqlParserPos.ZERO))
+          .build();
       SqlNode validated = sqlValidator.validate(select);
 
       SqlToRelConverter sqlToRelConverter = createSqlToRelConverter(sqlValidator);
@@ -375,7 +373,7 @@ public class QueryPlanner {
   /* Factories */
 
   public SqlValidator createSqlValidator() {
-    return new FlinkCalciteSqlValidator(
+    return new SqrlSqlValidator(
         this.operatorTable,
         catalogReader,
         typeFactory,
@@ -384,7 +382,7 @@ public class QueryPlanner {
 
   public SqlToRelConverter createSqlToRelConverter(SqlValidator validator) {
 
-    return new SqlToRelConverter((relDataType, sql, c, d) -> {
+    return new SqrlSqlToRelConverter((relDataType, sql, c, d) -> {
       SqlValidator validator1 = createSqlValidator();
       SqlNode node = parse(Dialect.CALCITE, sql);
       validator1.validate(node);
@@ -449,7 +447,8 @@ public class QueryPlanner {
         SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, result, catalogReader.nameMatcher());
 
     if (result.size() != 1) {
-      throw new RuntimeException("Could not resolve table: " + path);
+      return null;
+//      throw new RuntimeException("Could not resolve table: " + path);
     }
 
     return (SqlUserDefinedTableFunction)result.get(0);

@@ -1,0 +1,10 @@
+>>>errors
+[FATAL] Nested variables not yet implemented
+in script:<schema> [2:44]:
+IMPORT ecommerce-data.Product;
+Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
+-------------------------------------------^
+
+[FATAL] At line 2, column 44: Table '@' not found
+in script:<schema>:
+

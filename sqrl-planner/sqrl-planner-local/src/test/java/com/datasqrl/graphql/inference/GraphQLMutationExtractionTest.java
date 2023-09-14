@@ -4,7 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import com.datasqrl.calcite.TypeFactory;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.queries.APISource;

@@ -1,0 +1,6 @@
+>>>errors
+[FATAL] Could not find table: []
+in script:<schema> [1:1]:
+IMPORT ecommerce-data.* TIMESTAMP _ingest_time AS c_ts;
+^
+

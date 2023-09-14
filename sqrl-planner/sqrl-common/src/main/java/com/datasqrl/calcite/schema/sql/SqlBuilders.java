@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.schema.sql;
 
+import com.datasqrl.parse.SqlDistinctKeyword;
 import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.google.common.base.Preconditions;
@@ -7,10 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
@@ -18,6 +22,8 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlSelectKeyword;
+import org.apache.calcite.sql.Symbolizable;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
@@ -103,7 +109,11 @@ public class SqlBuilders {
     private final SqlSelect select;
 
     public SqlSelectBuilder() {
-      this.select = new SqlSelect(SqlParserPos.ZERO,
+      this(SqlParserPos.ZERO);
+    }
+
+    public SqlSelectBuilder(SqlParserPos pos) {
+      this.select = new SqlSelect(pos,
           SqlNodeList.EMPTY,
           new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
           null,
@@ -151,6 +161,12 @@ public class SqlBuilders {
     public SqlSelectBuilder clearKeywords() {
       SqlNodeList keywords = SqlNodeList.EMPTY;
       select.setOperand(0, keywords);
+      return this;
+    }
+
+    public SqlSelectBuilder setKeyword(Symbolizable symbol) {
+      SqlNode s = symbol.symbol(SqlParserPos.ZERO);
+      select.setOperand(0, new SqlNodeList(List.of(s), SqlParserPos.ZERO));
       return this;
     }
 
@@ -203,6 +219,38 @@ public class SqlBuilders {
 
     public SqlSelectBuilder setSelectList(List<SqlNode> columns) {
       select.setSelectList(new SqlNodeList(columns, SqlParserPos.ZERO));
+      return this;
+    }
+
+    public SqlSelectBuilder setOrder(List<SqlNode> order) {
+      select.setOrderBy(new SqlNodeList(order, SqlParserPos.ZERO));
+      return this;
+    }
+
+    public SqlSelectBuilder setLimit(int limit) {
+      select.setFetch(SqlLiteral.createExactNumeric(Integer.toString(limit), SqlParserPos.ZERO));
+      return this;
+    }
+
+    public SqlSelectBuilder setDistinctHint(List<Integer> hintOps) {
+      List<SqlNode> range = hintOps.stream()
+          .map(i -> SqlLiteral.createCharString(Integer.toString(i), SqlParserPos.ZERO))
+          .collect(Collectors.toList());
+      SqlHint hint = new SqlHint(SqlParserPos.ZERO, new SqlIdentifier("DISTINCT_ON", SqlParserPos.ZERO),
+          new SqlNodeList(range, SqlParserPos.ZERO), HintOptionFormat.ID_LIST);
+      select.setHints(new SqlNodeList(List.of(hint), SqlParserPos.ZERO));
+
+      return this;
+    }
+
+    public SqlSelectBuilder setWhere(List<SqlNode> conditions) {
+      if (conditions.size() > 1) {
+        SqlNode call = SqlStdOperatorTable.AND.createCall(SqlParserPos.ZERO,
+            new SqlNodeList(conditions, SqlParserPos.ZERO));
+        select.setWhere(call);
+      } else if (conditions.size() == 1){
+        select.setWhere(conditions.get(0));
+      }
       return this;
     }
   }

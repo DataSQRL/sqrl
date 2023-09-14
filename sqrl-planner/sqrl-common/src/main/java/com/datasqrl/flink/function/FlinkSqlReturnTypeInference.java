@@ -19,15 +19,15 @@
 package com.datasqrl.flink.function;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.TypeFactory;
+import com.datasqrl.calcite.type.TypeFactory;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
+import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.functions.inference.OperatorBindingCallContext;
 import org.apache.flink.table.types.inference.CallContext;
@@ -80,8 +80,8 @@ public class FlinkSqlReturnTypeInference implements SqlReturnTypeInference {
   private @Nullable RelDataType extractExpectedOutputType(SqlOperatorBinding opBinding) {
     if (opBinding instanceof SqlCallBinding) {
       final SqlCallBinding binding = (SqlCallBinding) opBinding;
-      final FlinkCalciteSqlValidator validator =
-          (FlinkCalciteSqlValidator) binding.getValidator();
+      final SqrlSqlValidator validator =
+          (SqrlSqlValidator) binding.getValidator();
       return validator.getExpectedOutputType(binding.getCall()).orElse(null);
     }
     return null;

@@ -34,9 +34,4 @@ public class SqrlQueryPlanner {
   public SqrlSchema getSchema() {
     return framework.getSchema();
   }
-
-  public RelNode runStage(OptimizationStage stage, RelNode relNode) {
-    return RelStageRunner.runStage(stage,
-        relNode, framework.getQueryPlanner().getPlanner());
-  }
 }

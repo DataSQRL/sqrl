@@ -68,6 +68,17 @@ public class FieldList {
         .max((a, b) -> Integer.compare(a.getVersion(), b.getVersion()));
   }
 
+  public List<Column> getColumns(boolean onlyVisible) {
+    Map<Name, Field> fieldsByName = getFields(onlyVisible)
+        .collect(Collectors.toMap(Field::getName, Function.identity(),
+            BinaryOperator.maxBy(Comparator.comparing(Field::getVersion))));
+    return getFields(onlyVisible)
+        .filter(f->f instanceof Collection)
+        .filter(f -> fieldsByName.get(f.getName()).equals(f))
+        .map(f->(Column)f)
+        .collect(Collectors.toList());
+  }
+
   @Value
   public static class IndexedField {
 

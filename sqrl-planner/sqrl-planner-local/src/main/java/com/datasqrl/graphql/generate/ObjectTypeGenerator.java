@@ -10,10 +10,10 @@ import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeReference
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.wrap;
 
 import com.datasqrl.schema.Column;
+import com.datasqrl.schema.FieldVisitor;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.schema.SQRLTable.SqrlTableVisitor;
-import com.datasqrl.schema.SqrlFieldVisitor;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLType;
@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.calcite.jdbc.CalciteSchemaVisitor;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * Create the object types
@@ -29,7 +28,7 @@ import org.apache.calcite.rel.type.RelDataType;
 public class ObjectTypeGenerator implements
     CalciteSchemaVisitor<Set<GraphQLType>, SchemaGeneratorContext>,
     SqrlTableVisitor<GraphQLType, SchemaGeneratorContext>,
-    SqrlFieldVisitor<GraphQLFieldDefinition, SchemaGeneratorContext> {
+    FieldVisitor<GraphQLFieldDefinition, SchemaGeneratorContext> {
 
   @Override
   public Set<GraphQLType> visit(SqrlSchema schema, SchemaGeneratorContext context) {

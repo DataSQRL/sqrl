@@ -11,9 +11,9 @@ import org.apache.calcite.rel.type.RelDataType;
 public class Column extends Field {
 
   private final Name vtName;
-  final boolean isVisible;
   private final RelDataType type;
-  boolean nullable;
+  private final boolean isVisible;
+  private final boolean nullable;
 
   public Column(Name name, Name vtName, int version, boolean isVisible, RelDataType type) {
     super(name, version);
@@ -26,11 +26,6 @@ public class Column extends Field {
   @Override
   public String toString() {
     return super.toString();
-  }
-
-  @Override
-  public FieldKind getKind() {
-    return FieldKind.COLUMN;
   }
 
   public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {

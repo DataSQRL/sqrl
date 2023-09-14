@@ -1,11 +1,11 @@
 package org.apache.calcite.jdbc;
 
-import static org.apache.calcite.sql.validate.SqlValidatorUtil.ATTEMPT_SUGGESTER;
-
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.metadata.MetadataStore;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.StreamUtil;
 import java.net.URL;
@@ -24,8 +24,6 @@ import org.apache.calcite.schema.TableFunction;
 
 import java.util.List;
 import java.util.stream.Stream;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
 
 @Getter
 public class SqrlSchema extends SimpleCalciteSchema {
@@ -34,6 +32,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
   private final List<SQRLTable> sqrlTables = new ArrayList<>();
   private final Map<List<String>, List<String>> relationships = new HashMap();
   private final Set<URL> jars = new HashSet<>();
+  private final Map<List<String>, Relationship> relFncs = new HashMap<>();
 
   public SqrlSchema(SqrlFramework framework) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
@@ -118,12 +117,12 @@ public class SqrlSchema extends SimpleCalciteSchema {
   public String getUniqueFunctionName(List<String> path) {
     int attempt = 1;
     Set<String> names = plus().getFunctionNames()
-        .stream().map(s-> Name.system(s).getCanonical())
+        .stream().map(s-> sqrlFramework.getNameCanonicalizer().name(s).getCanonical())
         .collect(Collectors.toSet());
     while (true) {
       String name = String.join(".", path) + "$" + attempt;
       //todo fix
-      if (names.contains(Name.system(name).getCanonical())) {
+      if (names.contains(sqrlFramework.getNameCanonicalizer().name(name).getCanonical())) {
         attempt++;
       } else {
         return name;
@@ -137,5 +136,11 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public void addJar(URL url) {
     jars.add(url);
+  }
+
+  public void addRelationship(Relationship relationship) {
+    this.relFncs.put(relationship.getPath().toStringList(), relationship);
+    plus().add(String.join(".", relationship.getPath().toStringList()) + "$"
+        + sqrlFramework.getUniqueTableInt().incrementAndGet(), relationship);
   }
 }

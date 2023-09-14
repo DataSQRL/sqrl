@@ -7,6 +7,7 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
+import org.apache.calcite.sql.SqrlAssignment;
 import org.apache.calcite.sql.SqrlCompoundIdentifier;
 import org.apache.calcite.sql.SqrlDistinctQuery;
 import org.apache.calcite.sql.SqrlExportDefinition;
@@ -41,6 +42,8 @@ public abstract class SqlNodeVisitor<R, C> implements
       return visitor.visit((SqrlDistinctQuery) node, context);
     } else if (node instanceof SqrlAssignTimestamp) {
       return visitor.visit((SqrlAssignTimestamp) node, context);
+    } else if (node instanceof SqrlAssignment) {
+      return visitor.visit((SqrlAssignment) node, context);
     }
     throw new RuntimeException("Unknown sql statement node:" + node);
   }

@@ -16,7 +16,7 @@ public class TableSourceNamespaceObject extends AbstractTableNamespaceObject<Tab
   private final TableSource table;
 
   public TableSourceNamespaceObject(TableSource table, CalciteTableFactory tableFactory) {
-    super(tableFactory, Optional.empty());
+    super(tableFactory);
     this.table = table;
   }
 

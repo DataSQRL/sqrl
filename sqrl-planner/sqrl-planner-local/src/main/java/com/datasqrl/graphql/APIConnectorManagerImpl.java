@@ -107,7 +107,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   @Override
   public TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable) {
     errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
-    errors.checkFatal(((VirtualRelationalTable)sqrlTable.getVt()).getRoot().getBase().getType()== TableType.STREAM,
+    errors.checkFatal(((VirtualRelationalTable) sqrlTable.getVt()).getRoot().getBase().getType()== TableType.STREAM,
         "Table %s for subscription %s is not a stream table", sqrlTable, subscription);
     //Check if we already exported it
     TableSource subscriptionSource;
@@ -115,10 +115,10 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       subscriptionSource = exports.get(sqrlTable).getSource();
     } else {
       //otherwise create new log for it
-      String logId = ((VirtualRelationalTable)sqrlTable.getVt()).getNameId();
+      String logId = ((VirtualRelationalTable) sqrlTable.getVt()).getNameId();
       RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory, 0,
           NameCanonicalizer.SYSTEM);
-      UniversalTable schema = converter.convert(sqrlTable.getPath(), ((VirtualRelationalTable)sqrlTable.getVt()).getRowType(),
+      UniversalTable schema = converter.convert(sqrlTable.getPath(), ((VirtualRelationalTable) sqrlTable.getVt()).getRowType(),
           null);
       Log log = logEngine.get().createLog(logId, schema);
       exports.put(sqrlTable, log);

@@ -1,6 +1,6 @@
 package com.datasqrl.plan.local.analyze;
 
-import com.datasqrl.calcite.TypeFactory;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.schema.Multiplicity;

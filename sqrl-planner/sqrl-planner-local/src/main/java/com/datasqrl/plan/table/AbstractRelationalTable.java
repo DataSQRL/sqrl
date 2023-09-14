@@ -4,6 +4,7 @@
 package com.datasqrl.plan.table;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.schema.NamedTable;
 import java.lang.reflect.Type;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -27,7 +28,7 @@ import org.apache.calcite.schema.impl.AbstractTableQueryable;
  * logical SQRL tables that users import or define in their scripts.
  */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public abstract class AbstractRelationalTable extends AbstractTable implements
+public abstract class AbstractRelationalTable extends AbstractTable implements NamedTable,
     Comparable<AbstractRelationalTable> {
 
   @EqualsAndHashCode.Include

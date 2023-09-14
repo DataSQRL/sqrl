@@ -1,7 +1,7 @@
 package com.datasqrl.frontend;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.TypeFactory;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;

@@ -1,6 +1,6 @@
 package org.apache.calcite.rel.rel2sql;
 
-import com.datasqrl.calcite.TypeFactory;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.FlinkExecutablePlan.FlinkQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlQuery;

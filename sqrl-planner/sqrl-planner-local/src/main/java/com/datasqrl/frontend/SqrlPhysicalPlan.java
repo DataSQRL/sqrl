@@ -34,9 +34,4 @@ public class SqrlPhysicalPlan extends SqrlOptimizeDag {
         debuggerConfig, framework, pipeline);
     physicalPlanner = new PhysicalPlanner(framework, errorSink.getErrorSink());
   }
-
-  public PhysicalPlan createPhysicalPlan(PhysicalDAGPlan dag) {
-    PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
-    return physicalPlan;
-  }
 }

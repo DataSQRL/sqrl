@@ -4,7 +4,7 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.schema.SqrlTableFunction;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -146,7 +146,7 @@ public class SchemaInference {
           ((TypeName) fieldDefinition.getType()).getName() : fieldDefinition.getType().toString());
     }
 
-    SqrlTableFunction tableFunction = (SqrlTableFunction)function.getFunction();
+    SqrlTableMacro tableFunction = (SqrlTableMacro)function.getFunction();
 
     //TODO: Validate all fields are there
     RelOptTable table = framework.getCatalogReader().getSqrlTable(List.of(fieldName));
@@ -156,7 +156,6 @@ public class SchemaInference {
           .unwrap(VirtualRelationalTable.class)
           .getSqrlTable();
     } else {
-      System.out.println();
       return framework.getSchema().getRootTables().stream()
           .filter(f->f.getName().getCanonical().equals(fieldName.toLowerCase()))
           .findAny().get();

@@ -590,8 +590,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void invalidShadowRelationshipTest() {
-    validateScriptInvalid(
+  public void replaceRelationshipTest() {
+    validateScript(
         "IMPORT ecommerce-data.Product;\n"
             + "Product.productCopy := JOIN Product;"
             + "Product.productCopy := JOIN Product;");
@@ -634,7 +634,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled //todo: the column gets added to the thing it was pointing at
   public void invalidQueryAssignmentOnRelationshipTest() {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
@@ -642,7 +641,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void invalidShadowJoinDeclarationTest() {
+  public void replaceJoinDeclarationTest() {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;");

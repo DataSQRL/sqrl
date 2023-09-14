@@ -3,6 +3,7 @@
  */
 package com.datasqrl.schema;
 
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.canonicalizer.Name;
@@ -127,11 +128,6 @@ public class UniversalTable {
     }
 
     @Override
-    public FieldKind getKind() {
-      return FieldKind.COLUMN;
-    }
-
-    @Override
     public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
       return null;
     }
@@ -148,11 +144,6 @@ public class UniversalTable {
       super(name, version);
       this.childTable = childTable;
       this.multiplicity = multiplicity;
-    }
-
-    @Override
-    public FieldKind getKind() {
-      return FieldKind.RELATIONSHIP;
     }
 
     @Override
@@ -242,7 +233,7 @@ public class UniversalTable {
     }
 
     public RelDataType withNullable(RelDataType type, boolean nullable) {
-      return TypeUtil.withNullable(typeFactory, type, nullable);
+      return TypeFactory.withNullable(typeFactory, type, nullable);
     }
 
   }
@@ -278,10 +269,10 @@ public class UniversalTable {
     public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
         boolean hasSourceTimestamp) {
       UniversalTable tblBuilder = new UniversalTable(name, path, 1, hasSourceTimestamp);
-      tblBuilder.addColumn(ReservedName.UUID, TypeUtil.makeUuidType(typeFactory, false));
-      tblBuilder.addColumn(ReservedName.INGEST_TIME, TypeUtil.makeTimestampType(typeFactory,false));
+      tblBuilder.addColumn(ReservedName.UUID, TypeFactory.makeUuidType(typeFactory, false));
+      tblBuilder.addColumn(ReservedName.INGEST_TIME, TypeFactory.makeTimestampType(typeFactory,false));
       if (hasSourceTimestamp) {
-        tblBuilder.addColumn(ReservedName.SOURCE_TIME, TypeUtil.makeTimestampType(typeFactory,false));
+        tblBuilder.addColumn(ReservedName.SOURCE_TIME, TypeFactory.makeTimestampType(typeFactory,false));
       }
       return tblBuilder;
     }

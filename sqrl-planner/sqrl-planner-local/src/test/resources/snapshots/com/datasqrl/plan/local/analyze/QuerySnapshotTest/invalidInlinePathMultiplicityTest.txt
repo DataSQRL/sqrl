@@ -1,0 +1,4 @@
+>>>errors
+[FATAL] At line 3, column 20: Table 'joinDeclaration' not found
+in script:<schema>:
+

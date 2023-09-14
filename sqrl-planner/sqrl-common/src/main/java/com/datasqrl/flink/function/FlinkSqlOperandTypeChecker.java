@@ -19,7 +19,7 @@
 package com.datasqrl.flink.function;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.TypeFactory;
+import com.datasqrl.calcite.type.TypeFactory;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlNode;

@@ -25,4 +25,9 @@ public class CheckUtil {
     return new SqrlAstException(label, pos.get(), message.get());
   }
 
+  public static RuntimeException createAstException(ErrorLabel label, SqlNode node,
+                                                    String message) {
+    return new SqrlAstException(label, node.getParserPosition(), message);
+  }
+
 }
