@@ -170,7 +170,6 @@ public class QueryPlanner {
   }
 
   protected RelRoot planRoot(SqlValidator validator, SqlNode sqlNode) {
-    System.out.println(sqlNode);
     sqlNode = validator.validate(sqlNode);
 
     SqlToRelConverter sqlToRelConverter = createSqlToRelConverter(validator);
@@ -439,7 +438,8 @@ public class QueryPlanner {
     List<SqlOperator> result = new ArrayList<>();
     String tableFunctionName = String.join(".", path);
     //get latest function
-    String latestVersionName = SqrlNameMatcher.getLatestVersion(schema.plus().getFunctionNames(), tableFunctionName);
+    String latestVersionName = SqrlNameMatcher.getLatestVersion(framework.getNameCanonicalizer(),
+        schema.plus().getFunctionNames(), tableFunctionName);
     if (latestVersionName == null) {
       //todo return optional
       return null;
@@ -457,12 +457,14 @@ public class QueryPlanner {
   public RelNode expandMacros(RelNode relNode) {
     //Before macro expansion, clean up the rel
     relNode = run(relNode,
-        CoreRules.FILTER_INTO_JOIN,
-        new ExpandTableMacroRule(this),
-        CoreRules.FILTER_INTO_JOIN);
+//        CoreRules.FILTER_INTO_JOIN,
+        new ExpandTableMacroRule(this)
+//        CoreRules.FILTER_INTO_JOIN
+    );
 
     //Convert lateral joins
     relNode = RelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
+    relNode = run(relNode, CoreRules.FILTER_INTO_JOIN);
     return relNode;
   }
 }

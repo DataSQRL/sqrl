@@ -108,8 +108,7 @@ public class Compiler {
     SqrlFramework framework = new SqrlFramework(SqrlRelMetadataProvider.INSTANCE,
         SqrlHintStrategyTable.getHintStrategyTable(), nameCanonicalizer);
 
-    DefaultFunctions functions = new DefaultFunctions(new FlinkConverter(framework.getQueryPlanner().getRexBuilder(),
-        framework.getTypeFactory()));
+    DefaultFunctions functions = new DefaultFunctions();
     functions.getDefaultFunctions()
         .forEach((key, value) -> framework.getSqrlOperatorTable().addFunction(key, value));
 

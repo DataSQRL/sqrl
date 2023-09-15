@@ -88,8 +88,7 @@ public class AbstractTest {
     //Do all the things, get all the queries, execute them all
     SqrlFramework framework = new SqrlFramework(new SqrlRelMetadataProvider(),
         SqrlHintStrategyTable.getHintStrategyTable(), NameCanonicalizer.SYSTEM);
-    DefaultFunctions functions = new DefaultFunctions(new FlinkConverter(framework.getQueryPlanner().getRexBuilder(),
-        framework.getTypeFactory()));
+    DefaultFunctions functions = new DefaultFunctions();
     functions.getDefaultFunctions()
         .forEach((key, value) -> framework.getSqrlOperatorTable().addFunction(key, value));
 

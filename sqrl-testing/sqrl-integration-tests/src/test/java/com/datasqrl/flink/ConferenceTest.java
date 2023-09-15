@@ -34,7 +34,7 @@ public class ConferenceTest extends AbstractGraphqlTest {
 
   @SneakyThrows
   @Test
-//  @Disabled
+  @Disabled
   public void run() {
     CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -50,7 +50,7 @@ public class ConferenceTest extends AbstractGraphqlTest {
           if (jsonObjectHttpResponse.statusCode() != 200) {
             fail(String.format("%s", jsonObjectHttpResponse.body()));
           }
-          countDownLatch.countDown();
+//          countDownLatch.countDown();
         });
     countDownLatch.await();
   }

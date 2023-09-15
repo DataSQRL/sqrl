@@ -1,95 +1,77 @@
 >>>database
-CREATE INDEX IF NOT EXISTS submission$3_btree_c2c18 ON submission$3 USING btree (name,variant$0);
-CREATE INDEX IF NOT EXISTS submission$3_btree_c2c3c18 ON submission$3 USING btree (name,version,variant$0);
-CREATE INDEX IF NOT EXISTS topicpackages$9_hash_c1 ON topicpackages$9 USING hash (topicname);
-CREATE TABLE IF NOT EXISTS keywords$5 (_uuid VARCHAR NOT NULL,_idx BIGINT NOT NULL,name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid,_idx));
-CREATE TABLE IF NOT EXISTS package$7 (name VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (name));
-CREATE TABLE IF NOT EXISTS submission$3 (_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,version VARCHAR NOT NULL,variant VARCHAR ,latest BOOLEAN NOT NULL,type VARCHAR ,license VARCHAR ,repository VARCHAR ,homepage VARCHAR ,documentation VARCHAR ,readme VARCHAR ,description VARCHAR ,uniqueid VARCHAR NOT NULL,file VARCHAR NOT NULL,hash VARCHAR NOT NULL,authorid VARCHAR NOT NULL,submissiontime TIMESTAMPTZ NOT NULL,variant$0 VARCHAR NOT NULL,repourl VARCHAR NOT NULL , PRIMARY KEY (_uuid));
-CREATE TABLE IF NOT EXISTS topicpackages$9 (pkgname VARCHAR NOT NULL,topicname VARCHAR NOT NULL,numsubmissions BIGINT NOT NULL,lastsubmission TIMESTAMPTZ NOT NULL , PRIMARY KEY (pkgname,topicname));
-CREATE TABLE IF NOT EXISTS topicsearch$11 (topicname VARCHAR NOT NULL,numpackages BIGINT NOT NULL,submissiontime TIMESTAMPTZ NOT NULL , PRIMARY KEY (topicname));
+CREATE INDEX IF NOT EXISTS submission$3_btree_c2c18 ON submission$3 USING btree (name$0,variant$5);
+CREATE INDEX IF NOT EXISTS submission$3_btree_c2c3c18 ON submission$3 USING btree (name$0,version$0,variant$5);
+CREATE INDEX IF NOT EXISTS topicpackages$19_hash_c1 ON topicpackages$19 USING hash (topicname$0);
+CREATE TABLE IF NOT EXISTS keywords$8 (_uuid$0 VARCHAR NOT NULL,_idx$0 BIGINT NOT NULL,name$0 VARCHAR NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid$0,_idx$0));
+CREATE TABLE IF NOT EXISTS package$12 (name$0 VARCHAR NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (name$0));
+CREATE TABLE IF NOT EXISTS submission$3 (_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,name$0 VARCHAR NOT NULL,version$0 VARCHAR NOT NULL,variant$0 VARCHAR ,latest$0 BOOLEAN NOT NULL,type$0 VARCHAR ,license$0 VARCHAR ,repository$0 VARCHAR ,homepage$0 VARCHAR ,documentation$0 VARCHAR ,readme$0 VARCHAR ,description$0 VARCHAR ,uniqueid$0 VARCHAR NOT NULL,file$0 VARCHAR NOT NULL,hash$0 VARCHAR NOT NULL,authorid$0 VARCHAR NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL,variant$5 VARCHAR NOT NULL,repourl$6 VARCHAR NOT NULL , PRIMARY KEY (_uuid$0));
+CREATE TABLE IF NOT EXISTS topicpackages$19 (pkgname$0 VARCHAR NOT NULL,topicname$0 VARCHAR NOT NULL,numsubmissions$0 BIGINT NOT NULL,lastsubmission$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (pkgname$0,topicname$0));
+CREATE TABLE IF NOT EXISTS topicsearch$24 (topicname$0 VARCHAR NOT NULL,numpackages$0 BIGINT NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (topicname$0));
 >>>query-latest
 {
   "errors" : [ {
-    "message" : "The field at path '/Package[0]/latest/variant' was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is 'String' within parent type 'Submission'",
-    "path" : [ "Package", 0, "latest", "variant" ],
-    "extensions" : {
-      "classification" : "NullValueInNonNullableField"
-    }
-  } ],
-  "data" : {
-    "Package" : [ {
-      "latest" : null
-    } ]
-  }
-}
->>>query-topicpkg
-{
-  "errors" : [ {
-    "message" : "The field at path '/TopicPackages[0]/latest/variant' was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is 'String' within parent type 'Submission'",
-    "path" : [ "TopicPackages", 0, "latest", "variant" ],
-    "extensions" : {
-      "classification" : "NullValueInNonNullableField"
-    }
-  }, {
-    "message" : "The field at path '/TopicPackages[1]/latest/variant' was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is 'String' within parent type 'Submission'",
-    "path" : [ "TopicPackages", 1, "latest", "variant" ],
-    "extensions" : {
-      "classification" : "NullValueInNonNullableField"
-    }
-  }, {
-    "message" : "The field at path '/TopicPackages[2]/latest/variant' was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is 'String' within parent type 'Submission'",
-    "path" : [ "TopicPackages", 2, "latest", "variant" ],
-    "extensions" : {
-      "classification" : "NullValueInNonNullableField"
-    }
-  } ],
-  "data" : {
-    "TopicPackages" : [ {
-      "topicName" : "example",
-      "pkgName" : "datasqrl.example.clickstream",
-      "lastSubmission" : "2023-05-03T23:08:29.755Z",
-      "numSubmissions" : 1,
-      "latest" : null
-    }, {
-      "topicName" : "example",
-      "pkgName" : "datasqrl.example.sensors",
-      "lastSubmission" : "2023-05-03T23:09:08.884Z",
-      "numSubmissions" : 1,
-      "latest" : null
-    }, {
-      "topicName" : "example",
-      "pkgName" : "datasqrl.seedshop",
-      "lastSubmission" : "2023-05-03T23:07:49.786Z",
-      "numSubmissions" : 1,
-      "latest" : null
-    } ]
-  }
-}
->>>query-topics
-{
-  "data" : {
-    "TopicSearch" : [ {
-      "topicName" : "example",
-      "numPackages" : 3
-    } ]
-  }
-}
->>>query-versions
-{
-  "errors" : [ {
-    "message" : "Exception while fetching data (/Package[0]/versions) : The number of parameters to execute should be consistent with the expected number of parameters = [2] but the actual number is [3].",
+    "message" : "Exception while fetching data (/Package) : Could not find query: {name=datasqrl.seedshop, limit=10, offset=0}",
     "locations" : [ {
-      "line" : 3,
-      "column" : 5
+      "line" : 2,
+      "column" : 1
     } ],
-    "path" : [ "Package", 0, "versions" ],
+    "path" : [ "Package" ],
     "extensions" : {
       "classification" : "DataFetchingException"
     }
   } ],
   "data" : {
-    "Package" : [ {
-      "versions" : null
-    } ]
+    "Package" : null
+  }
+}
+>>>query-topicpkg
+{
+  "errors" : [ {
+    "message" : "Exception while fetching data (/TopicPackages) : Could not find query: {topicName=example, limit=10, offset=0}",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 1
+    } ],
+    "path" : [ "TopicPackages" ],
+    "extensions" : {
+      "classification" : "DataFetchingException"
+    }
+  } ],
+  "data" : {
+    "TopicPackages" : null
+  }
+}
+>>>query-topics
+{
+  "errors" : [ {
+    "message" : "Exception while fetching data (/TopicSearch) : Could not find query: {topicName=example, limit=10, offset=0}",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 1
+    } ],
+    "path" : [ "TopicSearch" ],
+    "extensions" : {
+      "classification" : "DataFetchingException"
+    }
+  } ],
+  "data" : {
+    "TopicSearch" : null
+  }
+}
+>>>query-versions
+{
+  "errors" : [ {
+    "message" : "Exception while fetching data (/Package) : Could not find query: {name=datasqrl.seedshop, limit=10, offset=0}",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 1
+    } ],
+    "path" : [ "Package" ],
+    "extensions" : {
+      "classification" : "DataFetchingException"
+    }
+  } ],
+  "data" : {
+    "Package" : null
   }
 }

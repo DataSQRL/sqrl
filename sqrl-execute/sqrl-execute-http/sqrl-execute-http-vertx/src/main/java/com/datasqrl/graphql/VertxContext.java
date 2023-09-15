@@ -57,7 +57,9 @@ public class VertxContext implements Context {
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
       if (resolvedQuery == null) {
-        throw new RuntimeException("Could not find query: " + env.getArguments());
+        System.out.println("Could not find query: " + env.getArguments());
+        fut.fail("Could not find query: " + env.getArguments());
+        return;
       }
       //Execute
       QueryExecutionContext context = new VertxQueryExecutionContext(this,

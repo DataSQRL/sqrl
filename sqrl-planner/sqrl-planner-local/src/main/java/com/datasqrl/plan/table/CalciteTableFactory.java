@@ -301,9 +301,10 @@ public class CalciteTableFactory {
       }
     }
     //Add parent relationship if not overwriting column
-    if (vParent.isPresent()) {
+    if (sqrlParent.isPresent()) {
       //override field
-      Relationship relationship = createParent(builder.getPath(), sqrlParent.get(), vParent.get(), tbl, vTable);
+      Relationship relationship = createParent(builder.getPath(), sqrlParent.get(),
+          (VirtualRelationalTable) sqrlParent.get().getVt(), tbl, vTable);
       tbl.addRelationship(relationship);
       framework.getSchema().addRelationship(relationship);
     }

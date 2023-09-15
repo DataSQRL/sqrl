@@ -136,7 +136,6 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       Preconditions.checkArgument(vtOpt.isPresent(), "No such table: %s", tableName);
       VirtualRelationalTable vt = vtOpt.get();
       RelNode rel = planner.createRelBuilder().scan(vt.getNameId()).build();
-      System.out.println("Testing: " + planner.getFramework().getQueryPlanner().relToString(Dialect.CALCITE, rel));
       apiManager.addQuery(new APIQuery(tableName, rel));
     }
 

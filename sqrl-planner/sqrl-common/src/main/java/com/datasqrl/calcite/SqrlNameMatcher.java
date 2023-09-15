@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,11 +54,12 @@ public class SqrlNameMatcher implements SqlNameMatcher {
       return f;
     }
 
-    String name = getLatestVersion(relDataType.getFieldNames(), s);
+    String name = getLatestVersion(canonicalizer, relDataType.getFieldNames(), s);
     if (name == null) {
       return null;
     }
-    return relDataType.getField(name, false, false);
+    int i = indexOf(relDataType.getFieldNames(), name);
+    return relDataType.getFieldList().get(i);
   }
 
   @Override
@@ -69,7 +71,7 @@ public class SqrlNameMatcher implements SqlNameMatcher {
       return n.indexOf(name);
     }
 
-    String versioned = getLatestVersion(n, name);
+    String versioned = getLatestVersion(canonicalizer, n, name);
 
     return n.indexOf(versioned);
   }
@@ -85,24 +87,29 @@ public class SqrlNameMatcher implements SqlNameMatcher {
   }
 
 
-  public static String getLatestVersion(Collection<String> functionNames, String prefix) {
+  public static String getLatestVersion(NameCanonicalizer canonicalizer, Collection<String> functionNames, String prefix) {
     //todo: use name comparator
-    Set<String> functionNamesCanon = functionNames.stream().map(f-> Name.system(f).getCanonical())
+    Set<String> functionNamesCanon = functionNames.stream()
+        .map(f-> canonicalizer.name(f).getCanonical())
         .collect(Collectors.toSet());
-    String prefixCanon = Name.system(prefix).getCanonical();
+    String prefixCanon = canonicalizer.name(prefix).getCanonical();
 
     Pattern pattern = Pattern.compile("^"+Pattern.quote(prefixCanon) + "\\$(\\d+)");
     int maxVersion = -1;
 
+    String name = null;
     for (String function : functionNamesCanon) {
       Matcher matcher = pattern.matcher(function);
       if (matcher.find()) {
         int version = Integer.parseInt(matcher.group(1));
         maxVersion = Math.max(maxVersion, version);
+        if (maxVersion == version) {
+          name = matcher.group();
+        }
       }
     }
 
-    return maxVersion != -1 ? prefix + "$" + maxVersion : null;
+    return maxVersion != -1 ? name : null;
   }
 
   public static int getNextVersion(Collection<String> functionNames, String prefix) {

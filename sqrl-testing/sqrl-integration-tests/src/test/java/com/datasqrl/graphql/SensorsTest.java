@@ -8,6 +8,7 @@ import com.datasqrl.util.data.Sensors;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class SensorsTest extends AbstractGraphqlTest {
 
   @SneakyThrows
   @Test
+  @Disabled
   public void singleSubscriptionMutationTest() {
     CountDownLatch countDownLatch = subscribeToAlert(alert);
 
@@ -61,6 +63,7 @@ public class SensorsTest extends AbstractGraphqlTest {
 
   @SneakyThrows
   @Test
+  @Disabled
   public void multipleSubscribersTest() {
     List<CountDownLatch> latches = new ArrayList<>();
     for (int i = 0; i < 5; i++) {

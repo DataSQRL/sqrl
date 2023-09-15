@@ -3,6 +3,9 @@
  */
 package com.datasqrl.plan.util;
 
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.flink.FlinkConverter;
+import com.datasqrl.functions.DefaultFunctions;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import lombok.Value;
@@ -143,7 +146,7 @@ public class TimePredicate {
           if (useCurrentTime) {
               return rexBuilder.makeCall(SqlStdOperatorTable.CURRENT_TIMESTAMP);
           } else {
-              return rexBuilder.makeCall(FlinkSqlOperatorTable.NOW);
+              return rexBuilder.makeCall(DefaultFunctions.NOW);
           }
       }
     throw new UnsupportedOperationException("Invalid index: " + index);

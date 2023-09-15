@@ -5,6 +5,8 @@ package com.datasqrl.util;
 
 import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.functions.DefaultFunctions;
+import com.datasqrl.functions.TimeFunctions;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
@@ -188,7 +190,7 @@ public class SqrlRexUtil {
   }
 
   public static boolean isNOW(SqlOperator operator) {
-    return operator.equals(FlinkSqlOperatorTable.NOW);
+    return operator.equals(DefaultFunctions.NOW);
   }
 
   public static RexFinder findFunction(SqrlFunction operator) {

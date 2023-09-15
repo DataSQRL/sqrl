@@ -249,5 +249,10 @@ public class SqlBuilders {
       }
       return this;
     }
+
+    public SqlSelectBuilder clearHints() {
+      select.setHints(SqlNodeList.EMPTY);
+      return this;
+    }
   }
 }

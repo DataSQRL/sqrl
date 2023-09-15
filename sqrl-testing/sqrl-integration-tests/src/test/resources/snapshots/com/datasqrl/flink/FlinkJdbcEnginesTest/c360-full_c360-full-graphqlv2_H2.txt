@@ -1,24 +1,16 @@
 >>>database
-CREATE INDEX IF NOT EXISTS "product$16_hash_c5" ON "product$16" USING hash ("category");
-CREATE TABLE IF NOT EXISTS "category$14" ("name" CHARACTER VARYING NOT NULL,"updatetime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
-CREATE TABLE IF NOT EXISTS "customer$12" ("customerid" BIGINT NOT NULL,"_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"email" CHARACTER VARYING NOT NULL,"name" CHARACTER VARYING NOT NULL,"lastupdated" BIGINT NOT NULL,"updatetime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "favorite_categories$24" ("__customerid$pk$1" BIGINT NOT NULL,"category_name" CHARACTER VARYING NOT NULL,"total" DOUBLE PRECISION NOT NULL,"month" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$pk$1","category_name"));
-CREATE TABLE IF NOT EXISTS "order_again$20" ("__customerid$pk$1" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"num_orders" BIGINT NOT NULL,"most_recent" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$pk$1","productid"));
-CREATE TABLE IF NOT EXISTS "product$16" ("productid" BIGINT NOT NULL,"_uuid" CHARACTER VARYING NOT NULL,"_ingest_time" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"name" CHARACTER VARYING NOT NULL,"description" CHARACTER VARYING NOT NULL,"category" CHARACTER VARYING NOT NULL,"updatetime" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("productid"));
+CREATE INDEX IF NOT EXISTS "product$23_hash_c5" ON "product$23" USING hash ("category$0");
+CREATE TABLE IF NOT EXISTS "category$20" ("name$0" CHARACTER VARYING NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name$0"));
+CREATE TABLE IF NOT EXISTS "customer$17" ("customerid$0" BIGINT NOT NULL,"_uuid$0" CHARACTER VARYING NOT NULL,"_ingest_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"email$0" CHARACTER VARYING NOT NULL,"name$0" CHARACTER VARYING NOT NULL,"lastupdated$0" BIGINT NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid$0"));
+CREATE TABLE IF NOT EXISTS "favorite_categories$44" ("__customerid$0" BIGINT NOT NULL,"category_name$0" CHARACTER VARYING NOT NULL,"total$0" DOUBLE PRECISION NOT NULL,"month$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$0","category_name$0"));
+CREATE TABLE IF NOT EXISTS "order_again$36" ("__customerid$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"quantity$0" BIGINT NOT NULL,"num_orders$0" BIGINT NOT NULL,"most_recent$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$0","productid$0"));
+CREATE TABLE IF NOT EXISTS "product$23" ("productid$0" BIGINT NOT NULL,"_uuid$0" CHARACTER VARYING NOT NULL,"_ingest_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"name$0" CHARACTER VARYING NOT NULL,"description$0" CHARACTER VARYING NOT NULL,"category$0" CHARACTER VARYING NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("productid$0"));
 >>>query-category
 {
   "data" : {
     "Category" : [ {
       "name" : "Decoration",
-      "products" : [ {
-        "name" : "Aachen Snow Globe",
-        "productid" : 7235,
-        "description" : "Picturesque city in a beautiful snow globe"
-      }, {
-        "name" : "Original German Nutcracker 3ft",
-        "productid" : 8757,
-        "description" : "Hand-made nutcracker is the perfect Christmas decoration"
-      } ]
+      "products" : [ ]
     } ]
   }
 }
@@ -28,30 +20,8 @@ CREATE TABLE IF NOT EXISTS "product$16" ("productid" BIGINT NOT NULL,"_uuid" CHA
     "Customer" : [ {
       "email" : "emily.ludies@hotmail.com",
       "name" : "Emily F. Ludies",
-      "order_again" : [ {
-        "productid" : 1332,
-        "quantity" : 8,
-        "num_orders" : 1
-      }, {
-        "productid" : 3571,
-        "quantity" : 2,
-        "num_orders" : 2
-      } ],
-      "favorite_categories" : [ {
-        "category_name" : "Personal Care",
-        "total" : 146.82,
-        "category" : [ {
-          "products" : [ {
-            "name" : "Heavy Duty Butt Wipes",
-            "productid" : 1332,
-            "description" : "Wipes for hardiest of messes"
-          }, {
-            "name" : "Poptech Blow 500",
-            "productid" : 3571,
-            "description" : "High powered blowdryer for any hair"
-          } ]
-        } ]
-      } ]
+      "order_again" : [ ],
+      "favorite_categories" : [ ]
     } ]
   }
 }

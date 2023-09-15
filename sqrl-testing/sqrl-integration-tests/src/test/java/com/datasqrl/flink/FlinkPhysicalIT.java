@@ -159,8 +159,8 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   public void filterTest() {
     ScriptBuilder builder = example.getImports();
 
-    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 999 DAYS");
-    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 SECOND");
+    builder.add("HistoricOrders := SELECT * FROM Orders WHERE time >= now() - INTERVAL 999 DAYS");
+    builder.add("RecentOrders := SELECT * FROM Orders WHERE time >= now() - INTERVAL 1 SECOND");
 
     validateTables(builder.getScript(), "historicorders", "recentorders");
   }

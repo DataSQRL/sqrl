@@ -1,20 +1,11 @@
 >>>import
-[FATAL] Could not resolve import [ecommerce-data.Customerrr]
-in script:test.sqrl [1:8]:
-IMPORT ecommerce-data.Customerrr
--------^
 
 >>>export
-[FATAL] Could not resolve import [ecommerce-data.Customerrr]
-in script:test.sqrl [1:8]:
-IMPORT ecommerce-data.Customerrr
--------^
-
-[FATAL] Cannot resolve table sink: outputt.customer
-in script:test.sqrl [2:20]:
+[FATAL] Cannot resolve table sink: [outputt, customer]
+in script:<schema> [2:1]:
 IMPORT ecommerce-data.Customer;
 EXPORT Customer TO outputt.customer;
--------------------^
+^
 The sink used in an `EXPORT` statement or for debugging cannot
 be found.
 

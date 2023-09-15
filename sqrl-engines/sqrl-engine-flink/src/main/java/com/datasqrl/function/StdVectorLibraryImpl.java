@@ -4,6 +4,7 @@ import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform;
 import com.datasqrl.calcite.function.RuleTransform;
+import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.canonicalizer.NamePath;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.plan.RelRule;
@@ -39,10 +40,10 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
   }
 
   public static class CosineDistance extends ScalarFunction implements SqrlFunction, RuleTransform {
-    public double eval(double[] vectorA, double[] vectorB) {
+    public double eval(VectorType vectorA, VectorType vectorB) {
       // Create RealVectors from the input arrays
-      RealVector vA = new ArrayRealVector(vectorA, false);
-      RealVector vB = new ArrayRealVector(vectorB, false);
+      RealVector vA = new ArrayRealVector(vectorA.getVector(), false);
+      RealVector vB = new ArrayRealVector(vectorB.getVector(), false);
 
       // Calculate the cosine similarity
       double dotProduct = vA.dotProduct(vB);
@@ -65,7 +66,7 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
   }
 
   public static class CosineSimilarity extends ScalarFunction implements SqrlFunction, RuleTransform {
-    public double eval(double[] vectorA, double[] vectorB) {
+    public double eval(VectorType vectorA, VectorType vectorB) {
       return 1 - new CosineDistance().eval(vectorA, vectorB);
     }
 
@@ -84,10 +85,10 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
   }
 
   public static class EuclideanDistance extends ScalarFunction implements SqrlFunction, RuleTransform {
-    public double eval(double[] vectorA, double[] vectorB) {
+    public double eval(VectorType vectorA, VectorType vectorB) {
       // Create RealVectors from the input arrays
-      RealVector vA = new ArrayRealVector(vectorA, false);
-      RealVector vB = new ArrayRealVector(vectorB, false);
+      RealVector vA = new ArrayRealVector(vectorA.getVector(), false);
+      RealVector vB = new ArrayRealVector(vectorB.getVector(), false);
 
       return vA.getDistance(vB);
     }

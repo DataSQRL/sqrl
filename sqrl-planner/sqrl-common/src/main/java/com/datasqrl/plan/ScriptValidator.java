@@ -214,8 +214,14 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlAssignment assignment, Void context) {
     if (assignment.getIdentifier().names.size() > 1) {
-      TableFunction function = framework.getQueryPlanner()
-          .getTableFunction(SqrlListUtil.popLast(assignment.getIdentifier().names)).getFunction();
+      List<String> path = SqrlListUtil.popLast(assignment.getIdentifier().names);
+      SqlUserDefinedTableFunction tableFunction = framework.getQueryPlanner()
+          .getTableFunction(path);
+      if (tableFunction == null) {
+        addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Could not find table: %s", String.join(".", path));
+        return null;
+      }
+      TableFunction function = tableFunction.getFunction();
       if (function instanceof Relationship && ((Relationship) function).getJoinType() != JoinType.CHILD) {
         addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Cannot assign query to table");
       }
@@ -406,7 +412,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           SqlNode join = addSelfTableAsJoin(node.getLeft());
           return new SqlJoinBuilder(node)
               .setLeft(join)
-              .setRight(node)
+              .setRight(node.getRight())
               .build();
         }
 
@@ -1050,7 +1056,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     rexNode
         .filter(r->!(r instanceof RexInputRef))
         .ifPresent(r->{
-          if (node.getAlias().isEmpty()) {
+          if (node.getTimestampAlias().isEmpty()) {
             addError(ErrorLabel.GENERIC, node.getTimestamp(), "Alias must be specified for expression timestamps");
           }
         });

@@ -193,22 +193,21 @@ public class SchemaBuilder implements
       for (FunctionParameter p : op.getFunction().getParameters()) {
         SqrlFunctionParameter parameter = (SqrlFunctionParameter) p;
         //check parameter is in the arg list, if so then dynamic param
-        String paramName = parameter.getName().substring(1);
         InputValueDefinition def;
         if (parameter.isInternal()) {
 //          int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), paramName);
 //          Preconditions.checkState(fieldIndex != -1);
 //          String fieldName = builder.peek().getRowType().getFieldNames().get(fieldIndex);
 
-          queryParams.parameter(new SourceParameter(paramName+"$0")); //todo get lhs
-        } else if ((def = matcher.get(argMap, List.<String>of(), List.of(paramName))) != null) {
+          queryParams.parameter(new SourceParameter(parameter.getName())); //todo get lhs
+        } else if ((def = matcher.get(argMap, List.<String>of(), List.of(parameter.getName()))) != null) {
           argMap.remove(List.of(def.getName()));
 
 //          int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), p.getName());
 //          Preconditions.checkState(fieldIndex != -1);
 //          String fieldName = builder.peek().getRowType().getFieldNames().get(fieldIndex);
 
-          queryParams.parameter(new ArgumentParameter(paramName));
+          queryParams.parameter(new ArgumentParameter(parameter.getName()));
           matchSet.argument(new VariableArgument(def.getName(), null));
             //param found,
         } else {

@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -149,11 +150,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     Pair<List<FunctionParameter>, SqlNode> rewritten = extractSelfArgs(parameters,
         materializeSelf, result.getSqlNode());
     parameters = rewritten.getLeft();
-    System.out.println(rewritten.getRight());
 
     RelNode relNode = planner.plan(Dialect.CALCITE, rewritten.getRight());
-    System.out.println(relNode.explain());
     RelNode expanded = planner.expandMacros(relNode);
+    System.out.println(planner.relToString(Dialect.CALCITE, expanded));
     System.out.println(expanded.explain());
     final Optional<SqlNode> sql;
     if (!materializeSelf) {
@@ -334,15 +334,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       Result result = SqlNodeVisitor.accept(this, call.getFrom(), newContext);
 
       //retain distinct hint too
-      /**
-//       SELECT
-//       /*+ `DISTINCT_ON`(`0`) */
-//*
-//      FROM (SELECT `customerid`, `Customer`.`_uuid` AS `_uuid`, `Customer`.`_ingest_time` AS `_ingest_time`, `Customer`.`email` AS `email`, `Customer`.`name` AS `name`, `Customer`.`lastupdated` AS `lastUpdated`
-//      FROM `customer$10` AS `Customer`
-//      ORDER BY `Customer`.`_ingest_time` DESC
-//      FETCH NEXT 1 ROWS ONLY)
-//       */
       if (isDistinctOnHintPresent(call)) {
         //1. get table, distinct on
         List<Integer> hintOps = IntStream.range(0, call.getSelectList().size())
@@ -361,7 +352,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
         List<Column> columns = planner.getCatalogReader().getSqrlTable(result.getCurrentPath())
             .unwrap(ModifiableSqrlTable.class)
-            .getSqrlTable().getFields().getColumns(true);
+            .getSqrlTable().getFields().getColumns();
 
         for (Column column : columns) {
           if (!fieldNames.contains(column.getName().getCanonical())) {
@@ -369,8 +360,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           }
         }
 
-        sqlSelectBuilder.setSelectList(selectList);
-        //todo: wrap in select again?
+        sqlSelectBuilder.setSelectList(selectList)
+            .clearHints()
+        ;
         SqlSelect top = new SqlSelectBuilder()
             .setFrom(sqlSelectBuilder.build())
             .setDistinctOnHint(hintOps)

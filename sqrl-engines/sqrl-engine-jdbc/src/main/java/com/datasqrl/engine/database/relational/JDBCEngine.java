@@ -12,6 +12,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.engine.database.relational.ddl.PostgresCreateVectorExtensionStatement;
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
@@ -33,7 +34,6 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -119,11 +119,15 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         (new JdbcDDLServiceLoader()).load(connector.getDialect())
             .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
+
     List<SqlDDLStatement> ddlStatements = StreamUtil.filterByClass(inputs,
             EngineSink.class)
         .map(factory::createTable)
         .collect(Collectors.toList());
-
+    if (connector.getDialect().equalsIgnoreCase("postgres")) {
+      ddlStatements = new ArrayList<>(ddlStatements);
+//      ddlStatements.add(new PostgresCreateVectorExtensionStatement());
+    }
     dbPlan.getIndexDefinitions().stream()
             .map(factory::createIndex)
             .forEach(ddlStatements::add);

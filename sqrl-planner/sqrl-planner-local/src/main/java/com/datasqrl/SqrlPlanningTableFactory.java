@@ -58,6 +58,11 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
         input, setFieldNames, framework.getQueryPlanner().getRelBuilder(),
         opHints, ErrorCollector.root());
 
+    System.out.println("INPUT: " + input.explain());
+    System.out.println("INPUT: " + input.getRowType());
+    System.out.println("CONVR: " + analyzedLP.getConvertedRelnode().getRelNode().explain());
+    System.out.println("CONVR: " + analyzedLP.getConvertedRelnode().getRelNode().getRowType());
+
     NamePath names = nameUtil.toNamePath(path);
 
     Optional<SQRLTable> parent = Optional.empty();

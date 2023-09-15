@@ -1,12 +1,12 @@
 >>>customer-hasTimestamp
-Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, customerid: Long, email: String, name: String, lastupdated: Long)
+Row(_uuid$0: String, _ingest_time$0: Instant, _source_time$0: Instant, customerid$0: Long, email$0: String, name$0: String, lastupdated$0: Long)
 >>>customer
-Row(_uuid: String, _ingest_time: Instant, customerid: Long, email: String, name: String, lastupdated: Long)
+Row(_uuid$0: String, _ingest_time$0: Instant, customerid$0: Long, email$0: String, name$0: String, lastupdated$0: Long)
 >>>orders-hasTimestamp
-Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, id: Long, customerid: Long, time: Instant, entries: ObjectArrayTypeInfo<Row(_idx: Integer, productid: Long, quantity: Long, unit_price: Double, discount: Double)>)
+Row(_uuid$0: String, _ingest_time$0: Instant, _source_time$0: Instant, id$0: Long, customerid$0: Long, time$0: Instant, entries$0: ObjectArrayTypeInfo<Row(_idx$0: Integer, productid$0: Long, quantity$0: Long, unit_price$0: Double, discount$0: Double)>)
 >>>orders
-Row(_uuid: String, _ingest_time: Instant, id: Long, customerid: Long, time: Instant, entries: ObjectArrayTypeInfo<Row(_idx: Integer, productid: Long, quantity: Long, unit_price: Double, discount: Double)>)
+Row(_uuid$0: String, _ingest_time$0: Instant, id$0: Long, customerid$0: Long, time$0: Instant, entries$0: ObjectArrayTypeInfo<Row(_idx$0: Integer, productid$0: Long, quantity$0: Long, unit_price$0: Double, discount$0: Double)>)
 >>>product-hasTimestamp
-Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, productid: Long, name: String, description: String, category: String)
+Row(_uuid$0: String, _ingest_time$0: Instant, _source_time$0: Instant, productid$0: Long, name$0: String, description$0: String, category$0: String)
 >>>product
-Row(_uuid: String, _ingest_time: Instant, productid: Long, name: String, description: String, category: String)
+Row(_uuid$0: String, _ingest_time$0: Instant, productid$0: Long, name$0: String, description$0: String, category$0: String)
