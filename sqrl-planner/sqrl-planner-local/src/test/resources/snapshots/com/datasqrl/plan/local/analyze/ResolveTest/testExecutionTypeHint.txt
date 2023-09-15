@@ -1,6 +1,6 @@
 >>>customeragg1$q$5-lp-STREAM
-LogicalProject(customerid=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time$0=[$1])
-  LogicalFilter(condition=[>($1, -(now(), 3600000:INTERVAL HOUR(1)))])
+LogicalProject(customerid=[$1], num=[$2], _ingest_time$0=[$0])
+  LogicalAggregate(group=[{1, 2}], num=[COUNT()]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
     LogicalTableScan(table=[[customer$q$2]])
 
 >>>customeragg1$q$5-lp-DATABASE
@@ -8,7 +8,7 @@ LogicalProject(customerid=[$0], num=[$1], _ingest_time$0=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
     LogicalProject(customerid$0=[$0], num=[$1], _ingest_time$0=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(customerid$0=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time$0=[$1])
-        LogicalFilter(condition=[>($1, -(now(), 3600000:INTERVAL HOUR(1)))])
+        LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
           LogicalTableScan(table=[[customer$3]])
 
 >>>customeragg2$q$8-lp-DATABASE
@@ -16,11 +16,11 @@ LogicalProject(customerid=[$0], num=[$1], _ingest_time$0=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
     LogicalProject(customerid$0=[$0], num=[$1], _ingest_time$0=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(customerid$0=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time$0=[$1])
-        LogicalFilter(condition=[>($1, -(now(), 3600000:INTERVAL HOUR(1)))])
+        LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
           LogicalTableScan(table=[[customer$3]])
 
 >>>customeragg3$q$11-lp-STREAM
-LogicalProject(customerid=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time$0=[$1])
-  LogicalFilter(condition=[>($1, -(now(), 3600000:INTERVAL HOUR(1)))])
+LogicalProject(customerid=[$1], num=[$2], _ingest_time$0=[$0])
+  LogicalAggregate(group=[{1, 2}], num=[COUNT()]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
     LogicalTableScan(table=[[customer$q$2]])
 

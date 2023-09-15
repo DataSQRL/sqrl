@@ -200,14 +200,15 @@ public class SchemaBuilder implements
 //          String fieldName = builder.peek().getRowType().getFieldNames().get(fieldIndex);
 
           queryParams.parameter(new SourceParameter(parameter.getName())); //todo get lhs
-        } else if ((def = matcher.get(argMap, List.<String>of(), List.of(parameter.getName()))) != null) {
+        } else if ((def = matcher.get(argMap, List.<String>of(),
+            List.of(parameter.getName().substring(1)))) != null) {
           argMap.remove(List.of(def.getName()));
 
 //          int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), p.getName());
 //          Preconditions.checkState(fieldIndex != -1);
 //          String fieldName = builder.peek().getRowType().getFieldNames().get(fieldIndex);
 
-          queryParams.parameter(new ArgumentParameter(parameter.getName()));
+          queryParams.parameter(new ArgumentParameter(parameter.getName().substring(1)));
           matchSet.argument(new VariableArgument(def.getName(), null));
             //param found,
         } else {
