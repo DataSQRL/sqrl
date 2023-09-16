@@ -1,0 +1,8 @@
+>>>errors
+[FATAL] Cannot assign query to table
+in script:<schema> [3:1]:
+IMPORT ecommerce-data.Product;
+Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
+Product.joinDeclaration.column := 1;
+^
+

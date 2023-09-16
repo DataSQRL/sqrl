@@ -10,22 +10,22 @@ import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 public class CatalogReader extends CalciteCatalogReader {
 
   @Getter
   private final SqrlSchema schema;
+  private final SqrlNameMatcher matcher;
 
   public CatalogReader(SqrlSchema rootSchema, RelDataTypeFactory typeFactory, CalciteConnectionConfig config,
-      SqrlNameMatcher nameMatcher) {
+      SqlNameMatcher nameMatcher, SqrlNameMatcher matcher) {
     super(rootSchema, nameMatcher, ImmutableList.of(List.of(), ImmutableList.of()), typeFactory, config);
     this.schema = rootSchema;
+    this.matcher = matcher;
   }
 
-  /**
-   * Returns a SQRL preparing table, with fields shadowed
-   */
   public RelOptTable getSqrlTable(List<String> names) {
     List<String> absolutePath = getSqrlAbsolutePath(names);
     Map<List<String>, String> collect = schema.getSqrlTables().stream()

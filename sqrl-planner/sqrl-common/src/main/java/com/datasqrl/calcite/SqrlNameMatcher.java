@@ -111,25 +111,4 @@ public class SqrlNameMatcher implements SqlNameMatcher {
 
     return maxVersion != -1 ? name : null;
   }
-
-  public static int getNextVersion(Collection<String> functionNames, String prefix) {
-    //todo: use name comparator
-    Set<String> functionNamesCanon = functionNames.stream().map(f-> Name.system(f).getCanonical())
-        .collect(Collectors.toSet());
-    String prefixCanon = Name.system(prefix).getCanonical();
-
-    Pattern pattern = Pattern.compile("^"+Pattern.quote(prefixCanon) + "\\$(\\d+)");
-    int maxVersion = -1;
-
-    for (String function : functionNamesCanon) {
-      Matcher matcher = pattern.matcher(function);
-      if (matcher.find()) {
-        int version = Integer.parseInt(matcher.group(1));
-        maxVersion = Math.max(maxVersion, version);
-      }
-    }
-
-    return maxVersion != -1 ? maxVersion + 1 : 0;
-  }
-
 }

@@ -1,0 +1,11 @@
+{
+  "type" : "source_and_sink",
+  "connector" : {
+    "name" : "kafka",
+    "bootstrap.servers" : "localhost:59058",
+    "prefix" : "example."
+  },
+  "format" : {
+    "name" : "json"
+  }
+}

@@ -1,0 +1,56 @@
+type Category {
+  name: String!
+  products: [Product!]
+}
+
+type Customer {
+  customerid: Int!
+  email: String!
+  name: String!
+  lastupdated: Int!
+  updatetime: String!
+  orders: [Orders!]
+}
+
+type Orders {
+  id: Int!
+  customerid: Int!
+  time: String!
+  entries: [entries!]
+  total: [total!]
+  parent: Customer!
+}
+
+type Product {
+  productid: Int!
+  name: String!
+  description: String!
+  category: String!
+  updatetime: String!
+  parent: entries!
+}
+
+type Query {
+  Orders(id: Int, customerid: Int, time: String): [Orders!]
+  Customer(customerid: Int, email: String, name: String, lastupdated: Int, updatetime: String): [Customer!]
+  Category(name: String): [Category!]
+  Product(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
+}
+
+type entries {
+  productid: Int!
+  quantity: Int!
+  unit_price: Float!
+  parent: Orders!
+  discount: Float!
+  total: Float!
+  product: [Product!]
+}
+
+type total {
+  price: Float!
+  discount: Float!
+  num: Int!
+  parent: Orders!
+}
+

@@ -105,17 +105,21 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
   @Override
   public Object visitSourceParameter(SourceParameter sourceParameter,
       QueryExecutionContext context) {
-    return context.getContext().createPropertyFetcher(sourceParameter.getKey())
+    Object o = context.getContext().createPropertyFetcher(sourceParameter.getKey())
         .get(context.getEnvironment());
+
+    return o;
   }
 
   @Override
   public Object visitArgumentParameter(ArgumentParameter argumentParameter,
       QueryExecutionContext context) {
-    return context.getArguments().stream()
+    Object o = context.getArguments().stream()
         .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
         .findFirst()
         .map(f -> f.getValue())
         .orElse(null);
+
+    return o;
   }
 }

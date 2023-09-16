@@ -1,4 +1,18 @@
-type Product {
+interface Product {
+  productid: Int
+  name: String
+  description: String
+  category: String
+}
+
+type ProductSearch implements Product {
+  productid: Int
+  name: String
+  description: String
+  category: String
+}
+
+type ProductSearchWithId implements Product {
   productid: Int
   name: String
   description: String
@@ -6,7 +20,7 @@ type Product {
 }
 
 type Query {
-  ProductSearch(query: String!): [Product]
-  ProductSearchWithId(query: String!, id: Int!): [Product]
+  ProductSearch(query: String!): [ProductSearch]
+  ProductSearchWithId(query: String!, id: Int!): [ProductSearchWithId]
 }
 

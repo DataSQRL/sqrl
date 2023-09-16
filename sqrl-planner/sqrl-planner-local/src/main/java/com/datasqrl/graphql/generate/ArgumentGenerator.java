@@ -6,6 +6,7 @@ package com.datasqrl.graphql.generate;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
 import static com.ibm.icu.text.PluralRules.Operand.f;
 
+import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.FieldVisitor;
 import com.datasqrl.schema.Multiplicity;
@@ -39,6 +40,7 @@ public class ArgumentGenerator implements
       return field.getToTable().accept(this, context);
     } else {
       return parameters.stream()
+          .filter(p->!((SqrlFunctionParameter)p).isInternal())
           .map(parameter -> GraphQLArgument.newArgument()
               .name(parameter.getName())
               .type(getInputType(parameter.getType(null)))

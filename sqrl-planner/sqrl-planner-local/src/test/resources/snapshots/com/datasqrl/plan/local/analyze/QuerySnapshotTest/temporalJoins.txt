@@ -10,7 +10,7 @@ LogicalProject(_uuid$0=[$0], id=[$2], name=[$10], time$0=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[inner])
     LogicalTableScan(table=[[orders$q$6]])
     LogicalFilter(condition=[=($6, 1)])
-      LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+      LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
         LogicalTableScan(table=[[customer$q$16]])
 
 >>>customerorders$q$22
@@ -18,7 +18,7 @@ LogicalProject(_uuid$0=[$0], id=[$2], name=[$10], time$0=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[left])
     LogicalTableScan(table=[[orders$q$6]])
     LogicalFilter(condition=[=($6, 1)])
-      LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+      LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
         LogicalTableScan(table=[[customer$q$16]])
 
 >>>customerorders$q$25
@@ -26,7 +26,7 @@ LogicalProject(_uuid$0=[$0], id=[$2], name=[$10], time$0=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[left])
     LogicalTableScan(table=[[orders$q$6]])
     LogicalFilter(condition=[=($6, 1)])
-      LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+      LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
         LogicalTableScan(table=[[customer$q$16]])
 
 >>>orders$q$6

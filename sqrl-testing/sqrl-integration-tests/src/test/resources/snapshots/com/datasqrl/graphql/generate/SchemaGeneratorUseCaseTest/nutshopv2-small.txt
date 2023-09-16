@@ -1,0 +1,74 @@
+type Customers {
+  id: Int!
+  purchases: [Orders!]
+  spending_by_month: [spending_by_month!]
+  past_purchases: [past_purchases!]
+}
+
+type Orders {
+  id: Int!
+  customerid: Int!
+  time: Int!
+  items: [items!]
+  timestamp: String!
+  totals: [totals!]
+  parent: Customers!
+}
+
+type Products {
+  id: Int!
+  name: String!
+  sizing: String!
+  weight_in_gram: Int!
+  type: String!
+  category: String!
+  usda_id: Int!
+  updated: String!
+  parent: items!
+  volume_by_day: [volume_by_day!]
+}
+
+type Query {
+  Orders(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
+  Products(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
+  Customers(id: Int): [Customers!]
+}
+
+type items {
+  productid: Int!
+  quantity: Int!
+  unit_price: Float!
+  parent: Orders!
+  discount: Float!
+  total: Float!
+  product: [Products!]
+}
+
+type past_purchases {
+  productid: Int!
+  num_orders: Int!
+  total_quantity: Int!
+  parent: Customers!
+}
+
+type spending_by_month {
+  month: String!
+  total_spend: Float!
+  total_savings: Float!
+  parent: Customers!
+}
+
+type totals {
+  price: Float!
+  savings: Float!
+  parent: Orders!
+}
+
+type volume_by_day {
+  day: String!
+  quantity: Int!
+  total: Float!
+  total_weight: Int!
+  parent: Products!
+}
+

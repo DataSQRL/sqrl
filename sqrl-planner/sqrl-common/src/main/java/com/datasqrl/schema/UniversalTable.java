@@ -86,26 +86,28 @@ public class UniversalTable {
   }
 
   public void addColumn(Name colName, RelDataType type, boolean visible) {
-    colName = Name.system(colName.getDisplay().split("\\$")[0]);
-    int version = fields.nextVersion(colName);
+    //column may already be versioned, if so, strip
+    String nameStr = colName.getCanonical().split("\\$")[0];
+    Preconditions.checkState(!nameStr.isEmpty(), "Column not named: " + colName);
+    Name name = Name.system(nameStr);
 
-    if (version != 0) {
-      for (int i = 0; i < getNumPrimaryKeys(); i++) {
-        Name newName = Name.system(ReservedName.HIDDEN_PREFIX).append(colName);
-        int version2 = fields.nextVersion(newName);
+    int version = fields.nextVersion(name);
 
-        fields.addField(
-            new Column(newName, version2, type, visible));
-      }
-    }
+//    if (version != 0) {
+//      for (int i = 0; i < getNumPrimaryKeys(); i++) {
+//        Name newName = Name.system(ReservedName.HIDDEN_PREFIX).append(colName);
+//        int version2 = fields.nextVersion(newName);
+//
+//        fields.addField(
+//            new Column(newName, version2, type, visible));
+//      }
+//    }
 
     //A name may clash with a previously added name, hence we increase the version
-    fields.addField(new Column(colName, version, type, visible));
+    fields.addField(new Column(name, version, type, visible));
   }
 
   public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
-    name = Name.system(name.getDisplay().split("\\$")[0]);
-
     int version = fields.nextVersion(name);
     fields.addField(new ChildRelationship(name, version, child, multiplicity));
   }

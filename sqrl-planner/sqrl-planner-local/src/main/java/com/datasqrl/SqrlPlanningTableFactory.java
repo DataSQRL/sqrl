@@ -23,6 +23,8 @@ import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -58,11 +60,6 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
         input, setFieldNames, framework.getQueryPlanner().getRelBuilder(),
         opHints, ErrorCollector.root());
 
-    System.out.println("INPUT: " + input.explain());
-    System.out.println("INPUT: " + input.getRowType());
-    System.out.println("CONVR: " + analyzedLP.getConvertedRelnode().getRelNode().explain());
-    System.out.println("CONVR: " + analyzedLP.getConvertedRelnode().getRelNode().getRowType());
-
     NamePath names = nameUtil.toNamePath(path);
 
     Optional<SQRLTable> parent = Optional.empty();
@@ -80,7 +77,10 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
 
-    List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
+    List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames().stream()
+        .map(s->s.contains("$") ? s.split("\\$")[0] : s) //remove version info
+        .collect(Collectors.toList());
+
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
         .map(idx -> relFieldNames.get(idx))
         .map(n -> nameUtil.toName(n)).collect(Collectors.toList());

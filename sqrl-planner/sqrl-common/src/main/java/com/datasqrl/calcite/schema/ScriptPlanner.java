@@ -3,6 +3,7 @@ package com.datasqrl.calcite.schema;
 import static com.datasqrl.plan.ScriptValidator.isSelfField;
 import static com.datasqrl.plan.ScriptValidator.isSelfTable;
 import static com.datasqrl.plan.ScriptValidator.isVariable;
+import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableSqrlTable;
@@ -26,6 +27,7 @@ import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.ScriptValidator;
 import com.datasqrl.plan.ScriptValidator.QualifiedExport;
+import com.datasqrl.plan.SqlPlannerTableFunction;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
@@ -54,6 +56,7 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
@@ -63,6 +66,7 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
@@ -151,10 +155,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         materializeSelf, result.getSqlNode());
     parameters = rewritten.getLeft();
 
+    System.out.println(planner.sqlToString(Dialect.CALCITE, rewritten.getRight()));
     RelNode relNode = planner.plan(Dialect.CALCITE, rewritten.getRight());
     RelNode expanded = planner.expandMacros(relNode);
-    System.out.println(planner.relToString(Dialect.CALCITE, expanded));
-    System.out.println(expanded.explain());
     final Optional<SqlNode> sql;
     if (!materializeSelf) {
       sql = Optional.of(planner.relToSql(Dialect.CALCITE, expanded));
@@ -183,7 +186,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
         Relationship rel = new Relationship(path.getLast(),
             path, framework.getUniqueColumnInt().incrementAndGet(),
-            parent, Relationship.JoinType.CHILD, Multiplicity.MANY,
+            parent, Relationship.JoinType.JOIN, Multiplicity.MANY,
             isASqrl, parameters, nodeSupplier
             );
         parent.getSqrlTable().addRelationship(rel);
@@ -197,9 +200,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),
             null, isASqrl, parameters, nodeSupplier);
 
-        List<String> fieldNames = relNode.getRowType().getFieldNames().stream()
-            .map(f->f.contains("$") ? f.split("\\$")[0] : f)
-            .collect(Collectors.toList());
+        List<String> fieldNames = validator.getFieldNames().get(assignment);
         for (int i = 0; i < fieldNames.size(); i++) {
           String name = fieldNames.get(i);
           RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
@@ -213,6 +214,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 //            materializeSelf, Optional.of(nodeSupplier));
       }
     } else {
+      System.out.println(expanded.explain());
       tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
           assignment.getHints(), parameters, isA,
           materializeSelf, Optional.empty());
@@ -333,6 +335,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           context.isNested,call.getFetch() != null);
       Result result = SqlNodeVisitor.accept(this, call.getFrom(), newContext);
 
+      //todo get select list from validator
+
       //retain distinct hint too
       if (isDistinctOnHintPresent(call)) {
         //1. get table, distinct on
@@ -356,7 +360,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
         for (Column column : columns) {
           if (!fieldNames.contains(column.getName().getCanonical())) {
-            selectList.add(new SqlIdentifier(column.getVtName().getCanonical(), SqlParserPos.ZERO));
+            selectList.add(new SqlIdentifier(column.getName().getCanonical(), SqlParserPos.ZERO));
           }
         }
 
@@ -396,6 +400,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       SqlSelectBuilder select = new SqlSelectBuilder(call)
           .setFrom(result.getSqlNode())
+//          .setSelectList(newSelectList)
           .rewriteExpressions(new WalkExpressions(planner, newContext));
       pullUpKeys(select, result.keysToPullUp, isAggregating);
 
@@ -506,7 +511,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         Result rewrite = sqrlToSql.rewrite(item, false, context.currentPath);
         RelNode relNode = planner.plan(Dialect.CALCITE, rewrite.getSqlNode());
         builder.push(rewrite.getSqlNode(), relNode.getRowType());
-      } else if (tableFunction != null) {
+      } else if (tableFunction != null) { //may be schema table or function
         pathWalker.walk(identifier);
         builder.scanFunction(pathWalker.getPath(), List.of());
       } else if (isAlias) {
@@ -524,12 +529,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         pathWalker.walk(nextIdentifier);
 
         SqlUserDefinedTableFunction fnc = planner.getTableFunction(pathWalker.getPath());
-        if (fnc == null) {
-          builder.scanNestedTable(pathWalker.getPath());
-        } else {
-          List<SqlNode> args = rewriteArgs(alias, (SqrlTableMacro) fnc.getFunction());
-          builder.scanFunction(fnc, args);
-        }
+        List<SqlNode> args = rewriteArgs(alias, (SqrlTableMacro) fnc.getFunction());
+        builder.scanFunction(fnc, args);
       } else if (isSelf) {
         pathWalker.setPath(context.getCurrentPath());
         if (materializeSelf || !input.hasNext()) {//treat self as a table
@@ -547,16 +548,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           pathWalker.walk(nextIdentifier);
 
           SqlUserDefinedTableFunction fnc = planner.getTableFunction(pathWalker.getAbsolutePath());
-          if (fnc == null) {
-            builder.scanNestedTable(pathWalker.getPath());
-          } else {
-            RelDataType type = planner.getCatalogReader().getSqrlTable(context.currentPath)
-                .getRowType();
-            List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(),
-                (SqrlTableMacro) fnc.getFunction());
+          List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(),
+              (SqrlTableMacro) fnc.getFunction());
 
-            builder.scanFunction(fnc, args);
-          }
+          builder.scanFunction(fnc, args);
         }
       } else {
         throw new RuntimeException("Unknown table: " + item);
@@ -581,12 +576,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         }
       }
 
-      SqlNode sqlNode;
-      if (node.getItems().size() == 1 && pullupColumns.isEmpty()) {
-        sqlNode = builder.build();
-      } else {
-        sqlNode = builder.buildAndProjectLast(pullupColumns);
-      }
+      SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
 
       return new Result(sqlNode, pathWalker.getAbsolutePath(), pullupColumns, List.of(),Optional.empty());
     }

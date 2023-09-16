@@ -6,6 +6,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
@@ -25,8 +26,10 @@ import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
+import com.datasqrl.plan.SqlPlannerTableFunction.PlannerTableFunction;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
+import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
 import java.lang.reflect.Type;
@@ -48,6 +51,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -348,10 +352,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       result = sqrlToSql.rewrite(query, parent, statement.getTableArgs().orElseGet(()->
           new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
       sqlNode = result.getSqlNode();
+      System.out.println("Validator: "+planner.sqlToString(Dialect.CALCITE, sqlNode));
 
       framework.getSqrlOperatorTable().addPlanningFnc(result.getFncs());
 
-      validator.validate(sqlNode);
+      SqlNode validated = validator.validate(sqlNode);
+
     } catch (Exception e) {
       e.printStackTrace();
       errorCollector.exception(ErrorLabel.GENERIC, e.getMessage());
@@ -360,7 +366,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     //we have enough to plan
     RelDataType type = validator.getValidatedNodeType(sqlNode);
-
+    fieldNames.put(statement, type.getFieldNames());
     try {
       RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
       type = relNode.getRowType();
@@ -637,6 +643,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       SqlNode item = input.next();
 
+      if (item.getKind() == SqlKind.SELECT) {
+        Context ctx = new Context(context.currentPath, new HashMap<>(), context.tableFunctionDef, context.root);
+
+        return SqlNodeVisitor.accept(this, item, ctx);
+      }
+
       String identifier = getIdentifier(item)
           .orElseThrow(()->new RuntimeException("Subqueries are not yet implemented"));
 
@@ -647,10 +659,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 //          .orElse(false);
       SqlUserDefinedTableFunction tableFunction = planner.getTableFunction(List.of(identifier));
 
-      RelDataType latestTable;
+      TableFunction latestTable;
       if (tableFunction != null) {
         pathWalker.walk(identifier);
-        latestTable = tableFunction.getFunction().getRowType(null, null);
+        latestTable = tableFunction.getFunction();
       } else if (isAlias) {
         if (!input.hasNext()) {
           throw addError(ErrorLabel.GENERIC, item, "Alias by itself.");
@@ -675,7 +687,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
               pathWalker.getUserDefined());
         }
 
-        latestTable = table.getFunction().getRowType(null, null);
+        latestTable = table.getFunction();
       } else if (isSelf) {
         pathWalker.setPath(context.getCurrentPath());
         if (!input.hasNext()) {//treat self as a table
@@ -684,7 +696,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
             throw addError(ErrorLabel.GENERIC, item, "Could not find parent table: %s",
                 pathWalker.getUserDefined());
           }
-          latestTable = table.getFunction().getRowType(null, null);
+          latestTable = table.getFunction();
         } else { //treat self as a parameterized binding to the next function
           item = input.next();
           Optional<String> nextIdentifier = getIdentifier(item);
@@ -697,7 +709,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           if (table == null) {
             throw addError(ErrorLabel.GENERIC, item,"Could not find table: %s", pathWalker.getUserDefined());
           }
-          latestTable = table.getFunction().getRowType(null, null);
+          latestTable = table.getFunction();
         }
       } else {
         throw addError(ErrorLabel.GENERIC, item,"Could not find table: %s",
@@ -716,84 +728,17 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         if (table == null) {
           throw addError(ErrorLabel.GENERIC, item, "Could not find table: %s", pathWalker.getUserDefined());
         }
-        latestTable = table.getFunction().getRowType(null, null);
+        latestTable = table.getFunction();
       }
 
-      final RelDataType latestTable2 = latestTable;
+      RelDataTypeFieldBuilder b = new RelDataTypeFieldBuilder(new FieldInfoBuilder(planner.getTypeFactory()));
+      ((SqrlTableMacro) latestTable).getSqrlTable()
+          .getFields().getColumns()
+          .forEach(c->b.add(c.getName().getDisplay(), c.getType()));
+      final RelDataType latestTable2 = b.build();
 
-      TableFunction function = new TableFunction() {
-        @Override
-        public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
-          return latestTable2;
-        }
-
-        @Override
-        public Type getElementType(List<Object> list) {
-          return Object.class;
-        }
-
-        @Override
-        public List<FunctionParameter> getParameters() {
-          return List.of();
-        }
-      };
-      SqlUserDefinedTableFunction fnc = new SqlUserDefinedTableFunction(
-          new SqlIdentifier(node.getDisplay() + "$validate$"
-              + uniqueId.incrementAndGet(), SqlParserPos.ZERO),
-          SqlKind.OTHER_FUNCTION,
-          sqlOperatorBinding -> latestTable2, null, new SqlOperandMetadata() {
-        @Override
-        public List<RelDataType> paramTypes(RelDataTypeFactory relDataTypeFactory) {
-          return List.of();
-        }
-
-        @Override
-        public List<String> paramNames() {
-          return List.of();
-        }
-
-        @Override
-        public boolean checkOperandTypes(SqlCallBinding sqlCallBinding, boolean b) {
-          return true;
-        }
-
-        @Override
-        public SqlOperandCountRange getOperandCountRange() {
-          return new SqlOperandCountRange() {
-
-            @Override
-            public boolean isValidCount(int i) {
-              return true;
-            }
-
-            @Override
-            public int getMin() {
-              return 0;
-            }
-
-            @Override
-            public int getMax() {
-              return Integer.MAX_VALUE;
-            }
-          };
-        }
-
-        @Override
-        public String getAllowedSignatures(SqlOperator sqlOperator, String s) {
-          return null;
-        }
-
-        @Override
-        public Consistency getConsistency() {
-          return null;
-        }
-
-        @Override
-        public boolean isOptional(int i) {
-          return true;
-        }
-      }, function
-      );
+      String name = node.getDisplay() + "$validate$"+ uniqueId.incrementAndGet();
+      SqlUserDefinedTableFunction fnc = new SqlPlannerTableFunction(name, latestTable2);
 
       List<SqlNode> args = node.getItems().stream()
           .filter(f-> f instanceof SqlCall)

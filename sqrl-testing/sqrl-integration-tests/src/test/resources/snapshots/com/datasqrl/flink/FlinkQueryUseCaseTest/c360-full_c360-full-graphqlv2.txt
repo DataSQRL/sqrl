@@ -10,7 +10,15 @@ CREATE TABLE IF NOT EXISTS product$23 (productid$0 BIGINT NOT NULL,_uuid$0 VARCH
   "data" : {
     "Category" : [ {
       "name" : "Decoration",
-      "products" : [ ]
+      "products" : [ {
+        "name" : "Aachen Snow Globe",
+        "productid" : 7235,
+        "description" : "Picturesque city in a beautiful snow globe"
+      }, {
+        "name" : "Original German Nutcracker 3ft",
+        "productid" : 8757,
+        "description" : "Hand-made nutcracker is the perfect Christmas decoration"
+      } ]
     } ]
   }
 }
@@ -32,7 +40,17 @@ CREATE TABLE IF NOT EXISTS product$23 (productid$0 BIGINT NOT NULL,_uuid$0 VARCH
       "favorite_categories" : [ {
         "category_name" : "Personal Care",
         "total" : 146.82,
-        "category" : [ ]
+        "category" : [ {
+          "products" : [ {
+            "name" : "Heavy Duty Butt Wipes",
+            "productid" : 1332,
+            "description" : "Wipes for hardiest of messes"
+          }, {
+            "name" : "Poptech Blow 500",
+            "productid" : 3571,
+            "description" : "High powered blowdryer for any hair"
+          } ]
+        } ]
       } ]
     } ]
   }

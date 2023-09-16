@@ -1,8 +1,13 @@
 package com.datasqrl.calcite.schema.sql;
 
+import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
+import com.datasqrl.schema.Column;
+import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -10,10 +15,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
@@ -29,6 +36,7 @@ import org.apache.commons.collections.ListUtils;
 @AllArgsConstructor
 public class SqlJoinPathBuilder {
   QueryPlanner planner;
+  @Getter
   final List<Frame> tableHistory = new ArrayList<>();
   final Stack<Frame> stack = new Stack<>();
 
@@ -57,7 +65,7 @@ public class SqlJoinPathBuilder {
     call = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO, call);
 
     SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, call, new SqlIdentifier(alias, SqlParserPos.ZERO));
-    Frame frame = new Frame(type, aliasedCall, alias);
+    Frame frame = new Frame(((SqrlTableMacro) op.getFunction()).getSqrlTable(), type, aliasedCall, alias);
     stack.push(frame);
     tableHistory.add(frame);
 
@@ -82,7 +90,7 @@ public class SqlJoinPathBuilder {
     builder.addAll(right.getType().getFieldList());
     RelDataType type = builder.build();
 
-    Frame frame = new Frame(type, join, right.getAlias());
+    Frame frame = new Frame(right.sqrlTable, type, join, right.getAlias());
     stack.push(frame);
 
     return this;
@@ -95,7 +103,9 @@ public class SqlJoinPathBuilder {
   public SqlNode buildAndProjectLast(List<String> pullupCols) {
     Frame frame = stack.pop();
     Frame lastTable = tableHistory.get(tableHistory.size()-1);
-//
+    if (frame.getSqrlTable() == null) { //subquery
+      return frame.getNode();
+    }//
 //    if (!pullupCols.isEmpty()) {
       SqlSelectBuilder select = new SqlSelectBuilder()
           .setFrom(frame.getNode());
@@ -157,14 +167,14 @@ public class SqlJoinPathBuilder {
     String alias = "_t"+aliasInt.incrementAndGet();
 
     SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, table, new SqlIdentifier(alias, SqlParserPos.ZERO));
-    Frame frame = new Frame(relOptTable.getRowType(), aliasedCall, alias);
+    Frame frame = new Frame(relOptTable.unwrap(ModifiableSqrlTable.class).getSqrlTable(), relOptTable.getRowType(), aliasedCall, alias);
     stack.push(frame);
     tableHistory.add(frame);
 
   }
 
   public void push(SqlNode result, RelDataType rowType) {
-    Frame frame = new Frame(rowType, result, null);
+    Frame frame = new Frame(null, rowType, result, null);
     stack.push(frame);
     tableHistory.add(frame);
 
@@ -173,6 +183,7 @@ public class SqlJoinPathBuilder {
 
   @Value
   public class Frame {
+    SQRLTable sqrlTable;
     RelDataType type;
     SqlNode node;
     String alias;

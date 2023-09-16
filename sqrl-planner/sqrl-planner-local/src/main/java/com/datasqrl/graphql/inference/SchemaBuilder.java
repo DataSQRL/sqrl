@@ -39,6 +39,7 @@ import com.datasqrl.graphql.util.ApiQueryBase.ApiQueryBaseBuilder;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.schema.Column;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import graphql.language.InputValueDefinition;
@@ -195,19 +196,16 @@ public class SchemaBuilder implements
         //check parameter is in the arg list, if so then dynamic param
         InputValueDefinition def;
         if (parameter.isInternal()) {
-//          int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), paramName);
-//          Preconditions.checkState(fieldIndex != -1);
-//          String fieldName = builder.peek().getRowType().getFieldNames().get(fieldIndex);
-
-          queryParams.parameter(new SourceParameter(parameter.getName())); //todo get lhs
+          List<String> collect = field.getParentTable().getColumns(false).stream()
+              .map(f->f.getVtName().getCanonical())
+              .collect(Collectors.toList());
+          int i = framework.getCatalogReader().nameMatcher()
+              .indexOf(collect, parameter.getName());
+          Preconditions.checkState(i != -1);
+          queryParams.parameter(new SourceParameter(collect.get(i)));
         } else if ((def = matcher.get(argMap, List.<String>of(),
             List.of(parameter.getName().substring(1)))) != null) {
           argMap.remove(List.of(def.getName()));
-
-//          int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), p.getName());
-//          Preconditions.checkState(fieldIndex != -1);
-//          String fieldName = builder.peek().getRowType().getFieldNames().get(fieldIndex);
-
           queryParams.parameter(new ArgumentParameter(parameter.getName().substring(1)));
           matchSet.argument(new VariableArgument(def.getName(), null));
             //param found,

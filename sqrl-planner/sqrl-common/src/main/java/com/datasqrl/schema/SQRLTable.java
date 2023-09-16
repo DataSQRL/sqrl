@@ -62,7 +62,10 @@ public class SQRLTable implements ModifiableSqrlTable {
   }
 
   public Column addColumn(SqrlFramework framework, Name name, Name vtName, boolean visible, RelDataType type) {
-    Column col = new Column(name, vtName, getNextFieldVersion(name),
+    int version = name.getCanonical().split("\\$").length > 1 ?
+        Integer.parseInt(name.getCanonical().split("\\$")[1]) : getNextFieldVersion(name);
+
+    Column col = new Column(name, vtName, version,
         visible, type);
     fields.addField(col);
     return col;

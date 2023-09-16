@@ -190,29 +190,29 @@ CREATE TABLE IF NOT EXISTS userlikes$41 (userid$0 VARCHAR NOT NULL,eventid$0 VAR
 CREATE EXTENSION vector;
 CREATE INDEX IF NOT EXISTS events$35_text_c4c5 ON events$35 USING GIN (to_tsvector('english', coalesce(title$0, '') || ' ' || coalesce(description$0, '') ));
 CREATE INDEX IF NOT EXISTS events$35_btree_c3 ON events$35 USING btree (time$0);
-Query:PersonalizedEvents(userid, tolerance, afterTime)  =  SELECT "id$0", COALESCE("eventid$0", '') AS "shouldRemove1", "_uuid$0", "timestamp$0", "time$0", "title$0", "description$0", "location$0", "name$0", "embedding$0", "liked$0" AS "liked", "interestvector$0" / "embedding$0" AS "score", "__timestamp20"
-FROM (SELECT "t1"."id$0", "t1"."_uuid$0", "t1"."timestamp$0", "t1"."time$0", "t1"."title$0", "t1"."description$0", "t1"."location$0", "t1"."name$0", "t1"."embedding$0", "t1"."userid$0", "t1"."eventid$0", "t1"."_uuid$00", "t1"."_ingest_time$0", "t1"."_source_time$0", "t1"."liked$0", "t1"."eventid$00", "t1"."__timestamp", "t2"."userid$0" AS "userid$00", "t2"."interestvector$0", "t2"."_source_time$0" AS "_source_time$00", CASE WHEN "t1"."__timestamp" < "t2"."_source_time$0" THEN "t2"."_source_time$0" ELSE "t1"."__timestamp" END AS "__timestamp20"
+Query:PersonalizedEvents(userid, tolerance, afterTime)  =  SELECT id$0, COALESCE(eventid$0, '') AS shouldRemove1, _uuid$0, timestamp$0, time$0, title$0, description$0, location$0, name$0, embedding$0, liked$0 AS liked, interestvector$0 / embedding$0 AS score, __timestamp20
+FROM (SELECT t1.id$0, t1._uuid$0, t1.timestamp$0, t1.time$0, t1.title$0, t1.description$0, t1.location$0, t1.name$0, t1.embedding$0, t1.userid$0, t1.eventid$0, t1._uuid$00, t1._ingest_time$0, t1._source_time$0, t1.liked$0, t1.eventid$00, t1.__timestamp, t2.userid$0 AS userid$00, t2.interestvector$0, t2._source_time$0 AS _source_time$00, CASE WHEN t1.__timestamp < t2._source_time$0 THEN t2._source_time$0 ELSE t1.__timestamp END AS __timestamp20
   FROM (SELECT *
-    FROM (SELECT "events$35"."id$0", "events$35"."_uuid$0", "events$35"."timestamp$0", "events$35"."time$0", "events$35"."title$0", "events$35"."description$0", "events$35"."location$0", "events$35"."name$0", "events$35"."embedding$0", "t"."userid$0", "t"."eventid$0", "t"."_uuid$0" AS "_uuid$00", "t"."_ingest_time$0", "t"."_source_time$0", "t"."liked$0", "t"."eventid$00", CASE WHEN "events$35"."timestamp$0" < "t"."_source_time$0" THEN "t"."_source_time$0" ELSE "events$35"."timestamp$0" END AS "__timestamp"
-      FROM "events$35"
-       LEFT JOIN (SELECT "userid$0", "eventid$0", "_uuid$0", "_ingest_time$0", "_source_time$0", "liked$0", CAST("eventid$0" AS BIGINT) AS "eventid$00"
-        FROM "userlikes$41") AS "t" ON "events$35"."id$0" = "t"."eventid$00" AND "t"."userid$0" = $1) AS "t0"
-    WHERE "t0"."time$0" > $3) AS "t1"
+    FROM (SELECT events$35.id$0, events$35._uuid$0, events$35.timestamp$0, events$35.time$0, events$35.title$0, events$35.description$0, events$35.location$0, events$35.name$0, events$35.embedding$0, t.userid$0, t.eventid$0, t._uuid$0 AS _uuid$00, t._ingest_time$0, t._source_time$0, t.liked$0, t.eventid$00, CASE WHEN events$35.timestamp$0 < t._source_time$0 THEN t._source_time$0 ELSE events$35.timestamp$0 END AS __timestamp
+      FROM events$35
+       LEFT JOIN (SELECT userid$0, eventid$0, _uuid$0, _ingest_time$0, _source_time$0, liked$0, CAST(eventid$0 AS BIGINT) AS eventid$00
+        FROM userlikes$41) AS t ON events$35.id$0 = t.eventid$00 AND t.userid$0 = $1) AS t0
+    WHERE t0.time$0 > $3) AS t1
    LEFT JOIN (SELECT *
-    FROM "userinterests$38"
-    WHERE "userid$0" = $1) AS "t2" ON TRUE) AS "t3"
-WHERE "t3"."liked$0" = 1 OR "t3"."interestvector$0" / CAST("t3"."embedding$0" AS FLOAT) >= $2
-ORDER BY "time$0", "id$0", COALESCE("eventid$0", '')
+    FROM userinterests$38
+    WHERE userid$0 = $1) AS t2 ON TRUE) AS t3
+WHERE t3.liked$0 = 1 OR t3.interestvector$0 / CAST(t3.embedding$0 AS FLOAT) >= $2
+ORDER BY time$0, id$0, COALESCE(eventid$0, '')
 
 Query:EventsAfterTime(afterTime)  =  SELECT *
-FROM "events$35"
-WHERE "time$0" > $1
-ORDER BY "time$0", "id$0"
+FROM events$35
+WHERE time$0 > $1
+ORDER BY time$0, id$0
 
 Query:EventSearch(query, afterTime)  =  SELECT *
-FROM "events$35"
-WHERE "time$0" >= $2 AND ("to_tsvector"("title$0") @@ "to_tsquery"(CAST($1 AS VARCHAR(65536))) AND "ts_rank_cd"("title$0", CAST($1 AS VARCHAR(65536))) > 0)
-ORDER BY "id$0"
+FROM events$35
+WHERE time$0 >= $2 AND (to_tsvector(title$0) @@ to_tsquery(CAST($1 AS VARCHAR(65536))) AND ts_rank_cd(title$0, CAST($1 AS VARCHAR(65536))) > 0)
+ORDER BY id$0
 
 >>>Queries
 

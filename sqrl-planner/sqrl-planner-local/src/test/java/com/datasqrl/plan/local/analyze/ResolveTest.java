@@ -469,7 +469,6 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     validateQueryTable("suborders", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 4, 2,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).hasSort(true).build());
   }
-  //
 
   @Test
   public void partitionSelectDistinctTest() {

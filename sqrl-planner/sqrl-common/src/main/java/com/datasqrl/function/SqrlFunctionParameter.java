@@ -9,7 +9,6 @@ import org.apache.calcite.sql.*;
 
 import java.util.Optional;
 
-@AllArgsConstructor
 @Getter
 public class SqrlFunctionParameter implements FunctionParameter {
 
@@ -19,6 +18,16 @@ public class SqrlFunctionParameter implements FunctionParameter {
   private final int ordinal;
   private final RelDataType relDataType;
   private final boolean isInternal;
+
+  public SqrlFunctionParameter(String name, Optional<SqlNode> defaultValue, SqlDataTypeSpec type,
+      int ordinal, RelDataType relDataType, boolean isInternal) {
+    this.name = name;
+    this.defaultValue = defaultValue;
+    this.type = type;
+    this.ordinal = ordinal;
+    this.relDataType = relDataType;
+    this.isInternal = isInternal;
+  }
 
   @Override
   public RelDataType getType(RelDataTypeFactory relDataTypeFactory) {

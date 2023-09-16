@@ -260,10 +260,12 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     QueryPipelineItem queries1 = getOrCreate(QueryType.STREAM, select, stream.getInput(0), stream);
 
     SqlIdentifier table = new SqlIdentifier(queries1.getTableName(), SqlParserPos.ZERO);
-    SqlNode as = SqlStdOperatorTable.AS.createCall(POS, table,
-        new SqlIdentifier(x.neededAlias, POS));
+//    SqlNode as = SqlStdOperatorTable.AS.createCall(POS, table,
+//        new SqlIdentifier(x.neededAlias, POS));
+    SqlIdentifier identifier = table;
+    return this.result(identifier, ImmutableList.of(Clause.FROM), stream, (Map)null);
 
-    return this.result(as, List.of(Clause.FROM), null, null, Map.of());
+//    return this.result(as, List.of(Clause.FROM), null, null, Map.of());
   }
 
   @Override

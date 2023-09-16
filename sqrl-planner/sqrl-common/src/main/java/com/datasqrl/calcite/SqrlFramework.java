@@ -11,6 +11,7 @@ import org.apache.calcite.rel.metadata.RelMetadataProvider;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.util.Properties;
+import org.apache.calcite.sql.validate.SqlNameMatchers;
 
 @Getter
 public class SqrlFramework {
@@ -46,7 +47,8 @@ public class SqrlFramework {
 
     this.nameCanonicalizer = nameCanonicalizer;
     SqrlNameMatcher nameMatcher = new SqrlNameMatcher(nameCanonicalizer);
-    this.catalogReader = new CatalogReader(schema, typeFactory, config, nameMatcher);
+    this.catalogReader = new CatalogReader(schema, typeFactory, config,
+        nameMatcher, nameMatcher);
     this.sqrlOperatorTable = new OperatorTable(catalogReader, SqlStdOperatorTable.instance());
     this.queryPlanner = resetPlanner();
   }
