@@ -115,8 +115,9 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(queries);
     Map<String, ImportedRelationalTable> tables = extractTablesFromQueries(writeQueries);
     //exclude sqrl NOW for flink's NOW
-    udfs.remove(DefaultFunctions.NOW.getName());
-    registerFunctions(udfs);
+    HashMap<String, UserDefinedFunction> mutableUdfs = new HashMap<>(udfs);
+    mutableUdfs.remove(DefaultFunctions.NOW.getName());
+    registerFunctions(mutableUdfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
     extractWatermarks(writeQueries, watermarkCollector);

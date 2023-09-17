@@ -67,7 +67,10 @@ public class SqrlNameMatcher implements SqlNameMatcher {
     List<String> n = new ArrayList<>();
     names.iterator().forEachRemaining(n::add);
 
-    if (n.contains(name)) {
+    List<Name> names1 = n.stream().map(na->canonicalizer.name(na))
+        .collect(Collectors.toList());
+
+    if (names1.contains(canonicalizer.name(name))) {
       return n.indexOf(name);
     }
 

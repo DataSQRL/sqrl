@@ -330,6 +330,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     preprocessSql.put(statement, query);
     SqlNode sqlNode;
     Result result;
+    SqlNode validated;
+
     try {
       SqrlToSql sqrlToSql = new SqrlToSql(planner);
 
@@ -348,7 +350,13 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       framework.getSqrlOperatorTable().addPlanningFnc(result.getFncs());
 
-      SqlNode validated = validator.validate(sqlNode);
+      SqlNode copy = sqlNode.accept(new SqlShuttle() {
+        @Override
+        public SqlNode visit(SqlIdentifier id) {
+          return new SqlIdentifier(id.names, id.getParserPosition());
+        }
+      });
+      validated = validator.validate(copy);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -357,19 +365,35 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
 
     //we have enough to plan
-    RelDataType type = validator.getValidatedNodeType(sqlNode);
+    RelDataType type = validator.getValidatedNodeType(validated);
     fieldNames.put(statement, type.getFieldNames());
     try {
-      RelNode relNode = planner.plan(Dialect.CALCITE, sqlNode);
-      type = relNode.getRowType();
-      return Pair.of(result, type);
+//      RelNode relNode = planner.plan(Dialect.CALCITE, validated);
+//      type = relNode.getRowType();
+//      return Pair.of(result, type);
     } catch (Exception e) {
       errorCollector.exception(ErrorLabel.GENERIC, e.getMessage());
     }
 
-    return Pair.of(result, type);
+    return Pair.of(result, null);
   }
 
+  private List<String> getFieldNames(List<SqlNode> list) {
+    List<String> nodes = new ArrayList<>();
+    for (SqlNode node : list) {
+      if (node instanceof SqlIdentifier) {
+        String name = ((SqlIdentifier) node).names.get(((SqlIdentifier) node).names.size()-1);
+        nodes.add(nameUtil.toName(name).getCanonical());
+      } else if (node instanceof SqlCall && ((SqlCall)node).getKind() == SqlKind.AS) {
+        String name = ((SqlIdentifier)((SqlCall) node).getOperandList().get(1)).names.get(0);
+        nodes.add(nameUtil.toName(name).getCanonical());
+      } else {
+        throw new RuntimeException("Could not derive name: " + node);
+      }
+    }
+
+    return nodes;
+  }
   private SqlNode addNestedSelf(SqlNode query) {
     return SqlNodeVisitor.accept(new SqlRelationVisitor<SqlNode, Void>() {
 

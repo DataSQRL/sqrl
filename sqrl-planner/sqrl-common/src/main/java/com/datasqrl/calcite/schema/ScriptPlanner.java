@@ -64,6 +64,7 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
@@ -327,7 +328,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
             .unwrap(ModifiableTable.class)
             .getSqrlTable().getFields().getColumns();
 
+        SqlNameMatcher matcher = planner.getCatalogReader().nameMatcher();
         for (Column column : columns) {
+          //todo wrong again
+          int idx = matcher.indexOf(fieldNames, column.getName().getCanonical());
           if (!fieldNames.contains(column.getName().getCanonical())) {
             selectList.add(new SqlIdentifier(column.getName().getCanonical(), SqlParserPos.ZERO));
           }
@@ -377,9 +381,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       List<String> nodes = new ArrayList<>();
       for (SqlNode node : list) {
         if (node instanceof SqlIdentifier) {
-          nodes.add(((SqlIdentifier) node).names.get(((SqlIdentifier) node).names.size()-1));
+          String name = ((SqlIdentifier) node).names.get(((SqlIdentifier) node).names.size()-1);
+          nodes.add(nameUtil.toName(name).getCanonical());
         } else if (node instanceof SqlCall && ((SqlCall)node).getKind() == SqlKind.AS) {
-          nodes.add(((SqlIdentifier)((SqlCall) node).getOperandList().get(1)).names.get(0));
+          String name = ((SqlIdentifier)((SqlCall) node).getOperandList().get(1)).names.get(0);
+          nodes.add(nameUtil.toName(name).getCanonical());
         } else {
           throw new RuntimeException("Could not derive name: " + node);
         }
