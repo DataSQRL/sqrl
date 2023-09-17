@@ -7,6 +7,7 @@ IMPORT myAPI.AddInterest;
 
 IMPORT string.*;
 IMPORT text.*;
+IMPORT vector.*;
 IMPORT secure.randomID;
 
 /* requires string aggregated concatenation

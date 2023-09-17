@@ -28,6 +28,7 @@ public class TypeFactory extends JavaTypeFactoryImpl {
   }
 
   public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
+    //Add custom type translation here
     for (RelDataType type : types) {
       if (type.equals(engineType)) {
         return type;

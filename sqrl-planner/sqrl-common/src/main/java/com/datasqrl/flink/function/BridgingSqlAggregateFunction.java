@@ -20,43 +20,62 @@ package com.datasqrl.flink.function;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.function.RuleTransform;
+import com.datasqrl.util.ReflectionUtil;
+import java.lang.reflect.Method;
+import java.util.List;
 import lombok.Getter;
+import org.apache.calcite.adapter.enumerable.AggImplementor;
 import org.apache.calcite.adapter.enumerable.CallImplementor;
 import org.apache.calcite.adapter.enumerable.NullPolicy;
 import org.apache.calcite.adapter.enumerable.ReflectiveCallNotNullImplementor;
 import org.apache.calcite.adapter.enumerable.RexImpTable;
+import org.apache.calcite.adapter.enumerable.RexImpTable.UserDefinedAggReflectiveImplementor;
 import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.AggregateFunction;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.ImplementableAggFunction;
 import org.apache.calcite.schema.ImplementableFunction;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.schema.impl.AggregateFunctionImpl;
+import org.apache.calcite.schema.impl.ReflectiveFunctionBase;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.*;
+import org.apache.calcite.sql.type.SqlOperandMetadata;
+import org.apache.calcite.sql.type.SqlOperandTypeChecker;
+import org.apache.calcite.sql.type.SqlOperandTypeInference;
+import org.apache.calcite.sql.type.SqlReturnTypeInference;
+import org.apache.calcite.sql.validate.SqlUserDefinedAggFunction;
 import org.apache.calcite.sql.validate.SqlUserDefinedFunction;
+import org.apache.calcite.util.Optionality;
+import org.apache.calcite.util.ReflectUtil;
+import org.apache.calcite.util.Static;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.RexFactory;
 import org.apache.flink.table.types.inference.TypeInference;
 
-import java.lang.reflect.Method;
-import java.util.List;
-
 /**
  * Bridges a Flink function to calcite
  */
-public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements BridgingFunction, RuleTransform {
+public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction implements BridgingFunction, RuleTransform {
   private final String flinkName;
   private final DataTypeFactory dataTypeFactory;
   private final FlinkTypeFactory flinkTypeFactory;
   private final RexFactory rexFactory;
   @Getter
-  private final FunctionDefinition definition;
+  private final org.apache.flink.table.functions.AggregateFunction definition;
   private final TypeInference typeInference;
 
-  public BridgingSqlScalarFunction(String name, String flinkName, DataTypeFactory dataTypeFactory,
+  public BridgingSqlAggregateFunction(String name, String flinkName, DataTypeFactory dataTypeFactory,
                                    FlinkTypeFactory flinkTypeFactory, RexFactory rexFactory, SqlKind kind,
-                                   FunctionDefinition definition, TypeInference typeInference) {
+                                   org.apache.flink.table.functions.AggregateFunction definition, TypeInference typeInference) {
     super(
         new SqlIdentifier(name, SqlParserPos.ZERO),
         kind,
@@ -64,7 +83,9 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
         createSqlOperandTypeInference(name, flinkTypeFactory, dataTypeFactory, definition),
         createOperandMetadata(name, flinkTypeFactory, dataTypeFactory, definition),
         createCallableFlinkFunction(flinkTypeFactory, dataTypeFactory, definition),
-        createSqlFunctionCategory());
+        false,
+        false,
+        Optionality.IGNORED);
     this.flinkName = flinkName;
 
     this.dataTypeFactory = dataTypeFactory;
@@ -86,14 +107,6 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
     return new FlinkSqlOperandTypeInference(flinkTypeFactory, dataTypeFactory, definition, definition.getTypeInference(dataTypeFactory));
   }
 
-  public static SqlOperandTypeChecker createSqlOperandTypeChecker(String name, FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, FunctionDefinition definition) {
-    return new FlinkSqlOperandTypeChecker(flinkTypeFactory, dataTypeFactory, definition, definition.getTypeInference(dataTypeFactory));
-  }
-
-  public static SqlFunctionCategory createSqlFunctionCategory() {
-    return SqlFunctionCategory.USER_DEFINED_FUNCTION;
-  }
-
   @Override
   public List<String> getParamNames() {
     if (typeInference.getNamedArguments().isPresent()) {
@@ -108,40 +121,46 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
   }
 
 
-  private static Function createCallableFlinkFunction(FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, FunctionDefinition definition) {
-    return new ImplementableFunction() {
-      //Handles execution to flink code
-      @Override
-      public CallImplementor getImplementor() {
-        Class[] params = definition.getTypeInference(dataTypeFactory)
-            .getTypedArguments().stream()
-            .flatMap(a->a.stream())
-            .map(a->a.getConversionClass())
-            .toArray(s -> new Class[s]);
-
-        // Get the method handle for the eval method
-        Method method;
-        try {
-          method = definition.getClass().getMethod("eval", params);
-        } catch (NoSuchMethodException e) {
-          throw new RuntimeException("Method eval not found in class:" + definition, e);
-        }
-
-        return createImplementor(method);
-      }
-
-      private CallImplementor createImplementor(final Method method) {
-        final NullPolicy nullPolicy = NullPolicy.SEMI_STRICT;
-        return RexImpTable.createImplementor(
-            new ReflectiveCallNotNullImplementor(method), nullPolicy, false);
-      }
-
-      @Override
-      public List<FunctionParameter> getParameters() {
-        //derive parameters (necessary?)
-        return List.of();
-      }
-    };
+  private static AggregateFunction createCallableFlinkFunction(FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, org.apache.flink.table.functions.AggregateFunction definition) {
+//    Class clazz = definition.getClass();
+//    Method initMethod = ReflectionUtil.findMethod(clazz, "createAccumulator");
+//    Method addMethod = ReflectionUtil.findMethod(clazz, "accumulate");
+//    Method mergeMethod = ReflectionUtil.findMethod(clazz, "merge");;
+//    Method resultMethod = ReflectionUtil.findMethod(clazz, "result");
+//    Class<?> accumulatorType = initMethod.getReturnType();
+//    Class<?> resultType = resultMethod != null ? resultMethod.getReturnType() : accumulatorType;
+//    List<Class> addParamTypes = ImmutableList.copyOf((Class[])addMethod.getParameterTypes());
+//    if (!addParamTypes.isEmpty() && addParamTypes.get(0) == accumulatorType) {
+//      ReflectiveFunctionBase.ParameterListBuilder params = ReflectiveFunctionBase.builder();
+//      ImmutableList.Builder<Class<?>> valueTypes = ImmutableList.builder();
+//
+//      for (int i = 1; i < addParamTypes.size(); ++i) {
+//        Class type = (Class) addParamTypes.get(i);
+//        String name = ReflectUtil.getParameterName(addMethod, i);
+//        boolean optional = ReflectUtil.isParameterOptional(addMethod, i);
+//        params.add(type, name, optional);
+//        valueTypes.add(type);
+//      }
+//    }
+//
+//    return new ImplementableAggFunction() {
+//      @Override
+//      public RelDataType getReturnType(RelDataTypeFactory relDataTypeFactory) {
+//        throw new RuntimeException("todo");
+//      }
+//
+//      @Override
+//      public AggImplementor getImplementor(boolean b) {
+//        return new RexImpTable.UserDefinedAggReflectiveImplementor(this);
+//      }
+//
+//      @Override
+//      public List<FunctionParameter> getParameters() {
+//        //derive parameters (necessary?)
+//        return List.of();
+//      }
+//    };
+    return null;
   }
 
   @Override

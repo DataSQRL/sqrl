@@ -188,12 +188,18 @@ public class SchemaInference {
     TypeDefinition typeDef = unwrapObjectType(fieldDefinition.getType());
 
     if (typeDef instanceof ObjectTypeDefinition) {
+      //one deep check
       ObjectTypeDefinition obj = (ObjectTypeDefinition) typeDef;
-      checkState(visitedObj.get(obj) == null || visitedObj.get(obj) == table, typeDef.getSourceLocation(),
-          "Cannot redefine a type to point to a different SQRL table. Use an interface instead.\n"
-              + "The graphql field [%s] points to Sqrl table [%s] but already had [%s].",
-          parent.getName() + ":" + fieldDefinition.getName(),
-          table.getPath().toString(), "");
+      if (visitedObj.get(obj) != null ) {
+        if (!table.getIsTypeOf().contains(visitedObj.get(obj).getIsTypeOf().get(0)))
+
+          checkState(visitedObj.get(obj) == null || visitedObj.get(obj) == table,
+              typeDef.getSourceLocation(),
+              "Cannot redefine a type to point to a different SQRL table. Use an interface instead.\n"
+                  + "The graphql field [%s] points to Sqrl table [%s] but already had [%s].",
+              parent.getName() + ":" + fieldDefinition.getName(),
+              table.getPath().toString(), "");
+      }
       visitedObj.put(obj, table);
       InferredObjectField inferredObjectField = new InferredObjectField(parentTable, parent, fieldDefinition,
           (ObjectTypeDefinition) typeDef, table);

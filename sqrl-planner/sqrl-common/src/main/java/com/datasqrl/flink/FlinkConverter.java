@@ -21,6 +21,7 @@ package com.datasqrl.flink;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.calcite.type.BridgingFlinkType;
+import com.datasqrl.flink.function.BridgingSqlAggregateFunction;
 import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
@@ -34,10 +35,12 @@ import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
+import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.UnresolvedDataType;
 import org.apache.flink.table.types.inference.TypeInference;
@@ -83,14 +86,16 @@ public class FlinkConverter {
     final SqlFunction function;
     if (definition.getKind() == FunctionKind.AGGREGATE
         || definition.getKind() == FunctionKind.TABLE_AGGREGATE) {
-      throw new RuntimeException("Agg functions not yet supported");
-//      function =
-//         new BridgingSqlAggFunction(
-//              dataTypeFactory,
-//              typeFactory,
-//              SqlKind.OTHER_FUNCTION,
-//              resolvedFunction,
-//              typeInference);
+      function =
+          new BridgingSqlAggregateFunction(
+              sqrlName,
+              flinkName,
+              dataTypeFactory,
+              flinkTypeFactory,
+              null,
+              SqlKind.OTHER_FUNCTION,
+              (AggregateFunction) definition,
+              typeInference);
     } else {
       function =
           new BridgingSqlScalarFunction(

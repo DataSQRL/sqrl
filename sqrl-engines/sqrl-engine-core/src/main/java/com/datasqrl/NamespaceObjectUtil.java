@@ -9,6 +9,7 @@ import com.datasqrl.module.NamespaceObject;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import org.apache.calcite.sql.SqlFunction;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
@@ -30,9 +31,9 @@ public class NamespaceObjectUtil {
 
 
   public static NamespaceObject createNsObject(SqrlFunction function) {
-    Preconditions.checkArgument(function instanceof ScalarFunction,
-        "All SQRL function implementations must extend ScalarFunction: %s", function.getClass());
-    return new FlinkUdfNsObject(function.getFunctionName(), (ScalarFunction)function, Optional.empty());
+    Preconditions.checkArgument(function instanceof FunctionDefinition,
+        "All SQRL function implementations must extend FunctionDefinition: %s", function.getClass());
+    return new FlinkUdfNsObject(function.getFunctionName(), (FunctionDefinition)function, Optional.empty());
   }
 
 }

@@ -26,7 +26,6 @@ type Events implements AbstractEvents{
     title : String!
     description : String!
     name : String!
-    likeCount : LikeCount
 }
 
 type PersonalizedEvents implements AbstractEvents{
@@ -38,7 +37,6 @@ type PersonalizedEvents implements AbstractEvents{
     name : String!
     liked: Int!
     score: Float!
-    likeCount : LikeCount
 }
 
 

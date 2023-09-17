@@ -1,7 +1,7 @@
 package com.datasqrl.calcite.type;
 
 public class VectorType {
-  private double[] vector;
+  public double[] vector;
 
   public VectorType(double[] vector) {
     this.vector = vector;

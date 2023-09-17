@@ -2,6 +2,7 @@ package com.datasqrl;
 
 import static com.datasqrl.io.tables.TableConfig.CONNECTOR_KEY;
 
+import com.datasqrl.FlinkExecutablePlan.FlinkBase;
 import com.datasqrl.FlinkExecutablePlan.FlinkQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
@@ -71,6 +72,7 @@ import java.util.StringJoiner;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlStatement;
+import org.apache.flink.table.api.StatementSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -277,6 +279,7 @@ public class AbstractTest {
         + "\n"
         + "IMPORT string.*;\n"
         + "IMPORT text.*;\n"
+        + "IMPORT vector.*;\n"
         + "IMPORT secure.randomID;\n"
         + "\n"
         + "/* requires string aggregated concatenation\n"
@@ -299,6 +302,8 @@ public class AbstractTest {
         + "\n"
         + "--Interests.embedding := embed_text(text);\n"
         + "AddInterest.embedding := length(text); -- replace by vector embedding\n"
+        + "\n"
+        + "X := SELECT WeightedAvgExample(embedding, 2) e FROM AddInterest;"
         + "\n"
         + "UserInterests := SELECT userid, avg(embedding) as interestVector FROM AddInterest GROUP BY userid;\n"
         + "\n"
@@ -421,12 +426,11 @@ public class AbstractTest {
       }
     }
 
-    snapshot.createOrValidate();
-//    FlinkBase base = plan.getPlans(FlinkStreamPhysicalPlan.class).findAny().get()
-//        .getExecutablePlan().getBase();
-//    FlinkEnvironmentBuilder builder = new FlinkEnvironmentBuilder(errors);
-//    StatementSet statementSet = builder.visitBase(base, null);
-//    statementSet.execute().print();
+    FlinkBase base = plan.getPlans(FlinkStreamPhysicalPlan.class).findAny().get()
+        .getExecutablePlan().getBase();
+    FlinkEnvironmentBuilder builder = new FlinkEnvironmentBuilder(errors);
+    StatementSet statementSet = builder.visitBase(base, null);
+    statementSet.execute().print();
 
     System.out.println();
   }

@@ -4,6 +4,7 @@
 package com.datasqrl.util;
 
 import com.datasqrl.DefaultFunctions;
+import com.datasqrl.flink.function.BridgingFunction;
 import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.hints.DedupHint;
@@ -207,8 +208,8 @@ public class SqrlRexUtil {
   }
 
   public static Optional<SqrlFunction> getSqrlFunction(SqlOperator operator) {
-    if (operator instanceof BridgingSqlScalarFunction) {
-      FunctionDefinition function = ((BridgingSqlScalarFunction)operator).getDefinition();
+    if (operator instanceof BridgingFunction) {
+      FunctionDefinition function = ((BridgingFunction)operator).getDefinition();
       if (function instanceof SqrlFunction) {
         return Optional.of((SqrlFunction) function);
       }

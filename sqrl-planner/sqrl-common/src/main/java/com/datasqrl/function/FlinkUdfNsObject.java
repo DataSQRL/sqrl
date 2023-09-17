@@ -9,12 +9,13 @@ import java.net.URL;
 import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.sql.SqlFunction;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Value
-public class FlinkUdfNsObject implements FunctionNamespaceObject<UserDefinedFunction> {
+public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinition> {
   Name name;
-  UserDefinedFunction function;
+  FunctionDefinition function;
   Optional<URL> jarUrl;
 
   @Override

@@ -5,6 +5,18 @@ import java.util.List;
 import lombok.SneakyThrows;
 
 public class ReflectionUtil {
+  public static Method findMethod(Class<?> clazz, String name) {
+    Method[] methods = clazz.getMethods();
+
+    for(int i = 0; i < methods.length; ++i) {
+      Method method = methods[i];
+      if (method.getName().equals(name) && !method.isBridge()) {
+        return method;
+      }
+    }
+
+    return null;
+  }
 
   @SneakyThrows
   public static Object invokeSuperPrivateMethod(Object instance, String methodName, List<Class> clazz, Object... params)  {

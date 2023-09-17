@@ -13,9 +13,9 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlUserDefinedFunction;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
 
 import java.math.BigDecimal;
@@ -30,7 +30,8 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
   public static final List<SqrlFunction> SQRL_FUNCTIONS = List.of(
       new CosineSimilarity(),
       new CosineDistance(),
-      new EuclideanDistance()
+      new EuclideanDistance(),
+      new WeightedAvgExample()
   );
 
   public StdVectorLibraryImpl() {
@@ -124,5 +125,57 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
           null, null, null,
           null, SqlFunctionCategory.USER_DEFINED_FUNCTION);
     }
+  }
+
+
+  //Example aggregate function
+  public static class WeightedAvgExample extends AggregateFunction<Integer, WeightedAvgAccumulator> implements SqrlFunction {
+
+    @Override
+    public WeightedAvgAccumulator createAccumulator() {
+      return new WeightedAvgAccumulator();
+    }
+
+    @Override
+    public Integer getValue(WeightedAvgAccumulator acc) {
+      if (acc.count == 0) {
+        return null;
+      } else {
+        return acc.sum / acc.count;
+      }
+    }
+
+    public void accumulate(WeightedAvgAccumulator acc, Integer iValue, Integer iWeight) {
+      acc.sum += iValue * iWeight;
+      acc.count += iWeight;
+    }
+
+    public void retract(WeightedAvgAccumulator acc, Integer iValue, Integer iWeight) {
+      acc.sum -= iValue * iWeight;
+      acc.count -= iWeight;
+    }
+
+    public void merge(WeightedAvgAccumulator acc, Iterable<WeightedAvgAccumulator> it) {
+      for (WeightedAvgAccumulator a : it) {
+        acc.count += a.count;
+        acc.sum += a.sum;
+      }
+    }
+
+    public void resetAccumulator(WeightedAvgAccumulator acc) {
+      acc.count = 0;
+      acc.sum = 0;
+    }
+
+    @Override
+    public String getDocumentation() {
+      return "";
+    }
+  }
+
+  // mutable accumulator of structured type for the aggregate function
+  public static class WeightedAvgAccumulator {
+    public int sum = 0;
+    public int count = 0;
   }
 }
