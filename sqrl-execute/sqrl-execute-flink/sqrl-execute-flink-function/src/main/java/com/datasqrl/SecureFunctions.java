@@ -1,6 +1,6 @@
-package com.datasqrl.function;
+package com.datasqrl;
 
-import com.datasqrl.functions.SqrlFunctions;
+import com.datasqrl.function.SqrlFunction;
 import com.google.common.base.Preconditions;
 import java.security.SecureRandom;
 import java.util.Base64;

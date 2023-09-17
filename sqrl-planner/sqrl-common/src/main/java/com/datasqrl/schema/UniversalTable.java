@@ -93,16 +93,6 @@ public class UniversalTable {
 
     int version = fields.nextVersion(name);
 
-//    if (version != 0) {
-//      for (int i = 0; i < getNumPrimaryKeys(); i++) {
-//        Name newName = Name.system(ReservedName.HIDDEN_PREFIX).append(colName);
-//        int version2 = fields.nextVersion(newName);
-//
-//        fields.addField(
-//            new Column(newName, version2, type, visible));
-//      }
-//    }
-
     //A name may clash with a previously added name, hence we increase the version
     fields.addField(new Column(name, version, type, visible));
   }

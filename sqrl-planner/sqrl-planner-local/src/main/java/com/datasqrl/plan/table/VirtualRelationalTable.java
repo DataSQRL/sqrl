@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.calcite.ModifiableSqrlTable;
+import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.table.AddedColumn.Simple;
@@ -47,7 +47,7 @@ import org.apache.calcite.util.ImmutableBitSet;
 @Getter
 public abstract class VirtualRelationalTable extends AbstractRelationalTable implements
     QueryableTable,
-    ModifiableSqrlTable {
+    ModifiableTable {
 
   protected final int numLocalPks;
   @NonNull

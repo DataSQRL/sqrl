@@ -28,11 +28,9 @@ public class RelToFlinkSql {
   }
 
   public static String convertToString(SqlNode sqlNode) {
-    String s = sqlNode.toSqlString(
+    return sqlNode.toSqlString(
             c -> transform.apply(c.withDialect(FlinkDialect.DEFAULT)))
         .getSql().replaceAll("\"", "`");
-    System.out.println("FLINK: " + s);
-    return s;
   }
 
   public static SqlNode convertToSqlNode(RelNode optimizedNode) {
@@ -42,8 +40,6 @@ public class RelToFlinkSql {
   }
 
   public static String convertToSql(FlinkRelToSqlConverter converter, RelNode optimizedNode) {
-    converter.isTop = true;
-
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
     QueryPipelineItem query = converter.getOrCreate(QueryType.ROOT, sqlNode, optimizedNode, null);
     return query.getTableName();

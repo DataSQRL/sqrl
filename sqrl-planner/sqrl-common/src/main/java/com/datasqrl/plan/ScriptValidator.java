@@ -3,7 +3,7 @@ package com.datasqrl.plan;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.ModifiableSqrlTable;
+import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -26,13 +26,11 @@ import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
-import com.datasqrl.plan.SqlPlannerTableFunction.PlannerTableFunction;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +48,6 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
@@ -61,7 +58,6 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlHint;
@@ -70,8 +66,6 @@ import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperandCountRange;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
@@ -90,7 +84,6 @@ import org.apache.calcite.sql.SqrlStreamQuery;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlOperandMetadata;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -263,7 +256,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     Optional<RelOptTable> table = resolveModifableTable(node, SqrlListUtil.popLast(node.getIdentifier().names));
     table.ifPresent((t) -> {
-      if (t.unwrap(ModifiableSqrlTable.class) == null) {
+      if (t.unwrap(ModifiableTable.class) == null) {
         addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: ", t.getQualifiedName());
       }
     });
@@ -924,9 +917,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       addError(ErrorLabel.GENERIC, node, "Cannot column or query to table");
       return;
     }
-    if (!(tableFunction.getFunction() instanceof ModifiableSqrlTable)) {
-      addError(ErrorLabel.GENERIC, node, "Table not modifiable %s", path);
-    }
+//    if (!(tableFunction.getFunction() instanceof ModifiableSqrlTable)) {
+//      addError(ErrorLabel.GENERIC, node, "Table not modifiable %s", path);
+//    }
 
   }
 
@@ -1017,7 +1010,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     table.ifPresent((t)->this.tableMap.put(node, t));
 
     table.ifPresent((t) -> {
-      if (t.unwrap(ModifiableSqrlTable.class) == null) {
+      if (t.unwrap(ModifiableTable.class) == null) {
         addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: %s", t.getQualifiedName());
       }
     });

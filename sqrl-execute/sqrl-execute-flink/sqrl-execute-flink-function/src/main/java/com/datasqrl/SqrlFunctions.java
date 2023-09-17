@@ -1,4 +1,4 @@
-package com.datasqrl.functions;
+package com.datasqrl;
 
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;

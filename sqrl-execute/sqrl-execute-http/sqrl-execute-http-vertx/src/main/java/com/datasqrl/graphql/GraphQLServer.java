@@ -104,7 +104,7 @@ public class GraphQLServer extends AbstractVerticle {
 
     SqlClient client = getSqlClient();
 
-    GraphQL graphQL = createGraphQL(client);
+    GraphQL graphQL = createGraphQL(client, startPromise);
 
     router.route().handler(CorsHandler.create()
         .addOrigin("*")
@@ -172,7 +172,7 @@ public class GraphQLServer extends AbstractVerticle {
     return options;
   }
 
-  public GraphQL createGraphQL(SqlClient client) {
+  public GraphQL createGraphQL(SqlClient client, Promise<Void> startPromise) {
     try {
       GraphQL graphQL = model.accept(
           new BuildGraphQLEngine(),
@@ -180,6 +180,7 @@ public class GraphQLServer extends AbstractVerticle {
               constructSubscriptions(model, vertx), canonicalizer));
       return graphQL;
     } catch (Exception e) {
+      startPromise.fail(e.getMessage());
       e.printStackTrace();
       throw e;
     }

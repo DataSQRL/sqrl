@@ -198,7 +198,7 @@ public class SchemaBuilder implements
         InputValueDefinition def;
         if (parameter.isInternal()) {
           List<String> collect = field.getParentTable().getColumns(false).stream()
-              .map(f->f.getVtName().getCanonical())
+              .map(f->f.getId().getCanonical())
               .collect(Collectors.toList());
           int i = framework.getCatalogReader().nameMatcher()
               .indexOf(collect, parameter.getName());
@@ -330,7 +330,7 @@ public class SchemaBuilder implements
     return FieldLookupCoords.builder()
         .parentType(field.getParent().getName())
         .fieldName(field.getFieldDefinition().getName())
-        .columnName(field.getColumn().getVtName().getCanonical())
+        .columnName(field.getColumn().getId().getCanonical())
         .build();
   }
 

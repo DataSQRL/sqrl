@@ -3,19 +3,14 @@
  */
 package com.datasqrl.flink;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.graphql.AbstractGraphqlTest;
 import com.datasqrl.util.data.Conference;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.HttpResponse;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;

@@ -75,17 +75,17 @@ public class TestCmd {
 
   @Test
   public void discoverNutshop() {
-    execute(Nutshop.SMALL.getRootPackageDirectory(),
-        "discover", Nutshop.SMALL.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString(), "-l", "3600");
+    execute(Nutshop.INSTANCE.getRootPackageDirectory(),
+        "discover", Nutshop.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString(), "-l", "3600");
     createSnapshot();
   }
 
   @Test
   public void compileNutshop() {
-    Path rootDir = Nutshop.SMALL.getRootPackageDirectory();
+    Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
-    TestScript script = Nutshop.SMALL.getScripts().get(1);
+    TestScript script = Nutshop.INSTANCE.getScripts().get(1);
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
         script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
@@ -98,10 +98,10 @@ public class TestCmd {
   @Test
   @SneakyThrows
   public void compileError() {
-    Path rootDir = Nutshop.SMALL.getRootPackageDirectory();
+    Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
-    TestScript script = Nutshop.SMALL.getScripts().get(1);
+    TestScript script = Nutshop.INSTANCE.getScripts().get(1);
 
     int statusCode = execute(rootDir, StatusHook.NONE,"compile",
         script.getScriptPath().toString(),
@@ -112,10 +112,10 @@ public class TestCmd {
   @Test
   @SneakyThrows
   public void compileNutshopWithSchema() {
-    Path rootDir = Nutshop.SMALL.getRootPackageDirectory();
+    Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
-    TestScript script = Nutshop.SMALL.getScripts().get(1);
+    TestScript script = Nutshop.INSTANCE.getScripts().get(1);
     execute(rootDir, "compile",
             script.getScriptPath().toString(),
             script.getGraphQLSchemas().get(0).getSchemaPath().toString(),

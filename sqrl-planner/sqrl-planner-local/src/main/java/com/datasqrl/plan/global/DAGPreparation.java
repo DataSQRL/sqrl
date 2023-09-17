@@ -5,30 +5,24 @@ import static com.datasqrl.calcite.schema.ScriptPlanner.exportTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.local.generate.ComputeTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.VirtualRelationalTable;
-import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.logical.LogicalJoin;
-import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.tools.RelBuilder;
 
 @Value
@@ -42,7 +36,7 @@ public class DAGPreparation {
       Collection<ResolvedExport> exports, SqrlFramework framework) {
     //Add subscriptions as exports
     apiManager.getExports().forEach((sqrlTable, log) ->
-        exports.add(exportTable(sqrlTable, log.getSink(), relBuilder, framework)));
+        exports.add(exportTable(sqrlTable, log.getSink(), relBuilder)));
 
     List<ScriptRelationalTable> scriptTables = sqrlSchema.getTables(ScriptRelationalTable.class);
     //Assign timestamps to imports which should propagate and set all remaining timestamps

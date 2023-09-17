@@ -3,11 +3,12 @@
  */
 package com.datasqrl.plan.util;
 
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.flink.FlinkConverter;
-import com.datasqrl.functions.DefaultFunctions;
+import com.datasqrl.DefaultFunctions;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import lombok.Value;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexInputRef;
@@ -15,11 +16,6 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 /**
  * Represents a timestamp predicate that is normalized into the form: smallerIndex <=/= largerIndex

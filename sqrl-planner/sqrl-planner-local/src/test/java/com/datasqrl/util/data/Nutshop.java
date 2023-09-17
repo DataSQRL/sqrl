@@ -24,7 +24,7 @@ public class Nutshop implements TestDataset {
 
   public static final Path BASE_PATH = Path.of("..", "..", "sqrl-examples", "nutshop");
 
-  public static final Nutshop SMALL = new Nutshop(Variant.small);
+  public static final Nutshop INSTANCE = new Nutshop(Variant.small);
 
   public static final Nutshop MEDIUM = new Nutshop(Variant.medium);
 

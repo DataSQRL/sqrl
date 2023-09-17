@@ -1,7 +1,6 @@
 package com.datasqrl.calcite.schema;
 
 
-import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -21,11 +20,8 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
     implements TransformationRule {
 
-  private final QueryPlanner planner;
-
-  public ExpandTableMacroRule(QueryPlanner planner) {
+  public ExpandTableMacroRule() {
     super(ExpandTableMacroRule.Config.DEFAULT);
-    this.planner = planner;
   }
 
   @Override
@@ -39,11 +35,6 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
       RelNode relNode = CalciteUtil.applyRexShuttleRecursively(function.getViewTransform().get(),
           new ReplaceArgumentWithOperand(((RexCall) node.getCall()).getOperands()));
 
-      //Strip trivial projection
-//      if (relNode instanceof LogicalProject && RexUtil.isIdentity(((LogicalProject) relNode).getProjects(),
-//          relNode.getInput(0).getRowType())) {
-//        relNode = relNode.getInput(0);
-//      }
       Preconditions.checkState(relNode.getRowType().equalsSansFieldNames(node.getRowType()),
           "Not equal:\n " + relNode.getRowType() + " \n " + node.getRowType());
 
@@ -56,9 +47,7 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
     List<RexNode> operands;
     @Override
     public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
-      RexNode rexNode = operands.get(dynamicParam.getIndex());
-//      assert rexNode.getType().getSqlTypeName() == dynamicParam.getType().getSqlTypeName();
-      return rexNode;
+      return operands.get(dynamicParam.getIndex());
     }
   }
 

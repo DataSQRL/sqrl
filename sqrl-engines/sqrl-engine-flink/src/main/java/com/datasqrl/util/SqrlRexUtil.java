@@ -3,10 +3,9 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.DefaultFunctions;
 import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import com.datasqrl.function.SqrlFunction;
-import com.datasqrl.functions.DefaultFunctions;
-import com.datasqrl.functions.TimeFunctions;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
@@ -59,8 +58,6 @@ import org.apache.calcite.util.Util;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
-import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 public class SqrlRexUtil {
@@ -210,14 +207,13 @@ public class SqrlRexUtil {
   }
 
   public static Optional<SqrlFunction> getSqrlFunction(SqlOperator operator) {
-    if (operator instanceof BridgingSqlScalarFunction) {//todo: remaining sql functions
+    if (operator instanceof BridgingSqlScalarFunction) {
       FunctionDefinition function = ((BridgingSqlScalarFunction)operator).getDefinition();
       if (function instanceof SqrlFunction) {
         return Optional.of((SqrlFunction) function);
       }
     }
     return Optional.empty();
-//    return StdTimeLibraryImpl.lookupSQRLFunction(operator);
   }
 
   public static RexFinder<RexInputRef> findRexInputRefByIndex(final int index) {

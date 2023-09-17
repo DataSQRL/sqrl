@@ -1,8 +1,5 @@
-package com.datasqrl;
+package com.datasqrl.plan;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -19,13 +16,10 @@ import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
-import com.datasqrl.plan.table.VirtualRelationalTable;
-import com.datasqrl.schema.Relationship;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -35,7 +29,6 @@ import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -67,18 +60,19 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     if (path.size() > 1) {
       TableFunction function = framework.getQueryPlanner()
           .getTableFunction(SqrlListUtil.popLast(path)).getFunction();
-      ModifiableSqrlTable sqrlTable = (ModifiableSqrlTable)function;
+      SqrlTableMacro sqrlTable = (SqrlTableMacro)function;
       parent = Optional.of(sqrlTable.getSqrlTable());
     }
 
     List<SQRLTable> isATable = isA.stream()
         .map(f->(SqrlTableMacro) f)
-        .map(f->f.getSqrlTable())
+        .map(SqrlTableMacro::getSqrlTable)
         .collect(Collectors.toList());
 
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
 
     List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames().stream()
+        //todo: one versioned field comes in with a distinct on statement, fix it and remove this line
         .map(s->s.contains("$") ? s.split("\\$")[0] : s) //remove version info
         .collect(Collectors.toList());
 
@@ -94,12 +88,6 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
         null, null, parameters, isA, materializeSelf);
 
     nsObj.apply(Optional.empty(), framework, ErrorCollector.root());
-  }
-
-  @Override
-  public Relationship createParent(NamePath path, SQRLTable parent, SQRLTable sqrlTable) {
-    return new CalciteTableFactory(framework, nameCanonicalizer)
-        .createParent(path, parent, (VirtualRelationalTable)parent.getVt(), sqrlTable, (VirtualRelationalTable)sqrlTable.getVt());
   }
 
   //Converts SQRL statements into vanilla SQL

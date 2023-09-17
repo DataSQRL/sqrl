@@ -36,6 +36,6 @@ public class SqrlFunctionParameter implements FunctionParameter {
 
   @Override
   public boolean isOptional() {
-    return false;
+    return defaultValue.isPresent();
   }
 }

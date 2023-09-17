@@ -1,6 +1,6 @@
 package com.datasqrl.frontend;
 
-import com.datasqrl.SqrlPlanningTableFactory;
+import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.schema.ScriptPlanner;
@@ -79,7 +79,7 @@ public class SqrlPlan extends SqrlBase {
       ScriptPlanner planner = new ScriptPlanner(
           framework.getQueryPlanner(), validator,
           new SqrlPlanningTableFactory(framework, nameCanonicalizer), framework,
-          new SqlNameUtil(nameCanonicalizer), updatedModuleLoader, errors);
+          new SqlNameUtil(nameCanonicalizer), errors);
 
       planner.plan(statement);
     }

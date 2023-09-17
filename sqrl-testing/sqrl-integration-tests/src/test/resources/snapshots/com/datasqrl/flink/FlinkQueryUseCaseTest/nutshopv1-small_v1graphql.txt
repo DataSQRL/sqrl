@@ -1,10 +1,10 @@
 >>>database
 CREATE INDEX IF NOT EXISTS orders$7_btree_c2c3c4 ON orders$7 USING btree (id$0,customerid$0,time$0);
 CREATE INDEX IF NOT EXISTS orders$7_btree_c2c4 ON orders$7 USING btree (id$0,time$0);
-CREATE INDEX IF NOT EXISTS orders$7_btree_c3c4c5 ON orders$7 USING btree (customerid$0,time$0,timestamp$3);
-CREATE INDEX IF NOT EXISTS orders$7_btree_c3c5c2 ON orders$7 USING btree (customerid$0,timestamp$3,id$0);
-CREATE INDEX IF NOT EXISTS orders$7_btree_c4c5c2 ON orders$7 USING btree (time$0,timestamp$3,id$0);
-CREATE INDEX IF NOT EXISTS orders$7_btree_c5c2 ON orders$7 USING btree (timestamp$3,id$0);
+CREATE INDEX IF NOT EXISTS orders$7_btree_c3c4c5 ON orders$7 USING btree (customerid$0,time$0,timestamp$0);
+CREATE INDEX IF NOT EXISTS orders$7_btree_c3c5c2 ON orders$7 USING btree (customerid$0,timestamp$0,id$0);
+CREATE INDEX IF NOT EXISTS orders$7_btree_c4c5c2 ON orders$7 USING btree (time$0,timestamp$0,id$0);
+CREATE INDEX IF NOT EXISTS orders$7_btree_c5c2 ON orders$7 USING btree (timestamp$0,id$0);
 CREATE INDEX IF NOT EXISTS products$18_btree_c3 ON products$18 USING btree (name$0);
 CREATE INDEX IF NOT EXISTS products$18_btree_c4 ON products$18 USING btree (sizing$0);
 CREATE INDEX IF NOT EXISTS products$18_btree_c5 ON products$18 USING btree (weight_in_gram$0);
@@ -13,8 +13,8 @@ CREATE INDEX IF NOT EXISTS products$18_btree_c7 ON products$18 USING btree (cate
 CREATE INDEX IF NOT EXISTS products$18_btree_c8 ON products$18 USING btree (usda_id$0);
 CREATE INDEX IF NOT EXISTS products$18_btree_c9 ON products$18 USING btree (updated$0);
 CREATE TABLE IF NOT EXISTS customers$15 (id$0 BIGINT NOT NULL,timestamp$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (id$0));
-CREATE TABLE IF NOT EXISTS items$9 (_uuid$0 VARCHAR NOT NULL,_idx$0 BIGINT NOT NULL,productid$0 BIGINT NOT NULL,quantity$0 BIGINT NOT NULL,unit_price$0 DOUBLE PRECISION NOT NULL,discount$0 DOUBLE PRECISION ,discount$4 DOUBLE PRECISION NOT NULL,total$7 DOUBLE PRECISION NOT NULL,timestamp$3 TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid$0,_idx$0));
-CREATE TABLE IF NOT EXISTS orders$7 (_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,id$0 BIGINT NOT NULL,customerid$0 BIGINT NOT NULL,time$0 BIGINT NOT NULL,timestamp$3 TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid$0));
+CREATE TABLE IF NOT EXISTS items$9 (_uuid$0 VARCHAR NOT NULL,_idx$0 BIGINT NOT NULL,productid$0 BIGINT NOT NULL,quantity$0 BIGINT NOT NULL,unit_price$0 DOUBLE PRECISION NOT NULL,discount$0 DOUBLE PRECISION ,discount$1 DOUBLE PRECISION NOT NULL,total$0 DOUBLE PRECISION NOT NULL,timestamp$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid$0,_idx$0));
+CREATE TABLE IF NOT EXISTS orders$7 (_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,id$0 BIGINT NOT NULL,customerid$0 BIGINT NOT NULL,time$0 BIGINT NOT NULL,timestamp$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid$0));
 CREATE TABLE IF NOT EXISTS products$18 (id$0 BIGINT NOT NULL,_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,name$0 VARCHAR NOT NULL,sizing$0 VARCHAR NOT NULL,weight_in_gram$0 BIGINT NOT NULL,type$0 VARCHAR NOT NULL,category$0 VARCHAR NOT NULL,usda_id$0 BIGINT NOT NULL,updated$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (id$0));
 CREATE TABLE IF NOT EXISTS spending_by_month$28 (__id$0 BIGINT NOT NULL,month$0 TIMESTAMPTZ NOT NULL,total_spend$0 DOUBLE PRECISION NOT NULL,total_savings$0 DOUBLE PRECISION NOT NULL , PRIMARY KEY (__id$0,month$0));
 CREATE TABLE IF NOT EXISTS totals$23 (___uuid$0 VARCHAR NOT NULL,price$0 DOUBLE PRECISION NOT NULL,savings$0 DOUBLE PRECISION NOT NULL,timestamp$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (___uuid$0));

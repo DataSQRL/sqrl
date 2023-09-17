@@ -1,13 +1,11 @@
 package com.datasqrl.calcite.schema.sql;
 
-import com.datasqrl.calcite.ModifiableSqrlTable;
+import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
-import com.datasqrl.schema.Column;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -20,7 +18,6 @@ import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
@@ -35,16 +32,12 @@ import org.apache.commons.collections.ListUtils;
 
 @AllArgsConstructor
 public class SqlJoinPathBuilder {
-  QueryPlanner planner;
+  final QueryPlanner planner;
   @Getter
   final List<Frame> tableHistory = new ArrayList<>();
   final Stack<Frame> stack = new Stack<>();
-
   final AtomicInteger aliasInt = new AtomicInteger(0);
 
-  /**
-   *
-   */
   public SqlJoinPathBuilder scanFunction(List<String> path, List<SqlNode> args) {
     SqlUserDefinedTableFunction op = planner.getTableFunction(path);
     if (op == null && args.isEmpty()) {
@@ -105,20 +98,13 @@ public class SqlJoinPathBuilder {
     Frame lastTable = tableHistory.get(tableHistory.size()-1);
     if (frame.getSqrlTable() == null) { //subquery
       return frame.getNode();
-    }//
-//    if (!pullupCols.isEmpty()) {
-      SqlSelectBuilder select = new SqlSelectBuilder()
-          .setFrom(frame.getNode());
-        select.setSelectList(ListUtils.union(
-          rename(createSelectList(tableHistory.get(0), pullupCols.size()), pullupCols),
-          createSelectList(lastTable, lastTable.type.getFieldCount())));
-      return select.build();
-//    }
-//
-//    if (frame.getNode().getKind() == SqlKind.AS) {
-//      return ((SqlCall)frame.getNode()).getOperandList().get(0);
-//    }
-//    return frame.getNode();
+    }
+    SqlSelectBuilder select = new SqlSelectBuilder()
+        .setFrom(frame.getNode());
+      select.setSelectList(ListUtils.union(
+        rename(createSelectList(tableHistory.get(0), pullupCols.size()), pullupCols),
+        createSelectList(lastTable, lastTable.type.getFieldCount())));
+    return select.build();
   }
 
   private List rename(List<SqlIdentifier> selectList, List<String> pullupCols) {
@@ -149,35 +135,20 @@ public class SqlJoinPathBuilder {
       throw new RuntimeException("Could not find table: " + currentPath);
     }
     String tableName = relOptTable.getQualifiedName().get(0);
-    SqlNode table = //SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO,
-        new SqlIdentifier(tableName, SqlParserPos.ZERO)
-//    )
-        ;
-
-//    SqlSelect select = new SqlSelectBuilder()
-//        .setFrom(table)
-//        .setSelectList(RelBuilder.shadow(relOptTable.getRowType()).getFieldList()
-//            .stream()
-//            .map(f-> (SqlNode)SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-//                new SqlIdentifier(relOptTable.getInternalTable().getRowType().getFieldList().get(f.getIndex()).getName(), SqlParserPos.ZERO),
-//                new SqlIdentifier(f.getName(), SqlParserPos.ZERO)))
-//            .collect(Collectors.toList()))
-//        .build();
+    SqlNode table = new SqlIdentifier(tableName, SqlParserPos.ZERO);
 
     String alias = "_t"+aliasInt.incrementAndGet();
 
     SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, table, new SqlIdentifier(alias, SqlParserPos.ZERO));
-    Frame frame = new Frame(relOptTable.unwrap(ModifiableSqrlTable.class).getSqrlTable(), relOptTable.getRowType(), aliasedCall, alias);
+    Frame frame = new Frame(relOptTable.unwrap(ModifiableTable.class).getSqrlTable(), relOptTable.getRowType(), aliasedCall, alias);
     stack.push(frame);
     tableHistory.add(frame);
-
   }
 
   public void push(SqlNode result, RelDataType rowType) {
     Frame frame = new Frame(null, rowType, result, null);
     stack.push(frame);
     tableHistory.add(frame);
-
   }
 
 

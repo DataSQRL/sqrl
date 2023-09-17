@@ -1,15 +1,13 @@
 package org.apache.calcite.rel.rel2sql;
 
-import static org.apache.calcite.sql.type.SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
-
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.FlinkExecutablePlan.FlinkQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToTypeInformationTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
 import com.datasqrl.engine.stream.flink.sql.model.StreamPipelineItem;
 import com.datasqrl.plan.hints.SqrlHint;
@@ -32,7 +30,6 @@ import org.apache.calcite.rel.core.Uncollect;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalProject;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexFieldAccess;
@@ -260,81 +257,16 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     Result x = super.visitInput(stream, 0)
         .resetAlias();
 
-    SqlSelect select = (SqlSelect) x.asSelect();
+    SqlSelect select = x.asSelect();
     QueryPipelineItem queries1 = getOrCreate(QueryType.STREAM, select, stream.getInput(0), stream);
 
     SqlIdentifier table = new SqlIdentifier(queries1.getTableName(), SqlParserPos.ZERO);
-//    SqlNode as = SqlStdOperatorTable.AS.createCall(POS, table,
-//        new SqlIdentifier(x.neededAlias, POS));
     SqlIdentifier identifier = table;
     return this.result(identifier, ImmutableList.of(Clause.FROM), stream, (Map)null);
-
-//    return this.result(as, List.of(Clause.FROM), null, null, Map.of());
   }
-  private Project addCasts(Project project) {
-    long numTimestamps = project.getRowType().getFieldList().stream()
-        .filter(f->f.getType().getSqlTypeName() == TIMESTAMP_WITH_LOCAL_TIME_ZONE)
-        .count();
-
-    int tsIndex = getTimestampIndex(project.getRowType().getFieldList());
-    if (tsIndex == -1 || numTimestamps < 2) {
-      return project;
-    }
-    RexBuilder rexBuilder = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
-        FlinkTypeSystem.INSTANCE));
-    //Cast all other timestamps
-    List<RexNode> rex = new ArrayList<>();
-    List<String> names = new ArrayList<>();
-    for (int i = 0; i < project.getRowType().getFieldList().size(); i++) {
-      RelDataTypeField field = project.getRowType().getFieldList().get(i);
-      RexNode node = project.getProjects().get(i);
-      if (field.getType().getSqlTypeName() == TIMESTAMP_WITH_LOCAL_TIME_ZONE && i != tsIndex) {
-        RexNode casted = rexBuilder.makeCast(field.getType(),
-            node, true);
-        rex.add(casted);
-      } else {
-        rex.add(node);
-      }
-      names.add(field.getName());
-    }
-
-    LogicalProject p = new LogicalProject(project.getCluster(),
-        project.getTraitSet(), project.getHints(), project.getInput(),
-        rex, project.getRowType());
-    return p;
-  }
-
-  private int getTimestampIndex(List<RelDataTypeField> fieldList) {
-    //Look for in order:
-    // the latest 'timestamp'*
-    // a '_source_time'
-
-    for (int i = fieldList.size() - 1; i >= 0; i--) {
-      if (fieldList.get(i).getType().getSqlTypeName() == TIMESTAMP_WITH_LOCAL_TIME_ZONE
-          && fieldList.get(i).getName().contains("time")) {
-        return i;
-      }
-    }
-    for (int i = fieldList.size() - 1; i >= 0; i--) {
-      if (fieldList.get(i).getType().getSqlTypeName() == TIMESTAMP_WITH_LOCAL_TIME_ZONE
-          && fieldList.get(i).getName().equalsIgnoreCase("_source_time")) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  public boolean isTop = true;
 
   @Override
   public Result visit(Project project) {
-    //At the last second, do a flink rule event-time cast. we need to know if we're at the top too
-//    if (isTop) {
-//      isTop = false;
-//      project = addCasts(project);
-//    }
-
     Result result = super.visit(project);
     Optional<WatermarkHint> watermark = SqrlHint.fromRel(project, WatermarkHint.CONSTRUCTOR);
     /*
@@ -393,7 +325,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     QueryPipelineItem queries1 = getOrCreate(QueryType.QUERY, select, e.getInput(0), null);
 
     RexBuilder rex = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
-        TypeFactory.getSqrlTypeSystem()));
+        FlinkTypeSystem.INSTANCE));
     //The first flink operand is referencing something else
     // replace it with a placeholder then replace it with the sql node
     RexCall call = (RexCall) e.getCall();

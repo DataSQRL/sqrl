@@ -3,10 +3,9 @@ package com.datasqrl.calcite.schema;
 import static com.datasqrl.plan.ScriptValidator.isSelfField;
 import static com.datasqrl.plan.ScriptValidator.isSelfTable;
 import static com.datasqrl.plan.ScriptValidator.isVariable;
-import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.ModifiableSqrlTable;
+import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
@@ -19,22 +18,18 @@ import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.schema.sql.SqlJoinPathBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.ScriptValidator;
 import com.datasqrl.plan.ScriptValidator.QualifiedExport;
-import com.datasqrl.plan.SqlPlannerTableFunction;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.NamedTable;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.schema.SQRLTable;
@@ -44,7 +39,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,7 +52,6 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
@@ -68,7 +61,6 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.*;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
@@ -80,13 +72,12 @@ import org.apache.commons.lang3.tuple.Pair;
 @AllArgsConstructor
 public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
-  private QueryPlanner planner;
-  private ScriptValidator validator;
-  SqrlTableFactory tableFactory;
-  SqrlFramework framework;
-  SqlNameUtil nameUtil;
-  ModuleLoader moduleLoader;
-  ErrorCollector errors;
+  private final QueryPlanner planner;
+  private final ScriptValidator validator;
+  private final SqrlTableFactory tableFactory;
+  private final SqrlFramework framework;
+  private final SqlNameUtil nameUtil;
+  private final ErrorCollector errors;
 
   public Void plan(SqlNode query) {
     return SqlNodeVisitor.accept(this, query, null);
@@ -99,14 +90,13 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  public static ResolvedExport exportTable(SQRLTable table, TableSink sink, RelBuilder relBuilder,
-      SqrlFramework framework) {
-    NamedTable table1 = (NamedTable)table.getVt() ;
+  public static ResolvedExport exportTable(SQRLTable table, TableSink sink, RelBuilder relBuilder) {
+    ModifiableTable table1 = (ModifiableTable)table.getVt();
     relBuilder.scan(table1.getNameId());
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
     table.getVisibleColumns().stream().forEach(c -> {
-      selects.add(relBuilder.field(c.getVtName().getCanonical()));
+      selects.add(relBuilder.field(c.getId().getCanonical()));
       fieldNames.add(c.getName().getDisplay());
     });
     relBuilder.project(selects, fieldNames);
@@ -116,20 +106,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
     QualifiedExport export = validator.getExportOps().get(node);
-    ModifiableSqrlTable table = planner.getCatalogReader().getSqrlTable(export.getTable())
-        .unwrap(ModifiableSqrlTable.class);
+    ModifiableTable table = planner.getCatalogReader().getSqrlTable(export.getTable())
+        .unwrap(ModifiableTable.class);
 
     ResolvedExport resolvedExport = exportTable(table.getSqrlTable(), export.getSink(),
-        planner.getRelBuilder(), framework);
-//
-//    RelBuilder relBuilder = planner.getRelBuilder();
-//    RelNode relNode = relBuilder
-//        .scan(table.getQualifiedName())
-//        .project(relBuilder.fields()) //todo remove hidden fields
-//        .build();
-//
-//    ResolvedExport resolvedExport = new ResolvedExport(table.getQualifiedName().get(0),
-//        relNode, export.getSink());
+        planner.getRelBuilder());
 
     framework.getSchema().add(resolvedExport);
 
@@ -170,6 +151,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     //Expanding table functions may have added additional parameters that we need to remove.
     //These can only be discovered either during sqrl to sql rewriting or directly after
+    //TODO: move this logic into sqrl to sql converter and have it return params
     List<FunctionParameter> parameters = validator.getParameters().get(assignment);
     Pair<List<FunctionParameter>, SqlNode> rewritten = extractSelfArgs(parameters,
         materializeSelf, result.getSqlNode());
@@ -208,14 +190,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
             parent, Relationship.JoinType.JOIN, Multiplicity.MANY,
             isASqrl, parameters, nodeSupplier
             );
-        parent.getSqrlTable().addRelationship(rel);
+        parent.addRelationship(rel);
         planner.getSchema().addRelationship(rel);
-
-        //Also add parent
-//        Relationship relationship = tableFactory.createParent(path, parent, isASqrl.get(0));
-
-//        isASqrl.get(0).addRelationship(relationship);
-//        planner.getSchema().addRelationship(relationship);
       } else {
         RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),
             null, isASqrl, parameters, nodeSupplier);
@@ -224,14 +200,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         for (int i = 0; i < fieldNames.size(); i++) {
           String name = fieldNames.get(i);
           RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
-          sqrlTable.addColumn(framework, nameUtil.toName(name), nameUtil.toName(field.getName()), true,
+          sqrlTable.addColumn(nameUtil.toName(name), true,
               field.getType());
         }
 
         planner.getSchema().addSqrlTable(sqrlTable);
-//        tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
-//            assignment.getHints(), parameters, isA,
-//            materializeSelf, Optional.of(nodeSupplier));
       }
     } else {
       tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
@@ -303,35 +276,13 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   }
 
   private void addColumn(RexNode node, String cName, RelOptTable table) {
-    if (table.unwrap(ModifiableSqrlTable.class) != null) {
-      ModifiableSqrlTable table1 = (ModifiableSqrlTable) table.unwrap(Table.class);
-      String name = uniquifyColumnName(cName);
-      table1.addColumn(nameUtil.toName(name).getCanonical(), node, framework.getTypeFactory());
+    if (table.unwrap(ModifiableTable.class) != null) {
+      ModifiableTable table1 = (ModifiableTable) table.unwrap(Table.class);
       SQRLTable sqrlTable = table1.getSqrlTable();
-      sqrlTable.addColumn(framework, Name.system(cName), nameUtil.toName(name),true, node.getType());
+      Column column = sqrlTable.addColumn(nameUtil.toName(cName), true, node.getType());
+      table1.addColumn(column.getId().getCanonical(), node, framework.getTypeFactory());
     } else {
       throw new RuntimeException();
-    }
-  }
-
-  public String uniquifyColumnName(String name) {
-    if (name.contains("$")) {
-      return name; //keep name as-is
-    }
-
-    return name + "$" + framework.getUniqueColumnInt().incrementAndGet();
-  }
-
-  @Value
-  public static class TableResult {
-    Result result;
-    RelNode relNode;
-    SqlNode sqlNode;
-    SqrlTableFunctionDef def;
-
-    public static TableResult of(Result result, RelNode relNode, SqlNode sqlNode,
-        SqrlTableFunctionDef def) {
-      return new TableResult(result, relNode, sqlNode, def);
     }
   }
 
@@ -358,7 +309,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       //retain distinct hint too
       if (isDistinctOnHintPresent(call)) {
-        //1. get table, distinct on
         List<Integer> hintOps = IntStream.range(0, call.getSelectList().size())
             .boxed()
             .collect(Collectors.toList());
@@ -374,7 +324,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         //get latest fields not in select list
 
         List<Column> columns = planner.getCatalogReader().getSqrlTable(result.getCurrentPath())
-            .unwrap(ModifiableSqrlTable.class)
+            .unwrap(ModifiableTable.class)
             .getSqrlTable().getFields().getColumns();
 
         for (Column column : columns) {
@@ -384,8 +334,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         }
 
         sqlSelectBuilder.setSelectList(selectList)
-            .clearHints()
-        ;
+            .clearHints();
         SqlSelect top = new SqlSelectBuilder()
             .setFrom(sqlSelectBuilder.build())
             .setDistinctOnHint(hintOps)
@@ -399,7 +348,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         int keySize = context.isNested()
             ? planner.getCatalogReader().getSqrlTable(context.currentPath).getKeys().get(0).asSet().size()
             : 0;
-//      Preconditions.checkState(keySize == result.keysToPullUp.size());
 
         SqlSelectBuilder inner = new SqlSelectBuilder(call)
             .clearKeywords()
@@ -410,8 +358,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         SqlSelectBuilder topSelect = new SqlSelectBuilder()
             .setFrom(inner.build())
             .setTopNHint(call.isKeywordPresent(SqlSelectKeyword.DISTINCT)
-                ? Type.SELECT_DISTINCT : Type.TOP_N, SqlSelectBuilder.sqlIntRange(keySize))
-            ;
+                ? Type.SELECT_DISTINCT : Type.TOP_N, SqlSelectBuilder.sqlIntRange(keySize));
 
         return new Result(topSelect.build(),
             result.getCurrentPath(), List.of(), List.of(), Optional.empty());
@@ -419,8 +366,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       SqlSelectBuilder select = new SqlSelectBuilder(call)
           .setFrom(result.getSqlNode())
-//          .setSelectList(newSelectList)
           .rewriteExpressions(new WalkExpressions(planner, newContext));
+
       pullUpKeys(select, result.keysToPullUp, isAggregating);
 
       return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty());
@@ -512,16 +459,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           .orElseThrow(()->new RuntimeException("Subqueries are not yet implemented"));
 
       SqlJoinPathBuilder builder = new SqlJoinPathBuilder(planner);
-      boolean isSingleTable = node.getItems().size() == 1;
       boolean isAlias = context.hasAlias(identifier);
-      boolean isAggregating = context.isAggregating();
-      boolean isLimit = context.isLimit();
       boolean isNested = context.isNested();
       boolean isSelf = identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical());
       boolean materializeSelf = context.isMaterializeSelf();
-//      boolean isSchemaTable = getIdentifier(item)
-//          .map(i->planner.getCatalogReader().getSqrlTable(List.of(i)) != null)
-//          .orElse(false);
       SqlUserDefinedTableFunction tableFunction = planner.getTableFunction(List.of(identifier));
 
       List<String> pullupColumns = List.of();
@@ -540,7 +481,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
         pathWalker.setPath(context.getAliasPath(identifier));
         //Walk the next one and push in table function
-        String alias = identifier;
         item = input.next();
         String nextIdentifier = getIdentifier(item)
             .orElseThrow(()->new RuntimeException("Subqueries are not yet implemented"));
@@ -548,7 +488,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         pathWalker.walk(nextIdentifier);
 
         SqlUserDefinedTableFunction fnc = planner.getTableFunction(pathWalker.getPath());
-        List<SqlNode> args = rewriteArgs(alias, (SqrlTableMacro) fnc.getFunction());
+        List<SqlNode> args = rewriteArgs(identifier, (SqrlTableMacro) fnc.getFunction());
         builder.scanFunction(fnc, args);
       } else if (isSelf) {
         pathWalker.setPath(context.getCurrentPath());
@@ -567,8 +507,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           pathWalker.walk(nextIdentifier);
 
           SqlUserDefinedTableFunction fnc = planner.getTableFunction(pathWalker.getAbsolutePath());
-          List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(),
-              (SqrlTableMacro) fnc.getFunction());
+          List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.getFunction());
 
           builder.scanFunction(fnc, args);
         }
@@ -610,15 +549,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         nodes.add(identifier);
       }
       return nodes;
-
-//
-//      return function.getParameters().stream()
-//          .filter(f->f instanceof SqrlFunctionParameter)
-//          .map(f->(SqrlFunctionParameter)f)
-//          //todo: alias name not correct, look at default value and extract dynamic param with correct field name
-//          // but this is okay for now
-//          .map(f->new SqlIdentifier(List.of(alias, f.getName()), SqlParserPos.ZERO))
-//          .collect(Collectors.toList());
     }
 
     private Optional<String> getIdentifier(SqlNode item) {

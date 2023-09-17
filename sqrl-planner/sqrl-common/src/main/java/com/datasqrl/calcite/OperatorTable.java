@@ -1,6 +1,7 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 
@@ -9,10 +10,12 @@ import java.util.*;
 public class OperatorTable implements SqlOperatorTable {
   private final Map<List<String>, SqlFunction> udf = new HashMap<>();
   private final Map<List<String>, SqlFunction> internalNames = new HashMap<>();
+  private final NameCanonicalizer nameCanonicalizer;
   private final SqlOperatorTable[] chain;
   private final Map<String, SqlFunction> validatorFncs = new HashMap<>();
 
-  public OperatorTable(SqlOperatorTable... chain) {
+  public OperatorTable(NameCanonicalizer nameCanonicalizer, SqlOperatorTable... chain) {
+    this.nameCanonicalizer = nameCanonicalizer;
     this.chain = chain;
   }
 
@@ -51,10 +54,10 @@ public class OperatorTable implements SqlOperatorTable {
   }
 
   public void addFunction(String canonicalName, SqlFunction function) {
-    if (this.udf.containsKey(List.of(Name.system(canonicalName).getCanonical()))) {
+    if (this.udf.containsKey(List.of(nameCanonicalizer.getCanonical(canonicalName)))) {
       throw new RuntimeException(String.format("Function already exists: %s", canonicalName));
     }
-    this.udf.put(List.of(canonicalName.toLowerCase()), function);
+    this.udf.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
     this.internalNames.put(List.of(function.getName()), function);
   }
 

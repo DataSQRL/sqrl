@@ -29,14 +29,6 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
 
     registerScriptTable(scriptTableDefinition, framework);
 
-    scriptTableDefinition.getShredTableMap().entrySet().stream()
-        .filter(f->f.getKey() instanceof RootSqrlTable)
-        .forEach(f->{
-//          framework.getSchema().addSqrlTable(f.getKey());
-//          framework.getSchema().plus().add(f.getKey().getPath().toString() + "$" + framework.getUniqueMacroInt().incrementAndGet(),
-//              (RootSqrlTable)f.getKey());
-        });
-
     return true;
   }
 
@@ -46,22 +38,19 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     //add to schema
     for (Map.Entry<SQRLTable, VirtualRelationalTable> entry : tblDef.getShredTableMap().entrySet()) {
       framework.getSchema().add(entry.getValue().getNameId(), entry.getValue());
-      entry.getValue().setSqrlTable(entry.getKey());
-      entry.getKey().setVtTable(entry.getValue());
 
       for (Field field : entry.getKey().getFields().getFields()) {
+        //todo: this is only required because we miss registering nested tables for distinct-on statements
+        // Add the logic to calcite table factory and remove this
         if (field instanceof Relationship) {
           framework.getSchema().addRelationship((Relationship) field);
         }
       }
-//      framework.getSchema().addSqrlTable(entry.getKey());
     }
 
     if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {
       AbstractRelationalTable impTable = ((ProxyImportRelationalTable) tblDef.getBaseTable()).getBaseTable();
       framework.getSchema().add(impTable.getNameId(), impTable);
     }
-
-
   }
 }

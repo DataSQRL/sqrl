@@ -75,26 +75,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               sqrlConverter.convert(table, config, false, errors).explain(),
               table.getNameId());
         });
-//    ns.getSchema().getAllTables().stream()
-//        .flatMap(t->t.getAllRelationships())
-//        .sorted(Comparator.comparing(Field::getName))
-//        .filter(r->r.getJoin().isPresent());
-//            .forEach(r->
-//                snapshot.addContent(
-//                    SqlNodePrinter.printJoin(r.getJoin().get()), "join-declaration-" +
-//                    r.getName())
-//            );
     snapshot.createOrValidate();
-  }
-
-  @Test
-  @Disabled
-  public void uberTest() {
-    validateScript("IMPORT ecommerce-data.Orders;\n"
-        + "Orders.product := JOIN @.entries e JOIN Product p ON e.productid = p.productid;\n"
-        + "Orders.table := SELECT count() FROM @.product p \n"
-        + "                JOIN p.(SELECT p._uuid FROM @.parent p GROUP BY p._uuid LIMIT 1) o ON true\n"
-        + "                WHERE p.id IN (SELECT _uuid FROM @.parent);");
   }
 
   @Test
@@ -129,7 +110,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void accessTableFunctionTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("X(id: Int) := SELECT * FROM Customer WHERE customerid = @id");
@@ -137,7 +117,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void computeTableFunctionTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("X(id: Int) := SELECT *, 1 AS x FROM Customer WHERE customerid = @id");
@@ -243,7 +222,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled //incorrect lp analysis
   public void orderParentIdDiscountConditionTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Orders.entries.x := SELECT p.id, x.discount FROM @ AS x JOIN x.parent p WHERE p.id = 1");
@@ -369,7 +347,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void ordersNewIdTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;");
@@ -377,7 +354,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void customerWithPurchaseTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("CustomerWithPurchase := SELECT * FROM Customer\n"
@@ -431,7 +407,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void duplicateImportTest() {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "IMPORT ecommerce-data.Product;\n");
@@ -504,7 +479,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void invalidParentTable() {
     validateScriptInvalid("IMPORT ecommerce-data.*;\n"
         + "Products.orders := SELECT COUNT(1) FROM @ JOIN Orders.entries e ON e.productid = @.productid;\n");
@@ -544,7 +518,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void invalidImportDuplicateAliasTest() {
     validateScriptInvalid(
         "IMPORT ecommerce-data.Product;\n"
@@ -614,7 +587,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void testOrderedJoinDeclaration() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
@@ -747,7 +719,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void unionMixedTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT productid, name, category FROM Product\n"
@@ -813,7 +784,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void distinctWithGroupNotInSelectTest() {
     //todo: Fringe case to guard against
     validateScriptInvalid(
@@ -832,22 +802,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
             + "  SELECT p.* "
             + "  FROM @ JOIN Product p "
             + "  LIMIT 5;");
-
-//    assertFalse(((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().isEmpty());
-//    assertEquals(1,
-//        ((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().get(0).listOptions.size());
   }
   @Test
-  @Disabled//Does not properly shadow the column
   public void shadowUuidTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
             + "Product.nested := SELECT p.* FROM @ JOIN Product p;\n"
             + "X := SELECT _uuid FROM Product.nested;");
-
-//    assertFalse(((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().isEmpty());
-//    assertEquals(1,
-//        ((LogicalProject) env1.getOps().get(0).getRelNode()).getHints().get(0).listOptions.size());
   }
   @Test
   public void distinctSingleColumnTest() {
@@ -871,7 +832,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void compoundAggregateExpressionTest() {
     //not yet supported
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
@@ -1026,7 +986,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   //Automatically determining the order by statement not yet supported
   public void distinctOnTest() {
     validateScriptInvalid(
@@ -1042,7 +1001,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void distinctOnWithExpressionTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
@@ -1083,7 +1041,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void nestedLocalDistinctTest() {
     validateScriptInvalid(
         "IMPORT ecommerce-data.Product;\n"

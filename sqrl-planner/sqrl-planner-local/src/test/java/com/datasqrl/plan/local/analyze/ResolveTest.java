@@ -572,13 +572,12 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   */
 
   @Test
-  @Disabled
   public void tableFunctionsBasic() {
     ScriptBuilder builder = imports();
     builder.add(
-        "OrdersIDRange(idLower: INTEGER) := SELECT * FROM Orders WHERE id > :idLower");
+        "OrdersIDRange(idLower: Int) := SELECT * FROM Orders WHERE id > @idLower");
     builder.add(
-        "Orders2(idLower: INTEGER) := SELECT id, id - :idLower AS delta, time FROM Orders WHERE id > :idLower");
+        "Orders2(idLower: Int) := SELECT id, id - @idLower AS delta, time FROM Orders WHERE id > @idLower");
     plan(builder.toString());
     validateAccessTableFunction("ordersidrange", "orders", Type.DATABASE);
     validateTableFunction("orders2", TableType.STREAM, Type.DATABASE, 4, 1,

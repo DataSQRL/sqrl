@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.SqrlFunction;

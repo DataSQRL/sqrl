@@ -1,10 +1,10 @@
 >>>database
-CREATE INDEX IF NOT EXISTS orders$7_btree_c3c5 ON orders$7 ("customerid$0","timestamp$3")
+CREATE INDEX IF NOT EXISTS orders$7_btree_c3c5 ON orders$7 ("customerid$0","timestamp$0")
 CREATE INDEX IF NOT EXISTS orders$7_hash_c2 ON orders$7 ("id$0")
 CREATE INDEX IF NOT EXISTS products$20_hash_c3 ON products$20 ("name$0")
 CREATE TABLE IF NOT EXISTS "customers$24" ("id$0" BIGINT NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
-CREATE TABLE IF NOT EXISTS "items$9" ("_uuid$0" VARCHAR NOT NULL,"_idx$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"quantity$0" BIGINT NOT NULL,"unit_price$0" DOUBLE NOT NULL,"discount$0" DOUBLE ,"discount$4" DOUBLE NOT NULL,"total$5" DOUBLE NOT NULL,"timestamp$3" INTEGER NOT NULL , PRIMARY KEY ("_uuid$0","_idx$0"));
-CREATE TABLE IF NOT EXISTS "orders$7" ("_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"id$0" BIGINT NOT NULL,"customerid$0" BIGINT NOT NULL,"time$0" BIGINT NOT NULL,"timestamp$3" INTEGER NOT NULL , PRIMARY KEY ("_uuid$0"));
+CREATE TABLE IF NOT EXISTS "items$9" ("_uuid$0" VARCHAR NOT NULL,"_idx$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"quantity$0" BIGINT NOT NULL,"unit_price$0" DOUBLE NOT NULL,"discount$0" DOUBLE ,"discount$1" DOUBLE NOT NULL,"total$0" DOUBLE NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("_uuid$0","_idx$0"));
+CREATE TABLE IF NOT EXISTS "orders$7" ("_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"id$0" BIGINT NOT NULL,"customerid$0" BIGINT NOT NULL,"time$0" BIGINT NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("_uuid$0"));
 CREATE TABLE IF NOT EXISTS "past_purchases$33" ("__id$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"num_orders$0" BIGINT NOT NULL,"total_quantity$0" BIGINT NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("__id$0","productid$0"));
 CREATE TABLE IF NOT EXISTS "products$20" ("id$0" BIGINT NOT NULL,"_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"name$0" VARCHAR NOT NULL,"sizing$0" VARCHAR NOT NULL,"weight_in_gram$0" BIGINT NOT NULL,"type$0" VARCHAR NOT NULL,"category$0" VARCHAR NOT NULL,"usda_id$0" BIGINT NOT NULL,"updated$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
 CREATE TABLE IF NOT EXISTS "spending_by_month$28" ("__id$0" BIGINT NOT NULL,"month$0" INTEGER NOT NULL,"total_spend$0" DOUBLE NOT NULL,"total_savings$0" DOUBLE NOT NULL , PRIMARY KEY ("__id$0","month$0"));

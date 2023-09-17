@@ -16,7 +16,7 @@ LogicalProject(__id$0=[$0], week$0=[$1], spend$0=[$2], saved$0=[$3])
                   LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
           LogicalProject(___uuid$0$pk$1=[$0], price=[$2], saving=[$3], time$0=[$1])
             LogicalAggregate(group=[{0, 4}], price=[SUM($1)], saving=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
-              LogicalProject(___uuid$0$pk$1=[$0], total$3=[-(*($8, $9), CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE))], $f2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], _idx$0=[$6], time$0=[$4])
+              LogicalProject(___uuid$0$pk$1=[$0], total$0=[-(*($8, $9), CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE))], $f2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], _idx$0=[$6], time$0=[$4])
                 LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                   Uncollect
@@ -27,7 +27,7 @@ LogicalProject(__id$0=[$0], week$0=[$1], spend$0=[$2], saved$0=[$3])
 LogicalProject(___uuid$0=[$0], price$0=[$1], saving$0=[$2], time$0=[$3])
   LogicalProject(___uuid$0$pk$1=[$0], price=[$2], saving=[$3], time$0=[$1])
     LogicalAggregate(group=[{0, 4}], price=[SUM($1)], saving=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
-      LogicalProject(___uuid$0$pk$1=[$0], total$3=[-(*($8, $9), CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE))], $f2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], _idx$0=[$6], time$0=[$4])
+      LogicalProject(___uuid$0$pk$1=[$0], total$0=[-(*($8, $9), CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE))], $f2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], _idx$0=[$6], time$0=[$4])
         LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
           LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
           Uncollect

@@ -40,11 +40,9 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
     Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
     for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
       JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);
-      System.out.println();
       Object o = param.accept(this, this);
       paramObj[i] = o;
     }
-    System.out.println(pgQuery.getQuery().getSql() +" : "+Arrays.toString(paramObj));
 
     ((PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer())
         .getPreparedQuery().execute(Tuple.from(paramObj))
@@ -105,21 +103,17 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
   @Override
   public Object visitSourceParameter(SourceParameter sourceParameter,
       QueryExecutionContext context) {
-    Object o = context.getContext().createPropertyFetcher(sourceParameter.getKey())
+    return context.getContext().createPropertyFetcher(sourceParameter.getKey())
         .get(context.getEnvironment());
-
-    return o;
   }
 
   @Override
   public Object visitArgumentParameter(ArgumentParameter argumentParameter,
       QueryExecutionContext context) {
-    Object o = context.getArguments().stream()
+    return context.getArguments().stream()
         .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
         .findFirst()
         .map(f -> f.getValue())
         .orElse(null);
-
-    return o;
   }
 }

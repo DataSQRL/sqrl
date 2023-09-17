@@ -43,7 +43,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -266,9 +265,11 @@ public class CalciteTableFactory {
           parameters.orElse(List.of()),
           relNodeSupplier.orElse(
               ()->framework.getQueryPlanner().getRelBuilder().scan(vTable.getNameId()).build()));
+      vTable.setSqrlTable(tbl);
       framework.getSchema().addSqrlTable(tbl);
     } else {
       tbl = new SQRLTable(builder.getPath(), vTable, List.of());
+      vTable.setSqrlTable(tbl);
       framework.getSchema().addSqrlTable(tbl);
     }
 
@@ -292,7 +293,7 @@ public class CalciteTableFactory {
     for (Field field : allFields) {
       if (field instanceof Column) {
         Column c = (Column) field;
-        tbl.addColumn(framework, c.getName(), c.getId(), c.isVisible(), c.getType());
+        tbl.addColumn(c.getName(), c.isVisible(), c.getType());
       } else {
         ChildRelationship child = (ChildRelationship) field;
         build(child.getChildTable(), Optional.of(tbl),

@@ -1,6 +1,6 @@
-package com.datasqrl.functions;
+package com.datasqrl;
 
-import com.datasqrl.functions.SqrlFunctions.VariableArguments;
+import com.datasqrl.SqrlFunctions.VariableArguments;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform;
 import com.datasqrl.calcite.convert.SimplePredicateTransform;

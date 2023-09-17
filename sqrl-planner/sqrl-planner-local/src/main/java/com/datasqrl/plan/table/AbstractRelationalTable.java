@@ -4,22 +4,15 @@
 package com.datasqrl.plan.table;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.schema.NamedTable;
-import java.lang.reflect.Type;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
-import org.apache.calcite.linq4j.Enumerator;
-import org.apache.calcite.linq4j.QueryProvider;
-import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.QueryableTable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.impl.AbstractTable;
-import org.apache.calcite.schema.impl.AbstractTableQueryable;
 
 /**
  * A relational table is a Calcite table that represents a relation in standard relational algebra.
@@ -28,7 +21,7 @@ import org.apache.calcite.schema.impl.AbstractTableQueryable;
  * logical SQRL tables that users import or define in their scripts.
  */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public abstract class AbstractRelationalTable extends AbstractTable implements NamedTable,
+public abstract class AbstractRelationalTable extends AbstractTable implements
     Comparable<AbstractRelationalTable> {
 
   @EqualsAndHashCode.Include

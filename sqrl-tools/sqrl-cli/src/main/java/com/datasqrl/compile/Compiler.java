@@ -3,6 +3,7 @@
  */
 package com.datasqrl.compile;
 
+import com.datasqrl.DefaultFunctions;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
@@ -16,18 +17,16 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlDIModule;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
-import com.datasqrl.functions.DefaultFunctions;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
+import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
 import com.datasqrl.graphql.inference.SchemaBuilder;
 import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.tables.TableSink;

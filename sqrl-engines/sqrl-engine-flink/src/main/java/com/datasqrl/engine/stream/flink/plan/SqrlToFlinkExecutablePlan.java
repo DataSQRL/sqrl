@@ -2,6 +2,7 @@ package com.datasqrl.engine.stream.flink.plan;
 
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
+import com.datasqrl.DefaultFunctions;
 import com.datasqrl.FlinkExecutablePlan.DefaultFlinkConfig;
 import com.datasqrl.FlinkExecutablePlan.FlinkBase;
 import com.datasqrl.FlinkExecutablePlan.FlinkErrorSink;
@@ -113,6 +114,8 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(queries);
     Map<String, ImportedRelationalTable> tables = extractTablesFromQueries(writeQueries);
+    //exclude sqrl NOW for flink's NOW
+    udfs.remove(DefaultFunctions.NOW.getName());
     registerFunctions(udfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
@@ -347,35 +350,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     return new WriteQuery(query.getSink(), relNode);
   }
-
-  @AllArgsConstructor
-  public static class RewriteIntervalRexShuttle extends RexShuttle {
-    RexBuilder rexBuilder;
-
-    @Override
-    public RexWindow visitWindow(RexWindow window) {
-      return super.visitWindow(window);
-    }
-
-    @Override
-      public RexNode visitLiteral(RexLiteral literal) {
-        switch (literal.getTypeName().getFamily()) {
-          case INTERVAL_YEAR_MONTH:
-          case INTERVAL_DAY_TIME:
-            final boolean negative = literal.getValueAs(Boolean.class);
-
-            //Override precision for DAY
-            SqlIntervalQualifier i =
-                new SqlIntervalQualifier(TimeUnit.DAY, 3, null, -1, SqlParserPos.ZERO);
-
-            return rexBuilder.makeIntervalLiteral(
-                new BigDecimal(365).multiply(TimeUnit.DAY.multiplier), i);
-        }
-        return super.visitLiteral(literal);
-      }
-
-  }
-
 
   private void registerSinkTable(WriteSink sink, RelNode relNode) {
     String name;

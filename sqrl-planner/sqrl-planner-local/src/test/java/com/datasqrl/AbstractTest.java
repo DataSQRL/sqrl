@@ -9,7 +9,6 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.schema.ScriptPlanner;
-import com.datasqrl.plan.ScriptValidator;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -25,9 +24,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.frontend.ErrorSink;
-import com.datasqrl.functions.DefaultFunctions;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
@@ -52,6 +49,8 @@ import com.datasqrl.loaders.ObjectLoader;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.plan.ScriptValidator;
+import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
@@ -340,7 +339,7 @@ public class AbstractTest {
     ScriptPlanner planner = new ScriptPlanner(
         framework.getQueryPlanner(), validator,
         new SqrlPlanningTableFactory(framework, NameCanonicalizer.SYSTEM), framework,
-        new SqlNameUtil(NameCanonicalizer.SYSTEM), moduleLoader, errors);
+        new SqlNameUtil(NameCanonicalizer.SYSTEM), errors);
 
     ScriptNode node = (ScriptNode)framework.getQueryPlanner().parse(Dialect.SQRL, script);
     for (SqlNode statement : node.getStatements()) {

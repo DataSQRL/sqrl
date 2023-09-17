@@ -57,7 +57,6 @@ public class VertxContext implements Context {
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
       if (resolvedQuery == null) {
-        System.out.println("Could not find query: " + env.getArguments());
         fut.fail("Could not find query: " + env.getArguments());
         return;
       }
@@ -98,17 +97,7 @@ public class VertxContext implements Context {
     Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
 
     Flux<Map<String, Object>> deferredFlux = Flux.<Map<String, Object>>create(sink -> {
-      consumer.listen(n->{
-        System.out.println("SubSub map:" + n);
-        sink.next(n);
-      }, (e)->{
-        System.out.println("SubSub err:"+ e.getMessage());
-        e.printStackTrace();
-        sink.error(e);
-      }, (x) -> {
-        System.out.println("SubSub Complete");
-        sink.complete();
-      });
+      consumer.listen(sink::next, sink::error, (x) -> sink.complete());
     }).share();
 
     return new DataFetcher<>() {

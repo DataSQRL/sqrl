@@ -3,11 +3,11 @@ scalar DateTime
 type Query {
     PersonalizedEvents( userid: String!, tolerance: Float!, afterTime: DateTime!): [PersonalizedEvents!]
     EventsAfterTime(afterTime: DateTime!): [Events!]!
-    EventSearch( query: String!, afterTime: DateTime!): [EventSearchResult!]!
+    EventSearch( query: String!, afterTime: DateTime!): [Events!]!
 }
 
 interface AbstractEvents {
-    String : Int!
+    id : String!
     time : String!
     location: String!
     title : String!
@@ -16,17 +16,9 @@ interface AbstractEvents {
 }
 
 type LikeCount {
-    num : Int
+    num : Int!
 }
 
-type EventSearchResult {
-    id : String!
-    time : String!
-    location: String!
-    title : String!
-    description : String!
-    name : String!
-}
 type Events implements AbstractEvents{
     id : String!
     time : String!

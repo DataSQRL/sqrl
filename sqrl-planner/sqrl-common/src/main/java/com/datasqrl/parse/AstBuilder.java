@@ -717,19 +717,6 @@ class AstBuilder
     return emptyListToEmptyOptional(visit(ctx.expression(), SqlNode.class))
         .orElse(SqlNodeList.EMPTY);
   }
-//
-//  @Override
-//  public SqlNode visitSubqueryRelation(SubqueryRelationContext ctx) {
-//    List<SqrlIdentifierItem> list = new ArrayList<>();
-//    SqlNode node = visit(ctx.query());
-//    SqrlIdentifierItem item =
-//        new SqrlIdentifierItem(getLocation(ctx), node, Optional.empty());
-//    list.add(item);
-//    List<SqrlIdentifierItem> remaining = visit(ctx.relationPath(), SqrlIdentifierItem.class);
-//    list.addAll(remaining);
-//
-//    return new SqrlCompoundIdentifier(getLocation(ctx), list);
-//  }
 
   @Override
   public SqlNode visitJoinRelation(JoinRelationContext context) {

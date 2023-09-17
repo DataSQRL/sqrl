@@ -71,7 +71,7 @@ public class KafkaMonitoringTest extends KafkaBaseTest {
 
     int recordsWritten = writeTextFilesToTopic(topics[0], Retail.INSTANCE.getDataDirectory().resolve("orders.json"));
     assertEquals(4, recordsWritten);
-    recordsWritten = writeTextFilesToTopic(topics[1], Nutshop.SMALL.getDataDirectory().resolve("orders_part1.json"));
+    recordsWritten = writeTextFilesToTopic(topics[1], Nutshop.INSTANCE.getDataDirectory().resolve("orders_part1.json"));
     assertEquals(87, recordsWritten);
 
     TableConfig systemConfig = getSystemConfigBuilder("example", true);

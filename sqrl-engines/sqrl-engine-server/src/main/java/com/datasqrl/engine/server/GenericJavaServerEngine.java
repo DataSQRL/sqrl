@@ -43,6 +43,8 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   private final int port;
   private final Optional<Vertx> vertx;
 
+  private static final NameCanonicalizer canonicalize = NameCanonicalizer.SYSTEM;
+
   public GenericJavaServerEngine(String engineName, @NonNull int port, Optional<Vertx> vertx) {
     super(engineName, Type.SERVER, NO_CAPABILITIES);
     this.port = port;
@@ -55,7 +57,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
     Vertx vertx = this.vertx.orElseGet(Vertx::vertx);
     CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
-            serverPlan.getModel(), port, serverPlan.getJdbc(), NameCanonicalizer.SYSTEM))
+            serverPlan.getModel(), port, serverPlan.getJdbc(), canonicalize))
         .toCompletionStage()
         .toCompletableFuture();
     log.info("Server started at: http://localhost:" + port + "/graphiql/");

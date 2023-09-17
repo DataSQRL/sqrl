@@ -119,15 +119,11 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         (new JdbcDDLServiceLoader()).load(connector.getDialect())
             .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
 
-
     List<SqlDDLStatement> ddlStatements = StreamUtil.filterByClass(inputs,
             EngineSink.class)
         .map(factory::createTable)
         .collect(Collectors.toList());
-    if (connector.getDialect().equalsIgnoreCase("postgres")) {
-      ddlStatements = new ArrayList<>(ddlStatements);
-//      ddlStatements.add(new PostgresCreateVectorExtensionStatement());
-    }
+
     dbPlan.getIndexDefinitions().stream()
             .map(factory::createIndex)
             .forEach(ddlStatements::add);

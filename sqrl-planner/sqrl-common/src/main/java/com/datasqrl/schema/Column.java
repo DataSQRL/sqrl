@@ -10,14 +10,12 @@ import org.apache.calcite.rel.type.RelDataType;
 @Getter
 public class Column extends Field {
 
-  private final Name vtName;
   private final RelDataType type;
   private final boolean isVisible;
   private final boolean nullable;
 
-  public Column(Name name, Name vtName, int version, boolean isVisible, RelDataType type) {
+  public Column(Name name, int version, boolean isVisible, RelDataType type) {
     super(name, version);
-    this.vtName = vtName;
     this.isVisible = isVisible;
     this.type = type;
     this.nullable = type.isNullable();

@@ -3,7 +3,6 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
@@ -13,11 +12,10 @@ import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.FunctionParameter;
 
 @Getter
-public class Relationship extends Field implements SqrlTableMacro, ModifiableSqrlTable {
+public class Relationship extends Field implements SqrlTableMacro {
   private final NamePath path;
 
   private final SQRLTable fromTable;
@@ -50,17 +48,10 @@ public class Relationship extends Field implements SqrlTableMacro, ModifiableSqr
     return isA.get(0);
   }
 
-  @Override
-  public void addColumn(String name, RexNode column, RelDataTypeFactory typeFactory) {
-    getToTable().addColumn(name, column, typeFactory);
-  }
-
-  @Override
   public SQRLTable getSqrlTable() {
     return getToTable();
   }
 
-  @Override
   public String getNameId() {
     return getToTable().getNameId();
   }

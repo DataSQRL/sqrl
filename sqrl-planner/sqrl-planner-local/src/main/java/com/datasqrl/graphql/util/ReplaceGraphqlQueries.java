@@ -4,23 +4,20 @@
 
 package com.datasqrl.graphql.util;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.graphql.server.Model.*;
-import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.SqrlRelToSql;
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.DynamicParamSqlPrettyWriter;
+import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.engine.database.QueryTemplate;
+import com.datasqrl.graphql.server.Model.*;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import lombok.Getter;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class ReplaceGraphqlQueries implements
     RootVisitor<Object, Object>,
@@ -45,19 +42,9 @@ public class ReplaceGraphqlQueries implements
   public JdbcQuery visitApiQuery(ApiQueryBase apiQueryBase, Object context) {
     QueryTemplate template = queries.get(apiQueryBase.getQuery());
 
-//    SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
-//    DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
-
-//    RelBuilder builder = planner.getRelBuilder();
-//    RelNode c = builder.push(template.getRelNode())
-//        .project(builder.fields(), template.getRelNode().getRowType().getFieldNames().stream()
-//            .map(n-> Name.system(n).getCanonical())
-//            .collect(Collectors.toList()), true)
-//        .build();
     String query = planner.relToString(Dialect.POSTGRES,
         planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()));
 
-//    String query = convertDynamicParamsWithWriter(writer, template.getRelNode());
     return JdbcQuery.builder()
         .parameters(apiQueryBase.getParameters())
         .sql(query)
@@ -72,9 +59,9 @@ public class ReplaceGraphqlQueries implements
     SqlWriterConfig config = SqrlRelToSql.transform.apply(SqlPrettyWriter.config());
     DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
     String query = convertDynamicParamsWithWriter(writer, template.getRelNode());
-    if (writer.dynamicParameters.size() > 0) {
+    if (writer.getDynamicParameters().size() > 0) {
       Preconditions.checkState(
-          Collections.max(writer.dynamicParameters) < apiQueryBase.getParameters().size());
+          Collections.max(writer.getDynamicParameters()) < apiQueryBase.getParameters().size());
     } else {
       Preconditions.checkState(apiQueryBase.getParameters().size() == 0);
     }
@@ -87,30 +74,6 @@ public class ReplaceGraphqlQueries implements
     SqlNode node = SqrlRelToSql.convertToSqlNode(relNode);
     node.unparse(writer, 0, 0);
     return writer.toSqlString().getSql();
-  }
-
-  /**
-   * Writes postgres style dynamic params `$1` instead of `?`. Assumes the index field is the index
-   * of the parameter.
-   */
-  public static class DynamicParamSqlPrettyWriter extends SqlPrettyWriter {
-
-    @Getter
-    private List<Integer> dynamicParameters = new ArrayList<>();
-
-    public DynamicParamSqlPrettyWriter(@NonNull SqlWriterConfig config) {
-      super(config);
-    }
-
-    @Override
-    public void dynamicParam(int index) {
-      if (dynamicParameters == null) {
-        dynamicParameters = new ArrayList<>();
-      }
-      dynamicParameters.add(index);
-      print("$" + (index + 1));
-      setNeedWhitespace(true);
-    }
   }
 
   @Override

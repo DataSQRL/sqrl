@@ -39,8 +39,7 @@ public class CalciteFixes {
     if (sqlNode instanceof SqlOrderBy) {
       SqlOrderBy order = (SqlOrderBy) sqlNode;
       SqlSelect select = ((SqlSelect) order.query);
-      select
-          .setOrderBy(order.orderList);
+      select.setOrderBy(order.orderList);
       sqlNode = select;
     }
     return sqlNode;

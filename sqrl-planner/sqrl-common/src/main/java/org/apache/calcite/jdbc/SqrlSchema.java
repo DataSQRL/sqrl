@@ -117,26 +117,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
     return visitor.visit(this, context);
   }
 
-  public void addRelationship(List<String> from, List<String> to) {
-    this.relationships.put(from, to);
-  }
-
-  public String getUniqueFunctionName(List<String> path) {
-    int attempt = 1;
-    Set<String> names = plus().getFunctionNames()
-        .stream().map(s-> sqrlFramework.getNameCanonicalizer().name(s).getCanonical())
-        .collect(Collectors.toSet());
-    while (true) {
-      String name = String.join(".", path) + "$" + attempt;
-      //todo fix
-      if (names.contains(sqrlFramework.getNameCanonicalizer().name(name).getCanonical())) {
-        attempt++;
-      } else {
-        return name;
-      }
-    }
-  }
-
   public Set<URL> getJars() {
     return jars;
   }
