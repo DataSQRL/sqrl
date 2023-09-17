@@ -1,4 +1,4 @@
->>>countstream$23-lp-stream
+>>>countstream$25-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
     LogicalStream(stream=[ADD])
@@ -18,7 +18,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3]
                       LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$3=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[customer$i$1]])
 
->>>countstream$23$1-lp-stream
+>>>countstream$25$1-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
     LogicalStream(stream=[ADD])
@@ -38,7 +38,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3]
                       LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$3=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[customer$i$1]])
 
->>>countstream$23$2-lp-stream
+>>>countstream$25$2-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
     LogicalStream(stream=[ADD])
@@ -58,7 +58,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3]
                       LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$3=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[customer$i$1]])
 
->>>customercount$20-lp-stream
+>>>customercount$22-lp-stream
 LogicalProject(customerid$0=[$0], name$0=[$1], quantity$0=[$2], time$0=[$3])
   LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time$0=[$4])
     LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
@@ -73,7 +73,7 @@ LogicalProject(customerid$0=[$0], name$0=[$1], quantity$0=[$2], time$0=[$3])
             LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$3=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
               LogicalTableScan(table=[[customer$i$1]])
 
->>>customercount2$29-lp-stream
+>>>customercount2$31-lp-stream
 LogicalProject(customerid$0=[$0], _uuid$0=[$1], _source_time$0=[$2], name$0=[$3], quantity$0=[$4])
   LogicalProject(customerid=[$2], _uuid=[$0], _source_time=[$1], name=[$3], quantity=[$4])
     LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
@@ -94,7 +94,7 @@ LogicalProject(customerid$0=[$0], _uuid$0=[$1], _source_time$0=[$2], name$0=[$3]
                         LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$3=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                           LogicalTableScan(table=[[customer$i$1]])
 
->>>updatestream$26-lp-stream
+>>>updatestream$28-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
     LogicalStream(stream=[UPDATE])
@@ -117,40 +117,40 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3]
 >>>countstream-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
-    LogicalTableScan(table=[[countstream$23]])
+    LogicalTableScan(table=[[countstream$25]])
 
 >>>customercount-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
   LogicalProject(customerid$0=[$0], name$0=[$1], quantity$0=[$2], time$0=[$3])
-    LogicalTableScan(table=[[customercount$20]])
+    LogicalTableScan(table=[[customercount$22]])
 
 >>>customercount2-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(customerid$0=[$0], _uuid$0=[$1], _source_time$0=[$2], name$0=[$3], quantity$0=[$4])
-    LogicalTableScan(table=[[customercount2$29]])
+    LogicalTableScan(table=[[customercount2$31]])
 
 >>>updatestream-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
-    LogicalTableScan(table=[[updatestream$26]])
+    LogicalTableScan(table=[[updatestream$28]])
 
 >>>customercount-data
-1000101, John Mekker, 3, 2023-05-19T01:29:39.553-07:00
-1000107, Emily F. Ludies, 10, 2023-05-19T02:28:39.553-07:00
-1000121, Michelle Dagnes, 4, 2023-05-19T02:16:39.553-07:00
+1000101, John Mekker, 3, 2023-05-19T01:29:39.553Z
+1000107, Emily F. Ludies, 10, 2023-05-19T02:28:39.553Z
+1000121, Michelle Dagnes, 4, 2023-05-19T02:16:39.553Z
 >>>countstream-data
-2023-05-19T01:29:39.553-07:00, 1000101, John Mekker, 3
-2023-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 3
-2023-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 9
+2023-05-19T01:29:39.553Z, 1000101, John Mekker, 3
+2023-05-19T02:16:39.553Z, 1000121, Michelle Dagnes, 3
+2023-05-19T02:28:39.553Z, 1000107, Emily F. Ludies, 9
 >>>customercount2-data
-1000101, 2023-05-19T01:29:39.553-07:00, John Mekker, 3
-1000107, 2023-05-19T02:28:39.553-07:00, Emily F. Ludies, 9
-1000121, 2023-05-19T02:16:39.553-07:00, Michelle Dagnes, 3
+1000101, 2023-05-19T01:29:39.553Z, John Mekker, 3
+1000107, 2023-05-19T02:28:39.553Z, Emily F. Ludies, 9
+1000121, 2023-05-19T02:16:39.553Z, Michelle Dagnes, 3
 >>>updatestream-data
-2023-05-19T01:29:39.553-07:00, 1000101, John Mekker, 3
-2023-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 3
-2023-05-19T02:16:39.553-07:00, 1000121, Michelle Dagnes, 4
-2023-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 10
-2023-05-19T02:28:39.553-07:00, 1000107, Emily F. Ludies, 9
+2023-05-19T01:29:39.553Z, 1000101, John Mekker, 3
+2023-05-19T02:16:39.553Z, 1000121, Michelle Dagnes, 3
+2023-05-19T02:16:39.553Z, 1000121, Michelle Dagnes, 4
+2023-05-19T02:28:39.553Z, 1000107, Emily F. Ludies, 10
+2023-05-19T02:28:39.553Z, 1000107, Emily F. Ludies, 9
 >>>export-countstream
 3

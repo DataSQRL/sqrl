@@ -1,77 +1,79 @@
 >>>database
 CREATE INDEX IF NOT EXISTS submission$3_btree_c2c18 ON submission$3 USING btree (name$0,variant$5);
 CREATE INDEX IF NOT EXISTS submission$3_btree_c2c3c18 ON submission$3 USING btree (name$0,version$0,variant$5);
-CREATE INDEX IF NOT EXISTS topicpackages$19_hash_c1 ON topicpackages$19 USING hash (topicname$0);
+CREATE INDEX IF NOT EXISTS topicpackages$21_hash_c1 ON topicpackages$21 USING hash (topicname$0);
 CREATE TABLE IF NOT EXISTS keywords$8 (_uuid$0 VARCHAR NOT NULL,_idx$0 BIGINT NOT NULL,name$0 VARCHAR NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (_uuid$0,_idx$0));
-CREATE TABLE IF NOT EXISTS package$12 (name$0 VARCHAR NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (name$0));
+CREATE TABLE IF NOT EXISTS package$16 (name$0 VARCHAR NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (name$0));
 CREATE TABLE IF NOT EXISTS submission$3 (_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,name$0 VARCHAR NOT NULL,version$0 VARCHAR NOT NULL,variant$0 VARCHAR ,latest$0 BOOLEAN NOT NULL,type$0 VARCHAR ,license$0 VARCHAR ,repository$0 VARCHAR ,homepage$0 VARCHAR ,documentation$0 VARCHAR ,readme$0 VARCHAR ,description$0 VARCHAR ,uniqueid$0 VARCHAR NOT NULL,file$0 VARCHAR NOT NULL,hash$0 VARCHAR NOT NULL,authorid$0 VARCHAR NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL,variant$5 VARCHAR NOT NULL,repourl$6 VARCHAR NOT NULL , PRIMARY KEY (_uuid$0));
-CREATE TABLE IF NOT EXISTS topicpackages$19 (pkgname$0 VARCHAR NOT NULL,topicname$0 VARCHAR NOT NULL,numsubmissions$0 BIGINT NOT NULL,lastsubmission$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (pkgname$0,topicname$0));
-CREATE TABLE IF NOT EXISTS topicsearch$24 (topicname$0 VARCHAR NOT NULL,numpackages$0 BIGINT NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (topicname$0));
+CREATE TABLE IF NOT EXISTS topicpackages$21 (pkgname$0 VARCHAR NOT NULL,topicname$0 VARCHAR NOT NULL,numsubmissions$0 BIGINT NOT NULL,lastsubmission$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (pkgname$0,topicname$0));
+CREATE TABLE IF NOT EXISTS topicsearch$25 (topicname$0 VARCHAR NOT NULL,numpackages$0 BIGINT NOT NULL,submissiontime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (topicname$0));
 >>>query-latest
 {
-  "errors" : [ {
-    "message" : "Exception while fetching data (/Package) : Could not find query: {name=datasqrl.seedshop, limit=10, offset=0}",
-    "locations" : [ {
-      "line" : 2,
-      "column" : 1
-    } ],
-    "path" : [ "Package" ],
-    "extensions" : {
-      "classification" : "DataFetchingException"
-    }
-  } ],
   "data" : {
-    "Package" : null
+    "Package" : [ {
+      "latest" : {
+        "version" : "0.1.1",
+        "variant" : "dev",
+        "description" : "Simple e-commerce dataset for the DataSQRL Seed-shop",
+        "file" : "SIKfcBnr7bJCOldq_bp9Mryqsjw.zip",
+        "hash" : "164b68a31a68a0329a2e93f796f47291",
+        "submissionTime" : "2023-05-03T23:07:49.786037Z"
+      }
+    } ]
   }
 }
 >>>query-topicpkg
 {
-  "errors" : [ {
-    "message" : "Exception while fetching data (/TopicPackages) : Could not find query: {topicName=example, limit=10, offset=0}",
-    "locations" : [ {
-      "line" : 2,
-      "column" : 1
-    } ],
-    "path" : [ "TopicPackages" ],
-    "extensions" : {
-      "classification" : "DataFetchingException"
-    }
-  } ],
   "data" : {
-    "TopicPackages" : null
+    "TopicPackages" : [ {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.example.clickstream",
+      "lastSubmission" : "2023-05-03T23:08:29.755Z",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev"
+      }
+    }, {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.example.sensors",
+      "lastSubmission" : "2023-05-03T23:09:08.884Z",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev"
+      }
+    }, {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.seedshop",
+      "lastSubmission" : "2023-05-03T23:07:49.786Z",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.1",
+        "variant" : "dev"
+      }
+    } ]
   }
 }
 >>>query-topics
 {
-  "errors" : [ {
-    "message" : "Exception while fetching data (/TopicSearch) : Could not find query: {topicName=example, limit=10, offset=0}",
-    "locations" : [ {
-      "line" : 2,
-      "column" : 1
-    } ],
-    "path" : [ "TopicSearch" ],
-    "extensions" : {
-      "classification" : "DataFetchingException"
-    }
-  } ],
   "data" : {
-    "TopicSearch" : null
+    "TopicSearch" : [ {
+      "topicName" : "example",
+      "numPackages" : 3
+    } ]
   }
 }
 >>>query-versions
 {
-  "errors" : [ {
-    "message" : "Exception while fetching data (/Package) : Could not find query: {name=datasqrl.seedshop, limit=10, offset=0}",
-    "locations" : [ {
-      "line" : 2,
-      "column" : 1
-    } ],
-    "path" : [ "Package" ],
-    "extensions" : {
-      "classification" : "DataFetchingException"
-    }
-  } ],
   "data" : {
-    "Package" : null
+    "Package" : [ {
+      "versions" : [ {
+        "version" : "0.1.1",
+        "file" : "SIKfcBnr7bJCOldq_bp9Mryqsjw.zip",
+        "hash" : "164b68a31a68a0329a2e93f796f47291",
+        "submissionTime" : "2023-05-03T23:07:49.786037Z"
+      } ]
+    } ]
   }
 }

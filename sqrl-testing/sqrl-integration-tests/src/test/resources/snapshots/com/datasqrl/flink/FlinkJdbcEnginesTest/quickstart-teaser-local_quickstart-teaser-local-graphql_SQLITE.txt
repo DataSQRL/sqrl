@@ -3,23 +3,44 @@ CREATE INDEX IF NOT EXISTS orders$3_hash_c3 ON orders$3 ("customerid$0")
 CREATE INDEX IF NOT EXISTS orders$3_hash_c4 ON orders$3 ("time$0")
 CREATE TABLE IF NOT EXISTS "items$5" ("_uuid$0" VARCHAR NOT NULL,"_idx$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"quantity$0" BIGINT NOT NULL,"unit_price$0" DOUBLE NOT NULL,"discount$0" DOUBLE ,"total$3" DOUBLE NOT NULL,"time$0" INTEGER NOT NULL , PRIMARY KEY ("_uuid$0","_idx$0"));
 CREATE TABLE IF NOT EXISTS "orders$3" ("_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"id$0" BIGINT NOT NULL,"customerid$0" BIGINT NOT NULL,"time$0" INTEGER NOT NULL , PRIMARY KEY ("_uuid$0"));
-CREATE TABLE IF NOT EXISTS "spending$18" ("__id$0" BIGINT NOT NULL,"week$0" INTEGER NOT NULL,"spend$0" DOUBLE NOT NULL,"saved$0" DOUBLE NOT NULL , PRIMARY KEY ("__id$0","week$0"));
-CREATE TABLE IF NOT EXISTS "totals$9" ("___uuid$0" VARCHAR NOT NULL,"price$0" DOUBLE NOT NULL,"saving$0" DOUBLE NOT NULL,"time$0" INTEGER NOT NULL , PRIMARY KEY ("___uuid$0"));
-CREATE TABLE IF NOT EXISTS "users$13" ("id$0" BIGINT NOT NULL,"time$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
+CREATE TABLE IF NOT EXISTS "spending$20" ("__id$0" BIGINT NOT NULL,"week$0" INTEGER NOT NULL,"spend$0" DOUBLE NOT NULL,"saved$0" DOUBLE NOT NULL , PRIMARY KEY ("__id$0","week$0"));
+CREATE TABLE IF NOT EXISTS "totals$11" ("___uuid$0" VARCHAR NOT NULL,"price$0" DOUBLE NOT NULL,"saving$0" DOUBLE NOT NULL,"time$0" INTEGER NOT NULL , PRIMARY KEY ("___uuid$0"));
+CREATE TABLE IF NOT EXISTS "users$16" ("id$0" BIGINT NOT NULL,"time$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
 >>>query-orders
 {
-  "errors" : [ {
-    "message" : "Exception while fetching data (/Orders) : Could not find query: {limit=2, offset=2}",
-    "locations" : [ {
-      "line" : 2,
-      "column" : 1
-    } ],
-    "path" : [ "Orders" ],
-    "extensions" : {
-      "classification" : "DataFetchingException"
-    }
-  } ],
   "data" : {
-    "Orders" : null
+    "Orders" : [ {
+      "id" : 150000986,
+      "time" : "1677033789852",
+      "items" : [ {
+        "productid" : 16,
+        "quantity" : 1,
+        "unit_price" : 18.64,
+        "discount" : null,
+        "total" : 18.64
+      }, {
+        "productid" : 189,
+        "quantity" : 2,
+        "unit_price" : 5.75,
+        "discount" : null,
+        "total" : 11.5
+      }, {
+        "productid" : 55,
+        "quantity" : 1,
+        "unit_price" : 12.22,
+        "discount" : null,
+        "total" : 12.22
+      } ]
+    }, {
+      "id" : 150001008,
+      "time" : "1677028038370",
+      "items" : [ {
+        "productid" : 24,
+        "quantity" : 1,
+        "unit_price" : 5.02,
+        "discount" : null,
+        "total" : 5.02
+      } ]
+    } ]
   }
 }

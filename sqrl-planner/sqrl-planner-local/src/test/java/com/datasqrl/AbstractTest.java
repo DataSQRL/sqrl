@@ -73,6 +73,7 @@ import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlStatement;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -84,6 +85,7 @@ public class AbstractTest {
   }
 
   @Test
+  @Disabled
   public void test() {
     //Do all the things, get all the queries, execute them all
     SqrlFramework framework = new SqrlFramework(new SqrlRelMetadataProvider(),

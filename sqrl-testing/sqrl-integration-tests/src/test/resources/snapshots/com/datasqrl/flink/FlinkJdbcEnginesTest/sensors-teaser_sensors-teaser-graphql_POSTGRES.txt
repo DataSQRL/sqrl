@@ -1,11 +1,11 @@
 >>>database
-CREATE INDEX IF NOT EXISTS machine$25_btree_c1c2 ON machine$25 USING btree (maxtemp$0,avgtemp$0);
-CREATE INDEX IF NOT EXISTS machine$25_hash_c2 ON machine$25 USING hash (avgtemp$0);
-CREATE INDEX IF NOT EXISTS sensors$20_btree_c3c4 ON sensors$20 USING btree (machineid$0,placed$0);
-CREATE INDEX IF NOT EXISTS sensors$20_hash_c4 ON sensors$20 USING hash (placed$0);
-CREATE TABLE IF NOT EXISTS machine$25 (machineid$0 BIGINT NOT NULL,maxtemp$0 DOUBLE PRECISION NOT NULL,avgtemp$0 DOUBLE PRECISION NOT NULL,timemin$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (machineid$0));
-CREATE TABLE IF NOT EXISTS minreadings$17 (sensorid$0 BIGINT NOT NULL,timemin$0 TIMESTAMPTZ NOT NULL,temp$0 DOUBLE PRECISION NOT NULL , PRIMARY KEY (sensorid$0,timemin$0));
-CREATE TABLE IF NOT EXISTS sensors$20 (id$0 BIGINT NOT NULL,_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,machineid$0 BIGINT NOT NULL,placed$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (id$0));
+CREATE INDEX IF NOT EXISTS machine$26_btree_c1c2 ON machine$26 USING btree (maxtemp$0,avgtemp$0);
+CREATE INDEX IF NOT EXISTS machine$26_hash_c2 ON machine$26 USING hash (avgtemp$0);
+CREATE INDEX IF NOT EXISTS sensors$22_btree_c3c4 ON sensors$22 USING btree (machineid$0,placed$0);
+CREATE INDEX IF NOT EXISTS sensors$22_hash_c4 ON sensors$22 USING hash (placed$0);
+CREATE TABLE IF NOT EXISTS machine$26 (machineid$0 BIGINT NOT NULL,maxtemp$0 DOUBLE PRECISION NOT NULL,avgtemp$0 DOUBLE PRECISION NOT NULL,timemin$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (machineid$0));
+CREATE TABLE IF NOT EXISTS minreadings$19 (sensorid$0 BIGINT NOT NULL,timemin$0 TIMESTAMPTZ NOT NULL,temp$0 DOUBLE PRECISION NOT NULL , PRIMARY KEY (sensorid$0,timemin$0));
+CREATE TABLE IF NOT EXISTS sensors$22 (id$0 BIGINT NOT NULL,_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,machineid$0 BIGINT NOT NULL,placed$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (id$0));
 >>>query-machine
 {
   "data" : {
@@ -21,7 +21,34 @@ CREATE TABLE IF NOT EXISTS sensors$20 (id$0 BIGINT NOT NULL,_uuid$0 VARCHAR NOT 
     "Sensors" : [ {
       "placed" : "2023-04-03T07:00Z",
       "machineid" : 0,
-      "readings" : [ ]
+      "readings" : [ {
+        "timeMin" : "2023-04-04T07:08:59.999Z",
+        "temp" : 18.23706536
+      }, {
+        "timeMin" : "2023-04-04T07:07:59.999Z",
+        "temp" : 18.85544197
+      }, {
+        "timeMin" : "2023-04-04T07:06:59.999Z",
+        "temp" : 19.38399463
+      }, {
+        "timeMin" : "2023-04-04T07:05:59.999Z",
+        "temp" : 20.24024387
+      }, {
+        "timeMin" : "2023-04-04T07:04:59.999Z",
+        "temp" : 17.13202312
+      }, {
+        "timeMin" : "2023-04-04T07:03:59.999Z",
+        "temp" : 18.03603316
+      }, {
+        "timeMin" : "2023-04-04T07:02:59.999Z",
+        "temp" : 19.94989259
+      }, {
+        "timeMin" : "2023-04-04T07:01:59.999Z",
+        "temp" : 16.41595297
+      }, {
+        "timeMin" : "2023-04-04T07:00:59.999Z",
+        "temp" : 19.98737366
+      } ]
     } ]
   }
 }

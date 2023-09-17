@@ -352,7 +352,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       result = sqrlToSql.rewrite(query, parent, statement.getTableArgs().orElseGet(()->
           new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
       sqlNode = result.getSqlNode();
-      System.out.println("Validator: "+planner.sqlToString(Dialect.CALCITE, sqlNode));
 
       framework.getSqrlOperatorTable().addPlanningFnc(result.getFncs());
 

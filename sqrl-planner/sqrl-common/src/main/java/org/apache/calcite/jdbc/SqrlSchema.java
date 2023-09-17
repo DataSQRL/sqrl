@@ -146,6 +146,10 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addRelationship(Relationship relationship) {
+    if (relationships.containsKey(relationship)) {
+      return;
+    }
+
     relationships.put(relationship.getPath().toStringList(), relationship.getToTable().getPath().toStringList());
     this.relFncs.put(relationship.getPath().toStringList(), relationship);
     plus().add(String.join(".", relationship.getPath().toStringList()) + "$"

@@ -1,0 +1,232 @@
+>>>_sales_24h$41-lp-stream
+LogicalProject(__productid$0=[$0], total$0=[$1], num$0=[$2], hour$0=[$3])
+  LogicalProject(__productid$0$pk$1=[$1], total=[$2], num=[$3], hour=[$0])
+    LogicalAggregate(group=[{1, 4}], total=[SUM($2)], num=[SUM($3)]) hints[SlidingAggregationHint options:[1, 86400000, 1728000]]
+      LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
+        LogicalProject(__productid$0$pk$1=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
+          LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 0]]
+            LogicalProject(__productid$0$pk$1=[$13], hour=[endOfHour($4)], quantity$0=[$8], _uuid$0=[$0], _idx$0=[$6])
+              LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+                LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], unit_price$0=[$9], discount$0=[$10], discount$5=[COALESCE($10, 0.0:DOUBLE)], total$6=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
+                  LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                    LogicalTableScan(table=[[orders$i$9]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+                    Uncollect
+                      LogicalProject($f0=[$cor5.entries$0])
+                        LogicalValues(tuples=[[{ 0 }]])
+                LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+                  LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                    LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6])
+                      LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
+                        LogicalTableScan(table=[[product$i$5]])
+        LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+          LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6])
+              LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
+                LogicalTableScan(table=[[product$i$5]])
+
+>>>_sales_72h$46-lp-stream
+LogicalProject(__productid$0=[$0], total$0=[$1], num$0=[$2], hour$0=[$3])
+  LogicalProject(__productid$0$pk$1=[$1], total=[$2], num=[$3], hour=[$0])
+    LogicalAggregate(group=[{1, 4}], total=[SUM($2)], num=[SUM($3)]) hints[SlidingAggregationHint options:[1, 259200000, 5184000]]
+      LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
+        LogicalProject(__productid$0$pk$1=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
+          LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 0]]
+            LogicalProject(__productid$0$pk$1=[$13], hour=[endOfHour($4)], quantity$0=[$8], _uuid$0=[$0], _idx$0=[$6])
+              LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+                LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], unit_price$0=[$9], discount$0=[$10], discount$5=[COALESCE($10, 0.0:DOUBLE)], total$6=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
+                  LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+                    LogicalTableScan(table=[[orders$i$9]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+                    Uncollect
+                      LogicalProject($f0=[$cor5.entries$0])
+                        LogicalValues(tuples=[[{ 0 }]])
+                LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+                  LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                    LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6])
+                      LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
+                        LogicalTableScan(table=[[product$i$5]])
+        LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+          LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6])
+              LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
+                LogicalTableScan(table=[[product$i$5]])
+
+>>>_sales_by_hour$36-lp-stream
+LogicalProject(__productid$0=[$0], hour$0=[$1], quantity$0=[$2], num_orders$0=[$3])
+  LogicalProject(__productid$0$pk$1=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
+    LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 0]]
+      LogicalProject(__productid$0$pk$1=[$13], hour=[endOfHour($4)], quantity$0=[$8], _uuid$0=[$0], _idx$0=[$6])
+        LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+          LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], unit_price$0=[$9], discount$0=[$10], discount$5=[COALESCE($10, 0.0:DOUBLE)], total$6=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
+            LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+              LogicalTableScan(table=[[orders$i$9]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+              Uncollect
+                LogicalProject($f0=[$cor5.entries$0])
+                  LogicalValues(tuples=[[{ 0 }]])
+          LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+            LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+              LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6])
+                LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
+                  LogicalTableScan(table=[[product$i$5]])
+
+>>>category$22-lp-stream
+LogicalProject(name$0=[$0], updatetime$0=[$1])
+  LogicalProject(name=[$5], updatetime$2=[$6])
+    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
+      LogicalTableScan(table=[[product$i$5]])
+
+>>>customer$19-lp-stream
+LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
+  LogicalProject(customerid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$1=[$6])
+    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$1=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+      LogicalTableScan(table=[[customer$i$1]])
+
+>>>entries$13-lp-stream
+LogicalProject(_uuid$0=[$0], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], unit_price$0=[$9], discount$0=[$10], discount$5=[COALESCE($10, 0.0:DOUBLE)], total$6=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))], time$0=[$4])
+  LogicalCorrelate(correlation=[$cor8], joinType=[inner], requiredColumns=[{5}])
+    LogicalTableScan(table=[[orders$i$9]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    Uncollect
+      LogicalProject($f0=[$cor8.entries$0])
+        LogicalValues(tuples=[[{ 0 }]])
+
+>>>orders$11-lp-stream
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+  LogicalTableScan(table=[[orders$i$9]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+>>>product$25-lp-stream
+LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6])
+  LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[$6])
+    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$2=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
+      LogicalTableScan(table=[[product$i$5]])
+
+>>>total$28-lp-stream
+LogicalProject(___uuid$0=[$0], price$0=[$1], discount$0=[$2], num$0=[$3], time$0=[$4])
+  LogicalProject(___uuid$0$pk$1=[$0], price=[$2], discount=[$3], num=[$4], time$0=[$1])
+    LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
+      LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], unit_price$0=[$9], discount$0=[$10], discount$5=[COALESCE($10, 0.0:DOUBLE)], total$6=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
+        LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
+          LogicalTableScan(table=[[orders$i$9]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+          Uncollect
+            LogicalProject($f0=[$cor7.entries$0])
+              LogicalValues(tuples=[[{ 0 }]])
+
+>>>_sales_24h-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(__productid$0=[$0], total$0=[$1], num$0=[$2], hour$0=[$3])
+    LogicalTableScan(table=[[_sales_24h$41]])
+
+>>>_sales_72h-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(__productid$0=[$0], total$0=[$1], num$0=[$2], hour$0=[$3])
+    LogicalTableScan(table=[[_sales_72h$46]])
+
+>>>_sales_by_hour-lp-database
+LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[DESC])
+  LogicalProject(__productid$0=[$0], hour$0=[$1], quantity$0=[$2], num_orders$0=[$3])
+    LogicalTableScan(table=[[_sales_by_hour$36]])
+
+>>>_sales_trend-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(__productid$0=[$0], increase$0=[$1], __timestamp19$0=[$2])
+    LogicalProject(__productid$0$pk$1=[$0], increase=[+(/(*($9, 1.5:DECIMAL(2, 1)), GREATEST($14, 500.0:DECIMAL(4, 1))), /(*($10, 1.5:DECIMAL(2, 1)), GREATEST($15, 100.0:DECIMAL(4, 1))))], __timestamp17=[CASE(<($12, $16), $16, $12)])
+      LogicalJoin(condition=[=($0, $13)], joinType=[inner]) hints[JoinCostHint options:[STATE, DEDUP_STREAM, 1, RIGHT]]
+        LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[$7], __productid$0=[$8], total$0=[$9], num$0=[$10], hour$0=[$11], __timestamp=[CASE(<($6, $11), $11, $6)])
+          LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1, RIGHT]]
+            LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+              LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                LogicalTableScan(table=[[product$25]])
+            LogicalTableScan(table=[[_sales_24h$41]])
+        LogicalTableScan(table=[[_sales_72h$46]])
+
+>>>category-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(name$0=[$0], updatetime$0=[$1])
+    LogicalTableScan(table=[[category$22]])
+
+>>>customer-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
+    LogicalTableScan(table=[[customer$19]])
+
+>>>entries-lp-database
+LogicalSort(sort0=[$8], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[ASC], dir2=[ASC])
+  LogicalProject(_uuid$0=[$0], _idx$0=[$1], productid$0=[$2], quantity$0=[$3], unit_price$0=[$4], discount$0=[$5], discount$5=[$6], total$6=[$7], time$0=[$8])
+    LogicalTableScan(table=[[entries$13]])
+
+>>>orders-lp-database
+LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+    LogicalTableScan(table=[[orders$11]])
+
+>>>product-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6])
+    LogicalTableScan(table=[[product$25]])
+
+>>>total-lp-database
+LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
+  LogicalProject(___uuid$0=[$0], price$0=[$1], discount$0=[$2], num$0=[$3], time$0=[$4])
+    LogicalTableScan(table=[[total$28]])
+
+>>>orders-data
+10007140, 1000107
+10007543, 1000101
+10008231, 1000121
+10008434, 1000107
+>>>entries-data
+0, 1332, 8, 8.49, null, 0, 67.92
+0, 3571, 1, 41.95, 0, 0, 41.95
+0, 7235, 1, 17.35, 0, 0, 17.35
+0, 7552, 3, 25.5, 15, 15, 61.5
+1, 3225, 1, 105, 0, 0, 105
+1, 3571, 1, 41.95, 5, 5, 36.95
+1, 8757, 2, 57.5, 11.5, 11.5, 103.5
+>>>customer-data
+1000101, john.mekker@gmail.com, John Mekker, 1645396849
+1000107, emily.ludies@hotmail.com, Emily F. Ludies, 1650493189
+1000121, lalelu@hottunes.org, Michelle Dagnes, 1650493449
+1000131, hotbear753@yahoo.com, Mark Spielman, 1650494449
+>>>category-data
+Decoration
+House & Garden
+Personal Care
+>>>product-data
+1332, Heavy Duty Butt Wipes, Wipes for hardiest of messes, Personal Care
+3225, 4ft Garden Gnome, A real-sized garden gnome adds character to your outdoor space, House & Garden
+3571, Poptech Blow 500, High powered blowdryer for any hair, Personal Care
+7235, Aachen Snow Globe, Picturesque city in a beautiful snow globe, Decoration
+7552, Simer Garden Hose 50ft, Long garden hose that rolls up, House & Garden
+8757, Original German Nutcracker 3ft, Hand-made nutcracker is the perfect Christmas decoration, Decoration
+>>>total-data
+104.87, 5, 2
+120.85, 11.5, 2
+166.5, 15, 2
+41.95, 0, 1
+>>>_sales_by_hour-data
+1, 1
+1, 1
+1, 1
+1, 1
+2, 1
+3, 1
+8, 1
+>>>_sales_24h-data
+1, 1
+1, 1
+1, 1
+2, 1
+3, 1
+8, 1
+>>>_sales_72h-data
+1, 1
+1, 1
+1, 1
+2, 1
+3, 1
+8, 1
+>>>_sales_trend-data
+0.0180000000000000000000000000000000000000
+0.0180000000000000000000000000000000000000
+0.0180000000000000000000000000000000000000
+0.0210000000000000000000000000000000000000
+0.0240000000000000000000000000000000000000
+0.0390000000000000000000000000000000000000

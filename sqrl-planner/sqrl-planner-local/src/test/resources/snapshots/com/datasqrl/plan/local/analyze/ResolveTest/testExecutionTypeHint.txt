@@ -6,7 +6,7 @@ LogicalProject(customerid=[$1], num=[$2], _ingest_time$0=[$0])
 >>>customeragg1$q$5-lp-DATABASE
 LogicalProject(customerid=[$0], num=[$1], _ingest_time$0=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-    LogicalProject(customerid$0=[$0], num=[$1], _ingest_time$0=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+    LogicalProject(customerid$0=[$0], num=[$1], _ingest_time$0=[$2], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(customerid$0=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time$0=[$1])
         LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
           LogicalTableScan(table=[[customer$3]])
@@ -14,7 +14,7 @@ LogicalProject(customerid=[$0], num=[$1], _ingest_time$0=[$2])
 >>>customeragg2$q$8-lp-DATABASE
 LogicalProject(customerid=[$0], num=[$1], _ingest_time$0=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-    LogicalProject(customerid$0=[$0], num=[$1], _ingest_time$0=[$2], $f3=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+    LogicalProject(customerid$0=[$0], num=[$1], _ingest_time$0=[$2], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(customerid$0=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time$0=[$1])
         LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
           LogicalTableScan(table=[[customer$3]])

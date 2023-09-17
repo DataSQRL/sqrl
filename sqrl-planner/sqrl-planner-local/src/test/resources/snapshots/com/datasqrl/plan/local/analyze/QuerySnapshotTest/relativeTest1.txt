@@ -1,4 +1,4 @@
->>>d2$q$8
+>>>d2$q$10
 LogicalProject(___uuid$0$pk$1=[$0], ___idx$0$pk$2=[$6], discount=[$10], time$0=[$4])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])

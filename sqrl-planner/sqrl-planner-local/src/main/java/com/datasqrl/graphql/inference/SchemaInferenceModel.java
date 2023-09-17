@@ -178,6 +178,20 @@ public class SchemaInferenceModel {
 
   @Value
   @ToString
+  public static class InferredSubscriptionScalarField implements InferredField {
+
+    FieldDefinition fieldDefinition;
+    Column column;
+    ObjectTypeDefinition parent;
+
+    @Override
+    public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
+      return visitor.visitSubscriptionScalarField(this, context);
+    }
+  }
+
+  @Value
+  @ToString
   public static class InferredPagedField implements InferredField {
 
     @Override
@@ -195,6 +209,7 @@ public class SchemaInferenceModel {
     R visitComputedField(InferredComputedField field, C context);
 
     R visitScalarField(InferredScalarField field, C context);
+    R visitSubscriptionScalarField(InferredSubscriptionScalarField field, C context);
 
     R visitPagedField(InferredPagedField field, C context);
 

@@ -4,7 +4,6 @@ type Orders {
   time: String!
   items: [items!]
   totals: [totals!]
-  parent: Users!
 }
 
 type Query {

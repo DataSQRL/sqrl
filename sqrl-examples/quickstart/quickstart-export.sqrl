@@ -27,7 +27,7 @@ Users.past_purchases := SELECT i.productid, count(1) as num_orders,
       ORDER BY num_orders DESC, total_quantity DESC;
 
 Products := DISTINCT Products ON id ORDER BY updated DESC;
-Orders.items.product := JOIN Products ON Products.id = @.productid LIMIT 1;
+Orders.items.product := JOIN Products ON Products.id = @.productid;
 Products.ordered_items := JOIN Orders.items i ON i.productid = @.id;
 
 Products.volume_10day := SELECT u.country, sum(i.quantity) as quantity,
@@ -40,7 +40,7 @@ Users.order_stats := SELECT sum(t.price) as spend, sum(t.saving) as saved,
                             count(1) as num_orders
       FROM @.purchases o JOIN o.totals t;
 
-HighSpendingUsers := SELECT id, email FROM Users WHERE order_stats.spend > 1000;
+HighSpendingUsers := SELECT id, email FROM Users u JOIN u.order_stats s WHERE s.spend > 1000;
 
 UserPromotion := STREAM ON ADD AS
   SELECT u.id, u.first_name, u.last_name, u.email, s.spend

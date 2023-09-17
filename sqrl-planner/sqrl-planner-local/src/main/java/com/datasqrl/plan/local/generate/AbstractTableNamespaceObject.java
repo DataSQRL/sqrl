@@ -49,6 +49,11 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       entry.getValue().setSqrlTable(entry.getKey());
       entry.getKey().setVtTable(entry.getValue());
 
+      for (Field field : entry.getKey().getFields().getFields()) {
+        if (field instanceof Relationship) {
+          framework.getSchema().addRelationship((Relationship) field);
+        }
+      }
 //      framework.getSchema().addSqrlTable(entry.getKey());
     }
 
@@ -56,5 +61,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       AbstractRelationalTable impTable = ((ProxyImportRelationalTable) tblDef.getBaseTable()).getBaseTable();
       framework.getSchema().add(impTable.getNameId(), impTable);
     }
+
+
   }
 }

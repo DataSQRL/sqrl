@@ -1,11 +1,11 @@
 >>>database
-CREATE INDEX IF NOT EXISTS machine$25_btree_c1c2 ON machine$25 ("maxtemp$0","avgtemp$0")
-CREATE INDEX IF NOT EXISTS machine$25_hash_c2 ON machine$25 ("avgtemp$0")
-CREATE INDEX IF NOT EXISTS sensors$20_btree_c3c4 ON sensors$20 ("machineid$0","placed$0")
-CREATE INDEX IF NOT EXISTS sensors$20_hash_c4 ON sensors$20 ("placed$0")
-CREATE TABLE IF NOT EXISTS "machine$25" ("machineid$0" BIGINT NOT NULL,"maxtemp$0" DOUBLE NOT NULL,"avgtemp$0" DOUBLE NOT NULL,"timemin$0" INTEGER NOT NULL , PRIMARY KEY ("machineid$0"));
-CREATE TABLE IF NOT EXISTS "minreadings$17" ("sensorid$0" BIGINT NOT NULL,"timemin$0" INTEGER NOT NULL,"temp$0" DOUBLE NOT NULL , PRIMARY KEY ("sensorid$0","timemin$0"));
-CREATE TABLE IF NOT EXISTS "sensors$20" ("id$0" BIGINT NOT NULL,"_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"machineid$0" BIGINT NOT NULL,"placed$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
+CREATE INDEX IF NOT EXISTS machine$26_btree_c1c2 ON machine$26 ("maxtemp$0","avgtemp$0")
+CREATE INDEX IF NOT EXISTS machine$26_hash_c2 ON machine$26 ("avgtemp$0")
+CREATE INDEX IF NOT EXISTS sensors$22_btree_c3c4 ON sensors$22 ("machineid$0","placed$0")
+CREATE INDEX IF NOT EXISTS sensors$22_hash_c4 ON sensors$22 ("placed$0")
+CREATE TABLE IF NOT EXISTS "machine$26" ("machineid$0" BIGINT NOT NULL,"maxtemp$0" DOUBLE NOT NULL,"avgtemp$0" DOUBLE NOT NULL,"timemin$0" INTEGER NOT NULL , PRIMARY KEY ("machineid$0"));
+CREATE TABLE IF NOT EXISTS "minreadings$19" ("sensorid$0" BIGINT NOT NULL,"timemin$0" INTEGER NOT NULL,"temp$0" DOUBLE NOT NULL , PRIMARY KEY ("sensorid$0","timemin$0"));
+CREATE TABLE IF NOT EXISTS "sensors$22" ("id$0" BIGINT NOT NULL,"_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"machineid$0" BIGINT NOT NULL,"placed$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
 >>>query-machine
 {
   "data" : {
@@ -21,7 +21,34 @@ CREATE TABLE IF NOT EXISTS "sensors$20" ("id$0" BIGINT NOT NULL,"_uuid$0" VARCHA
     "Sensors" : [ {
       "placed" : "1680505200000",
       "machineid" : 0,
-      "readings" : [ ]
+      "readings" : [ {
+        "timeMin" : "1680592139999",
+        "temp" : 18.23706536
+      }, {
+        "timeMin" : "1680592079999",
+        "temp" : 18.85544197
+      }, {
+        "timeMin" : "1680592019999",
+        "temp" : 19.38399463
+      }, {
+        "timeMin" : "1680591959999",
+        "temp" : 20.24024387
+      }, {
+        "timeMin" : "1680591899999",
+        "temp" : 17.13202312
+      }, {
+        "timeMin" : "1680591839999",
+        "temp" : 18.03603316
+      }, {
+        "timeMin" : "1680591779999",
+        "temp" : 19.94989259
+      }, {
+        "timeMin" : "1680591719999",
+        "temp" : 16.41595297
+      }, {
+        "timeMin" : "1680591659999",
+        "temp" : 19.98737366
+      } ]
     } ]
   }
 }

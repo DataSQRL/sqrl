@@ -11,7 +11,6 @@ import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -38,7 +37,6 @@ public class BankingTest extends AbstractGraphqlTest {
 
   @SneakyThrows
   @Test
-  @Disabled
   public void runMetricsMutation() {
     String applicationAlert = "subscription ApplicationAlert {\n"
         + "  ApplicationAlert {\n"
@@ -53,25 +51,27 @@ public class BankingTest extends AbstractGraphqlTest {
 
     CountDownLatch countDownLatch = subscribeToAlert(applicationAlert);
 
-    Thread.sleep(3000);
+    Thread.sleep(10000);
 
     String addUpdate = "mutation ApplicationUpdate($loan_application_id: Int!, " +
-            "  $status: String!, $message: String!) {\n"
-            + "  ApplicationUpdates(event: {loan_application_id: $loan_application_id," +
-            "     status: $status, message: $message}) {\n"
-            + "    loan_application_id\n"
-            + "  }\n"
-            + "}";
+        "  $status: String!, $message: String!) {\n"
+        + "  ApplicationUpdates(event: {loan_application_id: $loan_application_id," +
+        "     status: $status, message: $message}) {\n"
+        + "    loan_application_id\n"
+        + "  }\n"
+        + "}";
+    for (int i = 0; i < 5; i++) {
 
-    executeMutation(addUpdate, new JsonObject()
-        .put("loan_application_id", 101)
-        .put("status", "underwriting")
-        .put("message", "The road goes ever on and on"), FAIL_HANDLER);
+      executeMutation(addUpdate, new JsonObject()
+          .put("loan_application_id", 101)
+          .put("status", "underwriting")
+          .put("message", "The road goes ever on and on"), FAIL_HANDLER);
 
-    Thread.sleep(1000);
+      Thread.sleep(1000);
 
+    }
     log.debug("count:" + countDownLatch.getCount());
-    countDownLatch.await(60, TimeUnit.SECONDS);
+    countDownLatch.await(600, TimeUnit.SECONDS);
     log.debug("count:" + countDownLatch.getCount());
 
     fut.cancel(true);

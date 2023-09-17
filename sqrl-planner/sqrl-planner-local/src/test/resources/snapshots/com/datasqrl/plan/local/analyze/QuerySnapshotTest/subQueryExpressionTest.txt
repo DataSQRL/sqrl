@@ -1,7 +1,7 @@
 >>>product$q$2
 LogicalTableScan(table=[[product$i$1]])
 
->>>product2$q$7
+>>>product2$q$6
 LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5])
   LogicalFilter(condition=[=($2, $SCALAR_QUERY({
 LogicalProject(productid=[$2])

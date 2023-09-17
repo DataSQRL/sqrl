@@ -1,4 +1,4 @@
->>>ordered_entries$q$8
+>>>ordered_entries$q$10
 LogicalProject(_uuid$0=[$0], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], unit_price$0=[$9], discount$0=[$10], time$0=[$4])
   LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])

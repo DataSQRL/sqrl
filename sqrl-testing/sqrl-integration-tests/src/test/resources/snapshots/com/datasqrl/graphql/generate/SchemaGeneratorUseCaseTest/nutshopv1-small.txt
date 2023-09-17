@@ -10,7 +10,6 @@ type Orders {
   time: Int!
   items: [items!]
   timestamp: String!
-  parent: Customers!
   totals: [totals!]
 }
 
@@ -23,7 +22,6 @@ type Products {
   category: String!
   usda_id: Int!
   updated: String!
-  parent: items!
 }
 
 type Query {

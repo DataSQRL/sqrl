@@ -1,22 +1,22 @@
 >>>database
-CREATE INDEX IF NOT EXISTS "customer$17_btree_c3c4" ON "customer$17" USING btree ("email$0","name$0");
-CREATE INDEX IF NOT EXISTS "customer$17_hash_c4" ON "customer$17" USING hash ("name$0");
-CREATE INDEX IF NOT EXISTS "newcustomerpromotion$54_hash_c2" ON "newcustomerpromotion$54" USING hash ("customerid$0");
+CREATE INDEX IF NOT EXISTS "customer$19_btree_c3c4" ON "customer$19" USING btree ("email$0","name$0");
+CREATE INDEX IF NOT EXISTS "customer$19_hash_c4" ON "customer$19" USING hash ("name$0");
+CREATE INDEX IF NOT EXISTS "newcustomerpromotion$57_hash_c2" ON "newcustomerpromotion$57" USING hash ("customerid$0");
 CREATE INDEX IF NOT EXISTS "orders$11_btree_c3c2c4" ON "orders$11" USING btree ("customerid$0","id$0","time$0");
 CREATE INDEX IF NOT EXISTS "orders$11_hash_c2" ON "orders$11" USING hash ("id$0");
 CREATE INDEX IF NOT EXISTS "orders$11_hash_c3c4" ON "orders$11" USING hash ("customerid$0","time$0");
-CREATE INDEX IF NOT EXISTS "product$23_btree_c3c5" ON "product$23" USING btree ("name$0","category$0");
-CREATE INDEX IF NOT EXISTS "product$23_hash_c5" ON "product$23" USING hash ("category$0");
-CREATE TABLE IF NOT EXISTS "category$20" ("name$0" CHARACTER VARYING NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name$0"));
-CREATE TABLE IF NOT EXISTS "customer$17" ("customerid$0" BIGINT NOT NULL,"_uuid$0" CHARACTER VARYING NOT NULL,"_ingest_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"email$0" CHARACTER VARYING NOT NULL,"name$0" CHARACTER VARYING NOT NULL,"lastupdated$0" BIGINT NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid$0"));
+CREATE INDEX IF NOT EXISTS "product$25_btree_c3c5" ON "product$25" USING btree ("name$0","category$0");
+CREATE INDEX IF NOT EXISTS "product$25_hash_c5" ON "product$25" USING hash ("category$0");
+CREATE TABLE IF NOT EXISTS "category$22" ("name$0" CHARACTER VARYING NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("name$0"));
+CREATE TABLE IF NOT EXISTS "customer$19" ("customerid$0" BIGINT NOT NULL,"_uuid$0" CHARACTER VARYING NOT NULL,"_ingest_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"email$0" CHARACTER VARYING NOT NULL,"name$0" CHARACTER VARYING NOT NULL,"lastupdated$0" BIGINT NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid$0"));
 CREATE TABLE IF NOT EXISTS "entries$13" ("_uuid$0" CHARACTER VARYING NOT NULL,"_idx$0" INTEGER NOT NULL,"productid$0" BIGINT NOT NULL,"quantity$0" BIGINT NOT NULL,"unit_price$0" DOUBLE PRECISION NOT NULL,"discount$0" DOUBLE PRECISION ,"discount$5" DOUBLE PRECISION NOT NULL,"total$6" DOUBLE PRECISION NOT NULL,"time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid$0","_idx$0"));
-CREATE TABLE IF NOT EXISTS "favorite_categories$44" ("__customerid$0" BIGINT NOT NULL,"category_name$0" CHARACTER VARYING NOT NULL,"total$0" DOUBLE PRECISION NOT NULL,"month$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$0","category_name$0"));
-CREATE TABLE IF NOT EXISTS "newcustomerpromotion$54" ("_uuid$0" CHARACTER VARYING NOT NULL,"_source_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"customerid$0" BIGINT NOT NULL,"email$0" CHARACTER VARYING NOT NULL,"name$0" CHARACTER VARYING NOT NULL,"total_spend$0" DOUBLE PRECISION NOT NULL,"num_orders$0" BIGINT NOT NULL , PRIMARY KEY ("_uuid$0"));
+CREATE TABLE IF NOT EXISTS "favorite_categories$46" ("__customerid$0" BIGINT NOT NULL,"category_name$0" CHARACTER VARYING NOT NULL,"total$0" DOUBLE PRECISION NOT NULL,"month$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$0","category_name$0"));
+CREATE TABLE IF NOT EXISTS "newcustomerpromotion$57" ("_uuid$0" CHARACTER VARYING NOT NULL,"_source_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"customerid$0" BIGINT NOT NULL,"email$0" CHARACTER VARYING NOT NULL,"name$0" CHARACTER VARYING NOT NULL,"total_spend$0" DOUBLE PRECISION NOT NULL,"num_orders$0" BIGINT NOT NULL , PRIMARY KEY ("_uuid$0"));
 CREATE TABLE IF NOT EXISTS "order_again$36" ("__customerid$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"quantity$0" BIGINT NOT NULL,"num_orders$0" BIGINT NOT NULL,"most_recent$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$0","productid$0"));
-CREATE TABLE IF NOT EXISTS "order_stats$50" ("__customerid$0" BIGINT NOT NULL,"total_spend$0" DOUBLE PRECISION NOT NULL,"num_orders$0" BIGINT NOT NULL,"time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$0"));
+CREATE TABLE IF NOT EXISTS "order_stats$52" ("__customerid$0" BIGINT NOT NULL,"total_spend$0" DOUBLE PRECISION NOT NULL,"num_orders$0" BIGINT NOT NULL,"time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("__customerid$0"));
 CREATE TABLE IF NOT EXISTS "orders$11" ("_uuid$0" CHARACTER VARYING NOT NULL,"_ingest_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"id$0" BIGINT NOT NULL,"customerid$0" BIGINT NOT NULL,"time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid$0"));
-CREATE TABLE IF NOT EXISTS "product$23" ("productid$0" BIGINT NOT NULL,"_uuid$0" CHARACTER VARYING NOT NULL,"_ingest_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"name$0" CHARACTER VARYING NOT NULL,"description$0" CHARACTER VARYING NOT NULL,"category$0" CHARACTER VARYING NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("productid$0"));
-CREATE TABLE IF NOT EXISTS "total$26" ("___uuid$0" CHARACTER VARYING NOT NULL,"price$0" DOUBLE PRECISION NOT NULL,"discount$0" DOUBLE PRECISION NOT NULL,"num$0" BIGINT NOT NULL,"time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("___uuid$0"));
+CREATE TABLE IF NOT EXISTS "product$25" ("productid$0" BIGINT NOT NULL,"_uuid$0" CHARACTER VARYING NOT NULL,"_ingest_time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL,"name$0" CHARACTER VARYING NOT NULL,"description$0" CHARACTER VARYING NOT NULL,"category$0" CHARACTER VARYING NOT NULL,"updatetime$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("productid$0"));
+CREATE TABLE IF NOT EXISTS "total$28" ("___uuid$0" CHARACTER VARYING NOT NULL,"price$0" DOUBLE PRECISION NOT NULL,"discount$0" DOUBLE PRECISION NOT NULL,"num$0" BIGINT NOT NULL,"time$0" TIMESTAMP(9) WITH TIME ZONE NOT NULL , PRIMARY KEY ("___uuid$0"));
 >>>query-allcustomers
 {
   "data" : {
@@ -59,7 +59,15 @@ CREATE TABLE IF NOT EXISTS "total$26" ("___uuid$0" CHARACTER VARYING NOT NULL,"p
       "email" : "john.mekker@gmail.com",
       "name" : "John Mekker",
       "updatetime" : "2022-02-20T22:40:49-08:00",
-      "orders" : [ ]
+      "orders" : [ {
+        "id" : 10007543,
+        "time" : "2023-05-19T01:29:39.553244-07:00",
+        "total" : [ {
+          "price" : 120.85,
+          "discount" : 11.5,
+          "num" : 2
+        } ]
+      } ]
     } ]
   }
 }
@@ -76,14 +84,22 @@ CREATE TABLE IF NOT EXISTS "total$26" ("___uuid$0" CHARACTER VARYING NOT NULL,"p
         "unit_price" : 8.49,
         "discount" : 0,
         "total" : 67.92,
-        "product" : [ ]
+        "product" : [ {
+          "name" : "Heavy Duty Butt Wipes",
+          "description" : "Wipes for hardiest of messes",
+          "category" : "Personal Care"
+        } ]
       }, {
         "productid" : 3571,
         "quantity" : 1,
         "unit_price" : 41.95,
         "discount" : 5,
         "total" : 36.95,
-        "product" : [ ]
+        "product" : [ {
+          "name" : "Poptech Blow 500",
+          "description" : "High powered blowdryer for any hair",
+          "category" : "Personal Care"
+        } ]
       } ],
       "total" : [ {
         "price" : 104.87,

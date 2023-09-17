@@ -26,7 +26,7 @@ Users.past_purchases := SELECT i.productid, count(1) as num_orders,
 
 -- Adding Products
 Products := DISTINCT Products ON id ORDER BY updated DESC;
-Orders.items.product := JOIN Products ON Products.id = @.productid LIMIT 1;
+Orders.items.product := JOIN Products ON Products.id = @.productid;
 Products.ordered_items := JOIN Orders.items i ON i.productid = @.id;
 
 -- Adding recency aggregate

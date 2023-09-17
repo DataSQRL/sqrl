@@ -12,7 +12,6 @@ type Orders {
   items: [items!]
   timestamp: String!
   totals: [totals!]
-  parent: Customers!
 }
 
 type Products {
@@ -24,7 +23,6 @@ type Products {
   category: String!
   usda_id: Int!
   updated: String!
-  parent: items!
   volume_by_day: [volume_by_day!]
 }
 

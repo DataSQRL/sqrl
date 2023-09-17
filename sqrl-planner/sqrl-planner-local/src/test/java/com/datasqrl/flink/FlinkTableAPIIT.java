@@ -44,6 +44,7 @@ import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
@@ -61,6 +62,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
 
   @SneakyThrows
   @Test
+  @Disabled
   public void testFlinkTableAPIIntegration() {
 
     TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"));

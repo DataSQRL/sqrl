@@ -4,7 +4,7 @@ LogicalTableScan(table=[[customer$i$1]])
 >>>orders$q$6
 LogicalTableScan(table=[[orders$i$5]])
 
->>>orders2$q$21
+>>>orders2$q$22
 LogicalProject(_uuid$0=[$0], _idx$0=[$6], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
   LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$6]])
@@ -12,7 +12,7 @@ LogicalProject(_uuid$0=[$0], _idx$0=[$6], _ingest_time$0=[$1], id$0=[$2], custom
       LogicalProject($f0=[$cor3.entries$0])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>orders3$q$16
+>>>orders3$q$18
 LogicalProject(_uuid$0=[$0], _idx$0=[$6], _idx$00=[$11], productid$0=[$12], quantity$0=[$13], unit_price$0=[$14], discount$0=[$15], time$0=[$4])
   LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
     LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
@@ -24,6 +24,6 @@ LogicalProject(_uuid$0=[$0], _idx$0=[$6], _idx$00=[$11], productid$0=[$12], quan
       LogicalProject($f0=[$cor7.entries$0])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>product$q$13
-LogicalTableScan(table=[[product$i$12]])
+>>>product$q$15
+LogicalTableScan(table=[[product$i$14]])
 

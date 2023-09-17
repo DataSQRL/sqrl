@@ -1,5 +1,7 @@
 package com.datasqrl.plan.global;
 
+import static com.datasqrl.calcite.schema.ScriptPlanner.exportTable;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -65,24 +67,6 @@ public class DAGPreparation {
     return apiManager.getQueries().stream().map(apiQuery ->
       new AnalyzedAPIQuery(apiQuery.getNameId(), APIQueryRewriter.rewrite(relBuilder, apiQuery.getRelNode()))
     ).collect(Collectors.toList());
-  }
-
-  private ResolvedExport exportTable(SQRLTable table, TableSink sink, RelBuilder relBuilder,
-      SqrlFramework framework) {
-    RelOptTable table1 = framework.getQueryPlanner().getCatalogReader()
-            .getSqrlTable(table.getPath().stream().map(f->f.getDisplay()).collect(Collectors.toList()));
-    relBuilder.scan(table1.getQualifiedName());
-    List<RexNode> selects = new ArrayList<>();
-    List<String> fieldNames = new ArrayList<>();
-
-    //todo: remove for latest columns
-    AtomicInteger i = new AtomicInteger();
-    table.getVisibleColumns().stream().forEach(c -> {
-      selects.add(relBuilder.field(i.getAndIncrement()));//c.getVtName().getCanonical()));
-      fieldNames.add(c.getName().getDisplay());
-    });
-    relBuilder.project(selects, fieldNames);
-    return new ResolvedExport(table1.getQualifiedName().get(0), relBuilder.build(), sink);
   }
 
   private void finalizeSourceTable(ProxyImportRelationalTable table) {

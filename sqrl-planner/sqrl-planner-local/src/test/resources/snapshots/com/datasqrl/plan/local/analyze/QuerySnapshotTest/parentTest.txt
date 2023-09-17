@@ -1,9 +1,9 @@
->>>newproduct$q$14
+>>>newproduct$q$15
 LogicalProject(_uuid$0=[$0], _uuid$00=[$6], _idx$0=[$12], customerid=[$21], __timestamp24=[CASE(<($17, $22), $22, $17)])
   LogicalJoin(condition=[=($6, $18)], joinType=[left])
     LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], _uuid$00=[$6], _ingest_time$00=[$7], id$0=[$8], customerid$0=[$9], time$0=[$10], entries$0=[$11], _idx$0=[$12], productid$00=[$13], quantity$0=[$14], unit_price$0=[$15], discount$0=[$16], __timestamp=[CASE(<($1, $10), $10, $1)])
       LogicalJoin(condition=[=($2, $13)], joinType=[inner])
-        LogicalTableScan(table=[[product$q$9]])
+        LogicalTableScan(table=[[product$q$11]])
         LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
           LogicalTableScan(table=[[orders$q$2]])
           Uncollect
@@ -14,6 +14,6 @@ LogicalProject(_uuid$0=[$0], _uuid$00=[$6], _idx$0=[$12], customerid=[$21], __ti
 >>>orders$q$2
 LogicalTableScan(table=[[orders$i$1]])
 
->>>product$q$9
-LogicalTableScan(table=[[product$i$8]])
+>>>product$q$11
+LogicalTableScan(table=[[product$i$10]])
 

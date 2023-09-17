@@ -14,9 +14,9 @@ LogicalProject(_uuid$0=[$0], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], uni
 LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
   LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>product$14-lp-stream
+>>>product$16-lp-stream
 LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5])
-  LogicalTableScan(table=[[product$i$12]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+  LogicalTableScan(table=[[product$i$14]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
 
 >>>customer-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
@@ -36,7 +36,7 @@ LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 >>>product-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5])
-    LogicalTableScan(table=[[product$14]])
+    LogicalTableScan(table=[[product$16]])
 
 >>>customer-data
 1000101, john.mekker@gmail.com, John Mekker, 1645396849
@@ -51,15 +51,15 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 7552, Simer Garden Hose 50ft, Long garden hose that rolls up, House & Garden
 8757, Original German Nutcracker 3ft, Hand-made nutcracker is the perfect Christmas decoration, Decoration
 >>>orders-data
-10007140, 1000107, 2023-05-19T02:28:39.553244-07:00
-10007543, 1000101, 2023-05-19T01:29:39.553244-07:00
-10008231, 1000121, 2023-05-19T02:16:39.553244-07:00
-10008434, 1000107, 2023-05-19T01:45:39.553244-07:00
+10007140, 1000107, 2023-05-19T02:28:39.553244Z
+10007543, 1000101, 2023-05-19T01:29:39.553244Z
+10008231, 1000121, 2023-05-19T02:16:39.553244Z
+10008434, 1000107, 2023-05-19T01:45:39.553244Z
 >>>entries-data
-0, 1332, 8, 8.49, null, 2023-05-19T02:28:39.553244-07:00
-0, 3571, 1, 41.95, 0, 2023-05-19T01:45:39.553244-07:00
-0, 7235, 1, 17.35, 0, 2023-05-19T01:29:39.553244-07:00
-0, 7552, 3, 25.5, 15, 2023-05-19T02:16:39.553244-07:00
-1, 3225, 1, 105, 0, 2023-05-19T02:16:39.553244-07:00
-1, 3571, 1, 41.95, 5, 2023-05-19T02:28:39.553244-07:00
-1, 8757, 2, 57.5, 11.5, 2023-05-19T01:29:39.553244-07:00
+0, 1332, 8, 8.49, null, 2023-05-19T02:28:39.553244Z
+0, 3571, 1, 41.95, 0, 2023-05-19T01:45:39.553244Z
+0, 7235, 1, 17.35, 0, 2023-05-19T01:29:39.553244Z
+0, 7552, 3, 25.5, 15, 2023-05-19T02:16:39.553244Z
+1, 3225, 1, 105, 0, 2023-05-19T02:16:39.553244Z
+1, 3571, 1, 41.95, 5, 2023-05-19T02:28:39.553244Z
+1, 8757, 2, 57.5, 11.5, 2023-05-19T01:29:39.553244Z

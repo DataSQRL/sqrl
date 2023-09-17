@@ -239,6 +239,8 @@ public class FlinkEnvironmentBuilder implements
   public Object visitQuery(FlinkSqlQuery query, PlanContext context) {
     log.debug("Creating SQL table: {} {}", query.getName(), query.getQuery());
     Table table = context.getTEnv().sqlQuery(query.getQuery());
+    System.out.println(table.getQueryOperation().getResolvedSchema().toString());
+    System.out.println(query.getQuery());
     context.getTEnv().createTemporaryView(query.getName(), table);
     return null;
   }
@@ -464,6 +466,7 @@ public class FlinkEnvironmentBuilder implements
         TableDescriptor.Builder builder = (TableDescriptor.Builder) o;
         TableDescriptor descriptor = builder.schema(toSchema(table.getSchema()))
             .build();
+        System.out.println(name + ":"+ descriptor.toString());
         context.getTEnv().createTemporaryTable(name, descriptor);
       } else {
         throw new RuntimeException("Unknown sink type");

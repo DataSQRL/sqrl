@@ -150,18 +150,67 @@ CREATE TABLE IF NOT EXISTS "trending$6" ("url$0" CHARACTER VARYING NOT NULL,"tot
 }
 >>>query-trending
 {
-  "errors" : [ {
-    "message" : "Exception while fetching data (/Trending) : Could not find query: {limit=20}",
-    "locations" : [ {
-      "line" : 2,
-      "column" : 1
-    } ],
-    "path" : [ "Trending" ],
-    "extensions" : {
-      "classification" : "DataFetchingException"
-    }
-  } ],
   "data" : {
-    "Trending" : null
+    "Trending" : [ {
+      "url" : "ziff_davis_media/edna_obrien",
+      "total" : 7
+    }, {
+      "url" : "gunit_books/by_grand_central_station_i_sat_down_and_wept",
+      "total" : 5
+    }, {
+      "url" : "athabasca_university_press/the_doors_of_perception",
+      "total" : 4
+    }, {
+      "url" : "berkley_books/to_sail_beyond_the_sunset",
+      "total" : 3
+    }, {
+      "url" : "blackwell_publishing/the_wealth_of_nations",
+      "total" : 3
+    }, {
+      "url" : "chick_publications/death_be_not_proud",
+      "total" : 3
+    }, {
+      "url" : "edupedia_publications/the_golden_apples_of_the_sun",
+      "total" : 3
+    }, {
+      "url" : "george_newnes/behold_the_man",
+      "total" : 3
+    }, {
+      "url" : "matthias_media/the_green_bay_tree",
+      "total" : 3
+    }, {
+      "url" : "secker__warburg/look_homeward_angel",
+      "total" : 3
+    }, {
+      "url" : "gay_mens_press/alone_on_a_wide_wide_sea",
+      "total" : 2
+    }, {
+      "url" : "george_h_doran_company/the_other_side_of_silence",
+      "total" : 2
+    }, {
+      "url" : "karadi_tales/a_manysplendoured_thing",
+      "total" : 2
+    }, {
+      "url" : "karadi_tales/the_moon_by_night",
+      "total" : 2
+    }, {
+      "url" : "left_book_club/where_angels_fear_to_tread",
+      "total" : 2
+    }, {
+      "url" : "marshall_cavendish/the_painted_veil",
+      "total" : 2
+    }, {
+      "url" : "navpress/death_be_not_proud",
+      "total" : 2
+    }, {
+      "url" : "schocken_books/the_cricket_on_the_hearth",
+      "total" : 2
+    }, {
+      "url" : "united_states_government_publishing_office/the_waste_land",
+      "total" : 2
+    }, {
+      "url" : "university_of_minnesota_press/to_a_god_unknown",
+      "total" : 2
+    } ]
   }
 }

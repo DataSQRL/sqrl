@@ -28,7 +28,7 @@ Users.past_purchases := SELECT i.productid, count(1) as num_orders,
       ORDER BY num_orders DESC, total_quantity DESC;
 
 Products := DISTINCT Products ON id ORDER BY updated DESC;
-Orders.items.product := JOIN Products ON Products.id = @.productid LIMIT 1;
+Orders.items.product := JOIN Products ON Products.id = @.productid;
 Products.ordered_items := JOIN Orders.items i ON i.productid = @.id;
 
 --

@@ -1,9 +1,9 @@
->>>historicorders$17-lp-stream
+>>>historicorders$19-lp-stream
 LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
   LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
     LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>recentorders$20-lp-stream
+>>>recentorders$22-lp-stream
 LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
   LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
     LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
@@ -12,18 +12,18 @@ LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], 
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
     LogicalFilter(condition=[<=(NOW(), +($4, 86313600000:INTERVAL SECOND(11)))])
-      LogicalTableScan(table=[[historicorders$17]])
+      LogicalTableScan(table=[[historicorders$19]])
 
 >>>recentorders-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
     LogicalFilter(condition=[<=(NOW(), +($4, 1000:INTERVAL SECOND(4)))])
-      LogicalTableScan(table=[[recentorders$20]])
+      LogicalTableScan(table=[[recentorders$22]])
 
 >>>historicorders-data
-10007140, 1000107, 2023-05-19T02:28:39.553244-07:00
-10007543, 1000101, 2023-05-19T01:29:39.553244-07:00
-10008231, 1000121, 2023-05-19T02:16:39.553244-07:00
-10008434, 1000107, 2023-05-19T01:45:39.553244-07:00
+10007140, 1000107, 2023-05-19T02:28:39.553244Z
+10007543, 1000101, 2023-05-19T01:29:39.553244Z
+10008231, 1000121, 2023-05-19T02:16:39.553244Z
+10008434, 1000107, 2023-05-19T01:45:39.553244Z
 >>>recentorders-data
 

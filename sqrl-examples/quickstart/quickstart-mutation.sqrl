@@ -34,7 +34,7 @@ Users.product_visits := SELECT productid, count(1) as visits
       GROUP BY productid ORDER BY visits DESC;
 
 Products := DISTINCT Products ON id ORDER BY updated DESC;
-Orders.items.product := JOIN Products ON Products.id = @.productid LIMIT 1;
+Orders.items.product := JOIN Products ON Products.id = @.productid;
 Products.ordered_items := JOIN Orders.items i ON i.productid = @.id;
 
 -- aggregating by country

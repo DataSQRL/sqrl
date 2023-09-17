@@ -20,7 +20,6 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.parse.SqrlAstException;
-import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
@@ -52,7 +51,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -125,7 +123,7 @@ public class SchemaInference {
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
     SQRLTable table = resolveRootSQRLTable(fieldDefinition, fieldDefinition.getType(), fieldDefinition.getName(), "Query");
-    return inferObjectField(fieldDefinition, table, fields, parent, null);
+    return inferObjectField(fieldDefinition, table, fields, parent, null, false);
   }
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
@@ -184,7 +182,8 @@ public class SchemaInference {
   }
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
-      List<InferredField> fields, ObjectTypeDefinition parent, SQRLTable parentTable) {
+      List<InferredField> fields, ObjectTypeDefinition parent, SQRLTable parentTable,
+      boolean isSubscription) {
     checkValidArrayNonNullType(fieldDefinition.getType());
     TypeDefinition typeDef = unwrapObjectType(fieldDefinition.getType());
 
@@ -192,12 +191,13 @@ public class SchemaInference {
       ObjectTypeDefinition obj = (ObjectTypeDefinition) typeDef;
       checkState(visitedObj.get(obj) == null || visitedObj.get(obj) == table, typeDef.getSourceLocation(),
           "Cannot redefine a type to point to a different SQRL table. Use an interface instead.\n"
-              + "Table [%s] points to a different SQRL table.",
-          table.getName().getDisplay());
+              + "The graphql field [%s] points to Sqrl table [%s] but already had [%s].",
+          parent.getName() + ":" + fieldDefinition.getName(),
+          table.getPath().toString(), "");
       visitedObj.put(obj, table);
       InferredObjectField inferredObjectField = new InferredObjectField(parentTable, parent, fieldDefinition,
           (ObjectTypeDefinition) typeDef, table);
-      fields.addAll(walkChildren((ObjectTypeDefinition) typeDef, table, fields));
+      fields.addAll(walkChildren((ObjectTypeDefinition) typeDef, table, fields, isSubscription));
       return inferredObjectField;
     } else {
       throw new RuntimeException("Could not infer non-object type on graphql schema: " + fieldDefinition.getName());
@@ -213,7 +213,7 @@ public class SchemaInference {
   }
 
   private List<InferredField> walkChildren(ObjectTypeDefinition typeDef, SQRLTable table,
-      List<InferredField> fields) {
+      List<InferredField> fields, boolean isSubscription) {
     List<FieldDefinition> invalidFields = getInvalidFields(typeDef, table);
     boolean structurallyEqual = structurallyEqual(typeDef, table);
     //todo clean up, add lazy evaluation
@@ -225,29 +225,29 @@ public class SchemaInference {
 
     return typeDef.getFieldDefinitions().stream()
         .filter(f -> !visited.contains(f))
-        .map(f -> walk(f, table.getField(Name.system(f.getName())).get(), fields, typeDef))
+        .map(f -> walk(f, table.getField(Name.system(f.getName())).get(), fields, typeDef, isSubscription))
         .collect(Collectors.toList());
   }
 
   private InferredField walk(FieldDefinition fieldDefinition, Field field,
-      List<InferredField> fields, ObjectTypeDefinition parent) {
+      List<InferredField> fields, ObjectTypeDefinition parent, boolean isSubscription) {
     visited.add(fieldDefinition);
     if (field instanceof Relationship) {
-      return walkRel(fieldDefinition, (Relationship) field, fields, parent);
+      return walkRel(fieldDefinition, (Relationship) field, fields, parent, isSubscription);
     } else {
-      return walkScalar(fieldDefinition, (Column) field, parent);
+      return walkScalar(fieldDefinition, (Column) field, parent, isSubscription);
     }
   }
 
   private InferredField walkRel(FieldDefinition fieldDefinition, Relationship relationship,
-      List<InferredField> fields, ObjectTypeDefinition parent) {
+      List<InferredField> fields, ObjectTypeDefinition parent, boolean isSubscription) {
     return new NestedField(relationship,
         inferObjectField(fieldDefinition, relationship.getToTable(),
-            fields, parent, relationship.getFromTable()));
+            fields, parent, relationship.getFromTable(), isSubscription));
   }
 
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,
-      ObjectTypeDefinition parent) {
+      ObjectTypeDefinition parent, boolean isSubscription) {
     checkValidArrayNonNullType(fieldDefinition.getType());
     TypeDefinition type = unwrapObjectType(fieldDefinition.getType());
     //Todo: expand server to allow type coercion
@@ -290,7 +290,10 @@ public class SchemaInference {
             "Unrecognized type: %s", column.getType().getSqlTypeName().getName());
     }
 
-    return new InferredScalarField(fieldDefinition, column, parent);
+
+    return isSubscription?
+        new InferredSubscriptionScalarField(fieldDefinition, column, parent) :
+        new InferredScalarField(fieldDefinition, column, parent);
   }
 
   private SqlParserPos toParserPos(SourceLocation sourceLocation) {
@@ -537,7 +540,7 @@ public class SchemaInference {
         Field field = table.getField(Name.system(definition.getName()))
             .orElseThrow(() -> new RuntimeException("Unrecognized field " + definition.getName() +
                 " in " + objectTypeDefinition.getName()));
-        InferredField inferredField = walk(definition, field, fields, objectTypeDefinition);
+        InferredField inferredField = walk(definition, field, fields, objectTypeDefinition, true);
         fields.add(inferredField);
       }
 

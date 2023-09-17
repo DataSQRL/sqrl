@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.calcite.ModifiableSqrlTable;
 import com.datasqrl.calcite.SqrlFramework;

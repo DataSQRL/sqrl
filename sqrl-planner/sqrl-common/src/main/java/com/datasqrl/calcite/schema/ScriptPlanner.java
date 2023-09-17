@@ -24,6 +24,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.ScriptValidator;
 import com.datasqrl.plan.ScriptValidator.QualifiedExport;
@@ -33,6 +34,7 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.NamedTable;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.schema.SQRLTable;
@@ -97,19 +99,37 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return null;
   }
 
+  public static ResolvedExport exportTable(SQRLTable table, TableSink sink, RelBuilder relBuilder,
+      SqrlFramework framework) {
+    NamedTable table1 = (NamedTable)table.getVt() ;
+    relBuilder.scan(table1.getNameId());
+    List<RexNode> selects = new ArrayList<>();
+    List<String> fieldNames = new ArrayList<>();
+    table.getVisibleColumns().stream().forEach(c -> {
+      selects.add(relBuilder.field(c.getVtName().getCanonical()));
+      fieldNames.add(c.getName().getDisplay());
+    });
+    relBuilder.project(selects, fieldNames);
+    return new ResolvedExport(table1.getNameId(), relBuilder.build(), sink);
+  }
+
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
     QualifiedExport export = validator.getExportOps().get(node);
-    RelOptTable table = planner.getCatalogReader().getSqrlTable(export.getTable());
+    ModifiableSqrlTable table = planner.getCatalogReader().getSqrlTable(export.getTable())
+        .unwrap(ModifiableSqrlTable.class);
 
-    RelBuilder relBuilder = planner.getRelBuilder();
-    RelNode relNode = relBuilder
-        .scan(table.getQualifiedName())
-        .project(relBuilder.fields()) //todo remove hidden fields
-        .build();
-
-    ResolvedExport resolvedExport = new ResolvedExport(table.getQualifiedName().get(0),
-        relNode, export.getSink());
+    ResolvedExport resolvedExport = exportTable(table.getSqrlTable(), export.getSink(),
+        planner.getRelBuilder(), framework);
+//
+//    RelBuilder relBuilder = planner.getRelBuilder();
+//    RelNode relNode = relBuilder
+//        .scan(table.getQualifiedName())
+//        .project(relBuilder.fields()) //todo remove hidden fields
+//        .build();
+//
+//    ResolvedExport resolvedExport = new ResolvedExport(table.getQualifiedName().get(0),
+//        relNode, export.getSink());
 
     framework.getSchema().add(resolvedExport);
 
@@ -155,7 +175,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         materializeSelf, result.getSqlNode());
     parameters = rewritten.getLeft();
 
-    System.out.println(planner.sqlToString(Dialect.CALCITE, rewritten.getRight()));
     RelNode relNode = planner.plan(Dialect.CALCITE, rewritten.getRight());
     RelNode expanded = planner.expandMacros(relNode);
     final Optional<SqlNode> sql;
@@ -193,9 +212,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         planner.getSchema().addRelationship(rel);
 
         //Also add parent
-        Relationship relationship = tableFactory.createParent(path, parent, isASqrl.get(0));
-        isASqrl.get(0).addRelationship(relationship);
-        planner.getSchema().addRelationship(relationship);
+//        Relationship relationship = tableFactory.createParent(path, parent, isASqrl.get(0));
+
+//        isASqrl.get(0).addRelationship(relationship);
+//        planner.getSchema().addRelationship(relationship);
       } else {
         RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),
             null, isASqrl, parameters, nodeSupplier);
@@ -214,7 +234,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 //            materializeSelf, Optional.of(nodeSupplier));
       }
     } else {
-      System.out.println(expanded.explain());
       tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
           assignment.getHints(), parameters, isA,
           materializeSelf, Optional.empty());

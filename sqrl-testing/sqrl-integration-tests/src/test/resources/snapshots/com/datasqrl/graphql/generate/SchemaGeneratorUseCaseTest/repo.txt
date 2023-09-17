@@ -31,7 +31,6 @@ type Submission {
   keywords: [keywords!]
   variant: String!
   repoURL: String!
-  parent: TopicPackages!
 }
 
 type TopicPackages {

@@ -1,4 +1,4 @@
->>>newproduct$q$7
+>>>newproduct$q$6
 LogicalProject(_uuid$0=[$0], _uuid$00=[$6], _ingest_time$0=[$7], productid$0=[$8], name$0=[$9], description$0=[$10], category$0=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
   LogicalJoin(condition=[=($2, $8)], joinType=[inner])
     LogicalTableScan(table=[[product$q$2]])

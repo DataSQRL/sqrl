@@ -8,7 +8,6 @@ type MinReadings {
   sensorid: Int!
   timemin: String!
   temp: Float!
-  parent: Sensors!
 }
 
 type Query {

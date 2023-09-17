@@ -554,7 +554,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
               "DISTINCT ON statements require stream table as input");
 
           pk = ContinuousIndexMap.builder(partition.size()).addAll(partition).build(targetLength);
-//          select = ContinuousIndexMap.identity(targetLength, targetLength); //Select everything
+          select = ContinuousIndexMap.identity(targetLength, targetLength); //Select everything
           //Extract timestamp from collation
           TimestampHolder.Derived.Candidate candidate = LPConverterUtil.getTimestampOrderIndex(
               collation, timestamp).get();

@@ -21,6 +21,7 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredScalarField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchemaVisitor;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptionObjectVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptionScalarField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptions;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.NestedField;
 import com.datasqrl.graphql.server.Model;
@@ -36,6 +37,8 @@ import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.ApiQueryBase.ApiQueryBaseBuilder;
+import com.datasqrl.graphql.util.PagedApiQueryBase;
+import com.datasqrl.graphql.util.PagedApiQueryBase.PagedApiQueryBaseBuilder;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
@@ -166,9 +169,7 @@ public class SchemaBuilder implements
     Set<String> limitOffset = Set.of("limit", "offset");
 
     List<List<InputValueDefinition>> argCombinations = generateCombinations(field.getFieldDefinition()
-        .getInputValueDefinitions().stream()
-        .filter(f->!limitOffset.contains(f.getName().toLowerCase()))
-        .collect(Collectors.toList()));
+        .getInputValueDefinitions());
     SqlNameMatcher matcher = framework.getCatalogReader().nameMatcher();
 
     ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
@@ -216,10 +217,15 @@ public class SchemaBuilder implements
         }
       }
 
+      boolean limitOffsetFlag = false;
       List<RexNode> conditions = new ArrayList<>();
       //For all remaining args, create equality conditions
       for (Map.Entry<List<String>, InputValueDefinition> args : argMap.entrySet()) {
         if (limitOffset.contains(args.getKey().get(0).toLowerCase())) {
+          matchSet.argument(VariableArgument.builder()
+              .path(args.getKey().get(0).toLowerCase())
+              .build());
+          limitOffsetFlag = true;
           continue;
         }
         int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), args.getKey().get(0));
@@ -245,10 +251,20 @@ public class SchemaBuilder implements
       String nameId = field.getParent().getName() + "." + field.getFieldDefinition().getName() + "-" + queryCounter.incrementAndGet();
       APIQuery query = new APIQuery(nameId, relNode);
       apiManager.addQuery(query);
-      matchSet.query(queryParams
-          .relNode(relNode)
-          .query(query)
-          .build());
+      if (limitOffsetFlag) {
+        ApiQueryBase base = queryParams.build();
+        //convert
+        //todo: limit offset strategy is bad
+        matchSet.query(PagedApiQueryBase.builder()
+            .parameters(base.getParameters())
+            .query(query)
+            .relNode(relNode).build());
+      } else {
+        matchSet.query(queryParams
+            .relNode(relNode)
+            .query(query)
+            .build());
+      }
       Model.ArgumentSet argumentSet = matchSet.build();
 
       coordsBuilder.match(argumentSet);
@@ -301,6 +317,14 @@ public class SchemaBuilder implements
     return null;
   }
 
+  @Override
+  public Coords visitSubscriptionScalarField(InferredSubscriptionScalarField field, Object context) {
+    return FieldLookupCoords.builder()
+        .parentType(field.getParent().getName())
+        .fieldName(field.getFieldDefinition().getName())
+        .columnName(field.getColumn().getName().getDisplay())
+        .build();
+  }
   @Override
   public Coords visitScalarField(InferredScalarField field, Object context) {
     return FieldLookupCoords.builder()

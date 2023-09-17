@@ -3,13 +3,13 @@ LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3
   LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$1=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
     LogicalTableScan(table=[[customer$i$1]])
 
->>>customerdedup$19-lp-stream
+>>>customerdedup$21-lp-stream
 LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
   LogicalProject(customerid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$1=[$6])
     LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$1=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[customer$i$1]])
 
->>>ordercustomerdedup$22-lp-stream
+>>>ordercustomerdedup$24-lp-stream
 LogicalProject(_uuid$0=[$0], id$0=[$1], name$0=[$2], customerid$0=[$3], rowtime$0=[$4])
   LogicalProject(_uuid$0=[$0], id=[$2], name=[$11], customerid=[$3], rowtime$4=[$6])
     LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[TemporalJoinHint options:[6, 6, 0]]
@@ -21,7 +21,7 @@ LogicalProject(_uuid$0=[$0], id$0=[$1], name$0=[$2], customerid$0=[$3], rowtime$
             LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$1=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
               LogicalTableScan(table=[[customer$i$1]])
 
->>>ordercustomerinterval$16-lp-stream
+>>>ordercustomerinterval$18-lp-stream
 LogicalProject(_uuid$0=[$0], _uuid$1=[$1], id$0=[$2], name$0=[$3], customerid$0=[$4], rowtime$0=[$5])
   LogicalProject(_uuid$0=[$0], _uuid$00=[$7], id=[$2], name=[$11], customerid=[$3], rowtime$4=[$6])
     LogicalJoin(condition=[AND(=($3, $9), >=($6, $13), <=($6, +($13, 31536000000:INTERVAL DAY(3))))], joinType=[inner]) hints[IntervalJoin]
@@ -38,7 +38,7 @@ LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], 
 >>>customerdedup-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
-    LogicalTableScan(table=[[customerdedup$19]])
+    LogicalTableScan(table=[[customerdedup$21]])
 
 >>>ordercustomer-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
@@ -51,12 +51,12 @@ LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
 >>>ordercustomerdedup-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid$0=[$0], id$0=[$1], name$0=[$2], customerid$0=[$3], rowtime$0=[$4])
-    LogicalTableScan(table=[[ordercustomerdedup$22]])
+    LogicalTableScan(table=[[ordercustomerdedup$24]])
 
 >>>ordercustomerinterval-lp-database
 LogicalSort(sort0=[$5], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[ASC], dir2=[ASC])
   LogicalProject(_uuid$0=[$0], _uuid$1=[$1], id$0=[$2], name$0=[$3], customerid$0=[$4], rowtime$0=[$5])
-    LogicalTableScan(table=[[ordercustomerinterval$16]])
+    LogicalTableScan(table=[[ordercustomerinterval$18]])
 
 >>>ordercustomer-data
 10007140, Emily F. Ludies, 1000107
@@ -66,12 +66,12 @@ LogicalSort(sort0=[$5], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[AS
 >>>ordercustomerinterval-data
 
 >>>customerdedup-data
-1000101, john.mekker@gmail.com, John Mekker, 1645396849, 2022-02-20T22:40:49-08:00
-1000107, emily.ludies@hotmail.com, Emily F. Ludies, 1650493189, 2022-04-20T22:19:49-07:00
-1000121, lalelu@hottunes.org, Michelle Dagnes, 1650493449, 2022-04-20T22:24:09-07:00
-1000131, hotbear753@yahoo.com, Mark Spielman, 1650494449, 2022-04-20T22:40:49-07:00
+1000101, john.mekker@gmail.com, John Mekker, 1645396849, 2022-02-20T22:40:49Z
+1000107, emily.ludies@hotmail.com, Emily F. Ludies, 1650493189, 2022-04-20T22:19:49Z
+1000121, lalelu@hottunes.org, Michelle Dagnes, 1650493449, 2022-04-20T22:24:09Z
+1000131, hotbear753@yahoo.com, Mark Spielman, 1650494449, 2022-04-20T22:40:49Z
 >>>ordercustomerdedup-data
-10007140, Emily F. Ludies, 1000107, 2023-05-19T02:28:39.553-07:00
-10007543, John Mekker, 1000101, 2023-05-19T01:29:39.553-07:00
-10008231, Michelle Dagnes, 1000121, 2023-05-19T02:16:39.553-07:00
-10008434, Emily F. Ludies, 1000107, 2023-05-19T01:45:39.553-07:00
+10007140, Emily F. Ludies, 1000107, 2023-05-19T02:28:39.553Z
+10007543, John Mekker, 1000101, 2023-05-19T01:29:39.553Z
+10008231, Michelle Dagnes, 1000121, 2023-05-19T02:16:39.553Z
+10008434, Emily F. Ludies, 1000107, 2023-05-19T01:45:39.553Z

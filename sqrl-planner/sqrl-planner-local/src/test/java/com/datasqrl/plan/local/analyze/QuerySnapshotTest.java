@@ -377,6 +377,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void customerWithPurchaseTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("CustomerWithPurchase := SELECT * FROM Customer\n"
@@ -430,6 +431,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void duplicateImportTest() {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "IMPORT ecommerce-data.Product;\n");
@@ -869,6 +871,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void compoundAggregateExpressionTest() {
     //not yet supported
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"

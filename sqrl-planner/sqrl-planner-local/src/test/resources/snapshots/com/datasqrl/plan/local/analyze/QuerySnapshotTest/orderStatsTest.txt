@@ -1,4 +1,4 @@
->>>_stats$q$16
+>>>_stats$q$18
 LogicalProject(___uuid$0$pk$1=[$0], total=[$2], total_savings=[$3], total_entries=[$4], time$0=[$1])
   LogicalAggregate(group=[{0, 4}], total=[SUM($1)], total_savings=[SUM($2)], total_entries=[COUNT()])
     LogicalProject(___uuid$0$pk$1=[$0], $f1=[-(*($8, $9), $10)], discount$0=[$10], _idx$0=[$6], time$0=[$4])
@@ -14,6 +14,6 @@ LogicalTableScan(table=[[customer$i$1]])
 >>>orders$q$6
 LogicalTableScan(table=[[orders$i$5]])
 
->>>product$q$13
-LogicalTableScan(table=[[product$i$12]])
+>>>product$q$15
+LogicalTableScan(table=[[product$i$14]])
 

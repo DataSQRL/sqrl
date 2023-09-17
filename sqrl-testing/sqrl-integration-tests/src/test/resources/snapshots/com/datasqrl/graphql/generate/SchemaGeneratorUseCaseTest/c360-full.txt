@@ -1,7 +1,6 @@
 type Category {
   name: String!
   products: [Product!]
-  parent: favorite_categories!
 }
 
 type Customer {
@@ -30,7 +29,6 @@ type Orders {
   time: String!
   entries: [entries!]
   total: [total!]
-  parent: Customer!
 }
 
 type Product {
@@ -39,7 +37,6 @@ type Product {
   description: String!
   category: String!
   updatetime: String!
-  parent: entries!
 }
 
 type Query {

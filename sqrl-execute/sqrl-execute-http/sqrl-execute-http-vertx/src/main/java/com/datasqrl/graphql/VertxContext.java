@@ -98,7 +98,17 @@ public class VertxContext implements Context {
     Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
 
     Flux<Map<String, Object>> deferredFlux = Flux.<Map<String, Object>>create(sink -> {
-      consumer.listen(sink::next, sink::error, (x) -> sink.complete());
+      consumer.listen(n->{
+        System.out.println("SubSub map:" + n);
+        sink.next(n);
+      }, (e)->{
+        System.out.println("SubSub err:"+ e.getMessage());
+        e.printStackTrace();
+        sink.error(e);
+      }, (x) -> {
+        System.out.println("SubSub Complete");
+        sink.complete();
+      });
     }).share();
 
     return new DataFetcher<>() {

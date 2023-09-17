@@ -1,48 +1,108 @@
 >>>database
 CREATE INDEX IF NOT EXISTS orders$7_btree_c3c5 ON orders$7 ("customerid$0","timestamp$3")
 CREATE INDEX IF NOT EXISTS orders$7_hash_c2 ON orders$7 ("id$0")
-CREATE INDEX IF NOT EXISTS products$17_hash_c3 ON products$17 ("name$0")
-CREATE TABLE IF NOT EXISTS "customers$22" ("id$0" BIGINT NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
+CREATE INDEX IF NOT EXISTS products$20_hash_c3 ON products$20 ("name$0")
+CREATE TABLE IF NOT EXISTS "customers$24" ("id$0" BIGINT NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
 CREATE TABLE IF NOT EXISTS "items$9" ("_uuid$0" VARCHAR NOT NULL,"_idx$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"quantity$0" BIGINT NOT NULL,"unit_price$0" DOUBLE NOT NULL,"discount$0" DOUBLE ,"discount$4" DOUBLE NOT NULL,"total$5" DOUBLE NOT NULL,"timestamp$3" INTEGER NOT NULL , PRIMARY KEY ("_uuid$0","_idx$0"));
 CREATE TABLE IF NOT EXISTS "orders$7" ("_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"id$0" BIGINT NOT NULL,"customerid$0" BIGINT NOT NULL,"time$0" BIGINT NOT NULL,"timestamp$3" INTEGER NOT NULL , PRIMARY KEY ("_uuid$0"));
-CREATE TABLE IF NOT EXISTS "past_purchases$31" ("__id$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"num_orders$0" BIGINT NOT NULL,"total_quantity$0" BIGINT NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("__id$0","productid$0"));
-CREATE TABLE IF NOT EXISTS "products$17" ("id$0" BIGINT NOT NULL,"_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"name$0" VARCHAR NOT NULL,"sizing$0" VARCHAR NOT NULL,"weight_in_gram$0" BIGINT NOT NULL,"type$0" VARCHAR NOT NULL,"category$0" VARCHAR NOT NULL,"usda_id$0" BIGINT NOT NULL,"updated$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
-CREATE TABLE IF NOT EXISTS "spending_by_month$27" ("__id$0" BIGINT NOT NULL,"month$0" INTEGER NOT NULL,"total_spend$0" DOUBLE NOT NULL,"total_savings$0" DOUBLE NOT NULL , PRIMARY KEY ("__id$0","month$0"));
-CREATE TABLE IF NOT EXISTS "totals$13" ("___uuid$0" VARCHAR NOT NULL,"price$0" DOUBLE NOT NULL,"savings$0" DOUBLE NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("___uuid$0"));
-CREATE TABLE IF NOT EXISTS "volume_by_day$35" ("__id$0" BIGINT NOT NULL,"day$0" INTEGER NOT NULL,"quantity$0" BIGINT NOT NULL,"total$0" DOUBLE NOT NULL,"total_weight$0" BIGINT NOT NULL , PRIMARY KEY ("__id$0","day$0"));
+CREATE TABLE IF NOT EXISTS "past_purchases$33" ("__id$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"num_orders$0" BIGINT NOT NULL,"total_quantity$0" BIGINT NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("__id$0","productid$0"));
+CREATE TABLE IF NOT EXISTS "products$20" ("id$0" BIGINT NOT NULL,"_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"name$0" VARCHAR NOT NULL,"sizing$0" VARCHAR NOT NULL,"weight_in_gram$0" BIGINT NOT NULL,"type$0" VARCHAR NOT NULL,"category$0" VARCHAR NOT NULL,"usda_id$0" BIGINT NOT NULL,"updated$0" INTEGER NOT NULL , PRIMARY KEY ("id$0"));
+CREATE TABLE IF NOT EXISTS "spending_by_month$28" ("__id$0" BIGINT NOT NULL,"month$0" INTEGER NOT NULL,"total_spend$0" DOUBLE NOT NULL,"total_savings$0" DOUBLE NOT NULL , PRIMARY KEY ("__id$0","month$0"));
+CREATE TABLE IF NOT EXISTS "totals$15" ("___uuid$0" VARCHAR NOT NULL,"price$0" DOUBLE NOT NULL,"savings$0" DOUBLE NOT NULL,"timestamp$0" INTEGER NOT NULL , PRIMARY KEY ("___uuid$0"));
+CREATE TABLE IF NOT EXISTS "volume_by_day$38" ("__id$0" BIGINT NOT NULL,"day$0" INTEGER NOT NULL,"quantity$0" BIGINT NOT NULL,"total$0" DOUBLE NOT NULL,"total_weight$0" BIGINT NOT NULL , PRIMARY KEY ("__id$0","day$0"));
 >>>query-allcustomers
 {
   "data" : {
     "Customers" : [ {
       "id" : 1,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 225.77,
+        "total_savings" : 14.73
+      }, {
+        "total_spend" : 95.53,
+        "total_savings" : 1.24
+      } ]
     }, {
       "id" : 2,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 336.64,
+        "total_savings" : 50.49
+      }, {
+        "total_spend" : 139.86,
+        "total_savings" : 29.08
+      } ]
     }, {
       "id" : 3,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 20.64,
+        "total_savings" : 0
+      }, {
+        "total_spend" : 53.94,
+        "total_savings" : 0
+      } ]
     }, {
       "id" : 4,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 98.75,
+        "total_savings" : 7
+      }, {
+        "total_spend" : 118.5,
+        "total_savings" : 18.28
+      } ]
     }, {
       "id" : 5,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 149.08,
+        "total_savings" : 4.43
+      }, {
+        "total_spend" : 105.55,
+        "total_savings" : 65.73
+      } ]
     }, {
       "id" : 6,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 172.84,
+        "total_savings" : 12.64
+      }, {
+        "total_spend" : 36.55,
+        "total_savings" : 16.87
+      } ]
     }, {
       "id" : 7,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 86.94,
+        "total_savings" : 7.94
+      }, {
+        "total_spend" : 23.83,
+        "total_savings" : 0
+      } ]
     }, {
       "id" : 8,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 118.54,
+        "total_savings" : 7.26
+      }, {
+        "total_spend" : 17.59,
+        "total_savings" : 5.27
+      } ]
     }, {
       "id" : 9,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 78.83,
+        "total_savings" : 5.95
+      }, {
+        "total_spend" : 94.36,
+        "total_savings" : 21.88
+      } ]
     }, {
       "id" : 10,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 104.33,
+        "total_savings" : 35.41
+      }, {
+        "total_spend" : 84.18,
+        "total_savings" : 4.24
+      } ]
     } ]
   }
 }
@@ -51,7 +111,13 @@ CREATE TABLE IF NOT EXISTS "volume_by_day$35" ("__id$0" BIGINT NOT NULL,"day$0" 
   "data" : {
     "Customers" : [ {
       "id" : 10,
-      "spending_by_month" : [ ]
+      "spending_by_month" : [ {
+        "total_spend" : 104.33,
+        "total_savings" : 35.41
+      }, {
+        "total_spend" : 84.18,
+        "total_savings" : 4.24
+      } ]
     } ]
   }
 }
