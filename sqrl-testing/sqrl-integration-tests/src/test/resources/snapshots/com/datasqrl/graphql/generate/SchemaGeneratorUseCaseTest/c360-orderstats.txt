@@ -1,0 +1,35 @@
+type CustomerOrderStats {
+  customerid: Int!
+  total_price: Float!
+  num_orders: Int!
+}
+
+type Orders {
+  id: Int!
+  customerid: Int!
+  time: String!
+  entries: [entries!]
+  totals: [totals!]
+}
+
+type Query {
+  Orders(id: Int, customerid: Int, time: String): [Orders!]
+  CustomerOrderStats(customerid: Int, total_price: Float, num_orders: Int): [CustomerOrderStats!]
+}
+
+type entries {
+  productid: Int!
+  quantity: Int!
+  unit_price: Float!
+  parent: Orders!
+  discount: Float!
+  price: Float!
+}
+
+type totals {
+  price: Float!
+  number: Int!
+  savings: Float!
+  parent: Orders!
+}
+

@@ -1,0 +1,13 @@
+orders$7_btree_c2c3c4 - 7794.750
+orders$7_btree_c2c4 - 47.500
+orders$7_btree_c3c4c5 - 49.875
+orders$7_btree_c3c5c2 - 1949.875
+orders$7_btree_c4c5c2 - 3944.875
+orders$7_btree_c5c2 - 997.500
+products$18_btree_c3 - 0.000
+products$18_btree_c4 - 0.000
+products$18_btree_c5 - 0.000
+products$18_btree_c6 - 0.000
+products$18_btree_c7 - 0.000
+products$18_btree_c8 - 0.000
+products$18_btree_c9 - 0.000
