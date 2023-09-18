@@ -32,7 +32,7 @@ LogicalProject(__customerid$0=[$0], category_name$0=[$1], total$0=[$2], month$0=
 
 >>>newcustomerpromotion$57-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], total_spend$0=[$5], num_orders$0=[$6])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
     LogicalStream(stream=[ADD])
       LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6], rownum=[$7], __customerid$0$pk$1=[$8], total_spend=[$9], num_orders=[$10], time$0=[$11], rownum0=[$12], __timestamp=[CASE(<($6, $11), $11, $6)])
         LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1, RIGHT]]
@@ -63,7 +63,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], email$0=[$3
                                 LogicalValues(tuples=[[{ 0 }]])
 
 >>>newcustomerpromotion$debug1-lp-stream
-LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
+LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
   LogicalStream(stream=[ADD])
     LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6], rownum=[$7], __customerid$0$pk$1=[$8], total_spend=[$9], num_orders=[$10], time$0=[$11], rownum0=[$12], __timestamp=[CASE(<($6, $11), $11, $6)])
       LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1, RIGHT]]

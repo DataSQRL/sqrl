@@ -1,6 +1,6 @@
 >>>countstream$25-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], name=[$3], quantity=[$4])
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[>($2, 1)])
         LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
@@ -20,7 +20,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3]
 
 >>>countstream$25$1-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], name=[$3], quantity=[$4])
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[>($2, 1)])
         LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
@@ -40,7 +40,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3]
 
 >>>countstream$25$2-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], name=[$3], quantity=[$4])
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[>($2, 1)])
         LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
@@ -75,8 +75,8 @@ LogicalProject(customerid$0=[$0], name$0=[$1], quantity$0=[$2], time$0=[$3])
 
 >>>customercount2$31-lp-stream
 LogicalProject(customerid$0=[$0], _uuid$0=[$1], _source_time$0=[$2], name$0=[$3], quantity$0=[$4])
-  LogicalProject(customerid=[$2], _uuid=[$0], _source_time=[$1], name=[$3], quantity=[$4])
-    LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalProject(customerid=[$2], _uuid$0=[$0], _source_time$0=[$1], name=[$3], quantity=[$4])
+    LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], name=[$3], quantity=[$4])
       LogicalStream(stream=[ADD])
         LogicalFilter(condition=[>($2, 1)])
           LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
@@ -96,7 +96,7 @@ LogicalProject(customerid$0=[$0], _uuid$0=[$1], _source_time$0=[$2], name$0=[$3]
 
 >>>updatestream$28-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], name$0=[$3], quantity$0=[$4])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quantity=[$4])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], name=[$3], quantity=[$4])
     LogicalStream(stream=[UPDATE])
       LogicalFilter(condition=[>($2, 1)])
         LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]

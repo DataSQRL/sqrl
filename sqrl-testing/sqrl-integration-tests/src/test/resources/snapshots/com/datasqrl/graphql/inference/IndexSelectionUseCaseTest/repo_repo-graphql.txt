@@ -1,3 +1,0 @@
-submission$3_btree_c2c18 - 47.500
-submission$3_btree_c2c3c18 - 3897.375
-topicpackages$21_hash_c1 - 950.000

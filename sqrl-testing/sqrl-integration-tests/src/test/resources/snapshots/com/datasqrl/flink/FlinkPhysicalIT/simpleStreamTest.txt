@@ -1,6 +1,6 @@
 >>>countstream0$11-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], num$0=[$3])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num=[$3])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], num=[$3])
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
         LogicalProject(customerid$0=[$0], num=[$1], time$0=[$2], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
@@ -9,7 +9,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], num$0=[$3])
 
 >>>countstream1$17-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], quantity$0=[$3])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], quantity=[$3])
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[>=($1, 1)])
         LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
@@ -19,7 +19,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], quantity$0=
 
 >>>countstream2$20-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], quantity$0=[$3])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], quantity=[$3])
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[>=($1, 2)])
         LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
@@ -34,7 +34,7 @@ LogicalProject(customerid$0=[$0], quantity$0=[$1], time$0=[$2])
 
 >>>updatestream0$23-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], num$0=[$3])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num=[$3])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], num=[$3])
     LogicalStream(stream=[UPDATE])
       LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
         LogicalProject(customerid$0=[$0], num=[$1], time$0=[$2], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
@@ -43,7 +43,7 @@ LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], num$0=[$3])
 
 >>>updatestream1$26-lp-stream
 LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], quantity$0=[$3])
-  LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3])
+  LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], quantity=[$3])
     LogicalStream(stream=[UPDATE])
       LogicalFilter(condition=[>=($1, 1)])
         LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
