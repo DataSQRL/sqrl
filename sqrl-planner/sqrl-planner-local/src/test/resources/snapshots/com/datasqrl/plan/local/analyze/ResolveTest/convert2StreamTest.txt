@@ -14,7 +14,7 @@ LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER 
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
 >>>countstream$q$24-lp-STREAM
-LogicalProject(_uuid=[$0], _source_time=[$1], productid=[$2], name=[$3], quantity=[$4])
+LogicalProject(_uuid$0=[$0], _source_time$0=[$1], productid=[$2], name=[$3], quantity=[$4])
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[>($2, 1)])
       LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
@@ -25,7 +25,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], productid=[$2], name=[$3], quantit
 Stage [database] does not support capabilities: [TO_STREAM]
 
 >>>productcount2$q$27-lp-STREAM
-LogicalProject(productid=[$2], _uuid=[$0], _source_time=[$1], name=[$3], quantity=[$4])
+LogicalProject(productid=[$2], _uuid$0=[$0], _source_time$0=[$1], name=[$3], quantity=[$4])
   LogicalTableScan(table=[[countstream$q$24]])
 
 >>>productcount2$q$27-lp-DATABASE
