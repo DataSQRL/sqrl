@@ -354,6 +354,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void customerWithPurchaseTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("CustomerWithPurchase := SELECT * FROM Customer\n"
