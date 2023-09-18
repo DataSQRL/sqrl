@@ -1,0 +1,7 @@
+[FATAL] Field(s) not allowed [invalidField]
+in script:<schema> [5:3]:
+}
+type Entries {
+	invalidField: String
+--^
+

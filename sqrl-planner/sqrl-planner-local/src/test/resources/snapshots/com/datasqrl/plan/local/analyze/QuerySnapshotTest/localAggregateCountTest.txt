@@ -1,6 +1,6 @@
 >>>errors
 [FATAL] Could not plan expression: At line 3, column 24: Column 'joinDeclaration' not found in any table
-in script:<schema> [3:1]:
+in script:<script> [3:1]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
 Product.total := COUNT(joinDeclaration);

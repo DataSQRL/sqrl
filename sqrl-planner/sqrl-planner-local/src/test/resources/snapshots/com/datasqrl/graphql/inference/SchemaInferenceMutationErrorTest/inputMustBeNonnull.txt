@@ -1,0 +1,7 @@
+[FATAL] [addOrder] inputMust be non-null.
+in script:<schema> [8:3]:
+}
+type Mutation {
+	addOrder(input: OrderInput): Orders
+--^
+

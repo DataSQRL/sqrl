@@ -89,11 +89,6 @@ public class FlinkSqlReturnTypeInference implements SqlReturnTypeInference {
 
   private RelDataType inferReturnTypeOrError(
       FlinkTypeFactory typeFactory, TypeFactory sqrlTypeFactory, CallContext callContext) {
-    try {
-      inferOutputType(callContext, typeInference.getOutputTypeStrategy());
-    } catch (Exception e) {
-      System.out.println();
-    }
 
     final LogicalType inferredType =
         inferOutputType(callContext, typeInference.getOutputTypeStrategy())

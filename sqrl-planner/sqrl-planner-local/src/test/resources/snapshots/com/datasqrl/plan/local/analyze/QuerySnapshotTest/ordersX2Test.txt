@@ -1,11 +1,11 @@
 >>>errors
 [FATAL] Alias by itself.
-in script:<schema> [5:36]:
+in script:<script> [5:36]:
 IMPORT ecommerce-data.Product;
 IMPORT time.*;
 Orders.x := SELECT x.* FROM @ JOIN @ AS x;
 -----------------------------------^
 
 [FATAL] Alias by itself.
-in script:<schema>:
+in script:<script>:
 

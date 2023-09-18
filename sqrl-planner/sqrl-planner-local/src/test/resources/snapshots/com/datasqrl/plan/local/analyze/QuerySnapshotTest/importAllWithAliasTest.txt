@@ -1,6 +1,6 @@
 >>>errors
 [FATAL] Import cannot be aliased
-in script:<schema> [1:1]:
+in script:<script> [1:1]:
 IMPORT ecommerce-data.* AS ecommerce;
 ^
 IMPORT cannot be aliased for star (*) imports.

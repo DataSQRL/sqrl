@@ -1,6 +1,6 @@
 >>>errors
 [FATAL] Could not plan expression: Could not plan expression
-in script:<schema> [2:1]:
+in script:<script> [2:1]:
 IMPORT ecommerce-data.Product;
 Product.total := COUNT(*);
 ^

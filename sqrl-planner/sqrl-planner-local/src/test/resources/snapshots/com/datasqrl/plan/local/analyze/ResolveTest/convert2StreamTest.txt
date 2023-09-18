@@ -7,7 +7,7 @@ LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER 
         LogicalProject($f0=[$cor1.entries$0])
           LogicalValues(tuples=[[{ 0 }]])
     LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-      LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$3=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+      LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
         LogicalTableScan(table=[[product$q$18]])
 
 >>>productcount$q$21-lp-DATABASE

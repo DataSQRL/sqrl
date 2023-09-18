@@ -53,7 +53,7 @@ public class SqrlPlan extends SqrlBase {
     ScriptNode scriptNode = (ScriptNode) framework.getQueryPlanner().parse(Dialect.SQRL,
         script);
 
-    ErrorCollector collector = errors.withSchema("<schema>", script);
+    ErrorCollector collector = errors.withScript("<script>", script);
     return plan(scriptNode, additionalModules, collector);
   }
 
@@ -72,7 +72,6 @@ public class SqrlPlan extends SqrlBase {
           updatedModuleLoader, collector, new SqlNameUtil(nameCanonicalizer));
       validator.validateStatement((SqrlStatement) statement);
       if (collector.hasErrors()) {
-        System.out.println(ErrorPrinter.prettyPrint(collector));
         throw new CollectedException(new RuntimeException("Script cannot validate"));
       }
 

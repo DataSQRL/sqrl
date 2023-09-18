@@ -2,7 +2,6 @@ package com.datasqrl.plan;
 
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
-import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
@@ -45,7 +44,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
@@ -116,6 +114,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   private final ArrayListMultimap<SqlNode, Function> isA = ArrayListMultimap.create();
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
 
+  private final List<SqlFunction> plannerFns = new ArrayList<>();
+  
   @Override
   public Void visit(SqrlImportDefinition node, Void context) {
     // IMPORT data.* AS x;
@@ -560,7 +560,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           }
 
           if (defs.size() != 1) {
-            throw addError(ErrorLabel.GENERIC, id, "Could not find matching table arguments");
+            addError(ErrorLabel.GENERIC, id, "Could not find matching table arguments");
+            return new SqlDynamicParam(0, id.getParserPosition());
           }
 
           FunctionParameter param = defs.get(0);
@@ -596,10 +597,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   public static boolean isSelfField(ImmutableList<String> names) {
     return names.get(0).equalsIgnoreCase("@") && names.size() > 1;
   }
+
   @AllArgsConstructor
   public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     final QueryPlanner planner;
-    private final List<SqlFunction> fncs = new ArrayList<>();
 
     public Result rewrite(SqlNode query, List<String> currentPath, SqrlTableFunctionDef tableArgs) {
       Context context = new Context(currentPath, new HashMap<>(), tableArgs, query);
@@ -763,10 +764,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           .collect(Collectors.toList());
 
       SqlCall call = fnc.createCall(SqlParserPos.ZERO, args);
-      this.fncs.add(fnc);
+      plannerFns.add(fnc);
 
       SqlCall call1 = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO, call);
-      return new Result(call1, pathWalker.getAbsolutePath(), fncs);
+      return new Result(call1, pathWalker.getAbsolutePath(), plannerFns);
     }
 
     private Optional<String> getIdentifier(SqlNode item) {
@@ -794,7 +795,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           .lateral()
           .build();
 
-      return new Result(join, rightNode.getCurrentPath(), fncs);
+      return new Result(join, rightNode.getCurrentPath(), plannerFns);
     }
 
     @Override
@@ -804,7 +805,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
               node.getOperandList().stream()
                   .map(o->SqlNodeVisitor.accept(this, o, context).getSqlNode())
                   .collect(Collectors.toList())),
-          List.of(), fncs);
+          List.of(), plannerFns);
     }
 
   }

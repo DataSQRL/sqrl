@@ -1,4 +1,4 @@
 >>>errors
 [FATAL] At line 1, column 43: Expression 'productid' is not being grouped
-in script:<schema>:
+in script:<script>:
 

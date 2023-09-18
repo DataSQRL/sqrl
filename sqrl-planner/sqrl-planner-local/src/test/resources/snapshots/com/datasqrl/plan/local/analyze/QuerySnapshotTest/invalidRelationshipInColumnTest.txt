@@ -1,4 +1,4 @@
 >>>errors
 [FATAL] At line 3, column 20: Column 'joinDeclaration' not found in any table
-in script:<schema>:
+in script:<script>:
 

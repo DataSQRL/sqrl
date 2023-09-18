@@ -26,6 +26,8 @@ import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
+import org.apache.calcite.rel.core.TableFunctionScan;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
@@ -210,6 +212,10 @@ public class QueryPlanner {
       root = sqlToRelConverter.convertQuery(validated, false, true);
       if (!(root.rel instanceof LogicalProject)) {
         throw new RuntimeException("Could not plan expression");
+      }
+
+      if (!(root.rel.getInput(0) instanceof TableScan || root.rel.getInput(0) instanceof TableFunctionScan)) {
+        throw new RuntimeException("Expression is not simple");
       }
 
       return ((LogicalProject) root.rel).getProjects().get(0);

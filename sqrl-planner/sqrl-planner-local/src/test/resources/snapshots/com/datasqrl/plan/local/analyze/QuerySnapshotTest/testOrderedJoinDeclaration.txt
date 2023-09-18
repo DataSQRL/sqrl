@@ -1,0 +1,7 @@
+>>>product$q$2
+LogicalTableScan(table=[[product$i$1]])
+
+>>>product$q$5
+LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5])
+  LogicalTableScan(table=[[product$q$2]])
+

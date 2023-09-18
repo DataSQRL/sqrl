@@ -1,0 +1,6 @@
+[FATAL] Field(s) not allowed [missingField]
+in script:<schema> [2:3]:
+type Orders {
+	missingField: String
+--^
+

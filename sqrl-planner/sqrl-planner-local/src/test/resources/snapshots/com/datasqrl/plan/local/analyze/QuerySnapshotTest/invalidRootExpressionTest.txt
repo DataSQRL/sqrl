@@ -1,6 +1,6 @@
 >>>errors
 [FATAL] Could not find table: []
-in script:<schema> [2:1]:
+in script:<script> [2:1]:
 IMPORT ecommerce-data.Product;
 ProductCount := count(Product);
 ^

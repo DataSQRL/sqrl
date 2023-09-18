@@ -1,6 +1,6 @@
 >>>errors
 [FATAL] Could not plan expression: At line 2, column 22: Table 'Product' not found
-in script:<schema> [2:1]:
+in script:<script> [2:1]:
 IMPORT ecommerce-data.Product;
 Product.total := SUM(Product.productid);
 ^

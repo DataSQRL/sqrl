@@ -56,22 +56,22 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     return Pair.of(result.getLeft(), result.getRight());
   }
 
-  public static Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
+  public Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
       SqrlQueryPlanner planner, String schemaStr) {
     APIConnectorManager apiManager = new MockAPIConnectorManager();
     APISource source = APISource.of(schemaStr);
     //Inference
-//    ErrorPrinter errors = errors.withSchema("<schema>",source.getSchemaDefinition());
     SchemaInference inference = new SchemaInference(planner.getFramework(), "<schema>", null,source,
         planner.getSchema(),
         planner.createRelBuilder(), apiManager);
+
     InferredSchema inferredSchema;
     try {
       inferredSchema = inference.accept();
     } catch (Exception e) {
-//      errors.handle(e);
       e.printStackTrace();
-      throw new RuntimeException(e);
+      errors.withSchema("<schema>", schemaStr).handle(e);
+      return null;
     }
 
     //Build queries

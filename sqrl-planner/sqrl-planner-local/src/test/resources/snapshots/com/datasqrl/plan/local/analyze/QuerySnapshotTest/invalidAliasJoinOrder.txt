@@ -1,9 +1,9 @@
 >>>errors
 [FATAL] Alias by itself.
-in script:<schema> [1:63]:
+in script:<script> [1:63]:
 IMPORT ecommerce-data.Orders;X := SELECT * From Orders o JOIN o;
 --------------------------------------------------------------^
 
 [FATAL] Alias by itself.
-in script:<schema>:
+in script:<script>:
 

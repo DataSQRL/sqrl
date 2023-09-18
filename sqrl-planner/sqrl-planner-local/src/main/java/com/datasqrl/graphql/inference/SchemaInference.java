@@ -190,7 +190,7 @@ public class SchemaInference {
     if (typeDef instanceof ObjectTypeDefinition) {
       //one deep check
       ObjectTypeDefinition obj = (ObjectTypeDefinition) typeDef;
-      if (visitedObj.get(obj) != null ) {
+      if (visitedObj.get(obj) != null && !visitedObj.get(obj).getIsTypeOf().isEmpty()) {
         if (!table.getIsTypeOf().contains(visitedObj.get(obj).getIsTypeOf().get(0)))
 
           checkState(visitedObj.get(obj) == null || visitedObj.get(obj) == table,
@@ -371,7 +371,7 @@ public class SchemaInference {
       TableSink tableSink = apiManager.getMutationSource(source, Name.system(def.getName()));
       if (tableSink==null) {
         throw new SqrlAstException(ErrorLabel.GENERIC, toParserPos(m.getSourceLocation()),
-            "Could not find mutation source: %s.%s", def.getName());
+            "Could not find mutation source: %s.", def.getName());
       }
       //TODO: validate that tableSink schema matches Input type
       SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();

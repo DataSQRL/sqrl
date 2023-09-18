@@ -1,5 +1,5 @@
 >>>orders$q$2-lp-STREAM
-LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], col1$3=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], col1$0=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
   LogicalTableScan(table=[[orders$i$1]])
 
 >>>orderentry$q$10-lp-STREAM

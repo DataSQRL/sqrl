@@ -1,4 +1,4 @@
 >>>errors
 [FATAL] Invalid name: 
-in script:<schema>:
+in script:<script>:
 

@@ -1,0 +1,7 @@
+>>>errors
+[FATAL] Could not plan expression: Expression is not simple
+in script:<script> [2:1]:
+IMPORT ecommerce-data.Product;
+Product.total := SUM(@.productid) + SUM(@.productid);
+^
+

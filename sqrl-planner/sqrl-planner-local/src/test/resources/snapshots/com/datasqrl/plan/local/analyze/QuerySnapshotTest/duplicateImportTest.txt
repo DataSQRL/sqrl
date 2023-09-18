@@ -1,0 +1,6 @@
+>>>product$q$2
+LogicalTableScan(table=[[product$i$1]])
+
+>>>product$q$6
+LogicalTableScan(table=[[product$i$5]])
+

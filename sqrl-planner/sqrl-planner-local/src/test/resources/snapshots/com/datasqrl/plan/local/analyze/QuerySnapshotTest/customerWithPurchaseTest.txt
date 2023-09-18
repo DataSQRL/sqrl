@@ -1,0 +1,21 @@
+>>>customer$q$2
+LogicalTableScan(table=[[customer$i$1]])
+
+>>>customerwithpurchase$q$18
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5])
+  LogicalFilter(condition=[=($2, $SCALAR_QUERY({
+LogicalProject(customerid=[$14])
+  LogicalCorrelate(correlation=[$cor1], joinType=[default], requiredColumns=[{5}])
+    LogicalCorrelate(correlation=[$cor0], joinType=[default], requiredColumns=[{0}])
+      LogicalTableFunctionScan(invocation=[orders$8()], rowType=[RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, BIGINT id$0, BIGINT customerid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) time$0)], elementType=[class java.lang.Object])
+      LogicalTableFunctionScan(invocation=[orders.entries$13($cor0._uuid$0)], rowType=[RecordType(CHAR(36) _uuid$0, INTEGER _idx$0, BIGINT productid$0, BIGINT quantity$0, DOUBLE unit_price$0, DOUBLE discount$0)], elementType=[class [Ljava.lang.Object;])
+    LogicalTableFunctionScan(invocation=[orders.entries.parent$12($cor1._uuid$00)], rowType=[RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, BIGINT id$0, BIGINT customerid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) time$0)], elementType=[class [Ljava.lang.Object;])
+}))])
+    LogicalTableScan(table=[[customer$q$2]])
+
+>>>orders$q$6
+LogicalTableScan(table=[[orders$i$5]])
+
+>>>product$q$15
+LogicalTableScan(table=[[product$i$14]])
+

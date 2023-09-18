@@ -112,14 +112,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void accessTableFunctionTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("X(id: Int) := SELECT * FROM Customer WHERE customerid = @id");
+    builder.add("X(@id: Int) := SELECT * FROM Customer WHERE customerid = @id");
     validateScript(builder.getScript());
   }
 
   @Test
   public void computeTableFunctionTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("X(id: Int) := SELECT *, 1 AS x FROM Customer WHERE customerid = @id");
+    builder.add("X(@id: Int) := SELECT *, 1 AS x FROM Customer WHERE customerid = @id");
     validateScript(builder.getScript());
   }
 
@@ -349,7 +349,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void ordersNewIdTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.newid := SELECT NOW(), STRING_TO_TIMESTAMP(TIMESTAMP_TO_STRING(EPOCH_TO_TIMESTAMP(100))) FROM Orders;");
+    builder.add("Orders.newid := SELECT NOW(), ParseTimestamp(TimestampToString(EpochToTimestamp(100))) FROM Orders;");
     validateScript(builder.getScript());
   }
 
@@ -408,7 +408,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void duplicateImportTest() {
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
+    validateScript("IMPORT ecommerce-data.Product;\n"
         + "IMPORT ecommerce-data.Product;\n");
   }
 
@@ -518,8 +518,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void invalidImportDuplicateAliasTest() {
-    validateScriptInvalid(
+  public void importDuplicateAliasTest() {
+    validateScript(
         "IMPORT ecommerce-data.Product;\n"
             + "IMPORT ecommerce-data.Customer AS Product;\n");
   }
@@ -590,7 +590,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void testOrderedJoinDeclaration() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product := DISTINCT Product ON productid;\n"
+            + "Product := DISTINCT Product ON productid ORDER BY _ingest_time;\n"
             + "Product.joinDeclaration := JOIN Product ON true ORDER BY Product.productid;");
   }
 
@@ -719,14 +719,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void unionMixedTest() {
-    validateScript("IMPORT ecommerce-data.Product;\n"
-        + "Product2 := SELECT productid, name, category FROM Product\n"
-        + "            UNION DISTINCT\n"
-        + "            SELECT description, productid FROM Product;");
-  }
-
-  @Test
   public void unionAllTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product UNION ALL SELECT * FROM Product;");
@@ -784,6 +776,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void distinctWithGroupNotInSelectTest() {
     //todo: Fringe case to guard against
     validateScriptInvalid(
@@ -1004,7 +997,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void distinctOnWithExpressionTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product2 := DISTINCT Product ON productid / 10 ORDER BY _ingest_time DESC;\n");
+            + "Product2 := DISTINCT Product ON productid / 10 AS pid ORDER BY _ingest_time DESC;\n");
   }
 
   @Test

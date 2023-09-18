@@ -1,0 +1,10 @@
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+  LogicalFilter(condition=[>($2, ?0)])
+    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+      LogicalTableScan(table=[[orders$7]])
+
+LogicalProject(id=[$2], delta=[-($2, ?0)], time=[$4])
+  LogicalFilter(condition=[>($2, ?0)])
+    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+      LogicalTableScan(table=[[orders$7]])
+

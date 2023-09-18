@@ -61,7 +61,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     Namespace ns = plan(script);
 
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
-    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> modelAndQueries = AbstractSchemaInferenceModelTest
+    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> modelAndQueries = t
         .inferSchemaModelQueries(planner, schema);
 
     PhysicalDAGPlan dag = physicalPlanner.planDag(framework, ns.getPipeline(), modelAndQueries.getRight(),
