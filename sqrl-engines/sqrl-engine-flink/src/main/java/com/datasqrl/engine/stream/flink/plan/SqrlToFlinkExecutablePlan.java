@@ -238,6 +238,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     Pair<TypeInformation, SerializableSchema> type = createTypeInformation(tableName, relationalTable, watermarkColumn,
         watermarkExpression);
+
     FlinkFactoryDefinition factoryDefinition = FlinkFactoryDefinition.builder()
         .name(tableName)
         .connectorFactory(connectorFactoryClass)
@@ -267,7 +268,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     if (watermarkColumn.isPresent()) { //watermark is a timestamp column
       watermarkExpr = null;
       watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(watermarkColumn.get()));
-      if (ReservedName.SOURCE_TIME.getCanonical().equalsIgnoreCase(watermarkName)) {
+      if (watermarkName.startsWith(ReservedName.SOURCE_TIME.getCanonical())) {
         waterMarkType = WaterMarkType.SOURCE_WATERMARK;
       } else {
         waterMarkType = WaterMarkType.COLUMN_BY_NAME;
@@ -281,7 +282,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(name));
       watermarkExpr = RelToFlinkSql.convertToString(expr);
 
-      if (expr instanceof SqlIdentifier && ((SqlIdentifier)expr).getSimple().equalsIgnoreCase(ReservedName.SOURCE_TIME.getCanonical())) {
+      if (expr instanceof SqlIdentifier && ((SqlIdentifier)expr).getSimple().startsWith(ReservedName.SOURCE_TIME.getCanonical())) {
         waterMarkType = WaterMarkType.SOURCE_WATERMARK;
       } else {
         waterMarkType = WaterMarkType.COLUMN_BY_NAME;

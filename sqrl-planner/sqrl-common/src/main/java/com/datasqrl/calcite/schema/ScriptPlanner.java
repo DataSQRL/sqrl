@@ -91,14 +91,15 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  public static ResolvedExport exportTable(SQRLTable table, TableSink sink, RelBuilder relBuilder) {
+  public static ResolvedExport exportTable(SQRLTable table, TableSink sink, RelBuilder relBuilder,
+      boolean subscription) {
     ModifiableTable table1 = (ModifiableTable)table.getVt();
     relBuilder.scan(table1.getNameId());
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
     table.getVisibleColumns().stream().forEach(c -> {
       selects.add(relBuilder.field(c.getId().getCanonical()));
-      fieldNames.add(c.getName().getDisplay());
+      fieldNames.add(subscription ? c.getId().getCanonical() : c.getName().getDisplay());
     });
     relBuilder.project(selects, fieldNames);
     return new ResolvedExport(table1.getNameId(), relBuilder.build(), sink);
@@ -111,7 +112,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         .unwrap(ModifiableTable.class);
 
     ResolvedExport resolvedExport = exportTable(table.getSqrlTable(), export.getSink(),
-        planner.getRelBuilder());
+        planner.getRelBuilder(), false);
 
     framework.getSchema().add(resolvedExport);
 

@@ -71,7 +71,7 @@ public class SchemaInference {
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
   private final RelBuilder relBuilder;
   private final APIConnectorManager apiManager;
-  private Set<FieldDefinition> visited = new HashSet<>();
+  private final Set<FieldDefinition> visited = new HashSet<>();
   private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
   public SchemaInference(SqrlFramework framework, String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchema schema,
@@ -297,9 +297,7 @@ public class SchemaInference {
     }
 
 
-    return isSubscription?
-        new InferredSubscriptionScalarField(fieldDefinition, column, parent) :
-        new InferredScalarField(fieldDefinition, column, parent);
+    return new InferredScalarField(fieldDefinition, column, parent);
   }
 
   private SqlParserPos toParserPos(SourceLocation sourceLocation) {
@@ -550,7 +548,17 @@ public class SchemaInference {
         fields.add(inferredField);
       }
 
-      InferredSubscription subscription = new InferredSubscription(def.getName(), kafkaSource);
+      //user defined field to internal field map
+      Map<String, String> filters = new HashMap<>();
+      for (InputValueDefinition input : def.getInputValueDefinitions()) {
+        Name fieldId = table.getField(Name.system(input.getName())).get().getId();
+        filters.put(input.getName(), fieldId.getCanonical());
+      }
+      /**
+       * Match parameters, error if there are any on the sqrl function
+       */
+
+      InferredSubscription subscription = new InferredSubscription(def.getName(), kafkaSource, filters);
       subscriptions.add(subscription);
     }
     return new InferredSubscriptions(subscriptions, fields);

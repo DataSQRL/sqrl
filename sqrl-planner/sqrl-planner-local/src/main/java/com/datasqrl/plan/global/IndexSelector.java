@@ -51,7 +51,6 @@ public class IndexSelector {
   public List<QueryIndexSummary> getIndexSelection(PhysicalDAGPlan.ReadQuery query) {
     RelNode optimized = RelStageRunner.runStage(READ_QUERY_OPTIMIZATION, query.getRelNode(), framework.getQueryPlanner()
         .getPlanner());
-//        System.out.println(optimized.explain());
     IndexFinder indexFinder = new IndexFinder();
     return indexFinder.find(optimized);
   }

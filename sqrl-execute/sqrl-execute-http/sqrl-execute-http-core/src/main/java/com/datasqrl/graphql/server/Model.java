@@ -105,6 +105,7 @@ public class Model {
   public static class SubscriptionCoords {
     protected String fieldName;
     protected SerializedSqrlConfig sinkConfig;
+    protected Map<String, String> filters;
   }
 
   public interface CoordVisitor<R, C> {

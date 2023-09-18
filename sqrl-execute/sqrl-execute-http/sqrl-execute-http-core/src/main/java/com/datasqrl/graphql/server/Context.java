@@ -5,6 +5,7 @@ import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import graphql.schema.DataFetcher;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,5 +20,5 @@ public interface Context {
 
   DataFetcher<?> createSinkFetcher(MutationCoords coords);
 
-  DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords);
+  DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords, Map<String, String> filters);
 }

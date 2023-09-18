@@ -51,7 +51,7 @@ public class BankingTest extends AbstractGraphqlTest {
 
     CountDownLatch countDownLatch = subscribeToAlert(applicationAlert);
 
-    Thread.sleep(10000);
+    Thread.sleep(5000);
 
     String addUpdate = "mutation ApplicationUpdate($loan_application_id: Int!, " +
         "  $status: String!, $message: String!) {\n"
@@ -60,16 +60,14 @@ public class BankingTest extends AbstractGraphqlTest {
         + "    loan_application_id\n"
         + "  }\n"
         + "}";
-    for (int i = 0; i < 5; i++) {
 
-      executeMutation(addUpdate, new JsonObject()
-          .put("loan_application_id", 101)
-          .put("status", "underwriting")
-          .put("message", "The road goes ever on and on"), FAIL_HANDLER);
+    executeMutation(addUpdate, new JsonObject()
+        .put("loan_application_id", 101)
+        .put("status", "underwriting")
+        .put("message", "The road goes ever on and on"), FAIL_HANDLER);
 
-      Thread.sleep(1000);
+    Thread.sleep(1000);
 
-    }
     log.debug("count:" + countDownLatch.getCount());
     countDownLatch.await(600, TimeUnit.SECONDS);
     log.debug("count:" + countDownLatch.getCount());

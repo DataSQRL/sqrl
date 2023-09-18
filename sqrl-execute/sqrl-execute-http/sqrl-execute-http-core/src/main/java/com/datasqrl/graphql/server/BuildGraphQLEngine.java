@@ -85,7 +85,7 @@ public class BuildGraphQLEngine implements
       for (SubscriptionCoords sc : root.subscriptions) {
         codeRegistry.dataFetcher(
             FieldCoordinates.coordinates("Subscription", sc.getFieldName()),
-            context.createSubscriptionFetcher(sc));
+            context.createSubscriptionFetcher(sc, sc.filters));
       }
     }
 

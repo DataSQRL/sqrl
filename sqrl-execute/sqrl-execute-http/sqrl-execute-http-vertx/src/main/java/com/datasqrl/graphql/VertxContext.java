@@ -21,6 +21,7 @@ import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -92,12 +93,12 @@ public class VertxContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords) {
+  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords, Map<String, String> filters) {
     SinkConsumer consumer = subscriptions.get(coords.getFieldName());
     Preconditions.checkNotNull(consumer, "Could not find subscription consumer: {}", coords.getFieldName());
 
     Flux<Map<String, Object>> deferredFlux = Flux.<Map<String, Object>>create(sink -> {
-      consumer.listen(sink::next, sink::error, (x) -> sink.complete());
+      consumer.listen(t -> sink.next(t), sink::error, (x) -> sink.complete());
     }).share();
 
     return new DataFetcher<>() {
@@ -106,16 +107,20 @@ public class VertxContext implements Context {
         return deferredFlux.filter(entry -> !filterSubscription(entry, env.getArguments()));
       }
 
-      private boolean filterSubscription(Map<String, Object> map, Map<String, Object> args) {
+      private boolean filterSubscription(Map<String, Object> data, Map<String, Object> args) {
         if (args == null) {
           return false;
         }
-        for (Map.Entry<String, Object> arg : args.entrySet()) {
-          Object o = map.get(arg.getKey());
-          if (!arg.getValue().equals(o)) {
+        for (Map.Entry<String, String> filter : filters.entrySet()) {
+          Object argValue = args.get(filter.getKey());
+          if (argValue == null) continue;
+
+          Object retrievedData = data.get(filter.getValue());
+          if (!argValue.equals(retrievedData)) {
             return true;
           }
         }
+
         return false;
       }
     };

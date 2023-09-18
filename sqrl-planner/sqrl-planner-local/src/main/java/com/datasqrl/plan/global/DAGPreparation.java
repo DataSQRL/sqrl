@@ -36,7 +36,7 @@ public class DAGPreparation {
       Collection<ResolvedExport> exports, SqrlFramework framework) {
     //Add subscriptions as exports
     apiManager.getExports().forEach((sqrlTable, log) ->
-        exports.add(exportTable(sqrlTable, log.getSink(), relBuilder)));
+        exports.add(exportTable(sqrlTable, log.getSink(), relBuilder, true)));
 
     List<ScriptRelationalTable> scriptTables = sqrlSchema.getTables(ScriptRelationalTable.class);
     //Assign timestamps to imports which should propagate and set all remaining timestamps

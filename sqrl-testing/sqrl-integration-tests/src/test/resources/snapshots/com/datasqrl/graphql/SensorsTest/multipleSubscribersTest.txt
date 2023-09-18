@@ -1,0 +1,5 @@
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}
+{"HighTempAlert":{"sensorid":1,"temp":62.1}}

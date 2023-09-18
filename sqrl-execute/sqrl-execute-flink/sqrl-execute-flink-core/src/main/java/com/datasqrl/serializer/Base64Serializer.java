@@ -1,6 +1,7 @@
 package com.datasqrl.serializer;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
@@ -15,6 +16,11 @@ public abstract class Base64Serializer<T extends Serializable> extends StdSerial
 
     @Override
     public void serialize(T value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+//        ObjectMapper objectMapper
+//            = new ObjectMapper();
+//        String jsonString = objectMapper.writeValueAsString(value);
+//        gen.writeString(jsonString);
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
             oos.writeObject(value);

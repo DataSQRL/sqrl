@@ -4,6 +4,7 @@
 package com.datasqrl.schema;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

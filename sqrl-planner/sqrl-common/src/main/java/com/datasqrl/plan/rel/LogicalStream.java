@@ -73,10 +73,10 @@ public class LogicalStream extends SingleRel {
     RelDataTypeFactory.Builder builder = typeFactory.builder();
     Set<String> containedNames = new HashSet();
 
-    builder.add(ReservedName.UUID.getCanonical(), makeUuidType(typeFactory, false));
-    builder.add(ReservedName.SOURCE_TIME.getCanonical(), makeTimestampType(typeFactory,false));
-    containedNames.add(ReservedName.UUID.getCanonical());
-    containedNames.add(ReservedName.SOURCE_TIME.getCanonical());
+    builder.add(ReservedName.UUID.getCanonical()+"$0", makeUuidType(typeFactory, false));
+    builder.add(ReservedName.SOURCE_TIME.getCanonical()+"$0", makeTimestampType(typeFactory,false));
+    containedNames.add(ReservedName.UUID.getCanonical()+"$0");
+    containedNames.add(ReservedName.SOURCE_TIME.getCanonical()+"$0");
 
 
     List<RelDataTypeField> fieldList = inputRowType.getFieldList();

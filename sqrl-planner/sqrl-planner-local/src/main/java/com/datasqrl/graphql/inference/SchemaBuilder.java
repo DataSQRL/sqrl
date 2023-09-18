@@ -143,7 +143,7 @@ public class SchemaBuilder implements
   public List<SubscriptionCoords> visitSubscriptions(InferredSubscriptions rootObject,
       Object context) {
     return rootObject.getSubscriptions().stream()
-        .map(sub->new SubscriptionCoords(sub.getName(), sub.getSinkConfig()))
+        .map(sub->new SubscriptionCoords(sub.getName(), sub.getSinkConfig(), sub.getFilters()))
         .collect(Collectors.toList());
   }
 

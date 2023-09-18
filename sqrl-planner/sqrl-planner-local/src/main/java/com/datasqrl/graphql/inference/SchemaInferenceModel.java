@@ -10,6 +10,7 @@ import com.datasqrl.schema.SQRLTable;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import lombok.ToString;
@@ -88,6 +89,7 @@ public class SchemaInferenceModel {
   public static class InferredSubscription {
     String name;
     SerializedSqrlConfig sinkConfig;
+    Map<String, String> filters;
   }
 
   public interface InferredRootObjectVisitor<R, C> {
