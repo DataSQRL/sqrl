@@ -1297,10 +1297,10 @@ class AstBuilder
             getLocation(baseType)
         );
       case "float":
-        typeName = SqlTypeName.FLOAT;
+        typeName = SqlTypeName.DOUBLE;
         break;
       case "int":
-        typeName = SqlTypeName.INTEGER;
+        typeName = SqlTypeName.BIGINT;
         break;
       case "string":
         typeName = SqlTypeName.VARCHAR;

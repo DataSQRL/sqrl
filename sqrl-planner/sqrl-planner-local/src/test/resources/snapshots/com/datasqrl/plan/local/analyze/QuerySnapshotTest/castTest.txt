@@ -10,11 +10,11 @@ LogicalProject(_uuid$0=[$0], cast2=[false], time$0=[$4])
   LogicalTableScan(table=[[orders$q$2]])
 
 >>>x$q$16
-LogicalProject(_uuid$0=[$0], cast3=[1:FLOAT], time$0=[$4])
+LogicalProject(_uuid$0=[$0], cast3=[1:DOUBLE], time$0=[$4])
   LogicalTableScan(table=[[orders$q$2]])
 
 >>>x$q$19
-LogicalProject(_uuid$0=[$0], cast4=[1], time$0=[$4])
+LogicalProject(_uuid$0=[$0], cast4=[1:BIGINT], time$0=[$4])
   LogicalTableScan(table=[[orders$q$2]])
 
 >>>x$q$22
