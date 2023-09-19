@@ -2,6 +2,7 @@
 CREATE INDEX IF NOT EXISTS "customer$19_btree_c3c4" ON "customer$19" USING btree ("email$0","name$0");
 CREATE INDEX IF NOT EXISTS "customer$19_hash_c4" ON "customer$19" USING hash ("name$0");
 CREATE INDEX IF NOT EXISTS "newcustomerpromotion$57_hash_c2" ON "newcustomerpromotion$57" USING hash ("customerid$0");
+CREATE INDEX IF NOT EXISTS "order_again$36_hash_c0c3" ON "order_again$36" USING hash ("__customerid$0","num_orders$0");
 CREATE INDEX IF NOT EXISTS "orders$11_btree_c3c2c4" ON "orders$11" USING btree ("customerid$0","id$0","time$0");
 CREATE INDEX IF NOT EXISTS "orders$11_hash_c2" ON "orders$11" USING hash ("id$0");
 CREATE INDEX IF NOT EXISTS "orders$11_hash_c3c4" ON "orders$11" USING hash ("customerid$0","time$0");
