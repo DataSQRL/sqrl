@@ -83,6 +83,9 @@ public class IndexSelector {
         indexedColumns.addAll(conj.inequalityColumns);
         indexedFunctions.addAll(conj.functionCalls);
       }
+      //Remove first primary key column
+      indexedColumns.remove(0);
+      //Pick generic index type
       IndexType genericType = config.getPreferredGenericIndexType();
       Map<IndexDefinition, Double> indexes = new HashMap<>();
       for (int colIndex : indexedColumns) {

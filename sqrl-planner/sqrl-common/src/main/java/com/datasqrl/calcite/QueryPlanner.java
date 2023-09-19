@@ -96,7 +96,7 @@ public class QueryPlanner {
     planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
     planner.addRelTraitDef(RelCollationTraitDef.INSTANCE);
     RelOptUtil.registerDefaultRules(planner, true, true);
-    RelOptRules.CALC_RULES.forEach(planner::addRule);
+//    RelOptRules.CALC_RULES.forEach(planner::addRule);
     EnumerableRules.rules().forEach(planner::addRule);
 
     RelOptRules.MATERIALIZATION_RULES.forEach(planner::addRule);
