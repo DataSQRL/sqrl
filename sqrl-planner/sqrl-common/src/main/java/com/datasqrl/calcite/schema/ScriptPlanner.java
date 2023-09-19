@@ -23,6 +23,7 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.ScriptValidator;
 import com.datasqrl.plan.ScriptValidator.QualifiedExport;
 import com.datasqrl.plan.hints.TopNHint.Type;
@@ -209,9 +210,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         planner.getSchema().addSqrlTable(sqrlTable);
       }
     } else {
+      ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
       tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
           assignment.getHints(), parameters, isA,
-          materializeSelf, Optional.empty());
+          materializeSelf, Optional.empty(), statementErrors);
     }
 
     return null;

@@ -29,6 +29,22 @@ public interface Name extends Serializable, Comparable<Name> {
    */
   String getCanonical();
 
+  /**
+   * Used to compare a name against an internal canonical name (such as column names)
+   * which may have an additional version or identifier at the end (separated by {@link #NAME_DELIMITER} ).
+   *
+   * Should ONLY be used against internally generated name strings that are canonical.
+   *
+   * @param canonicalName
+   * @return true if the names are identical, else false
+   */
+  default boolean matches(String canonicalName) {
+    String canonical = getCanonical();
+    return canonicalName.startsWith(canonical) &&
+        (canonical.length()==canonicalName.length() ||
+            (canonicalName.length()>canonical.length() && canonicalName.charAt(canonical.length())==NAME_DELIMITER));
+  }
+
   default int length() {
     return getCanonical().length();
   }
@@ -100,4 +116,9 @@ public interface Name extends Serializable, Comparable<Name> {
   static Name hidden(String name) {
     return system(HIDDEN_PREFIX + name);
   }
+
+  static boolean isSystemHidden(String name) {
+    return name.startsWith(SYSTEM_HIDDEN_PREFIX);
+  }
+
 }

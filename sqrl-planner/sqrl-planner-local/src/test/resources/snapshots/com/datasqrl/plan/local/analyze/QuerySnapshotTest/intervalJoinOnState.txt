@@ -1,2 +1,8 @@
 >>>errors
+[FATAL] Interval joins are only supported between two streams.
+in script:<script> [3:1]:
+IMPORT ecommerce-data.*;
+Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;
+CustomerOrders := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o.customerid=c.customerid;
+^
 

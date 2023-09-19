@@ -268,7 +268,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     if (watermarkColumn.isPresent()) { //watermark is a timestamp column
       watermarkExpr = null;
       watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(watermarkColumn.get()));
-      if (watermarkName.startsWith(ReservedName.SOURCE_TIME.getCanonical())) {
+      if (ReservedName.SOURCE_TIME.matches(watermarkName)) {
         waterMarkType = WaterMarkType.SOURCE_WATERMARK;
       } else {
         waterMarkType = WaterMarkType.COLUMN_BY_NAME;
@@ -282,7 +282,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(name));
       watermarkExpr = RelToFlinkSql.convertToString(expr);
 
-      if (expr instanceof SqlIdentifier && ((SqlIdentifier)expr).getSimple().startsWith(ReservedName.SOURCE_TIME.getCanonical())) {
+      if (expr instanceof SqlIdentifier && ReservedName.SOURCE_TIME.matches(((SqlIdentifier)expr).getSimple())) {
         waterMarkType = WaterMarkType.SOURCE_WATERMARK;
       } else {
         waterMarkType = WaterMarkType.COLUMN_BY_NAME;

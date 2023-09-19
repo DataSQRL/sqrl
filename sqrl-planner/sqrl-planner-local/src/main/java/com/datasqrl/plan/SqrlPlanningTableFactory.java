@@ -48,11 +48,11 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
   public void createTable(List<String> path, RelNode input, List<RelHint> hints,
       boolean setFieldNames, Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      Optional<Supplier<RelNode>> relNodeSupplier) {
+      Optional<Supplier<RelNode>> relNodeSupplier, ErrorCollector errors) {
     framework.resetPlanner();
     LPAnalysis analyzedLP = convertToVanillaSQL(
         input, setFieldNames, framework.getQueryPlanner().getRelBuilder(),
-        opHints, ErrorCollector.root());
+        opHints, errors);
 
     NamePath names = nameUtil.toNamePath(path);
 
@@ -87,7 +87,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(), scriptTableDefinition,
         null, null, parameters, isA, materializeSelf);
 
-    nsObj.apply(Optional.empty(), framework, ErrorCollector.root());
+    nsObj.apply(Optional.empty(), framework, errors);
   }
 
   //Converts SQRL statements into vanilla SQL

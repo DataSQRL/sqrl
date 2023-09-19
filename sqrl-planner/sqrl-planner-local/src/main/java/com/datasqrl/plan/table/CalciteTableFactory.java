@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.Getter;
@@ -137,7 +138,8 @@ public class CalciteTableFactory {
       Name.system("time"), 8);
 
   protected static int getTimestampScore(Name columnName) {
-    return Optional.ofNullable(defaultTimestampPreference.get(columnName)).orElse(1);
+    return defaultTimestampPreference.entrySet().stream().filter(e -> e.getKey().matches(columnName.getCanonical()))
+        .map(Entry::getValue).findFirst().orElse(1);
   }
 
   public static Optional<Integer> getTimestampScore(Name columnName, RelDataType datatype) {

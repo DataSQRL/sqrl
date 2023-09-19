@@ -1,5 +1,6 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.error.ErrorCollector;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -14,5 +15,5 @@ public interface SqrlTableFactory {
   void createTable(List<String> path, RelNode input, List<RelHint> hints,
       boolean setFieldNames, Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      Optional<Supplier<RelNode>> nodeSupplier);
+      Optional<Supplier<RelNode>> nodeSupplier, ErrorCollector errors);
 }

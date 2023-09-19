@@ -1,2 +1,7 @@
 >>>errors
+[FATAL] Expected one side of the join to be stream and the other temporal state.
+in script:<script> [2:1]:
+IMPORT ecommerce-data.*;
+CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid=c.customerid;
+^
 

@@ -78,7 +78,7 @@ public class SqrlPlan extends SqrlBase {
       ScriptPlanner planner = new ScriptPlanner(
           framework.getQueryPlanner(), validator,
           new SqrlPlanningTableFactory(framework, nameCanonicalizer), framework,
-          new SqlNameUtil(nameCanonicalizer), errors);
+          new SqlNameUtil(nameCanonicalizer), collector);
 
       planner.plan(statement);
     }

@@ -4,7 +4,9 @@
 package com.datasqrl;
 
 import com.datasqrl.calcite.Dialect;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
@@ -183,7 +185,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
           typeFilter = filterOutTimestampColumn;
         }
         String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
-                s -> Stream.of("_uuid", "_ingest_time", "__").noneMatch(p -> s.startsWith(p)),
+                s -> !ReservedName.UUID.matches(s) && !ReservedName.INGEST_TIME.matches(s) && !Name.isSystemHidden(s),
                 typeFilter))
             .sorted().collect(Collectors.joining(System.lineSeparator()));
         snapshot.addContent(content, query.getNameId(), "data");
