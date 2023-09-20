@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
@@ -48,10 +49,15 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void basicErrors() {
+  public void basicImportErrors() {
     initialize(IntegrationTestSettings.getInMemory(), (Path) null);
     generateInvalid("import",
         "IMPORT ecommerce-data.Customerrr");
+  }
+
+  @Test
+  public void basicExportErrors() {
+    initialize(IntegrationTestSettings.getInMemory(), (Path) null);
     generateInvalid("export",
         "IMPORT ecommerce-data.Customer",
         "EXPORT Customer TO outputt.customer");

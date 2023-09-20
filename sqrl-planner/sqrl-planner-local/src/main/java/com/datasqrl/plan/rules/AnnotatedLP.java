@@ -3,8 +3,10 @@
  */
 package com.datasqrl.plan.rules;
 
+import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.DedupHint;
@@ -194,18 +196,18 @@ public class AnnotatedLP implements RelHolder {
       //Add row_number (since it always applies)
       projects.add(rexUtil.createRowFunction(SqlStdOperatorTable.ROW_NUMBER, partitionKeys,
           fieldCollations));
-      projectNames.add("rownum");
+      projectNames.add(Name.hidden("rownum").getCanonical());
       int rowNumberIdx = projectIdx.size(), rankIdx = rowNumberIdx + 1, denserankIdx =
           rowNumberIdx + 2;
       if (topN.isDistinct()) {
         //Add rank and dense_rank if we have a limit
         projects.add(
             rexUtil.createRowFunction(SqlStdOperatorTable.RANK, partitionKeys, fieldCollations));
-        projectNames.add("rank");
+        projectNames.add(Name.hidden("rank").getCanonical());
         if (topN.hasLimit()) {
           projects.add(rexUtil.createRowFunction(SqlStdOperatorTable.DENSE_RANK, partitionKeys,
               fieldCollations));
-          projectNames.add("denserank");
+          projectNames.add(Name.hidden("denserank").getCanonical());
         }
         exec.require(EngineCapability.MULTI_RANK);
       }

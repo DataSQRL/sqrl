@@ -1,6 +1,6 @@
 type Orders {
   customerid: Int!
-  entries: [entries!]
+  entries(discount: Float, productid: Int, quantity: Int, unit_price: Float): [entries!]
   id: Int!
   time: String!
 }

@@ -44,9 +44,5 @@ public class FlinkQueryUseCaseTest extends AbstractQuerySQRLIT {
     TestScript script = Retail.INSTANCE.getScript(RetailScriptNames.SEARCH);
     fullScriptTest(script, script.getGraphQLSchemas().get(0),
         vertx, testContext);
-//    TestScript script = Conference.INSTANCE.getScripts().get(0);
-//    fullScriptTest(script, new Directory(
-//            Path.of("/Users/henneberger/sqrl/sqrl-examples/conference/app-graphql")),
-//        vertx, testContext);
   }
 }

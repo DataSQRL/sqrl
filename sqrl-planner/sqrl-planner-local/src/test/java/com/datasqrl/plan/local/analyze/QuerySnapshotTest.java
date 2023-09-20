@@ -354,7 +354,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
   public void customerWithPurchaseTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("CustomerWithPurchase := SELECT * FROM Customer\n"
@@ -364,13 +363,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void customerNamesTest() {
+  public void caseWhenTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("CustomerNames := SELECT *\n"
-        + "FROM Customer\n"
+        + "FROM Orders.entries\n"
         + "ORDER BY (CASE\n"
-        + "    WHEN name IS NULL THEN email\n"
-        + "    ELSE name\n"
+        + "    WHEN discount IS NULL THEN 0\n"
+        + "    ELSE discount\n"
         + "END);");
     validateScript(builder.getScript());
   }

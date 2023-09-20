@@ -33,7 +33,7 @@ public abstract class Field {
 
   @Override
   public String toString() {
-    return getId().toString();
+    return getId().toString() + " -> " + getName().toString();
   }
 
   public abstract <R, C> R accept(FieldVisitor<R, C> visitor, C context);

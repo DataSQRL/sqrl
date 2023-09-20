@@ -20,7 +20,7 @@ LogicalProject(___uuid$0$pk$1=[$0], ___idx$0$pk$2=[$6], _uuid$0=[$11], _ingest_t
 >>>recent_products$q$24
 LogicalProject(___uuid$0$pk$1=[$0], productid=[$1], category=[$2], quantity=[$3], num_orders=[$4], __timestamp=[$5])
   LogicalAggregate(group=[{0, 1, 2}], quantity=[SUM($3)], num_orders=[COUNT()], __timestamp=[MAX($7)])
-    LogicalProject(___uuid$0$pk$1=[$6], productid$0=[$19], category=[COALESCE($32, '')], quantity$0=[$20], _uuid$0=[$0], _idx$0=[$18], _uuid$01=[$27], __timestamp35=[CASE(<($24, $33), $33, $24)], ___uuid$0$pk$10=[$25], ___idx$0$pk$2=[$26], rownum=[$34])
+    LogicalProject(___uuid$0$pk$1=[$6], productid$0=[$19], category=[COALESCE($32, '')], quantity$0=[$20], _uuid$0=[$0], _idx$0=[$18], _uuid$01=[$27], __timestamp35=[CASE(<($24, $33), $33, $24)], ___uuid$0$pk$10=[$25], ___idx$0$pk$2=[$26], _rownum=[$34])
       LogicalJoin(condition=[AND(=($12, $25), =($18, $26))], joinType=[left])
         LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], _uuid$00=[$6], _ingest_time$00=[$7], customerid$00=[$8], email$0=[$9], name$0=[$10], lastupdated$0=[$11], _uuid$000=[$12], _ingest_time$000=[$13], id$00=[$14], customerid$000=[$15], time$00=[$16], entries$00=[$17], _idx$0=[$18], productid$0=[$19], quantity$0=[$20], unit_price$0=[$21], discount$0=[$22], __timestamp=[$23], __timestamp24=[CASE(<($4, $23), $23, $4)])
           LogicalJoin(condition=[=($12, $0)], joinType=[inner])
@@ -35,6 +35,6 @@ LogicalProject(___uuid$0$pk$1=[$0], productid=[$1], category=[$2], quantity=[$3]
                     LogicalProject($f0=[$cor5.entries$0])
                       LogicalValues(tuples=[[{ 0 }]])
         LogicalFilter(condition=[=($9, 1)])
-          LogicalProject(___uuid$0$pk$1=[$0], ___idx$0$pk$2=[$1], _uuid$0=[$2], _ingest_time$0=[$3], productid$0=[$4], name$0=[$5], description$0=[$6], category$0=[$7], __timestamp=[$8], rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1)])
+          LogicalProject(___uuid$0$pk$1=[$0], ___idx$0$pk$2=[$1], _uuid$0=[$2], _ingest_time$0=[$3], productid$0=[$4], name$0=[$5], description$0=[$6], category$0=[$7], __timestamp=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1)])
             LogicalTableScan(table=[[product$q$19]])
 

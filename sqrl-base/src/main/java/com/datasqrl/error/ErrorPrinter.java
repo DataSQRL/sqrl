@@ -47,7 +47,7 @@ public class ErrorPrinter {
     }
 
     boolean addSeparator = false;
-    if (location.hasFile()) {
+    if (location.hasFile() && !isAllZero(location.getFile())) {
       //print previous 2 lines
       //print line
       //print arrow pointing to offset
@@ -77,6 +77,11 @@ public class ErrorPrinter {
 //      b.append("[").append(label.getLabel()).append("]");
 //    }
     return b.toString();
+  }
+
+  private static boolean isAllZero(FileRange file) {
+    return file.getFromLine() == 0 && file.getFromOffset() == 0 &&
+        file.getToLine() == 0 && file.getToOffset() == 0;
   }
 
   public static String getErrorDescription(ErrorMessage errorMessage, boolean addSeparator) {

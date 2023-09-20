@@ -35,7 +35,9 @@ public class ArgumentGenerator implements
       return List.of();
     }
 
-    List<FunctionParameter> parameters = field.getParameters();
+    List<FunctionParameter> parameters = field.getParameters().stream()
+        .filter(f->!((SqrlFunctionParameter)f).isInternal())
+        .collect(Collectors.toList());
     if (parameters.isEmpty()) {
       return field.getToTable().accept(this, context);
     } else {

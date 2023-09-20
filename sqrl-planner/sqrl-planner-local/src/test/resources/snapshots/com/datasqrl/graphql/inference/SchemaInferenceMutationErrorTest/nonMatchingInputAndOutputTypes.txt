@@ -1,3 +1,6 @@
 [FATAL] Scalar types not matching for field [id]: String Int
-in script:<schema>:
+in script:<schema> [2:3]:
+type Orders {
+	id: Int
+--^
 
