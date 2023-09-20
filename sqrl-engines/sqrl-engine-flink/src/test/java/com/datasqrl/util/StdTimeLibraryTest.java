@@ -84,9 +84,12 @@ public class StdTimeLibraryTest {
     assertEquals(TIME1.toEpochMilli(), TIMESTAMP_TO_EPOCH_MILLI.eval(TIME1));
     assertEquals(TIME1, STRING_TO_TIMESTAMP.eval(TIME1_STR));
     assertEquals(TIME1_STR, TIMESTAMP_TO_STRING.eval(TIME1));
-
+    assertEquals(t("2023-09-27T06:45:00Z"), STRING_TO_TIMESTAMP.eval("September 26, 2023 11:45 PM PDT", "MMMM dd, yyyy hh:mm a z"));
+    assertEquals(t("2023-09-27T21:30:00Z"), STRING_TO_TIMESTAMP.eval("September 27, 2023 2:30 PM PDT", "MMMM d, yyyy h:mm a z"));
 //    assertEquals(t("2023-03-08T13:23:34.083704-05:00"), AT_ZONE.eval(TIME1, "GMT-8"));
   }
+
+
 
   @Test
   public void convert() {

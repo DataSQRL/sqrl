@@ -20,12 +20,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.TypeInference;
 
+@Slf4j
 public class TimeFunctions {
   public static final EpochToTimestamp EPOCH_TO_TIMESTAMP = new EpochToTimestamp();
   public static final EpochMilliToTimestamp EPOCH_MILLI_TO_TIMESTAMP = new EpochMilliToTimestamp();
@@ -371,9 +373,14 @@ public class TimeFunctions {
 
     public Instant eval(String s, String format) {
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format, Locale.US);
-      return LocalDateTime.parse(s, formatter)
-          .atZone(ZoneId.systemDefault())
-          .toInstant();
+      try {
+        return LocalDateTime.parse(s, formatter)
+            .atZone(ZoneId.systemDefault())
+            .toInstant();
+      } catch (Exception e) {
+        log.warn(e.getMessage());
+        return null;
+      }
     }
 
     @Override

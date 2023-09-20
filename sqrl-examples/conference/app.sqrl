@@ -11,14 +11,14 @@ IMPORT time.parseTimestamp;
 Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS INT),0);
 
 Events.full_text := concat(title,'\n',abstract);
-Events.embedding := onnxEmbed(full_text, '/build/vectorEmbedd/model_quantized.onnx');
-Events.startTime := concat(regexExtract(date, '^[^-]*'),' ',regexExtract(time, '\d\d?:\d\d\s(AM|PM)'));
+Events.embedding := onnxEmbed(full_text, '/Users/matthias/Data/jupyter/miniLMv2/model_quantized.onnx');
+Events.startTime := concat(trim(regexExtract(date, '^[^-]*')),' ',trim(regexExtract(time, '\d\d?:\d\d\s(AM|PM)')));
 -- Result: September 26, 2023 10:15 AM PDT
-Events.startTimestamp := parseTimestamp(concat(startTime,' PDT'), 'MMMMM dd, yyyy hh:mm a z')
+Events.startTimestamp := parseTimestamp(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z')
 
 Events := DISTINCT Events ON id ORDER BY last_updated DESC;
 
-AddInterest.embedding := onnxEmbed(text, '/build/vectorEmbedd/model_quantized.onnx');
+AddInterest.embedding := onnxEmbed(text, '/Users/matthias/Data/jupyter/miniLMv2/model_quantized.onnx');
 
 LikeVector := SELECT l.userid, e.embedding, l._source_time
               FROM Likes l TEMPORAL JOIN Events e ON l.eventId = e.id WHERE l.liked;
