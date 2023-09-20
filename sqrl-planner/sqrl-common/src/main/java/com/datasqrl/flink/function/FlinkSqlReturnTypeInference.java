@@ -22,6 +22,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import org.apache.calcite.rel.core.Aggregate.AggCallBinding;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rex.RexCallBinding;
 import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
@@ -84,6 +85,10 @@ public class FlinkSqlReturnTypeInference implements SqlReturnTypeInference {
     } else if (opBinding instanceof AggCallBinding) {
       AggCallBinding sqlCallBinding = (AggCallBinding) opBinding;
       return FlinkOperandMetadata.adaptCallBinding(sqlCallBinding, flinkTypeFactory, typeFactory);
+    } else if (opBinding instanceof RexCallBinding) {
+      RexCallBinding sqlCallBinding = (RexCallBinding) opBinding;
+      return FlinkOperandMetadata.adaptCallBinding(sqlCallBinding, flinkTypeFactory, typeFactory);
+
     }
 
     return opBinding;

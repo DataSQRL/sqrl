@@ -31,16 +31,16 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
   @Override
   public DataType convertBasic(RelDataType datatype) {
     if (datatype instanceof Vector) {
-
-      FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
-          FlinkTypeSystem.INSTANCE);
-      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
-          FlinkConverter.catalogManager.getDataTypeFactory());
-
-      RelDataType flinkType = flinkTypeFactory
-          .createFieldTypeFromLogicalType(dataType.getLogicalType());
-
-      return dataType;
+      return DataTypes.ARRAY(DataTypes.DOUBLE());
+//      FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
+//          FlinkTypeSystem.INSTANCE);
+//      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
+//          FlinkConverter.catalogManager.getDataTypeFactory());
+//
+//      RelDataType flinkType = flinkTypeFactory
+//          .createFieldTypeFromLogicalType(dataType.getLogicalType());
+//
+//      return dataType;
     }
 
     switch (datatype.getSqlTypeName()) {
