@@ -204,7 +204,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         for (int i = 0; i < fieldNames.size(); i++) {
           String name = fieldNames.get(i);
           RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
-          sqrlTable.addColumn(nameUtil.toName(name), true,
+          sqrlTable.addColumn(nameUtil.toName(name), field.getName(), true,
               field.getType());
         }
 
@@ -284,7 +284,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     if (table.unwrap(ModifiableTable.class) != null) {
       ModifiableTable table1 = (ModifiableTable) table.unwrap(Table.class);
       SQRLTable sqrlTable = table1.getSqrlTable();
-      Column column = sqrlTable.addColumn(nameUtil.toName(cName), true, node.getType());
+      Column column = sqrlTable.addColumn(nameUtil.toName(cName), null, true, node.getType());
+      column.setVtName(column.getId().getCanonical());
       table1.addColumn(column.getId().getCanonical(), node, framework.getTypeFactory());
     } else {
       throw new RuntimeException();
