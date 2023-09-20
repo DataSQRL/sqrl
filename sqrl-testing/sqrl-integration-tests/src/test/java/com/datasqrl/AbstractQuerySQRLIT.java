@@ -3,20 +3,21 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
+import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
-import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
+import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.queries.APIQuery;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -26,14 +27,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -61,16 +61,19 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     Namespace ns = plan(script);
 
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
-    Pair<RootGraphqlModel, APIConnectorManager> modelAndQueries = t
-        .getModelAndQueries(planner, schema);
+    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> modelAndQueries = t
+        .inferSchemaModelQueries(planner, schema);
 
-    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, modelAndQueries.getRight(), modelAndQueries.getLeft(), true);
+    PhysicalDAGPlan dag = physicalPlanner.planDag(framework, ns.getPipeline(), modelAndQueries.getRight(),
+        modelAndQueries.getMiddle(), true);
 
-    PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
+    ErrorSink errorSink = injector.getInstance(ErrorSink.class);
+    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+        .plan(dag);
 
-    RootGraphqlModel model = modelAndQueries.getKey();
+    RootGraphqlModel model = modelAndQueries.getMiddle();
     ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(
-        physicalPlan.getDatabaseQueries());
+        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner());
 
     model.accept(replaceGraphqlQueries, null);
 
@@ -90,7 +93,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     CountDownLatch countDownLatch = new CountDownLatch(1);
 
     this.port = getPort(8888);
-    GraphQLServer server = new GraphQLServer(model, port, jdbc);
+    GraphQLServer server = new GraphQLServer(model, port, jdbc, NameCanonicalizer.SYSTEM);
     vertx.deployVerticle(server, c->countDownLatch.countDown());
     countDownLatch.await(10, TimeUnit.SECONDS);
     if (countDownLatch.getCount() != 0) {

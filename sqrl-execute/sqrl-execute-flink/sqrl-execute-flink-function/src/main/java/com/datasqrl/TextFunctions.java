@@ -115,7 +115,6 @@ public class TextFunctions {
       while (tokenizer.hasMoreTokens()) collection.add(tokenizer.nextToken().trim().toLowerCase());
     }
 
-
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return TypeInference.newBuilder()

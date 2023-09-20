@@ -3,6 +3,8 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.calcite.type.DelegatingDataType;
+import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.rel.RelNode;
@@ -48,6 +50,12 @@ public class SqrlRelToSql {
   }
 
   private static String getSQLType(RelDataType type) {
+    if (type instanceof DelegatingDataType) {
+      if (((DelegatingDataType) type).getConversionClass() == VectorType.class) {
+        return "VECTOR";
+      }
+    }
+
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
         return "BOOLEAN";

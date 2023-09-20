@@ -1,6 +1,6 @@
 >>>errors
-[FATAL] Complex columns not yet supported
-in script:test.sqrl [2:1]:
+[FATAL] Could not plan expression: Could not plan expression
+in script:<script> [2:1]:
 IMPORT ecommerce-data.Product;
 Product.total := COUNT(*);
 ^

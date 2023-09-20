@@ -1,46 +1,46 @@
 >>>orders-hasTimestamp
 (
-  `_uuid` CHAR(36) NOT NULL,
-  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` BIGINT NOT NULL,
-  `items` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
+  `_uuid$0` CHAR(36) NOT NULL,
+  `_ingest_time$0` TIMESTAMP_LTZ(3) NOT NULL,
+  `_source_time$0` TIMESTAMP_LTZ(3) NOT NULL,
+  `id$0` BIGINT NOT NULL,
+  `customerid$0` BIGINT NOT NULL,
+  `time$0` BIGINT NOT NULL,
+  `items$0` ARRAY<ROW<`_idx$0` INT NOT NULL, `productid$0` BIGINT NOT NULL, `quantity$0` BIGINT NOT NULL, `unit_price$0` DOUBLE NOT NULL, `discount$0` DOUBLE> NOT NULL> NOT NULL
 )
 >>>orders
 (
-  `_uuid` CHAR(36) NOT NULL,
-  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` BIGINT NOT NULL,
-  `items` ARRAY<ROW<`_idx` INT NOT NULL, `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
+  `_uuid$0` CHAR(36) NOT NULL,
+  `_ingest_time$0` TIMESTAMP_LTZ(3) NOT NULL,
+  `id$0` BIGINT NOT NULL,
+  `customerid$0` BIGINT NOT NULL,
+  `time$0` BIGINT NOT NULL,
+  `items$0` ARRAY<ROW<`_idx$0` INT NOT NULL, `productid$0` BIGINT NOT NULL, `quantity$0` BIGINT NOT NULL, `unit_price$0` DOUBLE NOT NULL, `discount$0` DOUBLE> NOT NULL> NOT NULL
 )
 >>>products-hasTimestamp
 (
-  `_uuid` CHAR(36) NOT NULL,
-  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(32767) NOT NULL,
-  `sizing` VARCHAR(32767) NOT NULL,
-  `weight_in_gram` BIGINT NOT NULL,
-  `type` VARCHAR(32767) NOT NULL,
-  `category` VARCHAR(32767) NOT NULL,
-  `usda_id` BIGINT NOT NULL,
-  `updated` TIMESTAMP_LTZ(3) NOT NULL
+  `_uuid$0` CHAR(36) NOT NULL,
+  `_ingest_time$0` TIMESTAMP_LTZ(3) NOT NULL,
+  `_source_time$0` TIMESTAMP_LTZ(3) NOT NULL,
+  `id$0` BIGINT NOT NULL,
+  `name$0` STRING NOT NULL,
+  `sizing$0` STRING NOT NULL,
+  `weight_in_gram$0` BIGINT NOT NULL,
+  `type$0` STRING NOT NULL,
+  `category$0` STRING NOT NULL,
+  `usda_id$0` BIGINT NOT NULL,
+  `updated$0` TIMESTAMP_LTZ(3) NOT NULL
 )
 >>>products
 (
-  `_uuid` CHAR(36) NOT NULL,
-  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(32767) NOT NULL,
-  `sizing` VARCHAR(32767) NOT NULL,
-  `weight_in_gram` BIGINT NOT NULL,
-  `type` VARCHAR(32767) NOT NULL,
-  `category` VARCHAR(32767) NOT NULL,
-  `usda_id` BIGINT NOT NULL,
-  `updated` TIMESTAMP_LTZ(3) NOT NULL
+  `_uuid$0` CHAR(36) NOT NULL,
+  `_ingest_time$0` TIMESTAMP_LTZ(3) NOT NULL,
+  `id$0` BIGINT NOT NULL,
+  `name$0` STRING NOT NULL,
+  `sizing$0` STRING NOT NULL,
+  `weight_in_gram$0` BIGINT NOT NULL,
+  `type$0` STRING NOT NULL,
+  `category$0` STRING NOT NULL,
+  `usda_id$0` BIGINT NOT NULL,
+  `updated$0` TIMESTAMP_LTZ(3) NOT NULL
 )

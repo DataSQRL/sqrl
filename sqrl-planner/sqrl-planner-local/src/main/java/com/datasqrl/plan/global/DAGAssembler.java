@@ -4,6 +4,7 @@ import static com.datasqrl.plan.OptimizationStage.DATABASE_DAG_STITCHING;
 import static com.datasqrl.plan.OptimizationStage.SERVER_DAG_STITCHING;
 import static com.datasqrl.plan.OptimizationStage.STREAM_DAG_STITCHING;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -49,6 +50,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -56,6 +58,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 @Value
 public class DAGAssembler {
 
+  private final SqrlFramework framework;
   private final RelOptPlanner planner;
   private final SQRLConverter sqrlConverter;
   private final ExecutionPipeline pipeline;
@@ -157,7 +160,7 @@ public class DAGAssembler {
 
       //Third, pick index structures for materialized tables
       //Pick index structures for database tables based on the database queries
-      IndexSelector indexSelector = new IndexSelector(planner,
+      IndexSelector indexSelector = new IndexSelector(framework,
           ((DatabaseEngine) database.getEngine()).getIndexSelectorConfig());
       Collection<QueryIndexSummary> queryIndexSummaries = readDAG.stream().map(indexSelector::getIndexSelection)
           .flatMap(List::stream).collect(Collectors.toList());
@@ -172,7 +175,7 @@ public class DAGAssembler {
       Preconditions.checkArgument(exportNode.getChosenStage().equals(streamStage));
       ResolvedExport export = exportNode.getExport();
       Pair<RelNode,Integer> relPlusTimestamp = produceWriteTree(export.getRelNode(),
-          export.getBaseConfig().withStage(exportNode.getChosenStage()), errors);
+          getExportBaseConfig().withStage(exportNode.getChosenStage()), errors);
       RelNode processedRelnode = relPlusTimestamp.getKey();
       //Pick only the selected keys
       RelBuilder relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
@@ -194,6 +197,7 @@ public class DAGAssembler {
           TableSink sink = debugger.getDebugSink(debugSinkName, errors);
           RelNode convertedRelNode = table.getPlannedRelNode();
           RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode, planner);
+
           streamQueries.add(new PhysicalDAGPlan.WriteQuery(
               new PhysicalDAGPlan.ExternalSink(debugSinkName.getCanonical(), sink),
               expandedRelNode));
@@ -220,6 +224,11 @@ public class DAGAssembler {
     }
 
     return new PhysicalDAGPlan(allPlans, pipeline);
+  }
+
+  public static SQRLConverter.Config  getExportBaseConfig() {
+      return SQRLConverter.Config.builder()
+          .setOriginalFieldnames(true).build();
   }
 
   private Pair<RelNode,Integer> produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {

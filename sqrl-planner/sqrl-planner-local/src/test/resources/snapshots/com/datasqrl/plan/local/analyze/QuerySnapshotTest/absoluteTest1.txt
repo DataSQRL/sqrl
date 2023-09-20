@@ -1,7 +1,7 @@
 >>>product$q$2
 LogicalTableScan(table=[[product$i$1]])
 
->>>x$q$4
-LogicalProject(_uuid=[$0], productid=[$2], _ingest_time=[$1])
+>>>x$q$5
+LogicalProject(_uuid$0=[$0], productid=[$2], _ingest_time$0=[$1])
   LogicalTableScan(table=[[product$q$2]])
 

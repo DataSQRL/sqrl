@@ -1,12 +1,12 @@
 >>>customer-hasTimestamp
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time, BIGINT customerid, VARCHAR(32767) email, VARCHAR(32767) name, BIGINT lastupdated)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time$0, BIGINT customerid$0, VARCHAR(2147483647) email$0, VARCHAR(2147483647) name$0, BIGINT lastupdated$0)
 >>>customer
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, BIGINT customerid, VARCHAR(32767) email, VARCHAR(32767) name, BIGINT lastupdated)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, BIGINT customerid$0, VARCHAR(2147483647) email$0, VARCHAR(2147483647) name$0, BIGINT lastupdated$0)
 >>>orders-hasTimestamp
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time, BIGINT id, BIGINT customerid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) time, RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY entries)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time$0, BIGINT id$0, BIGINT customerid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) time$0, RecordType(INTEGER _idx$0, BIGINT productid$0, BIGINT quantity$0, DOUBLE unit_price$0, DOUBLE discount$0) ARRAY entries$0)
 >>>orders
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, BIGINT id, BIGINT customerid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) time, RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY entries)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, BIGINT id$0, BIGINT customerid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) time$0, RecordType(INTEGER _idx$0, BIGINT productid$0, BIGINT quantity$0, DOUBLE unit_price$0, DOUBLE discount$0) ARRAY entries$0)
 >>>product-hasTimestamp
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time, BIGINT productid, VARCHAR(32767) name, VARCHAR(32767) description, VARCHAR(32767) category)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time$0, BIGINT productid$0, VARCHAR(2147483647) name$0, VARCHAR(2147483647) description$0, VARCHAR(2147483647) category$0)
 >>>product
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, BIGINT productid, VARCHAR(32767) name, VARCHAR(32767) description, VARCHAR(32767) category)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, BIGINT productid$0, VARCHAR(2147483647) name$0, VARCHAR(2147483647) description$0, VARCHAR(2147483647) category$0)

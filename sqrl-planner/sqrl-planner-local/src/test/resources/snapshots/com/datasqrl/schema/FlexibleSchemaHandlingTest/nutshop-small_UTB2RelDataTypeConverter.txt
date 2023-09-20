@@ -1,8 +1,8 @@
 >>>orders-hasTimestamp
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time, BIGINT id, BIGINT customerid, BIGINT time, RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY items)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time$0, BIGINT id$0, BIGINT customerid$0, BIGINT time$0, RecordType(INTEGER _idx$0, BIGINT productid$0, BIGINT quantity$0, DOUBLE unit_price$0, DOUBLE discount$0) ARRAY items$0)
 >>>orders
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, BIGINT id, BIGINT customerid, BIGINT time, RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount) ARRAY items)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, BIGINT id$0, BIGINT customerid$0, BIGINT time$0, RecordType(INTEGER _idx$0, BIGINT productid$0, BIGINT quantity$0, DOUBLE unit_price$0, DOUBLE discount$0) ARRAY items$0)
 >>>products-hasTimestamp
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time, BIGINT id, VARCHAR(32767) name, VARCHAR(32767) sizing, BIGINT weight_in_gram, VARCHAR(32767) type, VARCHAR(32767) category, BIGINT usda_id, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) updated)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _source_time$0, BIGINT id$0, VARCHAR(2147483647) name$0, VARCHAR(2147483647) sizing$0, BIGINT weight_in_gram$0, VARCHAR(2147483647) type$0, VARCHAR(2147483647) category$0, BIGINT usda_id$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) updated$0)
 >>>products
-RecordType(CHAR(36) _uuid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time, BIGINT id, VARCHAR(32767) name, VARCHAR(32767) sizing, BIGINT weight_in_gram, VARCHAR(32767) type, VARCHAR(32767) category, BIGINT usda_id, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) updated)
+RecordType(CHAR(36) _uuid$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) _ingest_time$0, BIGINT id$0, VARCHAR(2147483647) name$0, VARCHAR(2147483647) sizing$0, BIGINT weight_in_gram$0, VARCHAR(2147483647) type$0, VARCHAR(2147483647) category$0, BIGINT usda_id$0, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) updated$0)

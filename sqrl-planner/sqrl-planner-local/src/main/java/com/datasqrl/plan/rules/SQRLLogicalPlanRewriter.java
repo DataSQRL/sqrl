@@ -66,7 +66,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -201,7 +200,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     final TimestampHolder.Derived timestamp;
     if (tblFct instanceof AccessTableFunction) {
       AccessTableFunction accessFct = (AccessTableFunction) tblFct;
-      VirtualRelationalTable vTable = accessFct.getTable().getVt();
+      VirtualRelationalTable vTable = (VirtualRelationalTable) accessFct.getTable().getVt();
       Preconditions.checkArgument(vTable.isRoot());
       numColumns = vTable.getNumColumns();
       numPrimaryKeys = vTable.getNumPrimaryKeys();

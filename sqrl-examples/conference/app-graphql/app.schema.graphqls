@@ -7,13 +7,12 @@ type Query {
 }
 
 interface AbstractEvents {
-    id : Int!
+    id : String!
     time : String!
     location: String!
     title : String!
     description : String!
     name : String!
-    likeCount : LikeCount
 }
 
 type LikeCount {
@@ -21,23 +20,21 @@ type LikeCount {
 }
 
 type Events implements AbstractEvents{
-    id : Int!
+    id : String!
     time : String!
     location: String!
     title : String!
     description : String!
     name : String!
-    likeCount : LikeCount
 }
 
 type PersonalizedEvents implements AbstractEvents{
-    id : Int!
+    id : String!
     time : String!
     location: String!
     title : String!
     description : String!
     name : String!
-    likeCount : LikeCount
     liked: Int!
     score: Float!
 }

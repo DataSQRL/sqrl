@@ -3,15 +3,14 @@
  */
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.schema.converters.SqrlTypeRelDataTypeConverter;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.input.FlexibleTableConverter.Visitor;
 import com.datasqrl.schema.type.Type;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 import java.util.ArrayDeque;
@@ -26,7 +25,7 @@ public class FlexibleTable2UTBConverter implements
   private final Deque<UniversalTable> stack = new ArrayDeque<>();
 
   public FlexibleTable2UTBConverter(boolean hasSourceTimestamp) {
-    this(new JavaTypeFactoryImpl(), hasSourceTimestamp);
+    this(TypeFactory.getTypeFactory(), hasSourceTimestamp);
   }
 
   public FlexibleTable2UTBConverter(RelDataTypeFactory typeFactory, boolean hasSourceTimestamp) {

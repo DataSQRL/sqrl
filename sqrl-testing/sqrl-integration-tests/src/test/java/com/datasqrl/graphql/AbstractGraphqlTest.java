@@ -44,6 +44,10 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   protected List<String> events = new ArrayList<>();
 
   @Container
+//  static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
+//      DockerImageName.parse("ankane/pgvector:v0.4.4")
+//      .asCompatibleSubstituteFor("postgres"));
+
   protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
       DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
       .withPassword("secret").withDatabaseName("datasqrl");
@@ -60,6 +64,7 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
     CLUSTER.start();
     log.info("Kafka started: " + CLUSTER.getAllTopicsInCluster());
     packageOverride = createPackageOverride(CLUSTER, testDatabase);
+    System.out.println(testDatabase.getJdbcUrl());
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     this.vertx = vertx;
@@ -114,6 +119,10 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   }
 
   protected void executeMutation(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback) {
+    client.query(query, input, callback);
+  }
+
+  protected void executeQuery(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback) {
     client.query(query, input, callback);
   }
 

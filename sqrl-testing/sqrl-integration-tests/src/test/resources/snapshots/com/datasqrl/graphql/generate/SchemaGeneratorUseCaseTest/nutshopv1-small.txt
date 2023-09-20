@@ -10,7 +10,7 @@ type Orders {
   time: Int!
   items(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [items!]
   timestamp: String!
-  totals: totals
+  totals(price: Float, savings: Float): [totals!]
 }
 
 type Products {
@@ -25,8 +25,8 @@ type Products {
 }
 
 type Query {
-  Customers(id: Int): [Customers!]
   Orders(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
+  Customers(id: Int): [Customers!]
   Products(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
 }
 

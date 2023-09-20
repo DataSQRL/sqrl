@@ -21,9 +21,4 @@ public abstract class SourceRelationalTableImpl extends AbstractRelationalTable 
     super(nameId);
   }
 
-  @Override
-  public List<String> getPrimaryKeyNames() {
-    return List.of(ReservedName.UUID.getCanonical());
-  }
-
 }

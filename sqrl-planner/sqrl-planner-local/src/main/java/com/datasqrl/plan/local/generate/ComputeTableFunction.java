@@ -7,7 +7,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
 import com.datasqrl.plan.table.QueryRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.SQRLTable;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -17,7 +16,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 
-import java.lang.reflect.Type;
 import java.util.List;
 
 

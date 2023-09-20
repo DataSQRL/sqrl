@@ -1,6 +1,6 @@
-[FATAL] Expected SQRL String or Date type, found: BIGINT
-in script:<schema> [2:7]:
+[FATAL] Scalar types not matching for field [id]: String Int
+in script:<schema> [2:3]:
 type Orders {
-  id: String
-------^
+	id: Int
+--^
 

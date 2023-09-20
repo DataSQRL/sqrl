@@ -11,13 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static com.datasqrl.util.TestClient.NO_HANDLER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SensorsTest extends AbstractGraphqlTest {
@@ -36,6 +34,7 @@ public class SensorsTest extends AbstractGraphqlTest {
       + "}";
 
   JsonObject triggerAlertJson = new JsonObject().put("sensorId", 1).put("temperature", 62.1);
+  JsonObject nontriggerAlertJson = new JsonObject().put("sensorId", 2).put("temperature", 62.1);
 
   @BeforeEach
   void setUp() {
@@ -46,10 +45,13 @@ public class SensorsTest extends AbstractGraphqlTest {
   @SneakyThrows
   @Test
   public void singleSubscriptionMutationTest() {
+    Thread.sleep(5000);
+
     CountDownLatch countDownLatch = subscribeToAlert(alert);
 
     Thread.sleep(1000);
 
+    executeMutation(addReading, nontriggerAlertJson);//test subscription filtering
     executeMutation(addReading, triggerAlertJson);
 
     countDownLatch.await(120, TimeUnit.SECONDS);

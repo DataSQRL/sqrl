@@ -1,14 +1,14 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>x$q$6
-LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], _uuid0=[$3], _ingest_time=[$4], email=[$5], name=[$6], lastupdated=[$7])
+>>>x$q$8
+LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid$0=[$2], _uuid$00=[$3], _ingest_time$0=[$4], email$0=[$5], name$0=[$6], lastupdated$0=[$7])
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[=($6, 1)])
-      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], $f6=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[y$q$4]])
+      LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[y$q$5]])
 
->>>y$q$4
-LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5])
+>>>y$q$5
+LogicalProject(customerid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], email$0=[$3], name$0=[$4], lastupdated$0=[$5])
   LogicalTableScan(table=[[customer$q$2]])
 

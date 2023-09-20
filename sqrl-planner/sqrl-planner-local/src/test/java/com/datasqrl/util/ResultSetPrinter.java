@@ -57,6 +57,10 @@ public class ResultSetPrinter {
     return size;
   }
 
+  public static String toString(ResultSet resultSet) {
+    return toString(resultSet, Predicates.alwaysTrue(), Predicates.alwaysTrue());
+  }
+
   public static String toString(ResultSet resultSet, Predicate<String> filterColumnsByName,
       Predicate<Integer> filterColumnsByType) {
     ByteArrayOutputStream os = new ByteArrayOutputStream();

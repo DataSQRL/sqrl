@@ -2,6 +2,7 @@ package com.datasqrl.engine.stream.flink.plan;
 
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
+import com.datasqrl.DefaultFunctions;
 import com.datasqrl.FlinkExecutablePlan.DefaultFlinkConfig;
 import com.datasqrl.FlinkExecutablePlan.FlinkBase;
 import com.datasqrl.FlinkExecutablePlan.FlinkErrorSink;
@@ -89,8 +90,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.functions.UserDefinedFunction;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 import org.apache.flink.table.types.DataType;
 
@@ -115,7 +114,10 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(queries);
     Map<String, ImportedRelationalTable> tables = extractTablesFromQueries(writeQueries);
-    registerFunctions(udfs);
+    //exclude sqrl NOW for flink's NOW
+    HashMap<String, UserDefinedFunction> mutableUdfs = new HashMap<>(udfs);
+    mutableUdfs.remove(DefaultFunctions.NOW.getName().toLowerCase());
+    registerFunctions(mutableUdfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
     extractWatermarks(writeQueries, watermarkCollector);
@@ -236,6 +238,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     Pair<TypeInformation, SerializableSchema> type = createTypeInformation(tableName, relationalTable, watermarkColumn,
         watermarkExpression);
+
     FlinkFactoryDefinition factoryDefinition = FlinkFactoryDefinition.builder()
         .name(tableName)
         .connectorFactory(connectorFactoryClass)
@@ -265,7 +268,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     if (watermarkColumn.isPresent()) { //watermark is a timestamp column
       watermarkExpr = null;
       watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(watermarkColumn.get()));
-      if (ReservedName.SOURCE_TIME.getCanonical().equalsIgnoreCase(watermarkName)) {
+      if (ReservedName.SOURCE_TIME.matches(watermarkName)) {
         waterMarkType = WaterMarkType.SOURCE_WATERMARK;
       } else {
         waterMarkType = WaterMarkType.COLUMN_BY_NAME;
@@ -279,7 +282,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(name));
       watermarkExpr = RelToFlinkSql.convertToString(expr);
 
-      if (expr instanceof SqlIdentifier && ((SqlIdentifier)expr).getSimple().equalsIgnoreCase(ReservedName.SOURCE_TIME.getCanonical())) {
+      if (expr instanceof SqlIdentifier && ReservedName.SOURCE_TIME.matches(((SqlIdentifier)expr).getSimple())) {
         waterMarkType = WaterMarkType.SOURCE_WATERMARK;
       } else {
         waterMarkType = WaterMarkType.COLUMN_BY_NAME;
@@ -349,83 +352,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     return new WriteQuery(query.getSink(), relNode);
   }
-
-  private RelNode rewriteIntervals(RelNode relNode) {
-    RexBuilder rexBuilder = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
-        FlinkTypeSystem.INSTANCE));
-    return relNode.accept(
-        new RelShuttleImpl() {
-
-          @Override
-          public RelNode visit(RelNode other) {
-            if (other instanceof LogicalStream) {
-              return visit((LogicalStream) other);
-            }
-            if (other instanceof Snapshot) {
-              return visit((Snapshot) other);
-            }
-            if (other instanceof LogicalTableFunctionScan) {
-              return visit((LogicalTableFunctionScan) other);
-            }
-
-            return super.visit(other);
-          }
-
-          public RelNode visit(Snapshot stream) {
-            return this.visitChildren(stream);
-          }
-
-
-          public RelNode visit(LogicalStream stream) {
-            return this.visitChildren(stream);
-          }
-
-          @Override
-          public RelNode visit(TableFunctionScan scan) {
-            LogicalTableFunctionScan node = (LogicalTableFunctionScan)
-                scan.accept(new RewriteIntervalRexShuttle(rexBuilder));
-
-            return super.visit(node);
-          }
-
-          @Override
-          public RelNode visit(LogicalProject project) {
-            LogicalProject node = (LogicalProject)project.accept(new RewriteIntervalRexShuttle(rexBuilder));
-
-            return super.visit(node);
-          }
-        }
-    );
-  }
-
-  @AllArgsConstructor
-  public static class RewriteIntervalRexShuttle extends RexShuttle {
-    RexBuilder rexBuilder;
-
-    @Override
-    public RexWindow visitWindow(RexWindow window) {
-      return super.visitWindow(window);
-    }
-
-    @Override
-      public RexNode visitLiteral(RexLiteral literal) {
-        switch (literal.getTypeName().getFamily()) {
-          case INTERVAL_YEAR_MONTH:
-          case INTERVAL_DAY_TIME:
-            final boolean negative = literal.getValueAs(Boolean.class);
-
-            //Override precision for DAY
-            SqlIntervalQualifier i =
-                new SqlIntervalQualifier(TimeUnit.DAY, 3, null, -1, SqlParserPos.ZERO);
-
-            return rexBuilder.makeIntervalLiteral(
-                new BigDecimal(365).multiply(TimeUnit.DAY.multiplier), i);
-        }
-        return super.visitLiteral(literal);
-      }
-
-  }
-
 
   private void registerSinkTable(WriteSink sink, RelNode relNode) {
     String name;

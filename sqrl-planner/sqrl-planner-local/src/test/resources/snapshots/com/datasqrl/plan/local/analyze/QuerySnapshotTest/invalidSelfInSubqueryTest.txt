@@ -1,8 +1,11 @@
 >>>errors
-[FATAL] No value present
-in script:test.sqrl [3:1]:
+[FATAL] Could not find table: [Product, parent]
+in script:<script> [3:71]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
-Product2 := SELECT * FROM Product, (SELECT MIN(productid) FROM @);
-^
+Product.table := SELECT * FROM Product, (SELECT MIN(productid) FROM @.parent);
+----------------------------------------------------------------------^
+
+[FATAL] Could not find table: [Product, parent]
+in script:<script>:
 

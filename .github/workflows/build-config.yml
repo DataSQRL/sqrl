@@ -1,5 +1,4 @@
 name: Build and test SQRL with Maven
-
 on:
   pull_request:
     branches: [ "main" ]

@@ -26,50 +26,58 @@ singleStatement
     : statement EOF
     ;
 
-exportDefinition
-    : qualifiedName TO qualifiedName
+statement
+    : importDefinition                               #importStatement
+    | exportDefinition                               #exportStatement
+    | assignmentPath ':=' FROM fromDeclaration       #fromQuery
+    | assignmentPath ':=' JOIN joinDeclaration       #joinQuery
+    | assignmentPath ':=' STREAM streamQuerySpec     #streamQuery
+    | assignmentPath ':=' DISTINCT distinctQuerySpec #distinctQuery
+    | assignmentPath ':=' query                      #sqlQuery
+    | assignmentPath ':=' expression                 #expressionQuery
     ;
+
+assignmentPath
+   : hint? qualifiedName tableFunctionDef?
+   ;
 
 importDefinition
-    : qualifiedName (AS? alias=identifier)? (TIMESTAMP expression (AS timestampAlias=identifier)?)?
+   : IMPORT qualifiedName (AS? alias=identifier)? (TIMESTAMP expression (AS timestampAlias=identifier)?)?
+   ;
+
+exportDefinition
+   : EXPORT qualifiedName TO qualifiedName
+   ;
+
+joinDeclaration
+    : first=aliasedRelation (firstCondition=joinCondition)?
+      (remainingJoins)*
+      (ORDER BY sortItem (',' sortItem)*)?
+      (LIMIT limit=INTEGER_VALUE)?
     ;
 
-statement
-    : IMPORT importDefinition                                                            # importStatement
-    | EXPORT exportDefinition                                                            # exportStatement
-    | hint? qualifiedName tableFunctionDef? ':=' joinSpecification                       # joinAssignment
-    | hint? qualifiedName                   ':=' expression                              # expressionAssign
-    | hint? qualifiedName tableFunctionDef? ':=' query                                   # queryAssign
-    | hint? qualifiedName                   ':=' streamQuery                             # streamAssign
-    | hint? qualifiedName ':=' DISTINCT table=identifier (AS? distinctAlias=identifier)?
-                               ON onList
-                               (ORDER BY orderExpr=expression ordering=DESC?)?           # distinctAssignment
+remainingJoins
+    : joinType JOIN aliasedRelation (joinCondition)?
     ;
 
-onList
-   : '('? expression (',' expression)* ')'?
-   ;
+fromDeclaration
+    : relation
+      (WHERE where=booleanExpression)?
+      (ORDER BY sortItem (',' sortItem)*)?
+      (LIMIT limit=INTEGER_VALUE)?
+    ;
 
-tableFunctionDef
-   : '(' functionArgumentDef (',' functionArgumentDef)* ')'
-   ;
-
-functionArgumentDef
-   : name=identifier (':' typeName=type)?
-   ;
-
-hint
-   : '/*+' hintItem (',' hintItem)* '*/'
-   ;
-
-// NO_HASH_JOIN, RESOURCE(mem, parallelism)
-hintItem
-   : identifier ('(' keyValue (',' keyValue)* ')')?
-   ;
-
-keyValue
+distinctQuerySpec
    : identifier
+     ON onExpr
+     (ORDER BY orderExpr=expression ordering=DESC?)?
    ;
+
+onExpr
+   : '('? selectItem (',' selectItem)* ')'?;
+
+streamQuerySpec
+    : ON subscriptionType AS query;
 
 subscriptionType
     : ADD
@@ -77,42 +85,19 @@ subscriptionType
     | UPDATE
     ;
 
-joinSpecification
-    : joinTerm
-      (ORDER BY sortItem (',' sortItem)*)?
-      (LIMIT limit=INTEGER_VALUE)?
-      (INVERSE inv=identifier)?
-    ;
-
-joinTerm
-    : (JOIN joinPathCondition)+                                                         #joinPath
-    | left=joinTerm operator=(UNION | INTERSECT | EXCEPT) setQuantifier right=joinTerm  #joinSetOperation
-    ;
-joinPathCondition
-    : aliasedRelation (joinCondition)?
-    ;
-
-streamQuery
-    : STREAM ON subscriptionType AS query;
-
 query
-    : queryNoWith
-    ;
-
-queryNoWith:
-      queryTerm
+    : queryTerm
       (ORDER BY sortItem (',' sortItem)*)?
       (LIMIT limit=INTEGER_VALUE)?
     ;
 
 queryTerm
-    : queryPrimary                                                             #queryTermDefault
+    : queryPrimary                                                                        #queryTermDefault
     | left=queryTerm operator=(UNION | INTERSECT | EXCEPT) setQuantifier right=queryTerm  #setOperation
     ;
 
 queryPrimary
-    : querySpecification                   #queryPrimaryDefault
-    | '(' queryNoWith  ')'                 #subquery
+    : (querySpecification | subquery)
     ;
 
 sortItem
@@ -128,16 +113,7 @@ querySpecification
     ;
 
 groupBy
-    : groupingElement
-    ;
-
-groupingElement
-    : groupingSet                                            #singleGroupingSet
-    ;
-
-groupingSet
-    : (expression (',' expression)*)?
-    | expression
+    : expression (',' expression)*
     ;
 
 setQuantifier
@@ -175,10 +151,21 @@ aliasedRelation
     ;
 
 relationPrimary
-    : qualifiedName                               #tableName
-    | '(' query ')'                               #subqueryRelation
-    | identifier tableFunctionExpression          #tableFunction
+    : relationItem ('.' relationItem)*
     ;
+
+relationItem
+    : subquery
+    | identifier
+    | tableFunction
+    ;
+
+tableFunction
+    : identifier tableFunctionExpression?
+    ;
+
+subquery
+    : '(' query ')';
 
 tableFunctionExpression
    : '(' expression (',' expression)* ')'
@@ -199,7 +186,6 @@ booleanExpression
 predicate[ParserRuleContext value]
     : comparisonOperator right=valueExpression                            #comparison
     | NOT? BETWEEN lower=valueExpression AND upper=valueExpression        #between
-    | NOT? IN qualifiedName                                               #inRelation
     | NOT? IN '(' expression (',' expression)* ')'                        #inList
     | NOT? LIKE pattern=valueExpression                                   #like
     | NOT? IN '(' query ')'                                               #inSubquery
@@ -214,21 +200,24 @@ valueExpression
     ;
 
 primaryExpression
-    : NULL                                                                                #nullLiteral
-    | interval                                                                            #intervalLiteral
-    | number                                                                              #numericLiteral
-    | booleanValue                                                                        #booleanLiteral
-    | string                                                                              #stringLiteral
-    | qualifiedName '(' ASTERISK ')'                                                      #functionCall
-    | qualifiedName '(' (setQuantifier? expression (',' expression)*)? ')'                #functionCall
-    | EXISTS '(' query ')'                                                                #existsCall
-    | qualifiedName '(' query ')'                                                         #functionCall
-    | '(' query ')'                                                                       #subqueryExpression
-    | CASE whenClause+ (ELSE elseExpression=expression)? END                              #simpleCase
-    | CAST '(' expression AS type ')'                                                     #cast
-    | qualifiedName                                                                       #columnReference
-    | '(' expression ')'                                                                  #parenthesizedExpression
-    | ':' identifier                                                                      #parameter
+    : literal                                                                                #literalExpression
+    | qualifiedName                                                                          #columnReference
+    | identifier '(' (setQuantifier? expression (',' expression)*)? ')'                      #functionCall
+    | identifier '(' ASTERISK ')'                                                            #functionCall
+    | identifier '(' query ')'                                                               #functionCall
+    | EXISTS '(' query ')'                                                                   #existsCall
+    | '(' query ')'                                                                          #subqueryExpression
+    | CASE whenClause+ (ELSE elseExpression=expression)? END                                 #simpleCase
+    | CAST '(' expression AS type ')'                                                        #cast
+    | '(' expression ')'                                                                     #parenthesizedExpression
+    ;
+
+literal
+    : NULL                                                                                   #nullLiteral
+    | interval                                                                               #intervalLiteral
+    | number                                                                                 #numericLiteral
+    | booleanValue                                                                           #booleanLiteral
+    | string                                                                                 #stringLiteral
     ;
 
 string
@@ -268,6 +257,27 @@ baseType
 whenClause
     : WHEN condition=expression THEN result=expression
     ;
+
+tableFunctionDef
+   : '(' functionArgumentDef? (',' functionArgumentDef)* ')'
+   ;
+
+functionArgumentDef
+   : name=identifier ':' typeName=type ('=' literal)?
+   ;
+
+hint
+   : '/*+' hintItem (',' hintItem)* '*/'
+   ;
+
+// NO_HASH_JOIN, RESOURCE(mem, parallelism)
+hintItem
+   : identifier ('(' keyValue (',' keyValue)* ')')?
+   ;
+
+keyValue
+   : identifier
+   ;
 
 qualifiedName
     : identifier ('.' identifier)* (all='.*')?

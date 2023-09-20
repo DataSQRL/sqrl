@@ -1,7 +1,6 @@
-[FATAL] Could not find associated SQRL type for field orders on type Orders. Check that the type has all the necessary fields.
-in script:<schema> [5:3]:
-}
-type Query {
-  orders: Orders
+[FATAL] Field(s) not allowed [missingField]
+in script:<schema> [2:3]:
+type Orders {
+	missingField: String
 --^
 

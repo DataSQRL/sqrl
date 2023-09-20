@@ -6,6 +6,7 @@ package com.datasqrl.graphql;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
@@ -155,7 +156,7 @@ class WriteTest {
 
     GraphQL graphQL = model.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client), mutations, subscriptions));
+        new VertxContext(new VertxJdbcClient(client), mutations, subscriptions, NameCanonicalizer.SYSTEM));
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()
         .query("mutation ($event: CreateCustomerEvent!) { addCustomer(event: $event) { customerid } }")

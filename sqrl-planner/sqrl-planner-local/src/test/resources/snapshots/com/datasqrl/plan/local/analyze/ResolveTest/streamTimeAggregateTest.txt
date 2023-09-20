@@ -1,27 +1,27 @@
->>>ordertime1$q$11-lp-STREAM
+>>>ordertime1$q$18-lp-STREAM
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000, 0]]
-    LogicalProject(customer=[$3], bucket=[endOfsecond($4)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$q$5]])
+    LogicalProject(customerid$0=[$3], bucket=[endOfSecond($4)], _uuid$0=[$0])
+      LogicalTableScan(table=[[orders$q$6]])
 
->>>ordertime1$q$11-lp-DATABASE
+>>>ordertime1$q$18-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 
->>>ordertime2$q$13-lp-STREAM
+>>>ordertime2$q$21-lp-STREAM
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 60000, 15000]]
-    LogicalProject(customer=[$3], bucket=[endOfMinute($4, 1:BIGINT, 15:BIGINT)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$q$5]])
+    LogicalProject(customerid$0=[$3], bucket=[endOfMinute($4, 1:BIGINT, 15:BIGINT)], _uuid$0=[$0])
+      LogicalTableScan(table=[[orders$q$6]])
 
->>>ordertime2$q$13-lp-DATABASE
+>>>ordertime2$q$21-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 
->>>ordertime3$q$15-lp-STREAM
+>>>ordertime3$q$24-lp-STREAM
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 18000000, 1800000]]
-    LogicalProject(customer=[$3], bucket=[endOfHour($4, 5:BIGINT, 30:BIGINT)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$q$5]])
+    LogicalProject(customerid$0=[$3], bucket=[endOfHour($4, 5:BIGINT, 30:BIGINT)], _uuid$0=[$0])
+      LogicalTableScan(table=[[orders$q$6]])
 
->>>ordertime3$q$15-lp-DATABASE
+>>>ordertime3$q$24-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 

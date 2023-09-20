@@ -1,23 +1,17 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>discount$q$11
-LogicalProject(__pk_0=[$0], __pk_1=[$6], _uuid0=[$11], _idx0=[$17], discount=[coalesce($21, 0.0:DOUBLE)], __timestamp=[CASE(<($4, $15), $15, $4)])
-  LogicalJoin(condition=[true], joinType=[inner])
-    LogicalCorrelate(correlation=[$cor2], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$q$5]])
-      Uncollect
-        LogicalProject($f0=[$cor2.entries])
-          LogicalValues(tuples=[[{ 0 }]])
-    LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$q$5]])
-      Uncollect
-        LogicalProject($f0=[$cor3.entries])
-          LogicalValues(tuples=[[{ 0 }]])
+>>>discount$q$18
+LogicalProject(___uuid$0$pk$1=[$0], ___idx$0$pk$2=[$6], discount=[COALESCE($10, 0.0:DOUBLE)], time$0=[$4])
+  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+    LogicalTableScan(table=[[orders$q$6]])
+    Uncollect
+      LogicalProject($f0=[$cor1.entries$0])
+        LogicalValues(tuples=[[{ 0 }]])
 
->>>orders$q$5
-LogicalTableScan(table=[[orders$i$4]])
+>>>orders$q$6
+LogicalTableScan(table=[[orders$i$5]])
 
->>>product$q$9
-LogicalTableScan(table=[[product$i$8]])
+>>>product$q$15
+LogicalTableScan(table=[[product$i$14]])
 

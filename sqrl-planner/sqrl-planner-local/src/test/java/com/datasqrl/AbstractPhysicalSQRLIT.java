@@ -3,15 +3,21 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.StagePlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
+import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
@@ -24,6 +30,7 @@ import com.datasqrl.module.SqrlModule;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.local.analyze.FuzzingRetailSqrlModule;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
@@ -48,12 +55,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -63,7 +68,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.commons.lang3.ArrayUtils;
@@ -83,15 +87,20 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   }
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
     Map<NamePath, SqrlModule> addlModules = Map.of();
+    CalciteTableFactory tableFactory = new CalciteTableFactory(framework, NameCanonicalizer.SYSTEM);
     if (rootDir == null) {
-      addlModules = Map.of(NamePath.of("ecommerce-data"), new RetailSqrlModule(),
-          NamePath.of("ecommerce-data-large"), new FuzzingRetailSqrlModule());
+      RetailSqrlModule retailSqrlModule = new RetailSqrlModule();
+      retailSqrlModule.init(tableFactory);
+      FuzzingRetailSqrlModule fuzzingRetailSqrlModule = new FuzzingRetailSqrlModule();
+      fuzzingRetailSqrlModule.init(tableFactory);
+      addlModules = Map.of(NamePath.of("ecommerce-data"), retailSqrlModule,
+          NamePath.of("ecommerce-data-large"), fuzzingRetailSqrlModule);
     }
     Pair<DatabaseHandle, PipelineFactory> engines = settings.getSqrlSettings();
     this.database = engines.getLeft();
 
     SqrlTestDIModule module = new SqrlTestDIModule(engines.getRight().createPipeline(), settings, rootDir, addlModules, errorDir,
-        ErrorCollector.root());
+        ErrorCollector.root(), framework, NameCanonicalizer.SYSTEM);
     Injector injector = Guice.createInjector(module);
 
     super.initialize(settings, rootDir, injector);
@@ -132,10 +141,13 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       apiManager.addQuery(new APIQuery(tableName, rel));
     }
 
-    PhysicalDAGPlan dag = physicalPlanner.planDag(ns, apiManager, null, true);
+    PhysicalDAGPlan dag = physicalPlanner.planDag(planner.getFramework(), ns.getPipeline(),
+        apiManager, null, true);
     addContent(dag);
 
-    PhysicalPlan physicalPlan = physicalPlanner.createPhysicalPlan(dag);
+    ErrorSink errorSink = injector.getInstance(ErrorSink.class);
+    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+        .plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
     CompletableFuture[] completableFutures = result.getResults().stream()
@@ -173,7 +185,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
           typeFilter = filterOutTimestampColumn;
         }
         String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
-                s -> Stream.of("_uuid", "_ingest_time", "__").noneMatch(p -> s.startsWith(p)),
+                s -> !ReservedName.UUID.matches(s) && !ReservedName.INGEST_TIME.matches(s) && !Name.isSystemHidden(s),
                 typeFilter))
             .sorted().collect(Collectors.joining(System.lineSeparator()));
         snapshot.addContent(content, query.getNameId(), "data");

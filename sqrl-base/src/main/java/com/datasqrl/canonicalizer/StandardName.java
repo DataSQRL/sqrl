@@ -27,6 +27,4 @@ public class StandardName extends AbstractName {
   public String getDisplay() {
     return displayName;
   }
-
-
 }

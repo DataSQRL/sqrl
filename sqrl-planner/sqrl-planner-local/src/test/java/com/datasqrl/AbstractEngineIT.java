@@ -3,7 +3,11 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.plan.hints.SqrlHintStrategyTable;
+import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.util.DatabaseHandle;
 import com.google.inject.Injector;
 import org.apache.commons.lang3.tuple.Pair;
@@ -14,6 +18,17 @@ public abstract class AbstractEngineIT {
   public DatabaseHandle database = null;
   protected Injector injector;
 
+  public SqrlFramework framework = createFramework();
+
+  public SqrlFramework createFramework() {
+    framework = new SqrlFramework(SqrlRelMetadataProvider.INSTANCE,
+        SqrlHintStrategyTable.getHintStrategyTable(), NameCanonicalizer.SYSTEM);
+    DefaultFunctions functions = new DefaultFunctions();
+    functions.getDefaultFunctions()
+        .forEach((key, value) -> framework.getSqrlOperatorTable().addFunction(key, value));
+
+    return framework;
+  }
 
   @AfterEach
   public void tearDown() {

@@ -47,9 +47,9 @@ UserPromotion := STREAM ON ADD AS
 
 EXPORT UserPromotion TO print.promotion;
 
-UsersWithSpending := SELECT id, email, order_stats.spend AS spend FROM Users;
+UsersWithSpending := SELECT u.id, u.email, s.spend AS spend FROM Users u JOIN u.order_stats s;
 
-HighSpendingUsers := SELECT id, email FROM Users WHERE order_stats.spend > 1000;
+HighSpendingUsers := SELECT u.id, u.email FROM Users u JOIN u.order_stats s WHERE s.spend > 1000;
 
 Users.spending_last_week := SELECT sum(i.total) AS spend,
             sum(i.discount) AS saved

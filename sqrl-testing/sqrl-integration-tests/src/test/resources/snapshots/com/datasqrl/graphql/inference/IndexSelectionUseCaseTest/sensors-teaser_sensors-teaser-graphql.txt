@@ -1,4 +1,5 @@
-machine$16_btree_c1c2 - 24648.047
-machine$16_hash_c2 - 12023.438
-sensors$14_btree_c3c4 - 1947.500
-sensors$14_hash_c4 - 950.000
+machine$26_btree_c1c2 - 438.625
+machine$26_hash_c2 - 213.750
+minreadings$19_btree_c0c2 - 5.500
+sensors$22_btree_c3c4 - 1947.500
+sensors$22_hash_c4 - 950.000

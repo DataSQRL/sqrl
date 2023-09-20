@@ -17,6 +17,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-runtime-web</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-format-json</artifactId>
       <scope>test</scope>

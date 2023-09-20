@@ -3,11 +3,11 @@
  */
 package com.datasqrl.plan.table;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
 import java.util.List;
@@ -62,5 +62,4 @@ public class ProxyImportRelationalTable extends ScriptRelationalTable {
     getAssignedStage().ifPresent(stage -> builder.stage(stage));
     return builder;
   }
-
 }

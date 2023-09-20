@@ -1,10 +1,10 @@
->>>ordersidrange-lp-DATABASE
-LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
   LogicalFilter(condition=[>($2, ?0)])
-    LogicalTableScan(table=[[orders$6]])
+    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+      LogicalTableScan(table=[[orders$7]])
 
->>>orders2$q$11-lp-DATABASE
-LogicalProject(_uuid=[$0], id=[$2], delta=[-($2, ?0)], time=[$4])
+LogicalProject(id=[$2], delta=[-($2, ?0)], time=[$4])
   LogicalFilter(condition=[>($2, ?0)])
-    LogicalTableScan(table=[[orders$6]])
+    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+      LogicalTableScan(table=[[orders$7]])
 

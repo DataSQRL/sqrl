@@ -16,6 +16,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;

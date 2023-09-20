@@ -4,4 +4,5 @@ ProductSearch( query: "garden gnome") {
     name
     description
     category
+    score
 }}

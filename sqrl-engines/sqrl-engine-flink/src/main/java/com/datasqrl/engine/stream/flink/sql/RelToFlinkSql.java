@@ -30,8 +30,7 @@ public class RelToFlinkSql {
   public static String convertToString(SqlNode sqlNode) {
     return sqlNode.toSqlString(
             c -> transform.apply(c.withDialect(FlinkDialect.DEFAULT)))
-        .getSql()
-        .replaceAll("\"", "`");
+        .getSql().replaceAll("\"", "`");
   }
 
   public static SqlNode convertToSqlNode(RelNode optimizedNode) {

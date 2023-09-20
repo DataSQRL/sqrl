@@ -2,56 +2,26 @@ IMPORT mysourcepackage.Events AS ConferenceEvents TIMESTAMP last_updated AS time
 IMPORT mysourcepackage.AuthTokens;
 IMPORT mysourcepackage.EmailTemplates
 
-IMPORT myAPI.EventUpdate TIMESTAMP _source_time AS timestamp;
 IMPORT myAPI.Likes;
-IMPORT myAPI.ReportEvent;
 IMPORT myAPI.AddInterest;
-IMPORT myAPI.EventRemoval;
 
 IMPORT string.*;
 IMPORT text.*;
+IMPORT vector.*;
 IMPORT secure.randomID;
-
-EmailTemplates := DISTINCT EmailTemplates ON id ORDER BY last_updated DESC;
-AuthTokens := DISTINCT AuthTokens ON id ORDER BY last_updated DESC;
-
-EventPosts := SELECT * FROM EventUpdate WHERE id IS NULL;
-
-EventPosts.id := randomID(12);
-EventPosts.secret := randomID(10);
-
-EventPostEmail := SELECT e.email as toEmail, t.fromEmail, t.title,
-                         format(t.textBody, e.name, e.id, e.secret) as textBody
-                  FROM EventPosts e TEMPORAL JOIN EmailTemplates t ON t.id = 'confirmpost';
-
-EXPORT EventPostEmail TO print.eventpostemail; --sink to queue and email sending
-
-EventSecrets := DISTINCT EventPosts ON id ORDER BY timestamp DESC;
-
-VerifiedEventUpdate := SELECT u.* FROM EventUpdate u TEMPORAL JOIN EventSecrets s ON u.id = s.id AND u.secret = s.secret;
-
-AuthorizedEventRemoval := SELECT r.* FROM EventRemoval r TEMPORAL JOIN AuthTokens a ON a.id = 'removal' AND a.value = r.auth_token;
-
-FilteredEventUpdate := SELECT v.*, coalesce(r._uuid, '') AS removalId, ((r._uuid IS NOT NULL ) OR (NOT bannedWordsFilter(v.name))
-                            OR (NOT bannedWordsFilter(v.description)) OR (NOT bannedWordsFilter(v.location))) AS removed
-                       FROM VerifiedEventUpdate v LEFT INTERVAL JOIN AuthorizedEventRemoval r ON v.id = r.eventId AND v.timestamp < r._source_time;
 
 /* requires string aggregated concatenation
 ConferenceEvents.speakerSummary := SELECT concatAgg( s.name + '(' + s.title + ' at ' + s.company + ')', ', ') as name
                                  FROM @.speakers s;
  */
 /* Replace with above */
-ConferenceEvents.speakerSummary := SELECT 'speakerlength' + (sum(length(s.name) + length(s.title) + length(s.company))) as name
+ConferenceEvents.speakerSummary := SELECT CAST(sum(length(s.name) + length(s.title) + length(s.company)) AS String) as name
                                    FROM @.speakers s;
 
-ConferenceEventsFlat := SELECT _uuid, timestamp, id, time, title, description, location, speakerSummary.name as name
-                        FROM ConferenceEvents;
+ConferenceEventsFlat := SELECT e._uuid, e.timestamp, e.id, e.time, e.title, e.description, e.location, s.name as name
+                        FROM ConferenceEvents e JOIN e.speakerSummary s;
 
-Events := (SELECT _uuid, removalId, timestamp, id, time, title, description, name, location, removed FROM FilteredEventUpdate)
-            UNION ALL
-          (SELECT _uuid, '' as removalId, timestamp, id, time, title, description, name, location, FALSE as removed FROM ConferenceEventsFlat);
-
-EventNotification := SELECT * FROM FilteredEventUpdate WHERE NOT removed;
+Events := SELECT * FROM ConferenceEventsFlat;
 
 --Events.embedding := embed_text(title + description);
 Events.embedding := length(description); -- replace by vector embedding
@@ -69,37 +39,27 @@ UserLikes := DISTINCT Likes ON userid, eventId ORDER BY _source_time DESC;
 EventLikeCount := SELECT eventid, sum(liked) as num FROM UserLikes l GROUP BY eventid;
 Events.likeCount := JOIN EventLikeCount l ON @.id = l.eventid;
 
-EventsAfterTime(afterTime: DateTime) := SELECT * FROM Events WHERE time > :afterTime AND NOT removed
+EventsAfterTime(@afterTime: DateTime) := SELECT * FROM Events WHERE time > @afterTime
                                                              ORDER BY time ASC;
 
-EventSearch( query: String, afterTime: DateTime) := SELECT * FROM Events WHERE
-                        time >= :afterTime AND textsearch(:query, title, description) > 0
-                        AND NOT removed
-                        ORDER BY textsearch(:query, title, description) DESC;
+EventSearch(@query: String, @afterTime: DateTime) := SELECT * FROM Events WHERE
+                        time >= @afterTime AND textsearch(@query, title, description) > 0
+                        ORDER BY textsearch(@query, title, description) DESC;
 
 -- Events that the user liked or that are similar to users interests (requires vector search)
 
-PersonalizedEvents( userid: String, tolerance: Float, afterTime: DateTime) :=
+PersonalizedEvents(@userid: String, @tolerance: Float, @afterTime: DateTime) :=
 SELECT e.*, l.liked,
        coalesce(l.eventId, '') as shouldRemove1,
        i.interestVector / e.embedding as score
 --       cosineSimilarity(i.interestVector, e.embedding) as score
 FROM Events e
-    LEFT JOIN UserLikes l ON e.id = l.eventId AND l.userid = :userid
-    LEFT JOIN UserInterests i ON i.userid = :userid
-    WHERE e.time > :afterTime AND NOT removed
+    LEFT JOIN UserLikes l ON e.id = l.eventId AND l.userid = @userid
+    LEFT JOIN UserInterests i ON i.userid = @userid
+    WHERE e.time > @afterTime
           AND (l.liked = 1 OR (i.interestVector IS NOT NULL AND
-                               i.interestVector / e.embedding >= :tolerance))
---                               cosineSimilarity(i.interestVector, e.embedding) >= :tolerance))
+                               i.interestVector / CAST(e.embedding AS float) >= @tolerance))
+--                               cosineSimilarity(i.interestVector, e.embedding) >= @tolerance))
     ORDER BY e.time ASC
 
 --PersonalizedEvents.likeCount := JOIN EventLikeCount l ON @.id = l.eventid;
-
-
-FlaggedEventEmail := SELECT t.toEmail, t.fromEmail, t.title,
-                         format(t.textBody, r.eventid, e.title, e.description, e.name) as textBody
-                  FROM ReportEvent r
-                  TEMPORAL JOIN Events e ON r.eventid = e.id
-                  TEMPORAL JOIN EmailTemplates t ON t.id = 'eventflag';
-
-EXPORT FlaggedEventEmail TO print.flaggedEventEmail;

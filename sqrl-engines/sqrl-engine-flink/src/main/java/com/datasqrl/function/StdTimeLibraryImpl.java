@@ -19,15 +19,11 @@ import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_EPOCH;
 import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_STRING;
 
 import com.datasqrl.NamespaceObjectUtil;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.FunctionNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.google.auto.service.AutoService;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.commons.collections.ListUtils;
 
 @AutoService(StdLibrary.class)

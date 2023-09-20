@@ -10,4 +10,4 @@ SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
     WHERE timeSec >= now() - INTERVAL 1 MINUTE
     GROUP BY sensorid;
 
-SecReadingByTemp(temp: INTEGER) := SELECT * FROM SecReading WHERE temp > :temp;
+SecReadingByTemp(@temp: Int) := SELECT * FROM SecReading WHERE temp > @temp;

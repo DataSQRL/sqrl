@@ -1,21 +1,22 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>customerwithpurchase$q$11
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5])
-  LogicalFilter(condition=[=($2, $SCALAR_QUERY({
-LogicalProject(customerid=[$14])
-  LogicalJoin(condition=[=($5, $11)], joinType=[default])
-    LogicalJoin(condition=[=($0, $5)], joinType=[default])
-      LogicalTableScan(table=[[orders$6]])
-      LogicalTableScan(table=[[entries$7]])
-    LogicalTableScan(table=[[orders$6]])
-}))])
+>>>customerwithpurchase$q$18
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], __timestamp=[CASE(<($1, $7), $7, $1)])
+  LogicalJoin(condition=[=($2, $6)], joinType=[inner])
     LogicalTableScan(table=[[customer$q$2]])
+    LogicalFilter(condition=[=($2, 1)])
+      LogicalProject($f0=[$0], time$0=[$1], _rownum=[ROW_NUMBER() OVER (ORDER BY $1 DESC NULLS LAST)])
+        LogicalProject($f0=[SINGLE_VALUE($3) IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time$0=[$4])
+          LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+            LogicalTableScan(table=[[orders$q$6]])
+            Uncollect
+              LogicalProject($f0=[$cor3.entries$0])
+                LogicalValues(tuples=[[{ 0 }]])
 
->>>orders$q$5
-LogicalTableScan(table=[[orders$i$4]])
+>>>orders$q$6
+LogicalTableScan(table=[[orders$i$5]])
 
->>>product$q$9
-LogicalTableScan(table=[[product$i$8]])
+>>>product$q$15
+LogicalTableScan(table=[[product$i$14]])
 

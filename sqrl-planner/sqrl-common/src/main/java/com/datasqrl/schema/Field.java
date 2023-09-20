@@ -4,6 +4,7 @@
 package com.datasqrl.schema;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -23,9 +24,6 @@ public abstract class Field {
   }
 
   public Name getId() {
-    if (version == 0) {
-      return name;
-    }
     return name.suffix(Integer.toString(version));
   }
 
@@ -35,14 +33,8 @@ public abstract class Field {
 
   @Override
   public String toString() {
-    return getId().toString();
+    return getId().toString() + " -> " + getName().toString();
   }
-
-  public abstract FieldKind getKind();
 
   public abstract <R, C> R accept(FieldVisitor<R, C> visitor, C context);
-
-  public boolean isScalar() {
-    return this instanceof Column;
-  }
 }

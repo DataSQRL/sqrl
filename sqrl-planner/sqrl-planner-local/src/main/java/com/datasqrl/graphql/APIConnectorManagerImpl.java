@@ -19,8 +19,10 @@ import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.RelDataType2UTBConverter;
 import com.datasqrl.plan.table.TableType;
+import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.schema.UniversalTable;
 import com.google.inject.Inject;
@@ -36,6 +38,7 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 @Getter
 public class APIConnectorManagerImpl implements APIConnectorManager {
 
+  private final CalciteTableFactory tableFactory;
   private final Optional<LogEngine> logEngine;
   private final ErrorCollector errors;
   private final ModuleLoader moduleLoader;
@@ -53,8 +56,9 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
 
   @Inject
-  public APIConnectorManagerImpl(ExecutionPipeline pipeline,
+  public APIConnectorManagerImpl(CalciteTableFactory tableFactory, ExecutionPipeline pipeline,
       ErrorCollector errors, ModuleLoader moduleLoader, RelDataTypeFactory typeFactory) {
+    this.tableFactory = tableFactory;
     this.errors = errors;
     this.moduleLoader = moduleLoader;
     this.logEngine = pipeline.getStage(Type.LOG).map(stage -> (LogEngine) stage.getEngine());
@@ -103,7 +107,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   @Override
   public TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable) {
     errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
-    errors.checkFatal(sqrlTable.getVt().getRoot().getBase().getType()== TableType.STREAM,
+    errors.checkFatal(((VirtualRelationalTable) sqrlTable.getVt()).getRoot().getBase().getType()== TableType.STREAM,
         "Table %s for subscription %s is not a stream table", sqrlTable, subscription);
     //Check if we already exported it
     TableSource subscriptionSource;
@@ -111,10 +115,10 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       subscriptionSource = exports.get(sqrlTable).getSource();
     } else {
       //otherwise create new log for it
-      String logId = sqrlTable.getVt().getNameId();
+      String logId = ((VirtualRelationalTable) sqrlTable.getVt()).getNameId();
       RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory, 0,
           NameCanonicalizer.SYSTEM);
-      UniversalTable schema = converter.convert(sqrlTable.getPath(), sqrlTable.getVt().getRowType(),
+      UniversalTable schema = converter.convert(sqrlTable.getPath(), ((VirtualRelationalTable) sqrlTable.getVt()).getRowType(),
           null);
       Log log = logEngine.get().createLog(logId, schema);
       exports.put(sqrlTable, log);
@@ -164,13 +168,13 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
     @Override
     public Optional<NamespaceObject> getNamespaceObject(Name name) {
       return Optional.ofNullable(entries.get(name)).map(log ->
-          new TableSourceSinkNamespaceObject(log.getSource(), log.getSink()));
+          new TableSourceSinkNamespaceObject(log.getSource(), log.getSink(), tableFactory));
     }
 
     @Override
     public List<NamespaceObject> getNamespaceObjects() {
       return entries.values().stream().map(log ->
-          new TableSourceSinkNamespaceObject(log.getSource(), log.getSink()))
+          new TableSourceSinkNamespaceObject(log.getSource(), log.getSink(), tableFactory))
           .collect(Collectors.toList());
     }
   }

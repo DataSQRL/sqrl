@@ -241,6 +241,16 @@
       <artifactId>kafka-streams-test-utils</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-kafka</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-kafka</artifactId>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 </project>

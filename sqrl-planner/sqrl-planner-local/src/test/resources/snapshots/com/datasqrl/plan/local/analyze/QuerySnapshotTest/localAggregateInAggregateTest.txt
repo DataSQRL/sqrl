@@ -1,21 +1,8 @@
 >>>errors
-[FATAL] Field cannot be walked here, has to-many multiplicity: joindeclaration
-in script:test.sqrl [3:28]:
+[FATAL] Could not plan expression: At line 3, column 28: Column 'joinDeclaration' not found in any table
+in script:<script> [3:1]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
 Product.total := SUM(COUNT(joinDeclaration));
----------------------------^
-To-many path not allowed in field path in this location.
-
-Erroneous code example:
-```
-IMPORT ecommerce-data.Orders;
-Orders.x := SELECT entries.discount FROM @;
-```
-
-Maybe try moving the to-many field to the FROM clause. Example:
-```
-IMPORT ecommerce-data.Orders;
-Orders.x := SELECT discount FROM @.entries;
-```
+^
 

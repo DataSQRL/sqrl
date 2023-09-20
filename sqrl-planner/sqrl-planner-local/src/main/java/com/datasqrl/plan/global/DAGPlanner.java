@@ -3,24 +3,20 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
@@ -31,7 +27,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 public class DAGPlanner {
   private final RelBuilder relBuilder;
 
-  private final RelOptPlanner planner;
+  private final SqrlFramework framework;
   private final ExecutionPipeline pipeline;
 
   private final SQRLConverter sqrlConverter;
@@ -39,10 +35,10 @@ public class DAGPlanner {
   private final Debugger debugger;
   private final ErrorCollector errors;
 
-  public DAGPlanner(RelBuilder relBuilder, RelOptPlanner planner,
-      ExecutionPipeline pipeline, Debugger debugger, ErrorCollector errors) {
-    this.relBuilder = relBuilder;
-    this.planner = planner;
+  public DAGPlanner(SqrlFramework framework,
+                    ExecutionPipeline pipeline, Debugger debugger, ErrorCollector errors) {
+    this.relBuilder = framework.getQueryPlanner().getRelBuilder();
+    this.framework = framework;
     this.pipeline = pipeline;
     this.sqrlConverter = new SQRLConverter(relBuilder);
 
@@ -53,7 +49,7 @@ public class DAGPlanner {
   public SqrlDAG build(SqrlSchema relSchema, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports) {
     //Prepare the inputs
-    Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, apiManager, exports);
+    Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, apiManager, exports, framework);
 
     //Assemble DAG
     SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(analyzedQueries, exports);
@@ -85,7 +81,8 @@ public class DAGPlanner {
   public PhysicalDAGPlan assemble(SqrlDAG dag, APIConnectorManager apiManager,
       Set<URL> jars, Map<String, UserDefinedFunction> udfs, RootGraphqlModel model) {
     //Stitch DAG together
-    DAGAssembler assembler = new DAGAssembler(planner, sqrlConverter, pipeline, debugger, errors);
+    DAGAssembler assembler = new DAGAssembler(framework, framework.getQueryPlanner().getPlanner(),
+        sqrlConverter, pipeline, debugger, errors);
     return assembler.assemble(dag, jars, udfs, model, apiManager);
   }
 

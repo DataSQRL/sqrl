@@ -4,16 +4,15 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.config.SerializedSqrlConfig;
-import com.datasqrl.graphql.inference.argument.ArgumentHandler;
 import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.SQRLTable;
 import graphql.language.FieldDefinition;
-import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import lombok.ToString;
 import lombok.Value;
 
@@ -90,6 +89,7 @@ public class SchemaInferenceModel {
   public static class InferredSubscription {
     String name;
     SerializedSqrlConfig sinkConfig;
+    Map<String, String> filters;
   }
 
   public interface InferredRootObjectVisitor<R, C> {
@@ -141,6 +141,7 @@ public class SchemaInferenceModel {
   @ToString
   public static class InferredObjectField implements InferredField {
 
+    SQRLTable parentTable;
     ObjectTypeDefinition parent;
     FieldDefinition fieldDefinition;
     ObjectTypeDefinition objectTypeDefinition;
@@ -179,6 +180,20 @@ public class SchemaInferenceModel {
 
   @Value
   @ToString
+  public static class InferredSubscriptionScalarField implements InferredField {
+
+    FieldDefinition fieldDefinition;
+    Column column;
+    ObjectTypeDefinition parent;
+
+    @Override
+    public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {
+      return visitor.visitSubscriptionScalarField(this, context);
+    }
+  }
+
+  @Value
+  @ToString
   public static class InferredPagedField implements InferredField {
 
     @Override
@@ -196,17 +211,10 @@ public class SchemaInferenceModel {
     R visitComputedField(InferredComputedField field, C context);
 
     R visitScalarField(InferredScalarField field, C context);
+    R visitSubscriptionScalarField(InferredSubscriptionScalarField field, C context);
 
     R visitPagedField(InferredPagedField field, C context);
 
     R visitNestedField(NestedField field, C context);
-  }
-
-  @Value
-  @ToString
-  public static class InferredArgument {
-
-    InputValueDefinition argDefinition;
-    ArgumentHandler handler;
   }
 }

@@ -17,17 +17,12 @@
 package com.datasqrl.parse;
 
 import com.datasqrl.model.StreamType;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.google.common.base.Preconditions;
-import java.util.stream.Collectors;
-import org.apache.calcite.sql.TableFunctionArgument;
-import java.util.Locale;
+import lombok.Value;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.sql.*;
@@ -38,10 +33,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Util;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -229,7 +221,25 @@ class AstBuilder
     throw new IllegalArgumentException("Unsupported interval field: " + token.getText());
   }
 
-//  private static IntervalLiteral.Sign getIntervalSign(Token token) {
+  @Value
+  class AssignPathResult {
+    Optional<SqlNodeList> hints;
+    SqlIdentifier identifier;
+    Optional<SqrlTableFunctionDef> tableArgs;
+  }
+
+  private AssignPathResult visitAssign(AssignmentPathContext ctx) {
+    return new AssignPathResult(
+        Optional.ofNullable((SqlNodeList) visit(ctx.hint())),
+        (SqlIdentifier) visit(ctx.qualifiedName()),
+        Optional.ofNullable((SqrlTableFunctionDef) visit(ctx.tableFunctionDef())));
+  }
+
+  @Override
+  public SqlNode visitHint(HintContext ctx) {
+    return new SqlNodeList(visit(ctx.hintItem(), SqlNode.class), getLocation(ctx));
+  }
+  //  private static IntervalLiteral.Sign getIntervalSign(Token token) {
 //    switch (token.getType()) {
 //      case SqlBaseLexer.MINUS:
 //        return IntervalLiteral.Sign.NEGATIVE;
@@ -288,19 +298,241 @@ class AstBuilder
   }
 
   @Override
-  public SqlNode visitQuery(QueryContext context) {
-    return visit(context.queryNoWith());
-//    Query body = (Query) visit(context.queryNoWith());
-//
-//    return new Query(
-//        getLocation(context),
-//        body.getQueryBody(),
-//        body.getOrderBy(),
-//        body.getLimit());
+  public SqlNode visitImportStatement(ImportStatementContext ctx) {
+    return visit(ctx.importDefinition());
   }
 
   @Override
-  public SqlNode visitQueryNoWith(QueryNoWithContext context) {
+  public SqlNode visitImportDefinition(ImportDefinitionContext ctx) {
+    Optional<SqlIdentifier> alias = Optional.ofNullable(
+        ctx.alias == null ? null : (SqlIdentifier) visit(ctx.alias));
+
+    Optional<SqlNode> timestamp;
+    Optional<SqlIdentifier> timestampAlias = Optional.empty();
+    if (ctx.TIMESTAMP() != null) {
+      SqlNode expr = visit(ctx.expression());
+
+      if (ctx.timestampAlias != null) {
+        SqlIdentifier tsAlias = ((SqlIdentifier) visit(ctx.timestampAlias));
+        timestampAlias = Optional.of(tsAlias);
+      }
+      timestamp = Optional.of(expr);
+    } else {
+      timestamp = Optional.empty();
+    }
+
+    SqlIdentifier identifier = getNamePath(ctx.qualifiedName());
+    SqrlImportDefinition importDef = new SqrlImportDefinition(getLocation(ctx), identifier, alias);
+
+    if (timestamp.isEmpty()) {
+      return importDef;
+    } else {
+      SqrlAssignTimestamp assignTimestamp = new SqrlAssignTimestamp(getLocation(ctx),
+          new SqlIdentifier(Util.last(identifier.names), identifier.getParserPosition()),
+          alias,
+          timestamp.get(), timestampAlias);
+
+      return new SqlNodeList(List.of(importDef, assignTimestamp), importDef.getParserPosition());
+    }
+  }
+
+  @Override
+  public SqlNode visitExportStatement(ExportStatementContext ctx) {
+    return visit(ctx.exportDefinition());
+  }
+
+  @Override
+  public SqlNode visitExportDefinition(ExportDefinitionContext ctx) {
+    return new SqrlExportDefinition(getLocation(ctx),
+        getNamePath(ctx.qualifiedName(0)),
+        getNamePath(ctx.qualifiedName(1)));
+  }
+
+  @Override
+  public SqlNode visitFromQuery(FromQueryContext ctx) {
+    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+
+    return new SqrlFromQuery(
+        getLocation(ctx),
+        assign.getHints(),
+        assign.getIdentifier(),
+        assign.getTableArgs(),
+        (SqlSelect) visit(ctx.fromDeclaration()));
+  }
+
+  @Override
+  public SqlNode visitJoinQuery(JoinQueryContext ctx) {
+    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+
+    return new SqrlJoinQuery(
+        getLocation(ctx),
+        assign.getHints(),
+        assign.getIdentifier(),
+        assign.getTableArgs(),
+        (SqlSelect) visit(ctx.joinDeclaration()));
+  }
+
+  @Override
+  public SqlNode visitStreamQuery(StreamQueryContext ctx) {
+    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+    return new SqrlStreamQuery(
+        getLocation(ctx),
+        assign.getHints(),
+        assign.getIdentifier(),
+        assign.getTableArgs(),
+        visit(ctx.streamQuerySpec().query()),
+        StreamType.valueOf(ctx.streamQuerySpec().subscriptionType().getText()));
+  }
+
+  @Override
+  public SqlNode visitDistinctQuery(DistinctQueryContext ctx) {
+    SqlIdentifier identifier = (SqlIdentifier)visit(ctx.distinctQuerySpec().identifier());
+    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+    SqlNode table = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+        new SqrlCompoundIdentifier(getLocation(ctx),
+        List.of(identifier)),identifier);
+
+    List<SqlNode> expressions = new ArrayList<>();
+
+    for (int i = 0; i < ctx.distinctQuerySpec().onExpr().selectItem().size(); i++) {
+      SqlNode expr = visit(ctx.distinctQuerySpec().onExpr().selectItem(i));
+      expressions.add(expr);
+    }
+
+    List<SqlNode> orders = new ArrayList<>();
+    if (ctx.distinctQuerySpec().orderExpr != null) {
+      SqlNode order = visit(ctx.distinctQuerySpec().orderExpr);
+      orders.add(SqlStdOperatorTable.DESC.createCall(getLocation(ctx.distinctQuerySpec().orderExpr), order));
+    }
+
+    return new SqrlDistinctQuery(
+        getLocation(ctx),
+        assign.getHints(),
+        assign.getIdentifier(),
+        assign.getTableArgs(),
+        table,
+        expressions,
+        orders);
+  }
+
+  @Override
+  public SqlNode visitSqlQuery(SqlQueryContext ctx) {
+    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+
+    return new SqrlSqlQuery(
+        getLocation(ctx),
+        assign.getHints(),
+        assign.getIdentifier(),
+        assign.getTableArgs(),
+        visit(ctx.query()));
+  }
+
+  @Override
+  public SqlNode visitExpressionQuery(ExpressionQueryContext ctx) {
+    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+
+    return new SqrlExpressionQuery(
+        getLocation(ctx),
+        assign.getHints(),
+        assign.getIdentifier(),
+        assign.getTableArgs(),
+        visit(ctx.expression()));
+  }
+
+  @Override
+  public SqlNode visitFromDeclaration(FromDeclarationContext ctx) {
+    List<SqlNode> order = visit(ctx.sortItem(), SqlNode.class);
+    Optional<SqlNodeList> sortList = emptyListToEmptyOptional(order);
+
+    SqlNode fetch = null;
+    Optional<String> limitStr = getTextIfPresent(ctx.limit);
+    if (ctx.LIMIT() != null && limitStr.isPresent()) {
+      fetch = SqlLiteral.createExactNumeric(limitStr.get(), getLocation(ctx.limit));
+    }
+
+    return new SqlSelect(getLocation(ctx),
+        null,
+        new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
+        visit(ctx.relation()),
+        visitIfPresent(ctx.where, SqlNode.class).orElse(null),
+        null,
+        null,
+        null,
+        sortList.orElse(null),
+        null,
+        fetch,
+        SqlNodeList.EMPTY);
+  }
+
+  @Override
+  public SqlNode visitJoinDeclaration(JoinDeclarationContext ctx) {
+    List<SqlNode> sort = visit(ctx.sortItem(), SqlNode.class);
+    Optional<SqlNodeList> sortList = emptyListToEmptyOptional(sort);
+
+    Optional<SqlNumericLiteral> limit =
+        ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL")
+            ? Optional.empty()
+            : Optional.of(
+            SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)));
+
+    //we pull the first on condition to the where clause and turn it into a normal select
+    SqlNode table = visit(ctx.first);
+    SqlNode where = visit(ctx.firstCondition);
+
+    for (int i = 1; i < ctx.remainingJoins().size(); i++) {
+      SqlNode relation = visit(ctx.remainingJoins(i).aliasedRelation());
+      SqlNode condition = visit(ctx.remainingJoins(i).joinCondition());
+      table = new SqlJoin(getLocation(ctx.remainingJoins(i).joinCondition()),
+          table,
+          SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
+          toJoinType(ctx.remainingJoins(i).joinType()).symbol(getLocation(ctx.remainingJoins(i).joinType())),
+          relation,
+          condition == null
+              ? JoinConditionType.NONE.symbol(SqlParserPos.ZERO)
+              : JoinConditionType.ON.symbol(getLocation(ctx.remainingJoins(i).joinCondition().ON())),
+          condition);
+    }
+
+    return new SqlSelect(getLocation(ctx),
+        null,
+        new SqlNodeList(List.of(SqlIdentifier.STAR), SqlParserPos.ZERO),
+        table,
+        where,
+        null,
+        null,
+        null,
+        sortList.orElse(null),
+        null,
+        limit.orElse(null),
+        SqlNodeList.EMPTY);
+  }
+
+  @Override
+  public SqlNode visitJoinCondition(JoinConditionContext ctx) {
+    return visit(ctx.booleanExpression());
+  }
+
+  @Override
+  public SqlNode visitTableFunctionDef(TableFunctionDefContext ctx) {
+    List<SqrlTableParamDef> defs = new ArrayList<>();
+    for (int i = 0; i < ctx.functionArgumentDef().size(); i++) {
+      FunctionArgumentDefContext fCtx = ctx.functionArgumentDef(i);
+      SqrlTableParamDef param = new SqrlTableParamDef(
+          getLocation(fCtx),
+          (SqlIdentifier)visit(fCtx.identifier()),
+          getType(fCtx.type()),
+          Optional.ofNullable(visit(fCtx.literal())),
+          i, false);
+      defs.add(param);
+    }
+
+    return new SqrlTableFunctionDef(
+        getLocation(ctx),
+        defs);
+  }
+
+  @Override
+  public SqlNode visitQuery(QueryContext context) {
     SqlCall term = (SqlCall) visit(context.queryTerm());
 
     SqlNodeList orderBy = null;
@@ -386,12 +618,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitGroupBy(GroupByContext context) {
-    return visit(context.groupingElement());
-  }
-
-  @Override
-  public SqlNode visitSingleGroupingSet(SingleGroupingSetContext context) {
-    List<SqlNode> groups = visit(context.groupingSet().expression(), SqlNode.class);
+    List<SqlNode> groups = visit(context.expression(), SqlNode.class);
     return new SqlNodeList(groups, getLocation(context));
   }
 
@@ -436,33 +663,21 @@ class AstBuilder
   public SqlNode visitSelectSingle(SelectSingleContext context) {
     SqlNode expression = visit(context.expression());
 
-//    if (expression instanceof Identifier &&
-//        ((Identifier) expression).getNamePath().getLast().getCanonical()
-//        .equalsIgnoreCase("*")) {
-//      return new AllColumns(getLocation(context),
-//          ((Identifier) expression).getNamePath().getPrefix().get());
-//    }
-
     Optional<SqlNode> alias = visitIfPresent(context.identifier(), SqlNode.class);
-    return alias.map(a -> (SqlNode) SqlStdOperatorTable.AS.createCall(getLocation(context),
-            expression, a))
-        .orElse(expression);
+    if (alias.isPresent()) {
+      return SqlStdOperatorTable.AS.createCall(getLocation(context),
+          expression,
+          alias.get());
+    }
+    return expression;
   }
 
   @Override
   public SqlNode visitSubquery(SubqueryContext context) {
-    return visit(context.queryNoWith());
+    return visit(context.query());
   }
 
   // ********************* primary expressions **********************
-
-  @Override
-  public SqlNode visitParameter(ParameterContext ctx) {
-    return new SqlNamedDynamicParam(
-        (SqlIdentifier) visit(ctx.identifier()),
-        getLocation(ctx)
-    );
-  }
 
   @Override
   public SqlNode visitLogicalNot(LogicalNotContext context) {
@@ -480,31 +695,6 @@ class AstBuilder
         getLocation(context.operator),
         left,
         right);
-    //    boolean warningForMixedAndOr = false;
-//
-//    if (operator.equals(LogicalBinaryExpression.Operator.OR) &&
-//        (mixedAndOrOperatorParenthesisCheck(right, context.right,
-//            LogicalBinaryExpression.Operator.AND) ||
-//            mixedAndOrOperatorParenthesisCheck(left, context.left,
-//                LogicalBinaryExpression.Operator.AND))) {
-//      warningForMixedAndOr = true;
-//    }
-//
-//    if (operator.equals(LogicalBinaryExpression.Operator.AND) &&
-//        (mixedAndOrOperatorParenthesisCheck(right, context.right,
-//            LogicalBinaryExpression.Operator.OR) ||
-//            mixedAndOrOperatorParenthesisCheck(left, context.left,
-//                LogicalBinaryExpression.Operator.OR))) {
-//      warningForMixedAndOr = true;
-//    }
-//
-//    if (warningForMixedAndOr) {
-//      warningConsumer.accept(new ParsingWarning(
-//          "The Query contains OR and AND operator without proper parenthesis. "
-//              + "Make sure the operators are guarded by parenthesis in order "
-//              + "to fetch logically correct results",
-//          context.getStart().getLine(), context.getStart().getCharPositionInLine()));
-//    }
   }
 
   @Override
@@ -514,50 +704,18 @@ class AstBuilder
 
   @Override
   public SqlNode visitTableFunction(TableFunctionContext ctx) {
-    SqlIdentifier name = (SqlIdentifier)visit(ctx.identifier());
-
-    List<SqlNode> args = visit(ctx.tableFunctionExpression().expression(), SqlNode.class);
-
-    SqlUnresolvedFunction function = new SqlUnresolvedFunction(name,
-        null, null, null, null,
-        SqlFunctionCategory.USER_DEFINED_FUNCTION);
-
-    return SqlStdOperatorTable.COLLECTION_TABLE
-        .createCall(getLocation(ctx),
-            function.createCall(getLocation(ctx), args));
+    SqlIdentifier node = (SqlIdentifier)visit(ctx.identifier());
+    SqlUnresolvedFunction function = new SqlUnresolvedFunction(node, null,
+        null, null, null, SqlFunctionCategory.USER_DEFINED_FUNCTION);
+    SqlNodeList args = (SqlNodeList)visit(ctx.tableFunctionExpression());
+    SqlNode call = function.createCall(args);
+    return call;
   }
 
   @Override
   public SqlNode visitTableFunctionExpression(TableFunctionExpressionContext ctx) {
-    return super.visitTableFunctionExpression(ctx);
-  }
-
-  @Override
-  public SqlNode visitSubqueryRelation(SubqueryRelationContext ctx) {
-    return visit(ctx.query());
-  }
-
-  @Override
-  public SqlNode visitJoinSetOperation(JoinSetOperationContext ctx) {
-    //todo
-    return new SqrlJoinSetOperation(getLocation(ctx));
-  }
-
-  @Override
-  public SqlNode visitJoinPath(JoinPathContext ctx) {
-    List<SqlNode> relations = new ArrayList<>();
-    List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < ctx.joinPathCondition().size(); i++) {
-      SqlNode relation = ctx.joinPathCondition(i).aliasedRelation().accept(this);
-      relations.add(relation);
-      SqlNode condition = ctx.joinPathCondition(i).joinCondition() == null ? null :
-          ctx.joinPathCondition(i).joinCondition().booleanExpression().accept(this);
-      conditions.add(condition);
-    }
-
-    return new SqrlJoinPath(getLocation(ctx),
-        relations,
-        conditions);
+    return emptyListToEmptyOptional(visit(ctx.expression(), SqlNode.class))
+        .orElse(SqlNodeList.EMPTY);
   }
 
   @Override
@@ -628,13 +786,6 @@ class AstBuilder
     }
 
     return joinType;
-  }
-
-  @Override
-  public SqlNode visitTableName(TableNameContext context) {
-    SqlIdentifier name = getNamePath(context.qualifiedName());
-
-    return name;
   }
 
   public SqlNodeList getHints(HintContext hint) {
@@ -716,11 +867,9 @@ class AstBuilder
   public SqlNode visitNullPredicate(NullPredicateContext context) {
     SqlNode child = visit(context.value);
 
-    if (context.NOT() == null) {
-      return SqlStdOperatorTable.IS_NULL.createCall(getLocation(context), child);
-    }
+    SqlOperator op = context.NOT() == null ? SqlStdOperatorTable.IS_NULL : SqlStdOperatorTable.IS_NOT_NULL;
 
-    return SqlStdOperatorTable.IS_NOT_NULL.createCall(getLocation(context), child);
+    return op.createCall(getLocation(context), child);
   }
 
   @Override
@@ -732,7 +881,7 @@ class AstBuilder
             getLocation(context)));
 
     if (context.NOT() != null) {
-      result = SqlStdOperatorTable.NOT.createCall(getLocation(context), result);
+      result = SqlStdOperatorTable.NOT_IN.createCall(getLocation(context), result);
     }
 
     return result;
@@ -741,7 +890,9 @@ class AstBuilder
   @Override
   public SqlNode visitInSubquery(InSubqueryContext context) {
     SqlNode query = visit(context.query());
-    SqlNode result = SqlStdOperatorTable.IN.createCall(
+    SqlOperator op = context.NOT() == null ? SqlStdOperatorTable.IN : SqlStdOperatorTable.NOT_IN;
+
+    SqlNode result = op.createCall(
         getLocation(context),
         visit(context.value),
         new SqlNodeList(List.of(query),
@@ -791,8 +942,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitQualifiedName(QualifiedNameContext ctx) {
-    SqlIdentifier qualified = getNamePath(ctx);
-    return qualified;
+    return getNamePath(ctx);
   }
 
   @Override
@@ -807,7 +957,6 @@ class AstBuilder
 
   @Override
   public SqlNode visitSimpleCase(SimpleCaseContext context) {
-//    visit(context.whenClause(), SqlNode.class);
     List<SqlNode> whenList = new ArrayList<>();
     List<SqlNode> thenList = new ArrayList<>();
     Optional<SqlNode> elseExpr = visitIfPresent(context.elseExpression, SqlNode.class);
@@ -852,8 +1001,8 @@ class AstBuilder
 
   @Override
   public SqlNode visitFunctionCall(FunctionCallContext context) {
-//    boolean distinct = isDistinct(context.setQuantifier());
-    SqlIdentifier name = (SqlIdentifier) context.qualifiedName().accept(this);
+    boolean distinct = isDistinct(context.setQuantifier());
+    SqlIdentifier name = (SqlIdentifier) context.identifier().accept(this);
     List<SqlNode> args;
     if (context.expression() != null) {
       args = visit(context.expression(), SqlNode.class);
@@ -863,7 +1012,7 @@ class AstBuilder
       throw new RuntimeException("Unknown function ast");
     }
 
-    //special case: count(*)
+    //special case: fnc(*)
     if (context.ASTERISK() != null) {
       args = List.of(SqlIdentifier.star(SqlParserPos.ZERO));
     }
@@ -876,7 +1025,17 @@ class AstBuilder
     SqlUnresolvedFunction function = new SqlUnresolvedFunction(name,
         null, null, null, null,
         SqlFunctionCategory.USER_DEFINED_FUNCTION);
-    return function.createCall(getLocation(context), args);
+    SqlCall call = function.createCall(getLocation(context), args);
+    if (distinct) {
+      final SqlLiteral qualifier =
+          distinct ? SqlSelectKeyword.DISTINCT.symbol(getLocation(context.setQuantifier())) : null;
+
+      return call.getOperator()
+          .createCall(qualifier, call.getParserPosition(),
+              call.getOperandList().toArray(SqlNode[]::new));
+    } else {
+      return call;
+    }
   }
 
   // ***************** helpers *****************
@@ -907,6 +1066,11 @@ class AstBuilder
 
     return new SqlIdentifier(List.of(identifier),
         null, getLocation(context), List.of(getLocation(context)));
+  }
+
+  @Override
+  public SqlNode visitLiteralExpression(LiteralExpressionContext ctx) {
+    return visit(ctx.literal());
   }
 
   @Override
@@ -1020,95 +1184,22 @@ class AstBuilder
 
   @Override
   public SqlNode visitScript(ScriptContext ctx) {
+    List<SqlNode> nodes = visit(ctx.statement(), SqlNode.class);
+
+    //post process: split aggregate statements
+    List<SqlNode> newNodes = new ArrayList<>();
+    for (SqlNode node : nodes) {
+      if (node instanceof SqlNodeList) {
+        newNodes.addAll(((SqlNodeList) node).getList());
+      } else {
+        newNodes.add(node);
+      }
+    }
+
+
     return new ScriptNode(
         getLocation(ctx),
-        visit(ctx.statement(), SqlNode.class)
-    );
-  }
-
-  @Override
-  public SqlNode visitImportStatement(ImportStatementContext ctx) {
-    return visit(ctx.importDefinition());
-  }
-
-  @Override
-  public SqlNode visitImportDefinition(ImportDefinitionContext ctx) {
-    Optional<SqlIdentifier> alias = Optional.ofNullable(
-        ctx.alias == null ? null : (SqlIdentifier) visit(ctx.alias));
-
-    Optional<SqlNode> timestamp;
-    Optional<SqlIdentifier> timestampAlias = Optional.empty();
-    if (ctx.TIMESTAMP() != null) {
-      SqlNode expr = visit(ctx.expression());
-
-      if (ctx.timestampAlias != null) {
-        SqlIdentifier tsAlias = ((SqlIdentifier) visit(ctx.timestampAlias));
-        timestampAlias = Optional.of(tsAlias);
-      }
-      timestamp = Optional.of(expr);
-    } else {
-      timestamp = Optional.empty();
-    }
-    NamePath namePath = NamePath.of(getNamePath(ctx.qualifiedName()).names.stream()
-        .map(i -> (i.equals(""))
-            ? ReservedName.ALL
-            : NameCanonicalizer.SYSTEM.name(i)
-        )
-        .collect(Collectors.toList())
-    );
-    return new ImportDefinition(getLocation(ctx), getNamePath(ctx.qualifiedName()), namePath, alias,
-        timestamp, timestampAlias);
-  }
-
-  @Override
-  public SqlNode visitExportStatement(ExportStatementContext ctx) {
-    return visit(ctx.exportDefinition());
-  }
-
-  @Override
-  public SqlNode visitExportDefinition(ExportDefinitionContext ctx) {
-    return new ExportDefinition(getLocation(ctx),
-        getNamePath(ctx.qualifiedName(0)), toNamePath(getNamePath(ctx.qualifiedName(0))),
-        getNamePath(ctx.qualifiedName(1)));
-  }
-
-  @Override
-  public SqlNode visitDistinctAssignment(DistinctAssignmentContext ctx) {
-    SqlIdentifier namePath = getNamePath(ctx.qualifiedName());
-    SqlIdentifier tableName = (SqlIdentifier) visit(ctx.table);
-
-    Optional<SqlIdentifier> alias = Optional.empty();
-    if (ctx.identifier().size() > 1) {
-      alias = Optional.of((SqlIdentifier) visit(ctx.identifier(1)));
-    }
-    SqlNode aliasedName = alias.map(a -> (SqlNode) SqlStdOperatorTable.AS.createCall(
-        getLocation(ctx.identifier(1)),
-        tableName,
-        a
-    )).orElse(tableName);
-
-    List<SqlNode> pk = new ArrayList<>();
-
-    for (int i = 0; i < ctx.onList().expression().size(); i++) {
-      SqlNode pkNode = visit(ctx.onList().expression(i));
-      pk.add(pkNode);
-    }
-
-    List<SqlNode> sort = new ArrayList<>();
-    if (ctx.orderExpr != null) {
-      SqlNode order = visit(ctx.orderExpr);
-      sort = List.of(SqlStdOperatorTable.DESC.createCall(getLocation(ctx.orderExpr), order));
-    }
-
-    return new DistinctAssignment(
-        getLocation(ctx),
-        namePath,
-        toNamePath(namePath),
-        aliasedName,
-        pk,
-        sort,
-        emptyListToEmptyOptional(getHints(ctx.hint())),
-        null
+        newNodes
     );
   }
 
@@ -1116,7 +1207,7 @@ class AstBuilder
     List<SqlIdentifier> ids = visit(context.identifier(), SqlIdentifier.class);
     SqlIdentifier id = flatten(ids);
     Preconditions.checkState(
-        id.names.size() == SqrlUtil.getComponentPositions(id).size());
+        id.names.size() == CalciteFixes.getComponentPositions(id).size());
 
     if (context.all != null) {
       return id.plusStar();
@@ -1130,95 +1221,11 @@ class AstBuilder
     List<SqlParserPos> cPos = new ArrayList<>();
     for (SqlIdentifier i : ids) {
       names.addAll(i.names);
-      cPos.addAll(SqrlUtil.getComponentPositions(i));
+      cPos.addAll(CalciteFixes.getComponentPositions(i));
     }
 
     return new SqlIdentifier(names, ids.get(0).getCollation(), ids.get(0).getParserPosition(),
         cPos);
-  }
-
-  @Override
-  public SqlNode visitJoinAssignment(JoinAssignmentContext ctx) {
-    SqlIdentifier name = getNamePath(ctx.qualifiedName());
-
-    SqlNode join = visit(ctx.joinSpecification());
-
-    return new JoinAssignment(getLocation(ctx), name,
-        toNamePath(name),
-        getTableArgs(ctx.tableFunctionDef()),
-        join,
-        emptyListToEmptyOptional(getHints(ctx.hint())));
-  }
-
-  private NamePath toNamePath(SqlIdentifier name) {
-    return NamePath.of(name.names.stream()
-        .map(e-> Name.system(e)) //todo: canonicalize
-        .collect(toList()));
-  }
-
-  private Optional<List<TableFunctionArgument>> getTableArgs(TableFunctionDefContext ctx) {
-    if (ctx == null) {
-      return Optional.empty();
-    }
-    List<TableFunctionArgument> args = ctx.functionArgumentDef().stream()
-        .map(arg -> toFunctionArg(arg))
-        .collect(toList());
-
-    return Optional.of(args);
-  }
-
-  private TableFunctionArgument toFunctionArg(FunctionArgumentDefContext ctx) {
-    return new TableFunctionArgument(
-        (SqlIdentifier) visit(ctx.name),
-        getType(ctx.typeName)
-    );
-  }
-
-  @Override
-  public SqlNode visitJoinSpecification(JoinSpecificationContext ctx) {
-    List<SqlNode> sort = visit(ctx.sortItem(), SqlNode.class);
-    Optional<SqlNodeList> sortList = emptyListToEmptyOptional(sort);
-
-    Optional<SqlNumericLiteral> limit =
-        ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL")
-            ? Optional.empty()
-            : Optional.of(
-                SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)));
-    SqrlJoinTerm relation = (SqrlJoinTerm) visit(ctx.joinTerm());
-
-    Optional<SqlIdentifier> inverse = Optional.ofNullable(ctx.inv)
-        .map(i -> (SqlIdentifier) visit(i));
-    return new SqrlJoinDeclarationSpec(
-        getLocation(ctx),
-        relation,
-        sortList,
-        limit,
-        inverse,
-        Optional.empty()
-    );
-  }
-
-  @Override
-  public SqlNode visitQueryAssign(QueryAssignContext ctx) {
-    SqlNode query = visit(ctx.query());
-    return new QueryAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
-        toNamePath(getNamePath(ctx.qualifiedName())),
-        getTableArgs(ctx.tableFunctionDef()),
-        query,
-        emptyListToEmptyOptional(getHints(ctx.hint())));
-  }
-
-  @Override
-  public SqlNode visitStreamAssign(StreamAssignContext ctx) {
-
-    SqlNode query = visit(ctx.streamQuery().query());
-    StreamType type = StreamType.valueOf(
-        ctx.streamQuery().subscriptionType().getText());
-    return new StreamAssignment(getLocation(ctx), getNamePath(ctx.qualifiedName()),
-        toNamePath(getNamePath(ctx.qualifiedName())),
-        query,
-        type,
-        emptyListToEmptyOptional(getHints(ctx.hint())));
   }
 
   private Optional<SqlNodeList> emptyListToEmptyOptional(List<SqlNode> list) {
@@ -1233,16 +1240,6 @@ class AstBuilder
       return Optional.empty();
     }
     return Optional.of(list);
-  }
-
-  @Override
-  public SqlNode visitExpressionAssign(ExpressionAssignContext ctx) {
-    SqlIdentifier name = getNamePath(ctx.qualifiedName());
-    SqlNode expr = visit(ctx.expression());
-    return new ExpressionAssignment(getLocation(ctx), name,
-        toNamePath(name),
-        expr,
-        emptyListToEmptyOptional(getHints(ctx.hint())));
   }
 
   @Override
@@ -1300,10 +1297,10 @@ class AstBuilder
             getLocation(baseType)
         );
       case "float":
-        typeName = SqlTypeName.FLOAT;
+        typeName = SqlTypeName.DOUBLE;
         break;
-      case "integer":
-        typeName = SqlTypeName.INTEGER;
+      case "int":
+        typeName = SqlTypeName.BIGINT;
         break;
       case "string":
         typeName = SqlTypeName.VARCHAR;
@@ -1324,14 +1321,43 @@ class AstBuilder
   }
 
   @Override
-  public SqlNode visitQueryPrimaryDefault(QueryPrimaryDefaultContext ctx) {
-    return visit(ctx.querySpecification());
+  public SqlNode visitQueryPrimary(QueryPrimaryContext ctx) {
+    return Optional.ofNullable(visit(ctx.querySpecification()))
+        .orElseGet(()->visit(ctx.subquery()));
+  }
+
+  @Override
+  public SqlNode visitRelationPrimary(RelationPrimaryContext ctx) {
+    return new SqrlCompoundIdentifier(getLocation(ctx), visit(ctx.relationItem(), SqlNode.class));
+  }
+
+  @Override
+  public SqlNode visitRelationItem(RelationItemContext ctx) {
+    if (ctx.subquery() != null) {
+      return visit(ctx.subquery());
+    } else if(ctx.identifier() != null) {
+      return visit(ctx.identifier());
+    } else if(ctx.tableFunction() != null) {
+      return visit(ctx.tableFunction());
+    }
+    throw new RuntimeException("Unknown path");
   }
 
   @Override
   public SqlNode visitAliasedRelation(AliasedRelationContext ctx) {
     if (ctx.identifier() == null) {
-      return visit(ctx.relationPrimary());
+      SqlNode node = visit(ctx.relationPrimary());
+      //Automatically alias tables that are singular, e.g. FROM Orders
+      if (node instanceof SqrlCompoundIdentifier && ((SqrlCompoundIdentifier)node).getItems().size() == 1
+      && ((SqrlCompoundIdentifier)node).getItems().get(0) instanceof SqlIdentifier) {
+        return SqlStdOperatorTable.AS.createCall(
+            getLocation(ctx),
+            node,
+            new SqlIdentifier(((SqlIdentifier)((SqrlCompoundIdentifier)node).getItems().get(0)).names.get(0), SqlParserPos.ZERO));
+      } else {
+        return visit(ctx.relationPrimary());
+      }
+
     }
     return SqlStdOperatorTable.AS.createCall(
         getLocation(ctx),
@@ -1339,15 +1365,17 @@ class AstBuilder
         visit(ctx.identifier()));
   }
 
-//  @Override
-//  public SqlNode visitChildren(RuleNode node) {
-//    throw new RuntimeException(node.getClass().getName());
-//    return super.visitChildren(node);
-//  }
-
   private enum UnicodeDecodeState {
     EMPTY,
     ESCAPED,
     UNICODE_SEQUENCE
+  }
+
+  @Override
+  public SqlNode visit(ParseTree tree) {
+    if (tree == null) {
+      return null;
+    }
+    return super.visit(tree);
   }
 }

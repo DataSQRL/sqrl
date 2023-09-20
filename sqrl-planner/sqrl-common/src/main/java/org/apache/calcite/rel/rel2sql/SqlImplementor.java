@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.rel.rel2sql;
 
+import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.tree.Expressions;
@@ -470,6 +471,18 @@ public abstract class SqlImplementor {
         return JoinType.INTERVAL;
       case TEMPORAL:
         return JoinType.TEMPORAL;
+      case LEFT_DEFAULT:
+        return JoinType.LEFT_DEFAULT;
+      case LEFT_INTERVAL:
+        return JoinType.LEFT_INTERVAL;
+      case LEFT_TEMPORAL:
+        return JoinType.LEFT_TEMPORAL;
+      case RIGHT_DEFAULT:
+        return JoinType.RIGHT_DEFAULT;
+      case RIGHT_INTERVAL:
+        return JoinType.RIGHT_INTERVAL;
+      case RIGHT_TEMPORAL:
+        return JoinType.RIGHT_TEMPORAL;
       default:
         throw new AssertionError(joinType);
     }
@@ -1584,6 +1597,7 @@ public abstract class SqlImplementor {
   /**
    * Result of implementing a node.
    */
+  @Getter
   public class Result {
 
     final SqlNode node;
@@ -2076,6 +2090,11 @@ public abstract class SqlImplementor {
     public void setFetch(SqlNode fetch) {
       assert clauses.contains(Clause.FETCH);
       select.setFetch(fetch);
+    }
+
+    //SQRL add hints
+    public void setHints(SqlNodeList hints) {
+      select.setHints(hints);
     }
 
     public void setOffset(SqlNode offset) {

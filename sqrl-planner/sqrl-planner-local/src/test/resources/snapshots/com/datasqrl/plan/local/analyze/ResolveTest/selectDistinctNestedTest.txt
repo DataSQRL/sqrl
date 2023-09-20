@@ -1,46 +1,46 @@
->>>productid$q$11-lp-STREAM
-LogicalProject(productid=[$7], time=[$4])
-  LogicalCorrelate(correlation=[$cor11], joinType=[inner], requiredColumns=[{5}])
-    LogicalTableScan(table=[[orders$q$5]])
+>>>productid$q$18-lp-STREAM
+LogicalProject(productid=[$7], time$0=[$4])
+  LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
+    LogicalTableScan(table=[[orders$q$6]])
     Uncollect
-      LogicalProject($f0=[$cor11.entries])
+      LogicalProject($f0=[$cor5.entries$0])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>productid$q$11-lp-DATABASE
-LogicalProject(productid=[$7], time=[$4])
+>>>productid$q$18-lp-DATABASE
+LogicalProject(productid=[$7], time$0=[$4])
   LogicalFilter(condition=[=($12, 1)]) hints[DedupHint]
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], _uuid0=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], time0=[$11], $f12=[ROW_NUMBER() OVER (PARTITION BY $7 ORDER BY $4 DESC NULLS LAST)])
+    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], _uuid$00=[$5], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], unit_price$0=[$9], discount$0=[$10], time$00=[$11], _rownum=[ROW_NUMBER() OVER (PARTITION BY $7 ORDER BY $4 DESC NULLS LAST)])
       LogicalJoin(condition=[=($0, $5)], joinType=[inner])
-        LogicalTableScan(table=[[orders$6]])
-        LogicalTableScan(table=[[entries$7]])
+        LogicalTableScan(table=[[orders$7]])
+        LogicalTableScan(table=[[entries$9]])
 
->>>productorders$q$13-lp-STREAM
-LogicalProject(_uuid=[$0], _idx=[$6], id=[$2], productid=[$11], time=[$4])
+>>>productorders$q$21-lp-STREAM
+LogicalProject(_uuid$0=[$0], _idx$0=[$6], id=[$2], productid=[$11], time$0=[$4])
   LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
-    LogicalCorrelate(correlation=[$cor13], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$q$5]])
+    LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$6]])
       Uncollect
-        LogicalProject($f0=[$cor13.entries])
+        LogicalProject($f0=[$cor7.entries$0])
           LogicalValues(tuples=[[{ 0 }]])
     LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
-      LogicalProject(productid=[$0], time=[$1], $f2=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
-        LogicalTableScan(table=[[productid$q$11]])
+      LogicalProject(productid=[$0], time$0=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+        LogicalTableScan(table=[[productid$q$18]])
 
->>>productorders$q$13-lp-DATABASE
+>>>productorders$q$21-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
->>>suborders$q$15-lp-STREAM
-LogicalProject(__pk_0=[$2], orderid=[$11], numOrders=[COUNT() IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], lastOrder=[MAX($4) IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)])
+>>>suborders$q$24-lp-STREAM
+LogicalProject(__productid$0$pk$1=[$2], orderid=[$11], numOrders=[COUNT() IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], lastOrder=[MAX($4) IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)])
   LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
-    LogicalCorrelate(correlation=[$cor15], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$q$5]])
+    LogicalCorrelate(correlation=[$cor9], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$6]])
       Uncollect
-        LogicalProject($f0=[$cor15.entries])
+        LogicalProject($f0=[$cor9.entries$0])
           LogicalValues(tuples=[[{ 0 }]])
     LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
-      LogicalProject(productid=[$0], time=[$1], $f2=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
-        LogicalTableScan(table=[[productid$q$11]])
+      LogicalProject(productid=[$0], time$0=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+        LogicalTableScan(table=[[productid$q$18]])
 
->>>suborders$q$15-lp-DATABASE
+>>>suborders$q$24-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 

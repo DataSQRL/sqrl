@@ -1,7 +1,7 @@
-[FATAL] Could not find associated SQRL type for field orders on type DOESNOTEXIST. Check that the type has all the necessary fields.
-in script:<schema> [5:3]:
+[FATAL] Could not find Object type [DOESNOTEXIST]
+in script:<schema> [5:11]:
 }
 type Query {
-  orders: DOESNOTEXIST
---^
+	orders: DOESNOTEXIST
+----------^
 

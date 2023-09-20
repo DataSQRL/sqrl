@@ -1,36 +1,36 @@
->>>productcount$q$13-lp-STREAM
-LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $14 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+>>>productcount$q$21-lp-STREAM
+LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $14 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time$0=[$4])
   LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-    LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$q$5]])
+    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+      LogicalTableScan(table=[[orders$q$6]])
       Uncollect
-        LogicalProject($f0=[$cor3.entries])
+        LogicalProject($f0=[$cor1.entries$0])
           LogicalValues(tuples=[[{ 0 }]])
     LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-      LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updatetime=[$6], $f7=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
-        LogicalTableScan(table=[[product$q$11]])
+      LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+        LogicalTableScan(table=[[product$q$18]])
 
->>>productcount$q$13-lp-DATABASE
+>>>productcount$q$21-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
->>>countstream$q$15-lp-STREAM
-LogicalProject(_uuid=[$0], _source_time=[$1], productid=[$2], name=[$3], quantity=[$4])
+>>>countstream$q$24-lp-STREAM
+LogicalProject(_uuid$0=[$0], _source_time$0=[$1], productid=[$2], name=[$3], quantity=[$4])
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[>($2, 1)])
       LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-        LogicalProject(productid=[$0], name=[$1], quantity=[$2], time=[$3], $f4=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
-          LogicalTableScan(table=[[productcount$q$13]])
+        LogicalProject(productid=[$0], name=[$1], quantity=[$2], time$0=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
+          LogicalTableScan(table=[[productcount$q$21]])
 
->>>countstream$q$15-lp-DATABASE
+>>>countstream$q$24-lp-DATABASE
 Stage [database] does not support capabilities: [TO_STREAM]
 
->>>productcount2$q$17-lp-STREAM
-LogicalProject(productid=[$2], _uuid=[$0], _source_time=[$1], name=[$3], quantity=[$4])
-  LogicalTableScan(table=[[countstream$q$15]])
+>>>productcount2$q$27-lp-STREAM
+LogicalProject(productid=[$2], _uuid$0=[$0], _source_time$0=[$1], name=[$3], quantity=[$4])
+  LogicalTableScan(table=[[countstream$q$24]])
 
->>>productcount2$q$17-lp-DATABASE
-LogicalProject(productid=[$2], _uuid=[$0], _source_time=[$1], name=[$3], quantity=[$4])
+>>>productcount2$q$27-lp-DATABASE
+LogicalProject(productid$0=[$2], _uuid$0=[$0], _source_time$0=[$1], name$0=[$3], quantity$0=[$4])
   LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(_uuid=[$0], _source_time=[$1], productid=[$2], name=[$3], quantity=[$4], $f5=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
-      LogicalTableScan(table=[[countstream$16]])
+    LogicalProject(_uuid$0=[$0], _source_time$0=[$1], productid$0=[$2], name$0=[$3], quantity$0=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
+      LogicalTableScan(table=[[countstream$25]])
 

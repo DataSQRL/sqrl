@@ -3,6 +3,10 @@
  */
 package com.datasqrl.schema;
 
+import static com.datasqrl.canonicalizer.Name.changeDisplayName;
+
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.StandardName;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.canonicalizer.Name;
@@ -84,10 +88,16 @@ public class UniversalTable {
     addColumn(colName, type, true);
   }
 
-  public void addColumn(final Name colName, RelDataType type, boolean visible) {
+  public void addColumn(Name colName, RelDataType type, boolean visible) {
+    //column may already be versioned, if so, strip
+    String nameStr = colName.getCanonical().split("\\$")[0];
+    Preconditions.checkState(!nameStr.isEmpty(), "Column not named: " + colName);
+    Name name = Name.system(nameStr);
+
+    int version = fields.nextVersion(name);
+
     //A name may clash with a previously added name, hence we increase the version
-    int version = fields.nextVersion(colName);
-    fields.addField(new Column(colName, version, type, visible));
+    fields.addField(new Column(name, version, type, visible));
   }
 
   public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
@@ -113,11 +123,6 @@ public class UniversalTable {
     }
 
     @Override
-    public FieldKind getKind() {
-      return FieldKind.COLUMN;
-    }
-
-    @Override
     public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
       return null;
     }
@@ -134,11 +139,6 @@ public class UniversalTable {
       super(name, version);
       this.childTable = childTable;
       this.multiplicity = multiplicity;
-    }
-
-    @Override
-    public FieldKind getKind() {
-      return FieldKind.RELATIONSHIP;
     }
 
     @Override
@@ -228,7 +228,7 @@ public class UniversalTable {
     }
 
     public RelDataType withNullable(RelDataType type, boolean nullable) {
-      return TypeUtil.withNullable(typeFactory, type, nullable);
+      return TypeFactory.withNullable(typeFactory, type, nullable);
     }
 
   }
@@ -264,10 +264,10 @@ public class UniversalTable {
     public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
         boolean hasSourceTimestamp) {
       UniversalTable tblBuilder = new UniversalTable(name, path, 1, hasSourceTimestamp);
-      tblBuilder.addColumn(ReservedName.UUID, TypeUtil.makeUuidType(typeFactory, false));
-      tblBuilder.addColumn(ReservedName.INGEST_TIME, TypeUtil.makeTimestampType(typeFactory,false));
+      tblBuilder.addColumn(ReservedName.UUID, TypeFactory.makeUuidType(typeFactory, false));
+      tblBuilder.addColumn(ReservedName.INGEST_TIME, TypeFactory.makeTimestampType(typeFactory,false));
       if (hasSourceTimestamp) {
-        tblBuilder.addColumn(ReservedName.SOURCE_TIME, TypeUtil.makeTimestampType(typeFactory,false));
+        tblBuilder.addColumn(ReservedName.SOURCE_TIME, TypeFactory.makeTimestampType(typeFactory,false));
       }
       return tblBuilder;
     }

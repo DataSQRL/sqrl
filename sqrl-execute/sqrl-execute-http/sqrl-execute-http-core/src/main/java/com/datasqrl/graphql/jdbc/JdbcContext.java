@@ -11,6 +11,7 @@ import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import graphql.schema.DataFetcher;
 import graphql.schema.PropertyDataFetcher;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -58,7 +59,7 @@ public class JdbcContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords) {
+  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords, Map<String, String> filters) {
     throw new RuntimeException("Subscriptions not yet supported");
   }
 }

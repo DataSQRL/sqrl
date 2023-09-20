@@ -5,19 +5,20 @@ package com.datasqrl.schema;
 
 import com.datasqrl.canonicalizer.Name;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.calcite.rel.type.RelDataType;
 
 @Getter
 public class Column extends Field {
 
-  private final Name vtName;
-  final boolean isVisible;
   private final RelDataType type;
-  boolean nullable;
+  private final boolean isVisible;
+  private final boolean nullable;
+  @Setter
+  private String vtName;
 
-  public Column(Name name, Name vtName, int version, boolean isVisible, RelDataType type) {
+  public Column(Name name, int version, boolean isVisible, RelDataType type) {
     super(name, version);
-    this.vtName = vtName;
     this.isVisible = isVisible;
     this.type = type;
     this.nullable = type.isNullable();
@@ -26,11 +27,6 @@ public class Column extends Field {
   @Override
   public String toString() {
     return super.toString();
-  }
-
-  @Override
-  public FieldKind getKind() {
-    return FieldKind.COLUMN;
   }
 
   public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {

@@ -3,8 +3,8 @@
  */
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.schema.TypeUtil;
 import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.AbstractBasicType;
@@ -48,7 +48,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
 
   @Override
   public RelDataType visitDateTimeType(DateTimeType type, Void context) {
-    return TypeUtil.makeTimestampType(typeFactory);
+    return TypeFactory.makeTimestampType(typeFactory);
   }
 
   @Override
@@ -64,12 +64,12 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
 
   @Override
   public RelDataType visitStringType(StringType type, Void context) {
-    return typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE);
+    return typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
   }
 
   @Override
   public RelDataType visitUuidType(UuidType type, Void context) {
-    return TypeUtil.makeUuidType(typeFactory);
+    return TypeFactory.makeUuidType(typeFactory);
   }
 
 

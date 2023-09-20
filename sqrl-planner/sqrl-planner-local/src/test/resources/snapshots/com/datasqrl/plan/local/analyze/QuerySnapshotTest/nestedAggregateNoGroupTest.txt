@@ -1,10 +1,10 @@
->>>entries_2$q$5
-LogicalProject(__pk_0=[$0], cnt=[$2], time=[$1])
+>>>entries_2$q$10
+LogicalProject(___uuid$0$pk$1=[$0], cnt=[$2], time$0=[$1])
   LogicalAggregate(group=[{0, 4}], cnt=[COUNT()])
     LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$2]])
       Uncollect
-        LogicalProject($f0=[$cor3.entries])
+        LogicalProject($f0=[$cor3.entries$0])
           LogicalValues(tuples=[[{ 0 }]])
 
 >>>orders$q$2

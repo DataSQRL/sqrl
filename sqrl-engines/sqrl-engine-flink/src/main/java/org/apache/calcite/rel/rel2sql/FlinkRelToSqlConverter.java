@@ -1,12 +1,13 @@
 package org.apache.calcite.rel.rel2sql;
 
-import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.FlinkExecutablePlan.FlinkQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToTypeInformationTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
 import com.datasqrl.engine.stream.flink.sql.model.StreamPipelineItem;
 import com.datasqrl.plan.hints.SqrlHint;
@@ -78,6 +79,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     }
 
     String sql = RelToFlinkSql.convertToString(node);
+
     QueryPipelineItem q;
     if (queryType == QueryType.STREAM) {
       q = new StreamPipelineItem(queryType.name().toLowerCase(), node, sql,
@@ -255,14 +257,12 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     Result x = super.visitInput(stream, 0)
         .resetAlias();
 
-    SqlSelect select = (SqlSelect) x.asSelect();
+    SqlSelect select = x.asSelect();
     QueryPipelineItem queries1 = getOrCreate(QueryType.STREAM, select, stream.getInput(0), stream);
 
     SqlIdentifier table = new SqlIdentifier(queries1.getTableName(), SqlParserPos.ZERO);
-    SqlNode as = SqlStdOperatorTable.AS.createCall(POS, table,
-        new SqlIdentifier(x.neededAlias, POS));
-
-    return this.result(as, List.of(Clause.FROM), null, null, Map.of());
+    SqlIdentifier identifier = table;
+    return this.result(identifier, ImmutableList.of(Clause.FROM), stream, (Map)null);
   }
 
   @Override
@@ -324,7 +324,6 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
     SqlSelect select = x.asSelect();
     QueryPipelineItem queries1 = getOrCreate(QueryType.QUERY, select, e.getInput(0), null);
 
-    Context context = x.qualifiedContext();
     RexBuilder rex = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
         FlinkTypeSystem.INSTANCE));
     //The first flink operand is referencing something else

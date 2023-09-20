@@ -1,9 +1,10 @@
 >>>database
-CREATE TABLE IF NOT EXISTS "category$14" ("name" VARCHAR NOT NULL,"updatetime" INTEGER NOT NULL , PRIMARY KEY ("name"));
-CREATE TABLE IF NOT EXISTS "customer$12" ("customerid" BIGINT NOT NULL,"_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"email" VARCHAR NOT NULL,"name" VARCHAR NOT NULL,"lastupdated" BIGINT NOT NULL,"updatetime" INTEGER NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "favorite_categories$24" ("__pk_0" BIGINT NOT NULL,"category_name" VARCHAR NOT NULL,"total" DOUBLE NOT NULL,"month" INTEGER NOT NULL , PRIMARY KEY ("__pk_0","category_name"));
-CREATE TABLE IF NOT EXISTS "order_again$20" ("__pk_0" BIGINT NOT NULL,"productid" BIGINT NOT NULL,"quantity" BIGINT NOT NULL,"num_orders" BIGINT NOT NULL,"most_recent" INTEGER NOT NULL , PRIMARY KEY ("__pk_0","productid"));
-CREATE TABLE IF NOT EXISTS "product$16" ("productid" BIGINT NOT NULL,"_uuid" VARCHAR NOT NULL,"_ingest_time" INTEGER NOT NULL,"name" VARCHAR NOT NULL,"description" VARCHAR NOT NULL,"category" VARCHAR NOT NULL,"updatetime" INTEGER NOT NULL , PRIMARY KEY ("productid"));
+CREATE INDEX IF NOT EXISTS product$25_hash_c5 ON product$25 ("category$0")
+CREATE TABLE IF NOT EXISTS "category$22" ("name$0" VARCHAR NOT NULL,"updatetime$0" INTEGER NOT NULL , PRIMARY KEY ("name$0"));
+CREATE TABLE IF NOT EXISTS "customer$19" ("customerid$0" BIGINT NOT NULL,"_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"email$0" VARCHAR NOT NULL,"name$0" VARCHAR NOT NULL,"lastupdated$0" BIGINT NOT NULL,"updatetime$0" INTEGER NOT NULL , PRIMARY KEY ("customerid$0"));
+CREATE TABLE IF NOT EXISTS "favorite_categories$46" ("__customerid$0" BIGINT NOT NULL,"category_name$0" VARCHAR NOT NULL,"total$0" DOUBLE NOT NULL,"month$0" INTEGER NOT NULL , PRIMARY KEY ("__customerid$0","category_name$0"));
+CREATE TABLE IF NOT EXISTS "order_again$36" ("__customerid$0" BIGINT NOT NULL,"productid$0" BIGINT NOT NULL,"quantity$0" BIGINT NOT NULL,"num_orders$0" BIGINT NOT NULL,"most_recent$0" INTEGER NOT NULL , PRIMARY KEY ("__customerid$0","productid$0"));
+CREATE TABLE IF NOT EXISTS "product$25" ("productid$0" BIGINT NOT NULL,"_uuid$0" VARCHAR NOT NULL,"_ingest_time$0" INTEGER NOT NULL,"name$0" VARCHAR NOT NULL,"description$0" VARCHAR NOT NULL,"category$0" VARCHAR NOT NULL,"updatetime$0" INTEGER NOT NULL , PRIMARY KEY ("productid$0"));
 >>>query-category
 {
   "data" : {

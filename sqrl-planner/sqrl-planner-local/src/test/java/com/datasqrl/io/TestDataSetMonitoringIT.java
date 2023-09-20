@@ -25,7 +25,6 @@ import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Conference;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
-import com.datasqrl.util.data.Sensors;
 import com.datasqrl.util.junit.ArgumentProvider;
 
 import java.util.List;

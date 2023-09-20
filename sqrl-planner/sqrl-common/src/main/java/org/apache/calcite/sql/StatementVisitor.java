@@ -1,11 +1,35 @@
 package org.apache.calcite.sql;
 
 public interface StatementVisitor<R, C> {
-    R visit(ImportDefinition statement, C context);
-    R visit(ExportDefinition statement, C context);
-    R visit(StreamAssignment statement, C context);
-    R visit(ExpressionAssignment statement, C context);
-    R visit(QueryAssignment statement, C context);
-    R visit(JoinAssignment statement, C context);
-    R visit(DistinctAssignment statement, C context);
+    R visit(SqrlImportDefinition statement, C context);
+    R visit(SqrlExportDefinition statement, C context);
+    R visit(SqrlAssignTimestamp statement, C context);
+
+    default R visit(SqrlStreamQuery statement, C context) {
+        return visit((SqrlAssignment) statement, context);
+    }
+
+    default R visit(SqrlExpressionQuery statement, C context) {
+        return visit((SqrlAssignment) statement, context);
+    }
+
+    default R visit(SqrlSqlQuery statement, C context) {
+        return visit((SqrlAssignment) statement, context);
+    }
+
+    default R visit(SqrlJoinQuery statement, C context) {
+        return visit((SqrlAssignment) statement, context);
+    }
+
+    default R visit(SqrlFromQuery statement, C context) {
+        return visit((SqrlAssignment) statement, context);
+    }
+
+    default R visit(SqrlDistinctQuery statement, C context) {
+        return visit((SqrlAssignment) statement, context);
+    }
+
+    default R visit(SqrlAssignment statement, C context) {
+        throw new RuntimeException("Could not walk statement: " + statement.getClass());
+    }
 }

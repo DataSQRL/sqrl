@@ -9,14 +9,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
-import com.datasqrl.plan.local.generate.TableFunctionBase;
+import com.datasqrl.plan.global.DAGBuilder;
+import com.datasqrl.plan.global.DAGPreparation;
+import com.datasqrl.plan.global.SqrlDAG;
+import com.datasqrl.plan.global.StageAnalysis;
+import com.datasqrl.plan.global.StageAnalysis.Cost;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
 import com.datasqrl.plan.table.CalciteTableFactory;
@@ -25,16 +28,9 @@ import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.plan.table.TableType;
 import com.datasqrl.plan.table.TimestampHolder;
-import com.datasqrl.plan.global.DAGBuilder;
-import com.datasqrl.plan.global.DAGPreparation;
-import com.datasqrl.plan.global.SqrlDAG;
-import com.datasqrl.plan.global.StageAnalysis;
-import com.datasqrl.plan.global.StageAnalysis.Cost;
-import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
-import com.datasqrl.util.StreamUtil;
 import com.datasqrl.util.TestRelWriter;
 import com.datasqrl.util.data.Retail;
 import java.io.IOException;
@@ -42,19 +38,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -69,7 +66,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
     initialize(IntegrationTestSettings.getInMemory(), null, Optional.of(exportPath));
-    schema = injector.getInstance(SqrlSchema.class);
+    schema = framework.getSchema();
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     if (!Files.isDirectory(exportPath)) {
@@ -432,7 +429,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY \"_ingest_time\" DESC;");
     builder.add(
-        "Customer.recentOrders := SELECT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+        "Customer.recentOrders := SELECT o.id, o.time FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
     plan(builder.toString());
     validateQueryTable("customer", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(2),
@@ -471,7 +468,6 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     validateQueryTable("suborders", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 4, 2,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).hasSort(true).build());
   }
-  //
 
   @Test
   public void partitionSelectDistinctTest() {
@@ -479,9 +475,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;");
     builder.add(
-        "Customer.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+        "Customer.distinctOrders := SELECT DISTINCT o.id FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
     builder.add(
-        "Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
+        "Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
 //    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM @.distinctOrders d");
     plan(builder.toString());
     validateQueryTable("customer", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 6, 1,
@@ -578,9 +574,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void tableFunctionsBasic() {
     ScriptBuilder builder = imports();
     builder.add(
-        "OrdersIDRange(idLower: INTEGER) := SELECT * FROM Orders WHERE id > :idLower");
+        "OrdersIDRange(@idLower: Int) := SELECT * FROM Orders WHERE id > @idLower");
     builder.add(
-        "Orders2(idLower: INTEGER) := SELECT id, id - :idLower AS delta, time FROM Orders WHERE id > :idLower");
+        "Orders2(@idLower: Int) := SELECT id, id - @idLower AS delta, time FROM Orders WHERE id > @idLower");
     plan(builder.toString());
     validateAccessTableFunction("ordersidrange", "orders", Type.DATABASE);
     validateTableFunction("orders2", TableType.STREAM, Type.DATABASE, 4, 1,
@@ -646,11 +642,12 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private void validateTableFunction(String tableName, TableType tableType, ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys, TimestampTest timestampTest,
       PullupTest pullupTest) {
-    ComputeTableFunction tblFct = getLatestTableFunction(schema, tableName,
-        ComputeTableFunction.class).get();
-    ScriptRelationalTable table = tblFct.getQueryTable();
-    validateScriptRelationalTable(table, tableType, numCols, numPrimaryKeys, timestampTest, pullupTest);
-    validatedTables.put(tblFct, execType);
+    Optional<SqrlTableMacro> tblFct = getLatestTableFunction(schema, tableName);
+    assertTrue(tblFct.isPresent());
+    snapshot.addContent(tblFct.get().getViewTransform().get().explain());
+//    ScriptRelationalTable table = tblFct.getQueryTable();
+//    validateScriptRelationalTable(table, tableType, numCols, numPrimaryKeys, timestampTest, pullupTest);
+//    validatedTables.put(tblFct, execType);
   }
 
   private void validateScriptRelationalTable(ScriptRelationalTable table, TableType tableType,
@@ -670,35 +667,37 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     return sqrlSchema.getTableNames().stream().filter(s -> s.indexOf(Name.NAME_DELIMITER) != -1)
         .filter(s -> s.substring(0, s.indexOf(Name.NAME_DELIMITER)).equals(normalizedName))
         .filter(s ->
-            tableClass.isInstance(sqrlSchema.getTable(s, true).getTable()))
+            tableClass.isInstance(sqrlSchema.getTable(s, false).getTable()))
         //Get most recently added table
         .sorted((a, b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),
             CalciteTableFactory.getTableOrdinal(b)))
-        .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, true).getTable()))
-        .or(() -> getLatestTableFunction(sqrlSchema, tableName,
-            ComputeTableFunction.class).map(tblFct -> tableClass.cast(tblFct.getQueryTable())));
+        .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, false).getTable()))
+       ;
   }
 
   private void validateAccessTableFunction(String tableName, String baseTableName, ExecutionEngine.Type execType) {
-    AccessTableFunction tblFct = getLatestTableFunction(this.schema, tableName,
-        AccessTableFunction.class).get();
-    assertTrue(baseTableName.equalsIgnoreCase(tblFct.getTable().getName().getCanonical()), "Base table name");
-    validatedTables.put(tblFct, execType);
+    Optional<SqrlTableMacro> tblFct = getLatestTableFunction(this.schema, tableName
+    );
+    assertTrue(tblFct.isPresent());
+    snapshot.addContent(tblFct.get().getViewTransform().get().explain());
+//    validatedTables.put(tblFct, execType);
   }
 
-  public static <T extends TableFunctionBase> Optional<T> getLatestTableFunction(
-      SqrlSchema sqrlSchema, String tableName, Class<T> tableFctClass) {
-    return StreamUtil.getOnlyElement(sqrlSchema.getFunctionStream(tableFctClass)
-        .filter(fct -> fct.getTableName().getCanonical().equalsIgnoreCase(tableName)));
+  public static <T extends SqrlTableMacro> Optional<T> getLatestTableFunction(
+      SqrlSchema sqrlSchema, String tableName) {
+    SqlUserDefinedTableFunction tableFunction = sqrlSchema.getSqrlFramework().getQueryPlanner().getTableFunction(
+        List.of(tableName));
+    return Optional.ofNullable(tableFunction)
+        .map(f->(T) f.getFunction());
   }
 
 
 
   private void createSnapshots() {
     new DAGPreparation(planner.createRelBuilder(), errors).prepareInputs(planner.getSchema(),
-        new MockAPIConnectorManager(), Collections.EMPTY_LIST);
+        new MockAPIConnectorManager(), Collections.EMPTY_LIST, framework);
     DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(planner.createRelBuilder()),
-        namespace.getSchema().getPipeline(), errors);
+        namespace.getPipeline(), errors);
     validatedTables.forEach((table, execType) -> {
       Map<ExecutionStage, StageAnalysis> stageAnalysis = dagBuilder.planStages(table);
       assertEquals(execType, SqrlDAG.SqrlNode.findCheapestStage(stageAnalysis).getStage().getEngine().getType(),

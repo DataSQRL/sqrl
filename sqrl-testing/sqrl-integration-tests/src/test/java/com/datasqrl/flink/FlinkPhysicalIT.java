@@ -159,8 +159,8 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   public void filterTest() {
     ScriptBuilder builder = example.getImports();
 
-    builder.add("HistoricOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 999 DAYS");
-    builder.add("RecentOrders := SELECT * FROM Orders WHERE \"time\" >= now() - INTERVAL 1 SECOND");
+    builder.add("HistoricOrders := SELECT * FROM Orders WHERE time >= now() - INTERVAL 999 DAYS");
+    builder.add("RecentOrders := SELECT * FROM Orders WHERE time >= now() - INTERVAL 1 SECOND");
 
     validateTables(builder.getScript(), "historicorders", "recentorders");
   }
@@ -175,16 +175,16 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("Customer.updateTime := epochToTimestamp(lastUpdated)");
     builder.add("CustomerDistinct := DISTINCT Customer ON customerid ORDER BY updateTime DESC;");
     builder.add(
-        "CustomerDistinct.recentOrders := SELECT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
+        "CustomerDistinct.recentOrders := SELECT o.id, o.time FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.\"time\" DESC LIMIT 10;");
 
     builder.add("CustomerId := SELECT DISTINCT customerid FROM Customer;");
     builder.add(
         "CustomerOrders := SELECT o.id, c.customerid FROM CustomerId c JOIN Orders o ON o.customerid = c.customerid");
 
     builder.add(
-        "CustomerDistinct.distinctOrders := SELECT DISTINCT o.id FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+        "CustomerDistinct.distinctOrders := SELECT DISTINCT o.id FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
     builder.add(
-        "CustomerDistinct.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
+        "CustomerDistinct.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
 
     builder.add("Orders := DISTINCT Orders ON id ORDER BY \"time\" DESC");
 

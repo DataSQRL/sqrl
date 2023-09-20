@@ -5,6 +5,7 @@ package com.datasqrl.engine.stream.inmemory;
 
 import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -24,7 +25,6 @@ import com.datasqrl.error.ErrorCollection;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.formats.TextLineFormat;
 import com.datasqrl.io.impl.file.FilePath;
 import com.datasqrl.io.impl.file.FilePathConfig;
@@ -46,7 +46,6 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.tools.RelBuilder;
 
 @Slf4j
 public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
@@ -71,7 +70,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
 
   @Override
   public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      ExecutionPipeline pipeline, RelBuilder relBuilder, TableSink errorSink) {
+                                 ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink) {
     throw new UnsupportedOperationException();
   }
 

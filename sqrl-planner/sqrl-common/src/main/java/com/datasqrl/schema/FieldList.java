@@ -4,6 +4,7 @@
 package com.datasqrl.schema;
 
 import com.datasqrl.canonicalizer.Name;
+import java.util.Map.Entry;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
@@ -29,16 +30,8 @@ public class FieldList {
     return new ArrayList<>(fields);
   }
 
-  public Field atIndex(int index) {
-    return fields.get(index);
-  }
-
-  public int numFields() {
-    return fields.size();
-  }
 
   public void addField(Field field) {
-//        Preconditions.checkArgument(field.getVersion()>=nextVersion(field.getName()));
     fields.add(field);
   }
 
@@ -74,6 +67,19 @@ public class FieldList {
     return fields.stream().filter(f -> f.getName().equals(name))
         .filter(Field::isVisible)
         .max((a, b) -> Integer.compare(a.getVersion(), b.getVersion()));
+  }
+
+  public List<Column> getColumns() {
+    Map<String, Column> cols = new LinkedHashMap<>();
+    for (Field f : fields) {
+      if (!f.isVisible() || !(f instanceof Column)) {
+        continue;
+      }
+      cols.put(f.getName().getCanonical(), (Column) f);
+    }
+    return cols.entrySet().stream()
+        .map(Entry::getValue)
+        .collect(Collectors.toList());
   }
 
   @Value

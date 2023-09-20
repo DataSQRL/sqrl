@@ -85,41 +85,6 @@ public class CalciteUtil {
         && !datatype.isNullable();
   }
 
-  private static SqlSelect stripOrderBy(SqlNode query) {
-    if (query instanceof SqlSelect) {
-      return (SqlSelect) query;
-    } else if (query instanceof SqlOrderBy) {
-      return (SqlSelect) ((SqlOrderBy) query).query;
-    }
-    return null;
-  }
-
-  public static void removeKeywords(SqlSelect select) {
-    select.setOperand(0, SqlNodeList.EMPTY);
-  }
-
-  public static void wrapSelectInProject(SqlSelect select) {
-    SqlSelect innerSelect = (SqlSelect) select.clone(select.getParserPosition());
-
-    SqlNodeList columnNames = new SqlNodeList(List.of(SqlIdentifier.STAR),
-        select.getSelectList().getParserPosition());
-
-    select.setOperand(0, SqlNodeList.EMPTY);
-    select.setOperand(1, columnNames);
-    select.setOperand(2, innerSelect);
-    select.setOperand(3, null);
-    select.setOperand(4, null);
-    select.setOperand(5, null);
-    select.setOperand(6, SqlNodeList.EMPTY);
-    select.setOperand(7, null);
-    select.setOperand(8, null);
-    select.setOperand(9, null);
-  }
-
-  public static void setHint(SqlSelect select, SqlHint hint) {
-    select.setHints(new SqlNodeList(List.of(hint), SqlParserPos.ZERO));
-  }
-
   public interface RelDataTypeBuilder {
 
     public default RelDataTypeBuilder add(Name name, RelDataType type) {
@@ -230,7 +195,6 @@ public class CalciteUtil {
     }
 
     public RelDataTypeBuilder add(RelDataTypeField field) {
-      //TODO: Do we need to do a deep clone or is this kosher since fields are immutable?
       fieldBuilder.add(field);
       return this;
     }
@@ -245,12 +209,6 @@ public class CalciteUtil {
     return node.accept(new RexShuttleApplier(rexShuttle));
   }
 
-  public interface InjectParentRelNode {
-
-    public void setParentRelNode(RelNode relNode);
-
-  }
-
   @Value
   private static class RexShuttleApplier extends RelShuttleImpl {
 
@@ -258,9 +216,6 @@ public class CalciteUtil {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-      if (rexShuttle instanceof InjectParentRelNode) {
-        ((InjectParentRelNode)rexShuttle).setParentRelNode(parent);
-      }
       return super.visitChild(parent.accept(rexShuttle), i, child);
     }
   }

@@ -1,6 +1,5 @@
 package com.datasqrl;
 
-import com.google.common.base.Preconditions;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +8,6 @@ import lombok.Builder;
 import lombok.Singular;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.ArgumentCount;

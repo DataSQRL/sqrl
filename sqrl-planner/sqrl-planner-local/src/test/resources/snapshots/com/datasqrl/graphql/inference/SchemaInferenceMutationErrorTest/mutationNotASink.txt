@@ -1,6 +1,7 @@
-[FATAL] Expected SQRL String or Date type, found: BIGINT
-in script:<schema> [2:7]:
-type Orders {
-  id: String
-------^
+[FATAL] Could not find mutation source: addOrder.
+in script:<schema> [7:1]:
+	id: Int!
+}
+type Mutation {
+^
 

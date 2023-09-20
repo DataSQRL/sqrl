@@ -2,6 +2,6 @@
 in script:<schema> [5:11]:
 }
 type Query {
-  orders: [[Orders!]]!
+	orders: [[Orders!]]!
 ----------^
 

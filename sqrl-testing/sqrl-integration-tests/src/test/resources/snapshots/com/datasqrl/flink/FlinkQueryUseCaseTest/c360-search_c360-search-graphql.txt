@@ -1,39 +1,44 @@
 >>>database
-CREATE INDEX IF NOT EXISTS product$5_text_c3c4c5 ON product$5 USING GIN (to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(category, '') ));
-CREATE TABLE IF NOT EXISTS product$5 (productid BIGINT NOT NULL,_uuid VARCHAR NOT NULL,_ingest_time TIMESTAMPTZ NOT NULL,name VARCHAR NOT NULL,description VARCHAR NOT NULL,category VARCHAR NOT NULL,updatetime TIMESTAMPTZ NOT NULL , PRIMARY KEY (productid));
+CREATE INDEX IF NOT EXISTS product$6_text_c3c4c5 ON product$6 USING GIN (to_tsvector('english', coalesce(name$0, '') || ' ' || coalesce(description$0, '') || ' ' || coalesce(category$0, '') ));
+CREATE TABLE IF NOT EXISTS product$6 (productid$0 BIGINT NOT NULL,_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,name$0 VARCHAR NOT NULL,description$0 VARCHAR NOT NULL,category$0 VARCHAR NOT NULL,updatetime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (productid$0));
 >>>query-productsearch
 {
   "data" : {
     "ProductSearch" : [ {
-      "productid" : 1332,
-      "name" : "Heavy Duty Butt Wipes",
-      "description" : "Wipes for hardiest of messes",
-      "category" : "Personal Care"
-    }, {
       "productid" : 3225,
       "name" : "4ft Garden Gnome",
       "description" : "A real-sized garden gnome adds character to your outdoor space",
-      "category" : "House & Garden"
-    }, {
-      "productid" : 3571,
-      "name" : "Poptech Blow 500",
-      "description" : "High powered blowdryer for any hair",
-      "category" : "Personal Care"
-    }, {
-      "productid" : 7235,
-      "name" : "Aachen Snow Globe",
-      "description" : "Picturesque city in a beautiful snow globe",
-      "category" : "Decoration"
+      "category" : "House & Garden",
+      "score" : 0.1
+    } ]
+  }
+}
+>>>query-productsearch2
+{
+  "data" : {
+    "ProductSearch" : [ {
+      "productid" : 3225,
+      "name" : "4ft Garden Gnome",
+      "description" : "A real-sized garden gnome adds character to your outdoor space",
+      "category" : "House & Garden",
+      "score" : 0.1
     }, {
       "productid" : 7552,
       "name" : "Simer Garden Hose 50ft",
       "description" : "Long garden hose that rolls up",
+      "category" : "House & Garden",
+      "score" : 0.1
+    } ]
+  }
+}
+>>>query-productsearchWithId
+{
+  "data" : {
+    "ProductSearchWithId" : [ {
+      "productid" : 7552,
+      "name" : "Simer Garden Hose 50ft",
+      "description" : "Long garden hose that rolls up",
       "category" : "House & Garden"
-    }, {
-      "productid" : 8757,
-      "name" : "Original German Nutcracker 3ft",
-      "description" : "Hand-made nutcracker is the perfect Christmas decoration",
-      "category" : "Decoration"
     } ]
   }
 }

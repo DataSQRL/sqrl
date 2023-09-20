@@ -1,15 +1,42 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.module.TableNamespaceObject;
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.local.ScriptTableDefinition;
-import lombok.NonNull;
-import lombok.Value;
+import com.datasqrl.plan.table.CalciteTableFactory;
+import java.util.List;
+import java.util.Optional;
+import lombok.Getter;
+import org.apache.calcite.schema.Function;
+import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.SqrlTableFunctionDef;
 
-@Value
-public class SqrlTableNamespaceObject implements TableNamespaceObject<ScriptTableDefinition> {
-  @NonNull
-  Name name;
-  @NonNull
-  ScriptTableDefinition table;
+@Getter
+public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<ScriptTableDefinition> {
+  private final Name name;
+  private final ScriptTableDefinition table;
+  private final SqrlTableFunctionDef args;
+  private final List<FunctionParameter> parameters;
+  private final List<Function> isA;
+  private final boolean materializeSelf;
+
+  public SqrlTableNamespaceObject(Name name, ScriptTableDefinition table, CalciteTableFactory tableFactory,
+      SqrlTableFunctionDef args,
+      List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf) {
+    super(tableFactory);
+    this.name = name;
+    this.table = table;
+    this.args = args;
+    this.parameters = parameters;
+    this.isA = isA;
+    this.materializeSelf = materializeSelf;
+  }
+
+  @Override
+  public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
+    registerScriptTable(table, framework);
+
+    return true;
+  }
 }

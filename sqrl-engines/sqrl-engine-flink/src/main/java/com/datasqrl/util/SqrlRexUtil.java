@@ -3,6 +3,9 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.DefaultFunctions;
+import com.datasqrl.flink.function.BridgingFunction;
+import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
@@ -54,11 +57,8 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
-import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
-import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 public class SqrlRexUtil {
@@ -188,7 +188,7 @@ public class SqrlRexUtil {
   }
 
   public static boolean isNOW(SqlOperator operator) {
-    return operator.equals(FlinkSqlOperatorTable.NOW);
+    return operator.equals(DefaultFunctions.NOW);
   }
 
   public static RexFinder findFunction(SqrlFunction operator) {
@@ -208,15 +208,13 @@ public class SqrlRexUtil {
   }
 
   public static Optional<SqrlFunction> getSqrlFunction(SqlOperator operator) {
-    if (operator instanceof BridgingSqlFunction) {
-      ContextResolvedFunction ctxFunction = ((BridgingSqlFunction)operator).getResolvedFunction();
-      FunctionDefinition function = ctxFunction.getDefinition();
+    if (operator instanceof BridgingFunction) {
+      FunctionDefinition function = ((BridgingFunction)operator).getDefinition();
       if (function instanceof SqrlFunction) {
         return Optional.of((SqrlFunction) function);
       }
     }
     return Optional.empty();
-//    return StdTimeLibraryImpl.lookupSQRLFunction(operator);
   }
 
   public static RexFinder<RexInputRef> findRexInputRefByIndex(final int index) {

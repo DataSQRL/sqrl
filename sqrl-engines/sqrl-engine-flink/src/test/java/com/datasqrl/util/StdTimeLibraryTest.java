@@ -15,7 +15,6 @@ import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_EPOCH_MILLI;
 import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.datasqrl.TimeFunctions.TimeWindowBucketFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

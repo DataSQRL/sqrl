@@ -8,6 +8,7 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.TestScript.QueryUseCaseProvider;
+import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Retail.RetailScriptNames;
 import java.util.stream.Collectors;

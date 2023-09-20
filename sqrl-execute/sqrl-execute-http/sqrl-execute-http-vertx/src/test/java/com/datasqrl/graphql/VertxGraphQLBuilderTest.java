@@ -6,6 +6,7 @@ package com.datasqrl.graphql;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.ArgumentSet;
@@ -153,7 +154,7 @@ class VertxGraphQLBuilderTest {
   public void test() {
     GraphQL graphQL = root.accept(
         new BuildGraphQLEngine(),
-        new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of()));
+        new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of(), NameCanonicalizer.SYSTEM));
     ExecutionResult result = graphQL.execute("{\n"
         + "  casc: customer(sort: {customerid: ASC}) {\n"
         + "    customerid\n"

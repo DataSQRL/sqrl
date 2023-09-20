@@ -139,10 +139,4 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable impl
     ImmutableBitSet key = ImmutableBitSet.of(ContiguousSet.closedOpen(0, numPrimaryKeys));
     return Statistics.of(tableStatistic.getRowCount(), List.of(key));
   }
-
-
-  @Override
-  public List<String> getPrimaryKeyNames() {
-    throw new UnsupportedOperationException();
-  }
 }

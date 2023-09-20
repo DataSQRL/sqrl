@@ -13,7 +13,6 @@ interface AbstractEvents {
     title : String!
     description : String!
     name : String!
-    likeCount : LikeCount
 }
 
 type LikeCount {
@@ -27,7 +26,6 @@ type Events implements AbstractEvents{
     title : String!
     description : String!
     name : String!
-    likeCount : LikeCount
 }
 
 type PersonalizedEvents implements AbstractEvents{
@@ -37,14 +35,10 @@ type PersonalizedEvents implements AbstractEvents{
     title : String!
     description : String!
     name : String!
-    likeCount : LikeCount
     liked: Int!
     score: Float!
 }
 
-type Subscription {
-    EventNotification: Events
-}
 
 
 type Mutation {
