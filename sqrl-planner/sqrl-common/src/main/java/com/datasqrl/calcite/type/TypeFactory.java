@@ -26,7 +26,6 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.types.logical.StructuredType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
   private List<RelDataType> types = new ArrayList<>();
@@ -38,8 +37,6 @@ public class TypeFactory extends JavaTypeFactoryImpl {
 
   public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
     //Add custom type translation here
-    //types.get(0).getClass()
-    System.out.println(engineType);
     if (engineType instanceof StructuredRelDataType &&
         ((StructuredRelDataType) engineType).getStructuredType().getImplementationClass().get() == FlinkVectorType.class) {
       return new Vector(this);

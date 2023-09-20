@@ -11,11 +11,13 @@ import org.apache.calcite.rel.core.Aggregate.AggCallBinding;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+import org.apache.calcite.rex.RexCallBinding;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperandCountRange;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlOperandMetadata;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -29,14 +31,12 @@ import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.functions.inference.ArgumentCountRange;
-import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.Signature;
 import org.apache.flink.table.types.inference.TypeInference;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.flink.table.types.logical.StructuredType;
 
 public class FlinkOperandMetadata implements SqlOperandMetadata {
   private final FlinkTypeFactory flinkTypeFactory;
@@ -118,6 +118,10 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
     return aggCallBinding;
   }
 
+  public static SqlOperatorBinding adaptCallBinding(RexCallBinding sqlCallBinding,
+      FlinkTypeFactory flinkTypeFactory, TypeFactory typeFactory) {
+    throw new RuntimeException("Rex call operator binding not expected");
+  }
   private static RelDataType translateToFlinkType(RelDataType operandType,
       FlinkTypeFactory flinkTypeFactory) {
     if (operandType instanceof Vector) {

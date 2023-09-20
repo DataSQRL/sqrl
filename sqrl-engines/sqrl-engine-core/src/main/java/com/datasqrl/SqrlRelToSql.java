@@ -14,7 +14,6 @@ import org.apache.calcite.sql.SqlWriterConfig;
 
 import java.util.function.UnaryOperator;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
-import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 
 public class SqrlRelToSql {
 

@@ -2,6 +2,7 @@ package com.datasqrl.engine.stream.flink.sql;
 
 import com.datasqrl.VectorFunctions;
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.calcite.type.Vector;
 import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
 import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.function.StdVectorLibraryImpl;
@@ -18,9 +19,13 @@ import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
 
 public class RelToFlinkSql {
@@ -54,7 +59,7 @@ public class RelToFlinkSql {
   public static String convertToSql(FlinkRelToSqlConverter converter, RelNode optimizedNode) {
     //add Casts
     List<Integer> toConvert = optimizedNode.getRowType().getFieldList().stream()
-        .filter(f -> f.getType().getComponentType() != null)
+        .filter(f->f.getType() instanceof Vector)
         .map(RelDataTypeField::getIndex)
         .collect(Collectors.toList());
     if (!toConvert.isEmpty()) {
@@ -63,8 +68,7 @@ public class RelToFlinkSql {
       relBuilder.push(optimizedNode);
       List<RexNode> collect = IntStream.range(0, optimizedNode.getRowType().getFieldCount())
           .mapToObj(i -> toConvert.contains(i) ?
-              relBuilder.call(new FlinkConverter(relBuilder.getRexBuilder(), (TypeFactory) relBuilder.getTypeFactory())
-                  .convertFunction("VecToDouble", "VecToDouble", VectorFunctions.VEC_TO_DOUBLE),
+              relBuilder.call(op("VecToDouble"),
                   relBuilder.field(i))
               :relBuilder.field(i))
           .collect(Collectors.toList());
@@ -82,5 +86,11 @@ public class RelToFlinkSql {
     System.out.println(query.getSql());
 
     return query.getTableName();
+  }
+
+  public static SqlUnresolvedFunction op(String name) {
+    return new SqlUnresolvedFunction(new SqlIdentifier(name, SqlParserPos.ZERO),
+        null, null, null,
+        null, SqlFunctionCategory.USER_DEFINED_FUNCTION);
   }
 }

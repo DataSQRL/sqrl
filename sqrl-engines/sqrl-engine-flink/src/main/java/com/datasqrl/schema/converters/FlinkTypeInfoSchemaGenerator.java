@@ -24,7 +24,8 @@ public class FlinkTypeInfoSchemaGenerator implements
   @Override
   public TypeInformation convertBasic(RelDataType datatype) {
     if (datatype instanceof Vector) {
-      return BasicTypeInfo.of(FlinkVectorType.class);
+      return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
+//      return BasicTypeInfo.of(FlinkVectorType.class);
     }
 
     switch (datatype.getSqlTypeName()) {

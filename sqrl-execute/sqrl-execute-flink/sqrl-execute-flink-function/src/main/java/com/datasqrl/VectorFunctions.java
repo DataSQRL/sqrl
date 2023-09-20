@@ -1,6 +1,9 @@
 package com.datasqrl;
 
+import static com.datasqrl.VectorFunctions.OnnxEmbed.TOKENIZER_FILENAME;
+
 import ai.onnxruntime.OnnxTensor;
+import com.datasqrl.VectorFunctions.OnnxEmbed.CachedModel;
 import com.datasqrl.calcite.type.FlinkVectorType;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.IndexType;
@@ -10,6 +13,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -175,36 +179,13 @@ public class VectorFunctions {
   }
 
 
-  public static class OnnxEmbed extends ScalarFunction implements SqrlFunction {
+  public static class OnnxEmbed extends ScalarFunction implements SqrlFunction, Serializable {
 
     public static final String TOKENIZER_FILENAME = "tokenizer.json";
 
-    LoadingCache<String, CachedModel> models = CacheBuilder.newBuilder()
+    public LoadingCache<String, CachedModel> models = CacheBuilder.newBuilder()
         .maximumSize(100)
-        .build(new CacheLoader<String, CachedModel>() {
-          @Override
-          public CachedModel load(String s) throws IllegalArgumentException {
-            Path modelPath = Paths.get(s);
-            Path tokenizerPath = modelPath.getParent().resolve(TOKENIZER_FILENAME);
-            Preconditions.checkArgument(Files.isRegularFile(modelPath) && Files.isReadable(modelPath),
-            "Could not read ONNX model from file [%s]. Check file is readable and correctly mounted.", modelPath);
-            Preconditions.checkArgument(Files.isRegularFile(tokenizerPath) && Files.isReadable(tokenizerPath),
-                "Could not read tokenizer configuration from file [%s]. Check file is readable and correctly mounted.", modelPath);
-            OnnxRunner runner;
-            Tokenizer tokenizer;
-            try {
-              runner = new OnnxRunner(modelPath);
-            } catch (Exception e) {
-              throw new IllegalArgumentException("Could not instantiate ONNX model: " + modelPath,e);
-            }
-            try {
-              tokenizer = new Tokenizer(tokenizerPath);
-            } catch (Exception e) {
-              throw new IllegalArgumentException("Could not instantiate tokenizer from: " + tokenizerPath,e);
-            }
-            return new CachedModel(runner, tokenizer);
-          }
-        });
+        .build(new CacheLoaderImpl());
 
     public FlinkVectorType eval(String text, String modelPath) {
       if (text == null || modelPath == null) return null;
@@ -236,6 +217,32 @@ public class VectorFunctions {
         return runner.run(tokenIds, tokens);
       }
 
+    }
+
+  }
+
+  public static class CacheLoaderImpl extends CacheLoader<String, CachedModel> implements Serializable {
+    @Override
+    public CachedModel load(String s) throws IllegalArgumentException {
+      Path modelPath = Paths.get(s);
+      Path tokenizerPath = modelPath.getParent().resolve(TOKENIZER_FILENAME);
+      Preconditions.checkArgument(Files.isRegularFile(modelPath) && Files.isReadable(modelPath),
+          "Could not read ONNX model from file [%s]. Check file is readable and correctly mounted.", modelPath);
+      Preconditions.checkArgument(Files.isRegularFile(tokenizerPath) && Files.isReadable(tokenizerPath),
+          "Could not read tokenizer configuration from file [%s]. Check file is readable and correctly mounted.", modelPath);
+      OnnxRunner runner;
+      Tokenizer tokenizer;
+      try {
+        runner = new OnnxRunner(modelPath);
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Could not instantiate ONNX model: " + modelPath,e);
+      }
+      try {
+        tokenizer = new Tokenizer(tokenizerPath);
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Could not instantiate tokenizer from: " + tokenizerPath,e);
+      }
+      return new CachedModel(runner, tokenizer);
     }
   }
 
