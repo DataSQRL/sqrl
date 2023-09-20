@@ -35,8 +35,8 @@ public class ConferenceTest extends AbstractGraphqlTest {
 
     Thread.sleep(5000);
     executeQuery("query q {\n"
-        + " EventsAfterTime(afterTime: \"2007-12-03T10:15:30+01:00\"){\n"
-        + "  description\n"
+        + " Events(limit: 10){\n"
+        + "  abstract\n"
         + "  id\n"
         + "\n"
         + " }"

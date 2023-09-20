@@ -12,6 +12,7 @@ public class Conference extends UseCaseExample {
   protected Conference() {
     super("", Set.of("authtokens","events","emailtemplates"), scripts()
         .add("app", "events")
+        .add("app_simple", "events")
         .build(), "myAPI.graphqls");
   }
 

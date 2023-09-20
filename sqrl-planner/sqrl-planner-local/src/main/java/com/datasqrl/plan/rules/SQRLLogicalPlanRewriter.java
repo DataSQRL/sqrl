@@ -417,6 +417,18 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
   }
 
+  public static ContinuousIndexMap constructIndexMap(RelDataType tableRowType) {
+    List<RelDataTypeField> queryRowType = tableRowType.getFieldList();
+    List<Integer> selectIdx = new ArrayList<>();
+    for (int i = 0; i < queryRowType.size(); i++) {
+      RelDataTypeField field = queryRowType.get(i);
+      if (!CalciteUtil.isNestedTable(field.getType())) {
+        selectIdx.add(i);
+      }
+    }
+    return ContinuousIndexMap.of(selectIdx);
+  }
+
   private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
 
   @Override

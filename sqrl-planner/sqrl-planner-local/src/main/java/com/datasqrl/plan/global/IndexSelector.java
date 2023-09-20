@@ -211,6 +211,8 @@ public class IndexSelector {
           }
           break;
         case TEXT:
+        case VEC_COSINE:
+        case VEC_EUCLID:
           queryIndexSummary.functionCalls.stream().map(fcall -> this.getIndexDefinition(fcall,
               queryIndexSummary.getTable())).flatMap(Optional::stream).forEach(result::add);
           break;

@@ -45,7 +45,7 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
 
   @Container
   static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
-      DockerImageName.parse("ankane/pgvector:v0.4.4")
+      DockerImageName.parse("ankane/pgvector:v0.5.0")
       .asCompatibleSubstituteFor("postgres"));
 
 //  protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(

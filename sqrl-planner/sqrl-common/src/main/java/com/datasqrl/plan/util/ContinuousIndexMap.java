@@ -86,6 +86,12 @@ public class ContinuousIndexMap implements IndexMap, Serializable {
     return new ContinuousIndexMap(combined);
   }
 
+  public ContinuousIndexMap add(int index) {
+    int[] newTargets = Arrays.copyOf(targets, targets.length+1);
+    newTargets[targets.length] = index;
+    return new ContinuousIndexMap(newTargets);
+  }
+
   public ContinuousIndexMap remap(IndexMap remap) {
     Builder b = new Builder(targets.length);
     for (int i = 0; i < targets.length; i++) {

@@ -7,10 +7,12 @@ import com.datasqrl.plan.hints.WatermarkHint;
 import com.datasqrl.plan.local.generate.AccessTableFunction;
 import com.datasqrl.plan.local.generate.ComputeTableFunction;
 import com.datasqrl.plan.table.AddedColumn;
+import com.datasqrl.plan.table.AddedColumn.Simple;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
 import com.datasqrl.plan.table.ScriptTable;
+import com.datasqrl.plan.util.ContinuousIndexMap;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +69,7 @@ public class SQRLConverter {
           ?((ComputeTableFunction)table).getQueryTable():(QueryRelationalTable) table;
       AnnotatedLP alp = convert(queryTable.getOriginalRelnode(), config, errors);
       RelBuilder builder = relBuilder.push(alp.getRelNode());
-      addColumns(builder, queryTable.getAddedColumns(), exec);
+      addColumns(builder, queryTable.getAddedColumns(), alp.select, exec);
       return builder.build();
     }
   }
@@ -75,7 +77,8 @@ public class SQRLConverter {
   private RelNode convert(ProxyImportRelationalTable table, ExecutionAnalysis exec,
       boolean addWatermark) {
     RelBuilder builder = relBuilder.scan(table.getBaseTable().getNameId());
-    addColumns(builder, table.getAddedColumns(), exec);
+    addColumns(builder, table.getAddedColumns(), SQRLLogicalPlanRewriter.constructIndexMap(table.getBaseTable()
+        .getRowType()), exec);
     RelNode relNode = builder.build();
     if (addWatermark) {
       int timestampIdx = table.getTimestamp().getTimestampCandidate().getIndex();
@@ -87,11 +90,12 @@ public class SQRLConverter {
   }
 
   private RelBuilder addColumns(RelBuilder builder, List<AddedColumn.Simple> columns,
-      ExecutionAnalysis exec) {
-    columns.forEach( column -> {
+      ContinuousIndexMap select, ExecutionAnalysis exec) {
+    for (Simple column : columns) {
       exec.requireRex(column.getBaseExpression());
-      column.appendTo(builder);
-    });
+      int addedIndex = column.appendTo(builder, select);
+      select = select.add(addedIndex);
+    }
     return builder;
   }
 
