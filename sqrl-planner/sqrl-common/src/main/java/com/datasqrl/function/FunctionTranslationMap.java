@@ -27,7 +27,8 @@ public class FunctionTranslationMap {
       "now", new NowTranslation(),
       "cosinedistance", new CosineDistanceTranslation(),
       "cosinesimilarity", new CosineSimilarityTranslation(),
-      "euclideandistance", new EuclideanDistanceTranslation()
+      "euclideandistance", new EuclideanDistanceTranslation(),
+      "center", new CenterTranslation()
   );
 
   public static class CosineDistanceTranslation implements RuleTransform {
@@ -59,6 +60,17 @@ public class FunctionTranslationMap {
       return List.of(new SimpleCallTransform(operator,
           ((rexBuilder, call) ->
               rexBuilder.makeCall(PgSpecificOperatorTable.EuclideanDistance, call.getOperands()))));
+    }
+
+  }
+
+  public static class CenterTranslation implements RuleTransform {
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      return List.of(new SimpleCallTransform(operator,
+          ((rexBuilder, call) ->
+              rexBuilder.makeCall(SqlStdOperatorTable.AVG, call.getOperands()))));
     }
 
   }
