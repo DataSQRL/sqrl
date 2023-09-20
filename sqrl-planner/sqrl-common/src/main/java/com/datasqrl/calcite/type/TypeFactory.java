@@ -21,22 +21,30 @@ import java.util.List;
 import java.util.Map;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
+import org.apache.flink.table.types.logical.StructuredType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
   private List<RelDataType> types = new ArrayList<>();
 
   public TypeFactory() {
     super(SqrlTypeSystem.INSTANCE);
+    types.add(new Vector(this));
   }
 
   public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
     //Add custom type translation here
-
-    for (RelDataType type : types) {
-      if (type.equals(engineType)) {
-        return type;
-      }
+    //types.get(0).getClass()
+    System.out.println(engineType);
+    if (engineType instanceof StructuredRelDataType &&
+        ((StructuredRelDataType) engineType).getStructuredType().getImplementationClass().get() == FlinkVectorType.class) {
+      return new Vector(this);
     }
+
+//    for (RelDataType type : types) {
+//      if (type.equals(engineType)) {
+//        return type;
+//      }
+//    }
 
     if (engineType instanceof DelegatingDataType) {
       throw new RuntimeException("Could not find type: " + engineType);

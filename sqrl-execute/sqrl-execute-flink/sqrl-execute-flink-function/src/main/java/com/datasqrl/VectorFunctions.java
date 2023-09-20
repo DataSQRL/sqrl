@@ -1,7 +1,7 @@
 package com.datasqrl;
 
 import ai.onnxruntime.OnnxTensor;
-import com.datasqrl.calcite.type.VectorType;
+import com.datasqrl.calcite.type.FlinkVectorType;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.SqrlFunction;
 import com.google.common.base.Preconditions;
@@ -39,11 +39,10 @@ public class VectorFunctions {
   public static final Center CENTER = new Center();
 
   public static class RandomVector extends ScalarFunction implements SqrlFunction {
-    public VectorType[] eval(Integer seed, Integer elements) {
+    public FlinkVectorType eval(Integer seed, Integer elements) {
       // Create RealVectors from the input arrays
       ThreadLocalRandom current = ThreadLocalRandom.current();
-      return current.doubles(elements).mapToObj(VectorType::new).toArray(
-          VectorType[]::new);
+      return new FlinkVectorType(current.doubles(elements).toArray());
     }
 
     @Override
@@ -53,10 +52,8 @@ public class VectorFunctions {
   }
 
   public static class VectorToDouble extends ScalarFunction implements SqrlFunction {
-    public double[] eval(VectorType[] vectorType) {
-      return Arrays.stream(vectorType)
-          .mapToDouble(VectorType::doubleValue)
-          .toArray();
+    public double[] eval(FlinkVectorType vectorType) {
+      return vectorType.getValue();
     }
 
     @Override
@@ -66,10 +63,8 @@ public class VectorFunctions {
   }
 
   public static class DoubleToVector extends ScalarFunction implements SqrlFunction {
-    public VectorType[] eval(double[] array) {
-      return Arrays.stream(array)
-          .mapToObj(VectorType::new)
-          .toArray(VectorType[]::new);
+    public FlinkVectorType eval(double[] array) {
+      return new FlinkVectorType(array);
     }
 
     @Override
@@ -79,8 +74,8 @@ public class VectorFunctions {
   }
 
   public static class CosineDistance extends ScalarFunction implements SqrlFunction {
-    public double eval(VectorType[] vectorA, VectorType[] vectorB) {
-      return 1 - new CosineDistance().eval(vectorA, vectorB);
+    public double eval(FlinkVectorType vectorA, FlinkVectorType vectorB) {
+      return 1 - new CosineSimilarity().eval(vectorA, vectorB);
     }
 
     @Override
@@ -90,7 +85,7 @@ public class VectorFunctions {
   }
 
   public static class CosineSimilarity extends ScalarFunction implements SqrlFunction {
-    public double eval(VectorType[] vectorA, VectorType[] vectorB) {
+    public double eval(FlinkVectorType vectorA, FlinkVectorType vectorB) {
       // Create RealVectors from the input arrays
       RealVector vA = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorA), false);
       RealVector vB = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorB), false);
@@ -109,7 +104,7 @@ public class VectorFunctions {
   }
 
   public static class EuclideanDistance extends ScalarFunction implements SqrlFunction {
-    public double eval(VectorType[] vectorA, VectorType[] vectorB) {
+    public double eval(FlinkVectorType vectorA, FlinkVectorType vectorB) {
       // Create RealVectors from the input arrays
       RealVector vA = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorA), false);
       RealVector vB = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorB), false);
@@ -154,7 +149,7 @@ public class VectorFunctions {
           }
         });
 
-    public VectorType[] eval(String text, String modelPath) {
+    public FlinkVectorType eval(String text, String modelPath) {
       if (text == null || modelPath == null) return null;
       try {
         CachedModel model = models.get(modelPath);
@@ -188,11 +183,11 @@ public class VectorFunctions {
   }
 
   public static class Center extends
-      AggregateFunction<VectorType[], CenterAccumulator> implements SqrlFunction {
+      AggregateFunction<FlinkVectorType, CenterAccumulator> implements SqrlFunction {
 
     @Override
     public Name getFunctionName() {
-      return Name.system("avg");
+      return Name.system("center");
     }
 
     @Override
@@ -201,7 +196,7 @@ public class VectorFunctions {
     }
 
     @Override
-    public VectorType[] getValue(CenterAccumulator acc) {
+    public FlinkVectorType getValue(CenterAccumulator acc) {
       if (acc.count == 0) {
         return null;
       } else {
@@ -209,11 +204,11 @@ public class VectorFunctions {
       }
     }
 
-    public void accumulate(CenterAccumulator acc, VectorType[] vector) {
+    public void accumulate(CenterAccumulator acc, FlinkVectorType vector) {
       acc.add(VEC_TO_DOUBLE.eval(vector));
     }
 
-    public void retract(CenterAccumulator acc, VectorType[] vector) {
+    public void retract(CenterAccumulator acc, FlinkVectorType vector) {
       acc.substract(VEC_TO_DOUBLE.eval(vector));
     }
 
@@ -336,9 +331,8 @@ public class VectorFunctions {
     public int count = 0;
   }
 
-  private static VectorType[] convert(double[] vector) {
-    return Arrays.stream(vector).mapToObj(VectorType::new).toArray(
-        VectorType[]::new);
+  private static FlinkVectorType convert(double[] vector) {
+    return new FlinkVectorType(vector);
   }
 
 }

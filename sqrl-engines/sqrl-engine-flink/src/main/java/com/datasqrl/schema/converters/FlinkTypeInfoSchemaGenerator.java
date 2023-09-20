@@ -3,22 +3,18 @@
  */
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.calcite.type.VectorType;
+import com.datasqrl.calcite.type.FlinkVectorType;
+import com.datasqrl.calcite.type.Vector;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
-import org.apache.flink.table.types.DataType;
 
 @Value
 public class FlinkTypeInfoSchemaGenerator implements
@@ -27,6 +23,10 @@ public class FlinkTypeInfoSchemaGenerator implements
 
   @Override
   public TypeInformation convertBasic(RelDataType datatype) {
+    if (datatype instanceof Vector) {
+      return BasicTypeInfo.of(FlinkVectorType.class);
+    }
+
     switch (datatype.getSqlTypeName()) {
       case CHAR:
       case VARCHAR:

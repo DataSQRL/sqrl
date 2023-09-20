@@ -83,7 +83,9 @@ public class SqrlPlan extends SqrlBase {
 
         planner.plan(statement);
       } catch (Exception e) {
+        e.printStackTrace();
         collector.handle(e);
+        System.out.println(ErrorPrinter.prettyPrint(collector));
         throw new CollectedException(new RuntimeException("Script cannot validate"));
       }
     }

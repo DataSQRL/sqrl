@@ -3,10 +3,8 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.calcite.type.DelegatingDataType;
-import com.datasqrl.calcite.type.VectorType;
-import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
+import com.datasqrl.calcite.type.FlinkVectorType;
+import com.datasqrl.calcite.type.Vector;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
@@ -16,7 +14,6 @@ import org.apache.calcite.sql.SqlWriterConfig;
 
 import java.util.function.UnaryOperator;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
-import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 
 public class SqrlRelToSql {
@@ -52,8 +49,7 @@ public class SqrlRelToSql {
   }
 
   private static String getSQLType(RelDataType type) {
-    if (type instanceof StructuredRelDataType &&
-        ((StructuredRelDataType) type).getStructuredType().getImplementationClass().get() == VectorType.class) {
+    if (type instanceof Vector) {
       return "VECTOR";
     }
 

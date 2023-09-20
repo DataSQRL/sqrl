@@ -118,6 +118,8 @@ public class FlinkSqlOperandTypeChecker implements SqlOperandTypeChecker {
       adaptedCallContext = adaptArguments(typeInference, callContext, null);
     } catch (ValidationException e) {
       throw createInvalidInputException(typeInference, callContext, e);
+    } catch (Exception e) {
+      throw e;
     }
 
     insertImplicitCasts(callBinding, typeFactory, adaptedCallContext.getArgumentDataTypes());

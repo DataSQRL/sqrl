@@ -1,22 +1,42 @@
 package com.datasqrl.flink.function;
 
+import com.datasqrl.calcite.type.FlinkVectorType;
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.calcite.type.Vector;
+import com.datasqrl.flink.FlinkConverter;
+import java.util.stream.IntStream;
+import org.apache.calcite.jdbc.CalciteSchema;
+import org.apache.calcite.prepare.CalciteCatalogReader;
+import org.apache.calcite.rel.core.Aggregate.AggCallBinding;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlCallBinding;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperandCountRange;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.type.SqlOperandCountRanges;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlOperandMetadata;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidator.Config;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.sql.validate.SqrlSqlValidator;
+import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.functions.inference.ArgumentCountRange;
+import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
+import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.Signature;
 import org.apache.flink.table.types.inference.TypeInference;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.flink.table.types.logical.StructuredType;
 
 public class FlinkOperandMetadata implements SqlOperandMetadata {
   private final FlinkTypeFactory flinkTypeFactory;
@@ -56,7 +76,60 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
   @Override
   public boolean checkOperandTypes(SqlCallBinding sqlCallBinding, boolean throwOnFailure) {
     return new FlinkSqlOperandTypeChecker(flinkTypeFactory, dataTypeFactory, definition, typeInference)
-        .checkOperandTypes(sqlCallBinding, throwOnFailure);
+        .checkOperandTypes(adaptCallBinding(sqlCallBinding, flinkTypeFactory), throwOnFailure);
+  }
+
+  public static SqlCallBinding adaptCallBinding(SqlCallBinding sqlCallBinding, FlinkTypeFactory flinkTypeFactory) {
+    CalciteCatalogReader calciteCatalogReader = new CalciteCatalogReader(
+        CalciteSchema.createRootSchema(false), List.of(), flinkTypeFactory, null);
+    SqlValidator validator = sqlCallBinding.getValidator();
+    return new SqlCallBinding(new SqrlSqlValidator(SqlStdOperatorTable.instance(),
+        calciteCatalogReader, new TypeFactory(), Config.DEFAULT
+    ) {
+      @Override
+      public RelDataType deriveType(SqlValidatorScope scope, SqlNode expr) {
+        RelDataType validatedNodeType = validator.deriveType(scope,expr);
+        if (validatedNodeType instanceof Vector) {
+          FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
+              FlinkTypeSystem.INSTANCE);
+          DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
+              FlinkConverter.catalogManager.getDataTypeFactory());
+
+          RelDataType flinkType = flinkTypeFactory
+              .createFieldTypeFromLogicalType(dataType.getLogicalType());
+
+          return flinkType;
+        }
+
+        return validator.deriveType(scope, expr);
+      }
+    }, sqlCallBinding.getScope(), sqlCallBinding.getCall());
+  }
+
+  public static AggCallBinding adaptCallBinding(AggCallBinding sqlCallBinding, FlinkTypeFactory flinkTypeFactory,
+      TypeFactory typeFactory) {
+
+    List<RelDataType> types = IntStream.range(0, sqlCallBinding.getOperandCount())
+        .mapToObj(i -> translateToFlinkType(sqlCallBinding.getOperandType(i), flinkTypeFactory))
+        .collect(Collectors.toList());
+
+    AggCallBinding aggCallBinding = new AggCallBinding(flinkTypeFactory, (SqlAggFunction) sqlCallBinding.getOperator(),
+        types, sqlCallBinding.getGroupCount(), sqlCallBinding.hasFilter());
+    return aggCallBinding;
+  }
+
+  private static RelDataType translateToFlinkType(RelDataType operandType,
+      FlinkTypeFactory flinkTypeFactory) {
+    if (operandType instanceof Vector) {
+      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
+          FlinkConverter.catalogManager.getDataTypeFactory());
+
+      RelDataType flinkType = flinkTypeFactory
+          .createFieldTypeFromLogicalType(dataType.getLogicalType());
+
+      return flinkType;
+    }
+    return null;
   }
 
   @Override

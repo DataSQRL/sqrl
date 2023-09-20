@@ -9,6 +9,7 @@ IMPORT vector.*;
 IMPORT time.parseTimestamp;
 
 Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS INT),0);
+
 Events.full_text := concat(title,'\n',abstract);
 Events.embedding := onnxEmbed(full_text, '/build/vectorEmbedd/model_quantized.onnx');
 Events.startTime := concat(regexExtract(date, '^[^-]*'),' ',regexExtract(time, '\d\d?:\d\d\s(AM|PM)'));
