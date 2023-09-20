@@ -1,4 +1,4 @@
-package com.datasqrl;
+package com.datasqrl.function;
 
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -8,7 +8,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 /**
  * A lightweight ts vector operator table
  */
-public class TsVectorOperatorTable {
+public class PgSpecificOperatorTable {
   public static final SqlUnresolvedFunction TO_TSVECTOR = op("to_tsvector");
   public static final SqlUnresolvedFunction TO_TSQUERY = op("to_tsquery");
   public static final SqlUnresolvedFunction TO_WEBQUERY = op("websearch_to_tsquery");
@@ -16,6 +16,12 @@ public class TsVectorOperatorTable {
 
   public static final SqlBinaryOperator MATCH = new SqlBinaryOperator("@@",
       SqlKind.OTHER_FUNCTION, 22, true, ReturnTypes.explicit(SqlTypeName.BOOLEAN),
+      null, null);
+  public static final SqlBinaryOperator CosineDistance = new SqlBinaryOperator("<=>",
+      SqlKind.OTHER_FUNCTION, 22, true, ReturnTypes.explicit(SqlTypeName.DOUBLE),
+      null, null);
+  public static final SqlBinaryOperator EuclideanDistance = new SqlBinaryOperator("<->",
+      SqlKind.OTHER_FUNCTION, 22, true, ReturnTypes.explicit(SqlTypeName.DOUBLE),
       null, null);
 
 

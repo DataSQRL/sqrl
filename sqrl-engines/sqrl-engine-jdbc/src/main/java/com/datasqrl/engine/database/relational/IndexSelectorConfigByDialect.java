@@ -16,6 +16,8 @@ import java.util.EnumSet;
 import static com.datasqrl.function.IndexType.BTREE;
 import static com.datasqrl.function.IndexType.HASH;
 import static com.datasqrl.function.IndexType.TEXT;
+import static com.datasqrl.function.IndexType.VEC_COSINE;
+import static com.datasqrl.function.IndexType.VEC_EUCLID;
 
 @Value
 @Builder
@@ -42,7 +44,7 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
     switch (dialect.toUpperCase()) {
       case "POSTGRES":
       case "MYSQL":
-        return EnumSet.of(HASH, BTREE, TEXT);
+        return EnumSet.of(HASH, BTREE, TEXT, VEC_COSINE, VEC_EUCLID);
       case "H2":
       case "SQLITE":
         return EnumSet.of(HASH, BTREE);

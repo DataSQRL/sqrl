@@ -3,6 +3,8 @@ package com.datasqrl;
 import ai.onnxruntime.OnnxTensor;
 import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.function.IndexType;
+import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.SqrlFunction;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -12,9 +14,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 import lombok.Value;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -78,7 +82,9 @@ public class VectorFunctions {
     }
   }
 
-  public static class CosineDistance extends ScalarFunction implements SqrlFunction {
+  public static class CosineDistance extends CosineSimilarity {
+
+    @Override
     public double eval(VectorType[] vectorA, VectorType[] vectorB) {
       return 1 - new CosineDistance().eval(vectorA, vectorB);
     }
@@ -87,9 +93,10 @@ public class VectorFunctions {
     public String getDocumentation() {
       return "Computes the cosine distance between two vectors";
     }
+
   }
 
-  public static class CosineSimilarity extends ScalarFunction implements SqrlFunction {
+  public static class CosineSimilarity extends ScalarFunction implements SqrlFunction, IndexableFunction {
     public double eval(VectorType[] vectorA, VectorType[] vectorB) {
       // Create RealVectors from the input arrays
       RealVector vA = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorA), false);
@@ -106,9 +113,35 @@ public class VectorFunctions {
     public String getDocumentation() {
       return "Computes the cosine similarity between two vectors";
     }
+
+
+    @Override
+    public OperandSelector getOperandSelector() {
+      return new OperandSelector() {
+        @Override
+        public boolean isSelectableColumn(int columnIndex) {
+          return true;
+        }
+
+        @Override
+        public int maxNumberOfColumns() {
+          return 1;
+        }
+      };
+    }
+
+    @Override
+    public double estimateSelectivity() {
+      return 0.1;
+    }
+
+    @Override
+    public EnumSet<IndexType> getSupportedIndexes() {
+      return EnumSet.of(IndexType.VEC_COSINE);
+    }
   }
 
-  public static class EuclideanDistance extends ScalarFunction implements SqrlFunction {
+  public static class EuclideanDistance extends ScalarFunction implements SqrlFunction, IndexableFunction {
     public double eval(VectorType[] vectorA, VectorType[] vectorB) {
       // Create RealVectors from the input arrays
       RealVector vA = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorA), false);
@@ -119,6 +152,32 @@ public class VectorFunctions {
     @Override
     public String getDocumentation() {
       return "Computes the euclidean distance between two vectors";
+    }
+
+
+    @Override
+    public OperandSelector getOperandSelector() {
+      return new OperandSelector() {
+        @Override
+        public boolean isSelectableColumn(int columnIndex) {
+          return true;
+        }
+
+        @Override
+        public int maxNumberOfColumns() {
+          return 1;
+        }
+      };
+    }
+
+    @Override
+    public double estimateSelectivity() {
+      return 0.1;
+    }
+
+    @Override
+    public EnumSet<IndexType> getSupportedIndexes() {
+      return EnumSet.of(IndexType.VEC_EUCLID);
     }
   }
 

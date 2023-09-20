@@ -5,11 +5,13 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
+import com.datasqrl.function.IndexableFunction.OperandSelector;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.rules.SqrlRelMdRowCount;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.collect.ImmutableSet;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -17,6 +19,8 @@ import lombok.EqualsAndHashCode.Include;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
+import org.apache.calcite.rel.RelCollation;
+import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -58,7 +62,7 @@ public class QueryIndexSummary {
    */
   double count = 1.0;
 
-  public static Optional<QueryIndexSummary> of(@NonNull VirtualRelationalTable table, RexNode filter,
+  public static Optional<QueryIndexSummary> ofFilter(@NonNull VirtualRelationalTable table, RexNode filter,
       SqrlRexUtil rexUtil) {
     List<RexNode> conjunctions = rexUtil.getConjunctions(filter);
     Set<Integer> equalityColumns = new HashSet<>();
@@ -85,6 +89,23 @@ public class QueryIndexSummary {
       return Optional.of(new QueryIndexSummary(table, ImmutableSet.copyOf(equalityColumns),
           ImmutableSet.copyOf(inequalityColumns), ImmutableSet.copyOf(functionCalls), 1.0));
     }
+  }
+
+  public static Optional<QueryIndexSummary> ofSort(@NonNull VirtualRelationalTable table, RexNode node) {
+    if (node instanceof RexCall) {
+      RexCall call = (RexCall) node;
+      IndexableFinder idxFinder = new IndexableFinder();
+      call.accept(idxFinder);
+      if (idxFinder.isIndexable && idxFinder.idxCall!=null) {
+        return Optional.of(new QueryIndexSummary(table, Set.of(),
+            Set.of(), ImmutableSet.of(idxFinder.idxCall), 1.0));
+      }
+    }
+    return Optional.empty();
+  }
+
+  public static Optional<QueryIndexSummary> ofSort(@NonNull VirtualRelationalTable table, int columnIndex) {
+    return Optional.of(new QueryIndexSummary(table, Set.of(), ImmutableSet.of(columnIndex), Set.of(), 1.0));
   }
 
   public double getCost(@NonNull IndexDefinition indexDef) {
@@ -206,16 +227,16 @@ public class QueryIndexSummary {
       List<RexNode> remainingOperands = new ArrayList<>();
       List<Integer> columnIndexes = new ArrayList<>();
       List<RexNode> operands = call.getOperands();
-      Predicate<Integer> operandSelector = idxFunction.getOperandSelector();
+      OperandSelector operandSelector = idxFunction.getOperandSelector();
       for (int i = 0; i < operands.size(); i++) {
         RexNode node = operands.get(i);
-        if (operandSelector.test(i) && (node instanceof RexInputRef)) {
+        if (operandSelector.isSelectableColumn(i) && (node instanceof RexInputRef)) {
           columnIndexes.add(((RexInputRef)node).getIndex());
         } else {
           remainingOperands.add(node);
         }
       }
-      if (columnIndexes.isEmpty()) return Optional.empty();
+      if (columnIndexes.isEmpty() || columnIndexes.size()>operandSelector.maxNumberOfColumns()) return Optional.empty();
       if (!SqrlRexUtil.findAllInputRefs(remainingOperands).isEmpty()) {
         //If the remainingOperands contain RexInputRef this isn't an indexable call
         //TODO: issue warning since this is likely not desired

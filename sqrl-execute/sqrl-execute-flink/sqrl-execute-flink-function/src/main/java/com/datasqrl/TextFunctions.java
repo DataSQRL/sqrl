@@ -135,8 +135,18 @@ public class TextFunctions {
     }
 
     @Override
-    public Predicate<Integer> getOperandSelector() {
-      return idx -> idx>0;
+    public OperandSelector getOperandSelector() {
+      return new OperandSelector() {
+        @Override
+        public boolean isSelectableColumn(int columnIndex) {
+          return columnIndex>0;
+        }
+
+        @Override
+        public int maxNumberOfColumns() {
+          return 128;
+        }
+      };
     }
 
     @Override

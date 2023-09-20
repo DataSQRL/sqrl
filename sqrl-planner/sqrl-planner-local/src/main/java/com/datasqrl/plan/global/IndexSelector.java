@@ -25,14 +25,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.adapter.enumerable.EnumerableCalc;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
-import org.apache.calcite.plan.RelOptPlanner;
+import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Join;
+import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
@@ -44,6 +45,8 @@ import org.apache.commons.math3.util.Precision;
 public class IndexSelector {
 
   private static final double EPSILON = 0.00001d;
+
+  private static final int MAX_LIMIT_INDEX_SCAN = 10000;
 
   private final SqrlFramework framework;
   private final IndexSelectorConfig config;
@@ -275,10 +278,40 @@ public class IndexSelector {
         VirtualRelationalTable table = ((TableScan) node).getTable()
             .unwrap(VirtualRelationalTable.class);
         Filter filter = (Filter) parent;
-        QueryIndexSummary.of(table, filter.getCondition(), rexUtil).map(queryIndexSummaries::add);
+        QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil).map(queryIndexSummaries::add);
+      } else if (node instanceof TableScan && parent instanceof Sort) {
+        VirtualRelationalTable table = ((TableScan) node).getTable()
+            .unwrap(VirtualRelationalTable.class);
+        Sort sort = (Sort) parent;
+        Optional<Integer> firstCollationIdx = getFirstCollation(sort);
+        if (firstCollationIdx.isPresent() && hasLimit(sort)) {
+          QueryIndexSummary.ofSort(table, firstCollationIdx.get()).map(queryIndexSummaries::add);
+        }
+      } else if (node instanceof Project && parent instanceof Sort && node.getInput(0) instanceof TableScan) {
+        VirtualRelationalTable table = ((TableScan) node.getInput(0)).getTable()
+            .unwrap(VirtualRelationalTable.class);
+        Sort sort = (Sort) parent;
+        Optional<Integer> firstCollationIdx = getFirstCollation(sort);
+        if (firstCollationIdx.isPresent() && hasLimit(sort)) {
+          Project project = (Project) node;
+          RexNode sortRex = project.getProjects().get(firstCollationIdx.get());
+          QueryIndexSummary.ofSort(table, sortRex).map(queryIndexSummaries::add);
+        }
       } else {
         super.visit(node, ordinal, parent);
       }
+    }
+
+    private boolean hasLimit(Sort sort) {
+      //Check for limit. Can only use index scans if there is a limit, otherwise it's a table scan
+      return SqrlRexUtil.getLimit(sort.fetch).filter(limit -> limit <= MAX_LIMIT_INDEX_SCAN).isPresent();
+    }
+
+    private Optional<Integer> getFirstCollation(Sort sort) {
+      List<RelFieldCollation> fieldCollations = sort.collation.getFieldCollations();
+      if (fieldCollations.isEmpty()) return Optional.empty();
+      RelFieldCollation firstCollation = fieldCollations.get(0);
+      return Optional.of(firstCollation.getFieldIndex());
     }
 
 
