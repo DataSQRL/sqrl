@@ -69,7 +69,7 @@ public class BankingTest extends AbstractGraphqlTest {
     Thread.sleep(1000);
 
     log.debug("count:" + countDownLatch.getCount());
-    countDownLatch.await(600, TimeUnit.SECONDS);
+    countDownLatch.await(60, TimeUnit.SECONDS);
     log.debug("count:" + countDownLatch.getCount());
 
     fut.cancel(true);

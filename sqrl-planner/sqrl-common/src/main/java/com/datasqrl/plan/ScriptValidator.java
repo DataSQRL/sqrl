@@ -168,9 +168,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  private void handleImport(SqlNode node, Optional<NamespaceObject> obj, Optional<String> alias, NamePath path) {
+  private void handleImport(SqrlImportDefinition node, Optional<NamespaceObject> obj, Optional<String> alias, NamePath path) {
     if (obj.isEmpty()) {
-      addError(ErrorLabel.GENERIC, node, "Could not find object: [%s] %s", path);
+      addError(ErrorLabel.GENERIC, node.getIdentifier(), "Could not find import object: %s", path.getDisplay());
     }
   }
 
@@ -193,7 +193,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         errorCollector, moduleLoader);
 
     if (sink.isEmpty()) {
-      addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node,"Cannot resolve table sink: %s", node.getSinkPath().names);
+      addError(ErrorCode.CANNOT_RESOLVE_TABLESINK, node,"Cannot resolve table sink: %s",
+          nameUtil.toNamePath(node.getSinkPath().names).getDisplay());
       return null;
     }
 
@@ -999,8 +1000,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
   @Override
   public Void visit(SqrlAssignTimestamp node, Void context) {
+    if (node.getIdentifier().isStar()) {
+      throw addError(ErrorLabel.GENERIC, node.getIdentifier(), "Cannot assign timestamp to multiple import items");
+    }
     if (node.getIdentifier().names.size() > 1) {
-      addError(ErrorLabel.GENERIC, node.getIdentifier().getComponent(1), "Cannot assign timestamp to nested item");
+      throw addError(ErrorLabel.GENERIC, node.getIdentifier().getComponent(1), "Cannot assign timestamp to nested item");
     }
 
     Optional<RelOptTable> table = resolveModifableTable(node, node.getAlias().orElse(node.getIdentifier()).names);
@@ -1063,8 +1067,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   private RuntimeException addError(ErrorLabel errorCode, SqlNode node,
       String message, Object... format) {
     RuntimeException exception = CheckUtil.createAstException(errorCode, node, format == null ? message : String.format(message, format));
-    errorCollector.handle(exception);
-    return exception;
+    return errorCollector.handle(exception);
   }
 
   private void addWarn(ErrorLabel errorCode, SqlNode node,

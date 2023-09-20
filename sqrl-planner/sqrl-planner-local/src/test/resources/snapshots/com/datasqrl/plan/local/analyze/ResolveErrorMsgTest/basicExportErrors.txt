@@ -1,7 +1,5 @@
->>>import
-
 >>>export
-[FATAL] Cannot resolve table sink: [outputt, customer]
+[FATAL] Cannot resolve table sink: outputt.customer
 in script:<script> [2:1]:
 IMPORT ecommerce-data.Customer;
 EXPORT Customer TO outputt.customer;

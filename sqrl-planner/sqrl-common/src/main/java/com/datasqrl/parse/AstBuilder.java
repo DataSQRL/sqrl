@@ -328,11 +328,11 @@ class AstBuilder
       return importDef;
     } else {
       SqrlAssignTimestamp assignTimestamp = new SqrlAssignTimestamp(getLocation(ctx),
-          new SqlIdentifier(Util.last(identifier.names), SqlParserPos.ZERO),
+          new SqlIdentifier(Util.last(identifier.names), identifier.getParserPosition()),
           alias,
           timestamp.get(), timestampAlias);
 
-      return new SqlNodeList(List.of(importDef, assignTimestamp), SqlParserPos.ZERO);
+      return new SqlNodeList(List.of(importDef, assignTimestamp), importDef.getParserPosition());
     }
   }
 

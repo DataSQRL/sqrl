@@ -68,19 +68,24 @@ public class SqrlPlan extends SqrlBase {
     }
 
     for (SqlNode statement : node.getStatements()) {
-      ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(),
-          updatedModuleLoader, collector, new SqlNameUtil(nameCanonicalizer));
-      validator.validateStatement((SqrlStatement) statement);
-      if (collector.hasErrors()) {
+      try {
+        ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(),
+            updatedModuleLoader, collector, new SqlNameUtil(nameCanonicalizer));
+        validator.validateStatement((SqrlStatement) statement);
+        if (collector.hasErrors()) {
+          throw new CollectedException(new RuntimeException("Script cannot validate"));
+        }
+
+        ScriptPlanner planner = new ScriptPlanner(
+            framework.getQueryPlanner(), validator,
+            new SqrlPlanningTableFactory(framework, nameCanonicalizer), framework,
+            new SqlNameUtil(nameCanonicalizer), collector);
+
+        planner.plan(statement);
+      } catch (Exception e) {
+        collector.handle(e);
         throw new CollectedException(new RuntimeException("Script cannot validate"));
       }
-
-      ScriptPlanner planner = new ScriptPlanner(
-          framework.getQueryPlanner(), validator,
-          new SqrlPlanningTableFactory(framework, nameCanonicalizer), framework,
-          new SqlNameUtil(nameCanonicalizer), collector);
-
-      planner.plan(statement);
     }
 
     return new Namespace(framework, pipeline);

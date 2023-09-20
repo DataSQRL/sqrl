@@ -14,12 +14,12 @@ LogicalProject(__productid$0=[$0], total$0=[$1], num$0=[$2], hour$0=[$3])
                       LogicalProject($f0=[$cor5.entries$0])
                         LogicalValues(tuples=[[{ 0 }]])
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-                  LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                  LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                     LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6])
                       LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[product$i$5]])
         LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-          LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+          LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
             LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6])
               LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                 LogicalTableScan(table=[[product$i$5]])
@@ -40,12 +40,12 @@ LogicalProject(__productid$0=[$0], total$0=[$1], num$0=[$2], hour$0=[$3])
                       LogicalProject($f0=[$cor5.entries$0])
                         LogicalValues(tuples=[[{ 0 }]])
                 LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-                  LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+                  LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                     LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6])
                       LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                         LogicalTableScan(table=[[product$i$5]])
         LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-          LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+          LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
             LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6])
               LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                 LogicalTableScan(table=[[product$i$5]])
@@ -63,7 +63,7 @@ LogicalProject(__productid$0=[$0], hour$0=[$1], quantity$0=[$2], num_orders$0=[$
                 LogicalProject($f0=[$cor5.entries$0])
                   LogicalValues(tuples=[[{ 0 }]])
           LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-            LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+            LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
               LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6])
                 LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
                   LogicalTableScan(table=[[product$i$5]])
@@ -129,10 +129,10 @@ LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(__productid$0=[$0], increase$0=[$1], __timestamp19$0=[$2])
     LogicalProject(__productid$0$pk$1=[$0], increase=[+(/(*($9, 1.5:DECIMAL(2, 1)), GREATEST($14, 500.0:DECIMAL(4, 1))), /(*($10, 1.5:DECIMAL(2, 1)), GREATEST($15, 100.0:DECIMAL(4, 1))))], __timestamp17=[CASE(<($12, $16), $16, $12)])
       LogicalJoin(condition=[=($0, $13)], joinType=[inner]) hints[JoinCostHint options:[STATE, DEDUP_STREAM, 1, RIGHT]]
-        LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[$7], __productid$0=[$8], total$0=[$9], num$0=[$10], hour$0=[$11], __timestamp=[CASE(<($6, $11), $11, $6)])
+        LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], _rownum=[$7], __productid$0=[$8], total$0=[$9], num$0=[$10], hour$0=[$11], __timestamp=[CASE(<($6, $11), $11, $6)])
           LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1, RIGHT]]
             LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-              LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+              LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                 LogicalTableScan(table=[[product$25]])
             LogicalTableScan(table=[[_sales_24h$41]])
         LogicalTableScan(table=[[_sales_72h$46]])

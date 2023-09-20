@@ -33,6 +33,7 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverterWithHints;
 import org.apache.calcite.rel.rules.CoreRules;
+import org.apache.calcite.rel.rules.SubQueryRemoveRule;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
@@ -434,7 +435,11 @@ public class QueryPlanner {
 
   public RelNode expandMacros(RelNode relNode) {
     //Before macro expansion, clean up the rel
-    relNode = run(relNode, new ExpandTableMacroRule());
+    relNode = run(relNode,
+        SubQueryRemoveRule.Config.PROJECT.toRule(),
+        SubQueryRemoveRule.Config.FILTER.toRule(),
+        SubQueryRemoveRule.Config.JOIN.toRule(),
+        new ExpandTableMacroRule());
 
     //Convert lateral joins
     relNode = RelDecorrelator.decorrelateQuery(relNode, getRelBuilder());

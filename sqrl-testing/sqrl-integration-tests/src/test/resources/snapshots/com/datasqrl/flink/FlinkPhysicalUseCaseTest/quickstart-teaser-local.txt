@@ -11,7 +11,7 @@ LogicalProject(__id$0=[$0], week$0=[$1], spend$0=[$2], saved$0=[$3])
           LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
             LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
             LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
-              LogicalProject(id=[$0], time$0=[$1], rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+              LogicalProject(id=[$0], time$0=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
                 LogicalProject(id=[$3], time$0=[$4])
                   LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
           LogicalProject(___uuid$0$pk$1=[$0], price=[$2], saving=[$3], time$0=[$1])

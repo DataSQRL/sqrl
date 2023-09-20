@@ -24,7 +24,6 @@
 
   <dependencies>
     <dependency>
-      <!-- STOPSHIP: this cannot be here, it must be base or just calcite -->
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-common</artifactId>
     </dependency>

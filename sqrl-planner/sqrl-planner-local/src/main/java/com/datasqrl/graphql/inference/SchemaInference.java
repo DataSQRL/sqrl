@@ -446,10 +446,12 @@ public class SchemaInference {
 
       //If input or scalar
       if (typeDefinition instanceof ScalarTypeDefinition) {
-        Preconditions.checkState(subTypeDefinition instanceof ScalarTypeDefinition &&
-            typeDefinition.getName().equals(subTypeDefinition.getName()),
-            "Scalar types not matching for field [%s]: %s %s", field.getName(),
-            typeDefinition.getName(), subTypeDefinition.getName());
+        if (!(subTypeDefinition instanceof ScalarTypeDefinition &&
+            typeDefinition.getName().equals(subTypeDefinition.getName()))) {
+          throw new SqrlAstException(ErrorLabel.GENERIC, toParserPos(field.getSourceLocation()),
+              "Scalar types not matching for field [%s]: %s %s", field.getName(),
+              typeDefinition.getName(), subTypeDefinition.getName());
+        }
         return null;
       } else if (typeDefinition instanceof EnumTypeDefinition) {
         Preconditions.checkState(subTypeDefinition instanceof EnumTypeDefinition &&
