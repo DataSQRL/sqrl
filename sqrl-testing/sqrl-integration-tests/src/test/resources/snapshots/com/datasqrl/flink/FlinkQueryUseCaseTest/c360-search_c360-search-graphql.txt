@@ -1,0 +1,33 @@
+>>>database
+CREATE INDEX IF NOT EXISTS product$6_text_c3c4c5 ON product$6 USING GIN (to_tsvector('english', coalesce(name$0, '') || ' ' || coalesce(description$0, '') || ' ' || coalesce(category$0, '') ));
+CREATE TABLE IF NOT EXISTS product$6 (productid$0 BIGINT NOT NULL,_uuid$0 VARCHAR NOT NULL,_ingest_time$0 TIMESTAMPTZ NOT NULL,name$0 VARCHAR NOT NULL,description$0 VARCHAR NOT NULL,category$0 VARCHAR NOT NULL,updatetime$0 TIMESTAMPTZ NOT NULL , PRIMARY KEY (productid$0));
+>>>query-productsearch
+{
+  "data" : {
+    "ProductSearch" : [ {
+      "productid" : 3225,
+      "name" : "4ft Garden Gnome",
+      "description" : "A real-sized garden gnome adds character to your outdoor space",
+      "category" : "House & Garden",
+      "score" : 0.1
+    } ]
+  }
+}
+>>>query-productsearch2
+{
+  "data" : {
+    "ProductSearch" : [ {
+      "productid" : 3225,
+      "name" : "4ft Garden Gnome",
+      "description" : "A real-sized garden gnome adds character to your outdoor space",
+      "category" : "House & Garden",
+      "score" : 0.1
+    }, {
+      "productid" : 7552,
+      "name" : "Simer Garden Hose 50ft",
+      "description" : "Long garden hose that rolls up",
+      "category" : "House & Garden",
+      "score" : 0.1
+    } ]
+  }
+}
