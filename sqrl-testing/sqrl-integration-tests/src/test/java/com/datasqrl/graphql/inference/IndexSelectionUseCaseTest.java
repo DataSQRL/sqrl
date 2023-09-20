@@ -35,7 +35,7 @@ public class IndexSelectionUseCaseTest extends AbstractSchemaInferenceModelTest 
   @Test
   @Disabled
   public void testSingle() {
-    TestScript script = Nutshop.INSTANCE.getScripts().get(0);
+    TestScript script = Retail.INSTANCE.getScript(RetailScriptNames.SEARCH);
     fullScriptTest(script, script.getGraphQLSchemas().get(0));
   }
 
