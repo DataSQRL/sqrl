@@ -2,6 +2,7 @@
 package com.datasqrl.calcite.type;
 
 import com.datasqrl.calcite.Dialect;
+import com.datasqrl.flink.FlinkConverter;
 import java.util.Optional;
 import org.apache.calcite.avatica.util.ByteString;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
@@ -20,23 +21,35 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
+import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.StructuredType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
   private List<RelDataType> types = new ArrayList<>();
 
   public TypeFactory() {
     super(SqrlTypeSystem.INSTANCE);
+    types.add(new Vector(this));
   }
 
   public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
     //Add custom type translation here
-
-    for (RelDataType type : types) {
-      if (type.equals(engineType)) {
-        return type;
-      }
+    //types.get(0).getClass()
+    System.out.println(engineType);
+    if (engineType instanceof StructuredRelDataType &&
+        ((StructuredRelDataType) engineType).getStructuredType().getImplementationClass().get() == FlinkVectorType.class) {
+      return new Vector(this);
     }
+
+//    for (RelDataType type : types) {
+//      if (type.equals(engineType)) {
+//        return type;
+//      }
+//    }
 
     if (engineType instanceof DelegatingDataType) {
       throw new RuntimeException("Could not find type: " + engineType);
@@ -170,5 +183,20 @@ public class TypeFactory extends JavaTypeFactoryImpl {
    */
   public void registerType(RelDataType type) {
     this.types.add(type);
+  }
+
+  public RelDataType translateToEngineType(Dialect dialect, RelDataType operandType) {
+    if (operandType instanceof Vector) {
+      FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
+          FlinkTypeSystem.INSTANCE);
+      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
+          FlinkConverter.catalogManager.getDataTypeFactory());
+
+      RelDataType flinkType = flinkTypeFactory
+          .createFieldTypeFromLogicalType(dataType.getLogicalType());
+      return flinkType;
+    }
+
+    return operandType;
   }
 }

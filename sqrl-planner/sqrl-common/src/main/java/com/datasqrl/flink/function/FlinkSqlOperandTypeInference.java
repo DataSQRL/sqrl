@@ -28,6 +28,7 @@ import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.functions.inference.CallBindingCallContext;
 import org.apache.flink.table.types.DataType;
@@ -54,7 +55,7 @@ public class FlinkSqlOperandTypeInference implements SqlOperandTypeInference {
   @Override
   public void inferOperandTypes(SqlCallBinding callBinding, RelDataType returnType, RelDataType[] operandTypes) {
     final CallContext callContext =
-        new CallBindingCallContext(dataTypeFactory, definition, callBinding, returnType);
+        new CallBindingCallContext(dataTypeFactory, definition, convertToFlinkBinding(callBinding), returnType);
     try {
       inferOperandTypesOrError(flinkTypeFactory, unwrapTypeFactory(callBinding), callContext, operandTypes);
     } catch (ValidationException | CalciteContextException e) {
@@ -62,6 +63,12 @@ public class FlinkSqlOperandTypeInference implements SqlOperandTypeInference {
     } catch (Throwable t) {
       throw createUnexpectedException(callContext, t);
     }
+  }
+
+  private SqlCallBinding convertToFlinkBinding(SqlCallBinding callBinding) {
+//    FlinkCalciteSqlValidator validator = new FlinkCalciteSqlValidator();
+
+    return callBinding;
   }
 
   private void inferOperandTypesOrError(

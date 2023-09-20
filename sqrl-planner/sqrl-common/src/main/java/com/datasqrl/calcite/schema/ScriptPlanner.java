@@ -351,6 +351,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         for (int i = columns.size() - 1; i >= 0; i--) {
           Column column = columns.get(i);
           if (!seenNames.contains(column.getName().getCanonical())) {
+            seenNames.add(column.getName().getCanonical());
             newNodes.add(new SqlIdentifier(column.getName().getDisplay(), SqlParserPos.ZERO));
           }
         }

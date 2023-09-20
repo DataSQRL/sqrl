@@ -266,6 +266,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       try {
         return Optional.of(planner.planExpression(node.getExpression(), t.getRowType()));
       } catch (Exception e) {
+        e.printStackTrace();
         addError(ErrorLabel.GENERIC, node, "Could not plan expression: %s", e.getMessage());
         return Optional.empty();
       }
@@ -835,6 +836,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
 
     public List<String> getAliasPath(String alias) {
+      if (getAliasPathMap().get(alias) == null) {
+        throw new RuntimeException("Could not find alias: " + alias);
+      }
       return new ArrayList<>(getAliasPathMap().get(alias));
     }
   }

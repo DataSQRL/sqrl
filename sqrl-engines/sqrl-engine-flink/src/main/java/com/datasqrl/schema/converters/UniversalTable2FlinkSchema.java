@@ -3,21 +3,24 @@
  */
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.calcite.type.VectorType;
+import com.datasqrl.calcite.type.FlinkVectorType;
+import com.datasqrl.calcite.type.Vector;
+import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.type.ArraySqlType;
-import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.sql.type.IntervalSqlType;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.StructuredType;
 
 
 @Value
@@ -27,9 +30,17 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
   //NOTE: Does not include nullable in this call, need to call nullable function
   @Override
   public DataType convertBasic(RelDataType datatype) {
-    if (datatype instanceof StructuredRelDataType &&
-        ((StructuredRelDataType) datatype).getStructuredType().getImplementationClass().get() == VectorType.class) {
-      return DataTypes.DOUBLE();
+    if (datatype instanceof Vector) {
+
+      FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
+          FlinkTypeSystem.INSTANCE);
+      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
+          FlinkConverter.catalogManager.getDataTypeFactory());
+
+      RelDataType flinkType = flinkTypeFactory
+          .createFieldTypeFromLogicalType(dataType.getLogicalType());
+
+      return dataType;
     }
 
     switch (datatype.getSqlTypeName()) {

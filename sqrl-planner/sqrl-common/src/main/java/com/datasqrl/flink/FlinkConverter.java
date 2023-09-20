@@ -51,7 +51,7 @@ import java.util.Map;
 public class FlinkConverter {
 
   static EnvironmentSettings settings = EnvironmentSettings.newInstance().build();
-  static CatalogManager catalogManager = CatalogManager.newBuilder()
+  public static CatalogManager catalogManager = CatalogManager.newBuilder()
       .classLoader(FlinkConverter.class.getClassLoader())
       .config(TableConfig.getDefault())
       .defaultCatalog(
