@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -33,7 +32,9 @@ public class VectorFunctions {
 
   public static final VectorToDouble VEC_TO_DOUBLE = new VectorToDouble();
 
-  public static final OnnxEmbedd ONNX_EMBEDD = new OnnxEmbedd();
+  public static final DoubleToVector DOUBLE_TO_VECTOR = new DoubleToVector();
+
+  public static final OnnxEmbed ONNX_EMBED = new OnnxEmbed();
 
   public static final Center CENTER = new Center();
 
@@ -64,17 +65,22 @@ public class VectorFunctions {
     }
   }
 
+  public static class DoubleToVector extends ScalarFunction implements SqrlFunction {
+    public VectorType[] eval(double[] array) {
+      return Arrays.stream(array)
+          .mapToObj(VectorType::new)
+          .toArray(VectorType[]::new);
+    }
+
+    @Override
+    public String getDocumentation() {
+      return "Converts a double array to a vector";
+    }
+  }
+
   public static class CosineDistance extends ScalarFunction implements SqrlFunction {
     public double eval(VectorType[] vectorA, VectorType[] vectorB) {
-      // Create RealVectors from the input arrays
-      RealVector vA = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorA), false);
-      RealVector vB = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorB), false);
-
-      // Calculate the cosine similarity
-      double dotProduct = vA.dotProduct(vB);
-      double normalization = vA.getNorm() * vB.getNorm();
-
-      return dotProduct / normalization;
+      return 1 - new CosineDistance().eval(vectorA, vectorB);
     }
 
     @Override
@@ -85,7 +91,15 @@ public class VectorFunctions {
 
   public static class CosineSimilarity extends ScalarFunction implements SqrlFunction {
     public double eval(VectorType[] vectorA, VectorType[] vectorB) {
-      return 1 - new CosineDistance().eval(vectorA, vectorB);
+      // Create RealVectors from the input arrays
+      RealVector vA = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorA), false);
+      RealVector vB = new ArrayRealVector(VEC_TO_DOUBLE.eval(vectorB), false);
+
+      // Calculate the cosine similarity
+      double dotProduct = vA.dotProduct(vB);
+      double normalization = vA.getNorm() * vB.getNorm();
+
+      return dotProduct / normalization;
     }
 
     @Override
@@ -109,7 +123,7 @@ public class VectorFunctions {
   }
 
 
-  public static class OnnxEmbedd extends ScalarFunction implements SqrlFunction {
+  public static class OnnxEmbed extends ScalarFunction implements SqrlFunction {
 
     public static final String TOKENIZER_FILENAME = "tokenizer.json";
 

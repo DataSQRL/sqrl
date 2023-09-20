@@ -2,7 +2,8 @@
 type Query {
     Events(limit: Int!, offset: Int = 0): [Events!]!
     EventsLiked(userid: String!): [EventsLiked!]!
-#    PersonalizedEvents(userid: String!, tolerance: Float!): [PersonalizedEvents!]
+    RecommendedEvents(userid: String!, tolerance: Float!): [RecommendedEvents!]
+    PersonalizedEventSearch(query: String!, userid: String!): [PersonalizedEventSearch!]
 }
 
 
@@ -39,17 +40,29 @@ type Events implements AbstractEvents{
     speakers : [speakers!]
 }
 
-#type PersonalizedEvents implements AbstractEvents{
-#    id : Int!
-#    date: String!
-#    time : String!
-#    location: String!
-#    title : String!
-#    abstract : String!
-#    url : String!
-#    startTimestamp : String!
-#    score: Float!
-#}
+type RecommendedEvents implements AbstractEvents{
+    id : Int!
+    date: String!
+    time : String!
+    location: String!
+    title : String!
+    abstract : String!
+    url : String!
+    startTimestamp : String!
+    score: Float!
+}
+
+type PersonalizedEventSearch implements AbstractEvents{
+    id : Int!
+    date: String!
+    time : String!
+    location: String!
+    title : String!
+    abstract : String!
+    url : String!
+    startTimestamp : String!
+    score: Float!
+}
 
 type EventsLiked implements AbstractEvents{
     id : Int!
