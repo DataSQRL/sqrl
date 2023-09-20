@@ -330,7 +330,7 @@ public class SchemaBuilder implements
     return FieldLookupCoords.builder()
         .parentType(field.getParent().getName())
         .fieldName(field.getFieldDefinition().getName())
-        .columnName(field.getColumn().getId().getCanonical())
+        .columnName(field.getColumn().getVtName())
         .build();
   }
 

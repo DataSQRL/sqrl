@@ -49,12 +49,13 @@ public class SQRLTable {
     return fields.nextVersion(name);
   }
 
-  public Column addColumn(Name name, boolean visible, RelDataType type) {
+  public Column addColumn(Name name, String vtName, boolean visible, RelDataType type) {
     //extract version information from vt column or derive a new version
     int version = name.getCanonical().split("\\$").length > 1 ?
         Integer.parseInt(name.getCanonical().split("\\$")[1]) : getNextFieldVersion(name);
 
     Column col = new Column(name, version, visible, type);
+    col.setVtName(vtName);
     fields.addField(col);
     return col;
   }

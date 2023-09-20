@@ -295,7 +295,10 @@ public class CalciteTableFactory {
     for (Field field : allFields) {
       if (field instanceof Column) {
         Column c = (Column) field;
-        tbl.addColumn(c.getName(), c.isVisible(), c.getType());
+        int index = framework.getCatalogReader().nameMatcher()
+            .indexOf(vTable.getRowType().getFieldNames(), c.getName().getCanonical());
+        Preconditions.checkState(index != -1);
+        tbl.addColumn(c.getName(), vTable.getRowType().getFieldNames().get(index), c.isVisible(), c.getType());
       } else {
         ChildRelationship child = (ChildRelationship) field;
         build(child.getChildTable(), Optional.of(tbl),
