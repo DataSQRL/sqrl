@@ -38,7 +38,6 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.util.BarfingInvocationHandler;
 import org.apache.calcite.util.ConversionUtil;
 import org.apache.calcite.util.Glossary;

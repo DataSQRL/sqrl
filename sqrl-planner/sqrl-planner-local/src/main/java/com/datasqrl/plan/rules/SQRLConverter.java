@@ -1,5 +1,6 @@
 package com.datasqrl.plan.rules;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.WatermarkHint;
@@ -12,7 +13,9 @@ import com.datasqrl.plan.global.AnalyzedAPIQuery;
 import com.datasqrl.plan.table.ScriptTable;
 import com.google.common.base.Preconditions;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;

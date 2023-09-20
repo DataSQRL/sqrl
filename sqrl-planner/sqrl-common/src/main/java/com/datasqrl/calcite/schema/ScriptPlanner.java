@@ -18,6 +18,7 @@ import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.schema.sql.SqlJoinPathBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
@@ -37,6 +38,7 @@ import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -65,7 +67,6 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
-import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
@@ -327,18 +328,33 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
         //get latest fields not in select list
 
+        List<Name> originalNames = planner.getCatalogReader().getSqrlTable(result.getCurrentPath())
+            .unwrap(ModifiableTable.class)
+            .getSqrlTable().getFields()
+            .getFields().stream()
+            .map(c -> c.getName())
+            .collect(Collectors.toList());
+
         List<Column> columns = planner.getCatalogReader().getSqrlTable(result.getCurrentPath())
             .unwrap(ModifiableTable.class)
             .getSqrlTable().getFields().getColumns();
 
-        SqlNameMatcher matcher = planner.getCatalogReader().nameMatcher();
-        for (Column column : columns) {
-          //todo wrong again
-          int idx = matcher.indexOf(fieldNames, column.getName().getCanonical());
-          if (!fieldNames.contains(column.getName().getCanonical())) {
-            selectList.add(new SqlIdentifier(column.getName().getCanonical(), SqlParserPos.ZERO));
+        //Exclude columns
+        Set<String> seenNames = new HashSet<>();
+        seenNames.addAll(fieldNames.stream()
+            .map(n->nameUtil.toName(n).getCanonical())
+            .collect(Collectors.toList()));
+
+        List<SqlNode> newNodes = new ArrayList<>();
+        //Walk backwards to get the latest nodes
+        for (int i = columns.size() - 1; i >= 0; i--) {
+          Column column = columns.get(i);
+          if (!seenNames.contains(column.getName().getCanonical())) {
+            newNodes.add(new SqlIdentifier(column.getName().getDisplay(), SqlParserPos.ZERO));
           }
         }
+        Collections.reverse(newNodes);
+        selectList.addAll(newNodes);
 
         sqlSelectBuilder.setSelectList(selectList)
             .clearHints();
@@ -348,7 +364,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
             .build();
 
         return new Result(top,
-            result.getCurrentPath(), List.of(), List.of(), Optional.empty());
+            result.getCurrentPath(), List.of(), List.of(), Optional.of(originalNames));
       } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) ||
           (context.isNested() && call.getFetch() != null)) {
         //if is nested, get primary key nodes
@@ -640,7 +656,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     List<String> currentPath;
     List<String> keysToPullUp;
     List<List<String>> tableReferences;
-    Optional<SqlNode> wrapperNode;
+    Optional<List<Name>> originalnames;
   }
 
   @Value

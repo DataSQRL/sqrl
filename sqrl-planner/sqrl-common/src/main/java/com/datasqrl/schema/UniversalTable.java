@@ -3,7 +3,10 @@
  */
 package com.datasqrl.schema;
 
+import static com.datasqrl.canonicalizer.Name.changeDisplayName;
+
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.StandardName;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.canonicalizer.Name;
