@@ -1,14 +1,14 @@
 type Package {
   name: String!
-  latest: [Submission!]
-  versions: [Submission!]
+  latest(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  versions(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
 }
 
 type Query {
   Submission(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
   Package(name: String): [Package!]
-  TopicPackages(pkgName: String, topicName: String, numSubmissions: Int, lastSubmission: String): [TopicPackages!]
-  TopicSearch(topicName: String, numPackages: Int): [TopicSearch!]
+  TopicPackages(pkgname: String, topicname: String, numsubmissions: Int, lastsubmission: String): [TopicPackages!]
+  TopicSearch(topicname: String, numpackages: Int): [TopicSearch!]
 }
 
 type Submission {
@@ -22,28 +22,28 @@ type Submission {
   documentation: String
   readme: String
   description: String
-  uniqueId: String!
+  uniqueid: String!
   file: String!
   hash: String!
   authorid: String!
-  submissionTime: String!
-  files: [files!]
-  keywords: [keywords!]
+  submissiontime: String!
+  files(filename: String, filesize: Int): [files!]
+  keywords(name: String): [keywords!]
   variant: String!
   repoURL: String!
 }
 
 type TopicPackages {
-  pkgName: String!
-  topicName: String!
-  numSubmissions: Int!
-  lastSubmission: String!
-  latest: [Submission!]
+  pkgname: String!
+  topicname: String!
+  numsubmissions: Int!
+  lastsubmission: String!
+  latest(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
 }
 
 type TopicSearch {
-  topicName: String!
-  numPackages: Int!
+  topicname: String!
+  numpackages: Int!
 }
 
 type files {

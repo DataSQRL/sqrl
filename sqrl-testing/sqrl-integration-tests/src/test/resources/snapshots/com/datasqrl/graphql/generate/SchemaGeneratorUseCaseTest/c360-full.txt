@@ -1,6 +1,6 @@
 type Category {
   name: String!
-  products: [Product!]
+  products(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
 }
 
 type Customer {
@@ -9,10 +9,10 @@ type Customer {
   name: String!
   lastupdated: Int!
   updatetime: String!
-  orders: [Orders!]
-  order_again: [order_again!]
-  favorite_categories: [favorite_categories!]
-  order_stats: [order_stats!]
+  orders(id: Int, customerid: Int, time: String): [Orders!]
+  order_again(productid: Int, quantity: Int, num_orders: Int, most_recent: String): [order_again!]
+  favorite_categories(category_name: String, total: Float): [favorite_categories!]
+  order_stats(total_spend: Float, num_orders: Int): [order_stats!]
 }
 
 type NewCustomerPromotion {
@@ -27,8 +27,8 @@ type Orders {
   id: Int!
   customerid: Int!
   time: String!
-  entries: [entries!]
-  total: [total!]
+  entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [entries!]
+  total(price: Float, discount: Float, num: Int): [total!]
 }
 
 type Product {
@@ -54,14 +54,14 @@ type entries {
   parent: Orders!
   discount: Float!
   total: Float!
-  product: [Product!]
+  product(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
 }
 
 type favorite_categories {
   category_name: String!
   total: Float!
   parent: Customer!
-  category: [Category!]
+  category(name: String): [Category!]
 }
 
 type order_again {

@@ -1,6 +1,6 @@
 type Category {
   name: String!
-  products: [Product!]
+  products(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
 }
 
 type Customer {
@@ -9,15 +9,15 @@ type Customer {
   name: String!
   lastupdated: Int!
   updatetime: String!
-  orders: [Orders!]
+  orders(id: Int, customerid: Int, time: String): [Orders!]
 }
 
 type Orders {
   id: Int!
   customerid: Int!
   time: String!
-  entries: [entries!]
-  total: [total!]
+  entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [entries!]
+  total(price: Float, discount: Float, num: Int): [total!]
 }
 
 type Product {
@@ -42,7 +42,7 @@ type entries {
   parent: Orders!
   discount: Float!
   total: Float!
-  product: [Product!]
+  product(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
 }
 
 type total {

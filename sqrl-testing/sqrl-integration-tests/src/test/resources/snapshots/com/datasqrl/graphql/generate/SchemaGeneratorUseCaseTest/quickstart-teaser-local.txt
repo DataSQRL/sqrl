@@ -2,8 +2,8 @@ type Orders {
   id: Int!
   customerid: Int!
   time: String!
-  items: [items!]
-  totals: [totals!]
+  items(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [items!]
+  totals(price: Float, saving: Float): [totals!]
 }
 
 type Query {
@@ -13,8 +13,8 @@ type Query {
 
 type Users {
   id: Int!
-  purchases: [Orders!]
-  spending: [spending!]
+  purchases(id: Int, customerid: Int, time: String): [Orders!]
+  spending(week: String, spend: Float, saved: Float): [spending!]
 }
 
 type items {
