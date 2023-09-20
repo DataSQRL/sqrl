@@ -20,6 +20,7 @@ package com.datasqrl.flink.function;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.function.RuleTransform;
+import com.datasqrl.function.FunctionTranslationMap;
 import com.datasqrl.util.ReflectionUtil;
 import java.lang.reflect.Method;
 import java.util.List;

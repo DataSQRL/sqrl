@@ -1,6 +1,10 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.function.RuleTransform;
+import com.datasqrl.function.FunctionTranslationMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
@@ -24,11 +28,11 @@ public class DialectCallConverter {
   }
 
   public RelNode convert(Dialect dialect, RelNode relNode) {
-    List<RuleTransform> transforms = extractFunctionTransforms(relNode);
+    Map<SqlOperator, RuleTransform> transforms = extractFunctionTransforms(relNode);
 
     List<RelRule> rules = new ArrayList<>();
-    for (RuleTransform transform : transforms) {
-      rules.addAll(transform.transform(dialect, (SqlOperator) transform));
+    for (Entry<SqlOperator, RuleTransform> transform : transforms.entrySet()) {
+      rules.addAll(transform.getValue().transform(dialect, transform.getKey()));
     }
 
     relNode = Programs.hep(rules, false, null)
@@ -37,16 +41,18 @@ public class DialectCallConverter {
     return relNode;
   }
 
-  private List<RuleTransform> extractFunctionTransforms(RelNode relNode) {
-    Set<RuleTransform> transforms = new HashSet<>();
+  private Map<SqlOperator, RuleTransform> extractFunctionTransforms(RelNode relNode) {
+    Map<SqlOperator, RuleTransform> transforms = new HashMap<>();
     relNode.accept(new RelShuttleImpl() {
       @Override
       protected RelNode visitChild(RelNode parent, int i, RelNode child) {
         parent.accept(new RexShuttle(){
           @Override
           public RexNode visitCall(RexCall call) {
-            if (call.getOperator() instanceof RuleTransform) {
-              transforms.add((RuleTransform)call.getOperator());
+            RuleTransform transform = FunctionTranslationMap.transformMap.get(
+                call.getOperator().getName().toLowerCase());
+            if (transform != null) {
+              transforms.put(call.getOperator(), transform);
             }
             return super.visitCall(call);
           }
@@ -56,6 +62,6 @@ public class DialectCallConverter {
       }
     });
 
-    return new ArrayList<>(transforms);
+    return new HashMap<>(transforms);
   }
 }

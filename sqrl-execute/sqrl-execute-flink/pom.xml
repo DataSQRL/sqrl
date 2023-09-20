@@ -25,7 +25,7 @@
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-common</artifactId>
+      <artifactId>sqrl-base</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
