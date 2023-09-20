@@ -31,3 +31,14 @@ CREATE TABLE IF NOT EXISTS product$6 (productid$0 BIGINT NOT NULL,_uuid$0 VARCHA
     } ]
   }
 }
+>>>query-productsearchWithId
+{
+  "data" : {
+    "ProductSearchWithId" : [ {
+      "productid" : 7552,
+      "name" : "Simer Garden Hose 50ft",
+      "description" : "Long garden hose that rolls up",
+      "category" : "House & Garden"
+    } ]
+  }
+}
