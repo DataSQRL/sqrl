@@ -1,15 +1,27 @@
 package com.datasqrl.engine.stream.flink.sql;
 
+import com.datasqrl.VectorFunctions;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
+import com.datasqrl.flink.FlinkConverter;
+import com.datasqrl.function.StdVectorLibraryImpl;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.calcite.rel.RelNode;
 import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter.QueryType;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
+import org.apache.calcite.tools.RelBuilder;
 
 public class RelToFlinkSql {
   public static final UnaryOperator<SqlWriterConfig> transform = c ->
@@ -40,8 +52,35 @@ public class RelToFlinkSql {
   }
 
   public static String convertToSql(FlinkRelToSqlConverter converter, RelNode optimizedNode) {
+    //add Casts
+    List<Integer> toConvert = optimizedNode.getRowType().getFieldList().stream()
+        .filter(f -> f.getType().getComponentType() != null)
+        .map(RelDataTypeField::getIndex)
+        .collect(Collectors.toList());
+    if (!toConvert.isEmpty()) {
+
+      RelBuilder relBuilder = new RelBuilder(null, optimizedNode.getCluster(), null){};
+      relBuilder.push(optimizedNode);
+      List<RexNode> collect = IntStream.range(0, optimizedNode.getRowType().getFieldCount())
+          .mapToObj(i -> toConvert.contains(i) ?
+              relBuilder.call(new FlinkConverter(relBuilder.getRexBuilder(), (TypeFactory) relBuilder.getTypeFactory())
+                  .convertFunction("VecToDouble", "VecToDouble", VectorFunctions.VEC_TO_DOUBLE),
+                  relBuilder.field(i))
+              :relBuilder.field(i))
+          .collect(Collectors.toList());
+
+      optimizedNode = relBuilder.project(collect, optimizedNode.getRowType().getFieldNames())
+          .build();
+    }
+
+    System.out.println(optimizedNode.getRowType());
+
+
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
     QueryPipelineItem query = converter.getOrCreate(QueryType.ROOT, sqlNode, optimizedNode, null);
+    System.out.println(optimizedNode.explain());
+    System.out.println(query.getSql());
+
     return query.getTableName();
   }
 }

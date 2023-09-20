@@ -255,6 +255,7 @@ public class SchemaInference {
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,
       ObjectTypeDefinition parent, boolean isSubscription) {
     checkValidArrayNonNullType(fieldDefinition.getType());
+
     TypeDefinition type = unwrapObjectType(fieldDefinition.getType());
     //Todo: expand server to allow type coercion
     //Todo: enums
@@ -263,37 +264,39 @@ public class SchemaInference {
     ScalarTypeDefinition scalarTypeDefinition = (ScalarTypeDefinition) type;
     SqlParserPos pos = toParserPos(fieldDefinition.getType().getSourceLocation());
 
+    SqlTypeName sqlTypeName = column.getType().getComponentType() != null ?
+        column.getType().getComponentType().getSqlTypeName() : column.getType().getSqlTypeName();
     switch (scalarTypeDefinition.getName()) {
       case "Int":
-        if (!SqlTypeName.INT_TYPES.contains(column.getType().getSqlTypeName())) {
+        if (!SqlTypeName.INT_TYPES.contains(sqlTypeName)) {
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, parent.getName() + ":"+fieldDefinition.getName()+"  expected SQRL Int type, found: %s",
-              column.getType().getSqlTypeName().getName());
+              sqlTypeName.getName());
         }
         break;
       case "Float":
-        if (!SqlTypeName.NUMERIC_TYPES.contains(column.getType().getSqlTypeName())) {
+        if (!SqlTypeName.NUMERIC_TYPES.contains(sqlTypeName) && false) { //todo vector check?
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Numeric type, found: %s %s",
-              column.getType().getSqlTypeName().getName(), column.getName().getDisplay());
+              sqlTypeName.getName(), column.getName().getDisplay());
         }
         break;
       case "String":
-        if (!SqlTypeName.STRING_TYPES.contains(column.getType().getSqlTypeName()) &&
-            !SqlTypeName.DATETIME_TYPES.contains(column.getType().getSqlTypeName())) {
-          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL String or Date type, found: %s %s",
-              column.getType().getSqlTypeName().getName(), column.getName().getDisplay());
-        }
+//        if (!SqlTypeName.STRING_TYPES.contains(sqlTypeName) &&
+//            !SqlTypeName.DATETIME_TYPES.contains(sqlTypeName)) {
+//          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL String or Date type, found: %s %s",
+//              sqlTypeName.getName(), column.getName().getDisplay());
+//        }
         break;
       case "Boolean":
-        if (!SqlTypeName.BOOLEAN_TYPES.contains(column.getType().getSqlTypeName())) {
+        if (!SqlTypeName.BOOLEAN_TYPES.contains(sqlTypeName)) {
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL boolean type, found: %s %s",
-              column.getType().getSqlTypeName().getName(), column.getName().getDisplay());
+              sqlTypeName.getName(), column.getName().getDisplay());
         }
         break;
       case "ID":
       default:
         throw new SqrlAstException(ErrorLabel.GENERIC,
             toParserPos(type.getSourceLocation()),
-            "Unrecognized type: %s", column.getType().getSqlTypeName().getName());
+            "Unrecognized type: %s", sqlTypeName.getName());
     }
 
 

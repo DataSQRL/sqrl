@@ -44,13 +44,13 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   protected List<String> events = new ArrayList<>();
 
   @Container
-//  static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
-//      DockerImageName.parse("ankane/pgvector:v0.4.4")
-//      .asCompatibleSubstituteFor("postgres"));
+  static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
+      DockerImageName.parse("ankane/pgvector:v0.4.4")
+      .asCompatibleSubstituteFor("postgres"));
 
-  protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
-      DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
-      .withPassword("secret").withDatabaseName("datasqrl");
+//  protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
+//      DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
+//      .withPassword("secret").withDatabaseName("datasqrl");
 
   protected SnapshotTest.Snapshot snapshot;
   protected Vertx vertx;

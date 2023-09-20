@@ -15,4 +15,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.tribuo</groupId>
+      <artifactId>tribuo-onnx</artifactId>
+      <version>4.3.1</version>
+    </dependency>
+  </dependencies>
+
 </project>

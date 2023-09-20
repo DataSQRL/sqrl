@@ -3,19 +3,23 @@ name: "events"
 schema_version: "1"
 partial_schema: false
 columns:
-- name: "id"
-  type: "INTEGER"
+- name: "url"
+  type: "STRING"
   tests:
   - "not_null"
-- name: "last_updated"
-  type: "DATETIME"
+- name: "date"
+  type: "STRING"
   tests:
   - "not_null"
 - name: "time"
-  type: "DATETIME"
+  type: "STRING"
   tests:
   - "not_null"
 - name: "title"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "abstract"
   type: "STRING"
   tests:
   - "not_null"
@@ -31,15 +35,13 @@ columns:
     - "not_null"
   - name: "title"
     type: "STRING"
-    tests:
-    - "not_null"
   - name: "company"
     type: "STRING"
     tests:
     - "not_null"
   tests:
   - "not_null"
-- name: "description"
-  type: "STRING"
+- name: "last_updated"
+  type: "DATETIME"
   tests:
   - "not_null"

@@ -43,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.ListUtils;
 
 @Slf4j
 public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
@@ -123,6 +124,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
             EngineSink.class)
         .map(factory::createTable)
         .collect(Collectors.toList());
+    ddlStatements = ListUtils.union(List.of(new PostgresCreateVectorExtensionStatement()), ddlStatements);
 
     dbPlan.getIndexDefinitions().stream()
             .map(factory::createIndex)

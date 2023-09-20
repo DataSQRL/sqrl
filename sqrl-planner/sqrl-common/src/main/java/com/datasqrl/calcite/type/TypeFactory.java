@@ -2,6 +2,7 @@
 package com.datasqrl.calcite.type;
 
 import com.datasqrl.calcite.Dialect;
+import java.util.Optional;
 import org.apache.calcite.avatica.util.ByteString;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
   private List<RelDataType> types = new ArrayList<>();
@@ -29,6 +31,7 @@ public class TypeFactory extends JavaTypeFactoryImpl {
 
   public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
     //Add custom type translation here
+
     for (RelDataType type : types) {
       if (type.equals(engineType)) {
         return type;

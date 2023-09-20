@@ -1,6 +1,4 @@
-IMPORT mysourcepackage.Events AS ConferenceEvents TIMESTAMP last_updated AS timestamp;
-IMPORT mysourcepackage.AuthTokens;
-IMPORT mysourcepackage.EmailTemplates
+IMPORT mysourcepackage.Events;
 
 IMPORT myAPI.Likes;
 IMPORT myAPI.AddInterest;
@@ -8,58 +6,57 @@ IMPORT myAPI.AddInterest;
 IMPORT string.*;
 IMPORT text.*;
 IMPORT vector.*;
-IMPORT secure.randomID;
+IMPORT time.parseTimestamp;
 
-/* requires string aggregated concatenation
-ConferenceEvents.speakerSummary := SELECT concatAgg( s.name + '(' + s.title + ' at ' + s.company + ')', ', ') as name
-                                 FROM @.speakers s;
- */
-/* Replace with above */
-ConferenceEvents.speakerSummary := SELECT CAST(sum(length(s.name) + length(s.title) + length(s.company)) AS String) as name
-                                   FROM @.speakers s;
+Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS INT),0);
+Events.full_text := concat(title,'\n',abstract);
+Events.embedding := onnxEmbedd(full_text, 'build/vectorEmbedd/model_quantized.onnx');
+Events.startTime := concat(regexExtract(date, '^[^-]*'),' ',regexExtract(time, '\d\d?:\d\d\s(AM|PM)'));
+-- Result: September 26, 2023 10:15 AM PDT
+Events.startTimestamp := parseTimestamp(concat(startTime,' PDT'), 'MMMMM dd, yyyy hh:mm a z')
 
-ConferenceEventsFlat := SELECT e._uuid, e.timestamp, e.id, e.time, e.title, e.description, e.location, s.name as name
-                        FROM ConferenceEvents e JOIN e.speakerSummary s;
+Events := DISTINCT Events ON id ORDER BY last_updated DESC;
 
-Events := SELECT * FROM ConferenceEventsFlat;
+AddInterest.embedding := onnxEmbedd(text, 'build/vectorEmbedd/model_quantized.onnx');
 
---Events.embedding := embed_text(title + description);
-Events.embedding := length(description); -- replace by vector embedding
+LikeVector := SELECT l.userid, e.embedding, l._source_time
+              FROM Likes l TEMPORAL JOIN Events e ON l.eventId = e.id WHERE l.liked;
 
-Events := DISTINCT Events ON id ORDER BY timestamp DESC;
+-- UserInterestVectors := (SELECT userid, embedding, _source_time FROM LikeVector)
+--                  UNION ALL
+--                  (SELECT userid, embedding, _source_time FROM AddInterest)
 
---Interests.embedding := embed_text(text);
-AddInterest.embedding := length(text); -- replace by vector embedding
+-- UserInterests := SELECT userid, center(embedding) as interestVector FROM UserInterestVectors GROUP BY userid;
 
-UserInterests := SELECT userid, avg(embedding) as interestVector FROM AddInterest GROUP BY userid;
+UserInterests := SELECT userid, center(embedding) as interestVector FROM AddInterest GROUP BY userid;
+
 
 UserLikes := DISTINCT Likes ON userid, eventId ORDER BY _source_time DESC;
 
-
-EventLikeCount := SELECT eventid, sum(liked) as num FROM UserLikes l GROUP BY eventid;
+EventLikeCount := SELECT eventid, count(*) as num, avg(eventid) as test
+                  FROM UserLikes l WHERE l.liked GROUP BY eventid;
 Events.likeCount := JOIN EventLikeCount l ON @.id = l.eventid;
 
-EventsAfterTime(@afterTime: DateTime) := SELECT * FROM Events WHERE time > @afterTime
-                                                             ORDER BY time ASC;
+-- EventSearch(@query: String) := SELECT * FROM Events WHERE
+--                         textsearch(@query, title, abstract) > 0
+--                         ORDER BY textsearch(@query, title, abstract) DESC;
 
-EventSearch(@query: String, @afterTime: DateTime) := SELECT * FROM Events WHERE
-                        time >= @afterTime AND textsearch(@query, title, description) > 0
-                        ORDER BY textsearch(@query, title, description) DESC;
+EventsLiked(@userid: String) := SELECT e.* FROM UserLikes l JOIN Events e ON l.eventId = e.id
+                                WHERE l.userid = @userid AND e.startTimestamp >= now() - INTERVAL 30 MINUTE
+                                ORDER BY e.startTimestamp ASC;
 
 -- Events that the user liked or that are similar to users interests (requires vector search)
 
-PersonalizedEvents(@userid: String, @tolerance: Float, @afterTime: DateTime) :=
-SELECT e.*, l.liked,
-       coalesce(l.eventId, '') as shouldRemove1,
-       i.interestVector / e.embedding as score
---       cosineSimilarity(i.interestVector, e.embedding) as score
-FROM Events e
-    LEFT JOIN UserLikes l ON e.id = l.eventId AND l.userid = @userid
-    LEFT JOIN UserInterests i ON i.userid = @userid
-    WHERE e.time > @afterTime
-          AND (l.liked = 1 OR (i.interestVector IS NOT NULL AND
-                               i.interestVector / CAST(e.embedding AS float) >= @tolerance))
---                               cosineSimilarity(i.interestVector, e.embedding) >= @tolerance))
-    ORDER BY e.time ASC
+-- PersonalizedEvents(@userid: String, @tolerance: Float) :=
+-- SELECT e.*, cosineSimilarity(i.interestVector, e.embedding) as score
+-- FROM Events e
+--     JOIN UserInterests i ON i.userid = @userid AND cosineSimilarity(i.interestVector, e.embedding) >= @tolerance
+--     WHERE e.startTimestamp >= now() - INTERVAL 30 MINUTE
+--     ORDER BY e.startTimestamp ASC;
 
---PersonalizedEvents.likeCount := JOIN EventLikeCount l ON @.id = l.eventid;
+-- PersonalizedEventSearch(@query: String, @userid: String) :=
+--     SELECT e.*, coalesce(cosineSimilarity(i.interestVector, e.embedding),0.0) as score
+--         FROM Events
+--         LEFT JOIN UserInterests i ON i.userid = @userid
+--         WHERE textsearch(@query, title, abstract) > 0 AND e.startTimestamp >= now() - INTERVAL 30 MINUTE
+--     ORDER BY score DESC;

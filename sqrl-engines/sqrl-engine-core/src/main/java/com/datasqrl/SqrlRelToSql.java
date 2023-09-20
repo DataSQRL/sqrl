@@ -16,6 +16,8 @@ import org.apache.calcite.sql.SqlWriterConfig;
 
 import java.util.function.UnaryOperator;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
+import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 
 public class SqrlRelToSql {
 
@@ -35,8 +37,8 @@ public class SqrlRelToSql {
 
   public static String toSql(RelDataTypeField field) {
     RelDataType datatype = field.getType();
-    Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
-        "Collection column encountered");
+//    Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
+//        "Collection column encountered");
     return toSql(field.getName(), getSQLType(datatype), datatype.isNullable());
   }
 
@@ -50,10 +52,9 @@ public class SqrlRelToSql {
   }
 
   private static String getSQLType(RelDataType type) {
-    if (type instanceof DelegatingDataType) {
-      if (((DelegatingDataType) type).getConversionClass() == VectorType.class) {
-        return "VECTOR";
-      }
+    if (type instanceof StructuredRelDataType &&
+        ((StructuredRelDataType) type).getStructuredType().getImplementationClass().get() == VectorType.class) {
+      return "VECTOR";
     }
 
     switch (type.getSqlTypeName()) {
@@ -81,13 +82,15 @@ public class SqrlRelToSql {
         return "TIMESTAMP";
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
         return "TIMESTAMPTZ";
+      case ARRAY:
+        //todo
+        return "VECTOR(25)";
       case BINARY:
       case VARBINARY:
       case INTERVAL_YEAR_MONTH:
       case INTERVAL_DAY:
       case NULL:
       case SYMBOL:
-      case ARRAY:
       case MAP:
       case MULTISET:
       case ROW:

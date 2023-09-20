@@ -8,6 +8,7 @@ import com.datasqrl.calcite.convert.SimplePredicateTransform;
 import com.datasqrl.calcite.function.RuleTransform;
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,13 +20,50 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.commons.text.similarity.CosineDistance;
 
 public class FunctionTranslationMap {
 
   public static final Map<String, RuleTransform> transformMap = Map.of(
       "textsearch", new TextSearchTranslation(),
-      "now", new NowTranslation()
+      "now", new NowTranslation(),
+      "cosinedistance", new CosineDistanceTranslation(),
+      "cosinesimilarity", new CosineSimilarityTranslation(),
+      "euclideandistance", new EuclideanDistanceTranslation()
   );
+
+  public static class CosineDistanceTranslation implements RuleTransform {
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      return List.of(new SimpleCallTransform(operator,
+          ((rexBuilder, call) -> rexBuilder
+              .makeCall(PgVectorOperatorTable.CosineDistance, call.getOperands()))));
+    }
+
+  }
+  public static class CosineSimilarityTranslation implements RuleTransform {
+
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      return List.of(new SimpleCallTransform(operator,
+          ((rexBuilder, call) -> rexBuilder.makeCall(SqlStdOperatorTable.MINUS,
+              rexBuilder.makeExactLiteral(BigDecimal.ONE),
+              rexBuilder.makeCall(PgVectorOperatorTable.CosineDistance, call.getOperands())))));
+    }
+
+  }
+  public static class EuclideanDistanceTranslation implements RuleTransform {
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      return List.of(new SimpleCallTransform(operator,
+          ((rexBuilder, call) ->
+              rexBuilder.makeCall(PgVectorOperatorTable.EuclideanDistance, call.getOperands()))));
+    }
+
+  }
 
   public static class NowTranslation implements RuleTransform {
 
