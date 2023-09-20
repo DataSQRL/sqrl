@@ -74,15 +74,6 @@ public class FileSourceFactory implements DataStreamSourceFactory {
             FileDataSystemConfig.fromConfig(tableConfig));
         builder.setFileEnumerator(fileEnumerator);
 
-        Optional<Integer> monitorInterval = tableConfig.getConnectorConfig()
-            .asInt(FileConfigOptions.MONITOR_INTERVAL_MS)
-            .getOptional();
-        if (isMonitor(monitorInterval)) {
-          Duration duration = monitorInterval
-              .map(this::parseDuration)
-              .orElse(defaultDuration());
-          builder.monitorContinuously(duration);
-        }
       } else {
         Path[] inputPaths = pathConfig.getFiles(ctx.getTableConfig()).stream()
             .map(FilePath::toFlinkPath).toArray(size -> new Path[size]);
@@ -90,7 +81,15 @@ public class FileSourceFactory implements DataStreamSourceFactory {
             new org.apache.flink.connector.file.src.reader.TextLineInputFormat(
                 charset), inputPaths);
       }
-
+      Optional<Integer> monitorInterval = tableConfig.getConnectorConfig()
+          .asInt(FileConfigOptions.MONITOR_INTERVAL_MS)
+          .getOptional();
+        if (isMonitor(monitorInterval)) {
+      Duration duration = monitorInterval
+          .map(this::parseDuration)
+          .orElse(defaultDuration());
+      builder.monitorContinuously(duration);
+        }
       return ctx.getEnv().fromSource(builder.build(),
           WatermarkStrategy.noWatermarks(), ctx.getFlinkName())
           .map(new NoTimedRecord())

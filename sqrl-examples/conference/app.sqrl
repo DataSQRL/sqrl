@@ -43,7 +43,7 @@ Events.likeCount := JOIN EventLikeCount l ON @.id = l.eventid;
 --                         ORDER BY textsearch(@query, title, abstract) DESC;
 
 EventsLiked(@userid: String) := SELECT e.* FROM UserLikes l JOIN Events e ON l.eventId = e.id
-                                WHERE l.userid = @userid AND e.startTimestamp >= now() - INTERVAL 30 MINUTE
+                                WHERE l.userid = @userid -- AND e.startTimestamp >= now() - INTERVAL 30 MINUTE
                                 ORDER BY e.startTimestamp ASC;
 
 -- Events that the user liked or that are similar to users interests (requires vector search)
@@ -60,5 +60,5 @@ PersonalizedEventSearch(@query: String, @userid: String) :=
     SELECT e.*, coalesce(cosineSimilarity(i.interestVector, e.embedding),0.0) as score
         FROM Events e
         LEFT JOIN UserInterests i ON i.userid = @userid
-        WHERE textsearch(@query, title, abstract) > 0 AND e.startTimestamp >= now() - INTERVAL 30 MINUTE
+        WHERE textsearch(@query, title, abstract) > 0 -- AND e.startTimestamp >= now() - INTERVAL 30 MINUTE
     ORDER BY score DESC;
