@@ -47,12 +47,12 @@ EventsLiked(@userid: String) := SELECT e.* FROM UserLikes l JOIN Events e ON l.e
 
 -- Events that the user liked or that are similar to users interests (requires vector search)
 
-RecommendedEvents(@userid: String, @tolerance: Float) :=
+RecommendedEvents(@userid: String) :=
 SELECT e.*, cosineSimilarity(i.interestVector, e.embedding) as score
-FROM Events e
-    JOIN UserInterests i ON i.userid = @userid AND cosineSimilarity(i.interestVector, e.embedding) >= @tolerance
-    WHERE e.startTimestamp >= now() - INTERVAL 30 MINUTE
-    ORDER BY e.startTimestamp ASC;
+FROM UserInterests i JOIN (SELECT * FROM Events ORDER BY cosineDistance(i.interestVector, embedding) ASC LIMIT 40) e
+WHERE i.userid = @userid
+ORDER BY e.startTimestamp ASC;
+
 
 PersonalizedEventSearch(@query: String, @userid: String) :=
     SELECT e.*, coalesce(cosineSimilarity(i.interestVector, e.embedding),0.0) as score

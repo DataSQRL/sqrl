@@ -8,6 +8,7 @@ import com.datasqrl.calcite.type.VectorType;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class StdVectorLibraryTest {
@@ -19,6 +20,7 @@ public class StdVectorLibraryTest {
   };
 
   @Test
+  @Disabled("requires local onnx model")
   public void testEmbeddingSimilarityCenter() {
     String modelPath = "/Users/matthias/Data/jupyter/miniLMv2/model_quantized.onnx";
     String[] sentences = {
