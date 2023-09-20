@@ -1,5 +1,5 @@
 {
-ProductSearch( query: "garden gnome") {
+ProductSearch( query: "garden") {
     productid
     name
     description

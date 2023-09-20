@@ -4,7 +4,10 @@ IMPORT ecommerce-data.Product TIMESTAMP _ingest_time AS updateTime;
 
 Product := DISTINCT Product ON productid ORDER BY updateTime DESC;
 
-ProductSearch(@query: String) := SELECT * FROM Product WHERE textSearch(@query, name, description, category) > 0;
+ProductSearch(@query: String) := SELECT p.*, textSearch(@query, description) as score
+                                 FROM Product p
+                                 WHERE textSearch(@query, description) > 0
+                                 ORDER BY score DESC;
 
 ProductSearchWithId(@query: String, @id: Int) := SELECT * FROM Product WHERE textSearch(@query, name, description, category) > 0
                                                AND productid > @id;
