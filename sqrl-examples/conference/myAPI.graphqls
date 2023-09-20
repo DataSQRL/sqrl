@@ -2,7 +2,7 @@
 type Query {
     Events(limit: Int!, offset: Int = 0): [Events!]!
     EventsLiked(userid: String!): [EventsLiked!]!
-    RecommendedEvents(userid: String!, tolerance: Float!): [RecommendedEvents!]
+    RecommendedEvents(userid: String!): [RecommendedEvents!]
     PersonalizedEventSearch(query: String!, userid: String!): [PersonalizedEventSearch!]
 }
 

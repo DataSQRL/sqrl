@@ -836,6 +836,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
 
     public List<String> getAliasPath(String alias) {
+      if (getAliasPathMap().get(alias) == null) {
+        throw new RuntimeException("Could not find alias: " + alias);
+      }
       return new ArrayList<>(getAliasPathMap().get(alias));
     }
   }

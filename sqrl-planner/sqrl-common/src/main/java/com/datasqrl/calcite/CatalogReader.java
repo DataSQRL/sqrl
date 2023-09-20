@@ -26,6 +26,7 @@ public class CatalogReader extends CalciteCatalogReader {
   public RelOptTable getSqrlTable(List<String> names) {
     List<String> absolutePath = getSqrlAbsolutePath(names);
     Map<List<String>, String> collect = schema.getSqrlTables().stream()
+        .filter(f->f.getRelOptTable() != null)
         .collect(Collectors.toMap(f -> f.getPath().toStringList(),
             f -> ((ModifiableTable)f.getRelOptTable()).getNameId()));
 

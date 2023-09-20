@@ -76,7 +76,7 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
   @Override
   public boolean checkOperandTypes(SqlCallBinding sqlCallBinding, boolean throwOnFailure) {
     return new FlinkSqlOperandTypeChecker(flinkTypeFactory, dataTypeFactory, definition, typeInference)
-        .checkOperandTypes(adaptCallBinding(sqlCallBinding, flinkTypeFactory), throwOnFailure);
+        .checkOperandTypes(sqlCallBinding, throwOnFailure);
   }
 
   public static SqlCallBinding adaptCallBinding(SqlCallBinding sqlCallBinding, FlinkTypeFactory flinkTypeFactory) {

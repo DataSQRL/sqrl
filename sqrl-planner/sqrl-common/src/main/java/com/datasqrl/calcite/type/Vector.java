@@ -16,6 +16,6 @@ public class Vector extends BridgingFlinkType {
 
   @Override
   public SqlTypeName getSqlTypeName() {
-    return SqlTypeName.ANY;
+    return SqlTypeName.STRUCTURED;
   }
 }

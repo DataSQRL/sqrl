@@ -2,6 +2,7 @@
 package com.datasqrl.calcite.type;
 
 import com.datasqrl.calcite.Dialect;
+import com.datasqrl.flink.FlinkConverter;
 import java.util.Optional;
 import org.apache.calcite.avatica.util.ByteString;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
@@ -20,7 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
+import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.StructuredType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
@@ -178,5 +183,20 @@ public class TypeFactory extends JavaTypeFactoryImpl {
    */
   public void registerType(RelDataType type) {
     this.types.add(type);
+  }
+
+  public RelDataType translateToEngineType(Dialect dialect, RelDataType operandType) {
+    if (operandType instanceof Vector) {
+      FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
+          FlinkTypeSystem.INSTANCE);
+      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
+          FlinkConverter.catalogManager.getDataTypeFactory());
+
+      RelDataType flinkType = flinkTypeFactory
+          .createFieldTypeFromLogicalType(dataType.getLogicalType());
+      return flinkType;
+    }
+
+    return operandType;
   }
 }
