@@ -1,32 +1,21 @@
 package com.datasqrl.engine.stream.flink.sql;
 
-import com.datasqrl.VectorFunctions;
-import com.datasqrl.calcite.type.NonnativeType;
-import com.datasqrl.calcite.type.PrimitiveType;
-import com.datasqrl.calcite.type.VectorType;
+import com.datasqrl.calcite.type.ForeignType;
+import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
-import com.datasqrl.function.SqrlFunction;
-import com.google.common.collect.ImmutableMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
-import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter.QueryType;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.SqlFunctionCategory;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
 
 public class RelToFlinkSql {
@@ -38,10 +27,6 @@ public class RelToFlinkSql {
           .withQuoteAllIdentifiers(true)
           .withDialect(PostgresqlSqlDialect.DEFAULT)
           .withSelectFolding(null);
-
-  public static Map<Class, SqrlFunction> TYPE_CONVERSION = ImmutableMap.of(
-      VectorType.class, VectorFunctions.VEC_TO_DOUBLE
-  );
 
   public static String convertToString(RelNode optimizedNode) {
     return convertToSqlNode(optimizedNode).toSqlString(
@@ -64,20 +49,20 @@ public class RelToFlinkSql {
   public static String convertToSql(FlinkRelToSqlConverter converter, RelNode optimizedNode) {
     //add Casts
     boolean requiresConversion = optimizedNode.getRowType().getFieldList().stream()
-        .filter(field->field.getType() instanceof NonnativeType)
-        .anyMatch(field -> ((NonnativeType)field.getType()).getDowncastFunction().isPresent());
+        .filter(field->field.getType() instanceof ForeignType)
+        .anyMatch(field -> ((ForeignType)field.getType()).getDowncastFunction().isPresent());
 
     if (requiresConversion) {
       RelBuilder relBuilder = new RelBuilder(null, optimizedNode.getCluster(), null){};
       relBuilder.push(optimizedNode);
       List<RexNode> collect = optimizedNode.getRowType().getFieldList().stream()
           .map(field -> {
-            Optional<SqlFunction> downcastFunction = (field.getType() instanceof NonnativeType)
-                ? ((NonnativeType) field.getType()).getDowncastFunction()
+            Optional<SqlFunction> downcastFunction = (field.getType() instanceof ForeignType)
+                ? ((ForeignType) field.getType()).getDowncastFunction()
                 : Optional.empty();
 
             return downcastFunction
-                .map(relBuilder::call)
+                .map(f->relBuilder.call(f, relBuilder.field(field.getIndex())))
                 .orElse(relBuilder.field(field.getIndex()));
           })
           .collect(Collectors.toList());

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.calcite.type.BridgingFlinkType;
 import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
@@ -21,17 +22,8 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
   //NOTE: Does not include nullable in this call, need to call nullable function
   @Override
   public DataType convertBasic(RelDataType datatype) {
-    if (datatype instanceof VectorType) {
-      return DataTypes.ARRAY(DataTypes.DOUBLE());
-//      FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
-//          FlinkTypeSystem.INSTANCE);
-//      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
-//          FlinkConverter.catalogManager.getDataTypeFactory());
-//
-//      RelDataType flinkType = flinkTypeFactory
-//          .createFieldTypeFromLogicalType(dataType.getLogicalType());
-//
-//      return dataType;
+    if (datatype instanceof BridgingFlinkType) {
+      return ((BridgingFlinkType)datatype).getFlinkNativeType();
     }
 
     switch (datatype.getSqlTypeName()) {
@@ -66,7 +58,6 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
       case TIME:
         return DataTypes.TIME(datatype.getPrecision());
       case ARRAY:
-
         return DataTypes.ARRAY(nullable(convertBasic(datatype.getComponentType()), datatype.isNullable()));
       case ROW:
         return DataTypes.ROW(datatype.getFieldList().stream()

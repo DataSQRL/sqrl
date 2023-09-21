@@ -16,6 +16,8 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
 import com.datasqrl.VectorFunctions;
+import com.datasqrl.calcite.type.BridgingFlinkType;
+import com.datasqrl.calcite.type.ForeignType;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.DataStreamSourceFactory;
@@ -113,9 +115,8 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     //exclude sqrl NOW for flink's NOW
     HashMap<String, UserDefinedFunction> mutableUdfs = new HashMap<>(udfs);
     mutableUdfs.remove(DefaultFunctions.NOW.getName().toLowerCase());
-    for (SqrlFunction conversionFct : RelToFlinkSql.TYPE_CONVERSION.values()) {
-      mutableUdfs.put(conversionFct.getFunctionName().getDisplay(), (ScalarFunction) conversionFct);
-    }
+    Map<String, UserDefinedFunction> conversionFunctions = extractDowncastConversionFunctions(writeQueries);
+    mutableUdfs.putAll(conversionFunctions);
     registerFunctions(mutableUdfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
@@ -141,6 +142,20 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .queries(this.queries)
         .errorSink(createErrorSink(errorSink))
         .build();
+  }
+
+  private Map<String, UserDefinedFunction> extractDowncastConversionFunctions(
+      List<WriteQuery> writeQueries) {
+    return writeQueries.stream()
+        .flatMap(query -> query.getRelNode().getRowType().getFieldList().stream())
+        .filter(field -> field.getType() instanceof BridgingFlinkType)
+        .map(field -> (BridgingFlinkType) field.getType())
+        .filter(t -> t.getDowncastFunction().isPresent())
+        .collect(Collectors.toMap(
+            t -> t.getDowncastFunction().get().getName(),
+            t -> t.getDowncastFlinkFunction().get(),
+            (existing, replacement) -> existing
+        ));
   }
 
   private Map<String, String> getTableConfig(SqrlConfig config) {

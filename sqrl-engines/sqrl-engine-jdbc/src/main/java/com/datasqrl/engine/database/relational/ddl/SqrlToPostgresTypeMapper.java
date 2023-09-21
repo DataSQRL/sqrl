@@ -9,7 +9,7 @@ public class SqrlToPostgresTypeMapper {
 
   public static String getSQLType(RelDataType type) {
     if (type instanceof PrimitiveType) {
-      String physicalType = ((PrimitiveType) type).getPhysicalType(Dialect.POSTGRES);
+      String physicalType = ((PrimitiveType) type).getPhysicalTypeName(Dialect.POSTGRES);
       Preconditions.checkNotNull(physicalType, "Could not find type name for: %s", type);
       return physicalType;
     }

@@ -1,15 +1,21 @@
 
 package com.datasqrl.calcite.type;
 
+import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+
+import com.datasqrl.VectorFunctions;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.flink.FlinkConverter;
+import java.util.Optional;
 import org.apache.calcite.avatica.util.ByteString;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
+import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.runtime.Geometries;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 
@@ -23,36 +29,53 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
-import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.UnresolvedDataType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
-  private List<RelDataType> types = new ArrayList<>();
+  private List<ForeignType> types = new ArrayList<>();
 
   public TypeFactory() {
     super(SqrlTypeSystem.INSTANCE);
-    types.add(new VectorType(this));
-    if (engineType instanceof StructuredRelDataType &&
-        ((StructuredRelDataType) engineType).getStructuredType().getImplementationClass().get() == FlinkVectorType.class) {
-      return new VectorType(this);
-    }
-
+    registerDefaultTypes();
   }
 
+  private void registerDefaultTypes() {
+    UnresolvedDataType unresovledVectorType = DataTypes.of(FlinkVectorType.class);
+    DataType flinkDataType = unresovledVectorType.toDataType(FlinkConverter.catalogManager.getDataTypeFactory());
+    RelDataType flinkRelType = FlinkConverter.flinkTypeFactory
+        .createFieldTypeFromLogicalType(flinkDataType.getLogicalType());
+
+    VectorType vectorType = new VectorType(flinkDataType, flinkRelType,
+        VectorFunctions.VEC_TO_DOUBLE, this);
+    registerType(vectorType);
+  }
+
+  /**
+   * Translates from an engine type to a SQRL type, usually happens during
+   * function return type inference.
+   */
   public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
     //Add custom type translation here
-    for (RelDataType type : types) {
-      if (type instanceof )
-      if (type.equals(engineType)) {
+    for (ForeignType type : types) {
+      if (type.translates(dialect, engineType)) {
         return type;
       }
     }
 
-    if (engineType instanceof DelegatingDataType) {
-      throw new RuntimeException("Could not find type: " + engineType);
+    return engineType;
+  }
+
+  /**
+   * Translates a sqrl type to the engine type. Usually happens during function
+   * operand conversion.
+   */
+  public RelDataType translateToEngineType(Dialect dialect, RelDataType type) {
+    if (type instanceof ForeignType) {
+      return ((ForeignType)type).getEngineType(dialect);
     }
 
-    return engineType;
+    return type;
   }
 
   public static RelDataTypeSystem getSqrlTypeSystem() {
@@ -90,12 +113,11 @@ public class TypeFactory extends JavaTypeFactoryImpl {
   @Override
   public Type getJavaClass(RelDataType type) {
     //Flink wrapped types
-    if (type instanceof DelegatingDataType) {
-      return ((DelegatingDataType) type).getConversionClass();
+    if (type instanceof ForeignType) {
+      return ((ForeignType) type).getConversionClass();
     }
 
     //Need to get raw data type mapping for the particular engine
-
     if (type instanceof RelDataTypeFactoryImpl.JavaType) {
       RelDataTypeFactoryImpl.JavaType javaType = (RelDataTypeFactoryImpl.JavaType)type;
       return javaType.getJavaClass();
@@ -178,22 +200,7 @@ public class TypeFactory extends JavaTypeFactoryImpl {
 
   /**
    */
-  public void registerType(RelDataType type) {
+  public void registerType(ForeignType type) {
     this.types.add(type);
-  }
-
-  public RelDataType translateToEngineType(Dialect dialect, RelDataType operandType) {
-    if (operandType instanceof VectorType) {
-      FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
-          FlinkTypeSystem.INSTANCE);
-      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
-          FlinkConverter.catalogManager.getDataTypeFactory());
-
-      RelDataType flinkType = flinkTypeFactory
-          .createFieldTypeFromLogicalType(dataType.getLogicalType());
-      return flinkType;
-    }
-
-    return operandType;
   }
 }
