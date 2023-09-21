@@ -18,7 +18,6 @@ public class TestClient {
 
   public static final Consumer<HttpResponse<JsonObject>> NO_HANDLER = (h)->{};
   public static final Consumer<HttpResponse<JsonObject>> FAIL_HANDLER = (h)->{
-    System.out.println("Got response"+h.body().encode());
     if (h.statusCode() >= 300) {
       fail(h.statusMessage());
     }};
