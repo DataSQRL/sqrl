@@ -94,8 +94,6 @@ public class DockerCompose {
         + "      - kafka-setup\n"
         + "    volumes:\n"
         + "      - ./flink-job.jar:/flink-job.jar\n"
-        + "    entrypoint: /bin/sh -c\n"
-        + "    command: >\n"
         + "      - ./submit-flink-job.sh:/submit-flink-job.sh\n"
         + "    entrypoint: /submit-flink-job.sh\n"
         + "\n"
