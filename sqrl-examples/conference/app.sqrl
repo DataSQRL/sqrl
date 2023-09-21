@@ -29,30 +29,23 @@ UserInterestVectors := (SELECT userid, embedding, _source_time FROM LikeVector)
 
 UserInterests := SELECT userid, center(embedding) as interestVector FROM UserInterestVectors GROUP BY userid;
 
--- UserInterests := SELECT userid, center(embedding) as interestVector FROM AddInterest GROUP BY userid;
-
-
 UserLikes := DISTINCT Likes ON userid, eventId ORDER BY _source_time DESC;
 
 EventLikeCount := SELECT eventid, count(*) as num, avg(eventid) as test
                   FROM UserLikes l WHERE l.liked GROUP BY eventid;
 Events.likeCount := JOIN EventLikeCount l ON @.id = l.eventid;
 
--- EventSearch(@query: String) := SELECT * FROM Events WHERE
---                         textsearch(@query, title, abstract) > 0
---                         ORDER BY textsearch(@query, title, abstract) DESC;
 
 EventsLiked(@userid: String) := SELECT e.* FROM UserLikes l JOIN Events e ON l.eventId = e.id
                                 WHERE l.userid = @userid -- AND e.startTimestamp >= now() - INTERVAL 30 MINUTE
                                 ORDER BY e.startTimestamp ASC;
 
--- Events that the user liked or that are similar to users interests (requires vector search)
 
 RecommendedEvents(@userid: String) :=
 SELECT e.*, cosineSimilarity(i.interestVector, e.embedding) as score
 FROM UserInterests i JOIN Events e
 WHERE i.userid = @userid
-ORDER BY cosineDistance(i.interestVector, e.embedding) ASC;
+ORDER BY score DESC;
 
 PersonalizedEventSearch(@query: String, @userid: String) :=
     SELECT e.*, coalesce(cosineSimilarity(i.interestVector, e.embedding),0.0) as score
