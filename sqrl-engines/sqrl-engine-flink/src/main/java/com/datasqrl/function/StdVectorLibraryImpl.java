@@ -1,5 +1,6 @@
 package com.datasqrl.function;
 
+import static com.datasqrl.VectorFunctions.ASCII_TEXT_TEST_EMBED;
 import static com.datasqrl.VectorFunctions.CENTER;
 import static com.datasqrl.VectorFunctions.COSINE_DISTANCE;
 import static com.datasqrl.VectorFunctions.COSINE_SIMILARITY;
@@ -25,6 +26,7 @@ public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdL
       EUCLIDEAN_DISTANCE,
       VEC_TO_DOUBLE,
       ONNX_EMBED,
+      ASCII_TEXT_TEST_EMBED,
       CENTER
   );
 

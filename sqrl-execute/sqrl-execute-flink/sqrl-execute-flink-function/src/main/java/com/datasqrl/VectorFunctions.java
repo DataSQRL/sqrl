@@ -44,6 +44,8 @@ public class VectorFunctions {
 
   public static final OnnxEmbed ONNX_EMBED = new OnnxEmbed();
 
+  public static final AsciiTextTestEmbed ASCII_TEXT_TEST_EMBED = new AsciiTextTestEmbed();
+
   public static final Center CENTER = new Center();
 
   public static class RandomVector extends ScalarFunction implements SqrlFunction {
@@ -176,6 +178,25 @@ public class VectorFunctions {
     public EnumSet<IndexType> getSupportedIndexes() {
       return EnumSet.of(IndexType.VEC_EUCLID);
     }
+  }
+
+  public static class AsciiTextTestEmbed extends ScalarFunction implements SqrlFunction, Serializable {
+
+    private static final int VECTOR_LENGTH = 256;
+
+    public FlinkVectorType eval(String text) {
+      double[] vector = new double[256];
+      for (char c : text.toCharArray()) {
+        vector[c%VECTOR_LENGTH] += 1;
+      }
+      return new FlinkVectorType(vector);
+    }
+
+    @Override
+    public String getDocumentation() {
+      return "A unuseful embedding function counts each character (modulo "+VECTOR_LENGTH+"). Used for testing only.";
+    }
+
   }
 
 
