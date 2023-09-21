@@ -3,8 +3,8 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.calcite.type.FlinkVectorType;
-import com.datasqrl.calcite.type.Vector;
+import com.datasqrl.calcite.type.PrimitiveType;
+import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
@@ -39,7 +39,6 @@ import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.MultisetSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.flink.table.planner.plan.schema.StructuredRelDataType;
 
 public class CalciteUtil {
 
@@ -53,7 +52,7 @@ public class CalciteUtil {
   }
 
   private static boolean isPrimitiveType(RelDataType t) {
-    return !t.isStruct() || (t.getClass() == Vector.class);
+    return !t.isStruct() || t instanceof PrimitiveType;
   }
 
   public static Optional<RelDataType> getArrayElementType(RelDataType type) {
@@ -65,7 +64,7 @@ public class CalciteUtil {
   }
 
   public static boolean isBasicOrArrayType(RelDataType type) {
-    return type.getClass() == Vector.class || type instanceof BasicSqlType || type instanceof IntervalSqlType
+    return type.getClass() == VectorType.class || type instanceof BasicSqlType || type instanceof IntervalSqlType
         || type instanceof ArraySqlType || type instanceof MultisetSqlType;
   }
 

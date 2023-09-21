@@ -3,7 +3,6 @@ package com.datasqrl.calcite.type;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.flink.FlinkConverter;
-import java.util.Optional;
 import org.apache.calcite.avatica.util.ByteString;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
@@ -32,21 +31,22 @@ public class TypeFactory extends JavaTypeFactoryImpl {
 
   public TypeFactory() {
     super(SqrlTypeSystem.INSTANCE);
-    types.add(new Vector(this));
+    types.add(new VectorType(this));
+    if (engineType instanceof StructuredRelDataType &&
+        ((StructuredRelDataType) engineType).getStructuredType().getImplementationClass().get() == FlinkVectorType.class) {
+      return new VectorType(this);
+    }
+
   }
 
   public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
     //Add custom type translation here
-    if (engineType instanceof StructuredRelDataType &&
-        ((StructuredRelDataType) engineType).getStructuredType().getImplementationClass().get() == FlinkVectorType.class) {
-      return new Vector(this);
+    for (RelDataType type : types) {
+      if (type instanceof )
+      if (type.equals(engineType)) {
+        return type;
+      }
     }
-
-//    for (RelDataType type : types) {
-//      if (type.equals(engineType)) {
-//        return type;
-//      }
-//    }
 
     if (engineType instanceof DelegatingDataType) {
       throw new RuntimeException("Could not find type: " + engineType);
@@ -183,7 +183,7 @@ public class TypeFactory extends JavaTypeFactoryImpl {
   }
 
   public RelDataType translateToEngineType(Dialect dialect, RelDataType operandType) {
-    if (operandType instanceof Vector) {
+    if (operandType instanceof VectorType) {
       FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
           FlinkTypeSystem.INSTANCE);
       DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(

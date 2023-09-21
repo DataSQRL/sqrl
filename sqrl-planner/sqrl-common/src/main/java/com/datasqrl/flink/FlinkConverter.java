@@ -19,10 +19,12 @@
 package com.datasqrl.flink;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.calcite.type.BridgingFlinkType;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.flink.function.BridgingSqlAggregateFunction;
 import com.datasqrl.flink.function.BridgingSqlScalarFunction;
+import java.util.Map;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
@@ -40,12 +42,9 @@ import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
-import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.UnresolvedDataType;
 import org.apache.flink.table.types.inference.TypeInference;
-
-import java.util.Map;
 
 @AllArgsConstructor
 public class FlinkConverter {
@@ -112,11 +111,8 @@ public class FlinkConverter {
     return function;
   }
 
-  //This is not strictly necessary for anything
-  public RelDataType convertType(UnresolvedDataType type,
-                                 SqlFunction downcastFunction,
-                                 SqlFunction upcastFunction,
-                                 Map<Dialect, String> physicalTypeName) {
+  public RelDataType convertType(UnresolvedDataType type, Optional<SqlFunction> downcastFunction,
+      Optional<SqlFunction> upcastFunction, Map<Dialect, String> physicalTypeName) {
     DataType dataType = type.toDataType(catalogManager.getDataTypeFactory());
     RelDataType flinkType = flinkTypeFactory
         .createFieldTypeFromLogicalType(dataType.getLogicalType());
@@ -125,8 +121,8 @@ public class FlinkConverter {
         new BridgingFlinkType(
             flinkType,
             dataType.getConversionClass(),
-            downcastFunction,
             upcastFunction,
+            downcastFunction,
             physicalTypeName);
 
     return bridgingFlinkType;

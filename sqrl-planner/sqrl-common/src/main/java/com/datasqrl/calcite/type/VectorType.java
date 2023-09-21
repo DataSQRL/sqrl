@@ -1,12 +1,15 @@
 package com.datasqrl.calcite.type;
 
+import com.datasqrl.calcite.Dialect;
+import java.util.Map;
 import org.apache.calcite.sql.type.SqlTypeName;
 
-public class Vector extends BridgingFlinkType {
+public class VectorType extends BridgingFlinkType implements PrimitiveType {
 
-  public Vector(TypeFactory typeFactory) {
+  public VectorType(TypeFactory typeFactory) {
     super(typeFactory.createType(FlinkVectorType.class),
-        null, null, null, null);
+        null,
+        Map.of(Dialect.POSTGRES, "VECTOR"));
   }
 
   @Override

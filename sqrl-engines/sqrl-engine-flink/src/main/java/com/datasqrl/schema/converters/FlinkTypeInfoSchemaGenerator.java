@@ -3,8 +3,7 @@
  */
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.calcite.type.FlinkVectorType;
-import com.datasqrl.calcite.type.Vector;
+import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
 import lombok.Value;
@@ -23,7 +22,7 @@ public class FlinkTypeInfoSchemaGenerator implements
 
   @Override
   public TypeInformation convertBasic(RelDataType datatype) {
-    if (datatype instanceof Vector) {
+    if (datatype instanceof VectorType) {
       return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
 //      return BasicTypeInfo.of(FlinkVectorType.class);
     }

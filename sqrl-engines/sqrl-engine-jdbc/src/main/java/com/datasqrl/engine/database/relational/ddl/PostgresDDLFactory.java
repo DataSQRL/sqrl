@@ -3,12 +3,14 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
-import com.datasqrl.SqrlRelToSql;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.util.CalciteUtil;
 import com.google.auto.service.AutoService;
+import com.google.common.base.Preconditions;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
 import java.util.ArrayList;
@@ -29,13 +31,29 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     List<RelDataTypeField> fields = table.getRowType().getFieldList();
     for (int i = 0; i < fields.size(); i++) {
       RelDataTypeField field = fields.get(i);
-      String column = SqrlRelToSql.toSql(field);
+      String column = toSql(field);
       columns.add(column);
       if (i < table.getNumPrimaryKeys()) {
         pk.add(field.getName());
       }
     }
     return new CreateTableDDL(table.getNameId(), columns, pk);
+  }
+
+  public static String toSql(RelDataTypeField field) {
+    RelDataType datatype = field.getType();
+    Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
+        "Collection column encountered");
+    return toSql(field.getName(), SqrlToPostgresTypeMapper.getSQLType(datatype), datatype.isNullable());
+  }
+
+  private static String toSql(String name, String sqlType, boolean nullable) {
+    StringBuilder sql = new StringBuilder();
+    sql.append(name).append(" ").append(sqlType).append(" ");
+    if (!nullable) {
+      sql.append("NOT NULL");
+    }
+    return sql.toString();
   }
 
   public CreateIndexDDL createIndex(IndexDefinition index) {

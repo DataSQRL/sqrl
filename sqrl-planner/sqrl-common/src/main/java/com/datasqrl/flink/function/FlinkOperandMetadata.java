@@ -2,7 +2,7 @@ package com.datasqrl.flink.function;
 
 import com.datasqrl.calcite.type.FlinkVectorType;
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.calcite.type.Vector;
+import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.flink.FlinkConverter;
 import java.util.stream.IntStream;
 import org.apache.calcite.jdbc.CalciteSchema;
@@ -10,7 +10,6 @@ import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.core.Aggregate.AggCallBinding;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rex.RexCallBinding;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlCallBinding;
@@ -89,7 +88,7 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
       @Override
       public RelDataType deriveType(SqlValidatorScope scope, SqlNode expr) {
         RelDataType validatedNodeType = validator.deriveType(scope,expr);
-        if (validatedNodeType instanceof Vector) {
+        if (validatedNodeType instanceof VectorType) {
           FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
               FlinkTypeSystem.INSTANCE);
           DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
@@ -124,7 +123,7 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
   }
   private static RelDataType translateToFlinkType(RelDataType operandType,
       FlinkTypeFactory flinkTypeFactory) {
-    if (operandType instanceof Vector) {
+    if (operandType instanceof VectorType) {
       DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
           FlinkConverter.catalogManager.getDataTypeFactory());
 
