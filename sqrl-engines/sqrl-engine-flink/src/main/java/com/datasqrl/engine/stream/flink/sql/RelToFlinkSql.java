@@ -5,8 +5,12 @@ import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.calcite.type.Vector;
 import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
 import com.datasqrl.flink.FlinkConverter;
+import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.StdVectorLibraryImpl;
+import com.google.common.collect.ImmutableMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -38,6 +42,10 @@ public class RelToFlinkSql {
           .withDialect(PostgresqlSqlDialect.DEFAULT)
           .withSelectFolding(null);
 
+  public static Map<Class, SqrlFunction> TYPE_CONVERSION = ImmutableMap.of(
+      Vector.class, VectorFunctions.VEC_TO_DOUBLE
+  );
+
   public static String convertToString(RelNode optimizedNode) {
     return convertToSqlNode(optimizedNode).toSqlString(
             c -> transform.apply(c.withDialect(FlinkDialect.DEFAULT)))
@@ -58,21 +66,22 @@ public class RelToFlinkSql {
 
   public static String convertToSql(FlinkRelToSqlConverter converter, RelNode optimizedNode) {
     //add Casts
-    List<Integer> toConvert = optimizedNode.getRowType().getFieldList().stream()
-        .filter(f->f.getType() instanceof Vector)
-        .map(RelDataTypeField::getIndex)
-        .collect(Collectors.toList());
-    if (!toConvert.isEmpty()) {
-
+    boolean requiresConversion = optimizedNode.getRowType().getFieldList().stream()
+        .anyMatch(field -> TYPE_CONVERSION.keySet().stream()
+            .anyMatch(t -> t.isInstance(field.getType())));
+    if (requiresConversion) {
       RelBuilder relBuilder = new RelBuilder(null, optimizedNode.getCluster(), null){};
       relBuilder.push(optimizedNode);
-      List<RexNode> collect = IntStream.range(0, optimizedNode.getRowType().getFieldCount())
-          .mapToObj(i -> toConvert.contains(i) ?
-              relBuilder.call(op("VecToDouble"),
-                  relBuilder.field(i))
-              :relBuilder.field(i))
+      List<RexNode> collect = optimizedNode.getRowType().getFieldList().stream()
+          .map(field -> {
+            Optional<SqrlFunction> conversionFct = TYPE_CONVERSION.entrySet().stream()
+                .filter(e -> e.getKey().isInstance(field.getType()))
+                .map(Entry::getValue).findFirst();
+            return conversionFct.map(fct -> relBuilder.call(op(fct.getFunctionName().getDisplay()),
+                relBuilder.field(field.getIndex())))
+                .orElse(relBuilder.field(field.getIndex()));
+          })
           .collect(Collectors.toList());
-
       optimizedNode = relBuilder.project(collect, optimizedNode.getRowType().getFieldNames())
           .build();
     }

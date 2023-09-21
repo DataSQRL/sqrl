@@ -97,7 +97,7 @@ public class IntegrationTestSettings {
   }
 
   public static IntegrationTestSettings getFlinkWithDB() {
-    return getEngines(StreamEngine.FLINK, DatabaseEngine.POSTGRES).build();
+    return getEngines(StreamEngine.FLINK, DatabaseEngine.H2).build();
   }
 
   public static IntegrationTestSettings.IntegrationTestSettingsBuilder getFlinkWithDBConfig() {

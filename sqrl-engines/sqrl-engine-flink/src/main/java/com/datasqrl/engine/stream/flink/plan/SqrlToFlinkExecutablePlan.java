@@ -31,6 +31,7 @@ import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule;
 import com.datasqrl.flink.FlinkConverter;
+import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.StdVectorLibraryImpl;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
@@ -82,6 +83,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
+import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 import org.apache.flink.table.types.DataType;
@@ -111,7 +113,9 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     //exclude sqrl NOW for flink's NOW
     HashMap<String, UserDefinedFunction> mutableUdfs = new HashMap<>(udfs);
     mutableUdfs.remove(DefaultFunctions.NOW.getName().toLowerCase());
-    mutableUdfs.put("VecToDouble", VectorFunctions.VEC_TO_DOUBLE);
+    for (SqrlFunction conversionFct : RelToFlinkSql.TYPE_CONVERSION.values()) {
+      mutableUdfs.put(conversionFct.getFunctionName().getDisplay(), (ScalarFunction) conversionFct);
+    }
     registerFunctions(mutableUdfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
