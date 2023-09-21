@@ -1,0 +1,25 @@
+---
+name: "authors"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "average_rating"
+  type: "FLOAT"
+  tests:
+  - "not_null"
+- name: "author_id"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "text_reviews_count"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "name"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "ratings_count"
+  type: "INTEGER"
+  tests:
+  - "not_null"

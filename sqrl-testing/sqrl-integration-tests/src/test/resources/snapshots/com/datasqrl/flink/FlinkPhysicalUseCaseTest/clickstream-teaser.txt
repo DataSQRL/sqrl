@@ -2,7 +2,7 @@
 LogicalProject(url$0=[$0], rec$0=[$1], frequency$0=[$2], timestamp$0=[$3])
   LogicalProject(url=[$2], rec=[$3], frequency=[COUNT() IGNORE NULLS OVER (PARTITION BY $2, $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], timestamp=[$4])
     LogicalProject(_uuid$0=[$0], _uuid$00=[$5], beforeURL=[$2], afterURL=[$7], timestamp=[$8])
-      LogicalJoin(condition=[AND(=($4, $9), <=($3, $8), >=($3, -($8, 600000:INTERVAL MINUTE(2))))], joinType=[inner]) hints[IntervalJoin]
+      LogicalJoin(condition=[AND(=($4, $9), <($3, $8), >=($3, -($8, 600000:INTERVAL MINUTE(2))))], joinType=[inner]) hints[IntervalJoin]
         LogicalTableScan(table=[[click$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
         LogicalTableScan(table=[[click$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
@@ -15,7 +15,7 @@ LogicalProject(url$0=[$0], total$0=[$1], timestamp$0=[$2])
 >>>visitafter$9-lp-stream
 LogicalProject(_uuid$0=[$0], _uuid$1=[$1], beforeurl$0=[$2], afterurl$0=[$3], timestamp$0=[$4])
   LogicalProject(_uuid$0=[$0], _uuid$00=[$5], beforeURL=[$2], afterURL=[$7], timestamp=[$8])
-    LogicalJoin(condition=[AND(=($4, $9), <=($3, $8), >=($3, -($8, 600000:INTERVAL MINUTE(2))))], joinType=[inner]) hints[IntervalJoin]
+    LogicalJoin(condition=[AND(=($4, $9), <($3, $8), >=($3, -($8, 600000:INTERVAL MINUTE(2))))], joinType=[inner]) hints[IntervalJoin]
       LogicalTableScan(table=[[click$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
       LogicalTableScan(table=[[click$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 

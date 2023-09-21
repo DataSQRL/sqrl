@@ -139,8 +139,10 @@ public class FlexibleSchemaValidator implements SchemaValidator, Serializable {
   private Pair<Name, Object> verifyAndAdjust(Object data, FlexibleFieldSchema.Field field,
       ErrorCollector errors) {
     List<FlexibleFieldSchema.FieldType> types = field.getTypes();
-    Simple typeSignature = TypeSignatureUtil.detectTypeSignature(data, s -> detectType(s, types),
+    Optional<Simple> typeSignatureOpt = TypeSignatureUtil.detectSimpleTypeSignature(data, s -> detectType(s, types),
         m -> detectType(m, types));
+    if (typeSignatureOpt.isEmpty()) return null;
+    Simple typeSignature = typeSignatureOpt.get();
     FlexibleFieldSchema.FieldType match = typeMatcher.matchType(typeSignature, types);
     if (match != null) {
       Object converted = verifyAndAdjust(data, match, field, typeSignature.getArrayDepth(), errors);

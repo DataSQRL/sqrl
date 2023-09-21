@@ -52,7 +52,7 @@ public class DocumentationExamplesTest {
     @Test
     @Disabled
     public void runIndividual() {
-        compileTutorials(Conference.INSTANCE.getRootPackageDirectory(),"app.sqrl", "myAPI.graphqls");
+        compileTutorials(Books.INSTANCE.getRootPackageDirectory(),"search.sqrl", "search.graphqls");
     }
 
     public static final TestCase[] CASES = {

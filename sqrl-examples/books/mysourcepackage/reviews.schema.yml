@@ -1,0 +1,49 @@
+---
+name: "reviews"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "user_id"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "book_id"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "review_id"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "rating"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "review_text"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "date_added"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "date_updated"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "read_at"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "started_at"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "n_votes"
+  type: "INTEGER"
+  tests:
+  - "not_null"
+- name: "n_comments"
+  type: "INTEGER"
+  tests:
+  - "not_null"
