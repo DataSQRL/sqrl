@@ -6,6 +6,7 @@ flink-plan.json
 kafka-plan.json
 server-config.json
 server-model.json
+submit-flink-job.sh
 >>>build
 build.gradle
 c360-full.sqrl

@@ -15,7 +15,10 @@ import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Preconditions;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Optional;
+import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -78,6 +81,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     if (configSupplier.usesDefault) {
       addDockerCompose(Optional.ofNullable(mountDirectory));
+      addFlinkExecute();
     }
     if (isGenerateGraphql()) {
       addGraphql(packager.getBuildDir(), packager.getRootDir());
@@ -106,6 +110,22 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       Files.writeString(toFile, yml);
     } catch (Exception e) {
       log.error("Could not copy docker-compose file.");
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void addFlinkExecute() {
+    String sh = DockerCompose.getFlinkExecute();
+    Path toFile = targetDir.resolve("submit-flink-job.sh");
+    try {
+      Files.createDirectories(targetDir);
+      Files.writeString(toFile, sh);
+
+      Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
+      Files.setPosixFilePermissions(toFile, perms);
+
+    } catch (Exception e) {
+      log.error("Could not copy flink executor file.");
       throw new RuntimeException(e);
     }
   }
