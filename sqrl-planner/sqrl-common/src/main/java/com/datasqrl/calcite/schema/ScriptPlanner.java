@@ -197,6 +197,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         parent.addRelationship(rel);
         planner.getSchema().addRelationship(rel);
       } else {
+        //todo fix for FROM statements
+        final RelNode finalRel = expanded;
+        //todo: unclean way to find from query
+        nodeSupplier = assignment instanceof SqrlFromQuery ? nodeSupplier : ()->finalRel;
+
         RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),
             null, isASqrl, parameters, nodeSupplier);
 

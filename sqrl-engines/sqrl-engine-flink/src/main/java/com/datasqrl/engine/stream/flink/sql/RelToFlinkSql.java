@@ -77,13 +77,8 @@ public class RelToFlinkSql {
           .build();
     }
 
-    System.out.println(optimizedNode.getRowType());
-
-
     final SqlNode sqlNode = converter.visitRoot(optimizedNode).asStatement();
     QueryPipelineItem query = converter.getOrCreate(QueryType.ROOT, sqlNode, optimizedNode, null);
-    System.out.println(optimizedNode.explain());
-    System.out.println(query.getSql());
 
     return query.getTableName();
   }

@@ -50,11 +50,9 @@ EventsLiked(@userid: String) := SELECT e.* FROM UserLikes l JOIN Events e ON l.e
 
 RecommendedEvents(@userid: String) :=
 SELECT e.*, cosineSimilarity(i.interestVector, e.embedding) as score
---FROM UserInterests i JOIN (SELECT * FROM Events ORDER BY cosineDistance(i.interestVector, embedding) ASC LIMIT 40) e
 FROM UserInterests i JOIN Events e
 WHERE i.userid = @userid
-ORDER BY e.startTimestamp ASC;
-
+ORDER BY cosineDistance(i.interestVector, e.embedding) ASC;
 
 PersonalizedEventSearch(@query: String, @userid: String) :=
     SELECT e.*, coalesce(cosineSimilarity(i.interestVector, e.embedding),0.0) as score
