@@ -120,7 +120,7 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
 
   public static SqlOperatorBinding adaptCallBinding(RexCallBinding sqlCallBinding,
       FlinkTypeFactory flinkTypeFactory, TypeFactory typeFactory) {
-    throw new RuntimeException("Rex call operator binding not expected");
+    return sqlCallBinding;
   }
   private static RelDataType translateToFlinkType(RelDataType operandType,
       FlinkTypeFactory flinkTypeFactory) {

@@ -46,8 +46,11 @@ public class JDBCTestDatabase implements DatabaseHandle {
       //Hold open the connection so the db stays around
       this.sqliteConn = DriverManager.getConnection(connector.getUrl());
     } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES) {
-      DockerImageName image = DockerImageName.parse("postgres:14.2");
-      postgreSQLContainer = new PostgreSQLContainer(image)
+//      DockerImageName image = DockerImageName.parse("postgres:14.2");
+      postgreSQLContainer = new PostgreSQLContainer(
+          DockerImageName.parse("ankane/pgvector:v0.5.0")
+              .asCompatibleSubstituteFor("postgres"))
+//      postgreSQLContainer = new PostgreSQLContainer(image)
           .withDatabaseName(TEST_DATABASE_NAME);
       postgreSQLContainer.start();
 

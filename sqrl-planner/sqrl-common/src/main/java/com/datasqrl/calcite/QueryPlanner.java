@@ -172,7 +172,6 @@ public class QueryPlanner {
   }
 
   protected RelRoot planRoot(SqlValidator validator, SqlNode sqlNode) {
-    System.out.println(sqlNode);
     sqlNode = validator.validate(sqlNode);
 
     SqlToRelConverter sqlToRelConverter = createSqlToRelConverter(validator);
