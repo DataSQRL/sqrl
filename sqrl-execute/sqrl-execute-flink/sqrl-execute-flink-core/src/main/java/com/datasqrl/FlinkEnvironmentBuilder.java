@@ -237,7 +237,7 @@ public class FlinkEnvironmentBuilder implements
 
   @Override
   public Object visitQuery(FlinkSqlQuery query, PlanContext context) {
-    log.info("Creating SQL table: {} {}", query.getName(), query.getQuery());
+    log.debug("Creating SQL table: {} {}", query.getName(), query.getQuery());
     Table table = context.getTEnv().sqlQuery(query.getQuery());
     context.getTEnv().createTemporaryView(query.getName(), table);
     return null;
