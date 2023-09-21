@@ -1,0 +1,20 @@
+{
+    Events(limit: 5) {
+        id
+        date
+        time
+        location
+        title
+        abstract
+        startTimestamp
+        url
+        speakers {
+            name
+            title
+            company
+        }
+        likeCount {
+            num
+        }
+    }
+}

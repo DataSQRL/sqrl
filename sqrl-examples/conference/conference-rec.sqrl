@@ -1,7 +1,7 @@
 IMPORT mysourcepackage.Events;
 
-IMPORT myAPI.Likes;
-IMPORT myAPI.AddInterest;
+IMPORT recAPI.Likes;
+IMPORT recAPI.AddInterest;
 
 IMPORT string.*;
 IMPORT text.*;
