@@ -48,10 +48,6 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
       DockerImageName.parse("ankane/pgvector:v0.5.0")
       .asCompatibleSubstituteFor("postgres"));
 
-//  protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
-//      DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
-//      .withPassword("secret").withDatabaseName("datasqrl");
-
   protected SnapshotTest.Snapshot snapshot;
   protected Vertx vertx;
   protected Path packageOverride;
@@ -64,7 +60,6 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
     CLUSTER.start();
     log.info("Kafka started: " + CLUSTER.getAllTopicsInCluster());
     packageOverride = createPackageOverride(CLUSTER, testDatabase);
-    System.out.println(testDatabase.getJdbcUrl());
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     this.vertx = vertx;
@@ -77,7 +72,6 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   @AfterEach
   public void tearDown() {
     super.tearDown();
-    testDatabase.stop();
     try {
       for (String id : vertx.deploymentIDs()) {
         vertx.undeploy(id).toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
