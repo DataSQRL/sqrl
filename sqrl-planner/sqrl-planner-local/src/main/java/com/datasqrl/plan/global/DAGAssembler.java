@@ -141,9 +141,9 @@ public class DAGAssembler {
         Pair<RelNode, Integer> relPlusTimestamp = produceWriteTree(scanTable,
             configBuilder.build(), errors);
         RelNode processedRelnode = relPlusTimestamp.getKey();
-//        Preconditions.checkArgument(normTable.getRowType().equals(processedRelnode.getRowType()),
-//            "Rowtypes do not match: \n%s \n vs \n%s",
-//            normTable.getRowType(), processedRelnode.getRowType());
+        Preconditions.checkArgument(normTable.getRowType().equals(processedRelnode.getRowType()),
+            "Rowtypes do not match: \n%s \n vs \n%s",
+            normTable.getRowType(), processedRelnode.getRowType());
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(normTable.getNameId(), normTable.getNumPrimaryKeys(),
                 normTable.getRowType(), relPlusTimestamp.getRight(), database),

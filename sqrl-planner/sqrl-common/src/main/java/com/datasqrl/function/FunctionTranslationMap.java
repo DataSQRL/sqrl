@@ -8,6 +8,7 @@ import com.datasqrl.calcite.function.RuleTransform;
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,14 +23,24 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class FunctionTranslationMap {
 
-  public static final Map<String, RuleTransform> transformMap = Map.of(
-      "textsearch", new TextSearchTranslation(),
-      "now", new NowTranslation(),
+  public static final Map<String, RuleTransform> vectorTransformMap = Map.of(
       "cosinedistance", new CosineDistanceTranslation(),
       "cosinesimilarity", new CosineSimilarityTranslation(),
       "euclideandistance", new EuclideanDistanceTranslation(),
       "center", new CenterTranslation()
   );
+
+  public static final Map<String, RuleTransform> pgTransforms = Map.of(
+      "textsearch", new TextSearchTranslation(),
+      "now", new NowTranslation()
+  );
+
+  public static final Map<String, RuleTransform> transformMap;
+
+  static {
+    transformMap = new HashMap<>(pgTransforms);
+    transformMap.putAll(vectorTransformMap);
+  }
 
   public static class CosineDistanceTranslation implements RuleTransform {
 

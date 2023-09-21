@@ -6,6 +6,7 @@ package com.datasqrl.engine.database.relational;
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -18,6 +19,8 @@ import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.function.FunctionTranslationMap;
+import com.datasqrl.function.PgSpecificOperatorTable;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.formats.FormatFactory;
@@ -31,7 +34,9 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.sql.Connection;
@@ -43,6 +48,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
 import org.apache.commons.collections.ListUtils;
 
 @Slf4j
@@ -124,7 +134,10 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
             EngineSink.class)
         .map(factory::createTable)
         .collect(Collectors.toList());
-    ddlStatements = ListUtils.union(List.of(new PostgresCreateVectorExtensionStatement()), ddlStatements);
+
+    List<SqlDDLStatement> typeExtensions = extractTypeExtensions(dbPlan.getQueries());
+
+    ddlStatements = ListUtils.union(typeExtensions, ddlStatements);
 
     dbPlan.getIndexDefinitions().stream()
             .map(factory::createIndex)
@@ -134,5 +147,37 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
 
     return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
+  }
+
+  private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {
+    return queries.stream()
+        .flatMap(relNode -> extractTypeExtensions(relNode.getRelNode()).stream())
+        .distinct()
+        .collect(Collectors.toList());
+  }
+
+  //todo: currently vector specific
+  private List<SqlDDLStatement> extractTypeExtensions(RelNode relNode) {
+    Set<SqlDDLStatement> statements = new HashSet<>();
+    //look at relnodes to see if we use a vector type
+    for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
+      if (field.getType() instanceof VectorType) {
+        statements.add(new PostgresCreateVectorExtensionStatement());
+      }
+    }
+
+    CalciteUtil.applyRexShuttleRecursively(relNode, new RexShuttle() {
+      @Override
+      public RexNode visitCall(RexCall call) {
+        //todo: generic for any types
+        if (FunctionTranslationMap.vectorTransformMap.containsKey(call.getOperator().getName().toLowerCase())) {
+          statements.add(new PostgresCreateVectorExtensionStatement());
+        }
+
+        return super.visitCall(call);
+      }
+    });
+
+    return new ArrayList<>(statements);
   }
 }

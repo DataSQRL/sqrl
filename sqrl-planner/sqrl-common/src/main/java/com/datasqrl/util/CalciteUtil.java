@@ -4,7 +4,6 @@
 package com.datasqrl.util;
 
 import com.datasqrl.calcite.type.PrimitiveType;
-import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
@@ -64,7 +63,7 @@ public class CalciteUtil {
   }
 
   public static boolean isBasicOrArrayType(RelDataType type) {
-    return type.getClass() == VectorType.class || type instanceof BasicSqlType || type instanceof IntervalSqlType
+    return type instanceof PrimitiveType || type instanceof BasicSqlType || type instanceof IntervalSqlType
         || type instanceof ArraySqlType || type instanceof MultisetSqlType;
   }
 

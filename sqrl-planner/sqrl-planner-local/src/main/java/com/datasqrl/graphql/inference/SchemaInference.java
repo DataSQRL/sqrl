@@ -274,17 +274,17 @@ public class SchemaInference {
         }
         break;
       case "Float":
-        if (!SqlTypeName.NUMERIC_TYPES.contains(sqlTypeName) && false) { //todo vector check?
+        if (!SqlTypeName.NUMERIC_TYPES.contains(sqlTypeName)) {
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Numeric type, found: %s %s",
               sqlTypeName.getName(), column.getName().getDisplay());
         }
         break;
       case "String":
-//        if (!SqlTypeName.STRING_TYPES.contains(sqlTypeName) &&
-//            !SqlTypeName.DATETIME_TYPES.contains(sqlTypeName)) {
-//          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL String or Date type, found: %s %s",
-//              sqlTypeName.getName(), column.getName().getDisplay());
-//        }
+        if (!SqlTypeName.STRING_TYPES.contains(sqlTypeName) &&
+            !SqlTypeName.DATETIME_TYPES.contains(sqlTypeName)) {
+          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL String or Date type, found: %s %s",
+              sqlTypeName.getName(), column.getName().getDisplay());
+        }
         break;
       case "Boolean":
         if (!SqlTypeName.BOOLEAN_TYPES.contains(sqlTypeName)) {

@@ -22,7 +22,7 @@ public class DockerCompose {
         + "version: \"3.8\"\n"
         + "services:\n"
         + "  database:\n"
-        + "    image: postgres:14.6-alpine\n"
+        + "    image: ankane/pgvector:v0.5.0\n"
         + "    restart: always\n"
         + "    environment:\n"
         + "      - POSTGRES_USER=postgres\n"

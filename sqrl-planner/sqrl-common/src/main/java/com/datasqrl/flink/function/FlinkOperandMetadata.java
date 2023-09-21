@@ -1,9 +1,8 @@
 package com.datasqrl.flink.function;
 
-import com.datasqrl.calcite.type.FlinkVectorType;
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.type.ForeignType;
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.calcite.type.VectorType;
-import com.datasqrl.flink.FlinkConverter;
 import java.util.stream.IntStream;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
@@ -24,13 +23,10 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidator.Config;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
-import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.functions.inference.ArgumentCountRange;
-import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.Signature;
 import org.apache.flink.table.types.inference.TypeInference;
 
@@ -88,16 +84,9 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
       @Override
       public RelDataType deriveType(SqlValidatorScope scope, SqlNode expr) {
         RelDataType validatedNodeType = validator.deriveType(scope,expr);
-        if (validatedNodeType instanceof VectorType) {
-          FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(getClass().getClassLoader(),
-              FlinkTypeSystem.INSTANCE);
-          DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
-              FlinkConverter.catalogManager.getDataTypeFactory());
-
-          RelDataType flinkType = flinkTypeFactory
-              .createFieldTypeFromLogicalType(dataType.getLogicalType());
-
-          return flinkType;
+        if (validatedNodeType instanceof ForeignType) {
+          ForeignType foreignType = (ForeignType) validatedNodeType;
+          return foreignType.getEngineType(Dialect.FLINK);
         }
 
         return validator.deriveType(scope, expr);
@@ -109,7 +98,7 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
       TypeFactory typeFactory) {
 
     List<RelDataType> types = IntStream.range(0, sqlCallBinding.getOperandCount())
-        .mapToObj(i -> translateToFlinkType(sqlCallBinding.getOperandType(i), flinkTypeFactory))
+        .mapToObj(i -> translateToFlinkType(sqlCallBinding.getOperandType(i)))
         .collect(Collectors.toList());
 
     AggCallBinding aggCallBinding = new AggCallBinding(flinkTypeFactory, (SqlAggFunction) sqlCallBinding.getOperator(),
@@ -121,18 +110,13 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
       FlinkTypeFactory flinkTypeFactory, TypeFactory typeFactory) {
     return sqlCallBinding;
   }
-  private static RelDataType translateToFlinkType(RelDataType operandType,
-      FlinkTypeFactory flinkTypeFactory) {
-    if (operandType instanceof VectorType) {
-      DataType dataType = DataTypes.of(FlinkVectorType.class).toDataType(
-          FlinkConverter.catalogManager.getDataTypeFactory());
 
-      RelDataType flinkType = flinkTypeFactory
-          .createFieldTypeFromLogicalType(dataType.getLogicalType());
-
-      return flinkType;
+  private static RelDataType translateToFlinkType(RelDataType relDataType) {
+    if (relDataType instanceof ForeignType) {
+      ForeignType foreignType = (ForeignType) relDataType;
+      return foreignType.getEngineType(Dialect.FLINK);
     }
-    return null;
+    return relDataType;
   }
 
   @Override

@@ -84,12 +84,12 @@ public class FileSourceFactory implements DataStreamSourceFactory {
       Optional<Integer> monitorInterval = tableConfig.getConnectorConfig()
           .asInt(FileConfigOptions.MONITOR_INTERVAL_MS)
           .getOptional();
-        if (isMonitor(monitorInterval)) {
-      Duration duration = monitorInterval
-          .map(this::parseDuration)
-          .orElse(defaultDuration());
-      builder.monitorContinuously(duration);
-        }
+      if (isMonitor(monitorInterval)) {
+        Duration duration = monitorInterval
+            .map(this::parseDuration)
+            .orElse(defaultDuration());
+        builder.monitorContinuously(duration);
+      }
       return ctx.getEnv().fromSource(builder.build(),
           WatermarkStrategy.noWatermarks(), ctx.getFlinkName())
           .map(new NoTimedRecord())
