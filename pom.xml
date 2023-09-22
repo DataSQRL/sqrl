@@ -5,7 +5,7 @@
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-root</artifactId>
     <packaging>pom</packaging>
-    <version>0.2.2</version>
+    <version>0.2.3-SNAPSHOT</version>
     <modules>
         <module>sqrl-base</module>
         <module>sqrl-engines</module>
@@ -786,7 +786,7 @@
         <url>https://github.com/DataSQRL/sqrl.git</url>
         <connection>scm:git:git@github.com:DataSQRL/sqrl.git</connection>
         <developerConnection>scm:git:git@github.com:DataSQRL/sqrl.git</developerConnection>
-      <tag>v0.2.2</tag>
+      <tag>HEAD</tag>
   </scm>
     <build>
         <plugins>

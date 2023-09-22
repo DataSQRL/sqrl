@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-execute-flink</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-execute-flink-connectors</artifactId>
