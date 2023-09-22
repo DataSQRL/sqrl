@@ -11,6 +11,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.VertxExtension;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
@@ -36,6 +38,7 @@ import java.util.function.Consumer;
 
 import static com.datasqrl.util.TestClient.NO_HANDLER;
 import static com.datasqrl.util.TestPackager.createPackageOverride;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
 @Testcontainers
@@ -44,13 +47,9 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   protected List<String> events = new ArrayList<>();
 
   @Container
-//  static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
-//      DockerImageName.parse("ankane/pgvector:v0.4.4")
-//      .asCompatibleSubstituteFor("postgres"));
-
-  protected final PostgreSQLContainer testDatabase = new PostgreSQLContainer(
-      DockerImageName.parse("postgres:14.2")).withDatabaseName("foo").withUsername("foo")
-      .withPassword("secret").withDatabaseName("datasqrl");
+  static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
+      DockerImageName.parse("ankane/pgvector:v0.5.0")
+      .asCompatibleSubstituteFor("postgres"));
 
   protected SnapshotTest.Snapshot snapshot;
   protected Vertx vertx;
@@ -64,7 +63,6 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
     CLUSTER.start();
     log.info("Kafka started: " + CLUSTER.getAllTopicsInCluster());
     packageOverride = createPackageOverride(CLUSTER, testDatabase);
-    System.out.println(testDatabase.getJdbcUrl());
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     this.vertx = vertx;
@@ -77,7 +75,6 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   @AfterEach
   public void tearDown() {
     super.tearDown();
-    testDatabase.stop();
     try {
       for (String id : vertx.deploymentIDs()) {
         vertx.undeploy(id).toCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
@@ -124,6 +121,30 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
 
   protected void executeQuery(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback) {
     client.query(query, input, callback);
+  }
+
+  public void executeQueryUntilTrue(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback,
+      Predicate<HttpResponse<JsonObject>> waitUntilTrue) {
+    executeQueryUntilTrue(query, input, callback, waitUntilTrue, 15);
+  }
+
+  @SneakyThrows
+  public void executeQueryUntilTrue(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback,
+      Predicate<HttpResponse<JsonObject>> waitUntilTrue, int times) {
+    AtomicBoolean done = new AtomicBoolean(false);
+    while (!done.get() && times-- > 0) {
+      executeQuery(query, input, t-> {
+        if (waitUntilTrue.test(t)) {
+          done.set(true);
+          callback.accept(t);
+        }
+      });
+
+      Thread.sleep(1000);
+    }
+    if (!done.get()) {
+      fail("Query yielded no results");
+    }
   }
 
   protected void validateEvents() {

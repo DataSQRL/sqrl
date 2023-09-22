@@ -1,7 +1,7 @@
 package com.datasqrl.function;
 
 public enum IndexType {
-  HASH, BTREE, TEXT;
+  HASH, BTREE, TEXT, VEC_COSINE, VEC_EUCLID /*, VEC_PRODUCT */;
 
   public boolean hasStrictColumnOrder() {
     return this == HASH || this == BTREE;
@@ -11,12 +11,12 @@ public enum IndexType {
     return this == HASH;
   }
 
-  public boolean isSpecialIndex() {
-    return this == TEXT;
-  }
-
+  /**
+   * A general index covers comparison operators and can cover multiple columns
+   * @return
+   */
   public boolean isGeneralIndex() {
-    return !isSpecialIndex();
+    return this == HASH || this==BTREE;
   }
 
 

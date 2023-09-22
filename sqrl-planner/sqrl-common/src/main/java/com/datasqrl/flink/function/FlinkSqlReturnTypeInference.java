@@ -20,7 +20,9 @@ package com.datasqrl.flink.function;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.type.TypeFactory;
+import org.apache.calcite.rel.core.Aggregate.AggCallBinding;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rex.RexCallBinding;
 import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
@@ -35,6 +37,7 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.logical.LogicalType;
 
 import javax.annotation.Nullable;
+import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 
 import static com.datasqrl.flink.function.FlinkTypeUtil.unwrapTypeFactory;
 import static org.apache.flink.table.types.inference.TypeInferenceUtil.*;
@@ -64,7 +67,7 @@ public class FlinkSqlReturnTypeInference implements SqlReturnTypeInference {
         new OperatorBindingCallContext(
             dataTypeFactory,
             definition,
-            opBinding,
+            adaptBinding(opBinding,  unwrapTypeFactory(opBinding)),
             extractExpectedOutputType(opBinding));
     try {
       return inferReturnTypeOrError(flinkTypeFactory, unwrapTypeFactory(opBinding), callContext);
@@ -73,6 +76,22 @@ public class FlinkSqlReturnTypeInference implements SqlReturnTypeInference {
     } catch (Throwable t) {
       throw createUnexpectedException(callContext, t);
     }
+  }
+
+  private SqlOperatorBinding adaptBinding(SqlOperatorBinding opBinding, TypeFactory typeFactory) {
+    if (opBinding instanceof SqlCallBinding) {
+      SqlCallBinding sqlCallBinding = (SqlCallBinding) opBinding;
+      return FlinkOperandMetadata.adaptCallBinding(sqlCallBinding, flinkTypeFactory);
+    } else if (opBinding instanceof AggCallBinding) {
+      AggCallBinding sqlCallBinding = (AggCallBinding) opBinding;
+      return FlinkOperandMetadata.adaptCallBinding(sqlCallBinding, flinkTypeFactory, typeFactory);
+    } else if (opBinding instanceof RexCallBinding) {
+      RexCallBinding sqlCallBinding = (RexCallBinding) opBinding;
+      return FlinkOperandMetadata.adaptCallBinding(sqlCallBinding, flinkTypeFactory, typeFactory);
+
+    }
+
+    return opBinding;
   }
 
   // --------------------------------------------------------------------------------------------

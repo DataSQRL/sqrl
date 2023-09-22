@@ -77,7 +77,8 @@ public class FlinkSqlOperandTypeChecker implements SqlOperandTypeChecker {
   @Override
   public boolean checkOperandTypes(SqlCallBinding callBinding, boolean throwOnFailure) {
     final CallContext callContext =
-        new CallBindingCallContext(dataTypeFactory, definition, callBinding, null);
+        new CallBindingCallContext(dataTypeFactory, definition,
+            FlinkOperandMetadata.adaptCallBinding(callBinding, flinkTypeFactory), null);
     try {
       return checkOperandTypesOrError(callBinding, unwrapTypeFactory(callBinding), callContext);
     } catch (ValidationException e) {
@@ -118,6 +119,8 @@ public class FlinkSqlOperandTypeChecker implements SqlOperandTypeChecker {
       adaptedCallContext = adaptArguments(typeInference, callContext, null);
     } catch (ValidationException e) {
       throw createInvalidInputException(typeInference, callContext, e);
+    } catch (Exception e) {
+      throw e;
     }
 
     insertImplicitCasts(callBinding, typeFactory, adaptedCallContext.getArgumentDataTypes());
@@ -131,7 +134,8 @@ public class FlinkSqlOperandTypeChecker implements SqlOperandTypeChecker {
     final List<SqlNode> operands = callBinding.operands();
     for (int i = 0; i < operands.size(); i++) {
       final LogicalType expectedType = expectedDataTypes.get(i).getLogicalType();
-      final LogicalType argumentType = toLogicalType(callBinding.getOperandType(i));
+      final LogicalType argumentType = toLogicalType(typeFactory.translateToEngineType(Dialect.FLINK,
+          callBinding.getOperandType(i)));
 
       if (!supportsAvoidingCast(argumentType, expectedType)) {
         final RelDataType expectedRelDataType = typeFactory.translateToSqrlType(

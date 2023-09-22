@@ -1,0 +1,50 @@
+IMPORT mysourcepackage.Events; --import external data
+IMPORT myAPI.Likes;            --import data from API mutation
+IMPORT myAPI.AddInterest;      --import data from API mutation
+-- import functions
+IMPORT string.*;
+IMPORT text.*;
+IMPORT vector.*;
+IMPORT time.parseTimestamp;
+-- clean up event data and compute embedding [2]
+Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS INT),0);
+Events.full_text := concat(title,'\n',abstract);
+Events.startTime := concat(trim(regexExtract(date, '^[^-]*')),' ',trim(regexExtract(time, '\d\d?:\d\d\s(AM|PM)')));
+Events.startTimestamp := parseTimestamp(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z')
+Events.embedding := onnxEmbed(full_text, '/build/embedding/model_quantized.onnx');
+-- deduplicate events
+Events := DISTINCT Events ON id ORDER BY last_updated DESC;
+-- compute embedding for user interest [3]
+AddInterest.embedding := onnxEmbed(text, '/build/embedding/model_quantized.onnx');
+-- join user likes with events to get embedding
+LikeVector := SELECT l.userid, e.embedding, l._source_time
+              FROM Likes l TEMPORAL JOIN Events e ON l.eventId = e.id WHERE l.liked;
+-- combine embeddings from user likes and interests
+UserInterestVectors := (SELECT userid, embedding, _source_time FROM LikeVector)
+                 UNION ALL
+                 (SELECT userid, embedding, _source_time FROM AddInterest)
+-- aggregate into semantic profile for each user
+UserInterests := SELECT userid, center(embedding) as interestVector FROM UserInterestVectors GROUP BY userid;
+-- deduplicate user likes [4]
+UserLikes := DISTINCT Likes ON userid, eventId ORDER BY _source_time DESC;
+-- aggregate user likes for each event and relate to event
+EventLikeCount := SELECT eventid, count(*) as num, avg(eventid) as test
+                  FROM UserLikes l WHERE l.liked GROUP BY eventid;
+Events.likeCount := JOIN EventLikeCount l ON @.id = l.eventid;
+-- returns the events that a user has liked [5]
+EventsLiked(@userid: String) := SELECT e.* FROM UserLikes l JOIN Events e ON l.eventId = e.id
+                                WHERE l.userid = @userid
+                                ORDER BY e.startTimestamp ASC;
+-- recommends events based on cosine similarity to semantic user profile [6]
+RecommendedEvents(@userid: String) :=
+SELECT e.*, cosineSimilarity(i.interestVector, e.embedding) as score
+FROM UserInterests i JOIN Events e
+WHERE i.userid = @userid
+ORDER BY score DESC;
+-- uses text search to find relevant events and ranks them by cosine similarity to semantic user profile [7]
+PersonalizedEventSearch(@query: String, @userid: String) :=
+    SELECT e.*, coalesce(cosineSimilarity(i.interestVector, e.embedding),0.0) as score
+        FROM Events e
+        LEFT JOIN UserInterests i ON i.userid = @userid
+        WHERE textsearch(@query, title, abstract) > 0
+    ORDER BY score DESC;

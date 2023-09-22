@@ -3,14 +3,21 @@
  */
 package com.datasqrl.flink;
 
+import static com.datasqrl.util.TestClient.FAIL_HANDLER;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.graphql.AbstractGraphqlTest;
 import com.datasqrl.util.data.Conference;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpResponse;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 @Slf4j
 public class ConferenceTest extends AbstractGraphqlTest {
+
   CompletableFuture<ExecutionResult> fut;
 
   @BeforeEach
@@ -33,19 +41,43 @@ public class ConferenceTest extends AbstractGraphqlTest {
   public void run() {
     CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    Thread.sleep(5000);
-    executeQuery("query q {\n"
-        + " EventsAfterTime(afterTime: \"2007-12-03T10:15:30+01:00\"){\n"
-        + "  description\n"
-        + "  id\n"
+    executeMutation("mutation {\n"
+        + "  Likes(liked: {\n"
+        + "    eventId: 1136937\n"
+        + "    userid: \"10\"\n"
+        + "    liked: true\n"
+        + "  }) {\n"
+        + "    userid\n"
+        + "  }\n"
+        + "}", null, FAIL_HANDLER);
+    executeMutation("mutation {\n"
+        + "AddInterest(interest:{\n"
+        + "  userid:\"10\",\n"
+        + "  text:\"ai\"\n"
+        + "}) {\n"
+        + "  userid\n"
+        + "}\n"
+        + "}", null, FAIL_HANDLER);
+
+    executeQueryUntilTrue("query {\n"
         + "\n"
-        + " }"
-        + "}", null, jsonObjectHttpResponse -> {
-          log.info("Got response " + jsonObjectHttpResponse.body().encode());
-          if (jsonObjectHttpResponse.statusCode() != 200) {
-            fail(String.format("%s", jsonObjectHttpResponse.body()));
+        + "  RecommendedEvents(userid:\"10\") {\n"
+        + "    url\n"
+        + "    title\n"
+        + "    score\n"
+        + "  }\n"
+        + "  \n"
+        + " \n"
+        + "}", null,
+        resp -> countDownLatch.countDown(),
+        resp -> {
+          JsonObject body = resp.body();
+          log.info("Got response " + body.encode());
+          if (resp.statusCode() != 200) {
+            fail(String.format("Non 200 response. %s", resp.body().encode()));
           }
-//          countDownLatch.countDown();
+          JsonArray jsonArray = resp.body().getJsonObject("data").getJsonArray("RecommendedEvents");
+          return !jsonArray.isEmpty();
         });
     countDownLatch.await();
   }

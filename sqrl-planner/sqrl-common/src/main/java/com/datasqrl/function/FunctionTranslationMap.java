@@ -1,13 +1,14 @@
 package com.datasqrl.function;
 
 import com.datasqrl.FunctionUtil;
-import com.datasqrl.TsVectorOperatorTable;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform;
 import com.datasqrl.calcite.convert.SimplePredicateTransform;
 import com.datasqrl.calcite.function.RuleTransform;
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,10 +23,68 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class FunctionTranslationMap {
 
-  public static final Map<String, RuleTransform> transformMap = Map.of(
+  public static final Map<String, RuleTransform> vectorTransformMap = Map.of(
+      "cosinedistance", new CosineDistanceTranslation(),
+      "cosinesimilarity", new CosineSimilarityTranslation(),
+      "euclideandistance", new EuclideanDistanceTranslation(),
+      "center", new CenterTranslation()
+  );
+
+  public static final Map<String, RuleTransform> pgTransforms = Map.of(
       "textsearch", new TextSearchTranslation(),
       "now", new NowTranslation()
   );
+
+  public static final Map<String, RuleTransform> transformMap;
+
+  static {
+    transformMap = new HashMap<>(pgTransforms);
+    transformMap.putAll(vectorTransformMap);
+  }
+
+  public static class CosineDistanceTranslation implements RuleTransform {
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      return List.of(new SimpleCallTransform(operator,
+          ((rexBuilder, call) -> rexBuilder
+              .makeCall(PgSpecificOperatorTable.CosineDistance, call.getOperands()))));
+    }
+
+  }
+  public static class CosineSimilarityTranslation implements RuleTransform {
+
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      return List.of(new SimpleCallTransform(operator,
+          ((rexBuilder, call) -> rexBuilder.makeCall(SqlStdOperatorTable.MINUS,
+              rexBuilder.makeExactLiteral(BigDecimal.ONE),
+              rexBuilder.makeCall(PgSpecificOperatorTable.CosineDistance, call.getOperands())))));
+    }
+
+  }
+  public static class EuclideanDistanceTranslation implements RuleTransform {
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      return List.of(new SimpleCallTransform(operator,
+          ((rexBuilder, call) ->
+              rexBuilder.makeCall(PgSpecificOperatorTable.EuclideanDistance, call.getOperands()))));
+    }
+
+  }
+
+  public static class CenterTranslation implements RuleTransform {
+
+    @Override
+    public List<RelRule> transform(Dialect dialect, SqlOperator operator) {
+      return List.of(new SimpleCallTransform(operator,
+          ((rexBuilder, call) ->
+              rexBuilder.makeCall(SqlStdOperatorTable.AVG, call.getOperands()))));
+    }
+
+  }
 
   public static class NowTranslation implements RuleTransform {
 
@@ -84,7 +143,8 @@ public class FunctionTranslationMap {
             Preconditions.checkArgument(operands.size()>1);
 
             //to_tsvector(col1  ' '  coalesce(col2,'')) @@ to_tsquery(:query) AND ts_rank_cd(col1..., :query) > 0.1
-            return rexBuilder.makeCall(TsVectorOperatorTable.MATCH, makeTsVector(rexBuilder, language, operands.subList(1,
+            return rexBuilder.makeCall(
+                PgSpecificOperatorTable.MATCH, makeTsVector(rexBuilder, language, operands.subList(1,
                 operands.size())), makeTsQuery(rexBuilder, language, operands.get(0)));
           }),
           new SimpleCallTransform(operator, (rexBuilder, call) -> {
@@ -94,7 +154,8 @@ public class FunctionTranslationMap {
             RexLiteral language = rexBuilder.makeLiteral("english");
             List<RexNode> operands = call.getOperands();
             Preconditions.checkArgument(operands.size()>1);
-            return rexBuilder.makeCall(TsVectorOperatorTable.TS_RANK_CD, makeTsVector(rexBuilder, language, operands.subList(1,
+            return rexBuilder.makeCall(
+                PgSpecificOperatorTable.TS_RANK_CD, makeTsVector(rexBuilder, language, operands.subList(1,
                 operands.size())), makeTsQuery(rexBuilder, language, operands.get(0)));
           })
       );
@@ -105,7 +166,7 @@ public class FunctionTranslationMap {
     }
 
     private RexNode makeTsQuery(RexBuilder rexBuilder, RexLiteral language, RexNode query) {
-      return rexBuilder.makeCall(TsVectorOperatorTable.TO_WEBQUERY, language, query);
+      return rexBuilder.makeCall(PgSpecificOperatorTable.TO_WEBQUERY, language, query);
     }
 
     private RexNode makeTsVector(RexBuilder rexBuilder, RexLiteral language, List<RexNode> columns) {
@@ -122,7 +183,7 @@ public class FunctionTranslationMap {
       } else {
         arg = args.get(0);
       }
-      return rexBuilder.makeCall(TsVectorOperatorTable.TO_TSVECTOR, language, arg);
+      return rexBuilder.makeCall(PgSpecificOperatorTable.TO_TSVECTOR, language, arg);
     }
 
   }

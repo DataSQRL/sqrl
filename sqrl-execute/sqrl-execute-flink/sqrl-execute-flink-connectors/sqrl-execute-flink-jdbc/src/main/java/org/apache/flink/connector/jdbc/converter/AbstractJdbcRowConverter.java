@@ -18,7 +18,9 @@
 
 package org.apache.flink.connector.jdbc.converter;
 
+import java.util.Arrays;
 import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
+import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatementImpl;
 import org.apache.flink.connector.jdbc.utils.JdbcTypeUtil;
 import org.apache.flink.table.data.*;
 import org.apache.flink.table.types.logical.*;
@@ -88,7 +90,7 @@ public abstract class AbstractJdbcRowConverter implements JdbcRowConverter {
    * Runtime converter to convert JDBC field to {@link RowData} type object.
    */
   @FunctionalInterface
-  interface JdbcDeserializationConverter extends Serializable {
+  public interface JdbcDeserializationConverter extends Serializable {
 
     /**
      * Convert a jdbc field object of {@link ResultSet} to the internal data structure object.
@@ -103,7 +105,7 @@ public abstract class AbstractJdbcRowConverter implements JdbcRowConverter {
    * {@link PreparedStatement}.
    */
   @FunctionalInterface
-  interface JdbcSerializationConverter extends Serializable {
+  public interface JdbcSerializationConverter extends Serializable {
 
     void serialize(RowData rowData, int index, FieldNamedPreparedStatement statement)
         throws SQLException;
@@ -190,7 +192,30 @@ public abstract class AbstractJdbcRowConverter implements JdbcRowConverter {
    * Create a nullable JDBC f{@link JdbcSerializationConverter} from given sql type.
    */
   protected JdbcSerializationConverter createNullableExternalConverter(LogicalType type) {
+    return wrapIntoNullableExternalConverter(createExternalArrayConverter(type), type);
+  }
+
+  private JdbcSerializationConverter createExternalArrayConverter(LogicalType type) {
     return wrapIntoNullableExternalConverter(createExternalConverter(type), type);
+
+  }
+
+  protected JdbcSerializationConverter createArrayExternalConverter(LogicalType type) {
+    return (val, index, statement) -> {
+      FieldNamedPreparedStatementImpl statement1 = (FieldNamedPreparedStatementImpl)statement;
+      for (int idx : statement1.getIndexMapping()[index]) {
+        GenericArrayData data = (GenericArrayData)val.getArray(index);
+        Double[] javaArray = Arrays.stream(data.toDoubleArray())
+            .boxed()
+            .toArray(Double[]::new);
+        Array sqlArray = statement1.getStatement().getConnection()
+            .createArrayOf("double", javaArray);
+
+        statement1.getStatement()
+            .setArray(idx, sqlArray);
+      }
+
+    };
   }
 
   protected JdbcSerializationConverter wrapIntoNullableExternalConverter(

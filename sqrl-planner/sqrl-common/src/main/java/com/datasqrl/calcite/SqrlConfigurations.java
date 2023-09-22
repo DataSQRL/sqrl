@@ -11,19 +11,21 @@ import org.apache.calcite.sql2rel.SqlToRelConverter;
 
 public class SqrlConfigurations {
 
-  public static final UnaryOperator<SqlWriterConfig> sqlToString = c -> c.withAlwaysUseParentheses(
-          false)
+  public static final UnaryOperator<SqlWriterConfig> sqlToString = c ->
+      c.withAlwaysUseParentheses(false)
       .withSelectListItemsOnSeparateLines(false)
       .withUpdateSetListNewline(false)
       .withIndentation(1)
       .withQuoteAllIdentifiers(true)
       .withDialect(PostgresqlSqlDialect.DEFAULT)
       .withSelectFolding(null);
+
   public static final SqlToRelConverter.Config sqlToRelConverterConfig = SqlToRelConverter
       .config()
       .withExpand(false)
       .withDecorrelationEnabled(false)
       .withTrimUnusedFields(false);
+
   public static SqlValidator.Config sqlValidatorConfig = SqlValidator.Config.DEFAULT
       .withCallRewrite(true)
       .withIdentifierExpansion(false)

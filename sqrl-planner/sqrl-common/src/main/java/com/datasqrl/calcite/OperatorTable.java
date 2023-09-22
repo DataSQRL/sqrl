@@ -42,6 +42,10 @@ public class OperatorTable implements SqlOperatorTable {
       }
     }
 
+    //Exit early so we don't get duplicate calcite functions
+    if (!list.isEmpty()) {
+      return;
+    }
     for (SqlOperatorTable table : chain) {
       table.lookupOperatorOverloads(sqlIdentifier, sqlFunctionCategory, sqlSyntax, list, sqlNameMatcher);
     }

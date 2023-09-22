@@ -50,6 +50,10 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-function</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

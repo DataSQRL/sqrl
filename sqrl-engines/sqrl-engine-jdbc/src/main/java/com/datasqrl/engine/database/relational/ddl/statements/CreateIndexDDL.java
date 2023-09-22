@@ -5,6 +5,7 @@ package com.datasqrl.engine.database.relational.ddl.statements;
 
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.function.IndexType;
+import com.google.common.base.Preconditions;
 import java.util.stream.Collectors;
 import lombok.Value;
 
@@ -28,6 +29,23 @@ public class CreateIndexDDL implements SqlDDLStatement {
             columns.stream().map(col -> String.format("coalesce(%s, '')", col)).collect(
                 Collectors.joining(" || ' ' || ")));
         indexType = "GIN";
+        break;
+      case VEC_COSINE:
+      case VEC_EUCLID:
+        Preconditions.checkArgument(columns.size()==1);
+        String indexModifier;
+        switch (type) {
+          case VEC_COSINE:
+            indexModifier = "vector_l2_ops";
+            break;
+          case VEC_EUCLID:
+            indexModifier = "vector_cosine_ops";
+            break;
+          default:
+            throw new UnsupportedOperationException(type.toString());
+        }
+        columnExpression = columns.get(0) + " " + indexModifier;
+        indexType = "HNSW";
         break;
       default:
         columnExpression = String.join(",", columns);

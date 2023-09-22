@@ -3,6 +3,7 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.calcite.type.PrimitiveType;
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
@@ -11,12 +12,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
-import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
@@ -31,15 +29,8 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.rex.RexVariable;
-import org.apache.calcite.sql.SqlHint;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOrderBy;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.BasicSqlType;
@@ -54,7 +45,13 @@ public class CalciteUtil {
     if (type.isStruct()) {
       return true;
     }
-    return getArrayElementType(type).map(RelDataType::isStruct).orElse(false);
+    return getArrayElementType(type)
+        .map(t-> !isPrimitiveType(t))
+        .orElse(false);
+  }
+
+  private static boolean isPrimitiveType(RelDataType t) {
+    return !t.isStruct() || t instanceof PrimitiveType;
   }
 
   public static Optional<RelDataType> getArrayElementType(RelDataType type) {
@@ -66,7 +63,7 @@ public class CalciteUtil {
   }
 
   public static boolean isBasicOrArrayType(RelDataType type) {
-    return type instanceof BasicSqlType || type instanceof IntervalSqlType
+    return type instanceof PrimitiveType || type instanceof BasicSqlType || type instanceof IntervalSqlType
         || type instanceof ArraySqlType || type instanceof MultisetSqlType;
   }
 

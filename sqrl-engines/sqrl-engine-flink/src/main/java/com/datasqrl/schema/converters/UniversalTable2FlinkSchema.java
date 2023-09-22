@@ -3,14 +3,12 @@
  */
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.calcite.type.BridgingFlinkType;
+import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.type.ArraySqlType;
-import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
@@ -24,6 +22,10 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
   //NOTE: Does not include nullable in this call, need to call nullable function
   @Override
   public DataType convertBasic(RelDataType datatype) {
+    if (datatype instanceof BridgingFlinkType) {
+      return ((BridgingFlinkType)datatype).getFlinkNativeType();
+    }
+
     switch (datatype.getSqlTypeName()) {
       case VARCHAR:
         return DataTypes.VARCHAR(Integer.MAX_VALUE);

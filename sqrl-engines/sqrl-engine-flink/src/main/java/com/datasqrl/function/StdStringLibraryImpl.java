@@ -23,7 +23,7 @@ public class StdStringLibraryImpl extends AbstractFunctionModule implements StdL
       createFunctionFromFlink("overlay", "OVERLAY"),
       createFunctionFromFlink("substring", "SUBSTRING"),
       createFunctionFromFlink("replace", "REPLACE"),
-      createFunctionFromFlink("regexpExtract", "REGEXP_EXTRACT"),
+      createFunctionFromFlink("regexExtract", "REGEXP_EXTRACT"),
       createFunctionFromFlink("initcap", "INITCAP"),
       createFunctionFromFlink("concat", "CONCAT_FUNCTION"),
       createFunctionFromFlink("concatWS", "CONCAT_WS"),

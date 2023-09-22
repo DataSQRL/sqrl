@@ -40,6 +40,7 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexShuttle;
@@ -71,6 +72,14 @@ public class SqrlRexUtil {
 
   public SqrlRexUtil(RexBuilder rexBuilder) {
     this(rexBuilder.getTypeFactory());
+  }
+
+  public static Optional<Integer> getLimit(RexNode limit) {
+    if (limit == null) {
+      return Optional.empty();
+    }
+    Preconditions.checkArgument(limit instanceof RexLiteral);
+    return Optional.of(((RexLiteral) limit).getValueAs(Integer.class));
   }
 
   public RexBuilder getBuilder() {

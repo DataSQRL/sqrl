@@ -19,9 +19,9 @@ columns:
   type: "STRING"
   tests:
   - "not_null"
-- name: "toEmail"
-  type: "STRING"
 - name: "textBody"
   type: "STRING"
   tests:
   - "not_null"
+- name: "toEmail"
+  type: "STRING"

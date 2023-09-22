@@ -15,6 +15,10 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
+import com.datasqrl.VectorFunctions;
+import com.datasqrl.calcite.type.BridgingFlinkType;
+import com.datasqrl.calcite.type.ForeignType;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactory;
@@ -28,6 +32,9 @@ import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule;
+import com.datasqrl.flink.FlinkConverter;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.StdVectorLibraryImpl;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
@@ -39,7 +46,6 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteSink;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.hints.WatermarkHint;
-import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
@@ -48,7 +54,6 @@ import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.google.common.base.Preconditions;
-import java.math.BigDecimal;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,34 +66,26 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.Snapshot;
-import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalProject;
-import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexLiteral;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.rex.RexWindow;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
+import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
+import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 import org.apache.flink.table.types.DataType;
@@ -98,6 +95,7 @@ import org.apache.flink.table.types.DataType;
 public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   TableSink errorSink;
+  RelBuilder relBuilder;
 
   private final List<FlinkStatement> statements = new ArrayList<>();
   private final List<FlinkFunction> functions = new ArrayList<>();
@@ -117,6 +115,8 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     //exclude sqrl NOW for flink's NOW
     HashMap<String, UserDefinedFunction> mutableUdfs = new HashMap<>(udfs);
     mutableUdfs.remove(DefaultFunctions.NOW.getName().toLowerCase());
+    Map<String, UserDefinedFunction> conversionFunctions = extractDowncastConversionFunctions(writeQueries);
+    mutableUdfs.putAll(conversionFunctions);
     registerFunctions(mutableUdfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
@@ -142,6 +142,20 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .queries(this.queries)
         .errorSink(createErrorSink(errorSink))
         .build();
+  }
+
+  private Map<String, UserDefinedFunction> extractDowncastConversionFunctions(
+      List<WriteQuery> writeQueries) {
+    return writeQueries.stream()
+        .flatMap(query -> query.getRelNode().getRowType().getFieldList().stream())
+        .filter(field -> field.getType() instanceof BridgingFlinkType)
+        .map(field -> (BridgingFlinkType) field.getType())
+        .filter(t -> t.getDowncastFunction().isPresent())
+        .collect(Collectors.toMap(
+            t -> t.getDowncastFunction().get().getName(),
+            t -> t.getDowncastFlinkFunction().get(),
+            (existing, replacement) -> existing
+        ));
   }
 
   private Map<String, String> getTableConfig(SqrlConfig config) {

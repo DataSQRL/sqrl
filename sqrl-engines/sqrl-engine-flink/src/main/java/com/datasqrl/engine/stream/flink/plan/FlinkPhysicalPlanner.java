@@ -31,7 +31,7 @@ public class FlinkPhysicalPlanner {
   public FlinkStreamPhysicalPlan createStreamGraph(
       SqrlConfig config, List<? extends Query> streamQueries, TableSink errorSink, Set<URL> jars,
       Map<String, UserDefinedFunction> udfs) {
-    SqrlToFlinkExecutablePlan sqrlToFlinkExecutablePlan = new SqrlToFlinkExecutablePlan(errorSink);
+    SqrlToFlinkExecutablePlan sqrlToFlinkExecutablePlan = new SqrlToFlinkExecutablePlan(errorSink,relBuilder);
     FlinkBase flinkBase = sqrlToFlinkExecutablePlan.create(config, streamQueries, udfs, jars);
     return new FlinkStreamPhysicalPlan(new FlinkExecutablePlan(flinkBase));
   }

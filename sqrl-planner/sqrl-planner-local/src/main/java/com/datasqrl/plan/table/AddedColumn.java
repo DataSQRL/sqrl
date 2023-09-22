@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.table;
 
+import com.datasqrl.plan.util.ContinuousIndexMap;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;
 import lombok.AllArgsConstructor;
@@ -53,7 +54,8 @@ public abstract class AddedColumn {
       return expression;
     }
 
-    public RelBuilder appendTo(@NonNull RelBuilder relBuilder) {
+
+    public int appendTo(@NonNull RelBuilder relBuilder, @NonNull IndexMap indexMap) {
       RelDataType baseType = relBuilder.peek().getRowType();
       int noBaseFields = baseType.getFieldCount();
       List<String> fieldNames = new ArrayList<>(noBaseFields + 1);
@@ -63,10 +65,10 @@ public abstract class AddedColumn {
         rexNodes.add(i, RexInputRef.of(i, baseType));
       }
       fieldNames.add(noBaseFields, nameId);
-      rexNodes.add(expression);
+      rexNodes.add(indexMap.map(expression, relBuilder.peek().getRowType()));
 
       relBuilder.project(rexNodes, fieldNames);
-      return relBuilder;
+      return noBaseFields;
     }
   }
 

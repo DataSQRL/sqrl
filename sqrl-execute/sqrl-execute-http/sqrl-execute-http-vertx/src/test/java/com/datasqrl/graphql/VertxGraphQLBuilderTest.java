@@ -46,7 +46,8 @@ class VertxGraphQLBuilderTest {
   // will be started before and stopped after each test method
   @Container
   private PostgreSQLContainer testDatabase =
-      new PostgreSQLContainer(DockerImageName.parse("postgres:14.2"))
+      new PostgreSQLContainer(DockerImageName.parse("ankane/pgvector:v0.5.0")
+          .asCompatibleSubstituteFor("postgres"))
           .withDatabaseName("foo")
           .withUsername("foo")
           .withPassword("secret")

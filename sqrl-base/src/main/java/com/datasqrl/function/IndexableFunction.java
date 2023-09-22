@@ -7,11 +7,19 @@ import java.util.function.Predicate;
 
 public interface IndexableFunction extends SqrlFunction {
 
-  Predicate<Integer> getOperandSelector();
+  OperandSelector getOperandSelector();
 
   double estimateSelectivity();
 
   EnumSet<IndexType> getSupportedIndexes();
 
+
+  interface OperandSelector {
+
+    boolean isSelectableColumn(int columnIndex);
+
+    int maxNumberOfColumns();
+
+  }
 
 }

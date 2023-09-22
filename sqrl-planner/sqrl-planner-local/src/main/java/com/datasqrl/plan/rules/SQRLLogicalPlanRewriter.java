@@ -96,7 +96,6 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexWindowBounds;
@@ -418,6 +417,18 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
   }
 
+  public static ContinuousIndexMap constructIndexMap(RelDataType tableRowType) {
+    List<RelDataTypeField> queryRowType = tableRowType.getFieldList();
+    List<Integer> selectIdx = new ArrayList<>();
+    for (int i = 0; i < queryRowType.size(); i++) {
+      RelDataTypeField field = queryRowType.get(i);
+      if (!CalciteUtil.isNestedTable(field.getType())) {
+        selectIdx.add(i);
+      }
+    }
+    return ContinuousIndexMap.of(selectIdx);
+  }
+
   private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
 
   @Override
@@ -509,7 +520,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
           LogicalSort nestedSort = (LogicalSort) base;
           base = nestedSort.getInput();
           collation = nestedSort.getCollation();
-          limit = getLimit(nestedSort.fetch);
+          limit = SqrlRexUtil.getLimit(nestedSort.fetch);
         }
 
         AnnotatedLP baseInput = getRelHolder(base.accept(this));
@@ -1577,7 +1588,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         "OFFSET not yet supported");
     AnnotatedLP input = getRelHolder(logicalSort.getInput().accept(this));
 
-    Optional<Integer> limit = getLimit(logicalSort.fetch);
+    Optional<Integer> limit = SqrlRexUtil.getLimit(logicalSort.fetch);
     if (limit.isPresent()) {
       //Need to inline topN
       input = input.inlineTopN(makeRelBuilder(), exec);
@@ -1598,14 +1609,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       result = input.copy().sort(new SortOrder(newCollation)).build();
     }
     return setRelHolder(result);
-  }
-
-  public Optional<Integer> getLimit(RexNode limit) {
-    if (limit == null) {
-      return Optional.empty();
-    }
-    Preconditions.checkArgument(limit instanceof RexLiteral);
-    return Optional.of(((RexLiteral) limit).getValueAs(Integer.class));
   }
 
 }
