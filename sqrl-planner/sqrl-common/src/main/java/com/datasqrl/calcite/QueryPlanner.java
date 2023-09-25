@@ -417,6 +417,9 @@ public class QueryPlanner {
     List<SqlOperator> result = new ArrayList<>();
     String tableFunctionName = String.join(".", path);
     //get latest function
+    if (tableFunctionName.isEmpty()) {
+      return null;
+    }
     String latestVersionName = SqrlNameMatcher.getLatestVersion(framework.getNameCanonicalizer(),
         schema.plus().getFunctionNames(), tableFunctionName);
     if (latestVersionName == null) {

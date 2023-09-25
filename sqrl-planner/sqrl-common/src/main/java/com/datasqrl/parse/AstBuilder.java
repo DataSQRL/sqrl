@@ -1350,10 +1350,12 @@ class AstBuilder
       //Automatically alias tables that are singular, e.g. FROM Orders
       if (node instanceof SqrlCompoundIdentifier && ((SqrlCompoundIdentifier)node).getItems().size() == 1
       && ((SqrlCompoundIdentifier)node).getItems().get(0) instanceof SqlIdentifier) {
+        SqlNode identifer = ((SqrlCompoundIdentifier) node).getItems().get(0);
         return SqlStdOperatorTable.AS.createCall(
             getLocation(ctx),
             node,
-            new SqlIdentifier(((SqlIdentifier)((SqrlCompoundIdentifier)node).getItems().get(0)).names.get(0), SqlParserPos.ZERO));
+            new SqlIdentifier(((SqlIdentifier)identifer).names.get(0),
+                identifer.getParserPosition()));
       } else {
         return visit(ctx.relationPrimary());
       }

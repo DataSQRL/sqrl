@@ -1,4 +1,7 @@
 >>>errors
-[FATAL] At line 1, column 80: Column 'parent' not found in table 'e'
-in script:<script>:
+[FATAL] At line 2, column 51: Column 'parent' not found in table 'e'
+in script:<script> [2:51]:
+IMPORT ecommerce-data.Orders
+X := SELECT e.* FROM Orders.entries AS e ORDER BY e.parent;
+--------------------------------------------------^
 
