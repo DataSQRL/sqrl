@@ -723,7 +723,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           SqlUserDefinedTableFunction table = planner.getTableFunction(context.getCurrentPath());
           if (table == null) {
             throw addError(ErrorLabel.GENERIC, item, "Could not find parent table: %s",
-                node.getDisplay());
+                flattenNames(context.getCurrentPath()));
           }
           latestTable = table.getFunction();
         } else { //treat self as a parameterized binding to the next function
