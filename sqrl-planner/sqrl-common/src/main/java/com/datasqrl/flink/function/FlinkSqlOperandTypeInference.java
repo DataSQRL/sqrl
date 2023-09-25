@@ -54,8 +54,11 @@ public class FlinkSqlOperandTypeInference implements SqlOperandTypeInference {
 
   @Override
   public void inferOperandTypes(SqlCallBinding callBinding, RelDataType returnType, RelDataType[] operandTypes) {
+    RelDataType type = unwrapTypeFactory(callBinding).translateToEngineType(Dialect.FLINK,
+        returnType);
     final CallContext callContext =
-        new CallBindingCallContext(dataTypeFactory, definition, convertToFlinkBinding(callBinding), returnType);
+        new CallBindingCallContext(dataTypeFactory, definition, FlinkOperandMetadata.adaptCallBinding(callBinding, flinkTypeFactory),
+            type);
     try {
       inferOperandTypesOrError(flinkTypeFactory, unwrapTypeFactory(callBinding), callContext, operandTypes);
     } catch (ValidationException | CalciteContextException e) {
@@ -63,12 +66,6 @@ public class FlinkSqlOperandTypeInference implements SqlOperandTypeInference {
     } catch (Throwable t) {
       throw createUnexpectedException(callContext, t);
     }
-  }
-
-  private SqlCallBinding convertToFlinkBinding(SqlCallBinding callBinding) {
-//    FlinkCalciteSqlValidator validator = new FlinkCalciteSqlValidator();
-
-    return callBinding;
   }
 
   private void inferOperandTypesOrError(
