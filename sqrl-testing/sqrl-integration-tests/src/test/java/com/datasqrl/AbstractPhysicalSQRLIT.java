@@ -16,7 +16,6 @@ import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
@@ -39,28 +38,44 @@ import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.util.*;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.DatabaseHandle;
+import com.datasqrl.util.FileTestUtil;
+import com.datasqrl.util.ResultSetPrinter;
+import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.StreamUtil;
+import com.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Types;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.runtime.client.JobStatusMessage;
+import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
+import org.apache.flink.test.util.MiniClusterWithClientResource;
+import org.junit.After;
+import org.junit.ClassRule;
 
 @Slf4j
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
@@ -71,10 +86,40 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   protected SnapshotTest.Snapshot snapshot;
   protected boolean closeSnapshotOnValidate = true;
 
+  private static final int DEFAULT_PARALLELISM = 4;
+
+  @ClassRule
+  public static final MiniClusterWithClientResource MINI_CLUSTER_RESOURCE =
+      new MiniClusterWithClientResource(
+          new MiniClusterResourceConfiguration.Builder()
+              .setNumberTaskManagers(1)
+              .setNumberSlotsPerTaskManager(DEFAULT_PARALLELISM)
+              .build());
+
+  @After
+  public final void cleanupRunningJobs() throws Exception {
+    if (!MINI_CLUSTER_RESOURCE.getMiniCluster().isRunning()) {
+      // do nothing if the MiniCluster is not running
+      log.warn("Mini cluster is not running after the test!");
+      return;
+    }
+
+    for (JobStatusMessage path : MINI_CLUSTER_RESOURCE.getClusterClient().listJobs().get()) {
+      if (!path.getJobState().isTerminalState()) {
+        try {
+          MINI_CLUSTER_RESOURCE.getClusterClient().cancel(path.getJobId()).get();
+        } catch (Exception ignored) {
+          // ignore exceptions when cancelling dangling jobs
+        }
+      }
+    }
+  }
+
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
     initialize(settings, rootDir, Optional.empty());
   }
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
+
     Map<NamePath, SqrlModule> addlModules = Map.of();
     CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
     if (rootDir == null) {
@@ -210,6 +255,5 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   protected static final Predicate<Integer> filterOutTimestampColumn =
       type -> type != Types.TIMESTAMP_WITH_TIMEZONE && type != Types.TIMESTAMP;
-
 
 }
