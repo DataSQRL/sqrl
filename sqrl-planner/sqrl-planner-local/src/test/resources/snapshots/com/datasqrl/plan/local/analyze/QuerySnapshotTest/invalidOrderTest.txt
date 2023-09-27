@@ -1,4 +1,4 @@
 >>>errors
-[FATAL] At line 1, column 80: Column 'parent' not found in table 'e'
+[FATAL] At line 2, column 53: Column 'parent' not found in table 'e'
 in script:<script>:
 
