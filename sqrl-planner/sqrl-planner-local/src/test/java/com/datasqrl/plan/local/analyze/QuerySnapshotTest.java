@@ -384,8 +384,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void testCatchingCalciteErrorTest() {
-    validateScriptInvalid(""
-        + "IMPORT ecommerce-data.Product;"
+    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         //Expression 'productid' is not being grouped
         + "X := SELECT productid, SUM(productid) FROM Product GROUP BY name");
   }
@@ -601,7 +600,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void joinDeclarationOnRootTet() {
+  public void joinDeclarationOnRootTest() {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "Product2 := JOIN Product;");
   }
@@ -1049,7 +1048,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void invalidOrderTest() {
-    validateScriptInvalid("IMPORT ecommerce-data.Orders;"
+    validateScriptInvalid("IMPORT ecommerce-data.Orders\n"
         + "X := SELECT e.* FROM Orders.entries AS e ORDER BY e.parent;");
   }
 
@@ -1101,7 +1100,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void invalidAliasJoinOrder() {
-    validateScriptInvalid("IMPORT ecommerce-data.Orders;"
+    validateScriptInvalid("IMPORT ecommerce-data.Orders;\n"
         + "X := SELECT * From Orders o JOIN o;");
   }
 

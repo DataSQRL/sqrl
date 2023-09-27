@@ -16,6 +16,7 @@ import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
@@ -51,6 +52,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
@@ -216,8 +218,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       SqlUserDefinedTableFunction tableFunction = framework.getQueryPlanner()
           .getTableFunction(path);
       if (tableFunction == null) {
-        addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Could not find table: %s", String.join(".", path));
-        return null;
+        throw addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Could not find table: %s", String.join(".", path));
       }
       TableFunction function = tableFunction.getFunction();
       if (function instanceof Relationship && ((Relationship) function).getJoinType() != JoinType.CHILD) {
@@ -317,7 +318,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
    * Allow UNION access tables
    *
    */
-  public Pair<Result, RelDataType> validateTable(SqrlAssignment statement, SqlNode query,
+  public void validateTable(SqrlAssignment statement, SqlNode query,
       Optional<SqrlTableFunctionDef> tableArgs, boolean materializeSelf) {
     SqlValidator validator = planner.createSqlValidator();
 
@@ -342,7 +343,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         parent = SqrlListUtil.popLast(statement.getIdentifier().names);
         SqlUserDefinedTableFunction sqrlTable = planner.getTableFunction(parent);
         if (sqrlTable == null) {
-          errorCollector.exception(ErrorLabel.GENERIC, "Could not find parent assignment table: %s", parent);
+          throw addError(ErrorLabel.GENERIC, statement.getIdentifier()
+                  .getComponent(statement.getIdentifier().names.size()-1),
+              "Could not find parent assignment table: %s",
+              flattenNames(parent));
         }
       }
 
@@ -360,10 +364,14 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       });
       validated = validator.validate(copy);
 
+    } catch (CalciteContextException e) {
+      throw addError(ErrorLabel.GENERIC, e);
+    } catch (CollectedException e) {
+      return;
     } catch (Exception e) {
       e.printStackTrace();
-      errorCollector.exception(ErrorLabel.GENERIC, e.getMessage());
-      return null;
+      addError(ErrorLabel.GENERIC, statement, e.getMessage());
+      return;
     }
 
     //we have enough to plan
@@ -376,8 +384,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     } catch (Exception e) {
       errorCollector.exception(ErrorLabel.GENERIC, e.getMessage());
     }
+  }
 
-    return Pair.of(result, null);
+  private String flattenNames(List<String> nameList) {
+    return String.join(".", nameList);
   }
 
   private List<String> getFieldNames(List<SqlNode> list) {
@@ -703,7 +713,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
         if (table == null) {
           throw addError(ErrorLabel.GENERIC, item,"Could not find path: %s",
-              pathWalker.getUserDefined());
+              flattenNames(pathWalker.getUserDefined()));
         }
 
         latestTable = table.getFunction();
@@ -713,7 +723,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           SqlUserDefinedTableFunction table = planner.getTableFunction(context.getCurrentPath());
           if (table == null) {
             throw addError(ErrorLabel.GENERIC, item, "Could not find parent table: %s",
-                pathWalker.getUserDefined());
+                flattenNames(context.getCurrentPath()));
           }
           latestTable = table.getFunction();
         } else { //treat self as a parameterized binding to the next function
@@ -726,7 +736,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
           SqlUserDefinedTableFunction table = planner.getTableFunction(pathWalker.getPath());
           if (table == null) {
-            throw addError(ErrorLabel.GENERIC, item,"Could not find table: %s", pathWalker.getUserDefined());
+            throw addError(ErrorLabel.GENERIC, item,"Could not find table: %s",
+                flattenNames(pathWalker.getUserDefined()));
           }
           latestTable = table.getFunction();
         }
@@ -745,7 +756,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
         SqlUserDefinedTableFunction table = planner.getTableFunction(pathWalker.getPath());
         if (table == null) {
-          throw addError(ErrorLabel.GENERIC, item, "Could not find table: %s", pathWalker.getUserDefined());
+          throw addError(ErrorLabel.GENERIC, item, "Could not find table: %s",
+              flattenNames(pathWalker.getUserDefined()));
         }
         latestTable = table.getFunction();
       }
@@ -874,6 +886,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     boolean materializeSelf = node.getQuery().getFetch() != null;
     isMaterializeTable.put(node, materializeSelf);
     checkAssignable(node);
+    List<String> path = SqrlListUtil.popLast(node.getIdentifier().names);
+    if (path.isEmpty()) {
+      throw addError(ErrorLabel.GENERIC, node.getIdentifier(),
+          "Cannot assign join declaration on root");
+    }
 
     /**
      * Add the implicit table join as sql since the fields are accessible
@@ -1066,6 +1083,13 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
                 .build())
             .collect(Collectors.toList()))
         .orElse(Collections.emptyList());
+  }
+
+  public RuntimeException addError(ErrorLabel errorCode, CalciteContextException e) {
+    RuntimeException exception = CheckUtil.createAstException(errorCode,
+        ()->new SqlParserPos(e.getPosLine(), e.getPosColumn(), e.getEndPosLine(), e.getEndPosColumn()),
+        e::getMessage);
+    return errorCollector.handle(exception);
   }
 
   private RuntimeException addError(ErrorLabel errorCode, SqlNode node,

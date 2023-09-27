@@ -5,15 +5,3 @@ IMPORT ecommerce-data.*;
 Products.orders := SELECT COUNT(1) FROM @ JOIN Orders.entries e ON e.productid = @.productid;
 ^
 
-[FATAL] Could not find parent assignment table: [Products]
-in script:<script>:
-
-[FATAL] Could not find parent table: [Products]
-in script:<script> [2:41]:
-IMPORT ecommerce-data.*;
-Products.orders := SELECT COUNT(1) FROM @ JOIN Orders.entries e ON e.productid = @.productid;
-----------------------------------------^
-
-[FATAL] Could not find parent table: [Products]
-in script:<script>:
-
