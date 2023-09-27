@@ -71,13 +71,11 @@ import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.runtime.client.JobStatusMessage;
-import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
-import org.apache.flink.test.util.MiniClusterWithClientResource;
-import org.junit.After;
-import org.junit.ClassRule;
+import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
+@ExtendWith(MiniClusterExtension.class)
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   public SqrlPhysicalPlan physicalPlanner;
@@ -85,35 +83,6 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   protected SnapshotTest.Snapshot snapshot;
   protected boolean closeSnapshotOnValidate = true;
-
-  private static final int DEFAULT_PARALLELISM = 4;
-
-  @ClassRule
-  public static final MiniClusterWithClientResource MINI_CLUSTER_RESOURCE =
-      new MiniClusterWithClientResource(
-          new MiniClusterResourceConfiguration.Builder()
-              .setNumberTaskManagers(1)
-              .setNumberSlotsPerTaskManager(DEFAULT_PARALLELISM)
-              .build());
-
-  @After
-  public final void cleanupRunningJobs() throws Exception {
-    if (!MINI_CLUSTER_RESOURCE.getMiniCluster().isRunning()) {
-      // do nothing if the MiniCluster is not running
-      log.warn("Mini cluster is not running after the test!");
-      return;
-    }
-
-    for (JobStatusMessage path : MINI_CLUSTER_RESOURCE.getClusterClient().listJobs().get()) {
-      if (!path.getJobState().isTerminalState()) {
-        try {
-          MINI_CLUSTER_RESOURCE.getClusterClient().cancel(path.getJobId()).get();
-        } catch (Exception ignored) {
-          // ignore exceptions when cancelling dangling jobs
-        }
-      }
-    }
-  }
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir) {
     initialize(settings, rootDir, Optional.empty());
