@@ -1,0 +1,7 @@
+>>>errors
+[FATAL] Cannot assign join declaration on root
+in script:<script> [2:1]:
+IMPORT ecommerce-data.Product;
+Product2 := JOIN Product;
+^
+

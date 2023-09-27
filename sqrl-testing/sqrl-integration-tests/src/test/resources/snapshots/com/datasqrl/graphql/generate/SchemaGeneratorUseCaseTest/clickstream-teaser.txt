@@ -5,26 +5,28 @@ type Click {
 }
 
 type Query {
+  Trending(url: String, total: Int, timestamp: String): [Trending!]
   Click(url: String, timestamp: String, userid: String): [Click!]
-  Trending(url: String, total: Int): [Trending!]
-  VisitAfter(beforeurl: String, afterurl: String, timestamp: String): [VisitAfter!]
-  Recommendation(url: String, rec: String, frequency: Int): [Recommendation!]
+  Recommendation(url: String, rec: String, frequency: Int, timestamp: String): [Recommendation!]
+  VisitAfter(beforeURL: String, afterURL: String, timestamp: String): [VisitAfter!]
 }
 
 type Recommendation {
   url: String!
   rec: String!
   frequency: Int!
+  timestamp: String!
 }
 
 type Trending {
   url: String!
   total: Int!
+  timestamp: String!
 }
 
 type VisitAfter {
-  beforeurl: String!
-  afterurl: String!
+  beforeURL: String!
+  afterURL: String!
   timestamp: String!
 }
 

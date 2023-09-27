@@ -6,6 +6,3 @@ IMPORT time.*;
 Orders.x := SELECT x.* FROM @ JOIN @ AS x;
 -----------------------------------^
 
-[FATAL] Alias by itself.
-in script:<script>:
-

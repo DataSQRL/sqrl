@@ -15,13 +15,14 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.RelStageRunner;
-import com.datasqrl.plan.local.generate.TableFunctionBase;
+import com.datasqrl.plan.hints.TimestampHint;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.plan.table.ScriptTable;
-import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.LogicalNestedTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.local.generate.Debugger;
@@ -50,7 +51,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.rules.CoreRules;
+import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -75,7 +76,7 @@ public class DAGAssembler {
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();
       Preconditions.checkNotNull(stage);
-      ScriptTable table = tableNode.getTable();
+      PhysicalTable table = tableNode.getTable();
       table.assignStage(stage); //this stage on the config below
       SQRLConverter.Config config = table.getBaseConfig().build();
       table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
@@ -127,35 +128,36 @@ public class DAGAssembler {
       Preconditions.checkArgument(tableScanVisitor.scanFunctions.isEmpty(),
           "Should not encounter table functions in materialized queries");
       Set<AbstractRelationalTable> materializedTables = tableScanVisitor.scanTables;
-      List<VirtualRelationalTable> normalizedTables = StreamUtil.filterByClass(materializedTables,
-          VirtualRelationalTable.class).sorted().collect(Collectors.toList());
-      List<ScriptRelationalTable> denormalizedTables = StreamUtil.filterByClass(materializedTables,
-          ScriptRelationalTable.class).sorted().collect(Collectors.toList());
+      List<LogicalNestedTable> normalizedTables = StreamUtil.filterByClass(materializedTables,
+              LogicalNestedTable.class).sorted().collect(Collectors.toList());
+      List<PhysicalRelationalTable> denormalizedTables = StreamUtil.filterByClass(materializedTables,
+          PhysicalRelationalTable.class).sorted().collect(Collectors.toList());
 
       //Fill all table sinks
       //First, all the tables that need to be written to the database in normalized form
-      for (VirtualRelationalTable normTable : normalizedTables) {
+      for (LogicalNestedTable normTable : normalizedTables) {
         RelNode scanTable = sqrlConverter.getRelBuilder().scan(normTable.getNameId()).build();
-        SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBase().getBaseConfig();
-        configBuilder.fieldNames(normTable.getRowType().getFieldNames());
-        Pair<RelNode, Integer> relPlusTimestamp = produceWriteTree(scanTable,
+        SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBaseConfig();
+        RelNode processedRelnode = produceWriteTree(scanTable,
             configBuilder.build(), errors);
-        RelNode processedRelnode = relPlusTimestamp.getKey();
         Preconditions.checkArgument(normTable.getRowType().equals(processedRelnode.getRowType()),
             "Rowtypes do not match: \n%s \n vs \n%s",
             normTable.getRowType(), processedRelnode.getRowType());
+        int timestampIndex = normTable.getNumColumns()-1; //timestamp is always at the end
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(normTable.getNameId(), normTable.getNumPrimaryKeys(),
-                normTable.getRowType(), relPlusTimestamp.getRight(), database),
+                normTable.getRowType(), timestampIndex, database),
             processedRelnode));
       }
       //Second, all tables that need to be written in denormalized form
-      for (ScriptRelationalTable denormTable : denormalizedTables) {
+      for (PhysicalRelationalTable denormTable : denormalizedTables) {
+        RelNode processedRelnode = produceWriteTree(denormTable.getPlannedRelNode(),
+                denormTable.getTimestamp().getTimestampCandidate().getIndex());
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(denormTable.getNameId(), denormTable.getNumPrimaryKeys(),
                 denormTable.getRowType(),
                 denormTable.getTimestamp().getTimestampCandidate().getIndex(), database),
-            denormTable.getPlannedRelNode()));
+            processedRelnode));
       }
 
       //Third, pick index structures for materialized tables
@@ -174,9 +176,8 @@ public class DAGAssembler {
     dag.allNodesByClass(ExportNode.class).forEach(exportNode -> {
       Preconditions.checkArgument(exportNode.getChosenStage().equals(streamStage));
       ResolvedExport export = exportNode.getExport();
-      Pair<RelNode,Integer> relPlusTimestamp = produceWriteTree(export.getRelNode(),
+      RelNode processedRelnode = produceWriteTree(export.getRelNode(),
           getExportBaseConfig().withStage(exportNode.getChosenStage()), errors);
-      RelNode processedRelnode = relPlusTimestamp.getKey();
       //Pick only the selected keys
       RelBuilder relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
       relBuilder1.project(export.getRelNode().getRowType().getFieldNames().stream()
@@ -191,13 +192,11 @@ public class DAGAssembler {
     Lists.newArrayList(Iterables.filter(dag, SqrlDAG.TableNode.class)).stream()
         .filter(node -> node.getChosenStage().equals(streamStage))
         .map(SqrlDAG.TableNode::getTable).filter(tbl -> debugger.isDebugTable(tbl.getTableName()))
-        .sorted(Comparator.comparing(ScriptTable::getTableName))
+        .sorted(Comparator.comparing(PhysicalTable::getTableName))
         .forEach(table -> {
           Name debugSinkName = table.getTableName().suffix("debug" + debugCounter.incrementAndGet());
           TableSink sink = debugger.getDebugSink(debugSinkName, errors);
-          RelNode convertedRelNode = table.getPlannedRelNode();
-          RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode, planner);
-
+          RelNode expandedRelNode = produceWriteTree(table.getPlannedRelNode(), table.getTimestamp().getTimestampCandidate().getIndex());
           streamQueries.add(new PhysicalDAGPlan.WriteQuery(
               new PhysicalDAGPlan.ExternalSink(debugSinkName.getCanonical(), sink),
               expandedRelNode));
@@ -227,17 +226,21 @@ public class DAGAssembler {
   }
 
   public static SQRLConverter.Config  getExportBaseConfig() {
-      return SQRLConverter.Config.builder()
-          .setOriginalFieldnames(true).build();
+      return SQRLConverter.Config.builder().build();
   }
 
-  private Pair<RelNode,Integer> produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {
-    Preconditions.checkArgument(config.isAddTimestamp2NormalizedChildTable());
+  private RelNode produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree
+    return produceWriteTree(convertedRelNode, alp.getTimestamp().getTimestampCandidate().getIndex());
+  }
+
+  private RelNode produceWriteTree(RelNode convertedRelNode, int timestampIndex) {
     RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode, planner);
-    return Pair.of(expandedRelNode,alp.timestamp.getTimestampCandidate().getIndex());
+    TimestampHint timestampHint = new TimestampHint(timestampIndex);
+    expandedRelNode = timestampHint.addHint((Hintable) expandedRelNode);
+    return expandedRelNode;
   }
 
 
@@ -248,7 +251,7 @@ public class DAGAssembler {
   private static class VisitTableScans extends RelShuttleImpl {
 
     final Set<AbstractRelationalTable> scanTables = new HashSet<>();
-    final Set<TableFunctionBase> scanFunctions = new HashSet<>();
+    final Set<QueryTableFunction> scanFunctions = new HashSet<>();
 
     public void findScans(RelNode relNode) {
       relNode.accept(this);
@@ -256,9 +259,9 @@ public class DAGAssembler {
 
     @Override
     public RelNode visit(TableScan scan) {
-      ScriptRelationalTable table = scan.getTable().unwrap(ScriptRelationalTable.class);
+      PhysicalRelationalTable table = scan.getTable().unwrap(PhysicalRelationalTable.class);
       if (table == null) { //It's a normalized query
-        VirtualRelationalTable vtable = scan.getTable().unwrap(VirtualRelationalTable.class);
+        LogicalNestedTable vtable = scan.getTable().unwrap(LogicalNestedTable.class);
         Preconditions.checkNotNull(vtable);
         scanTables.add(vtable);
       } else {
@@ -269,8 +272,8 @@ public class DAGAssembler {
 
     @Override
     public RelNode visit(TableFunctionScan scan) {
-      SqrlRexUtil.getCustomTableFunction(scan).filter(TableFunctionBase.class::isInstance)
-          .map(TableFunctionBase.class::cast).ifPresent(scanFunctions::add);
+      SqrlRexUtil.getCustomTableFunction(scan).filter(QueryTableFunction.class::isInstance)
+          .map(QueryTableFunction.class::cast).ifPresent(scanFunctions::add);
       return super.visit(scan);
     }
   }

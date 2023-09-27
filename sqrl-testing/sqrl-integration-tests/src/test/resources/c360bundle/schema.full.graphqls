@@ -9,7 +9,7 @@ type Customer {
     customerid: Int
     email: String
     favorite_categories(category_name: String, total: Float): [favorite_categories]
-    lastupdated: Int
+    lastUpdated: Int
     name: String
     order_again(most_recent: String, num_orders: Int, productid: Int, quantity: Int): [order_again]
     order_stats(num_orders: Int, total_spend: Float): [order_stats]
@@ -35,7 +35,7 @@ type Product {
 
 type Query {
     category(name: String): [Category]
-    customer(customerid: Int, email: String, lastupdated: Int, name: String, updatetime: String): [Customer]
+    customer(customerid: Int, email: String, lastUpdated: Int, name: String, updatetime: String): [Customer]
     newCustomerPromotion(customerid: Int, email: String, name: String, num_orders: Int, total_spend: Float): [NewCustomerPromotion]
     product(category: String, description: String, name: String, productid: Int, updatetime: String): [Product]
     orders(customerid: Int, id: Int, time: String): [Orders]
@@ -44,7 +44,7 @@ type Query {
 type _spending_by_month_category {
     category: String
     month: String
-    parent(email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    parent(email: String, lastUpdated: Int, name: String, updatetime: String): Customer!
     savings: Float
     total: Float
 }
@@ -62,21 +62,21 @@ type entries {
 type favorite_categories {
     category(name: String): [Category]
     category_name: String
-    parent(email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    parent(email: String, lastUpdated: Int, name: String, updatetime: String): Customer!
     total: Float
 }
 
 type order_again {
     most_recent: String
     num_orders: Int
-    parent(email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    parent(email: String, lastUpdated: Int, name: String, updatetime: String): Customer!
     productid: Int
     quantity: Int
 }
 
 type order_stats {
     num_orders: Int
-    parent(email: String, lastupdated: Int, name: String, updatetime: String): Customer!
+    parent(email: String, lastUpdated: Int, name: String, updatetime: String): Customer!
     total_spend: Float
 }
 

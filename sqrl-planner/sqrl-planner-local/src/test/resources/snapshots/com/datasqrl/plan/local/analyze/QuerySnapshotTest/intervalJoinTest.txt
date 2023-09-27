@@ -1,12 +1,12 @@
 >>>orders$q$2
 LogicalTableScan(table=[[orders$i$1]])
 
->>>product$q$11
-LogicalTableScan(table=[[product$i$10]])
+>>>product$q$8
+LogicalTableScan(table=[[product$i$7]])
 
->>>x$q$14
-LogicalProject(_uuid$0=[$0], _uuid$00=[$6], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], _ingest_time$00=[$7], id$0=[$8], customerid$0=[$9], time$0=[$10])
+>>>x$q$10
+LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _ingest_time0=[$7], id=[$8], customerid=[$9], time=[$10], entries=[$11])
   LogicalJoin(condition=[AND(>($7, $1), <($7, +($1, 31504464000:INTERVAL SECOND(11))))], joinType=[inner])
-    LogicalTableScan(table=[[product$q$11]])
+    LogicalTableScan(table=[[product$q$8]])
     LogicalTableScan(table=[[orders$q$2]])
 

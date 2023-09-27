@@ -21,13 +21,7 @@ import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.plan.global.StageAnalysis.Cost;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.AbstractRelationalTable;
-import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.plan.table.PullupOperator;
-import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.plan.table.ScriptTable;
-import com.datasqrl.plan.table.TableType;
-import com.datasqrl.plan.table.TimestampHolder;
+import com.datasqrl.plan.table.*;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
@@ -41,7 +35,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
+import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
@@ -51,7 +46,6 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -60,7 +54,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private SqrlSchema schema;
   private Namespace namespace;
 
-  private Map<ScriptTable, ExecutionEngine.Type> validatedTables;
+  private Map<PhysicalTable, ExecutionEngine.Type> validatedTables;
 
   private Path exportPath = Retail.INSTANCE.getRootPackageDirectory().resolve("export-data");
   @BeforeEach
@@ -99,9 +93,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void tableImportTest() {
     plan(imports().toString());
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
-        TimestampTest.candidates(1));
+        TimestampTest.fixed(1));
     validateQueryTable("product", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
-        TimestampTest.candidates(1));
+        TimestampTest.fixed(1));
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.candidates(1, 4));
   }
@@ -112,25 +106,21 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void timestampColumnDefinition() {
-    String script = ScriptBuilder.of("IMPORT ecommerce-data.Customer",
-        "IMPORT time.*",
-        "Customer.timestamp := epochToTimestamp(lastUpdated)",
-        "Customer.month := endOfMonth(endOfMonth(timestamp))");
+    String script = ScriptBuilder.of("IMPORT time.*",
+            "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp");
     plan(script);
-    validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 8, 1,
-        TimestampTest.candidates(1, 6, 7));
+    validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
+        TimestampTest.fixed(6));
   }
 
   @Test
   public void timestampColumnDefinitionWithPropagation() {
-    String script = ScriptBuilder.of("IMPORT ecommerce-data.Customer",
-        "IMPORT time.*",
-        "Customer.timestamp := epochToTimestamp(lastUpdated)",
-        "Customer.month := endOfMonth(endOfMonth(timestamp))",
-        "CustomerCopy := SELECT timestamp, month FROM Customer");
+    String script = ScriptBuilder.of("IMPORT time.*",
+            "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp",
+        "CustomerCopy := SELECT timestamp, endOfMonth(endOfMonth(timestamp)) as month FROM Customer");
     plan(script);
-    validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 8, 1,
-        TimestampTest.candidates(6, 7));
+    validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
+        TimestampTest.fixed(6));
     validateQueryTable("customercopy", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.candidates(1, 2));
   }
@@ -158,9 +148,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderEntry := SELECT o.col1, o.\"time\", e.productid, e.discount2, o._ingest_time FROM Orders o JOIN o.entries e");
     plan(script);
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
-        TimestampTest.candidates(1, 4));
+        TimestampTest.candidates(1,4));
     validateQueryTable("orderentry", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 2,
-        TimestampTest.candidates(3, 6));
+        TimestampTest.candidates(3,6));
   }
 
   @Test
@@ -412,7 +402,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "OrderAgg2 := SELECT o.customerid as customer, endOfsecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 DAY GROUP BY customer, bucket;\n");
     plan(builder.toString());
-    validateQueryTable("orderfilter", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
+    validateQueryTable("orderfilter", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(4), new PullupTest(true, false));
     validateQueryTable("orderagg1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1), new PullupTest(true, false));
@@ -537,8 +527,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void convert2StreamTest() {
-    ScriptBuilder builder = imports();
-    builder.add("Product.updateTime := _ingest_time - INTERVAL 1 DAY");
+    ScriptBuilder builder = new ScriptBuilder();
+    builder.add("IMPORT ecommerce-data.Orders");
+    builder.add("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time - INTERVAL 1 DAY AS updateTime");
     builder.add("Product := DISTINCT Product ON productid ORDER BY updateTime DESC");
     builder.add(
         "ProductCount := SELECT p.productid, p.name, SUM(e.quantity) as quantity FROM Orders.entries e JOIN Product p on e.productid = p.productid GROUP BY p.productid, p.name");
@@ -633,8 +624,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private void validateQueryTable(String tableName, TableType tableType, ExecutionEngine.Type execType,
       int numCols, int numPrimaryKeys, TimestampTest timestampTest,
       PullupTest pullupTest) {
-    ScriptRelationalTable table = getLatestTable(this.schema, tableName,
-        ScriptRelationalTable.class).get();
+    PhysicalRelationalTable table = getLatestTable(this.schema, tableName,
+        PhysicalRelationalTable.class).get();
     validateScriptRelationalTable(table, tableType, numCols, numPrimaryKeys, timestampTest, pullupTest);
     validatedTables.put(table, execType);
   }
@@ -650,9 +641,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 //    validatedTables.put(tblFct, execType);
   }
 
-  private void validateScriptRelationalTable(ScriptRelationalTable table, TableType tableType,
-      int numCols, int numPrimaryKeys, TimestampTest timestampTest,
-      PullupTest pullupTest) {
+  private void validateScriptRelationalTable(PhysicalRelationalTable table, TableType tableType,
+                                             int numCols, int numPrimaryKeys, TimestampTest timestampTest,
+                                             PullupTest pullupTest) {
     assertEquals(tableType, table.getType(), "table type");
     assertEquals(numPrimaryKeys, table.getNumPrimaryKeys(), "primary key size");
     assertEquals(numCols, table.getRowType().getFieldCount(), "field count");
@@ -669,10 +660,15 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         .filter(s ->
             tableClass.isInstance(sqrlSchema.getTable(s, false).getTable()))
         //Get most recently added table
-        .sorted((a, b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),
-            CalciteTableFactory.getTableOrdinal(b)))
+        .sorted((a, b) -> -Integer.compare(getTableOrdinal(a),
+            getTableOrdinal(b)))
         .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, false).getTable()))
        ;
+  }
+
+  public static int getTableOrdinal(String tableId) {
+    int idx = tableId.lastIndexOf(Name.NAME_DELIMITER);
+    return Integer.parseInt(tableId.substring(idx + 1));
   }
 
   private void validateAccessTableFunction(String tableName, String baseTableName, ExecutionEngine.Type execType) {
@@ -765,13 +761,13 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
       return new TimestampTest(Type.CANDIDATES, candidates);
     }
 
-    public void test(TimestampHolder.Base timeHolder) {
+    public void test(TimestampInference timeHolder) {
       if (type == Type.NO_TEST) {
         return;
       }
       if (type == Type.NONE) {
         assertFalse(timeHolder.hasFixedTimestamp(), "no timestamp");
-        assertEquals(0, timeHolder.getCandidates().size(), "candidate size");
+        assertEquals(0, Iterables.size(timeHolder.getCandidates()), "candidate size");
       } else if (type == Type.FIXED) {
         assertTrue(timeHolder.hasFixedTimestamp(), "has timestamp");
         assertEquals(1, candidates.length, "candidate size");
@@ -784,8 +780,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
       } else if (type == Type.CANDIDATES) {
         assertFalse(timeHolder.hasFixedTimestamp(), "no timestamp");
         assertEquals(Sets.newHashSet(candidates),
-            timeHolder.getCandidates().stream().map(TimestampHolder.Candidate::getIndex)
-                .collect(Collectors.toSet()), "candidate set");
+            timeHolder.getCandidateIndexes(), "candidate set");
       }
     }
 

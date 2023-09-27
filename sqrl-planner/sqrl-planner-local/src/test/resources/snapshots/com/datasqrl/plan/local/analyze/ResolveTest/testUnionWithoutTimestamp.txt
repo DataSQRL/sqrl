@@ -1,16 +1,16 @@
->>>combinedstream$q$18-lp-STREAM
-LogicalProject(_uuid$0=[$0], customerid=[$1], _timestamp=[$2])
+>>>combinedstream$q$13-lp-STREAM
+LogicalProject(_uuid=[$0], customerid=[$1], _timestamp=[$2])
   LogicalUnion(all=[true])
-    LogicalProject(_uuid$0=[$0], customerid$0=[$3], _timestamp=[$4])
-      LogicalTableScan(table=[[orders$q$6]])
-    LogicalProject(_uuid$0=[$0], customerid$0=[$2], _timestamp=[$1])
+    LogicalProject(_uuid=[$0], customerid=[$3], _timestamp=[$4])
+      LogicalTableScan(table=[[orders$q$5]])
+    LogicalProject(_uuid=[$0], customerid=[$2], _timestamp=[$1])
       LogicalTableScan(table=[[customer$q$2]])
 
->>>combinedstream$q$18-lp-DATABASE
-LogicalProject(_uuid$0=[$0], customerid=[$1], _timestamp=[$2])
+>>>combinedstream$q$13-lp-DATABASE
+LogicalProject(_uuid=[$0], customerid=[$1], _timestamp=[$2])
   LogicalUnion(all=[true])
-    LogicalProject(_uuid$0=[$0], customerid$0=[$3], _timestamp=[$4])
-      LogicalTableScan(table=[[orders$7]])
-    LogicalProject(_uuid$0=[$0], customerid$0=[$2], _timestamp=[$1])
-      LogicalTableScan(table=[[customer$3]])
+    LogicalProject(_uuid=[$0], customerid=[$3], _timestamp=[$4])
+      LogicalTableScan(table=[[orders$q$5]])
+    LogicalProject(_uuid=[$0], customerid=[$2], _timestamp=[$1])
+      LogicalTableScan(table=[[customer$q$2]])
 

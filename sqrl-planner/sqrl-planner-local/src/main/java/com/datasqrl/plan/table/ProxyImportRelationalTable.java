@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.table;
 
+import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -13,6 +14,9 @@ import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
@@ -23,27 +27,16 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
  * <p>
  * This is a phyiscal relation with a schema that captures the input data.
  */
-public class ProxyImportRelationalTable extends ScriptRelationalTable {
+public class ProxyImportRelationalTable extends PhysicalRelationalTable implements TimestampAssignableTable {
 
   @Getter
   private final ImportedRelationalTableImpl baseTable;
 
   public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
-      @NonNull TimestampHolder.Base timestamp, @NonNull RelDataType rowType,
+      @NonNull TimestampInference timestamp, @NonNull RelDataType rowType,
       ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
     super(rootTableId, tableName, TableType.STREAM, rowType, timestamp,   1, tableStatistic);
     this.baseTable = baseTable;
-  }
-
-  @Override
-  public int addInlinedColumn(AddedColumn.Simple column, @NonNull RelDataTypeFactory typeFactory,
-      Optional<Integer> timestampScore) {
-    int index = super.addInlinedColumn(column, typeFactory, timestampScore);
-    //Check if this adds a timestamp candidate
-    if (timestampScore.isPresent() && !timestamp.isCandidatesLocked()) {
-      timestamp.addCandidate(index, timestampScore.get());
-    }
-    return index;
   }
 
   @Override
@@ -62,4 +55,23 @@ public class ProxyImportRelationalTable extends ScriptRelationalTable {
     getAssignedStage().ifPresent(stage -> builder.stage(stage));
     return builder;
   }
+
+  @Override
+  public void assignTimestamp(int index) {
+    timestamp.getCandidateByIndex(index).fixAsTimestamp();
+  }
+
+  @Override
+  public int addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
+    int colIdx = super.addColumn(column, typeFactory);
+    if (CalciteUtil.isTimestamp(column.getDataType())) {
+      //Add timestamp candidate
+      TimestampInference.ImportBuilder timestampBuilder = TimestampInference.buildImport();
+      timestamp.getCandidates().forEach(cand -> timestampBuilder.addImport(cand.getIndex(), cand.getScore()));
+      timestampBuilder.addImport(colIdx, TimestampUtil.ADDED_TIMESTAMP_SCORE);
+      timestamp = timestampBuilder.build();
+    }
+    return colIdx;
+  }
+
 }

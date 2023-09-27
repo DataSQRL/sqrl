@@ -29,7 +29,7 @@ public class BasicTypeTest {
       assertNotNull(result.get());
       assertEquals(Instant.parse(resultTimes[i]),result.get());
 //      System.out.println(result.get());
-      assertFalse(errors.hasErrors());
+      assertTrue(errors.isEmpty());
     }
   }
 

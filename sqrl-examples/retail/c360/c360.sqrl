@@ -8,9 +8,9 @@ Category := SELECT DISTINCT category AS name FROM Product;
 Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;
 
 -- Compute useful statistics on orders
-Orders.entries.discount := coalesce(discount, 0.0);
-Orders.entries.total := quantity * unit_price - discount;
-Orders.total := SELECT sum(e.total) AS price, sum(e.discount) AS discount, count(1) AS num FROM @.entries e;
+Orders.entries.discount0 := coalesce(discount, 0.0);
+Orders.entries.total := quantity * unit_price - discount0;
+Orders.total := SELECT sum(e.total) AS price, sum(e.discount0) AS discount, count(1) AS num FROM @.entries e;
 
 -- Relate Customer to Orders and compute a customer's total order spent
 Customer.orders := JOIN Orders ON Orders.customerid = @.customerid;
@@ -37,7 +37,7 @@ Customer._spending_by_month_category :=
                      SELECT endOfMonth(o.time) AS month,
                             e.product.category AS category,
                             sum(e.total) AS total,
-                            sum(e.discount) AS savings
+                            sum(e.discount0) AS savings
                      FROM @.orders o JOIN o.entries e
                      GROUP BY month, category ORDER BY month DESC;
 

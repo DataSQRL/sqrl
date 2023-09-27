@@ -11,7 +11,7 @@ public class SqrlCompoundIdentifier extends SqlNodeList {
   private final List<SqlNode> items;
 
   public SqrlCompoundIdentifier(SqlParserPos pos, List<SqlNode> items) {
-    super(List.of(), pos);
+    super(items, pos);
     this.items = items;
   }
 

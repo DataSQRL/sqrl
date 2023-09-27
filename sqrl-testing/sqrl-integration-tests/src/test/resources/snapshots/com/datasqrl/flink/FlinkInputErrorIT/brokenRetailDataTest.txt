@@ -1,36 +1,33 @@
->>>customer$3-lp-stream
-LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5])
-  LogicalTableScan(table=[[customer$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+>>>customer$q$2-lp-stream
+LogicalTableScan(table=[[customer$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
 
->>>orders$7-lp-stream
-LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
-  LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+>>>orders$q$5-lp-stream
+LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]], [TimestampHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4], TimestampHint options:[4]]
 
->>>product$16-lp-stream
-LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5])
-  LogicalTableScan(table=[[product$i$14]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+>>>product$q$11-lp-stream
+LogicalTableScan(table=[[product$i$10]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
 
 >>>customer-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5])
-    LogicalTableScan(table=[[customer$3]])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5])
+    LogicalTableScan(table=[[customer$q$2]])
 
 >>>orders-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
-    LogicalTableScan(table=[[orders$7]])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+    LogicalTableScan(table=[[orders$q$5]])
 
 >>>product-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5])
-    LogicalTableScan(table=[[product$16]])
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
+    LogicalTableScan(table=[[product$q$11]])
 
 >>>customer-data
 1000121, lalelu@hottunes.org, Michelle Dagnes, 1650493449
 >>>orders-data
-10007140, 1000107, 2023-05-19T02:28:39.553244-07:00
-10007543, 1000101, 2023-05-19T01:29:39.553244-07:00
-10008434, 1000107, 2023-05-19T01:45:39.553244-07:00
+10007140, 1000107, 2023-05-19 02:28:39.553244
+10007543, 1000101, 2023-05-19 01:29:39.553244
+10008434, 1000107, 2023-05-19 01:45:39.553244
 >>>product-data
 1332, Heavy Duty Butt Wipes, Wipes for hardiest of messes, Personal Care
 3225, 4ft Garden Gnome, A real-sized garden gnome adds character to your outdoor space, House & Garden

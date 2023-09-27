@@ -72,6 +72,18 @@ public class CalciteUtil {
     return type.getFieldList().stream().map(t -> t.getType()).anyMatch(CalciteUtil::isNestedTable);
   }
 
+  public static RelBuilder projectOutNested(RelBuilder relBuilder) {
+    List<RelDataTypeField> fields = relBuilder.peek().getRowType().getFieldList();
+    List<RexNode> projects = new ArrayList<>(fields.size());
+    for (int i = 0; i < fields.size(); i++) {
+      if (!CalciteUtil.isNestedTable(fields.get(i).getType())) {
+        projects.add(relBuilder.field(i));
+      }
+    }
+    relBuilder.project(projects);
+    return relBuilder;
+  }
+
   public static boolean isArray(RelDataType type) {
     return type instanceof ArraySqlType;
   }

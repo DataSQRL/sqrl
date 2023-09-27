@@ -13,7 +13,7 @@ import org.apache.calcite.sql.SqlNodeList;
 public interface SqrlTableFactory {
 
   void createTable(List<String> path, RelNode input, List<RelHint> hints,
-      boolean setFieldNames, Optional<SqlNodeList> opHints,
+      Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
       Optional<Supplier<RelNode>> nodeSupplier, ErrorCollector errors);
 }

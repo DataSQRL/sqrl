@@ -15,17 +15,16 @@ import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
 
 @Getter
-public class QueryRelationalTable extends ScriptRelationalTable {
+public class QueryRelationalTable extends PhysicalRelationalTable {
 
   private final LPAnalysis analyzedLP;
 
-  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
-      @NonNull LPAnalysis analyzedLP) {
+  public QueryRelationalTable(Name rootTableId, Name tableName, @NonNull LPAnalysis analyzedLP) {
     super(rootTableId, tableName,
         analyzedLP.getConvertedRelnode().getType(),
         analyzedLP.getConvertedRelnode().getRelNode().getRowType(),
-        TimestampHolder.Base.ofDerived(analyzedLP.getConvertedRelnode().getTimestamp()),
-        analyzedLP.getConvertedRelnode().getPrimaryKey().getSourceLength(),
+        analyzedLP.getConvertedRelnode().getTimestamp().finalizeAsBase(),
+        analyzedLP.getConvertedRelnode().getPrimaryKey().getLength(),
         TableStatistic.of(analyzedLP.getConvertedRelnode().estimateRowCount()));
     this.analyzedLP = analyzedLP;
   }

@@ -1,12 +1,12 @@
 >>>database
-CREATE INDEX IF NOT EXISTS machine$26_btree_c1c2 ON machine$26 USING btree (maxtemp$0,avgtemp$0);
-CREATE INDEX IF NOT EXISTS machine$26_hash_c2 ON machine$26 USING hash (avgtemp$0);
-CREATE INDEX IF NOT EXISTS minreadings$19_btree_c0c2 ON minreadings$19 USING btree (sensorid$0,temp$0);
-CREATE INDEX IF NOT EXISTS sensors$22_btree_c3c4 ON sensors$22 USING btree (machineid$0,placed$0);
-CREATE INDEX IF NOT EXISTS sensors$22_hash_c4 ON sensors$22 USING hash (placed$0);
-CREATE TABLE IF NOT EXISTS machine$26 (machineid$0 BIGINT NOT NULL,maxtemp$0 DOUBLE PRECISION NOT NULL,avgtemp$0 DOUBLE PRECISION NOT NULL,timemin$0 TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (machineid$0));
-CREATE TABLE IF NOT EXISTS minreadings$19 (sensorid$0 BIGINT NOT NULL,timemin$0 TIMESTAMP WITH TIME ZONE NOT NULL,temp$0 DOUBLE PRECISION NOT NULL , PRIMARY KEY (sensorid$0,timemin$0));
-CREATE TABLE IF NOT EXISTS sensors$22 (id$0 BIGINT NOT NULL,_uuid$0 TEXT NOT NULL,_ingest_time$0 TIMESTAMP WITH TIME ZONE NOT NULL,machineid$0 BIGINT NOT NULL,placed$0 TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (id$0));
+CREATE INDEX IF NOT EXISTS machine$q$18_btree_c1c2 ON machine$q$18 USING btree (maxTemp,avgTemp);
+CREATE INDEX IF NOT EXISTS machine$q$18_hash_c2 ON machine$q$18 USING hash (avgTemp);
+CREATE INDEX IF NOT EXISTS minreadings$q$13_btree_c0c2 ON minreadings$q$13 USING btree (sensorid,temp);
+CREATE INDEX IF NOT EXISTS sensors$q$15_btree_c3c4 ON sensors$q$15 USING btree (machineid,placed);
+CREATE INDEX IF NOT EXISTS sensors$q$15_hash_c4 ON sensors$q$15 USING hash (placed);
+CREATE TABLE IF NOT EXISTS machine$q$18 (machineid BIGINT NOT NULL,maxTemp DOUBLE PRECISION NOT NULL,avgTemp DOUBLE PRECISION NOT NULL,timeMin TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (machineid));
+CREATE TABLE IF NOT EXISTS minreadings$q$13 (sensorid BIGINT NOT NULL,timeMin TIMESTAMP WITH TIME ZONE NOT NULL,temp DOUBLE PRECISION NOT NULL , PRIMARY KEY (sensorid,timeMin));
+CREATE TABLE IF NOT EXISTS sensors$q$15 (id BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,machineid BIGINT NOT NULL,placed TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (id));
 >>>query-machine
 {
   "data" : {

@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.schema;
 
+import static com.datasqrl.plan.ScriptValidator.getParentPath;
 import static com.datasqrl.plan.ScriptValidator.isSelfField;
 import static com.datasqrl.plan.ScriptValidator.isSelfTable;
 import static com.datasqrl.plan.ScriptValidator.isVariable;
@@ -30,11 +31,9 @@ import com.datasqrl.plan.ScriptValidator.QualifiedExport;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
-import com.datasqrl.schema.Column;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
-import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -47,7 +46,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -93,27 +91,26 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  public static ResolvedExport exportTable(SQRLTable table, TableSink sink, RelBuilder relBuilder,
+  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder,
       boolean subscription) {
-    ModifiableTable table1 = (ModifiableTable)table.getVt();
-    relBuilder.scan(table1.getNameId());
+    relBuilder.scan(table.getNameId());
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
-    table.getVisibleColumns().stream().forEach(c -> {
-      selects.add(relBuilder.field(c.getId().getCanonical()));
-      fieldNames.add(subscription ? c.getId().getCanonical() : c.getName().getDisplay());
+    table.getRowType().getFieldList().stream().forEach(c -> {
+      selects.add(relBuilder.field(c.getName()));
+      fieldNames.add(c.getName());
     });
     relBuilder.project(selects, fieldNames);
-    return new ResolvedExport(table1.getNameId(), relBuilder.build(), sink);
+    return new ResolvedExport(table.getNameId(), relBuilder.build(), sink);
   }
 
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
     QualifiedExport export = validator.getExportOps().get(node);
-    ModifiableTable table = planner.getCatalogReader().getSqrlTable(export.getTable())
+    ModifiableTable table = planner.getCatalogReader().getTableFromPath(export.getTable())
         .unwrap(ModifiableTable.class);
 
-    ResolvedExport resolvedExport = exportTable(table.getSqrlTable(), export.getSink(),
+    ResolvedExport resolvedExport = exportTable(table, export.getSink(),
         planner.getRelBuilder(), false);
 
     framework.getSchema().add(resolvedExport);
@@ -124,22 +121,22 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlAssignTimestamp query, Void context) {
     List<String> tableName = query.getAlias().orElse(query.getIdentifier()).names;
-    RelOptTable table = planner.getCatalogReader().getSqrlTable(tableName);
+    RelOptTable table = planner.getCatalogReader().getTableFromPath(tableName);
 
     RexNode node = planner.planExpression(query.getTimestamp(), table.getRowType());
     TimestampAssignableTable timestampAssignableTable = table.unwrap(TimestampAssignableTable.class);
 
+    int timestampIndex;
     if (!(node instanceof RexInputRef) && query.getTimestampAlias().isEmpty()) {
-      addColumn(node, "_time", table);
-      timestampAssignableTable.assignTimestamp(-1);
+      timestampIndex = addColumn(node, ReservedName.SYSTEM_TIMESTAMP.getCanonical(), table);
     } else if (query.getTimestampAlias().isPresent()) {
       //otherwise, add new column
-      addColumn(node, query.getTimestampAlias().get().getSimple(),
-          planner.getCatalogReader().getSqrlTable(tableName));
-      timestampAssignableTable.assignTimestamp(-1);
+      timestampIndex = addColumn(node, query.getTimestampAlias().get().getSimple(),
+          planner.getCatalogReader().getTableFromPath(tableName));
     } else {
-      timestampAssignableTable.assignTimestamp(((RexInputRef) node).getIndex());
+      timestampIndex = ((RexInputRef) node).getIndex();
     }
+    timestampAssignableTable.assignTimestamp(timestampIndex);
 
     return null;
   }
@@ -147,10 +144,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlAssignment assignment, Void context) {
     SqlNode node = validator.getPreprocessSql().get(assignment);
-
     boolean materializeSelf = validator.getIsMaterializeTable().get(assignment);
-
-    List<String> parentPath = SqrlListUtil.popLast(assignment.getIdentifier().names);
+    List<String> parentPath = getParentPath(assignment);
     Result result = new SqrlToSql().rewrite(node, materializeSelf, parentPath);
 
     //Expanding table functions may have added additional parameters that we need to remove.
@@ -163,38 +158,34 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     RelNode relNode = planner.plan(Dialect.CALCITE, rewritten.getRight());
     RelNode expanded = planner.expandMacros(relNode);
-    final Optional<SqlNode> sql;
-    if (!materializeSelf) {
-      sql = Optional.of(planner.relToSql(Dialect.CALCITE, expanded));
-    } else {
-      sql = Optional.empty();
-    }
 
+    final Optional<SqlNode> sql = !materializeSelf
+        ? Optional.of(planner.relToSql(Dialect.CALCITE, expanded))
+        : Optional.empty();
     if (assignment instanceof SqrlStreamQuery) {
       expanded = LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType());
     }
 
-    boolean setFieldNames = validator.getSetFieldNames().get(assignment);
     List<Function> isA = validator.getIsA().get(node);
 
     //Short path: if we're not materializing, create relationship
     if (!materializeSelf) {
       NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
-      List<SQRLTable> isASqrl = isA.stream()
-          .map(f->((SqrlTableMacro)f).getSqrlTable())
+      List<SqrlTableMacro> isASqrl = isA.stream()
+          .map(f->((SqrlTableMacro)f))
           .collect(Collectors.toList());
+
       Supplier<RelNode> nodeSupplier = ()->framework.getQueryPlanner().plan(Dialect.CALCITE, sql.get());
       //if nested, add as relationship
       if (assignment.getIdentifier().names.size() > 1) {
-        SQRLTable parent = ((SqrlTableMacro)planner.getTableFunction(path.popLast().toStringList()).getFunction())
-            .getSqrlTable();
+        NamePath fromTable = path.popLast();
+        NamePath toTable = isASqrl.get(0).getPath();
 
         Relationship rel = new Relationship(path.getLast(),
             path, framework.getUniqueColumnInt().incrementAndGet(),
-            parent, Relationship.JoinType.JOIN, Multiplicity.MANY,
-            isASqrl, parameters, nodeSupplier
+            fromTable, toTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
+            parameters, nodeSupplier
             );
-        parent.addRelationship(rel);
         planner.getSchema().addRelationship(rel);
       } else {
         //todo fix for FROM statements
@@ -202,26 +193,31 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         //todo: unclean way to find from query
         nodeSupplier = assignment instanceof SqrlFromQuery ? nodeSupplier : ()->finalRel;
 
-        RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),
-            null, isASqrl, parameters, nodeSupplier);
-
-        List<String> fieldNames = validator.getFieldNames().get(assignment);
-        for (int i = 0; i < fieldNames.size(); i++) {
-          String name = fieldNames.get(i);
-          RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
-          sqrlTable.addColumn(nameUtil.toName(name), field.getName(), true,
-              field.getType());
-        }
-
-        planner.getSchema().addSqrlTable(sqrlTable);
+        ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
+        tableFactory.createTable(path.toStringList(),
+            expanded, null,
+            assignment.getHints(), parameters, isA,
+            materializeSelf, Optional.of(nodeSupplier), statementErrors);
       }
     } else {
       ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
-      tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
+      List<String> path = assignment instanceof SqrlExpressionQuery ?
+          SqrlListUtil.popLast(assignment.getIdentifier().names) :
+          assignment.getIdentifier().names;
+
+      tableFactory.createTable(path, expanded, null,
           assignment.getHints(), parameters, isA,
           materializeSelf, Optional.empty(), statementErrors);
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(SqrlExpressionQuery node, Void context) {
+    RelOptTable table = planner.getCatalogReader().getTableFromPath(SqrlListUtil.popLast(node.getIdentifier().names));
+    RexNode rexNode = planner.planExpression(node.getExpression(), table.getRowType());
+    addColumn(rexNode, Util.last(node.getIdentifier().names), table);
     return null;
   }
 
@@ -276,29 +272,16 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return Pair.of(newParams, node);
   }
 
-  @Override
-  public Void visit(SqrlExpressionQuery node, Void context) {
-    RelOptTable table = planner.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(node.getIdentifier().names));
-    RexNode rexNode = planner.planExpression(node.getExpression(), table.getRowType());
-
-    addColumn(rexNode, Util.last(node.getIdentifier().names), table);
-    return null;
-  }
-
-  private void addColumn(RexNode node, String cName, RelOptTable table) {
+  private int addColumn(RexNode node, String cName, RelOptTable table) {
     if (table.unwrap(ModifiableTable.class) != null) {
       ModifiableTable table1 = (ModifiableTable) table.unwrap(Table.class);
-      SQRLTable sqrlTable = table1.getSqrlTable();
-      Column column = sqrlTable.addColumn(nameUtil.toName(cName), null, true, node.getType());
-      column.setVtName(column.getId().getCanonical());
-      table1.addColumn(column.getId().getCanonical(), node, framework.getTypeFactory());
+      return table1.addColumn(cName, node, framework.getTypeFactory());
     } else {
       throw new RuntimeException();
     }
   }
 
   public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
-    final AtomicInteger pkId = new AtomicInteger(0);
 
     public Result rewrite(SqlNode query, boolean materializeSelf, List<String> currentPath) {
       Context context = new Context(materializeSelf, currentPath, new HashMap<>(), false, currentPath.size() > 0, false);
@@ -334,30 +317,31 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
         //get latest fields not in select list
 
-        List<Name> originalNames = planner.getCatalogReader().getSqrlTable(result.getCurrentPath())
+        List<Name> originalNames = planner.getCatalogReader().getTableFromPath(result.getCurrentPath())
             .unwrap(ModifiableTable.class)
-            .getSqrlTable().getFields()
-            .getFields().stream()
-            .map(c -> c.getName())
+            .getRowType().getFieldNames()
+            .stream().map(nameUtil::toName)
             .collect(Collectors.toList());
 
-        List<Column> columns = planner.getCatalogReader().getSqrlTable(result.getCurrentPath())
+        List<String> columns = planner.getCatalogReader().getTableFromPath(result.getCurrentPath())
             .unwrap(ModifiableTable.class)
-            .getSqrlTable().getFields().getColumns();
+            .getRowType().getFieldNames();
 
         //Exclude columns
         Set<String> seenNames = new HashSet<>();
         seenNames.addAll(fieldNames.stream()
-            .map(n->nameUtil.toName(n).getCanonical())
+            .map(n->nameUtil.toName(n).getDisplay())
             .collect(Collectors.toList()));
 
         List<SqlNode> newNodes = new ArrayList<>();
         //Walk backwards to get the latest nodes
         for (int i = columns.size() - 1; i >= 0; i--) {
-          Column column = columns.get(i);
-          if (!seenNames.contains(column.getName().getCanonical())) {
-            seenNames.add(column.getName().getCanonical());
-            newNodes.add(new SqlIdentifier(column.getName().getDisplay(), SqlParserPos.ZERO));
+          String column = columns.get(i);
+          int idx = planner.getCatalogReader().nameMatcher()
+              .indexOf(seenNames, column);
+          if (idx == -1) {
+            seenNames.add(column);
+            newNodes.add(new SqlIdentifier(column, SqlParserPos.ZERO));
           }
         }
         Collections.reverse(newNodes);
@@ -376,7 +360,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           (context.isNested() && call.getFetch() != null)) {
         //if is nested, get primary key nodes
         int keySize = context.isNested()
-            ? planner.getCatalogReader().getSqrlTable(context.currentPath).getKeys().get(0).asSet().size()
+            ? planner.getCatalogReader().getTableFromPath(context.currentPath).getKeys().get(0).asSet().size()
             : 0;
 
         SqlSelectBuilder inner = new SqlSelectBuilder(call)
@@ -502,7 +486,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         SqrlToSql sqrlToSql = new SqrlToSql();
         Result rewrite = sqrlToSql.rewrite(item, false, context.currentPath);
         RelNode relNode = planner.plan(Dialect.CALCITE, rewrite.getSqlNode());
-        builder.push(rewrite.getSqlNode(), relNode.getRowType());
+        builder.pushSubquery(rewrite.getSqlNode(), relNode.getRowType());
       } else if (tableFunction != null) { //may be schema table or function
         pathWalker.walk(identifier);
         builder.scanFunction(pathWalker.getPath(), List.of());
@@ -527,9 +511,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         if (materializeSelf || !input.hasNext()) {//treat self as a table
           builder.scanNestedTable(context.getCurrentPath());
           if (isNested) {
-            RelOptTable table = planner.getCatalogReader().getSqrlTable(pathWalker.getAbsolutePath());
+            RelOptTable table = planner.getCatalogReader().getTableFromPath(pathWalker.getAbsolutePath());
             pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
-                .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$" + pkId.incrementAndGet())
+                .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$"
+                    + planner.getUniqueMacroInt().incrementAndGet())
                 .collect(Collectors.toList());
           }
         } else { //treat self as a parameterized binding to the next function

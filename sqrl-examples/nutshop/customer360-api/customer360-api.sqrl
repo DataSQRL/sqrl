@@ -6,7 +6,7 @@ IMPORT usda-data.nuts;
 Products := DISTINCT Products ON id ORDER BY _ingest_time DESC;
 
 Orders.date := EPOCH_TO_TIMESTAMP(time);
-Orders.items.discount := coalesce(discount, 0.0);
+Orders.items.discount0 := coalesce(discount, 0.0);
 
 -- @api(name="User", query="getusers")
 Customers := SELECT DISTINCT customerid AS id FROM Orders;
@@ -14,14 +14,14 @@ Customers := SELECT DISTINCT customerid AS id FROM Orders;
 Customers.purchases := JOIN Orders ON Orders.customerid = @.id ORDER BY Orders.time DESC;
 Orders.items.product := JOIN Products ON Products.id = @.productid LIMIT 1;
 
-Orders.items.total := quantity * unit_price - discount;
+Orders.items.total := quantity * unit_price - discount0;
 Orders.total := sum(items.total);
-Orders.savings := sum(items.discount);
+Orders.savings := sum(items.discount0);
 
 Customers.spending_by_month :=
          SELECT TRUNCATE_TO_MONTH(date) AS month,
                 sum(total) AS total_spend,
-                sum(discount) AS total_savings
+                sum(discount0) AS total_savings
          FROM @.purchases
          GROUP BY month ORDER BY month DESC;
 

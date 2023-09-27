@@ -1,8 +1,10 @@
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.DataSource;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
+import com.datasqrl.util.NameUtil;
 import com.datasqrl.util.StringUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
@@ -32,7 +34,8 @@ public class FlexibleSchemaPreprocessor implements Preprocessor {
     Preconditions.checkArgument(Files.isRegularFile(file), "Not a regular file: %s", file);
 
     String tablename = StringUtil.removeFromEnd(file.getFileName().toString(), FlexibleTableSchemaFactory.SCHEMA_EXTENSION);
-    Path tableFile = file.getParent().resolve(tablename + DataSource.TABLE_FILE_SUFFIX);
+
+    Path tableFile = NameUtil.namepath2Path(file.getParent(), NamePath.of(tablename + DataSource.TABLE_FILE_SUFFIX));
     boolean hasTableJson = Files.isRegularFile(tableFile);
 
     // If the directory does not contain a table json file

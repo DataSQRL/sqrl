@@ -54,4 +54,9 @@ public abstract class AbstractRelationalTable extends AbstractTable implements
   public int compareTo(AbstractRelationalTable other) {
     return this.getNameId().compareTo(other.getNameId());
   }
+
+  @Override
+  public String toString() {
+    return nameId;
+  }
 }

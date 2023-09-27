@@ -3,20 +3,18 @@
  */
 package com.datasqrl.plan.rules;
 
-import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
+import static com.datasqrl.error.ErrorCode.MULTIPLE_PRIMARY_KEY;
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.DedupHint;
-import com.datasqrl.plan.table.NowFilter;
-import com.datasqrl.plan.table.PullupOperator;
-import com.datasqrl.plan.table.SortOrder;
-import com.datasqrl.plan.table.TableType;
-import com.datasqrl.plan.table.TimestampHolder;
-import com.datasqrl.plan.table.TopNConstraint;
-import com.datasqrl.plan.util.ContinuousIndexMap;
+import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.hints.TopNHint;
+import com.datasqrl.plan.table.*;
+import com.datasqrl.plan.util.SelectIndexMap;
+import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.util.SqrlRexUtil;
@@ -29,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
@@ -60,11 +60,11 @@ public class AnnotatedLP implements RelHolder {
   @NonNull
   public TableType type;
   @NonNull
-  public ContinuousIndexMap primaryKey;
+  public PrimaryKeyMap primaryKey;
   @NonNull
-  public TimestampHolder.Derived timestamp;
+  public TimestampInference timestamp;
   @NonNull
-  public ContinuousIndexMap select;
+  public SelectIndexMap select;
   @Builder.Default
   public List<JoinTable> joinTables = null;
   @Builder.Default
@@ -86,15 +86,15 @@ public class AnnotatedLP implements RelHolder {
   public List<AnnotatedLP> inputs = List.of();
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
-      ContinuousIndexMap primaryKey,
-      TimestampHolder.Derived timestamp, ContinuousIndexMap select,
+      PrimaryKeyMap primaryKey,
+                                         TimestampInference timestamp, SelectIndexMap select,
       AnnotatedLP input) {
     return build(relNode, type, primaryKey, timestamp, select, List.of(input));
   }
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
-      ContinuousIndexMap primaryKey,
-      TimestampHolder.Derived timestamp, ContinuousIndexMap select,
+      PrimaryKeyMap primaryKey,
+      TimestampInference timestamp, SelectIndexMap select,
       List<AnnotatedLP> inputs) {
     return AnnotatedLP.builder().relNode(relNode).type(type).primaryKey(primaryKey)
         .timestamp(timestamp)
@@ -183,7 +183,7 @@ public class AnnotatedLP implements RelHolder {
       fieldCollations.addAll(SqrlRexUtil.translateCollation(topN.getCollation(), inputType));
       if (topN.isDistinct()) {
         //Add all other selects that are not partition indexes or collations to the sort
-        List<Integer> remainingDistincts = new ArrayList<>(primaryKey.targetsAsList());
+        List<Integer> remainingDistincts = primaryKey.asList();
         topN.getCollation().getFieldCollations().stream().map(RelFieldCollation::getFieldIndex)
             .forEach(remainingDistincts::remove);
         topN.getPartition().stream().forEach(remainingDistincts::remove);
@@ -231,8 +231,8 @@ public class AnnotatedLP implements RelHolder {
       }
 
       relBuilder.filter(conditions);
-      ContinuousIndexMap newPk = primaryKey.remap(IndexMap.IDENTITY);
-      ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
+      PrimaryKeyMap newPk = primaryKey.remap(IndexMap.IDENTITY);
+      SelectIndexMap newSelect = select.remap(IndexMap.IDENTITY);
       if (topN.isDeduplication() || topN.isDistinct()) { //Drop sort since it doesn't apply globally
         newSort = SortOrder.EMPTY;
       } else { //Add partitioned sort on top
@@ -317,15 +317,22 @@ public class AnnotatedLP implements RelHolder {
    *
    * @return
    */
-  public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, List<String> fieldNames,
+  public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
       ExecutionAnalysis exec, ErrorCollector errors) {
-    if (fieldNames == null) { //Use existing fieldnames
+    List<String> fieldNames;
+    if (originalRelNode==null ||
+            SqrlHint.fromRel(originalRelNode, TopNHint.CONSTRUCTOR)
+                    .filter(topN -> topN.getType()== TopNHint.Type.DISTINCT_ON).isPresent()) {
+      //Use processed fieldnames for distinct_on or when relnode is absent
       fieldNames = Collections.nCopies(select.getSourceLength(), null);
+    } else {
+      //otherwise, use the field names from the original relnode since we may have lost them in processing
+      fieldNames = originalRelNode.getRowType().getFieldNames();
     }
     Preconditions.checkArgument(fieldNames.size() == select.getSourceLength());
     List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
     AnnotatedLP input = this;
-    if (!topN.isEmpty() && //If any selected field is nested we have to inline topN
+    if (!topN.isEmpty() && //TODO: remove this condition once we support denormalized data in database
         select.targetsAsList().stream().map(fields::get).map(RelDataTypeField::getType)
             .anyMatch(CalciteUtil::isNestedTable)) {
       input = input.inlineTopN(relBuilder, exec);
@@ -333,10 +340,10 @@ public class AnnotatedLP implements RelHolder {
     HashMap<Integer, Integer> remapping = new HashMap<>();
     int index = 0;
     boolean addedPk = false;
-    for (int i = 0; i < input.primaryKey.getSourceLength(); i++) {
+    for (int i = 0; i < input.primaryKey.getLength(); i++) {
       remapping.put(input.primaryKey.map(i), index++);
     }
-    if (input.primaryKey.getSourceLength() == 0) {
+    if (input.primaryKey.getLength() == 0) {
       //If we don't have a primary key, we add a static one to resolve uniqueness in the database
       addedPk = true;
       index++;
@@ -348,20 +355,21 @@ public class AnnotatedLP implements RelHolder {
       }
     }
 
+
     //Determine which timestamp candidates have already been mapped and map the candidates accordingly
-    List<TimestampHolder.Derived.Candidate> candidates = new ArrayList<>();
-    for (TimestampHolder.Derived.Candidate c : input.timestamp.getCandidates()) {
+    TimestampInference.DerivedBuilder timestamp = TimestampInference.buildDerived();
+    for (TimestampInference.Candidate c : input.timestamp.getCandidates()) {
       Integer mappedIndex;
       if ((mappedIndex = remapping.get(c.getIndex()))!=null) {
-        candidates.add(c.withIndex(mappedIndex));
+        timestamp.add(mappedIndex, c);
       }
     }
-    if (candidates.isEmpty()) {
+    if (!timestamp.hasCandidates()) {
       //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
-      TimestampHolder.Derived.Candidate bestCandidate = input.timestamp.getBestCandidate();
+      TimestampInference.Candidate bestCandidate = input.timestamp.getBestCandidate();
       int nextIndex = index++;
       remapping.put(bestCandidate.getIndex(), nextIndex);
-      candidates.add(bestCandidate.withIndex(nextIndex));
+      timestamp.add(nextIndex, bestCandidate);
     }
 
     //Make sure we preserve sort orders if they aren't selected
@@ -377,15 +385,17 @@ public class AnnotatedLP implements RelHolder {
         && remapping.size() + (addedPk ? 1 : 0) == index && projectLength <= inputLength + (addedPk
         ? 1 : 0));
     IndexMap remap = IndexMap.of(remapping);
-    ContinuousIndexMap updatedSelect = input.select.remap(remap);
+    SelectIndexMap updatedSelect = input.select.remap(remap);
+
     List<RexNode> projects = new ArrayList<>(projectLength);
     List<String> updatedFieldNames = Arrays.asList(new String[projectLength]);
-    ContinuousIndexMap primaryKey = input.primaryKey.remap(remap);
+    PrimaryKeyMap primaryKey = input.primaryKey.remap(remap);
     if (addedPk) {
-      primaryKey = ContinuousIndexMap.identity(1, projectLength);
+      primaryKey = PrimaryKeyMap.firstN(1);
       projects.add(0, relBuilder.literal(1));
       updatedFieldNames.set(0, SQRLLogicalPlanRewriter.DEFAULT_PRIMARY_KEY_COLUMN_NAME);
     }
+
     RelDataType rowType = input.relNode.getRowType();
     remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(), e.getValue()))
         .sorted((a, b) -> Integer.compare(a.getTarget(), b.getTarget()))
@@ -401,14 +411,14 @@ public class AnnotatedLP implements RelHolder {
 
     //Verify that all primary key columns are not null which is required by databases
     List<RelDataTypeField> relTypes = relNode.getRowType().getFieldList();
-    for (int i = 0; i < primaryKey.getSourceLength(); i++) {
+    for (int i = 0; i < primaryKey.getLength(); i++) {
       RelDataTypeField field = relTypes.get(i);
       errors.checkFatal(!field.getType().isNullable(), PRIMARY_KEY_NULLABLE, "The primary key field %s is nullable", field.getName());
     }
 
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
-        input.timestamp.restrictTo(candidates), updatedSelect,null,
+        timestamp.build(), updatedSelect,null,
         input.numRootPks,
         input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap),
         List.of(this));

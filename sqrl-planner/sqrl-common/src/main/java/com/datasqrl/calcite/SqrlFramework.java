@@ -1,7 +1,11 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
@@ -26,6 +30,7 @@ public class SqrlFramework {
   private AtomicInteger uniqueMacroInt = new AtomicInteger(0);
   private AtomicInteger uniqueTableInt = new AtomicInteger(0);
   private AtomicInteger uniqueColumnInt = new AtomicInteger(0);
+  private Map<Name,AtomicInteger> tableNameShadowing = new HashMap<Name,AtomicInteger>();
 
   public SqrlFramework() {
     this(null, HintStrategyTable.builder().build(), NameCanonicalizer.SYSTEM);
@@ -44,9 +49,7 @@ public class SqrlFramework {
     CalciteConnectionConfigImpl config = new CalciteConnectionConfigImpl(info);
 
     this.nameCanonicalizer = nameCanonicalizer;
-    SqrlNameMatcher nameMatcher = new SqrlNameMatcher(nameCanonicalizer);
-    this.catalogReader = new CatalogReader(schema, typeFactory, config,
-        nameMatcher);
+    this.catalogReader = new CatalogReader(schema, typeFactory, config);
     this.sqrlOperatorTable = new OperatorTable(nameCanonicalizer, catalogReader, SqlStdOperatorTable.instance());
     this.queryPlanner = resetPlanner();
   }
@@ -54,5 +57,9 @@ public class SqrlFramework {
   public QueryPlanner resetPlanner() {
     this.queryPlanner = new QueryPlanner(this);
     return this.queryPlanner;
+  }
+
+  public int getUniqueTableId() {
+    return uniqueTableInt.incrementAndGet();
   }
 }

@@ -89,15 +89,10 @@ public class UniversalTable {
   }
 
   public void addColumn(Name colName, RelDataType type, boolean visible) {
-    //column may already be versioned, if so, strip
-    String nameStr = colName.getCanonical().split("\\$")[0];
-    Preconditions.checkState(!nameStr.isEmpty(), "Column not named: " + colName);
-    Name name = Name.system(nameStr);
-
-    int version = fields.nextVersion(name);
+    int version = fields.nextVersion(colName);
 
     //A name may clash with a previously added name, hence we increase the version
-    fields.addField(new Column(name, version, type, visible));
+    fields.addField(new Column(colName, version, type, visible));
   }
 
   public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
@@ -121,11 +116,6 @@ public class UniversalTable {
     public boolean isNullable() {
       return type.isNullable();
     }
-
-    @Override
-    public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
-      return null;
-    }
   }
 
   @Getter
@@ -140,11 +130,6 @@ public class UniversalTable {
       this.childTable = childTable;
       this.multiplicity = multiplicity;
     }
-
-    @Override
-    public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
-      return null;
-    }
   }
 
   public <T> List<Pair<String, T>> convert(TypeConverter<T> converter) {
@@ -156,7 +141,7 @@ public class UniversalTable {
     return fields.getFields(false)
         .filter(f -> (includeNested || (f instanceof Column)) && (!onlyVisible || f.isVisible()))
         .map(f -> {
-          String name = f.getId().getCanonical();
+          String name = f.getId().getDisplay();
           T type;
           if (f instanceof Column) {
             Column column = (Column) f;

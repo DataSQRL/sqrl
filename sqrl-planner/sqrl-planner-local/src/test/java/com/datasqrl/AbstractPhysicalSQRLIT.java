@@ -6,6 +6,7 @@ package com.datasqrl;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.engine.PhysicalPlan;
@@ -27,51 +28,39 @@ import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.module.SqrlModule;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.plan.local.analyze.FuzzingRetailSqrlModule;
-import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
-import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
+import com.datasqrl.plan.local.analyze.FuzzingRetailSqrlModule;
+import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.local.analyze.ResolveTest;
 import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APIQuery;
-import com.datasqrl.util.DatabaseHandle;
-import com.datasqrl.util.FileTestUtil;
-import com.datasqrl.util.ResultSetPrinter;
-import com.datasqrl.util.SnapshotTest;
-import com.datasqrl.util.StreamUtil;
-import com.datasqrl.util.TestRelWriter;
+import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.util.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Types;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.rel.RelNode;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 @Slf4j
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
@@ -87,7 +76,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   }
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
     Map<NamePath, SqrlModule> addlModules = Map.of();
-    CalciteTableFactory tableFactory = new CalciteTableFactory(framework, NameCanonicalizer.SYSTEM);
+    CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
     if (rootDir == null) {
       RetailSqrlModule retailSqrlModule = new RetailSqrlModule();
       retailSqrlModule.init(tableFactory);
@@ -133,12 +122,13 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     APIConnectorManager apiManager = new MockAPIConnectorManager();
     SqrlSchema sqrlSchema = planner.getSchema();
     for (String tableName : queryTables) {
-      Optional<VirtualRelationalTable> vtOpt = ResolveTest.getLatestTable(sqrlSchema, tableName,
-          VirtualRelationalTable.class);
+      Optional<ScriptRelationalTable> vtOpt = ResolveTest.getLatestTable(sqrlSchema, tableName,
+              ScriptRelationalTable.class);
       Preconditions.checkArgument(vtOpt.isPresent(), "No such table: %s", tableName);
-      VirtualRelationalTable vt = vtOpt.get();
-      RelNode rel = planner.createRelBuilder().scan(vt.getNameId()).build();
-      apiManager.addQuery(new APIQuery(tableName, rel));
+      ScriptRelationalTable vt = vtOpt.get();
+      RelBuilder relBuilder = planner.createRelBuilder().scan(vt.getNameId());
+      relBuilder = CalciteUtil.projectOutNested(relBuilder);
+      apiManager.addQuery(new APIQuery(tableName, relBuilder.build()));
     }
 
     PhysicalDAGPlan dag = physicalPlanner.planDag(planner.getFramework(), ns.getPipeline(),
@@ -168,7 +158,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     for (APIQuery query : apiManager.getQueries()) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
-      String sqlQuery = RelToFlinkSql.convertToString(template.getRelNode());
+
+      String sqlQuery = framework.getQueryPlanner().relToString(Dialect.POSTGRES, template.getRelNode());
       log.info("Executing query for {}: {}", query.getNameId(), sqlQuery);
 
       ResultSet resultSet = conn
@@ -185,7 +176,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
           typeFilter = filterOutTimestampColumn;
         }
         String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
-                s -> !ReservedName.UUID.matches(s) && !ReservedName.INGEST_TIME.matches(s) && !Name.isSystemHidden(s),
+                s -> !s.startsWith(ReservedName.UUID.getCanonical()) && !ReservedName.INGEST_TIME.matches(s) && !Name.isSystemHidden(s),
                 typeFilter))
             .sorted().collect(Collectors.joining(System.lineSeparator()));
         snapshot.addContent(content, query.getNameId(), "data");

@@ -71,7 +71,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class QueryPlanner {
 
-  private static final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
+  private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
+  private final AtomicInteger uniquePkId = new AtomicInteger(0);
   private final RelOptCluster cluster;
   private final RelOptPlanner planner;
   private final CatalogReader catalogReader;
@@ -410,13 +411,20 @@ public class QueryPlanner {
   }
 
   public String relToString(Dialect dialect, RelNode relNode) {
-    return sqlToString(dialect, relToSql(dialect, relNode));
+    String sql = sqlToString(dialect, relToSql(dialect, relNode));
+    if (dialect == Dialect.POSTGRES) {
+      return sql.replaceAll("\"", "");
+    }
+    return sql;
   }
 
   public SqlUserDefinedTableFunction getTableFunction(List<String> path) {
     List<SqlOperator> result = new ArrayList<>();
     String tableFunctionName = String.join(".", path);
     //get latest function
+    if (tableFunctionName.isEmpty()) {
+      return null;
+    }
     String latestVersionName = SqrlNameMatcher.getLatestVersion(framework.getNameCanonicalizer(),
         schema.plus().getFunctionNames(), tableFunctionName);
     if (latestVersionName == null) {

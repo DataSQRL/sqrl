@@ -1,13 +1,10 @@
 package org.apache.calcite.jdbc;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.metadata.MetadataStore;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
-import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.StreamUtil;
 import java.net.URL;
 import java.util.ArrayList;
@@ -15,7 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
@@ -30,10 +26,10 @@ import java.util.stream.Stream;
 public class SqrlSchema extends SimpleCalciteSchema {
   private final SqrlFramework sqrlFramework;
   private final List<ResolvedExport> exports = new ArrayList<>();
-  private final List<SQRLTable> sqrlTables = new ArrayList<>();
-  private final Map<List<String>, List<String>> relationships = new HashMap();
+  private final Map<NamePath, NamePath> absolutePathMap = new HashMap();
   private final Set<URL> jars = new HashSet<>();
-  private final Map<List<String>, Relationship> relFncs = new HashMap<>();
+  private final Map<NamePath, Relationship> pathToRelationshipMap = new HashMap<>();
+  private final Map<NamePath, String> pathToTableMap = new HashMap<>();
 
   public SqrlSchema(SqrlFramework framework) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
@@ -72,49 +68,17 @@ public class SqrlSchema extends SimpleCalciteSchema {
     this.exports.add(export);
   }
 
-  public<T extends Table> List<T> getTables(Class<T> clazz) {
-    return getTableStream(clazz).collect(Collectors.toList());
+  public void addTable(RootSqrlTable root) {
+    removePrefix(this.pathToRelationshipMap.keySet(),root.getName().toNamePath());
+    removePrefix(this.absolutePathMap.keySet(),root.getName().toNamePath());
+    plus().add(String.join(".", root.getPath().toStringList()) + "$"
+        + sqrlFramework.getUniqueTableInt().incrementAndGet(), root
+        );
   }
 
-  public List<SQRLTable> getAllTables() {
-    return this.sqrlTables;
-  }
-
-  public List<SQRLTable> getRootTables() {
-    return this.sqrlTables.stream()
-        .filter(s->s.getPath().size() == 1)
-        .collect(Collectors.toList());
-  }
-
-  public void addSqrlTable(SQRLTable root) {
-    if (root instanceof RootSqrlTable) {
-      plus().add(String.join(".", root.getPath().toStringList()) + "$"
-          + sqrlFramework.getUniqueTableInt().incrementAndGet(),(RootSqrlTable)root
-          );
-    }
-
-    for (int i = 0; i < sqrlTables.size(); i++) {
-      SQRLTable table = sqrlTables.get(i);
-      if (table.getPath().equals(root.getPath())) {
-        sqrlTables.remove(i);
-      }
-    }
-
-    this.sqrlTables.add(root);
-  }
-
-  public SQRLTable getSqrlTable(NamePath path) {
-    for (SQRLTable table : sqrlTables) {
-      if (table.getPath().equals(path)) {
-        return table;
-      }
-    }
-
-    return null;
-  }
-
-  public <R, C> R accept(CalciteSchemaVisitor<R, C> visitor, C context) {
-    return visitor.visit(this, context);
+  private void removePrefix(Set<NamePath> set, NamePath prefix) {
+    set.removeIf(
+        key -> key.size() >= prefix.size() && key.subList(0, prefix.size()).equals(prefix));
   }
 
   public Set<URL> getJars() {
@@ -126,13 +90,14 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addRelationship(Relationship relationship) {
-    if (relationships.containsKey(relationship)) {
-      return;
-    }
-
-    relationships.put(relationship.getPath().toStringList(), relationship.getToTable().getPath().toStringList());
-    this.relFncs.put(relationship.getPath().toStringList(), relationship);
+    absolutePathMap.put(relationship.getPath(),
+        relationship.getToTable());
+    this.pathToRelationshipMap.put(relationship.getPath(), relationship);
     plus().add(String.join(".", relationship.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueTableInt().incrementAndGet(), relationship);
+  }
+
+  public void addTableMapping(NamePath path, String nameId) {
+    this.pathToTableMap.put(path, nameId);
   }
 }

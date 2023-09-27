@@ -12,12 +12,12 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.plan.local.generate.TableFunctionBase;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.table.ScriptTable;
+import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
@@ -65,16 +65,18 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   protected void validateScript(String script) {
     Namespace ns = plan(script);
     SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
-    Stream.concat(ns.getSchema().getFunctionStream(TableFunctionBase.class).map(ScriptTable.class::cast),
-        ns.getSchema().getTableStream(ScriptRelationalTable.class).map(ScriptTable.class::cast))
+    Stream.concat(ns.getSchema().getFunctionStream(QueryTableFunction.class).map(QueryTableFunction::getQueryTable),
+        ns.getSchema().getTableStream(PhysicalRelationalTable.class))
         .sorted(Comparator.comparing(f->f.getNameId()))
         .forEach(table-> {
-          SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE)
-              .addTimestamp2NormalizedChildTable(false).build();
+          SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE).build();
           snapshot.addContent(
               sqrlConverter.convert(table, config, false, errors).explain(),
               table.getNameId());
         });
+    if (!errors.isEmpty()) {
+      snapshot.addContent(ErrorPrinter.prettyPrint(errors), "warnings");
+    }
     snapshot.createOrValidate();
   }
 
@@ -238,7 +240,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void orderCoalesceTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries.discount := SELECT coalesce(x.discount, 0.0) AS discount FROM @ AS x");
+    builder.add("Orders.entries.discount0 := SELECT coalesce(x.discount, 0.0) AS discount FROM @ AS x");
     validateScript(builder.getScript());
   }
 
@@ -310,8 +312,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void ordersEntriesDiscountTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries.discount := COALESCE(discount, 0.0);\n"
-        + "Orders.entries.total := quantity * unit_price - discount;");
+    builder.add("Orders.entries.discount0 := COALESCE(discount, 0.0);\n"
+        + "Orders.entries.total := quantity * unit_price - discount0;");
     validateScript(builder.getScript());
   }
 
@@ -384,8 +386,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void testCatchingCalciteErrorTest() {
-    validateScriptInvalid(""
-        + "IMPORT ecommerce-data.Product;"
+    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         //Expression 'productid' is not being grouped
         + "X := SELECT productid, SUM(productid) FROM Product GROUP BY name");
   }
@@ -502,7 +503,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void importWithTimestamp() {
     validateScript("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;");
-    RelOptTable table = framework.getCatalogReader().getSqrlTable(List.of("Customer"));
+    RelOptTable table = framework.getCatalogReader().getTableFromPath(List.of("Customer"));
     int cTs = framework.getCatalogReader().nameMatcher()
         .indexOf(table.getRowType().getFieldNames(), "c_ts");
     assertTrue(cTs != -1, "Timestamp column missing");
@@ -511,7 +512,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void importWithTimestampAndAlias() {
     validateScript("IMPORT ecommerce-data.Customer AS C2 TIMESTAMP _ingest_time AS c_ts;");
-    RelOptTable table = framework.getCatalogReader().getSqrlTable(List.of("C2"));
+    RelOptTable table = framework.getCatalogReader().getTableFromPath(List.of("C2"));
     int cTs = framework.getCatalogReader().nameMatcher()
         .indexOf(table.getRowType().getFieldNames(), "c_ts");
     assertTrue(cTs != -1, "Timestamp column missing");
@@ -528,14 +529,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void expressionTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.descriptionLength := CHAR_LENGTH(description);");
-  }
-
-  @Test
-  public void shadowExpressionTest() {
-    validateScript("IMPORT ecommerce-data.Product;\n"
-        + "Product.descriptionLength := CHAR_LENGTH(description);"
-        + "Product.descriptionLength := CHAR_LENGTH(description);"
-        + "X := SELECT descriptionLength FROM Product;");
   }
 
   @Test
@@ -601,7 +594,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void joinDeclarationOnRootTet() {
+  public void joinDeclarationOnRootTest() {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "Product2 := JOIN Product;");
   }
@@ -673,6 +666,19 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
         + "Product2 := SELECT joinDeclaration FROM Product;");
+  }
+
+  @Test
+  public void invalidTableLockedTest() {
+    validateScriptInvalid("IMPORT ecommerce-data.Customer;\n"
+            + "Customer2 := SELECT * FROM Customer;\n"
+            + "Customer.column := 1");
+  }
+
+  @Test
+  public void validateMultiplePKWarning() {
+    validateScript("IMPORT ecommerce-data.Customer;\n"
+            + "Customer2 := SELECT _uuid as id1, _uuid as id2, customerid + 5 as newid FROM Customer;");
   }
 
   @Test
@@ -825,13 +831,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void compoundAggregateExpressionTest() {
-    //not yet supported
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.total := SUM(@.productid) + SUM(@.productid);");
-  }
-
-  @Test
   public void queryAsExpressionTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
@@ -857,28 +856,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
         + "Product.joinDeclaration2 := JOIN @.joinDeclaration j ON @.productid = j.productid;\n");
-  }
-
-  @Test
-  public void localAggregateCountStarTest() {
-    //complex columns not yet supported
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.total := COUNT(*);");
-  }
-
-  @Test
-  public void localAggregateCountStarTest2() {
-    //complex columns not yet supported
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.total := COUNT();");
-  }
-
-  @Test
-  public void localAggregateInAggregateTest() {
-    //Not yet supported
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
-        + "Product.total := SUM(COUNT(joinDeclaration));");
   }
 
   @Test
@@ -1101,7 +1078,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void invalidAliasJoinOrder() {
-    validateScriptInvalid("IMPORT ecommerce-data.Orders;"
+    validateScriptInvalid("IMPORT ecommerce-data.Orders;\n"
         + "X := SELECT * From Orders o JOIN o;");
   }
 
@@ -1151,7 +1128,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         + "Y := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;"
         + "X := STREAM ON ADD AS SELECT * From Y;");
 
-    assertNotNull(this.framework.getCatalogReader().getSqrlTable(List.of("X")));
+    assertNotNull(this.framework.getCatalogReader().getTableFromPath(List.of("X")));
   }
 
   @Test

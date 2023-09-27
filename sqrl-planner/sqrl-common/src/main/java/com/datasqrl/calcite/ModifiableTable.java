@@ -1,14 +1,16 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.schema.SQRLTable;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexNode;
 
 public interface ModifiableTable {
-  void addColumn(String name, RexNode column, RelDataTypeFactory typeFactory);
+  int addColumn(String name, RexNode column, RelDataTypeFactory typeFactory);
 
-  SQRLTable getSqrlTable();
+  RelDataType getRowType();
 
   String getNameId();
+
+  boolean isLocked();
 
 }

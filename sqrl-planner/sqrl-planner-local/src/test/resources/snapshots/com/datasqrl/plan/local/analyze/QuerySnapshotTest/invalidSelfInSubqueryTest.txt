@@ -1,11 +1,8 @@
 >>>errors
-[FATAL] Could not find table: [Product, parent]
+[FATAL] Could not find table: Product.parent
 in script:<script> [3:71]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
 Product.table := SELECT * FROM Product, (SELECT MIN(productid) FROM @.parent);
 ----------------------------------------------------------------------^
-
-[FATAL] Could not find table: [Product, parent]
-in script:<script>:
 

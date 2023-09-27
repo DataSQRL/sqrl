@@ -24,7 +24,7 @@ public abstract class Field {
   }
 
   public Name getId() {
-    return name.suffix(Integer.toString(version));
+    return name;
   }
 
   public boolean isVisible() {
@@ -35,6 +35,4 @@ public abstract class Field {
   public String toString() {
     return getId().toString() + " -> " + getName().toString();
   }
-
-  public abstract <R, C> R accept(FieldVisitor<R, C> visitor, C context);
 }

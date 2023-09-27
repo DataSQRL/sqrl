@@ -7,7 +7,7 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.SqrlRexUtil;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,7 +36,7 @@ public class ExecutionAnalysis {
     require(Arrays.asList(requiredCapabilities));
   }
 
-  public boolean isMaterialize(ScriptRelationalTable sourceTable) {
+  public boolean isMaterialize(PhysicalRelationalTable sourceTable) {
     //check if this is a stage transition and the result stage supports materialization on key
     return sourceTable.getAssignedStage().map(s -> !s.equals(stage)).orElse(false)
         && supports(EngineCapability.MATERIALIZE_ON_KEY);

@@ -1,7 +1,10 @@
 >>>errors
-[FATAL] Could not find table: []
+[FATAL] Could not find table: 
 in script:<script> [2:1]:
 IMPORT ecommerce-data.Product;
 ProductCount := count(Product);
 ^
+
+[FATAL] null
+in script:<script>:
 

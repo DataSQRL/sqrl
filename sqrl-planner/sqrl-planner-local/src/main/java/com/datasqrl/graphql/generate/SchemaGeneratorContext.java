@@ -3,12 +3,10 @@
  */
 package com.datasqrl.graphql.generate;
 
-import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import java.util.List;
 import lombok.Getter;
-import org.apache.calcite.schema.FunctionParameter;
 
 @Getter
 public class SchemaGeneratorContext {

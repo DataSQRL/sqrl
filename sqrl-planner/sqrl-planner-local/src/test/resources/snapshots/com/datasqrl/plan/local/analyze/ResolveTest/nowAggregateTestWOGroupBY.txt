@@ -1,20 +1,20 @@
->>>recenttotal$q$18-lp-STREAM
-LogicalProject(_pk=[1], total=[$1], quantity=[$2], time$0=[$0])
+>>>recenttotal$q$13-lp-STREAM
+LogicalProject(_pk=[1], total=[$1], quantity=[$2], time=[$0])
   LogicalAggregate(group=[{4}], total=[SUM($0)], quantity=[SUM($1)]) hints[SlidingAggregationHint options:[4, 604800000, 12096000]]
-    LogicalProject($f0=[*($9, $8)], quantity$0=[$8], _uuid$0=[$0], _idx$0=[$6], time$0=[$4])
-      LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
-        LogicalTableScan(table=[[orders$q$6]])
+    LogicalProject($f0=[*($9, $8)], quantity=[$8], _uuid=[$0], _idx=[$6], time=[$4])
+      LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
+        LogicalTableScan(table=[[orders$q$5]])
         Uncollect
-          LogicalProject($f0=[$cor3.entries$0])
+          LogicalProject($f0=[$cor4.entries])
             LogicalValues(tuples=[[{ 0 }]])
 
->>>recenttotal$q$18-lp-DATABASE
-LogicalProject(_pk=[1], total=[$0], quantity=[$1], time$0=[$2])
+>>>recenttotal$q$13-lp-DATABASE
+LogicalProject(_pk=[1], total=[$0], quantity=[$1], time=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-    LogicalProject(total=[$0], quantity=[$1], time$0=[$2], _rownum=[ROW_NUMBER() OVER (ORDER BY $2 DESC NULLS LAST)])
-      LogicalProject(total=[SUM(*($9, $8)) IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], quantity=[SUM($8) IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time$0=[$4])
-        LogicalJoin(condition=[=($0, $5)], joinType=[inner])
+    LogicalProject(total=[$0], quantity=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (ORDER BY $2 DESC NULLS LAST)])
+      LogicalProject(total=[SUM(*($10, $9)) IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], quantity=[SUM($9) IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+        LogicalJoin(condition=[=($0, $6)], joinType=[inner])
           LogicalFilter(condition=[<(NOW(), +($4, 604800000:INTERVAL SECOND(9)))])
-            LogicalTableScan(table=[[orders$7]])
-          LogicalTableScan(table=[[entries$9]])
+            LogicalTableScan(table=[[orders$q$5]])
+          LogicalTableScan(table=[[entries$6]])
 

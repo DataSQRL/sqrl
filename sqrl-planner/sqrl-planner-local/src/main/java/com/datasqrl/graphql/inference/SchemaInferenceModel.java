@@ -4,9 +4,7 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.config.SerializedSqrlConfig;
-import com.datasqrl.schema.Column;
-import com.datasqrl.schema.Relationship;
-import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;

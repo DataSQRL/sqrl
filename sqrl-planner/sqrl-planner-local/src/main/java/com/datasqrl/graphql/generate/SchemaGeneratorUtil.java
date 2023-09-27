@@ -3,10 +3,9 @@
  */
 package com.datasqrl.graphql.generate;
 
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.Relationship;
-import com.datasqrl.schema.SQRLTable;
 import com.google.common.collect.BiMap;
 import graphql.Scalars;
 import graphql.schema.GraphQLInputType;
@@ -44,7 +43,7 @@ public class SchemaGeneratorUtil {
   }
 
   public static String getTypeName(SQRLTable table, BiMap<String, SQRLTable> names) {
-    String conformed = conformName(table.getName().getDisplay());
+    String conformed = conformName(table.getName());
 
     if (names.inverse().get(table) != null) {
       return names.inverse().get(table);
@@ -139,13 +138,13 @@ public class SchemaGeneratorUtil {
   }
 
   public static boolean isAccessible(SQRLTable table) {
-    return !table.getName().isHidden();
+    return !table.getName().startsWith("_");
   }
 
   public static boolean isAccessible(Field field) {
-    if (field instanceof Relationship && !isAccessible(((Relationship)field).getToTable())) {
-      return false;
-    }
+//    if (field instanceof Relationship && !isAccessible(((Relationship)field).getToTable())) {
+//      return false;
+//    }
 
     return !field.getName().isHidden();
   }

@@ -1,5 +1,5 @@
 ---
-name: "emailTemplates"
+name: "emailtemplates"
 schema_version: "1"
 partial_schema: false
 columns:

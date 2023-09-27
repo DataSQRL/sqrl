@@ -7,6 +7,7 @@ import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.error.ErrorLocation.FileRange;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -21,7 +22,11 @@ public class SqrlAstException extends RuntimeException {
   private final String message;
 
   public SqrlAstException(ErrorLabel errorLabel, SqlParserPos pos, String message, String... args) {
-    super(message);
+    this(Optional.empty(), errorLabel, pos, message, args);
+  }
+
+  public SqrlAstException(Optional<Throwable> cause, ErrorLabel errorLabel, SqlParserPos pos, String message, String... args) {
+    super(message, cause.orElse(null), true, true);
     this.errorLabel = errorLabel;
     this.pos = pos;
     this.message = String.format(message, (Object[]) args);

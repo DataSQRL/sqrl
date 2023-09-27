@@ -15,23 +15,26 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 
 @Getter
-public class Relationship extends Field implements SqrlTableMacro {
+public class Relationship implements SqrlTableMacro {
   private final NamePath path;
 
-  private final SQRLTable fromTable;
+  private final Name name;
+  private final int version;
+  private final NamePath fromTable;
+  private final NamePath toTable;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
 
-  private final List<SQRLTable> isA;
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
 
-  public Relationship(Name name, NamePath path, int version, SQRLTable fromTable,
-      JoinType joinType, Multiplicity multiplicity, List<SQRLTable> isA, List<FunctionParameter> parameters,
+  public Relationship(Name name, NamePath path, int version, NamePath fromTable, NamePath toTable,
+      JoinType joinType, Multiplicity multiplicity, List<FunctionParameter> parameters,
       Supplier<RelNode> viewTransform) {
-    super(name, version);
+    this.name = name;
+    this.version = version;
     this.fromTable = fromTable;
-    this.isA = isA;
+    this.toTable = toTable;
     this.parameters = parameters;
     this.viewTransform = viewTransform;
     this.joinType = joinType;
@@ -44,23 +47,12 @@ public class Relationship extends Field implements SqrlTableMacro {
     return viewTransform.get().getRowType();
   }
 
-  public SQRLTable getToTable() {
-    return isA.get(0);
-  }
-
-  public SQRLTable getSqrlTable() {
-    return getToTable();
-  }
-
-  public String getNameId() {
-    return getToTable().getNameId();
+  @Override
+  public RelDataType getRowType() {
+    return getRowType(null, null);
   }
 
   public enum JoinType {
     PARENT, CHILD, JOIN
-  }
-
-  public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
-    return visitor.visit(this, context);
   }
 }

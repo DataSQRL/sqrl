@@ -1,4 +1,0 @@
->>>errors
-[FATAL] Invalid name: 
-in script:<script>:
-

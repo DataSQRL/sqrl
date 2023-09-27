@@ -1,19 +1,21 @@
 type Package {
   name: String!
-  latest(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
-  versions(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  submissionTime: String!
+  versions(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
+  latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
 }
 
 type Query {
-  Submission(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
-  Package(name: String): [Package!]
-  TopicPackages(pkgname: String, topicname: String, numsubmissions: Int, lastsubmission: String): [TopicPackages!]
-  TopicSearch(topicname: String, numpackages: Int): [TopicSearch!]
+  Package(name: String, submissionTime: String): [Package!]
+  TopicPackages(pkgName: String, topicName: String, numSubmissions: Int, lastSubmission: String): [TopicPackages!]
+  Submission(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
+  TopicSearch(topicName: String, numPackages: Int, submissionTime: String): [TopicSearch!]
 }
 
 type Submission {
   name: String!
   version: String!
+  variant: String
   latest: Boolean!
   type: String
   license: String
@@ -22,34 +24,28 @@ type Submission {
   documentation: String
   readme: String
   description: String
-  uniqueid: String!
+  uniqueId: String!
   file: String!
   hash: String!
   authorid: String!
-  submissiontime: String!
-  files(filename: String, filesize: Int): [files!]
-  keywords(name: String): [keywords!]
-  variant: String!
+  submissionTime: String!
+  variant0: String!
   repoURL: String!
+  keywords(name: String): [keywords!]
 }
 
 type TopicPackages {
-  pkgname: String!
-  topicname: String!
-  numsubmissions: Int!
-  lastsubmission: String!
-  latest(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  pkgName: String!
+  topicName: String!
+  numSubmissions: Int!
+  lastSubmission: String!
+  latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
 }
 
 type TopicSearch {
-  topicname: String!
-  numpackages: Int!
-}
-
-type files {
-  filename: String!
-  filesize: Int!
-  parent: Submission!
+  topicName: String!
+  numPackages: Int!
+  submissionTime: String!
 }
 
 type keywords {

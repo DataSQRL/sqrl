@@ -1,140 +1,134 @@
->>>customerdistinct$19-lp-stream
-LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
-  LogicalProject(customerid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
-    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-      LogicalTableScan(table=[[customer$i$1]])
+>>>customerdistinct$q$13-lp-stream
+LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6]) hints[TimestampHint options:[6]]
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+    LogicalTableScan(table=[[customer$i$1]])
 
->>>customerid$27-lp-stream
-LogicalProject(customerid$0=[$0], updatetime$0=[$1])
-  LogicalProject(customerid=[$2], updatetime$0=[$6])
-    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-      LogicalTableScan(table=[[customer$i$1]])
+>>>customerid$q$18-lp-stream
+LogicalProject(customerid=[$2], updateTime=[$6]) hints[TimestampHint options:[1]]
+  LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+    LogicalTableScan(table=[[customer$i$1]])
 
->>>customerorders$30-lp-stream
-LogicalProject(_uuid$0=[$0], id$0=[$1], customerid$0=[$2], time$0=[$3])
-  LogicalProject(_uuid$0=[$0], id=[$2], customerid=[$6], time$0=[$4])
-    LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
-      LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-      LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
-        LogicalProject(customerid=[$0], updatetime$0=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
-          LogicalProject(customerid=[$2], updatetime$0=[$6])
-            LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-              LogicalTableScan(table=[[customer$i$1]])
+>>>customerorders$q$20-lp-stream
+LogicalProject(_uuid=[$0], id=[$2], customerid=[$6], time=[$4]) hints[TimestampHint options:[3]]
+  LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
+    LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], updateTime=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+        LogicalProject(customerid=[$2], updateTime=[$6])
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+            LogicalTableScan(table=[[customer$i$1]])
 
->>>distinctorders$33-lp-stream
-LogicalProject(__customerid$0=[$0], id$0=[$1], time$0=[$2])
-  LogicalProject(__customerid$0$pk$1=[$6], id=[$2], time$0=[$4])
-    LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-      LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-      LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-        LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
-          LogicalProject(customerid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
-            LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-              LogicalTableScan(table=[[customer$i$1]])
+>>>distinctorders$q$22-lp-stream
+LogicalProject(__customerid$pk$2=[$6], id=[$2], time=[$4]) hints[TimestampHint options:[2]]
+  LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+    LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+        LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6])
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+            LogicalTableScan(table=[[customer$i$1]])
 
->>>distinctorderstime$38-lp-stream
-LogicalProject(__customerid$0=[$0], id$0=[$1], time$0=[$2])
-  LogicalProject(__customerid$0$pk$1=[$6], id=[$2], time=[$4])
-    LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-      LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-      LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-        LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
-          LogicalProject(customerid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
-            LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-              LogicalTableScan(table=[[customer$i$1]])
+>>>distinctorderstime$q$25-lp-stream
+LogicalProject(__customerid$pk$3=[$6], id=[$2], time=[$4]) hints[TimestampHint options:[2]]
+  LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
+    LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+        LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6])
+          LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+            LogicalTableScan(table=[[customer$i$1]])
 
->>>entries$45-lp-stream
-LogicalProject(id$0=[$0], _idx$0=[$6], productid$0=[$7], quantity$0=[$8], unit_price$0=[$9], discount$0=[$10], time$0=[$4])
+>>>entries$29-lp-stream
+LogicalProject(id=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], __timestamp=[$4]) hints[TimestampHint options:[6]]
   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
-    LogicalProject(id$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$3], time$0=[$4], entries$0=[$5])
+    LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], customerid=[$3], time=[$4], entries=[$5])
       LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
-        LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
-          LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
+          LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     Uncollect
-      LogicalProject($f0=[$cor0.entries$0])
+      LogicalProject($f0=[$cor0.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>orders$43-lp-stream
-LogicalProject(id$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], customerid$0=[$3], time$0=[$4])
-  LogicalProject(id$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$3], time$0=[$4], entries$0=[$5])
-    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
-      LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
-        LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+>>>orders$q$28-lp-stream
+LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], customerid=[$3], time=[$4], entries=[$5]) hints[TimestampHint options:[4]]
+  LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
+      LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>customerdistinct-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(customerid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], updatetime$0=[$6])
-    LogicalTableScan(table=[[customerdistinct$19]])
+  LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6])
+    LogicalTableScan(table=[[customerdistinct$q$13]])
 
 >>>customerid-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(customerid$0=[$0], updatetime$0=[$1])
-    LogicalTableScan(table=[[customerid$27]])
+  LogicalProject(customerid=[$0], updateTime=[$1])
+    LogicalTableScan(table=[[customerid$q$18]])
 
 >>>customerorders-lp-database
 LogicalSort(sort0=[$3], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(_uuid$0=[$0], id$0=[$1], customerid$0=[$2], time$0=[$3])
-    LogicalTableScan(table=[[customerorders$30]])
+  LogicalProject(_uuid=[$0], id=[$1], customerid=[$2], time=[$3])
+    LogicalTableScan(table=[[customerorders$q$20]])
 
 >>>distinctorders-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(__customerid$0=[$0], id$0=[$1], time$0=[$2])
+  LogicalProject(__customerid$pk$2=[$0], id=[$1], time=[$2])
     LogicalFilter(condition=[AND(=($3, $4), <=($5, 10))])
-      LogicalProject(__customerid$0=[$0], id$0=[$1], time$0=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)], _rank=[RANK() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)], _denserank=[DENSE_RANK() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)])
-        LogicalTableScan(table=[[distinctorders$33]])
+      LogicalProject(__customerid$pk$2=[$0], id=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)], _rank=[RANK() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)], _denserank=[DENSE_RANK() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS FIRST)])
+        LogicalTableScan(table=[[distinctorders$q$22]])
 
 >>>distinctorderstime-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], sort2=[$2], dir0=[ASC], dir1=[ASC], dir2=[ASC])
-  LogicalProject(__customerid$0=[$0], id$0=[$1], time$0=[$2])
+  LogicalProject(__customerid$pk$3=[$0], id=[$1], time=[$2])
     LogicalFilter(condition=[AND(=($3, $4), <=($5, 10))])
-      LogicalProject(__customerid$0=[$0], id$0=[$1], time$0=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)], _rank=[RANK() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)], _denserank=[DENSE_RANK() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)])
-        LogicalTableScan(table=[[distinctorderstime$38]])
+      LogicalProject(__customerid$pk$3=[$0], id=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)], _rank=[RANK() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)], _denserank=[DENSE_RANK() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS FIRST, $1 NULLS LAST)])
+        LogicalTableScan(table=[[distinctorderstime$q$25]])
 
 >>>entries-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(id$0=[$0], _idx$0=[$1], productid$0=[$2], quantity$0=[$3], unit_price$0=[$4], discount$0=[$5], time$0=[$6])
-    LogicalTableScan(table=[[entries$45]])
+  LogicalProject(id=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], __timestamp=[$6])
+    LogicalTableScan(table=[[entries$29]])
 
 >>>orders-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(id$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], customerid$0=[$3], time$0=[$4])
-    LogicalTableScan(table=[[orders$43]])
+  LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], customerid=[$3], time=[$4])
+    LogicalTableScan(table=[[orders$q$28]])
 
 >>>customerdistinct-data
-1000101, john.mekker@gmail.com, John Mekker, 1645396849, 2022-02-20T22:40:49-08:00
-1000107, emily.ludies@hotmail.com, Emily F. Ludies, 1650493189, 2022-04-20T22:19:49-07:00
-1000121, lalelu@hottunes.org, Michelle Dagnes, 1650493449, 2022-04-20T22:24:09-07:00
-1000131, hotbear753@yahoo.com, Mark Spielman, 1650494449, 2022-04-20T22:40:49-07:00
+1000101, john.mekker@gmail.com, John Mekker, 1645396849, 2022-02-20 22:40:49.0
+1000107, emily.ludies@hotmail.com, Emily F. Ludies, 1650493189, 2022-04-20 22:19:49.0
+1000121, lalelu@hottunes.org, Michelle Dagnes, 1650493449, 2022-04-20 22:24:09.0
+1000131, hotbear753@yahoo.com, Mark Spielman, 1650494449, 2022-04-20 22:40:49.0
 >>>customerid-data
-1000101, 2022-02-20T22:40:49-08:00
-1000107, 2022-04-20T22:19:49-07:00
-1000121, 2022-04-20T22:24:09-07:00
-1000131, 2022-04-20T22:40:49-07:00
+1000101, 2022-02-20 22:40:49.0
+1000107, 2022-04-20 22:19:49.0
+1000121, 2022-04-20 22:24:09.0
+1000131, 2022-04-20 22:40:49.0
 >>>customerorders-data
-10007140, 1000107, 2023-05-19T02:28:39.553-07:00
-10007543, 1000101, 2023-05-19T01:29:39.553-07:00
-10008231, 1000121, 2023-05-19T02:16:39.553-07:00
-10008434, 1000107, 2023-05-19T01:45:39.553-07:00
+10007140, 1000107, 2023-05-19 02:28:39.553
+10007543, 1000101, 2023-05-19 01:29:39.553
+10008231, 1000121, 2023-05-19 02:16:39.553
+10008434, 1000107, 2023-05-19 01:45:39.553
 >>>distinctorders-data
-10007140, 2023-05-19T02:28:39.553-07:00
-10007543, 2023-05-19T01:29:39.553-07:00
-10008231, 2023-05-19T02:16:39.553-07:00
-10008434, 2023-05-19T01:45:39.553-07:00
+10007140, 2023-05-19 02:28:39.553
+10007543, 2023-05-19 01:29:39.553
+10008231, 2023-05-19 02:16:39.553
+10008434, 2023-05-19 01:45:39.553
 >>>distinctorderstime-data
-10007140, 2023-05-19T02:28:39.553-07:00
-10007543, 2023-05-19T01:29:39.553-07:00
-10008231, 2023-05-19T02:16:39.553-07:00
-10008434, 2023-05-19T01:45:39.553-07:00
+10007140, 2023-05-19 02:28:39.553
+10007543, 2023-05-19 01:29:39.553
+10008231, 2023-05-19 02:16:39.553
+10008434, 2023-05-19 01:45:39.553
 >>>orders-data
-10007140, 1000107, 2023-05-19T02:28:39.553-07:00
-10007543, 1000101, 2023-05-19T01:29:39.553-07:00
-10008231, 1000121, 2023-05-19T02:16:39.553-07:00
-10008434, 1000107, 2023-05-19T01:45:39.553-07:00
+10007140, 1000107, 2023-05-19 02:28:39.553
+10007543, 1000101, 2023-05-19 01:29:39.553
+10008231, 1000121, 2023-05-19 02:16:39.553
+10008434, 1000107, 2023-05-19 01:45:39.553
 >>>entries-data
-10007140, 0, 1332, 8, 8.49, null, 2023-05-19T02:28:39.553-07:00
-10007140, 1, 3571, 1, 41.95, 5, 2023-05-19T02:28:39.553-07:00
-10007543, 0, 7235, 1, 17.35, 0, 2023-05-19T01:29:39.553-07:00
-10007543, 1, 8757, 2, 57.5, 11.5, 2023-05-19T01:29:39.553-07:00
-10008231, 0, 7552, 3, 25.5, 15, 2023-05-19T02:16:39.553-07:00
-10008231, 1, 3225, 1, 105, 0, 2023-05-19T02:16:39.553-07:00
-10008434, 0, 3571, 1, 41.95, 0, 2023-05-19T01:45:39.553-07:00
+10007140, 0, 1332, 8, 8.49, null
+10007140, 1, 3571, 1, 41.95, 5
+10007543, 0, 7235, 1, 17.35, 0
+10007543, 1, 8757, 2, 57.5, 11.5
+10008231, 0, 7552, 3, 25.5, 15
+10008231, 1, 3225, 1, 105, 0
+10008434, 0, 3571, 1, 41.95, 0
