@@ -1,13 +1,11 @@
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.WatermarkHint;
 import com.datasqrl.plan.local.generate.AccessTableFunction;
 import com.datasqrl.plan.local.generate.ComputeTableFunction;
 import com.datasqrl.plan.table.AddedColumn;
-import com.datasqrl.plan.table.AddedColumn.Simple;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
@@ -15,9 +13,8 @@ import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.plan.util.ContinuousIndexMap;
 import com.google.common.base.Preconditions;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+
 import lombok.Builder;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
@@ -89,9 +86,9 @@ public class SQRLConverter {
     return relNode;
   }
 
-  private RelBuilder addColumns(RelBuilder builder, List<AddedColumn.Simple> columns,
+  private RelBuilder addColumns(RelBuilder builder, List<AddedColumn> columns,
       ContinuousIndexMap select, ExecutionAnalysis exec) {
-    for (Simple column : columns) {
+    for (AddedColumn column : columns) {
       exec.requireRex(column.getBaseExpression());
       int addedIndex = column.appendTo(builder, select);
       select = select.add(addedIndex);

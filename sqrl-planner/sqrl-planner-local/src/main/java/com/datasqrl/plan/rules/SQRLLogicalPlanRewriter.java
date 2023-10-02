@@ -29,16 +29,7 @@ import com.datasqrl.plan.rules.JoinAnalysis.Side;
 import com.datasqrl.plan.rules.JoinAnalysis.Type;
 import com.datasqrl.plan.rules.JoinTable.NormType;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
-import com.datasqrl.plan.table.AddedColumn;
-import com.datasqrl.plan.table.NowFilter;
-import com.datasqrl.plan.table.PullupOperator;
-import com.datasqrl.plan.table.QueryRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.plan.table.SortOrder;
-import com.datasqrl.plan.table.TableType;
-import com.datasqrl.plan.table.TimestampHolder;
-import com.datasqrl.plan.table.TopNConstraint;
-import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.table.VirtualRelationalTable.Child;
 import com.datasqrl.plan.table.VirtualRelationalTable.Root;
 import com.datasqrl.plan.util.ContinuousIndexMap;
@@ -398,9 +389,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     JoinTable.Path path = JoinTable.Path.of(joinTable);
     for (AddedColumn column : vtable.getAddedColumns()) {
       //How do columns impact materialization preference (e.g. contain function that cannot be computed in DB) if they might get projected out again
-      AddedColumn.Simple simpleCol = (AddedColumn.Simple) column;
-      RexNode added = simpleCol.getExpression(path.mapLeafTable(), builder.peek().getRowType());
-      rexUtil.appendColumn(builder, added, simpleCol.getNameId());
+      RexNode added = column.getExpression(path.mapLeafTable(), builder.peek().getRowType());
+      rexUtil.appendColumn(builder, added, column.getNameId());
     }
   }
 
@@ -1540,11 +1530,12 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         "Invalid groupByIdx [%s] to [%s]", originalGroupByIdx, finalGroupByIdx);
     PrimaryKeyMap pk = PrimaryKeyMap.of(originalGroupByIdx.stream().map(finalGroupByIdx::indexOf).collect(
             Collectors.toList()));
-    assert pk.getLength()== originalGroupByIdx.size();
-    List<Integer> selectIdx = pk.asList();
-    selectIdx.addAll(ContiguousSet.closedOpen(finalGroupByIdx.size(), targetLength));
-    ContinuousIndexMap select = ContinuousIndexMap.of(selectIdx);
-    return new PkAndSelect(pk, select);
+    assert pk.getLength() == originalGroupByIdx.size();
+
+    ContiguousSet<Integer> additionalIdx = ContiguousSet.closedOpen(finalGroupByIdx.size(), targetLength);
+    ContinuousIndexMap.Builder selectBuilder = ContinuousIndexMap.builder(pk.getLength() + additionalIdx.size());
+    selectBuilder.addAll(pk.asList()).addAll(additionalIdx);
+    return new PkAndSelect(pk, selectBuilder.build(targetLength));
   }
 
   @Value

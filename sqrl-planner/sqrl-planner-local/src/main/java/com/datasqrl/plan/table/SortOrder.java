@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.plan.util.ContinuousIndexMap;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import lombok.Value;
