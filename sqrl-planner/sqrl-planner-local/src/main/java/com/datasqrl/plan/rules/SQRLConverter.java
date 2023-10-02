@@ -10,7 +10,7 @@ import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
 import com.datasqrl.plan.table.ScriptTable;
-import com.datasqrl.plan.util.ContinuousIndexMap;
+import com.datasqrl.plan.util.SelectIndexMap;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.function.Consumer;
@@ -87,7 +87,7 @@ public class SQRLConverter {
   }
 
   private RelBuilder addColumns(RelBuilder builder, List<AddedColumn> columns,
-      ContinuousIndexMap select, ExecutionAnalysis exec) {
+                                SelectIndexMap select, ExecutionAnalysis exec) {
     for (AddedColumn column : columns) {
       exec.requireRex(column.getBaseExpression());
       int addedIndex = column.appendTo(builder, select);

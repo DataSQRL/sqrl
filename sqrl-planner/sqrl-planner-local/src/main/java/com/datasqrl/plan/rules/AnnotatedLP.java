@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.rules;
 
-import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
 import com.datasqrl.canonicalizer.Name;
@@ -16,7 +15,7 @@ import com.datasqrl.plan.table.SortOrder;
 import com.datasqrl.plan.table.TableType;
 import com.datasqrl.plan.table.TimestampHolder;
 import com.datasqrl.plan.table.TopNConstraint;
-import com.datasqrl.plan.util.ContinuousIndexMap;
+import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;
@@ -65,7 +64,7 @@ public class AnnotatedLP implements RelHolder {
   @NonNull
   public TimestampHolder.Derived timestamp;
   @NonNull
-  public ContinuousIndexMap select;
+  public SelectIndexMap select;
   @Builder.Default
   public List<JoinTable> joinTables = null;
   @Builder.Default
@@ -88,14 +87,14 @@ public class AnnotatedLP implements RelHolder {
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
       PrimaryKeyMap primaryKey,
-      TimestampHolder.Derived timestamp, ContinuousIndexMap select,
+      TimestampHolder.Derived timestamp, SelectIndexMap select,
       AnnotatedLP input) {
     return build(relNode, type, primaryKey, timestamp, select, List.of(input));
   }
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
       PrimaryKeyMap primaryKey,
-      TimestampHolder.Derived timestamp, ContinuousIndexMap select,
+      TimestampHolder.Derived timestamp, SelectIndexMap select,
       List<AnnotatedLP> inputs) {
     return AnnotatedLP.builder().relNode(relNode).type(type).primaryKey(primaryKey)
         .timestamp(timestamp)
@@ -233,7 +232,7 @@ public class AnnotatedLP implements RelHolder {
 
       relBuilder.filter(conditions);
       PrimaryKeyMap newPk = primaryKey.remap(IndexMap.IDENTITY);
-      ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
+      SelectIndexMap newSelect = select.remap(IndexMap.IDENTITY);
       if (topN.isDeduplication() || topN.isDistinct()) { //Drop sort since it doesn't apply globally
         newSort = SortOrder.EMPTY;
       } else { //Add partitioned sort on top
@@ -378,7 +377,7 @@ public class AnnotatedLP implements RelHolder {
         && remapping.size() + (addedPk ? 1 : 0) == index && projectLength <= inputLength + (addedPk
         ? 1 : 0));
     IndexMap remap = IndexMap.of(remapping);
-    ContinuousIndexMap updatedSelect = input.select.remap(remap);
+    SelectIndexMap updatedSelect = input.select.remap(remap);
     List<RexNode> projects = new ArrayList<>(projectLength);
     List<String> updatedFieldNames = Arrays.asList(new String[projectLength]);
     PrimaryKeyMap primaryKey = input.primaryKey.remap(remap);

@@ -32,8 +32,8 @@ import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.table.VirtualRelationalTable.Child;
 import com.datasqrl.plan.table.VirtualRelationalTable.Root;
-import com.datasqrl.plan.util.ContinuousIndexMap;
-import com.datasqrl.plan.util.ContinuousIndexMap.Builder;
+import com.datasqrl.plan.util.SelectIndexMap;
+import com.datasqrl.plan.util.SelectIndexMap.Builder;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.plan.util.TimeTumbleFunctionCall;
 import com.datasqrl.plan.util.TimestampAnalysis;
@@ -207,7 +207,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     return setRelHolder(new AnnotatedLP(functionScan, inputALP.getType(),
         PrimaryKeyMap.firstN(numPrimaryKeys),
         timestamp,
-        ContinuousIndexMap.identity(numColumns, targetLength),
+        SelectIndexMap.identity(numColumns, targetLength),
         (tblFct instanceof AccessTableFunction? inputALP.getJoinTables():Collections.EMPTY_LIST),
         Optional.of(inputALP.primaryKey.getLength()),
         NowFilter.EMPTY, TopNConstraint.EMPTY, //Can ignore those since they will be inlined
@@ -219,7 +219,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       boolean appendTimestamp) {
     //Shred the virtual table all the way to root:
     //First, we prepare all the data structures
-    Builder indexMap = ContinuousIndexMap.builder(numColumns);
+    Builder indexMap = SelectIndexMap.builder(numColumns);
     PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey = PrimaryKeyMap.builder();
     List<JoinTable> joinTables = new ArrayList<>();
     //Now, we shred
@@ -260,7 +260,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     return new AnnotatedLP(builder.build(), queryTable.getType(),
         PrimaryKeyMap.firstN(vtable.getNumPrimaryKeys()),
         queryTable.getTimestamp().getDerived().remapIndexes(query2virtualTable),
-        ContinuousIndexMap.identity(numColumns, targetLength),
+        SelectIndexMap.identity(numColumns, targetLength),
          List.of(JoinTable.ofRoot(vtable, NormType.NORMALIZED)), numRootPks,
         pullups.getNowFilter().remap(query2virtualTable), topN,
         pullups.getSort().remap(query2virtualTable), List.of());
@@ -288,16 +288,16 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     return new AnnotatedLP(builder.build(), queryTable.getType(),
         PrimaryKeyMap.firstN(vtable.getNumPrimaryKeys()),
         queryTable.getTimestamp().getDerived().remapIndexes(remapTimestamp),
-        ContinuousIndexMap.identity(numColumns, targetLength),
+        SelectIndexMap.identity(numColumns, targetLength),
          List.of(joinTable), numRootPks,
         NowFilter.EMPTY, TopNConstraint.EMPTY,
         SortOrder.EMPTY, List.of());
   }
 
   private RelBuilder shredTable(VirtualRelationalTable vtable,
-      PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
-      ContinuousIndexMap.Builder select, List<JoinTable> joinTables,
-      boolean isLeaf) {
+                                PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
+                                SelectIndexMap.Builder select, List<JoinTable> joinTables,
+                                boolean isLeaf) {
     Preconditions.checkArgument(joinTables.isEmpty());
     return shredTable(vtable, primaryKey, select, joinTables, null, JoinRelType.INNER, isLeaf);
   }
@@ -318,9 +318,9 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   }
 
   private RelBuilder shredTable(VirtualRelationalTable vtable,
-      PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
-      ContinuousIndexMap.Builder select, List<JoinTable> joinTables,
-      Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType, boolean isLeaf) {
+                                PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
+                                SelectIndexMap.Builder select, List<JoinTable> joinTables,
+                                Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType, boolean isLeaf) {
     Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT);
 
     if (startingBase != null && startingBase.getKey().getTable().equals(vtable)) {
@@ -357,8 +357,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   }
 
   private ShredTableResult shredChildTable(Child child, PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
-      ContinuousIndexMap.Builder select, List<JoinTable> joinTables,
-      Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType) {
+                                           SelectIndexMap.Builder select, List<JoinTable> joinTables,
+                                           Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType) {
     RelBuilder builder = shredTable(child.getParent(), primaryKey, select, joinTables, startingBase,
         joinType, false);
     JoinTable parentJoinTable = Iterables.getLast(joinTables);
@@ -395,8 +395,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   }
 
   public void constructLeafIndexMap(VirtualRelationalTable vtable,
-      ContinuousIndexMap.Builder select, boolean isLeaf, Pair<JoinTable, RelBuilder> startingBase,
-      int offset) {
+                                    SelectIndexMap.Builder select, boolean isLeaf, Pair<JoinTable, RelBuilder> startingBase,
+                                    int offset) {
     //Construct indexMap if this shred table is the leaf (i.e. the one we are expanding)
     if (isLeaf && startingBase == null) {
       //All non-nested fields are part of the virtual table query row type
@@ -410,16 +410,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
   }
 
-  public static ContinuousIndexMap constructIndexMap(RelDataType tableRowType) {
-    List<RelDataTypeField> queryRowType = tableRowType.getFieldList();
-    List<Integer> selectIdx = new ArrayList<>();
-    for (int i = 0; i < queryRowType.size(); i++) {
-      RelDataTypeField field = queryRowType.get(i);
-      if (!CalciteUtil.isNestedTable(field.getType())) {
-        selectIdx.add(i);
-      }
-    }
-    return ContinuousIndexMap.of(selectIdx);
+  public static SelectIndexMap constructIndexMap(RelDataType tableRowType) {
+    int sourceLength = (int)tableRowType.getFieldList().stream().map(RelDataTypeField::getType)
+            .filter(Predicate.not(CalciteUtil::isNestedTable)).count();
+    SelectIndexMap.Builder selectBuilder = SelectIndexMap.builder(sourceLength);
+    tableRowType.getFieldList().stream().filter(field -> !CalciteUtil.isNestedTable(field.getType()))
+            .map(RelDataTypeField::getIndex).forEach(selectBuilder::add);
+    return selectBuilder.build(tableRowType.getFieldCount());
   }
 
   private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
@@ -498,7 +495,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   public RelNode visit(LogicalProject logicalProject) {
     AnnotatedLP rawInput = getRelHolder(logicalProject.getInput().accept(this));
 
-    ContinuousIndexMap trivialMap = getTrivialMapping(logicalProject, rawInput.select);
+    SelectIndexMap trivialMap = getTrivialMapping(logicalProject, rawInput.select);
     if (trivialMap != null) {
       //Check if this is a topN constraint
       Optional<TopNHint> topNHintOpt = SqrlHint.fromRel(logicalProject, TopNHint.CONSTRUCTOR);
@@ -527,7 +524,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
             .collect(Collectors.toList());
 
         PrimaryKeyMap pk = baseInput.primaryKey;
-        ContinuousIndexMap select = trivialMap;
+        SelectIndexMap select = trivialMap;
         TimestampHolder.Derived timestamp = baseInput.timestamp;
         boolean isDistinct = false;
         if (topNHint.getType() == TopNHint.Type.SELECT_DISTINCT) {
@@ -557,7 +554,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
               "DISTINCT ON statements require stream table as input");
 
           pk = PrimaryKeyMap.of(partition);
-          select = ContinuousIndexMap.identity(targetLength, targetLength); //Select everything
+          select = SelectIndexMap.identity(targetLength, targetLength); //Select everything
           //Extract timestamp from collation
           TimestampHolder.Derived.Candidate candidate = LPConverterUtil.getTimestampOrderIndex(
               collation, timestamp).get();
@@ -701,13 +698,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     int fieldCount = updatedProjects.size();
     exec.requireRex(updatedProjects);
     return setRelHolder(AnnotatedLP.build(newProject, input.type, primaryKey.build(),
-            timestamp, ContinuousIndexMap.identity(logicalProject.getProjects().size(), fieldCount),
+            timestamp, SelectIndexMap.identity(logicalProject.getProjects().size(), fieldCount),
             input)
         .numRootPks(input.numRootPks).nowFilter(nowFilter).sort(sort).build());
   }
 
-  private ContinuousIndexMap getTrivialMapping(LogicalProject project, ContinuousIndexMap baseMap) {
-    ContinuousIndexMap.Builder b = ContinuousIndexMap.builder(project.getProjects().size());
+  private SelectIndexMap getTrivialMapping(LogicalProject project, SelectIndexMap baseMap) {
+    SelectIndexMap.Builder b = SelectIndexMap.builder(project.getProjects().size());
     for (RexNode rex : project.getProjects()) {
       if (!(rex instanceof RexInputRef)) {
         return null;
@@ -739,7 +736,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     assert joinAnalysis.isA(Side.LEFT) || joinAnalysis.isA(Side.NONE);
 
     final int leftSideMaxIdx = leftInput.getFieldLength();
-    ContinuousIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx, joinAnalysis.isFlipped());
+    SelectIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx, joinAnalysis.isFlipped());
     List<RelDataTypeField> inputFields = ListUtils.union(leftInput.relNode.getRowType().getFieldList(),
         rightInput.relNode.getRowType().getFieldList());
     RexNode condition = joinedIndexMap.map(logicalJoin.getCondition(), inputFields);
@@ -826,7 +823,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         RelNode relNode = relBuilder.build();
         //Update indexMap based on the mapping of join tables
         final List<JoinTable> rightTables = rightInput.joinTables;
-        ContinuousIndexMap remapedRight = rightInput.select.remap(
+        SelectIndexMap remapedRight = rightInput.select.remap(
             index -> {
               JoinTable jt = JoinTable.find(rightTables, index).get();
               return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
@@ -845,7 +842,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         }
 
 
-        ContinuousIndexMap indexMap = leftInput.select.append(remapedRight);
+        SelectIndexMap indexMap = leftInput.select.append(remapedRight);
         return setRelHolder(AnnotatedLP.build(relNode, leftInput.type, newPk, leftInput.timestamp,
                 indexMap, leftInput)
             .numRootPks(leftInput.numRootPks).nowFilter(resultNowFilter)
@@ -1141,7 +1138,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
           return result;
         }).orElse(Collections.emptySet());
 
-    ContinuousIndexMap select = inputs.get(0).select;
+    SelectIndexMap select = inputs.get(0).select;
     Optional<Integer> numRootPks = inputs.get(0).numRootPks;
     int maxSelectIdx = Collections.max(select.targetsAsList()) + 1;
     List<Integer> selectIndexes = SqrlRexUtil.combineIndexes(sharedPk, select.targetsAsList());
@@ -1533,7 +1530,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     assert pk.getLength() == originalGroupByIdx.size();
 
     ContiguousSet<Integer> additionalIdx = ContiguousSet.closedOpen(finalGroupByIdx.size(), targetLength);
-    ContinuousIndexMap.Builder selectBuilder = ContinuousIndexMap.builder(pk.getLength() + additionalIdx.size());
+    SelectIndexMap.Builder selectBuilder = SelectIndexMap.builder(pk.getLength() + additionalIdx.size());
     selectBuilder.addAll(pk.asList()).addAll(additionalIdx);
     return new PkAndSelect(pk, selectBuilder.build(targetLength));
   }
@@ -1542,7 +1539,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   private static class PkAndSelect {
 
     PrimaryKeyMap pk;
-    ContinuousIndexMap select;
+    SelectIndexMap select;
   }
 
 
@@ -1564,7 +1561,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         new LogicalStreamMetaData(state.primaryKey.asArray(), state.select.targetsAsArray(), candidate.getIndex()));
     PrimaryKeyMap pk = PrimaryKeyMap.firstN(1);
     int numFields = relNode.getRowType().getFieldCount();
-    ContinuousIndexMap select = ContinuousIndexMap.identity(numFields, numFields);
+    SelectIndexMap select = SelectIndexMap.identity(numFields, numFields);
     exec.require(EngineCapability.TO_STREAM);
     return AnnotatedLP.build(relNode, TableType.STREAM, pk, timestamp,
         select, state).build();
@@ -1584,7 +1581,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     //Map the collation fields
     RelCollation collation = logicalSort.getCollation();
-    ContinuousIndexMap indexMap = input.select;
+    SelectIndexMap indexMap = input.select;
     RelCollation newCollation = indexMap.map(collation);
 
     AnnotatedLP result;
