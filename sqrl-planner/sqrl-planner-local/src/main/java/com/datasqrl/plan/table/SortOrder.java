@@ -5,6 +5,7 @@ package com.datasqrl.plan.table;
 
 import com.datasqrl.plan.util.ContinuousIndexMap;
 import com.datasqrl.plan.util.IndexMap;
+import com.datasqrl.plan.util.PrimaryKeyMap;
 import lombok.Value;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
@@ -62,8 +63,8 @@ public class SortOrder implements PullupOperator {
         ListUtils.union(collation.getFieldCollations(), right.collation.getFieldCollations())));
   }
 
-  public SortOrder ensurePrimaryKeyPresent(ContinuousIndexMap pk) {
-    List<Integer> pkIdx = new ArrayList<>(pk.targetsAsList());
+  public SortOrder ensurePrimaryKeyPresent(PrimaryKeyMap pk) {
+    List<Integer> pkIdx = pk.asList();
     collation.getFieldCollations().stream().map(fc -> fc.getFieldIndex()).forEach(pkIdx::remove);
     if (pkIdx.isEmpty()) {
       return this;
