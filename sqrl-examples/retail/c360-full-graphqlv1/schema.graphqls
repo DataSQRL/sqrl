@@ -45,6 +45,7 @@ type entries {
   unit_price: Float
   parent: orders!
   discount: Float
+  discount0: Float
   total: Float
   product: [Product]
 }

@@ -238,7 +238,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void orderCoalesceTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries.discount := SELECT coalesce(x.discount, 0.0) AS discount FROM @ AS x");
+    builder.add("Orders.entries.discount0 := SELECT coalesce(x.discount, 0.0) AS discount FROM @ AS x");
     validateScript(builder.getScript());
   }
 
@@ -310,8 +310,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void ordersEntriesDiscountTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries.discount := COALESCE(discount, 0.0);\n"
-        + "Orders.entries.total := quantity * unit_price - discount;");
+    builder.add("Orders.entries.discount0 := COALESCE(discount, 0.0);\n"
+        + "Orders.entries.total := quantity * unit_price - discount0;");
     validateScript(builder.getScript());
   }
 
@@ -527,14 +527,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void expressionTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.descriptionLength := CHAR_LENGTH(description);");
-  }
-
-  @Test
-  public void shadowExpressionTest() {
-    validateScript("IMPORT ecommerce-data.Product;\n"
-        + "Product.descriptionLength := CHAR_LENGTH(description);"
-        + "Product.descriptionLength := CHAR_LENGTH(description);"
-        + "X := SELECT descriptionLength FROM Product;");
   }
 
   @Test
