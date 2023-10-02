@@ -15,7 +15,7 @@ import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.plan.rules.LPAnalysis;
-import com.datasqrl.plan.util.ContinuousIndexMap;
+import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
@@ -108,7 +108,7 @@ public class CalciteTableFactory {
       List<Name> fieldNames, Optional<SQRLTable> parent, boolean materializeSelf,
       Optional<Supplier<RelNode>> relNodeSupplier,
       Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
-    ContinuousIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
+    SelectIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
     Name tableid = createTableId(tablePath.getLast(), "q");
