@@ -1,11 +1,11 @@
 type Package {
   name: String!
-  latest(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
-  versions(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
+  versions(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
 }
 
 type Query {
-  Submission(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  Submission(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
   Package(name: String): [Package!]
   TopicPackages(pkgname: String, topicname: String, numsubmissions: Int, lastsubmission: String): [TopicPackages!]
   TopicSearch(topicname: String, numpackages: Int): [TopicSearch!]
@@ -14,6 +14,7 @@ type Query {
 type Submission {
   name: String!
   version: String!
+  variant: String
   latest: Boolean!
   type: String
   license: String
@@ -29,7 +30,7 @@ type Submission {
   submissiontime: String!
   files(filename: String, filesize: Int): [files!]
   keywords(name: String): [keywords!]
-  variant: String!
+  variant0: String!
   repoURL: String!
 }
 
@@ -38,7 +39,7 @@ type TopicPackages {
   topicname: String!
   numsubmissions: Int!
   lastsubmission: String!
-  latest(name: String, version: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, documentation: String): [Submission!]
+  latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
 }
 
 type TopicSearch {

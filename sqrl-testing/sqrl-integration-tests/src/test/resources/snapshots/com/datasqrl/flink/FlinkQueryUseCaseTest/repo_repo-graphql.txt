@@ -1,10 +1,10 @@
 >>>database
-CREATE INDEX IF NOT EXISTS submission$3_btree_c2c18 ON submission$3 USING btree (name$0,variant$1);
-CREATE INDEX IF NOT EXISTS submission$3_btree_c2c3c18 ON submission$3 USING btree (name$0,version$0,variant$1);
+CREATE INDEX IF NOT EXISTS submission$3_btree_c2c3c4 ON submission$3 USING btree (name$0,version$0,variant$0);
+CREATE INDEX IF NOT EXISTS submission$3_btree_c2c4 ON submission$3 USING btree (name$0,variant$0);
 CREATE INDEX IF NOT EXISTS topicpackages$21_hash_c1 ON topicpackages$21 USING hash (topicname$0);
 CREATE TABLE IF NOT EXISTS keywords$8 (_uuid$0 TEXT NOT NULL,_idx$0 INTEGER NOT NULL,name$0 TEXT NOT NULL,submissiontime$0 TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (_uuid$0,_idx$0));
 CREATE TABLE IF NOT EXISTS package$16 (name$0 TEXT NOT NULL,submissiontime$0 TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (name$0));
-CREATE TABLE IF NOT EXISTS submission$3 (_uuid$0 TEXT NOT NULL,_ingest_time$0 TIMESTAMP WITH TIME ZONE NOT NULL,name$0 TEXT NOT NULL,version$0 TEXT NOT NULL,variant$0 TEXT ,latest$0 BOOLEAN NOT NULL,type$0 TEXT ,license$0 TEXT ,repository$0 TEXT ,homepage$0 TEXT ,documentation$0 TEXT ,readme$0 TEXT ,description$0 TEXT ,uniqueid$0 TEXT NOT NULL,file$0 TEXT NOT NULL,hash$0 TEXT NOT NULL,authorid$0 TEXT NOT NULL,submissiontime$0 TIMESTAMP WITH TIME ZONE NOT NULL,variant$1 TEXT NOT NULL,repourl$0 TEXT NOT NULL , PRIMARY KEY (_uuid$0));
+CREATE TABLE IF NOT EXISTS submission$3 (_uuid$0 TEXT NOT NULL,_ingest_time$0 TIMESTAMP WITH TIME ZONE NOT NULL,name$0 TEXT NOT NULL,version$0 TEXT NOT NULL,variant$0 TEXT ,latest$0 BOOLEAN NOT NULL,type$0 TEXT ,license$0 TEXT ,repository$0 TEXT ,homepage$0 TEXT ,documentation$0 TEXT ,readme$0 TEXT ,description$0 TEXT ,uniqueid$0 TEXT NOT NULL,file$0 TEXT NOT NULL,hash$0 TEXT NOT NULL,authorid$0 TEXT NOT NULL,submissiontime$0 TIMESTAMP WITH TIME ZONE NOT NULL,variant0$0 TEXT NOT NULL,repourl$0 TEXT NOT NULL , PRIMARY KEY (_uuid$0));
 CREATE TABLE IF NOT EXISTS topicpackages$21 (pkgname$0 TEXT NOT NULL,topicname$0 TEXT NOT NULL,numsubmissions$0 BIGINT NOT NULL,lastsubmission$0 TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (pkgname$0,topicname$0));
 CREATE TABLE IF NOT EXISTS topicsearch$25 (topicname$0 TEXT NOT NULL,numpackages$0 BIGINT NOT NULL,submissiontime$0 TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (topicname$0));
 >>>query-latest

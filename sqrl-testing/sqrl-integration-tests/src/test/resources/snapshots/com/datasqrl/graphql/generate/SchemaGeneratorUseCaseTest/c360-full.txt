@@ -27,7 +27,7 @@ type Orders {
   id: Int!
   customerid: Int!
   time: String!
-  entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, total: Float): [entries!]
+  entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, total: Float): [entries!]
   total(price: Float, discount: Float, num: Int): [total!]
 }
 
@@ -51,8 +51,9 @@ type entries {
   productid: Int!
   quantity: Int!
   unit_price: Float!
+  discount: Float
   parent: Orders!
-  discount: Float!
+  discount0: Float!
   total: Float!
   product(productid: Int, name: String, description: String, category: String, updatetime: String): [Product!]
 }

@@ -1,7 +1,7 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>discount$q$18
+>>>discount0$q$18
 LogicalProject(___uuid$0$pk$1=[$0], ___idx$0$pk$2=[$6], discount=[COALESCE($10, 0.0:DOUBLE)], time$0=[$4])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$6]])
