@@ -816,13 +816,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void compoundAggregateExpressionTest() {
-    //not yet supported
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.total := SUM(@.productid) + SUM(@.productid);");
-  }
-
-  @Test
   public void queryAsExpressionTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
@@ -848,28 +841,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
         + "Product.joinDeclaration2 := JOIN @.joinDeclaration j ON @.productid = j.productid;\n");
-  }
-
-  @Test
-  public void localAggregateCountStarTest() {
-    //complex columns not yet supported
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.total := COUNT(*);");
-  }
-
-  @Test
-  public void localAggregateCountStarTest2() {
-    //complex columns not yet supported
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.total := COUNT();");
-  }
-
-  @Test
-  public void localAggregateInAggregateTest() {
-    //Not yet supported
-    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
-        + "Product.total := SUM(COUNT(joinDeclaration));");
   }
 
   @Test

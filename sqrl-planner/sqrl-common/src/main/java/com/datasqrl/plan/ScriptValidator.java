@@ -7,6 +7,7 @@ import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.PathWalker;
+import com.datasqrl.calcite.schema.ScriptPlanner.SqrlToSql;
 import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
@@ -263,28 +264,34 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       }
     });
 
-    Optional<RexNode> expr = table.flatMap((t)-> {
-      try {
-        return Optional.of(planner.planExpression(node.getExpression(), t.getRowType()));
-      } catch (Exception e) {
-        e.printStackTrace();
-        addError(ErrorLabel.GENERIC, node, "Could not plan expression: %s", e.getMessage());
-        return Optional.empty();
-      }
-    });
+    List<SqlNode> selectList = new ArrayList<>();
+    selectList.add(SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+        node.getExpression(),
+        new SqlIdentifier(node.getIdentifier().names.get(node.getIdentifier().names.size()-1), SqlParserPos.ZERO)));
 
-    expr.ifPresent(e -> e.accept(new RexShuttle() {
-      @Override
-      public RexNode visitCall(RexCall call) {
-        if (call.getKind() == SqlKind.AS) {
-          addError(ErrorLabel.GENERIC, node, "Cannot use AS in expression");
-        } else if (call.getKind() == SqlKind.SELECT) {
-          addError(ErrorLabel.GENERIC, node, "Subqueries not allowed");
-        }
-        return super.visitCall(call);
-      }
-    }));
+    //If on root table, use root table
+    //If on nested, use @.table
+    List<SqlNode> tablePath;
+    if (node.getIdentifier().names.size() > 2) {
+      tablePath = List.of(
+          new SqlIdentifier(ReservedName.SELF_IDENTIFIER.getCanonical(), SqlParserPos.ZERO),
+          new SqlIdentifier(node.getIdentifier().names.get(node.getIdentifier().names.size() - 2), SqlParserPos.ZERO));
+    } else if (node.getIdentifier().names.size() == 2) {
+      tablePath = List.of(new SqlIdentifier(node.getIdentifier().names.get(0), SqlParserPos.ZERO));
+    } else {
+      throw new RuntimeException();
+    }
 
+    selectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
+    SqlSelect select = new SqlSelectBuilder()
+        .setSelectList(selectList)
+        .setFrom(new SqrlCompoundIdentifier(SqlParserPos.ZERO, tablePath))
+        .build();
+    validateTable(node, select, node.getTableArgs(),
+        true);
+
+//    preprocessSql.put(node, select);
+    isMaterializeTable.put(node, true);
     return null;
   }
 
@@ -323,7 +330,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     SqlValidator validator = planner.createSqlValidator();
 
     //if query is nested, and the lhs is not already a '@', then add it
-    if (statement.getIdentifier().names.size() > 1) {
+    if (statement.getIdentifier().names.size() > 1 && !(statement instanceof SqrlExpressionQuery)) {
       query = addNestedSelf(query);
     }
     Pair<List<FunctionParameter>, SqlNode> p = transformArgs(query, materializeSelf, tableArgs.orElseGet(()->new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
@@ -340,7 +347,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       List<String> parent = List.of();
       if (statement.getIdentifier().names.size() > 1) {
-        parent = SqrlListUtil.popLast(statement.getIdentifier().names);
+        parent = getParentPath(statement);
         SqlUserDefinedTableFunction sqrlTable = planner.getTableFunction(parent);
         if (sqrlTable == null) {
           throw addError(ErrorLabel.GENERIC, statement.getIdentifier()
@@ -365,6 +372,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       validated = validator.validate(copy);
 
     } catch (CalciteContextException e) {
+      e.printStackTrace();
       throw addError(ErrorLabel.GENERIC, e);
     } catch (CollectedException e) {
       return;
@@ -383,6 +391,18 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 //      return Pair.of(result, type);
     } catch (Exception e) {
       errorCollector.exception(ErrorLabel.GENERIC, e.getMessage());
+    }
+  }
+
+  public static List<String> getParentPath(SqrlAssignment statement) {
+    if (statement instanceof SqrlExpressionQuery) {
+      if (statement.getIdentifier().names.size() > 2) {
+        return SqrlListUtil.popLast(SqrlListUtil.popLast(statement.getIdentifier().names));
+      } else {
+        return SqrlListUtil.popLast(statement.getIdentifier().names);
+      }
+    } else {
+      return SqrlListUtil.popLast(statement.getIdentifier().names);
     }
   }
 
@@ -411,7 +431,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       @Override
       public SqlNode visitQuerySpecification(SqlSelect node, Void context) {
-        if (!isSelfTable(node.getFrom()) && !(node.getFrom() instanceof SqlJoin)) {
+        if (!isSelfTable(node.getFrom()) && !(node.getFrom() instanceof SqlJoin)
+            && !isSelfPrefix(node.getFrom())) {
           SqlNode from = addSelfTableAsJoin(node.getFrom());
           return new SqlSelectBuilder(node)
               .setFrom(from)
@@ -463,6 +484,16 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
                 .collect(Collectors.toList()));
       }
     }, query, null);
+  }
+
+  private boolean isSelfPrefix(SqlNode sqlNode) {
+    if (sqlNode instanceof SqrlCompoundIdentifier &&
+        ((SqrlCompoundIdentifier)sqlNode).getList().get(0) instanceof SqlIdentifier) {
+      return ((SqlIdentifier)((SqrlCompoundIdentifier)sqlNode).getList().get(0)).names.get(0).equals(
+          ReservedName.SELF_IDENTIFIER.getCanonical());
+    }
+
+    return false;
   }
 
   public static boolean isSelfTable(SqlNode sqlNode) {
@@ -1086,7 +1117,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   }
 
   public RuntimeException addError(ErrorLabel errorCode, CalciteContextException e) {
-    RuntimeException exception = CheckUtil.createAstException(errorCode,
+    RuntimeException exception = CheckUtil.createAstException(Optional.of(e), errorCode,
         ()->new SqlParserPos(e.getPosLine(), e.getPosColumn(), e.getEndPosLine(), e.getEndPosColumn()),
         e::getMessage);
     return errorCollector.handle(exception);

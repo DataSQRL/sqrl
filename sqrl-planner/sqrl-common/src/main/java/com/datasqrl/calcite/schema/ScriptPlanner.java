@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.schema;
 
+import static com.datasqrl.plan.ScriptValidator.getParentPath;
 import static com.datasqrl.plan.ScriptValidator.isSelfField;
 import static com.datasqrl.plan.ScriptValidator.isSelfTable;
 import static com.datasqrl.plan.ScriptValidator.isVariable;
@@ -64,6 +65,7 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
@@ -150,7 +152,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     boolean materializeSelf = validator.getIsMaterializeTable().get(assignment);
 
-    List<String> parentPath = SqrlListUtil.popLast(assignment.getIdentifier().names);
+    List<String> parentPath = getParentPath(assignment);
+
     Result result = new SqrlToSql().rewrite(node, materializeSelf, parentPath);
 
     //Expanding table functions may have added additional parameters that we need to remove.
@@ -174,7 +177,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       expanded = LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType());
     }
 
-    boolean setFieldNames = validator.getSetFieldNames().get(assignment);
+    boolean setFieldNames = validator.getSetFieldNames().getOrDefault(assignment, true);
     List<Function> isA = validator.getIsA().get(node);
 
     //Short path: if we're not materializing, create relationship
@@ -217,7 +220,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       }
     } else {
       ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
-      tableFactory.createTable(assignment.getIdentifier().names, expanded, null, setFieldNames,
+      List<String> path = assignment instanceof SqrlExpressionQuery ?
+          SqrlListUtil.popLast(assignment.getIdentifier().names) :
+          assignment.getIdentifier().names;
+
+      tableFactory.createTable(path, expanded, null, setFieldNames,
           assignment.getHints(), parameters, isA,
           materializeSelf, Optional.empty(), statementErrors);
     }
@@ -274,15 +281,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     });
 
     return Pair.of(newParams, node);
-  }
-
-  @Override
-  public Void visit(SqrlExpressionQuery node, Void context) {
-    RelOptTable table = planner.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(node.getIdentifier().names));
-    RexNode rexNode = planner.planExpression(node.getExpression(), table.getRowType());
-
-    addColumn(rexNode, Util.last(node.getIdentifier().names), table);
-    return null;
   }
 
   private void addColumn(RexNode node, String cName, RelOptTable table) {
