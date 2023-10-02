@@ -7,7 +7,7 @@ orders (id : 10007140) {
         productid
         quantity
         unit_price
-        discount
+        discount: discount0
         total
         product {
             name
