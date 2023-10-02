@@ -25,7 +25,7 @@ public class QueryRelationalTable extends ScriptRelationalTable {
         analyzedLP.getConvertedRelnode().getType(),
         analyzedLP.getConvertedRelnode().getRelNode().getRowType(),
         TimestampHolder.Base.ofDerived(analyzedLP.getConvertedRelnode().getTimestamp()),
-        analyzedLP.getConvertedRelnode().getPrimaryKey().getSourceLength(),
+        analyzedLP.getConvertedRelnode().getPrimaryKey().getLength(),
         TableStatistic.of(analyzedLP.getConvertedRelnode().estimateRowCount()));
     this.analyzedLP = analyzedLP;
   }

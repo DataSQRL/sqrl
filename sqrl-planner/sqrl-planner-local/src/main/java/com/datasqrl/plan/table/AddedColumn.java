@@ -1,12 +1,7 @@
-/*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
- */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.plan.util.ContinuousIndexMap;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;
-import lombok.AllArgsConstructor;
+import com.datasqrl.util.CalciteUtil;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -19,79 +14,48 @@ import org.apache.calcite.tools.RelBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-@AllArgsConstructor
 @Getter
-public abstract class AddedColumn {
+public class AddedColumn {
 
-  @Setter
-  String nameId;
-
-  public abstract RelDataType getDataType();
-
-  public RelDataType appendTo(@NonNull RelDataType base, @NonNull RelDataTypeFactory factory) {
-    return CalciteUtil.appendField(base, nameId, getDataType(), factory);
-  }
-
-  public static class Simple extends AddedColumn {
-
+    @Setter
+    String nameId;
     final RexNode expression;
 
-    public Simple(@NonNull String nameId, @NonNull RexNode expression) {
-      super(nameId);
-      this.expression = expression;
+    public AddedColumn(@NonNull String nameId, @NonNull RexNode expression) {
+        this.nameId = nameId;
+        this.expression = expression;
     }
 
-    @Override
+    public RelDataType appendTo(@NonNull RelDataType base, @NonNull RelDataTypeFactory factory) {
+        return CalciteUtil.appendField(base, nameId, getDataType(), factory);
+    }
+
     public RelDataType getDataType() {
-      return expression.getType();
+        return expression.getType();
     }
 
     public RexNode getExpression(IndexMap indexMap, @NonNull RelDataType type) {
-      return indexMap.map(expression, type);
+        return indexMap.map(expression, type);
     }
 
     public RexNode getBaseExpression() {
-      return expression;
+        return expression;
     }
 
 
     public int appendTo(@NonNull RelBuilder relBuilder, @NonNull IndexMap indexMap) {
-      RelDataType baseType = relBuilder.peek().getRowType();
-      int noBaseFields = baseType.getFieldCount();
-      List<String> fieldNames = new ArrayList<>(noBaseFields + 1);
-      List<RexNode> rexNodes = new ArrayList<>(noBaseFields + 1);
-      for (int i = 0; i < noBaseFields; i++) {
-        fieldNames.add(i, null); //Calcite will infer name
-        rexNodes.add(i, RexInputRef.of(i, baseType));
-      }
-      fieldNames.add(noBaseFields, nameId);
-      rexNodes.add(indexMap.map(expression, relBuilder.peek().getRowType()));
+        RelDataType baseType = relBuilder.peek().getRowType();
+        int noBaseFields = baseType.getFieldCount();
+        List<String> fieldNames = new ArrayList<>(noBaseFields + 1);
+        List<RexNode> rexNodes = new ArrayList<>(noBaseFields + 1);
+        for (int i = 0; i < noBaseFields; i++) {
+            fieldNames.add(i, null); //Calcite will infer name
+            rexNodes.add(i, RexInputRef.of(i, baseType));
+        }
+        fieldNames.add(noBaseFields, nameId);
+        rexNodes.add(indexMap.map(expression, relBuilder.peek().getRowType()));
 
-      relBuilder.project(rexNodes, fieldNames);
-      return noBaseFields;
+        relBuilder.project(rexNodes, fieldNames);
+        return noBaseFields;
     }
-  }
-
-//    public static class Complex extends AddedColumn {
-//
-//        //Logical plan that produces the added column value in the last field. All previous fields
-//        //are primary key columns of the table (in the same order as for the table) to which this column is added.
-//        final RelNode rightJoin;
-//
-//        public Complex(@NonNull String nameId, @NonNull RelNode rightJoin) {
-//            super(nameId); //For now, we never inline complex columns
-//            this.rightJoin = rightJoin;
-//        }
-//
-//        RelDataTypeField getAddedColumnField() {
-//            List<RelDataTypeField> fields = rightJoin.getRowType().getFieldList();
-//            return fields.get(fields.size()-1);
-//        }
-//
-//        @Override
-//        public RelDataType getDataType() {
-//            return getAddedColumnField().getType();
-//        }
-//    }
-
 }

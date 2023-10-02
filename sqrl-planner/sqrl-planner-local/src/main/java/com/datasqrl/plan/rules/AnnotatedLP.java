@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.rules;
 
-import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
 import com.datasqrl.canonicalizer.Name;
@@ -16,7 +15,8 @@ import com.datasqrl.plan.table.SortOrder;
 import com.datasqrl.plan.table.TableType;
 import com.datasqrl.plan.table.TimestampHolder;
 import com.datasqrl.plan.table.TopNConstraint;
-import com.datasqrl.plan.util.ContinuousIndexMap;
+import com.datasqrl.plan.util.SelectIndexMap;
+import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.util.SqrlRexUtil;
@@ -60,11 +60,11 @@ public class AnnotatedLP implements RelHolder {
   @NonNull
   public TableType type;
   @NonNull
-  public ContinuousIndexMap primaryKey;
+  public PrimaryKeyMap primaryKey;
   @NonNull
   public TimestampHolder.Derived timestamp;
   @NonNull
-  public ContinuousIndexMap select;
+  public SelectIndexMap select;
   @Builder.Default
   public List<JoinTable> joinTables = null;
   @Builder.Default
@@ -86,15 +86,15 @@ public class AnnotatedLP implements RelHolder {
   public List<AnnotatedLP> inputs = List.of();
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
-      ContinuousIndexMap primaryKey,
-      TimestampHolder.Derived timestamp, ContinuousIndexMap select,
+      PrimaryKeyMap primaryKey,
+      TimestampHolder.Derived timestamp, SelectIndexMap select,
       AnnotatedLP input) {
     return build(relNode, type, primaryKey, timestamp, select, List.of(input));
   }
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
-      ContinuousIndexMap primaryKey,
-      TimestampHolder.Derived timestamp, ContinuousIndexMap select,
+      PrimaryKeyMap primaryKey,
+      TimestampHolder.Derived timestamp, SelectIndexMap select,
       List<AnnotatedLP> inputs) {
     return AnnotatedLP.builder().relNode(relNode).type(type).primaryKey(primaryKey)
         .timestamp(timestamp)
@@ -183,7 +183,7 @@ public class AnnotatedLP implements RelHolder {
       fieldCollations.addAll(SqrlRexUtil.translateCollation(topN.getCollation(), inputType));
       if (topN.isDistinct()) {
         //Add all other selects that are not partition indexes or collations to the sort
-        List<Integer> remainingDistincts = new ArrayList<>(primaryKey.targetsAsList());
+        List<Integer> remainingDistincts = primaryKey.asList();
         topN.getCollation().getFieldCollations().stream().map(RelFieldCollation::getFieldIndex)
             .forEach(remainingDistincts::remove);
         topN.getPartition().stream().forEach(remainingDistincts::remove);
@@ -231,8 +231,8 @@ public class AnnotatedLP implements RelHolder {
       }
 
       relBuilder.filter(conditions);
-      ContinuousIndexMap newPk = primaryKey.remap(IndexMap.IDENTITY);
-      ContinuousIndexMap newSelect = select.remap(IndexMap.IDENTITY);
+      PrimaryKeyMap newPk = primaryKey.remap(IndexMap.IDENTITY);
+      SelectIndexMap newSelect = select.remap(IndexMap.IDENTITY);
       if (topN.isDeduplication() || topN.isDistinct()) { //Drop sort since it doesn't apply globally
         newSort = SortOrder.EMPTY;
       } else { //Add partitioned sort on top
@@ -333,10 +333,10 @@ public class AnnotatedLP implements RelHolder {
     HashMap<Integer, Integer> remapping = new HashMap<>();
     int index = 0;
     boolean addedPk = false;
-    for (int i = 0; i < input.primaryKey.getSourceLength(); i++) {
+    for (int i = 0; i < input.primaryKey.getLength(); i++) {
       remapping.put(input.primaryKey.map(i), index++);
     }
-    if (input.primaryKey.getSourceLength() == 0) {
+    if (input.primaryKey.getLength() == 0) {
       //If we don't have a primary key, we add a static one to resolve uniqueness in the database
       addedPk = true;
       index++;
@@ -377,12 +377,12 @@ public class AnnotatedLP implements RelHolder {
         && remapping.size() + (addedPk ? 1 : 0) == index && projectLength <= inputLength + (addedPk
         ? 1 : 0));
     IndexMap remap = IndexMap.of(remapping);
-    ContinuousIndexMap updatedSelect = input.select.remap(remap);
+    SelectIndexMap updatedSelect = input.select.remap(remap);
     List<RexNode> projects = new ArrayList<>(projectLength);
     List<String> updatedFieldNames = Arrays.asList(new String[projectLength]);
-    ContinuousIndexMap primaryKey = input.primaryKey.remap(remap);
+    PrimaryKeyMap primaryKey = input.primaryKey.remap(remap);
     if (addedPk) {
-      primaryKey = ContinuousIndexMap.identity(1, projectLength);
+      primaryKey = PrimaryKeyMap.firstN(1);
       projects.add(0, relBuilder.literal(1));
       updatedFieldNames.set(0, SQRLLogicalPlanRewriter.DEFAULT_PRIMARY_KEY_COLUMN_NAME);
     }
@@ -401,7 +401,7 @@ public class AnnotatedLP implements RelHolder {
 
     //Verify that all primary key columns are not null which is required by databases
     List<RelDataTypeField> relTypes = relNode.getRowType().getFieldList();
-    for (int i = 0; i < primaryKey.getSourceLength(); i++) {
+    for (int i = 0; i < primaryKey.getLength(); i++) {
       RelDataTypeField field = relTypes.get(i);
       errors.checkFatal(!field.getType().isNullable(), PRIMARY_KEY_NULLABLE, "The primary key field %s is nullable", field.getName());
     }

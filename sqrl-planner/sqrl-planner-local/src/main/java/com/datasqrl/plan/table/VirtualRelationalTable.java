@@ -6,7 +6,6 @@ package com.datasqrl.plan.table;
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.plan.table.AddedColumn.Simple;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.schema.SQRLTable;
@@ -87,13 +86,12 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
   public abstract VirtualRelationalTable.Root getRoot();
 
   public void addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory,
-      Optional<Integer> timestampScore) {
-    if (isRoot() && column instanceof AddedColumn.Simple && addedColumns.isEmpty()) {
+                        Optional<Integer> timestampScore) {
+    if (isRoot() && addedColumns.isEmpty()) {
       //We can inline this column on the parent table
-      ((VirtualRelationalTable.Root) this).getBase().addInlinedColumn((AddedColumn.Simple) column,
+      ((VirtualRelationalTable.Root) this).getBase().addInlinedColumn((AddedColumn) column,
           typeFactory, timestampScore);
     } else {
-      Preconditions.checkArgument(!isRoot(),"Complex columns not yet supported");
       addedColumns.add(column);
     }
     //Update the row types
@@ -146,7 +144,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     Optional<Integer> timestampScore = CalciteTableFactory.getTimestampScore(
         Name.system(name), column.getType());
 
-    addColumn(new Simple(name, column), typeFactory, timestampScore);
+    addColumn(new AddedColumn(name, column), typeFactory, timestampScore);
   }
 
   @Override

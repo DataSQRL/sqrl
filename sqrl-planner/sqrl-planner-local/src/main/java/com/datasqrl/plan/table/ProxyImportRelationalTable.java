@@ -36,8 +36,8 @@ public class ProxyImportRelationalTable extends ScriptRelationalTable {
   }
 
   @Override
-  public int addInlinedColumn(AddedColumn.Simple column, @NonNull RelDataTypeFactory typeFactory,
-      Optional<Integer> timestampScore) {
+  public int addInlinedColumn(AddedColumn column, @NonNull RelDataTypeFactory typeFactory,
+                              Optional<Integer> timestampScore) {
     int index = super.addInlinedColumn(column, typeFactory, timestampScore);
     //Check if this adds a timestamp candidate
     if (timestampScore.isPresent() && !timestamp.isCandidatesLocked()) {
