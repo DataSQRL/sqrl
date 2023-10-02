@@ -1,4 +1,7 @@
+>>>orders$q$10
+LogicalProject(_uuid$0=[$0], x=['1':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+  LogicalTableScan(table=[[orders$q$2]])
+
 >>>orders$q$2
-LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], x$0=['1':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"])
-  LogicalTableScan(table=[[orders$i$1]])
+LogicalTableScan(table=[[orders$i$1]])
 
