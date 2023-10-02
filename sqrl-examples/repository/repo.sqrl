@@ -1,7 +1,7 @@
 IMPORT datasqrl-central.Submission TIMESTAMP submissionTime;
 IMPORT string.concat;
 
-Submission.variant := COALESCE(variant, 'default');
+Submission.variant0 := COALESCE(variant, 'default');
 Submission.repoURL := concat('https://repository.datasqrl.com/',file);
 
 Package := SELECT DISTINCT name FROM Submission;

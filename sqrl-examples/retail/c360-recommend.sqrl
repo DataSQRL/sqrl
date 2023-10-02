@@ -9,9 +9,9 @@ Category := SELECT DISTINCT category AS name FROM Product;
 Product := DISTINCT Product ON productid ORDER BY updateTime DESC;
 
 -- Compute useful statistics on orders
-Orders.entries.discount := coalesce(discount, 0.0);
-Orders.entries.total := quantity * unit_price - discount;
-Orders.total := SELECT sum(e.total) AS price, sum(e.discount) AS discount, count(1) AS num FROM @.entries e;
+Orders.entries.discount0 := coalesce(discount, 0.0);
+Orders.entries.total := quantity * unit_price - discount0;
+Orders.total := SELECT sum(e.total) AS price, sum(e.discount0) AS discount, count(1) AS num FROM @.entries e;
 
 -- Relate Customer to Orders and categories to products
 Customer.orders := JOIN Orders ON Orders.customerid = @.customerid;
