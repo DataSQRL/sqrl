@@ -102,8 +102,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
     table.getVisibleColumns().stream().forEach(c -> {
-      selects.add(relBuilder.field(c.getId().getCanonical()));
-      fieldNames.add(subscription ? c.getId().getCanonical() : c.getName().getDisplay());
+      selects.add(relBuilder.field(c.getId().getDisplay()));
+      fieldNames.add(subscription ? c.getId().getDisplay() : c.getName().getDisplay());
     });
     relBuilder.project(selects, fieldNames);
     return new ResolvedExport(table1.getNameId(), relBuilder.build(), sink);
@@ -288,8 +288,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       ModifiableTable table1 = (ModifiableTable) table.unwrap(Table.class);
       SQRLTable sqrlTable = table1.getSqrlTable();
       Column column = sqrlTable.addColumn(nameUtil.toName(cName), null, true, node.getType());
-      column.setVtName(column.getId().getCanonical());
-      return table1.addColumn(column.getId().getCanonical(), node, framework.getTypeFactory());
+      column.setVtName(column.getId().getDisplay());
+      return table1.addColumn(column.getId().getDisplay(), node, framework.getTypeFactory());
     } else {
       throw new RuntimeException();
     }

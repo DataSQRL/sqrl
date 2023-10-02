@@ -1,12 +1,12 @@
 >>>orders$q$18-lp-STREAM
-LogicalProject(id$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$3], time$0=[$4], entries$0=[$5])
+LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], customerid=[$3], time=[$4], entries=[$5])
   LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
-    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], entries$0=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[orders$q$6]])
 
 >>>orders$q$18-lp-DATABASE
-LogicalProject(id$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$3], time$0=[$4])
+LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], customerid=[$3], time=[$4])
   LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
-    LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[orders$7]])
 

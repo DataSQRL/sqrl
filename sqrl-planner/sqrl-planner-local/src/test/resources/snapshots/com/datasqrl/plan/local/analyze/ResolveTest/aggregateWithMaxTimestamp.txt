@@ -1,12 +1,12 @@
 >>>orderagg1$q$26-lp-STREAM
-LogicalProject(customerid=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time$0=[$4])
+LogicalProject(customerid=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
   LogicalTableScan(table=[[orders$q$6]])
 
 >>>orderagg1$q$26-lp-DATABASE
-LogicalProject(customerid=[$0], count=[$1], time$0=[$2])
+LogicalProject(customerid=[$0], count=[$1], time=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-    LogicalProject(customerid$0=[$0], count=[$1], time$0=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-      LogicalProject(customerid$0=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time$0=[$4])
+    LogicalProject(customerid=[$0], count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+      LogicalProject(customerid=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
         LogicalTableScan(table=[[orders$7]])
 
 >>>orderagg2$q$29-lp-STREAM
@@ -16,8 +16,8 @@ LogicalProject(customerid=[$3], timestamp=[MAX($4) IGNORE NULLS OVER (PARTITION 
 >>>orderagg2$q$29-lp-DATABASE
 LogicalProject(customerid=[$0], timestamp=[$1], count=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-    LogicalProject(customerid$0=[$0], timestamp=[$1], count=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
-      LogicalProject(customerid$0=[$3], timestamp=[MAX($4) IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)])
+    LogicalProject(customerid=[$0], timestamp=[$1], count=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+      LogicalProject(customerid=[$3], timestamp=[MAX($4) IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)])
         LogicalTableScan(table=[[orders$7]])
 
 >>>orderagg3$q$32-lp-STREAM

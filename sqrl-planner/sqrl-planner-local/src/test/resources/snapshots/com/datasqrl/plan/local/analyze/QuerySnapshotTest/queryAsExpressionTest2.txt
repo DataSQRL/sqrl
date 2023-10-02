@@ -1,5 +1,5 @@
 >>>example$q$5
-LogicalProject(___uuid$0$pk$1=[$0], productid=[$2], _ingest_time$0=[$1])
+LogicalProject(___uuid$pk$1=[$0], productid=[$2], _ingest_time=[$1])
   LogicalTableScan(table=[[product$q$2]])
 
 >>>product$q$2

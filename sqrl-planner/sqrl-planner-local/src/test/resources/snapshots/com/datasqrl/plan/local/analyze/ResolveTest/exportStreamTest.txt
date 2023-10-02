@@ -1,9 +1,9 @@
 >>>countstream$q$18-lp-STREAM
-LogicalProject(_uuid$0=[$0], _source_time$0=[$1], customerid=[$2], num_orders=[$3])
+LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num_orders=[$3])
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-      LogicalProject(customerid$0=[$0], num_orders=[$1], time$0=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalProject(customerid$0=[$3], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time$0=[$4])
+      LogicalProject(customerid=[$0], num_orders=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalProject(customerid=[$3], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
           LogicalTableScan(table=[[orders$q$6]])
 
 >>>countstream$q$18-lp-DATABASE

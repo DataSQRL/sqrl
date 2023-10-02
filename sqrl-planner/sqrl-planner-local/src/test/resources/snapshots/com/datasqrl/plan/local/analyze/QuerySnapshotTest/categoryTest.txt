@@ -1,5 +1,5 @@
 >>>category$q$18
-LogicalProject(name=[$5], _ingest_time$0=[$1])
+LogicalProject(name=[$5], _ingest_time=[$1])
   LogicalTableScan(table=[[product$q$15]])
 
 >>>customer$q$2

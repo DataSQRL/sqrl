@@ -1,23 +1,23 @@
 >>>ordercustomer$q$18-lp-STREAM
-LogicalProject(_uuid$0=[$0], _uuid$00=[$6], id=[$2], name=[$10], customerid=[$3], time$0=[$4])
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], time=[$4])
   LogicalJoin(condition=[AND(=($3, $8), >($4, $7), <=($4, +($7, 2678400000:INTERVAL DAY(2))))], joinType=[inner]) hints[IntervalJoin]
     LogicalTableScan(table=[[orders$q$6]])
     LogicalTableScan(table=[[customer$q$2]])
 
 >>>ordercustomer$q$18-lp-DATABASE
-LogicalProject(_uuid$0=[$0], _uuid$00=[$5], id=[$2], name=[$9], customerid=[$3], time$0=[$4])
+LogicalProject(_uuid=[$0], _uuid0=[$5], id=[$2], name=[$9], customerid=[$3], time=[$4])
   LogicalJoin(condition=[AND(=($3, $7), >($4, $6), <=($4, +($6, 2678400000:INTERVAL DAY(2))))], joinType=[inner]) hints[IntervalJoin]
     LogicalTableScan(table=[[orders$7]])
     LogicalTableScan(table=[[customer$3]])
 
 >>>ordercustomer2$q$21-lp-STREAM
-LogicalProject(_uuid$0=[$0], _uuid$00=[$6], id=[$2], name=[$10], customerid=[$3], time$0=[$4])
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], time=[$4])
   LogicalJoin(condition=[AND(=($3, $8), >($4, $7), <=($4, +($7, 2678400000:INTERVAL DAY(2))))], joinType=[inner]) hints[IntervalJoin]
     LogicalTableScan(table=[[orders$q$6]])
     LogicalTableScan(table=[[customer$q$2]])
 
 >>>ordercustomer2$q$21-lp-DATABASE
-LogicalProject(_uuid$0=[$0], _uuid$00=[$5], id=[$2], name=[$9], customerid=[$3], time$0=[$4])
+LogicalProject(_uuid=[$0], _uuid0=[$5], id=[$2], name=[$9], customerid=[$3], time=[$4])
   LogicalJoin(condition=[AND(=($3, $7), >($4, $6), <=($4, +($6, 2678400000:INTERVAL DAY(2))))], joinType=[inner]) hints[IntervalJoin]
     LogicalTableScan(table=[[orders$7]])
     LogicalTableScan(table=[[customer$3]])

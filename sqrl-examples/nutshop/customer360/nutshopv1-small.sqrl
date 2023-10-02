@@ -5,7 +5,7 @@ IMPORT nutshop-small.Products;
 IMPORT nutshop-small.Orders TIMESTAMP epochToTimestamp(time/1000) AS timestamp;
 
 /* Some order items are missing the discount field - let's clean that up */
-Orders.items.discount := coalesce(discount, 0.0);
+Orders.items.discount0 := coalesce(discount, 0.0);
 
 /* The Customers table are all the `customerid` that have placed an order */
 Customers := SELECT DISTINCT customerid AS id FROM Orders;
@@ -19,9 +19,9 @@ Customers.purchases := JOIN Orders ON Orders.customerid = @.id ORDER BY Orders.t
 Orders.items.product := JOIN Products ON Products.id = @.productid;
 
 /* Add a column to compute the total for each item in an order */
-Orders.items.total := quantity * unit_price - discount;
+Orders.items.total := quantity * unit_price - discount0;
 /* Adds a nested table `totals` in Orders to compute the totals for each Order */
-Orders.totals := SELECT sum(total) as price, sum(discount) as savings FROM @.items;
+Orders.totals := SELECT sum(total) as price, sum(discount0) as savings FROM @.items;
 
 /* Aggregates the purchase history for each customer by month */
 Customers.spending_by_month :=

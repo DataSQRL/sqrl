@@ -2,19 +2,19 @@
 LogicalTableScan(table=[[customer$i$14]])
 
 >>>customerorders1$q$18
-LogicalProject(_uuid$0=[$0], _uuid$00=[$6], id=[$2], name=[$10], __timestamp=[CASE(<($4, $7), $7, $4)])
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], __timestamp=[CASE(<($4, $7), $7, $4)])
   LogicalJoin(condition=[=($3, $8)], joinType=[inner])
     LogicalTableScan(table=[[orders$q$6]])
     LogicalTableScan(table=[[customer$q$15]])
 
 >>>customerorders2$q$21
-LogicalProject(_uuid$0=[$0], cuuid=[COALESCE($6, '')], id=[$2], name=[$10], __timestamp=[CASE(<($4, $7), $7, $4)])
+LogicalProject(_uuid=[$0], cuuid=[COALESCE($6, '')], id=[$2], name=[$10], __timestamp=[CASE(<($4, $7), $7, $4)])
   LogicalJoin(condition=[=($3, $8)], joinType=[left])
     LogicalTableScan(table=[[orders$q$6]])
     LogicalTableScan(table=[[customer$q$15]])
 
 >>>customerorders3$q$24
-LogicalProject(_uuid$0=[$0], ouuid=[COALESCE($6, '')], id=[$8], name=[$4], __timestamp=[CASE(<($1, $10), $10, $1)])
+LogicalProject(_uuid=[$0], ouuid=[COALESCE($6, '')], id=[$8], name=[$4], __timestamp=[CASE(<($1, $10), $10, $1)])
   LogicalJoin(condition=[=($9, $2)], joinType=[left])
     LogicalTableScan(table=[[customer$q$15]])
     LogicalTableScan(table=[[orders$q$6]])

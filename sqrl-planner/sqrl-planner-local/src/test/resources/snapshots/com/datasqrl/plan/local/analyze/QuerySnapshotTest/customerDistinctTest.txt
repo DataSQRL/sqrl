@@ -1,5 +1,5 @@
 >>>customer$q$18
-LogicalProject(customerid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], email$0=[$3], name$0=[$4], lastupdated$0=[$5])
+LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5])
   LogicalTableScan(table=[[customer$q$2]])
 
 >>>customer$q$2

@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[customer$i$1]])
 
 >>>newid$q$18
-LogicalProject(___uuid$0$pk$1=[$0], _uuid$00=[$6], EXPR$1=[NOW()], EXPR$2=[parseTimestamp(timestampToString(epochToTimestamp(100:BIGINT)))], __timestamp=[CASE(<($4, $10), $10, $4)])
+LogicalProject(___uuid$pk$1=[$0], _uuid0=[$6], EXPR$1=[NOW()], EXPR$2=[parseTimestamp(timestampToString(epochToTimestamp(100:BIGINT)))], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalJoin(condition=[true], joinType=[inner])
     LogicalTableScan(table=[[orders$q$6]])
     LogicalTableScan(table=[[orders$q$6]])

@@ -156,7 +156,7 @@ public class UniversalTable {
     return fields.getFields(false)
         .filter(f -> (includeNested || (f instanceof Column)) && (!onlyVisible || f.isVisible()))
         .map(f -> {
-          String name = f.getId().getCanonical();
+          String name = f.getId().getDisplay();
           T type;
           if (f instanceof Column) {
             Column column = (Column) f;

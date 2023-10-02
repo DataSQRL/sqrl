@@ -2,9 +2,9 @@ IMPORT time.*;
 IMPORT nutshop-medium.Products;
 IMPORT nutshop-medium.Orders TIMESTAMP epochToTimestamp(time/1000) AS timestamp;
 
-Orders.items.discount := coalesce(discount, 0.0);
-Orders.items.total := quantity * unit_price - discount;
-Orders.totals := SELECT sum(total) as price, sum(discount) as savings FROM @.items;
+Orders.items.discount0 := coalesce(discount, 0.0);
+Orders.items.total := quantity * unit_price - discount0;
+Orders.totals := SELECT sum(total) as price, sum(discount0) as savings FROM @.items;
 
 Products := DISTINCT Products ON id ORDER BY updated DESC;
 Orders.items.product := JOIN Products ON Products.id = @.productid;

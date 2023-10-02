@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[product$i$1]])
 
 >>>product2$q$5
-LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], productid$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
   LogicalUnion(all=[true])
     LogicalTableScan(table=[[product$q$2]])
     LogicalTableScan(table=[[product$q$2]])

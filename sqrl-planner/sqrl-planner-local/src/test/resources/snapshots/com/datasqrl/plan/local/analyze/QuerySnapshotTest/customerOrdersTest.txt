@@ -8,12 +8,12 @@ LogicalTableScan(table=[[orders$i$5]])
 LogicalTableScan(table=[[product$i$14]])
 
 >>>product$q$19
-LogicalProject(___uuid$0$pk$1=[$0], ___idx$0$pk$2=[$6], _uuid$0=[$11], _ingest_time$0=[$12], productid$0=[$13], name$0=[$14], description$0=[$15], category$0=[$16], __timestamp=[CASE(<($4, $12), $12, $4)])
+LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], _uuid=[$11], _ingest_time=[$12], productid=[$13], name=[$14], description=[$15], category=[$16], __timestamp=[CASE(<($4, $12), $12, $4)])
   LogicalJoin(condition=[=($13, $7)], joinType=[inner])
     LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$6]])
       Uncollect
-        LogicalProject($f0=[$cor3.entries$0])
+        LogicalProject($f0=[$cor3.entries])
           LogicalValues(tuples=[[{ 0 }]])
     LogicalTableScan(table=[[product$q$15]])
 

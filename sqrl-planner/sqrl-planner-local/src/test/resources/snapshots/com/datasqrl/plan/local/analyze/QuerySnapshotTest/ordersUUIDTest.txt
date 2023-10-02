@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[customer$i$1]])
 
 >>>o2$q$18
-LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], id$0=[$2], customerid$0=[$3], time$0=[$4])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
   LogicalTableScan(table=[[orders$q$6]])
 
 >>>orders$q$6

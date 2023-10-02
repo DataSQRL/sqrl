@@ -1,8 +1,8 @@
 >>>orders-hasTimestamp
-Row(_uuid$0: String, _ingest_time$0: Instant, _source_time$0: Instant, id$0: Long, customerid$0: Long, time$0: Long, items$0: ObjectArrayTypeInfo<Row(_idx$0: Integer, productid$0: Long, quantity$0: Long, unit_price$0: Double, discount$0: Double)>)
+Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, id: Long, customerid: Long, time: Long, items: ObjectArrayTypeInfo<Row(_idx: Integer, productid: Long, quantity: Long, unit_price: Double, discount: Double)>)
 >>>orders
-Row(_uuid$0: String, _ingest_time$0: Instant, id$0: Long, customerid$0: Long, time$0: Long, items$0: ObjectArrayTypeInfo<Row(_idx$0: Integer, productid$0: Long, quantity$0: Long, unit_price$0: Double, discount$0: Double)>)
+Row(_uuid: String, _ingest_time: Instant, id: Long, customerid: Long, time: Long, items: ObjectArrayTypeInfo<Row(_idx: Integer, productid: Long, quantity: Long, unit_price: Double, discount: Double)>)
 >>>products-hasTimestamp
-Row(_uuid$0: String, _ingest_time$0: Instant, _source_time$0: Instant, id$0: Long, name$0: String, sizing$0: String, weight_in_gram$0: Long, type$0: String, category$0: String, usda_id$0: Long, updated$0: Instant)
+Row(_uuid: String, _ingest_time: Instant, _source_time: Instant, id: Long, name: String, sizing: String, weight_in_gram: Long, type: String, category: String, usda_id: Long, updated: Instant)
 >>>products
-Row(_uuid$0: String, _ingest_time$0: Instant, id$0: Long, name$0: String, sizing$0: String, weight_in_gram$0: Long, type$0: String, category$0: String, usda_id$0: Long, updated$0: Instant)
+Row(_uuid: String, _ingest_time: Instant, id: Long, name: String, sizing: String, weight_in_gram: Long, type: String, category: String, usda_id: Long, updated: Instant)
