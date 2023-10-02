@@ -5,3 +5,6 @@ IMPORT ecommerce-data.Product;
 ProductCount := count(Product);
 ^
 
+[FATAL] null
+in script:<script>:
+

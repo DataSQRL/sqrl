@@ -6,6 +6,7 @@ package com.datasqrl;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.SqrlPlan;
 import com.datasqrl.io.tables.TableSource;
