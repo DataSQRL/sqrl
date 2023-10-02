@@ -6,10 +6,7 @@ package com.datasqrl.plan.util;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
@@ -24,48 +21,40 @@ import org.apache.commons.lang3.ArrayUtils;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class ContinuousIndexMap implements IndexMap, Serializable {
+public class SelectIndexMap implements IndexMap, Serializable {
 
-  public static final ContinuousIndexMap EMPTY = new ContinuousIndexMap(new int[0]);
+  private static final int INVALID_INDEX = -10;
+
+  public static final SelectIndexMap EMPTY = new SelectIndexMap(new int[0]);
 
   final int[] targets;
 
   @Override
   public int map(int index) {
-    return targets[index];
+    int result = targets[index];
+    if (result==INVALID_INDEX) throw new InvalidIndexException(index);
+    return result;
   }
 
   public int getSourceLength() {
     return targets.length;
   }
 
-  public List<Pair> getMapping() {
-    return IntStream.range(0, targets.length).mapToObj(i -> new Pair(i, targets[i]))
-        .collect(Collectors.toList());
+  private void validateIndexes() {
+    OptionalInt invalid = IntStream.range(0, targets.length).filter(idx -> targets[idx]==INVALID_INDEX).findFirst();
+    if (invalid.isPresent()) throw new InvalidIndexException(invalid.getAsInt());
   }
 
   public int[] targetsAsArray() {
+    validateIndexes();
     return targets.clone();
-  }
-
-  public ImmutableBitSet targetsAsBitSet() {
-    return ImmutableBitSet.of(targetsAsArray());
   }
 
   public List<Integer> targetsAsList() {
     return Ints.asList(targetsAsArray());
   }
 
-  public IndexMap inverseMap() {
-    return IndexMap.of(
-        getMapping().stream().collect(Collectors.toMap(Pair::getTarget, Pair::getSource)));
-  }
-
-  public boolean containsTarget(int targetIndex) {
-    return ArrayUtils.contains(targets, targetIndex);
-  }
-
-  public ContinuousIndexMap join(ContinuousIndexMap right, int leftSideWidth, boolean isFlipped) {
+  public SelectIndexMap join(SelectIndexMap right, int leftSideWidth, boolean isFlipped) {
     int[] combined = new int[targets.length + right.targets.length];
     //Left map doesn't change
     int offset=0;
@@ -76,65 +65,48 @@ public class ContinuousIndexMap implements IndexMap, Serializable {
       }
       offset += arrsToCopy[i].length;
     }
-    return new ContinuousIndexMap(combined);
+    return new SelectIndexMap(combined);
   }
 
-  public ContinuousIndexMap append(ContinuousIndexMap add) {
+  public SelectIndexMap append(SelectIndexMap add) {
     int[] combined = new int[targets.length + add.targets.length];
     System.arraycopy(targets, 0, combined, 0, targets.length);
     System.arraycopy(add.targets, 0, combined, targets.length, add.targets.length);
-    return new ContinuousIndexMap(combined);
+    return new SelectIndexMap(combined);
   }
 
-  public ContinuousIndexMap add(int index) {
+  public SelectIndexMap add(int index) {
     int[] newTargets = Arrays.copyOf(targets, targets.length+1);
     newTargets[targets.length] = index;
-    return new ContinuousIndexMap(newTargets);
+    return new SelectIndexMap(newTargets);
   }
 
-  public ContinuousIndexMap remap(IndexMap remap) {
+  public SelectIndexMap remap(IndexMap remap) {
     Builder b = new Builder(targets.length);
     for (int i = 0; i < targets.length; i++) {
-      b.add(remap.map(map(i)));
+      if (targets[i]==INVALID_INDEX) b.skip();
+      else b.add(remap.map(map(i)));
     }
     return b.build();
-  }
-
-  public Optional<ContinuousIndexMap> project(LogicalProject project) {
-    List<RexNode> projects = project.getProjects();
-    int[] newMap = new int[projects.size()];
-    for (int i = 0; i < projects.size(); i++) {
-      RexNode exp = projects.get(i);
-      if (exp instanceof RexInputRef) {
-        newMap[i] = map(((RexInputRef) exp).getIndex());
-      } else {
-        return Optional.empty(); //This is not a re-mapping projection, hence abort
-      }
-    }
-    return Optional.of(new ContinuousIndexMap(newMap));
   }
 
   public static Builder builder(int length) {
     return new Builder(length);
   }
 
-  public static Builder builder(ContinuousIndexMap base, int addedLength) {
+  public static Builder builder(SelectIndexMap base, int addedLength) {
     Builder b = new Builder(base.getSourceLength() + addedLength);
     return b.addAll(base);
   }
 
-  public static ContinuousIndexMap identity(int numSources, int targetLength) {
-    Builder b = builder(numSources);
-    for (int i = 0; i < numSources; i++) {
+  public static SelectIndexMap identity(int sourceLength, int targetLength) {
+    Builder b = builder(sourceLength);
+    for (int i = 0; i < sourceLength; i++) {
       b.add(i);
     }
     return b.build(targetLength);
   }
 
-  public static ContinuousIndexMap of(Collection<Integer> indexes) {
-    List<Integer> sortedIdx = indexes.stream().sorted().collect(Collectors.toUnmodifiableList());
-    return builder(sortedIdx.size()).addAll(sortedIdx).build();
-  }
 
   public static final class Builder {
 
@@ -149,9 +121,10 @@ public class ContinuousIndexMap implements IndexMap, Serializable {
       return map.length-offset;
     }
 
-    public Builder addAll(ContinuousIndexMap indexMap) {
-      for (int i = 0; i < indexMap.getSourceLength(); i++) {
-        add(indexMap.map(i));
+    public Builder addAll(SelectIndexMap indexMap) {
+      for (int i = 0; i < indexMap.targets.length; i++) {
+        if (indexMap.targets[i]==INVALID_INDEX) skip();
+        else add(indexMap.targets[i]);
       }
       return this;
     }
@@ -168,23 +141,29 @@ public class ContinuousIndexMap implements IndexMap, Serializable {
       return this;
     }
 
-    public Builder set(int index, int mapTo) {
-      Preconditions.checkArgument(index >= 0 && index < map.length);
-      map[index] = mapTo;
-      offset = Math.max(offset, index + 1);
+    public Builder skip() {
+      map[offset] = INVALID_INDEX;
+      offset++;
       return this;
     }
 
-    public ContinuousIndexMap build(int targetLength) {
-      Preconditions.checkArgument(!Arrays.stream(map).anyMatch(i -> i >= targetLength));
+    public SelectIndexMap build(int targetLength) {
+      Preconditions.checkArgument(Arrays.stream(map).noneMatch(i -> i >= targetLength));
       return build();
     }
 
-    public ContinuousIndexMap build() {
+    public SelectIndexMap build() {
       Preconditions.checkArgument(offset == map.length);
-      return new ContinuousIndexMap(map);
+      return new SelectIndexMap(map);
     }
 
+
+  }
+
+  @AllArgsConstructor
+  public static class InvalidIndexException extends RuntimeException {
+
+    int index;
 
   }
 

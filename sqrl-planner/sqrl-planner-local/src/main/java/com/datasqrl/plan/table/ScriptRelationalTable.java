@@ -8,7 +8,6 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.AddedColumn.Simple;
 import com.datasqrl.plan.table.PullupOperator.Container;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
@@ -53,7 +52,7 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable impl
   @Setter
   protected RelNode plannedRelNode;
 
-  private final List<Simple> addedColumns = new ArrayList<>();
+  private final List<AddedColumn> addedColumns = new ArrayList<>();
 
   @Setter
   protected Optional<ExecutionStage> assignedStage = Optional.empty();
@@ -105,8 +104,8 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable impl
     return getRowType().getFieldCount();
   }
 
-  public int addInlinedColumn(AddedColumn.Simple column, @NonNull RelDataTypeFactory typeFactory,
-      Optional<Integer> timestampScore) {
+  public int addInlinedColumn(AddedColumn column, @NonNull RelDataTypeFactory typeFactory,
+                              Optional<Integer> timestampScore) {
     int index = getNumColumns();
     this.rowType = column.appendTo(rowType, typeFactory);
     addedColumns.add(column);
