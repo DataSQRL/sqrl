@@ -1,7 +1,7 @@
 >>>customer$22-lp-stream
-LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
-  LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[$6])
+  LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[$6])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[customer$i$1]])
 
 >>>entries$9-lp-stream
@@ -35,9 +35,9 @@ LogicalProject(_uuid=[$0], _idx=[$1], id=[$2], name=[$3], customerid=[$4], col1=
             LogicalProject($f0=[$cor9.entries])
               LogicalValues(tuples=[[{ 0 }]])
       LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
-        LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
-          LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
-            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+        LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
+          LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[$6])
+            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
               LogicalTableScan(table=[[customer$i$1]])
 
 >>>orders$7-lp-stream
@@ -47,7 +47,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
 
 >>>customer-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastupdated=[$5], timestamp=[$6])
+  LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[$6])
     LogicalTableScan(table=[[customer$22]])
 
 >>>entries-lp-database

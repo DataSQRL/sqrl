@@ -1,0 +1,56 @@
+type Customers {
+  id: Int!
+  purchases(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
+  spending_by_month(month: String, total_spend: Float, total_savings: Float): [spending_by_month!]
+}
+
+type Orders {
+  id: Int!
+  customerid: Int!
+  time: Int!
+  items(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, total: Float): [items!]
+  timestamp: String!
+  totals(price: Float, savings: Float): [totals!]
+}
+
+type Products {
+  id: Int!
+  name: String!
+  sizing: String!
+  weight_in_gram: Int!
+  type: String!
+  category: String!
+  usda_id: Int!
+  updated: String!
+}
+
+type Query {
+  Orders(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
+  Customers(id: Int): [Customers!]
+  Products(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
+}
+
+type items {
+  productid: Int!
+  quantity: Int!
+  unit_price: Float!
+  discount: Float
+  parent: Orders!
+  discount0: Float!
+  product(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
+  total: Float!
+}
+
+type spending_by_month {
+  month: String!
+  total_spend: Float!
+  total_savings: Float!
+  parent: Customers!
+}
+
+type totals {
+  price: Float!
+  savings: Float!
+  parent: Orders!
+}
+

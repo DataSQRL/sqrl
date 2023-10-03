@@ -25,7 +25,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
   LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>totals$11-lp-stream
-LogicalProject(___uuid=[$0], price=[$1], number=[$2], savings=[$3], time=[$4])
+LogicalProject(___uuid$pk$1=[$0], price=[$1], number=[$2], savings=[$3], time=[$4])
   LogicalProject(___uuid$pk$1=[$0], price=[$2], number=[$3], savings=[$4], time=[$1])
     LogicalAggregate(group=[{0, 4}], price=[SUM($12)], number=[COUNT()], savings=[SUM($11)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount0=[COALESCE($10, 0.0:DOUBLE)], price=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
@@ -52,7 +52,7 @@ LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 
 >>>totals-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(___uuid=[$0], price=[$1], number=[$2], savings=[$3], time=[$4])
+  LogicalProject(___uuid$pk$1=[$0], price=[$1], number=[$2], savings=[$3], time=[$4])
     LogicalTableScan(table=[[totals$11]])
 
 >>>orders-data

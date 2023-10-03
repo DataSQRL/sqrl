@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[customer$i$1]])
 
 >>>customerwithpurchase$q$18
-LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], __timestamp=[CASE(<($1, $7), $7, $1)])
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], __timestamp=[CASE(<($1, $7), $7, $1)])
   LogicalJoin(condition=[=($2, $6)], joinType=[inner])
     LogicalTableScan(table=[[customer$q$2]])
     LogicalFilter(condition=[=($2, 1)])

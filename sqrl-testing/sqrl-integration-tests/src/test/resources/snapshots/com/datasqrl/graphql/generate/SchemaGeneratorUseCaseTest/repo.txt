@@ -7,8 +7,8 @@ type Package {
 type Query {
   Submission(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
   Package(name: String): [Package!]
-  TopicPackages(pkgname: String, topicname: String, numsubmissions: Int, lastsubmission: String): [TopicPackages!]
-  TopicSearch(topicname: String, numpackages: Int): [TopicSearch!]
+  TopicPackages(pkgName: String, topicName: String, numSubmissions: Int, lastSubmission: String): [TopicPackages!]
+  TopicSearch(topicName: String, numPackages: Int): [TopicSearch!]
 }
 
 type Submission {
@@ -23,11 +23,11 @@ type Submission {
   documentation: String
   readme: String
   description: String
-  uniqueid: String!
+  uniqueId: String!
   file: String!
   hash: String!
   authorid: String!
-  submissiontime: String!
+  submissionTime: String!
   files(filename: String, filesize: Int): [files!]
   keywords(name: String): [keywords!]
   variant0: String!
@@ -35,16 +35,16 @@ type Submission {
 }
 
 type TopicPackages {
-  pkgname: String!
-  topicname: String!
-  numsubmissions: Int!
-  lastsubmission: String!
+  pkgName: String!
+  topicName: String!
+  numSubmissions: Int!
+  lastSubmission: String!
   latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
 }
 
 type TopicSearch {
-  topicname: String!
-  numpackages: Int!
+  topicName: String!
+  numPackages: Int!
 }
 
 type files {

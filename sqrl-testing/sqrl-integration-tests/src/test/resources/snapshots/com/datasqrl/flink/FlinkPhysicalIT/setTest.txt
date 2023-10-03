@@ -4,8 +4,8 @@ LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
     LogicalUnion(all=[true])
       LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
         LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-      LogicalProject(_uuid=[$0], customerid=[$2], updatetime=[$6])
-        LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+      LogicalProject(_uuid=[$0], customerid=[$2], updateTime=[$6])
+        LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
           LogicalTableScan(table=[[customer$i$1]])
 
 >>>streamcount$18-lp-stream
@@ -17,8 +17,8 @@ LogicalProject(hour=[$0], num=[$1])
           LogicalUnion(all=[true])
             LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
               LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-            LogicalProject(_uuid=[$0], customerid=[$2], updatetime=[$6])
-              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastupdated=[$5], updatetime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+            LogicalProject(_uuid=[$0], customerid=[$2], updateTime=[$6])
+              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
                 LogicalTableScan(table=[[customer$i$1]])
 
 >>>combinedstream-lp-database

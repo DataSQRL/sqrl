@@ -296,7 +296,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   }
 
   public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
-    final AtomicInteger pkId = new AtomicInteger(0);
 
     public Result rewrite(SqlNode query, boolean materializeSelf, List<String> currentPath) {
       Context context = new Context(materializeSelf, currentPath, new HashMap<>(), false, currentPath.size() > 0, false);
@@ -527,7 +526,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           if (isNested) {
             RelOptTable table = planner.getCatalogReader().getSqrlTable(pathWalker.getAbsolutePath());
             pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
-                .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$" + pkId.incrementAndGet())
+                .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$"
+                    + planner.getUniqueMacroInt().incrementAndGet())
                 .collect(Collectors.toList());
           }
         } else { //treat self as a parameterized binding to the next function
