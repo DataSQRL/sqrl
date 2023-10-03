@@ -2,10 +2,10 @@ IMPORT datasqrl.seedshop.Orders;
 IMPORT datasqrl.seedshop.Products;
 IMPORT time.endOfWeek;
 
-Orders.items.discount := discount?0.0; -- Data cleaning
-Orders.items.total := quantity * unit_price - discount;
+Orders.items.discount0 := discount?0.0; -- Data cleaning
+Orders.items.total := quantity * unit_price - discount0;
 Orders.totals := SELECT sum(total) as price,
-                  sum(discount) as saving FROM @.items;
+                  sum(discount0) as saving FROM @.items;
 
 Users := SELECT DISTINCT customerid AS id FROM Orders;
 Users.purchases := JOIN Orders ON Orders.customerid = @.id ORDER BY Orders.time; -- time ordering
