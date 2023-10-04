@@ -1,42 +1,42 @@
->>>orderagg1$q$26-lp-STREAM
+>>>orderagg1$q$22-lp-STREAM
 LogicalProject(customerid=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
-  LogicalTableScan(table=[[orders$q$6]])
+  LogicalTableScan(table=[[orders$q$5]])
 
->>>orderagg1$q$26-lp-DATABASE
+>>>orderagg1$q$22-lp-DATABASE
 LogicalProject(customerid=[$0], count=[$1], time=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
     LogicalProject(customerid=[$0], count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(customerid=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
-        LogicalTableScan(table=[[orders$7]])
+        LogicalTableScan(table=[[orders$q$5]])
 
->>>orderagg2$q$29-lp-STREAM
+>>>orderagg2$q$24-lp-STREAM
 LogicalProject(customerid=[$3], timestamp=[MAX($4) IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)])
-  LogicalTableScan(table=[[orders$q$6]])
+  LogicalTableScan(table=[[orders$q$5]])
 
->>>orderagg2$q$29-lp-DATABASE
+>>>orderagg2$q$24-lp-DATABASE
 LogicalProject(customerid=[$0], timestamp=[$1], count=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
     LogicalProject(customerid=[$0], timestamp=[$1], count=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
       LogicalProject(customerid=[$3], timestamp=[MAX($4) IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)])
-        LogicalTableScan(table=[[orders$7]])
+        LogicalTableScan(table=[[orders$q$5]])
 
->>>orderagg3$q$32-lp-STREAM
+>>>orderagg3$q$26-lp-STREAM
 LogicalProject(customerid=[$0], count=[$1], __timestamp=[$2])
   LogicalAggregate(group=[{3}], count=[COUNT()], __timestamp=[MAX($4)])
-    LogicalTableScan(table=[[ordersstate$q$18]])
+    LogicalTableScan(table=[[ordersstate$q$15]])
 
->>>orderagg3$q$32-lp-DATABASE
+>>>orderagg3$q$26-lp-DATABASE
 LogicalProject(customerid=[$0], count=[$1], __timestamp=[$2])
   LogicalAggregate(group=[{3}], count=[COUNT()], __timestamp=[MAX($4)])
-    LogicalTableScan(table=[[ordersstate$19]])
+    LogicalTableScan(table=[[ordersstate$q$15]])
 
->>>orderagg4$q$35-lp-STREAM
+>>>orderagg4$q$28-lp-STREAM
 LogicalProject(customerid=[$0], timestamp=[$1], count=[$2])
   LogicalAggregate(group=[{3}], timestamp=[MAX($4)], count=[COUNT()])
-    LogicalTableScan(table=[[ordersstate$q$18]])
+    LogicalTableScan(table=[[ordersstate$q$15]])
 
->>>orderagg4$q$35-lp-DATABASE
+>>>orderagg4$q$28-lp-DATABASE
 LogicalProject(customerid=[$0], timestamp=[$1], count=[$2])
   LogicalAggregate(group=[{3}], timestamp=[MAX($4)], count=[COUNT()])
-    LogicalTableScan(table=[[ordersstate$19]])
+    LogicalTableScan(table=[[ordersstate$q$15]])
 

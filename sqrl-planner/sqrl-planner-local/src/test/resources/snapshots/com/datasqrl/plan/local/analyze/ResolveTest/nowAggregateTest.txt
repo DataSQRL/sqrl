@@ -1,42 +1,42 @@
->>>ordernow1$q$18-lp-STREAM
+>>>ordernow1$q$15-lp-STREAM
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 86400000, 0]]
     LogicalProject(customer=[$3], bucket=[endOfDay($4)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$q$6]])
+      LogicalTableScan(table=[[orders$q$5]])
 
->>>ordernow1$q$18-lp-DATABASE
+>>>ordernow1$q$15-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 
->>>ordernow2$q$21-lp-STREAM
+>>>ordernow2$q$17-lp-STREAM
 LogicalProject(bucket=[$0], order_count=[$1])
   LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 4, 86400000, 0]]
     LogicalProject(bucket=[endOfDay($4)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$q$6]])
+      LogicalTableScan(table=[[orders$q$5]])
 
->>>ordernow2$q$21-lp-DATABASE
+>>>ordernow2$q$17-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 
->>>ordernow3$q$24-lp-STREAM
+>>>ordernow3$q$19-lp-STREAM
 LogicalProject(customer=[$0], order_count=[$2], time=[$1])
   LogicalAggregate(group=[{3, 4}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[4, 691200000, 13824000]]
-    LogicalTableScan(table=[[orders$q$6]])
+    LogicalTableScan(table=[[orders$q$5]])
 
->>>ordernow3$q$24-lp-DATABASE
+>>>ordernow3$q$19-lp-DATABASE
 LogicalProject(customer=[$0], order_count=[$1], time=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
     LogicalProject(customerid=[$0], order_count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(customerid=[$3], order_count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
         LogicalFilter(condition=[<(NOW(), +($4, 691200000:INTERVAL SECOND(9)))])
-          LogicalTableScan(table=[[orders$7]])
+          LogicalTableScan(table=[[orders$q$5]])
 
->>>orderaugment$q$27-lp-STREAM
+>>>orderaugment$q$21-lp-STREAM
 LogicalProject(_uuid=[$0], id=[$2], time=[$4], order_count=[$7])
   LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
-    LogicalTableScan(table=[[orders$q$6]])
+    LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
       LogicalProject(customer=[$0], order_count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[ordernow3$q$24]])
+        LogicalTableScan(table=[[ordernow3$q$19]])
 
->>>orderaugment$q$27-lp-DATABASE
+>>>orderaugment$q$21-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 

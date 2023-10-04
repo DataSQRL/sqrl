@@ -1,7 +1,7 @@
 >>>product$q$2
 LogicalTableScan(table=[[product$i$1]])
 
->>>product2$q$6
+>>>product2$q$5
 LogicalProject(_uuid=[$0], _uuid0=[$6], _uuid00=[$12], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _ingest_time0=[$13], productid0=[$14], name0=[$15], description0=[$16], category0=[$17], __timestamp19=[CASE(<($1, $18), $18, $1)])
   LogicalJoin(condition=[true], joinType=[inner])
     LogicalTableScan(table=[[product$q$2]])
