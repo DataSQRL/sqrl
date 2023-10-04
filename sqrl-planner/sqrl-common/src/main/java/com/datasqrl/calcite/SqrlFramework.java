@@ -1,7 +1,11 @@
 package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
@@ -26,6 +30,7 @@ public class SqrlFramework {
   private AtomicInteger uniqueMacroInt = new AtomicInteger(0);
   private AtomicInteger uniqueTableInt = new AtomicInteger(0);
   private AtomicInteger uniqueColumnInt = new AtomicInteger(0);
+  private Map<Name,AtomicInteger> tableNameShadowing = new HashMap<Name,AtomicInteger>();
 
   public SqrlFramework() {
     this(null, HintStrategyTable.builder().build(), NameCanonicalizer.SYSTEM);
@@ -54,5 +59,15 @@ public class SqrlFramework {
   public QueryPlanner resetPlanner() {
     this.queryPlanner = new QueryPlanner(this);
     return this.queryPlanner;
+  }
+
+  public int getUniqueTableId(Name tableName) {
+//    AtomicInteger counter = tableNameShadowing.get(tableName);
+//    if (counter==null) {
+//      counter = new AtomicInteger(0);
+//      tableNameShadowing.put(tableName,counter);
+//    }
+//    return counter.incrementAndGet();
+    return uniqueTableInt.incrementAndGet();
   }
 }

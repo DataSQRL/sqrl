@@ -3,9 +3,9 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
-import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.global.QueryIndexSummary;
+import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.metadata.*;
 import org.apache.calcite.rex.RexNode;
@@ -24,8 +24,8 @@ public class SqrlRelMdSelectivity extends RelMdSelectivity
   }
 
 
-  public static Double getSelectivity(VirtualRelationalTable table,
-      QueryIndexSummary constraints) {
+  public static Double getSelectivity(ScriptRelationalTable table,
+                                      QueryIndexSummary constraints) {
     //TODO: use actual selectivity statistics from table
     double selectivity = 1.0d;
     selectivity *= Math.pow(0.05,constraints.getEqualityColumns().size());

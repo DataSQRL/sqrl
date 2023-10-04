@@ -3,46 +3,26 @@
  */
 package com.datasqrl.plan.rules;
 
-import static com.datasqrl.error.ErrorCode.DISTINCT_ON_TIMESTAMP;
-import static com.datasqrl.error.ErrorCode.NOT_YET_IMPLEMENTED;
-import static com.datasqrl.error.ErrorCode.WRONG_INTERVAL_JOIN;
-import static com.datasqrl.error.ErrorCode.WRONG_TABLE_TYPE;
-
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
-import com.datasqrl.plan.hints.JoinCostHint;
-import com.datasqrl.plan.hints.SlidingAggregationHint;
-import com.datasqrl.plan.hints.SqrlHint;
-import com.datasqrl.plan.hints.SqrlHintStrategyTable;
-import com.datasqrl.plan.hints.TemporalJoinHint;
-import com.datasqrl.plan.hints.TopNHint;
-import com.datasqrl.plan.hints.TumbleAggregationHint;
-import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
-import com.datasqrl.plan.local.generate.TableFunctionBase;
-import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.model.LogicalStreamMetaData;
+import com.datasqrl.model.StreamType;
+import com.datasqrl.plan.hints.*;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
 import com.datasqrl.plan.rules.JoinAnalysis.Type;
 import com.datasqrl.plan.rules.JoinTable.NormType;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.*;
-import com.datasqrl.plan.table.VirtualRelationalTable.Child;
-import com.datasqrl.plan.table.VirtualRelationalTable.Root;
-import com.datasqrl.plan.util.SelectIndexMap;
+import com.datasqrl.plan.util.*;
 import com.datasqrl.plan.util.SelectIndexMap.Builder;
-import com.datasqrl.plan.util.PrimaryKeyMap;
-import com.datasqrl.plan.util.TimeTumbleFunctionCall;
-import com.datasqrl.plan.util.TimestampAnalysis;
 import com.datasqrl.plan.util.TimestampAnalysis.MaxTimestamp;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.util.SqrlRexUtil;
-import com.datasqrl.plan.util.TimePredicate;
-import com.datasqrl.plan.util.TimePredicateAnalyzer;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
 import com.google.common.base.Preconditions;
@@ -50,21 +30,6 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.linq4j.Ord;
@@ -72,34 +37,29 @@ import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.AggregateCall;
-import org.apache.calcite.rel.core.CorrelationId;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.rel.core.TableFunctionScan;
-import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.logical.LogicalAggregate;
-import org.apache.calcite.rel.logical.LogicalFilter;
-import org.apache.calcite.rel.logical.LogicalJoin;
-import org.apache.calcite.rel.logical.LogicalProject;
-import org.apache.calcite.rel.logical.LogicalSort;
-import org.apache.calcite.rel.logical.LogicalUnion;
+import org.apache.calcite.rel.core.*;
+import org.apache.calcite.rel.logical.*;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
-import org.apache.calcite.rex.RexFieldCollation;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexUtil;
-import org.apache.calcite.rex.RexWindowBounds;
+import org.apache.calcite.rex.*;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlKind;
-import com.datasqrl.model.StreamType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static com.datasqrl.error.ErrorCode.*;
 
 @Value
 public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP> {
@@ -148,30 +108,26 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   }
 
   public AnnotatedLP processTableScan(TableScan tableScan) {
-    //The base scan tables for all SQRL queries are VirtualRelationalTable
-    VirtualRelationalTable vtable = tableScan.getTable().unwrap(VirtualRelationalTable.class);
+    //The base scan tables for all SQRL queries are ScriptRelationalTable
+    ScriptRelationalTable vtable = tableScan.getTable().unwrap(ScriptRelationalTable.class);
     Preconditions.checkArgument(vtable != null);
 
-    //Fields might have been added to vtable, so we need to trim the selects
-    int numColumns = tableScan.getRowType().getFieldCount();
-
-    PhysicalRelationalTable queryTable = vtable.getRoot().getBase();
+    PhysicalRelationalTable queryTable = vtable.getRoot();
     config.getSourceTableConsumer().accept(queryTable);
+    vtable.lock();
 
     Optional<Integer> numRootPks = Optional.of(vtable.getRoot().getNumPrimaryKeys());
 
     if (exec.supports(EngineCapability.DENORMALIZE)) {
       //We have to append a timestamp to nested tables that are being normalized when
       //all columns are selected
-      boolean appendTimestamp = !vtable.isRoot() && numColumns == vtable.getNumColumns()
-          && config.isAddTimestamp2NormalizedChildTable();
-      return denormalizeTable(queryTable, vtable, numColumns, numRootPks, appendTimestamp);
+      boolean appendTimestamp = !vtable.isRoot() && config.isAddTimestamp2NormalizedChildTable();
+      return denormalizeTable(queryTable, vtable, numRootPks, appendTimestamp);
     } else {
       if (vtable.isRoot()) {
-        return createAnnotatedRootTableScan(queryTable, numColumns,
-            (VirtualRelationalTable.Root)vtable, numRootPks);
+        return createAnnotatedRootTable(tableScan, queryTable, numRootPks);
       } else {
-        return createAnnotatedChildTableScan(queryTable, numColumns, vtable, numRootPks);
+        return createAnnotatedChildTableScan(queryTable, (LogicalNestedTable) vtable, numRootPks);
       }
     }
   }
@@ -180,135 +136,104 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   public RelNode visit(TableFunctionScan functionScan) {
     exec.require(EngineCapability.TABLE_FUNCTION_SCAN); //We only support table functions on the read side
     Optional<TableFunction> tableFunction = SqrlRexUtil.getCustomTableFunction(functionScan);
-    errors.checkFatal(tableFunction.isPresent() && tableFunction.get() instanceof TableFunctionBase,
+    errors.checkFatal(tableFunction.isPresent() && tableFunction.get() instanceof QueryTableFunction,
         "Invalid table function encountered in query: %s", functionScan);
-    TableFunctionBase tblFct = (TableFunctionBase) tableFunction.get();
-    config.getSourceTableConsumer().accept(tblFct);
-    AnnotatedLP inputALP = tblFct.getAnalyzedLP().getConvertedRelnode();
-    //TODO: We don't currently support nested types for table functions and hence don't have to do shredding
-    Preconditions.checkArgument(!CalciteUtil.hasNesting(inputALP.getRelNode().getRowType()));
+    QueryTableFunction tblFct = (QueryTableFunction) tableFunction.get();
+    QueryRelationalTable queryTable = tblFct.getQueryTable();
+    config.getSourceTableConsumer().accept(queryTable);
+    queryTable.lock();
 
-    final int numPrimaryKeys, numColumns, targetLength = inputALP.getRelNode().getRowType().getFieldCount();
-    final TimestampInference timestamp;
-    if (tblFct instanceof AccessTableFunction) {
-      AccessTableFunction accessFct = (AccessTableFunction) tblFct;
-      VirtualRelationalTable vTable = (VirtualRelationalTable) accessFct.getTable().getVt();
-      Preconditions.checkArgument(vTable.isRoot());
-      numColumns = vTable.getNumColumns();
-      numPrimaryKeys = vTable.getNumPrimaryKeys();
-      timestamp = inputALP.getTimestamp();
-    } else {
-      ComputeTableFunction computeFct = (ComputeTableFunction) tblFct;
-      QueryRelationalTable queryTable = computeFct.getQueryTable();
-      numPrimaryKeys = queryTable.getNumPrimaryKeys();
-      numColumns = queryTable.getNumColumns();
-      timestamp = queryTable.getTimestamp().asDerived();
-    }
-
-    return setRelHolder(new AnnotatedLP(functionScan, inputALP.getType(),
-        PrimaryKeyMap.firstN(numPrimaryKeys),
-        timestamp,
-        SelectIndexMap.identity(numColumns, targetLength),
-        (tblFct instanceof AccessTableFunction? inputALP.getJoinTables():Collections.EMPTY_LIST),
-        Optional.of(inputALP.primaryKey.getLength()),
-        NowFilter.EMPTY, TopNConstraint.EMPTY, //Can ignore those since they will be inlined
-        inputALP.getSort(), List.of()));
+    return setRelHolder(createAnnotatedRootTable(functionScan, queryTable, Optional.empty()));
   }
 
   private AnnotatedLP denormalizeTable(PhysicalRelationalTable queryTable,
-                                       VirtualRelationalTable vtable, int numColumns, Optional<Integer> numRootPks,
+                                       ScriptRelationalTable vtable, Optional<Integer> numRootPks,
                                        boolean appendTimestamp) {
     //Shred the virtual table all the way to root:
     //First, we prepare all the data structures
-    Builder indexMap = SelectIndexMap.builder(numColumns);
+    Builder selectBuilder = SelectIndexMap.builder(vtable.getNumColumns());
     PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey = PrimaryKeyMap.builder();
     List<JoinTable> joinTables = new ArrayList<>();
     //Now, we shred
-    RelNode relNode = shredTable(vtable, primaryKey, indexMap, joinTables, true).build();
+    RelNode relNode = shredTable(vtable, primaryKey, selectBuilder, joinTables, true, appendTimestamp).build();
 
     //Set timestamp
     TimestampInference timestamp = queryTable.getTimestamp().asDerived();
     if (appendTimestamp) {
-      indexMap.add(timestamp.getTimestampCandidate().getIndex());
+      selectBuilder.add(timestamp.getTimestampCandidate().getIndex());
     }
 
+    int targetLength = relNode.getRowType().getFieldCount();
+    SelectIndexMap selectMap = selectBuilder.build(targetLength);
     PrimaryKeyMap pk = primaryKey.build();
     assert pk.getLength() == vtable.getNumPrimaryKeys();
-    int targetLength = relNode.getRowType().getFieldCount();
+
     AnnotatedLP result = new AnnotatedLP(relNode, queryTable.getType(),
-        pk,
-        timestamp,
-        indexMap.build(targetLength), joinTables, numRootPks,
+        pk, timestamp,
+        selectMap, joinTables, numRootPks,
         queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(),
         queryTable.getPullups().getSort(), List.of());
     return result;
   }
 
-  private AnnotatedLP createAnnotatedRootTableScan(PhysicalRelationalTable queryTable,
-                                                   int numColumns, VirtualRelationalTable.Root vtable, Optional<Integer> numRootPks) {
-    int targetLength = vtable.getNumColumns();
+  private AnnotatedLP createAnnotatedRootTable(RelNode relNode, PhysicalRelationalTable queryTable, Optional<Integer> numRootPks) {
+    int numColumns = queryTable.getNumColumns();
     PullupOperator.Container pullups = queryTable.getPullups();
-
-    RelBuilder builder = makeRelBuilder();
-    builder.scan(vtable.getNameId());
 
     TopNConstraint topN = pullups.getTopN();
     if (exec.isMaterialize(queryTable) && topN.isDeduplication()) {
       // We can drop topN since that gets enforced by writing to DB with primary key
       topN = TopNConstraint.EMPTY;
     }
-    IndexMap query2virtualTable = vtable.mapQueryTable();
-    return new AnnotatedLP(builder.build(), queryTable.getType(),
-        PrimaryKeyMap.firstN(vtable.getNumPrimaryKeys()),
-        queryTable.getTimestamp().asDerived().remapIndexes(query2virtualTable),
-        SelectIndexMap.identity(numColumns, targetLength),
-         List.of(JoinTable.ofRoot(vtable, NormType.NORMALIZED)), numRootPks,
-        pullups.getNowFilter().remap(query2virtualTable), topN,
-        pullups.getSort().remap(query2virtualTable), List.of());
+    return new AnnotatedLP(relNode, queryTable.getType(),
+        PrimaryKeyMap.firstN(queryTable.getNumPrimaryKeys()),
+        queryTable.getTimestamp().asDerived(),
+        SelectIndexMap.identity(numColumns, numColumns),
+         List.of(JoinTable.ofRoot(queryTable, NormType.NORMALIZED)), numRootPks,
+        pullups.getNowFilter(), topN,
+        pullups.getSort(), List.of());
   }
 
   private AnnotatedLP createAnnotatedChildTableScan(PhysicalRelationalTable queryTable,
-                                                    int numColumns, VirtualRelationalTable vtable, Optional<Integer> numRootPks) {
-    int targetLength = vtable.getNumColumns();
+                                                    LogicalNestedTable childTable, Optional<Integer> numRootPks) {
+    int numColumns = childTable.getNumColumns();
     PullupOperator.Container pullups = queryTable.getPullups();
     Preconditions.checkArgument(pullups.getTopN().isEmpty() && pullups.getNowFilter().isEmpty());
 
-    //For this stage, data is normalized and we need to re-scan the VirtualRelationalTable
+    //For this stage, data is normalized and we need to re-scan the LogicalNestedTable
     //because it now has a timestamp at the end
     RelBuilder builder = makeRelBuilder();
-    builder.scan(vtable.getNameId()); //table now has a timestamp column at the end
-    Preconditions.checkArgument(targetLength==builder.peek().getRowType().getFieldCount());
-    Preconditions.checkArgument(queryTable.getTimestamp().hasFixedTimestamp());
-    int timestampIdx = targetLength-1;
-    IndexMap remapTimestamp = IndexMap.singleton(queryTable.getTimestamp()
-        .getTimestampCandidate().getIndex(),timestampIdx);
+    builder.scan(childTable.getNameId()); //table now has a timestamp column at the end
+    Preconditions.checkArgument(numColumns==builder.peek().getRowType().getFieldCount());
 
-    //ToDo: need to join with root table on timestamp to ensure we are filtering out outdated
-    //versions from previous upserts
-    JoinTable joinTable = new JoinTable(vtable, null, JoinRelType.INNER, 0, NormType.NORMALIZED);
+    Preconditions.checkArgument(queryTable.getTimestamp().hasFixedTimestamp());
+    TimestampInference.Candidate timestamp = queryTable.getTimestamp().getTimestampCandidate();
+    int timestampIdx = numColumns-1;
+
+    JoinTable joinTable = new JoinTable(childTable, null, JoinRelType.INNER, 0, NormType.NORMALIZED);
     return new AnnotatedLP(builder.build(), queryTable.getType(),
-        PrimaryKeyMap.firstN(vtable.getNumPrimaryKeys()),
-        queryTable.getTimestamp().asDerived().remapIndexes(remapTimestamp),
-        SelectIndexMap.identity(numColumns, targetLength),
+        PrimaryKeyMap.firstN(childTable.getNumPrimaryKeys()),
+        TimestampInference.buildDerived().add(timestampIdx, timestamp).build(),
+        SelectIndexMap.identity(numColumns, numColumns),
          List.of(joinTable), numRootPks,
         NowFilter.EMPTY, TopNConstraint.EMPTY,
         SortOrder.EMPTY, List.of());
   }
 
-  private RelBuilder shredTable(VirtualRelationalTable vtable,
+  private RelBuilder shredTable(ScriptRelationalTable vtable,
                                 PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
                                 SelectIndexMap.Builder select, List<JoinTable> joinTables,
-                                boolean isLeaf) {
+                                boolean isLeaf, boolean appendTimestamp) {
     Preconditions.checkArgument(joinTables.isEmpty());
-    return shredTable(vtable, primaryKey, select, joinTables, null, JoinRelType.INNER, isLeaf);
+    return shredTable(vtable, primaryKey, select, joinTables, null, JoinRelType.INNER, isLeaf, appendTimestamp);
   }
 
-  private RelBuilder shredTable(VirtualRelationalTable vtable,
+  private RelBuilder shredTable(ScriptRelationalTable vtable,
       PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
       List<JoinTable> joinTables, Pair<JoinTable, RelBuilder> startingBase,
       JoinRelType joinType) {
     Preconditions.checkArgument(joinTables.isEmpty());
-    return shredTable(vtable, primaryKey, null, joinTables, startingBase, joinType, false);
+    return shredTable(vtable, primaryKey, null, joinTables, startingBase, joinType, false, false);
   }
 
   @Value
@@ -318,10 +243,11 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     JoinTable joinTable;
   }
 
-  private RelBuilder shredTable(VirtualRelationalTable vtable,
+  private RelBuilder shredTable(ScriptRelationalTable vtable,
                                 PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
                                 SelectIndexMap.Builder select, List<JoinTable> joinTables,
-                                Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType, boolean isLeaf) {
+                                Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType,
+                                boolean isLeaf, boolean appendTimestamp) {
     Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT);
 
     if (startingBase != null && startingBase.getKey().getTable().equals(vtable)) {
@@ -331,37 +257,43 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     ShredTableResult tableResult;
     if (vtable.isRoot()) {
-      tableResult = shredRootTable((VirtualRelationalTable.Root) vtable);
+      tableResult = shredRootTable((PhysicalRelationalTable) vtable);
     } else {
-      tableResult = shredChildTable((VirtualRelationalTable.Child) vtable, primaryKey, select, joinTables, startingBase,
+      tableResult = shredChildTable((LogicalNestedTable) vtable, primaryKey, select, joinTables, startingBase,
           joinType);
+      addAdditionalColumns((LogicalNestedTable) vtable, tableResult.getBuilder(), tableResult.getJoinTable());
     }
     int offset = tableResult.getOffset();
     for (int i = 0; i < vtable.getNumLocalPks(); i++) {
-      primaryKey.pkIndex(offset + i);
-      if (!isLeaf && startingBase == null) {
+      primaryKey.pkIndex(offset);
+      if (startingBase == null) {
+        select.add(offset);
+      }
+      offset++;
+    }
+    joinTables.add(tableResult.getJoinTable());
+    //All primary key columns have already been selected, add remaining columns to select
+    if (isLeaf && startingBase == null) {
+      //If we append a timestamp, we won't select the last column (which is the timestamp)
+      for (int i = 0; i < vtable.getNumColumns() - vtable.getNumPrimaryKeys() - (appendTimestamp?1:0); i++) {
         select.add(offset + i);
       }
     }
-    addAdditionalColumns(vtable, tableResult.getBuilder(), tableResult.getJoinTable());
-    joinTables.add(tableResult.getJoinTable());
-    constructLeafIndexMap(vtable, select, isLeaf, startingBase, tableResult.getOffset());
-
     return tableResult.getBuilder();
   }
 
-  private ShredTableResult shredRootTable(Root root) {
+  private ShredTableResult shredRootTable(PhysicalRelationalTable root) {
     RelBuilder builder = makeRelBuilder();
-    builder.scan(root.getBase().getNameId());
+    builder.scan(root.getNameId());
     JoinTable joinTable = JoinTable.ofRoot(root, NormType.DENORMALIZED);
     return new ShredTableResult(builder, 0, joinTable);
   }
 
-  private ShredTableResult shredChildTable(Child child, PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
+  private ShredTableResult shredChildTable(LogicalNestedTable child, PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
                                            SelectIndexMap.Builder select, List<JoinTable> joinTables,
                                            Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType) {
     RelBuilder builder = shredTable(child.getParent(), primaryKey, select, joinTables, startingBase,
-        joinType, false);
+        joinType, false, false);
     JoinTable parentJoinTable = Iterables.getLast(joinTables);
     int indexOfShredField = parentJoinTable.getOffset() + child.getShredIndex();
     CorrelationId id = builder.getCluster().createCorrel();
@@ -385,29 +317,20 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     return new ShredTableResult(builder, offset, joinTable);
   }
 
-  private void addAdditionalColumns(VirtualRelationalTable vtable, RelBuilder builder, JoinTable joinTable) {
-    //Add additional columns
+  /**
+   * We only have to add columns to nested child tables when shredding.
+   * For the root {@link PhysicalRelationalTable} we add the columns in {@link SQRLConverter} when planning the final
+   * {@link RelNode}.
+   *
+   * @param childTable
+   * @param builder
+   * @param joinTable
+   */
+  private void addAdditionalColumns(LogicalNestedTable childTable, RelBuilder builder, JoinTable joinTable) {
     JoinTable.Path path = JoinTable.Path.of(joinTable);
-    for (AddedColumn column : vtable.getAddedColumns()) {
-      //How do columns impact materialization preference (e.g. contain function that cannot be computed in DB) if they might get projected out again
+    for (AddedColumn column : childTable.getAddedColumns()) {
       RexNode added = column.getExpression(path.mapLeafTable(), builder.peek().getRowType());
       rexUtil.appendColumn(builder, added, column.getNameId());
-    }
-  }
-
-  public void constructLeafIndexMap(VirtualRelationalTable vtable,
-                                    SelectIndexMap.Builder select, boolean isLeaf, Pair<JoinTable, RelBuilder> startingBase,
-                                    int offset) {
-    //Construct indexMap if this shred table is the leaf (i.e. the one we are expanding)
-    if (isLeaf && startingBase == null) {
-      //All non-nested fields are part of the virtual table query row type
-      List<RelDataTypeField> queryRowType = vtable.getQueryRowType().getFieldList();
-      for (int i = 0; i < queryRowType.size() && select.remaining()>0; i++) {
-        RelDataTypeField field = queryRowType.get(i);
-        if (!CalciteUtil.isNestedTable(field.getType())) {
-          select.add(offset + i);
-        }
-      }
     }
   }
 

@@ -5,11 +5,11 @@ import static com.datasqrl.calcite.schema.ScriptPlanner.exportTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.table.LogicalNestedTable;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.util.Collection;
@@ -46,7 +46,7 @@ public class DAGPreparation {
 
     //Append timestamp column to nested, normalized tables, so we can propagate it
     //to engines that don't support denormalization
-    sqrlSchema.getTableStream(VirtualRelationalTable.Child.class)
+    sqrlSchema.getTableStream(LogicalNestedTable.class)
         .forEach(nestedTable -> {
           nestedTable.appendTimestampColumn(relBuilder.getTypeFactory());
         });
@@ -59,8 +59,8 @@ public class DAGPreparation {
 
   private Stream<PhysicalRelationalTable> getAllPhysicalTables(SqrlSchema sqrlSchema) {
     return Stream.concat(sqrlSchema.getTables(PhysicalRelationalTable.class).stream(),
-            sqrlSchema.getFunctionStream(ComputeTableFunction.class).map(
-                    ComputeTableFunction::getQueryTable));
+            sqrlSchema.getFunctionStream(QueryTableFunction.class).map(
+                    QueryTableFunction::getQueryTable));
   }
 
   private void finalizeTimestampOnTable(PhysicalRelationalTable table) {

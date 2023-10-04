@@ -11,10 +11,9 @@ import org.apache.calcite.rel.RelNode;
 
 /**
  * Represents a generic table object in a SQRL script.
- * This could either be a {@link PhysicalRelationalTable} which represents standard relational tables
- * or a {@link com.datasqrl.plan.local.generate.TableFunctionBase} which represents a table function.
+ * This could either be a {@link PhysicalRelationalTable} which represents standard relational tables.
  */
-public interface ScriptTable {
+public interface PhysicalTable {
 
   public String getNameId();
 
