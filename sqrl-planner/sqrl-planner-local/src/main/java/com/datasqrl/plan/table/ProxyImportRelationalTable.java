@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.table;
 
+import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -25,7 +26,7 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
  * <p>
  * This is a phyiscal relation with a schema that captures the input data.
  */
-public class ProxyImportRelationalTable extends PhysicalRelationalTable {
+public class ProxyImportRelationalTable extends PhysicalRelationalTable implements TimestampAssignableTable {
 
   @Getter
   private final ImportedRelationalTableImpl baseTable;
@@ -35,12 +36,6 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable {
       ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
     super(rootTableId, tableName, TableType.STREAM, rowType, timestamp,   1, tableStatistic);
     this.baseTable = baseTable;
-  }
-
-  public int addTimestampColumn(AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
-    int index = super.addColumn(column, typeFactory);
-    this.timestamp = TimestampInference.buildImport().addImport(index, 100).build();
-    return index;
   }
 
   @Override
@@ -58,5 +53,10 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable {
     SQRLConverter.Config.ConfigBuilder builder = SQRLConverter.Config.builder();
     getAssignedStage().ifPresent(stage -> builder.stage(stage));
     return builder;
+  }
+
+  @Override
+  public void assignTimestamp(int index) {
+    this.timestamp = TimestampInference.buildImport().addImport(index, 100).build();
   }
 }
