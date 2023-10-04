@@ -334,15 +334,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
   }
 
-  public static SelectIndexMap constructIndexMap(RelDataType tableRowType) {
-    int sourceLength = (int)tableRowType.getFieldList().stream().map(RelDataTypeField::getType)
-            .filter(Predicate.not(CalciteUtil::isNestedTable)).count();
-    SelectIndexMap.Builder selectBuilder = SelectIndexMap.builder(sourceLength);
-    tableRowType.getFieldList().stream().filter(field -> !CalciteUtil.isNestedTable(field.getType()))
-            .map(RelDataTypeField::getIndex).forEach(selectBuilder::add);
-    return selectBuilder.build(tableRowType.getFieldCount());
-  }
-
   private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
 
   @Override

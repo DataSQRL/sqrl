@@ -66,8 +66,7 @@ public class SQRLConverter {
   private RelNode convert(ProxyImportRelationalTable table, ExecutionAnalysis exec,
       boolean addWatermark) {
     RelBuilder builder = relBuilder.scan(table.getBaseTable().getNameId());
-    addColumns(builder, table.getAddedColumns(), SQRLLogicalPlanRewriter.constructIndexMap(table.getBaseTable()
-        .getRowType()), exec);
+    addColumns(builder, table.getAddedColumns(), SelectIndexMap.identity(table.getNumColumns(), table.getNumColumns()), exec);
     RelNode relNode = builder.build();
     if (addWatermark) {
       int timestampIdx = table.getTimestamp().getTimestampCandidate().getIndex();

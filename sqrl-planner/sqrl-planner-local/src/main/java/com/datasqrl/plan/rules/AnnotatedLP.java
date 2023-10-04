@@ -320,7 +320,7 @@ public class AnnotatedLP implements RelHolder {
     Preconditions.checkArgument(fieldNames.size() == select.getSourceLength());
     List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
     AnnotatedLP input = this;
-    if (!topN.isEmpty() && //If any selected field is nested we have to inline topN
+    if (!topN.isEmpty() && //TODO: remove this condition once we support denormalized data in database
         select.targetsAsList().stream().map(fields::get).map(RelDataTypeField::getType)
             .anyMatch(CalciteUtil::isNestedTable)) {
       input = input.inlineTopN(relBuilder, exec);
