@@ -15,7 +15,7 @@ import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.util.ScriptBuilder;
@@ -66,7 +66,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     Namespace ns = plan(script);
     SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
     Stream.concat(ns.getSchema().getFunctionStream(TableFunctionBase.class).map(ScriptTable.class::cast),
-        ns.getSchema().getTableStream(ScriptRelationalTable.class).map(ScriptTable.class::cast))
+        ns.getSchema().getTableStream(PhysicalRelationalTable.class).map(ScriptTable.class::cast))
         .sorted(Comparator.comparing(f->f.getNameId()))
         .forEach(table-> {
           SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE)

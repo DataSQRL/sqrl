@@ -6,9 +6,6 @@ package com.datasqrl.plan.rules;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.local.generate.TableFunctionBase;
-import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.plan.table.SourceRelationalTableImpl;
-import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
@@ -17,11 +14,8 @@ import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.TableFunctionScan;
-import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.tools.RelBuilder;
 
 /**
  * Expands table function calls for {@link TableFunctionBase} by substituting the

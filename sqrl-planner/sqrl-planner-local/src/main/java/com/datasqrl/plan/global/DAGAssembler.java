@@ -19,7 +19,7 @@ import com.datasqrl.plan.local.generate.TableFunctionBase;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptTable;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
@@ -50,7 +50,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -129,8 +128,8 @@ public class DAGAssembler {
       Set<AbstractRelationalTable> materializedTables = tableScanVisitor.scanTables;
       List<VirtualRelationalTable> normalizedTables = StreamUtil.filterByClass(materializedTables,
           VirtualRelationalTable.class).sorted().collect(Collectors.toList());
-      List<ScriptRelationalTable> denormalizedTables = StreamUtil.filterByClass(materializedTables,
-          ScriptRelationalTable.class).sorted().collect(Collectors.toList());
+      List<PhysicalRelationalTable> denormalizedTables = StreamUtil.filterByClass(materializedTables,
+          PhysicalRelationalTable.class).sorted().collect(Collectors.toList());
 
       //Fill all table sinks
       //First, all the tables that need to be written to the database in normalized form
@@ -150,7 +149,7 @@ public class DAGAssembler {
             processedRelnode));
       }
       //Second, all tables that need to be written in denormalized form
-      for (ScriptRelationalTable denormTable : denormalizedTables) {
+      for (PhysicalRelationalTable denormTable : denormalizedTables) {
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(denormTable.getNameId(), denormTable.getNumPrimaryKeys(),
                 denormTable.getRowType(),
@@ -256,7 +255,7 @@ public class DAGAssembler {
 
     @Override
     public RelNode visit(TableScan scan) {
-      ScriptRelationalTable table = scan.getTable().unwrap(ScriptRelationalTable.class);
+      PhysicalRelationalTable table = scan.getTable().unwrap(PhysicalRelationalTable.class);
       if (table == null) { //It's a normalized query
         VirtualRelationalTable vtable = scan.getTable().unwrap(VirtualRelationalTable.class);
         Preconditions.checkNotNull(vtable);

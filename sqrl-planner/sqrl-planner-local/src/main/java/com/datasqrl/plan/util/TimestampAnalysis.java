@@ -5,7 +5,7 @@ package com.datasqrl.plan.util;
 
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.function.StdTimeLibraryImpl;
-import com.datasqrl.plan.table.TimestampHolder;
+import com.datasqrl.plan.table.TimestampInference;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
@@ -23,8 +23,8 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class TimestampAnalysis {
 
-  public static Optional<TimestampHolder.Derived.Candidate> getPreservedTimestamp(
-      @NonNull RexNode rexNode, @NonNull TimestampHolder.Derived timestamp) {
+  public static Optional<TimestampInference.Candidate> getPreservedTimestamp(
+      @NonNull RexNode rexNode, @NonNull TimestampInference timestamp) {
     if (!(CalciteUtil.isTimestamp(rexNode.getType()))) {
       return Optional.empty();
     }
@@ -70,13 +70,13 @@ public class TimestampAnalysis {
 
   @Value
   public static class MaxTimestamp {
-    TimestampHolder.Derived.Candidate candidate;
+    TimestampInference.Candidate candidate;
     int timestampIdx;
     int aggCallIdx;
   }
 
   public static Optional<MaxTimestamp> findMaxTimestamp(List<AggregateCall> aggregateCalls,
-      TimestampHolder.Derived timestamp) {
+                                                        TimestampInference timestamp) {
     for (int idx = 0; idx < aggregateCalls.size(); idx++) {
       AggregateCall aggCall = aggregateCalls.get(idx);
       if (aggCall.getAggregation().equals(SqlStdOperatorTable.MAX)
@@ -86,7 +86,7 @@ public class TimestampAnalysis {
       ) {
         //Check if input is a timestamp candidate
         int inputIdx = aggCall.getArgList().get(0);
-        Optional<TimestampHolder.Derived.Candidate> candidate = timestamp.getOptCandidateByIndex(inputIdx);
+        Optional<TimestampInference.Candidate> candidate = timestamp.getOptCandidateByIndex(inputIdx);
         if (candidate.isPresent()) {
           return Optional.of(new MaxTimestamp(candidate.get(), inputIdx, idx));
         }

@@ -9,12 +9,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.DedupHint;
-import com.datasqrl.plan.table.NowFilter;
-import com.datasqrl.plan.table.PullupOperator;
-import com.datasqrl.plan.table.SortOrder;
-import com.datasqrl.plan.table.TableType;
-import com.datasqrl.plan.table.TimestampHolder;
-import com.datasqrl.plan.table.TopNConstraint;
+import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.util.CalciteUtil;
@@ -62,7 +57,7 @@ public class AnnotatedLP implements RelHolder {
   @NonNull
   public PrimaryKeyMap primaryKey;
   @NonNull
-  public TimestampHolder.Derived timestamp;
+  public TimestampInference timestamp;
   @NonNull
   public SelectIndexMap select;
   @Builder.Default
@@ -87,14 +82,14 @@ public class AnnotatedLP implements RelHolder {
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
       PrimaryKeyMap primaryKey,
-      TimestampHolder.Derived timestamp, SelectIndexMap select,
+                                         TimestampInference timestamp, SelectIndexMap select,
       AnnotatedLP input) {
     return build(relNode, type, primaryKey, timestamp, select, List.of(input));
   }
 
   public static AnnotatedLPBuilder build(RelNode relNode, TableType type,
       PrimaryKeyMap primaryKey,
-      TimestampHolder.Derived timestamp, SelectIndexMap select,
+      TimestampInference timestamp, SelectIndexMap select,
       List<AnnotatedLP> inputs) {
     return AnnotatedLP.builder().relNode(relNode).type(type).primaryKey(primaryKey)
         .timestamp(timestamp)
@@ -349,19 +344,19 @@ public class AnnotatedLP implements RelHolder {
     }
 
     //Determine which timestamp candidates have already been mapped and map the candidates accordingly
-    List<TimestampHolder.Derived.Candidate> candidates = new ArrayList<>();
-    for (TimestampHolder.Derived.Candidate c : input.timestamp.getCandidates()) {
+    TimestampInference.DerivedBuilder timestamp = TimestampInference.buildDerived();
+    for (TimestampInference.Candidate c : input.timestamp.getCandidates()) {
       Integer mappedIndex;
       if ((mappedIndex = remapping.get(c.getIndex()))!=null) {
-        candidates.add(c.withIndex(mappedIndex));
+        timestamp.add(mappedIndex, c);
       }
     }
-    if (candidates.isEmpty()) {
+    if (!timestamp.hasCandidates()) {
       //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
-      TimestampHolder.Derived.Candidate bestCandidate = input.timestamp.getBestCandidate();
+      TimestampInference.Candidate bestCandidate = input.timestamp.getBestCandidate();
       int nextIndex = index++;
       remapping.put(bestCandidate.getIndex(), nextIndex);
-      candidates.add(bestCandidate.withIndex(nextIndex));
+      timestamp.add(nextIndex, bestCandidate);
     }
 
     //Make sure we preserve sort orders if they aren't selected
@@ -408,7 +403,7 @@ public class AnnotatedLP implements RelHolder {
 
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
-        input.timestamp.restrictTo(candidates), updatedSelect,null,
+        timestamp.build(), updatedSelect,null,
         input.numRootPks,
         input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap),
         List.of(this));
