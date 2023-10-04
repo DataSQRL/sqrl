@@ -145,7 +145,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void addingSimpleColumns() {
     String script = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
         "Orders.col1 := (id + customerid)/2",
-        "OrderEntry := SELECT o.col1, o.\"time\", e.productid, coalesce(discount,0.0), o._ingest_time FROM Orders o JOIN o.entries e");
+        "Orders.entries.discount2 := coalesce(discount,0.0)",
+        "OrderEntry := SELECT o.col1, o.\"time\", e.productid, e.discount2, o._ingest_time FROM Orders o JOIN o.entries e");
     plan(script);
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(5));
