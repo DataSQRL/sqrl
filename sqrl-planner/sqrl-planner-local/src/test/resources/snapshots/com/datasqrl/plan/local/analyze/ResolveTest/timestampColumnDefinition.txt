@@ -1,4 +1,4 @@
 >>>customer$q$2-lp-STREAM
-LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], timestamp$0=[epochToTimestamp($5)], month$0=[endOfMonth(endOfMonth(epochToTimestamp($5)))]) hints[WatermarkHint options:[6]]
+LogicalProject(_uuid$0=[$0], _ingest_time$0=[$1], customerid$0=[$2], email$0=[$3], name$0=[$4], lastupdated$0=[$5], timestamp$0=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
   LogicalTableScan(table=[[customer$i$1]])
 
