@@ -174,7 +174,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
           typeFilter = filterOutTimestampColumn;
         }
         String content = Arrays.stream(ResultSetPrinter.toLines(resultSet,
-                s -> !ReservedName.UUID.matches(s) && !ReservedName.INGEST_TIME.matches(s) && !Name.isSystemHidden(s),
+                s -> !s.startsWith(ReservedName.UUID.getCanonical()) && !ReservedName.INGEST_TIME.matches(s) && !Name.isSystemHidden(s),
                 typeFilter))
             .sorted().collect(Collectors.joining(System.lineSeparator()));
         snapshot.addContent(content, query.getNameId(), "data");

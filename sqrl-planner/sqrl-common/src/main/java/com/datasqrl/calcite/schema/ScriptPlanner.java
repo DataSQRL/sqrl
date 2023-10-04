@@ -102,8 +102,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
     table.getVisibleColumns().stream().forEach(c -> {
-      selects.add(relBuilder.field(c.getId().getCanonical()));
-      fieldNames.add(subscription ? c.getId().getCanonical() : c.getName().getDisplay());
+      selects.add(relBuilder.field(c.getId().getDisplay()));
+      fieldNames.add(subscription ? c.getId().getDisplay() : c.getName().getDisplay());
     });
     relBuilder.project(selects, fieldNames);
     return new ResolvedExport(table1.getNameId(), relBuilder.build(), sink);
@@ -288,15 +288,14 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       ModifiableTable table1 = (ModifiableTable) table.unwrap(Table.class);
       SQRLTable sqrlTable = table1.getSqrlTable();
       Column column = sqrlTable.addColumn(nameUtil.toName(cName), null, true, node.getType());
-      column.setVtName(column.getId().getCanonical());
-      return table1.addColumn(column.getId().getCanonical(), node, framework.getTypeFactory());
+      column.setVtName(column.getId().getDisplay());
+      return table1.addColumn(column.getId().getDisplay(), node, framework.getTypeFactory());
     } else {
       throw new RuntimeException();
     }
   }
 
   public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
-    final AtomicInteger pkId = new AtomicInteger(0);
 
     public Result rewrite(SqlNode query, boolean materializeSelf, List<String> currentPath) {
       Context context = new Context(materializeSelf, currentPath, new HashMap<>(), false, currentPath.size() > 0, false);
@@ -527,7 +526,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           if (isNested) {
             RelOptTable table = planner.getCatalogReader().getSqrlTable(pathWalker.getAbsolutePath());
             pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
-                .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$" + pkId.incrementAndGet())
+                .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$"
+                    + planner.getUniqueMacroInt().incrementAndGet())
                 .collect(Collectors.toList());
           }
         } else { //treat self as a parameterized binding to the next function

@@ -557,7 +557,7 @@ public class SchemaInference {
       Map<String, String> filters = new HashMap<>();
       for (InputValueDefinition input : def.getInputValueDefinitions()) {
         Name fieldId = table.getField(Name.system(input.getName())).get().getId();
-        filters.put(input.getName(), fieldId.getCanonical());
+        filters.put(input.getName(), fieldId.getDisplay());
       }
       /**
        * Match parameters, error if there are any on the sqrl function

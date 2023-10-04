@@ -1,5 +1,5 @@
 >>>errors
-[FATAL] The primary key field _uuid$00 is nullable
+[FATAL] The primary key field _uuid0 is nullable
 in script:<script> [2:1]:
 IMPORT ecommerce-data.*;
 CustomerOrders := SELECT o.id, c.name FROM Orders o RIGHT JOIN Customer c ON o.customerid=c.customerid;

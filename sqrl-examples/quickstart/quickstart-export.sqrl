@@ -1,19 +1,19 @@
-IMPORT datasqrl.seedshop.Orders TIMESTAMP time + INTERVAL 8 DAY AS time;
+IMPORT datasqrl.seedshop.Orders TIMESTAMP time + INTERVAL 8 DAY AS timestamp;
 IMPORT datasqrl.seedshop.Products;
 IMPORT time.*;
 IMPORT mySourcePackage.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp;
 
-Orders.items.discount := discount?0.0;
-Orders.items.total := quantity * unit_price - discount;
+Orders.items.discount0 := discount?0.0;
+Orders.items.total := quantity * unit_price - discount0;
 Orders.totals := SELECT sum(total) as price,
-                  sum(discount) as saving FROM @.items;
+                  sum(discount0) as saving FROM @.items;
 
 Users := DISTINCT Users ON id ORDER BY timestamp DESC;
 Users.purchases := JOIN Orders ON Orders.customerid = @.id;
-Users.country := country?'none';
+Users.country0 := country?'none';
 Orders.user := JOIN Users ON @.customerid = Users.id;
 
-Users.spending := SELECT endOfWeek(p.time) AS week,
+Users.spending := SELECT endOfWeek(p.timestamp) AS week,
          sum(t.price) AS spend, sum(t.saving) AS saved
       FROM @.purchases p JOIN p.totals t
       GROUP BY week ORDER BY week DESC;
@@ -30,10 +30,10 @@ Products := DISTINCT Products ON id ORDER BY updated DESC;
 Orders.items.product := JOIN Products ON Products.id = @.productid;
 Products.ordered_items := JOIN Orders.items i ON i.productid = @.id;
 
-Products.volume_10day := SELECT u.country, sum(i.quantity) as quantity,
+Products.volume_10day := SELECT u.country0 AS country, sum(i.quantity) as quantity,
          sum(i.total) as spend, sum(i.quantity * @.weight_in_gram) as weight
       FROM @ JOIN @.ordered_items i JOIN i.parent o JOIN o.user u
-      WHERE o.time > now() - INTERVAL 10 DAY GROUP BY u.country;
+      WHERE o.timestamp > now() - INTERVAL 10 DAY GROUP BY u.country0;
 
 --
 Users.order_stats := SELECT sum(t.price) as spend, sum(t.saving) as saved,

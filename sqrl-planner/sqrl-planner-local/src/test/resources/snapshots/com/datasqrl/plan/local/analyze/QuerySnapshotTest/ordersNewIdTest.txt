@@ -1,15 +1,15 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>newid$q$18
-LogicalProject(___uuid$0$pk$1=[$0], _uuid$00=[$6], EXPR$1=[NOW()], EXPR$2=[parseTimestamp(timestampToString(epochToTimestamp(100:BIGINT)))], __timestamp=[CASE(<($4, $10), $10, $4)])
+>>>newid$q$15
+LogicalProject(___uuid$pk$1=[$0], _uuid0=[$6], EXPR$1=[NOW()], EXPR$2=[parseTimestamp(timestampToString(epochToTimestamp(100:BIGINT)))], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalJoin(condition=[true], joinType=[inner])
-    LogicalTableScan(table=[[orders$q$6]])
-    LogicalTableScan(table=[[orders$q$6]])
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[orders$q$5]])
 
->>>orders$q$6
-LogicalTableScan(table=[[orders$i$5]])
+>>>orders$q$5
+LogicalTableScan(table=[[orders$i$4]])
 
->>>product$q$15
-LogicalTableScan(table=[[product$i$14]])
+>>>product$q$13
+LogicalTableScan(table=[[product$i$12]])
 

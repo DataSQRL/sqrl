@@ -1,8 +1,8 @@
->>>orders2$q$18-lp-STREAM
-LogicalProject(_uuid=[$0], time$0=[$4])
-  LogicalTableScan(table=[[orders$q$6]])
+>>>orders2$q$15-lp-STREAM
+LogicalProject(_uuid=[$0], time=[$4])
+  LogicalTableScan(table=[[orders$q$5]])
 
->>>orders2$q$18-lp-DATABASE
-LogicalProject(_uuid=[$0], time$0=[$4])
-  LogicalTableScan(table=[[orders$7]])
+>>>orders2$q$15-lp-DATABASE
+LogicalProject(_uuid=[$0], time=[$4])
+  LogicalTableScan(table=[[orders$q$5]])
 

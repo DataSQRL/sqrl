@@ -49,9 +49,7 @@ public class SqrlFramework {
     CalciteConnectionConfigImpl config = new CalciteConnectionConfigImpl(info);
 
     this.nameCanonicalizer = nameCanonicalizer;
-    SqrlNameMatcher nameMatcher = new SqrlNameMatcher(nameCanonicalizer);
-    this.catalogReader = new CatalogReader(schema, typeFactory, config,
-        nameMatcher);
+    this.catalogReader = new CatalogReader(schema, typeFactory, config);
     this.sqrlOperatorTable = new OperatorTable(nameCanonicalizer, catalogReader, SqlStdOperatorTable.instance());
     this.queryPlanner = resetPlanner();
   }

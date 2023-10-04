@@ -24,7 +24,7 @@ public abstract class Field {
   }
 
   public Name getId() {
-    return name.suffix(Integer.toString(version));
+    return name;
   }
 
   public boolean isVisible() {
