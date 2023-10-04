@@ -4,10 +4,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.plan.local.ScriptTableDefinition;
-import com.datasqrl.plan.table.AbstractRelationalTable;
-import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.plan.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.*;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
@@ -33,10 +30,8 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
   }
 
   public void registerScriptTable(ScriptTableDefinition tblDef, SqrlFramework framework) {
-    framework.getSchema()
-        .add(tblDef.getBaseTable().getNameId(), tblDef.getBaseTable());
     //add to schema
-    for (Map.Entry<SQRLTable, VirtualRelationalTable> entry : tblDef.getShredTableMap().entrySet()) {
+    for (Map.Entry<SQRLTable, ScriptRelationalTable> entry : tblDef.getShredTableMap().entrySet()) {
       framework.getSchema().add(entry.getValue().getNameId(), entry.getValue());
 
       for (Field field : entry.getKey().getFields().getFields()) {

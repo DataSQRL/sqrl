@@ -15,13 +15,13 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.RelStageRunner;
-import com.datasqrl.plan.local.generate.TableFunctionBase;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
+import com.datasqrl.plan.table.LogicalNestedTable;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.ScriptTable;
-import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.local.generate.Debugger;
@@ -74,7 +74,7 @@ public class DAGAssembler {
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();
       Preconditions.checkNotNull(stage);
-      ScriptTable table = tableNode.getTable();
+      PhysicalTable table = tableNode.getTable();
       table.assignStage(stage); //this stage on the config below
       SQRLConverter.Config config = table.getBaseConfig().build();
       table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
@@ -126,16 +126,16 @@ public class DAGAssembler {
       Preconditions.checkArgument(tableScanVisitor.scanFunctions.isEmpty(),
           "Should not encounter table functions in materialized queries");
       Set<AbstractRelationalTable> materializedTables = tableScanVisitor.scanTables;
-      List<VirtualRelationalTable> normalizedTables = StreamUtil.filterByClass(materializedTables,
-          VirtualRelationalTable.class).sorted().collect(Collectors.toList());
+      List<LogicalNestedTable> normalizedTables = StreamUtil.filterByClass(materializedTables,
+              LogicalNestedTable.class).sorted().collect(Collectors.toList());
       List<PhysicalRelationalTable> denormalizedTables = StreamUtil.filterByClass(materializedTables,
           PhysicalRelationalTable.class).sorted().collect(Collectors.toList());
 
       //Fill all table sinks
       //First, all the tables that need to be written to the database in normalized form
-      for (VirtualRelationalTable normTable : normalizedTables) {
+      for (LogicalNestedTable normTable : normalizedTables) {
         RelNode scanTable = sqrlConverter.getRelBuilder().scan(normTable.getNameId()).build();
-        SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBase().getBaseConfig();
+        SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBaseConfig();
         configBuilder.fieldNames(normTable.getRowType().getFieldNames());
         Pair<RelNode, Integer> relPlusTimestamp = produceWriteTree(scanTable,
             configBuilder.build(), errors);
@@ -190,7 +190,7 @@ public class DAGAssembler {
     Lists.newArrayList(Iterables.filter(dag, SqrlDAG.TableNode.class)).stream()
         .filter(node -> node.getChosenStage().equals(streamStage))
         .map(SqrlDAG.TableNode::getTable).filter(tbl -> debugger.isDebugTable(tbl.getTableName()))
-        .sorted(Comparator.comparing(ScriptTable::getTableName))
+        .sorted(Comparator.comparing(PhysicalTable::getTableName))
         .forEach(table -> {
           Name debugSinkName = table.getTableName().suffix("debug" + debugCounter.incrementAndGet());
           TableSink sink = debugger.getDebugSink(debugSinkName, errors);
@@ -247,7 +247,7 @@ public class DAGAssembler {
   private static class VisitTableScans extends RelShuttleImpl {
 
     final Set<AbstractRelationalTable> scanTables = new HashSet<>();
-    final Set<TableFunctionBase> scanFunctions = new HashSet<>();
+    final Set<QueryTableFunction> scanFunctions = new HashSet<>();
 
     public void findScans(RelNode relNode) {
       relNode.accept(this);
@@ -257,7 +257,7 @@ public class DAGAssembler {
     public RelNode visit(TableScan scan) {
       PhysicalRelationalTable table = scan.getTable().unwrap(PhysicalRelationalTable.class);
       if (table == null) { //It's a normalized query
-        VirtualRelationalTable vtable = scan.getTable().unwrap(VirtualRelationalTable.class);
+        LogicalNestedTable vtable = scan.getTable().unwrap(LogicalNestedTable.class);
         Preconditions.checkNotNull(vtable);
         scanTables.add(vtable);
       } else {
@@ -268,8 +268,8 @@ public class DAGAssembler {
 
     @Override
     public RelNode visit(TableFunctionScan scan) {
-      SqrlRexUtil.getCustomTableFunction(scan).filter(TableFunctionBase.class::isInstance)
-          .map(TableFunctionBase.class::cast).ifPresent(scanFunctions::add);
+      SqrlRexUtil.getCustomTableFunction(scan).filter(QueryTableFunction.class::isInstance)
+          .map(QueryTableFunction.class::cast).ifPresent(scanFunctions::add);
       return super.visit(scan);
     }
   }

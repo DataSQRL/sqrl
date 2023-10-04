@@ -2,13 +2,12 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
-import com.datasqrl.plan.local.generate.TableFunctionBase;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
-import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.QueryRelationalTable;
 import com.google.common.base.Preconditions;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
@@ -22,25 +21,19 @@ public interface DatabaseQuery {
   }
 
   static DatabaseQuery.Instance of(AbstractRelationalTable table) {
-    Preconditions.checkArgument(table instanceof VirtualRelationalTable.Root, "Expected root virtual table");
-    VirtualRelationalTable.Root vTable = (VirtualRelationalTable.Root)table;
+    Preconditions.checkArgument(table instanceof PhysicalRelationalTable, "Expected physical table");
+    PhysicalRelationalTable vTable = (PhysicalRelationalTable)table;
     Preconditions.checkArgument(vTable.isRoot());
-    ExecutionStage stage = vTable.getRoot().getBase().getAssignedStage().get();
+    ExecutionStage stage = vTable.getAssignedStage().get();
     //TODO: We don't yet support server queries directly against materialized tables. Need a database stage in between.
     Preconditions.checkArgument(stage.isRead(), "We do not yet support queries directly against stream");
-    return new Instance(vTable.getNameId(), vTable.getRoot().getBase().getPlannedRelNode(), stage);
+    return new Instance(vTable.getNameId(), vTable.getPlannedRelNode(), stage);
   }
 
-  static DatabaseQuery.Instance of(TableFunctionBase function) {
-    ExecutionStage assignedStage;
-    if (function instanceof AccessTableFunction) {
-      AccessTableFunction accessFct = (AccessTableFunction) function;
-      assignedStage = accessFct.getAssignedStage().get();
-    } else {
-      ComputeTableFunction computeFct = (ComputeTableFunction) function;
-      assignedStage = computeFct.getQueryTable().getAssignedStage().get();
-    }
-    return new Instance(function.getNameId(), function.getPlannedRelNode(), assignedStage);
+  static DatabaseQuery.Instance of(QueryTableFunction function) {
+    QueryRelationalTable queryTable = function.getQueryTable();
+    ExecutionStage assignedStage = queryTable.getAssignedStage().get();
+    return new Instance(queryTable.getNameId(), queryTable.getPlannedRelNode(), assignedStage);
   }
 
 

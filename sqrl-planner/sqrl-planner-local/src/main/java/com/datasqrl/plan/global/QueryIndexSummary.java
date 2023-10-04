@@ -8,19 +8,11 @@ import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.IndexableFunction.OperandSelector;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.rules.SqrlRelMdRowCount;
-import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.collect.ImmutableSet;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import lombok.EqualsAndHashCode.Include;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.calcite.rel.RelCollation;
-import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -47,7 +39,7 @@ public class QueryIndexSummary {
   public static final String INDEX_NAME = "_index_";
 
   @Include
-  VirtualRelationalTable table;
+  ScriptRelationalTable table;
   @Include
   Set<Integer> equalityColumns;
   @Include
@@ -62,7 +54,7 @@ public class QueryIndexSummary {
    */
   double count = 1.0;
 
-  public static Optional<QueryIndexSummary> ofFilter(@NonNull VirtualRelationalTable table, RexNode filter,
+  public static Optional<QueryIndexSummary> ofFilter(@NonNull ScriptRelationalTable table, RexNode filter,
       SqrlRexUtil rexUtil) {
     List<RexNode> conjunctions = rexUtil.getConjunctions(filter);
     Set<Integer> equalityColumns = new HashSet<>();
@@ -91,7 +83,7 @@ public class QueryIndexSummary {
     }
   }
 
-  public static Optional<QueryIndexSummary> ofSort(@NonNull VirtualRelationalTable table, RexNode node) {
+  public static Optional<QueryIndexSummary> ofSort(@NonNull ScriptRelationalTable table, RexNode node) {
     if (node instanceof RexCall) {
       RexCall call = (RexCall) node;
       IndexableFinder idxFinder = new IndexableFinder();
@@ -104,7 +96,7 @@ public class QueryIndexSummary {
     return Optional.empty();
   }
 
-  public static Optional<QueryIndexSummary> ofSort(@NonNull VirtualRelationalTable table, int columnIndex) {
+  public static Optional<QueryIndexSummary> ofSort(@NonNull ScriptRelationalTable table, int columnIndex) {
     return Optional.of(new QueryIndexSummary(table, Set.of(), ImmutableSet.of(columnIndex), Set.of(), 1.0));
   }
 

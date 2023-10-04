@@ -35,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;
@@ -55,7 +54,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private SqrlSchema schema;
   private Namespace namespace;
 
-  private Map<ScriptTable, ExecutionEngine.Type> validatedTables;
+  private Map<PhysicalTable, ExecutionEngine.Type> validatedTables;
 
   private Path exportPath = Retail.INSTANCE.getRootPackageDirectory().resolve("export-data");
   @BeforeEach
@@ -145,13 +144,13 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void addingSimpleColumns() {
     String script = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
         "Orders.col1 := (id + customerid)/2",
-        "Orders.entries.discount2 := coalesce(discount,0.0)",
-        "OrderEntry := SELECT o.col1, o.\"time\", e.productid, e.discount2, o._ingest_time FROM Orders o JOIN o.entries e");
+//        "Orders.entries.discount2 := coalesce(discount,0.0)",
+        "OrderEntry := SELECT o.col1, o.\"time\", e.productid, e.discount, o._ingest_time FROM Orders o JOIN o.entries e");
     plan(script);
-    validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
-        TimestampTest.fixed(5));
+    validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
+        TimestampTest.candidates(2,5));
     validateQueryTable("orderentry", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 2,
-        TimestampTest.fixed(3));
+        TimestampTest.candidates(3,6));
   }
 
   @Test

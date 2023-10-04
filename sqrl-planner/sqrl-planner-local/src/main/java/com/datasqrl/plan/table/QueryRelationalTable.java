@@ -19,8 +19,7 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
 
   private final LPAnalysis analyzedLP;
 
-  public QueryRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
-      @NonNull LPAnalysis analyzedLP) {
+  public QueryRelationalTable(Name rootTableId, Name tableName, @NonNull LPAnalysis analyzedLP) {
     super(rootTableId, tableName,
         analyzedLP.getConvertedRelnode().getType(),
         analyzedLP.getConvertedRelnode().getRelNode().getRowType(),

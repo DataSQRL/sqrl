@@ -2,24 +2,20 @@ package com.datasqrl.plan.rules;
 
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.hints.WatermarkHint;
-import com.datasqrl.plan.local.generate.AccessTableFunction;
-import com.datasqrl.plan.local.generate.ComputeTableFunction;
-import com.datasqrl.plan.table.AddedColumn;
-import com.datasqrl.plan.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
-import com.datasqrl.plan.table.ScriptTable;
+import com.datasqrl.plan.hints.WatermarkHint;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.util.SelectIndexMap;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.function.Consumer;
-
 import lombok.Builder;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
+
+import java.util.List;
+import java.util.function.Consumer;
 
 @Value
 public class SQRLConverter {
@@ -48,22 +44,18 @@ public class SQRLConverter {
     return alp.getRelNode();
   }
 
-  public RelNode convert(ScriptTable table, Config config, ErrorCollector errors) {
+  public RelNode convert(PhysicalTable table, Config config, ErrorCollector errors) {
     return convert(table,config,true,errors);
   }
 
-  public RelNode convert(ScriptTable table, Config config,
-      boolean addWatermark, ErrorCollector errors) {
+  public RelNode convert(PhysicalTable table, Config config,
+                         boolean addWatermark, ErrorCollector errors) {
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
     if (table instanceof ProxyImportRelationalTable) {
       return convert((ProxyImportRelationalTable) table, exec, addWatermark);
-    } else if (table instanceof AccessTableFunction) {
-      AccessTableFunction tblFct = (AccessTableFunction) table;
-      AnnotatedLP alp = convert(tblFct.getAnalyzedLP().getOriginalRelnode(), config, errors);
-      return alp.getRelNode();
-    } else { //either QueryRelationalTable or ComputeTableFunction
-      QueryRelationalTable queryTable = (table instanceof ComputeTableFunction)
-          ?((ComputeTableFunction)table).getQueryTable():(QueryRelationalTable) table;
+    } else { //either QueryRelationalTable or QueryTableFunction
+      QueryRelationalTable queryTable = (table instanceof QueryTableFunction)
+          ?((QueryTableFunction)table).getQueryTable():(QueryRelationalTable) table;
       AnnotatedLP alp = convert(queryTable.getOriginalRelnode(), config, errors);
       RelBuilder builder = relBuilder.push(alp.getRelNode());
       addColumns(builder, queryTable.getAddedColumns(), alp.select, exec);
@@ -86,7 +78,7 @@ public class SQRLConverter {
     return relNode;
   }
 
-  private RelBuilder addColumns(RelBuilder builder, List<AddedColumn> columns,
+  private RelBuilder addColumns(RelBuilder builder, Iterable<AddedColumn> columns,
                                 SelectIndexMap select, ExecutionAnalysis exec) {
     for (AddedColumn column : columns) {
       exec.requireRex(column.getBaseExpression());
@@ -105,7 +97,7 @@ public class SQRLConverter {
     ExecutionStage stage;
 
     @Builder.Default
-    Consumer<ScriptTable> sourceTableConsumer = (t) -> {};
+    Consumer<PhysicalRelationalTable> sourceTableConsumer = (t) -> {};
     @Builder.Default
     int slideWindowPanes = DEFAULT_SLIDING_WINDOW_PANES;
 
