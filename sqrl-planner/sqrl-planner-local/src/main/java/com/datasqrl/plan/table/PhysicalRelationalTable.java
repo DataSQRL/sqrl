@@ -31,7 +31,7 @@ import org.apache.calcite.util.ImmutableBitSet;
  * This is a physical relation that gets materialized in the write DAG or computed in the read DAG.
  */
 @Getter
-public abstract class ScriptRelationalTable extends AbstractRelationalTable implements ScriptTable {
+public abstract class PhysicalRelationalTable extends AbstractRelationalTable implements ScriptTable {
 
   //Name assigned by user - different from nameId which is unique
   @NonNull
@@ -39,7 +39,7 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable impl
   @NonNull
   protected final TableType type;
   @NonNull
-  protected final TimestampHolder.Base timestamp;
+  protected TimestampInference timestamp;
   @NonNull
   protected final int numPrimaryKeys;
   @NonNull
@@ -59,9 +59,9 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable impl
   @NonNull
   protected final TableStatistic tableStatistic;
 
-  public ScriptRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
-      @NonNull TableType type, @NonNull RelDataType rowType, @NonNull TimestampHolder.Base timestamp,
-      @NonNull int numPrimaryKeys, @NonNull TableStatistic tableStatistic) {
+  public PhysicalRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
+                                 @NonNull TableType type, @NonNull RelDataType rowType, @NonNull TimestampInference timestamp,
+                                 @NonNull int numPrimaryKeys, @NonNull TableStatistic tableStatistic) {
     super(rootTableId);
     this.tableName = tableName;
     this.type = type;

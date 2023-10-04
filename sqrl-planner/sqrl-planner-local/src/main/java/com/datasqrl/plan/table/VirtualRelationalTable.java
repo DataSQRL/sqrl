@@ -57,7 +57,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
   @NonNull
   protected RelDataType rowType;
   /**
-   * The row type of the underlying {@link ScriptRelationalTable} at the shredding level of this
+   * The row type of the underlying {@link PhysicalRelationalTable} at the shredding level of this
    * virtual table including any nested relations. This is distinct from the rowType of the virtual
    * table which is padded with parent primary keys and does not contain nested relations.
    */
@@ -162,9 +162,9 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
   public static class Root extends VirtualRelationalTable implements TimestampAssignableTable {
 
     @NonNull
-    final ScriptRelationalTable base;
+    final PhysicalRelationalTable base;
 
-    protected Root(Name nameId, @NonNull RelDataType rowType, @NonNull ScriptRelationalTable base) {
+    protected Root(Name nameId, @NonNull RelDataType rowType, @NonNull PhysicalRelationalTable base) {
       super(nameId, rowType, base.getRowType(), base.getNumPrimaryKeys());
       this.base = base;
     }
@@ -210,7 +210,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     @Override
     public void
     assignTimestamp(int index) {
-      getBase().getTimestamp().getCandidateByIndex(index == -1 ? getBase().getNumColumns() - 1 : index).lockTimestamp();
+      getBase().getTimestamp().getCandidateByIndex(index == -1 ? getBase().getNumColumns() - 1 : index).fixAsTimestamp();
     }
 
     public interface RootVirtualTableVisitor<R, C> extends TableVisitor<R, C> {
@@ -271,7 +271,7 @@ public abstract class VirtualRelationalTable extends AbstractRelationalTable imp
     }
 
     public void appendTimestampColumn(@NonNull RelDataTypeFactory typeFactory) {
-      ScriptRelationalTable base = getRoot().getBase();
+      PhysicalRelationalTable base = getRoot().getBase();
       int timestampIdx = base.getTimestamp().getTimestampCandidate().getIndex();
       RelDataTypeField timestampField = base.getRowType().getFieldList().get(timestampIdx);
       rowType = CalciteUtil.appendField(rowType, timestampField.getName(),

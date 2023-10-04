@@ -8,7 +8,7 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.local.generate.ComputeTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -38,17 +38,11 @@ public class DAGPreparation {
     apiManager.getExports().forEach((sqrlTable, log) ->
         exports.add(exportTable(sqrlTable, log.getSink(), relBuilder, true)));
 
-    List<ScriptRelationalTable> scriptTables = sqrlSchema.getTables(ScriptRelationalTable.class);
-    //Assign timestamps to imports which should propagate and set all remaining timestamps
-    //This also replaces the RelNode for import tables with the actual import table in preparation
-    //for stitching the DAG together.
-    StreamUtil.filterByClass(scriptTables, ProxyImportRelationalTable.class)
-        .forEach(this::finalizeSourceTable);
-    //Check that all script tables and the query tables of ComputeTableFunctions have timestamps
-    Preconditions.checkArgument(Stream.concat(scriptTables.stream(),
-        sqrlSchema.getFunctionStream(ComputeTableFunction.class).map(
-            ComputeTableFunction::getQueryTable))
-        .allMatch(table -> !table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp()));
+    //Assign timestamps to imports which propagate and restrict remaining timestamps in downstream tables
+    StreamUtil.filterByClass(getAllPhysicalTables(sqrlSchema), ProxyImportRelationalTable.class)
+        .forEach(this::finalizeTimestampOnTable);
+    //Some downstream tables have multiple timestamp candidates because the timestamp was selected multiple times, pick the best one
+    getAllPhysicalTables(sqrlSchema).forEach(this::finalizeTimestampOnTable);
 
     //Append timestamp column to nested, normalized tables, so we can propagate it
     //to engines that don't support denormalization
@@ -63,11 +57,18 @@ public class DAGPreparation {
     ).collect(Collectors.toList());
   }
 
-  private void finalizeSourceTable(ProxyImportRelationalTable table) {
-    // Determine timestamp
-    if (!table.getTimestamp().hasFixedTimestamp()) {
-      table.getTimestamp().getBestCandidate().lockTimestamp();
+  private Stream<PhysicalRelationalTable> getAllPhysicalTables(SqrlSchema sqrlSchema) {
+    return Stream.concat(sqrlSchema.getTables(PhysicalRelationalTable.class).stream(),
+            sqrlSchema.getFunctionStream(ComputeTableFunction.class).map(
+                    ComputeTableFunction::getQueryTable));
+  }
+
+  private void finalizeTimestampOnTable(PhysicalRelationalTable table) {
+    // Determine best timestamp if not already fixed
+    if (table.getType().hasTimestamp() && !table.getTimestamp().hasFixedTimestamp()) {
+      table.getTimestamp().selectTimestamp();
     }
+    Preconditions.checkArgument(!table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp());
   }
 
   /**
