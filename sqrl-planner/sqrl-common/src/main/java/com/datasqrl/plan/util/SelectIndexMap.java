@@ -23,8 +23,6 @@ import org.apache.commons.lang3.ArrayUtils;
 @ToString
 public class SelectIndexMap implements IndexMap, Serializable {
 
-  private static final int INVALID_INDEX = -10;
-
   public static final SelectIndexMap EMPTY = new SelectIndexMap(new int[0]);
 
   final int[] targets;
@@ -32,7 +30,6 @@ public class SelectIndexMap implements IndexMap, Serializable {
   @Override
   public int map(int index) {
     int result = targets[index];
-    if (result==INVALID_INDEX) throw new InvalidIndexException(index);
     return result;
   }
 
@@ -40,13 +37,7 @@ public class SelectIndexMap implements IndexMap, Serializable {
     return targets.length;
   }
 
-  private void validateIndexes() {
-    OptionalInt invalid = IntStream.range(0, targets.length).filter(idx -> targets[idx]==INVALID_INDEX).findFirst();
-    if (invalid.isPresent()) throw new InvalidIndexException(invalid.getAsInt());
-  }
-
   public int[] targetsAsArray() {
-    validateIndexes();
     return targets.clone();
   }
 
@@ -84,8 +75,7 @@ public class SelectIndexMap implements IndexMap, Serializable {
   public SelectIndexMap remap(IndexMap remap) {
     Builder b = new Builder(targets.length);
     for (int i = 0; i < targets.length; i++) {
-      if (targets[i]==INVALID_INDEX) b.skip();
-      else b.add(remap.map(map(i)));
+      b.add(remap.map(map(i)));
     }
     return b.build();
   }
@@ -107,7 +97,6 @@ public class SelectIndexMap implements IndexMap, Serializable {
     return b.build(targetLength);
   }
 
-
   public static final class Builder {
 
     final int[] map;
@@ -123,8 +112,7 @@ public class SelectIndexMap implements IndexMap, Serializable {
 
     public Builder addAll(SelectIndexMap indexMap) {
       for (int i = 0; i < indexMap.targets.length; i++) {
-        if (indexMap.targets[i]==INVALID_INDEX) skip();
-        else add(indexMap.targets[i]);
+        add(indexMap.targets[i]);
       }
       return this;
     }
@@ -141,12 +129,6 @@ public class SelectIndexMap implements IndexMap, Serializable {
       return this;
     }
 
-    public Builder skip() {
-      map[offset] = INVALID_INDEX;
-      offset++;
-      return this;
-    }
-
     public SelectIndexMap build(int targetLength) {
       Preconditions.checkArgument(Arrays.stream(map).noneMatch(i -> i >= targetLength));
       return build();
@@ -159,12 +141,4 @@ public class SelectIndexMap implements IndexMap, Serializable {
 
 
   }
-
-  @AllArgsConstructor
-  public static class InvalidIndexException extends RuntimeException {
-
-    int index;
-
-  }
-
 }
