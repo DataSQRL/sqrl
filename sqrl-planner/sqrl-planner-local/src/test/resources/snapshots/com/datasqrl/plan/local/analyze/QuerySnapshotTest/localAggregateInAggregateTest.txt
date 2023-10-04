@@ -1,8 +1,0 @@
->>>errors
-[FATAL] Could not plan expression: At line 3, column 28: Column 'joinDeclaration' not found in any table
-in script:<script> [3:1]:
-IMPORT ecommerce-data.Product;
-Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
-Product.total := SUM(COUNT(joinDeclaration));
-^
-

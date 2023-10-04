@@ -1,9 +1,9 @@
 >>>customer$q$2-lp-STREAM
 LogicalTableScan(table=[[customer$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
 
->>>product$q$15-lp-STREAM
-LogicalTableScan(table=[[product$i$14]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+>>>product$q$13-lp-STREAM
+LogicalTableScan(table=[[product$i$12]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
 
->>>orders$q$6-lp-STREAM
-LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+>>>orders$q$5-lp-STREAM
+LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 

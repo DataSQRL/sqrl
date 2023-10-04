@@ -1,9 +1,9 @@
->>>d2$q$10
-LogicalProject(___uuid$0$pk$1=[$0], ___idx$0$pk$2=[$6], discount=[$10], time$0=[$4])
+>>>d2$q$9
+LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], discount=[$10], time=[$4])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])
     Uncollect
-      LogicalProject($f0=[$cor1.entries$0])
+      LogicalProject($f0=[$cor1.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>orders$q$2

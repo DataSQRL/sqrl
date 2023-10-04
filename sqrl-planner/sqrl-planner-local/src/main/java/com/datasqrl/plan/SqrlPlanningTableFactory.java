@@ -20,6 +20,7 @@ import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -71,10 +72,8 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
 
-    List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames().stream()
-        //todo: one versioned field comes in with a distinct on statement, fix it and remove this line
-        .map(s->s.contains("$") ? s.split("\\$")[0] : s) //remove version info
-        .collect(Collectors.toList());
+    List<String> relFieldNames = new ArrayList<>(
+        processedRel.getRelNode().getRowType().getFieldNames());
 
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
         .map(idx -> relFieldNames.get(idx))

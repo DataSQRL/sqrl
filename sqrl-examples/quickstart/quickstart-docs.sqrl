@@ -3,10 +3,10 @@ IMPORT datasqrl.seedshop.Products;
 IMPORT time.*;
 IMPORT datasqrl.seedshop.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp;
 
-Orders.items.discount := discount?0.0;
-Orders.items.total := quantity * unit_price - discount;
+Orders.items.discount0 := discount?0.0;
+Orders.items.total := quantity * unit_price - discount0;
 Orders.totals := SELECT sum(total) as price,
-                  sum(discount) as saving FROM @.items;
+                  sum(discount0) as saving FROM @.items;
 
 -- Replacing users from import
 Users := DISTINCT Users ON id ORDER BY timestamp DESC;
@@ -52,12 +52,12 @@ UsersWithSpending := SELECT u.id, u.email, s.spend AS spend FROM Users u JOIN u.
 HighSpendingUsers := SELECT u.id, u.email FROM Users u JOIN u.order_stats s WHERE s.spend > 1000;
 
 Users.spending_last_week := SELECT sum(i.total) AS spend,
-            sum(i.discount) AS saved
+            sum(i.discount0) AS saved
       FROM @.purchases p JOIN p.items i
       WHERE p.time > now() - INTERVAL 7 DAY;
 
 Users.total_spend := SELECT sum(i.total) AS spend,
-            sum(i.discount) AS saved
+            sum(i.discount0) AS saved
       FROM @ JOIN Orders o ON o.customerid = @.id JOIN o.items i;
 
 RecentTotal := SELECT sum(i.total) AS total, sum(i.quantity) AS quantity
