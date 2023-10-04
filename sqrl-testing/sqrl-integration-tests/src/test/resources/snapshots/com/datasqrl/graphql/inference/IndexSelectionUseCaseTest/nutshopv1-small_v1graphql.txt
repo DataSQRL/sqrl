@@ -1,7 +1,7 @@
 items$9_btree_c0c2c3 - 1558.000
 items$9_btree_c0c3c7 - 394.250
-items$9_btree_c0c4c6 - 788.500
-items$9_btree_c0c6c2 - 99.750
+items$9_btree_c0c4c5 - 788.500
+items$9_btree_c0c5c2 - 99.750
 items$9_btree_c0c7c2 - 204.250
 orders$7_btree_c2c3c4 - 7796.500
 orders$7_btree_c2c4 - 47.500

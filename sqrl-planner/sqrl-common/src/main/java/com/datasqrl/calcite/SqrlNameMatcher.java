@@ -18,77 +18,13 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 
 /**
- * Allows for choosing the most recent canonicalize column in a table.
- * e.g. NAME -> name$1
+ * Allows for choosing the most recent table function.
  */
 @AllArgsConstructor
-public class SqrlNameMatcher implements SqlNameMatcher {
+public class SqrlNameMatcher {
   NameCanonicalizer canonicalizer;
 
   final SqlNameMatcher delegate = SqlNameMatchers.withCaseSensitive(false);
-
-  @Override
-  public boolean isCaseSensitive() {
-    return false;
-  }
-
-  @Override
-  public boolean matches(String s, String s1) {
-    return delegate.matches(s, s1);
-  }
-
-  @Override
-  public <K extends List<String>, V> V get(Map<K, V> map, List<String> list, List<String> list1) {
-    return delegate.get(map, list, list1);
-  }
-
-  @Override
-  public String bestString() {
-    return delegate.bestString();
-  }
-
-  @Override
-  public RelDataTypeField field(RelDataType relDataType, String s) {
-    RelDataTypeField f = relDataType.getField(s, false, false);
-    if (f != null) {
-      return f;
-    }
-
-    String name = getLatestVersion(canonicalizer, relDataType.getFieldNames(), s);
-    if (name == null) {
-      return null;
-    }
-    int i = indexOf(relDataType.getFieldNames(), name);
-    return relDataType.getFieldList().get(i);
-  }
-
-  @Override
-  public int indexOf(Iterable<String> names, String name) {
-    List<String> n = new ArrayList<>();
-    names.iterator().forEachRemaining(n::add);
-
-    List<Name> names1 = n.stream().map(na->canonicalizer.name(na))
-        .collect(Collectors.toList());
-
-    if (names1.contains(canonicalizer.name(name))) {
-      return n.indexOf(name);
-    }
-
-    String versioned = getLatestVersion(canonicalizer, n, name);
-
-    return n.indexOf(versioned);
-  }
-
-  @Override
-  public int frequency(Iterable<String> iterable, String s) {
-    return delegate.frequency(iterable, s);
-  }
-
-  @Override
-  public Set<String> createSet() {
-    return delegate.createSet();
-  }
-
 
   public static String getLatestVersion(NameCanonicalizer canonicalizer, Collection<String> functionNames, String prefix) {
     //todo: use name comparator

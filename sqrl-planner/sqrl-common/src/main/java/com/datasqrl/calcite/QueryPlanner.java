@@ -71,7 +71,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class QueryPlanner {
 
-  private static final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
+  private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
+  private final AtomicInteger uniquePkId = new AtomicInteger(0);
   private final RelOptCluster cluster;
   private final RelOptPlanner planner;
   private final CatalogReader catalogReader;

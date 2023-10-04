@@ -1,27 +1,27 @@
->>>joindeclaration$q$8
-LogicalProject(__productid$0$pk$1=[$0], productid$0=[$7], _uuid$0=[$8], _ingest_time$0=[$9], name$0=[$10], description$0=[$11], category$0=[$12], __timestamp=[CASE(<($2, $9), $9, $2)])
+>>>joindeclaration$q$6
+LogicalProject(__productid$pk$1=[$0], productid=[$7], _uuid=[$8], _ingest_time=[$9], name=[$10], description=[$11], category=[$12], __timestamp=[CASE(<($2, $9), $9, $2)])
   LogicalJoin(condition=[=($0, $7)], joinType=[inner])
     LogicalFilter(condition=[=($6, 1)])
-      LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[product$q$5]])
+      LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[product$q$4]])
     LogicalFilter(condition=[=($6, 1)])
-      LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[product$q$5]])
+      LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[product$q$4]])
 
 >>>product$q$2
 LogicalTableScan(table=[[product$i$1]])
 
->>>product$q$5
-LogicalProject(productid$0=[$2], _uuid$0=[$0], _ingest_time$0=[$1], name$0=[$3], description$0=[$4], category$0=[$5])
+>>>product$q$4
+LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5])
   LogicalTableScan(table=[[product$q$2]])
 
->>>product2$q$13
-LogicalProject(productid0=[$0], productid=[$8], __timestamp16=[CASE(<($2, $14), $14, $2)], __productid$0$pk$1=[$7], _rownum0=[$15])
+>>>product2$q$10
+LogicalProject(productid0=[$0], productid=[$8], __timestamp16=[CASE(<($2, $14), $14, $2)], __productid$pk$1=[$7], _rownum0=[$15])
   LogicalJoin(condition=[=($0, $7)], joinType=[left])
     LogicalFilter(condition=[=($6, 1)])
-      LogicalProject(productid$0=[$0], _uuid$0=[$1], _ingest_time$0=[$2], name$0=[$3], description$0=[$4], category$0=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[product$q$5]])
+      LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[product$q$4]])
     LogicalFilter(condition=[=($8, 1)])
-      LogicalProject(__productid$0$pk$1=[$0], productid$0=[$1], _uuid$0=[$2], _ingest_time$0=[$3], name$0=[$4], description$0=[$5], category$0=[$6], __timestamp=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0)])
-        LogicalTableScan(table=[[joindeclaration$q$8]])
+      LogicalProject(__productid$pk$1=[$0], productid=[$1], _uuid=[$2], _ingest_time=[$3], name=[$4], description=[$5], category=[$6], __timestamp=[$7], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0)])
+        LogicalTableScan(table=[[joindeclaration$q$6]])
 
