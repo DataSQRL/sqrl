@@ -131,17 +131,17 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     RexNode node = planner.planExpression(query.getTimestamp(), table.getRowType());
     TimestampAssignableTable timestampAssignableTable = table.unwrap(TimestampAssignableTable.class);
 
+    int timestampIndex;
     if (!(node instanceof RexInputRef) && query.getTimestampAlias().isEmpty()) {
-      addColumn(node, "_time", table);
-      timestampAssignableTable.assignTimestamp(-1);
+      timestampIndex = addColumn(node, "_time", table);
     } else if (query.getTimestampAlias().isPresent()) {
       //otherwise, add new column
-      addColumn(node, query.getTimestampAlias().get().getSimple(),
+      timestampIndex = addColumn(node, query.getTimestampAlias().get().getSimple(),
           planner.getCatalogReader().getSqrlTable(tableName));
-      timestampAssignableTable.assignTimestamp(-1);
     } else {
-      timestampAssignableTable.assignTimestamp(((RexInputRef) node).getIndex());
+      timestampIndex = ((RexInputRef) node).getIndex();
     }
+    timestampAssignableTable.assignTimestamp(timestampIndex);
 
     return null;
   }
@@ -283,13 +283,13 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return Pair.of(newParams, node);
   }
 
-  private void addColumn(RexNode node, String cName, RelOptTable table) {
+  private int addColumn(RexNode node, String cName, RelOptTable table) {
     if (table.unwrap(ModifiableTable.class) != null) {
       ModifiableTable table1 = (ModifiableTable) table.unwrap(Table.class);
       SQRLTable sqrlTable = table1.getSqrlTable();
       Column column = sqrlTable.addColumn(nameUtil.toName(cName), null, true, node.getType());
       column.setVtName(column.getId().getCanonical());
-      table1.addColumn(column.getId().getCanonical(), node, framework.getTypeFactory());
+      return table1.addColumn(column.getId().getCanonical(), node, framework.getTypeFactory());
     } else {
       throw new RuntimeException();
     }

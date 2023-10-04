@@ -70,8 +70,9 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable impl
         return addedColumns;
     }
 
-    public void addColumn(String name, RexNode column, RelDataTypeFactory typeFactory) {
-        addColumn(new AddedColumn(name, column), typeFactory);
+    @Override
+    public int addColumn(String name, RexNode column, RelDataTypeFactory typeFactory) {
+        return addColumn(new AddedColumn(name, column), typeFactory);
     }
 
     public abstract TableStatistic getTableStatistic();
