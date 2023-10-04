@@ -12,12 +12,12 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.plan.local.generate.TableFunctionBase;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.table.ScriptTable;
+import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
@@ -65,8 +65,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   protected void validateScript(String script) {
     Namespace ns = plan(script);
     SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
-    Stream.concat(ns.getSchema().getFunctionStream(TableFunctionBase.class).map(ScriptTable.class::cast),
-        ns.getSchema().getTableStream(PhysicalRelationalTable.class).map(ScriptTable.class::cast))
+    Stream.concat(ns.getSchema().getFunctionStream(QueryTableFunction.class).map(QueryTableFunction::getQueryTable),
+        ns.getSchema().getTableStream(PhysicalRelationalTable.class))
         .sorted(Comparator.comparing(f->f.getNameId()))
         .forEach(table-> {
           SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE)

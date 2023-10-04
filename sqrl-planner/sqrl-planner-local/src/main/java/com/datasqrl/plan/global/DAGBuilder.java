@@ -16,7 +16,8 @@ import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
 import com.datasqrl.plan.global.SqrlDAG.TableNode;
 import com.datasqrl.plan.global.StageAnalysis.Cost;
 import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.table.ScriptTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.PhysicalTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.Collection;
@@ -46,7 +47,7 @@ public class DAGBuilder {
 
   public SqrlDAG build(Collection<AnalyzedAPIQuery> queries,
       Collection<ResolvedExport> exports) {
-    Map<ScriptTable, TableNode> table2Node = new HashMap<>();
+    Map<PhysicalRelationalTable, TableNode> table2Node = new HashMap<>();
     Multimap<SqrlNode, SqrlNode> dagInputs = HashMultimap.create();
     //1. Add all queries as sinks
     List<ExecutionStage> readStages = pipeline.getReadStages();
@@ -73,8 +74,8 @@ public class DAGBuilder {
   private void add2DAG(RelNode relnode, Config baseConfig,
       List<ExecutionStage> stages, Multimap<SqrlNode, SqrlNode> dagInputs,
       Function<Map<ExecutionStage, StageAnalysis>,SqrlNode> nodeConstructor,
-      Map<ScriptTable, TableNode> table2Node) {
-    Set<ScriptTable> inputTables = new LinkedHashSet<>();
+      Map<PhysicalRelationalTable, TableNode> table2Node) {
+    Set<PhysicalRelationalTable> inputTables = new LinkedHashSet<>();
     Config.ConfigBuilder configBuilder = baseConfig.toBuilder()
         .sourceTableConsumer(inputTables::add);
 
@@ -87,11 +88,11 @@ public class DAGBuilder {
         dagInputs.put(node,input));
   }
 
-  private SqrlDAG.TableNode getInputTable(ScriptTable table,
-      Multimap<SqrlNode, SqrlNode> dagInputs,
-      Map<ScriptTable, TableNode> table2Node) {
+  private SqrlDAG.TableNode getInputTable(PhysicalRelationalTable table,
+                                          Multimap<SqrlNode, SqrlNode> dagInputs,
+                                          Map<PhysicalRelationalTable, TableNode> table2Node) {
     if (table2Node.containsKey(table)) return table2Node.get(table);
-    Set<ScriptTable> inputTables = new LinkedHashSet<>();
+    Set<PhysicalRelationalTable> inputTables = new LinkedHashSet<>();
     SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
     configBuilder.sourceTableConsumer(inputTables::add);
     List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
@@ -105,7 +106,7 @@ public class DAGBuilder {
     return node;
   }
 
-  public Map<ExecutionStage, StageAnalysis> planStages(ScriptTable table) {
+  public Map<ExecutionStage, StageAnalysis> planStages(PhysicalTable table) {
     SQRLConverter.Config.ConfigBuilder configBuilder = table.getBaseConfig();
     List<ExecutionStage> stages = table.getSupportedStages(pipeline, errors);
     return tryStages(stages, stage ->

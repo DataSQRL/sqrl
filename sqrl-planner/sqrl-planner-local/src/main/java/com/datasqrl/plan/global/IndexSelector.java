@@ -3,43 +3,33 @@
  */
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.plan.OptimizationStage.READ_QUERY_OPTIMIZATION;
-
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.OptimizationStage;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
-import com.datasqrl.plan.table.VirtualRelationalTable;
-import com.datasqrl.util.SqrlRexUtil;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.ArrayUtil;
+import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
-import org.apache.calcite.rel.core.Filter;
-import org.apache.calcite.rel.core.Join;
-import org.apache.calcite.rel.core.Project;
-import org.apache.calcite.rel.core.Sort;
-import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.core.*;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.commons.math3.util.Precision;
+
+import java.util.*;
+
+import static com.datasqrl.plan.OptimizationStage.READ_QUERY_OPTIMIZATION;
 
 @AllArgsConstructor
 public class IndexSelector {
@@ -61,19 +51,19 @@ public class IndexSelector {
   public Map<IndexDefinition, Double> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
     //Prune down to database indexes and remove duplicates
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
-    HashMultimap<VirtualRelationalTable, QueryIndexSummary> callsByTable = HashMultimap.create();
+    HashMultimap<ScriptRelationalTable, QueryIndexSummary> callsByTable = HashMultimap.create();
     queryIndexSummaries.forEach(idx -> {
       //TODO: Add up counts so we preserve relative frequency
       callsByTable.put(idx.getTable(), idx);
     });
 
-    for (VirtualRelationalTable table : callsByTable.keySet()) {
+    for (ScriptRelationalTable table : callsByTable.keySet()) {
       optIndexes.putAll(optimizeIndexes(table, callsByTable.get(table)));
     }
     return optIndexes;
   }
 
-  private Map<IndexDefinition, Double> optimizeIndexes(VirtualRelationalTable table,
+  private Map<IndexDefinition, Double> optimizeIndexes(ScriptRelationalTable table,
                                                        Set<QueryIndexSummary> queryIndexSummaries) {
     //Check how many unique QueryConjunctions we have on this table
     if (queryIndexSummaries.size()>config.maxIndexColumnSets()) {
@@ -103,14 +93,14 @@ public class IndexSelector {
     }
   }
 
-  private Optional<IndexDefinition> getIndexDefinition(IndexableFunctionCall fcall, VirtualRelationalTable table) {
+  private Optional<IndexDefinition> getIndexDefinition(IndexableFunctionCall fcall, ScriptRelationalTable table) {
     Optional<IndexType> specialType = config.getPreferredSpecialIndexType(fcall.getFunction()
         .getSupportedIndexes());
     return specialType.map(idxType -> new IndexDefinition(table.getNameId(), fcall.getColumnIndexes(),
         table.getRowType().getFieldNames(), idxType));
   }
 
-  private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(VirtualRelationalTable table,
+  private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(ScriptRelationalTable table,
       Collection<QueryIndexSummary> indexes) {
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
     //The baseline cost is the cost of doing the lookup with the primary key index
@@ -277,21 +267,21 @@ public class IndexSelector {
             .getPlanner());
         visit(right, 1, node);
       } else if (node instanceof TableScan && parent instanceof Filter) {
-        VirtualRelationalTable table = ((TableScan) node).getTable()
-            .unwrap(VirtualRelationalTable.class);
+        ScriptRelationalTable table = ((TableScan) node).getTable()
+            .unwrap(ScriptRelationalTable.class);
         Filter filter = (Filter) parent;
         QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil).map(queryIndexSummaries::add);
       } else if (node instanceof TableScan && parent instanceof Sort) {
-        VirtualRelationalTable table = ((TableScan) node).getTable()
-            .unwrap(VirtualRelationalTable.class);
+        ScriptRelationalTable table = ((TableScan) node).getTable()
+            .unwrap(ScriptRelationalTable.class);
         Sort sort = (Sort) parent;
         Optional<Integer> firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {
           QueryIndexSummary.ofSort(table, firstCollationIdx.get()).map(queryIndexSummaries::add);
         }
       } else if (node instanceof Project && parent instanceof Sort && node.getInput(0) instanceof TableScan) {
-        VirtualRelationalTable table = ((TableScan) node.getInput(0)).getTable()
-            .unwrap(VirtualRelationalTable.class);
+        ScriptRelationalTable table = ((TableScan) node.getInput(0)).getTable()
+            .unwrap(ScriptRelationalTable.class);
         Sort sort = (Sort) parent;
         Optional<Integer> firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {

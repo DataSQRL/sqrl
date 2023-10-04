@@ -31,42 +31,30 @@ import org.apache.calcite.util.ImmutableBitSet;
  * This is a physical relation that gets materialized in the write DAG or computed in the read DAG.
  */
 @Getter
-public abstract class PhysicalRelationalTable extends AbstractRelationalTable implements ScriptTable {
+public abstract class PhysicalRelationalTable extends ScriptRelationalTable implements PhysicalTable {
 
-  //Name assigned by user - different from nameId which is unique
   @NonNull
   protected final Name tableName;
   @NonNull
   protected final TableType type;
   @NonNull
-  protected TimestampInference timestamp;
-  @NonNull
   protected final int numPrimaryKeys;
   @NonNull
-  protected RelDataType rowType;
-  //Use only rowtype during planning. Once the final conversion (with stage) is done,
-  //set convertedRelNode and use for stitching DAG together
-  //the tricky part is keeping track of adding columns which must be added at the END
-  //of the rowtype after any columns (like timestamps and sorts) that have been added
-  //in the planning
+  protected TimestampInference timestamp;
   @Setter
   protected RelNode plannedRelNode;
-
-  private final List<AddedColumn> addedColumns = new ArrayList<>();
-
   @Setter
   protected Optional<ExecutionStage> assignedStage = Optional.empty();
   @NonNull
   protected final TableStatistic tableStatistic;
 
-  public PhysicalRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
-                                 @NonNull TableType type, @NonNull RelDataType rowType, @NonNull TimestampInference timestamp,
+  public PhysicalRelationalTable( Name rootTableId, @NonNull Name tableName, @NonNull TableType type,
+                                  RelDataType rowType, @NonNull TimestampInference timestamp,
                                  @NonNull int numPrimaryKeys, @NonNull TableStatistic tableStatistic) {
-    super(rootTableId);
+    super(rootTableId, rowType);
     this.tableName = tableName;
     this.type = type;
     this.timestamp = timestamp;
-    this.rowType = rowType;
     this.numPrimaryKeys = numPrimaryKeys;
     this.tableStatistic = tableStatistic;
   }
@@ -100,35 +88,14 @@ public abstract class PhysicalRelationalTable extends AbstractRelationalTable im
     return plannedRelNode;
   }
 
-  public int getNumColumns() {
-    return getRowType().getFieldCount();
+  @Override
+  public boolean isRoot() {
+    return true;
   }
 
-  public int addInlinedColumn(AddedColumn column, @NonNull RelDataTypeFactory typeFactory,
-                              Optional<Integer> timestampScore) {
-    int index = getNumColumns();
-    this.rowType = column.appendTo(rowType, typeFactory);
-    addedColumns.add(column);
-    return index;
-  }
-
-  private static RelDataTypeField getField(FieldIndexPath path, RelDataType rowType) {
-    Preconditions.checkArgument(path.size() > 0);
-    Preconditions.checkArgument(rowType.isStruct(), "Expected relational data type but found: %s",
-        rowType);
-    int firstIndex = path.get(0);
-    Preconditions.checkArgument(firstIndex < rowType.getFieldCount());
-    RelDataTypeField field = rowType.getFieldList().get(firstIndex);
-    path = path.popFirst();
-    if (path.isEmpty()) {
-      return field;
-    } else {
-      return getField(path, field.getType());
-    }
-  }
-
-  public RelDataTypeField getField(FieldIndexPath path) {
-    return getField(path, getRowType());
+  @Override
+  public PhysicalRelationalTable getRoot() {
+    return this;
   }
 
   public Statistic getStatistic() {

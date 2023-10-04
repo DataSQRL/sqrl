@@ -76,7 +76,7 @@ public class CalciteTableFactory {
     if (!StringUtils.isEmpty(type)) {
       name = name.suffix(type);
     }
-    return name.suffix(Integer.toString(framework.getUniqueTableInt().incrementAndGet()));
+    return name.suffix(Integer.toString(framework.getUniqueTableId(name)));
   }
 
   public static int getTableOrdinal(String tableId) {
@@ -99,9 +99,9 @@ public class CalciteTableFactory {
         getTimestampInference(rootTable), rootType, source,
         TableStatistic.of(1000));
 
-    Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty(),
-        true, Optional.empty(), Optional.empty(), Optional.empty());
-    return new ScriptTableDefinition(impTable, tables);
+    Map<SQRLTable, ScriptRelationalTable> tables = createScriptTables(rootTable, impTable, Optional.empty(),
+        Optional.empty(), Optional.empty(), Optional.empty());
+    return new ScriptTableDefinition(tables);
   }
 
   public ScriptTableDefinition defineTable(NamePath tablePath, LPAnalysis analyzedLP,
@@ -121,10 +121,10 @@ public class CalciteTableFactory {
     UniversalTable rootTable = convert2TableBuilder(tablePath, baseTable.getRowType(),
         baseTable.getNumPrimaryKeys(), index2Name);
 
-    Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, baseTable,
-        parent, materializeSelf, relNodeSupplier, parameters, isA);
+    Map<SQRLTable, ScriptRelationalTable> tables = createScriptTables(rootTable, baseTable,
+        parent, relNodeSupplier, parameters, isA);
 
-    ScriptTableDefinition tblDef = new ScriptTableDefinition(baseTable, tables);
+    ScriptTableDefinition tblDef = new ScriptTableDefinition(tables);
     //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
     //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
     //of tblDef.getTable() based on the provided list of fieldNames
@@ -169,18 +169,6 @@ public class CalciteTableFactory {
     RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory, numPrimaryKeys,
         canonicalizer);
     return converter.convert(path, type, index2Name);
-  }
-
-  public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTable rootTable,
-                                                                    PhysicalRelationalTable baseTable, Optional<SQRLTable> parent, boolean materializeSelf,
-                                                                    Optional<Supplier<RelNode>> relNodeSupplier,
-                                                                    Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
-    VirtualTableConstructor vtableBuilder = new VirtualTableConstructor(baseTable);
-    Map<SQRLTable, VirtualRelationalTable> createdTables = new HashMap<>();
-    build(rootTable, Optional.empty(), Optional.empty(),
-        Optional.of(rootTable.getName()),null, vtableBuilder, createdTables, parent, relNodeSupplier,
-        parameters, isA);
-    return createdTables;
   }
 
   public RelDataType convertTable(UniversalTable tblBuilder, boolean includeNested,
@@ -228,38 +216,30 @@ public class CalciteTableFactory {
     }
   }
 
-  @Getter
-  private final class VirtualTableConstructor {
-
-    PhysicalRelationalTable baseTable;
-
-    public VirtualTableConstructor(PhysicalRelationalTable baseTable) {
-      this.baseTable = baseTable;
-    }
-
-    public VirtualRelationalTable make(@NonNull UniversalTable tblBuilder) {
-      RelDataType rowType = convertTable(tblBuilder, false, false);
-      return new VirtualRelationalTable.Root(createTableId(tblBuilder.getName()), rowType, baseTable);
-    }
-
-    public VirtualRelationalTable make(@NonNull UniversalTable tblBuilder,
-        VirtualRelationalTable parent, Name shredFieldName) {
-      RelDataType rowType = convertTable(tblBuilder, false, false);
-      return VirtualRelationalTable.Child.of(createTableId(tblBuilder.getName()), rowType, parent,
-          shredFieldName.getCanonical());
-    }
+  private Map<SQRLTable, ScriptRelationalTable> createScriptTables(UniversalTable rootTable,
+                                                                   PhysicalRelationalTable baseTable, Optional<SQRLTable> parent,
+                                                                   Optional<Supplier<RelNode>> relNodeSupplier,
+                                                                   Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
+    Map<SQRLTable, ScriptRelationalTable> createdTables = new HashMap<>();
+    buildScriptTablesMap(rootTable, baseTable, rootTable.getName(),Optional.empty(), createdTables, parent, relNodeSupplier,
+            parameters, isA);
+    return createdTables;
   }
 
-  private void build(UniversalTable builder, Optional<SQRLTable> parent,
-      Optional<VirtualRelationalTable> vParent,
-      Optional<Name> fieldName,
-      UniversalTable.ChildRelationship childRel,
-      VirtualTableConstructor vtableBuilder,
-      Map<SQRLTable, VirtualRelationalTable> createdTables, Optional<SQRLTable> sqrlParent,
-      Optional<Supplier<RelNode>> relNodeSupplier,
-      Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
-    VirtualRelationalTable vTable = vParent.map(table -> vtableBuilder.make(builder, table, childRel.getId()))
-        .orElseGet(() -> vtableBuilder.make(builder));
+  private ScriptRelationalTable makeScriptTable(@NonNull UniversalTable tblBuilder,
+                                                ScriptRelationalTable parent, Name shredFieldName) {
+    RelDataType rowType = convertTable(tblBuilder, true, false);
+    return LogicalNestedTable.of(createTableId(tblBuilder.getName()), rowType, parent,
+            shredFieldName.getCanonical());
+  }
+
+  private void buildScriptTablesMap(UniversalTable builder, ScriptRelationalTable parent,
+                                    Name parentFieldName,
+                                    Optional<UniversalTable.ChildRelationship> childRel,
+                                    Map<SQRLTable, ScriptRelationalTable> createdTables, Optional<SQRLTable> sqrlParent,
+                                    Optional<Supplier<RelNode>> relNodeSupplier,
+                                    Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
+    ScriptRelationalTable vTable = childRel.map(rel -> makeScriptTable(builder, parent, rel.getId())).orElse(parent);
     SQRLTable tbl;
     if (sqrlParent.isEmpty()) {
       Preconditions.checkState(builder.getPath().size() == 1);
@@ -278,12 +258,12 @@ public class CalciteTableFactory {
     createdTables.put(tbl, vTable);
     if (sqrlParent.isPresent()) {
       //Add child relationship
-      Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper((VirtualRelationalTable) sqrlParent.get().getVt(), vTable);
+      Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper((ScriptRelationalTable) sqrlParent.get().getVt(), vTable);
 
-      Relationship relationship = new Relationship(fieldName.get(), builder.getPath(),
+      Relationship relationship = new Relationship(parentFieldName, builder.getPath(),
           framework.getUniqueColumnInt().incrementAndGet(),
           sqrlParent.get(), JoinType.CHILD,
-          childRel == null ? Multiplicity.MANY : childRel.getMultiplicity(),//guess
+          childRel.map(UniversalTable.ChildRelationship::getMultiplicity).orElse(Multiplicity.MANY), //TODO: is defaulting to many the right choice?
           List.of(tbl), pkWrapper.getLeft(),
           ()->framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
       sqrlParent.get().addRelationship(relationship);
@@ -301,8 +281,7 @@ public class CalciteTableFactory {
         tbl.addColumn(c.getName(), vTable.getRowType().getFieldNames().get(index), c.isVisible(), c.getType());
       } else {
         ChildRelationship child = (ChildRelationship) field;
-        build(child.getChildTable(), Optional.of(tbl),
-            Optional.of(vTable), Optional.of(child.getName()), child, vtableBuilder, createdTables,
+        buildScriptTablesMap(child.getChildTable(), vTable, child.getName(), Optional.of(child), createdTables,
             Optional.of(tbl), Optional.empty(), Optional.empty(), Optional.empty());
       }
     }
@@ -310,28 +289,29 @@ public class CalciteTableFactory {
     if (sqrlParent.isPresent()) {
       //override field
       Relationship relationship = createParent(builder.getPath(), sqrlParent.get(),
-          (VirtualRelationalTable) sqrlParent.get().getVt(), tbl, vTable);
+          (ScriptRelationalTable) sqrlParent.get().getVt(), tbl, vTable);
       tbl.addRelationship(relationship);
       framework.getSchema().addRelationship(relationship);
     }
   }
 
-  public Relationship createParent(NamePath path, SQRLTable p, VirtualRelationalTable parent, SQRLTable t, VirtualRelationalTable vTable) {
-    Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(vTable, parent);
+  public Relationship createParent(NamePath path, SQRLTable parentSqrlTable, ScriptRelationalTable parentScriptTable,
+                                   SQRLTable childSqrlTable, ScriptRelationalTable childScriptTable) {
+    Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(childScriptTable, parentScriptTable);
     Relationship relationship = new Relationship(parentRelationshipName, path.concat(parentRelationshipName),
         framework.getUniqueColumnInt().incrementAndGet(),
-        t, JoinType.PARENT, Multiplicity.ONE, List.of(p), pkWrapper.getLeft(),
+        childSqrlTable, JoinType.PARENT, Multiplicity.ONE, List.of(parentSqrlTable), pkWrapper.getLeft(),
         ()->framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
     return relationship;
   }
 
-  public static Pair<List<FunctionParameter>, SqlNode> createPkWrapper(VirtualRelationalTable vParent, VirtualRelationalTable vTable) {
+  public static Pair<List<FunctionParameter>, SqlNode> createPkWrapper(ScriptRelationalTable fromTable, ScriptRelationalTable toTable) {
     //Parameters
     List<FunctionParameter> parameters = new ArrayList<>();
     List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < Math.min(vTable.getNumPrimaryKeys(), vParent.getNumPrimaryKeys()); i++) {
-      RelDataTypeField field1 = vTable.getRowType().getFieldList().get(i);
-      RelDataTypeField field = vParent.getRowType().getFieldList().get(i);
+    for (int i = 0; i < Math.min(toTable.getNumPrimaryKeys(), fromTable.getNumPrimaryKeys()); i++) {
+      RelDataTypeField field1 = toTable.getRowType().getFieldList().get(i);
+      RelDataTypeField field = fromTable.getRowType().getFieldList().get(i);
 
       SqrlFunctionParameter param = new SqrlFunctionParameter(
           field.getName(),
@@ -349,7 +329,7 @@ public class CalciteTableFactory {
     }
 
     return Pair.of(parameters, new SqlSelectBuilder()
-        .setFrom(new SqlIdentifier(vTable.nameId, SqlParserPos.ZERO))
+        .setFrom(new SqlIdentifier(toTable.nameId, SqlParserPos.ZERO))
         .setWhere(conditions)
         .build());
   }

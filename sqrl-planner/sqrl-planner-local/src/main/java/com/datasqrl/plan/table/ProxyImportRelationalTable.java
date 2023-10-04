@@ -37,13 +37,9 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable {
     this.baseTable = baseTable;
   }
 
-  @Override
-  public int addInlinedColumn(AddedColumn column, @NonNull RelDataTypeFactory typeFactory,
-                              Optional<Integer> timestampScore) {
-    int index = super.addInlinedColumn(column, typeFactory, timestampScore);
-    //TODO: Need to refactor this. This makes the assumption that it's a timestamp column
-    Preconditions.checkArgument(timestampScore.isPresent());
-    this.timestamp = TimestampInference.buildImport().addImport(index, timestampScore.get()).build();
+  public int addTimestampColumn(AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
+    int index = super.addColumn(column, typeFactory);
+    this.timestamp = TimestampInference.buildImport().addImport(index, 100).build();
     return index;
   }
 

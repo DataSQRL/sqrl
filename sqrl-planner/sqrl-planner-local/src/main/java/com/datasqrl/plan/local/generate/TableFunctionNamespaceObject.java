@@ -12,11 +12,11 @@ import java.util.Optional;
 
 @AllArgsConstructor
 @Getter
-public class TableFunctionNamespaceObject implements TableNamespaceObject<TableFunctionBase> {
+public class TableFunctionNamespaceObject implements TableNamespaceObject<QueryTableFunction> {
   @NonNull
   Name name;
   @NonNull
-  TableFunctionBase table;
+  QueryTableFunction table;
 
   @Override
   public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {

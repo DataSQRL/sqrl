@@ -3,7 +3,8 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.table.VirtualRelationalTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.util.AbstractPath;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
@@ -41,18 +42,18 @@ public class JoinTable implements Comparable<JoinTable> {
     NORMALIZED, DENORMALIZED;
   }
 
-  final VirtualRelationalTable table;
+  final ScriptRelationalTable table;
   final JoinTable parent;
   final JoinRelType joinType;
   final int offset;
   final NormType normType;
 
-  public static JoinTable ofRoot(VirtualRelationalTable.Root root, NormType normType) {
+  public static JoinTable ofRoot(PhysicalRelationalTable root, NormType normType) {
     return new JoinTable(root, null, JoinRelType.INNER, 0, normType);
   }
 
   public int numColumns() {
-    return normType==NormType.DENORMALIZED?table.getNumQueryColumns():table.getNumColumns();
+    return table.getNumColumns();
   }
 
   public JoinTable withOffset(int newOffset) {
@@ -117,7 +118,7 @@ public class JoinTable implements Comparable<JoinTable> {
 
   public static boolean compatible(List<JoinTable> left, List<JoinTable> right) {
     if (!valid(left) || !valid(right)) return false;
-    Set<VirtualRelationalTable.Root> rightRoots = right.stream().map(jt -> jt.table.getRoot()).collect(
+    Set<PhysicalRelationalTable> rightRoots = right.stream().map(jt -> jt.table.getRoot()).collect(
         Collectors.toSet());
     return left.stream().map(jt -> jt.table.getRoot()).anyMatch(rightRoots::contains);
   }
