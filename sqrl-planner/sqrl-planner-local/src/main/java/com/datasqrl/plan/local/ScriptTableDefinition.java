@@ -3,7 +3,7 @@
  */
 package com.datasqrl.plan.local;
 
-import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.VirtualRelationalTable;
 import com.datasqrl.schema.SQRLTable;
 import lombok.Getter;
@@ -14,10 +14,10 @@ import java.util.Map;
 @Getter
 public class ScriptTableDefinition {
 
-  private final ScriptRelationalTable baseTable;
+  private final PhysicalRelationalTable baseTable;
   private final Map<SQRLTable, VirtualRelationalTable> shredTableMap;
 
-  public ScriptTableDefinition(@NonNull ScriptRelationalTable baseTable,
+  public ScriptTableDefinition(@NonNull PhysicalRelationalTable baseTable,
       @NonNull Map<SQRLTable, VirtualRelationalTable> shredTableMap) {
     this.baseTable = baseTable;
     this.shredTableMap = shredTableMap;

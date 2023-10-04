@@ -96,7 +96,7 @@ public class CalciteTableFactory {
         createTableId(rootTable.getName(), "i"), rootType, tableSource);
     ProxyImportRelationalTable impTable = new ProxyImportRelationalTable(
         createTableId(rootTable.getName(), "q"), rootTable.getName(),
-        getTimestampHolder(rootTable), rootType, source,
+        getTimestampInference(rootTable), rootType, source,
         TableStatistic.of(1000));
 
     Map<SQRLTable, VirtualRelationalTable> tables = createVirtualTables(rootTable, impTable, Optional.empty(),
@@ -112,7 +112,7 @@ public class CalciteTableFactory {
     Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
 
     Name tableid = createTableId(tablePath.getLast(), "q");
-    ScriptRelationalTable baseTable = new QueryRelationalTable(tableid, tablePath.getLast(), analyzedLP);
+    PhysicalRelationalTable baseTable = new QueryRelationalTable(tableid, tablePath.getLast(), analyzedLP);
 
     LinkedHashMap<Integer, Name> index2Name = new LinkedHashMap<>();
     for (int i = 0; i < fieldNames.size(); i++) {
@@ -149,18 +149,18 @@ public class CalciteTableFactory {
     return Optional.of(getTimestampScore(columnName));
   }
 
-  public TimestampHolder.Base getTimestampHolder(UniversalTable tblBuilder) {
+  public TimestampInference getTimestampInference(UniversalTable tblBuilder) {
     Preconditions.checkArgument(tblBuilder.getParent() == null,
         "Can only be invoked on root table");
-    TimestampHolder.Base tsh = new TimestampHolder.Base();
+    TimestampInference.ImportBuilder timestamp = TimestampInference.buildImport();
     tblBuilder.getAllIndexedFields().forEach(indexField -> {
       if (indexField.getField() instanceof UniversalTable.Column) {
         UniversalTable.Column column = (UniversalTable.Column) indexField.getField();
         Optional<Integer> score = getTimestampScore(column.getName(), column.getType());
-        score.ifPresent(s -> tsh.addCandidate(indexField.getIndex(), s));
+        score.ifPresent(s -> timestamp.addImport(indexField.getIndex(), s));
       }
     });
-    return tsh;
+    return timestamp.build();
   }
 
   public UniversalTable convert2TableBuilder(@NonNull NamePath path,
@@ -172,9 +172,9 @@ public class CalciteTableFactory {
   }
 
   public Map<SQRLTable, VirtualRelationalTable> createVirtualTables(UniversalTable rootTable,
-      ScriptRelationalTable baseTable, Optional<SQRLTable> parent, boolean materializeSelf,
-      Optional<Supplier<RelNode>> relNodeSupplier,
-      Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
+                                                                    PhysicalRelationalTable baseTable, Optional<SQRLTable> parent, boolean materializeSelf,
+                                                                    Optional<Supplier<RelNode>> relNodeSupplier,
+                                                                    Optional<List<FunctionParameter>> parameters, Optional<List<SQRLTable>> isA) {
     VirtualTableConstructor vtableBuilder = new VirtualTableConstructor(baseTable);
     Map<SQRLTable, VirtualRelationalTable> createdTables = new HashMap<>();
     build(rootTable, Optional.empty(), Optional.empty(),
@@ -231,9 +231,9 @@ public class CalciteTableFactory {
   @Getter
   private final class VirtualTableConstructor {
 
-    ScriptRelationalTable baseTable;
+    PhysicalRelationalTable baseTable;
 
-    public VirtualTableConstructor(ScriptRelationalTable baseTable) {
+    public VirtualTableConstructor(PhysicalRelationalTable baseTable) {
       this.baseTable = baseTable;
     }
 
