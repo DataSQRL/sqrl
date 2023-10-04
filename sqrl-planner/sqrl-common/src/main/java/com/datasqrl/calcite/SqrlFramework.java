@@ -59,13 +59,7 @@ public class SqrlFramework {
     return this.queryPlanner;
   }
 
-  public int getUniqueTableId(Name tableName) {
-//    AtomicInteger counter = tableNameShadowing.get(tableName);
-//    if (counter==null) {
-//      counter = new AtomicInteger(0);
-//      tableNameShadowing.put(tableName,counter);
-//    }
-//    return counter.incrementAndGet();
+  public int getUniqueTableId() {
     return uniqueTableInt.incrementAndGet();
   }
 }

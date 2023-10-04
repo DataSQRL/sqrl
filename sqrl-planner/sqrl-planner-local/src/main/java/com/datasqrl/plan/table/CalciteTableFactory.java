@@ -76,7 +76,7 @@ public class CalciteTableFactory {
     if (!StringUtils.isEmpty(type)) {
       name = name.suffix(type);
     }
-    return name.suffix(Integer.toString(framework.getUniqueTableId(name)));
+    return name.suffix(Integer.toString(framework.getUniqueTableId()));
   }
 
   public static int getTableOrdinal(String tableId) {
