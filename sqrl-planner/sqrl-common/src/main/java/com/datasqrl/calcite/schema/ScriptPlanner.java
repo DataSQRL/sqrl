@@ -232,6 +232,14 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return null;
   }
 
+  @Override
+  public Void visit(SqrlExpressionQuery node, Void context) {
+    RelOptTable table = planner.getCatalogReader().getSqrlTable(SqrlListUtil.popLast(node.getIdentifier().names));
+    RexNode rexNode = planner.planExpression(node.getExpression(), table.getRowType());
+    addColumn(rexNode, Util.last(node.getIdentifier().names), table);
+    return null;
+  }
+
   private Pair<List<FunctionParameter>, SqlNode> extractSelfArgs(List<FunctionParameter> parameters,
       boolean materializeSelf, SqlNode sqlNode) {
     if (materializeSelf) {
