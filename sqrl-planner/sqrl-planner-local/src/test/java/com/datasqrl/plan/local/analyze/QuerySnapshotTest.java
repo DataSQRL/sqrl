@@ -69,8 +69,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         ns.getSchema().getTableStream(PhysicalRelationalTable.class))
         .sorted(Comparator.comparing(f->f.getNameId()))
         .forEach(table-> {
-          SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE)
-              .addTimestamp2NormalizedChildTable(false).build();
+          SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE).build();
           snapshot.addContent(
               sqrlConverter.convert(table, config, false, errors).explain(),
               table.getNameId());

@@ -7,6 +7,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -230,7 +231,7 @@ public class CalciteTableFactory {
                                                 ScriptRelationalTable parent, Name shredFieldName) {
     RelDataType rowType = convertTable(tblBuilder, true, false);
     return LogicalNestedTable.of(createTableId(tblBuilder.getName()), rowType, parent,
-            shredFieldName.getCanonical());
+            shredFieldName.getCanonical(), typeFactory);
   }
 
   private void buildScriptTablesMap(UniversalTable builder, ScriptRelationalTable parent,
