@@ -26,6 +26,7 @@ public enum ErrorCode implements ErrorLabel {
   WRONG_INTERVAL_JOIN,
   CONFIG_EXCEPTION,
   PRIMARY_KEY_NULLABLE,
+  TABLE_LOCKED,
   NOT_YET_IMPLEMENTED;
 
   @Override
