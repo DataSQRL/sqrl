@@ -7,7 +7,6 @@ import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.PathWalker;
-import com.datasqrl.calcite.schema.ScriptPlanner.SqrlToSql;
 import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
@@ -49,10 +48,8 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
-import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
@@ -190,7 +187,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
    */
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
-    Optional<RelOptTable> table = resolveModifableTable(node.getIdentifier(), node.getIdentifier().names);
+    Optional<RelOptTable> table = resolveModifiableTable(node.getIdentifier(), node.getIdentifier().names);
     Optional<TableSink> sink = LoaderUtil.loadSinkOpt(nameUtil.toNamePath(node.getSinkPath().names),
         errorCollector, moduleLoader);
 
@@ -254,12 +251,17 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     if (node.getTableArgs().isPresent()) {
       addError(ErrorLabel.GENERIC, node, "Table arguments for expressions not implemented yet.");
     }
-
-    Optional<RelOptTable> table = resolveModifableTable(node, SqrlListUtil.popLast(node.getIdentifier().names));
+    List<String> names = SqrlListUtil.popLast(node.getIdentifier().names);
+    Optional<RelOptTable> table = resolveModifiableTable(node, names);
     table.ifPresent((t) -> {
-      if (t.unwrap(ModifiableTable.class) == null) {
-        addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: ", t.getQualifiedName());
+      ModifiableTable modTable = t.unwrap(ModifiableTable.class);
+      if (modTable == null) {
+        //TODO: isn't this already checked in resolveModifableTable?
+        addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: %s", flattenNames(names));
+      } else if (modTable.isLocked()) {
+        addError(ErrorCode.TABLE_LOCKED, node, "Cannot add column to locked table: %s", flattenNames(names));
       }
+
     });
 
     List<SqlNode> selectList = new ArrayList<>();
@@ -1053,7 +1055,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       throw addError(ErrorLabel.GENERIC, node.getIdentifier().getComponent(1), "Cannot assign timestamp to nested item");
     }
 
-    Optional<RelOptTable> table = resolveModifableTable(node, node.getAlias().orElse(node.getIdentifier()).names);
+    Optional<RelOptTable> table = resolveModifiableTable(node, node.getAlias().orElse(node.getIdentifier()).names);
 
     Optional<RexNode> rexNode = table.flatMap(t-> {
         try {
@@ -1076,17 +1078,17 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  private Optional<RelOptTable> resolveModifableTable(SqlNode node, List<String> names) {
+  private Optional<RelOptTable> resolveModifiableTable(SqlNode node, List<String> names) {
     Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader().getSqrlTable(names));
     if (table.isEmpty()) {
-      addError(ErrorLabel.GENERIC, node, "Could not find table: %s", names);
+      addError(ErrorLabel.GENERIC, node, "Could not find table: %s", flattenNames(names));
     }
 
     table.ifPresent((t)->this.tableMap.put(node, t));
 
     table.ifPresent((t) -> {
       if (t.unwrap(ModifiableTable.class) == null) {
-        addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: %s", t.getQualifiedName());
+        addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: %s", flattenNames(names));
       }
     });
 

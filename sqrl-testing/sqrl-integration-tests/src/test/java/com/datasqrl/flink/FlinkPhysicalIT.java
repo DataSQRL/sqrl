@@ -56,14 +56,15 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   public void tableColumnDefinitionTest() {
     ScriptBuilder builder = example.getImports();
 
-    builder.add(
-        "EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e"); //This is line 4 in the script
 
     builder.add("Customer.timestamp := epochToTimestamp(lastUpdated)");
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC");
 
     builder.add("Orders.col1 := (id + customerid)/2");
     builder.add("Orders.entries.discount2 := COALESCE(discount,0.0)");
+
+    builder.add(
+            "EntryPrice := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e"); //This is line 4 in the script
 
     builder.add(
         "OrderCustomer := SELECT o.id, c.name, o.customerid, o.col1, e.discount2 FROM Orders o JOIN o.entries e JOIN Customer c on o.customerid = c.customerid");
