@@ -539,8 +539,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         if (mappedProjects.putIfAbsent(originalIndex, exp.i) != null) {
           //We are ignoring this mapping because the prior one takes precedence, let's see if we should warn the user
           if (input.primaryKey.containsIndex(originalIndex)) {
-            //TODO: issue a warning to alert the user that this mapping is not considered part of primary key
-            System.out.println("WARNING: mapping primary key multiple times");
+            errors.warn(MULTIPLE_PRIMARY_KEY, "The primary key is mapped to multiple columns in SELECT: %s", logicalProject.getProjects());
           }
         }
       }

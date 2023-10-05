@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.rules;
 
+import static com.datasqrl.error.ErrorCode.MULTIPLE_PRIMARY_KEY;
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
 import com.datasqrl.canonicalizer.Name;
@@ -26,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
@@ -352,6 +355,7 @@ public class AnnotatedLP implements RelHolder {
       }
     }
 
+
     //Determine which timestamp candidates have already been mapped and map the candidates accordingly
     TimestampInference.DerivedBuilder timestamp = TimestampInference.buildDerived();
     for (TimestampInference.Candidate c : input.timestamp.getCandidates()) {
@@ -382,6 +386,7 @@ public class AnnotatedLP implements RelHolder {
         ? 1 : 0));
     IndexMap remap = IndexMap.of(remapping);
     SelectIndexMap updatedSelect = input.select.remap(remap);
+
     List<RexNode> projects = new ArrayList<>(projectLength);
     List<String> updatedFieldNames = Arrays.asList(new String[projectLength]);
     PrimaryKeyMap primaryKey = input.primaryKey.remap(remap);
@@ -390,6 +395,7 @@ public class AnnotatedLP implements RelHolder {
       projects.add(0, relBuilder.literal(1));
       updatedFieldNames.set(0, SQRLLogicalPlanRewriter.DEFAULT_PRIMARY_KEY_COLUMN_NAME);
     }
+
     RelDataType rowType = input.relNode.getRowType();
     remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(), e.getValue()))
         .sorted((a, b) -> Integer.compare(a.getTarget(), b.getTarget()))

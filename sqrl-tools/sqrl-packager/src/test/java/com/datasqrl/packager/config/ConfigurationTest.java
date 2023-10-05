@@ -51,7 +51,7 @@ public class ConfigurationTest {
     assertEquals("dev", pkgConfig.getVariant());
     assertEquals(3, pkgConfig.getKeywords().size());
 
-    assertFalse(errors.hasErrors());
+    assertTrue(errors.isEmpty());
   }
 
 }

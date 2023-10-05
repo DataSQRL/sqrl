@@ -173,7 +173,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
           } catch (Exception e) {
             collector.handle(e);
           }
-          if (collector.hasErrors()) {
+          if (!collector.isEmpty()) {
             errorHolder.addAll(collector.getErrors(), null);
           }
           if (result.isPresent()) {
@@ -222,7 +222,7 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
         System.err.println(e);
         status = Status.FAILED;
       }
-      if (errorHolder.hasErrors()) {
+      if (!errorHolder.isEmpty()) {
         errorHolder.stream().map(ErrorPrinter::prettyPrint).forEach(System.out::println);
       }
     }
