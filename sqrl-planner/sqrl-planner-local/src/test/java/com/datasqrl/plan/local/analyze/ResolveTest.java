@@ -148,7 +148,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderEntry := SELECT o.col1, o.\"time\", e.productid, e.discount, o._ingest_time FROM Orders o JOIN o.entries e");
     plan(script);
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
-        TimestampTest.candidates(2,5));
+        TimestampTest.candidates(1,4));
     validateQueryTable("orderentry", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 2,
         TimestampTest.candidates(3,6));
   }
@@ -402,7 +402,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "OrderAgg2 := SELECT o.customerid as customer, endOfsecond(o.\"time\") as bucket, COUNT(o.id) as order_count FROM Orders o WHERE o.\"time\" > now() - INTERVAL 1 DAY GROUP BY customer, bucket;\n");
     plan(builder.toString());
-    validateQueryTable("orderfilter", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
+    validateQueryTable("orderfilter", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(4), new PullupTest(true, false));
     validateQueryTable("orderagg1", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 2,
         TimestampTest.fixed(1), new PullupTest(true, false));
