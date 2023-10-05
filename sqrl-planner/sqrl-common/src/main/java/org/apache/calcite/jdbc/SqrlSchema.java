@@ -7,7 +7,6 @@ import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -15,7 +14,6 @@ import java.util.Set;
 import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
@@ -97,7 +95,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
         + sqrlFramework.getUniqueTableInt().incrementAndGet(), relationship);
   }
 
-  public void addTable(List<String> path, String nameId) {
+  public void addTableMapping(List<String> path, String nameId) {
     this.sysTables.put(path, nameId);
   }
 }

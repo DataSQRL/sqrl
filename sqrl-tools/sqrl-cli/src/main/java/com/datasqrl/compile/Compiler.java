@@ -47,6 +47,7 @@ import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.TableIdFactory;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -112,7 +113,7 @@ public class Compiler {
         .forEach((key, value) -> framework.getSqrlOperatorTable().addFunction(key, value));
 
     ModuleLoader moduleLoader = new ModuleLoaderImpl(new ObjectLoaderImpl(resourceResolver, errors,
-        new CalciteTableFactory(framework, nameCanonicalizer)));
+        new CalciteTableFactory(framework)));
     TableSink errorSink = loadErrorSink(moduleLoader, compilerConfig.getErrorSink(), errors);
 
     SqrlDIModule module = new SqrlDIModule(pipelineFactory.createPipeline(), debugger,

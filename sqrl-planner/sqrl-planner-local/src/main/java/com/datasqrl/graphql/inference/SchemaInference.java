@@ -150,12 +150,12 @@ public class SchemaInference {
   }
 
   private Optional<SQRLTable> getTableOfType(Type type, String name) {
-    for (SQRLTable table : schema.getRootTables()) {
-      if (isNameEqual(table.getName().getCanonical(), name) &&
-          lookupType(type).filter(t -> structurallyEqual(t, table)).isPresent()) {
-        return Optional.of(table);
-      }
-    }
+//    for (SQRLTable table : schema.getRootTables()) {
+//      if (isNameEqual(table.getName().getCanonical(), name) &&
+//          lookupType(type).filter(t -> structurallyEqual(t, table)).isPresent()) {
+//        return Optional.of(table);
+//      }
+//    }
     return Optional.empty();
   }
 
@@ -538,7 +538,7 @@ public class SchemaInference {
 
     for(FieldDefinition def : s.getFieldDefinitions()) {
       SQRLTable table = resolveRootSQRLTable(def, def.getType(), def.getName(), "Subscription");
-      APISubscription subscriptionDef = new APISubscription(Name.system(def.getName()),source);
+      APISubscription subscriptionDef = null;//new APISubscription(Name.system(def.getName()),source);
       TableSource tableSource = apiManager.addSubscription(subscriptionDef, table);
       SerializedSqrlConfig kafkaSource = tableSource.getConfiguration().getConfig().serialize();
       //Resolve the queries for all nested entries, validate all fields are sqrl fields

@@ -17,16 +17,14 @@ import org.apache.calcite.schema.Table;
 public class RootSqrlTable implements SqrlTableMacro {
   private final Name name;
   private final Table internalTable;
-  private final List<SQRLTable> isTypeOf;
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
   private final NamePath path;
 
-  public RootSqrlTable(Name name, Table internalTable, List<SQRLTable> isTypeOf,
-      List<FunctionParameter> parameters, Supplier<RelNode> viewTransform) {
+  public RootSqrlTable(Name name, Table internalTable, List<FunctionParameter> parameters,
+      Supplier<RelNode> viewTransform) {
     this.name = name;
     this.internalTable = internalTable;
-    this.isTypeOf = isTypeOf;
     this.parameters = parameters;
     this.viewTransform = viewTransform;
     this.path = NamePath.of(name);

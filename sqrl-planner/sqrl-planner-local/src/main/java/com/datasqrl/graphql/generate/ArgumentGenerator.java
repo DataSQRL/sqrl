@@ -39,7 +39,8 @@ public class ArgumentGenerator implements
         .filter(f->!((SqrlFunctionParameter)f).isInternal())
         .collect(Collectors.toList());
     if (parameters.isEmpty()) {
-      return field.getToTable().accept(this, context);
+      throw new RuntimeException("TODO");
+//      return field.getToTable().accept(this, context);
     } else {
       return parameters.stream()
           .filter(p->!((SqrlFunctionParameter)p).isInternal())

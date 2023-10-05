@@ -7,7 +7,7 @@ import org.apache.calcite.rex.RexNode;
 public interface ModifiableTable {
   int addColumn(String name, RexNode column, RelDataTypeFactory typeFactory);
 
-  RelDataType getRelDataType();
+  RelDataType getRowType();
 
   String getNameId();
 

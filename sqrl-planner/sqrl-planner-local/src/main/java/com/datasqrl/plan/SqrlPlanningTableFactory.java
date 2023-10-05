@@ -17,15 +17,24 @@ import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.TableConverter;
+import com.datasqrl.plan.table.TableIdFactory;
+import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.schema.Function;
@@ -37,13 +46,13 @@ import org.apache.calcite.tools.RelBuilder;
 public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
   private final SqrlFramework framework;
-  private final NameCanonicalizer nameCanonicalizer;
   private final SqlNameUtil nameUtil;
+  private final CalciteTableFactory tableFactory;
 
-  public SqrlPlanningTableFactory(SqrlFramework framework, NameCanonicalizer nameCanonicalizer) {
+  public SqrlPlanningTableFactory(SqrlFramework framework) {
     this.framework = framework;
-    this.nameCanonicalizer = nameCanonicalizer;
-    this.nameUtil = new SqlNameUtil(nameCanonicalizer);
+    this.nameUtil = new SqlNameUtil(framework.getNameCanonicalizer());
+    this.tableFactory = new CalciteTableFactory(framework);
   }
 
   @Override
@@ -59,18 +68,12 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
     Optional<ScriptRelationalTable> parent = Optional.empty();
     if (path.size() > 1) {
-      TableFunction function = framework.getQueryPlanner()
-          .getTableFunction(SqrlListUtil.popLast(path)).getFunction();
-      SqrlTableMacro sqrlTable = (SqrlTableMacro)function;
+      ScriptRelationalTable table = framework.getQueryPlanner().getCatalogReader()
+          .getTableFromPath(SqrlListUtil.popLast(path))
+          .unwrap(ScriptRelationalTable.class);
 
-      parent = Optional.empty();
-//      parent = Optional.of(sqrlTable.getSqrlTable());
+      parent = Optional.of(table);
     }
-
-    List<NamePath> isATable = isA.stream()
-        .map(f->(SqrlTableMacro) f)
-        .map(SqrlTableMacro::getPath)
-        .collect(Collectors.toList());
 
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
 
@@ -81,15 +84,55 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
         .map(idx -> relFieldNames.get(idx))
         .map(n -> nameUtil.toName(n)).collect(Collectors.toList());
 
-    ScriptTableDefinition scriptTableDefinition = new CalciteTableFactory(framework, nameCanonicalizer)
-        .defineTable(names, analyzedLP, fieldNames, parent, materializeSelf, relNodeSupplier,
-            Optional.of(parameters), Optional.empty());
+    Map<NamePath, ScriptRelationalTable> scriptTableDefinition = defineTable(names, analyzedLP, fieldNames);
 
-    SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(), scriptTableDefinition,
-        null, null, parameters, isA, materializeSelf);
+    SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(),
+        new ScriptTableDefinition(scriptTableDefinition),
+        tableFactory, null, parameters, isA, materializeSelf, parameters, relNodeSupplier, parameters);
 
     nsObj.apply(Optional.empty(), framework, errors);
   }
+
+
+  private LinkedHashMap<Integer, Name> mapFieldNamesToIndices(LPAnalysis analyzedLP, List<Name> fieldNames) {
+    LinkedHashMap<Integer, Name> index2Name = new LinkedHashMap<>();
+    SelectIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
+
+    for (int i = 0; i < fieldNames.size(); i++) {
+      index2Name.put(selectMap.map(i), fieldNames.get(i));
+    }
+
+    return index2Name;
+  }
+
+  public Map<NamePath, ScriptRelationalTable> defineTable(NamePath tablePath, LPAnalysis analyzedLP, List<Name> fieldNames) {
+    // Validate the field names with the select map from the analyzed relational node
+    validateFieldNames(analyzedLP, fieldNames);
+
+    // Create base table from the analyzed LP
+    PhysicalRelationalTable baseTable = tableFactory.createPhysicalRelTable(tablePath.getLast(), analyzedLP);
+
+    // Convert field names to a linked hash map with corresponding indices
+    LinkedHashMap<Integer, Name> index2Name = mapFieldNamesToIndices(analyzedLP, fieldNames);
+
+    // Convert the base table's data type to a universal table
+    UniversalTable rootTable = tableFactory.getTableConverter().convert2TableBuilder(
+        tablePath,
+        baseTable.getRowType(),
+        baseTable.getNumPrimaryKeys(),
+        index2Name
+    );
+    //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
+    //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
+    //of tblDef.getTable() based on the provided list of fieldNames
+    return tableFactory.createScriptTables(rootTable, baseTable, Optional.empty());
+  }
+
+  private void validateFieldNames(LPAnalysis analyzedLP, List<Name> fieldNames) {
+    SelectIndexMap selectMap = analyzedLP.getConvertedRelnode().getSelect();
+    Preconditions.checkArgument(fieldNames.size() == selectMap.getSourceLength());
+  }
+
 
   //Converts SQRL statements into vanilla SQL
   public static LPAnalysis convertToVanillaSQL(RelNode relNode,

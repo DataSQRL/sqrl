@@ -96,7 +96,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     relBuilder.scan(table.getNameId());
     List<RexNode> selects = new ArrayList<>();
     List<String> fieldNames = new ArrayList<>();
-    table.getRelDataType().getFieldList().stream().forEach(c -> {
+    table.getRowType().getFieldList().stream().forEach(c -> {
       selects.add(relBuilder.field(c.getName()));
       fieldNames.add(c.getName());
     });
@@ -185,15 +185,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       //if nested, add as relationship
       if (assignment.getIdentifier().names.size() > 1) {
         List<String> fromTable = path.popLast().toStringList();
-//        SQRLTable parent = ((SqrlTableMacro)planner.getTableFunction(path.popLast().toStringList())
-//            .getFunction())
-//            .getSqrlTable();
         NamePath toTable = isASqrl.get(0).getPath();
 
         Relationship rel = new Relationship(path.getLast(),
             path, framework.getUniqueColumnInt().incrementAndGet(),
             fromTable, toTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
-            List.of(), parameters, nodeSupplier
+            parameters, nodeSupplier
             );
         planner.getSchema().addRelationship(rel);
       } else {
@@ -202,8 +199,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         //todo: unclean way to find from query
         nodeSupplier = assignment instanceof SqrlFromQuery ? nodeSupplier : ()->finalRel;
 
-        RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),
-            null, List.of(), parameters, nodeSupplier);
+        RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),null, parameters, nodeSupplier);
 
         for (int i = 0; i < relNode.getRowType().getFieldList().size(); i++) {
           RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
@@ -336,13 +332,13 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
         List<Name> originalNames = planner.getCatalogReader().getTableFromPath(result.getCurrentPath())
             .unwrap(ModifiableTable.class)
-            .getRelDataType().getFieldNames()
+            .getRowType().getFieldNames()
             .stream().map(nameUtil::toName)
             .collect(Collectors.toList());
 
         List<String> columns = planner.getCatalogReader().getTableFromPath(result.getCurrentPath())
             .unwrap(ModifiableTable.class)
-            .getRelDataType().getFieldNames();
+            .getRowType().getFieldNames();
 
         //Exclude columns
         Set<String> seenNames = new HashSet<>();

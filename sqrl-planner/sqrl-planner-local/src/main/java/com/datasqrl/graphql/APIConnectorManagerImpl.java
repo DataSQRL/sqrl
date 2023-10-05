@@ -1,5 +1,6 @@
 package com.datasqrl.graphql;
 
+import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -104,8 +105,8 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   @Override
   public TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable) {
     errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
-    errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType()== TableType.STREAM,
-        "Table %s for subscription %s is not a stream table", sqrlTable, subscription);
+//    errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType()== TableType.STREAM,
+//        "Table %s for subscription %s is not a stream table", sqrlTable, subscription);
     //Check if we already exported it
     TableSource subscriptionSource;
     if (exports.containsKey(sqrlTable)) {

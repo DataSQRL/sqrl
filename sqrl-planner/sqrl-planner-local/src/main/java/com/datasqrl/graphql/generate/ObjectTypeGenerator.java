@@ -32,10 +32,11 @@ public class ObjectTypeGenerator implements
 
   @Override
   public Set<GraphQLType> visit(SqrlSchema schema, SchemaGeneratorContext context) {
-    return schema.getAllTables().stream()
-        .filter(SchemaGeneratorUtil::isAccessible)
-        .map(t -> t.accept(this, context))
-        .collect(Collectors.toSet());
+    return Set.of();
+//    return schema.getAllTables().stream()
+//        .filter(SchemaGeneratorUtil::isAccessible)
+//        .map(t -> t.accept(this, context))
+//        .collect(Collectors.toSet());
   }
 
   @Override
@@ -62,7 +63,7 @@ public class ObjectTypeGenerator implements
   public GraphQLFieldDefinition visit(Relationship field, SchemaGeneratorContext context) {
     return GraphQLFieldDefinition.newFieldDefinition()
         .name(conformName(field.getName().getDisplay()))
-        .type(wrap(getTypeReference(field.getToTable(), context.getNames()), field.getMultiplicity()))
+//        .type(wrap(getTypeReference(field.getToTable(), context.getNames()), field.getMultiplicity()))
         .arguments(field.accept(new ArgumentGenerator(), context))
         .build();
   }

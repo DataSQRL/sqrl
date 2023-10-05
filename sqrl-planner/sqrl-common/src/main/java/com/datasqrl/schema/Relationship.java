@@ -27,7 +27,7 @@ public class Relationship extends Field implements SqrlTableMacro {
   private final Supplier<RelNode> viewTransform;
 
   public Relationship(Name name, NamePath path, int version, List<String> fromTable, NamePath toTable,
-      JoinType joinType, Multiplicity multiplicity, List<SQRLTable> isA, List<FunctionParameter> parameters,
+      JoinType joinType, Multiplicity multiplicity, List<FunctionParameter> parameters,
       Supplier<RelNode> viewTransform) {
     super(name, version);
     this.fromTable = fromTable;

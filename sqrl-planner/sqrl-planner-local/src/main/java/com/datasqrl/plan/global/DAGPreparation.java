@@ -36,7 +36,7 @@ public class DAGPreparation {
       Collection<ResolvedExport> exports, SqrlFramework framework) {
     //Add subscriptions as exports
     apiManager.getExports().forEach((sqrlTable, log) ->
-        exports.add(exportTable(sqrlTable, log.getSink(), relBuilder, true)));
+        exports.add(exportTable(null, log.getSink(), relBuilder, true)));
 
     //Assign timestamps to imports which propagate and restrict remaining timestamps in downstream tables
     StreamUtil.filterByClass(getAllPhysicalTables(sqrlSchema), ProxyImportRelationalTable.class)
@@ -51,7 +51,7 @@ public class DAGPreparation {
   }
 
   private Stream<PhysicalRelationalTable> getAllPhysicalTables(SqrlSchema sqrlSchema) {
-    return Stream.concat(sqrlSchema.getTables(PhysicalRelationalTable.class).stream(),
+    return Stream.concat(sqrlSchema.getTableStream(PhysicalRelationalTable.class),
             sqrlSchema.getFunctionStream(QueryTableFunction.class).map(
                     QueryTableFunction::getQueryTable));
   }

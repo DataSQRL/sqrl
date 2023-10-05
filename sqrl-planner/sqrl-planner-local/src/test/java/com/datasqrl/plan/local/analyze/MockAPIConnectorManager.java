@@ -1,6 +1,5 @@
 package com.datasqrl.plan.local.analyze;
 
-import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -17,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.Value;
-import org.apache.commons.lang3.tuple.Pair;
 
 @Value
 public class MockAPIConnectorManager implements APIConnectorManager {
@@ -56,7 +54,7 @@ public class MockAPIConnectorManager implements APIConnectorManager {
   }
 
   @Override
-  public Map<ModifiableTable, Log> getExports() {
+  public Map<SQRLTable, Log> getExports() {
     return Collections.emptyMap();
   }
 }

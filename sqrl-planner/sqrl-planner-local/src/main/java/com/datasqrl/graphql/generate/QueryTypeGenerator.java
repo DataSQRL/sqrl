@@ -27,10 +27,10 @@ public class QueryTypeGenerator implements
   public GraphQLObjectType visit(SqrlSchema schema, SchemaGeneratorContext context) {
     return GraphQLObjectType.newObject()
         .name("Query")
-        .fields(schema.getRootTables().stream()
-            .filter(SchemaGeneratorUtil::isAccessible)
-            .map(t -> t.accept(this, context))
-            .collect(Collectors.toList()))
+//        .fields(schema.getRootTables().stream()
+//            .filter(SchemaGeneratorUtil::isAccessible)
+//            .map(t -> t.accept(this, context))
+//            .collect(Collectors.toList()))
         .build();
   }
 

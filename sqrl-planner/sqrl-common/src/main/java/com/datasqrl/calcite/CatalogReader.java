@@ -25,7 +25,7 @@ public class CatalogReader extends CalciteCatalogReader {
 
   public RelOptTable getTableFromPath(List<String> names) {
     List<String> absolutePath = getSqrlAbsolutePath(names);
-    String sysTableName = nameMatcher().get(schema.getTables(), List.of(), absolutePath);
+    String sysTableName = nameMatcher().get(schema.getSysTables(), List.of(), absolutePath);
     if (sysTableName == null) {
       return null;
     }

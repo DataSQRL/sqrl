@@ -28,11 +28,9 @@ public class SqrlTestDIModule extends SqrlDIModule {
       NameCanonicalizer nameCanonicalizer) {
     super(pipeline,
         settings.getDebugger(),
-        createModuleLoader(rootDir, addlModules, errors, errorDir, new CalciteTableFactory(framework,
-            nameCanonicalizer)),
+        createModuleLoader(rootDir, addlModules, errors, errorDir,new CalciteTableFactory(framework)),
         createErrorSink(settings.getErrorSink(), errors,
-            createModuleLoader(rootDir, addlModules, errors, errorDir, new CalciteTableFactory(framework,
-                nameCanonicalizer))),
+            createModuleLoader(rootDir, addlModules, errors, errorDir, new CalciteTableFactory(framework))),
         errors, framework, NameCanonicalizer.SYSTEM);
   }
 

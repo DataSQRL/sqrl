@@ -76,7 +76,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   }
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
     Map<NamePath, SqrlModule> addlModules = Map.of();
-    CalciteTableFactory tableFactory = new CalciteTableFactory(framework, NameCanonicalizer.SYSTEM);
+    CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
     if (rootDir == null) {
       RetailSqrlModule retailSqrlModule = new RetailSqrlModule();
       retailSqrlModule.init(tableFactory);

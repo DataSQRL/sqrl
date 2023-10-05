@@ -143,9 +143,9 @@ public class SchemaGeneratorUtil {
   }
 
   public static boolean isAccessible(Field field) {
-    if (field instanceof Relationship && !isAccessible(((Relationship)field).getToTable())) {
-      return false;
-    }
+//    if (field instanceof Relationship && !isAccessible(((Relationship)field).getToTable())) {
+//      return false;
+//    }
 
     return !field.getName().isHidden();
   }

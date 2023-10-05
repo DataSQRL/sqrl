@@ -36,5 +36,5 @@ public interface APIConnectorManager {
 
   List<APIQuery> getQueries();
 
-  Map<ModifiableTable, Log> getExports();
+  Map<SQRLTable, Log> getExports();
 }
