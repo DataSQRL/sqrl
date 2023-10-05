@@ -15,6 +15,7 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.RelStageRunner;
+import com.datasqrl.plan.hints.TimestampHint;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
@@ -50,6 +51,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -149,7 +151,8 @@ public class DAGAssembler {
       }
       //Second, all tables that need to be written in denormalized form
       for (PhysicalRelationalTable denormTable : denormalizedTables) {
-        RelNode processedRelnode = RelStageRunner.runStage(STREAM_DAG_STITCHING, denormTable.getPlannedRelNode(), planner);
+        RelNode processedRelnode = produceWriteTree(denormTable.getPlannedRelNode(),
+                denormTable.getTimestamp().getTimestampCandidate().getIndex());
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(denormTable.getNameId(), denormTable.getNumPrimaryKeys(),
                 denormTable.getRowType(),
@@ -193,9 +196,7 @@ public class DAGAssembler {
         .forEach(table -> {
           Name debugSinkName = table.getTableName().suffix("debug" + debugCounter.incrementAndGet());
           TableSink sink = debugger.getDebugSink(debugSinkName, errors);
-          RelNode convertedRelNode = table.getPlannedRelNode();
-          RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode, planner);
-
+          RelNode expandedRelNode = produceWriteTree(table.getPlannedRelNode(), table.getTimestamp().getTimestampCandidate().getIndex());
           streamQueries.add(new PhysicalDAGPlan.WriteQuery(
               new PhysicalDAGPlan.ExternalSink(debugSinkName.getCanonical(), sink),
               expandedRelNode));
@@ -232,8 +233,14 @@ public class DAGAssembler {
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree
+    return produceWriteTree(convertedRelNode, alp.getTimestamp().getTimestampCandidate().getIndex());
+  }
+
+  private RelNode produceWriteTree(RelNode convertedRelNode, int timestampIndex) {
     RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode, planner);
-    return expandedRelNode; //,alp.timestamp.getTimestampCandidate().getIndex());
+    TimestampHint timestampHint = new TimestampHint(timestampIndex);
+    expandedRelNode = timestampHint.addHint((Hintable) expandedRelNode);
+    return expandedRelNode;
   }
 
 

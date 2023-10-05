@@ -29,6 +29,8 @@ public interface PhysicalTable {
 
   RelNode getPlannedRelNode();
 
+  TimestampInference getTimestamp();
+
   void setPlannedRelNode(RelNode plannedRelNode);
 
 }
