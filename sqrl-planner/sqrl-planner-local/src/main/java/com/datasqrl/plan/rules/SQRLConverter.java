@@ -32,7 +32,7 @@ public class SQRLConverter {
         errors, config);
     RelNode converted = relNode.accept(sqrl2sql);
     AnnotatedLP alp = sqrl2sql.getRelHolder(converted);
-    alp = alp.postProcess(relBuilder, config.getFieldNames(relNode), exec, errors);
+    alp = alp.postProcess(relBuilder, relNode, exec, errors);
     return alp;
   }
 
@@ -110,8 +110,5 @@ public class SQRLConverter {
       return toBuilder().stage(stage).build();
     }
 
-    public List<String> getFieldNames(RelNode relNode) {
-      return isSetOriginalFieldnames()?relNode.getRowType().getFieldNames(): getFieldNames();
-    }
   }
 }

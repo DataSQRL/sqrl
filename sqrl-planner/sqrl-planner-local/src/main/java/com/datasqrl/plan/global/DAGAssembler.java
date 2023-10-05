@@ -136,7 +136,6 @@ public class DAGAssembler {
       for (LogicalNestedTable normTable : normalizedTables) {
         RelNode scanTable = sqrlConverter.getRelBuilder().scan(normTable.getNameId()).build();
         SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBaseConfig();
-        configBuilder.fieldNames(normTable.getRowType().getFieldNames());
         Pair<RelNode, Integer> relPlusTimestamp = produceWriteTree(scanTable,
             configBuilder.build(), errors);
         RelNode processedRelnode = relPlusTimestamp.getKey();
@@ -226,8 +225,7 @@ public class DAGAssembler {
   }
 
   public static SQRLConverter.Config  getExportBaseConfig() {
-      return SQRLConverter.Config.builder()
-          .setOriginalFieldnames(true).build();
+      return SQRLConverter.Config.builder().build();
   }
 
   private Pair<RelNode,Integer> produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {

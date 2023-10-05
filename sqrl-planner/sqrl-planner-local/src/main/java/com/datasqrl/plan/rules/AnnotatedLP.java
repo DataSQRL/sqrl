@@ -9,6 +9,8 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.DedupHint;
+import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.plan.util.PrimaryKeyMap;
@@ -312,10 +314,16 @@ public class AnnotatedLP implements RelHolder {
    *
    * @return
    */
-  public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, List<String> fieldNames,
+  public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
       ExecutionAnalysis exec, ErrorCollector errors) {
-    if (fieldNames == null) { //Use existing fieldnames
+    List<String> fieldNames;
+    if (originalRelNode==null ||
+            SqrlHint.fromRel(originalRelNode, TopNHint.CONSTRUCTOR)
+                    .filter(topN -> topN.getType()== TopNHint.Type.DISTINCT_ON).isPresent()) {
+      //Use processed fieldnames for distinct_on or when relnode is absent
       fieldNames = Collections.nCopies(select.getSourceLength(), null);
+    } else {
+      fieldNames = originalRelNode.getRowType().getFieldNames();
     }
     Preconditions.checkArgument(fieldNames.size() == select.getSourceLength());
     List<RelDataTypeField> fields = relNode.getRowType().getFieldList();

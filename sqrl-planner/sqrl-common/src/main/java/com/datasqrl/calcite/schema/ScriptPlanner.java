@@ -177,7 +177,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       expanded = LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType());
     }
 
-    boolean setFieldNames = validator.getSetFieldNames().getOrDefault(assignment, true);
     List<Function> isA = validator.getIsA().get(node);
 
     //Short path: if we're not materializing, create relationship
@@ -224,7 +223,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           SqrlListUtil.popLast(assignment.getIdentifier().names) :
           assignment.getIdentifier().names;
 
-      tableFactory.createTable(path, expanded, null, setFieldNames,
+      tableFactory.createTable(path, expanded, null,
           assignment.getHints(), parameters, isA,
           materializeSelf, Optional.empty(), statementErrors);
     }
