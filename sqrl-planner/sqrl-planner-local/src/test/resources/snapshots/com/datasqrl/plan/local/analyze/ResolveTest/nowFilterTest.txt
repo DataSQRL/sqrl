@@ -1,26 +1,26 @@
->>>orderfilter$q$18-lp-STREAM
-LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
-  LogicalTableScan(table=[[orders$q$6]])
+>>>orderfilter$q$15-lp-STREAM
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+  LogicalTableScan(table=[[orders$q$5]])
 
->>>orderfilter$q$18-lp-DATABASE
-LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
+>>>orderfilter$q$15-lp-DATABASE
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
   LogicalFilter(condition=[<(NOW(), +($4, 86400000:INTERVAL SECOND(8)))])
-    LogicalTableScan(table=[[orders$7]])
+    LogicalTableScan(table=[[orders$q$5]])
 
->>>orderagg1$q$21-lp-STREAM
+>>>orderagg1$q$22-lp-STREAM
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000, 0]]
     LogicalProject(customer=[$3], bucket=[endOfSecond($4)], _uuid=[$0])
-      LogicalTableScan(table=[[orderfilter$q$18]])
+      LogicalTableScan(table=[[orderfilter$q$15]])
 
->>>orderagg1$q$21-lp-DATABASE
+>>>orderagg1$q$22-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 
 >>>orderagg2$q$24-lp-STREAM
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000, 0]]
     LogicalProject(customer=[$3], bucket=[endOfSecond($4)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$q$6]])
+      LogicalTableScan(table=[[orders$q$5]])
 
 >>>orderagg2$q$24-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
