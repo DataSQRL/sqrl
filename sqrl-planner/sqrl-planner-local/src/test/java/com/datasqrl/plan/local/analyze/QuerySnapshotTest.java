@@ -74,6 +74,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               sqrlConverter.convert(table, config, false, errors).explain(),
               table.getNameId());
         });
+    if (!errors.isEmpty()) {
+      snapshot.addContent(ErrorPrinter.prettyPrint(errors), "warnings");
+    }
     snapshot.createOrValidate();
   }
 
@@ -670,6 +673,12 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScriptInvalid("IMPORT ecommerce-data.Customer;\n"
             + "Customer2 := SELECT * FROM Customer;\n"
             + "Customer.column := 1");
+  }
+
+  @Test
+  public void validateMultiplePKWarning() {
+    validateScript("IMPORT ecommerce-data.Customer;\n"
+            + "Customer2 := SELECT _uuid as id1, _uuid as id2, customerid + 5 as newid FROM Customer;");
   }
 
   @Test
