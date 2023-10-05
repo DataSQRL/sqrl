@@ -65,7 +65,7 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
     }
 
     public int addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
-        if (isLocked()) throw new TableLockedException(this);
+        if (isLocked()) throw new UnsupportedOperationException("Table is locked: " + getNameId());
         int index = getNumColumns();
         addedColumns.add(column);
         rowType = column.appendTo(rowType, typeFactory);
@@ -100,13 +100,6 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
         }
         ImmutableBitSet primaryKey = ImmutableBitSet.of(ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
         return Statistics.of(tableStatistic.getRowCount(), List.of(primaryKey));
-    }
-
-    @AllArgsConstructor
-    public static class TableLockedException extends RuntimeException {
-
-        private ScriptRelationalTable table;
-
     }
 
     @Override

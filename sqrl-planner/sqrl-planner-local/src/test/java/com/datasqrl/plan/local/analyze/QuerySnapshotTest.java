@@ -666,6 +666,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void invalidTableLockedTest() {
+    validateScriptInvalid("IMPORT ecommerce-data.Customer;\n"
+            + "Customer2 := SELECT * FROM Customer;\n"
+            + "Customer.column := 1");
+  }
+
+  @Test
   public void subQueryExpressionTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
