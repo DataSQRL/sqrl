@@ -1,11 +1,3 @@
->>>entries$q$9
-LogicalProject(___uuid$pk$1=[$0], _idx=[$6], discount2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], ___uuid$pk$10=[$0], _uuid=[$0], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], time=[$4])
-  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
-    LogicalTableScan(table=[[orders$q$2]])
-    Uncollect
-      LogicalProject($f0=[$cor3.entries])
-        LogicalValues(tuples=[[{ 0 }]])
-
 >>>orders$q$2
 LogicalTableScan(table=[[orders$i$1]])
 
