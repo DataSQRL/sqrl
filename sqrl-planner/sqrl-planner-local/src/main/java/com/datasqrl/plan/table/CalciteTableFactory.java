@@ -7,7 +7,6 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
-import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -132,14 +131,16 @@ public class CalciteTableFactory {
     return tblDef;
   }
 
-  private static final Map<Name, Integer> defaultTimestampPreference = ImmutableMap.of(
+  private static final Map<Name, Integer> DEFAULT_TIMESTAMP_PREFERENCE = ImmutableMap.of(
       ReservedName.SOURCE_TIME, 20,
       ReservedName.INGEST_TIME, 3,
       Name.system("timestamp"), 10,
       Name.system("time"), 8);
 
+  public static final int ADDED_TIMESTAMP_SCORE = 100;
+
   protected static int getTimestampScore(Name columnName) {
-    return defaultTimestampPreference.entrySet().stream().filter(e -> e.getKey().matches(columnName.getCanonical()))
+    return DEFAULT_TIMESTAMP_PREFERENCE.entrySet().stream().filter(e -> e.getKey().matches(columnName.getCanonical()))
         .map(Entry::getValue).findFirst().orElse(1);
   }
 
