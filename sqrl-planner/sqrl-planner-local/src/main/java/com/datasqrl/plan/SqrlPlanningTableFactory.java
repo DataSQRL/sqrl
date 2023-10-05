@@ -106,7 +106,6 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
     //Config for original construction without a specific stage
     configBuilder.stage(IdealExecutionStage.INSTANCE);
-    configBuilder.addTimestamp2NormalizedChildTable(false);
     Config config = configBuilder.build();
 
     SQRLConverter sqrlConverter = new SQRLConverter(relBuilder);

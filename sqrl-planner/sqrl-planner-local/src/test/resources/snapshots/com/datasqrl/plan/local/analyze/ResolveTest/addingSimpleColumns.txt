@@ -3,7 +3,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
   LogicalTableScan(table=[[orders$i$1]])
 
 >>>orderentry$q$9-lp-STREAM
-LogicalProject(_uuid=[$0], _idx=[$7], col1=[$6], time=[$4], productid=[$8], discount=[$11], _ingest_time=[$1])
+LogicalProject(_uuid=[$0], _idx=[$7], col1=[$6], time=[$4], productid=[$8], discount2=[COALESCE($11, 0.0:DOUBLE)], _ingest_time=[$1])
   LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])
     Uncollect
@@ -11,7 +11,7 @@ LogicalProject(_uuid=[$0], _idx=[$7], col1=[$6], time=[$4], productid=[$8], disc
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>orderentry$q$9-lp-DATABASE
-LogicalProject(_uuid=[$0], _idx=[$8], col1=[$6], time=[$4], productid=[$9], discount=[$12], _ingest_time=[$1])
+LogicalProject(_uuid=[$0], _idx=[$8], col1=[$6], time=[$4], productid=[$9], discount2=[$13], _ingest_time=[$1])
   LogicalJoin(condition=[=($0, $7)], joinType=[inner])
     LogicalTableScan(table=[[orders$q$2]])
     LogicalTableScan(table=[[entries$4]])

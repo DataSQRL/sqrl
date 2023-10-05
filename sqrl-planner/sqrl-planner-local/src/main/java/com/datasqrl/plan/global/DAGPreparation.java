@@ -44,13 +44,6 @@ public class DAGPreparation {
     //Some downstream tables have multiple timestamp candidates because the timestamp was selected multiple times, pick the best one
     getAllPhysicalTables(sqrlSchema).forEach(this::finalizeTimestampOnTable);
 
-    //Append timestamp column to nested, normalized tables, so we can propagate it
-    //to engines that don't support denormalization
-    sqrlSchema.getTableStream(LogicalNestedTable.class)
-        .forEach(nestedTable -> {
-          nestedTable.appendTimestampColumn(relBuilder.getTypeFactory());
-        });
-
     //Replace default joins with inner joins for API queries
     return apiManager.getQueries().stream().map(apiQuery ->
       new AnalyzedAPIQuery(apiQuery.getNameId(), APIQueryRewriter.rewrite(relBuilder, apiQuery.getRelNode()))

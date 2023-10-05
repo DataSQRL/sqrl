@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.rules;
 
+import com.datasqrl.plan.table.LogicalNestedTable;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.util.IndexMap;
@@ -53,7 +54,11 @@ public class JoinTable implements Comparable<JoinTable> {
   }
 
   public int numColumns() {
-    return table.getNumColumns();
+    if (table instanceof LogicalNestedTable && normType==NormType.DENORMALIZED) {
+      return ((LogicalNestedTable) table).getNumDenormalizedColumns();
+    } else {
+      return table.getNumColumns();
+    }
   }
 
   public JoinTable withOffset(int newOffset) {

@@ -104,9 +104,6 @@ public class SQRLConverter {
     boolean setOriginalFieldnames = false;
 
     @Builder.Default
-    boolean addTimestamp2NormalizedChildTable = true;
-
-    @Builder.Default
     List<String> fieldNames = null;
 
     public Config withStage(ExecutionStage stage) {

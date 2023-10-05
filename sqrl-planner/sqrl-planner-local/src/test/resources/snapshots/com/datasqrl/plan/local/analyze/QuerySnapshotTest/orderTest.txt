@@ -1,5 +1,5 @@
 >>>ordered_entries$q$9
-LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], time=[$4])
+LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], __timestamp=[$4])
   LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])
     Uncollect
