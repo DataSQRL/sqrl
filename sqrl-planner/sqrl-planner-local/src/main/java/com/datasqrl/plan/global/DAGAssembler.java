@@ -136,24 +136,25 @@ public class DAGAssembler {
       for (LogicalNestedTable normTable : normalizedTables) {
         RelNode scanTable = sqrlConverter.getRelBuilder().scan(normTable.getNameId()).build();
         SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBaseConfig();
-        Pair<RelNode, Integer> relPlusTimestamp = produceWriteTree(scanTable,
+        RelNode processedRelnode = produceWriteTree(scanTable,
             configBuilder.build(), errors);
-        RelNode processedRelnode = relPlusTimestamp.getKey();
         Preconditions.checkArgument(normTable.getRowType().equals(processedRelnode.getRowType()),
             "Rowtypes do not match: \n%s \n vs \n%s",
             normTable.getRowType(), processedRelnode.getRowType());
+        int timestampIndex = normTable.getNumColumns()-1; //timestamp is always at the end
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(normTable.getNameId(), normTable.getNumPrimaryKeys(),
-                normTable.getRowType(), relPlusTimestamp.getRight(), database),
+                normTable.getRowType(), timestampIndex, database),
             processedRelnode));
       }
       //Second, all tables that need to be written in denormalized form
       for (PhysicalRelationalTable denormTable : denormalizedTables) {
+        RelNode processedRelnode = RelStageRunner.runStage(STREAM_DAG_STITCHING, denormTable.getPlannedRelNode(), planner);
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
             new EngineSink(denormTable.getNameId(), denormTable.getNumPrimaryKeys(),
                 denormTable.getRowType(),
                 denormTable.getTimestamp().getTimestampCandidate().getIndex(), database),
-            denormTable.getPlannedRelNode()));
+            processedRelnode));
       }
 
       //Third, pick index structures for materialized tables
@@ -172,9 +173,8 @@ public class DAGAssembler {
     dag.allNodesByClass(ExportNode.class).forEach(exportNode -> {
       Preconditions.checkArgument(exportNode.getChosenStage().equals(streamStage));
       ResolvedExport export = exportNode.getExport();
-      Pair<RelNode,Integer> relPlusTimestamp = produceWriteTree(export.getRelNode(),
+      RelNode processedRelnode = produceWriteTree(export.getRelNode(),
           getExportBaseConfig().withStage(exportNode.getChosenStage()), errors);
-      RelNode processedRelnode = relPlusTimestamp.getKey();
       //Pick only the selected keys
       RelBuilder relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
       relBuilder1.project(export.getRelNode().getRowType().getFieldNames().stream()
@@ -228,12 +228,12 @@ public class DAGAssembler {
       return SQRLConverter.Config.builder().build();
   }
 
-  private Pair<RelNode,Integer> produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {
+  private RelNode produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree
     RelNode expandedRelNode = RelStageRunner.runStage(STREAM_DAG_STITCHING, convertedRelNode, planner);
-    return Pair.of(expandedRelNode,alp.timestamp.getTimestampCandidate().getIndex());
+    return expandedRelNode; //,alp.timestamp.getTimestampCandidate().getIndex());
   }
 
 

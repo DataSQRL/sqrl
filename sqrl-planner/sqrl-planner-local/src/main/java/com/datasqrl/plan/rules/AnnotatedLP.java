@@ -323,6 +323,7 @@ public class AnnotatedLP implements RelHolder {
       //Use processed fieldnames for distinct_on or when relnode is absent
       fieldNames = Collections.nCopies(select.getSourceLength(), null);
     } else {
+      //otherwise, use the field names from the original relnode since we may have lost them in processing
       fieldNames = originalRelNode.getRowType().getFieldNames();
     }
     Preconditions.checkArgument(fieldNames.size() == select.getSourceLength());

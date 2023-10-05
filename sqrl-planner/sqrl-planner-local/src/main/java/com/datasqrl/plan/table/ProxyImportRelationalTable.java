@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -57,6 +58,20 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
 
   @Override
   public void assignTimestamp(int index) {
-    this.timestamp = TimestampInference.buildImport().addImport(index, 100).build();
+    timestamp.getCandidateByIndex(index).fixAsTimestamp();
   }
+
+  @Override
+  public int addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
+    int colIdx = super.addColumn(column, typeFactory);
+    if (CalciteUtil.isTimestamp(column.getDataType())) {
+      //Add timestamp candidate
+      TimestampInference.ImportBuilder timestampBuilder = TimestampInference.buildImport();
+      timestamp.getCandidates().forEach(cand -> timestampBuilder.addImport(cand.getIndex(), cand.getScore()));
+      timestampBuilder.addImport(colIdx, CalciteTableFactory.ADDED_TIMESTAMP_SCORE);
+      timestamp = timestampBuilder.build();
+    }
+    return colIdx;
+  }
+
 }
