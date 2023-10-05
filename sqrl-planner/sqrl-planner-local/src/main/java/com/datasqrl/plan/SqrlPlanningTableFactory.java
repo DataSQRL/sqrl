@@ -47,12 +47,12 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
   @Override
   public void createTable(List<String> path, RelNode input, List<RelHint> hints,
-      boolean setFieldNames, Optional<SqlNodeList> opHints,
+      Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
       Optional<Supplier<RelNode>> relNodeSupplier, ErrorCollector errors) {
     framework.resetPlanner();
     LPAnalysis analyzedLP = convertToVanillaSQL(
-        input, setFieldNames, framework.getQueryPlanner().getRelBuilder(),
+        input, framework.getQueryPlanner().getRelBuilder(),
         opHints, errors);
 
     NamePath names = nameUtil.toNamePath(path);
@@ -90,7 +90,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
   }
 
   //Converts SQRL statements into vanilla SQL
-  public static LPAnalysis convertToVanillaSQL(RelNode relNode, boolean setOriginalFieldnames,
+  public static LPAnalysis convertToVanillaSQL(RelNode relNode,
       RelBuilder relBuilder, Optional<SqlNodeList> hints, ErrorCollector errors) {
     //Parse all optimizer hints
     List<OptimizerHint> optimizerHints = OptimizerHint.fromSqlHint(hints, errors);
@@ -101,7 +101,6 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     //Capture stages
     List<OptimizerHint.Stage> configuredStages = StreamUtil.filterByClass(optimizerHints,
         OptimizerHint.Stage.class).collect(Collectors.toList());
-    configBuilder.setOriginalFieldnames(setOriginalFieldnames);
     Config baseConfig = configBuilder.build();
 
     //Config for original construction without a specific stage

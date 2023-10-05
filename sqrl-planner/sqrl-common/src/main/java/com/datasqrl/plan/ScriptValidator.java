@@ -112,7 +112,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping = new HashMap<>();
   private final Map<SqrlAssignment, SqlNode> preprocessSql = new HashMap<>();
   private final Map<SqrlAssignment, Boolean> isMaterializeTable = new HashMap<>();
-  private final Map<SqrlAssignment, Boolean> setFieldNames = new HashMap<>();
   private final Map<SqrlAssignment, List<String>> fieldNames = new HashMap<>();
   private final ArrayListMultimap<SqlNode, Function> isA = ArrayListMultimap.create();
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
@@ -238,7 +237,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
 
     visit((SqrlAssignment) node, null);
-    setFieldNames.put(node, true);
     validateTable(node, node.getQuery(), node.getTableArgs(), materializeSelf);
     return null;
   }
@@ -301,7 +299,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     isMaterializeTable.put(node,materializeSelf);
 
     visit((SqrlAssignment) node, null);
-    setFieldNames.put(node, true);
     validateTable(node, node.getQuery(), node.getTableArgs(), materializeSelf);
 
     return null;
@@ -913,7 +910,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlJoinQuery node, Void context) {
     visit((SqrlAssignment) node, null);
-    setFieldNames.put(node, true);
     boolean materializeSelf = node.getQuery().getFetch() != null;
     isMaterializeTable.put(node, materializeSelf);
     checkAssignable(node);
@@ -1006,7 +1002,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     isMaterializeTable.put(node, false);
 
     visit((SqrlAssignment) node, null);
-    setFieldNames.put(node, true);
     if (node.getIdentifier().names.size() > 1) {
       addError(ErrorLabel.GENERIC, node.getIdentifier(), "FROM clause cannot be nested. Use JOIN instead.");
     }
@@ -1026,7 +1021,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlDistinctQuery node, Void context) {
     isMaterializeTable.put(node, true);
-    setFieldNames.put(node, false);
     if (node.getOrder().isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Order by statement must be specified");
     }

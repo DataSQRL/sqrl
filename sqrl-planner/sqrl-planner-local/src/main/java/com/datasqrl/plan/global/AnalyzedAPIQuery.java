@@ -23,8 +23,7 @@ public class AnalyzedAPIQuery implements DatabaseQuery {
   }
 
   public SQRLConverter.Config getBaseConfig() {
-    return SQRLConverter.Config.builder()
-        .setOriginalFieldnames(true).build();
+    return SQRLConverter.Config.builder().build();
   }
 
   public RelNode getRelNode() {
