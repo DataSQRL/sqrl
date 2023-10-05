@@ -121,8 +121,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     if (exec.supports(EngineCapability.DENORMALIZE)) {
       //We have to append a timestamp to nested tables that are being normalized when
       //all columns are selected
-      boolean appendTimestamp = !vtable.isRoot() && config.isAddTimestamp2NormalizedChildTable();
-      return denormalizeTable(queryTable, vtable, numRootPks, appendTimestamp);
+      return denormalizeTable(queryTable, vtable, numRootPks);
     } else {
       if (vtable.isRoot()) {
         return createAnnotatedRootTable(tableScan, queryTable, numRootPks);
@@ -147,20 +146,20 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   }
 
   private AnnotatedLP denormalizeTable(PhysicalRelationalTable queryTable,
-                                       ScriptRelationalTable vtable, Optional<Integer> numRootPks,
-                                       boolean appendTimestamp) {
+                                       ScriptRelationalTable vtable, Optional<Integer> numRootPks) {
     //Shred the virtual table all the way to root:
     //First, we prepare all the data structures
     Builder selectBuilder = SelectIndexMap.builder(vtable.getNumColumns());
     PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey = PrimaryKeyMap.builder();
     List<JoinTable> joinTables = new ArrayList<>();
     //Now, we shred
-    RelNode relNode = shredTable(vtable, primaryKey, selectBuilder, joinTables, true, appendTimestamp).build();
+    RelNode relNode = shredTable(vtable, primaryKey, selectBuilder, joinTables, true).build();
 
-    //Set timestamp
+    //Append timestamp if nested
     TimestampInference timestamp = queryTable.getTimestamp().asDerived();
-    if (appendTimestamp) {
-      selectBuilder.add(timestamp.getTimestampCandidate().getIndex());
+    if (!vtable.isRoot()) {
+      TimestampInference.Candidate best = queryTable.getTimestamp().getBestCandidate();
+      selectBuilder.add(best.getIndex());
     }
 
     int targetLength = relNode.getRowType().getFieldCount();
@@ -223,9 +222,9 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   private RelBuilder shredTable(ScriptRelationalTable vtable,
                                 PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
                                 SelectIndexMap.Builder select, List<JoinTable> joinTables,
-                                boolean isLeaf, boolean appendTimestamp) {
+                                boolean isLeaf) {
     Preconditions.checkArgument(joinTables.isEmpty());
-    return shredTable(vtable, primaryKey, select, joinTables, null, JoinRelType.INNER, isLeaf, appendTimestamp);
+    return shredTable(vtable, primaryKey, select, joinTables, null, JoinRelType.INNER, isLeaf);
   }
 
   private RelBuilder shredTable(ScriptRelationalTable vtable,
@@ -233,7 +232,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       List<JoinTable> joinTables, Pair<JoinTable, RelBuilder> startingBase,
       JoinRelType joinType) {
     Preconditions.checkArgument(joinTables.isEmpty());
-    return shredTable(vtable, primaryKey, null, joinTables, startingBase, joinType, false, false);
+    return shredTable(vtable, primaryKey, null, joinTables, startingBase, joinType, false);
   }
 
   @Value
@@ -247,7 +246,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
                                 PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
                                 SelectIndexMap.Builder select, List<JoinTable> joinTables,
                                 Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType,
-                                boolean isLeaf, boolean appendTimestamp) {
+                                boolean isLeaf) {
     Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT);
 
     if (startingBase != null && startingBase.getKey().getTable().equals(vtable)) {
@@ -274,8 +273,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     joinTables.add(tableResult.getJoinTable());
     //All primary key columns have already been selected, add remaining columns to select
     if (isLeaf && startingBase == null) {
-      //If we append a timestamp, we won't select the last column (which is the timestamp)
-      for (int i = 0; i < vtable.getNumColumns() - vtable.getNumPrimaryKeys() - (appendTimestamp?1:0); i++) {
+      //We append a timestamp on nested tables, so we don't select the last column
+      for (int i = 0; i < vtable.getNumColumns() - vtable.getNumPrimaryKeys() - (vtable.isRoot()?0:1); i++) {
         select.add(offset + i);
       }
     }
@@ -293,7 +292,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
                                            SelectIndexMap.Builder select, List<JoinTable> joinTables,
                                            Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType) {
     RelBuilder builder = shredTable(child.getParent(), primaryKey, select, joinTables, startingBase,
-        joinType, false, false);
+        joinType, false);
     JoinTable parentJoinTable = Iterables.getLast(joinTables);
     int indexOfShredField = parentJoinTable.getOffset() + child.getShredIndex();
     CorrelationId id = builder.getCluster().createCorrel();

@@ -5,7 +5,7 @@ LogicalTableScan(table=[[customer$i$1]])
 LogicalTableScan(table=[[orders$i$4]])
 
 >>>orders3$q$15
-LogicalProject(_uuid=[$0], _idx=[$6], _idx0=[$11], productid=[$12], quantity=[$13], unit_price=[$14], discount=[$15], time=[$4])
+LogicalProject(_uuid=[$0], _idx=[$6], _idx0=[$11], productid=[$12], quantity=[$13], unit_price=[$14], discount=[$15], __timestamp=[$4])
   LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
     LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$5]])

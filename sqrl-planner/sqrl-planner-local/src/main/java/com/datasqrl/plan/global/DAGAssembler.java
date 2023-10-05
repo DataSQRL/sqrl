@@ -231,7 +231,6 @@ public class DAGAssembler {
   }
 
   private Pair<RelNode,Integer> produceWriteTree(RelNode relNode, SQRLConverter.Config config, ErrorCollector errors) {
-    Preconditions.checkArgument(config.isAddTimestamp2NormalizedChildTable());
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree

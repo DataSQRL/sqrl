@@ -133,7 +133,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     int timestampIndex;
     if (!(node instanceof RexInputRef) && query.getTimestampAlias().isEmpty()) {
-      timestampIndex = addColumn(node, "_time", table);
+      timestampIndex = addColumn(node, ReservedName.SYSTEM_TIMESTAMP.getCanonical(), table);
     } else if (query.getTimestampAlias().isPresent()) {
       //otherwise, add new column
       timestampIndex = addColumn(node, query.getTimestampAlias().get().getSimple(),
