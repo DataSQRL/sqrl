@@ -2,6 +2,7 @@ package com.datasqrl.calcite;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
@@ -9,7 +10,6 @@ import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
@@ -23,14 +23,9 @@ public class CatalogReader extends CalciteCatalogReader {
     this.schema = rootSchema;
   }
 
-  public RelOptTable getSqrlTable(List<String> names) {
+  public RelOptTable getTableFromPath(List<String> names) {
     List<String> absolutePath = getSqrlAbsolutePath(names);
-    Map<List<String>, String> collect = schema.getSqrlTables().stream()
-        .filter(f->f.getRelOptTable() != null)
-        .collect(Collectors.toMap(f -> f.getPath().toStringList(),
-            f -> ((ModifiableTable)f.getRelOptTable()).getNameId()));
-
-    String sysTableName = nameMatcher().get(collect, List.of(), absolutePath);
+    String sysTableName = nameMatcher().get(schema.getTables(), List.of(), absolutePath);
     if (sysTableName == null) {
       return null;
     }

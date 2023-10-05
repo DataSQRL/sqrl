@@ -31,16 +31,16 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
 
   public void registerScriptTable(ScriptTableDefinition tblDef, SqrlFramework framework) {
     //add to schema
-    for (Map.Entry<SQRLTable, ScriptRelationalTable> entry : tblDef.getShredTableMap().entrySet()) {
-      framework.getSchema().add(entry.getValue().getNameId(), entry.getValue());
+    for (ScriptRelationalTable entry : tblDef.getShredTableMap().values()) {
+      framework.getSchema().add(entry.getNameId(), entry);
 
-      for (Field field : entry.getKey().getFields().getFields()) {
+//      for (Field field : entry.getKey().getFields().getFields()) {
         //todo: this is only required because we miss registering nested tables for distinct-on statements
         // Add the logic to calcite table factory and remove this
-        if (field instanceof Relationship) {
-          framework.getSchema().addRelationship((Relationship) field);
-        }
-      }
+//        if (field instanceof Relationship) {
+//          framework.getSchema().addRelationship((Relationship) field);
+//        }
+//      }
     }
 
     if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {

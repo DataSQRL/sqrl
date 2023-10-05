@@ -2,6 +2,7 @@ package com.datasqrl.schema;
 
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Supplier;
@@ -13,17 +14,22 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 
 @Getter
-public class RootSqrlTable extends SQRLTable implements SqrlTableMacro {
+public class RootSqrlTable implements SqrlTableMacro {
   private final Name name;
+  private final Table internalTable;
+  private final List<SQRLTable> isTypeOf;
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
+  private final NamePath path;
 
   public RootSqrlTable(Name name, Table internalTable, List<SQRLTable> isTypeOf,
       List<FunctionParameter> parameters, Supplier<RelNode> viewTransform) {
-    super(name.toNamePath(), internalTable, isTypeOf);
     this.name = name;
+    this.internalTable = internalTable;
+    this.isTypeOf = isTypeOf;
     this.parameters = parameters;
     this.viewTransform = viewTransform;
+    this.path = NamePath.of(name);
   }
 
   @Override
@@ -39,5 +45,14 @@ public class RootSqrlTable extends SQRLTable implements SqrlTableMacro {
   @Override
   public Supplier<RelNode> getViewTransform() {
     return viewTransform;
+  }
+
+  @Override
+  public RelDataType getRowType() {
+    return getRowType(null, null);
+  }
+
+  public void addColumn(Name name, String name1, boolean b, RelDataType type) {
+
   }
 }

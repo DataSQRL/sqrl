@@ -1,5 +1,6 @@
 package com.datasqrl.graphql;
 
+import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.io.tables.TableSink;
@@ -35,5 +36,5 @@ public interface APIConnectorManager {
 
   List<APIQuery> getQueries();
 
-  Map<SQRLTable, Log> getExports();
+  Map<ModifiableTable, Log> getExports();
 }

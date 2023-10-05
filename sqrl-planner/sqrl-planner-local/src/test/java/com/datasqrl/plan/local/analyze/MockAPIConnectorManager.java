@@ -1,5 +1,6 @@
 package com.datasqrl.plan.local.analyze;
 
+import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -55,7 +56,7 @@ public class MockAPIConnectorManager implements APIConnectorManager {
   }
 
   @Override
-  public Map<SQRLTable, Log> getExports() {
+  public Map<ModifiableTable, Log> getExports() {
     return Collections.emptyMap();
   }
 }

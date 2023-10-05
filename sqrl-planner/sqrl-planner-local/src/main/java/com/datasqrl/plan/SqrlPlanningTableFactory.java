@@ -17,6 +17,7 @@ import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
@@ -56,17 +57,19 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
     NamePath names = nameUtil.toNamePath(path);
 
-    Optional<SQRLTable> parent = Optional.empty();
+    Optional<ScriptRelationalTable> parent = Optional.empty();
     if (path.size() > 1) {
       TableFunction function = framework.getQueryPlanner()
           .getTableFunction(SqrlListUtil.popLast(path)).getFunction();
       SqrlTableMacro sqrlTable = (SqrlTableMacro)function;
-      parent = Optional.of(sqrlTable.getSqrlTable());
+
+      parent = Optional.empty();
+//      parent = Optional.of(sqrlTable.getSqrlTable());
     }
 
-    List<SQRLTable> isATable = isA.stream()
+    List<NamePath> isATable = isA.stream()
         .map(f->(SqrlTableMacro) f)
-        .map(SqrlTableMacro::getSqrlTable)
+        .map(SqrlTableMacro::getPath)
         .collect(Collectors.toList());
 
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
@@ -80,7 +83,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
     ScriptTableDefinition scriptTableDefinition = new CalciteTableFactory(framework, nameCanonicalizer)
         .defineTable(names, analyzedLP, fieldNames, parent, materializeSelf, relNodeSupplier,
-            Optional.of(parameters), Optional.of(isATable));
+            Optional.of(parameters), Optional.empty());
 
     SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(), scriptTableDefinition,
         null, null, parameters, isA, materializeSelf);

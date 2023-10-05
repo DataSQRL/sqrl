@@ -145,7 +145,8 @@ public class SchemaInference {
     }
 
     SqrlTableMacro tableFunction = (SqrlTableMacro)function.getFunction();
-    return tableFunction.getSqrlTable();
+    throw new RuntimeException("TODO");
+//    return null;//tableFunction.getSqrlTable();
   }
 
   private Optional<SQRLTable> getTableOfType(Type type, String name) {
@@ -247,9 +248,10 @@ public class SchemaInference {
 
   private InferredField walkRel(FieldDefinition fieldDefinition, Relationship relationship,
       List<InferredField> fields, ObjectTypeDefinition parent, boolean isSubscription) {
-    return new NestedField(relationship,
-        inferObjectField(fieldDefinition, relationship.getToTable(),
-            fields, parent, relationship.getFromTable(), isSubscription));
+    throw new RuntimeException("TODO");
+//    return new NestedField(relationship,
+//        inferObjectField(fieldDefinition, null/*, relationship.getToTable(),*/,
+//            fields, parent, null/*relationship.getFromTable()*/, isSubscription));
   }
 
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,

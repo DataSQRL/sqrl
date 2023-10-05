@@ -42,10 +42,6 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
     @Getter
     private boolean isLocked;
 
-    //TODO: This needs to be removed
-    @Getter @Setter
-    private SQRLTable sqrlTable;
-
     protected ScriptRelationalTable(@NonNull Name nameId, @NonNull RelDataType rowType) {
         super(nameId);
         this.rowType = rowType;
