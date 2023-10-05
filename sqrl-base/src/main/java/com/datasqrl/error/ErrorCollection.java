@@ -51,17 +51,8 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
   }
 
   public boolean hasErrors() {
-    return !errors.isEmpty();
-  }
-
-  public boolean isFatal() {
     return errors.stream().anyMatch(ErrorMessage::isFatal);
   }
-
-  public boolean isSuccess() {
-    return !isFatal();
-  }
-
 
   public String combineMessages(ErrorMessage.Severity minSeverity, String prefix,
       String delimiter) {

@@ -79,7 +79,7 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
         "type Orders {\n\tentries: OrderEntries\n}\n"
             + "type OrderEntries {\n\tproductid: Int\n}\n"
             + "type Query {\n\torders: Orders\n}");
-    if (errors.getErrors().hasErrors()) {
+    if (errors.hasErrors()) {
       fail("No errors expected");
     }
   }
