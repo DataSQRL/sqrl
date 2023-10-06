@@ -66,10 +66,10 @@ public abstract class BaseRowConverter extends AbstractJdbcRowConverter {
   protected JdbcSerializationConverter createExternalConverter(LogicalType type) {
     switch (type.getTypeRoot()) {
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        final int timestampPrecision2 = ((LocalZonedTimestampType) type).getPrecision();
+        final int tsPrecision = ((LocalZonedTimestampType) type).getPrecision();
         return (val, index, statement) ->
             statement.setTimestamp(
-                index, val.getTimestamp(index, timestampPrecision2).toTimestamp());
+                index, val.getTimestamp(index, tsPrecision).toTimestamp());
       case ARRAY:
         return (val, index, statement) -> createArraySerializer(type, val, index, statement);
       case ROW:

@@ -56,23 +56,23 @@ public class PostgresRowConverter extends BaseRowConverter {
     @SneakyThrows
     public void createRowSerializer(LogicalType type, RowData val, int index,
         FieldNamedPreparedStatement statement) {
-        FieldNamedPreparedStatementImpl statement1 = (FieldNamedPreparedStatementImpl) statement;
-        for (int idx : statement1.getIndexMapping()[index]) {
+        FieldNamedPreparedStatementImpl flinkPreparedStatement = (FieldNamedPreparedStatementImpl) statement;
+        for (int idx : flinkPreparedStatement.getIndexMapping()[index]) {
             statement.setObject(idx, val.getBinary(index));
         }
     }
 
     @SneakyThrows
     public void createArraySerializer(LogicalType type, RowData val, int index, FieldNamedPreparedStatement statement) {
-        FieldNamedPreparedStatementImpl statement1 = (FieldNamedPreparedStatementImpl) statement;
-        for (int idx : statement1.getIndexMapping()[index]) {
+        FieldNamedPreparedStatementImpl flinkPreparedStatement = (FieldNamedPreparedStatementImpl) statement;
+        for (int idx : flinkPreparedStatement.getIndexMapping()[index]) {
             ArrayData arrayData = val.getArray(index);
             if (arrayData instanceof GenericArrayData) {
-                createSqlArrayObject(type, (GenericArrayData)arrayData, idx, statement1.getStatement());
+                createSqlArrayObject(type, (GenericArrayData)arrayData, idx, flinkPreparedStatement.getStatement());
             } else if (arrayData instanceof BinaryArrayData) {
-                Array array = statement1.getStatement().getConnection()
+                Array array = flinkPreparedStatement.getStatement().getConnection()
                     .createArrayOf("bytea", ArrayUtils.toObject( arrayData.toByteArray()));
-                statement1.getStatement().setArray(idx, array);
+                flinkPreparedStatement.getStatement().setArray(idx, array);
             } else {
                 throw new RuntimeException("Unsupported ArrayData type: " + arrayData.getClass());
             }
