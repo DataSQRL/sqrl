@@ -4,10 +4,10 @@ LogicalTableScan(table=[[orders$i$1]])
 >>>stats$q$9
 LogicalProject(___uuid$pk$1=[$0], num=[$2], total=[$3], time=[$1])
   LogicalAggregate(group=[{0, 4}], num=[COUNT()], total=[SUM($10)])
-    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+    LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$2]])
       Uncollect
-        LogicalProject($f0=[$cor1.entries])
+        LogicalProject($f0=[$cor5.entries])
           LogicalValues(tuples=[[{ 0 }]])
 
 >>>x$q$13

@@ -18,23 +18,29 @@
 
 package org.apache.flink.connector.jdbc.internal.converter;
 
-import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter;
+import java.sql.Array;
+import java.sql.PreparedStatement;
+import lombok.SneakyThrows;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
+import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatementImpl;
+import org.apache.flink.table.data.ArrayData;
 import org.apache.flink.table.data.GenericArrayData;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.data.binary.BinaryArrayData;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.LogicalType;
-import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
-
 import org.postgresql.jdbc.PgArray;
-
-import java.lang.reflect.Array;
 
 /**
  * Runtime converter that responsible to convert between JDBC object and Flink internal object for
  * PostgreSQL.
+ *
+ * SQRL:Add array support
  */
-public class PostgresRowConverter extends AbstractJdbcRowConverter {
+public class PostgresRowConverter extends BaseRowConverter {
 
     private static final long serialVersionUID = 1L;
 
@@ -47,37 +53,50 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
         super(rowType);
     }
 
-    @Override
-    public JdbcDeserializationConverter createInternalConverter(LogicalType type) {
-        LogicalTypeRoot root = type.getTypeRoot();
+    @SneakyThrows
+    public void createRowSerializer(LogicalType type, RowData val, int index,
+        FieldNamedPreparedStatement statement) {
+        FieldNamedPreparedStatementImpl statement1 = (FieldNamedPreparedStatementImpl) statement;
+        for (int idx : statement1.getIndexMapping()[index]) {
+            statement.setObject(idx, val.getBinary(index));
+        }
+    }
 
-        if (root == LogicalTypeRoot.ARRAY) {
-            ArrayType arrayType = (ArrayType) type;
-            return createPostgresArrayConverter(arrayType);
+    @SneakyThrows
+    public void createArraySerializer(LogicalType type, RowData val, int index, FieldNamedPreparedStatement statement) {
+        FieldNamedPreparedStatementImpl statement1 = (FieldNamedPreparedStatementImpl) statement;
+        for (int idx : statement1.getIndexMapping()[index]) {
+            ArrayData arrayData = val.getArray(index);
+            if (arrayData instanceof GenericArrayData) {
+                createSqlArrayObject(type, (GenericArrayData)arrayData, idx, statement1.getStatement());
+            } else if (arrayData instanceof BinaryArrayData) {
+                Array array = statement1.getStatement().getConnection()
+                    .createArrayOf("bytea", ArrayUtils.toObject( arrayData.toByteArray()));
+                statement1.getStatement().setArray(idx, array);
+            } else {
+                throw new RuntimeException("Unsupported ArrayData type: " + arrayData.getClass());
+            }
+        }
+    }
+
+    @SneakyThrows
+    private void createSqlArrayObject(LogicalType type, GenericArrayData data, int idx,
+        PreparedStatement statement) {
+        //Scalar arrays of any dimension are one array call
+        if (isScalarArray(type)) {
+            Object[] boxed = data.toObjectArray();
+            Array array = statement.getConnection()
+                .createArrayOf(getArrayScalarName(type), boxed);
+            statement.setArray(idx, array);
         } else {
-            return createPrimitiveConverter(type);
+            Array array = statement.getConnection()
+                .createArrayOf("bytea", ArrayUtils.toObject(data.toByteArray()));
+            statement.setArray(idx, array);
         }
     }
 
     @Override
-    protected JdbcSerializationConverter createNullableExternalConverter(LogicalType type) {
-        LogicalTypeRoot root = type.getTypeRoot();
-        if (root == LogicalTypeRoot.ARRAY) {
-            return super.createArrayExternalConverter(type);
-
-            // note:Writing ARRAY type is not yet supported by PostgreSQL dialect now.
-//            return (val, index, statement) -> {
-//                throw new IllegalStateException(
-//                        String.format(
-//                                "Writing ARRAY type is not yet supported in JDBC:%s.",
-//                                converterName()));
-//            };
-        } else {
-            return super.createNullableExternalConverter(type);
-        }
-    }
-
-    private JdbcDeserializationConverter createPostgresArrayConverter(ArrayType arrayType) {
+    public JdbcDeserializationConverter createArrayConverter(ArrayType arrayType) {
         // Since PGJDBC 42.2.15 (https://github.com/pgjdbc/pgjdbc/pull/1194) bytea[] is wrapped in
         // primitive byte arrays
         final Class<?> elementClass =
@@ -87,7 +106,7 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
         return val -> {
             PgArray pgArray = (PgArray) val;
             Object[] in = (Object[]) pgArray.getArray();
-            final Object[] array = (Object[]) Array.newInstance(elementClass, in.length);
+            final Object[] array = (Object[]) java.lang.reflect.Array.newInstance(elementClass, in.length);
             for (int i = 0; i < in.length; i++) {
                 array[i] = elementConverter.deserialize(in[i]);
             }
@@ -95,9 +114,58 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
         };
     }
 
-    // Have its own method so that Postgres can support primitives that super class doesn't support
-    // in the future
-    private JdbcDeserializationConverter createPrimitiveConverter(LogicalType type) {
-        return super.createInternalConverter(type);
+
+    private String getArrayScalarName(LogicalType type) {
+        switch (type.getTypeRoot()) {
+            case CHAR:
+            case VARCHAR:
+                return "text";
+            case BOOLEAN:
+                return "boolean";
+            case BINARY:
+            case VARBINARY:
+                return "bytea";
+            case DECIMAL:
+                return "decimal";
+            case TINYINT:
+                return "smallint";
+            case SMALLINT:
+                return "smallint";
+            case INTEGER:
+                return "integer";
+            case BIGINT:
+                return "bigint";
+            case FLOAT:
+                return "real"; // PostgreSQL uses REAL for float
+            case DOUBLE:
+                return "double";
+            case DATE:
+                return "date";
+            case TIME_WITHOUT_TIME_ZONE:
+                return "time without time zone";
+            case TIMESTAMP_WITHOUT_TIME_ZONE:
+                return "timestamp without time zone";
+            case TIMESTAMP_WITH_TIME_ZONE:
+            case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                return "timestamp with time zone";
+            case INTERVAL_YEAR_MONTH:
+                return "interval year to month";
+            case INTERVAL_DAY_TIME:
+                return "interval day to second";
+            case NULL:
+                return "void";
+            case ARRAY:
+                return getArrayScalarName(((ArrayType) type).getElementType());
+            case MULTISET:
+            case MAP:
+            case ROW:
+            case DISTINCT_TYPE:
+            case STRUCTURED_TYPE:
+            case RAW:
+            case SYMBOL:
+            case UNRESOLVED:
+            default:
+                throw new RuntimeException("Unknown type");
+        }
     }
 }

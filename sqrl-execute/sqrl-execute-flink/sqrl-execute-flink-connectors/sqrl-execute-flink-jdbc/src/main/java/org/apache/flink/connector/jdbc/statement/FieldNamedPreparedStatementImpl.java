@@ -34,6 +34,9 @@ import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
 
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
+/**
+ * SQRL: added getStatement
+ */
 
 /** Simple implementation of {@link FieldNamedPreparedStatement}. */
 public class FieldNamedPreparedStatementImpl implements FieldNamedPreparedStatement {

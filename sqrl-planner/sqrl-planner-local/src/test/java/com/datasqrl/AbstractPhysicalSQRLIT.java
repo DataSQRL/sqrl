@@ -3,6 +3,7 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -157,7 +158,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     for (APIQuery query : apiManager.getQueries()) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
-      String sqlQuery = RelToFlinkSql.convertToString(template.getRelNode());
+
+      String sqlQuery = framework.getQueryPlanner().relToString(Dialect.POSTGRES, template.getRelNode());
       log.info("Executing query for {}: {}", query.getNameId(), sqlQuery);
 
       ResultSet resultSet = conn

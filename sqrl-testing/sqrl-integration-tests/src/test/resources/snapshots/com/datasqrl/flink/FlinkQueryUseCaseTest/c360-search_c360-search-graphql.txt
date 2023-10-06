@@ -1,6 +1,6 @@
 >>>database
-CREATE INDEX IF NOT EXISTS product$6_text_c3c4c5 ON product$6 USING GIN (to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(category, '') ));
-CREATE TABLE IF NOT EXISTS product$6 (productid BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,name TEXT NOT NULL,description TEXT NOT NULL,category TEXT NOT NULL,updateTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (productid));
+CREATE INDEX IF NOT EXISTS product$q$4_text_c3c4c5 ON product$q$4 USING GIN (to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(category, '') ));
+CREATE TABLE IF NOT EXISTS product$q$4 (productid BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,name TEXT NOT NULL,description TEXT NOT NULL,category TEXT NOT NULL,updateTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (productid));
 >>>query-productsearch
 {
   "data" : {

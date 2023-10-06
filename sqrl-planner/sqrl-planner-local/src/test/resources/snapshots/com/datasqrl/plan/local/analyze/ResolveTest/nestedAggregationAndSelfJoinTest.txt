@@ -2,10 +2,10 @@
 LogicalProject(___uuid$pk$1=[$0], price=[$2], num=[$3], discount=[$4], time=[$1])
   LogicalAggregate(group=[{0, 4}], price=[SUM($1)], num=[COUNT()], discount=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
     LogicalProject(___uuid$pk$1=[$0], $f1=[-(*($8, $9), $10)], discount=[$10], _idx=[$6], time=[$4])
-      LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+      LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
         LogicalTableScan(table=[[orders$q$2]])
         Uncollect
-          LogicalProject($f0=[$cor1.entries])
+          LogicalProject($f0=[$cor5.entries])
             LogicalValues(tuples=[[{ 0 }]])
 
 >>>total$q$14-lp-DATABASE

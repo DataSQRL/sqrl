@@ -4,10 +4,10 @@ LogicalTableScan(table=[[customer$i$1]])
 >>>dproduct$q$16
 LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], name=[$16], __timestamp=[CASE(<($4, $12), $12, $4)])
   LogicalJoin(condition=[=($7, $13)], joinType=[inner])
-    LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+    LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$5]])
       Uncollect
-        LogicalProject($f0=[$cor3.entries])
+        LogicalProject($f0=[$cor4.entries])
           LogicalValues(tuples=[[{ 0 }]])
     LogicalTableScan(table=[[product$q$13]])
 

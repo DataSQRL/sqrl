@@ -28,12 +28,6 @@ public class RelToFlinkSql {
           .withDialect(PostgresqlSqlDialect.DEFAULT)
           .withSelectFolding(null);
 
-  public static String convertToString(RelNode optimizedNode) {
-    return convertToSqlNode(optimizedNode).toSqlString(
-            c -> transform.apply(c.withDialect(FlinkDialect.DEFAULT)))
-        .getSql();
-  }
-
   public static String convertToString(SqlNode sqlNode) {
     return sqlNode.toSqlString(
             c -> transform.apply(c.withDialect(FlinkDialect.DEFAULT)))

@@ -3,10 +3,10 @@ LogicalTableScan(table=[[customer$i$1]])
 
 >>>entries2$q$15
 LogicalProject(___uuid$pk$1=[$0], _idx=[$6], id=[$2], time=[$4])
-  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+  LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$5]])
     Uncollect
-      LogicalProject($f0=[$cor3.entries])
+      LogicalProject($f0=[$cor4.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>orders$q$5
