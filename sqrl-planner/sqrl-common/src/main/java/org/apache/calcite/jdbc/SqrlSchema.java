@@ -7,6 +7,7 @@ import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,7 +26,6 @@ import java.util.stream.Stream;
 public class SqrlSchema extends SimpleCalciteSchema {
   private final SqrlFramework sqrlFramework;
   private final List<ResolvedExport> exports = new ArrayList<>();
-//  private final List<SQRLTable> sqrlTables = new ArrayList<>();
   private final Map<List<String>, List<String>> relationships = new HashMap();
   private final Set<URL> jars = new HashSet<>();
   private final Map<List<String>, Relationship> relFncs = new HashMap<>();
@@ -72,10 +72,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
     plus().add(String.join(".", root.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueTableInt().incrementAndGet(),(RootSqrlTable)root
         );
-  }
-
-  public <R, C> R accept(CalciteSchemaVisitor<R, C> visitor, C context) {
-    return visitor.visit(this, context);
   }
 
   public Set<URL> getJars() {

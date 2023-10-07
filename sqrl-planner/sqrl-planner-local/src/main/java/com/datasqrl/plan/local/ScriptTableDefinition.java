@@ -6,13 +6,10 @@ package com.datasqrl.plan.local;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.StreamUtil;
-import java.util.Set;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
-
-import java.util.Map;
 
 @Getter
 public class ScriptTableDefinition {

@@ -27,6 +27,7 @@ import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
 import com.datasqrl.graphql.inference.SchemaBuilder;
 import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
+import com.datasqrl.graphql.inference.SqrlSchema2;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.tables.TableSink;
@@ -136,15 +137,18 @@ public class Compiler {
 
     Namespace ns = planner.plan(FileUtil.readFile(mainScript), List.of(apiManager.getAsModuleLoader()));
 
+    SqrlSchema2 sqrlSchema2 = new SqrlSchema2(framework.getSchema());
+
     Name graphqlName = Name.system(scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>")
         .split("\\.")[0]);
     APISource apiSchema = apiSchemaOpt.orElseGet(() ->
-        new APISource(graphqlName, inferGraphQLSchema(ns.getSchema())));
+        new APISource(graphqlName, inferGraphQLSchema(sqrlSchema2)));
 
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 
     ErrorCollector collector = injector.getInstance(ErrorCollector.class);
     collector = collector.withSchema(apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
+
 
     RootGraphqlModel root;
     //todo: move
@@ -154,13 +158,13 @@ public class Compiler {
           apiSchema.getName().getDisplay(),
           moduleLoader,
           apiSchema,
-          framework.getSchema(),
+          sqrlSchema2,
           queryPlanner.createRelBuilder(),
           apiManager)
           .accept();
 
       SchemaBuilder schemaBuilder = new SchemaBuilder(framework, apiSchema,
-          framework.getSchema(),
+          sqrlSchema2,
           queryPlanner.createRelBuilder(),
           queryPlanner,
           framework.getSqrlOperatorTable(),
@@ -190,7 +194,7 @@ public class Compiler {
   }
 
   @SneakyThrows
-  public static String inferGraphQLSchema(SqrlSchema schema) {
+  public static String inferGraphQLSchema(SqrlSchema2 schema) {
     GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()

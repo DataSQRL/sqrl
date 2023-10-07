@@ -4,18 +4,14 @@
 package com.datasqrl.graphql.generate;
 
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
-import static com.ibm.icu.text.PluralRules.Operand.f;
 
 import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.schema.Column;
-import com.datasqrl.schema.FieldVisitor;
+import com.datasqrl.graphql.inference.SqrlSchema2.*;
+import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable.SqrlTableVisitor;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
-import com.datasqrl.schema.SQRLTable;
-import com.datasqrl.schema.SQRLTable.SqrlTableVisitor;
 import graphql.schema.GraphQLArgument;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.schema.FunctionParameter;
@@ -39,8 +35,7 @@ public class ArgumentGenerator implements
         .filter(f->!((SqrlFunctionParameter)f).isInternal())
         .collect(Collectors.toList());
     if (parameters.isEmpty()) {
-      throw new RuntimeException("TODO");
-//      return field.getToTable().accept(this, context);
+      return field.getToTable().accept(this, context);
     } else {
       return parameters.stream()
           .filter(p->!((SqrlFunctionParameter)p).isInternal())
@@ -53,12 +48,11 @@ public class ArgumentGenerator implements
 
   @Override
   public List<GraphQLArgument> visit(SQRLTable table, SchemaGeneratorContext context) {
-    return table.getFields().getAccessibleFields()
-        .stream().filter(SchemaGeneratorUtil::isAccessible)
-        .filter(f -> f instanceof Column)
+    return table.getColumns(true)
+        .stream()
         .map(f -> GraphQLArgument.newArgument()
             .name(f.getName().getDisplay())
-            .type(getInputType(((Column) f).getType()))
+            .type(getInputType(f.getType()))
             .build())
         .limit(8)
         .collect(Collectors.toList());

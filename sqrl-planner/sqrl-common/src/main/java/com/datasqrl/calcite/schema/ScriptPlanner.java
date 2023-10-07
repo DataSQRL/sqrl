@@ -201,13 +201,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
         RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),null, parameters, nodeSupplier);
 
-        for (int i = 0; i < relNode.getRowType().getFieldList().size(); i++) {
-          RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
-          sqrlTable.addColumn(nameUtil.toName(field.getName()), field.getName(), true,
-              field.getType());
-        }
+        ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
 
-        planner.getSchema().addTable(sqrlTable);
+        tableFactory.createTable(sqrlTable.getPath().toStringList(),
+            expanded, null,
+            assignment.getHints(), parameters, isA,
+            materializeSelf, Optional.empty(), statementErrors);
       }
     } else {
       ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
@@ -285,9 +284,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private int addColumn(RexNode node, String cName, RelOptTable table) {
     if (table.unwrap(ModifiableTable.class) != null) {
       ModifiableTable table1 = (ModifiableTable) table.unwrap(Table.class);
-//      SQRLTable sqrlTable = table1.getRelDataType();
-//      Column column = sqrlTable.addColumn(nameUtil.toName(cName), null, true, node.getType());
-//      column.setVtName(column.getId().getDisplay());
       return table1.addColumn(cName, node, framework.getTypeFactory());
     } else {
       throw new RuntimeException();
@@ -343,14 +339,16 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         //Exclude columns
         Set<String> seenNames = new HashSet<>();
         seenNames.addAll(fieldNames.stream()
-            .map(n->nameUtil.toName(n).getCanonical())
+            .map(n->nameUtil.toName(n).getDisplay())
             .collect(Collectors.toList()));
 
         List<SqlNode> newNodes = new ArrayList<>();
         //Walk backwards to get the latest nodes
         for (int i = columns.size() - 1; i >= 0; i--) {
           String column = columns.get(i);
-          if (!seenNames.contains(column)) {
+          int idx = planner.getCatalogReader().nameMatcher()
+              .indexOf(seenNames, column);
+          if (idx == -1) {
             seenNames.add(column);
             newNodes.add(new SqlIdentifier(column, SqlParserPos.ZERO));
           }

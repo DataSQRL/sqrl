@@ -51,9 +51,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
   }
 
   protected boolean importSourceTable(Optional<String> objectName, TableSource table, SqrlFramework framework) {
-    Map<NamePath, ScriptRelationalTable> tables = importTable(table,
-        objectName.map(canonicalizer::name));
-
+    Map<NamePath, ScriptRelationalTable> tables = importTable(table, objectName.map(canonicalizer::name));
     registerScriptTable(new ScriptTableDefinition(tables), framework, Optional.empty(), Optional.empty());
     return true;
   }

@@ -49,8 +49,4 @@ public class RootSqrlTable implements SqrlTableMacro {
   public RelDataType getRowType() {
     return getRowType(null, null);
   }
-
-  public void addColumn(Name name, String name1, boolean b, RelDataType type) {
-
-  }
 }

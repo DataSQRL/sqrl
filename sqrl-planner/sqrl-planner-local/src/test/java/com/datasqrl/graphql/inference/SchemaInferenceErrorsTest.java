@@ -40,7 +40,9 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void generateSchemaTest() {
-    GraphQLSchema gqlSchema = new SchemaGenerator().generate(ns.getSchema());
+    SqrlSchema2 sqrlSchema2 = new SqrlSchema2(planner.getFramework().getSchema());
+
+    GraphQLSchema gqlSchema = new SchemaGenerator().generate(sqrlSchema2);
 
     if (errors.hasErrors()) {
       fail("Exception thrown");

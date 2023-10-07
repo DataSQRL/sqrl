@@ -1,6 +1,5 @@
 package com.datasqrl.graphql;
 
-import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -9,6 +8,7 @@ import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
@@ -20,8 +20,9 @@ import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.plan.table.*;
-import com.datasqrl.schema.SQRLTable;
+import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.RelDataType2UTBConverter;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.UniversalTable;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -108,7 +109,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 //    errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType()== TableType.STREAM,
 //        "Table %s for subscription %s is not a stream table", sqrlTable, subscription);
     //Check if we already exported it
-    TableSource subscriptionSource;
+    TableSource subscriptionSource = null;
     if (exports.containsKey(sqrlTable)) {
       subscriptionSource = exports.get(sqrlTable).getSource();
     } else {
@@ -116,7 +117,9 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       String logId = ((ScriptRelationalTable) sqrlTable.getVt()).getNameId();
       RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory, 0,
           NameCanonicalizer.SYSTEM);
-      UniversalTable schema = converter.convert(sqrlTable.getPath(), ((ScriptRelationalTable) sqrlTable.getVt()).getRowType(),
+      UniversalTable schema = converter.convert(
+          NamePath.of(sqrlTable.getPath().toArray(String[]::new)),
+          ((ScriptRelationalTable) sqrlTable.getVt()).getRowType(),
           null);
       Log log = logEngine.get().createLog(logId, schema);
       exports.put(sqrlTable, log);

@@ -1,7 +1,6 @@
 package com.datasqrl.calcite.function;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.schema.SQRLTable;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Supplier;

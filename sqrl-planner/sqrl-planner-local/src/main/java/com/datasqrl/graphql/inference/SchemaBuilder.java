@@ -60,7 +60,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
@@ -82,7 +81,7 @@ public class SchemaBuilder implements
   private final SqrlFramework framework;
   private final APISource source;
   private final TypeDefinitionRegistry registry;
-  private final SqrlSchema schema;
+  private final SqrlSchema2 schema;
   private final RelBuilder relBuilder;
 
   private final SqlOperatorTable operatorTable;
@@ -91,7 +90,7 @@ public class SchemaBuilder implements
 
   private final AtomicInteger queryCounter = new AtomicInteger();
 
-  public SchemaBuilder(SqrlFramework framework, APISource source, SqrlSchema schema, RelBuilder relBuilder,
+  public SchemaBuilder(SqrlFramework framework, APISource source, SqrlSchema2 schema, RelBuilder relBuilder,
                               SqrlQueryPlanner planner,
                               SqlOperatorTable operatorTable, APIConnectorManager apiManager) {
     this.framework = framework;
@@ -157,10 +156,11 @@ public class SchemaBuilder implements
   public Coords visitObjectField(InferredObjectField field, Object context) {
     List<String> currentPath;
     if (field.getParentTable() == null) {
-      currentPath = field.getTable().getPath()
-          .toStringList();
+      currentPath = field.getTable().getPath();
     } else {
-      currentPath = field.getParentTable().getPath().concat(Name.system(field.getFieldDefinition().getName())).toStringList();
+      List<String> newPath = new ArrayList<>(field.getParentTable().getPath());
+      newPath.add(field.getFieldDefinition().getName());
+      currentPath = newPath;
     }
 
     SqlUserDefinedTableFunction op = framework.getQueryPlanner().getTableFunction(currentPath);

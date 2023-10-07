@@ -15,9 +15,11 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 
 @Getter
-public class Relationship extends Field implements SqrlTableMacro {
+public class Relationship implements SqrlTableMacro {
   private final NamePath path;
 
+  private final Name name;
+  private final int version;
   private final List<String> fromTable;
   private final NamePath toTable;
   private final JoinType joinType;
@@ -29,7 +31,8 @@ public class Relationship extends Field implements SqrlTableMacro {
   public Relationship(Name name, NamePath path, int version, List<String> fromTable, NamePath toTable,
       JoinType joinType, Multiplicity multiplicity, List<FunctionParameter> parameters,
       Supplier<RelNode> viewTransform) {
-    super(name, version);
+    this.name = name;
+    this.version = version;
     this.fromTable = fromTable;
     this.toTable = toTable;
     this.parameters = parameters;
@@ -51,9 +54,5 @@ public class Relationship extends Field implements SqrlTableMacro {
 
   public enum JoinType {
     PARENT, CHILD, JOIN
-  }
-
-  public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
-    return visitor.visit(this, context);
   }
 }
