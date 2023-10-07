@@ -18,9 +18,9 @@ import org.apache.flink.table.types.logical.RowType;
 /**
  * A sqrl class to handle arrays and extra data types
  */
-public abstract class BaseRowConverter extends AbstractJdbcRowConverter {
+public abstract class BaseJdbcRowConverter extends AbstractJdbcRowConverter {
 
-  public BaseRowConverter(RowType rowType) {
+  public BaseJdbcRowConverter(RowType rowType) {
     super(rowType);
   }
 
@@ -42,6 +42,7 @@ public abstract class BaseRowConverter extends AbstractJdbcRowConverter {
     }
     return super.wrapIntoNullableExternalConverter(jdbcSerializationConverter, type);
   }
+
   @Override
   public JdbcDeserializationConverter createInternalConverter(LogicalType type) {
     LogicalTypeRoot root = type.getTypeRoot();
@@ -60,7 +61,6 @@ public abstract class BaseRowConverter extends AbstractJdbcRowConverter {
       return super.createInternalConverter(type);
     }
   }
-
 
   @Override
   protected JdbcSerializationConverter createExternalConverter(LogicalType type) {
@@ -87,37 +87,4 @@ public abstract class BaseRowConverter extends AbstractJdbcRowConverter {
   public abstract void createArraySerializer(LogicalType type, RowData val, int index, FieldNamedPreparedStatement statement);
 
   public abstract JdbcDeserializationConverter createArrayConverter(ArrayType arrayType);
-
-  public static boolean isScalarArray(LogicalType type) {
-    if (type instanceof ArrayType) {
-      LogicalType elementType = ((ArrayType) type).getElementType();
-      return isScalar(elementType) || isScalarArray(elementType);
-    }
-    return false;
-  }
-
-  public static boolean isScalar(LogicalType type) {
-    switch (type.getTypeRoot()) {
-      case BOOLEAN:
-      case TINYINT:
-      case SMALLINT:
-      case INTEGER:
-      case BIGINT:
-      case FLOAT:
-      case DOUBLE:
-      case CHAR:
-      case VARCHAR:
-      case BINARY:
-      case VARBINARY:
-      case DATE:
-      case TIME_WITHOUT_TIME_ZONE:
-      case TIMESTAMP_WITH_TIME_ZONE:
-      case TIMESTAMP_WITHOUT_TIME_ZONE:
-      case DECIMAL:
-        return true;
-      default:
-        return false;
-    }
-  }
-
 }
