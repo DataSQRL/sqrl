@@ -23,6 +23,7 @@ import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.RelDataType2UTBConverter;
 import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.TableType;
 import com.datasqrl.schema.UniversalTable;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -106,10 +107,10 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   @Override
   public TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable) {
     errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
-//    errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType()== TableType.STREAM,
-//        "Table %s for subscription %s is not a stream table", sqrlTable, subscription);
+    errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType() == TableType.STREAM,
+        "Table %s for subscription %s is not a stream table", sqrlTable, subscription);
     //Check if we already exported it
-    TableSource subscriptionSource = null;
+    TableSource subscriptionSource;
     if (exports.containsKey(sqrlTable)) {
       subscriptionSource = exports.get(sqrlTable).getSource();
     } else {
