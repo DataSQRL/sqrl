@@ -25,14 +25,14 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.ObjectSqlType;
 
-public class SqrlSchema2 {
+public class SqrlSchemaForInference {
 
   private final Map<List<String>, SQRLTable> tableMap;
 
-  public SqrlSchema2(SqrlSchema schema) {
+  public SqrlSchemaForInference(SqrlSchema schema) {
     Map<List<String>, SQRLTable> tableMap = new LinkedHashMap<>();
     //Most recent tables
-    for (Entry<List<String>, String> entry : schema.getSysTables().entrySet()) {
+    for (Entry<List<String>, String> entry : schema.getPathToTableMap().entrySet()) {
       Table table = schema.getTable(entry.getValue(), false)
           .getTable();
 
@@ -40,7 +40,7 @@ public class SqrlSchema2 {
       tableMap.put(entry.getKey(), sqrlTable);
     }
 
-    for (Entry<List<String>, com.datasqrl.schema.Relationship> rel : schema.getRelFncs().entrySet()) {
+    for (Entry<List<String>, com.datasqrl.schema.Relationship> rel : schema.getPathToRelationshipMap().entrySet()) {
       com.datasqrl.schema.Relationship r = rel.getValue();
       SQRLTable from = tableMap.get(r.getFromTable());
       SQRLTable to = tableMap.get(r.getToTable().toStringList());
@@ -196,6 +196,6 @@ public class SqrlSchema2 {
   }
   public interface CalciteSchemaVisitor<R, C> {
 
-    R visit(SqrlSchema2 schema, C context);
+    R visit(SqrlSchemaForInference schema, C context);
   }
 }

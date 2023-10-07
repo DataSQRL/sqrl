@@ -7,7 +7,6 @@ import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -26,10 +25,10 @@ import java.util.stream.Stream;
 public class SqrlSchema extends SimpleCalciteSchema {
   private final SqrlFramework sqrlFramework;
   private final List<ResolvedExport> exports = new ArrayList<>();
-  private final Map<List<String>, List<String>> relationships = new HashMap();
+  private final Map<List<String>, List<String>> absolutePathMap = new HashMap();
   private final Set<URL> jars = new HashSet<>();
-  private final Map<List<String>, Relationship> relFncs = new HashMap<>();
-  private final Map<List<String>, String> sysTables = new HashMap<>();
+  private final Map<List<String>, Relationship> pathToRelationshipMap = new HashMap<>();
+  private final Map<List<String>, String> pathToTableMap = new HashMap<>();
 
   public SqrlSchema(SqrlFramework framework) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
@@ -69,9 +68,16 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addTable(RootSqrlTable root) {
+    removePrefix(this.pathToRelationshipMap.keySet(),root.getName().toNamePath().toStringList());
+    removePrefix(this.absolutePathMap.keySet(),root.getName().toNamePath().toStringList());
     plus().add(String.join(".", root.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueTableInt().incrementAndGet(),(RootSqrlTable)root
         );
+  }
+
+  private void removePrefix(Set<List<String>> set, List<String> prefix) {
+    set.removeIf(
+        key -> key.size() >= prefix.size() && key.subList(0, prefix.size()).equals(prefix));
   }
 
   public Set<URL> getJars() {
@@ -83,15 +89,14 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addRelationship(Relationship relationship) {
-
-    relationships.put(relationship.getPath().toStringList(),
+    absolutePathMap.put(relationship.getPath().toStringList(),
         relationship.getToTable().toStringList());
-    this.relFncs.put(relationship.getPath().toStringList(), relationship);
+    this.pathToRelationshipMap.put(relationship.getPath().toStringList(), relationship);
     plus().add(String.join(".", relationship.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueTableInt().incrementAndGet(), relationship);
   }
 
   public void addTableMapping(List<String> path, String nameId) {
-    this.sysTables.put(path, nameId);
+    this.pathToTableMap.put(path, nameId);
   }
 }

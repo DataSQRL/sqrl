@@ -7,10 +7,10 @@ import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.conformName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeReference;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.wrap;
 
-import com.datasqrl.graphql.inference.SqrlSchema2;
-import com.datasqrl.graphql.inference.SqrlSchema2.CalciteSchemaVisitor;
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable.SqrlTableVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.CalciteSchemaVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
 import com.datasqrl.schema.Multiplicity;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
@@ -24,7 +24,7 @@ public class QueryTypeGenerator implements
     CalciteSchemaVisitor<GraphQLObjectType, SchemaGeneratorContext> {
 
   @Override
-  public GraphQLObjectType visit(SqrlSchema2 schema, SchemaGeneratorContext context) {
+  public GraphQLObjectType visit(SqrlSchemaForInference schema, SchemaGeneratorContext context) {
     return GraphQLObjectType.newObject()
         .name("Query")
         .fields(schema.getRootTables().stream()

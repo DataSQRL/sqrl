@@ -3,7 +3,7 @@
  */
 package com.datasqrl.graphql.generate;
 
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Multiplicity;
 import com.google.common.collect.BiMap;

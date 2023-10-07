@@ -9,13 +9,13 @@ import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeReference;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.wrap;
 
-import com.datasqrl.graphql.inference.SqrlSchema2;
-import com.datasqrl.graphql.inference.SqrlSchema2.CalciteSchemaVisitor;
-import com.datasqrl.graphql.inference.SqrlSchema2.Column;
-import com.datasqrl.graphql.inference.SqrlSchema2.FieldVisitor;
-import com.datasqrl.graphql.inference.SqrlSchema2.Relationship;
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable.SqrlTableVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.CalciteSchemaVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Column;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.FieldVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLType;
@@ -31,7 +31,7 @@ public class ObjectTypeGenerator implements
     FieldVisitor<GraphQLFieldDefinition, SchemaGeneratorContext> {
 
   @Override
-  public Set<GraphQLType> visit(SqrlSchema2 schema, SchemaGeneratorContext context) {
+  public Set<GraphQLType> visit(SqrlSchemaForInference schema, SchemaGeneratorContext context) {
     return schema.getAllTables().stream()
         .filter(SchemaGeneratorUtil::isAccessible)
         .map(t -> t.accept(this, context))

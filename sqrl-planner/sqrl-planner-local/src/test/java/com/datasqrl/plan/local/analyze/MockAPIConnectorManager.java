@@ -3,7 +3,7 @@ package com.datasqrl.plan.local.analyze;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;

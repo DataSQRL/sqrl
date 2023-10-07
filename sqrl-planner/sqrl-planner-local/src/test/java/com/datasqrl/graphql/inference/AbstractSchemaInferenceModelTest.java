@@ -7,7 +7,6 @@ import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -61,10 +60,10 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     APIConnectorManager apiManager = new MockAPIConnectorManager();
     APISource source = APISource.of(schemaStr);
     //Inference
-    SqrlSchema2 sqrlSchema2 = new SqrlSchema2(planner.getFramework().getSchema());
+    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(planner.getFramework().getSchema());
 
     SchemaInference inference = new SchemaInference(planner.getFramework(), "<schema>", null,source,
-        sqrlSchema2,
+        sqrlSchemaForInference,
         planner.createRelBuilder(), apiManager);
 
     InferredSchema inferredSchema;
@@ -78,7 +77,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
     //Build queries
     SchemaBuilder schemaBuilder = new SchemaBuilder(planner.getFramework(), source,
-        sqrlSchema2,
+        sqrlSchemaForInference,
         planner.createRelBuilder(),
         planner,
         planner.getFramework().getSqrlOperatorTable(), apiManager);

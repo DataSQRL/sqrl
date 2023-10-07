@@ -6,9 +6,9 @@ package com.datasqrl.graphql.generate;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
 
 import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.graphql.inference.SqrlSchema2.*;
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable.SqrlTableVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
 import graphql.schema.GraphQLArgument;

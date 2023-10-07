@@ -27,7 +27,7 @@ import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
 import com.datasqrl.graphql.inference.SchemaBuilder;
 import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import com.datasqrl.graphql.inference.SqrlSchema2;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.tables.TableSink;
@@ -48,7 +48,6 @@ import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.plan.table.TableIdFactory;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -70,7 +69,6 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.io.FileUtils;
 
 @Slf4j
@@ -137,12 +135,12 @@ public class Compiler {
 
     Namespace ns = planner.plan(FileUtil.readFile(mainScript), List.of(apiManager.getAsModuleLoader()));
 
-    SqrlSchema2 sqrlSchema2 = new SqrlSchema2(framework.getSchema());
+    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
 
     Name graphqlName = Name.system(scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>")
         .split("\\.")[0]);
     APISource apiSchema = apiSchemaOpt.orElseGet(() ->
-        new APISource(graphqlName, inferGraphQLSchema(sqrlSchema2)));
+        new APISource(graphqlName, inferGraphQLSchema(sqrlSchemaForInference)));
 
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 
@@ -158,13 +156,13 @@ public class Compiler {
           apiSchema.getName().getDisplay(),
           moduleLoader,
           apiSchema,
-          sqrlSchema2,
+          sqrlSchemaForInference,
           queryPlanner.createRelBuilder(),
           apiManager)
           .accept();
 
       SchemaBuilder schemaBuilder = new SchemaBuilder(framework, apiSchema,
-          sqrlSchema2,
+          sqrlSchemaForInference,
           queryPlanner.createRelBuilder(),
           queryPlanner,
           framework.getSqrlOperatorTable(),
@@ -194,7 +192,7 @@ public class Compiler {
   }
 
   @SneakyThrows
-  public static String inferGraphQLSchema(SqrlSchema2 schema) {
+  public static String inferGraphQLSchema(SqrlSchemaForInference schema) {
     GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()

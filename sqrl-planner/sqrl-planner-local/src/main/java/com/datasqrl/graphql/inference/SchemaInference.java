@@ -10,8 +10,8 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.graphql.generate.SchemaGeneratorUtil;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.*;
-import com.datasqrl.graphql.inference.SqrlSchema2.*;
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.canonicalizer.Name;
@@ -62,14 +62,14 @@ public class SchemaInference {
   private final ModuleLoader moduleLoader;
   private final APISource source;
   private final TypeDefinitionRegistry registry;
-  private final SqrlSchema2 schema;
+  private final SqrlSchemaForInference schema;
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
   private final RelBuilder relBuilder;
   private final APIConnectorManager apiManager;
   private final Set<FieldDefinition> visited = new HashSet<>();
   private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference(SqrlFramework framework, String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchema2 schema,
+  public SchemaInference(SqrlFramework framework, String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchemaForInference schema,
                          RelBuilder relBuilder, APIConnectorManager apiManager) {
     this.framework = framework;
     this.name = name;

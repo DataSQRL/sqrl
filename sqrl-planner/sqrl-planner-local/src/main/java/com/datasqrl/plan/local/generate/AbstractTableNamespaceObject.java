@@ -101,7 +101,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         framework.getSchema().addTable(tbl);
       } else { //add nested
         List<String> parentPath = SqrlListUtil.popLast(path.toStringList());
-        String parentId = framework.getSchema().getSysTables().get(parentPath);
+        String parentId = framework.getSchema().getPathToTableMap().get(parentPath);
         Preconditions.checkNotNull(parentId);
         Table parentTable = framework.getSchema().getTable(parentId, false)
             .getTable();

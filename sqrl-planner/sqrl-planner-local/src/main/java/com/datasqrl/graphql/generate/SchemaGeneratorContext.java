@@ -3,10 +3,9 @@
  */
 package com.datasqrl.graphql.generate;
 
-import com.datasqrl.graphql.inference.SqrlSchema2.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import java.util.List;
 import lombok.Getter;
 
 @Getter

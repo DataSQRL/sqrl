@@ -1,9 +1,6 @@
 package com.datasqrl.calcite;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -25,7 +22,7 @@ public class CatalogReader extends CalciteCatalogReader {
 
   public RelOptTable getTableFromPath(List<String> names) {
     List<String> absolutePath = getSqrlAbsolutePath(names);
-    String sysTableName = nameMatcher().get(schema.getSysTables(), List.of(), absolutePath);
+    String sysTableName = nameMatcher().get(schema.getPathToTableMap(), List.of(), absolutePath);
     if (sysTableName == null) {
       return null;
     }
@@ -34,7 +31,7 @@ public class CatalogReader extends CalciteCatalogReader {
   }
 
   public List<String> getSqrlAbsolutePath(List<String> path) {
-    List<String> rel = nameMatcher().get(schema.getRelationships(), path, List.of());
+    List<String> rel = nameMatcher().get(schema.getAbsolutePathMap(), path, List.of());
     return (rel == null) ? path : rel;
   }
 }
