@@ -40,7 +40,7 @@ public class PostgresArrayTypeConverter {
         return "timestamp without time zone";
       case TIMESTAMP_WITH_TIME_ZONE:
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        return "timestamp with time zone";
+        return "timestamptz";
       case INTERVAL_YEAR_MONTH:
         return "interval year to month";
       case INTERVAL_DAY_TIME:

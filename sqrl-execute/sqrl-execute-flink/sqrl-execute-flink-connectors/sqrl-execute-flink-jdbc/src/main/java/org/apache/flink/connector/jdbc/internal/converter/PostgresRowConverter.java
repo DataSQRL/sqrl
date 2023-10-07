@@ -57,46 +57,22 @@ public class PostgresRowConverter extends BaseJdbcRowConverter {
     }
 
     @SneakyThrows
-    public void createRowSerializer(LogicalType type, RowData val, int index,
+    public void setRow(LogicalType type, RowData val, int index,
         FieldNamedPreparedStatement statement) {
         FieldNamedPreparedStatementImpl flinkPreparedStatement = (FieldNamedPreparedStatementImpl) statement;
         for (int idx : flinkPreparedStatement.getIndexMapping()[index]) {
-            statement.setObject(idx, val.getBinary(index));
+//            RowData row = val.getRow(index, ((RowType) type).getFieldCount());
+//            java.sql.Array sqlArray = flinkPreparedStatement.getStatement()
+//                .getConnection().createArrayOf("bytea", );
+            flinkPreparedStatement.getStatement().setBytes(idx, new byte[0]);
         }
     }
 
-    @SneakyThrows
-    public void createArraySerializer(LogicalType type, RowData val, int index, FieldNamedPreparedStatement statement) {
-        FieldNamedPreparedStatementImpl flinkPreparedStatement = (FieldNamedPreparedStatementImpl) statement;
-        for (int idx : flinkPreparedStatement.getIndexMapping()[index]) {
-            ArrayData arrayData = val.getArray(index);
-            if (arrayData instanceof GenericArrayData) {
-                createSqlArrayObject(type, (GenericArrayData)arrayData, idx, flinkPreparedStatement.getStatement());
-            } else if (arrayData instanceof BinaryArrayData) {
-                Array array = flinkPreparedStatement.getStatement().getConnection()
-                    .createArrayOf("bytea", ArrayUtils.toObject( arrayData.toByteArray()));
-                flinkPreparedStatement.getStatement().setArray(idx, array);
-            } else {
-                throw new RuntimeException("Unsupported ArrayData type: " + arrayData.getClass());
-            }
-        }
+    @Override
+    protected String getArrayType() {
+        return "bytea";
     }
 
-    @SneakyThrows
-    private void createSqlArrayObject(LogicalType type, GenericArrayData data, int idx,
-        PreparedStatement statement) {
-        //Scalar arrays of any dimension are one array call
-        if (isScalarArray(type)) {
-            Object[] boxed = data.toObjectArray();
-            Array array = statement.getConnection()
-                .createArrayOf(getArrayScalarName(type), boxed);
-            statement.setArray(idx, array);
-        } else {
-            Array array = statement.getConnection()
-                .createArrayOf("bytea", ArrayUtils.toObject(data.toByteArray()));
-            statement.setArray(idx, array);
-        }
-    }
 
     @Override
     public JdbcDeserializationConverter createArrayConverter(ArrayType arrayType) {
@@ -107,8 +83,15 @@ public class PostgresRowConverter extends BaseJdbcRowConverter {
         final JdbcDeserializationConverter elementConverter =
                 createNullableInternalConverter(arrayType.getElementType());
         return val -> {
-            PgArray pgArray = (PgArray) val;
-            Object[] in = (Object[]) pgArray.getArray();
+            //sqrl: check if scalar array
+
+            Object[] in;
+            if (val instanceof PgArray) {
+                PgArray pgArray = (PgArray) val;
+                in = (Object[]) pgArray.getArray();
+            } else {
+                in = (Object[])val;
+            }
             final Object[] array = (Object[]) java.lang.reflect.Array.newInstance(elementClass, in.length);
             for (int i = 0; i < in.length; i++) {
                 array[i] = elementConverter.deserialize(in[i]);
