@@ -9,9 +9,9 @@ LogicalTableScan(table=[[product$i$12]])
 
 >>>x$q$15
 LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], __timestamp=[$4])
-  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+  LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$5]])
     Uncollect
-      LogicalProject($f0=[$cor3.entries])
+      LogicalProject($f0=[$cor4.entries])
         LogicalValues(tuples=[[{ 0 }]])
 

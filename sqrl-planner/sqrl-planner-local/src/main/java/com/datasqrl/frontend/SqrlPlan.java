@@ -67,6 +67,7 @@ public class SqrlPlan extends SqrlBase {
           .build();
     }
 
+    framework.resetPlanner();
     for (SqlNode statement : node.getStatements()) {
       try {
         ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(),

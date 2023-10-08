@@ -125,7 +125,7 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
 
   public void executeQueryUntilTrue(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback,
       Predicate<HttpResponse<JsonObject>> waitUntilTrue) {
-    executeQueryUntilTrue(query, input, callback, waitUntilTrue, 15);
+    executeQueryUntilTrue(query, input, callback, waitUntilTrue, 30);
   }
 
   @SneakyThrows

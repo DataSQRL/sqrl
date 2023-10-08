@@ -411,7 +411,11 @@ public class QueryPlanner {
   }
 
   public String relToString(Dialect dialect, RelNode relNode) {
-    return sqlToString(dialect, relToSql(dialect, relNode));
+    String sql = sqlToString(dialect, relToSql(dialect, relNode));
+    if (dialect == Dialect.POSTGRES) {
+      return sql.replaceAll("\"", "");
+    }
+    return sql;
   }
 
   public SqlUserDefinedTableFunction getTableFunction(List<String> path) {

@@ -1,47 +1,45 @@
->>>combinedstream$15-lp-stream
-LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
-  LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
-    LogicalUnion(all=[true])
-      LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
-        LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-      LogicalProject(_uuid=[$0], customerid=[$2], updateTime=[$6])
-        LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-          LogicalTableScan(table=[[customer$i$1]])
+>>>combinedstream$q$12-lp-stream
+LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2]) hints[TimestampHint options:[2]]
+  LogicalUnion(all=[true])
+    LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
+      LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    LogicalProject(_uuid=[$0], customerid=[$2], updateTime=[$6])
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+        LogicalTableScan(table=[[customer$i$1]])
 
->>>streamcount$18-lp-stream
-LogicalProject(hour=[$0], num=[$1])
-  LogicalProject(hour=[$0], num=[$1])
-    LogicalAggregate(group=[{0}], num=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 3600000, 0]]
-      LogicalProject(hour=[endOfHour($2)], _uuid=[$0])
-        LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
-          LogicalUnion(all=[true])
-            LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
-              LogicalTableScan(table=[[orders$i$5]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
-            LogicalProject(_uuid=[$0], customerid=[$2], updateTime=[$6])
-              LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-                LogicalTableScan(table=[[customer$i$1]])
+>>>streamcount$q$14-lp-stream
+LogicalProject(hour=[$0], num=[$1]) hints[TimestampHint options:[0]]
+  LogicalAggregate(group=[{0}], num=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 3600000, 0]]
+    LogicalProject(hour=[endOfHour($2)], _uuid=[$0])
+      LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
+        LogicalUnion(all=[true])
+          LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
+            LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+          LogicalProject(_uuid=[$0], customerid=[$2], updateTime=[$6])
+            LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+              LogicalTableScan(table=[[customer$i$1]])
 
 >>>combinedstream-lp-database
 LogicalSort(sort0=[$2], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
-    LogicalTableScan(table=[[combinedstream$15]])
+    LogicalTableScan(table=[[combinedstream$q$12]])
 
 >>>streamcount-lp-database
 LogicalSort(sort0=[$0], dir0=[DESC-nulls-last])
   LogicalProject(hour=[$0], num=[$1])
-    LogicalTableScan(table=[[streamcount$18]])
+    LogicalTableScan(table=[[streamcount$q$14]])
 
 >>>combinedstream-data
-1000101, 2022-02-20T22:40:49-08:00
-1000101, 2023-05-19T01:29:39.553-07:00
-1000107, 2022-04-20T22:19:49-07:00
-1000107, 2023-05-19T01:45:39.553-07:00
-1000107, 2023-05-19T02:28:39.553-07:00
-1000121, 2022-04-20T22:24:09-07:00
-1000121, 2023-05-19T02:16:39.553-07:00
-1000131, 2022-04-20T22:40:49-07:00
+1000101, 2022-02-20 22:40:49.0
+1000101, 2023-05-19 01:29:39.553
+1000107, 2022-04-20 22:19:49.0
+1000107, 2023-05-19 01:45:39.553
+1000107, 2023-05-19 02:28:39.553
+1000121, 2022-04-20 22:24:09.0
+1000121, 2023-05-19 02:16:39.553
+1000131, 2022-04-20 22:40:49.0
 >>>streamcount-data
-2022-02-20T22:59:59.999-08:00, 1
-2022-04-20T22:59:59.999-07:00, 3
-2023-05-19T01:59:59.999-07:00, 2
-2023-05-19T02:59:59.999-07:00, 2
+2022-02-20 22:59:59.999, 1
+2022-04-20 22:59:59.999, 3
+2023-05-19 01:59:59.999, 2
+2023-05-19 02:59:59.999, 2
