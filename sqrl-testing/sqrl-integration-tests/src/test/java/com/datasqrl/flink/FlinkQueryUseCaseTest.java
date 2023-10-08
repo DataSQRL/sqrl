@@ -11,8 +11,6 @@ import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.TestScript.QueryUseCaseProvider;
 import com.datasqrl.util.data.Clickstream;
-import com.datasqrl.util.data.Retail;
-import com.datasqrl.util.data.Retail.RetailScriptNames;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.Disabled;
