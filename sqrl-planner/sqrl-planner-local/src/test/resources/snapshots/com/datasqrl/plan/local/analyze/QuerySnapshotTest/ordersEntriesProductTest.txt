@@ -1,7 +1,7 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>dproduct$q$16
+>>>dproduct$q$14
 LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], name=[$16], __timestamp=[CASE(<($4, $12), $12, $4)])
   LogicalJoin(condition=[=($7, $13)], joinType=[inner])
     LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
@@ -9,11 +9,11 @@ LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], name=[$16], __timestamp=[CAS
       Uncollect
         LogicalProject($f0=[$cor4.entries])
           LogicalValues(tuples=[[{ 0 }]])
-    LogicalTableScan(table=[[product$q$13]])
+    LogicalTableScan(table=[[product$q$11]])
 
 >>>orders$q$5
 LogicalTableScan(table=[[orders$i$4]])
 
->>>product$q$13
-LogicalTableScan(table=[[product$i$12]])
+>>>product$q$11
+LogicalTableScan(table=[[product$i$10]])
 

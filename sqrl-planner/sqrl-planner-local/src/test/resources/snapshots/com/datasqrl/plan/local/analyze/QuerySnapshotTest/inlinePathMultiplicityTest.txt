@@ -15,7 +15,7 @@ LogicalTableScan(table=[[product$i$1]])
 LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5])
   LogicalTableScan(table=[[product$q$2]])
 
->>>product2$q$10
+>>>product2$q$9
 LogicalProject(productid0=[$0], productid=[$8], __timestamp16=[CASE(<($2, $14), $14, $2)], __productid$pk$1=[$7], _rownum0=[$15])
   LogicalJoin(condition=[=($0, $7)], joinType=[left])
     LogicalFilter(condition=[=($6, 1)])

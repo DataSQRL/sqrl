@@ -4,13 +4,14 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.graphql.generate.SchemaGeneratorUtil;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.*;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.canonicalizer.Name;
@@ -20,10 +21,6 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.parse.SqrlAstException;
-import com.datasqrl.schema.Column;
-import com.datasqrl.schema.Field;
-import com.datasqrl.schema.Relationship;
-import com.datasqrl.schema.SQRLTable;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.ImplementingTypeDefinition;
@@ -50,10 +47,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
 import com.google.common.base.Preconditions;
@@ -67,14 +62,14 @@ public class SchemaInference {
   private final ModuleLoader moduleLoader;
   private final APISource source;
   private final TypeDefinitionRegistry registry;
-  private final SqrlSchema schema;
+  private final SqrlSchemaForInference schema;
   private final RootGraphqlModel.RootGraphqlModelBuilder root;
   private final RelBuilder relBuilder;
   private final APIConnectorManager apiManager;
   private final Set<FieldDefinition> visited = new HashSet<>();
   private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
 
-  public SchemaInference(SqrlFramework framework, String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchema schema,
+  public SchemaInference(SqrlFramework framework, String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchemaForInference schema,
                          RelBuilder relBuilder, APIConnectorManager apiManager) {
     this.framework = framework;
     this.name = name;
@@ -128,9 +123,8 @@ public class SchemaInference {
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
       Type fieldType, String fieldName, String rootType) {
-    SqlUserDefinedTableFunction function = framework.getQueryPlanner().getTableFunction(List.of(fieldName));
-
-    if (function == null) {
+    SQRLTable sqrlTable = schema.getRootSqrlTable(fieldName);
+    if (sqrlTable == null) {
       Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)
           .flatMap(name -> getTableOfType(fieldType, name));
       if (sqrlTableByFieldType.isPresent()) {
@@ -143,14 +137,12 @@ public class SchemaInference {
           fieldDefinition.getName(), fieldDefinition.getType() instanceof TypeName ?
           ((TypeName) fieldDefinition.getType()).getName() : fieldDefinition.getType().toString());
     }
-
-    SqrlTableMacro tableFunction = (SqrlTableMacro)function.getFunction();
-    return tableFunction.getSqrlTable();
+    return sqrlTable;
   }
 
   private Optional<SQRLTable> getTableOfType(Type type, String name) {
     for (SQRLTable table : schema.getRootTables()) {
-      if (isNameEqual(table.getName().getCanonical(), name) &&
+      if (isNameEqual(table.getName(), name) &&
           lookupType(type).filter(t -> structurallyEqual(t, table)).isPresent()) {
         return Optional.of(table);
       }
@@ -260,7 +252,7 @@ public class SchemaInference {
     //Todo: expand server to allow type coercion
     //Todo: enums
     Preconditions.checkState(type instanceof ScalarTypeDefinition,
-        "Unknown type found");
+        "Unknown type found: %s", type);
     ScalarTypeDefinition scalarTypeDefinition = (ScalarTypeDefinition) type;
     SqlParserPos pos = toParserPos(fieldDefinition.getType().getSourceLocation());
 
@@ -538,6 +530,7 @@ public class SchemaInference {
       SQRLTable table = resolveRootSQRLTable(def, def.getType(), def.getName(), "Subscription");
       APISubscription subscriptionDef = new APISubscription(Name.system(def.getName()),source);
       TableSource tableSource = apiManager.addSubscription(subscriptionDef, table);
+
       SerializedSqrlConfig kafkaSource = tableSource.getConfiguration().getConfig().serialize();
       //Resolve the queries for all nested entries, validate all fields are sqrl fields
       TypeDefinition returnType = registry.getType(def.getType())

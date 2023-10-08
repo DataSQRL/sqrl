@@ -1,4 +1,4 @@
->>>countstream$q$15-lp-STREAM
+>>>countstream$q$13-lp-STREAM
 LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num_orders=[$3])
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
@@ -6,6 +6,6 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num_orders=[$3])
         LogicalProject(customerid=[$3], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
           LogicalTableScan(table=[[orders$q$5]])
 
->>>countstream$q$15-lp-DATABASE
+>>>countstream$q$13-lp-DATABASE
 Stage [database] does not support capabilities: [TO_STREAM]
 

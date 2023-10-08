@@ -2,6 +2,7 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.log.Log;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
@@ -9,7 +10,6 @@ import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.schema.SQRLTable;
 import java.util.List;
 import java.util.Map;
 

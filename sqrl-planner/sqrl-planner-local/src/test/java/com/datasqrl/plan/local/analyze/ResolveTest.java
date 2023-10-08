@@ -660,10 +660,15 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         .filter(s ->
             tableClass.isInstance(sqrlSchema.getTable(s, false).getTable()))
         //Get most recently added table
-        .sorted((a, b) -> -Integer.compare(CalciteTableFactory.getTableOrdinal(a),
-            CalciteTableFactory.getTableOrdinal(b)))
+        .sorted((a, b) -> -Integer.compare(getTableOrdinal(a),
+            getTableOrdinal(b)))
         .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, false).getTable()))
        ;
+  }
+
+  public static int getTableOrdinal(String tableId) {
+    int idx = tableId.lastIndexOf(Name.NAME_DELIMITER);
+    return Integer.parseInt(tableId.substring(idx + 1));
   }
 
   private void validateAccessTableFunction(String tableName, String baseTableName, ExecutionEngine.Type execType) {

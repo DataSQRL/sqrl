@@ -9,18 +9,18 @@ import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeReference;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.wrap;
 
-import com.datasqrl.schema.Column;
-import com.datasqrl.schema.FieldVisitor;
-import com.datasqrl.schema.Relationship;
-import com.datasqrl.schema.SQRLTable;
-import com.datasqrl.schema.SQRLTable.SqrlTableVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.CalciteSchemaVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Column;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.FieldVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLType;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.calcite.jdbc.CalciteSchemaVisitor;
-import org.apache.calcite.jdbc.SqrlSchema;
 
 /**
  * Create the object types
@@ -31,7 +31,7 @@ public class ObjectTypeGenerator implements
     FieldVisitor<GraphQLFieldDefinition, SchemaGeneratorContext> {
 
   @Override
-  public Set<GraphQLType> visit(SqrlSchema schema, SchemaGeneratorContext context) {
+  public Set<GraphQLType> visit(SqrlSchemaForInference schema, SchemaGeneratorContext context) {
     return schema.getAllTables().stream()
         .filter(SchemaGeneratorUtil::isAccessible)
         .map(t -> t.accept(this, context))
@@ -42,9 +42,8 @@ public class ObjectTypeGenerator implements
   public GraphQLType visit(SQRLTable table, SchemaGeneratorContext context) {
     return GraphQLObjectType.newObject()
         .name(getTypeName(table, context.getNames()))
-        .fields(table.getFields().getAccessibleFields()
+        .fields(table.getFields(true)
             .stream()
-            .filter(SchemaGeneratorUtil::isAccessible)
             .map(f -> f.accept(this, context))
             .collect(Collectors.toList()))
         .build();
@@ -61,7 +60,7 @@ public class ObjectTypeGenerator implements
   @Override
   public GraphQLFieldDefinition visit(Relationship field, SchemaGeneratorContext context) {
     return GraphQLFieldDefinition.newFieldDefinition()
-        .name(conformName(field.getName().getDisplay()))
+        .name(conformName(field.getId().getDisplay()))
         .type(wrap(getTypeReference(field.getToTable(), context.getNames()), field.getMultiplicity()))
         .arguments(field.accept(new ArgumentGenerator(), context))
         .build();

@@ -116,11 +116,6 @@ public class UniversalTable {
     public boolean isNullable() {
       return type.isNullable();
     }
-
-    @Override
-    public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
-      return null;
-    }
   }
 
   @Getter
@@ -134,11 +129,6 @@ public class UniversalTable {
       super(name, version);
       this.childTable = childTable;
       this.multiplicity = multiplicity;
-    }
-
-    @Override
-    public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
-      return null;
     }
   }
 

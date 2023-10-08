@@ -1,4 +1,4 @@
->>>combinedstream$q$15-lp-STREAM
+>>>combinedstream$q$13-lp-STREAM
 LogicalProject(_uuid=[$0], customerid=[$1], _timestamp=[$2])
   LogicalUnion(all=[true])
     LogicalProject(_uuid=[$0], customerid=[$3], _timestamp=[$4])
@@ -6,7 +6,7 @@ LogicalProject(_uuid=[$0], customerid=[$1], _timestamp=[$2])
     LogicalProject(_uuid=[$0], customerid=[$2], _timestamp=[$1])
       LogicalTableScan(table=[[customer$q$2]])
 
->>>combinedstream$q$15-lp-DATABASE
+>>>combinedstream$q$13-lp-DATABASE
 LogicalProject(_uuid=[$0], customerid=[$1], _timestamp=[$2])
   LogicalUnion(all=[true])
     LogicalProject(_uuid=[$0], customerid=[$3], _timestamp=[$4])

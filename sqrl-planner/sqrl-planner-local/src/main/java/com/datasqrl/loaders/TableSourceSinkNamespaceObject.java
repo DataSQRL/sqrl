@@ -2,6 +2,7 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
@@ -18,7 +19,7 @@ public class TableSourceSinkNamespaceObject extends AbstractTableNamespaceObject
   private final TableSink sink;
 
   public TableSourceSinkNamespaceObject(TableSource source, TableSink sink, CalciteTableFactory tableFactory) {
-    super(tableFactory);
+    super(tableFactory, NameCanonicalizer.SYSTEM);
     this.table = source;
     this.sink = sink;
   }

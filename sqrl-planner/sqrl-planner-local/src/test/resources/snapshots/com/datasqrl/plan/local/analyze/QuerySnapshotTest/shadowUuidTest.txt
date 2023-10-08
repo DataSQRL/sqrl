@@ -7,7 +7,7 @@ LogicalProject(___uuid$pk$1=[$0], _uuid=[$6], _ingest_time=[$7], productid=[$8],
 >>>product$q$2
 LogicalTableScan(table=[[product$i$1]])
 
->>>x$q$8
+>>>x$q$7
 LogicalProject(_uuid=[$0], _uuid0=[$7], __timestamp14=[CASE(<($1, $13), $13, $1)])
   LogicalJoin(condition=[=($0, $6)], joinType=[inner])
     LogicalTableScan(table=[[product$q$2]])

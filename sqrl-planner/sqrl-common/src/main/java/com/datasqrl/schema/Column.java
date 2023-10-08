@@ -28,8 +28,4 @@ public class Column extends Field {
   public String toString() {
     return super.toString();
   }
-
-  public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
-    return visitor.visit(this, context);
-  }
 }

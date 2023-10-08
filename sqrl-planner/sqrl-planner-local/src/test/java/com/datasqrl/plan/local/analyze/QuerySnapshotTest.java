@@ -503,7 +503,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void importWithTimestamp() {
     validateScript("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;");
-    RelOptTable table = framework.getCatalogReader().getSqrlTable(List.of("Customer"));
+    RelOptTable table = framework.getCatalogReader().getTableFromPath(List.of("Customer"));
     int cTs = framework.getCatalogReader().nameMatcher()
         .indexOf(table.getRowType().getFieldNames(), "c_ts");
     assertTrue(cTs != -1, "Timestamp column missing");
@@ -512,7 +512,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void importWithTimestampAndAlias() {
     validateScript("IMPORT ecommerce-data.Customer AS C2 TIMESTAMP _ingest_time AS c_ts;");
-    RelOptTable table = framework.getCatalogReader().getSqrlTable(List.of("C2"));
+    RelOptTable table = framework.getCatalogReader().getTableFromPath(List.of("C2"));
     int cTs = framework.getCatalogReader().nameMatcher()
         .indexOf(table.getRowType().getFieldNames(), "c_ts");
     assertTrue(cTs != -1, "Timestamp column missing");
@@ -1128,7 +1128,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         + "Y := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;"
         + "X := STREAM ON ADD AS SELECT * From Y;");
 
-    assertNotNull(this.framework.getCatalogReader().getSqrlTable(List.of("X")));
+    assertNotNull(this.framework.getCatalogReader().getTableFromPath(List.of("X")));
   }
 
   @Test

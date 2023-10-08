@@ -21,7 +21,7 @@ LogicalProject(__customerid$pk$2=[$6], productid=[$15], quantity=[SUM($16) IGNOR
       LogicalProject($f0=[$cor21.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>order_again$q$28-lp-stream
+>>>order_again$q$25-lp-stream
 LogicalProject(__customerid$pk$2=[$6], productid=[$15], quantity=[SUM($16) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], most_recent=[MAX($4) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)]) hints[TimestampHint options:[4]]
   LogicalCorrelate(correlation=[$cor21], joinType=[inner], requiredColumns=[{5}])
     LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
@@ -54,7 +54,7 @@ LogicalProject(__customerid$pk$5=[$6], total_spend=[SUM($15) IGNORE NULLS OVER (
               LogicalProject($f0=[$cor23.entries])
                 LogicalValues(tuples=[[{ 0 }]])
 
->>>order_stats$q$41-lp-stream
+>>>order_stats$q$35-lp-stream
 LogicalProject(__customerid$pk$5=[$6], total_spend=[SUM($15) IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4]) hints[TimestampHint options:[3]]
   LogicalJoin(condition=[AND(=($0, $14), =($18, $4))], joinType=[inner]) hints[IntervalJoin]
     LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
@@ -89,12 +89,12 @@ LogicalProject(___uuid$pk$1=[$0], price=[$2], discount=[$3], num=[$4], time=[$1]
 >>>order_again-lp-database
 LogicalSort(sort0=[$0], sort1=[$4], sort2=[$2], sort3=[$1], dir0=[ASC], dir1=[DESC], dir2=[DESC], dir3=[ASC])
   LogicalProject(__customerid$pk$2=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4])
-    LogicalTableScan(table=[[order_again$q$28]])
+    LogicalTableScan(table=[[order_again$q$25]])
 
 >>>order_stats-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(__customerid$pk$5=[$0], total_spend=[$1], num_orders=[$2], time=[$3])
-    LogicalTableScan(table=[[order_stats$q$41]])
+    LogicalTableScan(table=[[order_stats$q$35]])
 
 >>>order_stats-data
 120.85, 1, 2023-05-19 01:29:39.553

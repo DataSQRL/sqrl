@@ -18,6 +18,8 @@ import com.datasqrl.plan.local.analyze.RetailSqrlModule;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.TableConverter;
+import com.datasqrl.plan.table.TableIdFactory;
 import com.datasqrl.util.DatabaseHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -47,7 +49,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
     Map<NamePath, SqrlModule> addlModules = Map.of();
-    CalciteTableFactory tableFactory = new CalciteTableFactory(framework, NameCanonicalizer.SYSTEM);
+    CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
     if (rootDir == null) {
       RetailSqrlModule retailSqrlModule = new RetailSqrlModule();
       retailSqrlModule.init(tableFactory);

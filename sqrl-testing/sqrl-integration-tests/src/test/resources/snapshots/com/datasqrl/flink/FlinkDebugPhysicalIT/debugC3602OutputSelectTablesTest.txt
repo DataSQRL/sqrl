@@ -1,4 +1,4 @@
->>>favorite_categories$q$36-lp-stream
+>>>favorite_categories$q$31-lp-stream
 LogicalProject(__customerid$pk$4=[$2], category_name=[$1], total=[$3], month=[$0]) hints[TimestampHint options:[3]]
   LogicalAggregate(group=[{1, 2, 5}], total=[SUM($3)]) hints[SlidingAggregationHint options:[1, 31536000000, 630720000]]
     LogicalJoin(condition=[=($5, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
@@ -60,7 +60,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=
                             LogicalProject($f0=[$cor27.entries])
                               LogicalValues(tuples=[[{ 0 }]])
 
->>>newcustomerpromotion$q$45-lp-stream
+>>>newcustomerpromotion$q$38-lp-stream
 LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6]) hints[TimestampHint options:[1]]
   LogicalStream(stream=[ADD])
     LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6], _rownum=[$7], __customerid$pk$5=[$8], total_spend=[$9], num_orders=[$10], time=[$11], _rownum0=[$12], __timestamp=[CASE(<($6, $11), $11, $6)])
@@ -105,7 +105,7 @@ LogicalProject(__customerid$pk$2=[$6], productid=[$15], quantity=[SUM($16) IGNOR
       LogicalProject($f0=[$cor25.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>order_again$q$28-lp-stream
+>>>order_again$q$25-lp-stream
 LogicalProject(__customerid$pk$2=[$6], productid=[$15], quantity=[SUM($16) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], most_recent=[MAX($4) IGNORE NULLS OVER (PARTITION BY $6, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)]) hints[TimestampHint options:[4]]
   LogicalCorrelate(correlation=[$cor25], joinType=[inner], requiredColumns=[{5}])
     LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
@@ -151,17 +151,17 @@ LogicalProject(___uuid$pk$1=[$0], price=[$2], discount=[$3], num=[$4], time=[$1]
 >>>NewCustomerPromotion-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], email=[$3], name=[$4], total_spend=[$5], num_orders=[$6])
-    LogicalTableScan(table=[[newcustomerpromotion$q$45]])
+    LogicalTableScan(table=[[newcustomerpromotion$q$38]])
 
 >>>favorite_categories-lp-database
 LogicalSort(sort0=[$0], sort1=[$2], sort2=[$1], dir0=[ASC], dir1=[ASC], dir2=[ASC])
   LogicalProject(__customerid$pk$4=[$0], category_name=[$1], total=[$2], month=[$3])
-    LogicalTableScan(table=[[favorite_categories$q$36]])
+    LogicalTableScan(table=[[favorite_categories$q$31]])
 
 >>>order_again-lp-database
 LogicalSort(sort0=[$0], sort1=[$4], sort2=[$2], sort3=[$1], dir0=[ASC], dir1=[DESC], dir2=[DESC], dir3=[ASC])
   LogicalProject(__customerid$pk$2=[$0], productid=[$1], quantity=[$2], num_orders=[$3], most_recent=[$4])
-    LogicalTableScan(table=[[order_again$q$28]])
+    LogicalTableScan(table=[[order_again$q$25]])
 
 >>>favorite_categories-data
 Decoration, 120.85, 2024-05-27 21:23:59.999

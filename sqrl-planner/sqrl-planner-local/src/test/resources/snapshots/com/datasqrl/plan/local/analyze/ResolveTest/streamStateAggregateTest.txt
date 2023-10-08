@@ -1,10 +1,10 @@
->>>agg1$q$17-lp-STREAM
+>>>agg1$q$15-lp-STREAM
 LogicalProject(customer=[$0], order_count=[$1], __timestamp=[$2])
   LogicalAggregate(group=[{4}], order_count=[COUNT()], __timestamp=[MAX($5)])
-    LogicalTableScan(table=[[ordercustomer$q$15]])
+    LogicalTableScan(table=[[ordercustomer$q$13]])
 
->>>agg1$q$17-lp-DATABASE
+>>>agg1$q$15-lp-DATABASE
 LogicalProject(customer=[$0], order_count=[$1], __timestamp=[$2])
   LogicalAggregate(group=[{4}], order_count=[COUNT()], __timestamp=[MAX($5)])
-    LogicalTableScan(table=[[ordercustomer$q$15]])
+    LogicalTableScan(table=[[ordercustomer$q$13]])
 

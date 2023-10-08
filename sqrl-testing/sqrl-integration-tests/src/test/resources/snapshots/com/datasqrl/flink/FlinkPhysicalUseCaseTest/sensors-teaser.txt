@@ -1,29 +1,29 @@
->>>machine$q$20-lp-stream
+>>>machine$q$18-lp-stream
 LogicalProject(machineid=[$1], maxTemp=[$2], avgTemp=[$3], timeMin=[$0]) hints[TimestampHint options:[3]]
   LogicalAggregate(group=[{1, 6}], maxTemp=[MAX($2)], avgTemp=[AVG($2)]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
     LogicalJoin(condition=[=($3, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 4, 0]]
       LogicalProject(sensorid=[$0], timeMin=[$1], temp=[$2])
         LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 60000, 0]]
           LogicalProject(sensorid=[$2], timeMin=[endOfMinute($3)], temperature=[$4], _uuid=[$0])
-            LogicalTableScan(table=[[sensorreading$i$9]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+            LogicalTableScan(table=[[sensorreading$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
       LogicalFilter(condition=[=($5, 1)]) hints[DedupHint]
         LogicalProject(id=[$0], _uuid=[$1], _ingest_time=[$2], machineid=[$3], placed=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
           LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], machineid=[$3], placed=[$4])
-            LogicalTableScan(table=[[sensors$i$12]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+            LogicalTableScan(table=[[sensors$i$10]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>minreadings$q$15-lp-stream
+>>>minreadings$q$13-lp-stream
 LogicalProject(sensorid=[$0], timeMin=[$1], temp=[$2]) hints[TimestampHint options:[1]]
   LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 60000, 0]]
     LogicalProject(sensorid=[$2], timeMin=[endOfMinute($3)], temperature=[$4], _uuid=[$0])
-      LogicalTableScan(table=[[sensorreading$i$9]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+      LogicalTableScan(table=[[sensorreading$i$7]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
 >>>machine-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(machineid=[$0], maxTemp=[$1], avgTemp=[$2], timeMin=[$3])
-    LogicalTableScan(table=[[machine$q$20]])
+    LogicalTableScan(table=[[machine$q$18]])
 
 >>>minreadings-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(sensorid=[$0], timeMin=[$1], temp=[$2])
-    LogicalTableScan(table=[[minreadings$q$15]])
+    LogicalTableScan(table=[[minreadings$q$13]])
 
