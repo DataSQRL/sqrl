@@ -28,7 +28,6 @@ type Submission {
   hash: String!
   authorid: String!
   submissionTime: String!
-  files(filename: String, filesize: Int): [files!]
   keywords(name: String): [keywords!]
   variant0: String!
   repoURL: String!
@@ -45,12 +44,6 @@ type TopicPackages {
 type TopicSearch {
   topicName: String!
   numPackages: Int!
-}
-
-type files {
-  filename: String!
-  filesize: Int!
-  parent: Submission!
 }
 
 type keywords {

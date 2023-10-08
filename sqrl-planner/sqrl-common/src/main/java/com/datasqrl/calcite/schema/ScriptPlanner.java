@@ -207,11 +207,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),
             null, isASqrl, parameters, nodeSupplier);
 
-        List<String> fieldNames = validator.getFieldNames().get(assignment);
-        for (int i = 0; i < fieldNames.size(); i++) {
-          String name = fieldNames.get(i);
+        for (int i = 0; i < relNode.getRowType().getFieldList().size(); i++) {
           RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
-          sqrlTable.addColumn(nameUtil.toName(name), field.getName(), true,
+          sqrlTable.addColumn(nameUtil.toName(field.getName()), field.getName(), true,
               field.getType());
         }
 

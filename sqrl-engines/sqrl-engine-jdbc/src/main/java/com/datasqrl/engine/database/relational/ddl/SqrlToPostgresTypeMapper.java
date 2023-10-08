@@ -4,6 +4,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.type.PrimitiveType;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.SqlTypeName;
 
 public class SqrlToPostgresTypeMapper {
 
@@ -51,10 +52,11 @@ public class SqrlToPostgresTypeMapper {
       case NULL:
         return "NULL"; // Postgres supports the NULL type, though it's rarely used explicitly
       // May need to create user-defined types in PostgreSQL or use JSON/JSONB types
+      case ROW:
+        return "bytea";
       case SYMBOL:
       case MAP:
       case MULTISET:
-      case ROW:
       default:
         throw new UnsupportedOperationException("Unsupported type:" + type);
     }

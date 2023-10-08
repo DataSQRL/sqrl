@@ -45,9 +45,7 @@ public class H2DDLFactory implements JdbcDDLFactory {
 
   public static String toSql(RelDataTypeField field) {
     RelDataType datatype = field.getType();
-    Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
-        "Collection column encountered");
-    return toSql("\"" + field.getName() + "\"", getSQLType(datatype), datatype.isNullable());
+    return toSql("\"" + field.getName() + "\"", getSQLType(datatype).getName(), datatype.isNullable());
   }
 
   private static String toSql(String name, String sqlType, boolean nullable) {
@@ -59,45 +57,47 @@ public class H2DDLFactory implements JdbcDDLFactory {
     return sql.toString();
   }
 
-  private static String getSQLType(RelDataType type) {
+  private static H2Type getSQLType(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
-        return H2Type.BOOLEAN.getName();
+        return H2Type.BOOLEAN;
       case TINYINT:
-        return H2Type.TINYINT.getName();
+        return H2Type.TINYINT;
       case SMALLINT:
-        return H2Type.SMALLINT.getName();
+        return H2Type.SMALLINT;
       case BIGINT:
-        return H2Type.BIGINT.getName();
+        return H2Type.BIGINT;
       case INTEGER:
-        return H2Type.INTEGER.getName();
+        return H2Type.INTEGER;
       case CHAR:
-        return H2Type.VARCHAR.getName();
+        return H2Type.VARCHAR;
       case VARCHAR:
-        return H2Type.VARCHAR.getName();
+        return H2Type.VARCHAR;
       case FLOAT:
       case DOUBLE:
-        return H2Type.DOUBLE_PRECISION.getName();
+        return H2Type.DOUBLE_PRECISION;
       case DECIMAL:
-        return "DECFLOAT(8)";
+        return H2Type.DECFLOAT;
       case DATE:
-        return H2Type.DATE.getName();
+        return H2Type.DATE;
       case TIME:
-        return H2Type.TIME.getName();
+        return H2Type.TIME;
       case TIMESTAMP:
-        return H2Type.TIMESTAMP.getName();
+        return H2Type.TIMESTAMP;
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        return H2Type.TIMESTAMP_WITH_TIME_ZONE.getName();
+        return H2Type.TIMESTAMP_WITH_TIME_ZONE;
+      case ARRAY:
+        return H2Type.array(getSQLType(type.getComponentType()));
+      case ROW:
+        return H2Type.BLOB;
       case BINARY:
       case VARBINARY:
       case INTERVAL_YEAR_MONTH:
       case INTERVAL_DAY:
       case NULL:
       case SYMBOL:
-      case ARRAY:
       case MAP:
       case MULTISET:
-      case ROW:
       default:
         throw new UnsupportedOperationException("Unsupported type:" + type);
     }
