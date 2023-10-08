@@ -14,6 +14,8 @@ a maven subdirectory.
 
 `mvn -Dmaven.test.skip compile jar:test-jar install`
 
+## Git case-insensitivity
+`git config core.ignorecase false`
 
 ### Maven
 -DskipTests=true and not -Dmaven.test.skip=true

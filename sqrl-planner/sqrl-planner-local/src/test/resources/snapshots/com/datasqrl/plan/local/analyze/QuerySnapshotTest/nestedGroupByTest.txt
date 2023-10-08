@@ -2,10 +2,10 @@
 LogicalProject(___uuid$pk$1=[$0], discount=[$1], cnt=[$3], time=[$2])
   LogicalAggregate(group=[{0, 1, 4}], cnt=[COUNT()])
     LogicalProject(___uuid$pk$1=[$0], discount=[COALESCE($10, 0:DOUBLE)], _idx=[$6], _ingest_time=[$1], time=[$4])
-      LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+      LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
         LogicalTableScan(table=[[orders$q$2]])
         Uncollect
-          LogicalProject($f0=[$cor3.entries])
+          LogicalProject($f0=[$cor4.entries])
             LogicalValues(tuples=[[{ 0 }]])
 
 >>>orders$q$2

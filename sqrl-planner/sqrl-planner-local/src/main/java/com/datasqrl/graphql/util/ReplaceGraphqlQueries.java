@@ -63,8 +63,7 @@ public class ReplaceGraphqlQueries implements
     QueryTemplate template = queries.get(apiQueryBase.getQuery());
 
     String query = planner.relToString(Dialect.POSTGRES,
-        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()))
-        .replaceAll("\"", "");
+        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()));
 
     return JdbcQuery.builder()
         .parameters(apiQueryBase.getParameters())
@@ -77,8 +76,7 @@ public class ReplaceGraphqlQueries implements
     QueryTemplate template = queries.get(apiQueryBase.getQuery());
 
     String query = planner.relToString(Dialect.POSTGRES,
-        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()))
-        .replaceAll("\"", "");
+        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()));
 
     int numDynamParams = countParameters(template.getRelNode());
     //number of params may have extra internal params but never less

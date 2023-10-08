@@ -8,10 +8,10 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=
     LogicalFilter(condition=[=($2, 1)])
       LogicalProject($f0=[$0], time=[$1], _rownum=[ROW_NUMBER() OVER (ORDER BY $1 DESC NULLS LAST)])
         LogicalProject($f0=[SINGLE_VALUE($3) IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
-          LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+          LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
             LogicalTableScan(table=[[orders$q$5]])
             Uncollect
-              LogicalProject($f0=[$cor3.entries])
+              LogicalProject($f0=[$cor5.entries])
                 LogicalValues(tuples=[[{ 0 }]])
 
 >>>orders$q$5

@@ -50,7 +50,6 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
       Optional<SqlNodeList> opHints,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
       Optional<Supplier<RelNode>> relNodeSupplier, ErrorCollector errors) {
-    framework.resetPlanner();
     LPAnalysis analyzedLP = convertToVanillaSQL(
         input, framework.getQueryPlanner().getRelBuilder(),
         opHints, errors);

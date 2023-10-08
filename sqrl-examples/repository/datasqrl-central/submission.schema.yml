@@ -51,16 +51,6 @@ columns:
   type: "DATETIME"
   tests:
   - "not_null"
-- name: "files"
-  columns:
-  - name: "filename"
-    type: "STRING"
-    tests:
-    - "not_null"
-  - name: "filesize"
-    type: "INTEGER"
-    tests:
-    - "not_null"
 - name: "keywords"
   columns:
   - name: "name"

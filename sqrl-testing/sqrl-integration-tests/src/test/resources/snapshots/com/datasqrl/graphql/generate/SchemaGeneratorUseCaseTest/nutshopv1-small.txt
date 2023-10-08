@@ -37,8 +37,8 @@ type items {
   discount: Float
   parent: Orders!
   discount0: Float!
-  product(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
   total: Float!
+  product(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
 }
 
 type spending_by_month {

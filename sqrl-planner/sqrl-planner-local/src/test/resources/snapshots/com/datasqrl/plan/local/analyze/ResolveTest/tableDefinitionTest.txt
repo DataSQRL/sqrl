@@ -1,9 +1,9 @@
 >>>entrycount$q$9-lp-STREAM
 LogicalProject(_uuid=[$0], _idx=[$6], price=[-(*($8, $9), $10)], time=[$4])
-  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{5}])
+  LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])
     Uncollect
-      LogicalProject($f0=[$cor3.entries])
+      LogicalProject($f0=[$cor4.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
 >>>entrycount$q$9-lp-DATABASE

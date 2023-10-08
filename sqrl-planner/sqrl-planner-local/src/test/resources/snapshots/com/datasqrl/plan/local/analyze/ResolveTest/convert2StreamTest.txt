@@ -1,10 +1,10 @@
 >>>productcount$q$14-lp-STREAM
 LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $14 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
   LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
-    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+    LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$q$2]])
       Uncollect
-        LogicalProject($f0=[$cor1.entries])
+        LogicalProject($f0=[$cor4.entries])
           LogicalValues(tuples=[[{ 0 }]])
     LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
       LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updateTime=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])

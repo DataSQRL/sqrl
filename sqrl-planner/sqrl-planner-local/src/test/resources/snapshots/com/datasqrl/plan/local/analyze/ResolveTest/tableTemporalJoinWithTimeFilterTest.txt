@@ -2,14 +2,14 @@
 LogicalProject(__customerid$pk$1=[$1], category=[$2], num=[$3], time=[$0])
   LogicalAggregate(group=[{4, 6, 23}], num=[SUM($15)]) hints[SlidingAggregationHint options:[4, 86400000, 1728000]]
     LogicalJoin(condition=[=($14, $18)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
-      LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5}])
+      LogicalCorrelate(correlation=[$cor6], joinType=[inner], requiredColumns=[{5}])
         LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
           LogicalTableScan(table=[[orders$q$5]])
           LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
             LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
               LogicalTableScan(table=[[customer$q$15]])
         Uncollect
-          LogicalProject($f0=[$cor1.entries])
+          LogicalProject($f0=[$cor6.entries])
             LogicalValues(tuples=[[{ 0 }]])
       LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
         LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
