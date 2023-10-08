@@ -45,8 +45,6 @@ public class H2DDLFactory implements JdbcDDLFactory {
 
   public static String toSql(RelDataTypeField field) {
     RelDataType datatype = field.getType();
-//    Preconditions.checkArgument(!CalciteUtil.isNestedTable(datatype),
-//        "Collection column encountered");
     return toSql("\"" + field.getName() + "\"", getSQLType(datatype).getName(), datatype.isNullable());
   }
 

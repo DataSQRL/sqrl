@@ -7,7 +7,7 @@
   "type" : "source",
   "connector" : {
     "name" : "file",
-    "fileURIs" : [ "../../sqrl-examples/conference/data/emailTemplates.json" ]
+    "fileURIs" : [ "../../sqrl-examples/conference/data/emailtemplates.json" ]
   },
   "canonicalizer" : "system"
 }
