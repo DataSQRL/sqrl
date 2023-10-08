@@ -83,14 +83,14 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       ScriptRelationalTable table = entry.getValue();
 
       framework.getSchema().add(table.getNameId(), table);
-      framework.getSchema().addTableMapping(path.toStringList(), table.getNameId());
+      framework.getSchema().addTableMapping(path, table.getNameId());
       if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {
         AbstractRelationalTable impTable = ((ProxyImportRelationalTable) tblDef.getBaseTable()).getBaseTable();
         framework.getSchema().add(impTable.getNameId(), impTable);
       }
 
       if (path.size() == 1) {
-        framework.getSchema().addTableMapping(path.toStringList(), table.getNameId());
+        framework.getSchema().addTableMapping(path, table.getNameId());
         Supplier<RelNode> nodeSupplier = relNodeSupplier
             .orElse(() -> framework.getQueryPlanner().getRelBuilder().scan(table.getNameId()).build());
         RootSqrlTable tbl = new RootSqrlTable(
@@ -100,7 +100,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
             nodeSupplier);
         framework.getSchema().addTable(tbl);
       } else { //add nested
-        List<String> parentPath = SqrlListUtil.popLast(path.toStringList());
+        NamePath parentPath = path.popLast();
         String parentId = framework.getSchema().getPathToTableMap().get(parentPath);
         Preconditions.checkNotNull(parentId);
         Table parentTable = framework.getSchema().getTable(parentId, false)
@@ -129,7 +129,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     return new Relationship(ReservedName.PARENT,
         path.concat(ReservedName.PARENT),
         framework.getUniqueColumnInt().incrementAndGet(),
-        path.toStringList(), NamePath.of(SqrlListUtil.popLast(path.toStringList()).toArray(String[]::new)),
+        path, NamePath.of(SqrlListUtil.popLast(path.toStringList()).toArray(String[]::new)),
         JoinType.PARENT, Multiplicity.ONE, pkWrapper.getLeft(),
         () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
   }

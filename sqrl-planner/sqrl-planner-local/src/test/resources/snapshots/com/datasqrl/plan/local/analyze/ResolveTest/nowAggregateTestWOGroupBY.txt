@@ -1,4 +1,4 @@
->>>recenttotal$q$15-lp-STREAM
+>>>recenttotal$q$13-lp-STREAM
 LogicalProject(_pk=[1], total=[$1], quantity=[$2], time=[$0])
   LogicalAggregate(group=[{4}], total=[SUM($0)], quantity=[SUM($1)]) hints[SlidingAggregationHint options:[4, 604800000, 12096000]]
     LogicalProject($f0=[*($9, $8)], quantity=[$8], _uuid=[$0], _idx=[$6], time=[$4])
@@ -8,7 +8,7 @@ LogicalProject(_pk=[1], total=[$1], quantity=[$2], time=[$0])
           LogicalProject($f0=[$cor4.entries])
             LogicalValues(tuples=[[{ 0 }]])
 
->>>recenttotal$q$15-lp-DATABASE
+>>>recenttotal$q$13-lp-DATABASE
 LogicalProject(_pk=[1], total=[$0], quantity=[$1], time=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
     LogicalProject(total=[$0], quantity=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (ORDER BY $2 DESC NULLS LAST)])
@@ -16,5 +16,5 @@ LogicalProject(_pk=[1], total=[$0], quantity=[$1], time=[$2])
         LogicalJoin(condition=[=($0, $6)], joinType=[inner])
           LogicalFilter(condition=[<(NOW(), +($4, 604800000:INTERVAL SECOND(9)))])
             LogicalTableScan(table=[[orders$q$5]])
-          LogicalTableScan(table=[[entries$7]])
+          LogicalTableScan(table=[[entries$6]])
 

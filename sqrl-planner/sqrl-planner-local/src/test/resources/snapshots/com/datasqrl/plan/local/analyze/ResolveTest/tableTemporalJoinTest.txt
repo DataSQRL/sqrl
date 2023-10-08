@@ -1,22 +1,22 @@
->>>orderwithcount$q$17-lp-STREAM
+>>>orderwithcount$q$15-lp-STREAM
 LogicalProject(_uuid=[$0], id=[$2], order_count=[$7], customerid=[$3], time=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
       LogicalProject(customer=[$0], order_count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[customercount$q$15]])
+        LogicalTableScan(table=[[customercount$q$13]])
 
->>>orderwithcount$q$17-lp-DATABASE
+>>>orderwithcount$q$15-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
->>>orderwithcount2$q$19-lp-STREAM
+>>>orderwithcount2$q$17-lp-STREAM
 LogicalProject(_uuid=[$0], id=[$2], order_count=[$7], customerid=[$3], time=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
       LogicalProject(customer=[$0], order_count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[customercount$q$15]])
+        LogicalTableScan(table=[[customercount$q$13]])
 
->>>orderwithcount2$q$19-lp-DATABASE
+>>>orderwithcount2$q$17-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 

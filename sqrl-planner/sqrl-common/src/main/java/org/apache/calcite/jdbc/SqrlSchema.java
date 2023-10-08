@@ -1,6 +1,7 @@
 package org.apache.calcite.jdbc;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
@@ -25,10 +26,10 @@ import java.util.stream.Stream;
 public class SqrlSchema extends SimpleCalciteSchema {
   private final SqrlFramework sqrlFramework;
   private final List<ResolvedExport> exports = new ArrayList<>();
-  private final Map<List<String>, List<String>> absolutePathMap = new HashMap();
+  private final Map<NamePath, NamePath> absolutePathMap = new HashMap();
   private final Set<URL> jars = new HashSet<>();
-  private final Map<List<String>, Relationship> pathToRelationshipMap = new HashMap<>();
-  private final Map<List<String>, String> pathToTableMap = new HashMap<>();
+  private final Map<NamePath, Relationship> pathToRelationshipMap = new HashMap<>();
+  private final Map<NamePath, String> pathToTableMap = new HashMap<>();
 
   public SqrlSchema(SqrlFramework framework) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
@@ -68,14 +69,14 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addTable(RootSqrlTable root) {
-    removePrefix(this.pathToRelationshipMap.keySet(),root.getName().toNamePath().toStringList());
-    removePrefix(this.absolutePathMap.keySet(),root.getName().toNamePath().toStringList());
+    removePrefix(this.pathToRelationshipMap.keySet(),root.getName().toNamePath());
+    removePrefix(this.absolutePathMap.keySet(),root.getName().toNamePath());
     plus().add(String.join(".", root.getPath().toStringList()) + "$"
-        + sqrlFramework.getUniqueTableInt().incrementAndGet(),(RootSqrlTable)root
+        + sqrlFramework.getUniqueTableInt().incrementAndGet(), root
         );
   }
 
-  private void removePrefix(Set<List<String>> set, List<String> prefix) {
+  private void removePrefix(Set<NamePath> set, NamePath prefix) {
     set.removeIf(
         key -> key.size() >= prefix.size() && key.subList(0, prefix.size()).equals(prefix));
   }
@@ -89,14 +90,14 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addRelationship(Relationship relationship) {
-    absolutePathMap.put(relationship.getPath().toStringList(),
-        relationship.getToTable().toStringList());
-    this.pathToRelationshipMap.put(relationship.getPath().toStringList(), relationship);
+    absolutePathMap.put(relationship.getPath(),
+        relationship.getToTable());
+    this.pathToRelationshipMap.put(relationship.getPath(), relationship);
     plus().add(String.join(".", relationship.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueTableInt().incrementAndGet(), relationship);
   }
 
-  public void addTableMapping(List<String> path, String nameId) {
+  public void addTableMapping(NamePath path, String nameId) {
     this.pathToTableMap.put(path, nameId);
   }
 }

@@ -153,14 +153,15 @@ public class SchemaBuilder implements
   public Coords visitObjectField(InferredObjectField field, Object context) {
     List<String> currentPath;
     if (field.getParentTable() == null) {
-      currentPath = field.getTable().getPath();
+      currentPath = field.getTable().getPath().toStringList();
     } else {
-      List<String> newPath = new ArrayList<>(field.getParentTable().getPath());
+      List<String> newPath = new ArrayList<>(field.getParentTable().getPath().toStringList());
       newPath.add(field.getFieldDefinition().getName());
       currentPath = newPath;
     }
 
-    SqlUserDefinedTableFunction op = framework.getQueryPlanner().getTableFunction(currentPath);
+    SqlUserDefinedTableFunction op = framework.getQueryPlanner()
+        .getTableFunction(currentPath);
     TableFunction function = op.getFunction();
 
     Set<String> limitOffset = Set.of("limit", "offset");

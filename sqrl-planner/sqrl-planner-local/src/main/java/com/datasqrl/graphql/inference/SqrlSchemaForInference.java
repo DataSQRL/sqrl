@@ -3,7 +3,9 @@ package com.datasqrl.graphql.inference;
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.TableVisitor;
@@ -27,12 +29,12 @@ import org.apache.calcite.sql.type.ObjectSqlType;
 
 public class SqrlSchemaForInference {
 
-  private final Map<List<String>, SQRLTable> tableMap;
+  private final Map<NamePath, SQRLTable> tableMap;
 
   public SqrlSchemaForInference(SqrlSchema schema) {
-    Map<List<String>, SQRLTable> tableMap = new LinkedHashMap<>();
+    Map<NamePath, SQRLTable> tableMap = new LinkedHashMap<>();
     //Most recent tables
-    for (Entry<List<String>, String> entry : schema.getPathToTableMap().entrySet()) {
+    for (Entry<NamePath, String> entry : schema.getPathToTableMap().entrySet()) {
       Table table = schema.getTable(entry.getValue(), false)
           .getTable();
 
@@ -40,14 +42,14 @@ public class SqrlSchemaForInference {
       tableMap.put(entry.getKey(), sqrlTable);
     }
 
-    for (Entry<List<String>, com.datasqrl.schema.Relationship> rel : schema.getPathToRelationshipMap().entrySet()) {
+    for (Entry<NamePath, com.datasqrl.schema.Relationship> rel : schema.getPathToRelationshipMap().entrySet()) {
       com.datasqrl.schema.Relationship r = rel.getValue();
       SQRLTable from = tableMap.get(r.getFromTable());
-      SQRLTable to = tableMap.get(r.getToTable().toStringList());
+      SQRLTable to = tableMap.get(r.getToTable());
 
       Relationship relationship = new Relationship(from, to, r.getName(), r.getParameters(),
           r.getMultiplicity(), r.getJoinType());
-      List<String> path = SqrlListUtil.popLast(rel.getKey());
+      NamePath path = rel.getKey().popLast();
       tableMap.get(path).fields
           .add(relationship);
     }
@@ -55,7 +57,7 @@ public class SqrlSchemaForInference {
     this.tableMap = tableMap;
   }
 
-  private SQRLTable createSqrlTable(Table table, List<String> path) {
+  private SQRLTable createSqrlTable(Table table, NamePath path) {
     SQRLTable sqrlTable = new SQRLTable(path, table, List.of());
     List<RelDataTypeField> fieldList = table.getRowType(null).getFieldList();
     for (RelDataTypeField field : fieldList) {
@@ -80,15 +82,14 @@ public class SqrlSchemaForInference {
   public SQRLTable getRootSqrlTable(String fieldName) {
     return  tableMap.entrySet().stream()
         .filter(f->f.getKey().size() == 1)
-        .filter(f->f.getKey().get(0).equalsIgnoreCase(fieldName))
+        .filter(f->f.getKey().get(0).equals(Name.system(fieldName)))
         .map(Entry::getValue)
         .findFirst()
         .orElse(null);
   }
 
   public List<SQRLTable> getAllTables() {
-    return tableMap.values().stream()
-        .collect(Collectors.toList());
+    return new ArrayList<>(tableMap.values());
   }
   public static abstract class Field {
     public abstract Name getId();
@@ -127,7 +128,7 @@ public class SqrlSchemaForInference {
   @Getter
   public static class SQRLTable {
 
-    protected final List<String> path;
+    protected final NamePath path;
     protected final Table relOptTable;
     protected final List<Field> fields = new ArrayList<>();
 
@@ -138,7 +139,7 @@ public class SqrlSchemaForInference {
     }
 
     public String getName() {
-      return path.get(path.size()-1);
+      return path.getLast().getDisplay();
     }
 
     public Optional<Field> getField(Name name) {
@@ -152,18 +153,20 @@ public class SqrlSchemaForInference {
     }
 
     public List<Column> getColumns(boolean onlyVisible) {
-      return StreamUtil.filterByClass(fields.stream()
-                  .filter(f->
-                      onlyVisible? !f.getId().getDisplay().startsWith(ReservedName.HIDDEN_PREFIX): true),
-              Column.class)
-          .collect(Collectors.toList());
+      return getFieldsByClass(Column.class, onlyVisible);
     }
 
     public List<Field> getFields(boolean onlyVisible) {
+      return getFieldsByClass(Field.class, onlyVisible);
+    }
+
+    public <T extends Field> List<T> getFieldsByClass(Class<T> clazz, boolean onlyVisible) {
       return StreamUtil.filterByClass(fields.stream()
                   .filter(f->
-                      onlyVisible? !f.getId().getDisplay().startsWith(ReservedName.HIDDEN_PREFIX): true),
-              Field.class)
+                      onlyVisible
+                          ? !f.getId().getDisplay().startsWith(ReservedName.HIDDEN_PREFIX)
+                          : true),
+              clazz)
           .collect(Collectors.toList());
     }
 

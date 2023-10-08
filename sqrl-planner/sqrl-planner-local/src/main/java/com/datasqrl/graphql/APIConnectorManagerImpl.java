@@ -118,8 +118,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       String logId = ((ScriptRelationalTable) sqrlTable.getVt()).getNameId();
       RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory, 0,
           NameCanonicalizer.SYSTEM);
-      UniversalTable schema = converter.convert(
-          NamePath.of(sqrlTable.getPath().toArray(String[]::new)),
+      UniversalTable schema = converter.convert(sqrlTable.getPath(),
           ((ScriptRelationalTable) sqrlTable.getVt()).getRowType(),
           null);
       Log log = logEngine.get().createLog(logId, schema);

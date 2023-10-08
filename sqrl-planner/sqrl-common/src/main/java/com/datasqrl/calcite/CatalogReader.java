@@ -1,5 +1,6 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.canonicalizer.NamePath;
 import java.util.List;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
@@ -21,8 +22,9 @@ public class CatalogReader extends CalciteCatalogReader {
   }
 
   public RelOptTable getTableFromPath(List<String> names) {
-    List<String> absolutePath = getSqrlAbsolutePath(names);
-    String sysTableName = nameMatcher().get(schema.getPathToTableMap(), List.of(), absolutePath);
+
+    NamePath absolutePath = getSqrlAbsolutePath(NamePath.system(names));
+    String sysTableName = schema.getPathToTableMap().get(absolutePath);
     if (sysTableName == null) {
       return null;
     }
@@ -30,8 +32,12 @@ public class CatalogReader extends CalciteCatalogReader {
     return getTable(List.of(sysTableName));
   }
 
-  public List<String> getSqrlAbsolutePath(List<String> path) {
-    List<String> rel = nameMatcher().get(schema.getAbsolutePathMap(), path, List.of());
+  public NamePath getSqrlAbsolutePath(List<String> path) {
+    return getSqrlAbsolutePath(NamePath.system(path));
+  }
+
+  public NamePath getSqrlAbsolutePath(NamePath path) {
+    NamePath rel = schema.getAbsolutePathMap().get(path);
     return (rel == null) ? path : rel;
   }
 }

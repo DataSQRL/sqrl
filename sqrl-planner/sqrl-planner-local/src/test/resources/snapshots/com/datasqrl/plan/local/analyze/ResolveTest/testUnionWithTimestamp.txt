@@ -1,4 +1,4 @@
->>>combinedstream$q$15-lp-STREAM
+>>>combinedstream$q$13-lp-STREAM
 LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
   LogicalUnion(all=[true])
     LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
@@ -6,7 +6,7 @@ LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
     LogicalProject(_uuid=[$0], customerid=[$2], _ingest_time=[$1])
       LogicalTableScan(table=[[customer$q$2]])
 
->>>combinedstream$q$15-lp-DATABASE
+>>>combinedstream$q$13-lp-DATABASE
 LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
   LogicalUnion(all=[true])
     LogicalProject(_uuid=[$0], customerid=[$3], time=[$4])
@@ -14,12 +14,12 @@ LogicalProject(_uuid=[$0], customerid=[$1], rowtime=[$2])
     LogicalProject(_uuid=[$0], customerid=[$2], _ingest_time=[$1])
       LogicalTableScan(table=[[customer$q$2]])
 
->>>streamcount$q$17-lp-STREAM
+>>>streamcount$q$15-lp-STREAM
 LogicalProject(day=[$0], num=[$1])
   LogicalAggregate(group=[{0}], num=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 86400000, 0]]
     LogicalProject(day=[endOfDay($2)], _uuid=[$0])
-      LogicalTableScan(table=[[combinedstream$q$15]])
+      LogicalTableScan(table=[[combinedstream$q$13]])
 
->>>streamcount$q$17-lp-DATABASE
+>>>streamcount$q$15-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 

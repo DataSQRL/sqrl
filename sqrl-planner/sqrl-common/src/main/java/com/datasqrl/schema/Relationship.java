@@ -20,7 +20,7 @@ public class Relationship implements SqrlTableMacro {
 
   private final Name name;
   private final int version;
-  private final List<String> fromTable;
+  private final NamePath fromTable;
   private final NamePath toTable;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
@@ -28,7 +28,7 @@ public class Relationship implements SqrlTableMacro {
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
 
-  public Relationship(Name name, NamePath path, int version, List<String> fromTable, NamePath toTable,
+  public Relationship(Name name, NamePath path, int version, NamePath fromTable, NamePath toTable,
       JoinType joinType, Multiplicity multiplicity, List<FunctionParameter> parameters,
       Supplier<RelNode> viewTransform) {
     this.name = name;

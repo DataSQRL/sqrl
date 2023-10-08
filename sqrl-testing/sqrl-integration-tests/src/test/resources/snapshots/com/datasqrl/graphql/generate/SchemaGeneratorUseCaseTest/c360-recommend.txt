@@ -1,5 +1,6 @@
 type Category {
   name: String!
+  updateTime: String!
   products(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
 }
 
@@ -17,7 +18,7 @@ type Orders {
   customerid: Int!
   time: String!
   entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, total: Float): [entries!]
-  total(price: Float, discount: Float, num: Int): [total!]
+  total(price: Float, discount: Float, num: Int, time: String): [total!]
 }
 
 type Product {
@@ -29,10 +30,10 @@ type Product {
 }
 
 type Query {
+  Product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
   Orders(id: Int, customerid: Int, time: String): [Orders!]
   Customer(customerid: Int, email: String, name: String, lastUpdated: Int, updateTime: String): [Customer!]
-  Category(name: String): [Category!]
-  Product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
+  Category(name: String, updateTime: String): [Category!]
 }
 
 type entries {
@@ -40,16 +41,17 @@ type entries {
   quantity: Int!
   unit_price: Float!
   discount: Float
-  parent: Orders!
   discount0: Float!
   total: Float!
   product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
+  parent: Orders!
 }
 
 type total {
   price: Float!
   discount: Float!
   num: Int!
+  time: String!
   parent: Orders!
 }
 

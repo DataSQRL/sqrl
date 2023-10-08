@@ -178,7 +178,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       Supplier<RelNode> nodeSupplier = ()->framework.getQueryPlanner().plan(Dialect.CALCITE, sql.get());
       //if nested, add as relationship
       if (assignment.getIdentifier().names.size() > 1) {
-        List<String> fromTable = path.popLast().toStringList();
+        NamePath fromTable = path.popLast();
         NamePath toTable = isASqrl.get(0).getPath();
 
         Relationship rel = new Relationship(path.getLast(),
