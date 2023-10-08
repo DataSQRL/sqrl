@@ -1,9 +1,9 @@
-customer$q$15_btree_c3c4 - 1947.500
-customer$q$15_hash_c4 - 950.000
-newcustomerpromotion$q$45_hash_c2 - 40579.102
-order_again$q$28_btree_c0c3 - 1068.750
+customer$q$13_btree_c3c4 - 1947.500
+customer$q$13_hash_c4 - 950.000
+newcustomerpromotion$q$38_hash_c2 - 40579.102
+order_again$q$25_btree_c0c3 - 1068.750
 orders$q$8_btree_c3c2c4 - 3897.375
 orders$q$8_btree_c3c4 - 47.500
 orders$q$8_hash_c2 - 950.000
-product$q$19_btree_c3c5 - 1947.500
-product$q$19_hash_c5 - 950.000
+product$q$17_btree_c3c5 - 1947.500
+product$q$17_hash_c5 - 950.000

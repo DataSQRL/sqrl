@@ -25,8 +25,8 @@ public class PathWalker {
   }
 
   public PathWalker setPath(List<String> path) {
-    this.path.addAll(catalogReader.getSqrlAbsolutePath(path));
-    this.absolutePath.addAll(catalogReader.getSqrlAbsolutePath(path));
+    this.path.addAll(catalogReader.getSqrlAbsolutePath(path).toStringList());
+    this.absolutePath.addAll(catalogReader.getSqrlAbsolutePath(path).toStringList());
     this.userDefined.addAll(path);
     return this;
   }
@@ -36,7 +36,7 @@ public class PathWalker {
     this.path.addAll(absolutePath);
     this.path.add(next);
     this.absolutePath.clear();
-    this.absolutePath.addAll(catalogReader.getSqrlAbsolutePath(this.path));
+    this.absolutePath.addAll(catalogReader.getSqrlAbsolutePath(this.path).toStringList());
     this.userDefined.add(next);
   }
 }

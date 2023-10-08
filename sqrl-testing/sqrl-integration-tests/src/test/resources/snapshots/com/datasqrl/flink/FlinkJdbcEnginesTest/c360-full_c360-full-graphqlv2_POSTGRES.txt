@@ -1,10 +1,10 @@
 >>>database
-CREATE INDEX IF NOT EXISTS product$q$19_hash_c5 ON product$q$19 USING hash (category);
-CREATE TABLE IF NOT EXISTS category$q$17 (name TEXT NOT NULL,updateTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (name));
-CREATE TABLE IF NOT EXISTS customer$q$15 (customerid BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,email TEXT NOT NULL,name TEXT NOT NULL,lastUpdated BIGINT NOT NULL,updateTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (customerid));
-CREATE TABLE IF NOT EXISTS favorite_categories$q$36 (__customerid$pk$4 BIGINT NOT NULL,category_name TEXT NOT NULL,total DOUBLE PRECISION NOT NULL,month TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (__customerid$pk$4,category_name));
-CREATE TABLE IF NOT EXISTS order_again$q$28 (__customerid$pk$2 BIGINT NOT NULL,productid BIGINT NOT NULL,quantity BIGINT NOT NULL,num_orders BIGINT NOT NULL,most_recent TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (__customerid$pk$2,productid));
-CREATE TABLE IF NOT EXISTS product$q$19 (productid BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,name TEXT NOT NULL,description TEXT NOT NULL,category TEXT NOT NULL,updateTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (productid));
+CREATE INDEX IF NOT EXISTS product$q$17_hash_c5 ON product$q$17 USING hash (category);
+CREATE TABLE IF NOT EXISTS category$q$15 (name TEXT NOT NULL,updateTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (name));
+CREATE TABLE IF NOT EXISTS customer$q$13 (customerid BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,email TEXT NOT NULL,name TEXT NOT NULL,lastUpdated BIGINT NOT NULL,updateTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (customerid));
+CREATE TABLE IF NOT EXISTS favorite_categories$q$31 (__customerid$pk$4 BIGINT NOT NULL,category_name TEXT NOT NULL,total DOUBLE PRECISION NOT NULL,month TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (__customerid$pk$4,category_name));
+CREATE TABLE IF NOT EXISTS order_again$q$25 (__customerid$pk$2 BIGINT NOT NULL,productid BIGINT NOT NULL,quantity BIGINT NOT NULL,num_orders BIGINT NOT NULL,most_recent TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (__customerid$pk$2,productid));
+CREATE TABLE IF NOT EXISTS product$q$17 (productid BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,name TEXT NOT NULL,description TEXT NOT NULL,category TEXT NOT NULL,updateTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (productid));
 >>>query-category
 {
   "data" : {

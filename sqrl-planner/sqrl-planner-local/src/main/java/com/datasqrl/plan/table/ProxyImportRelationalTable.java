@@ -68,7 +68,7 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
       //Add timestamp candidate
       TimestampInference.ImportBuilder timestampBuilder = TimestampInference.buildImport();
       timestamp.getCandidates().forEach(cand -> timestampBuilder.addImport(cand.getIndex(), cand.getScore()));
-      timestampBuilder.addImport(colIdx, CalciteTableFactory.ADDED_TIMESTAMP_SCORE);
+      timestampBuilder.addImport(colIdx, TimestampUtil.ADDED_TIMESTAMP_SCORE);
       timestamp = timestampBuilder.build();
     }
     return colIdx;

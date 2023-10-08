@@ -10,6 +10,8 @@ import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.TableConverter;
+import com.datasqrl.plan.table.TableIdFactory;
 import com.google.inject.AbstractModule;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 
@@ -43,8 +45,7 @@ public class SqrlDIModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(SqrlFramework.class).toInstance(sqrlFramework);
-    bind(CalciteTableFactory.class).toInstance(new CalciteTableFactory(sqrlFramework,
-        nameCanonicalizer));
+    bind(CalciteTableFactory.class).toInstance(new CalciteTableFactory(sqrlFramework));
     bind(RelDataTypeFactory.class).toInstance(TypeFactory.getTypeFactory());
     bind(ModuleLoader.class).toInstance(moduleLoader);
     bind(ErrorCollector.class).toInstance(errors);

@@ -1,7 +1,7 @@
 >>>orders$q$2
 LogicalTableScan(table=[[orders$i$1]])
 
->>>x$q$9
+>>>x$q$7
 LogicalProject(gp=[$0], min_price=[$2], time=[$1])
   LogicalAggregate(group=[{0, 4}], min_price=[MIN($9)])
     LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])

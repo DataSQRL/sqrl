@@ -4,7 +4,6 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
@@ -38,11 +37,9 @@ import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.ApiQueryBase.ApiQueryBaseBuilder;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
-import com.datasqrl.graphql.util.PagedApiQueryBase.PagedApiQueryBaseBuilder;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.schema.Column;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import graphql.language.InputValueDefinition;
@@ -60,7 +57,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
@@ -82,7 +78,7 @@ public class SchemaBuilder implements
   private final SqrlFramework framework;
   private final APISource source;
   private final TypeDefinitionRegistry registry;
-  private final SqrlSchema schema;
+  private final SqrlSchemaForInference schema;
   private final RelBuilder relBuilder;
 
   private final SqlOperatorTable operatorTable;
@@ -91,7 +87,7 @@ public class SchemaBuilder implements
 
   private final AtomicInteger queryCounter = new AtomicInteger();
 
-  public SchemaBuilder(SqrlFramework framework, APISource source, SqrlSchema schema, RelBuilder relBuilder,
+  public SchemaBuilder(SqrlFramework framework, APISource source, SqrlSchemaForInference schema, RelBuilder relBuilder,
                               SqrlQueryPlanner planner,
                               SqlOperatorTable operatorTable, APIConnectorManager apiManager) {
     this.framework = framework;
@@ -157,13 +153,15 @@ public class SchemaBuilder implements
   public Coords visitObjectField(InferredObjectField field, Object context) {
     List<String> currentPath;
     if (field.getParentTable() == null) {
-      currentPath = field.getTable().getPath()
-          .toStringList();
+      currentPath = field.getTable().getPath().toStringList();
     } else {
-      currentPath = field.getParentTable().getPath().concat(Name.system(field.getFieldDefinition().getName())).toStringList();
+      List<String> newPath = new ArrayList<>(field.getParentTable().getPath().toStringList());
+      newPath.add(field.getFieldDefinition().getName());
+      currentPath = newPath;
     }
 
-    SqlUserDefinedTableFunction op = framework.getQueryPlanner().getTableFunction(currentPath);
+    SqlUserDefinedTableFunction op = framework.getQueryPlanner()
+        .getTableFunction(currentPath);
     TableFunction function = op.getFunction();
 
     Set<String> limitOffset = Set.of("limit", "offset");

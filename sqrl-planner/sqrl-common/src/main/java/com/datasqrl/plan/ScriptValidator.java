@@ -793,9 +793,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       }
 
       RelDataTypeFieldBuilder b = new RelDataTypeFieldBuilder(new FieldInfoBuilder(planner.getTypeFactory()));
-      ((SqrlTableMacro) latestTable).getSqrlTable()
-          .getFields().getColumns()
-          .forEach(c->b.add(c.getName().getDisplay(), c.getType()));
+      ((SqrlTableMacro) latestTable).getRowType().getFieldList()
+          .forEach(c->b.add(c.getName(), c.getType()));
       final RelDataType latestTable2 = b.build();
 
       String name = node.getDisplay() + "$validate$"+ uniqueId.incrementAndGet();
@@ -1079,7 +1078,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   }
 
   private Optional<RelOptTable> resolveModifiableTable(SqlNode node, List<String> names) {
-    Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader().getSqrlTable(names));
+    Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader().getTableFromPath(names));
     if (table.isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Could not find table: %s", flattenNames(names));
     }

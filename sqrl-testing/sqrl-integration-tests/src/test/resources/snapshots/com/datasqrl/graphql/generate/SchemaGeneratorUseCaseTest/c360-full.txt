@@ -1,5 +1,6 @@
 type Category {
   name: String!
+  updateTime: String!
   products(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
 }
 
@@ -10,9 +11,9 @@ type Customer {
   lastUpdated: Int!
   updateTime: String!
   orders(id: Int, customerid: Int, time: String): [Orders!]
+  favorite_categories(category_name: String, total: Float, month: String): [favorite_categories!]
   order_again(productid: Int, quantity: Int, num_orders: Int, most_recent: String): [order_again!]
-  favorite_categories(category_name: String, total: Float): [favorite_categories!]
-  order_stats(total_spend: Float, num_orders: Int): [order_stats!]
+  order_stats(total_spend: Float, num_orders: Int, time: String): [order_stats!]
 }
 
 type NewCustomerPromotion {
@@ -28,7 +29,7 @@ type Orders {
   customerid: Int!
   time: String!
   entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, total: Float): [entries!]
-  total(price: Float, discount: Float, num: Int): [total!]
+  total(price: Float, discount: Float, num: Int, time: String): [total!]
 }
 
 type Product {
@@ -40,11 +41,11 @@ type Product {
 }
 
 type Query {
-  Orders(id: Int, customerid: Int, time: String): [Orders!]
-  Customer(customerid: Int, email: String, name: String, lastUpdated: Int, updateTime: String): [Customer!]
-  Category(name: String): [Category!]
   Product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
   NewCustomerPromotion(customerid: Int, email: String, name: String, total_spend: Float, num_orders: Int): [NewCustomerPromotion!]
+  Orders(id: Int, customerid: Int, time: String): [Orders!]
+  Customer(customerid: Int, email: String, name: String, lastUpdated: Int, updateTime: String): [Customer!]
+  Category(name: String, updateTime: String): [Category!]
 }
 
 type entries {
@@ -52,17 +53,18 @@ type entries {
   quantity: Int!
   unit_price: Float!
   discount: Float
-  parent: Orders!
   discount0: Float!
   total: Float!
   product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
+  parent: Orders!
 }
 
 type favorite_categories {
   category_name: String!
   total: Float!
+  month: String!
   parent: Customer!
-  category(name: String): [Category!]
+  category(name: String, updateTime: String): [Category!]
 }
 
 type order_again {
@@ -76,6 +78,7 @@ type order_again {
 type order_stats {
   total_spend: Float!
   num_orders: Int!
+  time: String!
   parent: Customer!
 }
 
@@ -83,6 +86,7 @@ type total {
   price: Float!
   discount: Float!
   num: Int!
+  time: String!
   parent: Orders!
 }
 

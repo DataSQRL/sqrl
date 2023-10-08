@@ -1,4 +1,4 @@
->>>package$q$9-lp-stream
+>>>package$q$7-lp-stream
 LogicalProject(name=[$2], submissionTime=[$17]) hints[TimestampHint options:[1]]
   LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[$4], latest=[$5], type=[$6], license=[$7], repository=[$8], homepage=[$9], documentation=[$10], readme=[$11], description=[$12], uniqueId=[$13], file=[$14], hash=[$15], authorid=[$16], submissionTime=[$17], keywords=[$18], variant0=[COALESCE($4, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $14)]) hints[WatermarkHint options:[17]]
     LogicalTableScan(table=[[submission$i$1]])
@@ -10,7 +10,7 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], name=[$2], version=[$3], variant=[
 >>>package-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(name=[$0], submissionTime=[$1])
-    LogicalTableScan(table=[[package$q$9]])
+    LogicalTableScan(table=[[package$q$7]])
 
 >>>submission-lp-database
 LogicalSort(sort0=[$17], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])

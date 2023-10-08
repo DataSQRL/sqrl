@@ -1,7 +1,7 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>d$q$15
+>>>d$q$13
 LogicalProject(_uuid=[$0], _idx=[$6], id=[$2], time=[$4])
   LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$5]])
@@ -12,6 +12,6 @@ LogicalProject(_uuid=[$0], _idx=[$6], id=[$2], time=[$4])
 >>>orders$q$5
 LogicalTableScan(table=[[orders$i$4]])
 
->>>product$q$13
-LogicalTableScan(table=[[product$i$12]])
+>>>product$q$11
+LogicalTableScan(table=[[product$i$10]])
 

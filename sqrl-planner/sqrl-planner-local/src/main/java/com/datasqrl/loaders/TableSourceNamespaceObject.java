@@ -1,6 +1,7 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.canonicalizer.Name;
@@ -16,7 +17,7 @@ public class TableSourceNamespaceObject extends AbstractTableNamespaceObject<Tab
   private final TableSource table;
 
   public TableSourceNamespaceObject(TableSource table, CalciteTableFactory tableFactory) {
-    super(tableFactory);
+    super(tableFactory, NameCanonicalizer.SYSTEM);
     this.table = table;
   }
 
