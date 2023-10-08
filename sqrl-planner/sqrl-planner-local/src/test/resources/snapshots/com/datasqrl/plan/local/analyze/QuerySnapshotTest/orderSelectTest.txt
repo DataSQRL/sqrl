@@ -1,7 +1,7 @@
 >>>customer$q$2
 LogicalTableScan(table=[[customer$i$1]])
 
->>>o2$q$15
+>>>o2$q$13
 LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], __timestamp=[CASE(<($4, $10), $10, $4)])
   LogicalJoin(condition=[true], joinType=[inner])
     LogicalTableScan(table=[[orders$q$5]])
@@ -10,6 +10,6 @@ LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], id=[$2], customerid=[
 >>>orders$q$5
 LogicalTableScan(table=[[orders$i$4]])
 
->>>product$q$13
-LogicalTableScan(table=[[product$i$12]])
+>>>product$q$11
+LogicalTableScan(table=[[product$i$10]])
 

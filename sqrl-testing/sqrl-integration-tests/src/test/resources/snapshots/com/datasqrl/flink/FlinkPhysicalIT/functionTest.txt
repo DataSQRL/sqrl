@@ -1,11 +1,11 @@
->>>product$q$13-lp-stream
+>>>product$q$11-lp-stream
 LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], badWords=[bannedWordsFilter($3)], searchResult=[textSearch('garden gnome', $4, $3)], format=[format('Go buy: %s in %s with id=%s', $3, $5, CAST($2):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
-  LogicalTableScan(table=[[product$i$12]])
+  LogicalTableScan(table=[[product$i$10]])
 
 >>>product-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], badWords=[$6], searchResult=[$7], format=[$8])
-    LogicalTableScan(table=[[product$q$13]])
+    LogicalTableScan(table=[[product$q$11]])
 
 >>>product-data
 1332, Heavy Duty Butt Wipes, Wipes for hardiest of messes, Personal Care, false, 0, Go buy: Heavy Duty Butt Wipes in Personal Care with id=1332

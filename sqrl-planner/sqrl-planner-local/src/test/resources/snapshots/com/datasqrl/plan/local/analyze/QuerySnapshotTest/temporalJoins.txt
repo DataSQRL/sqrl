@@ -1,17 +1,25 @@
+>>>customer$q$11
+LogicalTableScan(table=[[customer$i$10]])
+
 >>>customer$q$13
-LogicalTableScan(table=[[customer$i$12]])
-
->>>customer$q$15
 LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5])
-  LogicalTableScan(table=[[customer$q$13]])
+  LogicalTableScan(table=[[customer$q$11]])
 
->>>customerorders$q$17
+>>>customerorders$q$15
 LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[inner])
     LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($6, 1)])
       LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[customer$q$15]])
+        LogicalTableScan(table=[[customer$q$13]])
+
+>>>customerorders$q$17
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+  LogicalJoin(condition=[=($3, $6)], joinType=[left])
+    LogicalTableScan(table=[[orders$q$5]])
+    LogicalFilter(condition=[=($6, 1)])
+      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[customer$q$13]])
 
 >>>customerorders$q$19
 LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
@@ -19,15 +27,7 @@ LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
     LogicalTableScan(table=[[orders$q$5]])
     LogicalFilter(condition=[=($6, 1)])
       LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[customer$q$15]])
-
->>>customerorders$q$21
-LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
-  LogicalJoin(condition=[=($3, $6)], joinType=[left])
-    LogicalTableScan(table=[[orders$q$5]])
-    LogicalFilter(condition=[=($6, 1)])
-      LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[customer$q$15]])
+        LogicalTableScan(table=[[customer$q$13]])
 
 >>>orders$q$5
 LogicalTableScan(table=[[orders$i$4]])

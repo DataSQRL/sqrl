@@ -1,4 +1,4 @@
->>>countstream0$q$9-lp-stream
+>>>countstream0$q$7-lp-stream
 LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num=[$3]) hints[TimestampHint options:[1]]
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
@@ -6,7 +6,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num=[$3]) hints[T
         LogicalProject(customerid=[$3], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
           LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>countstream1$q$13-lp-stream
+>>>countstream1$q$11-lp-stream
 LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3]) hints[TimestampHint options:[1]]
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[>=($1, 1)])
@@ -15,7 +15,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3]) hi
           LogicalProject(customerid=[$3], quantity=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
             LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>countstream2$q$15-lp-stream
+>>>countstream2$q$13-lp-stream
 LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3]) hints[TimestampHint options:[1]]
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[>=($1, 2)])
@@ -24,11 +24,11 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3]) hi
           LogicalProject(customerid=[$3], quantity=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
             LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>customercount$q$11-lp-stream
+>>>customercount$q$9-lp-stream
 LogicalProject(customerid=[$3], quantity=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4]) hints[TimestampHint options:[2]]
   LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>updatestream0$q$17-lp-stream
+>>>updatestream0$q$15-lp-stream
 LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num=[$3]) hints[TimestampHint options:[1]]
   LogicalStream(stream=[UPDATE])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
@@ -36,7 +36,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num=[$3]) hints[T
         LogicalProject(customerid=[$3], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
           LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>updatestream1$q$19-lp-stream
+>>>updatestream1$q$17-lp-stream
 LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3]) hints[TimestampHint options:[1]]
   LogicalStream(stream=[UPDATE])
     LogicalFilter(condition=[>=($1, 1)])
@@ -48,32 +48,32 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3]) hi
 >>>countstream0-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num=[$3])
-    LogicalTableScan(table=[[countstream0$q$9]])
+    LogicalTableScan(table=[[countstream0$q$7]])
 
 >>>countstream1-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3])
-    LogicalTableScan(table=[[countstream1$q$13]])
+    LogicalTableScan(table=[[countstream1$q$11]])
 
 >>>countstream2-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3])
-    LogicalTableScan(table=[[countstream2$q$15]])
+    LogicalTableScan(table=[[countstream2$q$13]])
 
 >>>customercount-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(customerid=[$0], quantity=[$1], time=[$2])
-    LogicalTableScan(table=[[customercount$q$11]])
+    LogicalTableScan(table=[[customercount$q$9]])
 
 >>>updatestream0-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num=[$3])
-    LogicalTableScan(table=[[updatestream0$q$17]])
+    LogicalTableScan(table=[[updatestream0$q$15]])
 
 >>>updatestream1-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], quantity=[$3])
-    LogicalTableScan(table=[[updatestream1$q$19]])
+    LogicalTableScan(table=[[updatestream1$q$17]])
 
 >>>customercount-data
 1000101, 1, 2023-05-19 01:29:39.553

@@ -1,4 +1,4 @@
->>>entries_2$q$9
+>>>entries_2$q$7
 LogicalProject(___uuid$pk$1=[$0], cnt=[$2], time=[$1])
   LogicalAggregate(group=[{0, 4}], cnt=[COUNT()])
     LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])

@@ -3,21 +3,20 @@
  */
 package com.datasqrl.plan.local;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.StreamUtil;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NonNull;
-
-import java.util.Map;
 
 @Getter
 public class ScriptTableDefinition {
 
-  private final Map<SQRLTable, ScriptRelationalTable> shredTableMap;
+  private final Map<NamePath, ScriptRelationalTable> shredTableMap;
 
-  public ScriptTableDefinition(@NonNull Map<SQRLTable, ScriptRelationalTable> shredTableMap) {
+  public ScriptTableDefinition(@NonNull Map<NamePath, ScriptRelationalTable> shredTableMap) {
     this.shredTableMap = shredTableMap;
   }
 

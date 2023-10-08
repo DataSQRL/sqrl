@@ -1,15 +1,13 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.canonicalizer.NamePath;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
@@ -23,14 +21,10 @@ public class CatalogReader extends CalciteCatalogReader {
     this.schema = rootSchema;
   }
 
-  public RelOptTable getSqrlTable(List<String> names) {
-    List<String> absolutePath = getSqrlAbsolutePath(names);
-    Map<List<String>, String> collect = schema.getSqrlTables().stream()
-        .filter(f->f.getRelOptTable() != null)
-        .collect(Collectors.toMap(f -> f.getPath().toStringList(),
-            f -> ((ModifiableTable)f.getRelOptTable()).getNameId()));
+  public RelOptTable getTableFromPath(List<String> names) {
 
-    String sysTableName = nameMatcher().get(collect, List.of(), absolutePath);
+    NamePath absolutePath = getSqrlAbsolutePath(NamePath.system(names));
+    String sysTableName = schema.getPathToTableMap().get(absolutePath);
     if (sysTableName == null) {
       return null;
     }
@@ -38,8 +32,12 @@ public class CatalogReader extends CalciteCatalogReader {
     return getTable(List.of(sysTableName));
   }
 
-  public List<String> getSqrlAbsolutePath(List<String> path) {
-    List<String> rel = nameMatcher().get(schema.getRelationships(), path, List.of());
+  public NamePath getSqrlAbsolutePath(List<String> path) {
+    return getSqrlAbsolutePath(NamePath.system(path));
+  }
+
+  public NamePath getSqrlAbsolutePath(NamePath path) {
+    NamePath rel = schema.getAbsolutePathMap().get(path);
     return (rel == null) ? path : rel;
   }
 }

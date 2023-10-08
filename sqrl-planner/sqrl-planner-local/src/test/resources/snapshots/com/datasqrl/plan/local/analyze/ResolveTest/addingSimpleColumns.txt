@@ -2,7 +2,7 @@
 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], col1=[/(+($2, $3), 2)]) hints[WatermarkHint options:[4]]
   LogicalTableScan(table=[[orders$i$1]])
 
->>>orderentry$q$9-lp-STREAM
+>>>orderentry$q$7-lp-STREAM
 LogicalProject(_uuid=[$0], _idx=[$7], col1=[$6], time=[$4], productid=[$8], discount2=[COALESCE($11, 0.0:DOUBLE)], _ingest_time=[$1])
   LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$q$2]])
@@ -10,9 +10,9 @@ LogicalProject(_uuid=[$0], _idx=[$7], col1=[$6], time=[$4], productid=[$8], disc
       LogicalProject($f0=[$cor4.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>orderentry$q$9-lp-DATABASE
+>>>orderentry$q$7-lp-DATABASE
 LogicalProject(_uuid=[$0], _idx=[$8], col1=[$6], time=[$4], productid=[$9], discount2=[$13], _ingest_time=[$1])
   LogicalJoin(condition=[=($0, $7)], joinType=[inner])
     LogicalTableScan(table=[[orders$q$2]])
-    LogicalTableScan(table=[[entries$4]])
+    LogicalTableScan(table=[[entries$3]])
 

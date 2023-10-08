@@ -18,6 +18,10 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
     super(names);
   }
 
+  public static NamePath system(List<String> names) {
+    return of(names.toArray(String[]::new));
+  }
+
   @Override
   protected Constructor constructor() {
     return CONSTRUCTOR;

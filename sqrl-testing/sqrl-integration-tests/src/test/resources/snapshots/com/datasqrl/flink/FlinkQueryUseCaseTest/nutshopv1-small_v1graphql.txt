@@ -1,30 +1,30 @@
 >>>database
-CREATE INDEX IF NOT EXISTS items$7_btree_c0c2c3 ON items$7 USING btree (_uuid,productid,quantity);
-CREATE INDEX IF NOT EXISTS items$7_btree_c0c3c7 ON items$7 USING btree (_uuid,quantity,total);
-CREATE INDEX IF NOT EXISTS items$7_btree_c0c4c5 ON items$7 USING btree (_uuid,unit_price,discount);
-CREATE INDEX IF NOT EXISTS items$7_btree_c0c5c2 ON items$7 USING btree (_uuid,discount,productid);
-CREATE INDEX IF NOT EXISTS items$7_btree_c0c7c2 ON items$7 USING btree (_uuid,total,productid);
+CREATE INDEX IF NOT EXISTS items$6_btree_c0c2c3 ON items$6 USING btree (_uuid,productid,quantity);
+CREATE INDEX IF NOT EXISTS items$6_btree_c0c3c7 ON items$6 USING btree (_uuid,quantity,total);
+CREATE INDEX IF NOT EXISTS items$6_btree_c0c4c5 ON items$6 USING btree (_uuid,unit_price,discount);
+CREATE INDEX IF NOT EXISTS items$6_btree_c0c5c2 ON items$6 USING btree (_uuid,discount,productid);
+CREATE INDEX IF NOT EXISTS items$6_btree_c0c7c2 ON items$6 USING btree (_uuid,total,productid);
 CREATE INDEX IF NOT EXISTS orders$q$5_btree_c2c3c4 ON orders$q$5 USING btree (id,customerid,time);
 CREATE INDEX IF NOT EXISTS orders$q$5_btree_c2c4 ON orders$q$5 USING btree (id,time);
 CREATE INDEX IF NOT EXISTS orders$q$5_btree_c3c4c6 ON orders$q$5 USING btree (customerid,time,timestamp);
 CREATE INDEX IF NOT EXISTS orders$q$5_btree_c3c6 ON orders$q$5 USING btree (customerid,timestamp);
 CREATE INDEX IF NOT EXISTS orders$q$5_btree_c4c6c2 ON orders$q$5 USING btree (time,timestamp,id);
 CREATE INDEX IF NOT EXISTS orders$q$5_btree_c6c2c3 ON orders$q$5 USING btree (timestamp,id,customerid);
-CREATE INDEX IF NOT EXISTS products$q$14_btree_c3 ON products$q$14 USING btree (name);
-CREATE INDEX IF NOT EXISTS products$q$14_btree_c4 ON products$q$14 USING btree (sizing);
-CREATE INDEX IF NOT EXISTS products$q$14_btree_c5 ON products$q$14 USING btree (weight_in_gram);
-CREATE INDEX IF NOT EXISTS products$q$14_btree_c6 ON products$q$14 USING btree (type);
-CREATE INDEX IF NOT EXISTS products$q$14_btree_c7 ON products$q$14 USING btree (category);
-CREATE INDEX IF NOT EXISTS products$q$14_btree_c8 ON products$q$14 USING btree (usda_id);
-CREATE INDEX IF NOT EXISTS products$q$14_btree_c9 ON products$q$14 USING btree (updated);
-CREATE INDEX IF NOT EXISTS spending_by_month$q$22_btree_c0c2c3 ON spending_by_month$q$22 USING btree (__id$pk$2,total_spend,total_savings);
-CREATE INDEX IF NOT EXISTS spending_by_month$q$22_btree_c0c3 ON spending_by_month$q$22 USING btree (__id$pk$2,total_savings);
-CREATE TABLE IF NOT EXISTS customers$q$12 (id BIGINT NOT NULL,timestamp TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (id));
-CREATE TABLE IF NOT EXISTS items$7 (_uuid TEXT NOT NULL,_idx INTEGER NOT NULL,productid BIGINT NOT NULL,quantity BIGINT NOT NULL,unit_price DOUBLE PRECISION NOT NULL,discount DOUBLE PRECISION ,discount0 DOUBLE PRECISION NOT NULL,total DOUBLE PRECISION NOT NULL,__timestamp TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (_uuid,_idx));
+CREATE INDEX IF NOT EXISTS products$q$12_btree_c3 ON products$q$12 USING btree (name);
+CREATE INDEX IF NOT EXISTS products$q$12_btree_c4 ON products$q$12 USING btree (sizing);
+CREATE INDEX IF NOT EXISTS products$q$12_btree_c5 ON products$q$12 USING btree (weight_in_gram);
+CREATE INDEX IF NOT EXISTS products$q$12_btree_c6 ON products$q$12 USING btree (type);
+CREATE INDEX IF NOT EXISTS products$q$12_btree_c7 ON products$q$12 USING btree (category);
+CREATE INDEX IF NOT EXISTS products$q$12_btree_c8 ON products$q$12 USING btree (usda_id);
+CREATE INDEX IF NOT EXISTS products$q$12_btree_c9 ON products$q$12 USING btree (updated);
+CREATE INDEX IF NOT EXISTS spending_by_month$q$19_btree_c0c2c3 ON spending_by_month$q$19 USING btree (__id$pk$2,total_spend,total_savings);
+CREATE INDEX IF NOT EXISTS spending_by_month$q$19_btree_c0c3 ON spending_by_month$q$19 USING btree (__id$pk$2,total_savings);
+CREATE TABLE IF NOT EXISTS customers$q$10 (id BIGINT NOT NULL,timestamp TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (id));
+CREATE TABLE IF NOT EXISTS items$6 (_uuid TEXT NOT NULL,_idx INTEGER NOT NULL,productid BIGINT NOT NULL,quantity BIGINT NOT NULL,unit_price DOUBLE PRECISION NOT NULL,discount DOUBLE PRECISION ,discount0 DOUBLE PRECISION NOT NULL,total DOUBLE PRECISION NOT NULL,__timestamp TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (_uuid,_idx));
 CREATE TABLE IF NOT EXISTS orders$q$5 (_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,id BIGINT NOT NULL,customerid BIGINT NOT NULL,time BIGINT NOT NULL,items bytea[] NOT NULL,timestamp TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (_uuid));
-CREATE TABLE IF NOT EXISTS products$q$14 (id BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,name TEXT NOT NULL,sizing TEXT NOT NULL,weight_in_gram BIGINT NOT NULL,type TEXT NOT NULL,category TEXT NOT NULL,usda_id BIGINT NOT NULL,updated TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (id));
-CREATE TABLE IF NOT EXISTS spending_by_month$q$22 (__id$pk$2 BIGINT NOT NULL,month TIMESTAMP WITH TIME ZONE NOT NULL,total_spend DOUBLE PRECISION NOT NULL,total_savings DOUBLE PRECISION NOT NULL , PRIMARY KEY (__id$pk$2,month));
-CREATE TABLE IF NOT EXISTS totals$q$18 (___uuid$pk$1 TEXT NOT NULL,price DOUBLE PRECISION NOT NULL,savings DOUBLE PRECISION NOT NULL,timestamp TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (___uuid$pk$1));
+CREATE TABLE IF NOT EXISTS products$q$12 (id BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,name TEXT NOT NULL,sizing TEXT NOT NULL,weight_in_gram BIGINT NOT NULL,type TEXT NOT NULL,category TEXT NOT NULL,usda_id BIGINT NOT NULL,updated TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (id));
+CREATE TABLE IF NOT EXISTS spending_by_month$q$19 (__id$pk$2 BIGINT NOT NULL,month TIMESTAMP WITH TIME ZONE NOT NULL,total_spend DOUBLE PRECISION NOT NULL,total_savings DOUBLE PRECISION NOT NULL , PRIMARY KEY (__id$pk$2,month));
+CREATE TABLE IF NOT EXISTS totals$q$16 (___uuid$pk$1 TEXT NOT NULL,price DOUBLE PRECISION NOT NULL,savings DOUBLE PRECISION NOT NULL,timestamp TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (___uuid$pk$1));
 >>>query-product
 {
   "data" : {

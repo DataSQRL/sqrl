@@ -1,5 +1,5 @@
->>>customer$q$13
-LogicalTableScan(table=[[customer$i$12]])
+>>>customer$q$11
+LogicalTableScan(table=[[customer$i$10]])
 
 >>>orders$q$5
 LogicalTableScan(table=[[orders$i$4]])

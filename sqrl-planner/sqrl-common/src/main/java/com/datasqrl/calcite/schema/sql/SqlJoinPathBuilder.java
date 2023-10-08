@@ -1,10 +1,7 @@
 package com.datasqrl.calcite.schema.sql;
 
-import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
-import com.datasqrl.schema.SQRLTable;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +55,7 @@ public class SqlJoinPathBuilder {
     call = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO, call);
 
     SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, call, new SqlIdentifier(alias, SqlParserPos.ZERO));
-    Frame frame = new Frame(((SqrlTableMacro) op.getFunction()).getSqrlTable(), type, aliasedCall, alias);
+    Frame frame = new Frame(false, type, aliasedCall, alias);
     stack.push(frame);
     tableHistory.add(frame);
 
@@ -83,7 +80,7 @@ public class SqlJoinPathBuilder {
     builder.addAll(right.getType().getFieldList());
     RelDataType type = builder.build();
 
-    Frame frame = new Frame(right.sqrlTable, type, join, right.getAlias());
+    Frame frame = new Frame(right.subquery, type, join, right.getAlias());
     stack.push(frame);
 
     return this;
@@ -96,7 +93,7 @@ public class SqlJoinPathBuilder {
   public SqlNode buildAndProjectLast(List<String> pullupCols) {
     Frame frame = stack.pop();
     Frame lastTable = tableHistory.get(tableHistory.size()-1);
-    if (frame.getSqrlTable() == null) { //subquery
+    if (frame.isSubquery()) { //subquery
       return frame.getNode();
     }
     SqlSelectBuilder select = new SqlSelectBuilder()
@@ -130,7 +127,7 @@ public class SqlJoinPathBuilder {
   }
 
   public void scanNestedTable(List<String> currentPath) {
-    RelOptTable relOptTable = planner.getCatalogReader().getSqrlTable(currentPath);
+    RelOptTable relOptTable = planner.getCatalogReader().getTableFromPath(currentPath);
     if (relOptTable == null) {
       throw new RuntimeException("Could not find table: " + currentPath);
     }
@@ -140,13 +137,13 @@ public class SqlJoinPathBuilder {
     String alias = "_t"+aliasInt.incrementAndGet();
 
     SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, table, new SqlIdentifier(alias, SqlParserPos.ZERO));
-    Frame frame = new Frame(relOptTable.unwrap(ModifiableTable.class).getSqrlTable(), relOptTable.getRowType(), aliasedCall, alias);
+    Frame frame = new Frame(false, relOptTable.getRowType(), aliasedCall, alias);
     stack.push(frame);
     tableHistory.add(frame);
   }
 
-  public void push(SqlNode result, RelDataType rowType) {
-    Frame frame = new Frame(null, rowType, result, null);
+  public void pushSubquery(SqlNode result, RelDataType rowType) {
+    Frame frame = new Frame(true, rowType, result, null);
     stack.push(frame);
     tableHistory.add(frame);
   }
@@ -154,7 +151,7 @@ public class SqlJoinPathBuilder {
 
   @Value
   public class Frame {
-    SQRLTable sqrlTable;
+    boolean subquery;
     RelDataType type;
     SqlNode node;
     String alias;
