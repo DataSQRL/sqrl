@@ -36,7 +36,6 @@ public class FileResourceResolver implements ResourceResolver {
     Path path = namepath2Path(baseDir, namePath);
 
     if (!Files.exists(path)) {
-      System.out.println("not exists");
       return List.of();
     }
 

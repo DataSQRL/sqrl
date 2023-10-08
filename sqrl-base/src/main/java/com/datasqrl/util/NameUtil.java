@@ -26,14 +26,11 @@ public class NameUtil {
 
   public static Optional<Path> resolveCaseInsensitive(Path basePath, List<String> parts) {
     Path currentPath = basePath;
-    System.out.println("looking for: " + basePath.toString() + " : " + parts);
     for (String part : parts) {
       Optional<Path> nextPath = findCaseInsensitive(currentPath, part);
       if (nextPath.isPresent()) {
-        System.out.println("found");
         currentPath = nextPath.get();
       } else {
-        System.out.println("not found");
         return Optional.empty();
       }
     }
@@ -43,7 +40,6 @@ public class NameUtil {
   private static Optional<Path> findCaseInsensitive(Path dir, String name) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
       for (Path entry : stream) {
-        System.out.println("Looking at file: " + entry.toString());
         if (entry.getFileName().toString().equalsIgnoreCase(name)) {
           return Optional.of(entry);
         }

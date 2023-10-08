@@ -79,7 +79,6 @@ public class ObjectLoaderImpl implements ObjectLoader {
     TableSchemaFactory tableSchemaFactory = tableConfig.getSchemaFactory().orElseThrow(() ->
             errors.exception("Schema has not been configured for table [%s]", uri));
 
-    System.out.println("base:" + basePath + " : " + FileUtil.getParent(uri) + " : " + tableConfig);
     Optional<TableSchema> tableSchema = tableSchemaFactory.create(basePath, FileUtil.getParent(uri),
         resourceResolver, tableConfig, errors);
 
