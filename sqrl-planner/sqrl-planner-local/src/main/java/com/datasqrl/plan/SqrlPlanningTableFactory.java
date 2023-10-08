@@ -59,20 +59,8 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
     NamePath names = nameUtil.toNamePath(path);
 
-    Optional<ScriptRelationalTable> parent = Optional.empty();
-    if (path.size() > 1) {
-      ScriptRelationalTable table = framework.getQueryPlanner().getCatalogReader()
-          .getTableFromPath(SqrlListUtil.popLast(path))
-          .unwrap(ScriptRelationalTable.class);
-
-      parent = Optional.of(table);
-    }
-
     AnnotatedLP processedRel = analyzedLP.getConvertedRelnode();
-
-    List<String> relFieldNames = new ArrayList<>(
-        processedRel.getRelNode().getRowType().getFieldNames());
-
+    List<String> relFieldNames = processedRel.getRelNode().getRowType().getFieldNames();
     List<Name> fieldNames = processedRel.getSelect().targetsAsList().stream()
         .map(idx -> relFieldNames.get(idx))
         .map(n -> nameUtil.toName(n)).collect(Collectors.toList());

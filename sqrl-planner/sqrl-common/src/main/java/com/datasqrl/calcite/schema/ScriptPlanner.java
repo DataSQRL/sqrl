@@ -144,11 +144,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlAssignment assignment, Void context) {
     SqlNode node = validator.getPreprocessSql().get(assignment);
-
     boolean materializeSelf = validator.getIsMaterializeTable().get(assignment);
-
     List<String> parentPath = getParentPath(assignment);
-
     Result result = new SqrlToSql().rewrite(node, materializeSelf, parentPath);
 
     //Expanding table functions may have added additional parameters that we need to remove.
@@ -161,13 +158,10 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     RelNode relNode = planner.plan(Dialect.CALCITE, rewritten.getRight());
     RelNode expanded = planner.expandMacros(relNode);
-    final Optional<SqlNode> sql;
-    if (!materializeSelf) {
-      sql = Optional.of(planner.relToSql(Dialect.CALCITE, expanded));
-    } else {
-      sql = Optional.empty();
-    }
 
+    final Optional<SqlNode> sql = !materializeSelf
+        ? Optional.of(planner.relToSql(Dialect.CALCITE, expanded))
+        : Optional.empty();
     if (assignment instanceof SqrlStreamQuery) {
       expanded = LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType());
     }
@@ -199,14 +193,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         //todo: unclean way to find from query
         nodeSupplier = assignment instanceof SqrlFromQuery ? nodeSupplier : ()->finalRel;
 
-        RootSqrlTable sqrlTable = new RootSqrlTable(path.getFirst(),null, parameters, nodeSupplier);
-
         ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
-
-        tableFactory.createTable(sqrlTable.getPath().toStringList(),
+        tableFactory.createTable(path.toStringList(),
             expanded, null,
             assignment.getHints(), parameters, isA,
-            materializeSelf, Optional.empty(), statementErrors);
+            materializeSelf, Optional.of(nodeSupplier), statementErrors);
       }
     } else {
       ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
