@@ -11,8 +11,8 @@ import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.ArrayUtil;
 import com.datasqrl.util.SqrlRexUtil;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.primitives.Ints;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.adapter.enumerable.EnumerableFilter;
@@ -51,7 +51,7 @@ public class IndexSelector {
   public Map<IndexDefinition, Double> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
     //Prune down to database indexes and remove duplicates
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
-    HashMultimap<ScriptRelationalTable, QueryIndexSummary> callsByTable = HashMultimap.create();
+    LinkedHashMultimap<ScriptRelationalTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
     queryIndexSummaries.forEach(idx -> {
       //TODO: Add up counts so we preserve relative frequency
       callsByTable.put(idx.getTable(), idx);
@@ -111,7 +111,7 @@ public class IndexSelector {
       currentCost.put(idx, idx.getCost(pkIdx));
     }
     //Determine which index candidates reduce the cost the most
-    Set<IndexDefinition> candidates = new HashSet<>();
+    Set<IndexDefinition> candidates = new LinkedHashSet<>();
     indexes.forEach(idx -> candidates.addAll(generateIndexCandidates(idx)));
     candidates.remove(pkIdx);
     double beforeTotal = total(currentCost);
@@ -179,7 +179,7 @@ public class IndexSelector {
   public Set<IndexDefinition> generateIndexCandidates(QueryIndexSummary queryIndexSummary) {
     List<Integer> eqCols = ImmutableList.copyOf(queryIndexSummary.equalityColumns),
         inequality = ImmutableList.copyOf(queryIndexSummary.inequalityColumns);
-    Set<IndexDefinition> result = new HashSet<>();
+    Set<IndexDefinition> result = new LinkedHashSet<>();
 
     for (IndexType indexType : config.supportedIndexTypes()) {
       List<List<Integer>> colPermutations = new ArrayList<>();

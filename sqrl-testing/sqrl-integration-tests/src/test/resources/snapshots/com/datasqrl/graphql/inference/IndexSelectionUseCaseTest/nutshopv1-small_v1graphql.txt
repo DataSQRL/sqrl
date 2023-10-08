@@ -5,10 +5,10 @@ items$7_btree_c0c5c2 - 99.750
 items$7_btree_c0c7c2 - 204.250
 orders$q$5_btree_c2c3c4 - 7796.500
 orders$q$5_btree_c2c4 - 47.500
-orders$q$5_btree_c3c4c6 - 50.750
-orders$q$5_btree_c3c6c2 - 1950.750
+orders$q$5_btree_c3c4c6 - 1950.750
+orders$q$5_btree_c3c6 - 47.500
 orders$q$5_btree_c4c6c2 - 3945.750
-orders$q$5_btree_c6c2 - 997.500
+orders$q$5_btree_c6c2c3 - 1000.750
 products$q$14_btree_c3 - 0.000
 products$q$14_btree_c4 - 0.000
 products$q$14_btree_c5 - 0.000
