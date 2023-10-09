@@ -24,7 +24,7 @@ public class CatalogReader extends CalciteCatalogReader {
   public RelOptTable getTableFromPath(List<String> names) {
 
     NamePath absolutePath = getSqrlAbsolutePath(NamePath.system(names));
-    String sysTableName = schema.getPathToTableMap().get(absolutePath);
+    String sysTableName = schema.getPathToSysTableMap().get(absolutePath);
     if (sysTableName == null) {
       return null;
     }
@@ -37,7 +37,7 @@ public class CatalogReader extends CalciteCatalogReader {
   }
 
   public NamePath getSqrlAbsolutePath(NamePath path) {
-    NamePath rel = schema.getAbsolutePathMap().get(path);
+    NamePath rel = schema.getPathToAbsolutePathMap().get(path);
     return (rel == null) ? path : rel;
   }
 }

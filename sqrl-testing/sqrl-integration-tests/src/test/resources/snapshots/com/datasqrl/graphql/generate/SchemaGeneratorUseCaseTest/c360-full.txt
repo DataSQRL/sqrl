@@ -10,8 +10,8 @@ type Customer {
   lastUpdated: Int!
   updateTime: String!
   orders(id: Int, customerid: Int, time: String): [Orders!]
-  favorite_categories(category_name: String, total: Float): [favorite_categories!]
   order_again(productid: Int, quantity: Int, num_orders: Int, most_recent: String): [order_again!]
+  favorite_categories(category_name: String, total: Float): [favorite_categories!]
   order_stats(total_spend: Float, num_orders: Int): [order_stats!]
 }
 
@@ -54,8 +54,8 @@ type entries {
   discount: Float
   discount0: Float!
   total: Float!
-  product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
   parent: Orders!
+  product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
 }
 
 type favorite_categories {

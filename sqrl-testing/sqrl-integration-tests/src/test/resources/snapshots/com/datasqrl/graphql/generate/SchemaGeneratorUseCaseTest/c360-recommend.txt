@@ -42,8 +42,8 @@ type entries {
   discount: Float
   discount0: Float!
   total: Float!
-  product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
   parent: Orders!
+  product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
 }
 
 type total {
