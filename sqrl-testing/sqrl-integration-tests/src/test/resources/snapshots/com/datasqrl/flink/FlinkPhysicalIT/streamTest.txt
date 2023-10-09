@@ -3,8 +3,8 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[>($2, 1)])
       LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-        LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
-          LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+        LogicalProject(customerid=[$0], name=[$1], quantity=[$2], _time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
+          LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
             LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
               LogicalCorrelate(correlation=[$cor6], joinType=[inner], requiredColumns=[{5}])
                 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
@@ -23,8 +23,8 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[>($2, 1)])
         LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-          LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
-            LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+          LogicalProject(customerid=[$0], name=[$1], quantity=[$2], _time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
+            LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
               LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalCorrelate(correlation=[$cor6], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
@@ -43,8 +43,8 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[>($2, 1)])
         LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-          LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
-            LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+          LogicalProject(customerid=[$0], name=[$1], quantity=[$2], _time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
+            LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
               LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalCorrelate(correlation=[$cor6], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
@@ -58,7 +58,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
                         LogicalTableScan(table=[[customer$1]])
 
 >>>customercount$1-lp-stream
-LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4]) hints[TimestampHint options:[3]]
+LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4]) hints[TimestampHint options:[3]]
   LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
     LogicalCorrelate(correlation=[$cor6], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
@@ -77,8 +77,8 @@ LogicalProject(customerid=[$2], _uuid=[$0], _source_time=[$1], name=[$3], quanti
     LogicalStream(stream=[ADD])
       LogicalFilter(condition=[>($2, 1)])
         LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-          LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
-            LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+          LogicalProject(customerid=[$0], name=[$1], quantity=[$2], _time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
+            LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
               LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
                 LogicalCorrelate(correlation=[$cor6], joinType=[inner], requiredColumns=[{5}])
                   LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
@@ -96,8 +96,8 @@ LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], name=[$3], quanti
   LogicalStream(stream=[UPDATE])
     LogicalFilter(condition=[>($2, 1)])
       LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-        LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
-          LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+        LogicalProject(customerid=[$0], name=[$1], quantity=[$2], _time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
+          LogicalProject(customerid=[$11], name=[$15], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $15 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
             LogicalJoin(condition=[=($3, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
               LogicalCorrelate(correlation=[$cor6], joinType=[inner], requiredColumns=[{5}])
                 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
@@ -117,7 +117,7 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 
 >>>customercount-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(customerid=[$0], name=[$1], quantity=[$2], time=[$3])
+  LogicalProject(customerid=[$0], name=[$1], quantity=[$2], _time=[$3])
     LogicalTableScan(table=[[customercount$1]])
 
 >>>customercount2-lp-database

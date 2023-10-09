@@ -8,7 +8,7 @@ LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=
     LogicalTableScan(table=[[customer$1]])
 
 >>>ordercustomerdedup$1-lp-stream
-LogicalProject(_uuid=[$0], id=[$2], name=[$11], customerid=[$3], rowtime=[$6]) hints[TimestampHint options:[4]]
+LogicalProject(_uuid=[$0], id=[$2], name=[$11], customerid=[$3], _rowtime=[$6]) hints[TimestampHint options:[4]]
   LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[TemporalJoinHint options:[6, 6, 0]]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], rowtime=[$4]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[orders$1]])
@@ -19,7 +19,7 @@ LogicalProject(_uuid=[$0], id=[$2], name=[$11], customerid=[$3], rowtime=[$6]) h
             LogicalTableScan(table=[[customer$1]])
 
 >>>ordercustomerinterval$1-lp-stream
-LogicalProject(_uuid=[$0], _uuid0=[$7], id=[$2], name=[$11], customerid=[$3], rowtime=[$6]) hints[TimestampHint options:[5]]
+LogicalProject(_uuid=[$0], _uuid0=[$7], id=[$2], name=[$11], customerid=[$3], _rowtime=[$6]) hints[TimestampHint options:[5]]
   LogicalJoin(condition=[AND(=($3, $9), >=($6, $13), <=($6, +($13, 31536000000:INTERVAL DAY(3))))], joinType=[inner]) hints[IntervalJoin]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], rowtime=[$4]) hints[WatermarkHint options:[6]]
       LogicalTableScan(table=[[orders$1]])
@@ -45,12 +45,12 @@ LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
 
 >>>ordercustomerdedup-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(_uuid=[$0], id=[$1], name=[$2], customerid=[$3], rowtime=[$4])
+  LogicalProject(_uuid=[$0], id=[$1], name=[$2], customerid=[$3], _rowtime=[$4])
     LogicalTableScan(table=[[ordercustomerdedup$1]])
 
 >>>ordercustomerinterval-lp-database
 LogicalSort(sort0=[$5], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[ASC], dir2=[ASC])
-  LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], rowtime=[$5])
+  LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], _rowtime=[$5])
     LogicalTableScan(table=[[ordercustomerinterval$1]])
 
 >>>ordercustomer-data

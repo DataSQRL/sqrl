@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[orders$1]])
 
 >>>stats$1
-LogicalProject(___uuid$pk$1=[$0], num=[$2], total=[$3], time=[$1])
+LogicalProject(__pk1$_uuid=[$0], num=[$2], total=[$3], _time=[$1])
   LogicalAggregate(group=[{0, 4}], num=[COUNT()], total=[SUM($10)])
     LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$2]])
@@ -11,7 +11,7 @@ LogicalProject(___uuid$pk$1=[$0], num=[$2], total=[$3], time=[$1])
           LogicalValues(tuples=[[{ 0 }]])
 
 >>>x$1
-LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], num=[$7], time=[$4])
+LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], num=[$7], _time=[$4])
   LogicalJoin(condition=[AND(=($0, $6), =($9, $4))], joinType=[left])
     LogicalTableScan(table=[[orders$2]])
     LogicalTableScan(table=[[stats$1]])

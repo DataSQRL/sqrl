@@ -1,9 +1,9 @@
 >>>orderagg1$1-lp-STREAM
-LogicalProject(customerid=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+LogicalProject(customerid=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>orderagg1$1-lp-DATABASE
-LogicalProject(customerid=[$0], count=[$1], time=[$2])
+LogicalProject(customerid=[$0], count=[$1], _time=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
     LogicalProject(customerid=[$0], count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(customerid=[$3], count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])

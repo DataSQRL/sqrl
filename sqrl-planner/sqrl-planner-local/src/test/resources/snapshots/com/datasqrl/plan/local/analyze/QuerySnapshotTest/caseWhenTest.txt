@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[customer$1]])
 
 >>>customernames$1
-LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], __timestamp=[$4], EXPR$7=[CASE(IS NULL($10), 0:DOUBLE, $10)])
+LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], __timestamp=[$4], _EXPR$7=[CASE(IS NULL($10), 0:DOUBLE, $10)])
   LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$2]])
     Uncollect

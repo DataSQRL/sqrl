@@ -33,7 +33,6 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
-import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -54,7 +53,6 @@ import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Function;
@@ -367,7 +365,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
             .clearKeywords()
             .setFrom(result.getSqlNode())
             .rewriteExpressions(new WalkExpressions(planner, newContext));
-        pullUpKeys(inner, result.keysToPullUp, isAggregating);
+        pullUpKeys(inner, result.pullupColumns, isAggregating);
 
         SqlSelectBuilder topSelect = new SqlSelectBuilder()
             .setFrom(inner.build())
@@ -382,7 +380,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           .setFrom(result.getSqlNode())
           .rewriteExpressions(new WalkExpressions(planner, newContext));
 
-      pullUpKeys(select, result.keysToPullUp, isAggregating);
+      pullUpKeys(select, result.pullupColumns, isAggregating);
 
       return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty());
     }
@@ -409,7 +407,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           .anyMatch(f->((SqlHint)f).getName().equalsIgnoreCase("DISTINCT_ON"));
     }
 
-    private void pullUpKeys(SqlSelectBuilder inner, List<String> keysToPullUp, boolean isAggregating) {
+    private void pullUpKeys(SqlSelectBuilder inner, List<PullupColumn> keysToPullUp, boolean isAggregating) {
       if (!keysToPullUp.isEmpty()) {
         inner.prependSelect(keysToPullUp);
         if (isAggregating) {
@@ -461,7 +459,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       SqlNode newNode = aliasBuilder.setTable(result.getSqlNode())
           .build();
 
-      return new Result(newNode, result.getCurrentPath(), result.keysToPullUp, List.of(), Optional.empty());
+      return new Result(newNode, result.getCurrentPath(), result.pullupColumns, List.of(), Optional.empty());
     }
 
     @Override
@@ -481,7 +479,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       boolean materializeSelf = context.isMaterializeSelf();
       SqlUserDefinedTableFunction tableFunction = planner.getTableFunction(List.of(identifier));
 
-      List<String> pullupColumns = List.of();
+      List<PullupColumn> pullupColumns = List.of();
       if (item.getKind() == SqlKind.SELECT) {
         SqrlToSql sqrlToSql = new SqrlToSql();
         Result rewrite = sqrlToSql.rewrite(item, false, context.currentPath);
@@ -513,8 +511,14 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           if (isNested) {
             RelOptTable table = planner.getCatalogReader().getTableFromPath(pathWalker.getAbsolutePath());
             pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
-                .mapToObj(i -> "__" + table.getRowType().getFieldList().get(i).getName() + "$pk$"
-                    + planner.getUniqueMacroInt().incrementAndGet())
+                .mapToObj(i -> new PullupColumn(
+                    String.format("%spk%d$%s",
+                        ReservedName.SYSTEM_HIDDEN_PREFIX, planner.getUniqueMacroInt().incrementAndGet(),
+                        table.getRowType().getFieldList().get(i).getName()),
+                    String.format("%spk%d$%s",
+                        ReservedName.SYSTEM_HIDDEN_PREFIX, i+1,
+                        table.getRowType().getFieldList().get(i).getName())
+                    ))
                 .collect(Collectors.toList());
           }
         } else { //treat self as a parameterized binding to the next function
@@ -598,7 +602,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           .lateral()
           .build();
 
-      return new Result(join, rightNode.getCurrentPath(), leftNode.keysToPullUp, List.of(), Optional.empty());
+      return new Result(join, rightNode.getCurrentPath(), leftNode.pullupColumns, List.of(), Optional.empty());
     }
 
     @Override
@@ -613,6 +617,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           List.of(),
           Optional.empty());
     }
+  }
+
+  @Value
+  public static class PullupColumn {
+    String columnName;
+    String displayName;
   }
 
   @AllArgsConstructor
@@ -646,7 +656,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   public static class Result {
     SqlNode sqlNode;
     List<String> currentPath;
-    List<String> keysToPullUp;
+    List<PullupColumn> pullupColumns;
     List<List<String>> tableReferences;
     Optional<List<Name>> originalnames;
   }

@@ -1,6 +1,5 @@
 type Customers {
   id: Int!
-  timestamp: String!
   purchases(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
   spending_by_month(month: String, total_spend: Float, total_savings: Float): [spending_by_month!]
 }
@@ -11,7 +10,7 @@ type Orders {
   time: Int!
   timestamp: String!
   items(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, total: Float): [items!]
-  totals(price: Float, savings: Float, timestamp: String): [totals!]
+  totals(price: Float, savings: Float): [totals!]
 }
 
 type Products {
@@ -27,7 +26,7 @@ type Products {
 
 type Query {
   Products(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
-  Customers(id: Int, timestamp: String): [Customers!]
+  Customers(id: Int): [Customers!]
   Orders(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
 }
 
@@ -52,7 +51,6 @@ type spending_by_month {
 type totals {
   price: Float!
   savings: Float!
-  timestamp: String!
   parent: Orders!
 }
 

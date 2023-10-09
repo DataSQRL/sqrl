@@ -2,22 +2,22 @@
 LogicalTableScan(table=[[orders$1]])
 
 >>>x$1
-LogicalProject(_uuid=[$0], cast1=['1':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"], time=[$4])
+LogicalProject(_uuid=[$0], cast1=['1':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>x$2
-LogicalProject(_uuid=[$0], cast2=[false], time=[$4])
+LogicalProject(_uuid=[$0], cast2=[false], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>x$3
-LogicalProject(_uuid=[$0], cast3=[1:DOUBLE], time=[$4])
+LogicalProject(_uuid=[$0], cast3=[1:DOUBLE], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>x$4
-LogicalProject(_uuid=[$0], cast4=[1:BIGINT], time=[$4])
+LogicalProject(_uuid=[$0], cast4=[1:BIGINT], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>x$5
-LogicalProject(_uuid=[$0], cast5=[1970-01-01 00:00:00.001:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], time=[$4])
+LogicalProject(_uuid=[$0], cast5=[1970-01-01 00:00:00.001:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 

@@ -8,7 +8,7 @@ LogicalProject(customer=[$0], bucket=[$1], order_count=[$2]) hints[TimestampHint
       LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>orderagg2$1-lp-stream
-LogicalProject(_pk=[1], order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4]) hints[TimestampHint options:[2]]
+LogicalProject(_pk=[1], order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4]) hints[TimestampHint options:[2]]
   LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>orderaugment$1-lp-stream
@@ -16,8 +16,8 @@ LogicalProject(_uuid=[$0], id=[$2], time=[$4], order_count=[$7]) hints[Timestamp
   LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-      LogicalProject(customer=[$0], order_count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalProject(customer=[$0], order_count=[$2], time=[$1])
+      LogicalProject(customer=[$0], order_count=[$1], _time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalProject(customer=[$0], order_count=[$2], _time=[$1])
           LogicalAggregate(group=[{3, 4}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[4, 86313600000, 1726272000]]
             LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
@@ -34,7 +34,7 @@ LogicalProject(bucket=[$0], order_count=[$1]) hints[TimestampHint options:[0]]
       LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>ordernow3$1-lp-stream
-LogicalProject(customer=[$0], order_count=[$2], time=[$1]) hints[TimestampHint options:[2]]
+LogicalProject(customer=[$0], order_count=[$2], _time=[$1]) hints[TimestampHint options:[2]]
   LogicalAggregate(group=[{3, 4}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[4, 86313600000, 1726272000]]
     LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
@@ -64,7 +64,7 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 
 >>>orderagg2-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(_pk=[$0], order_count=[$1], time=[$2])
+  LogicalProject(_pk=[$0], order_count=[$1], _time=[$2])
     LogicalTableScan(table=[[orderagg2$1]])
 
 >>>orderaugment-lp-database
@@ -94,7 +94,7 @@ LogicalSort(sort0=[$0], dir0=[DESC-nulls-last])
 
 >>>ordernow3-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(customer=[$0], order_count=[$1], time=[$2])
+  LogicalProject(customer=[$0], order_count=[$1], _time=[$2])
     LogicalTableScan(table=[[ordernow3$1]])
 
 >>>ordertime1-lp-database
