@@ -1,68 +1,68 @@
->>>ordercustomer$q$13-lp-STREAM
+>>>ordercustomer$1-lp-STREAM
 LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
   LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[orders$q$5]])
-    LogicalTableScan(table=[[customer$q$2]])
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
 
->>>ordercustomer$q$13-lp-DATABASE
+>>>ordercustomer$1-lp-DATABASE
 LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
   LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[orders$q$5]])
-    LogicalTableScan(table=[[customer$q$2]])
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
 
->>>ordercustomerleft$q$15-lp-STREAM
+>>>ordercustomerleft$1-lp-STREAM
 LogicalProject(_uuid=[$0], cuuid=[COALESCE($6, '')], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
   LogicalJoin(condition=[=($3, $8)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[orders$q$5]])
-    LogicalTableScan(table=[[customer$q$2]])
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
 
->>>ordercustomerleft$q$15-lp-DATABASE
+>>>ordercustomerleft$1-lp-DATABASE
 LogicalProject(_uuid=[$0], cuuid=[COALESCE($6, '')], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
   LogicalJoin(condition=[=($3, $8)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[orders$q$5]])
-    LogicalTableScan(table=[[customer$q$2]])
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
 
->>>ordercustomerleftexcluded$q$17-lp-STREAM
+>>>ordercustomerleftexcluded$1-lp-STREAM
 LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], __timestamp=[$12])
   LogicalFilter(condition=[IS NULL($6)])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _uuid0=[$6], _ingest_time0=[$7], customerid0=[$8], email=[$9], name=[$10], lastUpdated=[$11], __timestamp=[CASE(<($4, $7), $7, $4)])
       LogicalJoin(condition=[=($3, $8)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-        LogicalTableScan(table=[[orders$q$5]])
-        LogicalTableScan(table=[[customer$q$2]])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableScan(table=[[customer$2]])
 
->>>ordercustomerleftexcluded$q$17-lp-DATABASE
+>>>ordercustomerleftexcluded$1-lp-DATABASE
 LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], __timestamp=[$12])
   LogicalFilter(condition=[IS NULL($6)])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _uuid0=[$6], _ingest_time0=[$7], customerid0=[$8], email=[$9], name=[$10], lastUpdated=[$11], __timestamp=[CASE(<($4, $7), $7, $4)])
       LogicalJoin(condition=[=($3, $8)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-        LogicalTableScan(table=[[orders$q$5]])
-        LogicalTableScan(table=[[customer$q$2]])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableScan(table=[[customer$2]])
 
->>>ordercustomerright$q$19-lp-STREAM
+>>>ordercustomerright$1-lp-STREAM
 LogicalProject(_uuid=[$0], ouuid=[COALESCE($6, '')], id=[$8], name=[$4], customerid=[$9], __timestamp=[CASE(<($1, $10), $10, $1)])
   LogicalJoin(condition=[=($9, $2)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[customer$q$2]])
-    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[customer$2]])
+    LogicalTableScan(table=[[orders$2]])
 
->>>ordercustomerright$q$19-lp-DATABASE
+>>>ordercustomerright$1-lp-DATABASE
 LogicalProject(_uuid=[$0], ouuid=[COALESCE($6, '')], id=[$8], name=[$4], customerid=[$9], __timestamp=[CASE(<($1, $10), $10, $1)])
   LogicalJoin(condition=[=($9, $2)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-    LogicalTableScan(table=[[customer$q$2]])
-    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[customer$2]])
+    LogicalTableScan(table=[[orders$2]])
 
->>>ordercustomerrightexcluded$q$21-lp-STREAM
+>>>ordercustomerrightexcluded$1-lp-STREAM
 LogicalProject(_uuid=[$0], customerid=[$2], name=[$4], __timestamp=[$12])
   LogicalFilter(condition=[IS NULL($6)])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _uuid0=[$6], _ingest_time0=[$7], id=[$8], customerid0=[$9], time=[$10], entries=[$11], __timestamp=[CASE(<($1, $10), $10, $1)])
       LogicalJoin(condition=[=($9, $2)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-        LogicalTableScan(table=[[customer$q$2]])
-        LogicalTableScan(table=[[orders$q$5]])
+        LogicalTableScan(table=[[customer$2]])
+        LogicalTableScan(table=[[orders$2]])
 
->>>ordercustomerrightexcluded$q$21-lp-DATABASE
+>>>ordercustomerrightexcluded$1-lp-DATABASE
 LogicalProject(_uuid=[$0], customerid=[$2], name=[$4], __timestamp=[$12])
   LogicalFilter(condition=[IS NULL($6)])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _uuid0=[$6], _ingest_time0=[$7], id=[$8], customerid0=[$9], time=[$10], entries=[$11], __timestamp=[CASE(<($1, $10), $10, $1)])
       LogicalJoin(condition=[=($9, $2)], joinType=[left]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-        LogicalTableScan(table=[[customer$q$2]])
-        LogicalTableScan(table=[[orders$q$5]])
+        LogicalTableScan(table=[[customer$2]])
+        LogicalTableScan(table=[[orders$2]])
 

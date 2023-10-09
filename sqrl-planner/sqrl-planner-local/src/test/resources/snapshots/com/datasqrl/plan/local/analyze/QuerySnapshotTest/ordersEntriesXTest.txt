@@ -1,25 +1,25 @@
->>>customer$q$2
-LogicalTableScan(table=[[customer$i$1]])
+>>>customer$2
+LogicalTableScan(table=[[customer$1]])
 
->>>dproduct$q$16
+>>>dproduct$1
 LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], unit_price=[$9], category=[$16], name=[$14], time=[$4])
   LogicalJoin(condition=[=($7, $11)], joinType=[left])
     LogicalCorrelate(correlation=[$cor2], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$q$5]])
+      LogicalTableScan(table=[[orders$2]])
       Uncollect
         LogicalProject($f0=[$cor2.entries])
           LogicalValues(tuples=[[{ 0 }]])
     LogicalFilter(condition=[=($6, 1)])
       LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-        LogicalTableScan(table=[[product$q$13]])
+        LogicalTableScan(table=[[product$3]])
 
->>>orders$q$5
-LogicalTableScan(table=[[orders$i$4]])
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
 
->>>product$q$11
-LogicalTableScan(table=[[product$i$10]])
+>>>product$2
+LogicalTableScan(table=[[product$1]])
 
->>>product$q$13
+>>>product$3
 LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5])
-  LogicalTableScan(table=[[product$q$11]])
+  LogicalTableScan(table=[[product$2]])
 

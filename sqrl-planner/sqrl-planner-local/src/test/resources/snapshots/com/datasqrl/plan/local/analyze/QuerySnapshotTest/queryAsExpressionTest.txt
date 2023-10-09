@@ -1,8 +1,8 @@
->>>product$q$2
-LogicalTableScan(table=[[product$i$1]])
+>>>product$2
+LogicalTableScan(table=[[product$1]])
 
->>>total$q$4
+>>>total$1
 LogicalProject(___uuid$pk$1=[$0], sum=[-($2, 1)], _ingest_time=[$1])
   LogicalAggregate(group=[{0, 1}], agg#0=[SUM($2)])
-    LogicalTableScan(table=[[product$q$2]])
+    LogicalTableScan(table=[[product$2]])
 

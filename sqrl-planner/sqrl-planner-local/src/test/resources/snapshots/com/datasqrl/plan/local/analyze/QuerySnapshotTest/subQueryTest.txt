@@ -1,12 +1,12 @@
->>>product$q$2
-LogicalTableScan(table=[[product$i$1]])
+>>>product$2
+LogicalTableScan(table=[[product$1]])
 
->>>product2$q$5
+>>>product2$1
 LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], min=[$6])
   LogicalJoin(condition=[true], joinType=[inner])
-    LogicalTableScan(table=[[product$q$2]])
+    LogicalTableScan(table=[[product$2]])
     LogicalFilter(condition=[=($2, 1)])
       LogicalProject(min=[$0], _ingest_time=[$1], _rownum=[ROW_NUMBER() OVER (ORDER BY $1 DESC NULLS LAST)])
         LogicalProject(min=[MIN($2) IGNORE NULLS OVER (ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
-          LogicalTableScan(table=[[product$q$2]])
+          LogicalTableScan(table=[[product$2]])
 

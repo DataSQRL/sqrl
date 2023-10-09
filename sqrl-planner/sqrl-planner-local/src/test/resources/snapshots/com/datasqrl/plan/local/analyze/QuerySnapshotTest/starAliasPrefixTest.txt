@@ -1,9 +1,9 @@
->>>product$q$2
-LogicalTableScan(table=[[product$i$1]])
+>>>product$2
+LogicalTableScan(table=[[product$1]])
 
->>>x$q$4
+>>>x$1
 LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], __timestamp=[CASE(<($1, $7), $7, $1)])
   LogicalJoin(condition=[true], joinType=[inner])
-    LogicalTableScan(table=[[product$q$2]])
-    LogicalTableScan(table=[[product$q$2]])
+    LogicalTableScan(table=[[product$2]])
+    LogicalTableScan(table=[[product$2]])
 

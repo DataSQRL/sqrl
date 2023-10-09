@@ -1,26 +1,26 @@
->>>customer$q$2-lp-stream
-LogicalTableScan(table=[[customer$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
+>>>customer$2-lp-stream
+LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
 
->>>orders$q$5-lp-stream
-LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]], [TimestampHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4], TimestampHint options:[4]]
+>>>orders$2-lp-stream
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]], [TimestampHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4], TimestampHint options:[4]]
 
->>>product$q$11-lp-stream
-LogicalTableScan(table=[[product$i$10]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
+>>>product$2-lp-stream
+LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
 
 >>>customer-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5])
-    LogicalTableScan(table=[[customer$q$2]])
+    LogicalTableScan(table=[[customer$2]])
 
 >>>orders-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
-    LogicalTableScan(table=[[orders$q$5]])
+    LogicalTableScan(table=[[orders$2]])
 
 >>>product-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
-    LogicalTableScan(table=[[product$q$11]])
+    LogicalTableScan(table=[[product$2]])
 
 >>>customer-data
 1000121, lalelu@hottunes.org, Michelle Dagnes, 1650493449
