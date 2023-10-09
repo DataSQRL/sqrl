@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
@@ -319,17 +320,6 @@ public class AnnotatedLP implements RelHolder {
    */
   public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
       ExecutionAnalysis exec, ErrorCollector errors) {
-    List<String> fieldNames;
-    if (originalRelNode==null ||
-            SqrlHint.fromRel(originalRelNode, TopNHint.CONSTRUCTOR)
-                    .filter(topN -> topN.getType()== TopNHint.Type.DISTINCT_ON).isPresent()) {
-      //Use processed fieldnames for distinct_on or when relnode is absent
-      fieldNames = Collections.nCopies(select.getSourceLength(), null);
-    } else {
-      //otherwise, use the field names from the original relnode since we may have lost them in processing
-      fieldNames = originalRelNode.getRowType().getFieldNames();
-    }
-    Preconditions.checkArgument(fieldNames.size() == select.getSourceLength());
     List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
     AnnotatedLP input = this;
     if (!topN.isEmpty() && //TODO: remove this condition once we support denormalized data in database
@@ -395,16 +385,41 @@ public class AnnotatedLP implements RelHolder {
       projects.add(0, relBuilder.literal(1));
       updatedFieldNames.set(0, SQRLLogicalPlanRewriter.DEFAULT_PRIMARY_KEY_COLUMN_NAME);
     }
-
     RelDataType rowType = input.relNode.getRowType();
+
+    //Set names of columns
+    Function<String,String> renameExtraColumn;
+    if (originalRelNode==null ||
+            SqrlHint.fromRel(originalRelNode, TopNHint.CONSTRUCTOR)
+                    .filter(topN -> topN.getType()== TopNHint.Type.DISTINCT_ON).isPresent()) {
+      //Use processed fieldnames for distinct_on or when relnode is absent
+      renameExtraColumn = Function.identity();
+    } else {
+      //otherwise, use the field names from the original relnode since we may have lost them in processing
+      List<String> fieldNames = originalRelNode.getRowType().getFieldNames();
+      Preconditions.checkArgument(fieldNames.size() == select.getSourceLength());
+      for (int i = 0; i < fieldNames.size(); i++) {
+        updatedFieldNames.set(updatedSelect.map(i), fieldNames.get(i));
+      }
+      Set<String> fieldNamesSet = Set.copyOf(fieldNames);
+      renameExtraColumn = name -> {
+        if (!Name.isHiddenString(name)) name = Name.hiddenString(name);
+        while (fieldNamesSet.contains(name)) {
+          name = Name.hiddenString(name);
+        }
+        return name;
+      };
+    }
     remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(), e.getValue()))
         .sorted((a, b) -> Integer.compare(a.getTarget(), b.getTarget()))
         .forEach(p -> {
           projects.add(p.getTarget(), RexInputRef.of(p.getSource(), rowType));
+          if (updatedFieldNames.get(p.getTarget())==null) {
+            updatedFieldNames.set(p.getTarget(), renameExtraColumn.apply(rowType.getFieldList().get(p.getSource()).getName()));
+          }
         });
-    for (int i = 0; i < fieldNames.size(); i++) {
-      updatedFieldNames.set(updatedSelect.map(i), fieldNames.get(i));
-    }
+
+
     relBuilder.push(input.relNode);
     relBuilder.project(projects, updatedFieldNames, true); //Force to make sure fields are renamed
     RelNode relNode = relBuilder.build();
