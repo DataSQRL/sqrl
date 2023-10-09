@@ -1,6 +1,7 @@
 package com.datasqrl.calcite.schema.sql;
 
 import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.calcite.schema.ScriptPlanner.PullupColumn;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import java.util.ArrayList;
@@ -90,7 +91,7 @@ public class SqlJoinPathBuilder {
     Frame frame = stack.pop();
     return frame.getNode();
   }
-  public SqlNode buildAndProjectLast(List<String> pullupCols) {
+  public SqlNode buildAndProjectLast(List<PullupColumn> pullupCols) {
     Frame frame = stack.pop();
     Frame lastTable = tableHistory.get(tableHistory.size()-1);
     if (frame.isSubquery()) { //subquery
@@ -104,10 +105,10 @@ public class SqlJoinPathBuilder {
     return select.build();
   }
 
-  private List rename(List<SqlIdentifier> selectList, List<String> pullupCols) {
+  private List rename(List<SqlIdentifier> selectList, List<PullupColumn> pullupCols) {
     return IntStream.range(0, selectList.size())
         .mapToObj(i-> SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, selectList.get(i),
-            new SqlIdentifier(pullupCols.get(i), SqlParserPos.ZERO)))
+            new SqlIdentifier(pullupCols.get(i).getColumnName(), SqlParserPos.ZERO)))
         .collect(Collectors.toList());
   }
 

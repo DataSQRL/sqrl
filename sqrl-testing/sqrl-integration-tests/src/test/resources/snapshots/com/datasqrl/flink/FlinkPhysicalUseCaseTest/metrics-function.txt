@@ -5,7 +5,7 @@ LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2]) hints[TimestampHint optio
       LogicalTableScan(table=[[sensorreading$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
 >>>sensormaxtemp$1-lp-stream
-LogicalProject(sensorid=[$0], maxTemp=[$2], timeSec=[$1]) hints[TimestampHint options:[2]]
+LogicalProject(sensorid=[$0], maxTemp=[$2], _timeSec=[$1]) hints[TimestampHint options:[2]]
   LogicalAggregate(group=[{0, 1}], maxTemp=[MAX($2)]) hints[SlidingAggregationHint options:[1, 60000, 1200]]
     LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2])
       LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 1000, 0]]
@@ -19,6 +19,6 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 
 >>>sensormaxtemp-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(sensorid=[$0], maxTemp=[$1], timeSec=[$2])
+  LogicalProject(sensorid=[$0], maxTemp=[$1], _timeSec=[$2])
     LogicalTableScan(table=[[sensormaxtemp$1]])
 

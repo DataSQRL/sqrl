@@ -1,20 +1,20 @@
 >>>orderagg1$1-lp-STREAM
-LogicalProject(customer=[$3], order_count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+LogicalProject(customer=[$3], order_count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>orderagg1$1-lp-DATABASE
-LogicalProject(customer=[$0], order_count=[$1], time=[$2])
+LogicalProject(customer=[$0], order_count=[$1], _time=[$2])
   LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
     LogicalProject(customerid=[$0], order_count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalProject(customerid=[$3], order_count=[COUNT() IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
         LogicalTableScan(table=[[orders$2]])
 
 >>>orderagg2$1-lp-STREAM
-LogicalProject(_pk=[1], order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+LogicalProject(_pk=[1], order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>orderagg2$1-lp-DATABASE
-LogicalProject(_pk=[1], order_count=[$0], time=[$1])
+LogicalProject(_pk=[1], order_count=[$0], _time=[$1])
   LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
     LogicalProject(order_count=[$0], time=[$1], _rownum=[ROW_NUMBER() OVER (ORDER BY $1 DESC NULLS LAST)])
       LogicalProject(order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])

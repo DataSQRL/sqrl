@@ -12,7 +12,7 @@ LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=
 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>distinctorders$1-lp-STREAM
-LogicalProject(__customerid$pk$1=[$6], id=[$2], time=[$4])
+LogicalProject(__pk1$customerid=[$6], id=[$2], _time=[$4])
   LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
@@ -23,7 +23,7 @@ LogicalProject(__customerid$pk$1=[$6], id=[$2], time=[$4])
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
 >>>distinctorderstime$1-lp-STREAM
-LogicalProject(__customerid$pk$2=[$6], id=[$2], time=[$4])
+LogicalProject(__pk1$customerid=[$6], id=[$2], time=[$4])
   LogicalJoin(condition=[=($6, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]

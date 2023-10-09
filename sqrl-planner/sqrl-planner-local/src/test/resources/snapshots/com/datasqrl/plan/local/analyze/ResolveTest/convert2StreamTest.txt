@@ -1,5 +1,5 @@
 >>>productcount$1-lp-STREAM
-LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $14 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4])
+LogicalProject(productid=[$11], name=[$14], quantity=[SUM($8) IGNORE NULLS OVER (PARTITION BY $11, $14 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
   LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
     LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
       LogicalTableScan(table=[[orders$2]])
@@ -18,7 +18,7 @@ LogicalProject(_uuid=[$0], _source_time=[$1], productid=[$2], name=[$3], quantit
   LogicalStream(stream=[ADD])
     LogicalFilter(condition=[>($2, 1)])
       LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-        LogicalProject(productid=[$0], name=[$1], quantity=[$2], time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
+        LogicalProject(productid=[$0], name=[$1], quantity=[$2], _time=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $3 DESC NULLS LAST)])
           LogicalTableScan(table=[[productcount$1]])
 
 >>>countstream$1-lp-DATABASE

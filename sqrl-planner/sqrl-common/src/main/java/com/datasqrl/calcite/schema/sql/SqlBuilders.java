@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.schema.sql;
 
+import com.datasqrl.calcite.schema.ScriptPlanner.PullupColumn;
 import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.google.common.base.Preconditions;
@@ -175,13 +176,22 @@ public class SqlBuilders {
       return select;
     }
 
-    public void prependSelect(List<String> keysToPullUp) {
-      select.setSelectList(prepend(select.getSelectList(), mapToIdentifier(keysToPullUp)));
+    public void prependSelect(List<PullupColumn> keysToPullUp) {
+      select.setSelectList(prepend(select.getSelectList(), mapToSelectIdentifier(keysToPullUp)));
     }
 
-    private List<SqlNode> mapToIdentifier(List<String> keysToPullUp) {
+    private List<SqlNode> mapToIdentifier(List<PullupColumn> keysToPullUp) {
       return keysToPullUp.stream()
-          .map(n->new SqlIdentifier(n, SqlParserPos.ZERO))
+          .map(n->new SqlIdentifier(n.getColumnName(), SqlParserPos.ZERO))
+          .collect(Collectors.toList());
+    }
+
+    private List<SqlNode> mapToSelectIdentifier(List<PullupColumn> keysToPullUp) {
+      return keysToPullUp.stream()
+          .map(n->SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+                  new SqlIdentifier(n.getColumnName(), SqlParserPos.ZERO),
+                  new SqlIdentifier(n.getDisplayName(), SqlParserPos.ZERO)
+              ))
           .collect(Collectors.toList());
     }
 
@@ -189,11 +199,13 @@ public class SqlBuilders {
       return new SqlNodeList(ListUtils.union(keysToPullUp, selectList.getList()), selectList.getParserPosition());
     }
 
-    public void prependGroup(List<String> keysToPullUp) {
-      select.setGroupBy(prepend(select.getGroup() == null ? SqlNodeList.EMPTY:select.getGroup(),mapToIdentifier(keysToPullUp)));
+    public void prependGroup(List<PullupColumn> keysToPullUp) {
+      select.setGroupBy(prepend(select.getGroup() == null ? SqlNodeList.EMPTY:select.getGroup(),
+          mapToIdentifier(keysToPullUp)));
     }
-    public void prependOrder(List<String> keysToPullUp) {
-      select.setOrderBy(prepend(select.getOrderList() == null? SqlNodeList.EMPTY:select.getOrderList(),mapToIdentifier(keysToPullUp)));
+    public void prependOrder(List<PullupColumn> keysToPullUp) {
+      select.setOrderBy(prepend(select.getOrderList() == null? SqlNodeList.EMPTY:select.getOrderList(),
+          mapToIdentifier(keysToPullUp)));
     }
 
     public boolean hasGroup() {
