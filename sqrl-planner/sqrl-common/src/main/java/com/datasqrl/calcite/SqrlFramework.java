@@ -29,6 +29,7 @@ public class SqrlFramework {
   private RelMetadataProvider relMetadataProvider;
   private AtomicInteger uniqueMacroInt = new AtomicInteger(0);
   private AtomicInteger uniqueTableInt = new AtomicInteger(0);
+  private Map<Name, AtomicInteger> tableNameToIdMap = new HashMap<>();
   private AtomicInteger uniqueColumnInt = new AtomicInteger(0);
   private Map<Name,AtomicInteger> tableNameShadowing = new HashMap<Name,AtomicInteger>();
 

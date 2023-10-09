@@ -1,11 +1,11 @@
->>>customer$q$2-lp-STREAM
+>>>customer$2-lp-STREAM
 LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-  LogicalTableScan(table=[[customer$i$1]])
+  LogicalTableScan(table=[[customer$1]])
 
->>>customercopy$q$4-lp-STREAM
+>>>customercopy$1-lp-STREAM
 LogicalProject(_uuid=[$0], timestamp=[$6], month=[endOfMonth(endOfMonth($6))])
-  LogicalTableScan(table=[[customer$q$2]])
+  LogicalTableScan(table=[[customer$2]])
 
->>>customercopy$q$4-lp-DATABASE
+>>>customercopy$1-lp-DATABASE
 Stage [database] does not support capabilities: [EXTENDED_FUNCTIONS]
 

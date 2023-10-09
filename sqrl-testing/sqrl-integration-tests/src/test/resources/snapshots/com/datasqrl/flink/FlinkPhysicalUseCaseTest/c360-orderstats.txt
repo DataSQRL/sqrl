@@ -1,33 +1,33 @@
->>>customerorderstats$q$10-lp-stream
+>>>customerorderstats$1-lp-stream
 LogicalProject(customerid=[$3], total_price=[SUM($7) IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], num_orders=[SUM($8) IGNORE NULLS OVER (PARTITION BY $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4]) hints[TimestampHint options:[3]]
   LogicalJoin(condition=[AND(=($0, $6), =($10, $4))], joinType=[inner]) hints[IntervalJoin]
-    LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     LogicalProject(___uuid$pk$1=[$0], price=[$2], number=[$3], savings=[$4], time=[$1])
       LogicalAggregate(group=[{0, 4}], price=[SUM($12)], number=[COUNT()], savings=[SUM($11)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount0=[COALESCE($10, 0.0:DOUBLE)], price=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
           LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
-            LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+            LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
             Uncollect
               LogicalProject($f0=[$cor7.entries])
                 LogicalValues(tuples=[[{ 0 }]])
 
->>>entries$3-lp-stream
+>>>entries$1-lp-stream
 LogicalProject(_uuid=[$0], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount0=[COALESCE($10, 0.0:DOUBLE)], price=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))], __timestamp=[$4]) hints[TimestampHint options:[8]]
   LogicalCorrelate(correlation=[$cor8], joinType=[inner], requiredColumns=[{5}])
-    LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     Uncollect
       LogicalProject($f0=[$cor8.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>orders$q$2-lp-stream
-LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]], [TimestampHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4], TimestampHint options:[4]]
+>>>orders$2-lp-stream
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]], [TimestampHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4], TimestampHint options:[4]]
 
->>>totals$q$7-lp-stream
+>>>totals$1-lp-stream
 LogicalProject(___uuid$pk$1=[$0], price=[$2], number=[$3], savings=[$4], time=[$1]) hints[TimestampHint options:[4]]
   LogicalAggregate(group=[{0, 4}], price=[SUM($12)], number=[COUNT()], savings=[SUM($11)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount0=[COALESCE($10, 0.0:DOUBLE)], price=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
       LogicalCorrelate(correlation=[$cor7], joinType=[inner], requiredColumns=[{5}])
-        LogicalTableScan(table=[[orders$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+        LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
         Uncollect
           LogicalProject($f0=[$cor7.entries])
             LogicalValues(tuples=[[{ 0 }]])
@@ -35,22 +35,22 @@ LogicalProject(___uuid$pk$1=[$0], price=[$2], number=[$3], savings=[$4], time=[$
 >>>customerorderstats-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(customerid=[$0], total_price=[$1], num_orders=[$2], time=[$3])
-    LogicalTableScan(table=[[customerorderstats$q$10]])
+    LogicalTableScan(table=[[customerorderstats$1]])
 
 >>>entries-lp-database
 LogicalSort(sort0=[$8], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[ASC], dir2=[ASC])
   LogicalProject(_uuid=[$0], _idx=[$1], productid=[$2], quantity=[$3], unit_price=[$4], discount=[$5], discount0=[$6], price=[$7], __timestamp=[$8])
-    LogicalTableScan(table=[[entries$3]])
+    LogicalTableScan(table=[[entries$1]])
 
 >>>orders-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4])
-    LogicalTableScan(table=[[orders$q$2]])
+    LogicalTableScan(table=[[orders$2]])
 
 >>>totals-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(___uuid$pk$1=[$0], price=[$1], number=[$2], savings=[$3], time=[$4])
-    LogicalTableScan(table=[[totals$q$7]])
+    LogicalTableScan(table=[[totals$1]])
 
 >>>orders-data
 10007140, 1000107

@@ -1,43 +1,43 @@
->>>total$q$12-lp-STREAM
+>>>total$1-lp-STREAM
 LogicalProject(___uuid$pk$1=[$0], price=[$2], num=[$3], discount=[$4], time=[$1])
   LogicalAggregate(group=[{0, 4}], price=[SUM($1)], num=[COUNT()], discount=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
     LogicalProject(___uuid$pk$1=[$0], $f1=[-(*($8, $9), $10)], discount=[$10], _idx=[$6], time=[$4])
       LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{5}])
-        LogicalTableScan(table=[[orders$q$2]])
+        LogicalTableScan(table=[[orders$2]])
         Uncollect
           LogicalProject($f0=[$cor5.entries])
             LogicalValues(tuples=[[{ 0 }]])
 
->>>total$q$12-lp-DATABASE
+>>>total$1-lp-DATABASE
 LogicalProject(___uuid$pk$1=[$0], price=[$2], num=[$3], discount=[$4], time=[$1])
   LogicalAggregate(group=[{0, 4}], price=[SUM($1)], num=[COUNT()], discount=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
     LogicalProject(___uuid$pk$1=[$0], $f1=[-(*($9, $10), $11)], discount=[$11], _idx=[$7], time=[$4])
       LogicalJoin(condition=[=($0, $6)], joinType=[inner])
-        LogicalTableScan(table=[[orders$q$2]])
-        LogicalTableScan(table=[[entries$3]])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableScan(table=[[entries$1]])
 
->>>ordersinline$q$15-lp-STREAM
+>>>ordersinline$1-lp-STREAM
 LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], time=[$4], price=[$7], num=[$8])
   LogicalJoin(condition=[AND(=($0, $6), =($10, $4))], joinType=[inner]) hints[IntervalJoin]
-    LogicalTableScan(table=[[orders$q$2]])
-    LogicalTableScan(table=[[total$q$12]])
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[total$1]])
 
->>>ordersinline$q$15-lp-DATABASE
+>>>ordersinline$1-lp-DATABASE
 LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], time=[$4], price=[$7], num=[$8])
   LogicalJoin(condition=[AND(=($0, $6), =($10, $4))], joinType=[inner]) hints[IntervalJoin]
-    LogicalTableScan(table=[[orders$q$2]])
-    LogicalTableScan(table=[[total$q$12]])
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[total$1]])
 
->>>orders_by_day$q$17-lp-STREAM
+>>>orders_by_day$1-lp-STREAM
 LogicalProject(__customerid$pk$2=[$0], day=[$1], total_price=[$2], total_num=[$3])
   LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 86400000, 0]]
     LogicalProject(__customerid$pk$2=[$6], day=[endOfDay($3)], price=[$4], num=[$5], _uuid=[$0])
       LogicalJoin(condition=[=($2, $6)], joinType=[inner]) hints[TemporalJoinHint options:[3, 2, 0]]
-        LogicalTableScan(table=[[ordersinline$q$15]])
+        LogicalTableScan(table=[[ordersinline$1]])
         LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
           LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-            LogicalTableScan(table=[[customer$q$10]])
+            LogicalTableScan(table=[[customer$3]])
 
->>>orders_by_day$q$17-lp-DATABASE
+>>>orders_by_day$1-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 

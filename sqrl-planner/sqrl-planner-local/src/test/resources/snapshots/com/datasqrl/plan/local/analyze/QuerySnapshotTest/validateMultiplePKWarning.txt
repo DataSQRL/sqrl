@@ -1,9 +1,9 @@
->>>customer$q$2
-LogicalTableScan(table=[[customer$i$1]])
+>>>customer$2
+LogicalTableScan(table=[[customer$1]])
 
->>>customer2$q$4
+>>>customer2$1
 LogicalProject(id1=[$0], id2=[$0], newid=[+($2, 5)], _ingest_time=[$1])
-  LogicalTableScan(table=[[customer$q$2]])
+  LogicalTableScan(table=[[customer$2]])
 
 >>>warnings
 [WARN] The primary key is mapped to multiple columns in SELECT: [$0, $0, +($2, 5)]
