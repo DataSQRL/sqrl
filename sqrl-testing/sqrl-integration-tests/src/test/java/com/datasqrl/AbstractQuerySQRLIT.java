@@ -100,9 +100,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
       throw new RuntimeException("Could not start vertx");
     }
 
-    //Testing short sleep for failing test
-    Thread.sleep(2000);
-
     for (Map.Entry<String, String> query : queries.entrySet()) {
       HttpResponse<String> response = testQuery(query.getValue());
       String httpQuery = prettyPrint(response.body());
