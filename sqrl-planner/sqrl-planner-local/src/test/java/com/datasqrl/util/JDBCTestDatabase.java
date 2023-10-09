@@ -9,6 +9,7 @@ import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -21,8 +22,13 @@ public class JDBCTestDatabase implements DatabaseHandle {
   private final DatabaseEngine dbType;
   private Connection sqliteConn;
 
+  public static AtomicInteger uniqueDbName = new AtomicInteger(0);
+
   @Getter
-  private PostgreSQLContainer postgreSQLContainer;
+  private static final PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer(
+      DockerImageName.parse("ankane/pgvector:v0.5.0")
+          .asCompatibleSubstituteFor("postgres"))
+      .withDatabaseName(TEST_DATABASE_NAME);
 
   @SneakyThrows
   public JDBCTestDatabase(IntegrationTestSettings.DatabaseEngine dbType) {
@@ -46,21 +52,25 @@ public class JDBCTestDatabase implements DatabaseHandle {
       //Hold open the connection so the db stays around
       this.sqliteConn = DriverManager.getConnection(connector.getUrl());
     } else if (dbType == IntegrationTestSettings.DatabaseEngine.POSTGRES) {
-      postgreSQLContainer = new PostgreSQLContainer(
-          DockerImageName.parse("ankane/pgvector:v0.5.0")
-              .asCompatibleSubstituteFor("postgres"))
-          .withDatabaseName(TEST_DATABASE_NAME);
-      postgreSQLContainer.start();
+      if (!postgreSQLContainer.isRunning()) {
+        postgreSQLContainer.start();
+      }
+
+      String dbName = TEST_DATABASE_NAME + uniqueDbName.incrementAndGet();
+      postgreSQLContainer.createConnection("")
+          .createStatement()
+          .execute("CREATE DATABASE " + dbName);
 
       connector = JdbcDataSystemConnector.builder()
               .host(postgreSQLContainer.getHost())
               .port(postgreSQLContainer.getMappedPort(5432))
-              .url(postgreSQLContainer.getJdbcUrl())
+              .url(postgreSQLContainer.getJdbcUrl()
+                  .replace(TEST_DATABASE_NAME, dbName))
               .driver(postgreSQLContainer.getDriverClassName())
               .dialect("postgres")
               .user(postgreSQLContainer.getUsername())
               .password(postgreSQLContainer.getPassword())
-              .database(TEST_DATABASE_NAME)
+              .database(dbName)
               .build();
     } else {
       throw new UnsupportedOperationException("Not a supported db type: " + dbType);
@@ -85,9 +95,6 @@ public class JDBCTestDatabase implements DatabaseHandle {
       } catch (SQLException e) {
         throw new RuntimeException(e);
       }
-    }
-    if (postgreSQLContainer != null) {
-      postgreSQLContainer.stop();
     }
   }
 }

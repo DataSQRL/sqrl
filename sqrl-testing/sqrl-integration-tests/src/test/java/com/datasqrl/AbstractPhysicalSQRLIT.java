@@ -16,7 +16,6 @@ import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.frontend.SqrlPhysicalPlan;
@@ -39,30 +38,44 @@ import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.util.*;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.DatabaseHandle;
+import com.datasqrl.util.FileTestUtil;
+import com.datasqrl.util.ResultSetPrinter;
+import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.StreamUtil;
+import com.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Types;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
+@ExtendWith(MiniClusterExtension.class)
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   public SqrlPhysicalPlan physicalPlanner;
@@ -75,6 +88,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     initialize(settings, rootDir, Optional.empty());
   }
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
+
     Map<NamePath, SqrlModule> addlModules = Map.of();
     CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
     if (rootDir == null) {
@@ -210,6 +224,5 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   protected static final Predicate<Integer> filterOutTimestampColumn =
       type -> type != Types.TIMESTAMP_WITH_TIMEZONE && type != Types.TIMESTAMP;
-
 
 }
