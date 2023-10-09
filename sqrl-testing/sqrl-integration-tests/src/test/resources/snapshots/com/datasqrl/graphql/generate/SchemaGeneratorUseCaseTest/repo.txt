@@ -1,7 +1,7 @@
 type Package {
   name: String!
-  versions(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
   latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
+  versions(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
 }
 
 type Query {

@@ -1,11 +1,9 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.ModifiableTable;
-import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.TableVisitor;
@@ -30,31 +28,40 @@ import org.apache.calcite.sql.type.ObjectSqlType;
 public class SqrlSchemaForInference {
 
   private final Map<NamePath, SQRLTable> tableMap;
+  private final Map<String, SQRLTable> fullTableMap;
 
   public SqrlSchemaForInference(SqrlSchema schema) {
-    Map<NamePath, SQRLTable> tableMap = new LinkedHashMap<>();
-    //Most recent tables
-    for (Entry<NamePath, String> entry : schema.getPathToTableMap().entrySet()) {
-      Table table = schema.getTable(entry.getValue(), false)
+    Map<String, SQRLTable> fullTableMap = new LinkedHashMap<>();
+    Map<NamePath, SQRLTable> currentTableMap = new LinkedHashMap<>();
+    //Create all tables, including shadowed
+    for (Entry<String, NamePath> entry : schema.getSysTableToPathMap().entrySet()) {
+      Table table = schema.getTable(entry.getKey(), false)
           .getTable();
 
-      SQRLTable sqrlTable = createSqrlTable(table, entry.getKey());
-      tableMap.put(entry.getKey(), sqrlTable);
+      SQRLTable sqrlTable = createSqrlTable(table, entry.getValue());
+      fullTableMap.put(entry.getKey(), sqrlTable);
     }
 
-    for (Entry<NamePath, com.datasqrl.schema.Relationship> rel : schema.getPathToRelationshipMap().entrySet()) {
+    //keep track of current tables
+    for(Entry<NamePath, String> entry : schema.getPathToSysTableMap().entrySet()) {
+      SQRLTable table = fullTableMap.get(entry.getValue());
+      currentTableMap.put(entry.getKey(), table);
+    }
+
+    for (Entry<String, com.datasqrl.schema.Relationship> rel : schema.getSysTableToRelationshipMap().entries()) {
       com.datasqrl.schema.Relationship r = rel.getValue();
-      SQRLTable from = tableMap.get(r.getFromTable());
-      SQRLTable to = tableMap.get(r.getToTable());
+
+      SQRLTable from = fullTableMap.get(r.getFromTable());
+      SQRLTable to = fullTableMap.get(r.getToTable());
 
       Relationship relationship = new Relationship(from, to, r.getName(), r.getParameters(),
           r.getMultiplicity(), r.getJoinType());
-      NamePath path = rel.getKey().popLast();
-      tableMap.get(path).fields
+      fullTableMap.get(rel.getKey()).fields
           .add(relationship);
     }
 
-    this.tableMap = tableMap;
+    this.fullTableMap = fullTableMap;
+    this.tableMap = currentTableMap;
   }
 
   private SQRLTable createSqrlTable(Table table, NamePath path) {
