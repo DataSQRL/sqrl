@@ -2,7 +2,7 @@ type Query {
   sensors(id: Int, machineid: Int, placed: String): [sensors!]
   machinegroup(groupId: Int, groupName: String, created: String): [machinegroup!]
   SecReadingByTemp(sensorid: Int, timeSec: String, temp: Float): [SecReadingByTemp!]
-  SensorMaxTemp(sensorid: Int, maxTemp: Float, timeSec: String): [SensorMaxTemp!]
+  SensorMaxTemp(sensorid: Int, maxTemp: Float): [SensorMaxTemp!]
   sensorreading(sensorid: Int, time: String, temperature: Float, humidity: Float): [sensorreading!]
   SecReading(sensorid: Int, timeSec: String, temp: Float): [SecReading!]
 }
@@ -22,7 +22,6 @@ type SecReadingByTemp {
 type SensorMaxTemp {
   sensorid: Int!
   maxTemp: Float!
-  timeSec: String!
 }
 
 type machinegroup {

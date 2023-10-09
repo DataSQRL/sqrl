@@ -1,10 +1,10 @@
 >>>_sales_24h$1-lp-stream
-LogicalProject(__productid$pk$3=[$1], total=[$2], num=[$3], hour=[$0]) hints[TimestampHint options:[3]]
+LogicalProject(__pk1$productid=[$1], total=[$2], num=[$3], _hour=[$0]) hints[TimestampHint options:[3]]
   LogicalAggregate(group=[{1, 4}], total=[SUM($2)], num=[SUM($3)]) hints[SlidingAggregationHint options:[1, 86400000, 1728000]]
     LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
-      LogicalProject(__productid$pk$2=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
+      LogicalProject(__pk1$productid=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
         LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 0]]
-          LogicalProject(__productid$pk$2=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
+          LogicalProject(__pk2$productid=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
             LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
               LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount0=[COALESCE($10, 0.0:DOUBLE)], total=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
                 LogicalCorrelate(correlation=[$cor16], joinType=[inner], requiredColumns=[{5}])
@@ -24,12 +24,12 @@ LogicalProject(__productid$pk$3=[$1], total=[$2], num=[$3], hour=[$0]) hints[Tim
               LogicalTableScan(table=[[product$1]])
 
 >>>_sales_72h$1-lp-stream
-LogicalProject(__productid$pk$4=[$1], total=[$2], num=[$3], hour=[$0]) hints[TimestampHint options:[3]]
+LogicalProject(__pk1$productid=[$1], total=[$2], num=[$3], _hour=[$0]) hints[TimestampHint options:[3]]
   LogicalAggregate(group=[{1, 4}], total=[SUM($2)], num=[SUM($3)]) hints[SlidingAggregationHint options:[1, 259200000, 5184000]]
     LogicalJoin(condition=[=($4, $0)], joinType=[inner]) hints[TemporalJoinHint options:[1, 6, 0]]
-      LogicalProject(__productid$pk$2=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
+      LogicalProject(__pk1$productid=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
         LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 0]]
-          LogicalProject(__productid$pk$2=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
+          LogicalProject(__pk2$productid=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
             LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
               LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount0=[COALESCE($10, 0.0:DOUBLE)], total=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
                 LogicalCorrelate(correlation=[$cor16], joinType=[inner], requiredColumns=[{5}])
@@ -49,9 +49,9 @@ LogicalProject(__productid$pk$4=[$1], total=[$2], num=[$3], hour=[$0]) hints[Tim
               LogicalTableScan(table=[[product$1]])
 
 >>>_sales_by_hour$1-lp-stream
-LogicalProject(__productid$pk$2=[$0], hour=[$1], quantity=[$2], num_orders=[$3]) hints[TimestampHint options:[1]]
+LogicalProject(__pk1$productid=[$0], hour=[$1], quantity=[$2], num_orders=[$3]) hints[TimestampHint options:[1]]
   LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], num_orders=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 0]]
-    LogicalProject(__productid$pk$2=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
+    LogicalProject(__pk2$productid=[$13], hour=[endOfHour($4)], quantity=[$8], _uuid=[$0], _idx=[$6])
       LogicalJoin(condition=[=($7, $13)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 0]]
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount0=[COALESCE($10, 0.0:DOUBLE)], total=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
           LogicalCorrelate(correlation=[$cor16], joinType=[inner], requiredColumns=[{5}])
@@ -66,7 +66,7 @@ LogicalProject(__productid$pk$2=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
                 LogicalTableScan(table=[[product$1]])
 
 >>>category$1-lp-stream
-LogicalProject(name=[$5], updateTime=[$6]) hints[TimestampHint options:[1]]
+LogicalProject(name=[$5], _updateTime=[$6]) hints[TimestampHint options:[1]]
   LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updateTime=[-($1, 31536000000:INTERVAL DAY(3))]) hints[WatermarkHint options:[6]]
     LogicalTableScan(table=[[product$1]])
 
@@ -92,7 +92,7 @@ LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], descrip
     LogicalTableScan(table=[[product$1]])
 
 >>>total$1-lp-stream
-LogicalProject(___uuid$pk$1=[$0], price=[$2], discount=[$3], num=[$4], time=[$1]) hints[TimestampHint options:[4]]
+LogicalProject(__pk1$_uuid=[$0], price=[$2], discount=[$3], num=[$4], _time=[$1]) hints[TimestampHint options:[4]]
   LogicalAggregate(group=[{0, 4}], price=[SUM($12)], discount=[SUM($11)], num=[COUNT()]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _idx=[$6], productid=[$7], quantity=[$8], unit_price=[$9], discount=[$10], discount0=[COALESCE($10, 0.0:DOUBLE)], total=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))])
       LogicalCorrelate(correlation=[$cor18], joinType=[inner], requiredColumns=[{5}])
@@ -103,25 +103,25 @@ LogicalProject(___uuid$pk$1=[$0], price=[$2], discount=[$3], num=[$4], time=[$1]
 
 >>>_sales_24h-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(__productid$pk$3=[$0], total=[$1], num=[$2], hour=[$3])
+  LogicalProject(__pk1$productid=[$0], total=[$1], num=[$2], _hour=[$3])
     LogicalTableScan(table=[[_sales_24h$1]])
 
 >>>_sales_72h-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(__productid$pk$4=[$0], total=[$1], num=[$2], hour=[$3])
+  LogicalProject(__pk1$productid=[$0], total=[$1], num=[$2], _hour=[$3])
     LogicalTableScan(table=[[_sales_72h$1]])
 
 >>>_sales_by_hour-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[DESC])
-  LogicalProject(__productid$pk$2=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
+  LogicalProject(__pk1$productid=[$0], hour=[$1], quantity=[$2], num_orders=[$3])
     LogicalTableScan(table=[[_sales_by_hour$1]])
 
 >>>_sales_trend-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(__productid$pk$5=[$0], increase=[$1], __timestamp19=[$2])
-    LogicalProject(__productid$pk$5=[$0], increase=[+(/(*($9, 1.5:DECIMAL(2, 1)), GREATEST($14, 500.0:DECIMAL(4, 1))), /(*($10, 1.5:DECIMAL(2, 1)), GREATEST($15, 100.0:DECIMAL(4, 1))))], __timestamp17=[CASE(<($12, $16), $16, $12)])
+  LogicalProject(__pk1$productid=[$0], increase=[$1], __timestamp19=[$2])
+    LogicalProject(__pk1$productid=[$0], increase=[+(/(*($9, 1.5:DECIMAL(2, 1)), GREATEST($14, 500.0:DECIMAL(4, 1))), /(*($10, 1.5:DECIMAL(2, 1)), GREATEST($15, 100.0:DECIMAL(4, 1))))], __timestamp17=[CASE(<($12, $16), $16, $12)])
       LogicalJoin(condition=[=($0, $13)], joinType=[inner]) hints[JoinCostHint options:[STATE, DEDUP_STREAM, 1, RIGHT]]
-        LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updateTime=[$6], _rownum=[$7], __productid$pk$3=[$8], total=[$9], num=[$10], hour=[$11], __timestamp=[CASE(<($6, $11), $11, $6)])
+        LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updateTime=[$6], _rownum=[$7], __pk1$productid=[$8], total=[$9], num=[$10], _hour=[$11], __timestamp=[CASE(<($6, $11), $11, $6)])
           LogicalJoin(condition=[=($0, $8)], joinType=[inner]) hints[JoinCostHint options:[DEDUP_STREAM, DEDUP_STREAM, 1, RIGHT]]
             LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
               LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updateTime=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
@@ -131,7 +131,7 @@ LogicalSort(sort0=[$0], dir0=[ASC])
 
 >>>category-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(name=[$0], updateTime=[$1])
+  LogicalProject(name=[$0], _updateTime=[$1])
     LogicalTableScan(table=[[category$1]])
 
 >>>customer-lp-database
@@ -156,7 +156,7 @@ LogicalSort(sort0=[$0], dir0=[ASC])
 
 >>>total-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
-  LogicalProject(___uuid$pk$1=[$0], price=[$1], discount=[$2], num=[$3], time=[$4])
+  LogicalProject(__pk1$_uuid=[$0], price=[$1], discount=[$2], num=[$3], _time=[$4])
     LogicalTableScan(table=[[total$1]])
 
 >>>orders-data

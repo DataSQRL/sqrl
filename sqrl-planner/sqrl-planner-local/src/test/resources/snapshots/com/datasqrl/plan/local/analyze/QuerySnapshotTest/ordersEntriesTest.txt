@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[customer$1]])
 
 >>>entries2$1
-LogicalProject(___uuid$pk$1=[$0], _idx=[$6], id=[$2], time=[$4])
+LogicalProject(__pk1$_uuid=[$0], _idx=[$6], id=[$2], time=[$4])
   LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$2]])
     Uncollect

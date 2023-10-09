@@ -2,7 +2,7 @@
 LogicalTableScan(table=[[product$1]])
 
 >>>product2$1
-LogicalProject(_uuid=[$0], _uuid0=[$6], _uuid00=[$12], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _ingest_time0=[$13], productid0=[$14], name0=[$15], description0=[$16], category0=[$17], __timestamp19=[CASE(<($1, $18), $18, $1)])
+LogicalProject(_uuid=[$0], __uuid0=[$6], _uuid0=[$12], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _ingest_time0=[$13], productid0=[$14], name0=[$15], description0=[$16], category0=[$17], __timestamp19=[CASE(<($1, $18), $18, $1)])
   LogicalJoin(condition=[true], joinType=[inner])
     LogicalTableScan(table=[[product$2]])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], _uuid0=[$6], _ingest_time0=[$7], productid0=[$8], name0=[$9], description0=[$10], category0=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])

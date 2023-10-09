@@ -1,15 +1,14 @@
 type Package {
   name: String!
-  submissionTime: String!
   versions(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
   latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
 }
 
 type Query {
-  Package(name: String, submissionTime: String): [Package!]
+  Package(name: String): [Package!]
   TopicPackages(pkgName: String, topicName: String, numSubmissions: Int, lastSubmission: String): [TopicPackages!]
   Submission(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
-  TopicSearch(topicName: String, numPackages: Int, submissionTime: String): [TopicSearch!]
+  TopicSearch(topicName: String, numPackages: Int): [TopicSearch!]
 }
 
 type Submission {
@@ -45,7 +44,6 @@ type TopicPackages {
 type TopicSearch {
   topicName: String!
   numPackages: Int!
-  submissionTime: String!
 }
 
 type keywords {

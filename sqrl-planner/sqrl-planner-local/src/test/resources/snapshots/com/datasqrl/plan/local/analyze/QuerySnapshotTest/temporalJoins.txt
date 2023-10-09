@@ -6,7 +6,7 @@ LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=
   LogicalTableScan(table=[[customer$2]])
 
 >>>customerorders$1
-LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], _time=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[inner])
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($6, 1)])
@@ -14,7 +14,7 @@ LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
         LogicalTableScan(table=[[customer$3]])
 
 >>>customerorders$2
-LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], _time=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[left])
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($6, 1)])
@@ -22,7 +22,7 @@ LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
         LogicalTableScan(table=[[customer$3]])
 
 >>>customerorders$3
-LogicalProject(_uuid=[$0], id=[$2], name=[$10], time=[$4])
+LogicalProject(_uuid=[$0], id=[$2], name=[$10], _time=[$4])
   LogicalJoin(condition=[=($3, $6)], joinType=[left])
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($6, 1)])
