@@ -1,14 +1,14 @@
->>>entrycount$q$7-lp-STREAM
+>>>entrycount$1-lp-STREAM
 LogicalProject(_uuid=[$0], _idx=[$6], price=[-(*($8, $9), $10)], time=[$4])
   LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
-    LogicalTableScan(table=[[orders$q$2]])
+    LogicalTableScan(table=[[orders$2]])
     Uncollect
       LogicalProject($f0=[$cor4.entries])
         LogicalValues(tuples=[[{ 0 }]])
 
->>>entrycount$q$7-lp-DATABASE
+>>>entrycount$1-lp-DATABASE
 LogicalProject(_uuid=[$0], _idx=[$7], price=[-(*($9, $10), $11)], time=[$4])
   LogicalJoin(condition=[=($0, $6)], joinType=[inner])
-    LogicalTableScan(table=[[orders$q$2]])
-    LogicalTableScan(table=[[entries$3]])
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[entries$1]])
 

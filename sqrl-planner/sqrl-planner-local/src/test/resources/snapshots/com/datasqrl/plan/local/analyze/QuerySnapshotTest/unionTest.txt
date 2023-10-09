@@ -1,9 +1,9 @@
->>>product$q$2
-LogicalTableScan(table=[[product$i$1]])
+>>>product$2
+LogicalTableScan(table=[[product$1]])
 
->>>product2$q$4
+>>>product2$1
 LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5])
   LogicalUnion(all=[true])
-    LogicalTableScan(table=[[product$q$2]])
-    LogicalTableScan(table=[[product$q$2]])
+    LogicalTableScan(table=[[product$2]])
+    LogicalTableScan(table=[[product$2]])
 
