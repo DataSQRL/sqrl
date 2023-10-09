@@ -362,13 +362,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       framework.getSqrlOperatorTable().addPlanningFnc(result.getFncs());
 
-      SqlNode copy = sqlNode.accept(new SqlShuttle() {
-        @Override
-        public SqlNode visit(SqlIdentifier id) {
-          return new SqlIdentifier(id.names, id.getParserPosition());
-        }
-      });
-      validated = validator.validate(copy);
+      validated = validator.validate(sqlNode);
 
     } catch (CalciteContextException e) {
       e.printStackTrace();
