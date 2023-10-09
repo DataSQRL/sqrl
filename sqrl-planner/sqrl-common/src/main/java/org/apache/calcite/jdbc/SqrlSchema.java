@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 @Getter
 public class SqrlSchema extends SimpleCalciteSchema {
   private final SqrlFramework sqrlFramework;
-  
+
   private final List<ResolvedExport> exports = new ArrayList<>();
   private final Set<URL> jars = new HashSet<>();
 
@@ -38,6 +38,8 @@ public class SqrlSchema extends SimpleCalciteSchema {
   //Full table mapping
   private final Map<String, NamePath> sysTableToPathMap = new HashMap<>();
   private final Multimap<String, Relationship> sysTableToRelationshipMap = LinkedHashMultimap.create();
+
+  private final Map<String, List<String>> sysTableToFieldNameMap = new HashMap<>();
 
   public SqrlSchema(SqrlFramework framework) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");

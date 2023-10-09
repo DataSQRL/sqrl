@@ -1,8 +1,8 @@
 type Customers {
   id: Int!
-  past_purchases(productid: Int, num_orders: Int, total_quantity: Int): [past_purchases!]
   purchases(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
   spending_by_month(month: String, total_spend: Float, total_savings: Float): [spending_by_month!]
+  past_purchases(productid: Int, num_orders: Int, total_quantity: Int): [past_purchases!]
 }
 
 type Orders {
