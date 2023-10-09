@@ -1026,7 +1026,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void invalidOrderTest() {
-    validateScriptInvalid("IMPORT ecommerce-data.Orders\n"
+    validateScriptInvalid("IMPORT ecommerce-data.Orders;\n"
         + "X := SELECT e.* FROM Orders.entries AS e ORDER BY e.parent;");
   }
 
