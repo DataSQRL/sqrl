@@ -58,7 +58,7 @@ public interface Name extends Serializable, Comparable<Name> {
   String getDisplay();
 
   default boolean isHidden() {
-    return getCanonical().startsWith(HIDDEN_PREFIX);
+    return isHiddenString(getCanonical());
   }
 
   default boolean isSsytemHidden() {
@@ -114,7 +114,15 @@ public interface Name extends Serializable, Comparable<Name> {
   }
 
   static Name hidden(String name) {
-    return system(HIDDEN_PREFIX + name);
+    return system(hiddenString(name));
+  }
+
+  static String hiddenString(String name) {
+    return HIDDEN_PREFIX + name;
+  }
+
+  static boolean isHiddenString(String name) {
+    return name.startsWith(HIDDEN_PREFIX);
   }
 
   static boolean isSystemHidden(String name) {
