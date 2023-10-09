@@ -1,51 +1,51 @@
->>>customer$q$2-lp-stream
-LogicalTableScan(table=[[customer$i$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
+>>>customer$2-lp-stream
+LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
 
->>>orderagg1$q$13-lp-stream
+>>>orderagg1$1-lp-stream
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2]) hints[TimestampHint options:[1]]
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 900000]]
     LogicalProject(customer=[$3], bucket=[endOfHour($4, 1:BIGINT, 15:BIGINT)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+      LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>orderagg2$q$15-lp-stream
+>>>orderagg2$1-lp-stream
 LogicalProject(_pk=[1], order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], time=[$4]) hints[TimestampHint options:[2]]
-  LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+  LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>orderaugment$q$25-lp-stream
+>>>orderaugment$1-lp-stream
 LogicalProject(_uuid=[$0], id=[$2], time=[$4], order_count=[$7]) hints[TimestampHint options:[2]]
   LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
-    LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
       LogicalProject(customer=[$0], order_count=[$1], time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
         LogicalProject(customer=[$0], order_count=[$2], time=[$1])
           LogicalAggregate(group=[{3, 4}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[4, 86313600000, 1726272000]]
-            LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+            LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>ordernow1$q$19-lp-stream
+>>>ordernow1$1-lp-stream
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2]) hints[TimestampHint options:[1]]
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 3600000, 0]]
     LogicalProject(customer=[$3], bucket=[endOfHour($4)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+      LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>ordernow2$q$21-lp-stream
+>>>ordernow2$1-lp-stream
 LogicalProject(bucket=[$0], order_count=[$1]) hints[TimestampHint options:[0]]
   LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 4, 3600000, 0]]
     LogicalProject(bucket=[endOfHour($4)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+      LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>ordernow3$q$23-lp-stream
+>>>ordernow3$1-lp-stream
 LogicalProject(customer=[$0], order_count=[$2], time=[$1]) hints[TimestampHint options:[2]]
   LogicalAggregate(group=[{3, 4}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[4, 86313600000, 1726272000]]
-    LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+    LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
->>>orders$q$5-lp-stream
-LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]], [TimestampHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4], TimestampHint options:[4]]
+>>>orders$2-lp-stream
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]], [TimestampHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4], TimestampHint options:[4]]
 
->>>ordertime1$q$17-lp-stream
+>>>ordertime1$1-lp-stream
 LogicalProject(customer=[$0], bucket=[$1], order_count=[$2]) hints[TimestampHint options:[1]]
   LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000, 0]]
     LogicalProject(customer=[$3], bucket=[endOfSecond($4)], _uuid=[$0])
-      LogicalTableScan(table=[[orders$i$4]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+      LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>agg1-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
@@ -54,53 +54,53 @@ LogicalSort(sort0=[$0], dir0=[ASC])
       LogicalAggregate(group=[{4}], order_count=[COUNT()], __timestamp=[MAX($5)])
         LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
           LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-            LogicalTableScan(table=[[orders$q$5]])
-            LogicalTableScan(table=[[customer$q$2]])
+            LogicalTableScan(table=[[orders$2]])
+            LogicalTableScan(table=[[customer$2]])
 
 >>>orderagg1-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
-    LogicalTableScan(table=[[orderagg1$q$13]])
+    LogicalTableScan(table=[[orderagg1$1]])
 
 >>>orderagg2-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(_pk=[$0], order_count=[$1], time=[$2])
-    LogicalTableScan(table=[[orderagg2$q$15]])
+    LogicalTableScan(table=[[orderagg2$1]])
 
 >>>orderaugment-lp-database
 LogicalSort(sort0=[$2], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], id=[$1], time=[$2], order_count=[$3])
-    LogicalTableScan(table=[[orderaugment$q$25]])
+    LogicalTableScan(table=[[orderaugment$1]])
 
 >>>ordercustomer-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
   LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], __timestamp=[$5])
     LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
       LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-        LogicalTableScan(table=[[orders$q$5]])
-        LogicalTableScan(table=[[customer$q$2]])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableScan(table=[[customer$2]])
 
 >>>ordernow1-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
     LogicalFilter(condition=[<(NOW(), +($1, 86313600000:INTERVAL SECOND(11)))])
-      LogicalTableScan(table=[[ordernow1$q$19]])
+      LogicalTableScan(table=[[ordernow1$1]])
 
 >>>ordernow2-lp-database
 LogicalSort(sort0=[$0], dir0=[DESC-nulls-last])
   LogicalProject(bucket=[$0], order_count=[$1])
     LogicalFilter(condition=[<(NOW(), +($0, 86313600000:INTERVAL SECOND(11)))])
-      LogicalTableScan(table=[[ordernow2$q$21]])
+      LogicalTableScan(table=[[ordernow2$1]])
 
 >>>ordernow3-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(customer=[$0], order_count=[$1], time=[$2])
-    LogicalTableScan(table=[[ordernow3$q$23]])
+    LogicalTableScan(table=[[ordernow3$1]])
 
 >>>ordertime1-lp-database
 LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(customer=[$0], bucket=[$1], order_count=[$2])
-    LogicalTableScan(table=[[ordertime1$q$17]])
+    LogicalTableScan(table=[[ordertime1$1]])
 
 >>>orderagg1-data
 1000101, 2023-05-19 02:14:59.999, 1

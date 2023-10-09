@@ -29,7 +29,7 @@ public class CalciteTableFactory {
 
   @Inject
   public CalciteTableFactory(SqrlFramework framework) {
-    this.tableIdFactory = new TableIdFactory(framework.getUniqueTableInt());
+    this.tableIdFactory = new TableIdFactory(framework.getTableNameToIdMap());
     this.tableConverter = new TableConverter(framework.getTypeFactory(), framework.getNameCanonicalizer());
   }
   public CalciteTableFactory(TableIdFactory tableIdFactory, TableConverter tableConverter) {
@@ -39,13 +39,13 @@ public class CalciteTableFactory {
 
   public ImportedRelationalTableImpl createImportedTable(RelDataType rootType,
       TableSource tableSource, Name tableName) {
-    Name importName = tableIdFactory.createImportTableId(tableName);
+    Name importName = tableIdFactory.createTableId(tableName);
     return new ImportedRelationalTableImpl(importName, rootType, tableSource);
   }
 
   public ProxyImportRelationalTable createProxyTable(RelDataType rootType, UniversalTable rootTable,
       ImportedRelationalTableImpl importedTable) {
-    Name proxyName = tableIdFactory.createQueryTableId(rootTable.getName());
+    Name proxyName = tableIdFactory.createTableId(rootTable.getName());
     TimestampInference tsInference = getTimestampInference(rootTable);
     return new ProxyImportRelationalTable(
         proxyName,
@@ -58,7 +58,7 @@ public class CalciteTableFactory {
   }
 
   public PhysicalRelationalTable createPhysicalRelTable(Name name, LPAnalysis analyzedLP) {
-    Name tableId = tableIdFactory.createQueryTableId(name);
+    Name tableId = tableIdFactory.createTableId(name);
     return new QueryRelationalTable(tableId, name, analyzedLP);
   }
 

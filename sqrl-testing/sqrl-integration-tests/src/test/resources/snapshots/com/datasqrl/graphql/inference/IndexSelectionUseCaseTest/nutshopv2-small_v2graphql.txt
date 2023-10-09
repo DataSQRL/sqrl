@@ -1,3 +1,3 @@
-orders$q$5_btree_c3c6 - 1947.500
-orders$q$5_hash_c2 - 950.000
-products$q$13_hash_c3 - 950.000
+orders$2_btree_c3c6 - 1947.500
+orders$2_hash_c2 - 950.000
+products$3_hash_c3 - 950.000

@@ -1,9 +1,9 @@
->>>example$q$4
+>>>example$1
 LogicalProject(___uuid$pk$1=[$0], example=[$2], _ingest_time=[$1])
   LogicalFilter(condition=[>($2, 10)])
     LogicalAggregate(group=[{0, 1}], example=[SUM($2)])
-      LogicalTableScan(table=[[product$q$2]])
+      LogicalTableScan(table=[[product$2]])
 
->>>product$q$2
-LogicalTableScan(table=[[product$i$1]])
+>>>product$2
+LogicalTableScan(table=[[product$1]])
 

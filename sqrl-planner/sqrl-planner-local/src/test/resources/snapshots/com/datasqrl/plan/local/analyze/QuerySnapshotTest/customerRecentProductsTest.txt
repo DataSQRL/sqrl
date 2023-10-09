@@ -1,23 +1,23 @@
->>>customer$q$2
-LogicalTableScan(table=[[customer$i$1]])
+>>>customer$2
+LogicalTableScan(table=[[customer$1]])
 
->>>orders$q$5
-LogicalTableScan(table=[[orders$i$4]])
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
 
->>>product$q$11
-LogicalTableScan(table=[[product$i$10]])
+>>>product$2
+LogicalTableScan(table=[[product$1]])
 
->>>product$q$14
+>>>product$3
 LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$6], _uuid=[$11], _ingest_time=[$12], productid=[$13], name=[$14], description=[$15], category=[$16], __timestamp=[CASE(<($4, $12), $12, $4)])
   LogicalJoin(condition=[=($13, $7)], joinType=[inner])
     LogicalCorrelate(correlation=[$cor10], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$q$5]])
+      LogicalTableScan(table=[[orders$2]])
       Uncollect
         LogicalProject($f0=[$cor10.entries])
           LogicalValues(tuples=[[{ 0 }]])
-    LogicalTableScan(table=[[product$q$11]])
+    LogicalTableScan(table=[[product$2]])
 
->>>recent_products$q$17
+>>>recent_products$1
 LogicalProject(___uuid$pk$3=[$0], productid=[$1], category=[$2], quantity=[$3], num_orders=[$4], __timestamp=[$5])
   LogicalAggregate(group=[{0, 1, 2}], quantity=[SUM($3)], num_orders=[COUNT()], __timestamp=[MAX($7)])
     LogicalProject(___uuid$pk$3=[$6], productid=[$19], category=[COALESCE($32, '')], quantity=[$20], _uuid=[$0], _idx=[$18], _uuid1=[$27], __timestamp35=[CASE(<($24, $33), $33, $24)], ___uuid$pk$1=[$25], ___idx$pk$2=[$26], _rownum=[$34])
@@ -25,16 +25,16 @@ LogicalProject(___uuid$pk$3=[$0], productid=[$1], category=[$2], quantity=[$3], 
         LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _uuid0=[$6], _ingest_time0=[$7], customerid0=[$8], email=[$9], name=[$10], lastUpdated=[$11], _uuid00=[$12], _ingest_time00=[$13], id0=[$14], customerid00=[$15], time0=[$16], entries0=[$17], _idx=[$18], productid=[$19], quantity=[$20], unit_price=[$21], discount=[$22], __timestamp=[$23], __timestamp24=[CASE(<($4, $23), $23, $4)])
           LogicalJoin(condition=[=($12, $0)], joinType=[inner])
             LogicalFilter(condition=[<(NOW(), +($4, 31536000000:INTERVAL SECOND(11)))])
-              LogicalTableScan(table=[[orders$q$5]])
+              LogicalTableScan(table=[[orders$2]])
             LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _uuid0=[$6], _ingest_time0=[$7], id=[$8], customerid0=[$9], time=[$10], entries=[$11], _idx=[$12], productid=[$13], quantity=[$14], unit_price=[$15], discount=[$16], __timestamp=[CASE(<($1, $10), $10, $1)])
               LogicalJoin(condition=[=($2, $9)], joinType=[inner])
-                LogicalTableScan(table=[[customer$q$2]])
+                LogicalTableScan(table=[[customer$2]])
                 LogicalCorrelate(correlation=[$cor12], joinType=[inner], requiredColumns=[{5}])
-                  LogicalTableScan(table=[[orders$q$5]])
+                  LogicalTableScan(table=[[orders$2]])
                   Uncollect
                     LogicalProject($f0=[$cor12.entries])
                       LogicalValues(tuples=[[{ 0 }]])
         LogicalFilter(condition=[=($9, 1)])
           LogicalProject(___uuid$pk$1=[$0], ___idx$pk$2=[$1], _uuid=[$2], _ingest_time=[$3], productid=[$4], name=[$5], description=[$6], category=[$7], __timestamp=[$8], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1)])
-            LogicalTableScan(table=[[product$q$14]])
+            LogicalTableScan(table=[[product$3]])
 

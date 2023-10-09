@@ -1,57 +1,57 @@
->>>customer$q$2-lp-stream
+>>>customer$2-lp-stream
 LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6], TimestampHint options:[6]]
-  LogicalTableScan(table=[[customer$i$1]])
+  LogicalTableScan(table=[[customer$1]])
 
->>>customerdedup$q$14-lp-stream
+>>>customerdedup$1-lp-stream
 LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6]) hints[TimestampHint options:[6]]
   LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-    LogicalTableScan(table=[[customer$i$1]])
+    LogicalTableScan(table=[[customer$1]])
 
->>>ordercustomerdedup$q$16-lp-stream
+>>>ordercustomerdedup$1-lp-stream
 LogicalProject(_uuid=[$0], id=[$2], name=[$11], customerid=[$3], rowtime=[$6]) hints[TimestampHint options:[4]]
   LogicalJoin(condition=[=($3, $7)], joinType=[inner]) hints[TemporalJoinHint options:[6, 6, 0]]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], rowtime=[$4]) hints[WatermarkHint options:[6]]
-      LogicalTableScan(table=[[orders$i$4]])
+      LogicalTableScan(table=[[orders$1]])
     LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
       LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
         LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6])
           LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-            LogicalTableScan(table=[[customer$i$1]])
+            LogicalTableScan(table=[[customer$1]])
 
->>>ordercustomerinterval$q$12-lp-stream
+>>>ordercustomerinterval$1-lp-stream
 LogicalProject(_uuid=[$0], _uuid0=[$7], id=[$2], name=[$11], customerid=[$3], rowtime=[$6]) hints[TimestampHint options:[5]]
   LogicalJoin(condition=[AND(=($3, $9), >=($6, $13), <=($6, +($13, 31536000000:INTERVAL DAY(3))))], joinType=[inner]) hints[IntervalJoin]
     LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], rowtime=[$4]) hints[WatermarkHint options:[6]]
-      LogicalTableScan(table=[[orders$i$4]])
+      LogicalTableScan(table=[[orders$1]])
     LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
-      LogicalTableScan(table=[[customer$i$1]])
+      LogicalTableScan(table=[[customer$1]])
 
->>>orders$q$5-lp-stream
+>>>orders$2-lp-stream
 LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], rowtime=[$4]) hints[WatermarkHint options:[6], TimestampHint options:[6]]
-  LogicalTableScan(table=[[orders$i$4]])
+  LogicalTableScan(table=[[orders$1]])
 
 >>>customerdedup-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6])
-    LogicalTableScan(table=[[customerdedup$q$14]])
+    LogicalTableScan(table=[[customerdedup$1]])
 
 >>>ordercustomer-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
   LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], __timestamp=[$5])
     LogicalProject(_uuid=[$0], _uuid0=[$7], id=[$2], name=[$11], customerid=[$3], __timestamp=[CASE(<($6, $13), $13, $6)])
       LogicalJoin(condition=[=($3, $9)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
-        LogicalTableScan(table=[[orders$q$5]])
-        LogicalTableScan(table=[[customer$q$2]])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableScan(table=[[customer$2]])
 
 >>>ordercustomerdedup-lp-database
 LogicalSort(sort0=[$4], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
   LogicalProject(_uuid=[$0], id=[$1], name=[$2], customerid=[$3], rowtime=[$4])
-    LogicalTableScan(table=[[ordercustomerdedup$q$16]])
+    LogicalTableScan(table=[[ordercustomerdedup$1]])
 
 >>>ordercustomerinterval-lp-database
 LogicalSort(sort0=[$5], sort1=[$0], sort2=[$1], dir0=[DESC-nulls-last], dir1=[ASC], dir2=[ASC])
   LogicalProject(_uuid=[$0], _uuid0=[$1], id=[$2], name=[$3], customerid=[$4], rowtime=[$5])
-    LogicalTableScan(table=[[ordercustomerinterval$q$12]])
+    LogicalTableScan(table=[[ordercustomerinterval$1]])
 
 >>>ordercustomer-data
 10007140, Emily F. Ludies, 1000107
