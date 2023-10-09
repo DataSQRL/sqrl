@@ -21,4 +21,4 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Build SQRL
-      run: mvn -T 1 -B -U -e clean install
+      run: mvn -T 4 -B -U -e clean install
