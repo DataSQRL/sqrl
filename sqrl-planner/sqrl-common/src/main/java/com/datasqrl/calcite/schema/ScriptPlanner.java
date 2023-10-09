@@ -178,10 +178,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       if (assignment.getIdentifier().names.size() > 1) {
         NamePath fromTable = path.popLast();
         NamePath toTable = isASqrl.get(0).getPath();
+        String fromSysTable = planner.getSchema().getPathToSysTableMap().get(fromTable);
+        String toSysTable = planner.getSchema().getPathToSysTableMap().get(toTable);
 
         Relationship rel = new Relationship(path.getLast(),
             path, framework.getUniqueColumnInt().incrementAndGet(),
-            fromTable, toTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
+            fromSysTable, toSysTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
             parameters, nodeSupplier
             );
         planner.getSchema().addRelationship(rel);

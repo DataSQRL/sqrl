@@ -11,11 +11,18 @@ type MinReadings {
 }
 
 type Query {
-  sensors(id: Int, machineid: Int, placed: String): [sensors!]
+  Sensors(id: Int, machineid: Int, placed: String): [Sensors!]
   MinReadings(sensorid: Int, timeMin: String, temp: Float): [MinReadings!]
   machinegroup(groupId: Int, groupName: String, created: String): [machinegroup!]
   Machine(machineid: Int, maxTemp: Float, avgTemp: Float): [Machine!]
   sensorreading(sensorid: Int, time: String, temperature: Float, humidity: Float): [sensorreading!]
+}
+
+type Sensors {
+  id: Int!
+  machineid: Int!
+  placed: String!
+  readings(sensorid: Int, timeMin: String, temp: Float): [MinReadings!]
 }
 
 type machinegroup {
@@ -35,12 +42,5 @@ type sensorreading {
   time: String!
   temperature: Float!
   humidity: Float!
-}
-
-type sensors {
-  id: Int!
-  machineid: Int!
-  placed: String!
-  readings(sensorid: Int, timeMin: String, temp: Float): [MinReadings!]
 }
 
