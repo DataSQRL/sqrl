@@ -2,7 +2,6 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.canonicalizer.Name;
@@ -101,16 +100,19 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         framework.getSchema().addTable(tbl);
       } else { //add nested
         NamePath parentPath = path.popLast();
-        String parentId = framework.getSchema().getPathToTableMap().get(parentPath);
+        String parentId = framework.getSchema().getPathToSysTableMap().get(parentPath);
         Preconditions.checkNotNull(parentId);
         Table parentTable = framework.getSchema().getTable(parentId, false)
             .getTable();
         ScriptRelationalTable scriptParentTable = (ScriptRelationalTable) parentTable;
 
+        String fromSysTable = framework.getSchema().getPathToSysTableMap().get(parentPath);
+        String toSysTable = framework.getSchema().getPathToSysTableMap().get(path);
+
         Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(scriptParentTable, table);
         Relationship relationship = new Relationship(path.getLast(), path,
             framework.getUniqueColumnInt().incrementAndGet(),
-            parentPath, path, JoinType.CHILD,
+            fromSysTable, toSysTable, JoinType.CHILD,
             Multiplicity.MANY, //todo fix multiplicity
             pkWrapper.getLeft(),
             () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
@@ -126,10 +128,13 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       ScriptRelationalTable childScriptTable) {
     Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(childScriptTable,
         parentScriptTable);
+    String fromSysTable = framework.getSchema().getPathToSysTableMap().get(path);
+    String toSysTable = framework.getSchema().getPathToSysTableMap().get(path.popLast());
+
     return new Relationship(ReservedName.PARENT,
         path.concat(ReservedName.PARENT),
         framework.getUniqueColumnInt().incrementAndGet(),
-        path, NamePath.of(SqrlListUtil.popLast(path.toStringList()).toArray(String[]::new)),
+        fromSysTable, toSysTable,
         JoinType.PARENT, Multiplicity.ONE, pkWrapper.getLeft(),
         () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
   }

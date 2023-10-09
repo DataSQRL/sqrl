@@ -6,6 +6,8 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,11 +27,17 @@ import java.util.stream.Stream;
 @Getter
 public class SqrlSchema extends SimpleCalciteSchema {
   private final SqrlFramework sqrlFramework;
+  
   private final List<ResolvedExport> exports = new ArrayList<>();
-  private final Map<NamePath, NamePath> absolutePathMap = new HashMap();
   private final Set<URL> jars = new HashSet<>();
-  private final Map<NamePath, Relationship> pathToRelationshipMap = new HashMap<>();
-  private final Map<NamePath, String> pathToTableMap = new HashMap<>();
+
+  //Current table mapping
+  private final Map<NamePath, NamePath> pathToAbsolutePathMap = new HashMap<>();
+  private final Map<NamePath, String> pathToSysTableMap = new HashMap<>();
+
+  //Full table mapping
+  private final Map<String, NamePath> sysTableToPathMap = new HashMap<>();
+  private final Multimap<String, Relationship> sysTableToRelationshipMap = LinkedHashMultimap.create();
 
   public SqrlSchema(SqrlFramework framework) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
@@ -69,8 +77,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addTable(RootSqrlTable root) {
-    removePrefix(this.pathToRelationshipMap.keySet(),root.getName().toNamePath());
-    removePrefix(this.absolutePathMap.keySet(),root.getName().toNamePath());
+    removePrefix(this.pathToAbsolutePathMap.keySet(),root.getName().toNamePath());
     plus().add(String.join(".", root.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueTableInt().incrementAndGet(), root
         );
@@ -90,14 +97,15 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addRelationship(Relationship relationship) {
-    absolutePathMap.put(relationship.getPath(),
-        relationship.getToTable());
-    this.pathToRelationshipMap.put(relationship.getPath(), relationship);
+    NamePath toTable = sysTableToPathMap.get(relationship.getToTable());
+    pathToAbsolutePathMap.put(relationship.getPath(), toTable);
+    this.sysTableToRelationshipMap.put(relationship.getFromTable(), relationship);
     plus().add(String.join(".", relationship.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueTableInt().incrementAndGet(), relationship);
   }
 
   public void addTableMapping(NamePath path, String nameId) {
-    this.pathToTableMap.put(path, nameId);
+    this.pathToSysTableMap.put(path, nameId);
+    this.sysTableToPathMap.put(nameId, path);
   }
 }
