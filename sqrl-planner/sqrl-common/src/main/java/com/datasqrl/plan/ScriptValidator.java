@@ -187,7 +187,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
    */
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
-    Optional<RelOptTable> table = resolveModifiableTable(node.getIdentifier(), node.getIdentifier().names);
+    Optional<RelOptTable> table = resolveTable(node.getIdentifier(), node.getIdentifier().names);
     Optional<TableSink> sink = LoaderUtil.loadSinkOpt(nameUtil.toNamePath(node.getSinkPath().names),
         errorCollector, moduleLoader);
 
@@ -253,16 +253,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
     List<String> names = SqrlListUtil.popLast(node.getIdentifier().names);
     Optional<RelOptTable> table = resolveModifiableTable(node, names);
-    table.ifPresent((t) -> {
-      ModifiableTable modTable = t.unwrap(ModifiableTable.class);
-      if (modTable == null) {
-        //TODO: isn't this already checked in resolveModifableTable?
-        addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: %s", flattenNames(names));
-      } else if (modTable.isLocked()) {
-        addError(ErrorCode.TABLE_LOCKED, node, "Cannot add column to locked table: %s", flattenNames(names));
-      }
-
-    });
 
     List<SqlNode> selectList = new ArrayList<>();
     selectList.add(SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
@@ -1071,6 +1061,17 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return null;
   }
 
+  private Optional<RelOptTable> resolveTable(SqlNode node, List<String> names) {
+    Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader().getTableFromPath(names));
+    if (table.isEmpty()) {
+      throw addError(ErrorLabel.GENERIC, node, "Could not find table: %s", flattenNames(names));
+    }
+
+    table.ifPresent((t)->this.tableMap.put(node, t));
+
+    return table;
+  }
+
   private Optional<RelOptTable> resolveModifiableTable(SqlNode node, List<String> names) {
     Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader().getTableFromPath(names));
     if (table.isEmpty()) {
@@ -1080,8 +1081,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     table.ifPresent((t)->this.tableMap.put(node, t));
 
     table.ifPresent((t) -> {
-      if (t.unwrap(ModifiableTable.class) == null) {
+      ModifiableTable modTable = t.unwrap(ModifiableTable.class);
+      if (modTable == null) {
         addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: %s", flattenNames(names));
+      } else if (modTable.isLocked()) {
+        addError(ErrorCode.TABLE_LOCKED, node, "Cannot add column to locked table: %s", flattenNames(names));
       }
     });
 

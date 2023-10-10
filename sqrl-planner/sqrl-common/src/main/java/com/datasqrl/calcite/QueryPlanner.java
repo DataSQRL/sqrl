@@ -71,8 +71,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class QueryPlanner {
 
-  private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
-  private final AtomicInteger uniquePkId = new AtomicInteger(0);
   private final RelOptCluster cluster;
   private final RelOptPlanner planner;
   private final CatalogReader catalogReader;
@@ -328,7 +326,7 @@ public class QueryPlanner {
   }
 
   public Enumerator execute(RelNode relNode, DataContextImpl context) {
-    String defaultName = "SqrlExecutable" + uniqueCompilerId.incrementAndGet();
+    String defaultName = "SqrlExecutable" + framework.getUniqueCompilerId().incrementAndGet();
     EnumerableRel enumerableRel = convertToEnumerableRel(relNode);
     HashMap<String, Object> carryover = new HashMap<>();
     ClassLoader classLoader = compile(defaultName, enumerableRel, carryover);
@@ -399,7 +397,7 @@ public class QueryPlanner {
         SqlWriterConfig config = SqrlConfigurations.sqlToString.apply(SqlPrettyWriter.config());
         DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
         node.unparse(writer, 0, 0);
-        return writer.toSqlString().getSql();
+        return writer.toSqlString().getSql().replaceAll("\"", "");
     }
     throw new RuntimeException("Unknown dialect");
   }
@@ -411,11 +409,7 @@ public class QueryPlanner {
   }
 
   public String relToString(Dialect dialect, RelNode relNode) {
-    String sql = sqlToString(dialect, relToSql(dialect, relNode));
-    if (dialect == Dialect.POSTGRES) {
-      return sql.replaceAll("\"", "");
-    }
-    return sql;
+    return sqlToString(dialect, relToSql(dialect, relNode));
   }
 
   public SqlUserDefinedTableFunction getTableFunction(List<String> path) {

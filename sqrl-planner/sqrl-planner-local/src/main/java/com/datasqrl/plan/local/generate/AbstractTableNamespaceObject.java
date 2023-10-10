@@ -2,6 +2,7 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.canonicalizer.Name;
@@ -111,7 +112,6 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
 
         Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(scriptParentTable, table);
         Relationship relationship = new Relationship(path.getLast(), path,
-            framework.getUniqueColumnInt().incrementAndGet(),
             fromSysTable, toSysTable, JoinType.CHILD,
             Multiplicity.MANY, //todo fix multiplicity
             pkWrapper.getLeft(),
@@ -133,7 +133,6 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
 
     return new Relationship(ReservedName.PARENT,
         path.concat(ReservedName.PARENT),
-        framework.getUniqueColumnInt().incrementAndGet(),
         fromSysTable, toSysTable,
         JoinType.PARENT, Multiplicity.ONE, pkWrapper.getLeft(),
         () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
