@@ -10,6 +10,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.util.CalciteUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
+import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
@@ -34,7 +35,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
       String column = toSql(field);
       columns.add(column);
       if (i < table.getNumPrimaryKeys()) {
-        pk.add(field.getName());
+        pk.add(quoteIdentifier(field.getName()));
       }
     }
     return new CreateTableDDL(table.getNameId(), columns, pk);
@@ -47,7 +48,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
 
   private static String toSql(String name, String sqlType, boolean nullable) {
     StringBuilder sql = new StringBuilder();
-    sql.append(name).append(" ").append(sqlType).append(" ");
+    sql.append("\"").append(name).append("\"").append(" ").append(sqlType).append(" ");
     if (!nullable) {
       sql.append("NOT NULL");
     }
@@ -57,5 +58,14 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
   public CreateIndexDDL createIndex(IndexDefinition index) {
     List<String> columns = index.getColumnNames();
     return new CreateIndexDDL(index.getName(), index.getTableId(), columns, index.getType());
+  }
+
+  public static List<String> quoteIdentifier(List<String> columns) {
+    return columns.stream()
+        .map(PostgresDDLFactory::quoteIdentifier)
+        .collect(Collectors.toList());
+  }
+  public static String quoteIdentifier(String column) {
+    return "\"" + column + "\"";
   }
 }

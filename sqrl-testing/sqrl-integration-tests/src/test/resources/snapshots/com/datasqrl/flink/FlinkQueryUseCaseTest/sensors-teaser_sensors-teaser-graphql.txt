@@ -1,12 +1,12 @@
 >>>database
-CREATE INDEX IF NOT EXISTS machine$1_btree_c1c2 ON machine$1 USING btree (maxTemp,avgTemp);
-CREATE INDEX IF NOT EXISTS machine$1_hash_c2 ON machine$1 USING hash (avgTemp);
-CREATE INDEX IF NOT EXISTS minreadings$1_btree_c0c2 ON minreadings$1 USING btree (sensorid,temp);
-CREATE INDEX IF NOT EXISTS sensors$3_btree_c3c4 ON sensors$3 USING btree (machineid,placed);
-CREATE INDEX IF NOT EXISTS sensors$3_hash_c4 ON sensors$3 USING hash (placed);
-CREATE TABLE IF NOT EXISTS machine$1 (machineid BIGINT NOT NULL,maxTemp DOUBLE PRECISION NOT NULL,avgTemp DOUBLE PRECISION NOT NULL,_timeMin TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (machineid));
-CREATE TABLE IF NOT EXISTS minreadings$1 (sensorid BIGINT NOT NULL,timeMin TIMESTAMP WITH TIME ZONE NOT NULL,temp DOUBLE PRECISION NOT NULL , PRIMARY KEY (sensorid,timeMin));
-CREATE TABLE IF NOT EXISTS sensors$3 (id BIGINT NOT NULL,_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,machineid BIGINT NOT NULL,placed TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (id));
+CREATE INDEX IF NOT EXISTS machine$1_btree_c1c2 ON machine$1 USING btree ("maxTemp","avgTemp");
+CREATE INDEX IF NOT EXISTS machine$1_hash_c2 ON machine$1 USING hash ("avgTemp");
+CREATE INDEX IF NOT EXISTS minreadings$1_btree_c0c2 ON minreadings$1 USING btree ("sensorid","temp");
+CREATE INDEX IF NOT EXISTS sensors$3_btree_c3c4 ON sensors$3 USING btree ("machineid","placed");
+CREATE INDEX IF NOT EXISTS sensors$3_hash_c4 ON sensors$3 USING hash ("placed");
+CREATE TABLE IF NOT EXISTS machine$1 ("machineid" BIGINT NOT NULL,"maxTemp" DOUBLE PRECISION NOT NULL,"avgTemp" DOUBLE PRECISION NOT NULL,"_timeMin" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("machineid"));
+CREATE TABLE IF NOT EXISTS minreadings$1 ("sensorid" BIGINT NOT NULL,"timeMin" TIMESTAMP WITH TIME ZONE NOT NULL,"temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeMin"));
+CREATE TABLE IF NOT EXISTS sensors$3 ("id" BIGINT NOT NULL,"_uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"machineid" BIGINT NOT NULL,"placed" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 >>>query-machine
 {
   "data" : {
