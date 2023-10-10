@@ -47,7 +47,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
           default:
             throw new UnsupportedOperationException(type.toString());
         }
-        columnExpression = columns.get(0) + " " + indexModifier;
+        columnExpression = quoteIdentifier(columns.get(0)) + " " + indexModifier;
         indexType = "HNSW";
         break;
       default:
