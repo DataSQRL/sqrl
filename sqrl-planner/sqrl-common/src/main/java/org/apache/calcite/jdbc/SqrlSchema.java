@@ -81,7 +81,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
   public void addTable(RootSqrlTable root) {
     removePrefix(this.pathToAbsolutePathMap.keySet(),root.getName().toNamePath());
     plus().add(String.join(".", root.getPath().toStringList()) + "$"
-        + sqrlFramework.getUniqueTableInt().incrementAndGet(), root
+        + sqrlFramework.getUniqueMacroInt().incrementAndGet(), root
         );
   }
 
@@ -103,7 +103,7 @@ public class SqrlSchema extends SimpleCalciteSchema {
     pathToAbsolutePathMap.put(relationship.getPath(), toTable);
     this.sysTableToRelationshipMap.put(relationship.getFromTable(), relationship);
     plus().add(String.join(".", relationship.getPath().toStringList()) + "$"
-        + sqrlFramework.getUniqueTableInt().incrementAndGet(), relationship);
+        + sqrlFramework.getUniqueMacroInt().incrementAndGet(), relationship);
   }
 
   public void addTableMapping(NamePath path, String nameId) {

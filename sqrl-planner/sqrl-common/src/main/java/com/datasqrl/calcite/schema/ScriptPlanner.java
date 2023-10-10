@@ -182,10 +182,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         String toSysTable = planner.getSchema().getPathToSysTableMap().get(toTable);
 
         Relationship rel = new Relationship(path.getLast(),
-            path, framework.getUniqueColumnInt().incrementAndGet(),
-            fromSysTable, toSysTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
-            parameters, nodeSupplier
-            );
+            path, fromSysTable, toSysTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
+            parameters, nodeSupplier);
         planner.getSchema().addRelationship(rel);
       } else {
         //todo fix for FROM statements
@@ -515,7 +513,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
             pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
                 .mapToObj(i -> new PullupColumn(
                     String.format("%spk%d$%s",
-                        ReservedName.SYSTEM_HIDDEN_PREFIX, planner.getUniqueMacroInt().incrementAndGet(),
+                        ReservedName.SYSTEM_HIDDEN_PREFIX, planner.getFramework().getUniquePkId()
+                            .incrementAndGet(),
                         table.getRowType().getFieldList().get(i).getName()),
                     String.format("%spk%d$%s",
                         ReservedName.SYSTEM_HIDDEN_PREFIX, i+1,

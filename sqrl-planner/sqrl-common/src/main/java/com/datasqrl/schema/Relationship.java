@@ -20,7 +20,6 @@ import org.apache.calcite.schema.FunctionParameter;
 public class Relationship implements SqrlTableMacro {
   private final Name name;
   private final NamePath path;
-  private final int version;
   private final String fromTable;
   private final String toTable;
   private final JoinType joinType;

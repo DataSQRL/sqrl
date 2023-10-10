@@ -26,12 +26,11 @@ public class SqrlFramework {
   private final HintStrategyTable hintStrategyTable;
   private final NameCanonicalizer nameCanonicalizer;
   private QueryPlanner queryPlanner;
-  private RelMetadataProvider relMetadataProvider;
-  private AtomicInteger uniqueMacroInt = new AtomicInteger(0);
-  private AtomicInteger uniqueTableInt = new AtomicInteger(0);
-  private Map<Name, AtomicInteger> tableNameToIdMap = new HashMap<>();
-  private AtomicInteger uniqueColumnInt = new AtomicInteger(0);
-  private Map<Name,AtomicInteger> tableNameShadowing = new HashMap<Name,AtomicInteger>();
+  private final RelMetadataProvider relMetadataProvider;
+  private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
+  private final AtomicInteger uniquePkId = new AtomicInteger(0);
+  private final AtomicInteger uniqueMacroInt = new AtomicInteger(0);
+  private final Map<Name, AtomicInteger> tableNameToIdMap = new HashMap<>();
 
   public SqrlFramework() {
     this(null, HintStrategyTable.builder().build(), NameCanonicalizer.SYSTEM);
@@ -58,9 +57,5 @@ public class SqrlFramework {
   public QueryPlanner resetPlanner() {
     this.queryPlanner = new QueryPlanner(this);
     return this.queryPlanner;
-  }
-
-  public int getUniqueTableId() {
-    return uniqueTableInt.incrementAndGet();
   }
 }
