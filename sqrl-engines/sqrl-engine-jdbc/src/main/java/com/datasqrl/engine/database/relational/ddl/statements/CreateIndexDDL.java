@@ -3,9 +3,12 @@
  */
 package com.datasqrl.engine.database.relational.ddl.statements;
 
+import static com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory.quoteIdentifier;
+
 import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
 import com.datasqrl.function.IndexType;
 import com.google.common.base.Preconditions;
+import java.util.Collection;
 import java.util.stream.Collectors;
 import lombok.Value;
 
@@ -26,7 +29,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
     switch (type) {
       case TEXT:
         columnExpression = String.format("to_tsvector('english', %s )",
-            columns.stream().map(col -> String.format("coalesce(%s, '')", col)).collect(
+            quoteIdentifier(columns).stream().map(col -> String.format("coalesce(%s, '')", col)).collect(
                 Collectors.joining(" || ' ' || ")));
         indexType = "GIN";
         break;
@@ -48,7 +51,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
         indexType = "HNSW";
         break;
       default:
-        columnExpression = String.join(",", columns);
+        columnExpression = String.join(",", quoteIdentifier(columns));
         indexType = type.name().toLowerCase();
     }
 
