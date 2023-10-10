@@ -1,12 +1,12 @@
 >>>database
-CREATE INDEX IF NOT EXISTS submission$2_btree_c2c3c4 ON submission$2 USING btree (name,version,variant);
-CREATE INDEX IF NOT EXISTS submission$2_btree_c2c4 ON submission$2 USING btree (name,variant);
-CREATE INDEX IF NOT EXISTS topicpackages$1_hash_c1 ON topicpackages$1 USING hash (topicName);
-CREATE TABLE IF NOT EXISTS keywords$1 (_uuid TEXT NOT NULL,_idx INTEGER NOT NULL,name TEXT NOT NULL,__timestamp TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (_uuid,_idx));
-CREATE TABLE IF NOT EXISTS package$1 (name TEXT NOT NULL,_submissionTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (name));
-CREATE TABLE IF NOT EXISTS submission$2 (_uuid TEXT NOT NULL,_ingest_time TIMESTAMP WITH TIME ZONE NOT NULL,name TEXT NOT NULL,version TEXT NOT NULL,variant TEXT ,latest BOOLEAN NOT NULL,type TEXT ,license TEXT ,repository TEXT ,homepage TEXT ,documentation TEXT ,readme TEXT ,description TEXT ,uniqueId TEXT NOT NULL,file TEXT NOT NULL,hash TEXT NOT NULL,authorid TEXT NOT NULL,submissionTime TIMESTAMP WITH TIME ZONE NOT NULL,keywords bytea[] NOT NULL,variant0 TEXT NOT NULL,repoURL TEXT NOT NULL , PRIMARY KEY (_uuid));
-CREATE TABLE IF NOT EXISTS topicpackages$1 (pkgName TEXT NOT NULL,topicName TEXT NOT NULL,numSubmissions BIGINT NOT NULL,lastSubmission TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (pkgName,topicName));
-CREATE TABLE IF NOT EXISTS topicsearch$1 (topicName TEXT NOT NULL,numPackages BIGINT NOT NULL,_submissionTime TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (topicName));
+CREATE INDEX IF NOT EXISTS submission$2_btree_c2c3c4 ON submission$2 USING btree ("name","version","variant");
+CREATE INDEX IF NOT EXISTS submission$2_btree_c2c4 ON submission$2 USING btree ("name","variant");
+CREATE INDEX IF NOT EXISTS topicpackages$1_hash_c1 ON topicpackages$1 USING hash ("topicName");
+CREATE TABLE IF NOT EXISTS keywords$1 ("_uuid" TEXT NOT NULL,"_idx" INTEGER NOT NULL,"name" TEXT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("_uuid","_idx"));
+CREATE TABLE IF NOT EXISTS package$1 ("name" TEXT NOT NULL,"_submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("name"));
+CREATE TABLE IF NOT EXISTS submission$2 ("_uuid" TEXT NOT NULL,"_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL,"name" TEXT NOT NULL,"version" TEXT NOT NULL,"variant" TEXT ,"latest" BOOLEAN NOT NULL,"type" TEXT ,"license" TEXT ,"repository" TEXT ,"homepage" TEXT ,"documentation" TEXT ,"readme" TEXT ,"description" TEXT ,"uniqueId" TEXT NOT NULL,"file" TEXT NOT NULL,"hash" TEXT NOT NULL,"authorid" TEXT NOT NULL,"submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL,"keywords" bytea[] NOT NULL,"variant0" TEXT NOT NULL,"repoURL" TEXT NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS topicpackages$1 ("pkgName" TEXT NOT NULL,"topicName" TEXT NOT NULL,"numSubmissions" BIGINT NOT NULL,"lastSubmission" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("pkgName","topicName"));
+CREATE TABLE IF NOT EXISTS topicsearch$1 ("topicName" TEXT NOT NULL,"numPackages" BIGINT NOT NULL,"_submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("topicName"));
 >>>query-latest
 {
   "data" : {
