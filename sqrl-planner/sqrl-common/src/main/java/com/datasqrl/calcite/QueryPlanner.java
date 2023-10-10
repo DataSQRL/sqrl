@@ -397,7 +397,7 @@ public class QueryPlanner {
         SqlWriterConfig config = SqrlConfigurations.sqlToString.apply(SqlPrettyWriter.config());
         DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
         node.unparse(writer, 0, 0);
-        return writer.toSqlString().getSql().replaceAll("\"", "");
+        return writer.toSqlString().getSql();
     }
     throw new RuntimeException("Unknown dialect");
   }

@@ -549,7 +549,7 @@ public class SchemaInference {
       //user defined field to internal field map
       Map<String, String> filters = new HashMap<>();
       for (InputValueDefinition input : def.getInputValueDefinitions()) {
-        Name fieldId = table.getField(Name.system(input.getName())).get().getId();
+        Name fieldId = table.getField(Name.system(input.getName())).get().getName();
         filters.put(input.getName(), fieldId.getDisplay());
       }
       /**

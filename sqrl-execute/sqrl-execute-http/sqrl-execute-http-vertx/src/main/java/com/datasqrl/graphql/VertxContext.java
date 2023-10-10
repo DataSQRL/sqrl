@@ -45,7 +45,7 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<Object> createPropertyFetcher(String name) {
-    return VertxPropertyDataFetcher.create(canonicalizer.getCanonical(name));
+    return VertxPropertyDataFetcher.create(name);
   }
 
   @Override
