@@ -3,6 +3,8 @@
  */
 package com.datasqrl.graphql.generate;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.schema.Field;
 import com.datasqrl.schema.Multiplicity;
@@ -138,14 +140,6 @@ public class SchemaGeneratorUtil {
   }
 
   public static boolean isAccessible(SQRLTable table) {
-    return !table.getName().startsWith("_");
-  }
-
-  public static boolean isAccessible(Field field) {
-//    if (field instanceof Relationship && !isAccessible(((Relationship)field).getToTable())) {
-//      return false;
-//    }
-
-    return !field.getName().isHidden();
+    return !Name.isHiddenString(table.getName());
   }
 }
