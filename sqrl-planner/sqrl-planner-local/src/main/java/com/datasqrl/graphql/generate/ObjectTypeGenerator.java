@@ -60,7 +60,7 @@ public class ObjectTypeGenerator implements
   @Override
   public GraphQLFieldDefinition visit(Relationship field, SchemaGeneratorContext context) {
     return GraphQLFieldDefinition.newFieldDefinition()
-        .name(conformName(field.getId().getDisplay()))
+        .name(conformName(field.getName().getDisplay()))
         .type(wrap(getTypeReference(field.getToTable(), context.getNames()), field.getMultiplicity()))
         .arguments(field.accept(new ArgumentGenerator(), context))
         .build();

@@ -25,6 +25,7 @@ public class SensorsTest extends AbstractGraphqlTest {
       + "  HighTempAlert(sensorid: 1) {\n"
       + "    sensorid\n"
       + "    temp\n"
+      + "    timeSec\n"
       + "  }\n"
       + "}";
   String addReading = "mutation AddReading($sensorId: Int!, $temperature: Float!) {\n"

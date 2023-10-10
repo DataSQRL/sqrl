@@ -73,7 +73,7 @@ public class SqrlSchemaForInference {
       }
 
       sqrlTable.fields.add(new Column(field.getType(),
-          Name.system(field.getName()), Name.system(field.getName()),
+          Name.system(field.getName()),
           field.getName()));
     }
     return sqrlTable;
@@ -99,7 +99,7 @@ public class SqrlSchemaForInference {
     return new ArrayList<>(tableMap.values());
   }
   public static abstract class Field {
-    public abstract Name getId();
+    public abstract Name getName();
 
     public abstract <R, C> R accept(FieldVisitor<R, C> visitor, C context);
   }
@@ -108,7 +108,6 @@ public class SqrlSchemaForInference {
   public static class Column extends Field {
     RelDataType type;
     Name name;
-    Name id;
     String vtName;
 
     @Override
@@ -122,7 +121,7 @@ public class SqrlSchemaForInference {
   public static class Relationship extends Field {
     SQRLTable fromTable;
     SQRLTable toTable;
-    Name id;
+    Name name;
     List<FunctionParameter> parameters;
     Multiplicity multiplicity;
     JoinType joinType;
@@ -151,7 +150,7 @@ public class SqrlSchemaForInference {
 
     public Optional<Field> getField(Name name) {
       return fields.stream()
-          .filter(f->f.getId().equals(name))
+          .filter(f->f.getName().equals(name))
           .findAny();
     }
 
@@ -171,7 +170,7 @@ public class SqrlSchemaForInference {
       return StreamUtil.filterByClass(fields.stream()
                   .filter(f->
                       onlyVisible
-                          ? !f.getId().getDisplay().startsWith(ReservedName.HIDDEN_PREFIX)
+                          ? !f.getName().getDisplay().startsWith(ReservedName.HIDDEN_PREFIX)
                           : true),
               clazz)
           .collect(Collectors.toList());

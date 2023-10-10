@@ -196,7 +196,7 @@ public class SchemaBuilder implements
         InputValueDefinition def;
         if (parameter.isInternal()) {
           List<String> collect = field.getParentTable().getColumns(false).stream()
-              .map(f->f.getId().getDisplay())
+              .map(f->f.getName().getDisplay())
               .collect(Collectors.toList());
           int i = framework.getCatalogReader().nameMatcher()
               .indexOf(collect, parameter.getName());
