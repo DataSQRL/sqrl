@@ -5,33 +5,33 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "id"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "customerid"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "time"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "items"
   columns:
   - name: "productid"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
     - "not_null"
   - name: "quantity"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
     - "not_null"
   - name: "unit_price"
-    type: "FLOAT"
+    type: "DOUBLE"
     tests:
     - "not_null"
   - name: "discount"
-    type: "FLOAT"
+    type: "DOUBLE"
   tests:
   - "not_null"
 
@@ -42,7 +42,7 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "id"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "name"
@@ -54,7 +54,7 @@ columns:
   tests:
   - "not_null"
 - name: "weight_in_gram"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "type"
@@ -66,11 +66,11 @@ columns:
   tests:
   - "not_null"
 - name: "usda_id"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "updated"
-  type: "DATETIME"
+  type: "TIMESTAMP"
   tests:
   - "not_null"
 

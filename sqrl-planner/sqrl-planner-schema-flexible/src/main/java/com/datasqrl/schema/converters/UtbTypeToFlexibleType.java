@@ -3,11 +3,10 @@ package com.datasqrl.schema.converters;
 import com.datasqrl.schema.UniversalTable.Column;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BooleanType;
-import com.datasqrl.schema.type.basic.DateTimeType;
-import com.datasqrl.schema.type.basic.FloatType;
-import com.datasqrl.schema.type.basic.IntegerType;
+import com.datasqrl.schema.type.basic.TimestampType;
+import com.datasqrl.schema.type.basic.DoubleType;
+import com.datasqrl.schema.type.basic.BigIntType;
 import com.datasqrl.schema.type.basic.StringType;
-import com.datasqrl.schema.type.basic.UuidType;
 
 public class UtbTypeToFlexibleType {
 
@@ -21,20 +20,17 @@ public class UtbTypeToFlexibleType {
       case INTEGER:
       case DATE:
       case TIMESTAMP:
-        return new IntegerType();
+        return new BigIntType();
       case CHAR:
       case VARCHAR:
-        if (type.getType().getPrecision() == 32) {
-          return new UuidType();
-        }
         return new StringType();
       case DECIMAL:
       case FLOAT:
       case DOUBLE:
-        return new FloatType();
+        return new DoubleType();
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
       case TIME:
-        return new DateTimeType();
+        return new TimestampType();
       case BINARY:
       case VARBINARY:
       case INTERVAL_YEAR_MONTH:

@@ -18,11 +18,10 @@ public class BasicTypeManager {
   //TODO: replace by discovery pattern so that new datatype can be registered
   public static final BasicType[] ALL_TYPES = {
       BooleanType.INSTANCE,
-      DateTimeType.INSTANCE,
-      IntegerType.INSTANCE, FloatType.INSTANCE,
+      TimestampType.INSTANCE,
+      BigIntType.INSTANCE, DoubleType.INSTANCE,
       IntervalType.INSTANCE,
-      StringType.INSTANCE,
-      UuidType.INSTANCE
+      StringType.INSTANCE
   };
 
   public static final Map<Class, BasicType> JAVA_TO_TYPE = Arrays.stream(ALL_TYPES).flatMap(t -> {
@@ -31,9 +30,10 @@ public class BasicTypeManager {
     return s;
   }).collect(Collectors.toUnmodifiableMap(Pair::getKey, Pair::getValue));
 
-  public static final Map<String, BasicType> ALL_TYPES_BY_NAME = Arrays.stream(ALL_TYPES)
-      .collect(Collectors.toUnmodifiableMap(t -> t.getName().trim().toLowerCase(Locale.ENGLISH),
-          Function.identity()));
+  public static final Map<String, BasicType<?>> ALL_TYPES_BY_NAME = Arrays.stream(ALL_TYPES)
+      .flatMap(f->(Stream<Pair<String, BasicType<?>>>)f.getName().stream().map(n->Pair.of((String)n, f)))
+      .collect(Collectors.toUnmodifiableMap(t ->(t.getLeft()).toLowerCase(Locale.ENGLISH),
+          Pair::getRight));
 
   public static final Map<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> TYPE_COMBINATION_MATRIX = computeTypeCombinationMatrix();
 

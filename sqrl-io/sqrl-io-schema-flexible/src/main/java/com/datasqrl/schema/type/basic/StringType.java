@@ -5,6 +5,7 @@ package com.datasqrl.schema.type.basic;
 
 import com.datasqrl.schema.type.SqrlTypeVisitor;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,8 +14,8 @@ public class StringType extends AbstractBasicType<String> {
   public static final StringType INSTANCE = new StringType();
 
   @Override
-  public String getName() {
-    return "STRING";
+  public List<String> getName() {
+    return List.of("STRING");
   }
 
   @Override
@@ -38,9 +39,6 @@ public class StringType extends AbstractBasicType<String> {
 
     @Override
     public Optional<Integer> getTypeDistance(BasicType fromType) {
-      if (fromType instanceof UuidType) {
-        return Optional.of(5);
-      }
       return Optional.of(30);
     }
   }

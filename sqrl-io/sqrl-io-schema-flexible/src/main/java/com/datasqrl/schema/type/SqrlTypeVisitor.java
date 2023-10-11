@@ -20,23 +20,19 @@ public interface SqrlTypeVisitor<R, C> {
     return visitBasicType(type, context);
   }
 
-  default R visitDateTimeType(DateTimeType type, C context) {
+  default R visitTimestampType(TimestampType type, C context) {
     return visitBasicType(type, context);
   }
 
-  default R visitFloatType(FloatType type, C context) {
+  default R visitDoubleType(DoubleType type, C context) {
     return visitBasicType(type, context);
   }
 
-  default R visitIntegerType(IntegerType type, C context) {
+  default R visitBigIntType(BigIntType type, C context) {
     return visitBasicType(type, context);
   }
 
   default R visitStringType(StringType type, C context) {
-    return visitBasicType(type, context);
-  }
-
-  default R visitUuidType(UuidType type, C context) {
     return visitBasicType(type, context);
   }
 

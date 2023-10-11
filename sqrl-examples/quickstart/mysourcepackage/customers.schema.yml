@@ -4,7 +4,7 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "id"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "first_name"
@@ -24,6 +24,6 @@ columns:
 - name: "country"
   type: "STRING"
 - name: "changed_on"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"

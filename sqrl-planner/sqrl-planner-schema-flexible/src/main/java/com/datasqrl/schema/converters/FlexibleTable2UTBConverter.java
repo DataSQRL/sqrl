@@ -10,11 +10,9 @@ import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.input.FlexibleTableConverter.Visitor;
 import com.datasqrl.schema.type.Type;
-import lombok.AllArgsConstructor;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class FlexibleTable2UTBConverter implements
@@ -23,14 +21,16 @@ public class FlexibleTable2UTBConverter implements
   private final UniversalTable.ImportFactory tableFactory;
   private final SqrlTypeRelDataTypeConverter typeConverter;
   private final Deque<UniversalTable> stack = new ArrayDeque<>();
+  private final TypeFactory typeFactory;
 
   public FlexibleTable2UTBConverter(boolean hasSourceTimestamp) {
     this(TypeFactory.getTypeFactory(), hasSourceTimestamp);
   }
 
-  public FlexibleTable2UTBConverter(RelDataTypeFactory typeFactory, boolean hasSourceTimestamp) {
+  public FlexibleTable2UTBConverter(TypeFactory typeFactory, boolean hasSourceTimestamp) {
     this.tableFactory = new UniversalTable.ImportFactory(typeFactory, true, hasSourceTimestamp);
     this.typeConverter = new SqrlTypeRelDataTypeConverter(typeFactory);
+    this.typeFactory = typeFactory;
   }
 
   @Override

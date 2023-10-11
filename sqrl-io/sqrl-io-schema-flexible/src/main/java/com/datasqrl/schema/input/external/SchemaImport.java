@@ -231,7 +231,7 @@ public class SchemaImport {
     }
 
     public static String export(int arrayDepth, BasicType type) {
-      String r = type.getName();
+      String r = (String)type.getName().get(0);
       for (int i = 0; i < arrayDepth; i++) {
         r = "[" + r + "]";
       }

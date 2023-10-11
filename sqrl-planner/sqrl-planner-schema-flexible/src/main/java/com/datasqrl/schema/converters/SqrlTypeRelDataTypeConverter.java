@@ -9,12 +9,11 @@ import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.AbstractBasicType;
 import com.datasqrl.schema.type.basic.BooleanType;
-import com.datasqrl.schema.type.basic.DateTimeType;
-import com.datasqrl.schema.type.basic.FloatType;
-import com.datasqrl.schema.type.basic.IntegerType;
+import com.datasqrl.schema.type.basic.TimestampType;
+import com.datasqrl.schema.type.basic.DoubleType;
+import com.datasqrl.schema.type.basic.BigIntType;
 import com.datasqrl.schema.type.basic.IntervalType;
 import com.datasqrl.schema.type.basic.StringType;
-import com.datasqrl.schema.type.basic.UuidType;
 import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -47,18 +46,18 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
   }
 
   @Override
-  public RelDataType visitDateTimeType(DateTimeType type, Void context) {
+  public RelDataType visitTimestampType(TimestampType type, Void context) {
     return TypeFactory.makeTimestampType(typeFactory);
   }
 
   @Override
-  public RelDataType visitFloatType(FloatType type, Void context) {
+  public RelDataType visitDoubleType(DoubleType type, Void context) {
     return typeFactory.createSqlType(SqlTypeName.DOUBLE);
 //    return typeFactory.createSqlType(SqlTypeName.DECIMAL, 30, 9);
   }
 
   @Override
-  public RelDataType visitIntegerType(IntegerType type, Void context) {
+  public RelDataType visitBigIntType(BigIntType type, Void context) {
     return typeFactory.createSqlType(SqlTypeName.BIGINT);
   }
 
@@ -66,12 +65,6 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
   public RelDataType visitStringType(StringType type, Void context) {
     return typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
   }
-
-  @Override
-  public RelDataType visitUuidType(UuidType type, Void context) {
-    return TypeFactory.makeUuidType(typeFactory);
-  }
-
 
   @Override
   public RelDataType visitIntervalType(IntervalType type, Void context) {
@@ -88,27 +81,23 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
     if (datatype instanceof BasicSqlType || datatype instanceof IntervalSqlType) {
       switch (datatype.getSqlTypeName()) {
         case VARCHAR:
-          return StringType.INSTANCE;
         case CHAR:
-          if (datatype.getPrecision() == 36) {
-            return UuidType.INSTANCE;
-          }
           return StringType.INSTANCE;
         case TIMESTAMP:
         case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-          return DateTimeType.INSTANCE;
+          return TimestampType.INSTANCE;
         case BIGINT:
         case INTEGER:
         case SMALLINT:
         case TINYINT:
-          return IntegerType.INSTANCE;
+          return BigIntType.INSTANCE;
         case BOOLEAN:
           return BooleanType.INSTANCE;
         case DOUBLE:
         case DECIMAL:
         case FLOAT: // sic
         case REAL:
-          return FloatType.INSTANCE;
+          return DoubleType.INSTANCE;
         case INTERVAL_DAY:
         case INTERVAL_DAY_HOUR:
         case INTERVAL_DAY_MINUTE:
