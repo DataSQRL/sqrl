@@ -13,8 +13,8 @@ LogicalProject(__pk1$id=[$0], week=[$1], spend=[$2], saved=[$3]) hints[Timestamp
               LogicalProject(id=[$3], _time=[$4])
                 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
         LogicalProject(__pk1$_uuid=[$0], price=[$2], saving=[$3], _time=[$1])
-          LogicalAggregate(group=[{0, 4}], price=[SUM($1)], saving=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
-            LogicalProject(__pk1$_uuid=[$0], total=[-(*($8, $9), CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE))], $f2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], _idx=[$6], time=[$4])
+          LogicalAggregate(group=[{0, 4}], price=[SUM($1)], agg#1=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
+            LogicalProject(__pk1$_uuid=[$0], total=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))], $f2=[COALESCE($10, 0.0:DECIMAL(2, 1))], _idx=[$6], time=[$4])
               LogicalCorrelate(correlation=[$cor8], joinType=[inner], requiredColumns=[{5}])
                 LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
                 Uncollect
@@ -23,8 +23,8 @@ LogicalProject(__pk1$id=[$0], week=[$1], spend=[$2], saved=[$3]) hints[Timestamp
 
 >>>totals$1-lp-stream
 LogicalProject(__pk1$_uuid=[$0], price=[$2], saving=[$3], _time=[$1]) hints[TimestampHint options:[3]]
-  LogicalAggregate(group=[{0, 4}], price=[SUM($1)], saving=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
-    LogicalProject(__pk1$_uuid=[$0], total=[-(*($8, $9), CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE))], $f2=[CASE(IS NOT NULL($10), CAST($10):DOUBLE NOT NULL, 0.0:DOUBLE)], _idx=[$6], time=[$4])
+  LogicalAggregate(group=[{0, 4}], price=[SUM($1)], agg#1=[SUM($2)]) hints[TumbleAggregationHint options:[4, INSTANT, -1, 1, 0]]
+    LogicalProject(__pk1$_uuid=[$0], total=[-(*($8, $9), COALESCE($10, 0.0:DOUBLE))], $f2=[COALESCE($10, 0.0:DECIMAL(2, 1))], _idx=[$6], time=[$4])
       LogicalCorrelate(correlation=[$cor8], joinType=[inner], requiredColumns=[{5}])
         LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
         Uncollect
