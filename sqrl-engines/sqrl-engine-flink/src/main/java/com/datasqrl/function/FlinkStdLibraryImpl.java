@@ -22,7 +22,13 @@ import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLibrary {
   public static final NamePath LIB_NAME = NamePath.of("flink");
 
+  private static final List<String> toExclude = List.of(
+      FlinkSqlOperatorTable.PROCTIME.getClass().getName(), //hard reference to flink type factory causes exception
+      FlinkSqlOperatorTable.NOW.getClass().getName() //use our NOW
+  );
+
   private static List<NamespaceObject> SQL_FUNCTIONS = getAllFunctionsFromFlink();
+
 
   public FlinkStdLibraryImpl() {
     super(SQL_FUNCTIONS);
@@ -37,7 +43,7 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
     for (Field field : fields) {
       // Check if field type is SqlFunction
       if (SqlFunction.class.isAssignableFrom(field.getType())) {
-        if (field.getName().equalsIgnoreCase("NOW")) {
+        if (toExclude.contains(field.getName())) {
           continue;
         }
         functions.add(createFunctionFromFlink(field.getName()));
