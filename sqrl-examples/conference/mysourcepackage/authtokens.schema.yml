@@ -12,6 +12,6 @@ columns:
   tests:
   - "not_null"
 - name: "last_updated"
-  type: "DATETIME"
+  type: "TIMESTAMP"
   tests:
   - "not_null"
