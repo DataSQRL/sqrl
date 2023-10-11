@@ -6,7 +6,7 @@ package com.datasqrl.schema.type.basic;
 import com.datasqrl.schema.type.Type;
 import java.util.List;
 
-public interface BasicType<JavaType> extends Type, Comparable<BasicType<JavaType>> {
+public interface BasicType<JavaType> extends Type, Comparable<BasicType<?>> {
 
   //First entry is the preferred name, the remaining are for backwards compatibility
   List<String> getName();
