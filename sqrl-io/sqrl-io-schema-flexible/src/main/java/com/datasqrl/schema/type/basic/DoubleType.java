@@ -16,7 +16,7 @@ public class DoubleType extends AbstractBasicType<Double> {
   public static final DoubleType INSTANCE = new DoubleType();
 
   @Override
-  public List<String> getName() {
+  public List<String> getNames() {
     return List.of("DOUBLE", "FLOAT");
   }
 

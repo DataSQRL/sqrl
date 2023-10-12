@@ -31,7 +31,7 @@ public class BasicTypeManager {
   }).collect(Collectors.toUnmodifiableMap(Pair::getKey, Pair::getValue));
 
   public static final Map<String, BasicType<?>> ALL_TYPES_BY_NAME = Arrays.stream(ALL_TYPES)
-      .flatMap(type->type.getName().stream().map(name->Pair.of(name, type)))
+      .flatMap(type->type.getNames().stream().map(name->Pair.of(name, type)))
       .collect(Collectors.toUnmodifiableMap(t ->(t.getLeft()).toLowerCase(Locale.ENGLISH),
           Pair::getRight));
 

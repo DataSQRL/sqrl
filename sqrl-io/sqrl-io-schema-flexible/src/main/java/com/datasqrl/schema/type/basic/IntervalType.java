@@ -14,7 +14,7 @@ public class IntervalType extends AbstractBasicType<Duration> {
   public static final IntervalType INSTANCE = new IntervalType();
 
   @Override
-  public List<String> getName() {
+  public List<String> getNames() {
     return List.of("INTERVAL");
   }
 
