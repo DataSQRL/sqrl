@@ -13,6 +13,8 @@ import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.java.typeutils.MapTypeInfo;
+import org.apache.flink.api.java.typeutils.ObjectArrayTypeInfo;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 
 @Value
@@ -52,14 +54,34 @@ public class FlinkTypeInfoSchemaGenerator implements
       case TIME:
         return BasicTypeInfo.DATE_TYPE_INFO;
       case ARRAY:
-        return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
-
-//        throw new RuntimeException("primitive arrays not yet supported");
+        switch (datatype.getComponentType().getSqlTypeName()) {
+          case BOOLEAN:
+            return BasicArrayTypeInfo.BOOLEAN_ARRAY_TYPE_INFO;
+          case INTEGER:
+            return BasicArrayTypeInfo.INT_ARRAY_TYPE_INFO;
+          case BIGINT:
+            return BasicArrayTypeInfo.LONG_ARRAY_TYPE_INFO;
+          case FLOAT:
+            return BasicArrayTypeInfo.FLOAT_ARRAY_TYPE_INFO;
+          case DOUBLE:
+            return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
+          case CHAR:
+            return BasicArrayTypeInfo.CHAR_ARRAY_TYPE_INFO;
+          case VARCHAR:
+            return BasicArrayTypeInfo.STRING_ARRAY_TYPE_INFO;
+          case BINARY:
+            return BasicArrayTypeInfo.BYTE_ARRAY_TYPE_INFO;
+          default:
+            return ObjectArrayTypeInfo.getInfoFor(convertBasic(datatype.getComponentType()));
+        }
       case ROW:
         return new RowTypeInfo(datatype.getFieldList().stream()
             .map(f->convertBasic(f.getType()))
             .toArray(TypeInformation[]::new));
       case TIME_WITH_LOCAL_TIME_ZONE:
+      case MAP:
+        return new MapTypeInfo(convertBasic(datatype.getKeyType()),
+            convertBasic(datatype.getValueType()));
       case BINARY:
       case VARBINARY:
       case GEOMETRY:
