@@ -434,26 +434,7 @@ public class QueryPlanner {
   }
 
   public SqlUserDefinedTableFunction getTableFunction(List<String> path) {
-    List<SqlOperator> result = new ArrayList<>();
-    String tableFunctionName = String.join(".", path);
-    //get latest function
-    if (tableFunctionName.isEmpty()) {
-      return null;
-    }
-    String latestVersionName = SqrlNameMatcher.getLatestVersion(framework.getNameCanonicalizer(),
-        schema.plus().getFunctionNames(), tableFunctionName);
-    if (latestVersionName == null) {
-      //todo return optional
-      return null;
-    }
-    operatorTable.lookupOperatorOverloads(new SqlIdentifier(List.of(latestVersionName), SqlParserPos.ZERO),
-        SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, result, catalogReader.nameMatcher());
-
-    if (result.size() != 1) {
-      return null;
-    }
-
-    return (SqlUserDefinedTableFunction)result.get(0);
+    return catalogReader.getTableFunction(path);
   }
 
   public RelNode expandMacros(RelNode relNode) {
