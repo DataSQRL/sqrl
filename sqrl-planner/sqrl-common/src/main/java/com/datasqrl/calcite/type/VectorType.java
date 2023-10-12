@@ -72,6 +72,11 @@ public class VectorType extends BridgingFlinkType implements PrimitiveType {
   }
 
   @Override
+  protected String getDigestName() {
+    return "vector";
+  }
+
+  @Override
   public TypeInformation getPhysicalTypeInformation() {
     return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
   }

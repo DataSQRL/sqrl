@@ -1,38 +1,33 @@
 
 package com.datasqrl.calcite.type;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
-
 import com.datasqrl.VectorFunctions;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.flink.FlinkConverter;
-import java.util.Optional;
-import org.apache.calcite.avatica.util.ByteString;
-import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
-import org.apache.calcite.rel.type.RelDataTypeSystem;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.runtime.Geometries;
-import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.sql.type.IntervalSqlType;
-
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
+import org.apache.calcite.avatica.util.ByteString;
+import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
+import org.apache.calcite.rel.type.RelDataTypeSystem;
+import org.apache.calcite.runtime.Geometries;
+import org.apache.calcite.sql.type.BasicSqlType;
+import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.UnresolvedDataType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
+  @Getter
   private List<ForeignType> types = new ArrayList<>();
 
   public TypeFactory() {
@@ -41,14 +36,18 @@ public class TypeFactory extends JavaTypeFactoryImpl {
   }
 
   private void registerDefaultTypes() {
-    UnresolvedDataType unresovledVectorType = DataTypes.of(FlinkVectorType.class);
-    DataType flinkDataType = unresovledVectorType.toDataType(FlinkConverter.catalogManager.getDataTypeFactory());
-    RelDataType flinkRelType = FlinkConverter.flinkTypeFactory
-        .createFieldTypeFromLogicalType(flinkDataType.getLogicalType());
-
-    VectorType vectorType = new VectorType(flinkDataType, flinkRelType,
+    Pair<DataType, RelDataType> vector = createTypeFromClass(FlinkVectorType.class);
+    VectorType vectorType = new VectorType(vector.getLeft(), vector.getRight(),
         VectorFunctions.VEC_TO_DOUBLE, this);
     registerType(vectorType);
+  }
+
+  private Pair<DataType, RelDataType> createTypeFromClass(Class clazz) {
+    UnresolvedDataType unresolvedVectorType = DataTypes.of(clazz);
+    DataType flinkDataType = unresolvedVectorType.toDataType(FlinkConverter.catalogManager.getDataTypeFactory());
+    RelDataType flinkRelType = FlinkConverter.flinkTypeFactory
+        .createFieldTypeFromLogicalType(flinkDataType.getLogicalType());
+    return Pair.of(flinkDataType, flinkRelType);
   }
 
   /**
@@ -82,7 +81,7 @@ public class TypeFactory extends JavaTypeFactoryImpl {
     return new SqrlTypeSystem();
   }
 
-  public static RelDataTypeFactory getTypeFactory() {
+  public static TypeFactory getTypeFactory() {
     return new TypeFactory();
   }
 

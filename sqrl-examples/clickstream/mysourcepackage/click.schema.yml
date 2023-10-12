@@ -8,7 +8,7 @@ columns:
   tests:
   - "not_null"
 - name: "timestamp"
-  type: "DATETIME"
+  type: "TIMESTAMP"
   tests:
   - "not_null"
 - name: "userid"

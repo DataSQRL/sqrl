@@ -1,6 +1,7 @@
 package com.datasqrl.util;
 
 import com.datasqrl.TimeFunctions.TimeWindowBucketFunction;
+import com.datasqrl.function.FlinkStdLibraryImpl;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.StdStringLibraryImpl;
 import com.datasqrl.function.StdTimeLibraryImpl;
@@ -59,7 +60,7 @@ public class GenerateFunctionDocumentation {
   public static void main(String[] args) {
     String openAPIKey = args.length>0?args[0]:"";
     GenerateFunctionDocumentation docs = new GenerateFunctionDocumentation(openAPIKey);
-    System.out.println(docs.generateFunctionMarkdownDocumentation(libraries.get(0)));
+    System.out.println(docs.generateFunctionMarkdownDocumentation(libraries.get(2)));
     docs.saveSQLFunctionDocs();
     System.out.println("Number of API calls: "  + docs.numAPICalls);
   }
@@ -163,7 +164,8 @@ public class GenerateFunctionDocumentation {
 
   public static List<LibrarySpec> libraries = List.of(
     new LibrarySpec(new StdStringLibraryImpl(), false, true),
-    new LibrarySpec(new StdTimeLibraryImpl(), true, false)
+    new LibrarySpec(new StdTimeLibraryImpl(), true, false),
+    new LibrarySpec(new FlinkStdLibraryImpl(), true, false)
   );
 
 }

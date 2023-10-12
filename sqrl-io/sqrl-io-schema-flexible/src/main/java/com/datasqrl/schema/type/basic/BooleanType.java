@@ -5,6 +5,7 @@ package com.datasqrl.schema.type.basic;
 
 import com.datasqrl.schema.type.SqrlTypeVisitor;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -25,8 +26,8 @@ public class BooleanType extends AbstractBasicType<Boolean> {
   public static final BooleanType INSTANCE = new BooleanType();
 
   @Override
-  public String getName() {
-    return "BOOLEAN";
+  public List<String> getName() {
+    return List.of("BOOLEAN");
   }
 
   @Override
@@ -55,7 +56,7 @@ public class BooleanType extends AbstractBasicType<Boolean> {
 
     @Override
     public Optional<Integer> getTypeDistance(BasicType fromType) {
-      if (fromType instanceof IntegerType) {
+      if (fromType instanceof BigIntType) {
         return Optional.of(80);
       }
       return Optional.empty();

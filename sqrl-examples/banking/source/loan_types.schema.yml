@@ -4,7 +4,7 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "id"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "name"
@@ -16,26 +16,26 @@ columns:
   tests:
   - "not_null"
 - name: "interest_rate"
-  type: "FLOAT"
+  type: "DOUBLE"
   tests:
   - "not_null"
 - name: "max_amount"
-  type: "FLOAT"
+  type: "DOUBLE"
   tests:
   - "not_null"
 - name: "min_amount"
-  type: "FLOAT"
+  type: "DOUBLE"
   tests:
   - "not_null"
 - name: "max_duration"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "min_duration"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "updated_at"
-  type: "DATETIME"
+  type: "TIMESTAMP"
   tests:
   - "not_null"

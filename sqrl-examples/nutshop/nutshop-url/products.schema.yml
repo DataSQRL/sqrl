@@ -3,7 +3,7 @@ schema_version: 1
 partial_schema: false
 columns:
   - name: "id"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
       - "not_null"
   - name: "name"
@@ -15,7 +15,7 @@ columns:
     tests:
       - "not_null"
   - name: "weight_in_gram"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
       - "not_null"
   - name: "type"
@@ -27,10 +27,10 @@ columns:
     tests:
       - "not_null"
   - name: "usda_id"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
       - "not_null"
   - name: "updated"
-    type: "DATETIME"
+    type: "TIMESTAMP"
     tests:
       - "not_null"

@@ -1,29 +1,27 @@
 ---
-name: "customers"
+name: "emailtemplates"
 schema_version: "1"
 partial_schema: false
 columns:
 - name: "id"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "first_name"
   type: "STRING"
   tests:
   - "not_null"
-- name: "last_name"
+- name: "last_updated"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"
+- name: "title"
   type: "STRING"
   tests:
   - "not_null"
-- name: "email"
+- name: "fromEmail"
   type: "STRING"
   tests:
   - "not_null"
-- name: "ip_address"
+- name: "textBody"
   type: "STRING"
-- name: "country"
-  type: "STRING"
-- name: "changed_on"
-  type: "BIGINT"
   tests:
   - "not_null"
+- name: "toEmail"
+  type: "STRING"

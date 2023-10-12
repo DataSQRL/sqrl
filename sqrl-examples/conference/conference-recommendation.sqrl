@@ -7,7 +7,7 @@ IMPORT text.*;
 IMPORT vector.*;
 IMPORT time.parseTimestamp;
 -- clean up event data and compute embedding [2]
-Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS INT),0);
+Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS BIGINT),0);
 Events.full_text := concat(title,'\n',abstract);
 Events.startTime := concat(trim(regexExtract(date, '^[^-]*')),' ',trim(regexExtract(time, '\d\d?:\d\d\s(AM|PM)')));
 Events.startTimestamp := parseTimestamp(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z')

@@ -14,10 +14,10 @@ LogicalProject(_uuid=[$0], cast3=[1:DOUBLE], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>x$4
-LogicalProject(_uuid=[$0], cast4=[1:BIGINT], _time=[$4])
+LogicalProject(_uuid=[$0], cast4=[1], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 
 >>>x$5
-LogicalProject(_uuid=[$0], cast5=[1970-01-01 00:00:00.001:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)], _time=[$4])
+LogicalProject(_uuid=[$0], cast5=[1970-01-01 00:00:00.001:TIMESTAMP(6)], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 

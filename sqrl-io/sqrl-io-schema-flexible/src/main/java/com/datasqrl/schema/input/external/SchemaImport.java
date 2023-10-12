@@ -218,7 +218,7 @@ public class SchemaImport {
         depth++;
         basicType = basicType.substring(1, basicType.length() - 1);
       }
-      BasicType type = BasicTypeManager.getTypeByName(basicType);
+      BasicType<?> type = BasicTypeManager.getTypeByName(basicType);
       if (type == null) {
         return null;
       }
@@ -227,11 +227,11 @@ public class SchemaImport {
 
     public static String export(FlexibleFieldSchema.FieldType ft) {
       Preconditions.checkArgument(ft.getType() instanceof BasicType);
-      return export(ft.getArrayDepth(), (BasicType) ft.getType());
+      return export(ft.getArrayDepth(), (BasicType<?>) ft.getType());
     }
 
-    public static String export(int arrayDepth, BasicType type) {
-      String r = type.getName();
+    public static String export(int arrayDepth, BasicType<?> type) {
+      String r = type.getName().get(0);
       for (int i = 0; i < arrayDepth; i++) {
         r = "[" + r + "]";
       }
