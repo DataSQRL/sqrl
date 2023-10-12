@@ -14,7 +14,7 @@ public class StringType extends AbstractBasicType<String> {
   public static final StringType INSTANCE = new StringType();
 
   @Override
-  public List<String> getName() {
+  public List<String> getNames() {
     return List.of("STRING");
   }
 
