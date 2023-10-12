@@ -17,12 +17,14 @@ import org.apache.calcite.adapter.enumerable.EnumerableRel;
 import org.apache.calcite.adapter.enumerable.EnumerableRelImplementor;
 import org.apache.calcite.adapter.enumerable.EnumerableRules;
 import org.apache.calcite.jdbc.CalcitePrepare;
+import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.linq4j.tree.ClassDeclaration;
 import org.apache.calcite.linq4j.tree.Expressions;
 import org.apache.calcite.plan.*;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
+import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -42,6 +44,8 @@ import org.apache.calcite.runtime.Bindable;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -185,6 +189,30 @@ public class QueryPlanner {
     return root;
   }
 
+  /**
+   * Helper function to parse a data type from a string using calcite's full
+   * type definition syntax.
+   */
+  @SneakyThrows
+  public static RelDataType parseDatatype(String datatype) {
+    TypeFactory typeFactory = TypeFactory.getTypeFactory();
+    SqlCall sqlNode = (SqlCall) SqlParser.create(
+        String.format("CAST(null AS %s)", datatype)).parseExpression();
+
+    SqrlSqlValidator validator = new SqrlSqlValidator(
+        SqlStdOperatorTable.instance(),
+        new CalciteCatalogReader(CalciteSchema.createRootSchema(false),
+            List.of(), typeFactory, null),
+        typeFactory,
+        SqrlConfigurations.sqlValidatorConfig);
+
+    validator.validate(sqlNode);
+
+    SqlDataTypeSpec typeSpec = (SqlDataTypeSpec) sqlNode.getOperandList().get(1);
+
+    RelDataType relType = typeSpec.deriveType(validator);
+    return relType;
+  }
   /**
    * Plans a sql statement against a relnode
    */

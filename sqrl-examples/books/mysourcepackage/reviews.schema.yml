@@ -8,7 +8,7 @@ columns:
   tests:
   - "not_null"
 - name: "book_id"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "review_id"
@@ -16,7 +16,7 @@ columns:
   tests:
   - "not_null"
 - name: "rating"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "review_text"
@@ -40,10 +40,10 @@ columns:
   tests:
   - "not_null"
 - name: "n_votes"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "n_comments"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"

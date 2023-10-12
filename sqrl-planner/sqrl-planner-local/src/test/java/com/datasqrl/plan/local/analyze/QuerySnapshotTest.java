@@ -114,14 +114,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void accessTableFunctionTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("X(@id: Int) := SELECT * FROM Customer WHERE customerid = @id");
+    builder.add("X(@id: BigInt) := SELECT * FROM Customer WHERE customerid = @id");
     validateScript(builder.getScript());
   }
 
   @Test
   public void computeTableFunctionTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("X(@id: Int) := SELECT *, 1 AS x FROM Customer WHERE customerid = @id");
+    builder.add("X(@id: bigint) := SELECT *, 1 AS x FROM Customer WHERE customerid = @id");
     validateScript(builder.getScript());
   }
 
@@ -1097,9 +1097,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScript("IMPORT ecommerce-data.Orders;"
         + "X := SELECT CAST(1 AS String) AS cast1 From Orders;"
         + "X := SELECT CAST(1 AS Boolean) AS cast2 From Orders;"
-        + "X := SELECT CAST(1 AS Float) AS cast3 From Orders;"
+        + "X := SELECT CAST(1 AS Double) AS cast3 From Orders;"
         + "X := SELECT CAST(1 AS Int) AS cast4 From Orders;"
-        + "X := SELECT CAST(1 AS DateTime) AS cast5 From Orders;");
+        + "X := SELECT CAST(1 AS Timestamp) AS cast5 From Orders;");
   }
 
   @Test

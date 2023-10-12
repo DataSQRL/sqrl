@@ -3,7 +3,7 @@ schema_version: 1
 partial_schema: false
 columns:
   - name: "customerid"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
       - "not_null"
   - name: "email"
@@ -15,6 +15,6 @@ columns:
     tests:
       - "not_null"
   - name: "lastUpdated"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
       - "not_null"

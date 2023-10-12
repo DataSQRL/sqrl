@@ -50,8 +50,10 @@ public abstract class BridgingFlinkType extends AbstractSqlType implements Forei
 
   @Override
   public void generateTypeString(StringBuilder stringBuilder, boolean b) {
-    stringBuilder.append("vector");
+    stringBuilder.append(this.getDigestName());
   }
+
+  protected abstract String getDigestName();
 
   @Override
   public boolean equalsSansFieldNames(RelDataType that) {

@@ -8,7 +8,7 @@ IMPORT text.*;
 IMPORT vector.*;
 IMPORT time.parseTimestamp;
 
-Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS INT),0);
+Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS BIGINT),0);
 
 Events.full_text := concat(title,'\n',abstract);
 Events.embedding := asciiTextTestEmbed(full_text);

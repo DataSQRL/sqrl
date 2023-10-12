@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.schema.type.basic.DateTimeType;
+import com.datasqrl.schema.type.basic.TimestampType;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -22,9 +22,9 @@ public class BasicTypeTest {
     String[] resultTimes = {"2022-07-15T17:15:30Z","2022-07-15T17:15:30.543Z", "2022-07-15T10:15:30Z", "2011-12-03T09:15:30Z",      "2011-12-03T18:15:30Z"};
     for (int i = 0; i < timeStrs.length; i++) {
       String timeStr = timeStrs[i];
-      assertTrue(DateTimeType.INSTANCE.conversion().detectType(timeStr),timeStr);
+      assertTrue(TimestampType.INSTANCE.conversion().detectType(timeStr),timeStr);
       ErrorCollector errors = ErrorCollector.root();
-      Optional<Instant> result = DateTimeType.INSTANCE.conversion().parseDetected(timeStr, errors);
+      Optional<Instant> result = TimestampType.INSTANCE.conversion().parseDetected(timeStr, errors);
       assertTrue(result.isPresent());
       assertNotNull(result.get());
       assertEquals(Instant.parse(resultTimes[i]),result.get());

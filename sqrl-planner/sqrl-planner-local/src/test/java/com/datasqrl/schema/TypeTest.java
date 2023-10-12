@@ -37,13 +37,13 @@ public class TypeTest {
 
   @Test
   public void testBasicTypes() {
-    assertEquals(7, BasicTypeManager.ALL_TYPES.length);
-    assertEquals(FloatType.INSTANCE,
-        BasicTypeManager.combine(IntegerType.INSTANCE, FloatType.INSTANCE, 10).get());
+    assertEquals(6, BasicTypeManager.ALL_TYPES.length);
+    assertEquals(DoubleType.INSTANCE,
+        BasicTypeManager.combine(BigIntType.INSTANCE, DoubleType.INSTANCE, 10).get());
     assertEquals(StringType.INSTANCE,
-        BasicTypeManager.combine(IntegerType.INSTANCE, DateTimeType.INSTANCE, 50).get());
+        BasicTypeManager.combine(BigIntType.INSTANCE, TimestampType.INSTANCE, 50).get());
     assertEquals(IntervalType.INSTANCE,
-        BasicTypeManager.combine(IntegerType.INSTANCE, IntervalType.INSTANCE, 40).get());
+        BasicTypeManager.combine(BigIntType.INSTANCE, IntervalType.INSTANCE, 40).get());
   }
 
 }

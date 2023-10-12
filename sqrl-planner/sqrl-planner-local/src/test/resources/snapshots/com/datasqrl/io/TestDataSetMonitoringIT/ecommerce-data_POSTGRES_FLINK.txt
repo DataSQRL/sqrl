@@ -5,7 +5,7 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "productid"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "name"
@@ -28,33 +28,33 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "id"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "customerid"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "time"
-  type: "DATETIME"
+  type: "TIMESTAMP"
   tests:
   - "not_null"
 - name: "entries"
   columns:
   - name: "productid"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
     - "not_null"
   - name: "quantity"
-    type: "INTEGER"
+    type: "BIGINT"
     tests:
     - "not_null"
   - name: "unit_price"
-    type: "FLOAT"
+    type: "DOUBLE"
     tests:
     - "not_null"
   - name: "discount"
-    type: "FLOAT"
+    type: "DOUBLE"
   tests:
   - "not_null"
 
@@ -65,7 +65,7 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "customerid"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "email"
@@ -77,7 +77,7 @@ columns:
   tests:
   - "not_null"
 - name: "lastUpdated"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 

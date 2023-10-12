@@ -12,7 +12,7 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
 
   @Override
   public int hashCode() {
-    return getName().hashCode();
+    return getName().get(0).hashCode();
   }
 
   @Override
@@ -30,11 +30,11 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
 
   @Override
   public String toString() {
-    return getName();
+    return getName().get(0);
   }
 
-  public int compareTo(BasicType o) {
-    return getName().compareTo(o.getName());
+  public int compareTo(BasicType<?> o) {
+    return getName().get(0).compareTo(o.getName().get(0));
   }
 
   public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
