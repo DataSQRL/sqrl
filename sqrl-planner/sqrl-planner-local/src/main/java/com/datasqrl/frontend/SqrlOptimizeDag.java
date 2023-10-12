@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
@@ -55,7 +56,7 @@ public class SqrlOptimizeDag extends SqrlPlan {
 
   private Map<String, UserDefinedFunction> extractFlinkFunctions(OperatorTable sqrlOperatorTable) {
     Map<String, UserDefinedFunction> fncs = new HashMap<>();
-    for (Map.Entry<List<String>, SqlFunction> fnc : sqrlOperatorTable.getUdfs().entrySet()) {
+    for (Map.Entry<List<String>, SqlOperator> fnc : sqrlOperatorTable.getUdfs().entrySet()) {
       if (fnc.getValue() instanceof BridgingFunction) {
         FunctionDefinition definition = ((BridgingFunction) fnc.getValue()).getDefinition();
         if (definition instanceof UserDefinedFunction) {

@@ -8,8 +8,8 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 import java.util.*;
 
 public class OperatorTable implements SqlOperatorTable {
-  private final Map<List<String>, SqlFunction> udf = new HashMap<>();
-  private final Map<List<String>, SqlFunction> internalNames = new HashMap<>();
+  private final Map<List<String>, SqlOperator> udf = new HashMap<>();
+  private final Map<List<String>, SqlOperator> internalNames = new HashMap<>();
   private final NameCanonicalizer nameCanonicalizer;
   private final SqlOperatorTable[] chain;
   private final Map<String, SqlFunction> validatorFncs = new HashMap<>();
@@ -28,7 +28,7 @@ public class OperatorTable implements SqlOperatorTable {
     }
 
     if (list.isEmpty()) {
-      SqlFunction fn = sqlNameMatcher.get(udf, List.of(), List.of(sqlIdentifier.getSimple()));
+      SqlOperator fn = sqlNameMatcher.get(udf, List.of(), List.of(sqlIdentifier.getSimple()));
       if (fn != null) {
         list.add(fn);
       }
@@ -36,7 +36,7 @@ public class OperatorTable implements SqlOperatorTable {
 
     //Also check the function name since calcite will convert to their function name
     if (list.isEmpty()) {
-      SqlFunction fn = sqlNameMatcher.get(internalNames, List.of(), List.of(sqlIdentifier.getSimple()));
+      SqlOperator fn = sqlNameMatcher.get(internalNames, List.of(), List.of(sqlIdentifier.getSimple()));
       if (fn != null) {
         list.add(fn);
       }
@@ -57,7 +57,7 @@ public class OperatorTable implements SqlOperatorTable {
     return new ArrayList<>(this.udf.values());
   }
 
-  public void addFunction(String canonicalName, SqlFunction function) {
+  public void addFunction(String canonicalName, SqlOperator function) {
     if (this.udf.containsKey(List.of(nameCanonicalizer.getCanonical(canonicalName)))) {
       throw new RuntimeException(String.format("Function already exists: %s", canonicalName));
     }
@@ -65,11 +65,12 @@ public class OperatorTable implements SqlOperatorTable {
     this.internalNames.put(List.of(function.getName()), function);
   }
 
-  public Map<List<String>, SqlFunction> getUdfs() {
+  public Map<List<String>, SqlOperator> getUdfs() {
     return udf;
   }
 
   public void addPlanningFnc(List<SqlFunction> fncs) {
     fncs.forEach(f->this.validatorFncs.put(f.getName(), f));
   }
+
 }

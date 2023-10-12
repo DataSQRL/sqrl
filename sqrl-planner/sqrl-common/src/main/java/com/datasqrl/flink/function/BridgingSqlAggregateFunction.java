@@ -20,42 +20,19 @@ package com.datasqrl.flink.function;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.function.RuleTransform;
-import com.datasqrl.function.FunctionTranslationMap;
-import com.datasqrl.util.ReflectionUtil;
-import java.lang.reflect.Method;
 import java.util.List;
 import lombok.Getter;
-import org.apache.calcite.adapter.enumerable.AggImplementor;
-import org.apache.calcite.adapter.enumerable.CallImplementor;
-import org.apache.calcite.adapter.enumerable.NullPolicy;
-import org.apache.calcite.adapter.enumerable.ReflectiveCallNotNullImplementor;
-import org.apache.calcite.adapter.enumerable.RexImpTable;
-import org.apache.calcite.adapter.enumerable.RexImpTable.UserDefinedAggReflectiveImplementor;
 import org.apache.calcite.plan.RelRule;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.AggregateFunction;
-import org.apache.calcite.schema.Function;
-import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.ImplementableAggFunction;
-import org.apache.calcite.schema.ImplementableFunction;
-import org.apache.calcite.schema.impl.AggregateFunctionImpl;
-import org.apache.calcite.schema.impl.ReflectiveFunctionBase;
-import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlOperandMetadata;
-import org.apache.calcite.sql.type.SqlOperandTypeChecker;
 import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.validate.SqlUserDefinedAggFunction;
-import org.apache.calcite.sql.validate.SqlUserDefinedFunction;
 import org.apache.calcite.util.Optionality;
-import org.apache.calcite.util.ReflectUtil;
-import org.apache.calcite.util.Static;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
@@ -66,17 +43,16 @@ import org.apache.flink.table.types.inference.TypeInference;
  * Bridges a Flink function to calcite
  */
 public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction implements BridgingFunction, RuleTransform {
-  private final String flinkName;
   private final DataTypeFactory dataTypeFactory;
   private final FlinkTypeFactory flinkTypeFactory;
   private final RexFactory rexFactory;
   @Getter
-  private final org.apache.flink.table.functions.AggregateFunction definition;
+  private final FunctionDefinition definition;
   private final TypeInference typeInference;
 
-  public BridgingSqlAggregateFunction(String name, String flinkName, DataTypeFactory dataTypeFactory,
+  public BridgingSqlAggregateFunction(String name, DataTypeFactory dataTypeFactory,
                                    FlinkTypeFactory flinkTypeFactory, RexFactory rexFactory, SqlKind kind,
-                                   org.apache.flink.table.functions.AggregateFunction definition, TypeInference typeInference) {
+      FunctionDefinition definition, TypeInference typeInference) {
     super(
         new SqlIdentifier(name, SqlParserPos.ZERO),
         kind,
@@ -87,8 +63,6 @@ public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction impl
         false,
         false,
         Optionality.IGNORED);
-    this.flinkName = flinkName;
-
     this.dataTypeFactory = dataTypeFactory;
     this.flinkTypeFactory = flinkTypeFactory;
     this.rexFactory = rexFactory;
@@ -121,8 +95,7 @@ public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction impl
     return definition.isDeterministic();
   }
 
-
-  private static AggregateFunction createCallableFlinkFunction(FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, org.apache.flink.table.functions.AggregateFunction definition) {
+  private static AggregateFunction createCallableFlinkFunction(FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, FunctionDefinition definition) {
 //    Class clazz = definition.getClass();
 //    Method initMethod = ReflectionUtil.findMethod(clazz, "createAccumulator");
 //    Method addMethod = ReflectionUtil.findMethod(clazz, "accumulate");

@@ -1103,6 +1103,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void testStrToMap() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "IMPORT string.*;\n"
+        + "Orders.map := strToMap('x=y')");
+
+  }
+  @Test
   public void castExpression() {
     validateScript("IMPORT ecommerce-data.Orders;"
         + "Orders.x := CAST(1 AS String);");

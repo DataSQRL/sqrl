@@ -4,16 +4,17 @@ import com.datasqrl.canonicalizer.Name;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
-import org.apache.calcite.sql.SqlFunction;
+import org.apache.flink.table.functions.BuiltInFunctionDefinition;
 
 public class FunctionUtil {
 
-  public static Optional<SqlFunction> getFunctionByNameFromClass(Class clazz, String name) {
+  public static <T> Optional<T> getFunctionByNameFromClass(Class clazz,
+      Class<T> assignableFrom, String name) {
     for (Field field : clazz.getDeclaredFields()) {
       try {
-        if (Modifier.isStatic(field.getModifiers()) && SqlFunction.class.isAssignableFrom(field.getType())) {
+        if (Modifier.isStatic(field.getModifiers()) && assignableFrom.isAssignableFrom(field.getType())) {
           if (field.getName().equalsIgnoreCase(name)) {
-            return Optional.of((SqlFunction)field.get(null));
+            return Optional.of((T)field.get(null));
           }
         }
       } catch (IllegalAccessException e) {

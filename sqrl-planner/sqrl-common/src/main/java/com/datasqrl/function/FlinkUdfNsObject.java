@@ -10,7 +10,6 @@ import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Value
 public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinition> {
@@ -20,11 +19,10 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
 
   @Override
   public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
-    FlinkConverter flinkConverter = new FlinkConverter(framework.getQueryPlanner().getRexBuilder(),
-        framework.getQueryPlanner().getTypeFactory());
+    FlinkConverter flinkConverter = new FlinkConverter(framework.getQueryPlanner().getTypeFactory());
 
     SqlFunction convertedFunction = flinkConverter
-        .convertFunction(objectName.orElse(((SqrlFunction) function).getFunctionName().getDisplay()),
+        .convertFunction(
             ((SqrlFunction) function).getFunctionName().getDisplay(), function);
 
     framework.getSqrlOperatorTable()

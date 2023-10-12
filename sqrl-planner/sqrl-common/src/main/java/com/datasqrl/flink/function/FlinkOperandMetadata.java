@@ -3,6 +3,7 @@ package com.datasqrl.flink.function;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.type.ForeignType;
 import com.datasqrl.calcite.type.TypeFactory;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.prepare.CalciteCatalogReader;
@@ -27,6 +28,7 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.functions.inference.ArgumentCountRange;
+import org.apache.flink.table.types.inference.ArgumentCount;
 import org.apache.flink.table.types.inference.Signature;
 import org.apache.flink.table.types.inference.TypeInference;
 

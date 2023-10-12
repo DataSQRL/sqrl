@@ -1,6 +1,7 @@
 package com.datasqrl.function;
 
 import static com.datasqrl.NamespaceObjectUtil.createFunctionFromFlink;
+import static com.datasqrl.NamespaceObjectUtil.createFunctionFromStdOpTable;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.NamespaceObject;
@@ -11,11 +12,11 @@ import java.util.List;
 public class StdStringLibraryImpl extends AbstractFunctionModule implements StdLibrary {
 
   private static final NamePath LIB_NAME = NamePath.of("string");
-  private static List<NamespaceObject> stringFunctions = List.of(
+  private static List<NamespaceObject> stringFunctions = java.util.List.of(
       createFunctionFromFlink("length", "CHAR_LENGTH"),
       createFunctionFromFlink("upper", "UPPER"),
       createFunctionFromFlink("position", "POSITION"),
-      createFunctionFromFlink("trim", "TRIM"),
+      createFunctionFromStdOpTable("trim"), //flink's trim fnc has addl args
       createFunctionFromFlink("ltrim", "LTRIM"),
       createFunctionFromFlink("rtrim", "RTRIM"),
       createFunctionFromFlink("repeat", "REPEAT"),
@@ -24,8 +25,8 @@ public class StdStringLibraryImpl extends AbstractFunctionModule implements StdL
       createFunctionFromFlink("substring", "SUBSTRING"),
       createFunctionFromFlink("replace", "REPLACE"),
       createFunctionFromFlink("regexExtract", "REGEXP_EXTRACT"),
-      createFunctionFromFlink("initcap", "INITCAP"),
-      createFunctionFromFlink("concat", "CONCAT_FUNCTION"),
+      createFunctionFromFlink("initcap", "INIT_CAP"),
+      createFunctionFromFlink("concat", "CONCAT"),
       createFunctionFromFlink("concatWS", "CONCAT_WS"),
       createFunctionFromFlink("lpad", "LPAD"),
       createFunctionFromFlink("rpad", "RPAD"),

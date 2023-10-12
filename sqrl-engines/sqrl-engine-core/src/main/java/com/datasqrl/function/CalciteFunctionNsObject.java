@@ -8,11 +8,12 @@ import java.net.URL;
 import java.util.Optional;
 import lombok.Value;
 import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlOperator;
 
 @Value
-public class CalciteFunctionNsObject implements FunctionNamespaceObject<SqlFunction> {
+public class CalciteFunctionNsObject implements FunctionNamespaceObject<SqlOperator> {
   Name name;
-  SqlFunction function;
+  SqlOperator function;
 
   String sqlName;
 
