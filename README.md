@@ -22,7 +22,7 @@ Users.spending := SELECT startOfMonth(p.time) AS month,
          FROM @.purchases p JOIN p.totals t
          GROUP BY month ORDER BY month DESC;
 ```
-- Run `docker run -it -p 8888:8888 -v $PWD:/build datasqrl/datasqrl-cmd run seedshop.sqrl` 
+- Run `docker run -it -v $PWD:/build datasqrl/cmd compile seedshop.sqrl;(cd build/deploy; docker compose up)` 
 
 This compiles the script into a data pipeline and executes the data pipeline against Apache Flink, Postgres, and a Vertx API server. You can inspect the resulting GraphQL API by navigating your browser to [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) and run GraphQL queries against the API. Hit `CTRL-C` to terminate the data pipeline when you are done. 
 
@@ -70,5 +70,5 @@ We built DataSQRL because we got tired of the endless plumbing, data mapping, an
 
 We also love [code contributions](https://www.datasqrl.com/docs/dev/contribute). A great place to start is contributing a data source/sink implementation, data format, or schema so that DataSQRL can cover more use cases.
 
-For more details, checkout [`CONTRIBUTING.md`](CONTRIBUTING.md) as well as the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+For more details, checkout [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
