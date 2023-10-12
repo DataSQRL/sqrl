@@ -194,25 +194,18 @@ public class QueryPlanner {
    * type definition syntax.
    */
   @SneakyThrows
-  public static RelDataType parseDatatype(String datatype) {
-    TypeFactory typeFactory = TypeFactory.getTypeFactory();
-    SqlCall sqlNode = (SqlCall) SqlParser.create(
-        String.format("CAST(null AS %s)", datatype)).parseExpression();
+  public RelDataType parseDatatype(String datatype) {
+    SqlCall sqlNode = (SqlCall) SqlParser.create(String.format("CAST(null AS %s)", datatype))
+        .parseExpression();
 
-    SqrlSqlValidator validator = new SqrlSqlValidator(
-        SqlStdOperatorTable.instance(),
-        new CalciteCatalogReader(CalciteSchema.createRootSchema(false),
-            List.of(), typeFactory, null),
-        typeFactory,
-        SqrlConfigurations.sqlValidatorConfig);
-
+    SqlValidator validator = createSqlValidator();
     validator.validate(sqlNode);
 
     SqlDataTypeSpec typeSpec = (SqlDataTypeSpec) sqlNode.getOperandList().get(1);
 
-    RelDataType relType = typeSpec.deriveType(validator);
-    return relType;
+    return typeSpec.deriveType(validator);
   }
+
   /**
    * Plans a sql statement against a relnode
    */

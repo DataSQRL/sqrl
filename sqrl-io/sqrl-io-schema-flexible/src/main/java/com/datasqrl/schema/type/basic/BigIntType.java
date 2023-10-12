@@ -17,7 +17,7 @@ public class BigIntType extends AbstractBasicType<Long> {
   public static final BigIntType INSTANCE = new BigIntType();
 
   @Override
-  public List<String> getName() {
+  public List<String> getNames() {
     return List.of("BIGINT", "INTEGER");
   }
 

@@ -26,7 +26,7 @@ public class BooleanType extends AbstractBasicType<Boolean> {
   public static final BooleanType INSTANCE = new BooleanType();
 
   @Override
-  public List<String> getName() {
+  public List<String> getNames() {
     return List.of("BOOLEAN");
   }
 
