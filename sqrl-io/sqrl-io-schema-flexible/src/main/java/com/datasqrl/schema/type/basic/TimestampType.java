@@ -18,7 +18,7 @@ public class TimestampType extends AbstractBasicType<Instant> {
   public static final TimestampType INSTANCE = new TimestampType();
 
   @Override
-  public List<String> getName() {
+  public List<String> getNames() {
     return List.of("TIMESTAMP", "DATETIME");
   }
 
