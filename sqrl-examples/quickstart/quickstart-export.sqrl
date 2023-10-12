@@ -3,14 +3,14 @@ IMPORT datasqrl.seedshop.Products;
 IMPORT time.*;
 IMPORT mySourcePackage.Customers AS Users TIMESTAMP epochMilliToTimestamp(changed_on) AS timestamp;
 
-Orders.items.discount0 := discount?0.0;
+Orders.items.discount0 := coalesce(discount, 0.0);
 Orders.items.total := quantity * unit_price - discount0;
 Orders.totals := SELECT sum(total) as price,
                   sum(discount0) as saving FROM @.items;
 
 Users := DISTINCT Users ON id ORDER BY timestamp DESC;
 Users.purchases := JOIN Orders ON Orders.customerid = @.id;
-Users.country0 := country?'none';
+Users.country0 := coalesce(country, 'none');
 Orders.user := JOIN Users ON @.customerid = Users.id;
 
 Users.spending := SELECT endOfWeek(p.timestamp) AS week,
