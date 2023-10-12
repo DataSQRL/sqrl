@@ -29,7 +29,7 @@ public abstract class AbstractBasicType<J> implements BasicType<J> {
       return false;
     }
     AbstractBasicType<?> that = (AbstractBasicType<?>) o;
-    return getNames().equals(that.getNames());
+    return getName().equals(that.getName());
   }
 
   @Override
