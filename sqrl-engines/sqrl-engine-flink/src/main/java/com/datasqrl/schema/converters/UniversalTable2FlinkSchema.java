@@ -70,6 +70,8 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
       case SYMBOL:
       case ANY:
       case NULL:
+      case MAP:
+        return DataTypes.MAP(convertBasic(datatype.getKeyType()), convertBasic(datatype.getValueType()));
       default:
         break;
       case INTERVAL_DAY_HOUR:

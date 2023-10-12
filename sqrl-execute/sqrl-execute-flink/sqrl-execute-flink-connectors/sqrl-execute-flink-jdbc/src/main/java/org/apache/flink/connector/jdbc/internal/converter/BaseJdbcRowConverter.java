@@ -3,6 +3,7 @@ package org.apache.flink.connector.jdbc.internal.converter;
 import static com.datasqrl.type.FlinkArrayTypeUtil.getBaseFlinkArrayType;
 import static com.datasqrl.type.FlinkArrayTypeUtil.isScalarArray;
 import static com.datasqrl.type.PostgresArrayTypeConverter.getArrayScalarName;
+import static org.apache.flink.table.types.logical.LogicalTypeRoot.MAP;
 import static org.apache.flink.table.types.logical.LogicalTypeRoot.ROW;
 import static org.apache.flink.table.types.logical.LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE;
 
@@ -53,7 +54,9 @@ public abstract class BaseJdbcRowConverter extends AbstractJdbcRowConverter {
         }
       };
     } else if (type.getTypeRoot() == ROW) {
-      return (val, index, statement) -> {};
+      return (val, index, statement) -> setRow(type, val, index, statement);
+    } else if (type.getTypeRoot() == MAP) {
+      return (val, index, statement) -> setRow(type, val, index, statement);
     }
     return super.wrapIntoNullableExternalConverter(jdbcSerializationConverter, type);
   }
@@ -70,7 +73,9 @@ public abstract class BaseJdbcRowConverter extends AbstractJdbcRowConverter {
     } else if (root == LogicalTypeRoot.ARRAY) {
       ArrayType arrayType = (ArrayType) type;
       return createArrayConverter(arrayType);
-    } if (root == LogicalTypeRoot.ROW) {
+    } else if (root == LogicalTypeRoot.ROW) {
+      return val-> val;
+    } else if (root == LogicalTypeRoot.MAP) {
       return val-> val;
     } else {
       return super.createInternalConverter(type);
@@ -90,6 +95,7 @@ public abstract class BaseJdbcRowConverter extends AbstractJdbcRowConverter {
       case ROW:
         return (val, index, statement) -> setRow(type, val, index, statement);
       case MAP:
+        return (val, index, statement) -> setRow(type, val, index, statement);
       case MULTISET:
       case RAW:
       default:
