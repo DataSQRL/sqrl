@@ -1,6 +1,6 @@
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.calcite.schema.ScriptPlanner.exportTable;
+import static com.datasqrl.calcite.plan.ScriptPlanner.exportTable;
 
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.SqrlFramework;
@@ -8,13 +8,11 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.table.LogicalNestedTable;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;

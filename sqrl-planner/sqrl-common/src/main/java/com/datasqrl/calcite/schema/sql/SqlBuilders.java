@@ -1,6 +1,6 @@
 package com.datasqrl.calcite.schema.sql;
 
-import com.datasqrl.calcite.schema.ScriptPlanner.PullupColumn;
+import com.datasqrl.calcite.SqrlToSql.PullupColumn;
 import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.google.common.base.Preconditions;

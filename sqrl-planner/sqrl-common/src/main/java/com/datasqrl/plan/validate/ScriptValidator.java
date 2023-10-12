@@ -1,14 +1,9 @@
-package com.datasqrl.plan;
-
-import static org.apache.calcite.sql.SqlUtil.stripAs;
+package com.datasqrl.plan.validate;
 
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.SqrlListUtil;
-import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
@@ -26,15 +21,16 @@ import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
+import com.datasqrl.plan.validate.SqrlToValidatorSql.Result;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
-import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,7 +43,6 @@ import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.CalciteContextException;
@@ -87,8 +82,6 @@ import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ArrayListMultimap;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 @AllArgsConstructor
 @Getter
@@ -332,8 +325,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     SqlNode validated;
 
     try {
-      SqrlToSql sqrlToSql = new SqrlToSql(planner);
-
       List<String> parent = List.of();
       if (statement.getIdentifier().names.size() > 1) {
         parent = getParentPath(statement);
@@ -346,8 +337,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         }
       }
 
+      SqrlToValidatorSql sqrlToSql = new SqrlToValidatorSql(planner, errorCollector, uniqueId);
       result = sqrlToSql.rewrite(query, parent, statement.getTableArgs().orElseGet(()->
           new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
+      this.isA.putAll(sqrlToSql.getIsA());
+
       sqlNode = result.getSqlNode();
 
       framework.getSqrlOperatorTable().addPlanningFnc(result.getFncs());
@@ -389,26 +383,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
   }
 
-  private String flattenNames(List<String> nameList) {
+  public static String flattenNames(List<String> nameList) {
     return String.join(".", nameList);
   }
 
-  private List<String> getFieldNames(List<SqlNode> list) {
-    List<String> nodes = new ArrayList<>();
-    for (SqlNode node : list) {
-      if (node instanceof SqlIdentifier) {
-        String name = ((SqlIdentifier) node).names.get(((SqlIdentifier) node).names.size()-1);
-        nodes.add(nameUtil.toName(name).getCanonical());
-      } else if (node instanceof SqlCall && ((SqlCall)node).getKind() == SqlKind.AS) {
-        String name = ((SqlIdentifier)((SqlCall) node).getOperandList().get(1)).names.get(0);
-        nodes.add(nameUtil.toName(name).getCanonical());
-      } else {
-        throw new RuntimeException("Could not derive name: " + node);
-      }
-    }
-
-    return nodes;
-  }
   private SqlNode addNestedSelf(SqlNode query) {
     return SqlNodeVisitor.accept(new SqlRelationVisitor<SqlNode, Void>() {
 
@@ -617,272 +595,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     };
   }
-  public static boolean isVariable(ImmutableList<String> names) {
+  public static boolean isVariable(List<String> names) {
     return names.get(0).startsWith("@") && names.get(0).length() > 1;
   }
-  public static boolean isSelfField(ImmutableList<String> names) {
+  public static boolean isSelfField(List<String> names) {
     return names.get(0).equalsIgnoreCase("@") && names.size() > 1;
-  }
-
-  @AllArgsConstructor
-  public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
-    final QueryPlanner planner;
-
-    public Result rewrite(SqlNode query, List<String> currentPath, SqrlTableFunctionDef tableArgs) {
-      Context context = new Context(currentPath, new HashMap<>(), tableArgs, query);
-
-      return SqlNodeVisitor.accept(this, query, context);
-    }
-
-    @Override
-    public Result visitQuerySpecification(SqlSelect call, Context context) {
-      // Copy query specification with new RelNode.
-      Context newContext = new Context(context.currentPath, new HashMap<>(), context.tableFunctionDef, context.root);
-      Result result = SqlNodeVisitor.accept(this, call.getFrom(), newContext);
-
-      for (SqlNode node : call.getSelectList()) {
-        node = stripAs(node);
-        if (node instanceof SqlIdentifier) {
-          SqlIdentifier ident = (SqlIdentifier) node;
-          if (ident.isStar() && ident.names.size() == 1) {
-            for (List<String> path : newContext.getAliasPathMap().values()) {
-              SqlUserDefinedTableFunction sqrlTable = planner.getTableFunction(path);
-              isA.put(context.root, sqrlTable.getFunction());
-            }
-          } else if (ident.isStar() && ident.names.size() == 2) {
-            List<String> path = newContext.getAliasPath(ident.names.get(0));
-            SqlUserDefinedTableFunction sqrlTable = planner.getTableFunction(path);
-            isA.put(context.root, sqrlTable.getFunction());
-          }
-        }
-      }
-
-      // Todo: check distinct rules
-
-      SqlSelectBuilder select = new SqlSelectBuilder(call)
-          .setFrom(result.getSqlNode())
-          .rewriteExpressions(new WalkSubqueries(planner, newContext));
-
-      return new Result(select.build(), result.getCurrentPath(), result.getFncs());
-    }
-
-    @Override
-    public Result visitAliasedRelation(SqlCall node, Context context) {
-      Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
-      SqlAliasCallBuilder aliasBuilder = new SqlAliasCallBuilder(node);
-
-      context.addAlias(aliasBuilder.getAlias(), result.getCurrentPath());
-
-      SqlNode newNode = aliasBuilder.setTable(result.getSqlNode())
-          .build();
-
-      return new Result(newNode, result.getCurrentPath(), result.getFncs());
-    }
-
-    @Override
-    public Result visitTable(SqrlCompoundIdentifier node, Context context) {
-      Iterator<SqlNode> input = node.getItems().iterator();
-      PathWalker pathWalker = new PathWalker(planner);
-
-      SqlNode item = input.next();
-
-      if (item.getKind() == SqlKind.SELECT) {
-        Context ctx = new Context(context.currentPath, new HashMap<>(), context.tableFunctionDef, context.root);
-
-        return SqlNodeVisitor.accept(this, item, ctx);
-      }
-
-      String identifier = getIdentifier(item)
-          .orElseThrow(()->new RuntimeException("Subqueries are not yet implemented"));
-
-      boolean isAlias = context.hasAlias(identifier);
-      boolean isSelf = identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical());
-//      boolean isSchemaTable = Optional.of(identifier)
-//          .map(i->planner.getTableFunction(List.of(i)) != null)
-//          .orElse(false);
-      SqlUserDefinedTableFunction tableFunction = planner.getTableFunction(List.of(identifier));
-
-      TableFunction latestTable;
-      if (tableFunction != null) {
-        pathWalker.walk(identifier);
-        latestTable = tableFunction.getFunction();
-      } else if (isAlias) {
-        if (!input.hasNext()) {
-          throw addError(ErrorLabel.GENERIC, item, "Alias by itself.");
-        }
-        pathWalker.setPath(context.getAliasPath(identifier));
-        //Walk the next one and push in table function
-        item = input.next();
-
-
-        Optional<String> nextIdentifier = getIdentifier(item);
-        if (nextIdentifier.isEmpty()) {
-          throw addError(ErrorLabel.GENERIC, item,
-              "Table is not a valid identifier");
-        }
-
-        pathWalker.walk(nextIdentifier.get());
-        //get table of current path (no args)
-        SqlUserDefinedTableFunction table = planner.getTableFunction(pathWalker.getPath());
-
-        if (table == null) {
-          throw addError(ErrorLabel.GENERIC, item,"Could not find path: %s",
-              flattenNames(pathWalker.getUserDefined()));
-        }
-
-        latestTable = table.getFunction();
-      } else if (isSelf) {
-        pathWalker.setPath(context.getCurrentPath());
-        if (!input.hasNext()) {//treat self as a table
-          SqlUserDefinedTableFunction table = planner.getTableFunction(context.getCurrentPath());
-          if (table == null) {
-            throw addError(ErrorLabel.GENERIC, item, "Could not find parent table: %s",
-                flattenNames(context.getCurrentPath()));
-          }
-          latestTable = table.getFunction();
-        } else { //treat self as a parameterized binding to the next function
-          item = input.next();
-          Optional<String> nextIdentifier = getIdentifier(item);
-          if (nextIdentifier.isEmpty()) {
-            throw addError(ErrorLabel.GENERIC, item,"Table is not a valid identifier");
-          }
-          pathWalker.walk(nextIdentifier.get());
-
-          SqlUserDefinedTableFunction table = planner.getTableFunction(pathWalker.getPath());
-          if (table == null) {
-            throw addError(ErrorLabel.GENERIC, item,"Could not find table: %s",
-                flattenNames(pathWalker.getUserDefined()));
-          }
-          latestTable = table.getFunction();
-        }
-      } else {
-        throw addError(ErrorLabel.GENERIC, item,"Could not find table: %s",
-            identifier);
-      }
-
-      while (input.hasNext()) {
-        item = input.next();
-        Optional<String> nextIdentifier = getIdentifier(item);
-        if (nextIdentifier.isEmpty()) {
-          throw addError(ErrorLabel.GENERIC, item,"Table is not a valid identifier");
-        }
-        pathWalker.walk(nextIdentifier.get());
-
-        SqlUserDefinedTableFunction table = planner.getTableFunction(pathWalker.getPath());
-        if (table == null) {
-          throw addError(ErrorLabel.GENERIC, item, "Could not find table: %s",
-              flattenNames(pathWalker.getUserDefined()));
-        }
-        latestTable = table.getFunction();
-      }
-
-      RelDataTypeFieldBuilder b = new RelDataTypeFieldBuilder(new FieldInfoBuilder(planner.getTypeFactory()));
-      ((SqrlTableMacro) latestTable).getRowType().getFieldList()
-          .forEach(c->b.add(c.getName(), c.getType()));
-      final RelDataType latestTable2 = b.build();
-
-      String name = node.getDisplay() + "$validate$"+ uniqueId.incrementAndGet();
-      SqlUserDefinedTableFunction fnc = new SqlPlannerTableFunction(name, latestTable2);
-
-      List<SqlNode> args = node.getItems().stream()
-          .filter(f-> f instanceof SqlCall)
-          .map(f-> (SqlCall)f)
-          .flatMap(f->f.getOperandList().stream())
-          .collect(Collectors.toList());
-
-      SqlCall call = fnc.createCall(SqlParserPos.ZERO, args);
-      plannerFns.add(fnc);
-
-      SqlCall call1 = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO, call);
-      return new Result(call1, pathWalker.getAbsolutePath(), plannerFns);
-    }
-
-    private Optional<String> getIdentifier(SqlNode item) {
-      if (item instanceof SqlIdentifier) {
-        return Optional.of(((SqlIdentifier) item).getSimple());
-      } else if (item instanceof SqlCall) {
-        return Optional.of(((SqlCall) item).getOperator().getName());
-      }
-
-      return Optional.empty();
-    }
-
-    @Override
-    public Result visitJoin(
-        SqlJoin call, Context context) {
-      Result leftNode = SqlNodeVisitor.accept(this, call.getLeft(), context);
-
-      Context context1 = new Context(leftNode.currentPath,  context.aliasPathMap, context.tableFunctionDef, context.root);
-      Result rightNode = SqlNodeVisitor.accept(this, call.getRight(), context1);
-
-      SqlNode join = new SqlJoinBuilder(call)
-          .rewriteExpressions(new WalkSubqueries(planner, context))
-          .setLeft(leftNode.getSqlNode())
-          .setRight(rightNode.getSqlNode())
-          .lateral()
-          .build();
-
-      return new Result(join, rightNode.getCurrentPath(), plannerFns);
-    }
-
-    @Override
-    public Result visitSetOperation(SqlCall node, Context context) {
-      return new Result(
-          node.getOperator().createCall(node.getParserPosition(),
-              node.getOperandList().stream()
-                  .map(o->SqlNodeVisitor.accept(this, o, context).getSqlNode())
-                  .collect(Collectors.toList())),
-          List.of(), plannerFns);
-    }
-
-  }
-
-  @Value
-  public class Result {
-    SqlNode sqlNode;
-    List<String> currentPath;
-    List<SqlFunction> fncs;
-  }
-
-  @Value
-  public class Context {
-    //unbound replaces @ with system args, bound expands @ to table.
-    List<String> currentPath;
-    Map<String, List<String>> aliasPathMap;
-    SqrlTableFunctionDef tableFunctionDef;
-    SqlNode root;
-
-    public void addAlias(String alias, List<String> currentPath) {
-      aliasPathMap.put(alias, currentPath);
-    }
-
-    public boolean hasAlias(String alias) {
-      return aliasPathMap.containsKey(alias);
-    }
-
-    public List<String> getAliasPath(String alias) {
-      if (getAliasPathMap().get(alias) == null) {
-        throw new RuntimeException("Could not find alias: " + alias);
-      }
-      return new ArrayList<>(getAliasPathMap().get(alias));
-    }
-  }
-
-  @AllArgsConstructor
-  public class WalkSubqueries extends SqlShuttle {
-    QueryPlanner planner;
-    Context context;
-    @Override
-    public SqlNode visit(SqlCall call) {
-      if (call.getKind() == SqlKind.SELECT) {
-        SqrlToSql sqrlToSql = new SqrlToSql(planner);
-        Result result = sqrlToSql.rewrite(call, context.currentPath, context.tableFunctionDef);
-
-        return result.getSqlNode();
-      }
-
-      return super.visit(call);
-    }
   }
 
   /**
@@ -1116,10 +833,15 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return errorCollector.handle(exception);
   }
 
-  private RuntimeException addError(ErrorLabel errorCode, SqlNode node,
+  public static RuntimeException addError(ErrorCollector errorCollector, ErrorLabel errorCode, SqlNode node,
       String message, Object... format) {
     RuntimeException exception = CheckUtil.createAstException(errorCode, node, format == null ? message : String.format(message, format));
     return errorCollector.handle(exception);
+  }
+
+  private RuntimeException addError(ErrorLabel errorCode, SqlNode node,
+      String message, Object... format) {
+    return addError(errorCollector, errorCode, node, message, format);
   }
 
   private void addWarn(ErrorLabel errorCode, SqlNode node,

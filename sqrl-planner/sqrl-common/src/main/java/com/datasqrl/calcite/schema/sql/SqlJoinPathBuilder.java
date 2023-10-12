@@ -1,7 +1,7 @@
 package com.datasqrl.calcite.schema.sql;
 
-import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.schema.ScriptPlanner.PullupColumn;
+import com.datasqrl.calcite.CatalogReader;
+import com.datasqrl.calcite.SqrlToSql.PullupColumn;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import java.util.ArrayList;
@@ -30,14 +30,14 @@ import org.apache.commons.collections.ListUtils;
 
 @AllArgsConstructor
 public class SqlJoinPathBuilder {
-  final QueryPlanner planner;
+  final CatalogReader catalogReader;
   @Getter
   final List<Frame> tableHistory = new ArrayList<>();
   final Stack<Frame> stack = new Stack<>();
   final AtomicInteger aliasInt = new AtomicInteger(0);
 
   public SqlJoinPathBuilder scanFunction(List<String> path, List<SqlNode> args) {
-    SqlUserDefinedTableFunction op = planner.getTableFunction(path);
+    SqlUserDefinedTableFunction op = catalogReader.getTableFunction(path);
     if (op == null && args.isEmpty()) {
       scanNestedTable(path);
       return this;
@@ -49,7 +49,7 @@ public class SqlJoinPathBuilder {
 
   public SqlJoinPathBuilder scanFunction(SqlUserDefinedTableFunction op,
       List<SqlNode> args) {
-    RelDataType type = op.getFunction().getRowType(planner.getTypeFactory(), List.of());
+    RelDataType type = op.getFunction().getRowType(null, null);
     SqlCall call = op.createCall(SqlParserPos.ZERO, args);
 
     String alias = "_t"+aliasInt.incrementAndGet();
@@ -63,7 +63,6 @@ public class SqlJoinPathBuilder {
     return this;
   }
 
-
   public SqlJoinPathBuilder joinLateral() {
     Frame right = stack.pop();
     Frame left = stack.pop();
@@ -76,7 +75,8 @@ public class SqlJoinPathBuilder {
         JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
         null);
 
-    RelDataTypeFieldBuilder builder = new RelDataTypeFieldBuilder(new FieldInfoBuilder(planner.getTypeFactory()));
+    RelDataTypeFieldBuilder builder = new RelDataTypeFieldBuilder(
+        new FieldInfoBuilder(catalogReader.getTypeFactory()));
     builder.addAll(left.getType().getFieldList());
     builder.addAll(right.getType().getFieldList());
     RelDataType type = builder.build();
@@ -128,7 +128,7 @@ public class SqlJoinPathBuilder {
   }
 
   public void scanNestedTable(List<String> currentPath) {
-    RelOptTable relOptTable = planner.getCatalogReader().getTableFromPath(currentPath);
+    RelOptTable relOptTable = catalogReader.getTableFromPath(currentPath);
     if (relOptTable == null) {
       throw new RuntimeException("Could not find table: " + currentPath);
     }
