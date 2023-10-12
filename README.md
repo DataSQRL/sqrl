@@ -9,7 +9,7 @@ DataSQRL is a compiler for building data services and APIs from streaming, stati
 IMPORT datasqrl.seedshop.Orders;  -- Import orders stream
 IMPORT time.startOfMonth;         -- Import time function
 /* Augment orders with aggregate calculations */
-Orders.items.total := quantity * unit_price - discount?0.0;
+Orders.items.total := quantity * unit_price - coalesce(discount, 0.0);
 Orders.totals := SELECT sum(total) as price,
                       sum(discount) as saving FROM @.items;
 /* Create new table of unique customers */

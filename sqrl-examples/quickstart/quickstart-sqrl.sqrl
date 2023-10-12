@@ -2,7 +2,7 @@ IMPORT datasqrl.seedshop.Orders;
 IMPORT datasqrl.seedshop.Products;
 IMPORT time.endOfWeek;
 
-Orders.items.discount0 := discount?0.0; -- Data cleaning
+Orders.items.discount0 := coalesce(discount, 0.0); -- Data cleaning
 Orders.items.total := quantity * unit_price - discount0;
 Orders.totals := SELECT sum(total) as price,
                   sum(discount0) as saving FROM @.items;

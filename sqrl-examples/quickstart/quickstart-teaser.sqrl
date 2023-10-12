@@ -1,9 +1,9 @@
 IMPORT datasqrl.seedshop.Orders;
 IMPORT time.endOfWeek;
 
-Orders.items.total := quantity * unit_price - discount?0.0;
+Orders.items.total := quantity * unit_price - coalesce(discount, 0.0);
 Orders.totals := SELECT sum(total) as price,
-                  sum(discount?0.0) as saving FROM @.items;
+                  sum(coalesce(discount, 0.0)) as saving FROM @.items;
 
 Users := SELECT DISTINCT customerid AS id FROM Orders;
 

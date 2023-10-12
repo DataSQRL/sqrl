@@ -1,9 +1,9 @@
 IMPORT mySourcePackage.Orders;  -- Import orders stream
 IMPORT time.endOfWeek;            -- Import time function
 /* Augment orders with total price */
-Orders.items.total := quantity * unit_price - discount?0.0;
+Orders.items.total := quantity * unit_price - coalesce(discount, 0.0);
 Orders.totals := SELECT sum(total) as price,
-                  sum(discount?0.0) as saving FROM @.items;
+                  sum(coalesce(discount, 0.0)) as saving FROM @.items;
 /* Create new table of unique customers */
 Users := SELECT DISTINCT customerid AS id FROM Orders;
 /* Create relationship between customers and orders */
