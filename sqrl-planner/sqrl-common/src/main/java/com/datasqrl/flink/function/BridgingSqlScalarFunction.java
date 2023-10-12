@@ -46,7 +46,6 @@ import java.util.List;
  * Bridges a Flink function to calcite
  */
 public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements BridgingFunction, RuleTransform {
-  private final String flinkName;
   private final DataTypeFactory dataTypeFactory;
   private final FlinkTypeFactory flinkTypeFactory;
   private final RexFactory rexFactory;
@@ -54,7 +53,7 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
   private final FunctionDefinition definition;
   private final TypeInference typeInference;
 
-  public BridgingSqlScalarFunction(String name, String flinkName, DataTypeFactory dataTypeFactory,
+  public BridgingSqlScalarFunction(String name, DataTypeFactory dataTypeFactory,
                                    FlinkTypeFactory flinkTypeFactory, RexFactory rexFactory, SqlKind kind,
                                    FunctionDefinition definition, TypeInference typeInference) {
     super(
@@ -65,8 +64,6 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
         createOperandMetadata(name, flinkTypeFactory, dataTypeFactory, definition),
         createCallableFlinkFunction(flinkTypeFactory, dataTypeFactory, definition),
         createSqlFunctionCategory());
-    this.flinkName = flinkName;
-
     this.dataTypeFactory = dataTypeFactory;
     this.flinkTypeFactory = flinkTypeFactory;
     this.rexFactory = rexFactory;

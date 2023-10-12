@@ -2,7 +2,9 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.function.RuleTransform;
 import com.datasqrl.function.FunctionTranslationMap;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.calcite.plan.RelOptPlanner;
@@ -14,11 +16,6 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.Programs;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class DialectCallConverter {
   private final RelOptPlanner planner;
@@ -38,6 +35,7 @@ public class DialectCallConverter {
     relNode = Programs.hep(rules, false, null)
         .run(planner, relNode, relNode.getTraitSet(),
             List.of(), List.of());
+
     return relNode;
   }
 
