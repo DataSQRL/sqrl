@@ -10,15 +10,13 @@ import org.apache.calcite.plan.RelOptTable;
 @Getter
 public class PathWalker {
 
-  private final QueryPlanner planner;
   private final CatalogReader catalogReader;
   private List<String> path;
   private List<String> absolutePath;
   private List<String> userDefined;
 
-  public PathWalker(QueryPlanner planner) {
-    this.catalogReader = planner.getCatalogReader();
-    this.planner = planner;
+  public PathWalker(CatalogReader catalogReader) {
+    this.catalogReader = catalogReader;
     this.path = new ArrayList<>();
     this.absolutePath = new ArrayList<>();
     this.userDefined = new ArrayList<>();
