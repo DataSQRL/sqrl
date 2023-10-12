@@ -1,6 +1,7 @@
 package org.apache.calcite.jdbc;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
@@ -27,6 +28,7 @@ import java.util.stream.Stream;
 @Getter
 public class SqrlSchema extends SimpleCalciteSchema {
   private final SqrlFramework sqrlFramework;
+  private final TypeFactory typeFactory;
 
   private final List<ResolvedExport> exports = new ArrayList<>();
   private final Set<URL> jars = new HashSet<>();
@@ -41,9 +43,10 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   private final Map<String, List<String>> sysTableToFieldNameMap = new HashMap<>();
 
-  public SqrlSchema(SqrlFramework framework) {
+  public SqrlSchema(SqrlFramework framework, TypeFactory typeFactory) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
     sqrlFramework = framework;
+    this.typeFactory = typeFactory;
   }
 
   //backwards compatibility classes for migration

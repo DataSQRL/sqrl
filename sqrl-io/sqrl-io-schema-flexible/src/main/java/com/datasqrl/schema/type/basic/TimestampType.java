@@ -8,20 +8,22 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
-public class DateTimeType extends AbstractBasicType<Instant> {
+public class TimestampType extends AbstractBasicType<Instant> {
 
-  public static final DateTimeType INSTANCE = new DateTimeType();
+  public static final TimestampType INSTANCE = new TimestampType();
 
   @Override
-  public String getName() {
-    return "DATETIME";
+  public List<String> getName() {
+    return List.of("TIMESTAMP", "DATETIME");
   }
 
   public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
-    return visitor.visitDateTimeType(this, context);
+    return visitor.visitTimestampType(this, context);
   }
 
   @Override
@@ -34,8 +36,8 @@ public class DateTimeType extends AbstractBasicType<Instant> {
     DateTimeFormatter[] formatters = {
         DateTimeFormatter.ISO_INSTANT,
         DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.systemDefault()),
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS]").withZone(
-            ZoneId.systemDefault())
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS]")
+            .withZone(ZoneId.systemDefault())
     };
 
     @Override
@@ -72,7 +74,7 @@ public class DateTimeType extends AbstractBasicType<Instant> {
 
     @Override
     public Optional<Integer> getTypeDistance(BasicType fromType) {
-      if (fromType instanceof IntegerType) {
+      if (fromType instanceof BigIntType) {
         return Optional.of(70);
       }
       return Optional.empty();

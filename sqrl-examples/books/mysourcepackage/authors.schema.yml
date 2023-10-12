@@ -4,15 +4,15 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "average_rating"
-  type: "FLOAT"
+  type: "DOUBLE"
   tests:
   - "not_null"
 - name: "author_id"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "text_reviews_count"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "name"
@@ -20,6 +20,6 @@ columns:
   tests:
   - "not_null"
 - name: "ratings_count"
-  type: "INTEGER"
+  type: "BIGINT"
   tests:
   - "not_null"

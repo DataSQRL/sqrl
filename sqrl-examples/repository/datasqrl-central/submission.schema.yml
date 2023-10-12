@@ -48,7 +48,7 @@ columns:
   tests:
   - "not_null"
 - name: "submissionTime"
-  type: "DATETIME"
+  type: "TIMESTAMP"
   tests:
   - "not_null"
 - name: "keywords"

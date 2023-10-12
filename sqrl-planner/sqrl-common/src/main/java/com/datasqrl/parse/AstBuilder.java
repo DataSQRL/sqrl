@@ -1281,38 +1281,19 @@ class AstBuilder
   }
 
   private SqlTypeNameSpec getTypeName(BaseTypeContext baseType) {
-    //todo: Collections, params, dates, etc
     SqlIdentifier id = (SqlIdentifier) visit(baseType.identifier());
 
-    String name = Util.last(id.names);
-    SqlTypeName typeName;
-    switch (name.toLowerCase(Locale.ROOT)) {
-      case "boolean":
-        typeName = SqlTypeName.BOOLEAN;
-        break;
-      case "datetime":
-        return new SqlBasicTypeNameSpec(
-            SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE,
-            3,
-            getLocation(baseType)
-        );
-      case "float":
-        typeName = SqlTypeName.DOUBLE;
-        break;
-      case "int":
-        typeName = SqlTypeName.BIGINT;
-        break;
-      case "string":
-        typeName = SqlTypeName.VARCHAR;
-        break;
-      default:
-        throw new RuntimeException(String.format("Unknown data type %s", name));
+    String typeName = Util.last(id.names);
+    if (typeName.equalsIgnoreCase("int")) {
+      typeName = "INTEGER"; //exists in calcite parser conversion
     }
 
-    return new SqlBasicTypeNameSpec(
-        typeName,
-        getLocation(baseType)
-    );
+    SqlTypeName sqlTypeName = SqlTypeName.get(typeName.toUpperCase(Locale.ROOT));
+
+    if (sqlTypeName == null) {
+      return new SqlUserDefinedTypeNameSpec(typeName, getLocation(baseType));
+    }
+    return new SqlBasicTypeNameSpec(sqlTypeName, getLocation(baseType));
   }
 
   @Override

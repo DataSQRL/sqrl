@@ -7,16 +7,17 @@ import com.datasqrl.schema.type.SqrlTypeVisitor;
 import com.google.common.collect.ImmutableSet;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class FloatType extends AbstractBasicType<Double> {
+public class DoubleType extends AbstractBasicType<Double> {
 
-  public static final FloatType INSTANCE = new FloatType();
+  public static final DoubleType INSTANCE = new DoubleType();
 
   @Override
-  public String getName() {
-    return "FLOAT";
+  public List<String> getName() {
+    return List.of("DOUBLE", "FLOAT");
   }
 
   @Override
@@ -29,7 +30,7 @@ public class FloatType extends AbstractBasicType<Double> {
     private static final Set<Class> FLOAT_CLASSES = ImmutableSet.of(Float.class, Double.class);
 
     public Conversion() {
-      super(Double.class, s -> new Double(s));
+      super(Double.class, Double::valueOf);
     }
 
     @Override
@@ -55,7 +56,7 @@ public class FloatType extends AbstractBasicType<Double> {
 
     @Override
     public Optional<Integer> getTypeDistance(BasicType fromType) {
-      if (fromType instanceof IntegerType) {
+      if (fromType instanceof BigIntType) {
         return Optional.of(3);
       } else if (fromType instanceof BooleanType) {
         return Optional.of(6);
@@ -68,6 +69,6 @@ public class FloatType extends AbstractBasicType<Double> {
 
 
   public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
-    return visitor.visitFloatType(this, context);
+    return visitor.visitDoubleType(this, context);
   }
 }

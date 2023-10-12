@@ -8,16 +8,17 @@ import com.google.common.collect.ImmutableSet;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class IntegerType extends AbstractBasicType<Long> {
+public class BigIntType extends AbstractBasicType<Long> {
 
-  public static final IntegerType INSTANCE = new IntegerType();
+  public static final BigIntType INSTANCE = new BigIntType();
 
   @Override
-  public String getName() {
-    return "INTEGER";
+  public List<String> getName() {
+    return List.of("BIGINT", "INTEGER");
   }
 
   @Override
@@ -60,13 +61,13 @@ public class IntegerType extends AbstractBasicType<Long> {
 
     @Override
     public Optional<Integer> getTypeDistance(BasicType fromType) {
-      if (fromType instanceof FloatType) {
+      if (fromType instanceof DoubleType) {
         return Optional.of(12);
       } else if (fromType instanceof BooleanType) {
         return Optional.of(4);
       } else if (fromType instanceof IntervalType) {
         return Optional.of(45);
-      } else if (fromType instanceof DateTimeType) {
+      } else if (fromType instanceof TimestampType) {
         return Optional.of(95);
       }
       return Optional.empty();
@@ -74,6 +75,6 @@ public class IntegerType extends AbstractBasicType<Long> {
   }
 
   public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
-    return visitor.visitIntegerType(this, context);
+    return visitor.visitBigIntType(this, context);
   }
 }

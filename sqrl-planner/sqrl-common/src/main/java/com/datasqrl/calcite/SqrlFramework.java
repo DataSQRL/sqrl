@@ -12,9 +12,13 @@ import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.util.Properties;
+import org.apache.calcite.sql.type.SqlTypeName;
 
 @Getter
 public class SqrlFramework {
@@ -39,10 +43,18 @@ public class SqrlFramework {
   public SqrlFramework(RelMetadataProvider relMetadataProvider, HintStrategyTable hintStrategyTable,
       NameCanonicalizer nameCanonicalizer) {
     this.hintStrategyTable = hintStrategyTable;
-    this.schema = new SqrlSchema(this);
-    this.relMetadataProvider = relMetadataProvider;
-
     this.typeFactory = new TypeFactory();
+    this.schema = new SqrlSchema(this, typeFactory);
+    //Add type aliases
+    this.schema.add("String", t->typeFactory.createSqlType(SqlTypeName.VARCHAR));
+    //Int -> Integer generally happens in the
+    this.schema.add("Int", t->typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    typeFactory.getTypes().stream()
+        .filter(f->f instanceof RelProtoDataType)
+        .forEach(t->schema.add(t.getFullTypeString(), (RelProtoDataType) t));
+
+    this.relMetadataProvider = relMetadataProvider;
 
     Properties info = new Properties();
     info.setProperty("caseSensitive", "false");

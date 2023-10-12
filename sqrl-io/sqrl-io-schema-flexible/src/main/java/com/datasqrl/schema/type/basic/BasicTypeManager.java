@@ -16,24 +16,24 @@ import org.apache.commons.lang3.tuple.Pair;
 public class BasicTypeManager {
 
   //TODO: replace by discovery pattern so that new datatype can be registered
-  public static final BasicType[] ALL_TYPES = {
+  public static final BasicType<?>[] ALL_TYPES = {
       BooleanType.INSTANCE,
-      DateTimeType.INSTANCE,
-      IntegerType.INSTANCE, FloatType.INSTANCE,
+      TimestampType.INSTANCE,
+      BigIntType.INSTANCE, DoubleType.INSTANCE,
       IntervalType.INSTANCE,
-      StringType.INSTANCE,
-      UuidType.INSTANCE
+      StringType.INSTANCE
   };
 
-  public static final Map<Class, BasicType> JAVA_TO_TYPE = Arrays.stream(ALL_TYPES).flatMap(t -> {
+  public static final Map<Class, BasicType<?>> JAVA_TO_TYPE = Arrays.stream(ALL_TYPES).flatMap(t -> {
     Stream<Class> classes = t.conversion().getJavaTypes().stream();
     Stream<Pair<Class, BasicType>> s = classes.map(c -> Pair.of(c, t));
     return s;
   }).collect(Collectors.toUnmodifiableMap(Pair::getKey, Pair::getValue));
 
-  public static final Map<String, BasicType> ALL_TYPES_BY_NAME = Arrays.stream(ALL_TYPES)
-      .collect(Collectors.toUnmodifiableMap(t -> t.getName().trim().toLowerCase(Locale.ENGLISH),
-          Function.identity()));
+  public static final Map<String, BasicType<?>> ALL_TYPES_BY_NAME = Arrays.stream(ALL_TYPES)
+      .flatMap(type->type.getName().stream().map(name->Pair.of(name, type)))
+      .collect(Collectors.toUnmodifiableMap(t ->(t.getLeft()).toLowerCase(Locale.ENGLISH),
+          Pair::getRight));
 
   public static final Map<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> TYPE_COMBINATION_MATRIX = computeTypeCombinationMatrix();
 

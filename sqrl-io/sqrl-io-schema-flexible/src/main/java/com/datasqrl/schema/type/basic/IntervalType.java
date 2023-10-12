@@ -6,6 +6,7 @@ package com.datasqrl.schema.type.basic;
 import com.datasqrl.schema.type.SqrlTypeVisitor;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 public class IntervalType extends AbstractBasicType<Duration> {
@@ -13,8 +14,8 @@ public class IntervalType extends AbstractBasicType<Duration> {
   public static final IntervalType INSTANCE = new IntervalType();
 
   @Override
-  public String getName() {
-    return "INTERVAL";
+  public List<String> getName() {
+    return List.of("INTERVAL");
   }
 
   @Override
@@ -42,9 +43,9 @@ public class IntervalType extends AbstractBasicType<Duration> {
 
     @Override
     public Optional<Integer> getTypeDistance(BasicType fromType) {
-      if (fromType instanceof FloatType) {
+      if (fromType instanceof DoubleType) {
         return Optional.of(40);
-      } else if (fromType instanceof IntegerType) {
+      } else if (fromType instanceof BigIntType) {
         return Optional.of(25);
       }
       return Optional.empty();
