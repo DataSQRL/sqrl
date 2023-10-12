@@ -56,6 +56,7 @@ public class SqrlToPostgresTypeMapper {
         return "bytea";
       case SYMBOL:
       case MAP:
+        return "bytea";
       case MULTISET:
       default:
         throw new UnsupportedOperationException("Unsupported type:" + type);
