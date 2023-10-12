@@ -129,6 +129,8 @@ public class PostgresDialect extends AbstractDialect {
                 LogicalTypeRoot.TIME_WITHOUT_TIME_ZONE,
                 LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE,
                 LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE,
-                LogicalTypeRoot.ARRAY);
+                LogicalTypeRoot.ARRAY,
+                LogicalTypeRoot.MAP
+            );
     }
 }
