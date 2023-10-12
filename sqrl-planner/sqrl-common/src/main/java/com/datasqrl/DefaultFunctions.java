@@ -11,20 +11,20 @@ import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.functions.ScalarFunction;
 
 public class DefaultFunctions {
-  public static final FlinkConverter converter = new FlinkConverter(new RexBuilder(new TypeFactory()), new TypeFactory());
+  public static final FlinkConverter converter = new FlinkConverter(new TypeFactory());
   public static SqlFunction COALESCE;
   public static SqlFunction GREATEST;
   public static SqlFunction LEAST;
   public static SqlFunction NOW;
   static {
     COALESCE = converter
-        .convertFunction(BuiltInFunctionDefinitions.COALESCE.getName(), BuiltInFunctionDefinitions.COALESCE.getName(), BuiltInFunctionDefinitions.COALESCE);
+        .convertFunction(BuiltInFunctionDefinitions.COALESCE.getName(), BuiltInFunctionDefinitions.COALESCE);
     GREATEST = converter
-        .convertFunction(BuiltInFunctionDefinitions.GREATEST.getName(),BuiltInFunctionDefinitions.GREATEST.getName(), BuiltInFunctionDefinitions.GREATEST);
+        .convertFunction(BuiltInFunctionDefinitions.GREATEST.getName(), BuiltInFunctionDefinitions.GREATEST);
     LEAST = converter
-        .convertFunction(BuiltInFunctionDefinitions.LEAST.getName(),BuiltInFunctionDefinitions.LEAST.getName(), BuiltInFunctionDefinitions.LEAST);
+        .convertFunction(BuiltInFunctionDefinitions.LEAST.getName(), BuiltInFunctionDefinitions.LEAST);
     NOW = converter
-        .convertFunction("NOW", "NOW", new Now());
+        .convertFunction("NOW", new Now());
   }
 
   public static class Now extends ScalarFunction implements SqrlFunction {

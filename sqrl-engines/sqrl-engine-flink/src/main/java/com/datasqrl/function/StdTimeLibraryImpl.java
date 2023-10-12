@@ -4,6 +4,7 @@
 package com.datasqrl.function;
 
 import static com.datasqrl.NamespaceObjectUtil.createFunctionFromFlink;
+import static com.datasqrl.NamespaceObjectUtil.createFunctionFromStdOpTable;
 import static com.datasqrl.TimeFunctions.AT_ZONE;
 import static com.datasqrl.TimeFunctions.END_OF_DAY;
 import static com.datasqrl.TimeFunctions.END_OF_HOUR;
@@ -19,11 +20,13 @@ import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_EPOCH;
 import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_STRING;
 
 import com.datasqrl.NamespaceObjectUtil;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.NamespaceObject;
 import com.google.auto.service.AutoService;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.commons.collections.ListUtils;
 
 @AutoService(StdLibrary.class)
@@ -46,16 +49,16 @@ public class StdTimeLibraryImpl extends AbstractFunctionModule implements StdLib
   );
 
   private static List<NamespaceObject> SQL_FUNCTIONS = List.of(
-      createFunctionFromFlink("second"),
-      createFunctionFromFlink("minute"),
-      createFunctionFromFlink("hour"),
-      createFunctionFromFlink("dayOfWeek"),
-      createFunctionFromFlink("dayOfMonth"),
-      createFunctionFromFlink("dayOfYear"),
-      createFunctionFromFlink("month"),
-      createFunctionFromFlink("week"),
-      createFunctionFromFlink("quarter"),
-      createFunctionFromFlink("year")
+      createFunctionFromStdOpTable("second"),
+      createFunctionFromStdOpTable("minute"),
+      createFunctionFromStdOpTable("hour"),
+      createFunctionFromStdOpTable("dayOfWeek"),
+      createFunctionFromStdOpTable("dayOfMonth"),
+      createFunctionFromStdOpTable("dayOfYear"),
+      createFunctionFromStdOpTable("month"),
+      createFunctionFromStdOpTable("week"),
+      createFunctionFromStdOpTable("quarter"),
+      createFunctionFromStdOpTable("year")
   );
 
   public static final StdTimeLibraryImpl stdTimeLibrary = new StdTimeLibraryImpl();
