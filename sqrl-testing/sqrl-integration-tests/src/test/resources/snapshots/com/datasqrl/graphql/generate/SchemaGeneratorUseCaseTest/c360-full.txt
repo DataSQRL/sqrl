@@ -1,38 +1,38 @@
 type Category {
   name: String!
-  products(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
+  products(productid: Float, name: String, description: String, category: String, updateTime: String): [Product!]
 }
 
 type Customer {
-  customerid: Int!
+  customerid: Float!
   email: String!
   name: String!
-  lastUpdated: Int!
+  lastUpdated: Float!
   updateTime: String!
-  orders(id: Int, customerid: Int, time: String): [Orders!]
-  order_again(productid: Int, quantity: Int, num_orders: Int, most_recent: String): [order_again!]
+  orders(id: Float, customerid: Float, time: String): [Orders!]
+  order_again(productid: Float, quantity: Float, num_orders: Float, most_recent: String): [order_again!]
   favorite_categories(category_name: String, total: Float): [favorite_categories!]
-  order_stats(total_spend: Float, num_orders: Int): [order_stats!]
+  order_stats(total_spend: Float, num_orders: Float): [order_stats!]
 }
 
 type NewCustomerPromotion {
-  customerid: Int!
+  customerid: Float!
   email: String!
   name: String!
   total_spend: Float!
-  num_orders: Int!
+  num_orders: Float!
 }
 
 type Orders {
-  id: Int!
-  customerid: Int!
+  id: Float!
+  customerid: Float!
   time: String!
-  entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, total: Float): [entries!]
-  total(price: Float, discount: Float, num: Int): [total!]
+  entries(productid: Float, quantity: Float, unit_price: Float, discount: Float, discount0: Float, total: Float): [entries!]
+  total(price: Float, discount: Float, num: Float): [total!]
 }
 
 type Product {
-  productid: Int!
+  productid: Float!
   name: String!
   description: String!
   category: String!
@@ -40,22 +40,22 @@ type Product {
 }
 
 type Query {
-  Product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
-  NewCustomerPromotion(customerid: Int, email: String, name: String, total_spend: Float, num_orders: Int): [NewCustomerPromotion!]
-  Orders(id: Int, customerid: Int, time: String): [Orders!]
-  Customer(customerid: Int, email: String, name: String, lastUpdated: Int, updateTime: String): [Customer!]
+  Product(productid: Float, name: String, description: String, category: String, updateTime: String): [Product!]
+  NewCustomerPromotion(customerid: Float, email: String, name: String, total_spend: Float, num_orders: Float): [NewCustomerPromotion!]
+  Orders(id: Float, customerid: Float, time: String): [Orders!]
+  Customer(customerid: Float, email: String, name: String, lastUpdated: Float, updateTime: String): [Customer!]
   Category(name: String): [Category!]
 }
 
 type entries {
-  productid: Int!
-  quantity: Int!
+  productid: Float!
+  quantity: Float!
   unit_price: Float!
   discount: Float
   discount0: Float!
   total: Float!
   parent: Orders!
-  product(productid: Int, name: String, description: String, category: String, updateTime: String): [Product!]
+  product(productid: Float, name: String, description: String, category: String, updateTime: String): [Product!]
 }
 
 type favorite_categories {
@@ -66,23 +66,23 @@ type favorite_categories {
 }
 
 type order_again {
-  productid: Int!
-  quantity: Int!
-  num_orders: Int!
+  productid: Float!
+  quantity: Float!
+  num_orders: Float!
   most_recent: String!
   parent: Customer!
 }
 
 type order_stats {
   total_spend: Float!
-  num_orders: Int!
+  num_orders: Float!
   parent: Customer!
 }
 
 type total {
   price: Float!
   discount: Float!
-  num: Int!
+  num: Float!
   parent: Orders!
 }
 
