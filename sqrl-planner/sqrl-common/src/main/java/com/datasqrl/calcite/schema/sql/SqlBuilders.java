@@ -6,6 +6,7 @@ import com.datasqrl.plan.hints.TopNHint.Type;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.calcite.sql.JoinConditionType;
@@ -264,6 +265,28 @@ public class SqlBuilders {
     public SqlSelectBuilder clearHints() {
       select.setHints(SqlNodeList.EMPTY);
       return this;
+    }
+  }
+
+  public static class SqlCallBuilder {
+
+    private SqlCall call;
+
+    public SqlCallBuilder(SqlCall call) {
+      this.call = call;
+    }
+
+    public SqlCallBuilder rewriteOperands(Function<SqlNode, SqlNode> fnc) {
+      call = call.getOperator().createCall(call.getParserPosition(),
+          call.getOperandList().stream()
+              .map(fnc::apply)
+              .collect(Collectors.toList())
+              );
+      return this;
+    }
+
+    public SqlCall build() {
+      return call;
     }
   }
 }
