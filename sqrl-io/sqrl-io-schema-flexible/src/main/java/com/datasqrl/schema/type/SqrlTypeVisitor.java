@@ -32,6 +32,10 @@ public interface SqrlTypeVisitor<R, C> {
     return visitBasicType(type, context);
   }
 
+  default R visitIntegerType(IntegerType type, C context) {
+    return visitBasicType(type, context);
+  }
+
   default R visitStringType(StringType type, C context) {
     return visitBasicType(type, context);
   }

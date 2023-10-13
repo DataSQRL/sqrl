@@ -3,7 +3,7 @@ schema_version: 1
 partial_schema: false
 columns:
   - name: "productid"
-    type: "BIGINT"
+    type: "INTEGER"
     tests:
       - "not_null"
   - name: "name"

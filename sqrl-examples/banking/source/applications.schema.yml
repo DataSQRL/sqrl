@@ -4,15 +4,15 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "id"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "customer_id"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "loan_type_id"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "amount"
@@ -20,7 +20,7 @@ columns:
   tests:
   - "not_null"
 - name: "duration"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "application_date"

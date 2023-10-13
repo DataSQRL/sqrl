@@ -261,14 +261,16 @@ public class SchemaInference {
     switch (scalarTypeDefinition.getName()) {
       case "Int":
         // see graphql.scalar.GraphqlIntCoercing
-        if (!SqlTypeName.INT_TYPES.contains(sqlTypeName)) {
+        if (!SqlTypeName.NUMERIC_TYPES.contains(sqlTypeName) &&
+            !SqlTypeName.STRING_TYPES.contains(sqlTypeName)) {
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, parent.getName() + ":"+fieldDefinition.getName()+"  expected SQRL Int type, found: %s",
               sqlTypeName.getName());
         }
         break;
       case "Float":
         // see graphql.scalar.GraphqlFloatCoercing
-        if (!SqlTypeName.NUMERIC_TYPES.contains(sqlTypeName)) {
+        if (!SqlTypeName.NUMERIC_TYPES.contains(sqlTypeName) &&
+            !SqlTypeName.STRING_TYPES.contains(sqlTypeName)) {
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Numeric type, found: %s %s",
               sqlTypeName.getName(), column.getName().getDisplay());
         }

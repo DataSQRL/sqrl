@@ -19,6 +19,7 @@ public class BasicTypeManager {
   public static final BasicType<?>[] ALL_TYPES = {
       BooleanType.INSTANCE,
       TimestampType.INSTANCE,
+      IntegerType.INSTANCE,
       BigIntType.INSTANCE, DoubleType.INSTANCE,
       IntervalType.INSTANCE,
       StringType.INSTANCE

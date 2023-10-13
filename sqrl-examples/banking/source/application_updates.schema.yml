@@ -4,7 +4,7 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "loan_application_id"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "status"

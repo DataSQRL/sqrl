@@ -4,7 +4,7 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "groupId"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "groupName"
@@ -18,7 +18,7 @@ columns:
 - name: "machines"
   columns:
   - name: "machineId"
-    type: "BIGINT"
+    type: "INTEGER"
     tests:
     - "not_null"
   tests:

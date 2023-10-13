@@ -6,7 +6,7 @@ datasets:
       - name: Product
         columns:
           - name: id
-            type: BIGINT
+            type: INTEGER
             tests:
               - not_null
           - name: name
@@ -18,7 +18,7 @@ datasets:
             tests:
               - not_null
           - name: weight_in_gram
-            type: BIGINT
+            type: INTEGER
             tests:
               - not_null
           - name: type
@@ -30,6 +30,6 @@ datasets:
             tests:
               - not_null
           - name: usda_id
-            type: BIGINT
+            type: INTEGER
             tests:
               - not_null

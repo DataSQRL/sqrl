@@ -4,6 +4,7 @@
 package com.datasqrl.schema.converters;
 
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.schema.type.basic.IntegerType;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
@@ -62,6 +63,11 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
   }
 
   @Override
+  public RelDataType visitIntegerType(IntegerType type, Void context) {
+    return typeFactory.createSqlType(SqlTypeName.INTEGER);
+  }
+
+  @Override
   public RelDataType visitStringType(StringType type, Void context) {
     return typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
   }
@@ -87,10 +93,11 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
         case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
           return TimestampType.INSTANCE;
         case BIGINT:
+          return BigIntType.INSTANCE;
         case INTEGER:
         case SMALLINT:
         case TINYINT:
-          return BigIntType.INSTANCE;
+          return IntegerType.INSTANCE;
         case BOOLEAN:
           return BooleanType.INSTANCE;
         case DOUBLE:

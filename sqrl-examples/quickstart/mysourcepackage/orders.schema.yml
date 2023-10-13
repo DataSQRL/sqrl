@@ -4,11 +4,11 @@ schema_version: "1"
 partial_schema: false
 columns:
 - name: "id"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "customerid"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "time"
@@ -18,11 +18,11 @@ columns:
 - name: "items"
   columns:
   - name: "productid"
-    type: "BIGINT"
+    type: "INTEGER"
     tests:
     - "not_null"
   - name: "quantity"
-    type: "BIGINT"
+    type: "INTEGER"
     tests:
     - "not_null"
   - name: "unit_price"

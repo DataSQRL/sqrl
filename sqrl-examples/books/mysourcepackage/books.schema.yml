@@ -22,7 +22,7 @@ columns:
 - name: "popular_shelves"
   columns:
   - name: "count"
-    type: "BIGINT"
+    type: "INTEGER"
     tests:
     - "not_null"
   - name: "name"
@@ -60,7 +60,7 @@ columns:
 - name: "authors"
   columns:
   - name: "author_id"
-    type: "BIGINT"
+    type: "INTEGER"
     tests:
     - "not_null"
   - name: "role"
@@ -104,7 +104,7 @@ columns:
   tests:
   - "not_null"
 - name: "book_id"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "ratings_count"

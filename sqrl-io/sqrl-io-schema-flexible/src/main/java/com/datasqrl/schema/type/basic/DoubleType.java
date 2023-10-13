@@ -58,6 +58,8 @@ public class DoubleType extends AbstractBasicType<Double> {
     public Optional<Integer> getTypeDistance(BasicType fromType) {
       if (fromType instanceof BigIntType) {
         return Optional.of(3);
+      } else if (fromType instanceof IntegerType) {
+        return Optional.of(4);
       } else if (fromType instanceof BooleanType) {
         return Optional.of(6);
       } else if (fromType instanceof IntervalType) {

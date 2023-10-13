@@ -8,11 +8,11 @@ columns:
   tests:
   - "not_null"
 - name: "author_id"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "text_reviews_count"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"
 - name: "name"
@@ -20,6 +20,6 @@ columns:
   tests:
   - "not_null"
 - name: "ratings_count"
-  type: "BIGINT"
+  type: "INTEGER"
   tests:
   - "not_null"

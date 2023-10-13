@@ -83,13 +83,13 @@ public class SchemaGeneratorUtil {
       case TINYINT:
       case SMALLINT:
       case INTEGER:
-      case BIGINT:
         return Scalars.GraphQLInt;
       case DECIMAL:
       case FLOAT:
       case REAL:
       case DOUBLE:
         return Scalars.GraphQLFloat;
+      case BIGINT: //bigint has a data size larger than GraphQLInt
       case DATE:
       case TIME:
       case TIME_WITH_LOCAL_TIME_ZONE:

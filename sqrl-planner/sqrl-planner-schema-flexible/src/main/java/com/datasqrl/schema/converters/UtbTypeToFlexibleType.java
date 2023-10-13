@@ -3,6 +3,7 @@ package com.datasqrl.schema.converters;
 import com.datasqrl.schema.UniversalTable.Column;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BooleanType;
+import com.datasqrl.schema.type.basic.IntegerType;
 import com.datasqrl.schema.type.basic.TimestampType;
 import com.datasqrl.schema.type.basic.DoubleType;
 import com.datasqrl.schema.type.basic.BigIntType;
@@ -14,13 +15,14 @@ public class UtbTypeToFlexibleType {
     switch (type.getType().getSqlTypeName()) {
       case BOOLEAN:
         return new BooleanType();
-      case TINYINT:
-      case SMALLINT:
-      case BIGINT:
-      case INTEGER:
       case DATE:
       case TIMESTAMP:
+      case BIGINT:
         return new BigIntType();
+      case TINYINT:
+      case SMALLINT:
+      case INTEGER:
+        return new IntegerType();
       case CHAR:
       case VARCHAR:
         return new StringType();
