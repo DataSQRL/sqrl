@@ -1,52 +1,52 @@
 type Customers {
-  id: Int!
-  purchases(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
+  id: Float!
+  purchases(id: Float, customerid: Float, time: Float, timestamp: String): [Orders!]
   spending_by_month(month: String, total_spend: Float, total_savings: Float): [spending_by_month!]
-  past_purchases(productid: Int, num_orders: Int, total_quantity: Int): [past_purchases!]
+  past_purchases(productid: Float, num_orders: Float, total_quantity: Float): [past_purchases!]
 }
 
 type Orders {
-  id: Int!
-  customerid: Int!
-  time: Int!
+  id: Float!
+  customerid: Float!
+  time: Float!
   timestamp: String!
-  items(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, total: Float): [items!]
+  items(productid: Float, quantity: Float, unit_price: Float, discount: Float, discount0: Float, total: Float): [items!]
   totals(price: Float, savings: Float): [totals!]
 }
 
 type Products {
-  id: Int!
+  id: Float!
   name: String!
   sizing: String!
-  weight_in_gram: Int!
+  weight_in_gram: Float!
   type: String!
   category: String!
-  usda_id: Int!
+  usda_id: Float!
   updated: String!
-  volume_by_day(day: String, quantity: Int, total: Float, total_weight: Int): [volume_by_day!]
+  volume_by_day(day: String, quantity: Float, total: Float, total_weight: Float): [volume_by_day!]
 }
 
 type Query {
-  Products(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
-  Customers(id: Int): [Customers!]
-  Orders(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
+  Products(id: Float, name: String, sizing: String, weight_in_gram: Float, type: String, category: String, usda_id: Float, updated: String): [Products!]
+  Customers(id: Float): [Customers!]
+  Orders(id: Float, customerid: Float, time: Float, timestamp: String): [Orders!]
 }
 
 type items {
-  productid: Int!
-  quantity: Int!
+  productid: Float!
+  quantity: Float!
   unit_price: Float!
   discount: Float
   discount0: Float!
   total: Float!
   parent: Orders!
-  product(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
+  product(id: Float, name: String, sizing: String, weight_in_gram: Float, type: String, category: String, usda_id: Float, updated: String): [Products!]
 }
 
 type past_purchases {
-  productid: Int!
-  num_orders: Int!
-  total_quantity: Int!
+  productid: Float!
+  num_orders: Float!
+  total_quantity: Float!
   parent: Customers!
 }
 
@@ -65,9 +65,9 @@ type totals {
 
 type volume_by_day {
   day: String!
-  quantity: Int!
+  quantity: Float!
   total: Float!
-  total_weight: Int!
+  total_weight: Float!
   parent: Products!
 }
 

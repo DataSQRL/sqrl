@@ -1,9 +1,9 @@
 type Query {
-  pRoDuCt(productid: Int, name: String, description: String, category: String): [pRoDuCt!]
+  pRoDuCt(productid: Float, name: String, description: String, category: String): [pRoDuCt!]
 }
 
 type pRoDuCt {
-  productid: Int!
+  productid: Float!
   name: String!
   description: String!
   category: String!

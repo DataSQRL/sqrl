@@ -83,8 +83,8 @@ public class SchemaGeneratorUtil {
       case TINYINT:
       case SMALLINT:
       case INTEGER:
-      case BIGINT:
         return Scalars.GraphQLInt;
+      case BIGINT: //treat bigint as float to prevent overflow
       case DECIMAL:
       case FLOAT:
       case REAL:

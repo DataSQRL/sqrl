@@ -6,9 +6,9 @@ type Package {
 
 type Query {
   Package(name: String): [Package!]
-  TopicPackages(pkgName: String, topicName: String, numSubmissions: Int, lastSubmission: String): [TopicPackages!]
+  TopicPackages(pkgName: String, topicName: String, numSubmissions: Float, lastSubmission: String): [TopicPackages!]
   Submission(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
-  TopicSearch(topicName: String, numPackages: Int): [TopicSearch!]
+  TopicSearch(topicName: String, numPackages: Float): [TopicSearch!]
 }
 
 type Submission {
@@ -36,14 +36,14 @@ type Submission {
 type TopicPackages {
   pkgName: String!
   topicName: String!
-  numSubmissions: Int!
+  numSubmissions: Float!
   lastSubmission: String!
   latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
 }
 
 type TopicSearch {
   topicName: String!
-  numPackages: Int!
+  numPackages: Float!
 }
 
 type keywords {
