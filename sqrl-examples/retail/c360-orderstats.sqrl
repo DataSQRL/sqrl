@@ -4,6 +4,7 @@ IMPORT ecommerce-data.Orders;
 Orders.entries.discount0 := coalesce(discount, 0.0);
 Orders.entries.price := quantity * unit_price - discount0;
 
+--Orders.totals := SELECT sum(e.price) AS price, CAST(COUNT(1) AS Integer) as number, sum(e.discount0) AS savings FROM @.entries e;
 Orders.totals := SELECT sum(e.price) AS price, COUNT(1) as number, sum(e.discount0) AS savings FROM @.entries e;
 
 CustomerOrderStats := SELECT o.customerid, sum(t.price) as total_price, sum(t.number) as num_orders FROM Orders o JOIN o.totals t

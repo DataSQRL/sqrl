@@ -1,13 +1,13 @@
 type Customers {
   id: Int!
-  purchases(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
+  purchases(id: Int, customerid: Int, time: String, timestamp: String): [Orders!]
   spending_by_month(month: String, total_spend: Float, total_savings: Float): [spending_by_month!]
 }
 
 type Orders {
   id: Int!
   customerid: Int!
-  time: Int!
+  time: String!
   timestamp: String!
   items(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, total: Float): [items!]
   totals(price: Float, savings: Float): [totals!]
@@ -27,7 +27,7 @@ type Products {
 type Query {
   Products(id: Int, name: String, sizing: String, weight_in_gram: Int, type: String, category: String, usda_id: Int, updated: String): [Products!]
   Customers(id: Int): [Customers!]
-  Orders(id: Int, customerid: Int, time: Int, timestamp: String): [Orders!]
+  Orders(id: Int, customerid: Int, time: String, timestamp: String): [Orders!]
 }
 
 type items {

@@ -1,7 +1,7 @@
 type CustomerOrderStats {
   customerid: Int!
   total_price: Float!
-  num_orders: Int!
+  num_orders: String!
 }
 
 type Orders {
@@ -9,12 +9,12 @@ type Orders {
   customerid: Int!
   time: String!
   entries(productid: Int, quantity: Int, unit_price: Float, discount: Float, discount0: Float, price: Float): [entries!]
-  totals(price: Float, number: Int, savings: Float): [totals!]
+  totals(price: Float, number: String, savings: Float): [totals!]
 }
 
 type Query {
   Orders(id: Int, customerid: Int, time: String): [Orders!]
-  CustomerOrderStats(customerid: Int, total_price: Float, num_orders: Int): [CustomerOrderStats!]
+  CustomerOrderStats(customerid: Int, total_price: Float, num_orders: String): [CustomerOrderStats!]
 }
 
 type entries {
@@ -29,7 +29,7 @@ type entries {
 
 type totals {
   price: Float!
-  number: Int!
+  number: String!
   savings: Float!
   parent: Orders!
 }
