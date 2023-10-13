@@ -1,0 +1,7 @@
+[FATAL] Field not allowed [invalidField]
+in script:invalidschema [14:3]:
+
+type Post {
+  invalidField: String
+--^
+

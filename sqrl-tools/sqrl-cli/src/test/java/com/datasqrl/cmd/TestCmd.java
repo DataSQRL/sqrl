@@ -6,6 +6,8 @@ package com.datasqrl.cmd;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
@@ -71,6 +73,25 @@ public class TestCmd {
     execute(root,
         "compile", root.resolve("script.sqrl").toString(),
         root.resolve("schema.graphqls").toString());
+  }
+
+  @Test
+  public void compileSubscriptionsInvalidGraphql() {
+    Path root = Paths.get("src/test/resources/subscriptions");
+    execute(root, new StatusHook() {
+          @Override
+          public void onSuccess() {
+
+          }
+
+          @Override
+          public void onFailure(Exception e, ErrorCollector errors) {
+            snapshot.addContent(ErrorPrinter.prettyPrint(errors));
+          }
+        },
+        "compile", root.resolve("invalidscript.sqrl").toString(),
+        root.resolve("invalidschema.graphqls").toString());
+    snapshot.createOrValidate();
   }
 
   @Test

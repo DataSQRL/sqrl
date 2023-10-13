@@ -349,12 +349,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       validated = validator.validate(sqlNode);
 
     } catch (CalciteContextException e) {
-      e.printStackTrace();
       throw addError(ErrorLabel.GENERIC, e);
     } catch (CollectedException e) {
       return;
     } catch (Exception e) {
-      e.printStackTrace();
       addError(ErrorLabel.GENERIC, statement, e.getMessage());
       return;
     }
