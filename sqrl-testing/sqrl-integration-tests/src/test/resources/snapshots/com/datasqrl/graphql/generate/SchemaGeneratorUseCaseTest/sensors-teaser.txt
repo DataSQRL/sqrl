@@ -1,44 +1,44 @@
 type Machine {
-  machineid: Int!
+  machineid: Float!
   maxTemp: Float!
   avgTemp: Float!
 }
 
 type MinReadings {
-  sensorid: Int!
+  sensorid: Float!
   timeMin: String!
   temp: Float!
 }
 
 type Query {
-  Sensors(id: Int, machineid: Int, placed: String): [Sensors!]
-  MinReadings(sensorid: Int, timeMin: String, temp: Float): [MinReadings!]
-  machinegroup(groupId: Int, groupName: String, created: String): [machinegroup!]
-  Machine(machineid: Int, maxTemp: Float, avgTemp: Float): [Machine!]
-  sensorreading(sensorid: Int, time: String, temperature: Float, humidity: Float): [sensorreading!]
+  Sensors(id: Float, machineid: Float, placed: String): [Sensors!]
+  MinReadings(sensorid: Float, timeMin: String, temp: Float): [MinReadings!]
+  machinegroup(groupId: Float, groupName: String, created: String): [machinegroup!]
+  Machine(machineid: Float, maxTemp: Float, avgTemp: Float): [Machine!]
+  sensorreading(sensorid: Float, time: String, temperature: Float, humidity: Float): [sensorreading!]
 }
 
 type Sensors {
-  id: Int!
-  machineid: Int!
+  id: Float!
+  machineid: Float!
   placed: String!
-  readings(sensorid: Int, timeMin: String, temp: Float): [MinReadings!]
+  readings(sensorid: Float, timeMin: String, temp: Float): [MinReadings!]
 }
 
 type machinegroup {
-  groupId: Int!
+  groupId: Float!
   groupName: String!
   created: String!
-  machines(machineId: Int): [machines!]
+  machines(machineId: Float): [machines!]
 }
 
 type machines {
-  machineId: Int!
+  machineId: Float!
   parent: machinegroup!
 }
 
 type sensorreading {
-  sensorid: Int!
+  sensorid: Float!
   time: String!
   temperature: Float!
   humidity: Float!

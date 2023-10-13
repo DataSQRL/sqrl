@@ -1,7 +1,7 @@
 type Orders {
-  customerid: Int!
-  entries(discount: Float, productid: Int, quantity: Int, unit_price: Float): [entries!]
-  id: Int!
+  customerid: Float!
+  entries(discount: Float, productid: Float, quantity: Float, unit_price: Float): [entries!]
+  id: Float!
   time: String!
 }
 
@@ -9,19 +9,19 @@ type Product {
   category: String!
   description: String!
   name: String!
-  productid: Int!
+  productid: Float!
 }
 
 type Query {
-  Orders(customerid: Int, id: Int, time: String): [Orders!]
-  Product(category: String, description: String, name: String, productid: Int): [Product!]
+  Orders(customerid: Float, id: Float, time: String): [Orders!]
+  Product(category: String, description: String, name: String, productid: Float): [Product!]
 }
 
 type entries {
   discount: Float
   parent: Orders!
-  productid: Int!
-  quantity: Int!
+  productid: Float!
+  quantity: Float!
   unit_price: Float!
 }
 

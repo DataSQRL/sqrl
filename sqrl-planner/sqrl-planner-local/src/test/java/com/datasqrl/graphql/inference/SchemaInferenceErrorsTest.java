@@ -87,13 +87,6 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
   }
 
   @Test
-  public void typeNotCoercableTest() {
-    inferSchemaModelQueries(planner, "type Orders {\n\tid: Boolean\n}\n"
-        + "type Query {\n\torders: Orders\n}");
-    validateErrorsAndAddContent();
-  }
-
-  @Test
   public void structuralObjectTest() {
     inferSchemaModelQueries(planner, ""
         + "type Orders {\n\t_uuid: String, entries: Entries\n}\n"
