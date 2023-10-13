@@ -2,6 +2,8 @@ package com.datasqrl.cmd;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.error.ErrorCollector;
+
 public class AssertStatusHook implements StatusHook {
   public static AssertStatusHook INSTANCE = new AssertStatusHook();
   @Override
@@ -9,7 +11,7 @@ public class AssertStatusHook implements StatusHook {
   }
 
   @Override
-  public void onFailure(Exception e) {
+  public void onFailure(Exception e, ErrorCollector errors) {
     fail(e);
   }
 }

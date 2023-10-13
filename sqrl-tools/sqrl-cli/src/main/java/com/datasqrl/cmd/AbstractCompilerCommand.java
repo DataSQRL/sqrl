@@ -11,6 +11,7 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.service.PackagerUtil;
@@ -74,11 +75,17 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     Packager packager = PackagerUtil.create(root.rootDir, files, config, errors);
     packager.cleanUp();
     Path packageFilePath =  packager.populateBuildDir(!noinfer);
+    if (errors.hasErrors()) {
+      return;
+    }
 
     Compiler compiler = new Compiler();
     Preconditions.checkArgument(Files.isRegularFile(packageFilePath));
     Compiler.CompilerResult result = compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
 
+    if (errors.hasErrors()) {
+      return;
+    }
     if (configSupplier.usesDefault) {
       addDockerCompose(Optional.ofNullable(mountDirectory));
       addFlinkExecute();

@@ -1,0 +1,32 @@
+type Query {
+  post: [Post!]
+}
+
+type Mutation {
+  createPost(input: CreatePostInput!): CreatePostPayload
+}
+
+type Subscription {
+  post: Post
+}
+
+type Post {
+  invalidField: String
+  title: String
+  author: String
+  url: String
+}
+
+type CreatePostPayload {
+  id: String
+  title: String
+  author: String
+  url: String
+}
+
+input CreatePostInput {
+  id: String
+  title: String
+  author: String
+  url: String
+}
