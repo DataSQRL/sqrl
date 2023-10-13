@@ -3,6 +3,7 @@
  */
 package com.datasqrl.cmd;
 
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,10 +29,12 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
     try {
       runCommand(collector);
       root.statusHook.onSuccess();
-    } catch (Exception e) {
+    } catch (CollectedException e) {
+      root.statusHook.onFailure(e, collector);
+    } catch (Exception e) { //unknown exception
       collector.getCatcher().handle(e);
       e.printStackTrace();
-      root.statusHook.onFailure(e);
+      root.statusHook.onFailure(e, collector);
     } finally {
       if (CLUSTER != null && startKafka) {
         CLUSTER.stop();

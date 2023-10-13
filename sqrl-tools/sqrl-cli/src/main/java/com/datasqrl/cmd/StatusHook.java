@@ -1,12 +1,13 @@
 package com.datasqrl.cmd;
 
+import com.datasqrl.error.ErrorCollector;
 import lombok.Getter;
 
 public interface StatusHook {
 
   void onSuccess();
 
-  void onFailure(Exception e);
+  void onFailure(Exception e, ErrorCollector errors);
 
   public static final StatusHook NONE = new StatusHook() {
     @Override
@@ -15,7 +16,7 @@ public interface StatusHook {
     }
 
     @Override
-    public void onFailure(Exception e) {
+    public void onFailure(Exception e, ErrorCollector errors) {
 
     }
   };
@@ -32,7 +33,7 @@ public interface StatusHook {
     }
 
     @Override
-    public void onFailure(Exception e) {
+    public void onFailure(Exception e, ErrorCollector errors) {
       failed = true;
     }
   }

@@ -134,8 +134,9 @@ public class SchemaInference {
       throw new SqrlAstException(ErrorLabel.GENERIC,
           toParserPos(fieldDefinition.getSourceLocation()),
           "Could not find associated SQRL table for field %s on type %s.",
-          fieldDefinition.getName(), fieldDefinition.getType() instanceof TypeName ?
-          ((TypeName) fieldDefinition.getType()).getName() : fieldDefinition.getType().toString());
+          fieldDefinition.getName(), fieldDefinition.getType() instanceof TypeName
+          ? ((TypeName) fieldDefinition.getType()).getName()
+          : unwrapObjectType(fieldDefinition.getType()).getName());
     }
     return sqrlTable;
   }
@@ -216,7 +217,8 @@ public class SchemaInference {
     boolean structurallyEqual = structurallyEqual(typeDef, table);
     //todo clean up, add lazy evaluation
     checkState(structurallyEqual,
-        invalidFields.isEmpty() ? typeDef.getSourceLocation() : invalidFields.get(invalidFields.size()-1).getSourceLocation(), "Field(s) not allowed [%s]",
+        invalidFields.isEmpty() ? typeDef.getSourceLocation() : invalidFields.get(invalidFields.size()-1).getSourceLocation(),
+        "Field%s not allowed [%s]", invalidFields.size() == 1 ? "" : "(s)",
         String.join(",", invalidFields.stream()
             .map(e->e.getName())
             .collect(Collectors.toList())), typeDef.getName());
