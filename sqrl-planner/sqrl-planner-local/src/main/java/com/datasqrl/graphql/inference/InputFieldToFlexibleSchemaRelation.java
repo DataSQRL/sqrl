@@ -139,7 +139,7 @@ public class InputFieldToFlexibleSchemaRelation implements
       RelDataType type;
       switch (node.getName()) {
         case "Int":
-          type = typeFactory.createSqlType(SqlTypeName.BIGINT);
+          type = typeFactory.createSqlType(SqlTypeName.INTEGER);
           break;
         case "Float":
           type = typeFactory.createSqlType(SqlTypeName.DECIMAL, 10, 5);
