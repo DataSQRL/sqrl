@@ -260,31 +260,32 @@ public class SchemaInference {
         column.getType().getComponentType().getSqlTypeName() : column.getType().getSqlTypeName();
     switch (scalarTypeDefinition.getName()) {
       case "Int":
+        // see graphql.scalar.GraphqlIntCoercing
         if (!SqlTypeName.INT_TYPES.contains(sqlTypeName)) {
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, parent.getName() + ":"+fieldDefinition.getName()+"  expected SQRL Int type, found: %s",
               sqlTypeName.getName());
         }
         break;
       case "Float":
+        // see graphql.scalar.GraphqlFloatCoercing
         if (!SqlTypeName.NUMERIC_TYPES.contains(sqlTypeName)) {
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL Numeric type, found: %s %s",
               sqlTypeName.getName(), column.getName().getDisplay());
         }
         break;
-      case "String":
-        if (!SqlTypeName.STRING_TYPES.contains(sqlTypeName) &&
-            !SqlTypeName.DATETIME_TYPES.contains(sqlTypeName)) {
-          throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL String or Date type, found: %s %s",
-              sqlTypeName.getName(), column.getName().getDisplay());
-        }
-        break;
       case "Boolean":
-        if (!SqlTypeName.BOOLEAN_TYPES.contains(sqlTypeName)) {
+        // see graphql.scalar.GraphqlBooleanCoercing
+        if (!SqlTypeName.BOOLEAN_TYPES.contains(sqlTypeName) &&
+            !SqlTypeName.STRING_TYPES.contains(sqlTypeName) &&
+            !SqlTypeName.NUMERIC_TYPES.contains(sqlTypeName)) {
           throw new SqrlAstException(ErrorLabel.GENERIC, pos, "Expected SQRL boolean type, found: %s %s",
               sqlTypeName.getName(), column.getName().getDisplay());
         }
         break;
       case "ID":
+      case "String":
+        //all things can be expressed as strings / ids
+        break;
       default:
         throw new SqrlAstException(ErrorLabel.GENERIC,
             toParserPos(type.getSourceLocation()),

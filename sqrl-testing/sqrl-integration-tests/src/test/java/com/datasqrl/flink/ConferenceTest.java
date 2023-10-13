@@ -20,6 +20,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -68,7 +70,10 @@ public class ConferenceTest extends AbstractGraphqlTest {
         + "  \n"
         + " \n"
         + "}", null,
-        resp -> countDownLatch.countDown(),
+        resp -> {
+          countDownLatch.countDown();
+          events.add(resp.body().encode());
+        },
         resp -> {
           JsonObject body = resp.body();
           log.info("Got response " + body.encode());
@@ -79,5 +84,11 @@ public class ConferenceTest extends AbstractGraphqlTest {
           return !jsonArray.isEmpty();
         });
     countDownLatch.await();
+    validateEvents();
+  }
+
+  @AfterEach
+  public void teardown() {
+    snapshot.createOrValidate();
   }
 }
