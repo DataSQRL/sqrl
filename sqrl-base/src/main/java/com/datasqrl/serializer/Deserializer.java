@@ -49,6 +49,9 @@ public class Deserializer {
   public <T> T mapJsonFile(Path path, Class<T> clazz) {
     return mapFile(jsonMapper, path, clazz);
   }
+  public <T> T mapJsonFile(String value, Class<T> clazz) {
+    return mapFile(jsonMapper, value, clazz);
+  }
 
   public <T> T mapYAMLFile(URI uri, Class<T> clazz) {
     return mapFile(yamlMapper, uri, clazz);
@@ -65,6 +68,14 @@ public class Deserializer {
   public static <T> T mapFile(ObjectMapper mapper, URI uri, Class<T> clazz) {
     try {
       return mapper.readValue(ResourceResolver.toURL(uri), clazz);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <T> T mapFile(ObjectMapper mapper, String str, Class<T> clazz) {
+    try {
+      return mapper.readValue(str, clazz);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
