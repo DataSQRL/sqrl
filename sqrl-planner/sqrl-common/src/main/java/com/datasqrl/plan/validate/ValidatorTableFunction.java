@@ -1,4 +1,4 @@
-package com.datasqrl.plan;
+package com.datasqrl.plan.validate;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -14,14 +14,11 @@ import org.apache.calcite.sql.SqlOperandCountRange;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlOperandMetadata;
-import org.apache.calcite.sql.type.SqlOperandTypeChecker.Consistency;
-import org.apache.calcite.sql.type.SqlOperandTypeInference;
-import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 
-public class SqlPlannerTableFunction extends SqlUserDefinedTableFunction {
+public class ValidatorTableFunction extends SqlUserDefinedTableFunction {
 
-  public SqlPlannerTableFunction(String name, RelDataType type) {
+  public ValidatorTableFunction(String name, RelDataType type) {
     super(new SqlIdentifier(name, SqlParserPos.ZERO),
         SqlKind.OTHER_FUNCTION,
         sqlOperatorBinding -> type, null, new OperandMetadata(),

@@ -15,7 +15,6 @@ import com.datasqrl.calcite.visitor.SqlRelationVisitor;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.plan.SqlPlannerTableFunction;
 import com.datasqrl.plan.validate.SqrlToValidatorSql.Context;
 import com.datasqrl.plan.validate.SqrlToValidatorSql.Result;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
@@ -215,7 +214,7 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
     final RelDataType latestTable2 = b.build();
 
     String name = node.getDisplay() + "$validate$" + uniqueId.incrementAndGet();
-    SqlUserDefinedTableFunction fnc = new SqlPlannerTableFunction(name, latestTable2);
+    SqlUserDefinedTableFunction fnc = new ValidatorTableFunction(name, latestTable2);
 
     List<SqlNode> args = node.getItems().stream()
         .filter(f -> f instanceof SqlCall)
