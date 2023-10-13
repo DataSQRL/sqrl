@@ -49,7 +49,7 @@ public class DAGPlanner {
   public SqrlDAG build(SqrlSchema relSchema, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports) {
     //Prepare the inputs
-    Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, apiManager, exports, framework);
+    Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(relBuilder, errors).prepareInputs(relSchema, apiManager, exports);
 
     //Assemble DAG
     SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(analyzedQueries, exports);
