@@ -42,8 +42,8 @@ import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
 import org.apache.calcite.sql.SqrlExportDefinition;
 import org.apache.calcite.sql.SqrlExpressionQuery;
-import org.apache.calcite.sql.SqrlFromQuery;
 import org.apache.calcite.sql.SqrlImportDefinition;
+import org.apache.calcite.sql.SqrlJoinQuery;
 import org.apache.calcite.sql.SqrlStreamQuery;
 import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.tools.RelBuilder;
@@ -120,55 +120,38 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
     RelNode expanded = planner.expandMacros(relNode);
 
-    final Optional<SqlNode> sql = !materializeSelf
-        ? Optional.of(planner.relToSql(Dialect.CALCITE, expanded))
-        : Optional.empty();
-    if (assignment instanceof SqrlStreamQuery) {
-      expanded = LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType());
-    }
-
     List<Function> isA = validator.getIsA().get(node);
 
-    //Short path: if we're not materializing, create relationship
-    if (!materializeSelf) {
-      NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
+    if (assignment instanceof SqrlJoinQuery) {
       List<SqrlTableMacro> isASqrl = isA.stream()
           .map(f->((SqrlTableMacro)f))
           .collect(Collectors.toList());
+      NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
 
-      Supplier<RelNode> nodeSupplier = ()->framework.getQueryPlanner().plan(Dialect.CALCITE, sql.get());
-      //if nested, add as relationship
-      if (assignment.getIdentifier().names.size() > 1) {
-        NamePath fromTable = path.popLast();
-        NamePath toTable = isASqrl.get(0).getPath();
-        String fromSysTable = planner.getSchema().getPathToSysTableMap().get(fromTable);
-        String toSysTable = planner.getSchema().getPathToSysTableMap().get(toTable);
+      NamePath fromTable = path.popLast();
+      NamePath toTable = isASqrl.get(0).getPath();
+      String fromSysTable = planner.getSchema().getPathToSysTableMap().get(fromTable);
+      String toSysTable = planner.getSchema().getPathToSysTableMap().get(toTable);
+      Supplier<RelNode> nodeSupplier = ()->expanded;
 
-        Relationship rel = new Relationship(path.getLast(),
-            path, fromSysTable, toSysTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
-            parameters, nodeSupplier);
-        planner.getSchema().addRelationship(rel);
-      } else {
-        //todo fix for FROM statements
-        final RelNode finalRel = expanded;
-        //todo: unclean way to find from query
-        nodeSupplier = assignment instanceof SqrlFromQuery ? nodeSupplier : ()->finalRel;
-
-        ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
-        tableFactory.createTable(path.toStringList(),
-            expanded, null,
-            assignment.getHints(), parameters, isA,
-            materializeSelf, Optional.of(nodeSupplier), statementErrors);
-      }
+      Relationship rel = new Relationship(path.getLast(),
+          path, fromSysTable, toSysTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
+          parameters, nodeSupplier);
+      planner.getSchema().addRelationship(rel);
     } else {
       ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
-      List<String> path = assignment instanceof SqrlExpressionQuery ?
-          SqrlListUtil.popLast(assignment.getIdentifier().names) :
-          assignment.getIdentifier().names;
+      List<String> path = assignment.getIdentifier().names;
+      RelNode rel = assignment instanceof SqrlStreamQuery
+          ? LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType())
+          : expanded;
 
-      tableFactory.createTable(path, expanded, null,
+      Optional<Supplier<RelNode>> nodeSupplier = parameters.isEmpty()
+          ? Optional.empty()
+          : Optional.of(()->rel);
+
+      tableFactory.createTable(path, rel, null,
           assignment.getHints(), parameters, isA,
-          materializeSelf, Optional.empty(), statementErrors);
+          materializeSelf, nodeSupplier, statementErrors);
     }
 
     return null;

@@ -284,7 +284,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void customerRecentProductsTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Customer.orders := JOIN Orders ON Orders.customerid = @.customerid;");
-    builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid LIMIT 1;");
+    builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid;");
     builder.add("Customer.recent_products := SELECT e.productid, coalesce(pp.category,'') AS category,\n"
         + "                                       sum(e.quantity) AS quantity, count(1) AS num_orders\n"
         + "                                FROM @.orders.entries AS e LEFT JOIN e.parent p LEFT JOIN e.product pp\n"
@@ -862,7 +862,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void parameterizedLocalAggregateTest() {
     //complex column not yet supported
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
-        + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid LIMIT 1;\n"
+        + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
         + "Product.total := COALESCE(joinDeclaration.productid, 1000);\n");
   }
 
@@ -885,7 +885,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void inlinePathMultiplicityTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
-        + "Product.joinDeclaration := JOIN Product p ON @.productid = p.productid LIMIT 1;\n"
+        + "Product.joinDeclaration := JOIN Product p ON @.productid = p.productid;\n"
         + "Product2 := SELECT j.productid, p.productid FROM Product p LEFT JOIN p.joinDeclaration j;\n");
   }
 
