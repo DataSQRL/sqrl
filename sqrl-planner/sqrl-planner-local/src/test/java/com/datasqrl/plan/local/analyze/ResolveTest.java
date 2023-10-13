@@ -691,7 +691,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   private void createSnapshots() {
     new DAGPreparation(planner.createRelBuilder(), errors).prepareInputs(planner.getSchema(),
-        new MockAPIConnectorManager(), Collections.EMPTY_LIST, framework);
+        new MockAPIConnectorManager(), Collections.EMPTY_LIST);
     DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(planner.createRelBuilder()),
         namespace.getPipeline(), errors);
     validatedTables.forEach((table, execType) -> {

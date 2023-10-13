@@ -3,7 +3,6 @@ package com.datasqrl.plan.global;
 import static com.datasqrl.calcite.plan.ScriptPlanner.exportTable;
 
 import com.datasqrl.calcite.ModifiableTable;
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
@@ -32,11 +31,11 @@ public class DAGPreparation {
   private final ErrorCollector errors;
 
   public Collection<AnalyzedAPIQuery> prepareInputs(SqrlSchema sqrlSchema, APIConnectorManager apiManager,
-      Collection<ResolvedExport> exports, SqrlFramework framework) {
+      Collection<ResolvedExport> exports) {
     //Add subscriptions as exports
 
     apiManager.getExports().forEach((sqrlTable, log) -> exports.add(exportTable((ModifiableTable) sqrlTable.getVt(),
-        log.getSink(), relBuilder, true)));
+        log.getSink(), relBuilder)));
 
     //Assign timestamps to imports which propagate and restrict remaining timestamps in downstream tables
     StreamUtil.filterByClass(getAllPhysicalTables(sqrlSchema), ProxyImportRelationalTable.class)
