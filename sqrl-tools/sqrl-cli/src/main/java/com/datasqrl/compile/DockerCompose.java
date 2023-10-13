@@ -94,6 +94,7 @@ public class DockerCompose {
         + "      - kafka-setup\n"
         + "    volumes:\n"
         + "      - ./flink-job.jar:/flink-job.jar\n"
+        + "      - ./flink-plan.json:/flink-plan.json\n"
         + "      - ./submit-flink-job.sh:/submit-flink-job.sh\n"
         + "    entrypoint: /submit-flink-job.sh\n"
         + "\n"
@@ -120,7 +121,9 @@ public class DockerCompose {
         + "sleep 3;\n"
         + "echo \"$filename\"\n"
         + "echo \"curl -X POST \"http://flink-jobmanager:8081/jars/${filename}/run\";\";\n"
-        + "post_response=$(curl -X POST \"http://flink-jobmanager:8081/jars/${filename}/run\");\n"
+        + "json_content_base64=$(base64 -w 0 flink-plan.json);\n"
+        + "echo \"$program_args\" \n"
+        + "post_response=$(curl -X POST \"http://flink-jobmanager:8081/jars/${filename}/run\" -H 'Content-Type: application/json'  -d \"{\\\"programArgs\\\":\\\"$json_content_base64\\\"}\");\n"
         + "echo \"$post_response\";\n"
         + "echo 'Job submitted.'";
   }
