@@ -10,6 +10,17 @@ You declaratively define your data sources (in JSON), your data processing (in S
 DataSQRL has a pluggable engine model that supports technologies like Apache Kafka, Apache Flink, Postgres, and Eclipse Vert.x to execute the steps of the pipeline. The topology of the data pipeline is defined in a JSON package file which specifies the engines to use in the pipeline. DataSQRL's optimizer builds efficient data pipelines against the configured engines that optimize physical data models, partitioning, view materialization vs. query execution, and data flow. <br /> 
 DataSQRL has adapters for various data sources like Apache Kafka, file system, S3, etc. Additional engines and adapters can be added to the compiler (it's open-source, wink wink).
 
+## What is DataSQRL for?
+
+DataSQRL makes it easier, faster, and less expensive to build efficient data pipelines that:
+
+* have multiple processing steps, because DataSQRL can optimize the resulting computational DAG.
+* combine stream processing with database querying, because DataSQRL manages the integration between stream and database and provides an abstraction layer for a streaming database.
+* expose processed data through an API, because DataSQRL generates an API server and integration into the data pipeline from an API specification.
+* require iterative development, because DataSQRL provides developer tooling that enables rapid iteration cycles.
+
+DataSQRL provides these benefits through a purposeful abstraction layer, compile-time optimization, and developer tooling. That means, DataSQRL might *not* be a good choice for use cases that require extremely high performance (i.e. millions of records a second or more) where every implementation detail needs to be optimized.
+
 ## Example
 
 We are going to create a data pipeline that ingests temperature readings and aggregates them for realtime querying.
@@ -41,7 +52,7 @@ For a detailed explanation of this example, take a look at the [Quickstart Tutor
 Building data pipelines manually is tedious because of all the integration code (e.g. connectors, schema mappings, error handling, retry logic, ...) and low-level implementation details (e.g. timestamp synchronization, physical data modeling, denormalization, index selection, view maintenance, ...) one has to implement.
 
 The idea behind DataSQRL is to "compile away" most of this data plumbing code by:
-1. Using SQL to implement the data flow of a data pipeline and using a cost-based optimizer to map data processing to each of the steps in the pipeline.
+1. Using SQL to implement the data flow of a data pipeline and using a cost-based optimizer to map data processing to best suited step in the pipeline.
 2. Using versioned dependency management for data sources and sinks to automate connector handling through a package manager.
 3. Compile-time optimization of low-level implementation details like watermarks, physical data models, and index structures so they can be abstracted away.
 4. Typing of relational tables, operator overloading, and schema validation to provide compile-time feedback and simplify development.
