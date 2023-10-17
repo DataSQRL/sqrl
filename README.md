@@ -12,7 +12,7 @@ DataSQRL has adapters for various data sources like Apache Kafka, file system, S
 
 ## What is DataSQRL for?
 
-DataSQRL makes it easier, faster, and less expensive to build efficient data pipelines that:
+DataSQRL makes it easier to build efficient data pipelines that:
 
 * have multiple processing steps, because DataSQRL can optimize the resulting computational DAG.
 * combine stream processing with database querying, because DataSQRL manages the integration between stream and database and provides an abstraction layer for a streaming database.
