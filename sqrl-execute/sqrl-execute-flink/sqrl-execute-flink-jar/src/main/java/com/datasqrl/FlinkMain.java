@@ -8,8 +8,6 @@ import com.datasqrl.module.resolver.ClasspathResourceResolver;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Preconditions;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -24,19 +22,18 @@ public class FlinkMain {
   public static void main(String[] args) {
     ClasspathResourceResolver resourceResolver = new ClasspathResourceResolver();
 
-    Preconditions.checkState(args.length == 1, "Requires a base64 flink plan as argument");
     log.info("Files:" + resourceResolver.getFiles());
-    (new FlinkMain()).run(resourceResolver, args[0]);
+    (new FlinkMain()).run(resourceResolver);
   }
 
   @SneakyThrows
-  public void run(ResourceResolver resourceResolver, String arg) {
+  public void run(ResourceResolver resourceResolver) {
     log.info("Hello.");
-    String flinkPlan = new String(Base64.getDecoder().decode(arg.getBytes()));
-    Preconditions.checkState(!flinkPlan.isEmpty(), "Could not find flink executable plan.");
+    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flink-plan.json"));
+    Preconditions.checkState(flinkPlan.isPresent(), "Could not find flink executable plan.");
 
     Deserializer deserializer = new Deserializer();
-    FlinkExecutablePlan executablePlan = deserializer.mapJsonFile(flinkPlan, FlinkExecutablePlan.class);
+    FlinkExecutablePlan executablePlan = deserializer.mapJsonFile(flinkPlan.get(), FlinkExecutablePlan.class);
     log.info("Found executable.");
 
     ErrorCollector errors = ErrorCollector.root();
