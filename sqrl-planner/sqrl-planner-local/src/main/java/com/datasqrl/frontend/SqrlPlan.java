@@ -1,5 +1,6 @@
 package com.datasqrl.frontend;
 
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
@@ -69,22 +70,34 @@ public class SqrlPlan extends SqrlBase {
     framework.resetPlanner();
     for (SqlNode statement : node.getStatements()) {
       try {
+        ErrorCollector errors = collector
+            .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
+
         ScriptValidator validator = new ScriptValidator(framework, framework.getQueryPlanner(),
-            updatedModuleLoader, collector, new SqlNameUtil(nameCanonicalizer));
+            updatedModuleLoader, errors, new SqlNameUtil(nameCanonicalizer));
         validator.validateStatement((SqrlStatement) statement);
-        if (collector.hasErrors()) {
+        if (errors.hasErrors()) {
           throw new CollectedException(new RuntimeException("Script cannot validate"));
         }
 
         ScriptPlanner planner = new ScriptPlanner(
             framework.getQueryPlanner(), validator,
             new SqrlPlanningTableFactory(framework), framework,
-            new SqlNameUtil(nameCanonicalizer), collector);
+            new SqlNameUtil(nameCanonicalizer), errors);
 
         planner.plan(statement);
+      } catch (CollectedException e) {
+        throw e;
       } catch (Exception e) {
-        collector.handle(e);
-        throw new CollectedException(new RuntimeException("Script cannot validate"));
+        //Print stack trace for unknown exceptions
+        if (e.getMessage() == null) {
+          e.printStackTrace();
+        }
+
+        ErrorCollector statementErrors = collector
+            .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
+
+        throw statementErrors.handle(e);
       }
     }
 
