@@ -65,7 +65,7 @@ public interface ErrorMessage {
     public Implementation(ErrorLabel errorLabel, String message, ErrorLocation location,
         Severity severity) {
       this.errorLabel = errorLabel;
-      this.message = message;
+      this.message = message == null ? "" : message;
       this.location = location;
       this.severity = severity;
     }

@@ -139,7 +139,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           parameters, nodeSupplier);
       planner.getSchema().addRelationship(rel);
     } else {
-      ErrorCollector statementErrors = errors.atFile(SqrlAstException.toLocation(assignment.getParserPosition()));
       List<String> path = assignment.getIdentifier().names;
       RelNode rel = assignment instanceof SqrlStreamQuery
           ? LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType())
@@ -151,7 +150,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       tableFactory.createTable(path, rel, null,
           assignment.getHints(), parameters, isA,
-          materializeSelf, nodeSupplier, statementErrors);
+          materializeSelf, nodeSupplier, errors);
     }
 
     return null;

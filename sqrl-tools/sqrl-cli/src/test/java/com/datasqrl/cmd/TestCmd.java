@@ -78,17 +78,7 @@ public class TestCmd {
   @Test
   public void compileSubscriptionsInvalidGraphql() {
     Path root = Paths.get("src/test/resources/subscriptions");
-    execute(root, new StatusHook() {
-          @Override
-          public void onSuccess() {
-
-          }
-
-          @Override
-          public void onFailure(Exception e, ErrorCollector errors) {
-            snapshot.addContent(ErrorPrinter.prettyPrint(errors));
-          }
-        },
+    execute(root, ERROR_STATUS_HOOK,
         "compile", root.resolve("invalidscript.sqrl").toString(),
         root.resolve("invalidschema.graphqls").toString());
     snapshot.createOrValidate();
@@ -174,4 +164,18 @@ public class TestCmd {
   public static int execute(Path rootDir, StatusHook hook, String... args) {
     return new RootCommand(rootDir,hook).getCmd().execute(args);
   }
+
+  public class ErrorStatusHook implements StatusHook {
+    @Override
+    public void onSuccess() {
+
+    }
+
+    @Override
+    public void onFailure(Exception e, ErrorCollector errors) {
+      snapshot.addContent(ErrorPrinter.prettyPrint(errors));
+    }
+  }
+
+  public final StatusHook ERROR_STATUS_HOOK = new ErrorStatusHook();
 }
