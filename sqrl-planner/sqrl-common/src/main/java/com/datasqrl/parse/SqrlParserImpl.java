@@ -18,7 +18,6 @@ package com.datasqrl.parse;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
-import com.datasqrl.parse.SqlBaseParser.BetweenContext;
 import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,12 +49,12 @@ public class SqrlParserImpl implements SqrlParser {
   private final LexerErrorHandler lexerErrorHandler = new LexerErrorHandler();
   private final ParsingErrorHandler parsingErrorHandler = ParsingErrorHandler.builder()
       .specialRule(SqlBaseParser.RULE_expression, "<expression>")
-      .specialRule(SqlBaseParser.RULE_booleanExpression, "<expression>")
-      .specialRule(SqlBaseParser.RULE_valueExpression, "<expression>")
-      .specialRule(SqlBaseParser.RULE_primaryExpression, "<expression>")
+//      .specialRule(SqlBaseParser.RULE_booleanExpression, "<expression>")
+//      .specialRule(SqlBaseParser.RULE_valueExpression, "<expression>")
+//      .specialRule(SqlBaseParser.RULE_primaryExpression, "<expression>")
       .specialRule(SqlBaseParser.RULE_identifier, "<identifier>")
-      .specialRule(SqlBaseParser.RULE_string, "<string>")
-      .specialRule(SqlBaseParser.RULE_query, "<query>")
+//      .specialRule(SqlBaseParser.RULE_string, "<string>")
+//      .specialRule(SqlBaseParser.RULE_query, "<query>")
       .specialRule(SqlBaseParser.RULE_type, "<type>")
       .specialToken(SqlBaseLexer.INTEGER_VALUE, "<integer>")
       .build();
@@ -139,11 +138,6 @@ public class SqrlParserImpl implements SqrlParser {
 
     private final List<String> ruleNames;
     Pattern pattern = Pattern.compile("[_A-Za-z][_0-9A-Za-z]");
-
-    @Override
-    public void exitBetween(BetweenContext ctx) {
-      super.exitBetween(ctx);
-    }
 
     @Override
     public void exitUnquotedIdentifier(SqlBaseParser.UnquotedIdentifierContext context) {
