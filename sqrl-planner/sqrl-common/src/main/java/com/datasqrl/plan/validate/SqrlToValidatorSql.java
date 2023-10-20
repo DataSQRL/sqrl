@@ -47,6 +47,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 @AllArgsConstructor
 @Getter
@@ -69,7 +70,7 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
     // Copy query specification with new RelNode.
     Context newContext = new Context(context.currentPath, new HashMap<>(), context.tableFunctionDef,
         context.root);
-    Result result = SqlNodeVisitor.accept(this, call.getFrom(), newContext);
+    Result result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getFrom()), newContext);
 
     for (SqlNode node : call.getSelectList()) {
       node = stripAs(node);
@@ -95,6 +96,37 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
         .rewriteExpressions(new WalkSubqueries(planner, newContext));
 
     return new Result(select.build(), result.getCurrentPath(), result.getFncs());
+  }
+
+  private SqlNode appendAliasIfRequired(SqlNode sqlNode) {
+    if (sqlNode instanceof SqrlCompoundIdentifier) {
+      if (((SqrlCompoundIdentifier) sqlNode).getItems().size() == 1 &&
+        ((SqrlCompoundIdentifier) sqlNode).getItems().get(0) instanceof SqlIdentifier
+      ) {
+        return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(),
+            sqlNode,
+            ((SqrlCompoundIdentifier) sqlNode).get(0));
+      }
+    }
+
+    if (sqlNode instanceof SqlIdentifier && ((SqlIdentifier) sqlNode).names.size() == 1) {
+      return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(),
+          new SqrlCompoundIdentifier(sqlNode.getParserPosition(), List.of(sqlNode)), sqlNode);
+    }
+
+    if (sqlNode instanceof SqlIdentifier) {
+      List<SqlNode> names = new ArrayList<>();
+      SqlIdentifier node = (SqlIdentifier)sqlNode;
+      ImmutableList<String> nameList = node.names;
+      for (int i = 0; i < nameList.size(); i++) {
+        String n = nameList.get(i);
+        SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
+        names.add(identifier);
+      }
+      return new SqrlCompoundIdentifier(node.getParserPosition(), names);
+    }
+
+    return sqlNode;
   }
 
   @Override
@@ -242,11 +274,11 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
   @Override
   public Result visitJoin(
       SqlJoin call, Context context) {
-    Result leftNode = SqlNodeVisitor.accept(this, call.getLeft(), context);
+    Result leftNode = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getLeft()), context);
 
     Context context1 = new Context(leftNode.currentPath, context.aliasPathMap,
         context.tableFunctionDef, context.root);
-    Result rightNode = SqlNodeVisitor.accept(this, call.getRight(), context1);
+    Result rightNode = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), context1);
 
     SqlNode join = new SqlJoinBuilder(call)
         .rewriteExpressions(new WalkSubqueries(planner, context))

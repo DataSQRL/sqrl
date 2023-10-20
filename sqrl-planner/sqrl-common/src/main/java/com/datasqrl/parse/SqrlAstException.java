@@ -29,7 +29,7 @@ public class SqrlAstException extends RuntimeException {
     super(message, cause.orElse(null), true, true);
     this.errorLabel = errorLabel;
     this.pos = pos;
-    this.message = String.format(message, (Object[]) args);
+    this.message = message == null ? null :String.format(message, (Object[]) args);
   }
 
   public ErrorLocation.FileLocation getLocation() {

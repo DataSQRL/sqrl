@@ -819,8 +819,8 @@ SqlNodeList ParenthesizedQueryOrCommaListWithDefault(
     }
     (
         e = OrderedQueryOrExpr(firstExprContext)
-    |
-        e = Default()
+//    |
+//        e = Default()
     )
     {
         list = startList(e);
@@ -833,8 +833,8 @@ SqlNodeList ParenthesizedQueryOrCommaListWithDefault(
         }
         (
             e = Expression(exprContext)
-        |
-            e = Default()
+//        |
+//            e = Default()
         )
         {
             list.add(e);
@@ -927,8 +927,8 @@ void Arg0(List list, ExprContext exprContext) :
         LOOKAHEAD(2) name = SimpleIdentifier() <NAMED_ARGUMENT_ASSIGNMENT>
     ]
     (
-        e = Default()
-    |
+//        e = Default()
+//    |
         e = OrderedQueryOrExpr(firstExprContext)
     )
     {
@@ -952,8 +952,8 @@ void Arg(List list, ExprContext exprContext) :
         LOOKAHEAD(2) name = SimpleIdentifier() <NAMED_ARGUMENT_ASSIGNMENT>
     ]
     (
-        e = Default()
-    |
+//        e = Default()
+//    |
         e = Expression(exprContext)
     )
     {
@@ -967,12 +967,12 @@ void Arg(List list, ExprContext exprContext) :
     }
 }
 
-SqlNode Default() : {}
-{
-    <DEFAULT_> {
-        return SqlStdOperatorTable.DEFAULT.createCall(getPos());
-    }
-}
+//SqlNode Default() : {}
+//{
+//    <DEFAULT_> {
+//        return SqlStdOperatorTable.DEFAULT.createCall(getPos());
+//    }
+//}
 
 /**
  * Parses a query (SELECT, UNION, INTERSECT, EXCEPT, VALUES, TABLE) followed by
@@ -1880,18 +1880,48 @@ SqlLiteral JoinType() :
 }
 {
     (
-    LOOKAHEAD(3) // required for "LEFT SEMI JOIN" in Babel
-<#list (parser.joinTypes!default.parser.joinTypes) as method>
-        joinType = ${method}()
+//    LOOKAHEAD(3) // required for "LEFT SEMI JOIN" in Babel
+//<#list (parser.joinTypes!default.parser.joinTypes) as method>
+//        joinType = ${method}()
+//    |
+//</#list>
+        LOOKAHEAD(3)
+        <LEFT> <TEMPORAL> <JOIN> { joinType = JoinType.LEFT_TEMPORAL; }
     |
-</#list>
-        <JOIN> { joinType = JoinType.INNER; }
+        LOOKAHEAD(3)
+        <LEFT> <INTERVAL> <JOIN> { joinType = JoinType.LEFT_INTERVAL; }
+    |
+        LOOKAHEAD(3)
+        <LEFT> <DEFAULT_> <JOIN> { joinType = JoinType.LEFT_DEFAULT; }
+    |
+        LOOKAHEAD(3)
+        <RIGHT> <TEMPORAL> <JOIN> { joinType = JoinType.RIGHT_TEMPORAL; }
+    |
+        LOOKAHEAD(3)
+        <RIGHT> <INTERVAL> <JOIN> { joinType = JoinType.RIGHT_INTERVAL; }
+    |
+        LOOKAHEAD(3)
+        <RIGHT> <DEFAULT_> <JOIN> { joinType = JoinType.RIGHT_DEFAULT; }
+    |
+        <TEMPORAL> <JOIN> { joinType = JoinType.TEMPORAL; }
+    |
+        <INTERVAL> <JOIN> { joinType = JoinType.INTERVAL; }
+    |
+        <DEFAULT_> <JOIN> { joinType = JoinType.DEFAULT; }
+    |
+        <JOIN> { joinType = JoinType.DEFAULT; }
     |
         <INNER> <JOIN> { joinType = JoinType.INNER; }
     |
-        <LEFT> [ <OUTER> ] <JOIN> { joinType = JoinType.LEFT; }
+        LOOKAHEAD(3)
+        <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT; }
     |
-        <RIGHT> [ <OUTER> ] <JOIN> { joinType = JoinType.RIGHT; }
+        <LEFT> <JOIN> { joinType = JoinType.LEFT_DEFAULT; }
+    |
+        LOOKAHEAD(3)
+        <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT; }
+    |
+        <RIGHT> <JOIN> { joinType = JoinType.RIGHT_DEFAULT; }
     |
         <FULL> [ <OUTER> ] <JOIN> { joinType = JoinType.FULL; }
     |
@@ -5973,11 +6003,11 @@ List<SqlNode> JsonValueEmptyOrErrorBehavior() :
         <NULL> {
             list.add(SqlJsonValueEmptyOrErrorBehavior.NULL.symbol(getPos()));
         }
-    |
-        <DEFAULT_> e = Expression(ExprContext.ACCEPT_NON_QUERY) {
-            list.add(SqlJsonValueEmptyOrErrorBehavior.DEFAULT.symbol(getPos()));
-            list.add(e);
-        }
+//    |
+//        <DEFAULT_> e = Expression(ExprContext.ACCEPT_NON_QUERY) {
+//            list.add(SqlJsonValueEmptyOrErrorBehavior.DEFAULT.symbol(getPos()));
+//            list.add(e);
+//        }
     )
     <ON>
     (
@@ -7077,7 +7107,7 @@ SqlPostfixOperator PostfixRowOperator() :
 /* KEYWORDS:  anything in this list is a reserved word unless it appears
    in the NonReservedKeyWord() production. */
 
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEF, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < A: "A" >
 |   < ABS: "ABS" >
@@ -7837,7 +7867,7 @@ void NonReservedKeyWord2of3() :
 
 /* LITERALS */
 
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEF, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < UNSIGNED_INTEGER_LITERAL: (["0"-"9"])+ >
 |
@@ -7864,7 +7894,7 @@ void NonReservedKeyWord2of3() :
 
 // All databases except BigQuery support standard single-quoted literals,
 // which use single-quote as the escape character.
-<DEFAULT, DQID, BTID> TOKEN :
+<DEF, DQID, BTID> TOKEN :
 {
     < QUOTED_STRING: <QUOTE> ( (~["'"]) | ("''"))* <QUOTE> >
 |
@@ -7872,7 +7902,7 @@ void NonReservedKeyWord2of3() :
 |
     < UNICODE_STRING_LITERAL: "U" "&" <QUOTED_STRING> >
 |
-    < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9"])
+    < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9","@"])
     (["a"-"z","A"-"Z","0"-"9",":",".","-","_"])*
     >
 }
@@ -7892,7 +7922,7 @@ void NonReservedKeyWord2of3() :
     >
 }
 
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEF, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < UNICODE_QUOTED_ESCAPE_CHAR:
     <QUOTE>
@@ -7903,7 +7933,7 @@ void NonReservedKeyWord2of3() :
 
 /* SEPARATORS */
 
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEF, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < LPAREN: "(">
 |   < RPAREN: ")">
@@ -7926,7 +7956,7 @@ void NonReservedKeyWord2of3() :
 
 /* OPERATORS */
 
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEF, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < EQ: "=" >
 |   < GT: ">" >
@@ -7992,7 +8022,7 @@ TOKEN_MGR_DECLS : {
 /*
 Lexical states:
 
-DEFAULT: Identifiers are quoted in brackets, e.g. [My Identifier]
+DEF: Identifiers are quoted in brackets, e.g. [My Identifier]
 DQID:    Identifiers are double-quoted, e.g. "My Identifier"
 BTID:    Identifiers are enclosed in back-ticks, e.g. `My Identifier`
 BQID:    Identifiers are enclosed in back-ticks, e.g. `My Identifier`,
@@ -8005,7 +8035,7 @@ IN_SINGLE_LINE_COMMENT:
 IN_FORMAL_COMMENT:
 IN_MULTI_LINE_COMMENT:
 
-DEFAULT, DQID, BTID, BQID are the 4 'normal states'. Behavior is identical
+DEF, DQID, BTID, BQID are the 4 'normal states'. Behavior is identical
 except for how quoted identifiers are recognized.
 
 The BQHID state exists only at the start of a table name (e.g. immediately after
@@ -8018,7 +8048,7 @@ of the 'normal states'.
 
 /* WHITE SPACE */
 
-<DEFAULT, DQID, BTID, BQID, BQHID> SKIP :
+<DEF, DQID, BTID, BQID, BQHID> SKIP :
 {
     " "
 |   "\t"
@@ -8029,23 +8059,23 @@ of the 'normal states'.
 
 /* COMMENTS */
 
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEF, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < HINT_BEG: "/*+">
 |   < COMMENT_END: "*/" >
 }
 
-<DEFAULT, DQID, BTID, BQID, BQHID> MORE :
+<DEF, DQID, BTID, BQID, BQHID> MORE :
 {
     <"/**" ~["/"]> { pushState(); } : IN_FORMAL_COMMENT
 }
 
-<DEFAULT, DQID, BTID, BQID, BQHID> MORE :
+<DEF, DQID, BTID, BQID, BQHID> MORE :
 {
     "/*" { pushState(); } : IN_MULTI_LINE_COMMENT
 }
 
-<DEFAULT, DQID, BTID, BQID, BQHID> SKIP :
+<DEF, DQID, BTID, BQID, BQHID> SKIP :
 {
     <SINGLE_LINE_COMMENT: ("//"|"--")(~["\n","\r"])* ("\n"|"\r"|"\r\n")? >
 }
@@ -8071,7 +8101,7 @@ MORE :
 
 /* IDENTIFIERS */
 
-<DEFAULT> TOKEN :
+<DEF> TOKEN :
 {
     < BRACKET_QUOTED_IDENTIFIER:
     "["
@@ -8118,12 +8148,12 @@ MORE :
     < HYPHENATED_IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>|"-")* > { popState(); }
 }
 
-<DEFAULT, DQID, BTID, BQID> TOKEN :
+<DEF, DQID, BTID, BQID> TOKEN :
 {
     < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
 }
 
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEF, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < COLLATION_ID:
     (<LETTER>|<DIGIT>)+ (<LETTER>|<DIGIT>|":"|"."|"-"|"_")*
@@ -8137,6 +8167,8 @@ MORE :
     < #LETTER:
     [
         "\u0024",
+        //sqrl u0040 is @
+        "\u0040",
         "\u0041"-"\u005a",
         "\u005f",
         "\u0061"-"\u007a",
@@ -8176,7 +8208,7 @@ MORE :
 /* Special token to throw a wrench in the works. It is never valid in SQL,
    and so when it occurs, it causes the parser to print which tokens would
    have been valid at that point. Used by SqlAdvisor. */
-<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+<DEF, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < BEL:
     [

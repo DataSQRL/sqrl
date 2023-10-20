@@ -58,6 +58,7 @@ public class FileSourceFactory implements DataStreamSourceFactory {
       org.apache.flink.connector.file.src.FileSource.FileSourceBuilder<String> builder;
       if (pathConfig.isDirectory()) {
         StreamFormat<String> format;
+        //todo: fix me with factory
         if (formatFactory.getName().equalsIgnoreCase("json")) {
           format = new JsonInputFormat(charset);
         } else {

@@ -14,15 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 -->
+
+
 <#--
-
-JoinType LeftSemiJoin() :
-{
-}
-{
-    <LEFT> <SEMI> <JOIN> { return JoinType.LEFT_SEMI_JOIN; }
-}
-
 /** Parses a TRY_CAST invocation. */
 SqlNode TryCastFunctionCall() :
 {
