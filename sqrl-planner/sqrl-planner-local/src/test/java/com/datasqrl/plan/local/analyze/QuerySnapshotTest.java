@@ -700,7 +700,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void subQueryTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
-        + "Product2 := SELECT * FROM Product, (SELECT MIN(productid) AS min FROM Product) f;");
+        + "Product2 := SELECT * FROM Product, (SELECT MIN(productid) AS `min` FROM Product) f;");
   }
 
   @Test
