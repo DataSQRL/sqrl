@@ -134,7 +134,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
 
       NamePath fromTable = path.popLast();
-      NamePath toTable = isASqrl.get(0).getPath();
+      NamePath toTable = isASqrl.get(isASqrl.size()-1).getPath();
       String fromSysTable = planner.getSchema().getPathToSysTableMap().get(fromTable);
       String toSysTable = planner.getSchema().getPathToSysTableMap().get(toTable);
       Supplier<RelNode> nodeSupplier = ()->expanded;

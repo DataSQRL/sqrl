@@ -60,13 +60,11 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
-import org.apache.calcite.sql.SqrlCompoundIdentifier;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final TypeFactory typeFactory;
@@ -207,36 +205,35 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         Optional.empty());
   }
 
+
   private SqlNode appendAliasIfRequired(SqlNode sqlNode) {
-    if (sqlNode instanceof SqrlCompoundIdentifier) {
-      if (((SqrlCompoundIdentifier) sqlNode).getItems().size() == 1 &&
-          ((SqrlCompoundIdentifier) sqlNode).getItems().get(0) instanceof SqlIdentifier
-      ) {
+    if (sqlNode instanceof SqlIdentifier) {
+      if (((SqlIdentifier) sqlNode).names.size() == 1) {
         return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(),
             sqlNode,
-            ((SqrlCompoundIdentifier) sqlNode).get(0));
+            sqlNode);
       }
     }
 
     if (sqlNode instanceof SqlIdentifier && ((SqlIdentifier) sqlNode).names.size() == 1) {
       return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(),
-          new SqrlCompoundIdentifier(sqlNode.getParserPosition(), List.of(sqlNode)), sqlNode);
-    }
-
-    if (sqlNode instanceof SqlIdentifier) {
-      List<SqlNode> names = new ArrayList<>();
-      SqlIdentifier node = (SqlIdentifier)sqlNode;
-      ImmutableList<String> nameList = node.names;
-      for (int i = 0; i < nameList.size(); i++) {
-        String n = nameList.get(i);
-        SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
-        names.add(identifier);
-      }
-      return new SqrlCompoundIdentifier(node.getParserPosition(), names);
+          sqlNode, sqlNode);
     }
 
     return sqlNode;
   }
+//
+//    if (sqlNode instanceof SqlIdentifier) {
+//      List<SqlNode> names = new ArrayList<>();
+//      SqlIdentifier node = (SqlIdentifier)sqlNode;
+//      ImmutableList<String> nameList = node.names;
+//      for (int i = 0; i < nameList.size(); i++) {
+//        String n = nameList.get(i);
+//        SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
+//        names.add(identifier);
+//      }
+//      return new SqrlCompoundIdentifier(node.getParserPosition(), names);
+//    }
 
   private List<String> getFieldNames(List<SqlNode> list) {
     List<String> nodes = new ArrayList<>();
@@ -319,8 +316,13 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   }
 
   @Override
-  public Result visitTable(SqrlCompoundIdentifier node, Context context) {
-    Iterator<SqlNode> input = node.getItems().iterator();
+  public Result visitTable(SqlIdentifier node, Context context) {
+    List<SqlNode> items = new ArrayList<>();
+    for (int i = 0; i < node.names.size(); i++) {
+      items.add(new SqlIdentifier(node.names.get(i), node.getComponentParserPosition(i)));
+    }
+
+    Iterator<SqlNode> input = items.iterator();
     PathWalker pathWalker = new PathWalker(catalogReader);
 
     SqlNode item = input.next();

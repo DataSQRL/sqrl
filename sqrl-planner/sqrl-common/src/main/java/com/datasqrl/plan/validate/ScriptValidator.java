@@ -50,18 +50,20 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
-import org.apache.calcite.sql.SqrlCompoundIdentifier;
 import org.apache.calcite.sql.SqrlDistinctQuery;
 import org.apache.calcite.sql.SqrlExportDefinition;
 import org.apache.calcite.sql.SqrlExpressionQuery;
@@ -77,11 +79,12 @@ import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 @AllArgsConstructor
 @Getter
@@ -254,13 +257,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     //If on root table, use root table
     //If on nested, use @.table
-    List<SqlNode> tablePath;
+    List<String> tablePath;
     if (node.getIdentifier().names.size() > 2) {
-      tablePath = List.of(
-          new SqlIdentifier(ReservedName.SELF_IDENTIFIER.getCanonical(), SqlParserPos.ZERO),
-          new SqlIdentifier(node.getIdentifier().names.get(node.getIdentifier().names.size() - 2), SqlParserPos.ZERO));
+      tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical(),
+          node.getIdentifier().names.get(node.getIdentifier().names.size() - 2));
     } else if (node.getIdentifier().names.size() == 2) {
-      tablePath = List.of(new SqlIdentifier(node.getIdentifier().names.get(0), SqlParserPos.ZERO));
+      tablePath = List.of(node.getIdentifier().names.get(0));
     } else {
       throw new RuntimeException();
     }
@@ -268,7 +270,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     selectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
     SqlSelect select = new SqlSelectBuilder()
         .setSelectList(selectList)
-        .setFrom(new SqrlCompoundIdentifier(SqlParserPos.ZERO, tablePath))
+        .setFrom(new SqlIdentifier(tablePath, SqlParserPos.ZERO))
         .build();
     validateTable(node, select, node.getTableArgs(),
         true);
@@ -347,8 +349,15 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       framework.getSqrlOperatorTable().addPlanningFnc(result.getFncs());
 
-      validated = validator.validate(sqlNode);
+      if (statement instanceof SqrlExpressionQuery) {
+        SqlNode aggregate = ((SqrlSqlValidator) validator).getAggregate((SqlSelect) sqlNode);
+        if (aggregate != null) {
+          throw addError(ErrorLabel.GENERIC, aggregate,
+              "Aggregate functions not yet allowed");
+        }
+      }
 
+      validated = validator.validate(sqlNode);
     } catch (CalciteContextException e) {
       throw addError(ErrorLabel.GENERIC, e);
     } catch (CollectedException e) {
@@ -418,7 +427,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       }
 
       @Override
-      public SqlNode visitTable(SqrlCompoundIdentifier node, Void context) {
+      public SqlNode visitTable(SqlIdentifier node, Void context) {
         return node;
       }
 
@@ -448,10 +457,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   }
 
   private boolean isSelfPrefix(SqlNode sqlNode) {
-    if (sqlNode instanceof SqrlCompoundIdentifier &&
-        ((SqrlCompoundIdentifier)sqlNode).getList().get(0) instanceof SqlIdentifier) {
-      return ((SqlIdentifier)((SqrlCompoundIdentifier)sqlNode).getList().get(0)).names.get(0).equals(
-          ReservedName.SELF_IDENTIFIER.getCanonical());
+    if (sqlNode instanceof SqlIdentifier) {
+      return ((SqlIdentifier)sqlNode).names.get(0).equals(ReservedName.SELF_IDENTIFIER.getCanonical());
     }
 
     return false;
@@ -459,12 +466,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
   public static boolean isSelfTable(SqlNode sqlNode) {
     if (sqlNode instanceof SqlCall &&
-        ((SqlCall) sqlNode).getOperandList().get(0) instanceof SqrlCompoundIdentifier) {
-      SqrlCompoundIdentifier id = ((SqrlCompoundIdentifier) ((SqlCall) sqlNode).getOperandList()
+        ((SqlCall) sqlNode).getOperandList().get(0) instanceof SqlIdentifier) {
+      SqlIdentifier id = ((SqlIdentifier) ((SqlCall) sqlNode).getOperandList()
           .get(0));
-      return id.getItems().size() == 1 && id.getItems().get(0) instanceof SqlIdentifier &&
-          ((SqlIdentifier) (id.getItems().get(0))).names.size() == 1 &&
-          ((SqlIdentifier) (id.getItems().get(0))).names.get(0).equalsIgnoreCase("@");
+      return id.names.size() == 1 &&
+          id.names.get(0).equalsIgnoreCase("@");
     }
     return false;
   }
@@ -492,18 +498,13 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       @Override
       //todo: move to sqrl rewriting
       public SqlNode visitTable(SqlIdentifier node, Object context) {
-        List<SqlNode> names = new ArrayList<>();
-        ImmutableList<String> strings = node.names;
-        for (int i = 0; i < strings.size(); i++) {
-          String n = strings.get(i);
-          SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
-          names.add(identifier);
-        }
-        return new SqrlCompoundIdentifier(node.getParserPosition(), names);
-      }
-
-      @Override
-      public SqlNode visitTable(SqrlCompoundIdentifier node, Object context) {
+//        List<SqlNode> names = new ArrayList<>();
+//        ImmutableList<String> strings = node.names;
+//        for (int i = 0; i < strings.size(); i++) {
+//          String n = strings.get(i);
+//          SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
+//          names.add(identifier);
+//        }
         return node;
       }
 
@@ -635,65 +636,111 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
 
     /**
-     * Add the implicit table join as sql since the fields are accessible
+     * We want a SELECT lastAlias.* FROM ~ so query has proper number of fields.
      */
-    SqlJoinBuilder joinBuilder = new SqlJoinBuilder();
-    joinBuilder.setLeft(createSelfCall());
-    Pair<String, SqlNode> aliasedQuery = getOrSetJoinAlias(node.getQuery().getFrom());
-    joinBuilder.setRight(aliasedQuery.getRight());
+    Optional<String> lastAlias = extractLastAlias(node.getQuery().getFrom());
+    if (lastAlias.isEmpty()) {
+      throw addError(ErrorLabel.GENERIC, node.getQuery(), "Not a valid join declaration. "
+          + "Could not derive table/alias of last join path item.");
+    }
 
     SqlSelect select = new SqlSelectBuilder(node.getQuery())
-        .setFrom(joinBuilder.build())
-        .setSelectList(List.of(new SqlIdentifier(List.of(aliasedQuery.getLeft(), ""), SqlParserPos.ZERO)))
+        .setSelectList(List.of(new SqlIdentifier(List.of(lastAlias.get(), ""), SqlParserPos.ZERO)))
         .build();
 
     preprocessSql.put(node, select);
     validateTable(node, select, node.getTableArgs(), materializeSelf);
-
     return null;
+  }
+
+  private Optional<String> extractLastAlias(SqlNode from) {
+    return from.accept(new SqlBasicVisitor<>(){
+      @Override
+      public Optional<String> visit(SqlLiteral literal) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<String> visit(SqlCall call) {
+        if (call.getKind() == SqlKind.JOIN) {
+          return ((SqlJoin) call).getRight().accept(this);
+        } else if (call.getKind() == SqlKind.AS) {
+          return call.getOperandList().get(1).accept(this);
+        }
+
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<String> visit(SqlNodeList nodeList) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<String> visit(SqlIdentifier id) {
+        if (id.isSimple()) {
+          return Optional.of(id.getSimple());
+        }
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<String> visit(SqlDataTypeSpec type) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<String> visit(SqlDynamicParam param) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<String> visit(SqlIntervalQualifier intervalQualifier) {
+        return Optional.empty();
+      }
+    });
   }
 
   private SqlNode createSelfCall() {
     return SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-        new SqrlCompoundIdentifier(SqlParserPos.ZERO,
-            List.of(new SqlIdentifier("@", SqlParserPos.ZERO))),
+        new SqlIdentifier("@", SqlParserPos.ZERO),
         new SqlIdentifier("@", SqlParserPos.ZERO));
   }
-
-  private Pair<String, SqlNode> getOrSetJoinAlias(SqlNode from) {
-    AtomicReference<String> reference = new AtomicReference<>();
-    SqlNode newNode = from.accept(new SqlShuttle() {
-      @Override
-      public SqlNode visit(SqlCall call) {
-        if (call.getKind() == SqlKind.JOIN) {
-          SqlJoin join = (SqlJoin) call;
-          SqlJoinBuilder builder = new SqlJoinBuilder(join);
-          builder.setRight(join.getRight().accept(this));
-          return builder.build();
-        }
-        if (call.getKind() == SqlKind.AS) {
-          reference.set(((SqlIdentifier)call.getOperandList().get(1)).names.get(0));
-          return call;
-        }
-
-        return super.visit(call);
-      }
-
-      @Override
-      public SqlNode visit(SqlNodeList nodeList) {
-        if (nodeList instanceof SqrlCompoundIdentifier) {
-          reference.set("_a");
-          return SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, nodeList,
-              new SqlIdentifier("_a", SqlParserPos.ZERO));
-        }
-
-        return super.visit(nodeList);
-      }
-
-    });
-
-    return Pair.of(reference.get(), newNode);
-  }
+//
+//  private Pair<String, SqlNode> getOrSetJoinAlias(SqlNode from) {
+//    AtomicReference<String> reference = new AtomicReference<>();
+//    SqlNode newNode = from.accept(new SqlShuttle() {
+//      @Override
+//      public SqlNode visit(SqlCall call) {
+//        if (call.getKind() == SqlKind.JOIN) {
+//          SqlJoin join = (SqlJoin) call;
+//          SqlJoinBuilder builder = new SqlJoinBuilder(join);
+//          builder.setRight(join.getRight().accept(this));
+//          return builder.build();
+//        }
+//        if (call.getKind() == SqlKind.AS) {
+//          reference.set(((SqlIdentifier)call.getOperandList().get(1)).names.get(0));
+//          return call;
+//        }
+//
+//        return super.visit(call);
+//      }
+//
+//      @Override
+//      public SqlNode visit(SqlNodeList nodeList) {
+//        if (nodeList instanceof SqrlCompoundIdentifier) {
+//          reference.set("_a");
+//          return SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, nodeList,
+//              new SqlIdentifier("_a", SqlParserPos.ZERO));
+//        }
+//
+//        return super.visit(nodeList);
+//      }
+//
+//    });
+//
+//    return Pair.of(reference.get(), newNode);
+//  }
 
   private void checkAssignable(SqrlAssignment node) {
     List<String> path = SqrlListUtil.popLast(node.getIdentifier().names);
@@ -706,10 +753,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       addError(ErrorLabel.GENERIC, node, "Cannot column or query to table");
       return;
     }
-//    if (!(tableFunction.getFunction() instanceof ModifiableSqrlTable)) {
-//      addError(ErrorLabel.GENERIC, node, "Table not modifiable %s", path);
-//    }
-
   }
 
   @Override

@@ -351,7 +351,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void ordersNewIdTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.newid := SELECT NOW(), ParseTimestamp(TimestampToString(EpochToTimestamp(100))) FROM Orders;");
+    builder.add("Orders.newid := SELECT NOW(), ParseTimestamp(TimestampToString(EpochToTimestamp(100))) FROM @ JOIN Orders;");
     validateScript(builder.getScript());
   }
 
@@ -540,7 +540,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void coalesceTest() {
     validateScript("IMPORT ecommerce-data.Orders;\n"
-        + "Orders.entries.discount2 := discount ? 0.0;");
+        + "Orders.entries.discount2 := COALESCE(discount,0.0);");
   }
 
   @Test
@@ -820,7 +820,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void localAggregateExpressionTest() {
     validateScriptInvalid(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.total := SUM(Product.productid);");
+            + "Product.total := SUM(productid);");
   }
 
   @Test
@@ -1140,11 +1140,11 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void timestampTest() {
-    validateScript("IMPORT ecommerce-data.Orders TIMESTAMP time;");
+    validateScript("IMPORT ecommerce-data.Orders TIMESTAMP `time`;");
   }
 
   @Test
   public void timestampAliasTest() {
-    validateScript("IMPORT ecommerce-data.Orders AS O TIMESTAMP time;");
+    validateScript("IMPORT ecommerce-data.Orders AS O TIMESTAMP `time`;");
   }
 }

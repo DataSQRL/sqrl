@@ -41,13 +41,11 @@ import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqrlCompoundIdentifier;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 @AllArgsConstructor
 @Getter
@@ -99,31 +97,17 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
   }
 
   private SqlNode appendAliasIfRequired(SqlNode sqlNode) {
-    if (sqlNode instanceof SqrlCompoundIdentifier) {
-      if (((SqrlCompoundIdentifier) sqlNode).getItems().size() == 1 &&
-        ((SqrlCompoundIdentifier) sqlNode).getItems().get(0) instanceof SqlIdentifier
-      ) {
+    if (sqlNode instanceof SqlIdentifier) {
+      if (((SqlIdentifier) sqlNode).names.size() == 1) {
         return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(),
             sqlNode,
-            ((SqrlCompoundIdentifier) sqlNode).get(0));
+            sqlNode);
       }
     }
 
     if (sqlNode instanceof SqlIdentifier && ((SqlIdentifier) sqlNode).names.size() == 1) {
       return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(),
-          new SqrlCompoundIdentifier(sqlNode.getParserPosition(), List.of(sqlNode)), sqlNode);
-    }
-
-    if (sqlNode instanceof SqlIdentifier) {
-      List<SqlNode> names = new ArrayList<>();
-      SqlIdentifier node = (SqlIdentifier)sqlNode;
-      ImmutableList<String> nameList = node.names;
-      for (int i = 0; i < nameList.size(); i++) {
-        String n = nameList.get(i);
-        SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
-        names.add(identifier);
-      }
-      return new SqrlCompoundIdentifier(node.getParserPosition(), names);
+          sqlNode, sqlNode);
     }
 
     return sqlNode;
@@ -143,8 +127,14 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
   }
 
   @Override
-  public Result visitTable(SqrlCompoundIdentifier node, Context context) {
-    Iterator<SqlNode> input = node.getItems().iterator();
+  public Result visitTable(SqlIdentifier node, Context context) {
+    List<SqlNode> items = new ArrayList<>();
+    for (int i = 0; i < node.names.size(); i++) {
+      items.add(new SqlIdentifier(node.names.get(i), node.getComponentParserPosition(i)));
+    }
+
+    Iterator<SqlNode> input = items.iterator();
+
     PathWalker pathWalker = new PathWalker(planner.getCatalogReader());
 
     SqlNode item = input.next();
@@ -245,20 +235,24 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
         .forEach(c -> b.add(c.getName(), c.getType()));
     final RelDataType latestTable2 = b.build();
 
-    String name = node.getDisplay() + "$validate$" + uniqueId.incrementAndGet();
+    String name = getDisplay(node) + "$validate$" + uniqueId.incrementAndGet();
     SqlUserDefinedTableFunction fnc = new ValidatorTableFunction(name, latestTable2);
 
-    List<SqlNode> args = node.getItems().stream()
-        .filter(f -> f instanceof SqlCall)
-        .map(f -> (SqlCall) f)
-        .flatMap(f -> f.getOperandList().stream())
-        .collect(Collectors.toList());
+//    List<SqlNode> args = node.getItems().stream()
+//        .filter(f -> f instanceof SqlCall)
+//        .map(f -> (SqlCall) f)
+//        .flatMap(f -> f.getOperandList().stream())
+//        .collect(Collectors.toList());
 
-    SqlCall call = fnc.createCall(SqlParserPos.ZERO, args);
+    SqlCall call = fnc.createCall(SqlParserPos.ZERO, List.of());
     plannerFns.add(fnc);
 
     SqlCall call1 = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO, call);
     return new Result(call1, pathWalker.getAbsolutePath(), plannerFns);
+  }
+
+  private String getDisplay(SqlIdentifier node) {
+    return String.join(".", node.names);
   }
 
   private Optional<String> getIdentifier(SqlNode item) {

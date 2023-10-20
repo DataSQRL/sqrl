@@ -37,6 +37,7 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.util.Static;
 import org.apache.calcite.util.Util;
@@ -207,5 +208,10 @@ public class SqrlSqlValidator extends SqlValidatorImpl {
     // factory,
     // this makes it possible to ignore them in the validator and fall back to regular row types
     // see also SqlFunction#deriveType
+  }
+
+  @Override
+  public SqlNode getAggregate(SqlSelect select) {
+    return super.getAggregate(select);
   }
 }

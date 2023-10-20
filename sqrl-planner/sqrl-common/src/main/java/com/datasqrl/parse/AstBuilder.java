@@ -21,6 +21,7 @@ import com.datasqrl.model.StreamType;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
 import com.google.common.base.Preconditions;
+import java.util.function.Function;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -68,23 +69,59 @@ class AstBuilder
 
   }
 
+  @FunctionalInterface
+  private interface SqlParserFunction {
+    SqlNode apply(SqlParser parser) throws SqlParseException;
+  }
+
+  /**
+   * Parses a SQL statement and adjusts its position.
+   */
   @SneakyThrows
   public SqlNode parse(int rowOffset, int colOffset, String sql) {
-    SqlParser parser = SqlParser.create(sql, createParserConfig());
-    SqlNode node;
-    try {
-      node = parser.parseStmt();
-    } catch (SqlParseException e) {
-      SqlParserPos pos = PositionAdjustingSqlShuttle.adjustPosition(e.getPos(),
-          rowOffset, colOffset);
-      throw new SqlParseException(e.getMessage(), pos, e.getExpectedTokenSequences(),
-          e.getTokenImages(), e.getCause());
-    }
-    node = node.accept(new PositionAdjustingSqlShuttle(rowOffset, colOffset));
-
+    SqlNode node = parseSql(sql, rowOffset, colOffset, SqlParser::parseStmt);
     return CalciteFixes.pushDownOrder(node);
   }
 
+  private SqlNode parseExpression(ParserRuleContext expression) {
+    int startIndex = expression.start.getStartIndex();
+    int stopIndex = expression.stop.getStopIndex();
+    Interval interval = new Interval(startIndex, stopIndex);
+    String queryString = expression.start.getInputStream().getText(interval);
+
+    int rowOffset = expression.getStart().getCharPositionInLine() + 1;
+    int line = expression.getStart().getLine();
+    return parseExpression(rowOffset, line, queryString);
+  }
+
+  @SneakyThrows
+  public SqlNode parseExpression(int rowOffset, int colOffset, String expression) {
+    return parseSql(expression, rowOffset, colOffset, SqlParser::parseExpression);
+  }
+
+  private SqlNode parseSql(String sql, int rowOffset, int colOffset,
+      SqlParserFunction parseFunction) throws Exception {
+    SqlParser parser = SqlParser.create(sql, createParserConfig());
+    SqlNode node;
+
+    try {
+      node = parseFunction.apply(parser);
+    } catch (SqlParseException e) {
+      throw adjustSqlParseException(e, rowOffset, colOffset);
+    }
+
+    return adjustPosition(node, rowOffset, colOffset);
+  }
+
+  private SqlNode adjustPosition(SqlNode node, int rowOffset, int colOffset) {
+    return node.accept(new PositionAdjustingSqlShuttle(rowOffset, colOffset));
+  }
+
+  private Exception adjustSqlParseException(SqlParseException e, int rowOffset, int colOffset) {
+    SqlParserPos pos = PositionAdjustingSqlShuttle.adjustPosition(e.getPos(), rowOffset, colOffset);
+    return new SqlParseException(e.getMessage(), pos, e.getExpectedTokenSequences(),
+        e.getTokenImages(), e.getCause());
+  }
   private static String decodeUnicodeLiteral(UnicodeStringLiteralContext context) {
     char escape;
     if (context.UESCAPE() != null) {
@@ -344,7 +381,7 @@ class AstBuilder
     Optional<SqlNode> timestamp;
     Optional<SqlIdentifier> timestampAlias = Optional.empty();
     if (ctx.TIMESTAMP() != null) {
-      SqlNode expr = visit(ctx.expression());
+      SqlNode expr = parseExpression(ctx.expression());
 
       if (ctx.timestampAlias != null) {
         SqlIdentifier tsAlias = ((SqlIdentifier) visit(ctx.timestampAlias));
@@ -398,12 +435,24 @@ class AstBuilder
   public SqlNode visitJoinQuery(JoinQueryContext ctx) {
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
 
+
+    int startIndex = ctx.joinDeclaration().start.getStartIndex();
+    int stopIndex = ctx.joinDeclaration().stop.getStopIndex();
+    Interval interval = new Interval(startIndex, stopIndex);
+    String queryString = ctx.start.getInputStream().getText(interval);
+    queryString = String.format("SELECT * FROM @ AS @ JOIN %s", queryString);
+
+    int rowOffset = ctx.joinDeclaration().getStart().getCharPositionInLine() + 20;
+    int line = ctx.joinDeclaration().getStart().getLine();
+    SqlNode query = parse(rowOffset, line, queryString);
+
+
     return new SqrlJoinQuery(
         getLocation(ctx),
         assign.getHints(),
         assign.getIdentifier(),
         assign.getTableArgs(),
-        (SqlSelect) visit(ctx.joinDeclaration()));
+        (SqlSelect) query);
   }
 
   @Override
@@ -423,8 +472,7 @@ class AstBuilder
     SqlIdentifier identifier = (SqlIdentifier)visit(ctx.distinctQuerySpec().identifier());
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
     SqlNode table = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-        new SqrlCompoundIdentifier(getLocation(ctx),
-        List.of(identifier)),identifier);
+        identifier, identifier);
 
     List<SqlNode> expressions = new ArrayList<>();
 
@@ -457,6 +505,7 @@ class AstBuilder
     int stopIndex = ctx.query().stop.getStopIndex();
     Interval interval = new Interval(startIndex, stopIndex);
     String queryString = ctx.start.getInputStream().getText(interval);
+
     int rowOffset = ctx.query().getStart().getCharPositionInLine() + 1;
     int line = ctx.query().getStart().getLine();
     SqlNode query = parse(rowOffset, line, queryString);
@@ -473,12 +522,14 @@ class AstBuilder
   public SqlNode visitExpressionQuery(ExpressionQueryContext ctx) {
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
 
+    SqlNode expression = parseExpression(ctx.expression());
+
     return new SqrlExpressionQuery(
         getLocation(ctx),
         assign.getHints(),
         assign.getIdentifier(),
         assign.getTableArgs(),
-        visit(ctx.expression()));
+        expression);
   }
 
   @Override
@@ -1351,7 +1402,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitRelationPrimary(RelationPrimaryContext ctx) {
-    return new SqrlCompoundIdentifier(getLocation(ctx), visit(ctx.relationItem(), SqlNode.class));
+    return null;//new SqlIdentifier(getLocation(ctx), visit(ctx.relationItem(), SqlIdentifier.class));
   }
 
   @Override
@@ -1369,19 +1420,19 @@ class AstBuilder
   @Override
   public SqlNode visitAliasedRelation(AliasedRelationContext ctx) {
     if (ctx.identifier() == null) {
-      SqlNode node = visit(ctx.relationPrimary());
-      //Automatically alias tables that are singular, e.g. FROM Orders
-      if (node instanceof SqrlCompoundIdentifier && ((SqrlCompoundIdentifier)node).getItems().size() == 1
-      && ((SqrlCompoundIdentifier)node).getItems().get(0) instanceof SqlIdentifier) {
-        SqlNode identifer = ((SqrlCompoundIdentifier) node).getItems().get(0);
-        return SqlStdOperatorTable.AS.createCall(
-            getLocation(ctx),
-            node,
-            new SqlIdentifier(((SqlIdentifier)identifer).names.get(0),
-                identifer.getParserPosition()));
-      } else {
-        return visit(ctx.relationPrimary());
-      }
+//      SqlNode node = visit(ctx.relationPrimary());
+//      //Automatically alias tables that are singular, e.g. FROM Orders
+//      if (node instanceof SqrlCompoundIdentifier && ((SqrlCompoundIdentifier)node).getItems().size() == 1
+//      && ((SqrlCompoundIdentifier)node).getItems().get(0) instanceof SqlIdentifier) {
+//        SqlNode identifer = ((SqrlCompoundIdentifier) node).getItems().get(0);
+//        return SqlStdOperatorTable.AS.createCall(
+//            getLocation(ctx),
+//            node,
+//            new SqlIdentifier(((SqlIdentifier)identifer).names.get(0),
+//                identifer.getParserPosition()));
+//      } else {
+//        return visit(ctx.relationPrimary());
+//      }
 
     }
     return SqlStdOperatorTable.AS.createCall(
