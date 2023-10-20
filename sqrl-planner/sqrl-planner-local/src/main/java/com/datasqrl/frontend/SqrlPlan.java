@@ -1,5 +1,6 @@
 package com.datasqrl.frontend;
 
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.datasqrl.calcite.Dialect;
@@ -77,6 +78,7 @@ public class SqrlPlan extends SqrlBase {
             updatedModuleLoader, errors, new SqlNameUtil(nameCanonicalizer));
         validator.validateStatement((SqrlStatement) statement);
         if (errors.hasErrors()) {
+          System.out.println(ErrorPrinter.prettyPrint(errors));
           throw new CollectedException(new RuntimeException("Script cannot validate"));
         }
 

@@ -8,7 +8,6 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
-import org.apache.calcite.sql.SqrlCompoundIdentifier;
 import org.apache.calcite.sql.SqrlDistinctQuery;
 import org.apache.calcite.sql.SqrlExportDefinition;
 import org.apache.calcite.sql.SqrlExpressionQuery;
@@ -51,8 +50,6 @@ public abstract class SqlNodeVisitor<R, C> implements
   public static <R, C> R accept(SqlRelationVisitor<R, C> visitor, SqlNode node, C context) {
     if (node.getKind() == SqlKind.AS) {
       return visitor.visitAliasedRelation((SqlCall) node, context);
-    } else if (node instanceof SqrlCompoundIdentifier) {
-      return visitor.visitTable((SqrlCompoundIdentifier) node, context);
     } else if (node instanceof SqlIdentifier) {
       return visitor.visitTable((SqlIdentifier) node, context);
     } else if (node instanceof SqlJoin) {
