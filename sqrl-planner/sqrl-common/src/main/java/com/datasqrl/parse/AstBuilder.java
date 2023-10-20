@@ -34,13 +34,13 @@ import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Util;
 
 import java.util.*;
-import org.apache.flink.table.planner.delegation.FlinkSqlParserFactories;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -69,9 +69,19 @@ class AstBuilder
   }
 
   @SneakyThrows
-  public SqlNode parse(String sql) {
+  public SqlNode parse(int rowOffset, int colOffset, String sql) {
     SqlParser parser = SqlParser.create(sql, createParserConfig());
-    SqlNode node = parser.parseStmt();
+    SqlNode node;
+    try {
+      node = parser.parseStmt();
+    } catch (SqlParseException e) {
+      SqlParserPos pos = PositionAdjustingSqlShuttle.adjustPosition(e.getPos(),
+          rowOffset, colOffset);
+      throw new SqlParseException(e.getMessage(), pos, e.getExpectedTokenSequences(),
+          e.getTokenImages(), e.getCause());
+    }
+    node = node.accept(new PositionAdjustingSqlShuttle(rowOffset, colOffset));
+
     return CalciteFixes.pushDownOrder(node);
   }
 
@@ -447,9 +457,9 @@ class AstBuilder
     int stopIndex = ctx.query().stop.getStopIndex();
     Interval interval = new Interval(startIndex, stopIndex);
     String queryString = ctx.start.getInputStream().getText(interval);
-    System.out.println(queryString);
-
-    SqlNode query = parse(queryString);
+    int rowOffset = ctx.query().getStart().getCharPositionInLine() + 1;
+    int line = ctx.query().getStart().getLine();
+    SqlNode query = parse(rowOffset, line, queryString);
 
     return new SqrlSqlQuery(
         getLocation(ctx),

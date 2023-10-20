@@ -90,7 +90,8 @@ public class SqrlPlan extends SqrlBase {
         throw e;
       } catch (Exception e) {
         //Print stack trace for unknown exceptions
-        if (e.getMessage() == null) {
+        if (e.getMessage() == null || e instanceof IllegalStateException
+            || e instanceof NullPointerException) {
           e.printStackTrace();
         }
 

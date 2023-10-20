@@ -69,12 +69,18 @@ public class SqlBuilders {
           call.operand(1),
           call.operand(2),
           call.operand(3),
-          call.operand(4).equals(JoinConditionType.NONE.symbol(SqlParserPos.ZERO))
+          shouldAddOnCondition(call)
               ? JoinConditionType.ON.symbol(SqlParserPos.ZERO)
               : call.operand(4),
-          call.operand(4).equals(JoinConditionType.NONE.symbol(SqlParserPos.ZERO))
+          shouldAddOnCondition(call)
               ? SqlLiteral.createBoolean(true, SqlParserPos.ZERO)
               : call.operand(5));
+    }
+
+    public boolean shouldAddOnCondition(SqlJoin call) {
+      return call.operand(4).equals(JoinConditionType.NONE.symbol(SqlParserPos.ZERO))
+          && !call.isNatural() && call.getJoinType() != JoinType.COMMA
+          && call.getJoinType() != JoinType.CROSS;
     }
 
     public SqlJoinBuilder setLeft(SqlNode sqlNode) {
@@ -97,7 +103,9 @@ public class SqlBuilders {
     }
 
     public SqlJoinBuilder rewriteExpressions(SqlShuttle shuttle) {
-      join.setOperand(5, join.getCondition().accept(shuttle));
+      if (join.getCondition() != null) {
+        join.setOperand(5, join.getCondition().accept(shuttle));
+      }
       return this;
     }
   }

@@ -1,11 +1,13 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.calcite.convert.IntervalSimplificationShuttle;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqrlParserImpl;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.calcite.convert.PostgresSqlConverter;
 import java.util.ArrayList;
@@ -35,6 +37,8 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverterWithHints;
 import org.apache.calcite.rel.rules.CoreRules;
+import org.apache.calcite.rel.rules.ReduceExpressionsRule;
+import org.apache.calcite.rel.rules.ReduceExpressionsRule.ProjectReduceExpressionsRule;
 import org.apache.calcite.rel.rules.SubQueryRemoveRule;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
@@ -448,6 +452,7 @@ public class QueryPlanner {
     //Convert lateral joins
     relNode = RelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
     relNode = run(relNode, CoreRules.FILTER_INTO_JOIN);
+    relNode = CalciteUtil.applyRexShuttleRecursively(relNode, new IntervalSimplificationRexShuttle(getRexBuilder()));
     return relNode;
   }
 }

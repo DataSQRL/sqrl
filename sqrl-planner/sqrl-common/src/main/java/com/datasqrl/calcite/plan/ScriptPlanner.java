@@ -31,7 +31,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.rules.ReduceExpressionsRule;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Function;
@@ -118,6 +120,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     List<FunctionParameter> parameters = sqrlToSql.getParams();
 
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
+    System.out.println(planner.relToString(Dialect.CALCITE, relNode));
     RelNode expanded = planner.expandMacros(relNode);
 
     System.out.println(planner.sqlToString(Dialect.CALCITE, result.getSqlNode()));
