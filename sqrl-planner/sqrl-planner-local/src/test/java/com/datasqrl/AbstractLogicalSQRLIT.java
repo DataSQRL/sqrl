@@ -8,6 +8,7 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.frontend.SqrlPlan;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
@@ -82,7 +83,11 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
 
   protected Namespace plan(String query) {
-    return sqrlPlanner.plan(query, List.of());
+    try {
+      return sqrlPlanner.plan(query, List.of());
+    } catch (CollectedException e) {
+      throw e;
+    }
   }
 
 }

@@ -16,24 +16,31 @@
  */
 package com.datasqrl.parse;
 
+import com.datasqrl.calcite.SqrlConformance;
 import com.datasqrl.model.StreamType;
 import com.datasqrl.parse.SqlBaseParser.*;
+import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
 import com.google.common.base.Preconditions;
+import lombok.SneakyThrows;
 import lombok.Value;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.config.Lex;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Util;
 
 import java.util.*;
+import org.apache.flink.table.planner.delegation.FlinkSqlParserFactories;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -49,6 +56,23 @@ class AstBuilder
     if (!condition) {
       throw parseError(message, context);
     }
+  }
+
+  public static SqlParser.Config createParserConfig() {
+    return SqlParser.config()
+        .withParserFactory(
+            SqrlSqlParserImpl.FACTORY)
+        .withConformance(SqrlConformance.INSTANCE)
+        .withLex(Lex.JAVA)
+        .withIdentifierMaxLength(256);
+
+  }
+
+  @SneakyThrows
+  public SqlNode parse(String sql) {
+    SqlParser parser = SqlParser.create(sql, createParserConfig());
+    SqlNode node = parser.parseStmt();
+    return CalciteFixes.pushDownOrder(node);
   }
 
   private static String decodeUnicodeLiteral(UnicodeStringLiteralContext context) {
@@ -419,12 +443,20 @@ class AstBuilder
   public SqlNode visitSqlQuery(SqlQueryContext ctx) {
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
 
+    int startIndex = ctx.query().start.getStartIndex();
+    int stopIndex = ctx.query().stop.getStopIndex();
+    Interval interval = new Interval(startIndex, stopIndex);
+    String queryString = ctx.start.getInputStream().getText(interval);
+    System.out.println(queryString);
+
+    SqlNode query = parse(queryString);
+
     return new SqrlSqlQuery(
         getLocation(ctx),
         assign.getHints(),
         assign.getIdentifier(),
         assign.getTableArgs(),
-        visit(ctx.query()));
+        query);
   }
 
   @Override

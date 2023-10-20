@@ -36,7 +36,7 @@
   # keyword, please also add it to 'nonReservedKeywords' section.
   # Please keep the keyword in alphabetical order if new keyword is added.
   keywords: [
-    "BYTES"
+    "TEMPORAL"
     "CATALOGS"
     "CHANGELOG_MODE"
     "COMMENT"

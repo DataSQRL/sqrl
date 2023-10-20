@@ -27,7 +27,6 @@ import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,6 +81,7 @@ import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 @AllArgsConstructor
 @Getter
@@ -313,7 +313,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     //if query is nested, and the lhs is not already a '@', then add it
     if (statement.getIdentifier().names.size() > 1 && !(statement instanceof SqrlExpressionQuery)) {
-      query = addNestedSelf(query);
+//      query = addNestedSelf(query);
+      //todo: instead throw error
     }
     Pair<List<FunctionParameter>, SqlNode> p = transformArgs(query, materializeSelf, tableArgs.orElseGet(()->new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
     query = p.getRight();
@@ -353,7 +354,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     } catch (CollectedException e) {
       return;
     } catch (Exception e) {
-      addError(ErrorLabel.GENERIC, statement, e.getMessage());
+      e.printStackTrace();
+      addError(e, ErrorLabel.GENERIC, statement, e.getMessage());
       return;
     }
 
@@ -485,6 +487,19 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         return node.getOperator().createCall(node.getParserPosition(),
             SqlNodeVisitor.accept(this, node.getOperandList().get(0), null),
             node.getOperandList().get(1));
+      }
+
+      @Override
+      //todo: move to sqrl rewriting
+      public SqlNode visitTable(SqlIdentifier node, Object context) {
+        List<SqlNode> names = new ArrayList<>();
+        ImmutableList<String> strings = node.names;
+        for (int i = 0; i < strings.size(); i++) {
+          String n = strings.get(i);
+          SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
+          names.add(identifier);
+        }
+        return new SqrlCompoundIdentifier(node.getParserPosition(), names);
       }
 
       @Override
@@ -834,6 +849,13 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   public static RuntimeException addError(ErrorCollector errorCollector, ErrorLabel errorCode, SqlNode node,
       String message, Object... format) {
     RuntimeException exception = CheckUtil.createAstException(errorCode, node, format == null ? message : String.format(message, format));
+    return errorCollector.handle(exception);
+  }
+
+  public RuntimeException addError(Throwable cause, ErrorLabel errorCode, SqlNode node,
+      String message, Object... format) {
+    RuntimeException exception = CheckUtil.createAstException(Optional.of(cause), errorCode,
+        node::getParserPosition, ()-> format == null || message == null ? message : String.format(message, format));
     return errorCollector.handle(exception);
   }
 

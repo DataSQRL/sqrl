@@ -98,7 +98,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void differentGroupByFromSelectOrderTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("X := SELECT max(productid) as MAX, name, description "
+    builder.add("X := SELECT max(productid) as `MAX`, name, description "
         + " FROM Product"
         + " GROUP BY description, name");
     validateScript(builder.getScript());
@@ -156,7 +156,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void innerJoinTimeTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("X := SELECT o.time, o2.time, o3.time FROM Orders AS o INNER JOIN Orders o2 ON o._uuid = o2._uuid INNER JOIN Orders o3 ON o2._uuid = o3._uuid INNER JOIN Orders o4 ON o3._uuid = o4._uuid");
+    builder.add("X := SELECT o.`time`, o2.`time`, o3.`time` FROM Orders AS o INNER JOIN Orders o2 ON o._uuid = o2._uuid INNER JOIN Orders o3 ON o2._uuid = o3._uuid INNER JOIN Orders o4 ON o3._uuid = o4._uuid");
     validateScript(builder.getScript());
   }
 
@@ -288,7 +288,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     builder.add("Customer.recent_products := SELECT e.productid, coalesce(pp.category,'') AS category,\n"
         + "                                       sum(e.quantity) AS quantity, count(1) AS num_orders\n"
         + "                                FROM @.orders.entries AS e LEFT JOIN e.parent p LEFT JOIN e.product pp\n"
-        + "                                WHERE p.time > now() - INTERVAL 365 DAYS\n"
+        + "                                WHERE p.`time` > now() - INTERVAL 365 DAYS\n"
         + "                                GROUP BY productid, category ORDER BY count(1) DESC, quantity DESC;\n");
     validateScript(builder.getScript());
   }
@@ -305,7 +305,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void ordersEntriesTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries2 := SELECT @.id, @.time FROM @ JOIN @.entries;\n");
+    builder.add("Orders.entries2 := SELECT @.id, @.`time` FROM @ JOIN @.entries;\n");
     validateScript(builder.getScript());
   }
 
@@ -834,7 +834,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void queryAsExpressionTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.total := SELECT SUM(x.productid) - 1 AS sum FROM @ AS x;");
+            + "Product.total := SELECT SUM(x.productid) - 1 AS `sum` FROM @ AS x;");
   }
 
   @Test
