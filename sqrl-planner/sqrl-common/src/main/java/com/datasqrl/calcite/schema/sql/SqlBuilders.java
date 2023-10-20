@@ -274,6 +274,14 @@ public class SqlBuilders {
       select.setHints(SqlNodeList.EMPTY);
       return this;
     }
+
+    public void appendWhere(SqlNode sqlNode) {
+      List<SqlNode> nodes = new ArrayList<>();
+      if (select.getWhere() != null) nodes.add(select.getWhere());
+      nodes.add(sqlNode);
+
+      this.setWhere(nodes);
+    }
   }
 
   public static class SqlCallBuilder {

@@ -31,10 +31,14 @@ statement
     | exportDefinition                               #exportStatement
     | assignmentPath ':=' FROM fromDeclaration       #fromQuery
     | assignmentPath ':=' JOIN joinDeclaration       #joinQuery
-    | assignmentPath ':=' STREAM streamQuerySpec     #streamQuery
+    | assignmentPath ':=' STREAM SELECT streamQuerySpec     #streamQuery
     | assignmentPath ':=' DISTINCT distinctQuerySpec #distinctQuery
-    | assignmentPath ':=' query                      #sqlQuery
+    | assignmentPath ':=' SELECT query2              #sqlQuery
     | assignmentPath ':=' expression                 #expressionQuery
+    ;
+
+query2
+    : ( . )+?
     ;
 
 assignmentPath
@@ -50,21 +54,11 @@ exportDefinition
    ;
 
 joinDeclaration
-    : first=aliasedRelation (firstCondition=joinCondition)?
-      (remainingJoins)*
-      (ORDER BY sortItem (',' sortItem)*)?
-      (LIMIT limit=INTEGER_VALUE)?
-    ;
-
-remainingJoins
-    : joinType JOIN aliasedRelation (joinCondition)?
+    : query2
     ;
 
 fromDeclaration
-    : relation
-      (WHERE where=booleanExpression)?
-      (ORDER BY sortItem (',' sortItem)*)?
-      (LIMIT limit=INTEGER_VALUE)?
+    : query2
     ;
 
 distinctQuerySpec
@@ -77,7 +71,7 @@ onExpr
    : '('? selectItem (',' selectItem)* ')'?;
 
 streamQuerySpec
-    : ON subscriptionType AS query;
+    : ON subscriptionType AS query2;
 
 subscriptionType
     : ADD
@@ -85,161 +79,13 @@ subscriptionType
     | UPDATE
     ;
 
-query
-    : queryTerm
-      (ORDER BY sortItem (',' sortItem)*)?
-      (LIMIT limit=INTEGER_VALUE)?
-    ;
-
-queryTerm
-    : queryPrimary                                                                        #queryTermDefault
-    | left=queryTerm operator=(UNION | INTERSECT | EXCEPT) setQuantifier right=queryTerm  #setOperation
-    ;
-
-queryPrimary
-    : (querySpecification | subquery)
-    ;
-
-sortItem
-    : expression ordering=(ASC | DESC)?
-    ;
-
-querySpecification
-    : SELECT hint? setQuantifier? selectItem (',' selectItem)*
-      FROM relation (',' relation)*
-      (WHERE where=booleanExpression)?
-      (GROUP BY groupBy)?
-      (HAVING having=booleanExpression)?
-    ;
-
-groupBy
-    : expression (',' expression)*
-    ;
-
-setQuantifier
-    : DISTINCT
-    | ALL
-    ;
-
 selectItem
     : expression (AS? identifier)?  #selectSingle
     | ASTERISK                      #selectAll
     ;
 
-relation
-    : left=relation
-      ( CROSS JOIN right=aliasedRelation
-      | joinType JOIN rightRelation=aliasedRelation (joinCondition)?
-      )                                           #joinRelation
-    | aliasedRelation                             #relationDefault
-    ;
-
-joinType
-    : INNER?
-    | TEMPORAL?
-    | INTERVAL?
-    | LEFT  (OUTER|TEMPORAL|INTERVAL)?
-    | RIGHT (OUTER|TEMPORAL|INTERVAL)?
-    ;
-
-joinCondition
-    : ON booleanExpression
-    ;
-
-aliasedRelation
-    : relationPrimary (AS? identifier)?
-    ;
-
-relationPrimary
-    : relationItem ('.' relationItem)*
-    ;
-
-relationItem
-    : subquery
-    | identifier
-    | tableFunction
-    ;
-
-tableFunction
-    : identifier tableFunctionExpression?
-    ;
-
-subquery
-    : '(' query ')';
-
-tableFunctionExpression
-   : '(' expression (',' expression)* ')'
-   ;
-
 expression
-    : booleanExpression
-    ;
-
-booleanExpression
-    : valueExpression predicate[$valueExpression.ctx]?     #predicated
-    | NOT booleanExpression                                        #logicalNot
-    | left=booleanExpression operator=AND right=booleanExpression  #logicalBinary
-    | left=booleanExpression operator=OR right=booleanExpression   #logicalBinary
-    ;
-
-// workaround for https://github.com/antlr/antlr4/issues/780
-predicate[ParserRuleContext value]
-    : comparisonOperator right=valueExpression                            #comparison
-    | NOT? BETWEEN lower=valueExpression AND upper=valueExpression        #between
-    | NOT? IN '(' expression (',' expression)* ')'                        #inList
-    | NOT? LIKE pattern=valueExpression                                   #like
-    | NOT? IN '(' query ')'                                               #inSubquery
-    | IS NOT? NULL                                                        #nullPredicate
-    ;
-
-valueExpression
-    : primaryExpression ('?' primaryExpression)?                                        #valueExpressionDefault
-    | operator=(MINUS | PLUS) valueExpression                                           #arithmeticUnary
-    | left=valueExpression operator=(ASTERISK | SLASH | PERCENT) right=valueExpression  #arithmeticBinary
-    | left=valueExpression operator=(PLUS | MINUS) right=valueExpression                #arithmeticBinary
-    ;
-
-primaryExpression
-    : literal                                                                                #literalExpression
-    | qualifiedName                                                                          #columnReference
-    | identifier '(' (setQuantifier? expression (',' expression)*)? ')'                      #functionCall
-    | identifier '(' ASTERISK ')'                                                            #functionCall
-    | identifier '(' query ')'                                                               #functionCall
-    | EXISTS '(' query ')'                                                                   #existsCall
-    | '(' query ')'                                                                          #subqueryExpression
-    | CASE whenClause+ (ELSE elseExpression=expression)? END                                 #simpleCase
-    | CAST '(' expression AS type ')'                                                        #cast
-    | '(' expression ')'                                                                     #parenthesizedExpression
-    ;
-
-literal
-    : NULL                                                                                   #nullLiteral
-    | interval                                                                               #intervalLiteral
-    | number                                                                                 #numericLiteral
-    | booleanValue                                                                           #booleanLiteral
-    | string                                                                                 #stringLiteral
-    ;
-
-string
-    : STRING                                #basicStringLiteral
-    | UNICODE_STRING (UESCAPE STRING)?      #unicodeStringLiteral
-    ;
-
-comparisonOperator
-    : EQ | NEQ | LT | LTE | GT | GTE
-    ;
-
-booleanValue
-    : TRUE | FALSE
-    ;
-
-interval
-    : INTERVAL sign=(PLUS | MINUS)? number intervalField
-    ;
-
-intervalField
-    : YEAR | MONTH | WEEK | DAY | HOUR | MINUTE | SECOND
-    | YEARS | MONTHS | WEEKS | DAYS | HOURS | MINUTES | SECONDS
+    : ( . )+?
     ;
 
 type
@@ -254,16 +100,13 @@ baseType
     : identifier
     ;
 
-whenClause
-    : WHEN condition=expression THEN result=expression
-    ;
 
 tableFunctionDef
    : '(' functionArgumentDef? (',' functionArgumentDef)* ')'
    ;
 
 functionArgumentDef
-   : name=identifier ':' typeName=type ('=' literal)?
+   : name=identifier ':' typeName=type ('=' expression)?
    ;
 
 hint

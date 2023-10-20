@@ -21,7 +21,6 @@ import com.datasqrl.model.StreamType;
 import com.datasqrl.parse.SqlBaseParser.*;
 import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
 import com.google.common.base.Preconditions;
-import java.util.function.Function;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -83,6 +82,17 @@ class AstBuilder
     return CalciteFixes.pushDownOrder(node);
   }
 
+  private SqlNode parseQuery(ParserRuleContext query, int offset) {
+    int startIndex = query.start.getStartIndex();
+    int stopIndex = query.stop.getStopIndex();
+    Interval interval = new Interval(startIndex, stopIndex);
+    String queryString = query.start.getInputStream().getText(interval);
+    queryString = String.format("SELECT %s", queryString);
+    int rowOffset = query.getStart().getCharPositionInLine() + 1 - offset;
+    int line = query.getStart().getLine();
+    return parse(rowOffset, line, queryString);
+  }
+
   private SqlNode parseExpression(ParserRuleContext expression) {
     int startIndex = expression.start.getStartIndex();
     int stopIndex = expression.stop.getStopIndex();
@@ -122,96 +132,12 @@ class AstBuilder
     return new SqlParseException(e.getMessage(), pos, e.getExpectedTokenSequences(),
         e.getTokenImages(), e.getCause());
   }
-  private static String decodeUnicodeLiteral(UnicodeStringLiteralContext context) {
-    char escape;
-    if (context.UESCAPE() != null) {
-      String escapeString = unquote(context.STRING().getText());
-      check(!escapeString.isEmpty(), "Empty Unicode escape character", context);
-      check(escapeString.length() == 1, "Invalid Unicode escape character: " + escapeString,
-          context);
-      escape = escapeString.charAt(0);
-      check(isValidUnicodeEscape(escape), "Invalid Unicode escape character: " + escapeString,
-          context);
-    } else {
-      escape = '\\';
-    }
-
-    String rawContent = unquote(context.UNICODE_STRING().getText().substring(2));
-    StringBuilder unicodeStringBuilder = new StringBuilder();
-    StringBuilder escapedCharacterBuilder = new StringBuilder();
-    int charactersNeeded = 0;
-    UnicodeDecodeState state = UnicodeDecodeState.EMPTY;
-    for (int i = 0; i < rawContent.length(); i++) {
-      char ch = rawContent.charAt(i);
-      switch (state) {
-        case EMPTY:
-          if (ch == escape) {
-            state = UnicodeDecodeState.ESCAPED;
-          } else {
-            unicodeStringBuilder.append(ch);
-          }
-          break;
-        case ESCAPED:
-          if (ch == escape) {
-            unicodeStringBuilder.append(escape);
-            state = UnicodeDecodeState.EMPTY;
-          } else if (ch == '+') {
-            state = UnicodeDecodeState.UNICODE_SEQUENCE;
-            charactersNeeded = 6;
-          } else if (isHexDigit(ch)) {
-            state = UnicodeDecodeState.UNICODE_SEQUENCE;
-            charactersNeeded = 4;
-            escapedCharacterBuilder.append(ch);
-          } else {
-            throw parseError("Invalid hexadecimal digit: " + ch, context);
-          }
-          break;
-        case UNICODE_SEQUENCE:
-          check(isHexDigit(ch), "Incomplete escape sequence: " + escapedCharacterBuilder,
-              context);
-          escapedCharacterBuilder.append(ch);
-          if (charactersNeeded == escapedCharacterBuilder.length()) {
-            String currentEscapedCode = escapedCharacterBuilder.toString();
-            escapedCharacterBuilder.setLength(0);
-            int codePoint = Integer.parseInt(currentEscapedCode, 16);
-            check(Character.isValidCodePoint(codePoint),
-                "Invalid escaped character: " + currentEscapedCode, context);
-            if (Character.isSupplementaryCodePoint(codePoint)) {
-              unicodeStringBuilder.appendCodePoint(codePoint);
-            } else {
-              char currentCodePoint = (char) codePoint;
-              check(!Character.isSurrogate(currentCodePoint), format(
-                  "Invalid escaped character: %s. Escaped character is a surrogate. Use '\\+123456' instead.",
-                  currentEscapedCode), context);
-              unicodeStringBuilder.append(currentCodePoint);
-            }
-            state = UnicodeDecodeState.EMPTY;
-            charactersNeeded = -1;
-          } else {
-            check(charactersNeeded > escapedCharacterBuilder.length(),
-                "Unexpected escape sequence length: " + escapedCharacterBuilder.length(), context);
-          }
-          break;
-        default:
-          throw new UnsupportedOperationException();
-      }
-    }
-
-    check(state == UnicodeDecodeState.EMPTY,
-        "Incomplete escape sequence: " + escapedCharacterBuilder, context);
-    return unicodeStringBuilder.toString();
-  }
 
   private static String unquote(String value) {
     return value.substring(1, value.length() - 1)
         .replace("''", "'");
   }
 
-  // ******************* statements **********************
-
-  private static boolean isDistinct(SetQuantifierContext setQuantifier) {
-    return setQuantifier != null && setQuantifier.DISTINCT() != null;
-  }
 
   private static boolean isHexDigit(char c) {
     return ((c >= '0') && (c <= '9')) ||
@@ -435,7 +361,6 @@ class AstBuilder
   public SqlNode visitJoinQuery(JoinQueryContext ctx) {
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
 
-
     int startIndex = ctx.joinDeclaration().start.getStartIndex();
     int stopIndex = ctx.joinDeclaration().stop.getStopIndex();
     Interval interval = new Interval(startIndex, stopIndex);
@@ -458,12 +383,15 @@ class AstBuilder
   @Override
   public SqlNode visitStreamQuery(StreamQueryContext ctx) {
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
+
+    SqlNode query = parseQuery(ctx.streamQuerySpec().query2(), 12);
+
     return new SqrlStreamQuery(
         getLocation(ctx),
         assign.getHints(),
         assign.getIdentifier(),
         assign.getTableArgs(),
-        visit(ctx.streamQuerySpec().query()),
+        query,
         StreamType.valueOf(ctx.streamQuerySpec().subscriptionType().getText()));
   }
 
@@ -501,14 +429,7 @@ class AstBuilder
   public SqlNode visitSqlQuery(SqlQueryContext ctx) {
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
 
-    int startIndex = ctx.query().start.getStartIndex();
-    int stopIndex = ctx.query().stop.getStopIndex();
-    Interval interval = new Interval(startIndex, stopIndex);
-    String queryString = ctx.start.getInputStream().getText(interval);
-
-    int rowOffset = ctx.query().getStart().getCharPositionInLine() + 1;
-    int line = ctx.query().getStart().getLine();
-    SqlNode query = parse(rowOffset, line, queryString);
+    SqlNode query = parseQuery(ctx.query2(), 7);
 
     return new SqrlSqlQuery(
         getLocation(ctx),
@@ -534,75 +455,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitFromDeclaration(FromDeclarationContext ctx) {
-    List<SqlNode> order = visit(ctx.sortItem(), SqlNode.class);
-    Optional<SqlNodeList> sortList = emptyListToEmptyOptional(order);
-
-    SqlNode fetch = null;
-    Optional<String> limitStr = getTextIfPresent(ctx.limit);
-    if (ctx.LIMIT() != null && limitStr.isPresent()) {
-      fetch = SqlLiteral.createExactNumeric(limitStr.get(), getLocation(ctx.limit));
-    }
-
-    return new SqlSelect(getLocation(ctx),
-        null,
-        new SqlNodeList(List.of(SqlIdentifier.star(SqlParserPos.ZERO)), SqlParserPos.ZERO),
-        visit(ctx.relation()),
-        visitIfPresent(ctx.where, SqlNode.class).orElse(null),
-        null,
-        null,
-        null,
-        sortList.orElse(null),
-        null,
-        fetch,
-        SqlNodeList.EMPTY);
-  }
-
-  @Override
-  public SqlNode visitJoinDeclaration(JoinDeclarationContext ctx) {
-    List<SqlNode> sort = visit(ctx.sortItem(), SqlNode.class);
-    Optional<SqlNodeList> sortList = emptyListToEmptyOptional(sort);
-
-    Optional<SqlNumericLiteral> limit =
-        ctx.limit == null || ctx.limit.getText().equalsIgnoreCase("ALL")
-            ? Optional.empty()
-            : Optional.of(
-            SqlLiteral.createExactNumeric(ctx.limit.getText(), getLocation(ctx.limit)));
-
-    //we pull the first on condition to the where clause and turn it into a normal select
-    SqlNode table = visit(ctx.first);
-    SqlNode where = visit(ctx.firstCondition);
-
-    for (int i = 1; i < ctx.remainingJoins().size(); i++) {
-      SqlNode relation = visit(ctx.remainingJoins(i).aliasedRelation());
-      SqlNode condition = visit(ctx.remainingJoins(i).joinCondition());
-      table = new SqlJoin(getLocation(ctx.remainingJoins(i).joinCondition()),
-          table,
-          SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-          toJoinType(ctx.remainingJoins(i).joinType()).symbol(getLocation(ctx.remainingJoins(i).joinType())),
-          relation,
-          condition == null
-              ? JoinConditionType.NONE.symbol(SqlParserPos.ZERO)
-              : JoinConditionType.ON.symbol(getLocation(ctx.remainingJoins(i).joinCondition().ON())),
-          condition);
-    }
-
-    return new SqlSelect(getLocation(ctx),
-        null,
-        new SqlNodeList(List.of(SqlIdentifier.STAR), SqlParserPos.ZERO),
-        table,
-        where,
-        null,
-        null,
-        null,
-        sortList.orElse(null),
-        null,
-        limit.orElse(null),
-        SqlNodeList.EMPTY);
-  }
-
-  @Override
-  public SqlNode visitJoinCondition(JoinConditionContext ctx) {
-    return visit(ctx.booleanExpression());
+    return parseQuery(ctx.query2(), 5);
   }
 
   @Override
@@ -614,7 +467,8 @@ class AstBuilder
           getLocation(fCtx),
           (SqlIdentifier)visit(fCtx.identifier()),
           getType(fCtx.type()),
-          Optional.ofNullable(visit(fCtx.literal())),
+          fCtx.expression() == null ? Optional.empty() :
+              Optional.of(parseExpression(fCtx.expression())),
           i, false);
       defs.add(param);
     }
@@ -622,129 +476,6 @@ class AstBuilder
     return new SqrlTableFunctionDef(
         getLocation(ctx),
         defs);
-  }
-
-  @Override
-  public SqlNode visitQuery(QueryContext context) {
-    SqlCall term = (SqlCall) visit(context.queryTerm());
-
-    SqlNodeList orderBy = null;
-    if (context.ORDER() != null) {
-      List<SqlNode> order = visit(context.sortItem(), SqlNode.class);
-      orderBy = new SqlNodeList(order, getLocation(context.ORDER()));
-    }
-
-    SqlNode fetch = null;
-    Optional<String> limitStr = getTextIfPresent(context.limit);
-    if (context.LIMIT() != null && limitStr.isPresent()) {
-      fetch = SqlLiteral.createExactNumeric(limitStr.get(), getLocation(context.limit));
-    }
-
-    if (term instanceof SqlSelect) {
-      // When we have a simple query specification
-      // followed by order by limit, fold the order by and limit
-      // clauses into the query specification (analyzer/planner
-      // expects this structure to resolve references with respect
-      // to columns defined in the query specification)
-      SqlSelect query = (SqlSelect) term;
-      query.setOrderBy(orderBy);
-      query.setFetch(fetch);
-      return query;
-    }
-
-    if (orderBy != null || fetch != null) {
-      return new SqlOrderBy(
-          getLocation(context),
-          term,
-          orderBy,
-          null,
-          fetch
-      );
-    }
-    return term;
-  }
-
-  @Override
-  public SqlNode visitQuerySpecification(QuerySpecificationContext context) {
-    SqlNode from;
-    List<SqlNode> selectItems = visit(context.selectItem(), SqlNode.class);
-
-    List<SqlNode> relations = visit(context.relation(), SqlNode.class);
-    if (relations.isEmpty()) {
-      throw new RuntimeException("FROM required");
-    } else {
-      // cross joins
-      Iterator<SqlNode> iterator = relations.iterator();
-      SqlNode relation = iterator.next();
-
-      while (iterator.hasNext()) {
-        relation = new SqlJoin(getLocation(context),
-            relation,
-            SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-            SqlLiteral.createSymbol(JoinType.DEFAULT, SqlParserPos.ZERO),
-            iterator.next(),
-            SqlLiteral.createSymbol(JoinConditionType.NONE, SqlParserPos.ZERO),
-            null
-        );
-      }
-
-      from = relation;
-    }
-
-    SqlNodeList keywords = isDistinct(context.setQuantifier()) ?
-        new SqlNodeList(List.of(
-            SqlSelectKeyword.DISTINCT.symbol(getLocation(context.setQuantifier()))),
-            getLocation(context.setQuantifier()))
-        : null;
-    SqlNodeList hints = getHints(context.hint());
-    return new SqlSelect(
-        getLocation(context),
-        keywords,
-        new SqlNodeList(selectItems, getLocation(context.SELECT())),
-        from,
-        visitIfPresent(context.where, SqlNode.class).orElse(null),
-        visitIfPresent(context.groupBy(), SqlNodeList.class).orElse(null),
-        visitIfPresent(context.having, SqlNode.class).orElse(null),
-        null, null, null, null,
-        hints);
-  }
-
-  @Override
-  public SqlNode visitGroupBy(GroupByContext context) {
-    List<SqlNode> groups = visit(context.expression(), SqlNode.class);
-    return new SqlNodeList(groups, getLocation(context));
-  }
-
-  @Override
-  public SqlNode visitSetOperation(SetOperationContext context) {
-    SqlNode left = visit(context.left);
-    SqlNode right = visit(context.right);
-
-    Optional<Boolean> distinct = Optional.empty();
-    if (context.setQuantifier() != null) {
-      if (context.setQuantifier().DISTINCT() != null) {
-        distinct = Optional.of(true);
-      } else if (context.setQuantifier().ALL() != null) {
-        distinct = Optional.of(false);
-      }
-    }
-
-    switch (context.operator.getType()) {
-      case SqlBaseLexer.UNION:
-        SqlSetOperator op = distinct.map(d -> SqlStdOperatorTable.UNION_ALL)
-            .orElse(SqlStdOperatorTable.UNION);
-        return op.createCall(getLocation(context.UNION()), List.of(left, right));
-      case SqlBaseLexer.INTERSECT:
-        SqlSetOperator op_i = distinct.map(d -> SqlStdOperatorTable.UNION_ALL)
-            .orElse(SqlStdOperatorTable.UNION);
-        return op_i.createCall(getLocation(context.INTERSECT()), List.of(left, right));
-      case SqlBaseLexer.EXCEPT:
-        SqlSetOperator op_e = distinct.map(d -> SqlStdOperatorTable.UNION_ALL)
-            .orElse(SqlStdOperatorTable.UNION);
-        return op_e.createCall(getLocation(context.EXCEPT()), List.of(left, right));
-    }
-
-    throw new IllegalArgumentException("Unsupported set operation: " + context.operator.getText());
   }
 
   @Override
@@ -763,122 +494,6 @@ class AstBuilder
           alias.get());
     }
     return expression;
-  }
-
-  @Override
-  public SqlNode visitSubquery(SubqueryContext context) {
-    return visit(context.query());
-  }
-
-  // ********************* primary expressions **********************
-
-  @Override
-  public SqlNode visitLogicalNot(LogicalNotContext context) {
-    return SqlStdOperatorTable.NOT.createCall(getLocation(context),
-        visit(context.booleanExpression()));
-  }
-
-  @Override
-  public SqlNode visitLogicalBinary(LogicalBinaryContext context) {
-    SqlOperator operator = getLogicalBinaryOperator(context.operator);
-    SqlNode left = visit(context.left);
-    SqlNode right = visit(context.right);
-
-    return operator.createCall(
-        getLocation(context.operator),
-        left,
-        right);
-  }
-
-  @Override
-  public SqlNode visitRelationDefault(RelationDefaultContext ctx) {
-    return visit(ctx.aliasedRelation());
-  }
-
-  @Override
-  public SqlNode visitTableFunction(TableFunctionContext ctx) {
-    SqlIdentifier node = (SqlIdentifier)visit(ctx.identifier());
-    SqlUnresolvedFunction function = new SqlUnresolvedFunction(node, null,
-        null, null, null, SqlFunctionCategory.USER_DEFINED_FUNCTION);
-    SqlNodeList args = (SqlNodeList)visit(ctx.tableFunctionExpression());
-    SqlNode call = function.createCall(args);
-    return call;
-  }
-
-  @Override
-  public SqlNode visitTableFunctionExpression(TableFunctionExpressionContext ctx) {
-    return emptyListToEmptyOptional(visit(ctx.expression(), SqlNode.class))
-        .orElse(SqlNodeList.EMPTY);
-  }
-
-  @Override
-  public SqlNode visitJoinRelation(JoinRelationContext context) {
-    SqlNode left = visit(context.left);
-    SqlNode right;
-
-    //todo
-    if (context.CROSS() != null) {
-      right = visit(context.right);
-      return new SqlJoin(getLocation(context),
-          left,
-          SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-          JoinType.CROSS.symbol(SqlParserPos.ZERO),
-          right,
-          JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
-          null);
-    }
-
-    SqlLiteral type = JoinConditionType.NONE.symbol(SqlParserPos.ZERO);
-    SqlNode condition = null;
-    right = visit(context.rightRelation);
-    if (context.joinCondition() != null && context.joinCondition().ON() != null) {
-      type = JoinConditionType.ON.symbol(getLocation(context.joinCondition().ON()));
-      condition = visit(context.joinCondition().booleanExpression());
-    }
-
-    return new SqlJoin(getLocation(context),
-        left,
-        SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-        toJoinType(context.joinType()).symbol(getLocation(context.joinType())),
-        right,
-        type,
-        condition);
-  }
-
-  public JoinType toJoinType(JoinTypeContext ctx) {
-    JoinType joinType;
-
-    if (ctx.LEFT() != null) {
-      if (ctx.TEMPORAL() != null) {
-        joinType = JoinType.LEFT_TEMPORAL;
-      } else if (ctx.INTERVAL() != null) {
-        joinType = JoinType.LEFT_INTERVAL;
-      } else if (ctx.OUTER() != null){
-        joinType = JoinType.LEFT;
-      } else  {
-        joinType = JoinType.LEFT_DEFAULT;
-      }
-    } else if (ctx.RIGHT() != null) {
-      if (ctx.TEMPORAL() != null) {
-        joinType = JoinType.RIGHT_TEMPORAL;
-      } else if (ctx.INTERVAL() != null) {
-        joinType = JoinType.RIGHT_INTERVAL;
-      } else if (ctx.OUTER() != null){
-        joinType = JoinType.RIGHT;
-      } else  {
-        joinType = JoinType.RIGHT_DEFAULT;
-      }
-    } else if (ctx.INNER() != null) {
-      joinType = JoinType.INNER;
-    } else if (ctx.TEMPORAL() != null) {
-      joinType = JoinType.TEMPORAL;
-    } else if (ctx.INTERVAL() != null) {
-      joinType = JoinType.INTERVAL;
-    } else {
-      joinType = JoinType.DEFAULT;
-    }
-
-    return joinType;
   }
 
   public SqlNodeList getHints(HintContext hint) {
@@ -908,241 +523,13 @@ class AstBuilder
 
   @Override
   public SqlNode visitExpression(ExpressionContext ctx) {
-    return visit(ctx.booleanExpression());
-  }
-
-  @Override
-  public SqlNode visitValueExpressionDefault(ValueExpressionDefaultContext ctx) {
-    if (ctx.primaryExpression().size() > 1) {
-      return SqlStdOperatorTable.COALESCE.createCall(
-          getLocation(ctx),
-          visit(ctx.primaryExpression().get(0)),
-          visit(ctx.primaryExpression().get(1)));
-    }
-    return visit(ctx.primaryExpression().get(0));
-  }
-
-  @Override
-  public SqlNode visitPredicated(PredicatedContext context) {
-    if (context.predicate() != null) {
-      return visit(context.predicate());
-    }
-
-    return visit(context.valueExpression);
-  }
-
-  @Override
-  public SqlNode visitComparison(ComparisonContext context) {
-    SqlOperator op = getComparisonOperator(
-        ((TerminalNode) context.comparisonOperator().getChild(0)).getSymbol());
-
-    return op.createCall(getLocation(context.comparisonOperator()), visit(context.value),
-        visit(context.right));
-  }
-
-  @Override
-  public SqlNode visitBetween(BetweenContext context) {
-    SqlCall between = SqlStdOperatorTable.BETWEEN.createCall(
-        getLocation(context),
-        visit(context.value),
-        visit(context.lower),
-        visit(context.upper)
-    );
-
-    if (context.NOT() != null) {
-      between = SqlStdOperatorTable.NOT.createCall(getLocation(context), between);
-    }
-
-    return between;
-  }
-
-  @Override
-  public SqlNode visitNullPredicate(NullPredicateContext context) {
-    SqlNode child = visit(context.value);
-
-    SqlOperator op = context.NOT() == null ? SqlStdOperatorTable.IS_NULL : SqlStdOperatorTable.IS_NOT_NULL;
-
-    return op.createCall(getLocation(context), child);
-  }
-
-  @Override
-  public SqlNode visitInList(InListContext context) {
-    SqlNode result = SqlStdOperatorTable.IN.createCall(
-        getLocation(context),
-        (SqlNode) visit(context.value),
-        new SqlNodeList(visit(context.expression(), SqlNode.class),
-            getLocation(context)));
-
-    if (context.NOT() != null) {
-      result = SqlStdOperatorTable.NOT_IN.createCall(getLocation(context), result);
-    }
-
-    return result;
-  }
-
-  @Override
-  public SqlNode visitInSubquery(InSubqueryContext context) {
-    SqlNode query = visit(context.query());
-    SqlOperator op = context.NOT() == null ? SqlStdOperatorTable.IN : SqlStdOperatorTable.NOT_IN;
-
-    SqlNode result = op.createCall(
-        getLocation(context),
-        visit(context.value),
-        new SqlNodeList(List.of(query),
-            getLocation(context)));
-
-    if (context.NOT() != null) {
-      result = SqlStdOperatorTable.NOT.createCall(getLocation(context), result);
-    }
-
-    return result;
-  }
-
-  @Override
-  public SqlNode visitArithmeticUnary(ArithmeticUnaryContext context) {
-    SqlNode child = visit(context.valueExpression());
-
-    switch (context.operator.getType()) {
-      case SqlBaseLexer.MINUS:
-        return SqlStdOperatorTable.UNARY_MINUS.createCall(getLocation(context), child);
-      case SqlBaseLexer.PLUS:
-        return SqlStdOperatorTable.UNARY_PLUS.createCall(getLocation(context), child);
-      default:
-        throw new UnsupportedOperationException("Unsupported sign: " + context.operator.getText());
-    }
-  }
-
-  @Override
-  public SqlNode visitArithmeticBinary(ArithmeticBinaryContext context) {
-    return getArithmeticBinaryOperator(context.operator)
-        .createCall(getLocation(context.operator),
-            List.of(visit(context.left),
-                visit(context.right)));
-  }
-
-  @Override
-  public SqlNode visitParenthesizedExpression(ParenthesizedExpressionContext context) {
-    return visit(context.expression());
-  }
-
-  @Override
-  public SqlNode visitCast(CastContext context) {
-    SqlNode expr = visit(context.expression());
-    SqlDataTypeSpec dataType = getType(context.type());
-    return SqlStdOperatorTable.CAST.createCall(getLocation(context),
-        List.of(expr, dataType));
+    return parseExpression(ctx);
+//    return visit(ctx.booleanExpression());
   }
 
   @Override
   public SqlNode visitQualifiedName(QualifiedNameContext ctx) {
     return getNamePath(ctx);
-  }
-
-  @Override
-  public SqlNode visitSubqueryExpression(SubqueryExpressionContext context) {
-    return visit(context.query());
-  }
-
-  @Override
-  public SqlNode visitColumnReference(ColumnReferenceContext context) {
-    return visit(context.qualifiedName());
-  }
-
-  @Override
-  public SqlNode visitSimpleCase(SimpleCaseContext context) {
-    List<SqlNode> whenList = new ArrayList<>();
-    List<SqlNode> thenList = new ArrayList<>();
-    Optional<SqlNode> elseExpr = visitIfPresent(context.elseExpression, SqlNode.class);
-
-    for (WhenClauseContext ctx : context.whenClause()) {
-      whenList.add(visit(ctx.condition));
-      thenList.add(visit(ctx.result));
-    }
-
-    return new SqlCase(getLocation(context),
-        null,
-        new SqlNodeList(whenList, getLocation(context)),
-        new SqlNodeList(thenList, getLocation(context)),
-        elseExpr.orElse(null));
-  }
-
-  @Override
-  public SqlNode visitWhenClause(WhenClauseContext context) {
-    throw new RuntimeException("see visitSimpleCase");
-  }
-
-  @Override
-  public SqlNode visitLike(LikeContext ctx) {
-    SqlNode value = ctx.valueExpression().accept(this);
-    SqlNode pattern = ctx.pattern.accept(this);
-
-    if (ctx.NOT() != null) {
-      return SqlStdOperatorTable.NOT_LIKE
-          .createCall(getLocation(ctx), value, pattern);
-    }
-
-    return SqlStdOperatorTable.LIKE.createCall(getLocation(ctx),
-        value, pattern);
-  }
-
-  @Override
-  public SqlNode visitExistsCall(ExistsCallContext context) {
-    SqlNode query = context.query().accept(this);
-
-    return SqlStdOperatorTable.EXISTS.createCall(getLocation(context), query);
-  }
-
-  @Override
-  public SqlNode visitFunctionCall(FunctionCallContext context) {
-    boolean distinct = isDistinct(context.setQuantifier());
-    SqlIdentifier name = (SqlIdentifier) context.identifier().accept(this);
-    List<SqlNode> args;
-    if (context.expression() != null) {
-      args = visit(context.expression(), SqlNode.class);
-    } else if (context.query() != null){
-      args = List.of(visit(context.query()));
-    } else {
-      throw new RuntimeException("Unknown function ast");
-    }
-
-    //special case: fnc(*)
-    if (context.ASTERISK() != null) {
-      args = List.of(SqlIdentifier.star(SqlParserPos.ZERO));
-    }
-    //special case: count()
-    if (name.names.size() == 1 && name.names.get(0).equalsIgnoreCase("count")
-        && args.isEmpty()) {
-      args = List.of(SqlIdentifier.star(SqlParserPos.ZERO));
-    }
-
-    SqlUnresolvedFunction function = new SqlUnresolvedFunction(name,
-        null, null, null, null,
-        SqlFunctionCategory.USER_DEFINED_FUNCTION);
-    SqlCall call = function.createCall(getLocation(context), args);
-    if (distinct) {
-      final SqlLiteral qualifier =
-          distinct ? SqlSelectKeyword.DISTINCT.symbol(getLocation(context.setQuantifier())) : null;
-
-      return call.getOperator()
-          .createCall(qualifier, call.getParserPosition(),
-              call.getOperandList().toArray(SqlNode[]::new));
-    } else {
-      return call;
-    }
-  }
-
-  // ***************** helpers *****************
-
-  @Override
-  public SqlNode visitSortItem(SortItemContext context) {
-    SqlNode expression = visit(context.expression());
-
-    SqlNode node = Optional.ofNullable(context.ordering)
-        .flatMap(AstBuilder::getOrderingType)
-        .map(o -> (SqlNode) o.createCall(getLocation(context), expression))
-        .orElse(expression);
-
-    return node;
   }
 
   @Override
@@ -1162,26 +549,6 @@ class AstBuilder
   }
 
   @Override
-  public SqlNode visitLiteralExpression(LiteralExpressionContext ctx) {
-    return visit(ctx.literal());
-  }
-
-  @Override
-  public SqlNode visitNullLiteral(NullLiteralContext context) {
-    return SqlLiteral.createNull(getLocation(context));
-  }
-
-  @Override
-  public SqlNode visitBasicStringLiteral(BasicStringLiteralContext context) {
-    return SqlLiteral.createCharString(unquote(context.STRING().getText()), getLocation(context));
-  }
-
-  @Override
-  public SqlNode visitUnicodeStringLiteral(UnicodeStringLiteralContext context) {
-    return SqlLiteral.createCharString(decodeUnicodeLiteral(context), getLocation(context));
-  }
-
-  @Override
   public SqlNode visitIntegerLiteral(IntegerLiteralContext context) {
     return SqlLiteral.createExactNumeric(context.getText(), getLocation(context));
   }
@@ -1196,83 +563,6 @@ class AstBuilder
   @Override
   public SqlNode visitDoubleLiteral(DoubleLiteralContext context) {
     return SqlLiteral.createExactNumeric(context.getText(), getLocation(context));
-  }
-
-  @Override
-  public SqlNode visitIntervalLiteral(IntervalLiteralContext ctx) {
-    return visit(ctx.interval());
-  }
-
-  @Override
-  public SqlNode visitNumericLiteral(NumericLiteralContext ctx) {
-    return visit(ctx.number());
-  }
-
-  @Override
-  public SqlNode visitBooleanLiteral(BooleanLiteralContext ctx) {
-    return visit(ctx.booleanValue());
-  }
-
-  @Override
-  public SqlNode visitBooleanValue(BooleanValueContext context) {
-    return SqlLiteral.createBoolean(Boolean.parseBoolean(context.getText()), getLocation(context));
-  }
-
-  @Override
-  public SqlNode visitInterval(IntervalContext context) {
-    int sign = Optional.ofNullable(context.sign)
-        .map(AstBuilder::getIntervalSign)
-        .orElse(1);
-    SqlLiteral expr = (SqlLiteral) visit(context.number());
-    TimeUnit timeUnit = getIntervalFieldType(
-        (Token) context.intervalField().getChild(0).getPayload());
-    //YEAR | MONTH | WEEK | DAY | HOUR | MINUTE | SECOND
-    //Calcite adjusts dates to either months or milliseconds, otherwise it produces invalid semantics
-    // However, there is no SqlTypeName.INTERVAL_MILLISECOND so we use seconds, even though
-    // it gets converted to milliseconds when it gets converted to a relation
-
-    switch (timeUnit) {
-      case WEEK:
-      case YEAR:
-      case MONTH:
-      default:
-        throw new RuntimeException(
-            String.format("Found interval '%s'. YEAR MONTH WEEK interval not yet supported.",
-                timeUnit));
-      case DAY:
-      case HOUR:
-      case MINUTE:
-      case SECOND:
-        return SqlLiteral.createInterval(sign,
-            expr.toValue(),
-            new SqlIntervalQualifier(timeUnit, getPrecision(expr.toValue()),
-                null, getFracPrecision(expr.toValue()), getLocation(context.intervalField())),
-            getLocation(context)
-        );
-    }
-  }
-
-  public static int getFracPrecision(String toValue) {
-    String[] val = toValue.split("\\.");
-    if (val.length == 2) {
-      return val[1].length();
-    }
-
-    return -1;
-  }
-
-  public static int getPrecision(String toValue) {
-    return toValue.split("\\.")[0].length();
-  }
-
-  private static int getIntervalSign(Token token) {
-    if (token.getText().equalsIgnoreCase("PLUS")) {
-      return 1;
-    }
-    if (token.getText().equalsIgnoreCase("MINUS")) {
-      return -1;
-    }
-    throw new RuntimeException("unknown interval sign");
   }
 
   @Override
@@ -1321,20 +611,6 @@ class AstBuilder
         cPos);
   }
 
-  private Optional<SqlNodeList> emptyListToEmptyOptional(List<SqlNode> list) {
-    if (list == null || list.isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(new SqlNodeList(list, SqlParserPos.ZERO));
-  }
-
-  private Optional<SqlNodeList> emptyListToEmptyOptional(SqlNodeList list) {
-    if (list.getList().isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(list);
-  }
-
   @Override
   public SqlNode visitBackQuotedIdentifier(BackQuotedIdentifierContext ctx) {
     return new SqlIdentifier(List.of(ctx.getText().substring(1, ctx.getText().length() - 1)), null,
@@ -1364,11 +640,6 @@ class AstBuilder
         .collect(toList());
   }
 
-  @Override
-  public SqlNode visitStringLiteral(StringLiteralContext ctx) {
-    return visit(ctx.string());
-  }
-
   private SqlDataTypeSpec getType(TypeContext ctx) {
     return new SqlDataTypeSpec(getTypeName(ctx.baseType()), getLocation(ctx));
   }
@@ -1387,64 +658,6 @@ class AstBuilder
       return new SqlUserDefinedTypeNameSpec(typeName, getLocation(baseType));
     }
     return new SqlBasicTypeNameSpec(sqlTypeName, getLocation(baseType));
-  }
-
-  @Override
-  public SqlNode visitQueryTermDefault(QueryTermDefaultContext ctx) {
-    return visit(ctx.queryPrimary());
-  }
-
-  @Override
-  public SqlNode visitQueryPrimary(QueryPrimaryContext ctx) {
-    return Optional.ofNullable(visit(ctx.querySpecification()))
-        .orElseGet(()->visit(ctx.subquery()));
-  }
-
-  @Override
-  public SqlNode visitRelationPrimary(RelationPrimaryContext ctx) {
-    return null;//new SqlIdentifier(getLocation(ctx), visit(ctx.relationItem(), SqlIdentifier.class));
-  }
-
-  @Override
-  public SqlNode visitRelationItem(RelationItemContext ctx) {
-    if (ctx.subquery() != null) {
-      return visit(ctx.subquery());
-    } else if(ctx.identifier() != null) {
-      return visit(ctx.identifier());
-    } else if(ctx.tableFunction() != null) {
-      return visit(ctx.tableFunction());
-    }
-    throw new RuntimeException("Unknown path");
-  }
-
-  @Override
-  public SqlNode visitAliasedRelation(AliasedRelationContext ctx) {
-    if (ctx.identifier() == null) {
-//      SqlNode node = visit(ctx.relationPrimary());
-//      //Automatically alias tables that are singular, e.g. FROM Orders
-//      if (node instanceof SqrlCompoundIdentifier && ((SqrlCompoundIdentifier)node).getItems().size() == 1
-//      && ((SqrlCompoundIdentifier)node).getItems().get(0) instanceof SqlIdentifier) {
-//        SqlNode identifer = ((SqrlCompoundIdentifier) node).getItems().get(0);
-//        return SqlStdOperatorTable.AS.createCall(
-//            getLocation(ctx),
-//            node,
-//            new SqlIdentifier(((SqlIdentifier)identifer).names.get(0),
-//                identifer.getParserPosition()));
-//      } else {
-//        return visit(ctx.relationPrimary());
-//      }
-
-    }
-    return SqlStdOperatorTable.AS.createCall(
-        getLocation(ctx),
-        visit(ctx.relationPrimary()),
-        visit(ctx.identifier()));
-  }
-
-  private enum UnicodeDecodeState {
-    EMPTY,
-    ESCAPED,
-    UNICODE_SEQUENCE
   }
 
   @Override

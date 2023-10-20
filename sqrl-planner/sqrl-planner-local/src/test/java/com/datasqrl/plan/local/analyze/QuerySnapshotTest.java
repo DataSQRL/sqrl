@@ -967,7 +967,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void distinctOnWithExpression2Test() {
     validateScript(
         "IMPORT ecommerce-data.Orders;\n"
-            + "Product2 := DISTINCT Orders ON id ORDER BY time DESC;\n");
+            + "Product2 := DISTINCT Orders ON id ORDER BY `time` DESC;\n");
   }
 
   @Test
@@ -1107,6 +1107,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScript("IMPORT ecommerce-data.Orders;\n"
         + "IMPORT string.*;\n"
         + "Orders.map := strToMap('x=y')");
+
+  }
+  @Test
+  public void testMapWithKey() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "IMPORT string.*;\n"
+        + "Orders.map := strToMap('x=y')['x']");
 
   }
   @Test

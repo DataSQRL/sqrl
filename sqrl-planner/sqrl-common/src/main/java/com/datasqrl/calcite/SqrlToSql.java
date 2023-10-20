@@ -198,6 +198,10 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     SqlSelectBuilder select = new SqlSelectBuilder(call)
         .setFrom(result.getSqlNode())
         .rewriteExpressions(new WalkExpressions(newContext));
+    if (condition.isPresent()) {
+      select.appendWhere(condition.get());
+      condition = Optional.empty();
+    }
 
     pullUpKeys(select, result.pullupColumns, isAggregating);
 
@@ -471,13 +475,14 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     return Optional.empty();
   }
 
+  Optional<SqlNode> condition = Optional.empty();
   @Override
   public Result visitJoin(SqlJoin call, Context context) {
     //Check if we should skip the lhs, if it's self and we don't materialize and there is no condition
     if (isSelfTable(call.getLeft())
         && !context.isMaterializeSelf()
-        && (call.getCondition() == null || call.getCondition() instanceof SqlLiteral
-            && ((SqlLiteral) call.getCondition()).getValue() == Boolean.TRUE)) {
+    ) {
+      condition = Optional.ofNullable(call.getCondition());
       return SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), context);
     }
 
