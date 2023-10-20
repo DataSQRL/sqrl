@@ -65,7 +65,6 @@
     "REMOVE"
     "RENAME"
     "SCALA"
-    "STRING"
     "TABLES"
     "UNLOAD"
     "USE"

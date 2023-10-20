@@ -714,13 +714,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void nestedUnionTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.p2 := SELECT * FROM @\n"
-        + "              UNION DISTINCT\n"
+        + "              UNION ALL\n"
         + "              SELECT * FROM @;");
   }
 
   @Test
   public void unionTest() {
-    validateScript("IMPORT ecommerce-data.Product;\n"
+    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "Product2 := SELECT * FROM Product UNION DISTINCT SELECT * FROM Product;");
   }
 
