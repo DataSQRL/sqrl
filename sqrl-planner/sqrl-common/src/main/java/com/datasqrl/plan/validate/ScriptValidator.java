@@ -1,5 +1,7 @@
 package com.datasqrl.plan.validate;
 
+import static org.apache.calcite.sql.SqlUtil.stripAs;
+
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
@@ -262,12 +264,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical(),
           node.getIdentifier().names.get(node.getIdentifier().names.size() - 2));
     } else if (node.getIdentifier().names.size() == 2) {
-      tablePath = List.of(node.getIdentifier().names.get(0));
+      tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical());
     } else {
       throw new RuntimeException();
     }
 
-    selectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
     SqlSelect select = new SqlSelectBuilder()
         .setSelectList(selectList)
         .setFrom(new SqlIdentifier(tablePath, SqlParserPos.ZERO))
@@ -312,6 +313,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   public void validateTable(SqrlAssignment statement, SqlNode query,
       Optional<SqrlTableFunctionDef> tableArgs, boolean materializeSelf) {
     SqlValidator validator = planner.createSqlValidator();
+
+    if (statement.getIdentifier().names.size() > 1) {
+      validateHasNestedSelf(query);
+    }
 
     //if query is nested, and the lhs is not already a '@', then add it
     if (statement.getIdentifier().names.size() > 1 && !(statement instanceof SqrlExpressionQuery)) {
@@ -377,6 +382,30 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 //      return Pair.of(result, type);
     } catch (Exception e) {
       errorCollector.exception(ErrorLabel.GENERIC, e.getMessage());
+    }
+  }
+
+  private void validateHasNestedSelf(SqlNode query) {
+    if (query.getKind() == SqlKind.UNION) {
+      throw addError(ErrorLabel.GENERIC, query, "Nested unions not yet supported");
+    } else if (query.getKind() != SqlKind.SELECT) {
+      throw addError(ErrorLabel.GENERIC, query,
+          "Unknown nested query type. Must be SELECT or JOIN");
+    }
+    SqlSelect select = (SqlSelect) query;
+    SqlNode lhs = select.getFrom();
+    lhs = stripAs(lhs);
+    while (lhs instanceof SqlJoin) {
+      SqlJoin join = (SqlJoin) lhs;
+      lhs = join.getLeft();
+      lhs = stripAs(lhs);
+    }
+    if (!(lhs instanceof SqlIdentifier)) {
+      throw addError(ErrorLabel.GENERIC, lhs, "Must be a table reference that starts with '@'");
+    }
+    SqlIdentifier identifier = (SqlIdentifier) lhs;
+    if (!identifier.names.get(0).equals(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+      throw addError(ErrorLabel.GENERIC, lhs, "Table must start with with '@'");
     }
   }
 
@@ -788,16 +817,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       return null;
     }
 
-    SqlSelect select = new SqlSelectBuilder(node.getParserPosition())
-        .setDistinctOnHint(List.of())
-        .setSelectList(node.getOperands())
-        .setFrom(node.getTable())
-        .setOrder(node.getOrder())
-        .build();
+    preprocessSql.put(node, node.getSelect());
 
-    preprocessSql.put(node, select);
-
-    validateTable(node, select, Optional.empty(), false);
+    validateTable(node, node.getSelect(), Optional.empty(), false);
 
     return null;
   }
@@ -872,14 +894,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
             p.getType(), p.getIndex(), p.getType().deriveType(validator),p.isInternal()))
         .collect(Collectors.toList());
     return parameters;
-  }
-
-  private List<RelHint> createHints(Optional<SqlNodeList> hints) {
-    return hints.map(nodes -> nodes.getList().stream()
-            .map(node -> RelHint.builder(((SqlHint) node).getName())
-                .build())
-            .collect(Collectors.toList()))
-        .orElse(Collections.emptyList());
   }
 
   public RuntimeException addError(ErrorLabel errorCode, CalciteContextException e) {

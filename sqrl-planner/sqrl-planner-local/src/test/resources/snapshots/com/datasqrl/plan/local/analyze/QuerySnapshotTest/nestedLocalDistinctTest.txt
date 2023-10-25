@@ -1,13 +1,7 @@
 >>>errors
-[FATAL] Order by statement must be specified
-in script:<script> [2:53]:
-IMPORT ecommerce-data.Product;
-Product.nested := SELECT p.productid FROM Product p;Product.nested := DISTINCT @ ON @.productid;
-----------------------------------------------------^
-
 [FATAL] Order by cannot be nested
-in script:<script> [2:53]:
+in script:<script> [2:1]:
 IMPORT ecommerce-data.Product;
-Product.nested := SELECT p.productid FROM Product p;Product.nested := DISTINCT @ ON @.productid;
-----------------------------------------------------^
+Product.nested := DISTINCT @ ON @.productid ORDER BY _ingest_time DESC;
+^
 

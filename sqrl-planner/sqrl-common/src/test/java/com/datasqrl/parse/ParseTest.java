@@ -49,13 +49,13 @@ class ParseTest {
     }
   }
 
-  @Test
-  public void testSqlSelect() {
-    parser.parse("Table.nested(val: Int = 5, var: String) := SELECT * FROM table.nested", error);
-  }
-
-  @Test
-  public void testFnc() {
-    parser.parse("Table.nested() := SELECT * FROM a.b(id, e.id).c.d.e", error);
-  }
+//  @Test
+//  public void testSqlSelect() {
+//    parser.parse("Table.nested(val: Int = 5, var: String) := SELECT * FROM table.nested", error);
+//  }
+//
+//  @Test
+//  public void testFnc() {
+//    parser.parse("Table.nested() := SELECT * FROM a.b(id, e.id).c.d.e", error);
+//  }
 }

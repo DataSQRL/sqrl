@@ -71,143 +71,6 @@ class AstBuilder
             SqrlSqlParserImpl.FACTORY)
         .withConformance(SqrlConformance.INSTANCE)
         .withCharLiteralStyles(Set.of(CharLiteralStyle.STANDARD));
-
-//    return SqlParser.config()
-//        .withParserFactory(
-//            SqrlSqlParserImpl.FACTORY)
-//        .withConformance(SqrlConformance.INSTANCE)
-//        .withLex(Lex.JAVA)
-//        .withIdentifierMaxLength(256);
-
-  }
-
-  public enum FlinkSqlConformance2 implements SqlConformance {
-    DEFAULT,
-    HIVE;
-
-    private FlinkSqlConformance2() {
-    }
-
-    public boolean isLiberal() {
-      return true;
-    }
-
-    public boolean allowCharLiteralAlias() {
-      return false;
-    }
-
-    public boolean isGroupByAlias() {
-      return false;
-    }
-
-    public boolean isGroupByOrdinal() {
-      return false;
-    }
-
-    public boolean isHavingAlias() {
-      return false;
-    }
-
-    public boolean isSortByOrdinal() {
-      switch (this) {
-        case DEFAULT:
-        case HIVE:
-          return true;
-        default:
-          return false;
-      }
-    }
-
-    public boolean isSortByAlias() {
-      switch (this) {
-        case DEFAULT:
-        case HIVE:
-          return true;
-        default:
-          return false;
-      }
-    }
-
-    public boolean isSortByAliasObscures() {
-      return false;
-    }
-
-    public boolean isFromRequired() {
-      return false;
-    }
-
-    public boolean splitQuotedTableName() {
-      return false;
-    }
-
-    public boolean allowHyphenInUnquotedTableName() {
-      return false;
-    }
-
-    public boolean isBangEqualAllowed() {
-      return false;
-    }
-
-    public boolean isPercentRemainderAllowed() {
-      return true;
-    }
-
-    public boolean isMinusAllowed() {
-      return false;
-    }
-
-    public boolean isApplyAllowed() {
-      return false;
-    }
-
-    public boolean isInsertSubsetColumnsAllowed() {
-      return false;
-    }
-
-    public boolean allowAliasUnnestItems() {
-      return false;
-    }
-
-    public boolean allowNiladicParentheses() {
-      return false;
-    }
-
-    public boolean allowExplicitRowValueConstructor() {
-      switch (this) {
-        case DEFAULT:
-          return true;
-        default:
-          return false;
-      }
-    }
-
-    public boolean allowExtend() {
-      return false;
-    }
-
-    public boolean isLimitStartCountAllowed() {
-      return false;
-    }
-
-    public boolean allowGeometry() {
-      return false;
-    }
-
-    public boolean shouldConvertRaggedUnionTypesToVarying() {
-      return false;
-    }
-
-    public boolean allowExtendedTrim() {
-      return false;
-    }
-
-    public boolean allowPluralTimeUnits() {
-      return false;
-    }
-
-    public boolean allowQualifyingCommonColumn() {
-      return true;
-    }
   }
 
   @FunctionalInterface
@@ -262,6 +125,9 @@ class AstBuilder
       node = parseFunction.apply(parser);
     } catch (SqlParseException e) {
       throw adjustSqlParseException(e, rowOffset, colOffset);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
     }
 
     return adjustPosition(node, rowOffset, colOffset);
@@ -275,91 +141,6 @@ class AstBuilder
     SqlParserPos pos = PositionAdjustingSqlShuttle.adjustPosition(e.getPos(), rowOffset, colOffset);
     return new SqlParseException(e.getMessage(), pos, e.getExpectedTokenSequences(),
         e.getTokenImages(), e.getCause());
-  }
-
-  private static String unquote(String value) {
-    return value.substring(1, value.length() - 1)
-        .replace("''", "'");
-  }
-
-
-  private static boolean isHexDigit(char c) {
-    return ((c >= '0') && (c <= '9')) ||
-        ((c >= 'A') && (c <= 'F')) ||
-        ((c >= 'a') && (c <= 'f'));
-  }
-
-  private static boolean isValidUnicodeEscape(char c) {
-    return c < 0x7F && c > 0x20 && !isHexDigit(c) && c != '"' && c != '+' && c != '\'';
-  }
-
-  private static Optional<String> getTextIfPresent(Token token) {
-    return Optional.ofNullable(token)
-        .map(Token::getText);
-  }
-
-  private static SqlOperator getArithmeticBinaryOperator(Token operator) {
-    switch (operator.getType()) {
-      case SqlBaseLexer.PLUS:
-        return SqlStdOperatorTable.PLUS;
-      case SqlBaseLexer.MINUS:
-        return SqlStdOperatorTable.MINUS;
-      case SqlBaseLexer.ASTERISK:
-        return SqlStdOperatorTable.MULTIPLY;
-      case SqlBaseLexer.SLASH:
-        return SqlStdOperatorTable.DIVIDE;
-      case SqlBaseLexer.PERCENT:
-        return SqlStdOperatorTable.MOD;
-    }
-
-    throw new UnsupportedOperationException("Unsupported operator: " + operator.getText());
-  }
-
-  private static SqlOperator getComparisonOperator(Token symbol) {
-    switch (symbol.getType()) {
-      case SqlBaseLexer.EQ:
-        return SqlStdOperatorTable.EQUALS;
-      case SqlBaseLexer.NEQ:
-        return SqlStdOperatorTable.NOT_EQUALS;
-      case SqlBaseLexer.LT:
-        return SqlStdOperatorTable.LESS_THAN;
-      case SqlBaseLexer.LTE:
-        return SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
-      case SqlBaseLexer.GT:
-        return SqlStdOperatorTable.GREATER_THAN;
-      case SqlBaseLexer.GTE:
-        return SqlStdOperatorTable.GREATER_THAN_OR_EQUAL;
-    }
-
-    throw new IllegalArgumentException("Unsupported operator: " + symbol.getText());
-  }
-
-  private static TimeUnit getIntervalFieldType(Token token) {
-    switch (token.getType()) {
-      case SqlBaseLexer.YEAR:
-      case SqlBaseLexer.YEARS:
-        return TimeUnit.YEAR;
-      case SqlBaseLexer.MONTH:
-      case SqlBaseLexer.MONTHS:
-        return TimeUnit.MONTH;
-      case SqlBaseLexer.DAY:
-      case SqlBaseLexer.DAYS:
-        return TimeUnit.DAY;
-      case SqlBaseLexer.WEEK:
-      case SqlBaseLexer.WEEKS:
-        return TimeUnit.WEEK;
-      case SqlBaseLexer.HOUR:
-      case SqlBaseLexer.HOURS:
-        return TimeUnit.HOUR;
-      case SqlBaseLexer.MINUTE:
-      case SqlBaseLexer.MINUTES:
-        return TimeUnit.MINUTE;
-      case SqlBaseLexer.SECOND:
-      case SqlBaseLexer.SECONDS:
-        return TimeUnit.SECOND;
-    }
-
-    throw new IllegalArgumentException("Unsupported interval field: " + token.getText());
   }
 
   @Value
@@ -541,32 +322,45 @@ class AstBuilder
 
   @Override
   public SqlNode visitDistinctQuery(DistinctQueryContext ctx) {
-    SqlIdentifier identifier = (SqlIdentifier)visit(ctx.distinctQuerySpec().identifier());
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
-    SqlNode table = SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-        identifier, identifier);
 
-    List<SqlNode> expressions = new ArrayList<>();
-
+    String table = extractString(ctx.distinctQuerySpec().identifier());
+    StringJoiner stringJoiner = new StringJoiner(",");
     for (int i = 0; i < ctx.distinctQuerySpec().onExpr().selectItem().size(); i++) {
-      SqlNode expr = visit(ctx.distinctQuerySpec().onExpr().selectItem(i));
-      expressions.add(expr);
+      SelectItemContext context = ctx.distinctQuerySpec().onExpr().selectItem(i);
+      String value = extractString(context);
+      stringJoiner.add(value);
     }
 
-    List<SqlNode> orders = new ArrayList<>();
-    if (ctx.distinctQuerySpec().orderExpr != null) {
-      SqlNode order = visit(ctx.distinctQuerySpec().orderExpr);
-      orders.add(SqlStdOperatorTable.DESC.createCall(getLocation(ctx.distinctQuerySpec().orderExpr), order));
-    }
+    Optional<String> orderExpr = (ctx.distinctQuerySpec().orderExpr != null)
+        ? Optional.of(extractString(ctx.distinctQuerySpec().orderExpr))
+        : Optional.empty();
+
+    String sql = format("SELECT /*+ DISTINCT_ON */ %s FROM %s %s",
+        stringJoiner,
+        table,
+        orderExpr.map(o->"ORDER BY " + o).orElse("")
+    );
+
+    SqlSelect select = (SqlSelect)parse(0, 0, sql);
 
     return new SqrlDistinctQuery(
         getLocation(ctx),
         assign.getHints(),
         assign.getIdentifier(),
         assign.getTableArgs(),
-        table,
-        expressions,
-        orders);
+        select.getFrom(),
+        select.getSelectList().getList(),
+        select.getOrderList() != null? select.getOrderList().getList()
+        : List.of(), select);
+  }
+
+  private String extractString(ParserRuleContext context) {
+    int startIndex = context.start.getStartIndex();
+    int stopIndex = context.stop.getStopIndex();
+    Interval interval = new Interval(startIndex, stopIndex);
+    String queryString = context.start.getInputStream().getText(interval);
+    return queryString;
   }
 
   @Override
@@ -629,15 +423,7 @@ class AstBuilder
 
   @Override
   public SqlNode visitSelectSingle(SelectSingleContext context) {
-    SqlNode expression = visit(context.expression());
-
-    Optional<SqlNode> alias = visitIfPresent(context.identifier(), SqlNode.class);
-    if (alias.isPresent()) {
-      return SqlStdOperatorTable.AS.createCall(getLocation(context),
-          expression,
-          alias.get());
-    }
-    return expression;
+    return visit(context.expression());
   }
 
   public SqlNodeList getHints(HintContext hint) {
