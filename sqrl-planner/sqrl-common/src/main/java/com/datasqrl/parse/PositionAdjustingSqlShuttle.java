@@ -12,7 +12,7 @@ public class PositionAdjustingSqlShuttle extends SqlShuttle {
   private final int columnOffset;
   private final int rowOffset;
 
-  public PositionAdjustingSqlShuttle(int columnOffset, int rowOffset) {
+  public PositionAdjustingSqlShuttle(int rowOffset, int columnOffset) {
     this.columnOffset = columnOffset;
     this.rowOffset = rowOffset;
   }
