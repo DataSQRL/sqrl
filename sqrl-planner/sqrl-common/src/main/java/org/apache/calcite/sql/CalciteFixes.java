@@ -36,10 +36,12 @@ public class CalciteFixes {
   //odd behavior by calcite parser, im doing something wrong?
   public static SqlNode pushDownOrder(SqlNode sqlNode) {
     //recursive?
-    if (sqlNode instanceof SqlOrderBy) {
+    if (sqlNode instanceof SqlOrderBy && ((SqlOrderBy) sqlNode).query instanceof SqlSelect ) {
       SqlOrderBy order = (SqlOrderBy) sqlNode;
       SqlSelect select = ((SqlSelect) order.query);
       select.setOrderBy(order.orderList);
+      select.setFetch(order.fetch);
+      select.setOffset(order.offset);
       sqlNode = select;
     }
     return sqlNode;

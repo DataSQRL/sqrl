@@ -11,13 +11,15 @@ public class SqrlDistinctQuery extends SqrlAssignment {
   private final SqlNode table;
   private final List<SqlNode> operands;
   private final List<SqlNode> order;
+  private final SqlSelect select;
 
   public SqrlDistinctQuery(SqlParserPos location, Optional<SqlNodeList> hints,
       SqlIdentifier identifier, Optional<SqrlTableFunctionDef> tableArgs, SqlNode table,
-      List<SqlNode> operands, List<SqlNode> order) {
+      List<SqlNode> operands, List<SqlNode> order, SqlSelect select) {
     super(location, hints, identifier, tableArgs);
     this.table = table;
     this.operands = operands;
     this.order = order;
+    this.select = select;
   }
 }

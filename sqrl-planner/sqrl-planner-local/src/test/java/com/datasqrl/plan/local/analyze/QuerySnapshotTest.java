@@ -574,7 +574,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void testJoinDeclaration() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product := DISTINCT Product ON productid ORDER BY _ingest_time;\n"
+            + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
             + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;");
   }
 
@@ -582,7 +582,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void testOrderedJoinDeclaration() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product := DISTINCT Product ON productid ORDER BY _ingest_time;\n"
+            + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
             + "Product.joinDeclaration := JOIN Product ON true ORDER BY Product.productid;");
   }
 
@@ -706,15 +706,15 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void invalidSelfInSubqueryTest() {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
-        + "Product.table := SELECT * FROM Product, (SELECT MIN(productid) FROM @.parent);");
+        + "Product.table := SELECT * FROM @, (SELECT MIN(productid) FROM @.parent);");
   }
 
   @Test
   public void nestedUnionTest() {
-    validateScript("IMPORT ecommerce-data.Product;\n"
-        + "Product.p2 := SELECT * FROM @\n"
+    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
+        + "Product.nested := SELECT * FROM Product\n"
         + "              UNION ALL\n"
-        + "              SELECT * FROM @;");
+        + "              SELECT * FROM Product;");
   }
 
   @Test
@@ -1013,8 +1013,23 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void nestedLocalDistinctTest() {
     validateScriptInvalid(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.nested := SELECT p.productid FROM Product p;"
-            + "Product.nested := DISTINCT @ ON @.productid;");
+            + "Product.nested := DISTINCT @ ON @.productid ORDER BY _ingest_time DESC;");
+  }
+
+  /**
+   * Nested queries must start with a @
+   */
+  @Test
+  public void invalidNestedQueryTest() {
+    validateScriptInvalid(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product.nested := SELECT p.productid FROM Product p;");
+  }
+  @Test
+  public void invalidNestedSubqueryQueryTest() {
+    validateScriptInvalid(
+        "IMPORT ecommerce-data.Product;\n"
+            + "Product.nested := SELECT p.productid FROM (SELECT * FROM Product) p;");
   }
 
   @Test
@@ -1132,6 +1147,16 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void testHourLiteral() {
     validateScript("IMPORT ecommerce-data.Orders;\n"
         + "Order_time := SELECT time AS hour, EXTRACT(HOUR FROM NOW()) AS hour FROM Orders;\n");
+  }
+  @Test
+  public void testWeekLiteral() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "Order_time := SELECT time AS week, EXTRACT(WEEK FROM NOW()) AS week FROM Orders;\n");
+  }
+  @Test
+  public void testCountAsColumnName() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "Order_time := SELECT COUNT(*) AS count FROM Orders;\n");
   }
 
   @Test

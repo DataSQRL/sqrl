@@ -1,0 +1,7 @@
+>>>errors
+[FATAL] Must be a table reference that starts with '@'
+in script:<script> [2:44]:
+IMPORT ecommerce-data.Product;
+Product.nested := SELECT p.productid FROM (SELECT * FROM Product) p;
+-------------------------------------------^
+

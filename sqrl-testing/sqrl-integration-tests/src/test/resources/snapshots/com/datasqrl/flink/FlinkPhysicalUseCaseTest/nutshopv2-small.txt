@@ -17,20 +17,19 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4
   LogicalTableScan(table=[[orders$1]])
 
 >>>past_purchases$1-lp-stream
-LogicalProject(__pk1$id=[$8], productid=[$14], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $8, $14 ORDER BY $6 ROWS UNBOUNDED PRECEDING)], total_quantity=[SUM($9) IGNORE NULLS OVER (PARTITION BY $8, $14 ORDER BY $6 ROWS UNBOUNDED PRECEDING)], _timestamp=[$6]) hints[TimestampHint options:[4]]
-  LogicalJoin(condition=[=($14, $3)], joinType=[inner]) hints[TemporalJoinHint options:[6, 1, 0]]
-    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[$6], _idx=[$7], productid=[$8], quantity=[$9], unit_price=[$10], discount=[$11], discount0=[COALESCE($11, 0.0:DOUBLE)], total=[-(*($9, $10), COALESCE($11, 0.0:DOUBLE))])
-      LogicalCorrelate(correlation=[$cor20], joinType=[inner], requiredColumns=[{5}])
-        LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
-          LogicalTableScan(table=[[orders$1]])
-        Uncollect
-          LogicalProject($f0=[$cor20.items])
-            LogicalValues(tuples=[[{ 0 }]])
-    LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
-      LogicalProject(id=[$0], _timestamp=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
-        LogicalProject(id=[$3], _timestamp=[$6])
-          LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
-            LogicalTableScan(table=[[orders$1]])
+LogicalProject(__pk1$id=[$7], productid=[$11], num_orders=[COUNT() IGNORE NULLS OVER (PARTITION BY $7, $11 ORDER BY $6 ROWS UNBOUNDED PRECEDING)], total_quantity=[SUM($12) IGNORE NULLS OVER (PARTITION BY $7, $11 ORDER BY $6 ROWS UNBOUNDED PRECEDING)], _timestamp=[$6]) hints[TimestampHint options:[4]]
+  LogicalCorrelate(correlation=[$cor20], joinType=[inner], requiredColumns=[{5}])
+    LogicalJoin(condition=[=($7, $3)], joinType=[inner]) hints[TemporalJoinHint options:[6, 1, 0]]
+      LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+        LogicalTableScan(table=[[orders$1]])
+      LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
+        LogicalProject(id=[$0], _timestamp=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+          LogicalProject(id=[$3], _timestamp=[$6])
+            LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], items=[$5], timestamp=[epochToTimestamp(/($4, 1000))]) hints[WatermarkHint options:[6]]
+              LogicalTableScan(table=[[orders$1]])
+    Uncollect
+      LogicalProject($f0=[$cor20.items])
+        LogicalValues(tuples=[[{ 0 }]])
 
 >>>products$3-lp-stream
 LogicalProject(id=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], sizing=[$4], weight_in_gram=[$5], type=[$6], category=[$7], usda_id=[$8], updated=[$9]) hints[TimestampHint options:[9]]

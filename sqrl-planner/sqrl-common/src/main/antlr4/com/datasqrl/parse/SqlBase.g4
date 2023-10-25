@@ -64,7 +64,7 @@ fromDeclaration
 distinctQuerySpec
    : identifier
      ON onExpr
-     (ORDER BY orderExpr=expression ordering=DESC?)?
+     ORDER BY orderExpr=expression
    ;
 
 onExpr
@@ -80,7 +80,7 @@ subscriptionType
     ;
 
 selectItem
-    : expression (AS? identifier)?  #selectSingle
+    : expression                    #selectSingle
     | ASTERISK                      #selectAll
     ;
 

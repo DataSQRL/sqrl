@@ -32,7 +32,7 @@ Customers.total_orders := SUM(purchases.total);
 Products.nutrition := JOIN Nuts ON Nuts.fdcID = @.usda_id LIMIT 1;
 Nuts.product := JOIN Products ON @.fdcID = Products.usda_id LIMIT 1;
 
-Nuts.protein := SELECT f.amount FROM @.foodNutrients f WHERE f.nutrient.name = "Protein" LIMIT 1;
+Nuts.protein := SELECT f.amount FROM @.foodNutrients f JOIN f.nutrient AS n WHERE n.name = 'Protein' LIMIT 1;
 
 Customers.past_purchases :=
          SELECT i.productid, count(i.*) as num_orders, sum(i.quantity) as total_quantity
