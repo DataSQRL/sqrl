@@ -93,9 +93,9 @@ class AstBuilder
     Interval interval = new Interval(startIndex, stopIndex);
     String queryString = query.start.getInputStream().getText(interval);
     queryString = String.format("SELECT %s", queryString);
-    int rowOffset = query.getStart().getCharPositionInLine() + 1 - offset;
-    int line = query.getStart().getLine();
-    return parse(rowOffset, line, queryString);
+    int colOffset = query.getStart().getCharPositionInLine() + 1 - offset;
+    int rowOffset = query.getStart().getLine();
+    return parse(rowOffset, colOffset, queryString);
   }
 
   private SqlNode parseExpression(ParserRuleContext expression) {
@@ -104,9 +104,9 @@ class AstBuilder
     Interval interval = new Interval(startIndex, stopIndex);
     String queryString = expression.start.getInputStream().getText(interval);
 
-    int rowOffset = expression.getStart().getCharPositionInLine() + 1;
-    int line = expression.getStart().getLine();
-    return parseExpression(rowOffset, line, queryString);
+    int colOffset = expression.getStart().getCharPositionInLine() + 1;
+    int rowOffset = expression.getStart().getLine();
+    return parseExpression(rowOffset, colOffset, queryString);
   }
 
   @SneakyThrows
@@ -118,8 +118,6 @@ class AstBuilder
       SqlParserFunction parseFunction) throws Exception {
     SqlParser parser = SqlParser.create(sql, createParserConfig());
     SqlNode node;
-
-    System.out.println(sql);
 
     try {
       node = parseFunction.apply(parser);
@@ -292,9 +290,9 @@ class AstBuilder
     String queryString = ctx.start.getInputStream().getText(interval);
     queryString = String.format("SELECT * FROM @ AS @ JOIN %s", queryString);
 
-    int rowOffset = ctx.joinDeclaration().getStart().getCharPositionInLine() + 20;
-    int line = ctx.joinDeclaration().getStart().getLine();
-    SqlNode query = parse(rowOffset, line, queryString);
+    int colOffset = ctx.joinDeclaration().getStart().getCharPositionInLine() + 20;
+    int rowOffset = ctx.joinDeclaration().getStart().getLine();
+    SqlNode query = parse(rowOffset, colOffset, queryString);
 
 
     return new SqrlJoinQuery(

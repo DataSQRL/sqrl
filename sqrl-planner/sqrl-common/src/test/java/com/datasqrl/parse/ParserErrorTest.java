@@ -50,7 +50,7 @@ public class ParserErrorTest {
 
   @Test
   public void reservedWord() {
-    handle("Test.example := SELECT AS AS AS, * FROM t;");
+    handle("Test.example := SELECT Ass AS AS, * FROM t;");
   }
 
   public void handle(String str) {

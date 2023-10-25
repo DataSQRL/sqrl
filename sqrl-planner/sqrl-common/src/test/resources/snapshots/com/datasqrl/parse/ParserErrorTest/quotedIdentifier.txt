@@ -11,4 +11,6 @@ Was expecting one of:
     <UNICODE_QUOTED_IDENTIFIER> ...
     "(" ...
     
+Test.example := SELECT * FROM 'x$0';
+------------------------------^
 
