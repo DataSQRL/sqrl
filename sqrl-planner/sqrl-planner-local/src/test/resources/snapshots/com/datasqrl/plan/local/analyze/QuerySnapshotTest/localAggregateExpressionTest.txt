@@ -1,7 +1,7 @@
 >>>errors
-[FATAL] At line 2, column 22: Table 'Product' not found
-in script:<script> [2:22]:
+[FATAL] Aggregate functions not yet allowed
+in script:<script> [2:18]:
 IMPORT ecommerce-data.Product;
-Product.total := SUM(Product.productid);
----------------------^
+Product.total := SUM(productid);
+-----------------^
 

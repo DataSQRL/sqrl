@@ -31,7 +31,7 @@ statement
     | exportDefinition                               #exportStatement
     | assignmentPath ':=' FROM fromDeclaration       #fromQuery
     | assignmentPath ':=' JOIN joinDeclaration       #joinQuery
-    | assignmentPath ':=' STREAM SELECT streamQuerySpec     #streamQuery
+    | assignmentPath ':=' STREAM streamQuerySpec     #streamQuery
     | assignmentPath ':=' DISTINCT distinctQuerySpec #distinctQuery
     | assignmentPath ':=' SELECT query2              #sqlQuery
     | assignmentPath ':=' expression                 #expressionQuery
@@ -71,7 +71,7 @@ onExpr
    : '('? selectItem (',' selectItem)* ')'?;
 
 streamQuerySpec
-    : ON subscriptionType AS query2;
+    : ON subscriptionType AS SELECT query2;
 
 subscriptionType
     : ADD

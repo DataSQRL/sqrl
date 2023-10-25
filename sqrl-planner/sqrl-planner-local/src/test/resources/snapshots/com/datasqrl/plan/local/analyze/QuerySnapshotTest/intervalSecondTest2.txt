@@ -2,6 +2,6 @@
 LogicalTableScan(table=[[product$1]])
 
 >>>product2$1
-LogicalProject(_uuid=[$0], x=[+($1, 60000:INTERVAL SECOND(2))], _ingest_time=[$1])
+LogicalProject(_uuid=[$0], x=[+($1, *(60, 1000:INTERVAL SECOND))], _ingest_time=[$1])
   LogicalTableScan(table=[[product$2]])
 

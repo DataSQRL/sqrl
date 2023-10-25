@@ -452,7 +452,6 @@ public class QueryPlanner {
     //Convert lateral joins
     relNode = RelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
     relNode = run(relNode, CoreRules.FILTER_INTO_JOIN);
-    relNode = CalciteUtil.applyRexShuttleRecursively(relNode, new IntervalSimplificationRexShuttle(getRexBuilder()));
     return relNode;
   }
 }

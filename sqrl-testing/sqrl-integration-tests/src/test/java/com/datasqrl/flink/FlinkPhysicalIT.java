@@ -94,10 +94,10 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add(
         "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e");
     builder.add(
-        "OrdersInline := SELECT o.id, o.customerid, o.`time`, t.price, t.num FROM Orders o JOIN o.total t");
-//    builder.add("Customer.orders_by_day := SELECT o.`time`, o.price, o.num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid");
+        "OrdersInline := SELECT o.id, o.customerid, o.time, t.price, t.num FROM Orders o JOIN o.total t");
+//    builder.add("Customer.orders_by_day := SELECT o.time, o.price, o.num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid");
     builder.add(
-        "Customer.orders_by_hour := SELECT endOfHour(o.`time`) as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY hour");
+        "Customer.orders_by_hour := SELECT endOfHour(o.time) as `hour`, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY hour");
     validateTables(builder.getScript(), "customer", "orders", "ordersinline", "orders_by_hour");
   }
 
@@ -107,7 +107,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("IMPORT time.*");
     builder.add(
         "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
-    builder.add("IMPORT ecommerce-data.Orders TIMESTAMP `time` AS rowtime");
+    builder.add("IMPORT ecommerce-data.Orders TIMESTAMP time AS rowtime");
 
     //Normal join
     builder.add(
@@ -131,20 +131,20 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     ScriptBuilder builder = example.getImports();
     //temporal state
     builder.append(
-        "OrderAgg1 := SELECT o.customerid as customer, endOfHour(o.`time`, 1, 15) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "OrderAgg1 := SELECT o.customerid as customer, endOfHour(o.time, 1, 15) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     builder.append("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o");
     //time window
     builder.append(
-        "Ordertime1 := SELECT o.customerid as customer, endOfSecond(o.`time`) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
+        "Ordertime1 := SELECT o.customerid as customer, endOfSecond(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o GROUP BY customer, bucket");
     //now() and sliding window
     builder.append(
-        "OrderNow1 := SELECT o.customerid as customer, endOfHour(o.`time`) as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.`time` > NOW() - INTERVAL 999 DAYS) GROUP BY customer, bucket");
+        "OrderNow1 := SELECT o.customerid as customer, endOfHour(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 999 DAYS) GROUP BY customer, bucket");
     builder.append(
-        "OrderNow2 := SELECT endOfHour(o.`time`) as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.`time` > NOW() - INTERVAL 999 DAYS) GROUP BY bucket");
+        "OrderNow2 := SELECT endOfHour(o.time) as bucket, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 999 DAYS) GROUP BY bucket");
     builder.append(
-        "OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.`time` > NOW() - INTERVAL 999 DAYS) GROUP BY customer");
+        "OrderNow3 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o  WHERE (o.time > NOW() - INTERVAL 999 DAYS) GROUP BY customer");
     builder.append(
-        "OrderAugment := SELECT o.id, o.`time`, c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer"); //will be empty because OrderNow3 has a timestamp greater than Order
+        "OrderAugment := SELECT o.id, o.time, c.order_count FROM Orders o JOIN OrderNow3 c ON o.customerid = c.customer"); //will be empty because OrderNow3 has a timestamp greater than Order
     //state
     builder.append(
         "OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
@@ -160,8 +160,8 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   public void filterTest() {
     ScriptBuilder builder = example.getImports();
 
-    builder.add("HistoricOrders := SELECT * FROM Orders WHERE `time` >= now() - INTERVAL 999 DAYS");
-    builder.add("RecentOrders := SELECT * FROM Orders WHERE `time` >= now() - INTERVAL 1 SECOND");
+    builder.add("HistoricOrders := SELECT * FROM Orders WHERE time >= now() - INTERVAL 999 DAYS");
+    builder.add("RecentOrders := SELECT * FROM Orders WHERE time >= now() - INTERVAL 1 SECOND");
 
     validateTables(builder.getScript(), "historicorders", "recentorders");
   }
@@ -176,7 +176,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("Customer.updateTime := epochToTimestamp(lastUpdated)");
     builder.add("CustomerDistinct := DISTINCT Customer ON customerid ORDER BY updateTime DESC;");
     builder.add(
-        "CustomerDistinct.recentOrders := SELECT o.id, o.`time`  FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.`time` DESC LIMIT 10;");
+        "CustomerDistinct.recentOrders := SELECT o.id, o.time  FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
 
     builder.add("CustomerId := SELECT DISTINCT customerid FROM Customer;");
     builder.add(
@@ -185,9 +185,9 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add(
         "CustomerDistinct.distinctOrders := SELECT DISTINCT o.id FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
     builder.add(
-        "CustomerDistinct.distinctOrdersTime := SELECT DISTINCT o.id, o.`time`  FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.`time`  DESC LIMIT 10;");
+        "CustomerDistinct.distinctOrdersTime := SELECT DISTINCT o.id, o.time  FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time  DESC LIMIT 10;");
 
-    builder.add("Orders := DISTINCT Orders ON id ORDER BY `time` DESC");
+    builder.add("Orders := DISTINCT Orders ON id ORDER BY time DESC");
 
     validateTables(builder.getScript(), "customerdistinct", "customerid", "customerorders",
         "distinctorders", "distinctorderstime", "orders", "entries");
@@ -212,9 +212,9 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
         "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) as updateTime"); //we fake that customer updates happen before orders
     builder.add("IMPORT ecommerce-data.Orders");
 
-    builder.add("CombinedStream := (SELECT o.customerid, o.`time` AS rowtime FROM Orders o)" +
+    builder.add("CombinedStream := SELECT o.customerid, o.time AS rowtime FROM Orders o" +
         " UNION ALL " +
-        "(SELECT c.customerid, c.updateTime AS rowtime FROM Customer c);");
+        "SELECT c.customerid, c.updateTime AS rowtime FROM Customer c;");
     builder.add(
         "StreamCount := SELECT endOfHour(rowtime) as `hour`, COUNT(1) as num FROM CombinedStream GROUP BY hour");
     validateTables(builder.getScript(), "combinedstream", "streamcount");

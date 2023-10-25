@@ -395,74 +395,74 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   public static String flattenNames(List<String> nameList) {
     return String.join(".", nameList);
   }
-
-  private SqlNode addNestedSelf(SqlNode query) {
-    return SqlNodeVisitor.accept(new SqlRelationVisitor<SqlNode, Void>() {
-
-      @Override
-      public SqlNode visitQuerySpecification(SqlSelect node, Void context) {
-        if (!isSelfTable(node.getFrom()) && !(node.getFrom() instanceof SqlJoin)
-            && !isSelfPrefix(node.getFrom())) {
-          SqlNode from = addSelfTableAsJoin(node.getFrom());
-          return new SqlSelectBuilder(node)
-              .setFrom(from)
-              .build();
-        }
-
-        return new SqlSelectBuilder(node)
-            .setFrom(SqlNodeVisitor.accept(this, node.getFrom(), null))
-            .build();
-      }
-
-      private SqlNode addSelfTableAsJoin(SqlNode from) {
-        return new SqlJoinBuilder()
-            .setLeft(createSelfCall())
-            .setRight(from)
-            .build();
-      }
-
-      @Override
-      public SqlNode visitAliasedRelation(SqlCall node, Void context) {
-        return node;
-      }
-
-      @Override
-      public SqlNode visitTable(SqlIdentifier node, Void context) {
-        return node;
-      }
-
-      @Override
-      public SqlNode visitJoin(SqlJoin node, Void context) {
-        if (!isSelfTable(node.getLeft()) && !(node.getLeft() instanceof SqlJoin)) {
-          SqlNode join = addSelfTableAsJoin(node.getLeft());
-          return new SqlJoinBuilder(node)
-              .setLeft(join)
-              .setRight(node.getRight())
-              .build();
-        }
-
-        return new SqlJoinBuilder(node)
-            .setLeft(SqlNodeVisitor.accept(this, node.getLeft(), null))
-            .build();
-      }
-
-      @Override
-      public SqlNode visitSetOperation(SqlCall node, Void context) {
-        return node.getOperator().createCall(node.getParserPosition(),
-            node.getOperandList().stream()
-                .map(o->SqlNodeVisitor.accept(this, o, context))
-                .collect(Collectors.toList()));
-      }
-    }, query, null);
-  }
-
-  private boolean isSelfPrefix(SqlNode sqlNode) {
-    if (sqlNode instanceof SqlIdentifier) {
-      return ((SqlIdentifier)sqlNode).names.get(0).equals(ReservedName.SELF_IDENTIFIER.getCanonical());
-    }
-
-    return false;
-  }
+//
+//  private SqlNode addNestedSelf(SqlNode query) {
+//    return SqlNodeVisitor.accept(new SqlRelationVisitor<SqlNode, Void>() {
+//
+//      @Override
+//      public SqlNode visitQuerySpecification(SqlSelect node, Void context) {
+//        if (!isSelfTable(node.getFrom()) && !(node.getFrom() instanceof SqlJoin)
+//            && !isSelfPrefix(node.getFrom())) {
+//          SqlNode from = addSelfTableAsJoin(node.getFrom());
+//          return new SqlSelectBuilder(node)
+//              .setFrom(from)
+//              .build();
+//        }
+//
+//        return new SqlSelectBuilder(node)
+//            .setFrom(SqlNodeVisitor.accept(this, node.getFrom(), null))
+//            .build();
+//      }
+//
+//      private SqlNode addSelfTableAsJoin(SqlNode from) {
+//        return new SqlJoinBuilder()
+//            .setLeft(createSelfCall())
+//            .setRight(from)
+//            .build();
+//      }
+//
+//      @Override
+//      public SqlNode visitAliasedRelation(SqlCall node, Void context) {
+//        return node;
+//      }
+//
+//      @Override
+//      public SqlNode visitTable(SqlIdentifier node, Void context) {
+//        return node;
+//      }
+//
+//      @Override
+//      public SqlNode visitJoin(SqlJoin node, Void context) {
+//        if (!isSelfTable(node.getLeft()) && !(node.getLeft() instanceof SqlJoin)) {
+//          SqlNode join = addSelfTableAsJoin(node.getLeft());
+//          return new SqlJoinBuilder(node)
+//              .setLeft(join)
+//              .setRight(node.getRight())
+//              .build();
+//        }
+//
+//        return new SqlJoinBuilder(node)
+//            .setLeft(SqlNodeVisitor.accept(this, node.getLeft(), null))
+//            .build();
+//      }
+//
+//      @Override
+//      public SqlNode visitSetOperation(SqlCall node, Void context) {
+//        return node.getOperator().createCall(node.getParserPosition(),
+//            node.getOperandList().stream()
+//                .map(o->SqlNodeVisitor.accept(this, o, context))
+//                .collect(Collectors.toList()));
+//      }
+//    }, query, null);
+//  }
+//
+//  private boolean isSelfPrefix(SqlNode sqlNode) {
+//    if (sqlNode instanceof SqlIdentifier) {
+//      return ((SqlIdentifier)sqlNode).names.get(0).equals(ReservedName.SELF_IDENTIFIER.getCanonical());
+//    }
+//
+//    return false;
+//  }
 
   public static boolean isSelfTable(SqlNode sqlNode) {
     if (sqlNode instanceof SqlCall &&

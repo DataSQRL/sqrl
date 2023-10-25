@@ -1,8 +1,8 @@
 >>>errors
-[FATAL] At line 3, column 24: Column 'joinDeclaration' not found in any table
-in script:<script> [3:24]:
+[FATAL] Aggregate functions not yet allowed
+in script:<script> [3:18]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
 Product.total := COUNT(joinDeclaration);
------------------------^
+-----------------^
 

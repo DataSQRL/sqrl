@@ -12,12 +12,11 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
@@ -156,7 +155,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void innerJoinTimeTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("X := SELECT o.`time`, o2.`time`, o3.`time` FROM Orders AS o INNER JOIN Orders o2 ON o._uuid = o2._uuid INNER JOIN Orders o3 ON o2._uuid = o3._uuid INNER JOIN Orders o4 ON o3._uuid = o4._uuid");
+    builder.add("X := SELECT o.time, o2.time, o3.time FROM Orders AS o INNER JOIN Orders o2 ON o._uuid = o2._uuid INNER JOIN Orders o3 ON o2._uuid = o3._uuid INNER JOIN Orders o4 ON o3._uuid = o4._uuid");
     validateScript(builder.getScript());
   }
 
@@ -288,7 +287,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     builder.add("Customer.recent_products := SELECT e.productid, coalesce(pp.category,'') AS category,\n"
         + "                                       sum(e.quantity) AS quantity, count(1) AS num_orders\n"
         + "                                FROM @.orders.entries AS e LEFT JOIN e.parent p LEFT JOIN e.product pp\n"
-        + "                                WHERE p.`time` > now() - INTERVAL 365 DAYS\n"
+        + "                                WHERE p.time > now() - INTERVAL 365 DAYS\n"
         + "                                GROUP BY productid, category ORDER BY count(1) DESC, quantity DESC;\n");
     validateScript(builder.getScript());
   }
@@ -305,7 +304,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void ordersEntriesTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.entries2 := SELECT @.id, @.`time` FROM @ JOIN @.entries;\n");
+    builder.add("Orders.entries2 := SELECT @.id, @.time FROM @ JOIN @.entries;\n");
     validateScript(builder.getScript());
   }
 
@@ -967,7 +966,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void distinctOnWithExpression2Test() {
     validateScript(
         "IMPORT ecommerce-data.Orders;\n"
-            + "Product2 := DISTINCT Orders ON id ORDER BY `time` DESC;\n");
+            + "Product2 := DISTINCT Orders ON id ORDER BY time DESC;\n");
   }
 
   @Test
@@ -1114,8 +1113,33 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScript("IMPORT ecommerce-data.Orders;\n"
         + "IMPORT string.*;\n"
         + "Orders.map := strToMap('x=y')['x']");
-
   }
+
+  @Test
+  public void testUtf8() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "IMPORT string.*;\n"
+        + "Orders.map := '🎶'");
+  }
+
+  @Test
+  public void testTimeLiteral() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "Order_time := SELECT time, TIME '20:17:40' AS time FROM Orders;\n");
+  }
+
+  @Test
+  public void testHourLiteral() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "Order_time := SELECT time AS hour, EXTRACT(HOUR FROM NOW()) AS hour FROM Orders;\n");
+  }
+
+  @Test
+  public void testMonthLiteral() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "Order_time := SELECT time AS month, EXTRACT(MONTH FROM NOW()) AS month FROM Orders;\n");
+  }
+
   @Test
   public void castExpression() {
     validateScript("IMPORT ecommerce-data.Orders;"
@@ -1147,11 +1171,11 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void timestampTest() {
-    validateScript("IMPORT ecommerce-data.Orders TIMESTAMP `time`;");
+    validateScript("IMPORT ecommerce-data.Orders TIMESTAMP time;");
   }
 
   @Test
   public void timestampAliasTest() {
-    validateScript("IMPORT ecommerce-data.Orders AS O TIMESTAMP `time`;");
+    validateScript("IMPORT ecommerce-data.Orders AS O TIMESTAMP time;");
   }
 }

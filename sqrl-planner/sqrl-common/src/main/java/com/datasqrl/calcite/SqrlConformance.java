@@ -148,7 +148,7 @@ public class SqrlConformance implements SqlConformance {
 
   @Override
   public boolean allowPluralTimeUnits() {
-    return false;
+    return true;
   }
 
   @Override

@@ -1,7 +1,7 @@
 >>>recommendation$1-lp-stream
 LogicalProject(url=[$2], rec=[$3], frequency=[COUNT() IGNORE NULLS OVER (PARTITION BY $2, $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _timestamp=[$4]) hints[TimestampHint options:[3]]
   LogicalProject(_uuid=[$0], _uuid0=[$5], beforeURL=[$2], afterURL=[$7], timestamp=[$8])
-    LogicalJoin(condition=[AND(=($4, $9), <($3, $8), >=($3, -($8, 600000:INTERVAL MINUTE(2))))], joinType=[inner]) hints[IntervalJoin]
+    LogicalJoin(condition=[AND(=($4, $9), <($3, $8), >=($3, -($8, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner]) hints[IntervalJoin]
       LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
       LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
@@ -12,7 +12,7 @@ LogicalProject(url=[$0], total=[$2], _timestamp=[$1]) hints[TimestampHint option
 
 >>>visitafter$1-lp-stream
 LogicalProject(_uuid=[$0], _uuid0=[$5], beforeURL=[$2], afterURL=[$7], timestamp=[$8]) hints[TimestampHint options:[4]]
-  LogicalJoin(condition=[AND(=($4, $9), <($3, $8), >=($3, -($8, 600000:INTERVAL MINUTE(2))))], joinType=[inner]) hints[IntervalJoin]
+  LogicalJoin(condition=[AND(=($4, $9), <($3, $8), >=($3, -($8, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner]) hints[IntervalJoin]
     LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
     LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 

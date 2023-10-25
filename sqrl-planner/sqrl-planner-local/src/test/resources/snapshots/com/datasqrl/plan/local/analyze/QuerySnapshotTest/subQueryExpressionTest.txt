@@ -6,7 +6,6 @@ LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], descrip
   LogicalJoin(condition=[=($2, $6)], joinType=[inner])
     LogicalTableScan(table=[[product$2]])
     LogicalFilter(condition=[=($2, 1)])
-      LogicalProject($f0=[$0], _ingest_time=[$1], _rownum=[ROW_NUMBER() OVER (ORDER BY $1 DESC NULLS LAST)])
-        LogicalProject($f0=[SINGLE_VALUE($2) IGNORE NULLS OVER (ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
-          LogicalTableScan(table=[[product$2]])
+      LogicalProject(productid=[$2], _ingest_time=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
+        LogicalTableScan(table=[[product$2]])
 

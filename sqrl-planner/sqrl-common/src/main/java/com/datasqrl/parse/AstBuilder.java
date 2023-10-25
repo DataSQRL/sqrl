@@ -29,6 +29,7 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.config.CharLiteralStyle;
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
@@ -36,11 +37,15 @@ import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.parser.SqlParser.Config;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.util.Util;
 
 import java.util.*;
+import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl;
+import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -60,12 +65,149 @@ class AstBuilder
 
   public static SqlParser.Config createParserConfig() {
     return SqlParser.config()
+        .withLex(Lex.JAVA)
+        .withIdentifierMaxLength(256)
         .withParserFactory(
             SqrlSqlParserImpl.FACTORY)
         .withConformance(SqrlConformance.INSTANCE)
-        .withLex(Lex.JAVA)
-        .withIdentifierMaxLength(256);
+        .withCharLiteralStyles(Set.of(CharLiteralStyle.STANDARD));
 
+//    return SqlParser.config()
+//        .withParserFactory(
+//            SqrlSqlParserImpl.FACTORY)
+//        .withConformance(SqrlConformance.INSTANCE)
+//        .withLex(Lex.JAVA)
+//        .withIdentifierMaxLength(256);
+
+  }
+
+  public enum FlinkSqlConformance2 implements SqlConformance {
+    DEFAULT,
+    HIVE;
+
+    private FlinkSqlConformance2() {
+    }
+
+    public boolean isLiberal() {
+      return true;
+    }
+
+    public boolean allowCharLiteralAlias() {
+      return false;
+    }
+
+    public boolean isGroupByAlias() {
+      return false;
+    }
+
+    public boolean isGroupByOrdinal() {
+      return false;
+    }
+
+    public boolean isHavingAlias() {
+      return false;
+    }
+
+    public boolean isSortByOrdinal() {
+      switch (this) {
+        case DEFAULT:
+        case HIVE:
+          return true;
+        default:
+          return false;
+      }
+    }
+
+    public boolean isSortByAlias() {
+      switch (this) {
+        case DEFAULT:
+        case HIVE:
+          return true;
+        default:
+          return false;
+      }
+    }
+
+    public boolean isSortByAliasObscures() {
+      return false;
+    }
+
+    public boolean isFromRequired() {
+      return false;
+    }
+
+    public boolean splitQuotedTableName() {
+      return false;
+    }
+
+    public boolean allowHyphenInUnquotedTableName() {
+      return false;
+    }
+
+    public boolean isBangEqualAllowed() {
+      return false;
+    }
+
+    public boolean isPercentRemainderAllowed() {
+      return true;
+    }
+
+    public boolean isMinusAllowed() {
+      return false;
+    }
+
+    public boolean isApplyAllowed() {
+      return false;
+    }
+
+    public boolean isInsertSubsetColumnsAllowed() {
+      return false;
+    }
+
+    public boolean allowAliasUnnestItems() {
+      return false;
+    }
+
+    public boolean allowNiladicParentheses() {
+      return false;
+    }
+
+    public boolean allowExplicitRowValueConstructor() {
+      switch (this) {
+        case DEFAULT:
+          return true;
+        default:
+          return false;
+      }
+    }
+
+    public boolean allowExtend() {
+      return false;
+    }
+
+    public boolean isLimitStartCountAllowed() {
+      return false;
+    }
+
+    public boolean allowGeometry() {
+      return false;
+    }
+
+    public boolean shouldConvertRaggedUnionTypesToVarying() {
+      return false;
+    }
+
+    public boolean allowExtendedTrim() {
+      return false;
+    }
+
+    public boolean allowPluralTimeUnits() {
+      return false;
+    }
+
+    public boolean allowQualifyingCommonColumn() {
+      return true;
+    }
   }
 
   @FunctionalInterface
@@ -113,6 +255,8 @@ class AstBuilder
       SqlParserFunction parseFunction) throws Exception {
     SqlParser parser = SqlParser.create(sql, createParserConfig());
     SqlNode node;
+
+    System.out.println(sql);
 
     try {
       node = parseFunction.apply(parser);
