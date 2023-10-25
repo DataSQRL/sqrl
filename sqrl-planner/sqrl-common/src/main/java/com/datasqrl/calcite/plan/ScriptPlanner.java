@@ -120,11 +120,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     List<FunctionParameter> parameters = sqrlToSql.getParams();
 
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
-    System.out.println(planner.relToString(Dialect.CALCITE, relNode));
     RelNode expanded = planner.expandMacros(relNode);
 
-    System.out.println(planner.sqlToString(Dialect.CALCITE, result.getSqlNode()));
-    System.out.println(expanded.explain());
     List<Function> isA = validator.getIsA().get(node);
 
     if (assignment instanceof SqrlJoinQuery) {

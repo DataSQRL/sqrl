@@ -3873,6 +3873,7 @@ SqlNode AtomicRowExpression() :
 }
 {
     (
+        LOOKAHEAD(2)
         e = LiteralOrIntervalExpression()
     |
         e = DynamicParam()
@@ -3985,8 +3986,8 @@ SqlSetOption SqlSetOption(Span s, String scope) :
         name = CompoundIdentifier()
         <EQ>
         (
-            val = Literal()
-        |
+//            val = Literal()
+//        |
             val = SimpleIdentifier()
         |
             <ON> {
@@ -4415,14 +4416,19 @@ SqlLiteral DateTimeLiteral() :
         return SqlParserUtil.parseTimestampLiteral(p, s.end(this));
     }
 |
+    LOOKAHEAD(2)
     <DATE> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseDateLiteral(token.image, s.end(this));
     }
 |
+    //SQRL Add lookahead to resolve ambiguity of a time literal
+    LOOKAHEAD(2)
     <TIME> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseTimeLiteral(token.image, s.end(this));
     }
 |
+    //SQRL Add lookahead to resolve ambiguity of a timestamp
+    LOOKAHEAD(2)
     <TIMESTAMP> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseTimestampLiteral(token.image, s.end(this));
     }
@@ -6781,7 +6787,6 @@ SqlIdentifier ReservedFunctionName() :
     |   <FUSION>
     |   <INTERSECTION>
     |   <GROUPING>
-    |   <HOUR>
     |   <LAG>
     |   <LEAD>
     |   <LEFT>
@@ -6794,7 +6799,6 @@ SqlIdentifier ReservedFunctionName() :
     |   <MIN>
     |   <MINUTE>
     |   <MOD>
-    |   <MONTH>
     |   <NTH_VALUE>
     |   <NTILE>
     |   <NULLIF>
@@ -6807,7 +6811,6 @@ SqlIdentifier ReservedFunctionName() :
     |   <REGR_SYY>
     |   <RIGHT>
     |   <ROW_NUMBER>
-    |   <SECOND>
     |   <SOME>
     |   <SQRT>
     |   <STDDEV_POP>

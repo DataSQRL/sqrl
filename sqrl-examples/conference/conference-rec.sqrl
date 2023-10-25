@@ -23,9 +23,9 @@ AddInterest.embedding := asciiTextTestEmbed(text);
 LikeVector := SELECT l.userid, e.embedding, l._source_time
               FROM Likes l TEMPORAL JOIN Events e ON l.eventId = e.id WHERE l.liked;
 
-UserInterestVectors := (SELECT userid, embedding, _source_time FROM LikeVector)
+UserInterestVectors := SELECT userid, embedding, _source_time FROM LikeVector
                  UNION ALL
-                 (SELECT userid, embedding, _source_time FROM AddInterest)
+                 SELECT userid, embedding, _source_time FROM AddInterest
 
 UserInterests := SELECT userid, center(embedding) as interestVector FROM UserInterestVectors GROUP BY userid;
 

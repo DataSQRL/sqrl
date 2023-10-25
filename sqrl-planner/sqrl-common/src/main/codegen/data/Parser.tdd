@@ -81,6 +81,13 @@
 
   # List of keywords from "keywords" section that are not reserved.
   nonReservedKeywords: [
+    "TIME"
+    "TIMESTAMP"
+    "HOUR"
+    "MONTH"
+    "DAY"
+    "SECOND"
+    "DATE"
     "A"
     "ABSENT"
     "ABSOLUTE"
