@@ -58,7 +58,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
 
     builder.add("Customer.timestamp := epochToTimestamp(lastUpdated)");
-    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC");
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC");
 
     builder.add("Orders.col1 := (id + customerid)/2");
     builder.add("Orders.entries.discount2 := COALESCE(discount,0.0)");
