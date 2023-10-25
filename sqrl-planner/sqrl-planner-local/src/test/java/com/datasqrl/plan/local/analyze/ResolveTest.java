@@ -117,7 +117,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void timestampColumnDefinitionWithPropagation() {
     String script = ScriptBuilder.of("IMPORT time.*",
             "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp",
-        "CustomerCopy := SELECT `timestamp`, endOfMonth(endOfMonth(`timestamp`)) as month FROM Customer");
+        "CustomerCopy := SELECT timestamp, endOfMonth(endOfMonth(timestamp)) as month FROM Customer");
     plan(script);
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.fixed(6));
@@ -377,9 +377,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("OrdersState := DISTINCT Orders ON id ORDER BY time DESC");
     builder.add("OrderAgg1 := SELECT customerid, COUNT(1) as `count` FROM Orders GROUP BY customerid");
-    builder.add("OrderAgg2 := SELECT customerid, MAX(time) as `timestamp`, COUNT(1) as `count` FROM Orders GROUP BY customerid");
+    builder.add("OrderAgg2 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as `count` FROM Orders GROUP BY customerid");
     builder.add("OrderAgg3 := SELECT customerid, COUNT(1) as `count` FROM OrdersState GROUP BY customerid");
-    builder.add("OrderAgg4 := SELECT customerid, MAX(time) as `timestamp`, COUNT(1) as `count` FROM OrdersState GROUP BY customerid");
+    builder.add("OrderAgg4 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as `count` FROM OrdersState GROUP BY customerid");
     plan(builder.toString());
     validateQueryTable("orderagg1", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
