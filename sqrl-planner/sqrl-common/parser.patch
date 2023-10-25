@@ -1,0 +1,751 @@
+diff --git a/sqrl-planner/sqrl-common/src/main/codegen/templates/Parser.jj b/sqrl-planner/sqrl-common/src/main/codegen/templates/Parser.jj
+index 7a3702cdb..739c56f3a 100644
+--- a/sqrl-planner/sqrl-common/src/main/codegen/templates/Parser.jj
++++ b/sqrl-planner/sqrl-common/src/main/codegen/templates/Parser.jj
+@@ -1030,33 +1030,34 @@ SqlNode SqlStmt() :
+         LOOKAHEAD(2) stmt = ${method}
+     |
+ </#list>
+-        stmt = SqlSetOption(Span.of(), null)
+-    |
+-        stmt = SqlAlter()
+-    |
+-<#if (parser.createStatementParserMethods!default.parser.createStatementParserMethods)?size != 0>
+-        stmt = SqlCreate()
+-    |
+-</#if>
+-<#if (parser.dropStatementParserMethods!default.parser.dropStatementParserMethods)?size != 0>
+-        stmt = SqlDrop()
+-    |
+-</#if>
++//SQRL: These statement options are not used
++//        stmt = SqlSetOption(Span.of(), null)
++//    |
++//        stmt = SqlAlter()
++//    |
++//<#if (parser.createStatementParserMethods!default.parser.createStatementParserMethods)?size != 0>
++//        stmt = SqlCreate()
++//    |
++//</#if>
++//<#if (parser.dropStatementParserMethods!default.parser.dropStatementParserMethods)?size != 0>
++//        stmt = SqlDrop()
++//    |
++//</#if>
+         stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
+-    |
+-        stmt = SqlExplain()
+-    |
+-        stmt = SqlDescribe()
+-    |
+-        stmt = SqlInsert()
+-    |
+-        stmt = SqlDelete()
+-    |
+-        stmt = SqlUpdate()
+-    |
+-        stmt = SqlMerge()
+-    |
+-        stmt = SqlProcedureCall()
++//    |
++//        stmt = SqlExplain()
++//    |
++//        stmt = SqlDescribe()
++//    |
++//        stmt = SqlInsert()
++//    |
++//        stmt = SqlDelete()
++//    |
++//        stmt = SqlUpdate()
++//    |
++//        stmt = SqlMerge()
++//    |
++//        stmt = SqlProcedureCall()
+     )
+     {
+         return stmt;
+@@ -1880,18 +1881,48 @@ SqlLiteral JoinType() :
+ }
+ {
+     (
+-    LOOKAHEAD(3) // required for "LEFT SEMI JOIN" in Babel
+-<#list (parser.joinTypes!default.parser.joinTypes) as method>
+-        joinType = ${method}()
++//    LOOKAHEAD(3) // required for "LEFT SEMI JOIN" in Babel
++//<#list (parser.joinTypes!default.parser.joinTypes) as method>
++//        joinType = ${method}()
++//    |
++//</#list>
++        LOOKAHEAD(3)
++        <LEFT> <TEMPORAL> <JOIN> { joinType = JoinType.LEFT_TEMPORAL; }
+     |
+-</#list>
+-        <JOIN> { joinType = JoinType.INNER; }
++        LOOKAHEAD(3)
++        <LEFT> <INTERVAL> <JOIN> { joinType = JoinType.LEFT_INTERVAL; }
++    |
++        LOOKAHEAD(3)
++        <LEFT> <DEFAULT_> <JOIN> { joinType = JoinType.LEFT_DEFAULT; }
++    |
++        LOOKAHEAD(3)
++        <RIGHT> <TEMPORAL> <JOIN> { joinType = JoinType.RIGHT_TEMPORAL; }
++    |
++        LOOKAHEAD(3)
++        <RIGHT> <INTERVAL> <JOIN> { joinType = JoinType.RIGHT_INTERVAL; }
++    |
++        LOOKAHEAD(3)
++        <RIGHT> <DEFAULT_> <JOIN> { joinType = JoinType.RIGHT_DEFAULT; }
++    |
++        <TEMPORAL> <JOIN> { joinType = JoinType.TEMPORAL; }
++    |
++        <INTERVAL> <JOIN> { joinType = JoinType.INTERVAL; }
++    |
++        <DEFAULT_> <JOIN> { joinType = JoinType.DEFAULT; }
++    |
++        <JOIN> { joinType = JoinType.DEFAULT; }
+     |
+         <INNER> <JOIN> { joinType = JoinType.INNER; }
+     |
+-        <LEFT> [ <OUTER> ] <JOIN> { joinType = JoinType.LEFT; }
++        LOOKAHEAD(3)
++        <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT; }
+     |
+-        <RIGHT> [ <OUTER> ] <JOIN> { joinType = JoinType.RIGHT; }
++        <LEFT> <JOIN> { joinType = JoinType.LEFT_DEFAULT; }
++    |
++        LOOKAHEAD(3)
++        <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT; }
++    |
++        <RIGHT> <JOIN> { joinType = JoinType.RIGHT_DEFAULT; }
+     |
+         <FULL> [ <OUTER> ] <JOIN> { joinType = JoinType.FULL; }
+     |
+@@ -3843,6 +3874,8 @@ SqlNode AtomicRowExpression() :
+ }
+ {
+     (
++        //SQRL required for keyword 'date'
++        LOOKAHEAD(2)
+         e = LiteralOrIntervalExpression()
+     |
+         e = DynamicParam()
+@@ -3867,6 +3900,8 @@ SqlNode AtomicRowExpression() :
+         LOOKAHEAD( [<SPECIFIC>] FunctionName() <LPAREN>)
+         e = NamedFunctionCall()
+     |
++    //SQRL Required to allow the keyword 'user'
++        LOOKAHEAD(2)
+         e = ContextVariable()
+     |
+         e = CompoundIdentifier()
+@@ -3937,81 +3972,81 @@ SqlCall SequenceExpression() :
+         return f.createCall(s.end(sequenceRef), sequenceRef);
+     }
+ }
+-
+-/**
+- * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
+- * "ALTER &lt;SCOPE&gt;".
+- */
+-SqlSetOption SqlSetOption(Span s, String scope) :
+-{
+-    SqlIdentifier name;
+-    final SqlNode val;
+-}
+-{
+-    (
+-        <SET> {
+-            s.add(this);
+-        }
+-        name = CompoundIdentifier()
+-        <EQ>
+-        (
+-            val = Literal()
+-        |
+-            val = SimpleIdentifier()
+-        |
+-            <ON> {
+-                // OFF is handled by SimpleIdentifier, ON handled here.
+-                val = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+-                    getPos());
+-            }
+-        )
+-        {
+-            return new SqlSetOption(s.end(val), scope, name, val);
+-        }
+-    |
+-        <RESET> {
+-            s.add(this);
+-        }
+-        (
+-            name = CompoundIdentifier()
+-        |
+-            <ALL> {
+-                name = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+-                    getPos());
+-            }
+-        )
+-        {
+-            return new SqlSetOption(s.end(name), scope, name, null);
+-        }
+-    )
+-}
++//
++///**
++// * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
++// * "ALTER &lt;SCOPE&gt;".
++// */
++//SqlSetOption SqlSetOption(Span s, String scope) :
++//{
++//    SqlIdentifier name;
++//    final SqlNode val;
++//}
++//{
++//    (
++//        <SET> {
++//            s.add(this);
++//        }
++//        name = CompoundIdentifier()
++//        <EQ>
++//        (
++//            val = Literal()
++//        |
++//            val = SimpleIdentifier()
++//        |
++//            <ON> {
++//                // OFF is handled by SimpleIdentifier, ON handled here.
++//                val = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
++//                    getPos());
++//            }
++//        )
++//        {
++//            return new SqlSetOption(s.end(val), scope, name, val);
++//        }
++//    |
++//        <RESET> {
++//            s.add(this);
++//        }
++//        (
++//            name = CompoundIdentifier()
++//        |
++//            <ALL> {
++//                name = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
++//                    getPos());
++//            }
++//        )
++//        {
++//            return new SqlSetOption(s.end(name), scope, name, null);
++//        }
++//    )
++//}
+ 
+ /**
+  * Parses an expression for setting or resetting an option in SQL, such as QUOTED_IDENTIFIERS,
+  * or explain plan level (physical/logical).
+  */
+-SqlAlter SqlAlter() :
+-{
+-    final Span s;
+-    final String scope;
+-    final SqlAlter alterNode;
+-}
+-{
+-    <ALTER> { s = span(); }
+-    scope = Scope()
+-    (
+-<#-- additional literal parser methods are included here -->
+-<#list (parser.alterStatementParserMethods!default.parser.alterStatementParserMethods) as method>
+-        alterNode = ${method}(s, scope)
+-    |
+-</#list>
+-
+-        alterNode = SqlSetOption(s, scope)
+-    )
+-    {
+-        return alterNode;
+-    }
+-}
++//SqlAlter SqlAlter() :
++//{
++//    final Span s;
++//    final String scope;
++//    final SqlAlter alterNode;
++//}
++//{
++//    <ALTER> { s = span(); }
++//    scope = Scope()
++//    (
++//<#-- additional literal parser methods are included here -->
++//<#list (parser.alterStatementParserMethods!default.parser.alterStatementParserMethods) as method>
++//        alterNode = ${method}(s, scope)
++//    |
++//</#list>
++//
++//        alterNode = SqlSetOption(s, scope)
++//    )
++//    {
++//        return alterNode;
++//    }
++//}
+ 
+ String Scope() :
+ {
+@@ -4389,6 +4424,8 @@ SqlLiteral DateTimeLiteral() :
+         return SqlParserUtil.parseDateLiteral(token.image, s.end(this));
+     }
+ |
++    //SQRL Add lookahead to resolve ambiguity of a time literal
++    LOOKAHEAD(2)
+     <TIME> { s = span(); } <QUOTED_STRING> {
+         return SqlParserUtil.parseTimeLiteral(token.image, s.end(this));
+     }
+@@ -6718,77 +6755,72 @@ SqlIdentifier FunctionName() :
+         return qualifiedName;
+     }
+ }
+-
+-/**
+- * Parses a reserved word which is used as the name of a function.
+- */
++//
++///**
++// * Parses a reserved word which is used as the name of a function.
++// */
+ SqlIdentifier ReservedFunctionName() :
+ {
+ }
+ {
+     (
+-        <ABS>
+-    |   <AVG>
+-    |   <CARDINALITY>
+-    |   <CEILING>
+-    |   <CHAR_LENGTH>
+-    |   <CHARACTER_LENGTH>
+-    |   <COALESCE>
+-    |   <COLLECT>
+-    |   <COVAR_POP>
+-    |   <COVAR_SAMP>
+-    |   <CUME_DIST>
+-    |   <COUNT>
++//        <ABS>
++//    |   <AVG>
++//    |   <CARDINALITY>
++      <CEILING>
++//    |   <CHAR_LENGTH>
++//    |   <CHARACTER_LENGTH>
++//    |   <COALESCE>
++//    |   <COLLECT>
++//    |   <COVAR_POP>
++//    |   <COVAR_SAMP>
++//    |   <CUME_DIST>
++//    |   <COUNT>
+     |   <CURRENT_DATE>
+     |   <CURRENT_TIME>
+     |   <CURRENT_TIMESTAMP>
+-    |   <DENSE_RANK>
+-    |   <ELEMENT>
+-    |   <EVERY>
+-    |   <EXP>
+-    |   <FIRST_VALUE>
++//    |   <DENSE_RANK>
++//    |   <ELEMENT>
++//    |   <EVERY>
++//    |   <EXP>
++//    |   <FIRST_VALUE>
+     |   <FLOOR>
+-    |   <FUSION>
+-    |   <INTERSECTION>
+-    |   <GROUPING>
+-    |   <HOUR>
+-    |   <LAG>
+-    |   <LEAD>
++//    |   <FUSION>
++//    |   <INTERSECTION>
++//    |   <GROUPING>
++//    |   <LAG>
++//    |   <LEAD>
+     |   <LEFT>
+-    |   <LAST_VALUE>
+-    |   <LN>
+-    |   <LOCALTIME>
+-    |   <LOCALTIMESTAMP>
+-    |   <LOWER>
+-    |   <MAX>
+-    |   <MIN>
++//    |   <LAST_VALUE>
++//    |   <LN>
++//    |   <LOCALTIME>
++//    |   <LOCALTIMESTAMP>
++//    |   <LOWER>
++//    |   <MAX>
++//    |   <MIN>
+     |   <MINUTE>
+-    |   <MOD>
+-    |   <MONTH>
+-    |   <NTH_VALUE>
+-    |   <NTILE>
+-    |   <NULLIF>
+-    |   <OCTET_LENGTH>
+-    |   <PERCENT_RANK>
+-    |   <POWER>
+-    |   <RANK>
+-    |   <REGR_COUNT>
+-    |   <REGR_SXX>
+-    |   <REGR_SYY>
++//    |   <MOD>
++//    |   <NTH_VALUE>
++//    |   <NTILE>
++//    |   <NULLIF>
++//    |   <OCTET_LENGTH>
++//    |   <PERCENT_RANK>
++//    |   <POWER>
++//    |   <RANK>
++//    |   <REGR_COUNT>
++//    |   <REGR_SXX>
++//    |   <REGR_SYY>
+     |   <RIGHT>
+-    |   <ROW_NUMBER>
+-    |   <SECOND>
++//    |   <ROW_NUMBER>
+     |   <SOME>
+-    |   <SQRT>
+-    |   <STDDEV_POP>
+-    |   <STDDEV_SAMP>
+-    |   <SUM>
+-    |   <UPPER>
++//    |   <SQRT>
++//    |   <STDDEV_POP>
++//    |   <STDDEV_SAMP>
++//    |   <SUM>
++//    |   <UPPER>
+     |   <TRUNCATE>
+-    |   <USER>
+-    |   <VAR_POP>
+-    |   <VAR_SAMP>
+-    |   <YEAR>
++//    |   <VAR_POP>
++//    |   <VAR_SAMP>
+     )
+     {
+         return new SqlIdentifier(unquotedIdentifier(), getPos());
+@@ -7080,7 +7112,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ <DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
+ {
+     < A: "A" >
+-|   < ABS: "ABS" >
++//|   < ABS: "ABS" >
+ |   < ABSENT: "ABSENT" >
+ |   < ABSOLUTE: "ABSOLUTE" >
+ |   < ACTION: "ACTION" >
+@@ -7110,7 +7142,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < ATTRIBUTE: "ATTRIBUTE" >
+ |   < ATTRIBUTES: "ATTRIBUTES" >
+ |   < AUTHORIZATION: "AUTHORIZATION" >
+-|   < AVG: "AVG" >
++//|   < AVG: "AVG" >
+ |   < BEFORE: "BEFORE" >
+ |   < BEGIN: "BEGIN" >
+ |   < BEGIN_FRAME: "BEGIN_FRAME" >
+@@ -7128,7 +7160,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < C: "C" >
+ |   < CALL: "CALL" >
+ |   < CALLED: "CALLED" >
+-|   < CARDINALITY: "CARDINALITY" >
++//|   < CARDINALITY: "CARDINALITY" >
+ |   < CASCADE: "CASCADE" >
+ |   < CASCADED: "CASCADED" >
+ |   < CASE: "CASE" >
+@@ -7140,9 +7172,9 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < CENTURY: "CENTURY" >
+ |   < CHAIN: "CHAIN" >
+ |   < CHAR: "CHAR" >
+-|   < CHAR_LENGTH: "CHAR_LENGTH" >
++//|   < CHAR_LENGTH: "CHAR_LENGTH" >
+ |   < CHARACTER: "CHARACTER" >
+-|   < CHARACTER_LENGTH: "CHARACTER_LENGTH" >
++//|   < CHARACTER_LENGTH: "CHARACTER_LENGTH" >
+ |   < CHARACTER_SET_CATALOG: "CHARACTER_SET_CATALOG" >
+ |   < CHARACTER_SET_NAME: "CHARACTER_SET_NAME" >
+ |   < CHARACTER_SET_SCHEMA: "CHARACTER_SET_SCHEMA" >
+@@ -7153,14 +7185,14 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < CLASS_ORIGIN: "CLASS_ORIGIN" >
+ |   < CLOB: "CLOB" >
+ |   < CLOSE: "CLOSE" >
+-|   < COALESCE: "COALESCE" >
++//|   < COALESCE: "COALESCE" >
+ |   < COBOL: "COBOL" >
+ |   < COLLATE: "COLLATE" >
+ |   < COLLATION: "COLLATION" >
+ |   < COLLATION_CATALOG: "COLLATION_CATALOG" >
+ |   < COLLATION_NAME: "COLLATION_NAME" >
+ |   < COLLATION_SCHEMA: "COLLATION_SCHEMA" >
+-|   < COLLECT: "COLLECT" >
++//|   < COLLECT: "COLLECT" >
+ |   < COLUMN: "COLUMN" >
+ |   < COLUMN_NAME: "COLUMN_NAME" >
+ |   < COMMAND_FUNCTION: "COMMAND_FUNCTION" >
+@@ -7185,12 +7217,12 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < CORR: "CORR" >
+ |   < CORRESPONDING: "CORRESPONDING" >
+ |   < COUNT: "COUNT" >
+-|   < COVAR_POP: "COVAR_POP" >
+-|   < COVAR_SAMP: "COVAR_SAMP" >
++//|   < COVAR_POP: "COVAR_POP" >
++//|   < COVAR_SAMP: "COVAR_SAMP" >
+ |   < CREATE: "CREATE" >
+ |   < CROSS: "CROSS" >
+ |   < CUBE: "CUBE" >
+-|   < CUME_DIST: "CUME_DIST" >
++//|   < CUME_DIST: "CUME_DIST" >
+ |   < CURRENT: "CURRENT" >
+ |   < CURRENT_CATALOG: "CURRENT_CATALOG" >
+ |   < CURRENT_DATE: "CURRENT_DATE" >
+@@ -7227,7 +7259,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < DEFINER: "DEFINER" >
+ |   < DEGREE: "DEGREE" >
+ |   < DELETE: "DELETE" > { beforeTableName(); }
+-|   < DENSE_RANK: "DENSE_RANK" >
++//|   < DENSE_RANK: "DENSE_RANK" >
+ |   < DEPTH: "DEPTH" >
+ |   < DEREF: "DEREF" >
+ |   < DERIVED: "DERIVED" >
+@@ -7250,7 +7282,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < DYNAMIC_FUNCTION: "DYNAMIC_FUNCTION" >
+ |   < DYNAMIC_FUNCTION_CODE: "DYNAMIC_FUNCTION_CODE" >
+ |   < EACH: "EACH" >
+-|   < ELEMENT: "ELEMENT" >
++//|   < ELEMENT: "ELEMENT" >
+ |   < ELSE: "ELSE" >
+ |   < EMPTY: "EMPTY" >
+ |   < ENCODING: "ENCODING">
+@@ -7270,7 +7302,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < EXEC: "EXEC" >
+ |   < EXECUTE: "EXECUTE" >
+ |   < EXISTS: "EXISTS" >
+-|   < EXP: "EXP" >
++//|   < EXP: "EXP" >
+ |   < EXPLAIN: "EXPLAIN" >
+ |   < EXTEND: "EXTEND" >
+ |   < EXTERNAL: "EXTERNAL" >
+@@ -7280,7 +7312,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < FILTER: "FILTER" >
+ |   < FINAL: "FINAL" >
+ |   < FIRST: "FIRST" >
+-|   < FIRST_VALUE: "FIRST_VALUE">
++//|   < FIRST_VALUE: "FIRST_VALUE">
+ |   < FLOAT: "FLOAT" >
+ |   < FLOOR: "FLOOR" >
+ |   < FOLLOWING: "FOLLOWING" >
+@@ -7295,7 +7327,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < FROM: "FROM" > { beforeTableName(); }
+ |   < FULL: "FULL" >
+ |   < FUNCTION: "FUNCTION" >
+-|   < FUSION: "FUSION" >
++//|   < FUSION: "FUSION" >
+ |   < G: "G" >
+ |   < GENERAL: "GENERAL" >
+ |   < GENERATED: "GENERATED" >
+@@ -7337,7 +7369,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < INT: "INT" >
+ |   < INTEGER: "INTEGER" >
+ |   < INTERSECT: "INTERSECT" >
+-|   < INTERSECTION: "INTERSECTION" >
++//|   < INTERSECTION: "INTERSECTION" >
+ |   < INTERVAL: "INTERVAL" >
+ |   < INTO: "INTO" >
+ |   < INVOKER: "INVOKER" >
+@@ -7360,13 +7392,13 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < KEY_MEMBER: "KEY_MEMBER" >
+ |   < KEY_TYPE: "KEY_TYPE" >
+ |   < LABEL: "LABEL" >
+-|   < LAG: "LAG" >
++//|   < LAG: "LAG" >
+ |   < LANGUAGE: "LANGUAGE" >
+ |   < LARGE: "LARGE" >
+ |   < LAST: "LAST" >
+-|   < LAST_VALUE: "LAST_VALUE" >
++//|   < LAST_VALUE: "LAST_VALUE" >
+ |   < LATERAL: "LATERAL" >
+-|   < LEAD: "LEAD" >
++//|   < LEAD: "LEAD" >
+ |   < LEADING: "LEADING" >
+ |   < LEFT: "LEFT" >
+ |   < LENGTH: "LENGTH" >
+@@ -7375,7 +7407,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < LIKE: "LIKE" >
+ |   < LIKE_REGEX: "LIKE_REGEX" >
+ |   < LIMIT: "LIMIT" >
+-|   < LN: "LN" >
++//|   < LN: "LN" >
+ |   < LOCAL: "LOCAL" >
+ |   < LOCALTIME: "LOCALTIME" >
+ |   < LOCALTIMESTAMP: "LOCALTIMESTAMP" >
+@@ -7388,7 +7420,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < MATCHES: "MATCHES" >
+ |   < MATCH_NUMBER: "MATCH_NUMBER">
+ |   < MATCH_RECOGNIZE: "MATCH_RECOGNIZE">
+-|   < MAX: "MAX" >
++//|   < MAX: "MAX" >
+ |   < MAXVALUE: "MAXVALUE" >
+ |   < MEASURES: "MEASURES" >
+ |   < MEMBER: "MEMBER" >
+@@ -7400,11 +7432,11 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < MICROSECOND: "MICROSECOND" >
+ |   < MILLISECOND: "MILLISECOND" >
+ |   < MILLENNIUM: "MILLENNIUM" >
+-|   < MIN: "MIN" >
++//|   < MIN: "MIN" >
+ |   < MINUTE: "MINUTE" >
+ |   < MINUTES: "MINUTES" >
+ |   < MINVALUE: "MINVALUE" >
+-|   < MOD: "MOD" >
++//|   < MOD: "MOD" >
+ |   < MODIFIES: "MODIFIES" >
+ |   < MODULE: "MODULE" >
+ |   < MONTH: "MONTH" >
+@@ -7427,17 +7459,17 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < NORMALIZE: "NORMALIZE" >
+ |   < NORMALIZED: "NORMALIZED" >
+ |   < NOT: "NOT" >
+-|   < NTH_VALUE: "NTH_VALUE" >
++//|   < NTH_VALUE: "NTH_VALUE" >
+ |   < NTILE: "NTILE" >
+ |   < NULL: "NULL" >
+ |   < NULLABLE: "NULLABLE" >
+-|   < NULLIF: "NULLIF" >
++//|   < NULLIF: "NULLIF" >
+ |   < NULLS: "NULLS" >
+ |   < NUMBER: "NUMBER" >
+ |   < NUMERIC: "NUMERIC" >
+ |   < OBJECT: "OBJECT" >
+ |   < OCCURRENCES_REGEX: "OCCURRENCES_REGEX" >
+-|   < OCTET_LENGTH: "OCTET_LENGTH" >
++//|   < OCTET_LENGTH: "OCTET_LENGTH" >
+ |   < OCTETS: "OCTETS" >
+ |   < OF: "OF" >
+ |   < OFFSET: "OFFSET" >
+@@ -7481,7 +7513,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < PERCENT: "PERCENT" >
+ |   < PERCENTILE_CONT: "PERCENTILE_CONT" >
+ |   < PERCENTILE_DISC: "PERCENTILE_DISC" >
+-|   < PERCENT_RANK: "PERCENT_RANK" >
++//|   < PERCENT_RANK: "PERCENT_RANK" >
+ |   < PERIOD: "PERIOD" >
+ |   < PERMUTE: "PERMUTE" >
+ |   < PIVOT: "PIVOT" >
+@@ -7491,7 +7523,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < PORTION: "PORTION" >
+ |   < POSITION: "POSITION" >
+ |   < POSITION_REGEX: "POSITION_REGEX" >
+-|   < POWER: "POWER" >
++//|   < POWER: "POWER" >
+ |   < PRECEDES: "PRECEDES" >
+ |   < PRECEDING: "PRECEDING" >
+ |   < PRECISION: "PRECISION" >
+@@ -7505,7 +7537,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < PUBLIC: "PUBLIC" >
+ |   < QUARTER: "QUARTER" >
+ |   < RANGE: "RANGE" >
+-|   < RANK: "RANK" >
++//|   < RANK: "RANK" >
+ |   < READ: "READ" >
+ |   < READS: "READS" >
+ |   < REAL: "REAL" >
+@@ -7513,9 +7545,9 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < REF: "REF" >
+ |   < REFERENCES: "REFERENCES" >
+ |   < REFERENCING: "REFERENCING" >
+-|   < REGR_AVGX: "REGR_AVGX" >
+-|   < REGR_AVGY: "REGR_AVGY" >
+-|   < REGR_COUNT: "REGR_COUNT" >
++//|   < REGR_AVGX: "REGR_AVGX" >
++//|   < REGR_AVGY: "REGR_AVGY" >
++//|   < REGR_COUNT: "REGR_COUNT" >
+ |   < REGR_INTERCEPT: "REGR_INTERCEPT" >
+ |   < REGR_R2: "REGR_R2" >
+ |   < REGR_SLOPE: "REGR_SLOPE" >
+@@ -7549,7 +7581,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < ROUTINE_SCHEMA: "ROUTINE_SCHEMA" >
+ |   < ROW: "ROW" >
+ |   < ROW_COUNT: "ROW_COUNT" >
+-|   < ROW_NUMBER: "ROW_NUMBER" >
++//|   < ROW_NUMBER: "ROW_NUMBER" >
+ |   < ROWS: "ROWS" >
+ |   < RUNNING: "RUNNING" >
+ |   < SAVEPOINT: "SAVEPOINT" >
+@@ -7650,8 +7682,8 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < STATE: "STATE" >
+ |   < STATEMENT: "STATEMENT" >
+ |   < STATIC: "STATIC" >
+-|   < STDDEV_POP: "STDDEV_POP" >
+-|   < STDDEV_SAMP: "STDDEV_SAMP" >
++//|   < STDDEV_POP: "STDDEV_POP" >
++//|   < STDDEV_SAMP: "STDDEV_SAMP" >
+ |   < STREAM: "STREAM" >
+ |   < STRUCTURE: "STRUCTURE" >
+ |   < STYLE: "STYLE" >
+@@ -7662,7 +7694,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < SUBSTRING: "SUBSTRING" >
+ |   < SUBSTRING_REGEX: "SUBSTRING_REGEX" >
+ |   < SUCCEEDS: "SUCCEEDS" >
+-|   < SUM: "SUM" >
++//|   < SUM: "SUM" >
+ |   < SYMMETRIC: "SYMMETRIC" >
+ |   < SYSTEM: "SYSTEM" >
+ |   < SYSTEM_TIME: "SYSTEM_TIME" >
+@@ -7714,7 +7746,7 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < UNNAMED: "UNNAMED" >
+ |   < UNNEST: "UNNEST" >
+ |   < UPDATE: "UPDATE" > { beforeTableName(); }
+-|   < UPPER: "UPPER" >
++//|   < UPPER: "UPPER" >
+ |   < UPSERT: "UPSERT" >
+ |   < USAGE: "USAGE" >
+ |   < USER: "USER" >
+@@ -7729,8 +7761,8 @@ SqlPostfixOperator PostfixRowOperator() :
+ |   < VALUE: "VALUE" >
+ |   < VALUES: "VALUES" > { afterTableName(); }
+ |   < VALUE_OF: "VALUE_OF" >
+-|   < VAR_POP: "VAR_POP" >
+-|   < VAR_SAMP: "VAR_SAMP" >
++//|   < VAR_POP: "VAR_POP" >
++//|   < VAR_SAMP: "VAR_SAMP" >
+ |   < VARBINARY: "VARBINARY" >
+ |   < VARCHAR: "VARCHAR" >
+ |   < VARYING: "VARYING" >
+@@ -7872,7 +7904,7 @@ void NonReservedKeyWord2of3() :
+ |
+     < UNICODE_STRING_LITERAL: "U" "&" <QUOTED_STRING> >
+ |
+-    < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9"])
++    < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9","@"])
+     (["a"-"z","A"-"Z","0"-"9",":",".","-","_"])*
+     >
+ }
+@@ -7992,7 +8024,7 @@ TOKEN_MGR_DECLS : {
+ /*
+ Lexical states:
+ 
+-DEFAULT: Identifiers are quoted in brackets, e.g. [My Identifier]
++DEF: Identifiers are quoted in brackets, e.g. [My Identifier]
+ DQID:    Identifiers are double-quoted, e.g. "My Identifier"
+ BTID:    Identifiers are enclosed in back-ticks, e.g. `My Identifier`
+ BQID:    Identifiers are enclosed in back-ticks, e.g. `My Identifier`,
+@@ -8071,7 +8103,7 @@ MORE :
+ 
+ /* IDENTIFIERS */
+ 
+-<DEFAULT> TOKEN :
++<DEF> TOKEN :
+ {
+     < BRACKET_QUOTED_IDENTIFIER:
+     "["
+@@ -8137,6 +8169,8 @@ MORE :
+     < #LETTER:
+     [
+         "\u0024",
++        //sqrl u0040 is @
++        "\u0040",
+         "\u0041"-"\u005a",
+         "\u005f",
+         "\u0061"-"\u007a",
