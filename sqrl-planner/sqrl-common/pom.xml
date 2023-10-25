@@ -113,33 +113,57 @@
           </excludes>
         </configuration>
       </plugin>
-<!--      <plugin>-->
-<!--        &lt;!&ndash; Extract parser grammar template from calcite-core.jar and put-->
-<!--                     it under ${project.build.directory} where all freemarker templates are. &ndash;&gt;-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-dependency-plugin</artifactId>-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <id>unpack-parser-template</id>-->
-<!--            <phase>initialize</phase>-->
-<!--            <goals>-->
-<!--              <goal>unpack</goal>-->
-<!--            </goals>-->
-<!--            <configuration>-->
-<!--              <artifactItems>-->
-<!--                <artifactItem>-->
-<!--                  <groupId>org.apache.calcite</groupId>-->
-<!--                  <artifactId>calcite-core</artifactId>-->
-<!--                  <type>jar</type>-->
-<!--                  <overWrite>true</overWrite>-->
-<!--                  <outputDirectory>${project.build.directory}/</outputDirectory>-->
-<!--                  <includes>**/Parser.jj</includes>-->
-<!--                </artifactItem>-->
-<!--              </artifactItems>-->
-<!--            </configuration>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
+      <plugin>
+        <!-- Extract parser grammar template from calcite-core.jar and put
+                     it under ${project.build.directory} where all freemarker templates are. -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-parser-template</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.apache.calcite</groupId>
+                  <artifactId>calcite-core</artifactId>
+                  <version>1.26.0</version>
+                  <type>jar</type>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>${project.build.directory}/</outputDirectory>
+                  <includes>**/Parser.jj</includes>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>apply-patch</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>patch</executable>
+              <arguments>
+                <!-- The location where the Parser.jj file was extracted -->
+                <argument>${project.build.directory}/codegen/templates/Parser.jj</argument>
+                <!-- The location of your patch file -->
+                <argument>-i</argument>
+                <argument>parser.patch</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <!-- adding fmpp code gen -->
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
