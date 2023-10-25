@@ -819,8 +819,8 @@ SqlNodeList ParenthesizedQueryOrCommaListWithDefault(
     }
     (
         e = OrderedQueryOrExpr(firstExprContext)
-//    |
-//        e = Default()
+    |
+        e = Default()
     )
     {
         list = startList(e);
@@ -833,8 +833,8 @@ SqlNodeList ParenthesizedQueryOrCommaListWithDefault(
         }
         (
             e = Expression(exprContext)
-//        |
-//            e = Default()
+        |
+            e = Default()
         )
         {
             list.add(e);
@@ -927,8 +927,8 @@ void Arg0(List list, ExprContext exprContext) :
         LOOKAHEAD(2) name = SimpleIdentifier() <NAMED_ARGUMENT_ASSIGNMENT>
     ]
     (
-//        e = Default()
-//    |
+        e = Default()
+    |
         e = OrderedQueryOrExpr(firstExprContext)
     )
     {
@@ -952,8 +952,8 @@ void Arg(List list, ExprContext exprContext) :
         LOOKAHEAD(2) name = SimpleIdentifier() <NAMED_ARGUMENT_ASSIGNMENT>
     ]
     (
-//        e = Default()
-//    |
+        e = Default()
+    |
         e = Expression(exprContext)
     )
     {
@@ -967,12 +967,12 @@ void Arg(List list, ExprContext exprContext) :
     }
 }
 
-//SqlNode Default() : {}
-//{
-//    <DEFAULT_> {
-//        return SqlStdOperatorTable.DEFAULT.createCall(getPos());
-//    }
-//}
+SqlNode Default() : {}
+{
+    <DEFAULT_> {
+        return SqlStdOperatorTable.DEFAULT.createCall(getPos());
+    }
+}
 
 /**
  * Parses a query (SELECT, UNION, INTERSECT, EXCEPT, VALUES, TABLE) followed by
@@ -1030,33 +1030,34 @@ SqlNode SqlStmt() :
         LOOKAHEAD(2) stmt = ${method}
     |
 </#list>
-        stmt = SqlSetOption(Span.of(), null)
-    |
-        stmt = SqlAlter()
-    |
-<#if (parser.createStatementParserMethods!default.parser.createStatementParserMethods)?size != 0>
-        stmt = SqlCreate()
-    |
-</#if>
-<#if (parser.dropStatementParserMethods!default.parser.dropStatementParserMethods)?size != 0>
-        stmt = SqlDrop()
-    |
-</#if>
+//SQRL: These statement options are not used
+//        stmt = SqlSetOption(Span.of(), null)
+//    |
+//        stmt = SqlAlter()
+//    |
+//<#if (parser.createStatementParserMethods!default.parser.createStatementParserMethods)?size != 0>
+//        stmt = SqlCreate()
+//    |
+//</#if>
+//<#if (parser.dropStatementParserMethods!default.parser.dropStatementParserMethods)?size != 0>
+//        stmt = SqlDrop()
+//    |
+//</#if>
         stmt = OrderedQueryOrExpr(ExprContext.ACCEPT_QUERY)
-    |
-        stmt = SqlExplain()
-    |
-        stmt = SqlDescribe()
-    |
-        stmt = SqlInsert()
-    |
-        stmt = SqlDelete()
-    |
-        stmt = SqlUpdate()
-    |
-        stmt = SqlMerge()
-    |
-        stmt = SqlProcedureCall()
+//    |
+//        stmt = SqlExplain()
+//    |
+//        stmt = SqlDescribe()
+//    |
+//        stmt = SqlInsert()
+//    |
+//        stmt = SqlDelete()
+//    |
+//        stmt = SqlUpdate()
+//    |
+//        stmt = SqlMerge()
+//    |
+//        stmt = SqlProcedureCall()
     )
     {
         return stmt;
@@ -3873,6 +3874,7 @@ SqlNode AtomicRowExpression() :
 }
 {
     (
+        //SQRL required for keyword 'date'
         LOOKAHEAD(2)
         e = LiteralOrIntervalExpression()
     |
@@ -3898,6 +3900,7 @@ SqlNode AtomicRowExpression() :
         LOOKAHEAD( [<SPECIFIC>] FunctionName() <LPAREN>)
         e = NamedFunctionCall()
     |
+    //SQRL Required to allow the keyword 'user'
         LOOKAHEAD(2)
         e = ContextVariable()
     |
@@ -3969,81 +3972,81 @@ SqlCall SequenceExpression() :
         return f.createCall(s.end(sequenceRef), sequenceRef);
     }
 }
-
-/**
- * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
- * "ALTER &lt;SCOPE&gt;".
- */
-SqlSetOption SqlSetOption(Span s, String scope) :
-{
-    SqlIdentifier name;
-    final SqlNode val;
-}
-{
-    (
-        <SET> {
-            s.add(this);
-        }
-        name = CompoundIdentifier()
-        <EQ>
-        (
+//
+///**
+// * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
+// * "ALTER &lt;SCOPE&gt;".
+// */
+//SqlSetOption SqlSetOption(Span s, String scope) :
+//{
+//    SqlIdentifier name;
+//    final SqlNode val;
+//}
+//{
+//    (
+//        <SET> {
+//            s.add(this);
+//        }
+//        name = CompoundIdentifier()
+//        <EQ>
+//        (
 //            val = Literal()
 //        |
-            val = SimpleIdentifier()
-        |
-            <ON> {
-                // OFF is handled by SimpleIdentifier, ON handled here.
-                val = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
-                    getPos());
-            }
-        )
-        {
-            return new SqlSetOption(s.end(val), scope, name, val);
-        }
-    |
-        <RESET> {
-            s.add(this);
-        }
-        (
-            name = CompoundIdentifier()
-        |
-            <ALL> {
-                name = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
-                    getPos());
-            }
-        )
-        {
-            return new SqlSetOption(s.end(name), scope, name, null);
-        }
-    )
-}
+//            val = SimpleIdentifier()
+//        |
+//            <ON> {
+//                // OFF is handled by SimpleIdentifier, ON handled here.
+//                val = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+//                    getPos());
+//            }
+//        )
+//        {
+//            return new SqlSetOption(s.end(val), scope, name, val);
+//        }
+//    |
+//        <RESET> {
+//            s.add(this);
+//        }
+//        (
+//            name = CompoundIdentifier()
+//        |
+//            <ALL> {
+//                name = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+//                    getPos());
+//            }
+//        )
+//        {
+//            return new SqlSetOption(s.end(name), scope, name, null);
+//        }
+//    )
+//}
 
 /**
  * Parses an expression for setting or resetting an option in SQL, such as QUOTED_IDENTIFIERS,
  * or explain plan level (physical/logical).
  */
-SqlAlter SqlAlter() :
-{
-    final Span s;
-    final String scope;
-    final SqlAlter alterNode;
-}
-{
-    <ALTER> { s = span(); }
-    scope = Scope()
-    (
-<#-- additional literal parser methods are included here -->
-<#list (parser.alterStatementParserMethods!default.parser.alterStatementParserMethods) as method>
-        alterNode = ${method}(s, scope)
-    |
-</#list>
-
-        alterNode = SqlSetOption(s, scope)
-    )
-    {
-        return alterNode;
-    }
-}
+//SqlAlter SqlAlter() :
+//{
+//    final Span s;
+//    final String scope;
+//    final SqlAlter alterNode;
+//}
+//{
+//    <ALTER> { s = span(); }
+//    scope = Scope()
+//    (
+//<#-- additional literal parser methods are included here -->
+//<#list (parser.alterStatementParserMethods!default.parser.alterStatementParserMethods) as method>
+//        alterNode = ${method}(s, scope)
+//    |
+//</#list>
+//
+//        alterNode = SqlSetOption(s, scope)
+//    )
+//    {
+//        return alterNode;
+//    }
+//}
 
 String Scope() :
 {
@@ -4417,7 +4420,6 @@ SqlLiteral DateTimeLiteral() :
         return SqlParserUtil.parseTimestampLiteral(p, s.end(this));
     }
 |
-    LOOKAHEAD(2)
     <DATE> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseDateLiteral(token.image, s.end(this));
     }
@@ -4428,8 +4430,6 @@ SqlLiteral DateTimeLiteral() :
         return SqlParserUtil.parseTimeLiteral(token.image, s.end(this));
     }
 |
-    //SQRL Add lookahead to resolve ambiguity of a timestamp
-    LOOKAHEAD(2)
     <TIMESTAMP> { s = span(); } <QUOTED_STRING> {
         return SqlParserUtil.parseTimestampLiteral(token.image, s.end(this));
     }
@@ -6010,11 +6010,11 @@ List<SqlNode> JsonValueEmptyOrErrorBehavior() :
         <NULL> {
             list.add(SqlJsonValueEmptyOrErrorBehavior.NULL.symbol(getPos()));
         }
-//    |
-//        <DEFAULT_> e = Expression(ExprContext.ACCEPT_NON_QUERY) {
-//            list.add(SqlJsonValueEmptyOrErrorBehavior.DEFAULT.symbol(getPos()));
-//            list.add(e);
-//        }
+    |
+        <DEFAULT_> e = Expression(ExprContext.ACCEPT_NON_QUERY) {
+            list.add(SqlJsonValueEmptyOrErrorBehavior.DEFAULT.symbol(getPos()));
+            list.add(e);
+        }
     )
     <ON>
     (
@@ -6748,6 +6748,8 @@ SqlIdentifier FunctionName() :
 {
     (
         qualifiedName = CompoundIdentifier()
+    |
+        qualifiedName = ReservedFunctionName()
     )
     {
         return qualifiedName;
@@ -7107,7 +7109,7 @@ SqlPostfixOperator PostfixRowOperator() :
 /* KEYWORDS:  anything in this list is a reserved word unless it appears
    in the NonReservedKeyWord() production. */
 
-<DEF, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < A: "A" >
 //|   < ABS: "ABS" >
@@ -7867,7 +7869,7 @@ void NonReservedKeyWord2of3() :
 
 /* LITERALS */
 
-<DEF, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < UNSIGNED_INTEGER_LITERAL: (["0"-"9"])+ >
 |
@@ -7894,7 +7896,7 @@ void NonReservedKeyWord2of3() :
 
 // All databases except BigQuery support standard single-quoted literals,
 // which use single-quote as the escape character.
-<DEF, DQID, BTID> TOKEN :
+<DEFAULT, DQID, BTID> TOKEN :
 {
     < QUOTED_STRING: <QUOTE> ( (~["'"]) | ("''"))* <QUOTE> >
 |
@@ -7922,7 +7924,7 @@ void NonReservedKeyWord2of3() :
     >
 }
 
-<DEF, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < UNICODE_QUOTED_ESCAPE_CHAR:
     <QUOTE>
@@ -7933,7 +7935,7 @@ void NonReservedKeyWord2of3() :
 
 /* SEPARATORS */
 
-<DEF, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < LPAREN: "(">
 |   < RPAREN: ")">
@@ -7956,7 +7958,7 @@ void NonReservedKeyWord2of3() :
 
 /* OPERATORS */
 
-<DEF, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < EQ: "=" >
 |   < GT: ">" >
@@ -8035,7 +8037,7 @@ IN_SINGLE_LINE_COMMENT:
 IN_FORMAL_COMMENT:
 IN_MULTI_LINE_COMMENT:
 
-DEF, DQID, BTID, BQID are the 4 'normal states'. Behavior is identical
+DEFAULT, DQID, BTID, BQID are the 4 'normal states'. Behavior is identical
 except for how quoted identifiers are recognized.
 
 The BQHID state exists only at the start of a table name (e.g. immediately after
@@ -8048,7 +8050,7 @@ of the 'normal states'.
 
 /* WHITE SPACE */
 
-<DEF, DQID, BTID, BQID, BQHID> SKIP :
+<DEFAULT, DQID, BTID, BQID, BQHID> SKIP :
 {
     " "
 |   "\t"
@@ -8059,23 +8061,23 @@ of the 'normal states'.
 
 /* COMMENTS */
 
-<DEF, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < HINT_BEG: "/*+">
 |   < COMMENT_END: "*/" >
 }
 
-<DEF, DQID, BTID, BQID, BQHID> MORE :
+<DEFAULT, DQID, BTID, BQID, BQHID> MORE :
 {
     <"/**" ~["/"]> { pushState(); } : IN_FORMAL_COMMENT
 }
 
-<DEF, DQID, BTID, BQID, BQHID> MORE :
+<DEFAULT, DQID, BTID, BQID, BQHID> MORE :
 {
     "/*" { pushState(); } : IN_MULTI_LINE_COMMENT
 }
 
-<DEF, DQID, BTID, BQID, BQHID> SKIP :
+<DEFAULT, DQID, BTID, BQID, BQHID> SKIP :
 {
     <SINGLE_LINE_COMMENT: ("//"|"--")(~["\n","\r"])* ("\n"|"\r"|"\r\n")? >
 }
@@ -8148,12 +8150,12 @@ MORE :
     < HYPHENATED_IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>|"-")* > { popState(); }
 }
 
-<DEF, DQID, BTID, BQID> TOKEN :
+<DEFAULT, DQID, BTID, BQID> TOKEN :
 {
     < IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>)* >
 }
 
-<DEF, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < COLLATION_ID:
     (<LETTER>|<DIGIT>)+ (<LETTER>|<DIGIT>|":"|"."|"-"|"_")*
@@ -8208,7 +8210,7 @@ MORE :
 /* Special token to throw a wrench in the works. It is never valid in SQL,
    and so when it occurs, it causes the parser to print which tokens would
    have been valid at that point. Used by SqlAdvisor. */
-<DEF, DQID, BTID, BQID, BQHID> TOKEN :
+<DEFAULT, DQID, BTID, BQID, BQHID> TOKEN :
 {
     < BEL:
     [
