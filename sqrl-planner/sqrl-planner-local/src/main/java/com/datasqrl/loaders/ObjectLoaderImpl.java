@@ -56,7 +56,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   private List<? extends NamespaceObject> load(URI uri, NamePath directory) {
-    if (uri.toString().endsWith(DataSource.DATASYSTEM_FILE)) {
+    if (uri.toString().startsWith(DataSource.DATASYSTEM_FILE_PREFIX) && uri.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
       return loadDataSystem(uri, directory);
     } else if (uri.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
       return loadTable(uri, directory);

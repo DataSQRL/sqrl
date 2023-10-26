@@ -61,4 +61,8 @@ public interface Preprocessor {
     }
   }
 
+  public static String toRegex(String filename) {
+    return filename.replace(".","\\.");
+  }
+
 }
