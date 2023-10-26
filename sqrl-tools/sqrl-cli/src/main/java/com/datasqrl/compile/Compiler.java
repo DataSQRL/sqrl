@@ -150,28 +150,25 @@ public class Compiler {
 
     RootGraphqlModel root;
     //todo: move
-    try {
-      InferredSchema inferredSchema = new SchemaInference(
-          framework,
-          apiSchema.getName().getDisplay(),
-          moduleLoader,
-          apiSchema,
-          sqrlSchemaForInference,
-          queryPlanner.createRelBuilder(),
-          apiManager)
-          .accept();
+    InferredSchema inferredSchema = new SchemaInference(
+        framework,
+        apiSchema.getName().getDisplay(),
+        moduleLoader,
+        apiSchema,
+        sqrlSchemaForInference,
+        queryPlanner.createRelBuilder(),
+        apiManager)
+        .accept();
 
-      SchemaBuilder schemaBuilder = new SchemaBuilder(framework, apiSchema,
-          sqrlSchemaForInference,
-          queryPlanner.createRelBuilder(),
-          queryPlanner,
-          framework.getSqrlOperatorTable(),
-          apiManager);
+    SchemaBuilder schemaBuilder = new SchemaBuilder(framework, apiSchema,
+        sqrlSchemaForInference,
+        queryPlanner.createRelBuilder(),
+        queryPlanner,
+        framework.getSqrlOperatorTable(),
+        apiManager);
 
-      root = inferredSchema.accept(schemaBuilder, null);
-    } catch (Exception e) {
-      throw collector.handle(e);
-    }
+    root = inferredSchema.accept(schemaBuilder, null);
+
 
     PhysicalDAGPlan dag = planner.planDag(framework, pipelineFactory.createPipeline(), apiManager, root,
        false);

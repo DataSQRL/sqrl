@@ -96,7 +96,7 @@ public class DocumentationExamplesTest {
     @Test
     @Disabled
     public void testExternal() {
-        execute(Path.of("/Users/matthias/Data/datasqrl/medidata/left_join_test"), "compile", "rave_enrich.sqrl", null);
+        execute(Path.of("/your/path/cleared_data"), "compile", "rave_enrich2.sqrl", null);
     }
 
     public void execute(@NonNull Path rootDir, @NonNull String command, String script, String graphQL, String... options) {
