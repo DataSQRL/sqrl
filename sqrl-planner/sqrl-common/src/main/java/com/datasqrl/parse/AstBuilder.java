@@ -342,15 +342,31 @@ class AstBuilder
 
     SqlSelect select = (SqlSelect)parse(0, 0, sql);
 
+    //Update the parsing position
+    SqlNodeList selectList = select.getSelectList();
+    SqlNodeList orderList = select.getOrderList();
+    SqlNode tableItem = select.getFrom();
+
+
+    int tableRowOffset = ctx.distinctQuerySpec().identifier().start.getStartIndex();
+    int tableColOffset = ctx.distinctQuerySpec().identifier().start.getCharPositionInLine() - 1;
+    int selectRowOffset = ctx.distinctQuerySpec().onExpr().start.getStartIndex();
+    int selectColOffset = ctx.distinctQuerySpec().onExpr().start.getCharPositionInLine() - 1;
+    int orderRowOffset = ctx.distinctQuerySpec().orderExpr.start.getStartIndex();
+    int orderColOffset = ctx.distinctQuerySpec().orderExpr.start.getCharPositionInLine() - 1;
+    selectList.accept(new PositionAdjustingSqlShuttle(selectRowOffset, selectColOffset));
+
+
+    select.setSelectList(selectList);
+    select.setOrderBy(orderList);
+    select.setFrom(tableItem);
+
     return new SqrlDistinctQuery(
         getLocation(ctx),
         assign.getHints(),
         assign.getIdentifier(),
         assign.getTableArgs(),
-        select.getFrom(),
-        select.getSelectList().getList(),
-        select.getOrderList() != null? select.getOrderList().getList()
-        : List.of(), select);
+        select);
   }
 
   private String extractString(ParserRuleContext context) {
