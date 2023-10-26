@@ -30,6 +30,7 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
       runCommand(collector);
       root.statusHook.onSuccess();
     } catch (CollectedException e) {
+      if (e.isInternalError()) e.printStackTrace();
       root.statusHook.onFailure(e, collector);
     } catch (Exception e) { //unknown exception
       collector.getCatcher().handle(e);
