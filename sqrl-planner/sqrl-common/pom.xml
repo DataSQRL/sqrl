@@ -158,7 +158,7 @@
                 <argument>${project.build.directory}/codegen/templates/Parser.jj</argument>
                 <!-- The location of your patch file -->
                 <argument>-i</argument>
-                <argument>parser.patch</argument>
+                <argument>parser.diff</argument>
               </arguments>
             </configuration>
           </execution>

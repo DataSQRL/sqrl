@@ -1,7 +1,7 @@
-diff --git a/sqrl-planner/sqrl-common/src/main/codegen/templates/Parser.jj b/sqrl-planner/sqrl-common/src/main/codegen/templates/Parser.jj
+diff --git a/Parser.jj b/Parser.jj
 index 7a3702cdb..739c56f3a 100644
---- a/sqrl-planner/sqrl-common/src/main/codegen/templates/Parser.jj
-+++ b/sqrl-planner/sqrl-common/src/main/codegen/templates/Parser.jj
+--- a/Parser.jj
++++ b/Parser.jj
 @@ -1030,33 +1030,34 @@ SqlNode SqlStmt() :
          LOOKAHEAD(2) stmt = ${method}
      |
