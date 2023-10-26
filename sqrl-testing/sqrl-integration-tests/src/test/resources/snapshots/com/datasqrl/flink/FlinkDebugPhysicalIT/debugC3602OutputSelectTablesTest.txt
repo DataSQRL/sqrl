@@ -21,7 +21,7 @@ LogicalProject(__pk1$customerid=[$2], category_name=[$1], total=[$3], _month=[$0
               LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
                 LogicalProject(productid=[$0], _uuid=[$1], _ingest_time=[$2], name=[$3], description=[$4], category=[$5], updateTime=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
                   LogicalProject(productid=[$2], _uuid=[$0], _ingest_time=[$1], name=[$3], description=[$4], category=[$5], updateTime=[$6])
-                    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updateTime=[-($1, *(365, 86400000:INTERVAL DAY))]) hints[WatermarkHint options:[6]]
+                    LogicalProject(_uuid=[$0], _ingest_time=[$1], productid=[$2], name=[$3], description=[$4], category=[$5], updateTime=[-($1, *(86400000:INTERVAL DAY, 365))]) hints[WatermarkHint options:[6]]
                       LogicalTableScan(table=[[product$1]])
       LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]
         LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], updateTime=[$6], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])

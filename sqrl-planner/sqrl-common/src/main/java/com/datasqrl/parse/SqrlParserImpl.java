@@ -49,12 +49,7 @@ public class SqrlParserImpl implements SqrlParser {
   private final LexerErrorHandler lexerErrorHandler = new LexerErrorHandler();
   private final ParsingErrorHandler parsingErrorHandler = ParsingErrorHandler.builder()
       .specialRule(SqlBaseParser.RULE_expression, "<expression>")
-//      .specialRule(SqlBaseParser.RULE_booleanExpression, "<expression>")
-//      .specialRule(SqlBaseParser.RULE_valueExpression, "<expression>")
-//      .specialRule(SqlBaseParser.RULE_primaryExpression, "<expression>")
       .specialRule(SqlBaseParser.RULE_identifier, "<identifier>")
-//      .specialRule(SqlBaseParser.RULE_string, "<string>")
-//      .specialRule(SqlBaseParser.RULE_query, "<query>")
       .specialRule(SqlBaseParser.RULE_type, "<type>")
       .specialToken(SqlBaseLexer.INTEGER_VALUE, "<integer>")
       .build();

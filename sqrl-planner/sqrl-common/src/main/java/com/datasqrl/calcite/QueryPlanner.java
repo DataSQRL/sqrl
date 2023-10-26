@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.convert.IntervalSimplificationShuttle;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.type.TypeFactory;

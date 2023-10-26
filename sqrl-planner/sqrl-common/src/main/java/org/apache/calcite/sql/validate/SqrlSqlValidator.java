@@ -210,7 +210,6 @@ public class SqrlSqlValidator extends SqlValidatorImpl {
     // see also SqlFunction#deriveType
   }
 
-  @Override
   public SqlNode getAggregate(SqlSelect select) {
     return super.getAggregate(select);
   }

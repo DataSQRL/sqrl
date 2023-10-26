@@ -3,16 +3,9 @@
  */
 package com.datasqrl.plan.util;
 
-import com.datasqrl.engine.stream.flink.plan.ApplyFlinkIntervalFixRex;
-import java.util.stream.Collectors;
 import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.flink.table.api.TableConfig;
 
 import java.util.ArrayList;
@@ -28,10 +21,6 @@ public class ExpressionReducer {
 
   List<RexNode> reduce(RexBuilder rexBuilder, List<RexNode> original) {
     ArrayList<RexNode> reduced = new ArrayList<>();
-    original = original.stream()
-            .map(e->e.accept(new ApplyFlinkIntervalFixRex(rexBuilder)))
-                .collect(Collectors.toList());
-
     reducer.reduce(rexBuilder, original, reduced);
     assert reduced.size() == original.size();
     return reduced;

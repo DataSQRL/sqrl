@@ -183,8 +183,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "IMPORT time.*",
         "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC",
         "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e",
-        "OrdersInline := SELECT o.id, o.customerid, o.time, t.price, t.`num` FROM Orders o JOIN o.total t",
-        "Customer.orders_by_day := SELECT endOfDay(o.time) as day, SUM(o.price) as total_price, SUM(o.`num`) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day");
+        "OrdersInline := SELECT o.id, o.customerid, o.time, t.price, t.num FROM Orders o JOIN o.total t",
+        "Customer.orders_by_day := SELECT endOfDay(o.time) as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day");
     plan(sqrl);
     validateQueryTable("total", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(4));
@@ -271,7 +271,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC");
     builder.add("Customer.orders := JOIN Orders ON Orders.customerid = @.customerid");
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid");
-    builder.add("Customer.totals := SELECT p.category as category, sum(e.quantity) as `num` " +
+    builder.add("Customer.totals := SELECT p.category as category, sum(e.quantity) as num " +
         "FROM @.orders o JOIN o.entries e JOIN e.product p WHERE o.time >= now() - INTERVAL 1 DAY GROUP BY category");
     builder.add("OrderCustomer := SELECT o.id, c.name FROM Orders o LEFT JOIN Customer c ON o.customerid = c.customerid");
     builder.add("OrderCustomer2 := SELECT o.id, c.name FROM Orders o LEFT TEMPORAL JOIN Customer c ON o.customerid = c.customerid");
@@ -376,10 +376,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void aggregateWithMaxTimestamp() {
     ScriptBuilder builder = imports();
     builder.add("OrdersState := DISTINCT Orders ON id ORDER BY time DESC");
-    builder.add("OrderAgg1 := SELECT customerid, COUNT(1) as `count` FROM Orders GROUP BY customerid");
-    builder.add("OrderAgg2 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as `count` FROM Orders GROUP BY customerid");
-    builder.add("OrderAgg3 := SELECT customerid, COUNT(1) as `count` FROM OrdersState GROUP BY customerid");
-    builder.add("OrderAgg4 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as `count` FROM OrdersState GROUP BY customerid");
+    builder.add("OrderAgg1 := SELECT customerid, COUNT(1) as count FROM Orders GROUP BY customerid");
+    builder.add("OrderAgg2 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as count FROM Orders GROUP BY customerid");
+    builder.add("OrderAgg3 := SELECT customerid, COUNT(1) as count FROM OrdersState GROUP BY customerid");
+    builder.add("OrderAgg4 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as count FROM OrdersState GROUP BY customerid");
     plan(builder.toString());
     validateQueryTable("orderagg1", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
@@ -506,7 +506,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         " UNION ALL " +
         "SELECT c.customerid, c._ingest_time AS rowtime FROM Customer c;");
     builder.add(
-        "StreamCount := SELECT endOfDay(rowtime) as day, COUNT(1) as `num` FROM CombinedStream GROUP BY day");
+        "StreamCount := SELECT endOfDay(rowtime) as day, COUNT(1) as num FROM CombinedStream GROUP BY day");
     plan(builder.toString());
     validateQueryTable("combinedstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2));
@@ -588,11 +588,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = new ScriptBuilder();
     builder.add("IMPORT ecommerce-data.Customer");
     builder.add(
-        "CustomerAgg1 := SELECT customerid, COUNT(1) as `num` FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
+        "CustomerAgg1 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
     builder.add(
-        "/*+ EXEC(database) */ CustomerAgg2 := SELECT customerid, COUNT(1) as `num` FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
+        "/*+ EXEC(database) */ CustomerAgg2 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
     builder.add(
-        "/*+ EXEC(streams) */ CustomerAgg3 := SELECT customerid, COUNT(1) as `num` FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
+        "/*+ EXEC(streams) */ CustomerAgg3 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
 
     plan(builder.getScript());
     validateQueryTable("customeragg1", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,

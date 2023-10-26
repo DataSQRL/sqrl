@@ -97,7 +97,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void differentGroupByFromSelectOrderTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("X := SELECT max(productid) as `MAX`, name, description "
+    builder.add("X := SELECT max(productid) as MAX, name, description "
         + " FROM Product"
         + " GROUP BY description, name");
     validateScript(builder.getScript());
@@ -727,7 +727,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void subQueryTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
-        + "Product2 := SELECT * FROM Product, (SELECT MIN(productid) AS `min` FROM Product) f;");
+        + "Product2 := SELECT * FROM Product, (SELECT MIN(productid) AS min FROM Product) f;");
   }
 
   @Test
@@ -861,7 +861,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void queryAsExpressionTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
-            + "Product.total := SELECT SUM(x.productid) - 1 AS `sum` FROM @ AS x;");
+            + "Product.total := SELECT SUM(x.productid) - 1 AS sum FROM @ AS x;");
   }
 
   @Test

@@ -226,18 +226,6 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     return sqlNode;
   }
-//
-//    if (sqlNode instanceof SqlIdentifier) {
-//      List<SqlNode> names = new ArrayList<>();
-//      SqlIdentifier node = (SqlIdentifier)sqlNode;
-//      ImmutableList<String> nameList = node.names;
-//      for (int i = 0; i < nameList.size(); i++) {
-//        String n = nameList.get(i);
-//        SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
-//        names.add(identifier);
-//      }
-//      return new SqrlCompoundIdentifier(node.getParserPosition(), names);
-//    }
 
   private List<String> getFieldNames(List<SqlNode> list) {
     List<String> nodes = new ArrayList<>();

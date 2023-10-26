@@ -3,7 +3,6 @@ package org.apache.calcite.rel.rel2sql;
 import com.datasqrl.FlinkExecutablePlan.FlinkQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkStreamQuery;
-import com.datasqrl.engine.stream.flink.plan.ApplyFlinkIntervalFixSql;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToTypeInformationTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
@@ -77,8 +76,6 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
         }
       }
     }
-
-    node = node.accept(new ApplyFlinkIntervalFixSql());
 
     String sql = RelToFlinkSql.convertToString(node);
 
