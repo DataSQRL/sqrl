@@ -1,0 +1,546 @@
+1033,1044c1033,1045
+<         stmt = SqlSetOption(Span.of(), null)
+<     |
+<         stmt = SqlAlter()
+<     |
+< <#if (parser.createStatementParserMethods!default.parser.createStatementParserMethods)?size != 0>
+<         stmt = SqlCreate()
+<     |
+< </#if>
+< <#if (parser.dropStatementParserMethods!default.parser.dropStatementParserMethods)?size != 0>
+<         stmt = SqlDrop()
+<     |
+< </#if>
+---
+> //SQRL: These statement options are not used
+> //        stmt = SqlSetOption(Span.of(), null)
+> //    |
+> //        stmt = SqlAlter()
+> //    |
+> //<#if (parser.createStatementParserMethods!default.parser.createStatementParserMethods)?size != 0>
+> //        stmt = SqlCreate()
+> //    |
+> //</#if>
+> //<#if (parser.dropStatementParserMethods!default.parser.dropStatementParserMethods)?size != 0>
+> //        stmt = SqlDrop()
+> //    |
+> //</#if>
+1046,1059c1047,1060
+<     |
+<         stmt = SqlExplain()
+<     |
+<         stmt = SqlDescribe()
+<     |
+<         stmt = SqlInsert()
+<     |
+<         stmt = SqlDelete()
+<     |
+<         stmt = SqlUpdate()
+<     |
+<         stmt = SqlMerge()
+<     |
+<         stmt = SqlProcedureCall()
+---
+> //    |
+> //        stmt = SqlExplain()
+> //    |
+> //        stmt = SqlDescribe()
+> //    |
+> //        stmt = SqlInsert()
+> //    |
+> //        stmt = SqlDelete()
+> //    |
+> //        stmt = SqlUpdate()
+> //    |
+> //        stmt = SqlMerge()
+> //    |
+> //        stmt = SqlProcedureCall()
+1883,1885c1884,1890
+<     LOOKAHEAD(3) // required for "LEFT SEMI JOIN" in Babel
+< <#list (parser.joinTypes!default.parser.joinTypes) as method>
+<         joinType = ${method}()
+---
+> //    LOOKAHEAD(3) // required for "LEFT SEMI JOIN" in Babel
+> //<#list (parser.joinTypes!default.parser.joinTypes) as method>
+> //        joinType = ${method}()
+> //    |
+> //</#list>
+>         LOOKAHEAD(3)
+>         <LEFT> <TEMPORAL> <JOIN> { joinType = JoinType.LEFT_TEMPORAL; }
+1887,1888c1892,1893
+< </#list>
+<         <JOIN> { joinType = JoinType.INNER; }
+---
+>         LOOKAHEAD(3)
+>         <LEFT> <INTERVAL> <JOIN> { joinType = JoinType.LEFT_INTERVAL; }
+1890c1895,1896
+<         <INNER> <JOIN> { joinType = JoinType.INNER; }
+---
+>         LOOKAHEAD(3)
+>         <LEFT> <DEFAULT_> <JOIN> { joinType = JoinType.LEFT_DEFAULT; }
+1892c1898,1899
+<         <LEFT> [ <OUTER> ] <JOIN> { joinType = JoinType.LEFT; }
+---
+>         LOOKAHEAD(3)
+>         <RIGHT> <TEMPORAL> <JOIN> { joinType = JoinType.RIGHT_TEMPORAL; }
+1894c1901,1925
+<         <RIGHT> [ <OUTER> ] <JOIN> { joinType = JoinType.RIGHT; }
+---
+>         LOOKAHEAD(3)
+>         <RIGHT> <INTERVAL> <JOIN> { joinType = JoinType.RIGHT_INTERVAL; }
+>     |
+>         LOOKAHEAD(3)
+>         <RIGHT> <DEFAULT_> <JOIN> { joinType = JoinType.RIGHT_DEFAULT; }
+>     |
+>         <TEMPORAL> <JOIN> { joinType = JoinType.TEMPORAL; }
+>     |
+>         <INTERVAL> <JOIN> { joinType = JoinType.INTERVAL; }
+>     |
+>         <DEFAULT_> <JOIN> { joinType = JoinType.DEFAULT; }
+>     |
+>         <JOIN> { joinType = JoinType.DEFAULT; }
+>     |
+>         <INNER> <JOIN> { joinType = JoinType.INNER; }
+>     |
+>         LOOKAHEAD(3)
+>         <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT; }
+>     |
+>         <LEFT> <JOIN> { joinType = JoinType.LEFT_DEFAULT; }
+>     |
+>         LOOKAHEAD(3)
+>         <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT; }
+>     |
+>         <RIGHT> <JOIN> { joinType = JoinType.RIGHT_DEFAULT; }
+3845a3877,3878
+>         //SQRL required for keyword 'date'
+>         LOOKAHEAD(2)
+3869a3903,3904
+>     //SQRL Required to allow the keyword 'user'
+>         LOOKAHEAD(2)
+3940,3987c3975,4022
+< 
+< /**
+<  * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
+<  * "ALTER &lt;SCOPE&gt;".
+<  */
+< SqlSetOption SqlSetOption(Span s, String scope) :
+< {
+<     SqlIdentifier name;
+<     final SqlNode val;
+< }
+< {
+<     (
+<         <SET> {
+<             s.add(this);
+<         }
+<         name = CompoundIdentifier()
+<         <EQ>
+<         (
+<             val = Literal()
+<         |
+<             val = SimpleIdentifier()
+<         |
+<             <ON> {
+<                 // OFF is handled by SimpleIdentifier, ON handled here.
+<                 val = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+<                     getPos());
+<             }
+<         )
+<         {
+<             return new SqlSetOption(s.end(val), scope, name, val);
+<         }
+<     |
+<         <RESET> {
+<             s.add(this);
+<         }
+<         (
+<             name = CompoundIdentifier()
+<         |
+<             <ALL> {
+<                 name = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+<                     getPos());
+<             }
+<         )
+<         {
+<             return new SqlSetOption(s.end(name), scope, name, null);
+<         }
+<     )
+< }
+---
+> //
+> ///**
+> // * Parses "SET &lt;NAME&gt; = VALUE" or "RESET &lt;NAME&gt;", without a leading
+> // * "ALTER &lt;SCOPE&gt;".
+> // */
+> //SqlSetOption SqlSetOption(Span s, String scope) :
+> //{
+> //    SqlIdentifier name;
+> //    final SqlNode val;
+> //}
+> //{
+> //    (
+> //        <SET> {
+> //            s.add(this);
+> //        }
+> //        name = CompoundIdentifier()
+> //        <EQ>
+> //        (
+> //            val = Literal()
+> //        |
+> //            val = SimpleIdentifier()
+> //        |
+> //            <ON> {
+> //                // OFF is handled by SimpleIdentifier, ON handled here.
+> //                val = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+> //                    getPos());
+> //            }
+> //        )
+> //        {
+> //            return new SqlSetOption(s.end(val), scope, name, val);
+> //        }
+> //    |
+> //        <RESET> {
+> //            s.add(this);
+> //        }
+> //        (
+> //            name = CompoundIdentifier()
+> //        |
+> //            <ALL> {
+> //                name = new SqlIdentifier(token.image.toUpperCase(Locale.ROOT),
+> //                    getPos());
+> //            }
+> //        )
+> //        {
+> //            return new SqlSetOption(s.end(name), scope, name, null);
+> //        }
+> //    )
+> //}
+3993,4014c4028,4049
+< SqlAlter SqlAlter() :
+< {
+<     final Span s;
+<     final String scope;
+<     final SqlAlter alterNode;
+< }
+< {
+<     <ALTER> { s = span(); }
+<     scope = Scope()
+<     (
+< <#-- additional literal parser methods are included here -->
+< <#list (parser.alterStatementParserMethods!default.parser.alterStatementParserMethods) as method>
+<         alterNode = ${method}(s, scope)
+<     |
+< </#list>
+< 
+<         alterNode = SqlSetOption(s, scope)
+<     )
+<     {
+<         return alterNode;
+<     }
+< }
+---
+> //SqlAlter SqlAlter() :
+> //{
+> //    final Span s;
+> //    final String scope;
+> //    final SqlAlter alterNode;
+> //}
+> //{
+> //    <ALTER> { s = span(); }
+> //    scope = Scope()
+> //    (
+> //<#-- additional literal parser methods are included here -->
+> //<#list (parser.alterStatementParserMethods!default.parser.alterStatementParserMethods) as method>
+> //        alterNode = ${method}(s, scope)
+> //    |
+> //</#list>
+> //
+> //        alterNode = SqlSetOption(s, scope)
+> //    )
+> //    {
+> //        return alterNode;
+> //    }
+> //}
+4391a4427,4428
+>     //SQRL Add lookahead to resolve ambiguity of a time literal
+>     LOOKAHEAD(2)
+6721,6724c6758,6761
+< 
+< /**
+<  * Parses a reserved word which is used as the name of a function.
+<  */
+---
+> //
+> ///**
+> // * Parses a reserved word which is used as the name of a function.
+> // */
+6730,6741c6767,6778
+<         <ABS>
+<     |   <AVG>
+<     |   <CARDINALITY>
+<     |   <CEILING>
+<     |   <CHAR_LENGTH>
+<     |   <CHARACTER_LENGTH>
+<     |   <COALESCE>
+<     |   <COLLECT>
+<     |   <COVAR_POP>
+<     |   <COVAR_SAMP>
+<     |   <CUME_DIST>
+<     |   <COUNT>
+---
+> //        <ABS>
+> //    |   <AVG>
+> //    |   <CARDINALITY>
+>       <CEILING>
+> //    |   <CHAR_LENGTH>
+> //    |   <CHARACTER_LENGTH>
+> //    |   <COALESCE>
+> //    |   <COLLECT>
+> //    |   <COVAR_POP>
+> //    |   <COVAR_SAMP>
+> //    |   <CUME_DIST>
+> //    |   <COUNT>
+6745,6749c6782,6786
+<     |   <DENSE_RANK>
+<     |   <ELEMENT>
+<     |   <EVERY>
+<     |   <EXP>
+<     |   <FIRST_VALUE>
+---
+> //    |   <DENSE_RANK>
+> //    |   <ELEMENT>
+> //    |   <EVERY>
+> //    |   <EXP>
+> //    |   <FIRST_VALUE>
+6751,6756c6788,6792
+<     |   <FUSION>
+<     |   <INTERSECTION>
+<     |   <GROUPING>
+<     |   <HOUR>
+<     |   <LAG>
+<     |   <LEAD>
+---
+> //    |   <FUSION>
+> //    |   <INTERSECTION>
+> //    |   <GROUPING>
+> //    |   <LAG>
+> //    |   <LEAD>
+6758,6764c6794,6800
+<     |   <LAST_VALUE>
+<     |   <LN>
+<     |   <LOCALTIME>
+<     |   <LOCALTIMESTAMP>
+<     |   <LOWER>
+<     |   <MAX>
+<     |   <MIN>
+---
+> //    |   <LAST_VALUE>
+> //    |   <LN>
+> //    |   <LOCALTIME>
+> //    |   <LOCALTIMESTAMP>
+> //    |   <LOWER>
+> //    |   <MAX>
+> //    |   <MIN>
+6766,6786c6802,6820
+<     |   <MOD>
+<     |   <MONTH>
+<     |   <NTH_VALUE>
+<     |   <NTILE>
+<     |   <NULLIF>
+<     |   <OCTET_LENGTH>
+<     |   <PERCENT_RANK>
+<     |   <POWER>
+<     |   <RANK>
+<     |   <REGR_COUNT>
+<     |   <REGR_SXX>
+<     |   <REGR_SYY>
+<     |   <RIGHT>
+<     |   <ROW_NUMBER>
+<     |   <SECOND>
+<     |   <SOME>
+<     |   <SQRT>
+<     |   <STDDEV_POP>
+<     |   <STDDEV_SAMP>
+<     |   <SUM>
+<     |   <UPPER>
+---
+> //    |   <MOD>
+> //    |   <NTH_VALUE>
+> //    |   <NTILE>
+> //    |   <NULLIF>
+> //    |   <OCTET_LENGTH>
+> //    |   <PERCENT_RANK>
+> //    |   <POWER>
+> //    |   <RANK>
+> //    |   <REGR_COUNT>
+> //    |   <REGR_SXX>
+> //    |   <REGR_SYY>
+>     |   <RIGHT>
+> //    |   <ROW_NUMBER>
+>     |   <SOME>
+> //    |   <SQRT>
+> //    |   <STDDEV_POP>
+> //    |   <STDDEV_SAMP>
+> //    |   <SUM>
+> //    |   <UPPER>
+6788,6791c6822,6823
+<     |   <USER>
+<     |   <VAR_POP>
+<     |   <VAR_SAMP>
+<     |   <YEAR>
+---
+> //    |   <VAR_POP>
+> //    |   <VAR_SAMP>
+7083c7115
+< |   < ABS: "ABS" >
+---
+> //|   < ABS: "ABS" >
+7113c7145
+< |   < AVG: "AVG" >
+---
+> //|   < AVG: "AVG" >
+7131c7163
+< |   < CARDINALITY: "CARDINALITY" >
+---
+> //|   < CARDINALITY: "CARDINALITY" >
+7143c7175
+< |   < CHAR_LENGTH: "CHAR_LENGTH" >
+---
+> //|   < CHAR_LENGTH: "CHAR_LENGTH" >
+7145c7177
+< |   < CHARACTER_LENGTH: "CHARACTER_LENGTH" >
+---
+> //|   < CHARACTER_LENGTH: "CHARACTER_LENGTH" >
+7156c7188
+< |   < COALESCE: "COALESCE" >
+---
+> //|   < COALESCE: "COALESCE" >
+7163c7195
+< |   < COLLECT: "COLLECT" >
+---
+> //|   < COLLECT: "COLLECT" >
+7188,7189c7220,7221
+< |   < COVAR_POP: "COVAR_POP" >
+< |   < COVAR_SAMP: "COVAR_SAMP" >
+---
+> //|   < COVAR_POP: "COVAR_POP" >
+> //|   < COVAR_SAMP: "COVAR_SAMP" >
+7193c7225
+< |   < CUME_DIST: "CUME_DIST" >
+---
+> //|   < CUME_DIST: "CUME_DIST" >
+7230c7262
+< |   < DENSE_RANK: "DENSE_RANK" >
+---
+> //|   < DENSE_RANK: "DENSE_RANK" >
+7253c7285
+< |   < ELEMENT: "ELEMENT" >
+---
+> //|   < ELEMENT: "ELEMENT" >
+7273c7305
+< |   < EXP: "EXP" >
+---
+> //|   < EXP: "EXP" >
+7283c7315
+< |   < FIRST_VALUE: "FIRST_VALUE">
+---
+> //|   < FIRST_VALUE: "FIRST_VALUE">
+7298c7330
+< |   < FUSION: "FUSION" >
+---
+> //|   < FUSION: "FUSION" >
+7340c7372
+< |   < INTERSECTION: "INTERSECTION" >
+---
+> //|   < INTERSECTION: "INTERSECTION" >
+7363c7395
+< |   < LAG: "LAG" >
+---
+> //|   < LAG: "LAG" >
+7367c7399
+< |   < LAST_VALUE: "LAST_VALUE" >
+---
+> //|   < LAST_VALUE: "LAST_VALUE" >
+7369c7401
+< |   < LEAD: "LEAD" >
+---
+> //|   < LEAD: "LEAD" >
+7378c7410
+< |   < LN: "LN" >
+---
+> //|   < LN: "LN" >
+7391c7423
+< |   < MAX: "MAX" >
+---
+> //|   < MAX: "MAX" >
+7403c7435
+< |   < MIN: "MIN" >
+---
+> //|   < MIN: "MIN" >
+7407c7439
+< |   < MOD: "MOD" >
+---
+> //|   < MOD: "MOD" >
+7430c7462
+< |   < NTH_VALUE: "NTH_VALUE" >
+---
+> //|   < NTH_VALUE: "NTH_VALUE" >
+7434c7466
+< |   < NULLIF: "NULLIF" >
+---
+> //|   < NULLIF: "NULLIF" >
+7440c7472
+< |   < OCTET_LENGTH: "OCTET_LENGTH" >
+---
+> //|   < OCTET_LENGTH: "OCTET_LENGTH" >
+7484c7516
+< |   < PERCENT_RANK: "PERCENT_RANK" >
+---
+> //|   < PERCENT_RANK: "PERCENT_RANK" >
+7494c7526
+< |   < POWER: "POWER" >
+---
+> //|   < POWER: "POWER" >
+7508c7540
+< |   < RANK: "RANK" >
+---
+> //|   < RANK: "RANK" >
+7516,7518c7548,7550
+< |   < REGR_AVGX: "REGR_AVGX" >
+< |   < REGR_AVGY: "REGR_AVGY" >
+< |   < REGR_COUNT: "REGR_COUNT" >
+---
+> //|   < REGR_AVGX: "REGR_AVGX" >
+> //|   < REGR_AVGY: "REGR_AVGY" >
+> //|   < REGR_COUNT: "REGR_COUNT" >
+7552c7584
+< |   < ROW_NUMBER: "ROW_NUMBER" >
+---
+> //|   < ROW_NUMBER: "ROW_NUMBER" >
+7653,7654c7685,7686
+< |   < STDDEV_POP: "STDDEV_POP" >
+< |   < STDDEV_SAMP: "STDDEV_SAMP" >
+---
+> //|   < STDDEV_POP: "STDDEV_POP" >
+> //|   < STDDEV_SAMP: "STDDEV_SAMP" >
+7665c7697
+< |   < SUM: "SUM" >
+---
+> //|   < SUM: "SUM" >
+7717c7749
+< |   < UPPER: "UPPER" >
+---
+> //|   < UPPER: "UPPER" >
+7732,7733c7764,7765
+< |   < VAR_POP: "VAR_POP" >
+< |   < VAR_SAMP: "VAR_SAMP" >
+---
+> //|   < VAR_POP: "VAR_POP" >
+> //|   < VAR_SAMP: "VAR_SAMP" >
+7875c7907
+<     < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9"])
+---
+>     < #CHARSETNAME: (["a"-"z","A"-"Z","0"-"9","@"])
+8139a8172,8173
+>         //sqrl u0040 is @
+>         "\u0040",
