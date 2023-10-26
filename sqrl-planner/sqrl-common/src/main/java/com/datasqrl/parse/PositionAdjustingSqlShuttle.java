@@ -82,17 +82,7 @@ public class PositionAdjustingSqlShuttle extends SqlShuttle {
   }
 
   public static SqlParserPos adjustSinglePosition(SqlParserPos offset, SqlParserPos pos) {
-    //There is no visibility into the start location
-    int newLine;
-    int newCol;
-    if (pos.getLineNum() == 1) {
-      newLine = offset.getLineNum();
-      newCol = offset.getColumnNum() + pos.getColumnNum() - 1;
-    } else {
-      newLine = offset.getLineNum() + pos.getLineNum();
-      newCol = pos.getColumnNum();
-    }
-    return new SqlParserPos(newLine, newCol);
+    return adjustPosition(offset, new SqlParserPos(1, 1), pos);
   }
 
   public static SqlParserPos adjustPosition(SqlParserPos offset, SqlParserPos start, SqlParserPos pos) {
@@ -102,7 +92,7 @@ public class PositionAdjustingSqlShuttle extends SqlShuttle {
       newLine = offset.getLineNum();
       newCol = offset.getColumnNum() + (pos.getColumnNum() - start.getColumnNum());
     } else {
-      newLine = offset.getLineNum() +  (pos.getLineNum() - start.getLineNum());
+      newLine = offset.getLineNum() + (pos.getLineNum() - start.getLineNum());
       newCol = pos.getColumnNum();
     }
     return new SqlParserPos(newLine, newCol);
