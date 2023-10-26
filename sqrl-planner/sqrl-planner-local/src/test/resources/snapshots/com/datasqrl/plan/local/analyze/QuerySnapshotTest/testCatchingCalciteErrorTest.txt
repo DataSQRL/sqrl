@@ -1,5 +1,5 @@
 >>>errors
-[FATAL] From line 2, column 13 to line 2, column 21: Expression 'productid' is not being grouped
+[FATAL] At line 2, column 13: Expression 'productid' is not being grouped
 in script:<script> [2:13]:
 IMPORT ecommerce-data.Product;
 X := SELECT productid, SUM(productid) FROM Product GROUP BY name
