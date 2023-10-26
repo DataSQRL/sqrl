@@ -51,12 +51,6 @@ import static java.util.stream.Collectors.toList;
 class AstBuilder
     extends SqlBaseBaseVisitor<SqlNode> {
 
-  private static void check(boolean condition, String message, ParserRuleContext context) {
-    if (!condition) {
-      throw parseError(message, context);
-    }
-  }
-
   public static SqlParser.Config createParserConfig() {
     return SqlParser.config()
         .withLex(Lex.JAVA)
@@ -157,38 +151,6 @@ class AstBuilder
   public SqlNode visitHint(HintContext ctx) {
     return new SqlNodeList(visit(ctx.hintItem(), SqlNode.class), getLocation(ctx));
   }
-  //  private static IntervalLiteral.Sign getIntervalSign(Token token) {
-//    switch (token.getType()) {
-//      case SqlBaseLexer.MINUS:
-//        return IntervalLiteral.Sign.NEGATIVE;
-//      case SqlBaseLexer.PLUS:
-//        return IntervalLiteral.Sign.POSITIVE;
-//    }
-//
-//    throw new IllegalArgumentException("Unsupported sign: " + token.getText());
-//  }
-
-  private static SqlOperator getLogicalBinaryOperator(Token token) {
-    switch (token.getType()) {
-      case SqlBaseLexer.AND:
-        return SqlStdOperatorTable.AND;
-      case SqlBaseLexer.OR:
-        return SqlStdOperatorTable.OR;
-    }
-
-    throw new IllegalArgumentException("Unsupported operator: " + token.getText());
-  }
-
-  private static Optional<SqlPostfixOperator> getOrderingType(Token token) {
-    switch (token.getType()) {
-      case SqlBaseLexer.ASC:
-        return Optional.empty();
-      case SqlBaseLexer.DESC:
-        return Optional.of(SqlStdOperatorTable.DESC);
-    }
-
-    throw new IllegalArgumentException("Unsupported ordering: " + token.getText());
-  }
 
   public static SqlParserPos getLocation(TerminalNode terminalNode) {
     requireNonNull(terminalNode, "terminalNode is null");
@@ -275,7 +237,7 @@ class AstBuilder
         assign.getHints(),
         assign.getIdentifier(),
         assign.getTableArgs(),
-        (SqlSelect) visit(ctx.fromDeclaration()));
+        visit(ctx.fromDeclaration()));
   }
 
   @Override
@@ -340,7 +302,7 @@ class AstBuilder
         orderExpr.map(o->"ORDER BY " + o).orElse("")
     );
 
-    SqlSelect select = (SqlSelect)parse(SqlParserPos.ZERO, sql);
+    SqlSelect select = (SqlSelect)parse(new SqlParserPos(1, 1), sql);
 
     //Update the parsing position
     SqlNodeList selectList = select.getSelectList();
@@ -350,15 +312,11 @@ class AstBuilder
 
     SqlParserPos tableStart = tableItem.getParserPosition();
     SqlParserPos tableOffset = getLocation(ctx.distinctQuerySpec().identifier());
-    int tableRowOffset = ctx.distinctQuerySpec().identifier().start.getLine();
-    int tableColOffset = ctx.distinctQuerySpec().identifier().start.getCharPositionInLine() + 1;
     tableItem = tableItem.accept(new PositionAdjustingSqlShuttle(tableOffset, tableStart));
     select.setFrom(tableItem);
 
     SqlParserPos selectOffset = getLocation(ctx.distinctQuerySpec().onExpr().selectItem(0));
     SqlParserPos selectStart = selectList.getParserPosition();
-    int selectRowOffset = ctx.distinctQuerySpec().onExpr().selectItem(0).start.getLine();
-    int selectColOffset = ctx.distinctQuerySpec().onExpr().selectItem(0).start.getCharPositionInLine() + 2; // for '('
     selectList = (SqlNodeList) selectList.accept(new PositionAdjustingSqlShuttle(selectOffset, selectStart));
     select.setSelectList(selectList);
 
@@ -478,7 +436,6 @@ class AstBuilder
   @Override
   public SqlNode visitExpression(ExpressionContext ctx) {
     return parseExpression(ctx);
-//    return visit(ctx.booleanExpression());
   }
 
   @Override
