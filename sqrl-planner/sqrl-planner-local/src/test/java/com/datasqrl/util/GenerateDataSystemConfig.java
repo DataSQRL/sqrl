@@ -25,7 +25,7 @@ public class GenerateDataSystemConfig {
 
 
     Path datasystemConfigFile = testDataset.getRootPackageDirectory().resolve("output")
-        .resolve(DataSource.DATASYSTEM_FILE);
+        .resolve(DataSource.DATASYSTEM_FILE_PREFIX + "discover" + DataSource.TABLE_FILE_SUFFIX);
     sinkConfig.build().toFile(datasystemConfigFile);
   }
 

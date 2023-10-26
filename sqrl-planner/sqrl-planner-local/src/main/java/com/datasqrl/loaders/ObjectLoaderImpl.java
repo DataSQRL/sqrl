@@ -20,6 +20,8 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -36,6 +38,8 @@ import java.util.stream.Collectors;
 public class ObjectLoaderImpl implements ObjectLoader {
 
   public static final String FUNCTION_JSON = ".function.json";
+  private static final Predicate<String> DATA_SYSTEM_FILE = Pattern.compile(".*"+FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX)
+      + ".*" + FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX)+"$").asMatchPredicate();
   ResourceResolver resourceResolver;
   ErrorCollector errors;
   CalciteTableFactory tableFactory;
@@ -56,7 +60,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   private List<? extends NamespaceObject> load(URI uri, NamePath directory) {
-    if (uri.toString().endsWith(DataSource.DATASYSTEM_FILE)) {
+    if (DATA_SYSTEM_FILE.test(uri.toString())) {
       return loadDataSystem(uri, directory);
     } else if (uri.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
       return loadTable(uri, directory);
@@ -75,6 +79,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   @SneakyThrows
   private List<TableNamespaceObject> loadTable(URI uri, NamePath basePath) {
     String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(uri),DataSource.TABLE_FILE_SUFFIX);
+    errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
     TableConfig tableConfig = TableConfig.load(uri, Name.system(tableName), errors);
     TableSchemaFactory tableSchemaFactory = tableConfig.getSchemaFactory().orElseThrow(() ->
             errors.exception("Schema has not been configured for table [%s]", uri));
