@@ -151,9 +151,6 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
 
     boolean isAlias = context.hasAlias(identifier);
     boolean isSelf = identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical());
-//      boolean isSchemaTable = Optional.of(identifier)
-//          .map(i->planner.getTableFunction(List.of(i)) != null)
-//          .orElse(false);
     SqlUserDefinedTableFunction tableFunction = planner.getTableFunction(List.of(identifier));
 
     TableFunction latestTable;
@@ -237,12 +234,6 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
 
     String name = getDisplay(node) + "$validate$" + uniqueId.incrementAndGet();
     SqlUserDefinedTableFunction fnc = new ValidatorTableFunction(name, latestTable2);
-
-//    List<SqlNode> args = node.getItems().stream()
-//        .filter(f -> f instanceof SqlCall)
-//        .map(f -> (SqlCall) f)
-//        .flatMap(f -> f.getOperandList().stream())
-//        .collect(Collectors.toList());
 
     SqlCall call = fnc.createCall(SqlParserPos.ZERO, List.of());
     plannerFns.add(fnc);

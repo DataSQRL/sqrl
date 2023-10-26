@@ -30,19 +30,16 @@ import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.collect.ArrayListMultimap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -55,7 +52,6 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -74,10 +70,10 @@ import org.apache.calcite.sql.SqrlImportDefinition;
 import org.apache.calcite.sql.SqrlJoinQuery;
 import org.apache.calcite.sql.SqrlSqlQuery;
 import org.apache.calcite.sql.SqrlStatement;
-import org.apache.calcite.sql.SqrlTableParamDef;
-import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.sql.SqrlStreamQuery;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
+import org.apache.calcite.sql.SqrlTableParamDef;
+import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -276,7 +272,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     validateTable(node, select, node.getTableArgs(),
         true);
 
-//    preprocessSql.put(node, select);
     isMaterializeTable.put(node, true);
     return null;
   }
@@ -318,11 +313,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       validateHasNestedSelf(query);
     }
 
-    //if query is nested, and the lhs is not already a '@', then add it
-    if (statement.getIdentifier().names.size() > 1 && !(statement instanceof SqrlExpressionQuery)) {
-//      query = addNestedSelf(query);
-      //todo: instead throw error
-    }
     Pair<List<FunctionParameter>, SqlNode> p = transformArgs(query, materializeSelf, tableArgs.orElseGet(()->new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
     query = p.getRight();
     this.parameters.putAll(statement, p.getLeft());
@@ -424,74 +414,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   public static String flattenNames(List<String> nameList) {
     return String.join(".", nameList);
   }
-//
-//  private SqlNode addNestedSelf(SqlNode query) {
-//    return SqlNodeVisitor.accept(new SqlRelationVisitor<SqlNode, Void>() {
-//
-//      @Override
-//      public SqlNode visitQuerySpecification(SqlSelect node, Void context) {
-//        if (!isSelfTable(node.getFrom()) && !(node.getFrom() instanceof SqlJoin)
-//            && !isSelfPrefix(node.getFrom())) {
-//          SqlNode from = addSelfTableAsJoin(node.getFrom());
-//          return new SqlSelectBuilder(node)
-//              .setFrom(from)
-//              .build();
-//        }
-//
-//        return new SqlSelectBuilder(node)
-//            .setFrom(SqlNodeVisitor.accept(this, node.getFrom(), null))
-//            .build();
-//      }
-//
-//      private SqlNode addSelfTableAsJoin(SqlNode from) {
-//        return new SqlJoinBuilder()
-//            .setLeft(createSelfCall())
-//            .setRight(from)
-//            .build();
-//      }
-//
-//      @Override
-//      public SqlNode visitAliasedRelation(SqlCall node, Void context) {
-//        return node;
-//      }
-//
-//      @Override
-//      public SqlNode visitTable(SqlIdentifier node, Void context) {
-//        return node;
-//      }
-//
-//      @Override
-//      public SqlNode visitJoin(SqlJoin node, Void context) {
-//        if (!isSelfTable(node.getLeft()) && !(node.getLeft() instanceof SqlJoin)) {
-//          SqlNode join = addSelfTableAsJoin(node.getLeft());
-//          return new SqlJoinBuilder(node)
-//              .setLeft(join)
-//              .setRight(node.getRight())
-//              .build();
-//        }
-//
-//        return new SqlJoinBuilder(node)
-//            .setLeft(SqlNodeVisitor.accept(this, node.getLeft(), null))
-//            .build();
-//      }
-//
-//      @Override
-//      public SqlNode visitSetOperation(SqlCall node, Void context) {
-//        return node.getOperator().createCall(node.getParserPosition(),
-//            node.getOperandList().stream()
-//                .map(o->SqlNodeVisitor.accept(this, o, context))
-//                .collect(Collectors.toList()));
-//      }
-//    }, query, null);
-//  }
-//
-//  private boolean isSelfPrefix(SqlNode sqlNode) {
-//    if (sqlNode instanceof SqlIdentifier) {
-//      return ((SqlIdentifier)sqlNode).names.get(0).equals(ReservedName.SELF_IDENTIFIER.getCanonical());
-//    }
-//
-//    return false;
-//  }
 
   public static boolean isSelfTable(SqlNode sqlNode) {
     if (sqlNode instanceof SqlCall &&
@@ -525,15 +447,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       }
 
       @Override
-      //todo: move to sqrl rewriting
       public SqlNode visitTable(SqlIdentifier node, Object context) {
-//        List<SqlNode> names = new ArrayList<>();
-//        ImmutableList<String> strings = node.names;
-//        for (int i = 0; i < strings.size(); i++) {
-//          String n = strings.get(i);
-//          SqlIdentifier identifier = new SqlIdentifier(n, node.getComponentParserPosition(i));
-//          names.add(identifier);
-//        }
         return node;
       }
 
@@ -729,47 +643,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       }
     });
   }
-
-  private SqlNode createSelfCall() {
-    return SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-        new SqlIdentifier("@", SqlParserPos.ZERO),
-        new SqlIdentifier("@", SqlParserPos.ZERO));
-  }
-//
-//  private Pair<String, SqlNode> getOrSetJoinAlias(SqlNode from) {
-//    AtomicReference<String> reference = new AtomicReference<>();
-//    SqlNode newNode = from.accept(new SqlShuttle() {
-//      @Override
-//      public SqlNode visit(SqlCall call) {
-//        if (call.getKind() == SqlKind.JOIN) {
-//          SqlJoin join = (SqlJoin) call;
-//          SqlJoinBuilder builder = new SqlJoinBuilder(join);
-//          builder.setRight(join.getRight().accept(this));
-//          return builder.build();
-//        }
-//        if (call.getKind() == SqlKind.AS) {
-//          reference.set(((SqlIdentifier)call.getOperandList().get(1)).names.get(0));
-//          return call;
-//        }
-//
-//        return super.visit(call);
-//      }
-//
-//      @Override
-//      public SqlNode visit(SqlNodeList nodeList) {
-//        if (nodeList instanceof SqrlCompoundIdentifier) {
-//          reference.set("_a");
-//          return SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO, nodeList,
-//              new SqlIdentifier("_a", SqlParserPos.ZERO));
-//        }
-//
-//        return super.visit(nodeList);
-//      }
-//
-//    });
-//
-//    return Pair.of(reference.get(), newNode);
-//  }
 
   private void checkAssignable(SqrlAssignment node) {
     List<String> path = SqrlListUtil.popLast(node.getIdentifier().names);

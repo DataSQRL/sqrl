@@ -10,7 +10,7 @@ Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;
 -- Compute useful statistics on orders
 Orders.entries.discount0 := coalesce(discount, 0.0);
 Orders.entries.total := quantity * unit_price - discount0;
-Orders.total := SELECT sum(e.total) AS price, sum(e.discount0) AS discount, count(1) AS `num` FROM @.entries e;
+Orders.total := SELECT sum(e.total) AS price, sum(e.discount0) AS discount, count(1) AS num FROM @.entries e;
 
 -- Relate Customer to Orders and compute a customer's total order spent
 Customer.orders := JOIN Orders ON Orders.customerid = @.customerid;
@@ -51,9 +51,9 @@ Customer.spending_by_month.categories :=
 /* Compute w/w product sales volume increase average over a month
    These numbers are internal to determine trending products */
 
-Product._sales_by_hour := SELECT endOfHour(o.time) as `hour`, sum(e.quantity) as quantity,
+Product._sales_by_hour := SELECT endOfHour(o.time) as hour, sum(e.quantity) as quantity,
                                 count(1) as num_orders
-                          FROM @ JOIN Orders o JOIN o.entries e ON e.productid = @.productid ORDER BY `hour` DESC;
+                          FROM @ JOIN Orders o JOIN o.entries e ON e.productid = @.productid ORDER BY hour DESC;
 
 Product._sales_24h := SELECT sum(quantity) as total, sum(num_orders) as num FROM @._sales_by_hour LIMIT 24;
 Product._sales_72h := SELECT sum(quantity) as total, sum(num_orders) as num FROM @._sales_by_hour LIMIT 72;

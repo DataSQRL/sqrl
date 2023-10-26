@@ -291,7 +291,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
       SqlNode name = call.operand(1);
       SqlNode expr = stripAs(call);
-      expr = fixFlinkTimestamp(expr);
 
       watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(name));
       watermarkExpr = RelToFlinkSql.convertToString(expr);
@@ -310,10 +309,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .convertSchema(universalTable);
 
     return Pair.of(typeInformation, flinkSchema);
-  }
-
-  private SqlNode fixFlinkTimestamp(SqlNode call) {
-    return call.accept(new ApplyFlinkIntervalFixSql());
   }
 
   private void registerSinkTables(List<WriteQuery> writeQueries) {

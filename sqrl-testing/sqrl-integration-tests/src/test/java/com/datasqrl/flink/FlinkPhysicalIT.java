@@ -97,7 +97,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
         "OrdersInline := SELECT o.id, o.customerid, o.time, t.price, t.num FROM Orders o JOIN o.total t");
 //    builder.add("Customer.orders_by_day := SELECT o.time, o.price, o.num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid");
     builder.add(
-        "Customer.orders_by_hour := SELECT endOfHour(o.time) as `hour`, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY hour");
+        "Customer.orders_by_hour := SELECT endOfHour(o.time) as hour, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY hour");
     validateTables(builder.getScript(), "customer", "orders", "ordersinline", "orders_by_hour");
   }
 
@@ -216,7 +216,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
         " UNION ALL " +
         "SELECT c.customerid, c.updateTime AS rowtime FROM Customer c;");
     builder.add(
-        "StreamCount := SELECT endOfHour(rowtime) as `hour`, COUNT(1) as num FROM CombinedStream GROUP BY hour");
+        "StreamCount := SELECT endOfHour(rowtime) as hour, COUNT(1) as num FROM CombinedStream GROUP BY hour");
     validateTables(builder.getScript(), "combinedstream", "streamcount");
   }
 
@@ -241,11 +241,11 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   public void simpleStreamTest() {
     ScriptBuilder builder = new ScriptBuilder();
     builder.add("IMPORT ecommerce-data.Orders");
-    builder.add("CountStream0 := STREAM ON ADD AS SELECT customerid, count(1) AS `num` FROM orders GROUP BY customerid");
+    builder.add("CountStream0 := STREAM ON ADD AS SELECT customerid, count(1) AS num FROM orders GROUP BY customerid");
     builder.add("CustomerCount := SELECT o.customerid, count(1) as quantity FROM Orders o GROUP BY o.customerid");
     builder.add("CountStream1 := STREAM ON ADD AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 1");
     builder.add("CountStream2 := STREAM ON ADD AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 2");
-    builder.add("UpdateStream0 := STREAM ON UPDATE AS SELECT customerid, count(1) AS `num` FROM orders GROUP BY customerid");
+    builder.add("UpdateStream0 := STREAM ON UPDATE AS SELECT customerid, count(1) AS num FROM orders GROUP BY customerid");
     builder.add("UpdateStream1 := STREAM ON UPDATE AS SELECT customerid, quantity FROM CustomerCount WHERE quantity >= 1");
     validateTables(builder.getScript(), "customercount", "countstream0", "countstream1",
         "countstream2","updatestream0","updatestream1");
