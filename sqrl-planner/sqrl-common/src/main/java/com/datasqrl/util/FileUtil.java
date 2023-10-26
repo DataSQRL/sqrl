@@ -106,4 +106,8 @@ public class FileUtil {
   public static URI getParent(URI uri) {
     return new URI(uri.toString().substring(0, uri.toString().lastIndexOf("/") + 1));
   }
+
+  public static String toRegex(String filename) {
+    return filename.replace(".","\\.");
+  }
 }

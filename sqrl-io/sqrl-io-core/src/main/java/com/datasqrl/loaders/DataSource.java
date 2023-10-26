@@ -14,7 +14,6 @@ import java.util.Optional;
 public class DataSource {
 
   public static final String TABLE_FILE_SUFFIX = ".table.json";
-
   public static final String DATASYSTEM_FILE_PREFIX = "system.";
 
   public Optional<TableSource> readTableSource(TableSchema tableSchema, TableConfig tableConfig,
