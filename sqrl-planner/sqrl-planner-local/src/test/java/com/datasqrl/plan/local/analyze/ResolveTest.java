@@ -212,6 +212,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderCustomerRight := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;");
     builder.add(
         "OrderCustomerRightExcluded := SELECT c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o._uuid IS NULL;");
+    builder.add(
+        "OrderCustomerConstant := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id = 5;");
     plan(builder.toString());
     validateQueryTable("ordercustomer", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
         TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
@@ -223,6 +225,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         TimestampTest.fixed(5));
     validateQueryTable("ordercustomerrightexcluded", TableType.STATE, ExecutionEngine.Type.DATABASE, 4, 1,
         TimestampTest.fixed(3));
+    validateQueryTable("ordercustomerconstant", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
+        TimestampTest.fixed(5));
   }
 
   @Test

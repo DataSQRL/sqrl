@@ -66,3 +66,15 @@ LogicalProject(_uuid=[$0], customerid=[$2], name=[$4], __timestamp=[$12])
         LogicalTableScan(table=[[customer$2]])
         LogicalTableScan(table=[[orders$2]])
 
+>>>ordercustomerconstant$1-lp-STREAM
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
+  LogicalJoin(condition=[AND(=($3, $8), =($10, 'Robert'), =($2, 5))], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 3, NONE]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
+
+>>>ordercustomerconstant$1-lp-DATABASE
+LogicalProject(_uuid=[$0], _uuid0=[$6], id=[$2], name=[$10], customerid=[$3], __timestamp=[CASE(<($4, $7), $7, $4)])
+  LogicalJoin(condition=[AND(=($3, $8), =($10, 'Robert'), =($2, 5))], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 3, NONE]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
+

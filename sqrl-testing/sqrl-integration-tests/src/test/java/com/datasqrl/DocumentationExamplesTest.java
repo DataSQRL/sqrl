@@ -92,6 +92,13 @@ public class DocumentationExamplesTest {
         Files.createDirectories(rootDir.resolve(DEFAULT_SINK_DIR));
     }
 
+
+    @Test
+    @Disabled
+    public void testExternal() {
+        execute(Path.of("/Users/matthias/Data/datasqrl/medidata/left_join_test"), "compile", "rave_enrich.sqrl", null);
+    }
+
     public void execute(@NonNull Path rootDir, @NonNull String command, String script, String graphQL, String... options) {
         this.root = rootDir; //For clean up
         createSinkDir(rootDir);

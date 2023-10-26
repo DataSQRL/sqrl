@@ -177,7 +177,7 @@ public class SqrlRexUtil {
       public int rightIndex;
 
       public EqualityCondition(int leftIndex, int rightIndex) {
-        Preconditions.checkArgument(leftIndex<rightIndex);
+        Preconditions.checkArgument(leftIndex<rightIndex || rightIndex==NO_INDEX);
         Preconditions.checkArgument(leftIndex>=0 || rightIndex>=0);
         this.leftIndex = leftIndex;
         this.rightIndex = rightIndex;
