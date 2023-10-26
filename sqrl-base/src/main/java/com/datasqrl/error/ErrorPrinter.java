@@ -57,7 +57,7 @@ public class ErrorPrinter {
             fileRange.getFromLine()-LINES_BEFORE_LOCATION),1,
             fileRange.getToLine(), Integer.MAX_VALUE));
         b.append(codeSnippet);
-        b.append("-".repeat(fileRange.getFromOffset()-1));
+        b.append("-".repeat(Math.max(0,fileRange.getFromOffset()-1)));
         b.append("^\n");
       } else {
         //print arrow pointing down to offset

@@ -237,6 +237,34 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void invalidMultilineQueryTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := SELECT * FROM Customer\nWHERE x = null;");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
+  public void invalidDistinctSelectTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := DISTINCT Customer ON x ORDER BY _ingest_time DESC");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
+  public void invalidDistinctTableTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := DISTINCT x ON customerid ORDER BY _ingest_time DESC");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
+  public void invalidDistinctOrderTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY x DESC");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
   public void orderCoalesceTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Orders.entries.discount0 := SELECT coalesce(x.discount, 0.0) AS discount FROM @ AS x");

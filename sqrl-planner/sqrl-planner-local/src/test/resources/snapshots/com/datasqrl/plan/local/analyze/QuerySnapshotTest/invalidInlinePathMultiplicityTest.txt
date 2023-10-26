@@ -1,5 +1,5 @@
 >>>errors
-[FATAL] From line 3, column 20 to line 3, column 34: Table 'joinDeclaration' not found
+[FATAL] At line 3, column 20: Table 'joinDeclaration' not found
 in script:<script> [3:20]:
 IMPORT ecommerce-data.Product;
 Product.joinDeclaration := JOIN Product ON true;

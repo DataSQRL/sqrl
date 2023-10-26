@@ -28,24 +28,18 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.config.CharLiteralStyle;
 import org.apache.calcite.config.Lex;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
-import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
-import org.apache.calcite.sql.parser.SqlParser.Config;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.util.Util;
 
 import java.util.*;
-import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl;
-import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -82,20 +76,19 @@ class AstBuilder
    * Parses a SQL statement and adjusts its position.
    */
   @SneakyThrows
-  public SqlNode parse(int rowOffset, int colOffset, String sql) {
-    SqlNode node = parseSql(sql, rowOffset, colOffset, SqlParser::parseStmt);
+  public SqlNode parse(SqlParserPos offset, String sql) {
+    SqlNode node = parseSql(sql, offset, SqlParser::parseStmt);
     return CalciteFixes.pushDownOrder(node);
   }
 
-  private SqlNode parseQuery(ParserRuleContext query, int offset) {
+  private SqlNode parseQuery(ParserRuleContext query, SqlParserPos offset) {
     int startIndex = query.start.getStartIndex();
     int stopIndex = query.stop.getStopIndex();
     Interval interval = new Interval(startIndex, stopIndex);
     String queryString = query.start.getInputStream().getText(interval);
     queryString = String.format("SELECT %s", queryString);
-    int colOffset = query.getStart().getCharPositionInLine() + 1 - offset;
-    int rowOffset = query.getStart().getLine();
-    return parse(rowOffset, colOffset, queryString);
+
+    return parse(offset, queryString);
   }
 
   private SqlNode parseExpression(ParserRuleContext expression) {
@@ -104,39 +97,44 @@ class AstBuilder
     Interval interval = new Interval(startIndex, stopIndex);
     String queryString = expression.start.getInputStream().getText(interval);
 
-    int colOffset = expression.getStart().getCharPositionInLine() + 1;
-    int rowOffset = expression.getStart().getLine();
-    return parseExpression(rowOffset, colOffset, queryString);
+    SqlParserPos offsetPos = getLocation(expression);
+
+    return parseExpression(offsetPos, queryString);
   }
 
   @SneakyThrows
-  public SqlNode parseExpression(int rowOffset, int colOffset, String expression) {
-    return parseSql(expression, rowOffset, colOffset, SqlParser::parseExpression);
+  public SqlNode parseExpression(SqlParserPos offset, String expression) {
+    return parseSql(expression, offset, SqlParser::parseExpression);
   }
 
-  private SqlNode parseSql(String sql, int rowOffset, int colOffset,
+  private SqlNode parseSql(String sql, SqlParserPos offset,
       SqlParserFunction parseFunction) throws Exception {
     SqlParser parser = SqlParser.create(sql, createParserConfig());
+    //Fix 0 based vs 1 based
+    offset = new SqlParserPos(offset.getLineNum(), offset.getColumnNum());
+
+
     SqlNode node;
 
     try {
       node = parseFunction.apply(parser);
+      node = CalciteFixes.pushDownOrder(node);
     } catch (SqlParseException e) {
-      throw adjustSqlParseException(e, rowOffset, colOffset);
+      throw adjustSqlParseException(e, offset);
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
     }
 
-    return adjustPosition(node, rowOffset, colOffset);
+    return adjustPosition(node, offset);
   }
 
-  private SqlNode adjustPosition(SqlNode node, int rowOffset, int colOffset) {
-    return node.accept(new PositionAdjustingSqlShuttle(rowOffset, colOffset));
+  private SqlNode adjustPosition(SqlNode node, SqlParserPos offset) {
+    return node.accept(new PositionAdjustingSqlShuttle(offset, node.getParserPosition()));
   }
 
-  private Exception adjustSqlParseException(SqlParseException e, int rowOffset, int colOffset) {
-    SqlParserPos pos = PositionAdjustingSqlShuttle.adjustPosition(e.getPos(), rowOffset, colOffset);
+  private Exception adjustSqlParseException(SqlParseException e, SqlParserPos offset) {
+    SqlParserPos pos = PositionAdjustingSqlShuttle.adjustSinglePosition(offset, e.getPos());
     return new SqlParseException(e.getMessage(), pos, e.getExpectedTokenSequences(),
         e.getTokenImages(), e.getCause());
   }
@@ -292,7 +290,9 @@ class AstBuilder
 
     int colOffset = ctx.joinDeclaration().getStart().getCharPositionInLine() + 20;
     int rowOffset = ctx.joinDeclaration().getStart().getLine();
-    SqlNode query = parse(rowOffset, colOffset, queryString);
+    SqlParserPos pos = getLocation(ctx.joinDeclaration());
+
+    SqlNode query = parse(pos, queryString);
 
 
     return new SqrlJoinQuery(
@@ -306,8 +306,8 @@ class AstBuilder
   @Override
   public SqlNode visitStreamQuery(StreamQueryContext ctx) {
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
-
-    SqlNode query = parseQuery(ctx.streamQuerySpec().query2(), 12);
+    SqlParserPos offset = getLocation(ctx.streamQuerySpec().SELECT().getSymbol());
+    SqlNode query = parseQuery(ctx.streamQuerySpec().query2(), offset);
 
     return new SqrlStreamQuery(
         getLocation(ctx),
@@ -340,7 +340,7 @@ class AstBuilder
         orderExpr.map(o->"ORDER BY " + o).orElse("")
     );
 
-    SqlSelect select = (SqlSelect)parse(0, 0, sql);
+    SqlSelect select = (SqlSelect)parse(SqlParserPos.ZERO, sql);
 
     //Update the parsing position
     SqlNodeList selectList = select.getSelectList();
@@ -348,18 +348,26 @@ class AstBuilder
     SqlNode tableItem = select.getFrom();
 
 
-    int tableRowOffset = ctx.distinctQuerySpec().identifier().start.getStartIndex();
-    int tableColOffset = ctx.distinctQuerySpec().identifier().start.getCharPositionInLine() - 1;
-    int selectRowOffset = ctx.distinctQuerySpec().onExpr().start.getStartIndex();
-    int selectColOffset = ctx.distinctQuerySpec().onExpr().start.getCharPositionInLine() - 1;
-    int orderRowOffset = ctx.distinctQuerySpec().orderExpr.start.getStartIndex();
-    int orderColOffset = ctx.distinctQuerySpec().orderExpr.start.getCharPositionInLine() - 1;
-    selectList.accept(new PositionAdjustingSqlShuttle(selectRowOffset, selectColOffset));
-
-
-    select.setSelectList(selectList);
-    select.setOrderBy(orderList);
+    SqlParserPos tableStart = tableItem.getParserPosition();
+    SqlParserPos tableOffset = getLocation(ctx.distinctQuerySpec().identifier());
+    int tableRowOffset = ctx.distinctQuerySpec().identifier().start.getLine();
+    int tableColOffset = ctx.distinctQuerySpec().identifier().start.getCharPositionInLine() + 1;
+    tableItem = tableItem.accept(new PositionAdjustingSqlShuttle(tableOffset, tableStart));
     select.setFrom(tableItem);
+
+    SqlParserPos selectOffset = getLocation(ctx.distinctQuerySpec().onExpr().selectItem(0));
+    SqlParserPos selectStart = selectList.getParserPosition();
+    int selectRowOffset = ctx.distinctQuerySpec().onExpr().selectItem(0).start.getLine();
+    int selectColOffset = ctx.distinctQuerySpec().onExpr().selectItem(0).start.getCharPositionInLine() + 2; // for '('
+    selectList = (SqlNodeList) selectList.accept(new PositionAdjustingSqlShuttle(selectOffset, selectStart));
+    select.setSelectList(selectList);
+
+    if (ctx.distinctQuerySpec().orderExpr != null) {
+      SqlParserPos orderOffset = getLocation(ctx.distinctQuerySpec().ORDER());
+      SqlParserPos orderStart = orderList.getParserPosition();
+      orderList = (SqlNodeList) orderList.accept(new PositionAdjustingSqlShuttle(orderOffset, orderStart));
+      select.setOrderBy(orderList);
+    }
 
     return new SqrlDistinctQuery(
         getLocation(ctx),
@@ -381,7 +389,8 @@ class AstBuilder
   public SqlNode visitSqlQuery(SqlQueryContext ctx) {
     AssignPathResult assign = visitAssign(ctx.assignmentPath());
 
-    SqlNode query = parseQuery(ctx.query2(), 7);
+    SqlParserPos startOffset = getLocation(ctx.SELECT().getSymbol());
+    SqlNode query = parseQuery(ctx.query2(), startOffset);
 
     return new SqrlSqlQuery(
         getLocation(ctx),
@@ -407,7 +416,8 @@ class AstBuilder
 
   @Override
   public SqlNode visitFromDeclaration(FromDeclarationContext ctx) {
-    return parseQuery(ctx.query2(), 5);
+    //todo: from declaration
+    return parseQuery(ctx.query2(), SqlParserPos.ZERO);
   }
 
   @Override

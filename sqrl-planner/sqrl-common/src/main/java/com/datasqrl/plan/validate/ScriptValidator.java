@@ -808,7 +808,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlDistinctQuery node, Void context) {
     isMaterializeTable.put(node, true);
-    if (node.getOrder().isEmpty()) {
+    if (node.getSelect().getOrderList() == null) {
       addError(ErrorLabel.GENERIC, node, "Order by statement must be specified");
     }
 

@@ -17,7 +17,7 @@ public class SourceMapImpl implements SourceMap {
     String[] src = source.split("\n");
     StringBuilder result = new StringBuilder();
     for (int i = range.getFromLine()-1; i < range.getToLine(); i++) {
-      String line = src[i];
+      String line = src[Math.min(i, src.length - 1)];
       if (i==range.getToLine()-1) { //last line, substring to toOffset
         line = line.substring(0,Math.min(line.length(),range.getToOffset()));
       }

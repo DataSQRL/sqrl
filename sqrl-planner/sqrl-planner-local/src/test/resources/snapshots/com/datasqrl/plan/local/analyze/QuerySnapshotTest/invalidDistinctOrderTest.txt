@@ -1,0 +1,8 @@
+>>>errors
+[FATAL] At line 5, column 54: Column 'x' not found in any table
+in script:<script> [5:54]:
+IMPORT ecommerce-data.Product;
+IMPORT time.*;
+Customer := DISTINCT Customer ON customerid ORDER BY x DESC;
+-----------------------------------------------------^
+

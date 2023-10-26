@@ -9,14 +9,14 @@ import org.apache.calcite.sql.util.SqlShuttle;
 
 public class PositionAdjustingSqlShuttle extends SqlShuttle {
 
-  private final int columnOffset;
-  private final int rowOffset;
+  private final SqlParserPos offset;
+  private final SqlParserPos start;
 
-  public PositionAdjustingSqlShuttle(int rowOffset, int columnOffset) {
-    this.columnOffset = columnOffset;
-    this.rowOffset = rowOffset;
+  public PositionAdjustingSqlShuttle(SqlParserPos offset,
+      SqlParserPos start) {
+    this.offset = offset;
+    this.start = start;
   }
-
 
   @Override
   public SqlNode visit(SqlCall call) {
@@ -78,14 +78,34 @@ public class PositionAdjustingSqlShuttle extends SqlShuttle {
   }
 
   public SqlParserPos adjustPosition(SqlParserPos pos) {
-    return adjustPosition(pos, rowOffset, columnOffset);
+    return adjustPosition(offset, start, pos);
   }
 
-  public static SqlParserPos adjustPosition(SqlParserPos pos, int rowOffset, int columnOffset) {
-    int adjustedLine = pos.getLineNum() + rowOffset - 1;  // subtract 1 to start from 0
-    int adjustedColumn = pos.getColumnNum() + (pos.getLineNum() == 1 ? columnOffset : 0) - 1;  // subtract 1 to start from 0
-    int adjustedEndLine = pos.getEndLineNum() + rowOffset - 1;
-    int adjustedEndColumn = pos.getEndColumnNum() + (pos.getLineNum() == 1 ? columnOffset : 0) - 1;
-    return new SqlParserPos(adjustedLine, adjustedColumn, adjustedEndLine, adjustedEndColumn);
+  public static SqlParserPos adjustSinglePosition(SqlParserPos offset, SqlParserPos pos) {
+    //There is no visibility into the start location
+    int newLine;
+    int newCol;
+    if (pos.getLineNum() == 1) {
+      newLine = offset.getLineNum();
+      newCol = offset.getColumnNum() + pos.getColumnNum() - 1;
+    } else {
+      newLine = offset.getLineNum() + pos.getLineNum();
+      newCol = pos.getColumnNum();
+    }
+    return new SqlParserPos(newLine, newCol);
   }
+
+  public static SqlParserPos adjustPosition(SqlParserPos offset, SqlParserPos start, SqlParserPos pos) {
+    int newLine;
+    int newCol;
+    if (start.getLineNum() == pos.getLineNum()) {
+      newLine = offset.getLineNum();
+      newCol = offset.getColumnNum() + (pos.getColumnNum() - start.getColumnNum());
+    } else {
+      newLine = offset.getLineNum() +  (pos.getLineNum() - start.getLineNum());
+      newCol = pos.getColumnNum();
+    }
+    return new SqlParserPos(newLine, newCol);
+  }
+
 }
