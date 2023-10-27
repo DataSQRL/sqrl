@@ -9,6 +9,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.SqrlToSql;
 import com.datasqrl.calcite.SqrlToSql.Result;
+import com.datasqrl.calcite.TablePathBuilder;
 import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.SqrlListUtil;
@@ -17,7 +18,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.plan.validate.ScriptValidator;
@@ -31,9 +31,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.rules.ReduceExpressionsRule;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Function;
@@ -111,11 +109,15 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     SqlNode node = validator.getPreprocessSql().get(assignment);
     boolean materializeSelf = validator.getIsMaterializeTable().get(assignment);
     List<String> parentPath = getParentPath(assignment);
-    SqrlToSql sqrlToSql = new SqrlToSql(planner.getTypeFactory(),
+    TablePathBuilder tablePathBuilder = new TablePathBuilder(
+        planner.getCatalogReader(), planner.getTypeFactory(),
+        validator.getParamMapping(), framework.getUniquePkId());
+
+    SqrlToSql sqrlToSql = new SqrlToSql(
         planner.getCatalogReader(), nameUtil,
-        planner.getOperatorTable(), validator.getDynamicParam(), framework.getUniquePkId(),
-        validator.getParameters(), validator.getParameters().get(assignment),
-        validator.getParamMapping());
+        planner.getOperatorTable(), validator.getDynamicParam(),
+        validator.getParameters().get(assignment),
+        tablePathBuilder);
     Result result = sqrlToSql.rewrite(node, materializeSelf, parentPath);
     List<FunctionParameter> parameters = sqrlToSql.getParams();
 
