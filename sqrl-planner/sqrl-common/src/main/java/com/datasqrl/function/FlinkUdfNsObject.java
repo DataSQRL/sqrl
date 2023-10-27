@@ -1,6 +1,7 @@
 package com.datasqrl.function;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.module.FunctionNamespaceObject;
@@ -19,7 +20,8 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
 
   @Override
   public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
-    FlinkConverter flinkConverter = new FlinkConverter(framework.getQueryPlanner().getTypeFactory());
+    FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
+        .getTypeFactory());
 
     SqlFunction convertedFunction = flinkConverter
         .convertFunction(

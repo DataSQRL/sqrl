@@ -8,6 +8,7 @@ import com.datasqrl.calcite.SqrlToSql.Result;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.schema.sql.SqlJoinPathBuilder;
+import com.datasqrl.calcite.sqrl.CatalogResolver;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.function.SqrlFunctionParameter;
@@ -34,15 +35,13 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 
 public class TablePathBuilder {
 
-  private final CatalogReader catalogReader;
-  private final TypeFactory typeFactory;
+  private final CatalogResolver catalogResolver;
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping;
   private final AtomicInteger uniquePkId;
 
-  public TablePathBuilder(CatalogReader catalogReader, TypeFactory typeFactory,Map<FunctionParameter, SqlDynamicParam> paramMapping,
+  public TablePathBuilder(CatalogReader catalogResolver, Map<FunctionParameter, SqlDynamicParam> paramMapping,
       AtomicInteger uniquePkId) {
-    this.catalogReader = catalogReader;
-    this.typeFactory = typeFactory;
+    this.catalogResolver = catalogResolver;
     this.paramMapping = paramMapping;
     this.uniquePkId = uniquePkId;
   }
@@ -51,8 +50,8 @@ public class TablePathBuilder {
     List<FunctionParameter> params = new ArrayList<>(parameters);
 
     Iterator<SqlNode> input = items.iterator();
-    PathWalker pathWalker = new PathWalker(catalogReader);
-    SqlJoinPathBuilder builder = new SqlJoinPathBuilder(catalogReader);
+    PathWalker pathWalker = new PathWalker(catalogResolver);
+    SqlJoinPathBuilder builder = new SqlJoinPathBuilder(catalogResolver);
 
     List<PullupColumn> pullupColumns = processFirstItem(input, pathWalker, builder, context, params);
 
@@ -69,7 +68,7 @@ public class TablePathBuilder {
     String identifier = getIdentifier(item)
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
 
-    if (catalogReader.getTableFunction(List.of(identifier)).isPresent()) {
+    if (catalogResolver.getTableFunction(List.of(identifier)).isPresent()) {
       pathWalker.walk(identifier);
       builder.scanFunction(pathWalker.getPath(), List.of());
     } else if (context.hasAlias(identifier)) {
@@ -94,7 +93,7 @@ public class TablePathBuilder {
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
     pathWalker.walk(nextIdentifier);
 
-    Optional<SqlUserDefinedTableFunction> fnc = catalogReader.getTableFunction(pathWalker.getPath());
+    Optional<SqlUserDefinedTableFunction> fnc = catalogResolver.getTableFunction(pathWalker.getPath());
     Preconditions.checkState(fnc.isPresent(), "Table function not found %s", pathWalker.getPath());
     List<SqlNode> args = rewriteArgs(identifier, fnc.get().getFunction(), context, params);
     builder.scanFunction(fnc.get(), args);
@@ -116,7 +115,7 @@ public class TablePathBuilder {
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
       pathWalker.walk(nextIdentifier);
 
-      Optional<SqlUserDefinedTableFunction> fnc = catalogReader.getTableFunction(pathWalker.getAbsolutePath());
+      Optional<SqlUserDefinedTableFunction> fnc = catalogResolver.getTableFunction(pathWalker.getAbsolutePath());
       Preconditions.checkState(fnc.isPresent(), "Table function not found %s", pathWalker.getPath());
       List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.get().getFunction(), context,
           params);
@@ -126,7 +125,7 @@ public class TablePathBuilder {
   }
 
   private List<PullupColumn> buildPullupColumns(PathWalker pathWalker) {
-    RelOptTable table = catalogReader.getTableFromPath(pathWalker.getAbsolutePath());
+    RelOptTable table = catalogResolver.getTableFromPath(pathWalker.getAbsolutePath());
     return IntStream.range(0, table.getKeys().get(0).asSet().size())
         .mapToObj(i -> new PullupColumn(
             String.format("%spk%d$%s", ReservedName.SYSTEM_HIDDEN_PREFIX, uniquePkId.incrementAndGet(), table.getRowType().getFieldList().get(i).getName()),
@@ -145,7 +144,7 @@ public class TablePathBuilder {
       pathWalker.walk(nextIdentifier);
 
       String alias = builder.getLatestAlias();
-      Optional<SqlUserDefinedTableFunction> fnc = catalogReader.getTableFunction(pathWalker.getPath());
+      Optional<SqlUserDefinedTableFunction> fnc = catalogResolver.getTableFunction(pathWalker.getPath());
       if (fnc.isEmpty()) {
         builder.scanNestedTable(pathWalker.getPath());
       } else {
@@ -190,7 +189,7 @@ public class TablePathBuilder {
       }
     }
 
-    RelDataType anyType = typeFactory.createSqlType(SqlTypeName.ANY);
+    RelDataType anyType = catalogResolver.getTypeFactory().createSqlType(SqlTypeName.ANY);
     SqrlFunctionParameter functionParameter = new SqrlFunctionParameter(id.names.get(1),
         Optional.empty(), SqlDataTypeSpecBuilder
         .create(anyType), params.size(), anyType,

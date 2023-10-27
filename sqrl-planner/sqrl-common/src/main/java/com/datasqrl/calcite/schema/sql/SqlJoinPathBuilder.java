@@ -1,8 +1,8 @@
 package com.datasqrl.calcite.schema.sql;
 
-import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.calcite.SqrlToSql.PullupColumn;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
+import com.datasqrl.calcite.sqrl.CatalogResolver;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,14 +31,14 @@ import org.apache.commons.collections.ListUtils;
 
 @AllArgsConstructor
 public class SqlJoinPathBuilder {
-  final CatalogReader catalogReader;
+  final CatalogResolver catalogResolver;
   @Getter
   final List<Frame> tableHistory = new ArrayList<>();
   final Stack<Frame> stack = new Stack<>();
   final AtomicInteger aliasInt = new AtomicInteger(0);
 
   public SqlJoinPathBuilder scanFunction(List<String> path, List<SqlNode> args) {
-    Optional<SqlUserDefinedTableFunction> op = catalogReader.getTableFunction(path);
+    Optional<SqlUserDefinedTableFunction> op = catalogResolver.getTableFunction(path);
     if (op.isEmpty() && args.isEmpty()) {
       scanNestedTable(path);
       return this;
@@ -80,7 +80,7 @@ public class SqlJoinPathBuilder {
         null);
 
     RelDataTypeFieldBuilder builder = new RelDataTypeFieldBuilder(
-        new FieldInfoBuilder(catalogReader.getTypeFactory()));
+        new FieldInfoBuilder(catalogResolver.getTypeFactory()));
     builder.addAll(left.getType().getFieldList());
     builder.addAll(right.getType().getFieldList());
     RelDataType type = builder.build();
@@ -132,7 +132,7 @@ public class SqlJoinPathBuilder {
   }
 
   public void scanNestedTable(List<String> currentPath) {
-    RelOptTable relOptTable = catalogReader.getTableFromPath(currentPath);
+    RelOptTable relOptTable = catalogResolver.getTableFromPath(currentPath);
     if (relOptTable == null) {
       throw new RuntimeException("Could not find table: " + currentPath);
     }
