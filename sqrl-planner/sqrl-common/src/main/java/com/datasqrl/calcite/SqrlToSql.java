@@ -11,13 +11,13 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,19 +50,16 @@ import org.apache.calcite.sql.util.SqlShuttle;
 
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final CatalogReader catalogReader;
-  final SqlNameUtil nameUtil;
   final SqlOperatorTable operatorTable;
   final Map<SqlNode, SqlDynamicParam> dynamicParam;
   @Getter
   final List<FunctionParameter> params;
   private final TablePathBuilder tablePathBuilder;
 
-  public SqrlToSql(CatalogReader catalogReader, SqlNameUtil nameUtil,
-      SqlOperatorTable operatorTable, Map<SqlNode, SqlDynamicParam> dynamicParam,
-      List<FunctionParameter> mutableParams,
+  public SqrlToSql(CatalogReader catalogReader, SqlOperatorTable operatorTable,
+      Map<SqlNode, SqlDynamicParam> dynamicParam, List<FunctionParameter> mutableParams,
       TablePathBuilder tablePathBuilder) {
     this.catalogReader = catalogReader;
-    this.nameUtil = nameUtil;
     this.operatorTable = operatorTable;
     this.dynamicParam = dynamicParam;
     this.params = new ArrayList<>(mutableParams);
@@ -97,9 +94,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
           .setFrom(result.sqlNode);
 
       List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
-      Set<String> fieldNames = getFieldNames(selectList).stream()
-          .map(nameUtil::toName).map(Name::getDisplay)
-          .collect(Collectors.toSet());
+      Set<String> fieldNames = new HashSet<>(getFieldNames(selectList));
 
       List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath())
           .unwrap(ModifiableTable.class).getRowType().getFieldNames();
