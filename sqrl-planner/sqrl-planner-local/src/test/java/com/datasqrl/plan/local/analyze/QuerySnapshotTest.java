@@ -237,6 +237,25 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void fromTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("CustomerById(@id: INT) := FROM Customer WHERE customerid = @id;");
+    validateScript(builder.getScript());
+  }
+  @Test
+  public void fromInvalidTableTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("CustomerById(@id: INT) := FROM x WHERE customerid = @id;");
+    validateScriptInvalid(builder.getScript());
+  }
+  @Test
+  public void fromMultilineInvalidTableTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("CustomerById(@id: INT) := FROM \n x WHERE customerid = @id;");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
   public void invalidMultilineQueryTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Customer := SELECT * FROM Customer\nWHERE x = null;");

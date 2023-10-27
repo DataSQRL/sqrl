@@ -16,7 +16,6 @@
  */
 package com.datasqrl.parse;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
 import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
 import java.nio.file.Files;
@@ -56,34 +55,22 @@ public class SqrlParserImpl implements SqrlParser {
 
   @SneakyThrows
   @Override
-  public ScriptNode parse(Path scriptPath, ErrorCollector errors) {
+  public ScriptNode parse(Path scriptPath) {
     String scriptContent = Files.readString(scriptPath);
-    errors = errors.withScript(scriptPath, scriptContent);
-    ScriptNode scriptNode = parse(scriptContent, errors);
+    ScriptNode scriptNode = parse(scriptContent);
     scriptNode.setScriptPath(Optional.of(scriptPath));
     return scriptNode;
   }
 
-  public ScriptNode parse(String sql, ErrorCollector errors) {
-    try {
-      ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
-      scriptNode.setOriginalScript(sql);
-      scriptNode.setScriptPath(Optional.empty());
-      return scriptNode;
-    } catch (Exception e) {
-      if (errors.getLocation() == null || errors.getLocation().getSourceMap() == null) {
-        errors = errors.withSchema("<schema>", sql);
-      }
-      throw errors.handle(e);
-    }
+  public ScriptNode parse(String sql) {
+    ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
+    scriptNode.setOriginalScript(sql);
+    scriptNode.setScriptPath(Optional.empty());
+    return scriptNode;
   }
 
-  public SqrlStatement parseStatement(String sql, ErrorCollector errors) {
-    try {
-      return (SqrlStatement) invokeParser("statement", sql, SqlBaseParser::singleStatement);
-    } catch (Exception e) {
-      throw errors.handle(e);
-    }
+  public SqrlStatement parseStatement(String sql) {
+    return (SqrlStatement) invokeParser("statement", sql, SqlBaseParser::singleStatement);
   }
 
   private SqlNode invokeParser(String name, String sql,

@@ -29,16 +29,16 @@ singleStatement
 statement
     : importDefinition                               #importStatement
     | exportDefinition                               #exportStatement
-    | assignmentPath ':=' FROM fromDeclaration       #fromQuery
-    | assignmentPath ':=' JOIN joinDeclaration       #joinQuery
-    | assignmentPath ':=' STREAM streamQuerySpec     #streamQuery
-    | assignmentPath ':=' DISTINCT distinctQuerySpec #distinctQuery
-    | assignmentPath ':=' SELECT query2              #sqlQuery
+    | assignmentPath ':=' fromDeclaration            #fromQuery
+    | assignmentPath ':=' joinDeclaration            #joinQuery
+    | assignmentPath ':=' streamQuerySpec            #streamQuery
+    | assignmentPath ':=' distinctQuerySpec          #distinctQuery
+    | assignmentPath ':=' query                      #sqlQuery
     | assignmentPath ':=' expression                 #expressionQuery
     ;
 
-query2
-    : ( . )+?
+query
+    : SELECT ( . )+?
     ;
 
 assignmentPath
@@ -54,15 +54,19 @@ exportDefinition
    ;
 
 joinDeclaration
-    : query2
+    : JOIN any
+    ;
+
+any
+    : ( . )+?
     ;
 
 fromDeclaration
-    : query2
+    : FROM any
     ;
 
 distinctQuerySpec
-   : identifier
+   : DISTINCT identifier
      ON onExpr
      ORDER BY orderExpr=expression
    ;
@@ -71,7 +75,7 @@ onExpr
    : '('? selectItem (',' selectItem)* ')'?;
 
 streamQuerySpec
-    : ON subscriptionType AS SELECT query2;
+    : STREAM ON subscriptionType AS query;
 
 subscriptionType
     : ADD

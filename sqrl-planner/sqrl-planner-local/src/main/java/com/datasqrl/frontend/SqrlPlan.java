@@ -51,8 +51,17 @@ public class SqrlPlan extends SqrlBase {
   }
 
   public Namespace plan(String script, List<ModuleLoader> additionalModules) {
-    ScriptNode scriptNode = (ScriptNode) framework.getQueryPlanner().parse(Dialect.SQRL,
-        script);
+    if (errors.getLocation() == null || errors.getLocation().getSourceMap() == null) {
+      errors = errors.withSchema("<schema>", script);
+    }
+
+    ScriptNode scriptNode;
+    try {
+      scriptNode = (ScriptNode) framework.getQueryPlanner().parse(Dialect.SQRL,
+          script);
+    } catch (Exception e) {
+      throw errors.handle(e);
+    }
 
     ErrorCollector collector = errors.withScript("<script>", script);
     return plan(scriptNode, additionalModules, collector);

@@ -45,12 +45,12 @@ class ParseTest {
         "");
 
     for (String type : types) {
-      parser.parse(String.format(JOIN_TYPE_TEMPLATE, type), error);
+      parser.parse(String.format(JOIN_TYPE_TEMPLATE, type));
     }
   }
 
   @Test
   public void testSqlSelect() {
-    parser.parse("Table.nested(val: Int = 5, var: String) := SELECT * FROM tbl.nested;", error);
+    parser.parse("Table.nested(val: Int = 5, var: String) := SELECT * FROM tbl.nested;");
   }
 }

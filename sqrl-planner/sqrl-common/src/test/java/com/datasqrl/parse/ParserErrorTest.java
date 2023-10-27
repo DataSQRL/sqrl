@@ -60,12 +60,11 @@ public class ParserErrorTest {
     SqrlParser parser = new SqrlParserImpl();
 
     try {
-      parser.parse(str, errorCollector);
+      parser.parse(str);
       fail("Error should have been thrown");
-    } catch (CollectedException e) {
-      snapshot.addContent(ErrorPrinter.prettyPrint(errorCollector));
     } catch (Exception e) {
-      fail("Uncaught error", e);
+      errorCollector.handle(e);
+      snapshot.addContent(ErrorPrinter.prettyPrint(errorCollector));
     }
   }
 }

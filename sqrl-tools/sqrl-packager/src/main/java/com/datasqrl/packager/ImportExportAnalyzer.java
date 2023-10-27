@@ -29,8 +29,9 @@ public class ImportExportAnalyzer {
   public Result analyze(Path sqrlScript, ErrorCollector errors) {
     ScriptNode node;
     try {
-      node = parser.parse(sqrlScript, errors);
+      node = parser.parse(sqrlScript);
     } catch (Exception e) {
+      errors.handle(e);
       errors.warn("Could not compile SQRL script %s", sqrlScript);
       throw e;
     }

@@ -18,8 +18,8 @@ class ExportTest {
   public void exportTest() {
     SqrlParser parser = new SqrlParserImpl();
     // cannot use ANTLR defined keywords e.g. 'table' or 'source'
-    SqrlStatement sqrlStatement = parser.parseStatement("EXPORT UserAlerts TO file-output.Alerts",
-        ErrorCollector.root());
+    String sqrl = "EXPORT UserAlerts TO file-output.Alerts";
+    SqrlStatement sqrlStatement = parser.parseStatement(sqrl);
     assertTrue(sqrlStatement instanceof SqrlExportDefinition);
     SqrlExportDefinition exportDefinition = (SqrlExportDefinition) sqrlStatement;
 
