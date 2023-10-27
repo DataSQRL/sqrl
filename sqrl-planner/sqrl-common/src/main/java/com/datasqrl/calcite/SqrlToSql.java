@@ -1,24 +1,18 @@
 package com.datasqrl.calcite;
 
-import static com.datasqrl.plan.validate.ScriptValidator.isSelfField;
 import static com.datasqrl.plan.validate.ScriptValidator.isSelfTable;
 import static com.datasqrl.plan.validate.ScriptValidator.isVariable;
 
 import com.datasqrl.calcite.SqrlToSql.Context;
 import com.datasqrl.calcite.SqrlToSql.Result;
-import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
-import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
-import com.datasqrl.calcite.schema.sql.SqlJoinPathBuilder;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
@@ -26,7 +20,6 @@ import com.google.common.collect.ArrayListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,11 +31,7 @@ import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.CalciteFixes;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDynamicParam;
@@ -60,9 +49,7 @@ import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlShuttle;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final TypeFactory typeFactory;
@@ -265,162 +252,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .map(name -> new SqlIdentifier(name, node.getComponentParserPosition(node.names.indexOf(name))))
         .collect(Collectors.toList());
 
-    Iterator<SqlNode> input = items.iterator();
-    PathWalker pathWalker = new PathWalker(catalogReader);
-    SqlJoinPathBuilder builder = new SqlJoinPathBuilder(catalogReader);
-
-    List<PullupColumn> pullupColumns = processFirstItem(input, pathWalker, builder, context);
-
-    processRemainingItems(input, pathWalker, builder, context);
-
-    SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
-    return createResult(sqlNode, pathWalker, pullupColumns);
-  }
-
-
-  private List<PullupColumn> processFirstItem(Iterator<SqlNode> input, PathWalker pathWalker,
-      SqlJoinPathBuilder builder, Context context) {
-    SqlNode item = input.next();
-    String identifier = getIdentifier(item)
-        .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
-
-    boolean isAlias = context.hasAlias(identifier);
-    boolean isNested = context.isNested();
-    boolean isSelf = identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical());
-    boolean materializeSelf = context.isMaterializeSelf();
-    SqlUserDefinedTableFunction tableFunction = catalogReader.getTableFunction(List.of(identifier));
-
-    List<PullupColumn> pullupColumns = List.of();
-    if (tableFunction != null) { //may be schema table or function
-      pathWalker.walk(identifier);
-      builder.scanFunction(pathWalker.getPath(), List.of());
-    } else if (isAlias) {
-      if (!input.hasNext()) {
-        throw new RuntimeException("Alias by itself.");
-      }
-
-      pathWalker.setPath(context.getAliasPath(identifier));
-      //Walk the next one and push in table function
-      item = input.next();
-      String nextIdentifier = getIdentifier(item)
-          .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
-
-      pathWalker.walk(nextIdentifier);
-
-      SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getPath());
-      List<SqlNode> args = rewriteArgs(identifier, fnc.getFunction(), context.materializeSelf);
-      builder.scanFunction(fnc, args);
-    } else if (isSelf) {
-      pathWalker.setPath(context.getCurrentPath());
-      if (materializeSelf || !input.hasNext()) {//treat self as a table
-        builder.scanNestedTable(context.getCurrentPath());
-        if (isNested) {
-          RelOptTable table = catalogReader
-              .getTableFromPath(pathWalker.getAbsolutePath());
-          pullupColumns = IntStream.range(0, table.getKeys().get(0).asSet().size())
-              .mapToObj(i -> new PullupColumn(
-                  String.format("%spk%d$%s",
-                      ReservedName.SYSTEM_HIDDEN_PREFIX, uniquePkId
-                          .incrementAndGet(),
-                      table.getRowType().getFieldList().get(i).getName()),
-                  String.format("%spk%d$%s",
-                      ReservedName.SYSTEM_HIDDEN_PREFIX, i + 1,
-                      table.getRowType().getFieldList().get(i).getName())
-              ))
-              .collect(Collectors.toList());
-        }
-      } else { //treat self as a parameterized binding to the next function
-        item = input.next();
-        String nextIdentifier = getIdentifier(item)
-            .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
-        pathWalker.walk(nextIdentifier);
-
-        SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getAbsolutePath());
-        List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(),
-            fnc.getFunction(), context.materializeSelf);
-
-        builder.scanFunction(fnc, args);
-      }
-    } else {
-      throw new RuntimeException("Unknown table: " + item);
-    }
-
-    return pullupColumns;
-  }
-
-  private void processRemainingItems(Iterator<SqlNode> input, PathWalker pathWalker,
-      SqlJoinPathBuilder builder, Context context) {
-
-    while (input.hasNext()) {
-      SqlNode item = input.next();
-      String nextIdentifier = getIdentifier(item)
-          .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
-      pathWalker.walk(nextIdentifier);
-
-      String alias = builder.getLatestAlias();
-      SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getPath());
-      if (fnc == null) {
-        builder.scanNestedTable(pathWalker.getPath());
-      } else {
-        List<SqlNode> args = rewriteArgs(alias, fnc.getFunction(), context.materializeSelf);
-        builder.scanFunction(fnc, args)
-            .joinLateral();
-      }
-    }
-  }
-
-  private Result createResult(SqlNode sqlNode, PathWalker pathWalker, List<PullupColumn> pullupColumns) {
-    return new Result(sqlNode, pathWalker.getAbsolutePath(), pullupColumns, List.of(), Optional.empty());
-  }
-
-  private List<SqlNode> rewriteArgs(String alias, TableFunction function, boolean materializeSelf) {
-    //if arg needs to by a dynamic expression, rewrite.
-    List<SqlNode> nodes = new ArrayList<>();
-    for (FunctionParameter parameter : function.getParameters()) {
-      SqrlFunctionParameter p = (SqrlFunctionParameter) parameter;
-      SqlIdentifier identifier = new SqlIdentifier(List.of(alias, p.getName()),
-          SqlParserPos.ZERO);
-      SqlNode rewritten = materializeSelf
-          ? identifier
-          : rewriteToDynamicParam(identifier);
-      nodes.add(rewritten);
-    }
-    return nodes;
-  }
-
-  public SqlNode rewriteToDynamicParam(SqlIdentifier id) {
-    //if self, check if param list, if not create one
-    if (!isSelfField(id.names)) {
-      return id;
-    }
-
-    for (FunctionParameter p : params) {
-      if (paramMapping.containsKey(p)) {
-        return paramMapping.get(p);
-      }
-    }
-
-    RelDataType anyType = typeFactory.createSqlType(SqlTypeName.ANY);
-    SqrlFunctionParameter functionParameter = new SqrlFunctionParameter(id.names.get(1),
-        Optional.empty(), SqlDataTypeSpecBuilder
-        .create(anyType), params.size(), anyType,
-        true);
-    params.add(functionParameter);
-    SqlDynamicParam param = new SqlDynamicParam(functionParameter.getOrdinal(),
-        id.getParserPosition());
-    paramMapping.put(functionParameter, param);
-
-    return param;
-  }
-
-  private Optional<String> getIdentifier(SqlNode item) {
-    if (item instanceof SqlIdentifier) {
-      return Optional.of(((SqlIdentifier) item).getSimple());
-    } else if (item instanceof SqlCall) {
-      return Optional.of(((SqlCall) item).getOperator().getName());
-    }
-
-    return Optional.empty();
+    TablePathBuilder tablePathBuilder = new TablePathBuilder(catalogReader, typeFactory, params, paramMapping, uniquePkId);
+    return tablePathBuilder.build(items, context);
   }
 
   @Override
