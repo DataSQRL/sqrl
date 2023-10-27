@@ -685,13 +685,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   public static <T extends SqrlTableMacro> Optional<T> getLatestTableFunction(
       SqrlSchema sqrlSchema, String tableName) {
-    SqlUserDefinedTableFunction tableFunction = sqrlSchema.getSqrlFramework().getQueryPlanner().getTableFunction(
+    Optional<SqlUserDefinedTableFunction> tableFunction = sqrlSchema.getSqrlFramework().getQueryPlanner().getTableFunction(
         List.of(tableName));
-    return Optional.ofNullable(tableFunction)
+    return tableFunction
         .map(f->(T) f.getFunction());
   }
-
-
 
   private void createSnapshots() {
     new DAGPreparation(planner.createRelBuilder(), errors).prepareInputs(planner.getSchema(),

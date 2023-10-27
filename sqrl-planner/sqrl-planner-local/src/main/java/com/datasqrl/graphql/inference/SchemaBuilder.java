@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -160,9 +161,10 @@ public class SchemaBuilder implements
       currentPath = newPath;
     }
 
-    SqlUserDefinedTableFunction op = framework.getQueryPlanner()
+    Optional<SqlUserDefinedTableFunction> op = framework.getQueryPlanner()
         .getTableFunction(currentPath);
-    TableFunction function = op.getFunction();
+    Preconditions.checkState(op.isPresent(), "Could not find table %s", String.join(".", currentPath));
+    TableFunction function = op.get().getFunction();
 
     Set<String> limitOffset = Set.of("limit", "offset");
 
@@ -179,7 +181,7 @@ public class SchemaBuilder implements
 
       AtomicInteger uniqueOrdinal = new AtomicInteger(0);
       //Anticipate all args being found
-      builder.functionScan(op, 0, function.getParameters().stream()
+      builder.functionScan(op.get(), 0, function.getParameters().stream()
           .map(param -> new RexDynamicParam(param.getType(null), uniqueOrdinal.getAndIncrement()))
           .collect(Collectors.toList()));
 
@@ -190,7 +192,7 @@ public class SchemaBuilder implements
       Map<List<String>, InputValueDefinition> argMap = new HashMap<>(Maps.uniqueIndex(arg, n->List.of(n.getName())));
 
       //Iterate over all required args in the function
-      for (FunctionParameter p : op.getFunction().getParameters()) {
+      for (FunctionParameter p : op.get().getFunction().getParameters()) {
         SqrlFunctionParameter parameter = (SqrlFunctionParameter) p;
         //check parameter is in the arg list, if so then dynamic param
         InputValueDefinition def;

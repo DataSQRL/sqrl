@@ -24,9 +24,7 @@ import org.apache.calcite.sql.validate.SqlNameMatchers;
 public class SqrlNameMatcher {
   NameCanonicalizer canonicalizer;
 
-  final SqlNameMatcher delegate = SqlNameMatchers.withCaseSensitive(false);
-
-  public static String getLatestVersion(NameCanonicalizer canonicalizer, Collection<String> functionNames, String prefix) {
+  public static Optional<String> getLatestVersion(NameCanonicalizer canonicalizer, Collection<String> functionNames, String prefix) {
     //todo: use name comparator
     Set<String> functionNamesCanon = functionNames.stream()
         .map(f-> canonicalizer.name(f).getCanonical())
@@ -48,6 +46,6 @@ public class SqrlNameMatcher {
       }
     }
 
-    return maxVersion != -1 ? name : null;
+    return maxVersion != -1 ? Optional.of(name) : Optional.empty();
   }
 }

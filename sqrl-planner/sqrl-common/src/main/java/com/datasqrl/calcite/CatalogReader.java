@@ -31,7 +31,6 @@ public class CatalogReader extends CalciteCatalogReader {
   }
 
   public RelOptTable getTableFromPath(List<String> names) {
-
     NamePath absolutePath = getSqrlAbsolutePath(NamePath.system(names));
     String sysTableName = schema.getPathToSysTableMap().get(absolutePath);
     if (sysTableName == null) {
@@ -50,32 +49,18 @@ public class CatalogReader extends CalciteCatalogReader {
     return (rel == null) ? path : rel;
   }
 
-  public SqlUserDefinedTableFunction getTableFunction(List<String> path) {
-    List<SqlOperator> result = new ArrayList<>();
-    String tableFunctionName = String.join(".", path);
-    //get latest function
-    if (tableFunctionName.isEmpty()) {
-      return null;
-    }
-    String latestVersionName = SqrlNameMatcher.getLatestVersion(NameCanonicalizer.SYSTEM,
-        schema.plus().getFunctionNames(), tableFunctionName);
-    if (latestVersionName == null) {
-      //todo return optional
-      return null;
+  public Optional<SqlUserDefinedTableFunction> getTableFunction(List<String> path) {
+    if (path.isEmpty()) {
+      return Optional.empty();
     }
 
-    Optional<SqlOperator> first = this.getOperatorList()
-        .stream()
-        .filter(f -> f.getName().equalsIgnoreCase(latestVersionName))
-        .findFirst();
-//    operatorTable.lookupOperatorOverloads(new SqlIdentifier(List.of(latestVersionName), SqlParserPos.ZERO),
-//        SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, result, nameMatcher());
-
-    if (first.isEmpty()) {
-      return null;
-    }
-
-    return (SqlUserDefinedTableFunction)first.get();
+    return SqrlNameMatcher.getLatestVersion(NameCanonicalizer.SYSTEM, schema.plus().getFunctionNames(),
+            String.join(".", path))
+        .flatMap(s -> this.getOperatorList().stream()
+        .filter(f -> f.getName().equalsIgnoreCase(s))
+        .filter(f -> f instanceof SqlUserDefinedTableFunction)
+        .map(f -> (SqlUserDefinedTableFunction) f)
+        .findFirst());
   }
 
 }
