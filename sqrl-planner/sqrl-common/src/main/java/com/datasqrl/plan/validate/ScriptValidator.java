@@ -205,12 +205,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   public Void visit(SqrlAssignment assignment, Void context) {
     if (assignment.getIdentifier().names.size() > 1) {
       List<String> path = SqrlListUtil.popLast(assignment.getIdentifier().names);
-      SqlUserDefinedTableFunction tableFunction = framework.getQueryPlanner()
+      Optional<SqlUserDefinedTableFunction> tableFunction = framework.getQueryPlanner()
           .getTableFunction(path);
-      if (tableFunction == null) {
+      if (tableFunction.isEmpty()) {
         throw addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Could not find table: %s", String.join(".", path));
       }
-      TableFunction function = tableFunction.getFunction();
+      TableFunction function = tableFunction.get().getFunction();
       if (function instanceof Relationship && ((Relationship) function).getJoinType() != JoinType.CHILD) {
         addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Cannot assign query to table");
       }
@@ -328,8 +328,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       List<String> parent = List.of();
       if (statement.getIdentifier().names.size() > 1) {
         parent = getParentPath(statement);
-        SqlUserDefinedTableFunction sqrlTable = planner.getTableFunction(parent);
-        if (sqrlTable == null) {
+        Optional<SqlUserDefinedTableFunction> sqrlTable = planner.getTableFunction(parent);
+        if (sqrlTable.isEmpty()) {
           throw addError(ErrorLabel.GENERIC, statement.getIdentifier()
                   .getComponent(statement.getIdentifier().names.size()-1),
               "Could not find parent assignment table: %s",
@@ -646,10 +646,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       return;
     }
 
-    SqlUserDefinedTableFunction tableFunction = planner.getTableFunction(path);
-    if (tableFunction == null) {
+    Optional<SqlUserDefinedTableFunction> tableFunction = planner.getTableFunction(path);
+    if (tableFunction.isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Cannot column or query to table");
-      return;
     }
   }
 

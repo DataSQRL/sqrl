@@ -9,6 +9,7 @@ import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.calcite.convert.PostgresSqlConverter;
 import java.util.Arrays;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
@@ -429,7 +430,7 @@ public class QueryPlanner {
     return sqlToString(dialect, relToSql(dialect, relNode));
   }
 
-  public SqlUserDefinedTableFunction getTableFunction(List<String> path) {
+  public Optional<SqlUserDefinedTableFunction> getTableFunction(List<String> path) {
     return catalogReader.getTableFunction(path);
   }
 

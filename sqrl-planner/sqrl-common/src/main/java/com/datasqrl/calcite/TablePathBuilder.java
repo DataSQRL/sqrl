@@ -11,6 +11,7 @@ import com.datasqrl.calcite.schema.sql.SqlJoinPathBuilder;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.function.SqrlFunctionParameter;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -68,8 +69,9 @@ public class TablePathBuilder {
     String identifier = getIdentifier(item)
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
 
-    if (catalogReader.getTableFunction(List.of(identifier)) != null) {
-      handleTableFunction(pathWalker, builder, identifier, params);
+    if (catalogReader.getTableFunction(List.of(identifier)).isPresent()) {
+      pathWalker.walk(identifier);
+      builder.scanFunction(pathWalker.getPath(), List.of());
     } else if (context.hasAlias(identifier)) {
       handleAlias(input, pathWalker, builder, context, identifier, params);
     } else if (identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical())) {
@@ -79,12 +81,6 @@ public class TablePathBuilder {
     }
 
     return List.of();
-  }
-
-  private void handleTableFunction(PathWalker pathWalker, SqlJoinPathBuilder builder, String identifier,
-      List<FunctionParameter> params) {
-    pathWalker.walk(identifier);
-    builder.scanFunction(pathWalker.getPath(), List.of());
   }
 
   private void handleAlias(Iterator<SqlNode> input, PathWalker pathWalker, SqlJoinPathBuilder builder, Context context, String identifier,
@@ -98,9 +94,10 @@ public class TablePathBuilder {
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
     pathWalker.walk(nextIdentifier);
 
-    SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getPath());
-    List<SqlNode> args = rewriteArgs(identifier, fnc.getFunction(), context, params);
-    builder.scanFunction(fnc, args);
+    Optional<SqlUserDefinedTableFunction> fnc = catalogReader.getTableFunction(pathWalker.getPath());
+    Preconditions.checkState(fnc.isPresent(), "Table function not found %s", pathWalker.getPath());
+    List<SqlNode> args = rewriteArgs(identifier, fnc.get().getFunction(), context, params);
+    builder.scanFunction(fnc.get(), args);
   }
 
   private List<PullupColumn> handleSelf(Iterator<SqlNode> input, PathWalker pathWalker, SqlJoinPathBuilder builder, Context context,
@@ -119,10 +116,11 @@ public class TablePathBuilder {
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
       pathWalker.walk(nextIdentifier);
 
-      SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getAbsolutePath());
-      List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.getFunction(), context,
+      Optional<SqlUserDefinedTableFunction> fnc = catalogReader.getTableFunction(pathWalker.getAbsolutePath());
+      Preconditions.checkState(fnc.isPresent(), "Table function not found %s", pathWalker.getPath());
+      List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.get().getFunction(), context,
           params);
-      builder.scanFunction(fnc, args);
+      builder.scanFunction(fnc.get(), args);
     }
     return List.of();
   }
@@ -147,13 +145,13 @@ public class TablePathBuilder {
       pathWalker.walk(nextIdentifier);
 
       String alias = builder.getLatestAlias();
-      SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getPath());
-      if (fnc == null) {
+      Optional<SqlUserDefinedTableFunction> fnc = catalogReader.getTableFunction(pathWalker.getPath());
+      if (fnc.isEmpty()) {
         builder.scanNestedTable(pathWalker.getPath());
       } else {
-        List<SqlNode> args = rewriteArgs(alias, fnc.getFunction(), context,
+        List<SqlNode> args = rewriteArgs(alias, fnc.get().getFunction(), context,
             params);
-        builder.scanFunction(fnc, args)
+        builder.scanFunction(fnc.get(), args)
             .joinLateral();
       }
     }

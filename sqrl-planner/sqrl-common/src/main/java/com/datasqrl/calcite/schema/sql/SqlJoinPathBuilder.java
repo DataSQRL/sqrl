@@ -6,6 +6,7 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -37,13 +38,16 @@ public class SqlJoinPathBuilder {
   final AtomicInteger aliasInt = new AtomicInteger(0);
 
   public SqlJoinPathBuilder scanFunction(List<String> path, List<SqlNode> args) {
-    SqlUserDefinedTableFunction op = catalogReader.getTableFunction(path);
-    if (op == null && args.isEmpty()) {
+    Optional<SqlUserDefinedTableFunction> op = catalogReader.getTableFunction(path);
+    if (op.isEmpty() && args.isEmpty()) {
       scanNestedTable(path);
       return this;
     }
+    if (op.isEmpty()) {
+      throw new RuntimeException(String.format("Could not find table: %s", path));
+    }
 
-    scanFunction(op, args);
+    scanFunction(op.get(), args);
     return this;
   }
 
