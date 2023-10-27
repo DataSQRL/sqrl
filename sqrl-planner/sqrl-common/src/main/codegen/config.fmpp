@@ -32,6 +32,8 @@
 # Parser template file (Parser.jj) along with this file are packaged as
 # part of the calcite-core-<version>.jar under "codegen" directory.
 
+# SQRL: Base calcite configuration
+
 data: {
   parser: tdd(../data/Parser.tdd)
 }

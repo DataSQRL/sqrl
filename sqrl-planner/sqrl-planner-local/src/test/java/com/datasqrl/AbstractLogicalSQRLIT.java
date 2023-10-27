@@ -83,11 +83,7 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
 
   protected Namespace plan(String query) {
-    try {
-      return sqrlPlanner.plan(query, List.of());
-    } catch (CollectedException e) {
-      throw e;
-    }
+    return sqrlPlanner.plan(query, List.of());
   }
 
 }
