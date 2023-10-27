@@ -1,11 +1,9 @@
 package com.datasqrl.calcite.schema;
 
 import com.datasqrl.calcite.CatalogReader;
-import com.datasqrl.calcite.QueryPlanner;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
-import org.apache.calcite.plan.RelOptTable;
 
 @Getter
 public class PathWalker {

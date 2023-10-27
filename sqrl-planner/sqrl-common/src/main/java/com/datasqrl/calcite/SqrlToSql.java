@@ -259,7 +259,6 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     return new Result(newNode, result.getCurrentPath(), result.pullupColumns, List.of(), result.getCondition());
   }
-
   @Override
   public Result visitTable(SqlIdentifier node, Context context) {
     List<SqlNode> items = node.names.stream()
@@ -268,11 +267,23 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     Iterator<SqlNode> input = items.iterator();
     PathWalker pathWalker = new PathWalker(catalogReader);
+    SqlJoinPathBuilder builder = new SqlJoinPathBuilder(catalogReader);
+
+    List<PullupColumn> pullupColumns = processFirstItem(input, pathWalker, builder, context);
+
+    processRemainingItems(input, pathWalker, builder, context);
+
+    SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
+    return createResult(sqlNode, pathWalker, pullupColumns);
+  }
+
+
+  private List<PullupColumn> processFirstItem(Iterator<SqlNode> input, PathWalker pathWalker,
+      SqlJoinPathBuilder builder, Context context) {
     SqlNode item = input.next();
     String identifier = getIdentifier(item)
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
 
-    SqlJoinPathBuilder builder = new SqlJoinPathBuilder(catalogReader);
     boolean isAlias = context.hasAlias(identifier);
     boolean isNested = context.isNested();
     boolean isSelf = identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical());
@@ -280,13 +291,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     SqlUserDefinedTableFunction tableFunction = catalogReader.getTableFunction(List.of(identifier));
 
     List<PullupColumn> pullupColumns = List.of();
-    if (item.getKind() == SqlKind.SELECT) {
-      SqrlToSql sqrlToSql = new SqrlToSql(typeFactory, catalogReader, nameUtil, operatorTable, dynamicParam,
-          uniquePkId, parameters, List.of(), Map.of());
-      Result rewrite = sqrlToSql.rewrite(item, false, context.currentPath);
-
-      builder.pushSubquery(rewrite.getSqlNode(), new RelRecordType(List.of())/*can be empty*/);
-    } else if (tableFunction != null) { //may be schema table or function
+    if (tableFunction != null) { //may be schema table or function
       pathWalker.walk(identifier);
       builder.scanFunction(pathWalker.getPath(), List.of());
     } else if (isAlias) {
@@ -340,8 +345,14 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       throw new RuntimeException("Unknown table: " + item);
     }
 
+    return pullupColumns;
+  }
+
+  private void processRemainingItems(Iterator<SqlNode> input, PathWalker pathWalker,
+      SqlJoinPathBuilder builder, Context context) {
+
     while (input.hasNext()) {
-      item = input.next();
+      SqlNode item = input.next();
       String nextIdentifier = getIdentifier(item)
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
       pathWalker.walk(nextIdentifier);
@@ -356,9 +367,9 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
             .joinLateral();
       }
     }
+  }
 
-    SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
-
+  private Result createResult(SqlNode sqlNode, PathWalker pathWalker, List<PullupColumn> pullupColumns) {
     return new Result(sqlNode, pathWalker.getAbsolutePath(), pullupColumns, List.of(), Optional.empty());
   }
 
