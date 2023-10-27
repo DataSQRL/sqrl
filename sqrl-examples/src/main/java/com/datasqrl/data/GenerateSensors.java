@@ -9,12 +9,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
@@ -52,6 +55,15 @@ public class GenerateSensors extends AbstractGenerateCommand {
 
     WriterUtil.writeToFile(sensors, getOutputDir().resolve(String.format(SENSOR_FILE,0)), null, null);
 
+    Map<Sensor,SpikeGenerator> sensorMap = new HashMap<>(sensors.size());
+    sensors.forEach(s -> sensorMap.put(s, new SpikeGenerator(sampler,
+        sampler.nextDouble(config.temperatureBaselineMin, config.temperatureBaselineMax),
+        config.maxNoise,
+        sampler.nextDouble(1.0,config.maxTemperaturePeakStdDev),
+        sampler.nextInt(config.minMaxRampWidth, config.maxMaxRampWidth),
+        config.errorProbability
+        )));
+
     long totalRecords = 0;
     int machineGroupId = 1;
     Instant startOfDay = startTime;
@@ -60,9 +72,10 @@ public class GenerateSensors extends AbstractGenerateCommand {
       List<SensorReading> readings = new ArrayList<>(numReadings*config.numSensors);
       for (int j = 0; j < numReadings; j++) {
         Instant timestamp = startOfDay.plus(j,SENSOR_READING_UNIT);
-        for (Sensor sensor : sensors) {
+        for (Map.Entry<Sensor, SpikeGenerator> sensorEntry : sensorMap.entrySet()) {
+          Sensor sensor = sensorEntry.getKey();
           readings.add(new SensorReading(sensor.id, timestamp,
-              sampler.nextNormal(18,10),
+              sensorEntry.getValue().nextValue(),
               sampler.nextInt(0,100), config.useEpoch));
         }
       }
@@ -105,8 +118,10 @@ public class GenerateSensors extends AbstractGenerateCommand {
   }
 
   @Value
+  @EqualsAndHashCode(onlyExplicitlyIncluded = true)
   public static class Sensor {
 
+    @Include
     int id;
     int machineid;
     Instant placed;
@@ -185,6 +200,20 @@ public class GenerateSensors extends AbstractGenerateCommand {
     public int avgMachinesPerGroup = 4;
 
     public double avgMachinesPerGroupDeviation = 20.0;
+
+    public double temperatureBaselineMin = 18.0;
+
+    public double temperatureBaselineMax = 30.0;
+
+    public double maxNoise = 0.5;
+
+    public double maxTemperaturePeakStdDev = 15.0;
+
+    public int minMaxRampWidth = 10;
+
+    public int maxMaxRampWidth = 50;
+
+    public double errorProbability = 0.001;
 
     public boolean useEpoch = true;
 
