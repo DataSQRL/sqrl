@@ -1,6 +1,5 @@
 package com.datasqrl.calcite.schema;
 
-import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.calcite.sqrl.CatalogResolver;
 import java.util.ArrayList;
 import java.util.List;
