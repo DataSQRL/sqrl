@@ -115,7 +115,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     SqrlToSql sqrlToSql = new SqrlToSql(
         planner.getCatalogReader(),
-        planner.getOperatorTable(), validator.getDynamicParam(),
+        planner.getOperatorTable(),
         validator.getParameters().get(assignment),
         tablePathBuilder);
     Result result = sqrlToSql.rewrite(node, materializeSelf, parentPath);

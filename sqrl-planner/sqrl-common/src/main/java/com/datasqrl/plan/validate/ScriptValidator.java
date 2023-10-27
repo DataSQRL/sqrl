@@ -99,7 +99,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   private final Map<SqlNode, Object> schemaTable = new HashMap<>();
   private final AtomicInteger uniqueId = new AtomicInteger(0);
   private final Map<SqlNode, RelOptTable> tableMap = new HashMap<>();
-  private final Map<SqlNode, SqlDynamicParam> dynamicParam = new HashMap<>();
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping = new HashMap<>();
   private final Map<SqrlAssignment, SqlNode> preprocessSql = new HashMap<>();
   private final Map<SqrlAssignment, Boolean> isMaterializeTable = new HashMap<>();
@@ -488,9 +487,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
             if (s.isInternal() && s.getName().equalsIgnoreCase(name)) {
               //already exists, return dynamic param of index
               if (paramMapping.get(p) != null) {
-                SqlDynamicParam dynamicParam1 = paramMapping.get(p);
-                dynamicParam.put(id, dynamicParam1);
-                return dynamicParam1;
+                return paramMapping.get(p);
               } else {
                 throw new RuntimeException("unknown param");
               }
@@ -505,7 +502,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
               true);
           parameterList.add(functionParameter);
           SqlDynamicParam param = new SqlDynamicParam(functionParameter.getOrdinal(), id.getParserPosition());
-          dynamicParam.put(id, param);
           paramMapping.put(functionParameter, param);
 
           return param;
@@ -532,16 +528,13 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
 
           if (paramMapping.get(param) != null) {
-            SqlDynamicParam dynamicParam1 = paramMapping.get(param);
-            dynamicParam.put(id, dynamicParam1);
-            return dynamicParam1;
+            return paramMapping.get(param);
           }
 
           int index = param.getOrdinal();
 
           SqlDynamicParam p = new SqlDynamicParam(index, id.getParserPosition());
 
-          dynamicParam.put(id, p);
           paramMapping.put(param, p);
 
           return p;
