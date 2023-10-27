@@ -5,12 +5,17 @@ import static com.datasqrl.plan.validate.ScriptValidator.isVariable;
 
 import com.datasqrl.calcite.SqrlToSql.Context;
 import com.datasqrl.calcite.SqrlToSql.Result;
+import com.datasqrl.calcite.NormalizeTablePath.PathItem;
+import com.datasqrl.calcite.NormalizeTablePath.SelfTablePathItem;
+import com.datasqrl.calcite.NormalizeTablePath.TablePathResult;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
+import com.datasqrl.calcite.sqrl.PathToSql;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -22,12 +27,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.CalciteFixes;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlHint;
@@ -48,15 +56,18 @@ import org.apache.calcite.sql.util.SqlShuttle;
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   private final CatalogReader catalogReader;
   private final SqlOperatorTable operatorTable;
-  private final TablePathBuilder tablePathBuilder;
+  private final NormalizeTablePath normalizeTablePath;
   private List<FunctionParameter> parameters;
+  private final AtomicInteger uniquePkId;
 
   public SqrlToSql(CatalogReader catalogReader, SqlOperatorTable operatorTable,
-      TablePathBuilder tablePathBuilder, List<FunctionParameter> parameters) {
+      NormalizeTablePath normalizeTablePath, List<FunctionParameter> parameters,
+      AtomicInteger uniquePkId) {
     this.catalogReader = catalogReader;
     this.operatorTable = operatorTable;
-    this.tablePathBuilder = tablePathBuilder;
+    this.normalizeTablePath = normalizeTablePath;
     this.parameters = parameters;
+    this.uniquePkId = uniquePkId;
   }
 
   public Result rewrite(SqlNode query, boolean materializeSelf, List<String> currentPath) {
@@ -102,8 +113,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       result.condition.ifPresent(sqlSelectBuilder::appendWhere);
       SqlSelect top = new SqlSelectBuilder().setFrom(sqlSelectBuilder.build()).setDistinctOnHint(hintOps).build();
       return new Result(top, result.getCurrentPath(), List.of(), List.of(), Optional.empty(), result.params);
-    } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) ||
-        (context.isNested() && call.getFetch() != null)) {
+    } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) || (context.isNested() && call.getFetch() != null)) {
       //if is nested, get primary key nodes
       int keySize = context.isNested()
           ? catalogReader.getTableFromPath(context.currentPath).getKeys().get(0)
@@ -234,9 +244,62 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .map(name -> new SqlIdentifier(name, node.getComponentParserPosition(node.names.indexOf(name))))
         .collect(Collectors.toList());
 
-    Result result = tablePathBuilder.build(items, context, parameters);
+    TablePathResult result = normalizeTablePath.convert(items, context, parameters);
+
+    PathToSql pathToSql = new PathToSql();
+    SqlNode sqlNode = pathToSql.build(result.getPathItems());
+
+    List<PullupColumn> pullupColumns = (context.isNested && result.getPathItems().get(0) instanceof SelfTablePathItem)
+        ? buildPullupColumns((SelfTablePathItem)result.getPathItems().get(0))
+        : List.of();
+    // Wrap in a select to maintain sql semantics
+    if (!pullupColumns.isEmpty() || result.getPathItems().size() > 1) {
+      sqlNode = buildAndProjectLast(pullupColumns, sqlNode, result.getPathItems().get(0),
+          result.getPathItems().get(result.getPathItems().size()-1));
+    } else if (result.getPathItems().size() == 1) {
+      //Just a table by itself
+      if (sqlNode instanceof SqlBasicCall) {
+        sqlNode = ((SqlBasicCall) sqlNode).getOperandList().get(0);
+      }
+    }
+
     this.parameters = result.getParams(); //update parameters with new parameters
-    return result;
+    return new Result(sqlNode, result.getPath(), pullupColumns,
+        List.of(), Optional.empty(), result.getParams());
+  }
+
+
+  public SqlNode buildAndProjectLast(List<PullupColumn> pullupCols, SqlNode sqlNode,
+      PathItem first, PathItem last) {
+
+    SqlSelectBuilder select = new SqlSelectBuilder()
+        .setFrom(sqlNode);
+
+    List<SqlNode> selectList = new ArrayList<>();
+    for (PullupColumn column : pullupCols) {
+      selectList.add(
+          SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+              new SqlIdentifier(List.of(first.getAlias(), column.getColumnName()), SqlParserPos.ZERO),
+              new SqlIdentifier(column.getDisplayName(), SqlParserPos.ZERO)));
+    }
+
+    selectList.add(new SqlIdentifier(List.of(last.getAlias(), ""), SqlParserPos.ZERO));
+
+    select.setSelectList(selectList);
+    return select.build();
+  }
+
+  private List<PullupColumn> buildPullupColumns(SelfTablePathItem selfTablePathItem) {
+    RelOptTable table = selfTablePathItem.table;
+    return IntStream.range(0, table.getKeys().get(0).asSet().size())
+        .mapToObj(i -> new PullupColumn(
+            table.getRowType().getFieldList().get(i).getName(),
+            String.format("%spk%d$%s", ReservedName.SYSTEM_HIDDEN_PREFIX, uniquePkId.incrementAndGet(),
+                table.getRowType().getFieldList().get(i).getName()),
+            String.format("%spk%d$%s", ReservedName.SYSTEM_HIDDEN_PREFIX, i + 1,
+                table.getRowType().getFieldList().get(i).getName())
+        ))
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -314,9 +377,9 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   @Value
   public static class PullupColumn {
-
     String columnName;
     String displayName;
+    String finalName;
   }
 
   @AllArgsConstructor
