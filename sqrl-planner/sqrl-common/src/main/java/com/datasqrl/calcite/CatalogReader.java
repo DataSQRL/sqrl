@@ -1,8 +1,8 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.calcite.sqrl.CatalogResolver;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
@@ -11,16 +11,11 @@ import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.sql.SqlFunctionCategory;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.SqlSyntax;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
-public class CatalogReader extends CalciteCatalogReader {
+public class CatalogReader extends CalciteCatalogReader implements CatalogResolver {
 
   @Getter
   private final SqrlSchema schema;

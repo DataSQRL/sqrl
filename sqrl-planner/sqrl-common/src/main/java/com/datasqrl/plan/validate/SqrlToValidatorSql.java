@@ -233,7 +233,7 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
     }
 
     RelDataTypeFieldBuilder b = new RelDataTypeFieldBuilder(
-        new FieldInfoBuilder(planner.getTypeFactory()));
+        new FieldInfoBuilder(planner.getCatalogReader().getTypeFactory()));
     ((SqrlTableMacro) latestTable).getRowType().getFieldList()
         .forEach(c -> b.add(c.getName(), c.getType()));
     final RelDataType latestTable2 = b.build();

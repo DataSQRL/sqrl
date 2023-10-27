@@ -78,7 +78,6 @@ public class QueryPlanner {
   private final OperatorTable operatorTable;
   private final SqrlSchema schema;
   private final ConvertletTable convertletTable;
-  private final TypeFactory typeFactory;
   private final File defaultClassDir;
   private final AtomicInteger uniqueMacroInt;
   private final HintStrategyTable hintStrategyTable;
@@ -105,7 +104,6 @@ public class QueryPlanner {
 
     this.cluster = RelOptCluster.create(planner, new RexBuilder(framework.getTypeFactory()));
     this.convertletTable = new ConvertletTable();
-    this.typeFactory = framework.getTypeFactory();
     this.defaultClassDir = new File("build/calcite/classes");
     cluster.setMetadataProvider(this.metadataProvider);
     cluster.setHintStrategies(hintStrategyTable);
@@ -372,7 +370,7 @@ public class QueryPlanner {
     return new SqrlSqlValidator(
         this.operatorTable,
         catalogReader,
-        typeFactory,
+        catalogReader.getTypeFactory(),
         SqrlConfigurations.sqlValidatorConfig);
   }
 
@@ -397,7 +395,7 @@ public class QueryPlanner {
   }
 
   public RexBuilder getRexBuilder() {
-    return new RexBuilder(typeFactory);
+    return new RexBuilder(catalogReader.getTypeFactory());
   }
 
   public String sqlToString(Dialect dialect, SqlNode node) {

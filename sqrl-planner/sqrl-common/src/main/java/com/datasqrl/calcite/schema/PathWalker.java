@@ -1,6 +1,7 @@
 package com.datasqrl.calcite.schema;
 
 import com.datasqrl.calcite.CatalogReader;
+import com.datasqrl.calcite.sqrl.CatalogResolver;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -8,12 +9,12 @@ import lombok.Getter;
 @Getter
 public class PathWalker {
 
-  private final CatalogReader catalogReader;
+  private final CatalogResolver catalogReader;
   private List<String> path;
   private List<String> absolutePath;
   private List<String> userDefined;
 
-  public PathWalker(CatalogReader catalogReader) {
+  public PathWalker(CatalogResolver catalogReader) {
     this.catalogReader = catalogReader;
     this.path = new ArrayList<>();
     this.absolutePath = new ArrayList<>();

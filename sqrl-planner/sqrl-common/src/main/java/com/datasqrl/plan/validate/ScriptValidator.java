@@ -495,7 +495,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           }
 
           //todo: Type?
-          RelDataType anyType = planner.getTypeFactory().createSqlType(SqlTypeName.ANY);
+          RelDataType anyType = planner.getCatalogReader().getTypeFactory().createSqlType(SqlTypeName.ANY);
           SqrlFunctionParameter functionParameter = new SqrlFunctionParameter(name,
               Optional.empty(), SqlDataTypeSpecBuilder
                 .create(anyType), parameterList.size(), anyType,

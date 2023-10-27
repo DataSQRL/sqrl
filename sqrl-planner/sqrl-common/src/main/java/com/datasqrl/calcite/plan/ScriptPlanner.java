@@ -110,8 +110,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     SqlNode node = validator.getPreprocessSql().get(assignment);
     boolean materializeSelf = validator.getIsMaterializeTable().get(assignment);
     List<String> parentPath = getParentPath(assignment);
-    TablePathBuilder tablePathBuilder = new TablePathBuilder(
-        planner.getCatalogReader(), planner.getTypeFactory(),
+    TablePathBuilder tablePathBuilder = new TablePathBuilder(planner.getCatalogReader(),
         validator.getParamMapping(), framework.getUniquePkId());
 
     SqrlToSql sqrlToSql = new SqrlToSql(planner.getCatalogReader(), planner.getOperatorTable(), tablePathBuilder,
