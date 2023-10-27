@@ -35,29 +35,26 @@ public class TablePathBuilder {
 
   private final CatalogReader catalogReader;
   private final TypeFactory typeFactory;
-  private final List<FunctionParameter> params;
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping;
   private final AtomicInteger uniquePkId;
 
-  public TablePathBuilder(CatalogReader catalogReader, TypeFactory typeFactory,
-      List<FunctionParameter> params, Map<FunctionParameter, SqlDynamicParam> paramMapping,
+  public TablePathBuilder(CatalogReader catalogReader, TypeFactory typeFactory,Map<FunctionParameter, SqlDynamicParam> paramMapping,
       AtomicInteger uniquePkId) {
     this.catalogReader = catalogReader;
     this.typeFactory = typeFactory;
-    this.params = params;
     this.paramMapping = paramMapping;
     this.uniquePkId = uniquePkId;
   }
 
-  public Result build(List<SqlNode> items, Context context) {
+  public Result build(List<SqlNode> items, Context context, List<FunctionParameter> params) {
 
     Iterator<SqlNode> input = items.iterator();
     PathWalker pathWalker = new PathWalker(catalogReader);
     SqlJoinPathBuilder builder = new SqlJoinPathBuilder(catalogReader);
 
-    List<PullupColumn> pullupColumns = processFirstItem(input, pathWalker, builder, context);
+    List<PullupColumn> pullupColumns = processFirstItem(input, pathWalker, builder, context, params);
 
-    processRemainingItems(input, pathWalker, builder, context);
+    processRemainingItems(input, pathWalker, builder, context, params);
 
     SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
 
@@ -65,17 +62,17 @@ public class TablePathBuilder {
   }
 
   private List<PullupColumn> processFirstItem(Iterator<SqlNode> input, PathWalker pathWalker,
-      SqlJoinPathBuilder builder, Context context) {
+      SqlJoinPathBuilder builder, Context context, List<FunctionParameter> params) {
     SqlNode item = input.next();
     String identifier = getIdentifier(item)
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
 
     if (catalogReader.getTableFunction(List.of(identifier)) != null) {
-      handleTableFunction(pathWalker, builder, identifier);
+      handleTableFunction(pathWalker, builder, identifier, params);
     } else if (context.hasAlias(identifier)) {
-      handleAlias(input, pathWalker, builder, context, identifier);
+      handleAlias(input, pathWalker, builder, context, identifier, params);
     } else if (identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical())) {
-      return handleSelf(input, pathWalker, builder, context);
+      return handleSelf(input, pathWalker, builder, context, params);
     } else {
       throw new RuntimeException("Unknown table: " + item);
     }
@@ -83,12 +80,14 @@ public class TablePathBuilder {
     return List.of();
   }
 
-  private void handleTableFunction(PathWalker pathWalker, SqlJoinPathBuilder builder, String identifier) {
+  private void handleTableFunction(PathWalker pathWalker, SqlJoinPathBuilder builder, String identifier,
+      List<FunctionParameter> params) {
     pathWalker.walk(identifier);
     builder.scanFunction(pathWalker.getPath(), List.of());
   }
 
-  private void handleAlias(Iterator<SqlNode> input, PathWalker pathWalker, SqlJoinPathBuilder builder, Context context, String identifier) {
+  private void handleAlias(Iterator<SqlNode> input, PathWalker pathWalker, SqlJoinPathBuilder builder, Context context, String identifier,
+      List<FunctionParameter> params) {
     if (!input.hasNext()) {
       throw new RuntimeException("Alias by itself.");
     }
@@ -99,11 +98,12 @@ public class TablePathBuilder {
     pathWalker.walk(nextIdentifier);
 
     SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getPath());
-    List<SqlNode> args = rewriteArgs(identifier, fnc.getFunction(), context.isMaterializeSelf());
+    List<SqlNode> args = rewriteArgs(identifier, fnc.getFunction(), context.isMaterializeSelf(), params);
     builder.scanFunction(fnc, args);
   }
 
-  private List<PullupColumn> handleSelf(Iterator<SqlNode> input, PathWalker pathWalker, SqlJoinPathBuilder builder, Context context) {
+  private List<PullupColumn> handleSelf(Iterator<SqlNode> input, PathWalker pathWalker, SqlJoinPathBuilder builder, Context context,
+      List<FunctionParameter> params) {
     pathWalker.setPath(context.getCurrentPath());
     boolean isNested = context.isNested();
     boolean materializeSelf = context.isMaterializeSelf();
@@ -119,7 +119,8 @@ public class TablePathBuilder {
       pathWalker.walk(nextIdentifier);
 
       SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getAbsolutePath());
-      List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.getFunction(), context.isMaterializeSelf());
+      List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.getFunction(), context.isMaterializeSelf(),
+          params);
       builder.scanFunction(fnc, args);
     }
     return List.of();
@@ -136,7 +137,7 @@ public class TablePathBuilder {
   }
 
   private void processRemainingItems(Iterator<SqlNode> input, PathWalker pathWalker,
-      SqlJoinPathBuilder builder, Context context) {
+      SqlJoinPathBuilder builder, Context context, List<FunctionParameter> params) {
 
     while (input.hasNext()) {
       SqlNode item = input.next();
@@ -149,7 +150,8 @@ public class TablePathBuilder {
       if (fnc == null) {
         builder.scanNestedTable(pathWalker.getPath());
       } else {
-        List<SqlNode> args = rewriteArgs(alias, fnc.getFunction(), context.isMaterializeSelf());
+        List<SqlNode> args = rewriteArgs(alias, fnc.getFunction(), context.isMaterializeSelf(),
+            params);
         builder.scanFunction(fnc, args)
             .joinLateral();
       }
@@ -160,7 +162,8 @@ public class TablePathBuilder {
     return new Result(sqlNode, path, pullupColumns, List.of(), Optional.empty());
   }
 
-  private List<SqlNode> rewriteArgs(String alias, TableFunction function, boolean materializeSelf) {
+  private List<SqlNode> rewriteArgs(String alias, TableFunction function, boolean materializeSelf,
+      List<FunctionParameter> params) {
     //if arg needs to by a dynamic expression, rewrite.
     List<SqlNode> nodes = new ArrayList<>();
     for (FunctionParameter parameter : function.getParameters()) {
@@ -169,13 +172,13 @@ public class TablePathBuilder {
           SqlParserPos.ZERO);
       SqlNode rewritten = materializeSelf
           ? identifier
-          : rewriteToDynamicParam(identifier);
+          : rewriteToDynamicParam(identifier, params);
       nodes.add(rewritten);
     }
     return nodes;
   }
 
-  public SqlNode rewriteToDynamicParam(SqlIdentifier id) {
+  public SqlNode rewriteToDynamicParam(SqlIdentifier id, List<FunctionParameter> params) {
     //if self, check if param list, if not create one
     if (!isSelfField(id.names)) {
       return id;

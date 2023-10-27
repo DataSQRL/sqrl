@@ -9,14 +9,12 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
-import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ArrayListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
@@ -52,30 +49,24 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
-  final TypeFactory typeFactory;
   final CatalogReader catalogReader;
   final SqlNameUtil nameUtil;
   final SqlOperatorTable operatorTable;
   final Map<SqlNode, SqlDynamicParam> dynamicParam;
-  final AtomicInteger uniquePkId;
-  final ArrayListMultimap<SqlNode, FunctionParameter> parameters;
   @Getter
   final List<FunctionParameter> params;
-  final Map<FunctionParameter, SqlDynamicParam> paramMapping;
+  private final TablePathBuilder tablePathBuilder;
 
-  public SqrlToSql(TypeFactory typeFactory, CatalogReader catalogReader, SqlNameUtil nameUtil,
+  public SqrlToSql(CatalogReader catalogReader, SqlNameUtil nameUtil,
       SqlOperatorTable operatorTable, Map<SqlNode, SqlDynamicParam> dynamicParam,
-      AtomicInteger uniquePkId, ArrayListMultimap<SqlNode, FunctionParameter> parameters,
-      List<FunctionParameter> mutableParams, Map<FunctionParameter, SqlDynamicParam> paramMapping) {
-    this.typeFactory = typeFactory;
+      List<FunctionParameter> mutableParams,
+      TablePathBuilder tablePathBuilder) {
     this.catalogReader = catalogReader;
     this.nameUtil = nameUtil;
     this.operatorTable = operatorTable;
     this.dynamicParam = dynamicParam;
-    this.uniquePkId = uniquePkId;
-    this.parameters = parameters;
     this.params = new ArrayList<>(mutableParams);
-    this.paramMapping = paramMapping;
+    this.tablePathBuilder = tablePathBuilder;
   }
 
   public Result rewrite(SqlNode query, boolean materializeSelf, List<String> currentPath) {
@@ -106,9 +97,12 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
           .setFrom(result.sqlNode);
 
       List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
-      Set<String> fieldNames = getFieldNames(selectList).stream().map(nameUtil::toName).map(Name::getDisplay).collect(Collectors.toSet());
+      Set<String> fieldNames = getFieldNames(selectList).stream()
+          .map(nameUtil::toName).map(Name::getDisplay)
+          .collect(Collectors.toSet());
 
-      List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath()).unwrap(ModifiableTable.class).getRowType().getFieldNames();
+      List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath())
+          .unwrap(ModifiableTable.class).getRowType().getFieldNames();
       List<SqlNode> newNodes = new ArrayList<>();
       for (String column : columns) {
         if (!fieldNames.contains(column)) {
@@ -252,8 +246,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .map(name -> new SqlIdentifier(name, node.getComponentParserPosition(node.names.indexOf(name))))
         .collect(Collectors.toList());
 
-    TablePathBuilder tablePathBuilder = new TablePathBuilder(catalogReader, typeFactory, params, paramMapping, uniquePkId);
-    return tablePathBuilder.build(items, context);
+    return tablePathBuilder.build(items, context, params);
   }
 
   @Override
@@ -342,9 +335,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     @Override
     public SqlNode visit(SqlCall call) {
       if (call.getKind() == SqlKind.SELECT) {
-        SqrlToSql sqrlToSql = new SqrlToSql(typeFactory, catalogReader, nameUtil, operatorTable, dynamicParam,
-            uniquePkId, parameters, List.of(), Map.of());
-        Result result = sqrlToSql.rewrite(call, false, context.currentPath);
+        Result result = rewrite(call, false, context.currentPath);
 
         return result.getSqlNode();
       }
