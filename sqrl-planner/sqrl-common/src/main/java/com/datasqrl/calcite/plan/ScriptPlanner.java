@@ -9,10 +9,11 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.SqrlToSql;
 import com.datasqrl.calcite.SqrlToSql.Result;
-import com.datasqrl.calcite.TablePathBuilder;
+import com.datasqrl.calcite.NormalizeTablePath;
 import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.SqrlListUtil;
+import com.datasqrl.calcite.sqrl.PathToSql;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -25,7 +26,6 @@ import com.datasqrl.plan.validate.ScriptValidator.QualifiedExport;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.util.SqlNameUtil;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -36,7 +36,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Function;
-import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
@@ -110,13 +109,13 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     SqlNode node = validator.getPreprocessSql().get(assignment);
     boolean materializeSelf = validator.getIsMaterializeTable().get(assignment);
     List<String> parentPath = getParentPath(assignment);
-    TablePathBuilder tablePathBuilder = new TablePathBuilder(planner.getCatalogReader(),
-        validator.getParamMapping(), framework.getUniquePkId());
-
-    SqrlToSql sqrlToSql = new SqrlToSql(planner.getCatalogReader(), planner.getOperatorTable(), tablePathBuilder,
-        validator.getParameters().get(assignment));
+    NormalizeTablePath normalizeTablePath = new NormalizeTablePath(planner.getCatalogReader(),
+        validator.getParamMapping());
+    SqrlToSql sqrlToSql = new SqrlToSql(planner.getCatalogReader(), planner.getOperatorTable(),
+        normalizeTablePath, validator.getParameters().get(assignment), framework.getUniquePkId());
     Result result = sqrlToSql.rewrite(node, materializeSelf, parentPath);
 
+    System.out.println(planner.sqlToString(Dialect.CALCITE, result.getSqlNode()));
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
     RelNode expanded = planner.expandMacros(relNode);
 

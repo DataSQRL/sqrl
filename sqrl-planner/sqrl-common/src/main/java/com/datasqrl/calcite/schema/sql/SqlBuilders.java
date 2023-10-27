@@ -191,16 +191,16 @@ public class SqlBuilders {
 
     private List<SqlNode> mapToIdentifier(List<PullupColumn> keysToPullUp) {
       return keysToPullUp.stream()
-          .map(n->new SqlIdentifier(n.getColumnName(), SqlParserPos.ZERO))
+          .map(n->new SqlIdentifier(n.getDisplayName(), SqlParserPos.ZERO))
           .collect(Collectors.toList());
     }
 
     private List<SqlNode> mapToSelectIdentifier(List<PullupColumn> keysToPullUp) {
       return keysToPullUp.stream()
-          .map(n->SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-                  new SqlIdentifier(n.getColumnName(), SqlParserPos.ZERO),
-                  new SqlIdentifier(n.getDisplayName(), SqlParserPos.ZERO)
-              ))
+          .map(n->
+          SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
+                  new SqlIdentifier(n.getDisplayName(), SqlParserPos.ZERO),
+                  new SqlIdentifier(n.getFinalName(), SqlParserPos.ZERO)))
           .collect(Collectors.toList());
     }
 
@@ -220,6 +220,7 @@ public class SqlBuilders {
     public boolean hasGroup() {
       return select.getGroup() != null && !select.getGroup().getList().isEmpty();
     }
+
     public boolean hasOrder() {
       return select.getOrderList() != null && !select.getOrderList().getList().isEmpty();
     }
