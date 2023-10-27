@@ -31,7 +31,6 @@ import lombok.Value;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.CalciteFixes;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -51,17 +50,14 @@ import org.apache.calcite.sql.util.SqlShuttle;
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final CatalogReader catalogReader;
   final SqlOperatorTable operatorTable;
-  final Map<SqlNode, SqlDynamicParam> dynamicParam;
   @Getter
   final List<FunctionParameter> params;
   private final TablePathBuilder tablePathBuilder;
 
   public SqrlToSql(CatalogReader catalogReader, SqlOperatorTable operatorTable,
-      Map<SqlNode, SqlDynamicParam> dynamicParam, List<FunctionParameter> mutableParams,
-      TablePathBuilder tablePathBuilder) {
+      List<FunctionParameter> mutableParams, TablePathBuilder tablePathBuilder) {
     this.catalogReader = catalogReader;
     this.operatorTable = operatorTable;
-    this.dynamicParam = dynamicParam;
     this.params = new ArrayList<>(mutableParams);
     this.tablePathBuilder = tablePathBuilder;
   }
@@ -340,10 +336,6 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     @Override
     public SqlNode visit(SqlIdentifier id) {
-      if (dynamicParam.get(id) != null) {
-        return dynamicParam.get(id);
-      }
-
       Preconditions.checkState(!isVariable(id.names), "Found variable when expecting one.");
       return super.visit(id);
     }

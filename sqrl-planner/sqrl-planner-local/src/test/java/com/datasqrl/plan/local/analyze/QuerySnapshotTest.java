@@ -608,6 +608,11 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "ProductCount := count(Product);");
   }
+  @Test
+  public void duplicateParamTest() {
+    validateScript("IMPORT ecommerce-data.Product;\n"
+        + "Product(@id: Int) := SELECT * FROM Product WHERE @id > productid AND @id < productid;");
+  }
 
   @Test
   public void replaceRelationshipTest() {
