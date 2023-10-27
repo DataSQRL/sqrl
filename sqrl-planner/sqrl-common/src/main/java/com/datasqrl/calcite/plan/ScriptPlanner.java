@@ -25,6 +25,7 @@ import com.datasqrl.plan.validate.ScriptValidator.QualifiedExport;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.util.SqlNameUtil;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -113,13 +114,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         planner.getCatalogReader(), planner.getTypeFactory(),
         validator.getParamMapping(), framework.getUniquePkId());
 
-    SqrlToSql sqrlToSql = new SqrlToSql(
-        planner.getCatalogReader(),
-        planner.getOperatorTable(),
-        validator.getParameters().get(assignment),
-        tablePathBuilder);
+    SqrlToSql sqrlToSql = new SqrlToSql(planner.getCatalogReader(), planner.getOperatorTable(), tablePathBuilder,
+        validator.getParameters().get(assignment));
     Result result = sqrlToSql.rewrite(node, materializeSelf, parentPath);
-    List<FunctionParameter> parameters = sqrlToSql.getParams();
 
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
     RelNode expanded = planner.expandMacros(relNode);
@@ -140,7 +137,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
       Relationship rel = new Relationship(path.getLast(),
           path, fromSysTable, toSysTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
-          parameters, nodeSupplier);
+          result.getParams(), nodeSupplier);
       planner.getSchema().addRelationship(rel);
     } else {
       List<String> path = assignment.getIdentifier().names;
@@ -148,12 +145,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           ? LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType())
           : expanded;
 
-      Optional<Supplier<RelNode>> nodeSupplier = parameters.isEmpty()
+      Optional<Supplier<RelNode>> nodeSupplier = result.getParams().isEmpty()
           ? Optional.empty()
           : Optional.of(()->rel);
 
       tableFactory.createTable(path, rel, null,
-          assignment.getHints(), parameters, isA,
+          assignment.getHints(), result.getParams(), isA,
           materializeSelf, nodeSupplier, errors);
     }
 
