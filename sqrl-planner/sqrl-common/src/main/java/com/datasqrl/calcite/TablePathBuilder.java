@@ -46,7 +46,8 @@ public class TablePathBuilder {
     this.uniquePkId = uniquePkId;
   }
 
-  public Result build(List<SqlNode> items, Context context, List<FunctionParameter> params) {
+  public Result build(List<SqlNode> items, Context context, List<FunctionParameter> parameters) {
+    List<FunctionParameter> params = new ArrayList<>(parameters);
 
     Iterator<SqlNode> input = items.iterator();
     PathWalker pathWalker = new PathWalker(catalogReader);
@@ -58,7 +59,7 @@ public class TablePathBuilder {
 
     SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
 
-    return createResult(sqlNode, pathWalker.getAbsolutePath(), pullupColumns);
+    return createResult(sqlNode, pathWalker.getAbsolutePath(), pullupColumns, params);
   }
 
   private List<PullupColumn> processFirstItem(Iterator<SqlNode> input, PathWalker pathWalker,
@@ -98,7 +99,7 @@ public class TablePathBuilder {
     pathWalker.walk(nextIdentifier);
 
     SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getPath());
-    List<SqlNode> args = rewriteArgs(identifier, fnc.getFunction(), context.isMaterializeSelf(), params);
+    List<SqlNode> args = rewriteArgs(identifier, fnc.getFunction(), context, params);
     builder.scanFunction(fnc, args);
   }
 
@@ -119,7 +120,7 @@ public class TablePathBuilder {
       pathWalker.walk(nextIdentifier);
 
       SqlUserDefinedTableFunction fnc = catalogReader.getTableFunction(pathWalker.getAbsolutePath());
-      List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.getFunction(), context.isMaterializeSelf(),
+      List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.getFunction(), context,
           params);
       builder.scanFunction(fnc, args);
     }
@@ -150,7 +151,7 @@ public class TablePathBuilder {
       if (fnc == null) {
         builder.scanNestedTable(pathWalker.getPath());
       } else {
-        List<SqlNode> args = rewriteArgs(alias, fnc.getFunction(), context.isMaterializeSelf(),
+        List<SqlNode> args = rewriteArgs(alias, fnc.getFunction(), context,
             params);
         builder.scanFunction(fnc, args)
             .joinLateral();
@@ -158,11 +159,12 @@ public class TablePathBuilder {
     }
   }
 
-  private Result createResult(SqlNode sqlNode, List<String> path, List<PullupColumn> pullupColumns) {
-    return new Result(sqlNode, path, pullupColumns, List.of(), Optional.empty());
+  private Result createResult(SqlNode sqlNode, List<String> path, List<PullupColumn> pullupColumns,
+      List<FunctionParameter> params) {
+    return new Result(sqlNode, path, pullupColumns, List.of(), Optional.empty(), params);
   }
 
-  private List<SqlNode> rewriteArgs(String alias, TableFunction function, boolean materializeSelf,
+  private List<SqlNode> rewriteArgs(String alias, TableFunction function, Context context,
       List<FunctionParameter> params) {
     //if arg needs to by a dynamic expression, rewrite.
     List<SqlNode> nodes = new ArrayList<>();
@@ -170,7 +172,7 @@ public class TablePathBuilder {
       SqrlFunctionParameter p = (SqrlFunctionParameter) parameter;
       SqlIdentifier identifier = new SqlIdentifier(List.of(alias, p.getName()),
           SqlParserPos.ZERO);
-      SqlNode rewritten = materializeSelf
+      SqlNode rewritten = context.isMaterializeSelf()
           ? identifier
           : rewriteToDynamicParam(identifier, params);
       nodes.add(rewritten);

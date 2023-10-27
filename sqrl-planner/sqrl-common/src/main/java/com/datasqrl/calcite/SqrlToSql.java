@@ -12,7 +12,6 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
 import com.datasqrl.plan.hints.TopNHint.Type;
-import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.CalciteFixes;
@@ -50,16 +48,15 @@ import org.apache.calcite.sql.util.SqlShuttle;
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final CatalogReader catalogReader;
   final SqlOperatorTable operatorTable;
-  @Getter
-  final List<FunctionParameter> params;
   private final TablePathBuilder tablePathBuilder;
+  private List<FunctionParameter> parameters;
 
   public SqrlToSql(CatalogReader catalogReader, SqlOperatorTable operatorTable,
-      List<FunctionParameter> mutableParams, TablePathBuilder tablePathBuilder) {
+      TablePathBuilder tablePathBuilder, List<FunctionParameter> parameters) {
     this.catalogReader = catalogReader;
     this.operatorTable = operatorTable;
-    this.params = new ArrayList<>(mutableParams);
     this.tablePathBuilder = tablePathBuilder;
+    this.parameters = parameters;
   }
 
   public Result rewrite(SqlNode query, boolean materializeSelf, List<String> currentPath) {
@@ -106,7 +103,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       sqlSelectBuilder.setSelectList(selectList).clearHints();
       result.condition.ifPresent(sqlSelectBuilder::appendWhere);
       SqlSelect top = new SqlSelectBuilder().setFrom(sqlSelectBuilder.build()).setDistinctOnHint(hintOps).build();
-      return new Result(top, result.getCurrentPath(), List.of(), List.of(), Optional.empty());
+      return new Result(top, result.getCurrentPath(), List.of(), List.of(), Optional.empty(), result.params);
     } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) ||
         (context.isNested() && call.getFetch() != null)) {
       //if is nested, get primary key nodes
@@ -129,7 +126,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
       return new Result(topSelect.build(),
           result.getCurrentPath(), List.of(), List.of(),
-          Optional.empty());
+          Optional.empty(), result.params);
     }
 
     SqlSelectBuilder select = new SqlSelectBuilder(call)
@@ -141,7 +138,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     pullUpKeys(select, result.pullupColumns, isAggregating);
 
-    return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty());
+    return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty(),
+        result.params);
   }
 
   private SqlNode appendAliasIfRequired(SqlNode sqlNode) {
@@ -198,8 +196,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
             List<SqlOperator> matches = new ArrayList<>();
             operatorTable.lookupOperatorOverloads(call.getOperator().getNameAsId(),
                 SqlFunctionCategory.USER_DEFINED_FUNCTION, SqlSyntax.FUNCTION, matches,
-                catalogReader
-                    .nameMatcher());
+                catalogReader.nameMatcher());
 
             for (SqlOperator op : matches) {
               if (op.isAggregator()) {
@@ -229,7 +226,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     SqlNode newNode = aliasBuilder.setTable(result.getSqlNode())
         .build();
 
-    return new Result(newNode, result.getCurrentPath(), result.pullupColumns, List.of(), result.getCondition());
+    return new Result(newNode, result.getCurrentPath(), result.pullupColumns, List.of(), result.getCondition(),
+        result.params);
   }
   @Override
   public Result visitTable(SqlIdentifier node, Context context) {
@@ -237,7 +235,9 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .map(name -> new SqlIdentifier(name, node.getComponentParserPosition(node.names.indexOf(name))))
         .collect(Collectors.toList());
 
-    return tablePathBuilder.build(items, context, params);
+    Result result = tablePathBuilder.build(items, context, parameters);
+    this.parameters = result.getParams(); //update parameters with new parameters
+    return result;
   }
 
   @Override
@@ -247,7 +247,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         && !context.isMaterializeSelf()) {
       Optional<SqlNode> condition = Optional.ofNullable(call.getCondition());
       Result result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), context);
-      return new Result(result.sqlNode, result.currentPath, result.pullupColumns, result.tableReferences, condition);
+      return new Result(result.sqlNode, result.currentPath, result.pullupColumns, result.tableReferences, condition,
+          result.params);
     }
 
     Result leftNode = SqlNodeVisitor.accept(this,
@@ -265,7 +266,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .build();
 
     return new Result(join, rightNode.getCurrentPath(), leftNode.pullupColumns, List.of(),
-        leftNode.getCondition().or(rightNode::getCondition));
+        leftNode.getCondition().or(rightNode::getCondition), leftNode.params);
   }
 
   @Override
@@ -307,7 +308,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         List.of(),
         List.of(),
         tableReferences,
-        Optional.empty());
+        Optional.empty(),
+        operandResults.get(0).params);
   }
 
 
@@ -348,6 +350,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     List<PullupColumn> pullupColumns;
     List<List<String>> tableReferences;
     Optional<SqlNode> condition;
+    List<FunctionParameter> params; //mutable
   }
 
   @Value
