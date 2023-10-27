@@ -241,6 +241,20 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
   @Override
   public Void visit(SqrlExpressionQuery node, Void context) {
+
+    //If on root table, use root table
+    //If on nested, use @.table
+    List<String> tablePath;
+    if (node.getIdentifier().names.size() > 2) {
+      tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical(),
+          node.getIdentifier().names.get(node.getIdentifier().names.size() - 2));
+    } else if (node.getIdentifier().names.size() == 2) {
+      tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical());
+    } else {
+      throw addError(ErrorLabel.GENERIC, node.getExpression(),
+          "Cannot assign expression to root");
+    }
+
     visit((SqrlAssignment) node, null);
     if (node.getTableArgs().isPresent()) {
       addError(ErrorLabel.GENERIC, node, "Table arguments for expressions not implemented yet.");
@@ -253,17 +267,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         node.getExpression(),
         new SqlIdentifier(node.getIdentifier().names.get(node.getIdentifier().names.size()-1), SqlParserPos.ZERO)));
 
-    //If on root table, use root table
-    //If on nested, use @.table
-    List<String> tablePath;
-    if (node.getIdentifier().names.size() > 2) {
-      tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical(),
-          node.getIdentifier().names.get(node.getIdentifier().names.size() - 2));
-    } else if (node.getIdentifier().names.size() == 2) {
-      tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical());
-    } else {
-      throw new RuntimeException();
-    }
 
     SqlSelect select = new SqlSelectBuilder()
         .setSelectList(selectList)

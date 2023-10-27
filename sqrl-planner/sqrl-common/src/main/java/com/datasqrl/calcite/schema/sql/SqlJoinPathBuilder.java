@@ -143,13 +143,6 @@ public class SqlJoinPathBuilder {
     tableHistory.add(frame);
   }
 
-  public void pushSubquery(SqlNode result, RelDataType rowType) {
-    Frame frame = new Frame(true, rowType, result, null);
-    stack.push(frame);
-    tableHistory.add(frame);
-  }
-
-
   @Value
   public class Frame {
     boolean subquery;
