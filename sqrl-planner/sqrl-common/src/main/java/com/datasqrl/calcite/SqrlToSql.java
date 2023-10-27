@@ -24,6 +24,7 @@ import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,7 +53,6 @@ import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
@@ -70,13 +70,10 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   final TypeFactory typeFactory;
   final CatalogReader catalogReader;
   final SqlNameUtil nameUtil;
-
   final SqlOperatorTable operatorTable;
   final Map<SqlNode, SqlDynamicParam> dynamicParam;
-
   final AtomicInteger uniquePkId;
   final ArrayListMultimap<SqlNode, FunctionParameter> parameters;
-
   @Getter
   final List<FunctionParameter> params;
   final Map<FunctionParameter, SqlDynamicParam> paramMapping;
@@ -130,14 +127,6 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
       Set<String> fieldNames = new HashSet<>(getFieldNames(call.getSelectList().getList()));
       List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
-      //get latest fields not in select list
-
-      List<Name> originalNames = catalogReader
-          .getTableFromPath(result.getCurrentPath())
-          .unwrap(ModifiableTable.class)
-          .getRowType().getFieldNames()
-          .stream().map(nameUtil::toName)
-          .collect(Collectors.toList());
 
       List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath())
           .unwrap(ModifiableTable.class)
@@ -165,13 +154,14 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
       sqlSelectBuilder.setSelectList(selectList)
           .clearHints();
+      result.condition
+          .ifPresent(sqlSelectBuilder::appendWhere);
       SqlSelect top = new SqlSelectBuilder()
           .setFrom(sqlSelectBuilder.build())
           .setDistinctOnHint(hintOps)
           .build();
 
-      return new Result(top,
-          result.getCurrentPath(), List.of(), List.of(), Optional.of(originalNames));
+      return new Result(top, result.getCurrentPath(), List.of(), List.of(), Optional.empty());
     } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) ||
         (context.isNested() && call.getFetch() != null)) {
       //if is nested, get primary key nodes
@@ -185,28 +175,28 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
           .setFrom(result.getSqlNode())
           .rewriteExpressions(new WalkExpressions(newContext));
       pullUpKeys(inner, result.pullupColumns, isAggregating);
-
+      result.condition
+          .ifPresent(inner::appendWhere);
       SqlSelectBuilder topSelect = new SqlSelectBuilder()
           .setFrom(inner.build())
           .setTopNHint(call.isKeywordPresent(SqlSelectKeyword.DISTINCT)
               ? Type.SELECT_DISTINCT : Type.TOP_N, SqlSelectBuilder.sqlIntRange(keySize));
 
       return new Result(topSelect.build(),
-          result.getCurrentPath(), List.of(), List.of(), Optional.empty());
+          result.getCurrentPath(), List.of(), List.of(),
+          Optional.empty());
     }
 
     SqlSelectBuilder select = new SqlSelectBuilder(call)
         .setFrom(result.getSqlNode())
         .rewriteExpressions(new WalkExpressions(newContext));
-    if (condition.isPresent()) {
-      select.appendWhere(condition.get());
-      condition = Optional.empty();
-    }
+
+    result.condition
+        .ifPresent(select::appendWhere);
 
     pullUpKeys(select, result.pullupColumns, isAggregating);
 
-    return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(),
-        Optional.empty());
+    return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty());
   }
 
 
@@ -303,8 +293,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     SqlNode newNode = aliasBuilder.setTable(result.getSqlNode())
         .build();
 
-    return new Result(newNode, result.getCurrentPath(), result.pullupColumns, List.of(),
-        Optional.empty());
+    return new Result(newNode, result.getCurrentPath(), result.pullupColumns, List.of(), result.getCondition());
   }
 
   @Override
@@ -409,8 +398,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     SqlNode sqlNode = builder.buildAndProjectLast(pullupColumns);
 
-    return new Result(sqlNode, pathWalker.getAbsolutePath(), pullupColumns, List.of(),
-        Optional.empty());
+    return new Result(sqlNode, pathWalker.getAbsolutePath(), pullupColumns, List.of(), Optional.empty());
   }
 
   private List<SqlNode> rewriteArgs(String alias, TableFunction function, boolean materializeSelf) {
@@ -463,15 +451,14 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     return Optional.empty();
   }
 
-  Optional<SqlNode> condition = Optional.empty();
   @Override
   public Result visitJoin(SqlJoin call, Context context) {
     //Check if we should skip the lhs, if it's self and we don't materialize and there is no condition
     if (isSelfTable(call.getLeft())
-        && !context.isMaterializeSelf()
-    ) {
-      condition = Optional.ofNullable(call.getCondition());
-      return SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), context);
+        && !context.isMaterializeSelf()) {
+      Optional<SqlNode> condition = Optional.ofNullable(call.getCondition());
+      Result result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getRight()), context);
+      return new Result(result.sqlNode, result.currentPath, result.pullupColumns, result.tableReferences, condition);
     }
 
     Result leftNode = SqlNodeVisitor.accept(this,
@@ -489,19 +476,48 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .build();
 
     return new Result(join, rightNode.getCurrentPath(), leftNode.pullupColumns, List.of(),
-        Optional.empty());
+        leftNode.getCondition().or(rightNode::getCondition));
   }
 
   @Override
   public Result visitSetOperation(SqlCall node, Context context) {
+    final List<Result> operandResults = node.getOperandList().stream()
+        .map(o -> SqlNodeVisitor.accept(this, o, context))
+        .collect(Collectors.toList());
+
+    Optional<SqlNode> condition = operandResults.stream()
+        .map(r -> r.condition)
+        .flatMap(Optional::stream)
+        .findAny();
+    if (condition.isPresent()) {
+      throw new RuntimeException("Trailing condition abandoned in rewriting");
+    }
+
+    Optional<PullupColumn> pullupColumn = operandResults.stream()
+        .map(Result::getPullupColumns)
+        .flatMap(Collection::stream)
+        .findAny();
+    if (pullupColumn.isPresent()) {
+      throw new RuntimeException("Primary key columns not pulled up in rewriting");
+    }
+
+    List<List<String>> tableReferences = operandResults.stream()
+        .map(o -> o.tableReferences)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+
+    List<SqlNode> operands = operandResults.stream()
+        .map(Result::getSqlNode)
+        .collect(Collectors.toList());
+
     SqlCall call = new SqlCallBuilder(node)
-        .rewriteOperands(o -> SqlNodeVisitor.accept(this, o, context).getSqlNode())
+        .setOperands(operands)
         .build();
 
     return new Result(call,
         List.of(),
         List.of(),
-        List.of(),
+        tableReferences,
         Optional.empty());
   }
 
@@ -544,12 +560,11 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   @Value
   public static class Result {
-
     SqlNode sqlNode;
     List<String> currentPath;
     List<PullupColumn> pullupColumns;
     List<List<String>> tableReferences;
-    Optional<List<Name>> originalnames;
+    Optional<SqlNode> condition;
   }
 
   @Value

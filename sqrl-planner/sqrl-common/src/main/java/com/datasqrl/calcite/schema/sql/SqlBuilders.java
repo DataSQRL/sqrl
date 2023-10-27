@@ -296,13 +296,17 @@ public class SqlBuilders {
       call = call.getOperator().createCall(call.getParserPosition(),
           call.getOperandList().stream()
               .map(fnc::apply)
-              .collect(Collectors.toList())
-              );
+              .collect(Collectors.toList()));
       return this;
     }
 
     public SqlCall build() {
       return call;
+    }
+
+    public SqlCallBuilder setOperands(List<SqlNode> operands) {
+      call = call.getOperator().createCall(call.getParserPosition(), operands);
+      return this;
     }
   }
 }
