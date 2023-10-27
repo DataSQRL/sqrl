@@ -1031,6 +1031,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void unnamedColumn() {
+    validateScript(
+        "IMPORT ecommerce-data.Orders;\n"
+            + "Orders.unnamed := SELECT coalesce(customerid,0) FROM @;\n");
+  }
+
+  @Test
   public void nestedGroupByTest() {
     validateScript(
         "IMPORT ecommerce-data.Orders;\n"
