@@ -114,7 +114,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         validator.getParamMapping(), framework.getUniquePkId());
 
     SqrlToSql sqrlToSql = new SqrlToSql(
-        planner.getCatalogReader(), nameUtil,
+        planner.getCatalogReader(),
         planner.getOperatorTable(), validator.getDynamicParam(),
         validator.getParameters().get(assignment),
         tablePathBuilder);
