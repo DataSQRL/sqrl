@@ -25,9 +25,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -111,56 +109,31 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         context.isNested, call.getFetch() != null);
     Result result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getFrom()), newContext);
 
-    //todo get select list from validator
-
     //retain distinct hint too
     if (isDistinctOnHintPresent(call)) {
-      List<Integer> hintOps = IntStream.range(0, call.getSelectList().size())
-          .boxed()
+      List<Integer> hintOps = IntStream.range(0, call.getSelectList().size()).boxed()
           .collect(Collectors.toList());
-
-      //create new sql node list
       SqlSelectBuilder sqlSelectBuilder = new SqlSelectBuilder(call)
           .setLimit(1)
           .clearKeywords()
           .setFrom(result.sqlNode);
 
-      Set<String> fieldNames = new HashSet<>(getFieldNames(call.getSelectList().getList()));
       List<SqlNode> selectList = new ArrayList<>(call.getSelectList().getList());
+      Set<String> fieldNames = getFieldNames(selectList).stream().map(nameUtil::toName).map(Name::getDisplay).collect(Collectors.toSet());
 
-      List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath())
-          .unwrap(ModifiableTable.class)
-          .getRowType().getFieldNames();
-
-      //Exclude columns
-      Set<String> seenNames = new HashSet<>();
-      seenNames.addAll(fieldNames.stream()
-          .map(n -> nameUtil.toName(n).getDisplay())
-          .collect(Collectors.toList()));
-
+      List<String> columns = catalogReader.getTableFromPath(result.getCurrentPath()).unwrap(ModifiableTable.class).getRowType().getFieldNames();
       List<SqlNode> newNodes = new ArrayList<>();
-      //Walk backwards to get the latest nodes
-      for (int i = columns.size() - 1; i >= 0; i--) {
-        String column = columns.get(i);
-        int idx = catalogReader.nameMatcher()
-            .indexOf(seenNames, column);
-        if (idx == -1) {
-          seenNames.add(column);
+      for (String column : columns) {
+        if (!fieldNames.contains(column)) {
           newNodes.add(new SqlIdentifier(column, SqlParserPos.ZERO));
+          fieldNames.add(column);
         }
       }
-      Collections.reverse(newNodes);
+
       selectList.addAll(newNodes);
-
-      sqlSelectBuilder.setSelectList(selectList)
-          .clearHints();
-      result.condition
-          .ifPresent(sqlSelectBuilder::appendWhere);
-      SqlSelect top = new SqlSelectBuilder()
-          .setFrom(sqlSelectBuilder.build())
-          .setDistinctOnHint(hintOps)
-          .build();
-
+      sqlSelectBuilder.setSelectList(selectList).clearHints();
+      result.condition.ifPresent(sqlSelectBuilder::appendWhere);
+      SqlSelect top = new SqlSelectBuilder().setFrom(sqlSelectBuilder.build()).setDistinctOnHint(hintOps).build();
       return new Result(top, result.getCurrentPath(), List.of(), List.of(), Optional.empty());
     } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) ||
         (context.isNested() && call.getFetch() != null)) {
@@ -199,36 +172,25 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty());
   }
 
-
   private SqlNode appendAliasIfRequired(SqlNode sqlNode) {
-    if (sqlNode instanceof SqlIdentifier) {
-      if (((SqlIdentifier) sqlNode).names.size() == 1) {
-        return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(),
-            sqlNode,
-            sqlNode);
-      }
-    }
-
     if (sqlNode instanceof SqlIdentifier && ((SqlIdentifier) sqlNode).names.size() == 1) {
-      return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(),
-          sqlNode, sqlNode);
+      return SqlStdOperatorTable.AS.createCall(sqlNode.getParserPosition(), sqlNode, sqlNode);
     }
-
     return sqlNode;
   }
 
   private List<String> getFieldNames(List<SqlNode> list) {
     List<String> nodes = new ArrayList<>();
     for (SqlNode node : list) {
+      String name;
       if (node instanceof SqlIdentifier) {
-        String name = ((SqlIdentifier) node).names.get(((SqlIdentifier) node).names.size() - 1);
-        nodes.add(nameUtil.toName(name).getCanonical());
+        name = ((SqlIdentifier) node).names.get(((SqlIdentifier) node).names.size() - 1);
       } else if (node instanceof SqlCall && node.getKind() == SqlKind.AS) {
-        String name = ((SqlIdentifier) ((SqlCall) node).getOperandList().get(1)).names.get(0);
-        nodes.add(nameUtil.toName(name).getCanonical());
+        name = ((SqlIdentifier) ((SqlCall) node).getOperandList().get(1)).names.get(0);
       } else {
         throw new RuntimeException("Could not derive name: " + node);
       }
+      nodes.add(name);
     }
 
     return nodes;
@@ -239,16 +201,18 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .anyMatch(f -> ((SqlHint) f).getName().equalsIgnoreCase("DISTINCT_ON"));
   }
 
-  private void pullUpKeys(SqlSelectBuilder inner, List<PullupColumn> keysToPullUp,
-      boolean isAggregating) {
-    if (!keysToPullUp.isEmpty()) {
-      inner.prependSelect(keysToPullUp);
-      if (isAggregating) {
-        if (inner.hasOrder()) {
-          inner.prependOrder(keysToPullUp);
-        }
-        inner.prependGroup(keysToPullUp);
+  private void pullUpKeys(SqlSelectBuilder inner, List<PullupColumn> keysToPullUp, boolean isAggregating) {
+    if (keysToPullUp.isEmpty()) {
+      return;
+    }
+
+    inner.prependSelect(keysToPullUp);
+
+    if (isAggregating) {
+      if (inner.hasOrder()) {
+        inner.prependOrder(keysToPullUp);
       }
+      inner.prependGroup(keysToPullUp);
     }
   }
 
@@ -298,16 +262,13 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   @Override
   public Result visitTable(SqlIdentifier node, Context context) {
-    List<SqlNode> items = new ArrayList<>();
-    for (int i = 0; i < node.names.size(); i++) {
-      items.add(new SqlIdentifier(node.names.get(i), node.getComponentParserPosition(i)));
-    }
+    List<SqlNode> items = node.names.stream()
+        .map(name -> new SqlIdentifier(name, node.getComponentParserPosition(node.names.indexOf(name))))
+        .collect(Collectors.toList());
 
     Iterator<SqlNode> input = items.iterator();
     PathWalker pathWalker = new PathWalker(catalogReader);
-
     SqlNode item = input.next();
-
     String identifier = getIdentifier(item)
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
 
