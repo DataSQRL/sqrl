@@ -7,9 +7,9 @@ import org.apache.calcite.sql.SqrlStatement;
 
 public interface SqrlParser {
 
-  ScriptNode parse(String sql, ErrorCollector errors);
+  ScriptNode parse(String sql);
 
-  SqrlStatement parseStatement(String sql, ErrorCollector errors);
+  SqrlStatement parseStatement(String sql);
 
-  ScriptNode parse(Path scriptPath, ErrorCollector errors);
+  ScriptNode parse(Path scriptPath);
 }
