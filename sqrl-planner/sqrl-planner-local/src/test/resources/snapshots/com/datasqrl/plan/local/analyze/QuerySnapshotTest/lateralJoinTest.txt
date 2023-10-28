@@ -1,0 +1,27 @@
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+
+>>>x$1
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+  LogicalFilter(condition=[=($2, ?0)])
+    LogicalTableScan(table=[[orders$2]])
+
+>>>x$2
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+  LogicalFilter(condition=[AND(=($2, ?0), =($3, ?1))])
+    LogicalTableScan(table=[[orders$2]])
+
+>>>y$1
+LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _ingest_time0=[$7], id0=[$8], customerid0=[$9], time0=[$10], entries0=[$11], __timestamp16=[CASE(<($4, $15), $15, $4)])
+  LogicalJoin(condition=[=($2, $12)], joinType=[inner])
+    LogicalFilter(condition=[=($2, 2)])
+      LogicalTableScan(table=[[orders$2]])
+    LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], id0=[$6], time0=[$7], _rownum=[$8], __timestamp=[CASE(<($4, $7), $7, $4)])
+      LogicalJoin(condition=[=($2, CAST($6):INTEGER NOT NULL)], joinType=[inner])
+        LogicalFilter(condition=[=($3, 3)])
+          LogicalTableScan(table=[[orders$2]])
+        LogicalFilter(condition=[=($2, 1)])
+          LogicalProject(id=[$2], time=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $4 DESC NULLS LAST)])
+            LogicalFilter(condition=[=($2, 2)])
+              LogicalTableScan(table=[[orders$2]])
+

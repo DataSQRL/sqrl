@@ -56,6 +56,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLateralOperator;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -479,6 +480,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       @Override
       public SqlNode visitCall(SqlCall node, Object context) {
+        if (node.getOperator() instanceof SqlLateralOperator) {
+          SqlNode op = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+          return node.getOperator().createCall(node.getParserPosition(), op);
+        }
         throw addError(ErrorLabel.GENERIC, node, "Unsupported call: %s", node.getOperator().getName());
       }
     }, query, null);

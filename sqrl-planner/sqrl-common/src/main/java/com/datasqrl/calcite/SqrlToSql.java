@@ -44,6 +44,7 @@ import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLateralOperator;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
@@ -385,6 +386,12 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   @Override
   public Result visitCall(SqlCall node, Context context) {
+    if (node.getOperator() instanceof SqlLateralOperator) {
+      Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+      SqlCall call = node.getOperator().createCall(node.getParserPosition(), result.sqlNode);
+      return new Result(call, result.currentPath, result.pullupColumns, result.tableReferences,
+          result.condition, result.params);
+    }
     throw new RuntimeException("Expected call");
   }
 

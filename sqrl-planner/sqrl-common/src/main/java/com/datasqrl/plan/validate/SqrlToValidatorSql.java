@@ -40,6 +40,7 @@ import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLateralOperator;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
@@ -80,18 +81,16 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
         if (ident.isStar() && ident.names.size() == 1) {
           for (List<String> path : newContext.getAliasPathMap().values()) {
             Optional<SqlUserDefinedTableFunction> sqrlTable = planner.getTableFunction(path);
-            if (sqrlTable.isEmpty()) {
-              throw addError(errorCollector, ErrorLabel.GENERIC, node, "Could not find table %s",getDisplay(ident));
+            if (sqrlTable.isPresent()) {
+              isA.put(context.root, sqrlTable.get().getFunction());
             }
-            isA.put(context.root, sqrlTable.get().getFunction());
           }
         } else if (ident.isStar() && ident.names.size() == 2) {
           List<String> path = newContext.getAliasPath(ident.names.get(0));
           Optional<SqlUserDefinedTableFunction> sqrlTable = planner.getTableFunction(path);
-          if (sqrlTable.isEmpty()) {
-            throw addError(errorCollector, ErrorLabel.GENERIC, node, "Could not find table %s",getDisplay(ident));
+          if (sqrlTable.isPresent()) {
+            isA.put(context.root, sqrlTable.get().getFunction());
           }
-          isA.put(context.root, sqrlTable.get().getFunction());
         }
       }
     }
@@ -253,6 +252,9 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
 
   @Override
   public Result visitCall(SqlCall node, Context context) {
+    if (node.getOperator() instanceof SqlLateralOperator) {
+      return new Result(node, List.of(), List.of());
+    }
     throw addError(errorCollector, ErrorLabel.GENERIC, node, "Call not yet supported %s",
         node.getOperator().getName());
   }
