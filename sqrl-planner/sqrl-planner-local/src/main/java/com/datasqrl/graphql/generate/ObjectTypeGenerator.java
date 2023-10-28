@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.generate;
 
+import static com.datasqrl.canonicalizer.Name.SYSTEM_HIDDEN_PREFIX;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.conformName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getOutputType;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeName;
@@ -19,6 +20,8 @@ import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTable
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLType;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,20 +43,33 @@ public class ObjectTypeGenerator implements
 
   @Override
   public GraphQLType visit(SQRLTable table, SchemaGeneratorContext context) {
+    List<GraphQLFieldDefinition> fields = table.getFields(true)
+        .stream()
+        .filter(f -> !(f instanceof Column) || getOutputType(((Column) f).getType()).isPresent())
+        .map(f -> f.accept(this, context))
+        .collect(Collectors.toList());
+
+    //Include hidden fields in relation has none.
+    if (fields.isEmpty()) {
+      fields = table.getFields(false)
+          .stream()
+          .filter(f->!f.getName().getDisplay().startsWith(SYSTEM_HIDDEN_PREFIX))
+          .filter(f -> !(f instanceof Column) || getOutputType(((Column) f).getType()).isPresent())
+          .map(f -> f.accept(this, context))
+          .collect(Collectors.toList());
+    }
+
     return GraphQLObjectType.newObject()
         .name(getTypeName(table, context.getNames()))
-        .fields(table.getFields(true)
-            .stream()
-            .map(f -> f.accept(this, context))
-            .collect(Collectors.toList()))
+        .fields(fields)
         .build();
   }
 
   @Override
   public GraphQLFieldDefinition visit(Column column, SchemaGeneratorContext context) {
     return GraphQLFieldDefinition.newFieldDefinition()
-        .name(column.getName().getDisplay())
-        .type(wrap(getOutputType(column.getType()), column.getType()))
+        .name(conformName(column.getName().getDisplay()))
+        .type(wrap(getOutputType(column.getType()).get(), column.getType()))
         .build();
   }
 

@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.generate;
 
+import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.conformName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
 
 import com.datasqrl.function.SqrlFunctionParameter;
@@ -39,20 +40,26 @@ public class ArgumentGenerator implements
     } else {
       return parameters.stream()
           .filter(p->!((SqrlFunctionParameter)p).isInternal())
+          .filter(p->getInputType(p.getType(null)).isPresent())
           .map(parameter -> GraphQLArgument.newArgument()
-              .name(parameter.getName())
-              .type(getInputType(parameter.getType(null)))
+              .name(stripVariableIdentifier(parameter.getName()))
+              .type(getInputType(parameter.getType(null)).get())
               .build()).collect(Collectors.toList());
     }
+  }
+
+  private String stripVariableIdentifier(String name) {
+    return name.charAt(0) == '@' ? name.substring(1) : name;
   }
 
   @Override
   public List<GraphQLArgument> visit(SQRLTable table, SchemaGeneratorContext context) {
     return table.getColumns(true)
         .stream()
+        .filter(f -> getInputType(f.getType()).isPresent())
         .map(f -> GraphQLArgument.newArgument()
-            .name(f.getName().getDisplay())
-            .type(getInputType(f.getType()))
+            .name(conformName(f.getName().getDisplay()))
+            .type(getInputType(f.getType()).get())
             .build())
         .limit(8)
         .collect(Collectors.toList());

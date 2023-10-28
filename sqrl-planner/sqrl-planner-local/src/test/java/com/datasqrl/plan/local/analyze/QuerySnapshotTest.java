@@ -3,6 +3,9 @@
  */
 package com.datasqrl.plan.local.analyze;
 
+import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -12,6 +15,8 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.graphql.generate.SchemaGenerator;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.IdealExecutionStage;
@@ -20,6 +25,9 @@ import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphqlTypeComparatorRegistry;
+import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -73,6 +81,22 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               sqrlConverter.convert(table, config, false, errors).explain(),
               table.getNameId());
         });
+
+    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
+
+    SchemaGenerator schemaGenerator = new SchemaGenerator();
+    GraphQLSchema generate = schemaGenerator.generate(sqrlSchemaForInference);
+
+    SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
+        .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
+        .includeDirectives(false);
+
+    String print = new SchemaPrinter(opts).print(generate);
+    if (isBlank(print)) {
+      System.out.println(print);
+      throw new RuntimeException("Could not validate graphql.");
+    }
+
     if (!errors.isEmpty()) {
       snapshot.addContent(ErrorPrinter.prettyPrint(errors), "warnings");
     }
