@@ -355,7 +355,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         }
       }
 
-      System.out.println(sqlNode);
       validated = validator.validate(sqlNode);
     } catch (CalciteContextException e) {
       throw addError(ErrorLabel.GENERIC, e);
