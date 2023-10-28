@@ -85,7 +85,9 @@ public class SqrlSchema extends SimpleCalciteSchema {
     removePrefix(this.pathToAbsolutePathMap.keySet(),root.getName().toNamePath());
     plus().add(String.join(".", root.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueMacroInt().incrementAndGet(), root);
-    plus().add(root.getName().getDisplay(), root);
+    if (!root.getParameters().isEmpty()) {
+      plus().add(root.getName().getDisplay(), root);
+    }
   }
 
   private void removePrefix(Set<NamePath> set, NamePath prefix) {
@@ -107,6 +109,9 @@ public class SqrlSchema extends SimpleCalciteSchema {
     this.sysTableToRelationshipMap.put(relationship.getFromTable(), relationship);
     plus().add(String.join(".", relationship.getPath().toStringList()) + "$"
         + sqrlFramework.getUniqueMacroInt().incrementAndGet(), relationship);
+    if (!relationship.getParameters().isEmpty()) {
+      plus().add(String.join(".", relationship.getPath().toStringList()), relationship);
+    }
   }
 
   public void addTableMapping(NamePath path, String nameId) {
