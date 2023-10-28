@@ -1127,6 +1127,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         + "Y(@id: Int) := SELECT * FROM TABLE(X(@id));\n"
         + "Z := SELECT * FROM TABLE(Y(3));\n");
   }
+  
+  @Test
+  public void lateralJoinTest() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "X(@id: Int) := SELECT * FROM Orders WHERE id = @id;\n"
+        + "X(@id: Int, @customerid: Int) := SELECT * FROM Orders WHERE id = @id AND customerid = @customerid;\n"
+        + "Y(@id: Int) := SELECT * FROM TABLE(X(2)) AS t JOIN LATERAL TABLE(X(t.id, 3));\n");
+  }
 
   @Test
   public void orderTest() {
