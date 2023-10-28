@@ -1,0 +1,30 @@
+name: Docker Compose Action
+
+on:
+  push:
+    branches:
+      - composeTest
+
+jobs:
+  docker-compose-up:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+        # This step assumes you've set your DockerHub credentials as secrets in your GitHub repository.
+        # The secrets DOCKERHUB_USERNAME and DOCKERHUB_PASSWORD should be set to your DockerHub username and password respectively.
+
+      - name: Run Docker Compose
+        run: |
+          cd sqrl-examples/mutations/build/deploy
+          docker-compose -f ./docker-compose.yml up -d
