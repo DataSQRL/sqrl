@@ -379,19 +379,34 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   }
 
   @Override
-  public Result visitTableFunction(SqlCall node, Context context) {
-    //Let sql validator resolve table function
+  public Result visitCollectTableFunction(SqlCall node, Context context) {
+    return visitAugmentedTable(node, context);
+  }
+
+  @Override
+  public Result visitLateralFunction(SqlCall node, Context context) {
+    return visitAugmentedTable(node, context);
+  }
+
+  @Override
+  public Result visitUnnestFunction(SqlCall node, Context context) {
+    return visitAugmentedTable(node, context);
+  }
+
+  public Result visitAugmentedTable(SqlCall node, Context context) {
+    Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+    SqlCall call = node.getOperator().createCall(node.getParserPosition(), result.sqlNode);
+    return new Result(call, result.currentPath, result.pullupColumns, result.tableReferences,
+        result.condition, result.params);
+  }
+
+  @Override
+  public Result visitUserDefinedTableFunction(SqlCall node, Context context) {
     return new Result(node, List.of(), List.of(), List.of(), Optional.empty(), parameters);
   }
 
   @Override
   public Result visitCall(SqlCall node, Context context) {
-    if (node.getOperator() instanceof SqlLateralOperator) {
-      Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
-      SqlCall call = node.getOperator().createCall(node.getParserPosition(), result.sqlNode);
-      return new Result(call, result.currentPath, result.pullupColumns, result.tableReferences,
-          result.condition, result.params);
-    }
     throw new RuntimeException("Expected call");
   }
 

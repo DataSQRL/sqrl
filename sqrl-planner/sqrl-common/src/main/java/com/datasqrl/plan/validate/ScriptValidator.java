@@ -472,18 +472,35 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       }
 
       @Override
-      public SqlNode visitTableFunction(SqlCall node, Object context) {
-        SqlCall sqlNode = (SqlCall)node.getOperandList().get(0);
-        return node.getOperator().createCall(node.getParserPosition(),
-            sqlNode.accept(rewriteVariables(parameterList, materializeSelf)));
+      public SqlNode visitCollectTableFunction(SqlCall node, Object context) {
+        return visitAugmentedTable(node, context);
+      }
+
+      @Override
+      public SqlNode visitLateralFunction(SqlCall node, Object context) {
+        return visitAugmentedTable(node, context);
+      }
+
+      @Override
+      public SqlNode visitUnnestFunction(SqlCall node, Object context) {
+        return visitAugmentedTable(node, context);
+      }
+
+      private SqlNode visitAugmentedTable(SqlCall node, Object context) {
+        SqlNode op = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+        return node.getOperator().createCall(node.getParserPosition(), op);
+      }
+
+      @Override
+      public SqlNode visitUserDefinedTableFunction(SqlCall node, Object context) {
+        List<SqlNode> operands = node.getOperandList().stream()
+            .map(f->f.accept(rewriteVariables(parameterList, materializeSelf)))
+            .collect(Collectors.toList());
+        return node.getOperator().createCall(node.getParserPosition(), operands);
       }
 
       @Override
       public SqlNode visitCall(SqlCall node, Object context) {
-        if (node.getOperator() instanceof SqlLateralOperator) {
-          SqlNode op = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
-          return node.getOperator().createCall(node.getParserPosition(), op);
-        }
         throw addError(ErrorLabel.GENERIC, node, "Unsupported call: %s", node.getOperator().getName());
       }
     }, query, null);

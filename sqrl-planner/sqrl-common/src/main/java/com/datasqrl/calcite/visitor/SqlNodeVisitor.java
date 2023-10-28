@@ -5,8 +5,11 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLateralOperator;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlUnnestOperator;
+import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
 import org.apache.calcite.sql.SqrlDistinctQuery;
@@ -19,6 +22,7 @@ import org.apache.calcite.sql.SqrlSqlQuery;
 import org.apache.calcite.sql.SqrlStreamQuery;
 import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 
 public abstract class SqlNodeVisitor<R, C> implements
     SqlRelationVisitor<R, C>,
@@ -63,7 +67,17 @@ public abstract class SqlNodeVisitor<R, C> implements
         && SqlKind.SET_QUERY.contains(node.getKind())) {
       return visitor.visitSetOperation((SqlCall) node, context);
     } else if (node instanceof SqlCall && ((SqlCall) node).getOperator() instanceof SqlCollectionTableOperator) {
-      return visitor.visitTableFunction((SqlCall) node, context);
+      return visitor.visitCollectTableFunction((SqlCall) node, context);
+    } else if (node instanceof SqlCall && ((SqlCall) node).getOperator() instanceof SqlLateralOperator) {
+      return visitor.visitLateralFunction((SqlCall) node, context);
+    } else if (node instanceof SqlCall && ((SqlCall) node).getOperator() instanceof SqlUnnestOperator) {
+      return visitor.visitUnnestFunction((SqlCall) node, context);
+    } else if (node instanceof SqlCall &&
+        ((SqlCall) node).getOperator() instanceof SqlUserDefinedTableFunction) {
+      return visitor.visitUserDefinedTableFunction((SqlCall) node, context);
+    } else if (node instanceof SqlCall &&
+        ((SqlCall) node).getOperator() instanceof SqlUnresolvedFunction) {
+      return visitor.visitUserDefinedTableFunction((SqlCall) node, context);
     } else if (node instanceof SqlCall) {
       return visitor.visitCall((SqlCall) node, context);
     }

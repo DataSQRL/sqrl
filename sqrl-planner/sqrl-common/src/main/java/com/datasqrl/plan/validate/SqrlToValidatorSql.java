@@ -5,6 +5,7 @@ import static com.datasqrl.plan.validate.ScriptValidator.flattenNames;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.calcite.SqrlToSql;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
@@ -18,6 +19,7 @@ import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.plan.validate.SqrlToValidatorSql.Context;
 import com.datasqrl.plan.validate.SqrlToValidatorSql.Result;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
@@ -303,20 +305,39 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
   }
 
   @Override
-  public Result visitTableFunction(SqlCall node, Context context) {
-    // Wrapped in a SqlCollectionTableOperator
-    SqlCall tableFunctionCall = (SqlCall)node.getOperandList().get(0);
+  public Result visitCollectTableFunction(SqlCall node, Context context) {
+    return visitAugmentedTable(node, context);
+  }
 
+  @Override
+  public Result visitLateralFunction(SqlCall node, Context context) {
+    return visitAugmentedTable(node, context);
+  }
+
+  @Override
+  public Result visitUnnestFunction(SqlCall node, Context context) {
+    return visitAugmentedTable(node, context);
+  }
+
+  private Result visitAugmentedTable(SqlCall node, Context context) {
+    Preconditions.checkState(node.getOperandList().size() == 1, "Expected a single table condition (LATERAL, UNNEST, ...)");
+    Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+    SqlCall call = node.getOperator().createCall(node.getParserPosition(), result.sqlNode);
+    //We don't actually fully resolve the function, just check that it exists and let the sql validator do the rest
+    return new Result(call, result.currentPath, result.fncs);
+  }
+
+  @Override
+  public Result visitUserDefinedTableFunction(SqlCall node, Context context) {
     List<SqlOperator> operators = new ArrayList<>();
-    planner.getOperatorTable().lookupOperatorOverloads(tableFunctionCall.getOperator().getNameAsId(),
+    planner.getOperatorTable().lookupOperatorOverloads(node.getOperator().getNameAsId(),
         SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, operators,
         planner.getCatalogReader().nameMatcher());
 
     if (operators.isEmpty()) {
-      throw addError(errorCollector, ErrorLabel.GENERIC, tableFunctionCall, "Could not find table function %s",
-          tableFunctionCall.getOperator().getName());
+      throw addError(errorCollector, ErrorLabel.GENERIC, node, "Could not find table function %s",
+          node.getOperator().getName());
     }
-    //We don't actually fully resolve the function, just check that it exists and let the sql validator do the rest
     return new Result(node, List.of(), List.of());
   }
 
