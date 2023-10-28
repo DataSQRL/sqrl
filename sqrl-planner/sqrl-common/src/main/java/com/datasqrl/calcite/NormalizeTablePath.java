@@ -37,8 +37,7 @@ public class NormalizeTablePath {
   private static final String ALIAS_PREFIX = "_t";
   private final CatalogResolver catalogResolver;
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping;
-  final AtomicInteger aliasInt = new AtomicInteger(0);
-
+  private final AtomicInteger aliasInt = new AtomicInteger(0);
 
   public NormalizeTablePath(CatalogResolver catalogResolver, Map<FunctionParameter, SqlDynamicParam> paramMapping) {
     this.catalogResolver = catalogResolver;
@@ -49,7 +48,6 @@ public class NormalizeTablePath {
     // Map items to higher level objects, then walk the objects
     List<FunctionParameter> params = new ArrayList<>(parameters);
     PathWalker pathWalker = new PathWalker(catalogResolver);
-
     List<PathItem> pathItems = mapToPathItems(context, items, params, pathWalker);
     return new TablePathResult(params, pathItems, pathWalker.getAbsolutePath());
   }
