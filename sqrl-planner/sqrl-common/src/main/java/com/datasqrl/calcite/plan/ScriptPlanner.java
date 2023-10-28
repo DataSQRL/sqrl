@@ -115,7 +115,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         normalizeTablePath, validator.getParameters().get(assignment), framework.getUniquePkId());
     Result result = sqrlToSql.rewrite(node, materializeSelf, parentPath);
 
-    System.out.println(planner.sqlToString(Dialect.CALCITE, result.getSqlNode()));
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
     RelNode expanded = planner.expandMacros(relNode);
 
