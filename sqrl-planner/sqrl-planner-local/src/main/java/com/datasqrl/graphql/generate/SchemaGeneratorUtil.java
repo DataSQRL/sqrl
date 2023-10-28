@@ -16,6 +16,7 @@ import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
+import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 
 public class SchemaGeneratorUtil {
@@ -64,32 +65,34 @@ public class SchemaGeneratorUtil {
     return new GraphQLTypeReference(getTypeName(table, names));
   }
 
-  public static GraphQLInputType getInputType(RelDataType type) {
-    return (GraphQLInputType) getInOutType(type);
+  public static Optional<GraphQLInputType> getInputType(RelDataType type) {
+    return getInOutType(type)
+        .map(f->(GraphQLInputType)f);
   }
 
-  public static GraphQLOutputType getOutputType(RelDataType type) {
-    return (GraphQLOutputType) getInOutType(type);
+  public static Optional<GraphQLOutputType> getOutputType(RelDataType type) {
+    return getInOutType(type)
+        .map(f->(GraphQLOutputType)f);
   }
 
-  public static GraphQLType getInOutType(RelDataType type) {
+  public static Optional<GraphQLType> getInOutType(RelDataType type) {
     return getInOutTypeHelper(type);
   }
 
-  public static GraphQLType getInOutTypeHelper(RelDataType type) {
+  public static Optional<GraphQLType> getInOutTypeHelper(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
-        return Scalars.GraphQLBoolean;
+        return Optional.of(Scalars.GraphQLBoolean);
       case TINYINT:
       case SMALLINT:
       case INTEGER:
-        return Scalars.GraphQLInt;
+        return Optional.of(Scalars.GraphQLInt);
       case BIGINT: //treat bigint as float to prevent overflow
       case DECIMAL:
       case FLOAT:
       case REAL:
       case DOUBLE:
-        return Scalars.GraphQLFloat;
+        return Optional.of(Scalars.GraphQLFloat);
       case DATE:
       case TIME:
       case TIME_WITH_LOCAL_TIME_ZONE:
@@ -110,17 +113,12 @@ public class SchemaGeneratorUtil {
       case INTERVAL_SECOND:
       case CHAR:
       case VARCHAR:
-        return Scalars.GraphQLString;
+        return Optional.of(Scalars.GraphQLString);
       case ARRAY:
       case MULTISET:
-        return GraphQLList.list(getOutputType(type.getComponentType()));
+        return getOutputType(type.getComponentType()).map(GraphQLList::list);
       case STRUCTURED:
       case ROW:
-//        String name = uniqueName("struct");
-//        ObjectTypeBuilder objectTypeBuilder = new ObjectTypeBuilder(name);
-//        objectTypeBuilderList.add(objectTypeBuilder);
-//        objectTypeBuilder.createStructField(type.getComponentType());
-//        return new GraphQLTypeReference(name);
       case BINARY:
       case VARBINARY:
       case NULL:
@@ -135,7 +133,7 @@ public class SchemaGeneratorUtil {
       case GEOMETRY:
       case SARG:
       default:
-        throw new RuntimeException("Unknown graphql schema type");
+        return Optional.empty();
     }
   }
 
