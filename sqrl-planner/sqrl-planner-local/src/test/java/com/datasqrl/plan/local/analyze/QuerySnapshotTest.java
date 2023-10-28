@@ -1129,8 +1129,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  @Disabled
-  //todo: Illegal use of dynamic param error
   public void joinTableFncCallTest() {
     validateScript("IMPORT ecommerce-data.Orders;\n"
         + "IMPORT ecommerce-data.Product;\n"
