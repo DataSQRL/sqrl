@@ -469,6 +469,18 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
                 .map(o->SqlNodeVisitor.accept(this, o, context))
                 .collect(Collectors.toList()));
       }
+
+      @Override
+      public SqlNode visitTableFunction(SqlCall node, Object context) {
+        SqlCall sqlNode = (SqlCall)node.getOperandList().get(0);
+        return node.getOperator().createCall(node.getParserPosition(),
+            sqlNode.accept(rewriteVariables(parameterList, materializeSelf)));
+      }
+
+      @Override
+      public SqlNode visitCall(SqlCall node, Object context) {
+        throw addError(ErrorLabel.GENERIC, node, "Unsupported call: %s", node.getOperator().getName());
+      }
     }, query, null);
 
     return Pair.of(parameterList, node);

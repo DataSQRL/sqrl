@@ -84,8 +84,8 @@ public class SqrlSchema extends SimpleCalciteSchema {
   public void addTable(RootSqrlTable root) {
     removePrefix(this.pathToAbsolutePathMap.keySet(),root.getName().toNamePath());
     plus().add(String.join(".", root.getPath().toStringList()) + "$"
-        + sqrlFramework.getUniqueMacroInt().incrementAndGet(), root
-        );
+        + sqrlFramework.getUniqueMacroInt().incrementAndGet(), root);
+    plus().add(root.getName().getDisplay(), root);
   }
 
   private void removePrefix(Set<NamePath> set, NamePath prefix) {

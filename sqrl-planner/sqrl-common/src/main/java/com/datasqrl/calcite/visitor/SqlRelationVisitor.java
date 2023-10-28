@@ -8,7 +8,6 @@ public interface SqlRelationVisitor<R, C> {
   R visitTable(SqlIdentifier node, C context);
   R visitJoin(SqlJoin node, C context);
   R visitSetOperation(SqlCall node, C context);
-  default R visitTableFunction(SqlCall node, C context) {
-    return null;
-  }
+  R visitTableFunction(SqlCall node, C context);
+  R visitCall(SqlCall node, C context);
 }

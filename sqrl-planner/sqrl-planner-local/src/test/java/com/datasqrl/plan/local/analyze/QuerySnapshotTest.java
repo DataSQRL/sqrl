@@ -1112,6 +1112,23 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void callTableFunction() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "X(@id: Int) := SELECT * FROM Orders WHERE id = @id;\n"
+        + "X(@id: Int, @customerid: Int) := SELECT * FROM Orders WHERE id = @id AND customerid = @customerid;\n"
+        + "Y(@id: Int) := SELECT * FROM TABLE(X(2));\n"
+        + "Z(@id: Int) := SELECT * FROM TABLE(X(2, 3));\n");
+  }
+
+  @Test
+  public void chainedTableFncCallTest() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "X(@id: Int) := SELECT * FROM Orders WHERE id = @id;\n"
+        + "Y(@id: Int) := SELECT * FROM TABLE(X(@id));\n"
+        + "Z := SELECT * FROM TABLE(Y(3));\n");
+  }
+
+  @Test
   public void orderTest() {
     validateScript("IMPORT ecommerce-data.Orders;"
         + "Orders.ordered_entries := SELECT e.* FROM @ JOIN @.entries AS e ORDER BY @._uuid;");

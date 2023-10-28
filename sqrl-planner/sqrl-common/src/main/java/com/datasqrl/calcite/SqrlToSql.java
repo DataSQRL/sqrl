@@ -1,5 +1,6 @@
 package com.datasqrl.calcite;
 
+import static com.datasqrl.plan.validate.ScriptValidator.addError;
 import static com.datasqrl.plan.validate.ScriptValidator.isSelfTable;
 import static com.datasqrl.plan.validate.ScriptValidator.isVariable;
 
@@ -16,6 +17,7 @@ import com.datasqrl.calcite.sqrl.PathToSql;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -373,6 +375,17 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         tableReferences,
         Optional.empty(),
         operandResults.get(0).params);
+  }
+
+  @Override
+  public Result visitTableFunction(SqlCall node, Context context) {
+    //Let sql validator resolve table function
+    return new Result(node, List.of(), List.of(), List.of(), Optional.empty(), parameters);
+  }
+
+  @Override
+  public Result visitCall(SqlCall node, Context context) {
+    throw new RuntimeException("Expected call");
   }
 
   @Value

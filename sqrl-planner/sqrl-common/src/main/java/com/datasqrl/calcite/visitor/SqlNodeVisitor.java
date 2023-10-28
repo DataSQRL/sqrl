@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.visitor;
 
+import com.google.common.base.Preconditions;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -17,6 +18,7 @@ import org.apache.calcite.sql.SqrlJoinQuery;
 import org.apache.calcite.sql.SqrlSqlQuery;
 import org.apache.calcite.sql.SqrlStreamQuery;
 import org.apache.calcite.sql.StatementVisitor;
+import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
 
 public abstract class SqlNodeVisitor<R, C> implements
     SqlRelationVisitor<R, C>,
@@ -48,6 +50,7 @@ public abstract class SqlNodeVisitor<R, C> implements
   }
 
   public static <R, C> R accept(SqlRelationVisitor<R, C> visitor, SqlNode node, C context) {
+    Preconditions.checkNotNull(node, "Could not rewrite query.");
     if (node.getKind() == SqlKind.AS) {
       return visitor.visitAliasedRelation((SqlCall) node, context);
     } else if (node instanceof SqlIdentifier) {
@@ -59,8 +62,10 @@ public abstract class SqlNodeVisitor<R, C> implements
     } else if (node instanceof SqlCall
         && SqlKind.SET_QUERY.contains(node.getKind())) {
       return visitor.visitSetOperation((SqlCall) node, context);
-    } else if (node instanceof SqlCall) {
+    } else if (node instanceof SqlCall && ((SqlCall) node).getOperator() instanceof SqlCollectionTableOperator) {
       return visitor.visitTableFunction((SqlCall) node, context);
+    } else if (node instanceof SqlCall) {
+      return visitor.visitCall((SqlCall) node, context);
     }
     throw new RuntimeException("Unknown sql statement node:" + node);
   }
