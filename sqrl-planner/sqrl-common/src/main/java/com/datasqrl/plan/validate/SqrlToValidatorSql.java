@@ -36,11 +36,14 @@ import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -248,6 +251,12 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
     return new Result(call1, pathWalker.getAbsolutePath(), plannerFns);
   }
 
+  @Override
+  public Result visitCall(SqlCall node, Context context) {
+    throw addError(errorCollector, ErrorLabel.GENERIC, node, "Call not yet supported %s",
+        node.getOperator().getName());
+  }
+
   private String getDisplay(SqlIdentifier node) {
     return String.join(".", node.names);
   }
@@ -291,6 +300,23 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
         List.of(), plannerFns);
   }
 
+  @Override
+  public Result visitTableFunction(SqlCall node, Context context) {
+    // Wrapped in a SqlCollectionTableOperator
+    SqlCall tableFunctionCall = (SqlCall)node.getOperandList().get(0);
+
+    List<SqlOperator> operators = new ArrayList<>();
+    planner.getOperatorTable().lookupOperatorOverloads(tableFunctionCall.getOperator().getNameAsId(),
+        SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, operators,
+        planner.getCatalogReader().nameMatcher());
+
+    if (operators.isEmpty()) {
+      throw addError(errorCollector, ErrorLabel.GENERIC, tableFunctionCall, "Could not find table function %s",
+          tableFunctionCall.getOperator().getName());
+    }
+    //We don't actually fully resolve the function, just check that it exists and let the sql validator do the rest
+    return new Result(node, List.of(), List.of());
+  }
 
   @AllArgsConstructor
   public class WalkSubqueries extends SqlShuttle {
