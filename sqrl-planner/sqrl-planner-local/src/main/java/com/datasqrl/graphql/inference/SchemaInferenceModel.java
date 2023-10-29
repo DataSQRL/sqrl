@@ -3,6 +3,7 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
 import graphql.language.FieldDefinition;
@@ -144,6 +145,7 @@ public class SchemaInferenceModel {
     FieldDefinition fieldDefinition;
     ObjectTypeDefinition objectTypeDefinition;
     SQRLTable table;
+    SqrlTableMacro macro;
 
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {

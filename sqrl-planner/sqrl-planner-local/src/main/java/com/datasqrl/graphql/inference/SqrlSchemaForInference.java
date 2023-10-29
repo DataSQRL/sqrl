@@ -56,7 +56,7 @@ public class SqrlSchemaForInference {
             .get(rel.getFullPath());
         SQRLTable toTable = tables.get(toNamePath);
 
-        Relationship relationship = new Relationship(fromTable, toTable, rel.getName(),
+        Relationship relationship = new Relationship(fromTable, toTable, macro, rel.getName(),
             rel.getParameters(), rel.getMultiplicity(), rel.getJoinType());
         fromTable.fields.add(relationship);
       }
@@ -125,6 +125,7 @@ public class SqrlSchemaForInference {
   public static class Relationship extends Field {
     SQRLTable fromTable;
     SQRLTable toTable;
+    SqrlTableMacro macro;
     Name name;
     List<FunctionParameter> parameters;
     Multiplicity multiplicity;
