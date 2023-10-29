@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -38,6 +39,7 @@ import graphql.language.TypeName;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +49,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
@@ -117,7 +120,12 @@ public class SchemaInference {
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
     SQRLTable table = resolveRootSQRLTable(fieldDefinition, fieldDefinition.getType(), fieldDefinition.getName(), "Query");
-    return inferObjectField(fieldDefinition, table, fields, parent, null);
+    //resolve macro
+    List<Function> functions = new ArrayList<>(framework.getSchema()
+        .getFunctions(fieldDefinition.getName(), false));
+
+
+    return inferObjectField(fieldDefinition, table, fields, parent, null, (SqrlTableMacro)functions.get(0));
   }
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
@@ -174,7 +182,8 @@ public class SchemaInference {
   }
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
-      List<InferredField> fields, ObjectTypeDefinition parent, SQRLTable parentTable) {
+      List<InferredField> fields, ObjectTypeDefinition parent, SQRLTable parentTable,
+      SqrlTableMacro macro) {
     checkValidArrayNonNullType(fieldDefinition.getType());
     TypeDefinition typeDef = unwrapObjectType(fieldDefinition.getType());
 
@@ -193,7 +202,7 @@ public class SchemaInference {
       }
       visitedObj.put(obj, table);
       InferredObjectField inferredObjectField = new InferredObjectField(parentTable, parent, fieldDefinition,
-          (ObjectTypeDefinition) typeDef, table);
+          (ObjectTypeDefinition) typeDef, table, macro);
       fields.addAll(walkChildren((ObjectTypeDefinition) typeDef, table, fields));
       return inferredObjectField;
     } else {
@@ -241,7 +250,7 @@ public class SchemaInference {
       List<InferredField> fields, ObjectTypeDefinition parent) {
     return new NestedField(relationship,
         inferObjectField(fieldDefinition, relationship.getToTable(),
-            fields, parent, relationship.getFromTable()));
+            fields, parent, relationship.getFromTable(), relationship.macro));
   }
 
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,
