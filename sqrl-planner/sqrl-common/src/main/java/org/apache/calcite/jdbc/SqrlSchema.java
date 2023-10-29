@@ -1,29 +1,28 @@
 package org.apache.calcite.jdbc;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
-
-import java.util.List;
-import java.util.stream.Stream;
 
 @Getter
 public class SqrlSchema extends SimpleCalciteSchema {
@@ -35,13 +34,8 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   //Current table mapping
   private final Map<NamePath, NamePath> pathToAbsolutePathMap = new HashMap<>();
+  //Required for looking up tables
   private final Map<NamePath, String> pathToSysTableMap = new HashMap<>();
-
-  //Full table mapping
-  private final Map<String, NamePath> sysTableToPathMap = new HashMap<>();
-  private final Multimap<String, Relationship> sysTableToRelationshipMap = LinkedHashMultimap.create();
-
-  private final Map<String, List<String>> sysTableToFieldNameMap = new HashMap<>();
 
   public SqrlSchema(SqrlFramework framework, TypeFactory typeFactory) {
     super(null, CalciteSchema.createRootSchema(false, false).plus(), "");
@@ -82,12 +76,23 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addTable(RootSqrlTable root) {
-    removePrefix(this.pathToAbsolutePathMap.keySet(),root.getName().toNamePath());
-    plus().add(String.join(".", root.getPath().toStringList()) + "$"
-        + sqrlFramework.getUniqueMacroInt().incrementAndGet(), root);
-    if (!root.getParameters().isEmpty()) {
-      plus().add(root.getName().getDisplay(), root);
+    //Allow shadowing if table was not referenced before..
+    if (root.getParameters().isEmpty()) {
+      NamePath prefix = root.getAbsolutePath();
+      for (NamePath key : pathToAbsolutePathMap.keySet()) {
+        if (key.size() >= prefix.size() && key.subList(0, prefix.size()).equals(prefix)) {
+          String name = String.join(".", key.toStringList());
+          List<FunctionEntry> functionEntries = this.functionMap.map().get(name);
+          for (FunctionEntry entry : new ArrayList<>(functionEntries)) {
+            this.functionMap.remove(name, entry);
+          }
+        }
+      }
+      removePrefix(pathToAbsolutePathMap.keySet(), prefix);
     }
+
+    pathToAbsolutePathMap.put(root.getFullPath(), root.getAbsolutePath());
+    plus().add(root.getDisplayName(), root);
   }
 
   private void removePrefix(Set<NamePath> set, NamePath prefix) {
@@ -104,18 +109,20 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addRelationship(Relationship relationship) {
-    NamePath toTable = sysTableToPathMap.get(relationship.getToTable());
-    pathToAbsolutePathMap.put(relationship.getPath(), toTable);
-    this.sysTableToRelationshipMap.put(relationship.getFromTable(), relationship);
-    plus().add(String.join(".", relationship.getPath().toStringList()) + "$"
-        + sqrlFramework.getUniqueMacroInt().incrementAndGet(), relationship);
-    if (!relationship.getParameters().isEmpty()) {
-      plus().add(String.join(".", relationship.getPath().toStringList()), relationship);
-    }
+    pathToAbsolutePathMap.put(relationship.getFullPath(), relationship.getAbsolutePath());
+
+    plus().add(relationship.getDisplayName(), relationship);
   }
 
   public void addTableMapping(NamePath path, String nameId) {
     this.pathToSysTableMap.put(path, nameId);
-    this.sysTableToPathMap.put(nameId, path);
+  }
+
+  public List<SqrlTableMacro> getTableFunctions() {
+    return getFunctionNames().stream()
+        .flatMap(f->getFunctions(f, false).stream())
+        .filter(f->f instanceof SqrlTableMacro)
+        .map(f->(SqrlTableMacro)f)
+        .collect(Collectors.toList());
   }
 }

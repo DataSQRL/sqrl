@@ -1,5 +1,6 @@
 package com.datasqrl.calcite.plan;
 
+import static com.datasqrl.plan.validate.ScriptValidator.addError;
 import static com.datasqrl.plan.validate.ScriptValidator.getParentPath;
 
 import com.datasqrl.calcite.Dialect;
@@ -18,6 +19,7 @@ import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
@@ -117,6 +119,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
     RelNode expanded = planner.expandMacros(relNode);
+    System.out.println(planner.relToString(Dialect.CALCITE, expanded));
 
     List<Function> isA = validator.getIsA().get(node);
 
@@ -126,15 +129,19 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           .collect(Collectors.toList());
       NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
 
-      NamePath fromTable = path.popLast();
-      NamePath toTable = isASqrl.get(isASqrl.size()-1).getPath();
-      String fromSysTable = planner.getSchema().getPathToSysTableMap().get(fromTable);
-      String toSysTable = planner.getSchema().getPathToSysTableMap().get(toTable);
+//      NamePath fromTable = path.popLast();
+      NamePath toTable = isASqrl.get(isASqrl.size()-1).getAbsolutePath();
+//      String fromSysTable = planner.getSchema().getPathToSysTableMap().get(fromTable);
+//      String toSysTable = planner.getSchema().getPathToSysTableMap().get(toTable);
       Supplier<RelNode> nodeSupplier = ()->expanded;
 
+      int version = framework.getUniqueMacroInt().incrementAndGet();
+      String internalName = String.join(".", path.toStringList()) + "$"
+          + version;
+
       Relationship rel = new Relationship(path.getLast(),
-          path, fromSysTable, toSysTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
-          result.getParams(), nodeSupplier);
+          path, toTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
+          result.getParams(), nodeSupplier, internalName, version);
       planner.getSchema().addRelationship(rel);
     } else {
       List<String> path = assignment.getIdentifier().names;

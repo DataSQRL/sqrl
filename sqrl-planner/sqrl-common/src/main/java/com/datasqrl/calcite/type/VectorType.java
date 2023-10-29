@@ -85,4 +85,9 @@ public class VectorType extends BridgingFlinkType implements PrimitiveType {
   public DataType getFlinkNativeType() {
     return DataTypes.ARRAY(DataTypes.DOUBLE());
   }
+
+  @Override
+  public String getName() {
+    return getDigestName();
+  }
 }

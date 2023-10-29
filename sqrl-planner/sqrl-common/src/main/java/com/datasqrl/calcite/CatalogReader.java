@@ -43,19 +43,4 @@ public class CatalogReader extends CalciteCatalogReader implements CatalogResolv
     NamePath rel = schema.getPathToAbsolutePathMap().get(path);
     return (rel == null) ? path : rel;
   }
-
-  public Optional<SqlUserDefinedTableFunction> getTableFunction(List<String> path) {
-    if (path.isEmpty()) {
-      return Optional.empty();
-    }
-
-    return SqrlNameMatcher.getLatestVersion(NameCanonicalizer.SYSTEM, schema.plus().getFunctionNames(),
-            String.join(".", path))
-        .flatMap(s -> this.getOperatorList().stream()
-        .filter(f -> f.getName().equalsIgnoreCase(s))
-        .filter(f -> f instanceof SqlUserDefinedTableFunction)
-        .map(f -> (SqlUserDefinedTableFunction) f)
-        .findFirst());
-  }
-
 }

@@ -3,16 +3,21 @@
  */
 package com.datasqrl.graphql.generate;
 
-import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.conformName;
+import static com.datasqrl.graphql.generate.ObjectTypeGenerator.logIfInvalid;
+import static com.datasqrl.graphql.generate.SchemaGenerator.isValidGraphQLName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
+import static graphql.schema.GraphQLNonNull.nonNull;
 
 import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Column;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.FieldVisitor;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
 import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLInputType;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.schema.FunctionParameter;
@@ -42,29 +47,56 @@ public class ArgumentGenerator implements
           .filter(p->!((SqrlFunctionParameter)p).isInternal())
           .filter(p->getInputType(p.getType(null)).isPresent())
           .map(parameter -> GraphQLArgument.newArgument()
-              .name(stripVariableIdentifier(parameter.getName()))
-              .type(getInputType(parameter.getType(null)).get())
+              .name(((SqrlFunctionParameter)parameter).getVariableName())
+              .type(nonNull(getInputType(parameter.getType(null)).get()))
               .build()).collect(Collectors.toList());
     }
   }
 
-  private String stripVariableIdentifier(String name) {
-    return name.charAt(0) == '@' ? name.substring(1) : name;
-  }
-
   @Override
   public List<GraphQLArgument> visit(SQRLTable table, SchemaGeneratorContext context) {
+    List<FunctionParameter> params = table.getTableMacro().getParameters().stream()
+        .filter(f -> !((SqrlFunctionParameter) f).isInternal())
+        .collect(Collectors.toList());
+
+    if (!params.isEmpty()) {
+      List<GraphQLArgument> arguments = params.stream()
+          .map(a->(SqrlFunctionParameter)a)
+          .filter(a-> logIfInvalid(isValidGraphQLName(a.getVariableName()), table, a))
+          .map(this::createArgument)
+          .collect(Collectors.toList());
+      return arguments;
+    }
+
     return table.getColumns(true)
         .stream()
         .filter(f -> getInputType(f.getType()).isPresent())
+        .filter(f-> logIfInvalid(isValidGraphQLName(f.getName().getDisplay()), table, f))
         .map(f -> GraphQLArgument.newArgument()
-            .name(conformName(f.getName().getDisplay()))
+            .name(f.getName().getDisplay())
             .type(getInputType(f.getType()).get())
             .build())
         .limit(8)
         .collect(Collectors.toList());
   }
 
+  private GraphQLArgument createArgument(FunctionParameter parameter) {
+    SqrlFunctionParameter sqrlFunctionParameter = (SqrlFunctionParameter)parameter;
+    //todo check if type is real
+    GraphQLInputType argType = getInputType(sqrlFunctionParameter.getRelDataType()).get();
+//    if (parameter.getDefaultValue().isPresent()) {
+//      return GraphQLArgument.newArgument()
+//          .name(parameter.getName())
+//          .type(argType)
+//          .defaultValue(((SqlLiteral)parameter.getDefaultValue().get()).getValue()) // Note: Convert SqlNode to an appropriate Java type.
+//          .build();
+//    } else {
+      return GraphQLArgument.newArgument()
+          .name(sqrlFunctionParameter.getVariableName())
+          .type(nonNull(argType))
+          .build();
+//    }
+  }
   private boolean allowedArguments(Relationship field) {
     //No arguments for to-one rels or parent fields
     return field.getMultiplicity().equals(Multiplicity.MANY) &&

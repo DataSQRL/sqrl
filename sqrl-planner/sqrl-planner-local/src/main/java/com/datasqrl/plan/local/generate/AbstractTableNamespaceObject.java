@@ -107,15 +107,16 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
             .getTable();
         ScriptRelationalTable scriptParentTable = (ScriptRelationalTable) parentTable;
 
-        String fromSysTable = framework.getSchema().getPathToSysTableMap().get(parentPath);
-        String toSysTable = framework.getSchema().getPathToSysTableMap().get(path);
-
         Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(scriptParentTable, table);
-        Relationship relationship = new Relationship(path.getLast(), path,
-            fromSysTable, toSysTable, JoinType.CHILD,
+        int version = framework.getUniqueMacroInt().incrementAndGet();
+        String internalName = String.join(".", path.toStringList()) + "$"
+            + version;
+        Relationship relationship = new Relationship(path.getLast(), path, path,
+            JoinType.CHILD,
             Multiplicity.MANY, //todo fix multiplicity
             pkWrapper.getLeft(),
-            () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
+            () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()),
+            internalName, version);
         framework.getSchema().addRelationship(relationship);
 
         Relationship rel = createParent(framework, path, scriptParentTable, table);
@@ -128,14 +129,15 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       ScriptRelationalTable childScriptTable) {
     Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(childScriptTable,
         parentScriptTable);
-    String fromSysTable = framework.getSchema().getPathToSysTableMap().get(path);
-    String toSysTable = framework.getSchema().getPathToSysTableMap().get(path.popLast());
-
+    NamePath relPath = path.concat(ReservedName.PARENT);
+    int version = framework.getUniqueMacroInt().incrementAndGet();
+    String internalName = String.join(".", relPath.toStringList()) + "$"
+        + version;
     return new Relationship(ReservedName.PARENT,
-        path.concat(ReservedName.PARENT),
-        fromSysTable, toSysTable,
+        relPath, path.popLast(),
         JoinType.PARENT, Multiplicity.ONE, pkWrapper.getLeft(),
-        () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
+        () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()),
+        internalName, version);
   }
 
   public static Pair<List<FunctionParameter>, SqlNode> createPkWrapper(ScriptRelationalTable fromTable,

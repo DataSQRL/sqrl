@@ -3,24 +3,37 @@
  */
 package com.datasqrl.plan.local.analyze;
 
-import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
+import com.datasqrl.graphql.inference.SchemaBuilder;
+import com.datasqrl.graphql.inference.SchemaInference;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import com.datasqrl.graphql.server.Model;
+import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.Model.ArgumentSet;
+import com.datasqrl.graphql.server.Model.Coords;
+import com.datasqrl.graphql.server.Model.FieldLookupCoords;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
@@ -31,6 +44,7 @@ import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptTable;
@@ -91,9 +105,68 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
         .includeDirectives(false);
 
-    String print = new SchemaPrinter(opts).print(generate);
-    if (isBlank(print)) {
-      System.out.println(print);
+    String schema = new SchemaPrinter(opts).print(generate);
+
+    System.out.println(schema);
+    APISource source = APISource.of(schema);
+
+    InferredSchema inferredSchema = new SchemaInference(
+        framework,
+        "<>",
+        mock(MockModuleLoader.class),
+        source,
+        sqrlSchemaForInference,
+        planner.createRelBuilder(),
+        mock(APIConnectorManagerImpl.class))
+        .accept();
+
+    SchemaBuilder schemaBuilder = new SchemaBuilder(framework, source,
+        sqrlSchemaForInference,
+        planner.createRelBuilder(),
+        planner,
+        framework.getSqrlOperatorTable(),
+        mock(APIConnectorManagerImpl.class));
+
+    RootGraphqlModel root = inferredSchema.accept(schemaBuilder,
+        null);
+
+    for (Coords coord : root.getCoords()) {
+      if (coord instanceof FieldLookupCoords) {
+//        System.out.println(((FieldLookupCoords) coord).getColumnName());;
+      } else if (coord instanceof ArgumentLookupCoords) {
+        Set<ArgumentSet> matchs = ((ArgumentLookupCoords) coord).getMatchs();
+        for (ArgumentSet set : matchs){
+//          String sql = planner.getFramework().getQueryPlanner().relToString(Dialect.CALCITE,
+//              ((ApiQueryBase) set.getQuery()).getQuery().getRelNode());
+//          System.out.println(sql);
+        }
+      }
+    }
+
+    System.out.println(schema);
+//    APISource apiSchema = new APISource(Name.system("schema"), schema);
+//    InferredSchema inferredSchema = new SchemaInference(
+//        framework,
+//        apiSchema.getName().getDisplay(),
+//        new MockModuleLoader(null, Map.of(), Optional.empty()),
+//        apiSchema,
+//        sqrlSchemaForInference,
+//        planner.createRelBuilder(),
+//        mock(APIConnectorManager.class))
+//        .accept();
+//
+//    SchemaBuilder schemaBuilder = new SchemaBuilder(framework, apiSchema,
+//        sqrlSchemaForInference,
+//        planner.createRelBuilder(),
+//        planner,
+//        framework.getSqrlOperatorTable(),
+//        mock(APIConnectorManager.class));
+
+//    RootGraphqlModel root = inferredSchema.accept(schemaBuilder,
+//        null);
+
+    if (isBlank(schema)) {
+      System.out.println(schema);
       throw new RuntimeException("Could not validate graphql.");
     }
 
@@ -282,7 +355,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void invalidMultilineQueryTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Customer := SELECT * FROM Customer\nWHERE x = null;");
+    builder.add("Customer2 := SELECT * FROM Customer\nWHERE x = null;");
     validateScriptInvalid(builder.getScript());
   }
 
@@ -990,7 +1063,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScript("IMPORT ecommerce-data.*;\n"
         + "CustomerOrders1 := SELECT o.id, c.name FROM Orders o INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
         + "CustomerOrders2 := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name FROM Orders o LEFT INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
-        + "CustomerOrders1 := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name FROM Orders o RIGHT INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
+        + "CustomerOrders3 := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name FROM Orders o RIGHT INTERVAL JOIN Customer c ON o._ingest_time < c._ingest_time;\n"
     );
   }
 
@@ -1012,9 +1085,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void temporalJoins() {
     validateScript("IMPORT ecommerce-data.*;\n"
         + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
-        + "CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid=c.customerid;\n"
-        + "CustomerOrders := SELECT o.id, c.name FROM Orders o LEFT TEMPORAL JOIN Customer c ON o.customerid=c.customerid;\n"
-        + "CustomerOrders := SELECT o.id, c.name FROM Customer c RIGHT TEMPORAL JOIN Orders o ON o.customerid=c.customerid;");
+        + "CustomerOrders1 := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders2 := SELECT o.id, c.name FROM Orders o LEFT TEMPORAL JOIN Customer c ON o.customerid=c.customerid;\n"
+        + "CustomerOrders3 := SELECT o.id, c.name FROM Customer c RIGHT TEMPORAL JOIN Orders o ON o.customerid=c.customerid;");
   }
 
   @Test
@@ -1159,6 +1232,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         + "Orders.entries.product(@id: Int) := JOIN Product p ON p.productid = @id;\n"
         + "Y(@id: Int) := SELECT * FROM TABLE(`Orders.entries.product`(@id));");
   }
+
   @Test
   @Disabled
   //todo: Illegal use of dynamic param error
@@ -1235,11 +1309,11 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void castTest() {
     validateScript("IMPORT ecommerce-data.Orders;"
-        + "X := SELECT CAST(1 AS String) AS cast1 From Orders;"
-        + "X := SELECT CAST(1 AS Boolean) AS cast2 From Orders;"
-        + "X := SELECT CAST(1 AS Double) AS cast3 From Orders;"
-        + "X := SELECT CAST(1 AS Int) AS cast4 From Orders;"
-        + "X := SELECT CAST(1 AS Timestamp) AS cast5 From Orders;");
+        + "X1 := SELECT CAST(1 AS String) AS cast1 From Orders;"
+        + "X2 := SELECT CAST(1 AS Boolean) AS cast2 From Orders;"
+        + "X3 := SELECT CAST(1 AS Double) AS cast3 From Orders;"
+        + "X4 := SELECT CAST(1 AS Int) AS cast4 From Orders;"
+        + "X5 := SELECT CAST(1 AS Timestamp) AS cast5 From Orders;");
   }
 
   @Test

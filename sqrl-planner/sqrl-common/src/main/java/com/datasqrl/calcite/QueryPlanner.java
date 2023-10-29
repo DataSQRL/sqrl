@@ -2,9 +2,7 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
-import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.calcite.convert.PostgresSqlConverter;
@@ -426,10 +424,6 @@ public class QueryPlanner {
 
   public String relToString(Dialect dialect, RelNode relNode) {
     return sqlToString(dialect, relToSql(dialect, relNode));
-  }
-
-  public Optional<SqlUserDefinedTableFunction> getTableFunction(List<String> path) {
-    return catalogReader.getTableFunction(path);
   }
 
   public RelNode expandMacros(RelNode relNode) {

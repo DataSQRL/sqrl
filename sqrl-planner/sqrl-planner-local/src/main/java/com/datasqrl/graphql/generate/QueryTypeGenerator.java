@@ -3,6 +3,8 @@
  */
 package com.datasqrl.graphql.generate;
 
+import static com.datasqrl.graphql.generate.ObjectTypeGenerator.logIfInvalid;
+import static com.datasqrl.graphql.generate.SchemaGenerator.isValidGraphQLName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.conformName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeReference;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.wrap;
@@ -14,32 +16,45 @@ import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTable
 import com.datasqrl.schema.Multiplicity;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Generates the GraphQL Query type.
  */
 public class QueryTypeGenerator implements
-    SqrlTableVisitor<GraphQLFieldDefinition, SchemaGeneratorContext>,
-    CalciteSchemaVisitor<GraphQLObjectType, SchemaGeneratorContext> {
+    SqrlTableVisitor<Void, SchemaGeneratorContext>,
+    CalciteSchemaVisitor<Void, SchemaGeneratorContext> {
 
-  @Override
-  public GraphQLObjectType visit(SqrlSchemaForInference schema, SchemaGeneratorContext context) {
-    return GraphQLObjectType.newObject()
-        .name("Query")
-        .fields(schema.getRootTables().stream()
-            .filter(SchemaGeneratorUtil::isAccessible)
-            .map(t -> t.accept(this, context))
-            .collect(Collectors.toList()))
-        .build();
+  private final List<GraphQLFieldDefinition> queryFields;
+
+  public QueryTypeGenerator(List<GraphQLFieldDefinition> queryFields) {
+    this.queryFields = queryFields;
   }
 
   @Override
-  public GraphQLFieldDefinition visit(SQRLTable table, SchemaGeneratorContext context) {
-    return GraphQLFieldDefinition.newFieldDefinition()
-        .name(conformName(table.getName()))
+  public Void visit(SqrlSchemaForInference schema, SchemaGeneratorContext context) {
+    schema.getRootTables().stream()
+        .filter(SchemaGeneratorUtil::isAccessible)
+        .forEach(t -> t.accept(this, context));
+
+    return null;
+  }
+
+  @Override
+  public Void visit(SQRLTable table, SchemaGeneratorContext context) {
+    if (!logIfInvalid(isValidGraphQLName(table.getName()), context.sqrlTable)) {
+      return null;
+    }
+
+    GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
+        .name(table.getName())
         .type(wrap(getTypeReference(table, context.getNames()), Multiplicity.MANY))
         .arguments(table.accept(new ArgumentGenerator(), context))
         .build();
+    queryFields.add(field);
+
+    return null;
   }
 }

@@ -3,6 +3,7 @@ package com.datasqrl.calcite.sqrl;
 import com.datasqrl.calcite.NormalizeTablePath.PathItem;
 import com.datasqrl.calcite.NormalizeTablePath.SelfTablePathItem;
 import com.datasqrl.calcite.NormalizeTablePath.TableFunctionPathItem;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.ReservedName;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -11,13 +12,20 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlOperandTypeChecker;
+import org.apache.calcite.sql.type.SqlOperandTypeInference;
+import org.apache.calcite.sql.type.SqlReturnTypeInference;
 
 @AllArgsConstructor
 public class PathToSql {
@@ -37,7 +45,11 @@ public class PathToSql {
         stack.push(aliasedCall);
       } else if (item instanceof TableFunctionPathItem) {
         TableFunctionPathItem tableFncItm = (TableFunctionPathItem) item;
-        SqlCall call = tableFncItm.getOp().createCall(SqlParserPos.ZERO, tableFncItm.getArguments());
+
+        SqlOperator fun = new SqlUnresolvedFunction(new SqlIdentifier(((SqrlTableMacro)tableFncItm.getOp()).getDisplayName(), SqlParserPos.ZERO), (SqlReturnTypeInference)null,
+            (SqlOperandTypeInference)null, (SqlOperandTypeChecker)null, null, SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION);
+        SqlCall call = fun.createCall(SqlParserPos.ZERO, tableFncItm.getArguments());
+
         call = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO, call);
         SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(
             SqlParserPos.ZERO,

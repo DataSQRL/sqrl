@@ -30,6 +30,7 @@ import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.collect.ArrayListMultimap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,12 +207,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   public Void visit(SqrlAssignment assignment, Void context) {
     if (assignment.getIdentifier().names.size() > 1) {
       List<String> path = SqrlListUtil.popLast(assignment.getIdentifier().names);
-      Optional<SqlUserDefinedTableFunction> tableFunction = framework.getQueryPlanner()
-          .getTableFunction(path);
+      Collection<Function> tableFunction = framework.getQueryPlanner().getSchema()
+          .getFunctions(String.join(".", path), false);
       if (tableFunction.isEmpty()) {
         throw addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Could not find table: %s", String.join(".", path));
       }
-      TableFunction function = tableFunction.get().getFunction();
+      Function function = new ArrayList<>(tableFunction).get(0);
       if (function instanceof Relationship && ((Relationship) function).getJoinType() != JoinType.CHILD) {
         addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Cannot assign query to table");
       }
@@ -233,6 +234,14 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   }
 
   private boolean materializeSelfQuery(SqrlSqlQuery node) {
+    if (node.getTableArgs().isEmpty()) {
+      Collection<Function> tableFunction = framework.getQueryPlanner().getSchema()
+          .getFunctions(String.join(".", node.getIdentifier().names), false);
+
+      if (tableFunction.size() > 0) {
+        throw addError(ErrorLabel.GENERIC, node, "Cannot shadow table");
+      }
+    }
     //don't materialize self if we have external arguments, the query will be inlined or called from gql
     return !(node.getTableArgs().isPresent() && node.getTableArgs().get().getParameters().size() > 0) ||
             //materialize self if we have a LIMIT clause
@@ -329,7 +338,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       List<String> parent = List.of();
       if (statement.getIdentifier().names.size() > 1) {
         parent = getParentPath(statement);
-        Optional<SqlUserDefinedTableFunction> sqrlTable = planner.getTableFunction(parent);
+        Collection<Function> sqrlTable = planner.getSchema().getFunctions(
+            String.join(".", parent), false);
         if (sqrlTable.isEmpty()) {
           throw addError(ErrorLabel.GENERIC, statement.getIdentifier()
                   .getComponent(statement.getIdentifier().names.size()-1),
@@ -345,8 +355,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       sqlNode = result.getSqlNode();
 
-      framework.getSqrlOperatorTable().addPlanningFnc(result.getFncs());
-
       if (statement instanceof SqrlExpressionQuery) {
         SqlNode aggregate = ((SqrlSqlValidator) validator).getAggregate((SqlSelect) sqlNode);
         if (aggregate != null) {
@@ -355,8 +363,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         }
       }
 
-      validated = validator.validate(sqlNode);
+//      System.out.println(sqlNode);
+//      validated = validator.validate(sqlNode);
     } catch (CalciteContextException e) {
+      e.printStackTrace();
       throw addError(ErrorLabel.GENERIC, e);
     } catch (CollectedException e) {
       return;
@@ -367,8 +377,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
 
     //we have enough to plan
-    RelDataType type = validator.getValidatedNodeType(validated);
-    fieldNames.put(statement, type.getFieldNames());
+//    RelDataType type = validator.getValidatedNodeType(validated);
+//    fieldNames.put(statement, type.getFieldNames());
     try {
 //      RelNode relNode = planner.plan(Dialect.CALCITE, validated);
 //      type = relNode.getRowType();
@@ -680,7 +690,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       return;
     }
 
-    Optional<SqlUserDefinedTableFunction> tableFunction = planner.getTableFunction(path);
+    Collection<Function> tableFunction = planner.getSchema().getFunctions(
+        String.join(".", path), false);
     if (tableFunction.isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Cannot column or query to table");
     }

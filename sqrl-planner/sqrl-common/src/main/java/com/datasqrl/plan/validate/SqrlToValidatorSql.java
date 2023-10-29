@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -35,6 +36,7 @@ import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunction;
@@ -82,16 +84,24 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
         SqlIdentifier ident = (SqlIdentifier) node;
         if (ident.isStar() && ident.names.size() == 1) {
           for (List<String> path : newContext.getAliasPathMap().values()) {
-            Optional<SqlUserDefinedTableFunction> sqrlTable = planner.getTableFunction(path);
-            if (sqrlTable.isPresent()) {
-              isA.put(context.root, sqrlTable.get().getFunction());
+            Collection<Function> sqrlTable = planner.getSchema().getFunctions(
+                String.join(".",path), false);
+
+            if (!sqrlTable.isEmpty()) {
+              new ArrayList<>(sqrlTable).stream()
+                      .map(f->(SqrlTableMacro)f)
+                          .forEach(f->isA.put(context.root, f));
             }
           }
         } else if (ident.isStar() && ident.names.size() == 2) {
           List<String> path = newContext.getAliasPath(ident.names.get(0));
-          Optional<SqlUserDefinedTableFunction> sqrlTable = planner.getTableFunction(path);
-          if (sqrlTable.isPresent()) {
-            isA.put(context.root, sqrlTable.get().getFunction());
+          Collection<Function> sqrlTable = planner.getSchema().getFunctions(
+              String.join(".",path), false);
+
+          if (!sqrlTable.isEmpty()) {
+            new ArrayList<>(sqrlTable).stream()
+                .map(f->(SqrlTableMacro)f)
+                .forEach(f->isA.put(context.root, f));
           }
         }
       }
@@ -161,12 +171,11 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
 
     boolean isAlias = context.hasAlias(identifier);
     boolean isSelf = identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical());
-    Optional<SqlUserDefinedTableFunction> tableFunction = planner.getTableFunction(List.of(identifier));
+    Collection<Function> tableFunction = planner.getSchema().getFunctions(
+        identifier, false);
 
-    TableFunction latestTable;
-    if (tableFunction.isPresent()) {
+    if (!tableFunction.isEmpty()) {
       pathWalker.walk(identifier);
-      latestTable = tableFunction.get().getFunction();
     } else if (isAlias) {
       if (!input.hasNext()) {
         throw addError(errorCollector, ErrorLabel.GENERIC, item, "Alias by itself.");
@@ -183,23 +192,22 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
 
       pathWalker.walk(nextIdentifier.get());
       //get table of current path (no args)
-      Optional<SqlUserDefinedTableFunction> table = planner.getTableFunction(pathWalker.getPath());
+      Collection<Function> table = planner.getSchema().getFunctions(
+          String.join(".",pathWalker.getPath()), false);
 
       if (table.isEmpty()) {
         throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find path: %s",
             flattenNames(pathWalker.getUserDefined()));
       }
-
-      latestTable = table.get().getFunction();
     } else if (isSelf) {
       pathWalker.setPath(context.getCurrentPath());
       if (!input.hasNext()) {//treat self as a table
-        Optional<SqlUserDefinedTableFunction> table = planner.getTableFunction(context.getCurrentPath());
+        Collection<Function> table = planner.getSchema().getFunctions(
+            String.join(".",context.getCurrentPath()), false);
         if (table.isEmpty()) {
           throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find parent table: %s",
               flattenNames(context.getCurrentPath()));
         }
-        latestTable = table.get().getFunction();
       } else { //treat self as a parameterized binding to the next function
         item = input.next();
         Optional<String> nextIdentifier = getIdentifier(item);
@@ -208,12 +216,12 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
         }
         pathWalker.walk(nextIdentifier.get());
 
-        Optional<SqlUserDefinedTableFunction> table = planner.getTableFunction(pathWalker.getPath());
+        Collection<Function> table =
+            planner.getSchema().getFunctions(String.join(".", pathWalker.getPath()), false);
         if (table.isEmpty()) {
           throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find table: %s",
               flattenNames(pathWalker.getUserDefined()));
         }
-        latestTable = table.get().getFunction();
       }
     } else {
       throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find table: %s",
@@ -228,35 +236,24 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
       }
       pathWalker.walk(nextIdentifier.get());
 
-      Optional<SqlUserDefinedTableFunction> table = planner.getTableFunction(pathWalker.getPath());
+      Collection<Function> table =
+          planner.getSchema().getFunctions(String.join(".", pathWalker.getPath()), false);
       if (table.isEmpty()) {
         throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find table: %s",
             flattenNames(pathWalker.getUserDefined()));
       }
-      latestTable = table.get().getFunction();
     }
 
-    RelDataTypeFieldBuilder b = new RelDataTypeFieldBuilder(
-        new FieldInfoBuilder(planner.getCatalogReader().getTypeFactory()));
-    ((SqrlTableMacro) latestTable).getRowType().getFieldList()
-        .forEach(c -> b.add(c.getName(), c.getType()));
-    final RelDataType latestTable2 = b.build();
-
-    String name = getDisplay(node) + "$validate$" + uniqueId.incrementAndGet();
-    SqlUserDefinedTableFunction fnc = new ValidatorTableFunction(name, latestTable2);
-
-    SqlCall call = fnc.createCall(SqlParserPos.ZERO, List.of());
-    plannerFns.add(fnc);
-
-    SqlCall call1 = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO, call);
+    SqlCall call1 = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO,
+        new SqlIdentifier(String.join(".", pathWalker.getAbsolutePath()), SqlParserPos.ZERO));
     return new Result(call1, pathWalker.getAbsolutePath(), plannerFns);
   }
 
   @Override
   public Result visitCall(SqlCall node, Context context) {
-    if (node.getOperator() instanceof SqlLateralOperator) {
-      return new Result(node, List.of(), List.of());
-    }
+//    if (node.getOperator() instanceof SqlLateralOperator) {
+//      return new Result(node, List.of(), List.of());
+//    }
     throw addError(errorCollector, ErrorLabel.GENERIC, node, "Call not yet supported %s",
         node.getOperator().getName());
   }

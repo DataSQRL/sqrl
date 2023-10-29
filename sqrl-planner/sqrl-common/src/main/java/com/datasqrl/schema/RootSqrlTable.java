@@ -19,7 +19,7 @@ public class RootSqrlTable implements SqrlTableMacro {
   private final Table internalTable;
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
-  private final NamePath path;
+  private final NamePath fullPath;
 
   public RootSqrlTable(Name name, Table internalTable, List<FunctionParameter> parameters,
       Supplier<RelNode> viewTransform) {
@@ -27,8 +27,9 @@ public class RootSqrlTable implements SqrlTableMacro {
     this.internalTable = internalTable;
     this.parameters = parameters;
     this.viewTransform = viewTransform;
-    this.path = NamePath.of(name);
+    this.fullPath = NamePath.of(name);
   }
+
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
@@ -48,5 +49,20 @@ public class RootSqrlTable implements SqrlTableMacro {
   @Override
   public RelDataType getRowType() {
     return getRowType(null, null);
+  }
+
+  @Override
+  public NamePath getAbsolutePath() {
+    return fullPath;
+  }
+
+  @Override
+  public String getInternalName() {
+    return getName().getDisplay();
+  }
+
+  @Override
+  public String getDisplayName() {
+    return getName().getDisplay();
   }
 }

@@ -30,6 +30,8 @@ import com.datasqrl.util.data.Retail;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,6 +44,7 @@ import lombok.Builder;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.AfterEach;
@@ -685,10 +688,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   public static <T extends SqrlTableMacro> Optional<T> getLatestTableFunction(
       SqrlSchema sqrlSchema, String tableName) {
-    Optional<SqlUserDefinedTableFunction> tableFunction = sqrlSchema.getSqrlFramework().getQueryPlanner().getTableFunction(
-        List.of(tableName));
-    return tableFunction
-        .map(f->(T) f.getFunction());
+
+    List<Function> tableFunction =
+        new ArrayList<>(sqrlSchema.getSqrlFramework().getSchema().getFunctions(String.join(".", tableName), false));
+    return tableFunction.size() == 0? Optional.empty() : Optional.of((T)tableFunction.get(0));
   }
 
   private void createSnapshots() {

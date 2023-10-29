@@ -38,4 +38,8 @@ public class SqrlFunctionParameter implements FunctionParameter {
   public boolean isOptional() {
     return defaultValue.isPresent();
   }
+
+  public String getVariableName() {
+    return name.charAt(0) == '@' ? name.substring(1) : name;
+  }
 }

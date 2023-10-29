@@ -10,6 +10,6 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 public interface CatalogResolver {
   NamePath getSqrlAbsolutePath(List<String> path);
   RelOptTable getTableFromPath(List<String> names);
-  Optional<SqlUserDefinedTableFunction> getTableFunction(List<String> path);
+//  Optional<SqlUserDefinedTableFunction> getTableFunction(List<String> path);
   RelDataTypeFactory getTypeFactory();
 }

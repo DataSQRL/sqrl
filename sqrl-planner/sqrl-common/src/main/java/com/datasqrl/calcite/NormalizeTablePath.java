@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlCall;
@@ -35,11 +36,11 @@ import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
  */
 public class NormalizeTablePath {
   private static final String ALIAS_PREFIX = "_t";
-  private final CatalogResolver catalogResolver;
+  private final CatalogReader catalogResolver;
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping;
   private final AtomicInteger aliasInt = new AtomicInteger(0);
 
-  public NormalizeTablePath(CatalogResolver catalogResolver, Map<FunctionParameter, SqlDynamicParam> paramMapping) {
+  public NormalizeTablePath(CatalogReader catalogResolver, Map<FunctionParameter, SqlDynamicParam> paramMapping) {
     this.catalogResolver = catalogResolver;
     this.paramMapping = paramMapping;
   }
@@ -62,8 +63,8 @@ public class NormalizeTablePath {
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
 
     String alias;
-    if (catalogResolver.getTableFunction(List.of(identifier)).isPresent()) {
-      SqlUserDefinedTableFunction op = catalogResolver.getTableFunction(List.of(identifier)).get();
+    if (getTable(identifier).isPresent()) {
+      TableFunction op = getTable(identifier).get();
       alias = generateAlias();
       pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), op, List.of(), alias));
       pathWalker.walk(identifier);
@@ -81,11 +82,11 @@ public class NormalizeTablePath {
       pathWalker.walk(nextIdentifier);
 
       // Lookup function
-      Optional<SqlUserDefinedTableFunction> fnc = catalogResolver.getTableFunction(pathWalker.getPath());
+      Optional<TableFunction> fnc = getTable(pathWalker.getPath());
       Preconditions.checkState(fnc.isPresent(), "Table function not found %s", pathWalker.getPath());
 
       // Rewrite arguments so internal arguments are prefixed with the alias
-      List<SqlNode> args = rewriteArgs(identifier, fnc.get().getFunction(), context, params);
+      List<SqlNode> args = rewriteArgs(identifier, fnc.get(), context, params);
 
       pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), fnc.get(), args, alias));
     } else if (identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical())) {
@@ -104,12 +105,12 @@ public class NormalizeTablePath {
             .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
         pathWalker.walk(nextIdentifier);
 
-        Optional<SqlUserDefinedTableFunction> fnc = catalogResolver.getTableFunction(pathWalker.getAbsolutePath());
+        Optional<TableFunction> fnc = getTable(pathWalker.getAbsolutePath());
         Preconditions.checkState(fnc.isPresent(), "Table function not found %s", pathWalker.getPath());
 
         alias = generateAlias();
         // Rewrite arguments
-        List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.get().getFunction(), context,
+        List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.get(), context,
             params);
         pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), fnc.get(), args, alias));
       }
@@ -123,14 +124,28 @@ public class NormalizeTablePath {
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
       pathWalker.walk(nextIdentifier);
 
-      Optional<SqlUserDefinedTableFunction> fnc = catalogResolver.getTableFunction(pathWalker.getPath());
-      List<SqlNode> args = rewriteArgs(alias, fnc.get().getFunction(), context, params);
+
+      Optional<TableFunction> fnc = getTable(pathWalker.getPath());
+      List<SqlNode> args = rewriteArgs(alias, fnc.get(), context, params);
       String newAlias = generateAlias();
       pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), fnc.get(), args, newAlias));
       alias = newAlias;
     }
 
     return pathItems;
+  }
+
+  private Optional<TableFunction> getTable(List<String> path) {
+    return getTable(String.join(".", path));
+  }
+
+  private Optional<TableFunction> getTable(String identifier) {
+    ArrayList<Function> functions = new ArrayList<>(
+        catalogResolver.getSchema().getFunctions(identifier, false));
+    //first function assumed to be our table function
+    // Also assumed to be table function
+    //TODO: Fix me
+    return functions.isEmpty() ? Optional.empty() : Optional.of((TableFunction) functions.get(0));
   }
 
   private List<SqlNode> rewriteArgs(String alias, TableFunction function, Context context,
@@ -195,7 +210,7 @@ public class NormalizeTablePath {
   @Getter
   public class TableFunctionPathItem implements PathItem {
     List<String> path;
-    SqlUserDefinedTableFunction op;
+    TableFunction op;
     List<SqlNode> arguments;
     String alias;
   }
