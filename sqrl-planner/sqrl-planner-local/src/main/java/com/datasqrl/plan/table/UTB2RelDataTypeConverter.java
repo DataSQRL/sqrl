@@ -3,9 +3,12 @@ package com.datasqrl.plan.table;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.util.CalciteUtil;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
@@ -34,8 +37,14 @@ public class UTB2RelDataTypeConverter implements UniversalTable.TypeConverter<Re
   public RelDataType nestedTable(List<Pair<String, RelDataType>> fields) {
     CalciteUtil.RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(
         typeFactory);
+    Set<String> names = new HashSet<>();
     for (Pair<String, RelDataType> column : fields) {
-      typeBuilder.add(column.getKey(), column.getRight());
+      String name = SqlValidatorUtil.uniquify(
+          column.getKey(),
+          names,
+          SqlValidatorUtil.EXPR_SUGGESTER);
+      names.add(name);
+      typeBuilder.add(name, column.getRight());
     }
 
     return typeBuilder.build();

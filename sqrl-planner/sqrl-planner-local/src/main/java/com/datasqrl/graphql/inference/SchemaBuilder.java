@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
@@ -49,6 +50,7 @@ import graphql.schema.GraphQLList;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -62,9 +64,15 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.SqlSyntax;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
@@ -161,10 +169,16 @@ public class SchemaBuilder implements
       currentPath = newPath;
     }
 
-    Optional<SqlUserDefinedTableFunction> op = framework.getQueryPlanner()
-        .getTableFunction(currentPath);
-    Preconditions.checkState(op.isPresent(), "Could not find table %s", String.join(".", currentPath));
-    TableFunction function = op.get().getFunction();
+    Collection<Function> op = framework.getQueryPlanner().getSchema()
+        .getFunctions(String.join(".", currentPath), false);
+
+//    Optional<SqlUserDefinedTableFunction> op = framework.getQueryPlanner()
+//        .getTableFunction(currentPath);
+    Preconditions.checkState(!op.isEmpty(), "Could not find table %s", String.join(".", currentPath));
+    SqrlTableMacro function = (SqrlTableMacro)new ArrayList<>(op).get(0);
+    List<SqlOperator> matches = new ArrayList<>();
+    framework.getSqrlOperatorTable().lookupOperatorOverloads(new SqlIdentifier(function.getDisplayName(), SqlParserPos.ZERO),
+        SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, matches, framework.getCatalogReader().nameMatcher());
 
     Set<String> limitOffset = Set.of("limit", "offset");
 
@@ -181,7 +195,7 @@ public class SchemaBuilder implements
 
       AtomicInteger uniqueOrdinal = new AtomicInteger(0);
       //Anticipate all args being found
-      builder.functionScan(op.get(), 0, function.getParameters().stream()
+      builder.functionScan(matches.get(0), 0, function.getParameters().stream()
           .map(param -> new RexDynamicParam(param.getType(null), uniqueOrdinal.getAndIncrement()))
           .collect(Collectors.toList()));
 
@@ -192,7 +206,7 @@ public class SchemaBuilder implements
       Map<List<String>, InputValueDefinition> argMap = new HashMap<>(Maps.uniqueIndex(arg, n->List.of(n.getName())));
 
       //Iterate over all required args in the function
-      for (FunctionParameter p : op.get().getFunction().getParameters()) {
+      for (FunctionParameter p : function.getParameters()) {
         SqrlFunctionParameter parameter = (SqrlFunctionParameter) p;
         //check parameter is in the arg list, if so then dynamic param
         InputValueDefinition def;
@@ -205,7 +219,7 @@ public class SchemaBuilder implements
           Preconditions.checkState(i != -1);
           queryParams.parameter(new SourceParameter(collect.get(i)));
         } else if ((def = matcher.get(argMap, List.<String>of(),
-            List.of(parameter.getName().substring(1)))) != null) {
+            List.of(parameter.getVariableName()))) != null) {
           argMap.remove(List.of(def.getName()));
           queryParams.parameter(new ArgumentParameter(parameter.getName().substring(1)));
           matchSet.argument(new VariableArgument(def.getName(), null));

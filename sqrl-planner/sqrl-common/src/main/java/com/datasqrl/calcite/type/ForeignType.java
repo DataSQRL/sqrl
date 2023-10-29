@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlFunction;
 
-public interface ForeignType extends RelDataType {
+public interface ForeignType extends RelDataType, SqrlType {
 
   Optional<SqlFunction> getDowncastFunction();
   Optional<SqlFunction> getUpcastFunction();

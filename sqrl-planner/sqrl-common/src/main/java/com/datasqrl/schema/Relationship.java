@@ -19,14 +19,16 @@ import org.apache.calcite.schema.FunctionParameter;
 @Getter
 public class Relationship implements SqrlTableMacro {
   private final Name name;
-  private final NamePath path;
-  private final String fromTable;
-  private final String toTable;
+  private final NamePath fullPath;
+  private final NamePath absolutePath;
   private final JoinType joinType;
   private final Multiplicity multiplicity;
 
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
+
+  public String internalName;
+  public int version;
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
@@ -36,6 +38,10 @@ public class Relationship implements SqrlTableMacro {
   @Override
   public RelDataType getRowType() {
     return getRowType(null, null);
+  }
+
+  public String getDisplayName() {
+    return String.join(".", getFullPath().toStringList());
   }
 
   public enum JoinType {
