@@ -41,6 +41,7 @@ import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import graphql.language.InputValueDefinition;
@@ -64,6 +65,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
@@ -169,13 +171,14 @@ public class SchemaBuilder implements
       currentPath = newPath;
     }
 
-    Collection<Function> op = framework.getQueryPlanner().getSchema()
-        .getFunctions(String.join(".", currentPath), false);
+    SqrlTableMacro function = field.getTable().getTableMacro();
+//    Collection<Function> op = framework.getQueryPlanner().getSchema()
+//        .getFunctions(String.join(".", currentPath), false);
 
 //    Optional<SqlUserDefinedTableFunction> op = framework.getQueryPlanner()
 //        .getTableFunction(currentPath);
-    Preconditions.checkState(!op.isEmpty(), "Could not find table %s", String.join(".", currentPath));
-    SqrlTableMacro function = (SqrlTableMacro)new ArrayList<>(op).get(0);
+//    Preconditions.checkState(!op.isEmpty(), "Could not find table %s", String.join(".", currentPath));
+//    SqrlTableMacro function = (SqrlTableMacro)new ArrayList<>(op).get(0);
     List<SqlOperator> matches = new ArrayList<>();
     framework.getSqrlOperatorTable().lookupOperatorOverloads(new SqlIdentifier(function.getDisplayName(), SqlParserPos.ZERO),
         SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION, SqlSyntax.FUNCTION, matches, framework.getCatalogReader().nameMatcher());
@@ -205,57 +208,67 @@ public class SchemaBuilder implements
       //modifiable since we'll subtract the args we find
       Map<List<String>, InputValueDefinition> argMap = new HashMap<>(Maps.uniqueIndex(arg, n->List.of(n.getName())));
 
-      //Iterate over all required args in the function
-      for (FunctionParameter p : function.getParameters()) {
-        SqrlFunctionParameter parameter = (SqrlFunctionParameter) p;
-        //check parameter is in the arg list, if so then dynamic param
-        InputValueDefinition def;
-        if (parameter.isInternal()) {
-          List<String> collect = field.getParentTable().getColumns(false).stream()
-              .map(f->f.getName().getDisplay())
-              .collect(Collectors.toList());
-          int i = framework.getCatalogReader().nameMatcher()
-              .indexOf(collect, parameter.getName());
-          Preconditions.checkState(i != -1);
-          queryParams.parameter(new SourceParameter(collect.get(i)));
-        } else if ((def = matcher.get(argMap, List.<String>of(),
-            List.of(parameter.getVariableName()))) != null) {
-          argMap.remove(List.of(def.getName()));
-          queryParams.parameter(new ArgumentParameter(parameter.getName().substring(1)));
-          matchSet.argument(new VariableArgument(def.getName(), null));
+      //TODO:
+      // 1. Walk all function parameters
+      // 2.
+
+      if (!function.getParameters().isEmpty()) {
+        //Iterate over all required args in the function
+        List<FunctionParameter> parameters = function.getParameters();
+        for (int j = 0; j < parameters.size(); j++) {
+          FunctionParameter p = parameters.get(j);
+          SqrlFunctionParameter parameter = (SqrlFunctionParameter) p;
+          //check parameter is in the arg list, if so then dynamic param
+          InputValueDefinition def;
+          if (parameter.isInternal()) {
+            List<String> fields = field.getParentTable().getColumns(false).stream()
+                .map(f -> f.getName().getDisplay())
+                .collect(Collectors.toList());
+            String fieldName = fields.get(j); //todo fix me, field names are not at the beginning
+            queryParams.parameter(new SourceParameter(fieldName));
+            Preconditions.checkState(fieldName.endsWith(parameter.getName())
+                || parameter.getName().endsWith(fieldName) );
+          } else if ((def = matcher.get(argMap, List.<String>of(),
+              List.of(parameter.getVariableName()))) != null) {
+            argMap.remove(List.of(def.getName()));
+            queryParams.parameter(new ArgumentParameter(parameter.getName().substring(1)));
+            matchSet.argument(new VariableArgument(def.getName(), null));
             //param found,
-        } else {
-          //param not in list, attempt to get default value.
+          } else {
+            //param not in list, attempt to get default value.
 
-          throw new RuntimeException("Could not find param: " + p.getName());
+            throw new RuntimeException("Could not find param: " + p.getName());
+          }
         }
-      }
+      } else {
 
-      boolean limitOffsetFlag = false;
-      List<RexNode> conditions = new ArrayList<>();
-      //For all remaining args, create equality conditions
-      for (Map.Entry<List<String>, InputValueDefinition> args : argMap.entrySet()) {
-        if (limitOffset.contains(args.getKey().get(0).toLowerCase())) {
-          matchSet.argument(VariableArgument.builder()
-              .path(args.getKey().get(0).toLowerCase())
-              .build());
-          limitOffsetFlag = true;
-          continue;
+        boolean limitOffsetFlag = false;
+        List<RexNode> conditions = new ArrayList<>();
+        //For all remaining args, create equality conditions
+        for (Map.Entry<List<String>, InputValueDefinition> args : argMap.entrySet()) {
+          if (limitOffset.contains(args.getKey().get(0).toLowerCase())) {
+            matchSet.argument(VariableArgument.builder()
+                .path(args.getKey().get(0).toLowerCase())
+                .build());
+            limitOffsetFlag = true;
+            continue;
+          }
+          int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(),
+              args.getKey().get(0));
+          if (fieldIndex == -1) {
+            throw new RuntimeException("Could not find field: " + args.getKey().get(0));
+          }
+          RexInputRef lhs = builder.field(fieldIndex);
+
+          RexDynamicParam rhs = new RexDynamicParam(lhs.getType(), uniqueOrdinal.getAndIncrement());
+          conditions.add(builder.equals(lhs, rhs));
+
+          queryParams.parameter(new ArgumentParameter(args.getKey().get(0)));//todo: get name of lhs
+          matchSet.argument(new VariableArgument(args.getKey().get(0), null));
         }
-        int fieldIndex = matcher.indexOf(builder.peek().getRowType().getFieldNames(), args.getKey().get(0));
-        if (fieldIndex == -1) {
-          throw new RuntimeException("Could not find field: " + args.getKey().get(0));
+        if (!conditions.isEmpty()) {
+          builder.filter(conditions);
         }
-        RexInputRef lhs = builder.field(fieldIndex);
-
-        RexDynamicParam rhs = new RexDynamicParam(lhs.getType(), uniqueOrdinal.getAndIncrement());
-        conditions.add(builder.equals(lhs, rhs));
-
-        queryParams.parameter(new ArgumentParameter(args.getKey().get(0)));//todo: get name of lhs
-        matchSet.argument(new VariableArgument(args.getKey().get(0), null));
-      }
-      if (!conditions.isEmpty()) {
-        builder.filter(conditions);
       }
       //
       //add defaults
@@ -265,21 +278,38 @@ public class SchemaBuilder implements
       String nameId = field.getParent().getName() + "." + field.getFieldDefinition().getName() + "-" + queryCounter.incrementAndGet();
       APIQuery query = new APIQuery(nameId, relNode);
       apiManager.addQuery(query);
-      if (limitOffsetFlag) {
-        ApiQueryBase base = queryParams.build();
+//      if (limitOffsetFlag) {
+//        ApiQueryBase base = queryParams.build();
         //convert
         //todo: limit offset strategy is bad
-        matchSet.query(PagedApiQueryBase.builder()
-            .parameters(base.getParameters())
-            .query(query)
-            .relNode(relNode).build());
-      } else {
+//        matchSet.query(PagedApiQueryBase.builder()
+//            .parameters(base.getParameters())
+//            .query(query)
+//            .relNode(relNode).build());
+//      } else {
         matchSet.query(queryParams
             .relNode(relNode)
             .query(query)
             .build());
-      }
+//      }
       Model.ArgumentSet argumentSet = matchSet.build();
+
+      Set<RexNode> dynamicParams = new HashSet<>();
+      CalciteUtil.applyRexShuttleRecursively(relNode, new RexShuttle(){
+        @Override
+        public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
+          dynamicParams.add(dynamicParam);
+          return super.visitDynamicParam(dynamicParam);
+        }
+      });
+
+      if (argumentSet.getQuery() instanceof ApiQueryBase) {
+        int size = ((ApiQueryBase)argumentSet.getQuery())
+            .getParameters().size() ;
+
+        Preconditions.checkState(dynamicParams.size() == size,
+            "Args not matching");
+      }
 
       coordsBuilder.match(argumentSet);
     }
