@@ -4,6 +4,7 @@
 package com.datasqrl.plan.local.analyze;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -35,6 +36,7 @@ import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
@@ -42,12 +44,18 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -136,34 +144,20 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
       } else if (coord instanceof ArgumentLookupCoords) {
         Set<ArgumentSet> matchs = ((ArgumentLookupCoords) coord).getMatchs();
         for (ArgumentSet set : matchs){
-//          String sql = planner.getFramework().getQueryPlanner().relToString(Dialect.CALCITE,
-//              ((ApiQueryBase) set.getQuery()).getQuery().getRelNode());
-//          System.out.println(sql);
+          RelNode relNode = ((ApiQueryBase) set.getQuery()).getQuery().getRelNode();
+
+
+          String sql = planner.getFramework().getQueryPlanner().relToString(Dialect.CALCITE,
+              relNode);
+          System.out.println(sql);
+
+          System.out.println(set.getArguments());
+
+
+
         }
       }
     }
-
-    System.out.println(schema);
-//    APISource apiSchema = new APISource(Name.system("schema"), schema);
-//    InferredSchema inferredSchema = new SchemaInference(
-//        framework,
-//        apiSchema.getName().getDisplay(),
-//        new MockModuleLoader(null, Map.of(), Optional.empty()),
-//        apiSchema,
-//        sqrlSchemaForInference,
-//        planner.createRelBuilder(),
-//        mock(APIConnectorManager.class))
-//        .accept();
-//
-//    SchemaBuilder schemaBuilder = new SchemaBuilder(framework, apiSchema,
-//        sqrlSchemaForInference,
-//        planner.createRelBuilder(),
-//        planner,
-//        framework.getSqrlOperatorTable(),
-//        mock(APIConnectorManager.class));
-
-//    RootGraphqlModel root = inferredSchema.accept(schemaBuilder,
-//        null);
 
     if (isBlank(schema)) {
       System.out.println(schema);
