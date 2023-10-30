@@ -51,31 +51,41 @@ public class SchemaGenerator {
 
   void postProcess() {
     // Ensure every field points to a valid type
-    Iterator<GraphQLObjectType> iterator = objectTypes.iterator();
-    while (iterator.hasNext()) {
-      GraphQLObjectType objectType = iterator.next();
-      List<GraphQLFieldDefinition> invalidFields = new ArrayList<>();
+    boolean found;
+    int attempts = 10;
+    do {
+      found = false;
+      Iterator<GraphQLObjectType> iterator = objectTypes.iterator();
+      while (iterator.hasNext()) {
+        GraphQLObjectType objectType = iterator.next();
+        List<GraphQLFieldDefinition> invalidFields = new ArrayList<>();
 
-      for (GraphQLFieldDefinition field : objectType.getFields()) {
-        if (!isValidType(field.getType())) {
-          invalidFields.add(field);
+        for (GraphQLFieldDefinition field : objectType.getFields()) {
+          if (!isValidType(field.getType())) {
+            invalidFields.add(field);
+          }
+        }
+
+        // Refactor to remove invalid fields
+        List<GraphQLFieldDefinition> fields = new ArrayList<>(objectType.getFields());
+        fields.removeAll(invalidFields);
+
+        // After removing invalid fields, if an object has no fields, it should be removed
+        if (fields.isEmpty()) {
+          iterator.remove();
+          found = true;
         }
       }
 
-      // Refactor to remove invalid fields
-      List<GraphQLFieldDefinition> fields = new ArrayList<>(objectType.getFields());
-      fields.removeAll(invalidFields);
+      found |= queryFields.removeIf(field -> !isValidType(field.getType()));
 
-      // After removing invalid fields, if an object has no fields, it should be removed
-      if (fields.isEmpty()) {
-        iterator.remove();
-      }
+      // Ensure each object has at least one field
+      found |= objectTypes.removeIf(objectType -> objectType.getFields().isEmpty());
+    } while(found && --attempts != 0);
+
+    if (found) {
+      throw new RuntimeException("Schema too complexity high, could not be reduced");
     }
-
-    queryFields.removeIf(field -> !isValidType(field.getType()));
-
-    // Ensure each object has at least one field
-    objectTypes.removeIf(objectType -> objectType.getFields().isEmpty());
   }
 
   boolean isValidType(GraphQLType type) {
