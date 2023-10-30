@@ -39,6 +39,7 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
+import org.apache.calcite.sql.SqrlDistinctQuery;
 import org.apache.calcite.sql.SqrlExportDefinition;
 import org.apache.calcite.sql.SqrlExpressionQuery;
 import org.apache.calcite.sql.SqrlImportDefinition;
@@ -119,6 +120,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     RelNode expanded = planner.expandMacros(relNode);
 
     List<Function> isA = validator.getIsA().get(node);
+
+    if (assignment instanceof SqrlDistinctQuery) {
+      //Allow shadowing for distinct on
+      NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
+      planner.getSchema().clearFunctions(path);
+    }
 
     if (assignment instanceof SqrlJoinQuery) {
       List<SqrlTableMacro> isASqrl = isA.stream()

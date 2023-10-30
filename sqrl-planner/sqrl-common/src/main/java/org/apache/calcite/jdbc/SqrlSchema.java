@@ -78,19 +78,13 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void addTable(RootSqrlTable root) {
-    //Allow shadowing if table was not referenced before..
-    if (root.getParameters().isEmpty()) { //allow shadowing root tables (distinct on case)
-      clearFunctionsIfNotLocked(root.getFullPath());
-    }
-
     pathToAbsolutePathMap.put(root.getFullPath(), root.getAbsolutePath());
     plus().add(root.getDisplayName(), root);
   }
 
-  private void clearFunctionsIfNotLocked(NamePath path) {
+  public void clearFunctions(NamePath path) {
     String fncName = path.getDisplay();
-    List<FunctionEntry> fnc = this.functionMap.map().get(fncName);
-    if (fnc != null && !fnc.isEmpty()) {
+    if (this.functionMap.containsKey(fncName, false)) {
       NamePath prefix = path;
       for (NamePath key : pathToAbsolutePathMap.keySet()) {
         if (key.size() >= prefix.size() && key.subList(0, prefix.size()).equals(prefix)) {
