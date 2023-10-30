@@ -1,5 +1,8 @@
 package com.datasqrl.graphql.inference;
 
+import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
+import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
+
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaBuilder.ArgCombination;
@@ -145,17 +148,17 @@ public class QueryBuilderHelper {
       this.limitOffsetFlag = true;
       if (limit.isPresent()) {
         if (limit.get().getDefaultValue().isEmpty()) {
-          createVariableForLimitOffset("limit");
+          createVariableForLimitOffset(LIMIT);
         } else {
-          createLiteralForLimitOffset("limit");
+          createLiteralForLimitOffset(LIMIT);
         }
       }
 
       if (offset.isPresent()) {
         if (offset.get().getDefaultValue().isEmpty()) {
-          createVariableForLimitOffset("offset");
+          createVariableForLimitOffset(OFFSET);
         } else {
-          createLiteralForLimitOffset("offset");
+          createLiteralForLimitOffset(OFFSET);
         }
       }
     }
@@ -199,21 +202,21 @@ public class QueryBuilderHelper {
 
       if (offset.isPresent() && limit.isPresent()) {
         if (limitValue.isPresent() && offsetValue.isPresent()) { //both are scalars
-          addArgumentLiteralFilter("limit", limitValue.get());
-          addArgumentLiteralFilter("offset", offsetValue.get());
+          addArgumentLiteralFilter(LIMIT, limitValue.get());
+          addArgumentLiteralFilter(OFFSET, offsetValue.get());
           relBuilder
               .limit(offsetValue.get(), limitValue.get());
         } else if (limitValue.isPresent()) { //offset is a variable
-          addArgumentLiteralFilter("limit", limitValue.get());
-          RexDynamicParam param = addVariableOperand("offset", type);
+          addArgumentLiteralFilter(LIMIT, limitValue.get());
+          RexDynamicParam param = addVariableOperand(OFFSET, type);
 
           RexInputRef rowNum = createRowNum(partitionKeysFields, relBuilder);
           relBuilder
               .filter(relBuilder.call(SqlStdOperatorTable.GREATER_THAN, rowNum, param))
               .limit(0, limitValue.get());
         } else if (offsetValue.isPresent()) { //limit is a variable
-          RexDynamicParam param = addVariableOperand("limit", type);
-          addArgumentLiteralFilter("offset", offset.get());
+          RexDynamicParam param = addVariableOperand(LIMIT, type);
+          addArgumentLiteralFilter(OFFSET, offset.get());
 
           RexInputRef rowNum = createRowNum(partitionKeysFields, relBuilder);
           // between offset + 1 and limit + offset
@@ -223,8 +226,8 @@ public class QueryBuilderHelper {
                   relBuilder.call(SqlStdOperatorTable.PLUS, relBuilder.literal(offsetValue.get()),
                       param)));
         } else { //both are variables
-          RexDynamicParam limitParam = addVariableOperand("limit", type);
-          RexDynamicParam offsetParam = addVariableOperand("offset", type);
+          RexDynamicParam limitParam = addVariableOperand(LIMIT, type);
+          RexDynamicParam offsetParam = addVariableOperand(OFFSET, type);
 
           RexInputRef rowNum = createRowNum(partitionKeysFields, relBuilder);
           //
@@ -241,7 +244,7 @@ public class QueryBuilderHelper {
           relBuilder
               .limit(offsetValue.get(), 0);
         } else {
-          RexDynamicParam offsetParam = addVariableOperand("offset", type);
+          RexDynamicParam offsetParam = addVariableOperand(OFFSET, type);
 
           RexInputRef rowNum = createRowNum(partitionKeysFields, relBuilder);
 
@@ -253,7 +256,7 @@ public class QueryBuilderHelper {
           relBuilder
               .limit(0, limitValue.get());
         } else {
-          RexDynamicParam limitParam = addVariableOperand("limit", type);
+          RexDynamicParam limitParam = addVariableOperand(LIMIT, type);
 
           RexInputRef rowNum = createRowNum(partitionKeysFields, relBuilder);
 

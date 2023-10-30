@@ -1,5 +1,8 @@
 package com.datasqrl.graphql;
 
+import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
+import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
+
 import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentParameter;
@@ -60,8 +63,8 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
   @Override
   public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
       boolean isList, QueryExecutionContext context) {
-    Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument("limit"));
-    Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument("offset"));
+    Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
+    Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
     Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
     for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
       JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);

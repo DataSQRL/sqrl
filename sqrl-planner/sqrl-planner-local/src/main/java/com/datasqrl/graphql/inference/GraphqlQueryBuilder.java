@@ -1,6 +1,8 @@
 package com.datasqrl.graphql.inference;
 
 import static com.datasqrl.canonicalizer.ReservedName.VARIABLE_PREFIX;
+import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
+import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -142,8 +144,8 @@ public class GraphqlQueryBuilder {
   }
 
   private boolean isLimitOrOffset(ArgCombination c) {
-    return c.getDefinition().getName().equalsIgnoreCase("limit") ||
-        c.getDefinition().getName().equalsIgnoreCase("offset");
+    return c.getDefinition().getName().equalsIgnoreCase(LIMIT) ||
+        c.getDefinition().getName().equalsIgnoreCase(OFFSET);
   }
 
   private Pair<SqlUserDefinedTableFunction, Boolean> resolveOperator(SqrlTableMacro macro, List<ArgCombination> arg) {
@@ -197,20 +199,20 @@ public class GraphqlQueryBuilder {
 
   private Optional<ArgCombination> onlyLimit(List<ArgCombination> arg) {
     return arg.stream()
-        .filter(f -> f.getDefinition().getName().equalsIgnoreCase("limit"))
+        .filter(f -> f.getDefinition().getName().equalsIgnoreCase(LIMIT))
         .findFirst();
   }
 
   private Optional<ArgCombination> onlyOffset(List<ArgCombination> arg) {
     return arg.stream()
-        .filter(f -> f.getDefinition().getName().equalsIgnoreCase("offset"))
+        .filter(f -> f.getDefinition().getName().equalsIgnoreCase(OFFSET))
         .findFirst();
   }
 
   private List<ArgCombination> removePaging(List<ArgCombination> arg) {
     return arg.stream()
-        .filter(f -> !f.getDefinition().getName().equalsIgnoreCase("limit")
-            && !f.getDefinition().getName().equalsIgnoreCase("offset"))
+        .filter(f -> !f.getDefinition().getName().equalsIgnoreCase(LIMIT)
+            && !f.getDefinition().getName().equalsIgnoreCase(OFFSET))
         .collect(Collectors.toList());
   }
 
