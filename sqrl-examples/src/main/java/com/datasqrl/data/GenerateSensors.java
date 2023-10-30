@@ -29,7 +29,9 @@ public class GenerateSensors extends AbstractGenerateCommand {
 
   public static final String READINGS_FILE = "sensorreading_part%04d.csv";
 
-  public static final String GROUP_FILE = "machinegroup_part%04d.json";
+  public static final String GROUP_FILE = "observationgroup_part%04d.json";
+
+  public static final String GROUP_NAME = " Group";
 
 
   public static final int SENSOR_READINGS_PER_DAY = 3600*24; //one per second
@@ -44,12 +46,12 @@ public class GenerateSensors extends AbstractGenerateCommand {
     Instant startTime = getStartTime(numDays);
 
     int numMachines = config.numSensors / config.avgSensorsPerMachine;
-    List<Machine> machines = IntStream.range(0,numMachines).mapToObj(i -> new Machine(i)).collect(
+    List<Patient> machines = IntStream.range(0,numMachines).mapToObj(i -> new Patient(i)).collect(
         Collectors.toList());
 
     Instant initialSensorPlacement = startTime.minus(1, ChronoUnit.DAYS);
     List<Sensor> sensors = IntStream.range(0,config.numSensors)
-        .mapToObj(i -> new Sensor(i, sampler.next(machines).machineId ,initialSensorPlacement,
+        .mapToObj(i -> new Sensor(i, sampler.next(machines).patientId ,initialSensorPlacement,
             config.useEpoch))
         .collect(Collectors.toList());
 
@@ -89,7 +91,7 @@ public class GenerateSensors extends AbstractGenerateCommand {
       List<Sensor> reassignments = new ArrayList<>(numReassignments);
       for (int j = 0; j < numReassignments; j++) {
         Sensor sensor = sampler.next(sensors);
-        reassignments.add(sensor.replaced(sampler.next(machines).machineId,
+        reassignments.add(sensor.replaced(sampler.next(machines).patientId,
             sampler.nextTimestamp(startOfDay, 1, ChronoUnit.DAYS)));
       }
       WriterUtil.writeToFileSorted(reassignments, getOutputDir().resolve(String.format(SENSOR_FILE,i+1)),
@@ -104,7 +106,7 @@ public class GenerateSensors extends AbstractGenerateCommand {
         int numMachinesInGroup = (int)Math.round(sampler.nextPositiveNormal(config.avgMachinesPerGroup,
             config.avgMachinesPerGroupDeviation));
         numMachinesInGroup = Math.min(machines.size(),numMachinesInGroup);
-        groups.add(new MachineGroup(machineGroupId++,faker.name().lastName()+" Factory",
+        groups.add(new MachineGroup(machineGroupId++,faker.medical().hospitalName()+GROUP_NAME,
             sampler.nextTimestamp(startOfDay, 1, ChronoUnit.DAYS).toString(),
             sampler.withoutReplacement(numMachinesInGroup,machines)));
         sampler.withoutReplacement(numMachinesInGroup,machines);
@@ -129,7 +131,7 @@ public class GenerateSensors extends AbstractGenerateCommand {
 
     @Override
     public String toString() {
-      return SerializerUtil.toJson(Map.of("id",id,"machineid",machineid,
+      return SerializerUtil.toJson(Map.of("id",id,"patientid",machineid,
           "placed",useEpoch?placed.toEpochMilli():placed.toString()));
     }
 
@@ -151,12 +153,12 @@ public class GenerateSensors extends AbstractGenerateCommand {
 
     @Override
     public String toString() {
-      return Stream.of(sensorid, useEpoch?time.toEpochMilli():time.toString(), temperature, humidity).map(Objects::toString).collect(
+      return Stream.of(sensorid, useEpoch?time.toEpochMilli():time.toString(), temperature/*, humidity*/).map(Objects::toString).collect(
           Collectors.joining(", "));
     }
 
     public static String header() {
-      return StringUtils.join(new String[]{"sensorid", "time", "temperature", "humidity"},", ");
+      return StringUtils.join(new String[]{"sensorid", "time", "temperature"/*, "humidity"*/},", ");
     }
 
   }
@@ -167,7 +169,7 @@ public class GenerateSensors extends AbstractGenerateCommand {
     int groupId;
     String groupName;
     String created;
-    Collection<Machine> machines;
+    Collection<Patient> patients;
 
     @Override
     public String toString() {
@@ -177,17 +179,17 @@ public class GenerateSensors extends AbstractGenerateCommand {
   }
 
   @Value
-  public static class Machine {
+  public static class Patient {
 
-    int machineId;
+    int patientId;
 
   }
 
   public static class Config implements Configuration {
 
-    public int numSensors = 20;
+    public int numSensors = 30;
 
-    public int avgSensorsPerMachine = 5;
+    public int avgSensorsPerMachine = 2;
 
     public int avgSensorReassignments = 3;
 
@@ -197,23 +199,23 @@ public class GenerateSensors extends AbstractGenerateCommand {
 
     public double avgGroupPerDayDeviation = 4.0;
 
-    public int avgMachinesPerGroup = 4;
+    public int avgMachinesPerGroup = 10;
 
     public double avgMachinesPerGroupDeviation = 20.0;
 
-    public double temperatureBaselineMin = 18.0;
+    public double temperatureBaselineMin = 97;
 
-    public double temperatureBaselineMax = 30.0;
+    public double temperatureBaselineMax = 99;
 
-    public double maxNoise = 0.5;
+    public double maxNoise = 0.05;
 
-    public double maxTemperaturePeakStdDev = 15.0;
+    public double maxTemperaturePeakStdDev = 2.0;
 
-    public int minMaxRampWidth = 10;
+    public int minMaxRampWidth = 600;
 
-    public int maxMaxRampWidth = 50;
+    public int maxMaxRampWidth = 10000;
 
-    public double errorProbability = 0.001;
+    public double errorProbability = 0.00;
 
     public boolean useEpoch = true;
 

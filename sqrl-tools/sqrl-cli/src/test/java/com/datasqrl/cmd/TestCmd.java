@@ -14,14 +14,17 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
+import com.datasqrl.util.data.Sensors;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.apache.kafka.common.metrics.Sensor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -89,6 +92,14 @@ public class TestCmd {
     execute(Nutshop.INSTANCE.getRootPackageDirectory(),
         "discover", Nutshop.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString(), "-l", "3600");
     createSnapshot();
+  }
+
+  @Test
+  @Disabled
+  public void discoverExternal() {
+    execute(Sensors.INSTANCE.getRootPackageDirectory(),
+        "discover", Sensors.INSTANCE.getRootPackageDirectory().resolve("patientdata").toString(),
+        "-o", Sensors.INSTANCE.getRootPackageDirectory().resolve("patientpackage").toString(), "-l", "3600");
   }
 
   @Test

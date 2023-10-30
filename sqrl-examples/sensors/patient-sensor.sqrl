@@ -1,0 +1,40 @@
+IMPORT time.*;
+IMPORT patientpackage.Sensors TIMESTAMP epochMilliToTimestamp(placed) AS placedTimestamp;
+IMPORT patientpackage.SensorReading TIMESTAMP epochMilliToTimestamp(time) AS timestamp;
+--IMPORT patientapi.AddReading AS SensorReading TIMESTAMP _source_time;
+IMPORT patientpackage.ObservationGroup;
+
+/* Aggregate sensor readings to minute */
+MinReading := SELECT sensorid, endOfMinute(timestamp) as timeMin,
+                     avg(temperature) as smoothTemp
+              FROM SensorReading  GROUP BY sensorid, timeMin;
+/* Create table of sensors and relate to readings */
+Sensors := DISTINCT Sensors ON id ORDER BY placedTimestamp DESC;
+Sensors.readings := JOIN MinReading r ON r.sensorid = @.id;
+
+/* Create aggregates for patients */
+PatientHourly := SELECT patientid, endOfHour(timeMin) as timeHour,
+                        avg(smoothTemp) as avgTemp, max(smoothTemp) as maxTemp,
+                        min(smoothTemp) as minTemp
+                 FROM Sensors s JOIN s.readings r
+                 GROUP BY patientid, timeHour;
+
+PatientLastHour := SELECT patientid,
+                         avg(smoothTemp) as avgTemp, max(smoothTemp) as maxTemp,
+                         min(smoothTemp) as minTemp
+                  FROM Sensors s JOIN s.readings
+                  WHERE timeMin >= now() - INTERVAL 1 HOUR
+                  GROUP BY patientid;
+
+/* Create temperature alert and export */
+TempAlert := SELECT patientid, sensorid, smoothTemp, timeMin
+            FROM Sensors s JOIN s.readings
+            WHERE smoothTemp > 102 OR smoothTemp < 95;
+
+EXPORT TempAlert TO print.tempWarning;
+
+/* Provide analytics for observation groups */
+ObservationGroup.lastHour := SELECT max(maxTemp) as maxTemp, min(minTemp) as minTemp
+                             FROM @.patients p JOIN PatientLastHour h ON p.patientid = h.patientid;
+ObservationGroup.patients.hourly := JOIN PatientHourly p ON @.patientid = p.patientid;
+ObservationGroup.patients.lastHour := JOIN PatientLastHour h ON @.patientid = h.patientid;

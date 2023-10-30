@@ -52,7 +52,7 @@ public class DocumentationExamplesTest {
     @Test
     @Disabled
     public void runIndividual() {
-        compileTutorials(Books.INSTANCE.getRootPackageDirectory(),"search.sqrl", "search.graphqls");
+        compileTutorials(Sensors.INSTANCE.getRootPackageDirectory(),"patient-sensor.sqrl", "patientapi.graphqls");
     }
 
     public static final TestCase[] CASES = {

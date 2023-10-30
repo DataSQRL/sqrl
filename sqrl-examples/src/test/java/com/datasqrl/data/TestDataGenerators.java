@@ -18,6 +18,11 @@ public class TestDataGenerators {
   }
 
   @Test
+  public void testPatientSensors() {
+    new RootGenerateCommand().getCmd().execute(new String[]{"sensors","-n","50000","-o","sensors/patientdata"});
+  }
+
+  @Test
   public void testLoan() {
     new RootGenerateCommand().getCmd().execute(new String[]{"loan","-n","100","-o","banking/data"});
   }
