@@ -108,15 +108,11 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         ScriptRelationalTable scriptParentTable = (ScriptRelationalTable) parentTable;
 
         Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(scriptParentTable, table);
-        int version = framework.getUniqueMacroInt().incrementAndGet();
-        String internalName = String.join(".", path.toStringList()) + "$"
-            + version;
         Relationship relationship = new Relationship(path.getLast(), path, path,
             JoinType.CHILD,
             Multiplicity.MANY, //todo fix multiplicity
             pkWrapper.getLeft(),
-            () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()),
-            internalName, version);
+            () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
         framework.getSchema().addRelationship(relationship);
 
         Relationship rel = createParent(framework, path, scriptParentTable, table);
@@ -130,14 +126,11 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(childScriptTable,
         parentScriptTable);
     NamePath relPath = path.concat(ReservedName.PARENT);
-    int version = framework.getUniqueMacroInt().incrementAndGet();
-    String internalName = String.join(".", relPath.toStringList()) + "$"
-        + version;
+
     return new Relationship(ReservedName.PARENT,
         relPath, path.popLast(),
         JoinType.PARENT, Multiplicity.ONE, pkWrapper.getLeft(),
-        () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()),
-        internalName, version);
+        () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
   }
 
   public static Pair<List<FunctionParameter>, SqlNode> createPkWrapper(ScriptRelationalTable fromTable,

@@ -4,6 +4,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
@@ -21,6 +22,7 @@ import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 
@@ -77,11 +79,22 @@ public class SqrlSchema extends SimpleCalciteSchema {
 
   public void addTable(RootSqrlTable root) {
     //Allow shadowing if table was not referenced before..
-    if (root.getParameters().isEmpty()) {
-      NamePath prefix = root.getAbsolutePath();
+    if (root.getParameters().isEmpty()) { //allow shadowing root tables (distinct on case)
+      clearFunctionsIfNotLocked(root.getFullPath());
+    }
+
+    pathToAbsolutePathMap.put(root.getFullPath(), root.getAbsolutePath());
+    plus().add(root.getDisplayName(), root);
+  }
+
+  private void clearFunctionsIfNotLocked(NamePath path) {
+    String fncName = path.getDisplay();
+    List<FunctionEntry> fnc = this.functionMap.map().get(fncName);
+    if (fnc != null && !fnc.isEmpty()) {
+      NamePath prefix = path;
       for (NamePath key : pathToAbsolutePathMap.keySet()) {
         if (key.size() >= prefix.size() && key.subList(0, prefix.size()).equals(prefix)) {
-          String name = String.join(".", key.toStringList());
+          String name = key.getDisplay();
           List<FunctionEntry> functionEntries = this.functionMap.map().get(name);
           for (FunctionEntry entry : new ArrayList<>(functionEntries)) {
             this.functionMap.remove(name, entry);
@@ -91,8 +104,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
       removePrefix(pathToAbsolutePathMap.keySet(), prefix);
     }
 
-    pathToAbsolutePathMap.put(root.getFullPath(), root.getAbsolutePath());
-    plus().add(root.getDisplayName(), root);
   }
 
   private void removePrefix(Set<NamePath> set, NamePath prefix) {
@@ -112,6 +123,13 @@ public class SqrlSchema extends SimpleCalciteSchema {
     pathToAbsolutePathMap.put(relationship.getFullPath(), relationship.getAbsolutePath());
 
     plus().add(relationship.getDisplayName(), relationship);
+  }
+
+  public static List<SqrlFunctionParameter> getExternalParams(List<FunctionParameter> params) {
+    return params.stream()
+        .map(p -> (SqrlFunctionParameter) p)
+        .filter(p -> !p.isInternal())
+        .collect(Collectors.toList());
   }
 
   public void addTableMapping(NamePath path, String nameId) {

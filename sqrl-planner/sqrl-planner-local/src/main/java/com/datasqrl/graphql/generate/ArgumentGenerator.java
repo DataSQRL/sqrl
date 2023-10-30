@@ -9,7 +9,6 @@ import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
 import static graphql.schema.GraphQLNonNull.nonNull;
 
 import com.datasqrl.function.SqrlFunctionParameter;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.Column;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.FieldVisitor;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
@@ -21,7 +20,6 @@ import graphql.Scalars;
 import graphql.language.IntValue;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLInputType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.schema.FunctionParameter;
@@ -118,18 +116,10 @@ public class ArgumentGenerator implements
     SqrlFunctionParameter sqrlFunctionParameter = (SqrlFunctionParameter)parameter;
     //todo check if type is real
     GraphQLInputType argType = getInputType(sqrlFunctionParameter.getRelDataType()).get();
-//    if (parameter.getDefaultValue().isPresent()) {
-//      return GraphQLArgument.newArgument()
-//          .name(parameter.getName())
-//          .type(argType)
-//          .defaultValue(((SqlLiteral)parameter.getDefaultValue().get()).getValue()) // Note: Convert SqlNode to an appropriate Java type.
-//          .build();
-//    } else {
-      return GraphQLArgument.newArgument()
-          .name(sqrlFunctionParameter.getVariableName())
-          .type(nonNull(argType))
-          .build();
-//    }
+    return GraphQLArgument.newArgument()
+        .name(sqrlFunctionParameter.getVariableName())
+        .type(nonNull(argType))
+        .build();
   }
   private boolean allowedArguments(Relationship field) {
     //No arguments for to-one rels or parent fields

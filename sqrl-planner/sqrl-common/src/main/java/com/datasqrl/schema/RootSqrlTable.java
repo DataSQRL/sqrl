@@ -57,11 +57,6 @@ public class RootSqrlTable implements SqrlTableMacro {
   }
 
   @Override
-  public String getInternalName() {
-    return getName().getDisplay();
-  }
-
-  @Override
   public String getDisplayName() {
     return getName().getDisplay();
   }

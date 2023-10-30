@@ -41,4 +41,8 @@ public abstract class AbstractName implements Name {
     return getCanonical().compareTo(o.getCanonical());
   }
 
+  @Override
+  public boolean hasPrefix(Name variablePrefix) {
+    return this.getCanonical().startsWith(variablePrefix.getCanonical());
+  }
 }

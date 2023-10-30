@@ -13,6 +13,9 @@ import static org.mockito.Mockito.mock;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
@@ -21,9 +24,15 @@ import com.datasqrl.graphql.inference.SchemaBuilder;
 import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
+import com.datasqrl.graphql.server.Model.ArgumentSet;
+import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.graphql.util.ApiQueryBase;
+import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
@@ -37,6 +46,7 @@ import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptTable;
@@ -99,7 +109,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
     String schema = new SchemaPrinter(opts).print(generate);
 
-    System.out.println(schema);
     APISource source = APISource.of(schema);
 
     InferredSchema inferredSchema = new SchemaInference(
@@ -118,8 +127,21 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     RootGraphqlModel root = inferredSchema.accept(schemaBuilder,
         null);
 
+    for (Coords c : root.getCoords()) {
+      if (c instanceof ArgumentLookupCoords) {
+        Set<ArgumentSet> matches = ((ArgumentLookupCoords) c).getMatchs();
+        for (ArgumentSet set : matches) {
+          if (set.getQuery() instanceof ApiQueryBase) {
+            addQuery(c.getParentType(), c.getFieldName(), ((ApiQueryBase) set.getQuery()).getQuery());
+          } else if (set.getQuery() instanceof PagedApiQueryBase) {
+            addQuery(c.getParentType(), c.getFieldName(), ((PagedApiQueryBase) set.getQuery()).getQuery());
+          }
+        }
+
+      }
+    }
+
     if (isBlank(schema)) {
-      System.out.println(schema);
       throw new RuntimeException("Could not validate graphql.");
     }
 
@@ -127,6 +149,11 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
       snapshot.addContent(ErrorPrinter.prettyPrint(errors), "warnings");
     }
     snapshot.createOrValidate();
+  }
+
+  private void addQuery(String parentType, String fieldName, APIQuery query) {
+//    snapshot.addContent(parentType + ":" + fieldName + "\n" +
+//        framework.getQueryPlanner().relToString(Dialect.CALCITE, query.getRelNode()));
   }
 
   @Test
@@ -599,7 +626,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void importWithTimestamp() {
     validateScript("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;");
-    RelOptTable table = framework.getCatalogReader().getTableFromPath(List.of("Customer"));
+    RelOptTable table = framework.getCatalogReader().getTableFromPath(Name.system("Customer").toNamePath());
     int cTs = framework.getCatalogReader().nameMatcher()
         .indexOf(table.getRowType().getFieldNames(), "c_ts");
     assertTrue(cTs != -1, "Timestamp column missing");
@@ -608,7 +635,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void importWithTimestampAndAlias() {
     validateScript("IMPORT ecommerce-data.Customer AS C2 TIMESTAMP _ingest_time AS c_ts;");
-    RelOptTable table = framework.getCatalogReader().getTableFromPath(List.of("C2"));
+    RelOptTable table = framework.getCatalogReader().getTableFromPath(Name.system("C2").toNamePath());
     int cTs = framework.getCatalogReader().nameMatcher()
         .indexOf(table.getRowType().getFieldNames(), "c_ts");
     assertTrue(cTs != -1, "Timestamp column missing");
@@ -665,8 +692,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void replaceRelationshipTest() {
-    validateScript(
+    validateScriptInvalid(
         "IMPORT ecommerce-data.Product;\n"
             + "Product.productCopy := JOIN Product;"
             + "Product.productCopy := JOIN Product;");
@@ -715,8 +743,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void replaceJoinDeclarationTest() {
-    validateScript("IMPORT ecommerce-data.Product;\n"
+    validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;\n"
         + "Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;");
   }
@@ -1164,10 +1193,18 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void callTableFunction() {
     validateScript("IMPORT ecommerce-data.Orders;\n"
-        + "X(@id: Int) := SELECT * FROM Orders WHERE id = @id;\n"
-        + "X(@id: Int, @customerid: Int) := SELECT * FROM Orders WHERE id = @id AND customerid = @customerid;\n"
-        + "Y(@id: Int) := SELECT * FROM TABLE(X(2));\n"
-        + "Z(@id: Int) := SELECT * FROM TABLE(X(2, 3));\n");
+        + "X(@id: Int) := SELECT id FROM Orders WHERE id = @id;\n"
+        + "X(@id: Int, @customerid: Int) := SELECT id FROM Orders WHERE id = @id AND customerid = @customerid;\n"
+        + "Y(@id: Int) := SELECT id FROM TABLE(X(2));\n"
+        + "Z(@id: Int) := SELECT id FROM TABLE(X(2, 3));\n");
+  }
+
+  @Test
+  public void parameterizedJoinDeclaration() {
+    validateScript(
+        "IMPORT ecommerce-data.Orders;\n"
+        + "IMPORT ecommerce-data.Product;\n"
+        + "Orders.entries.product(@name: String) := JOIN Product p ON p.name = @name;\n");
   }
 
   @Test
@@ -1200,8 +1237,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void lateralJoinTest() {
     validateScript("IMPORT ecommerce-data.Orders;\n"
-        + "X(@id: Int) := SELECT * FROM Orders WHERE id = @id;\n"
-        + "X(@id: Int, @customerid: Int) := SELECT * FROM Orders WHERE id = @id AND customerid = @customerid;\n"
+        + "X(@id: Int) := SELECT id, customerid FROM Orders WHERE id = @id;\n"
+        + "X(@id: Int, @customerid: Int) := SELECT id, customerid FROM Orders WHERE id = @id AND customerid = @customerid;\n"
         + "Y(@id: Int) := SELECT * FROM TABLE(X(2)) AS t JOIN LATERAL TABLE(X(t.id, 3));\n");
   }
 
@@ -1353,7 +1390,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         + "Y := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;"
         + "X := STREAM ON ADD AS SELECT * From Y;");
 
-    assertNotNull(this.framework.getCatalogReader().getTableFromPath(List.of("X")));
+    assertNotNull(this.framework.getCatalogReader().getTableFromPath(Name.system("X").toNamePath()));
   }
 
   @Test

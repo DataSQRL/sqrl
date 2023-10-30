@@ -1,10 +1,7 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.sqrl.CatalogResolver;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import java.util.List;
-import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -12,10 +9,9 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
-public class CatalogReader extends CalciteCatalogReader implements CatalogResolver {
+public class CatalogReader extends CalciteCatalogReader {
 
   @Getter
   private final SqrlSchema schema;
@@ -25,8 +21,8 @@ public class CatalogReader extends CalciteCatalogReader implements CatalogResolv
     this.schema = rootSchema;
   }
 
-  public RelOptTable getTableFromPath(List<String> names) {
-    NamePath absolutePath = getSqrlAbsolutePath(NamePath.system(names));
+  public RelOptTable getTableFromPath(NamePath names) {
+    NamePath absolutePath = getSqrlAbsolutePath(names);
     String sysTableName = schema.getPathToSysTableMap().get(absolutePath);
     if (sysTableName == null) {
       return null;

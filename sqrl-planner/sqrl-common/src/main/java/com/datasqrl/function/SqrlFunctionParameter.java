@@ -1,5 +1,7 @@
 package com.datasqrl.function;
 
+import static com.datasqrl.canonicalizer.ReservedName.VARIABLE_PREFIX;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
@@ -40,6 +42,6 @@ public class SqrlFunctionParameter implements FunctionParameter {
   }
 
   public String getVariableName() {
-    return name.charAt(0) == '@' ? name.substring(1) : name;
+    return name.charAt(0) == VARIABLE_PREFIX.getCanonical().charAt(0) ? name.substring(1) : name;
   }
 }

@@ -25,18 +25,5 @@ public interface SqrlTableMacro extends TableFunction {
   NamePath getFullPath();
   NamePath getAbsolutePath();
 
-  String getInternalName();
   String getDisplayName();
-
-  @Value
-  class Column {
-    String name;
-    List<SqrlFunctionParameter> parameters;
-    boolean computed;
-    boolean relationship;
-    List<SqrlTableMacro> isA;
-    RelDataType type;
-  }
-
-
 }

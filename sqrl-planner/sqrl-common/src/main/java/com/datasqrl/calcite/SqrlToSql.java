@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import static com.datasqrl.plan.validate.ScriptValidator.addError;
 import static com.datasqrl.plan.validate.ScriptValidator.isSelfTable;
 import static com.datasqrl.plan.validate.ScriptValidator.isVariable;
 
@@ -16,9 +15,11 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.sqrl.PathToSql;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.plan.hints.TopNHint.Type;
+import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +45,6 @@ import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLateralOperator;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
@@ -62,18 +62,20 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   private final NormalizeTablePath normalizeTablePath;
   private List<FunctionParameter> parameters;
   private final AtomicInteger uniquePkId;
+  private final SqlNameUtil nameUtil;
 
   public SqrlToSql(CatalogReader catalogReader, SqlOperatorTable operatorTable,
       NormalizeTablePath normalizeTablePath, List<FunctionParameter> parameters,
-      AtomicInteger uniquePkId) {
+      AtomicInteger uniquePkId, SqlNameUtil nameUtil) {
     this.catalogReader = catalogReader;
     this.operatorTable = operatorTable;
     this.normalizeTablePath = normalizeTablePath;
     this.parameters = parameters;
     this.uniquePkId = uniquePkId;
+    this.nameUtil = nameUtil;
   }
 
-  public Result rewrite(SqlNode query, boolean materializeSelf, List<String> currentPath) {
+  public Result rewrite(SqlNode query, boolean materializeSelf, NamePath currentPath) {
     Context context = new Context.ContextBuilder(materializeSelf, currentPath, currentPath.size() > 0).build();
     Result result = SqlNodeVisitor.accept(this, query, context);
     CalciteFixes.appendSelectLists(result.getSqlNode());
@@ -232,7 +234,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
 
     SqlAliasCallBuilder aliasBuilder = new SqlAliasCallBuilder(node);
-    context.addAlias(aliasBuilder.getAlias(), result.getCurrentPath());
+    context.addAlias(nameUtil.toName(aliasBuilder.getAlias()), result.getCurrentPath());
 
     SqlNode newNode = aliasBuilder.setTable(result.getSqlNode())
         .build();
@@ -282,11 +284,11 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     for (PullupColumn column : pullupCols) {
       selectList.add(
           SqlStdOperatorTable.AS.createCall(SqlParserPos.ZERO,
-              new SqlIdentifier(List.of(first.getAlias(), column.getColumnName()), SqlParserPos.ZERO),
+              new SqlIdentifier(List.of(first.getAlias().getDisplay(), column.getColumnName()), SqlParserPos.ZERO),
               new SqlIdentifier(column.getDisplayName(), SqlParserPos.ZERO)));
     }
 
-    selectList.add(new SqlIdentifier(List.of(last.getAlias(), ""), SqlParserPos.ZERO));
+    selectList.add(new SqlIdentifier(List.of(last.getAlias().getDisplay(), ""), SqlParserPos.ZERO));
 
     select.setSelectList(selectList);
     return select.build();
@@ -357,7 +359,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       throw new RuntimeException("Primary key columns not pulled up in rewriting");
     }
 
-    List<List<String>> tableReferences = operandResults.stream()
+    List<NamePath> tableReferences = operandResults.stream()
         .map(o -> o.tableReferences)
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
@@ -371,7 +373,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .build();
 
     return new Result(call,
-        List.of(),
+        NamePath.ROOT,
         List.of(),
         tableReferences,
         Optional.empty(),
@@ -402,7 +404,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
   @Override
   public Result visitUserDefinedTableFunction(SqlCall node, Context context) {
-    return new Result(node, List.of(), List.of(), List.of(), Optional.empty(), parameters);
+    return new Result(node, NamePath.ROOT, List.of(), List.of(), Optional.empty(), parameters);
   }
 
   @Override
@@ -435,7 +437,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     @Override
     public SqlNode visit(SqlIdentifier id) {
-      Preconditions.checkState(!isVariable(id.names), "Found variable when expecting one.");
+      Preconditions.checkState(!isVariable(nameUtil.toNamePath(id.names)), "Found variable when expecting one.");
       return super.visit(id);
     }
   }
@@ -443,9 +445,9 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   @Value
   public static class Result {
     SqlNode sqlNode;
-    List<String> currentPath;
+    NamePath currentPath;
     List<PullupColumn> pullupColumns;
-    List<List<String>> tableReferences;
+    List<NamePath> tableReferences;
     Optional<SqlNode> condition;
     List<FunctionParameter> params;
   }
@@ -455,26 +457,26 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     //unbound replaces @ with system args, bound expands @ to table.
     boolean materializeSelf;
-    List<String> currentPath;
-    Map<String, List<String>> aliasPathMap;
+    NamePath currentPath;
+    Map<Name, NamePath> aliasPathMap;
     public boolean isNested;
 
-    public void addAlias(String alias, List<String> currentPath) {
+    public void addAlias(Name alias, NamePath currentPath) {
       aliasPathMap.put(alias, currentPath);
     }
 
-    public boolean hasAlias(String alias) {
+    public boolean hasAlias(Name alias) {
       return aliasPathMap.containsKey(alias);
     }
 
-    public List<String> getAliasPath(String alias) {
-      return new ArrayList<>(getAliasPathMap().get(alias));
+    public NamePath getAliasPath(Name alias) {
+      return getAliasPathMap().get(alias);
     }
 
     public static class ContextBuilder {
       boolean materializeSelf;
-      List<String> currentPath;
-      Map<String, List<String>> aliasPathMap;
+      NamePath currentPath;
+      Map<Name, NamePath> aliasPathMap;
       public boolean isNested;
 
       public ContextBuilder(Context context) {
@@ -484,7 +486,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         this.isNested = context.isNested;
       }
 
-      public ContextBuilder(boolean materializeSelf, List<String> currentPath,
+      public ContextBuilder(boolean materializeSelf, NamePath currentPath,
           boolean isNested) {
         this.materializeSelf = materializeSelf;
         this.currentPath = currentPath;
@@ -497,13 +499,13 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         return this;
       }
 
-      public ContextBuilder setCurrentPath(List<String> currentPath) {
+      public ContextBuilder setCurrentPath(NamePath currentPath) {
         this.currentPath = currentPath;
         return this;
       }
 
       public ContextBuilder setAliasPathMap(
-          Map<String, List<String>> aliasPathMap) {
+          Map<Name, NamePath> aliasPathMap) {
         this.aliasPathMap = aliasPathMap;
         return this;
       }

@@ -27,9 +27,6 @@ public class Relationship implements SqrlTableMacro {
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
 
-  public String internalName;
-  public int version;
-
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
     return viewTransform.get().getRowType();
@@ -41,7 +38,7 @@ public class Relationship implements SqrlTableMacro {
   }
 
   public String getDisplayName() {
-    return String.join(".", getFullPath().toStringList());
+    return getFullPath().getDisplay();
   }
 
   public enum JoinType {

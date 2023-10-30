@@ -39,13 +39,10 @@ public class JdbcContext implements Context {
       //Map args
       Set<Argument> argumentSet = new HashSet<>();
       for (GraphQLArgument argument : env.getFieldDefinition().getArguments()) {
-        if (argument.getArgumentDefaultValue().isNotSet()) {
-          argumentSet.add(new VariableArgument(argument.getName(), env.getArguments().get(argument.getName())));
-        } else {
-          argumentSet.add(new FixedArgument(argument.getName(), env.getArguments().get(argument.getName())));
-        }
+        VariableArgument arg = new VariableArgument(argument.getName(),
+            env.getArguments().get(argument.getName()));
+        argumentSet.add(arg);
       }
-
 
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);
@@ -67,7 +64,8 @@ public class JdbcContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords, Map<String, String> filters) {
+  public DataFetcher<?> createSubscriptionFetcher(SubscriptionCoords coords,
+      Map<String, String> filters) {
     throw new RuntimeException("Subscriptions not yet supported");
   }
 }

@@ -3,11 +3,14 @@ package com.datasqrl.calcite;
 import static com.datasqrl.plan.validate.ScriptValidator.isSelfField;
 
 import com.datasqrl.calcite.SqrlToSql.Context;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
-import com.datasqrl.calcite.sqrl.CatalogResolver;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
@@ -29,7 +33,6 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 
 /**
  * Converts a table path to a normalized representation.
@@ -39,10 +42,13 @@ public class NormalizeTablePath {
   private final CatalogReader catalogResolver;
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping;
   private final AtomicInteger aliasInt = new AtomicInteger(0);
+  private final SqlNameUtil nameUtil;
 
-  public NormalizeTablePath(CatalogReader catalogResolver, Map<FunctionParameter, SqlDynamicParam> paramMapping) {
-    this.catalogResolver = catalogResolver;
+  public NormalizeTablePath(CatalogReader catalogReader, Map<FunctionParameter, SqlDynamicParam> paramMapping,
+      SqlNameUtil nameUtil) {
+    this.catalogResolver = catalogReader;
     this.paramMapping = paramMapping;
+    this.nameUtil = nameUtil;
   }
 
   public TablePathResult convert(List<SqlNode> items, Context context, List<FunctionParameter> parameters) {
@@ -59,14 +65,13 @@ public class NormalizeTablePath {
     Iterator<SqlNode> input = items.iterator();
 
     SqlNode item = input.next();
-    String identifier = getIdentifier(item)
+    Name identifier = getIdentifier(item)
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
 
-    String alias;
+    Name alias;
     if (getTable(identifier).isPresent()) {
-      TableFunction op = getTable(identifier).get();
       alias = generateAlias();
-      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), op, List.of(), alias));
+      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), identifier, List.of(), alias));
       pathWalker.walk(identifier);
     } else if (context.hasAlias(identifier)) {
       // For tables that start with an alias e.g. `o.entries`
@@ -76,20 +81,23 @@ public class NormalizeTablePath {
       alias = generateAlias();
       // Get absolute path of alias `o`
       pathWalker.setPath(context.getAliasPath(identifier));
-      String nextIdentifier = getIdentifier(input.next())
+      Name nextIdentifier = getIdentifier(input.next())
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
       // Update path walker
       pathWalker.walk(nextIdentifier);
 
       // Lookup function
-      Optional<TableFunction> fnc = getTable(pathWalker.getPath());
-      Preconditions.checkState(fnc.isPresent(), "Table function not found %s", pathWalker.getPath());
+      Optional<SqrlTableMacro> fnc = getTable(pathWalker.getPath());
+      boolean hasTableFnc = hasTableFunction(pathWalker.getPath());
+      Preconditions.checkState(hasTableFnc, "Table function not found %s", pathWalker.getPath());
 
+      List<SqrlFunctionParameter> internalParams = getInternalParamsOfTable(pathWalker.getPath());
       // Rewrite arguments so internal arguments are prefixed with the alias
-      List<SqlNode> args = rewriteArgs(identifier, fnc.get(), context, params);
+      List<SqlNode> args = rewriteInternalArgs(identifier, internalParams, context, params);
 
-      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), fnc.get(), args, alias));
-    } else if (identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical())) {
+      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
+          nameUtil.toName(pathWalker.getPath().getDisplay()), args, alias));
+    } else if (identifier.equals(ReservedName.SELF_IDENTIFIER)) {
       //Tables that start with '@'
       pathWalker.setPath(context.getCurrentPath());
       // Treat '@' as something to add to the table path list
@@ -99,20 +107,23 @@ public class NormalizeTablePath {
         // Do a table scan on the source table
         RelOptTable table = catalogResolver.getTableFromPath(pathWalker.getPath());
         pathItems.add(new SelfTablePathItem(pathWalker.getPath(), table));
-        alias = ReservedName.SELF_IDENTIFIER.getCanonical();
+        alias = ReservedName.SELF_IDENTIFIER;
       } else {
-        String nextIdentifier = getIdentifier(input.next())
+        Name nextIdentifier = getIdentifier(input.next())
             .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
         pathWalker.walk(nextIdentifier);
 
-        Optional<TableFunction> fnc = getTable(pathWalker.getAbsolutePath());
-        Preconditions.checkState(fnc.isPresent(), "Table function not found %s", pathWalker.getPath());
+        boolean hasTableFnc = hasTableFunction(pathWalker.getPath());
+        Preconditions.checkState(hasTableFnc, "Table function not found %s", pathWalker.getPath());
+
+        List<SqrlFunctionParameter> internalParams = getInternalParamsOfTable(pathWalker.getPath());
 
         alias = generateAlias();
         // Rewrite arguments
-        List<SqlNode> args = rewriteArgs(ReservedName.SELF_IDENTIFIER.getCanonical(), fnc.get(), context,
+        List<SqlNode> args = rewriteInternalArgs(ReservedName.SELF_IDENTIFIER, internalParams, context,
             params);
-        pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), fnc.get(), args, alias));
+        pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
+            nameUtil.toName(pathWalker.getPath().getDisplay()), args, alias));
       }
     } else {
       throw new RuntimeException("Unknown table: " + item);
@@ -120,41 +131,58 @@ public class NormalizeTablePath {
 
     while (input.hasNext()) {
       item = input.next();
-      String nextIdentifier = getIdentifier(item)
+      Name nextIdentifier = getIdentifier(item)
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
       pathWalker.walk(nextIdentifier);
 
+      boolean hasTableFnc = hasTableFunction(pathWalker.getPath());
+      Preconditions.checkState(hasTableFnc, "Table function not found %s", pathWalker.getPath());
 
-      Optional<TableFunction> fnc = getTable(pathWalker.getPath());
-      List<SqlNode> args = rewriteArgs(alias, fnc.get(), context, params);
-      String newAlias = generateAlias();
-      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), fnc.get(), args, newAlias));
+      List<SqrlFunctionParameter> internalParams = getInternalParamsOfTable(pathWalker.getPath());
+
+      List<SqlNode> args = rewriteInternalArgs(alias, internalParams, context, params);
+      Name newAlias = generateAlias();
+      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
+          nameUtil.toName(pathWalker.getPath().getDisplay()), args, newAlias));
       alias = newAlias;
     }
 
     return pathItems;
   }
 
-  private Optional<TableFunction> getTable(List<String> path) {
-    return getTable(String.join(".", path));
+  private boolean hasTableFunction(NamePath path) {
+    return getTable(path).isPresent();
   }
 
-  private Optional<TableFunction> getTable(String identifier) {
+  // Internal params are all the same for a given path
+  private List<SqrlFunctionParameter> getInternalParamsOfTable(NamePath path) {
+    return getTable(path)
+        .get().getParameters().stream()
+        .map(p->(SqrlFunctionParameter)p)
+        .filter(SqrlFunctionParameter::isInternal)
+        .collect(Collectors.toList());
+  }
+
+  private Optional<SqrlTableMacro> getTable(Name name) {
+    return getTable(name.toNamePath());
+  }
+
+  private Optional<SqrlTableMacro> getTable(NamePath path) {
+    return getTable(path.getDisplay());
+  }
+
+  private Optional<SqrlTableMacro> getTable(String identifier) {
     ArrayList<Function> functions = new ArrayList<>(
         catalogResolver.getSchema().getFunctions(identifier, false));
-    //first function assumed to be our table function
-    // Also assumed to be table function
-    //TODO: Fix me
-    return functions.isEmpty() ? Optional.empty() : Optional.of((TableFunction) functions.get(0));
+    //Get first function, calcite will resolve parameters
+    return functions.isEmpty() ? Optional.empty() : Optional.of((SqrlTableMacro) functions.get(0));
   }
 
-  private List<SqlNode> rewriteArgs(String alias, TableFunction function, Context context,
+  private List<SqlNode> rewriteInternalArgs(Name alias, List<SqrlFunctionParameter> internalParams, Context context,
       List<FunctionParameter> params) {
-    //if arg needs to by a dynamic expression, rewrite.
     List<SqlNode> nodes = new ArrayList<>();
-    for (FunctionParameter parameter : function.getParameters()) {
-      SqrlFunctionParameter p = (SqrlFunctionParameter) parameter;
-      SqlIdentifier identifier = new SqlIdentifier(List.of(alias, p.getName()),
+    for (SqrlFunctionParameter param : internalParams) {
+      SqlIdentifier identifier = new SqlIdentifier(List.of(alias.getDisplay(), param.getName()),
           SqlParserPos.ZERO);
       SqlNode rewritten = context.isMaterializeSelf()
           ? identifier
@@ -166,7 +194,7 @@ public class NormalizeTablePath {
 
   public SqlNode rewriteToDynamicParam(SqlIdentifier id, List<FunctionParameter> params) {
     //if self, check if param list, if not create one
-    if (!isSelfField(id.names)) {
+    if (!isSelfField(nameUtil.toNamePath(id.names))) {
       return id;
     }
 
@@ -187,43 +215,45 @@ public class NormalizeTablePath {
     return param;
   }
 
-  private Optional<String> getIdentifier(SqlNode item) {
+  private Optional<Name> getIdentifier(SqlNode item) {
     if (item instanceof SqlIdentifier) {
-      return Optional.of(((SqlIdentifier) item).getSimple());
+      return Optional.of(((SqlIdentifier) item).getSimple())
+          .map(nameUtil::toName);
     } else if (item instanceof SqlCall) {
-      return Optional.of(((SqlCall) item).getOperator().getName());
+      return Optional.of(((SqlCall) item).getOperator().getName())
+          .map(nameUtil::toName);
     }
 
     return Optional.empty();
   }
 
-  private String generateAlias() {
-    return ALIAS_PREFIX + aliasInt.incrementAndGet();
+  private Name generateAlias() {
+    return nameUtil.toName(ALIAS_PREFIX + aliasInt.incrementAndGet());
   }
 
 
   public interface PathItem {
-    String getAlias();
+    Name getAlias();
   }
 
   @AllArgsConstructor
   @Getter
   public class TableFunctionPathItem implements PathItem {
-    List<String> path;
-    TableFunction op;
+    NamePath path;
+    Name functionName;
     List<SqlNode> arguments;
-    String alias;
+    Name alias;
   }
 
   @AllArgsConstructor
   @Getter
   public class SelfTablePathItem implements PathItem {
-    List<String> path;
+    NamePath path;
     RelOptTable table;
 
     @Override
-    public String getAlias() {
-      return ReservedName.SELF_IDENTIFIER.getCanonical();
+    public Name getAlias() {
+      return ReservedName.SELF_IDENTIFIER;
     }
   }
 
@@ -231,6 +261,6 @@ public class NormalizeTablePath {
   public class TablePathResult {
     List<FunctionParameter> params;
     List<PathItem> pathItems;
-    List<String> path;
+    NamePath path;
   }
 }
