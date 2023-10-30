@@ -5,7 +5,6 @@ package com.datasqrl.graphql.generate;
 
 import static com.datasqrl.graphql.generate.ObjectTypeGenerator.logIfInvalid;
 import static com.datasqrl.graphql.generate.SchemaGenerator.isValidGraphQLName;
-import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.conformName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getTypeReference;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.wrap;
 
@@ -15,10 +14,7 @@ import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
 import com.datasqrl.schema.Multiplicity;
 import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLObjectType;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Generates the GraphQL Query type.
@@ -28,9 +24,11 @@ public class QueryTypeGenerator implements
     CalciteSchemaVisitor<Void, SchemaGeneratorContext> {
 
   private final List<GraphQLFieldDefinition> queryFields;
+  private final boolean allowAdditionalArgs;
 
-  public QueryTypeGenerator(List<GraphQLFieldDefinition> queryFields) {
+  public QueryTypeGenerator(List<GraphQLFieldDefinition> queryFields, boolean allowAdditionalArgs) {
     this.queryFields = queryFields;
+    this.allowAdditionalArgs = allowAdditionalArgs;
   }
 
   @Override
@@ -51,7 +49,7 @@ public class QueryTypeGenerator implements
     GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
         .name(table.getName())
         .type(wrap(getTypeReference(table, context.getNames()), Multiplicity.MANY))
-        .arguments(table.accept(new ArgumentGenerator(), context))
+        .arguments(table.accept(new ArgumentGenerator(allowAdditionalArgs), context))
         .build();
     queryFields.add(field);
 

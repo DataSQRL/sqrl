@@ -101,7 +101,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
 
     SchemaGenerator schemaGenerator = new SchemaGenerator();
-    GraphQLSchema generate = schemaGenerator.generate(sqrlSchemaForInference);
+    GraphQLSchema generate = schemaGenerator.generate(sqrlSchemaForInference, true);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)

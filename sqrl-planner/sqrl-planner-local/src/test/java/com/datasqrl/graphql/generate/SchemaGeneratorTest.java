@@ -41,4 +41,9 @@ public class SchemaGeneratorTest extends AbstractSchemaGeneratorTest {
     snapshotTest("IMPORT ecommerce-data.Orders;");
   }
 
+  @Test
+  public void testImportNestedNoArgs() {
+    snapshotTest("IMPORT ecommerce-data.Orders;", false);
+  }
+
 }

@@ -139,8 +139,9 @@ public class Compiler {
 
     Name graphqlName = Name.system(scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>")
         .split("\\.")[0]);
+
     APISource apiSchema = apiSchemaOpt.orElseGet(() ->
-        new APISource(graphqlName, inferGraphQLSchema(sqrlSchemaForInference)));
+        new APISource(graphqlName, inferGraphQLSchema(sqrlSchemaForInference, compilerConfig.isAllowAdditionalArgs())));
 
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 
@@ -188,8 +189,9 @@ public class Compiler {
   }
 
   @SneakyThrows
-  public static String inferGraphQLSchema(SqrlSchemaForInference schema) {
-    GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema);
+  public static String inferGraphQLSchema(SqrlSchemaForInference schema,
+      boolean allowAdditionalArgs) {
+    GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema, allowAdditionalArgs);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
