@@ -46,16 +46,12 @@ public class PhysicalPlanExecutor {
 
     List<StageResult> results;
 
-    public List<ExecutionResult> get() {
-      return results.stream().map(r -> {
-        try {
-          return r.result.get();
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }).collect(Collectors.toList());
+    public CompletableFuture get() {
+      CompletableFuture[] futures = results.stream()
+          .map(StageResult::getResult)
+          .toArray(CompletableFuture[]::new);
+      return CompletableFuture.allOf(futures);
     }
-
   }
 
   @Value

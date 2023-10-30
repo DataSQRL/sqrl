@@ -65,6 +65,8 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.configuration.ConfigConstants;
+import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -173,8 +175,14 @@ public class FlinkEnvironmentBuilder implements
     log.debug("Setting flink config");
     Configuration sEnvConfig = Configuration.fromMap(
         config.getStreamExecutionEnvironmentConfig());
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(
-        sEnvConfig);
+    StreamExecutionEnvironment sEnv;
+    if (config.getStreamExecutionEnvironmentConfig().get(ConfigConstants.LOCAL_START_WEBSERVER) != null &&
+        config.getStreamExecutionEnvironmentConfig().get(ConfigConstants.LOCAL_START_WEBSERVER).equalsIgnoreCase("true")) {
+      sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(sEnvConfig);
+    } else {
+      sEnv = StreamExecutionEnvironment.getExecutionEnvironment(sEnvConfig);
+    }
+
 
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
         .withConfiguration(Configuration.fromMap(config.getTableEnvironmentConfig())).build();

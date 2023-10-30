@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.apache.flink.configuration.ConfigConstants;
 
 @Slf4j
 public class PackagerUtil {
@@ -204,6 +205,8 @@ public class PackagerUtil {
 
     SqrlConfig flinkConfig = config.getSubConfig("streams");
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+    flinkConfig.setProperty("taskmanager.memory.network.max", "800m");
+    flinkConfig.setProperty(ConfigConstants.LOCAL_START_WEBSERVER, "true");
 
     SqrlConfig server = config.getSubConfig("server");
     server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,

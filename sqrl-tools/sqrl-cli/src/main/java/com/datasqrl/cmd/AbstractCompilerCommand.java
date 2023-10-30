@@ -176,11 +176,19 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       throw new RuntimeException(e);
     }
   }
+  @SneakyThrows
   protected void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
     Predicate<ExecutionStage> stageFilter = s -> true;
     if (!startGraphql) stageFilter = s -> s.getEngine().getType()!= Type.SERVER;
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
-    result.get();
+    result.get().get();
+
+    // Hold java open if service is not long running
+    try {
+      System.in.read();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 }
