@@ -1,6 +1,7 @@
 package com.datasqrl.service;
 
 import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.config.EngineKeys;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
@@ -124,14 +125,14 @@ public class PackagerUtil {
         .port(5432)
         .build()
     );
-    SqrlConfig flinkConfig = config.getSubConfig("streams");
+    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
 
-    SqrlConfig server = config.getSubConfig("server");
+    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
     server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
         VertxEngineFactory.ENGINE_NAME);
 
-    SqrlConfig logConfig = config.getSubConfig("log");
+    SqrlConfig logConfig = config.getSubConfig(EngineKeys.LOG);
     logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
     logConfig.copy(
         KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, "kafka:9092",
@@ -174,10 +175,10 @@ public class PackagerUtil {
         .build()
     );
 
-    SqrlConfig flinkConfig = config.getSubConfig("streams");
+    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
 
-    SqrlConfig server = config.getSubConfig("server");
+    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
     server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
         VertxEngineFactory.ENGINE_NAME);
 
@@ -189,7 +190,7 @@ public class PackagerUtil {
 
     SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
 
-    SqrlConfig dbConfig = config.getSubConfig("database");
+    SqrlConfig dbConfig = config.getSubConfig(EngineKeys.DATABASE);
     dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
     dbConfig.setProperties(JdbcDataSystemConnector.builder()
         .url("jdbc:postgresql://localhost/datasqrl")
@@ -203,15 +204,15 @@ public class PackagerUtil {
         .build()
     );
 
-    SqrlConfig flinkConfig = config.getSubConfig("streams");
+    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
     flinkConfig.setProperty(ConfigConstants.LOCAL_START_WEBSERVER, "true");
 
-    SqrlConfig server = config.getSubConfig("server");
+    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
     server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
         VertxEngineFactory.ENGINE_NAME);
 
-    SqrlConfig logConfig = config.getSubConfig("log");
+    SqrlConfig logConfig = config.getSubConfig(EngineKeys.LOG);
     logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
     logConfig.copy(
         KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, bootstrapServers,

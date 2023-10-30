@@ -198,6 +198,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       throw new RuntimeException(e);
     }
   }
+
   @SneakyThrows
   protected void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
     Predicate<ExecutionStage> stageFilter = s -> true;

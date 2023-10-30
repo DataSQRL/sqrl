@@ -106,7 +106,7 @@ public class Packager {
     // Find all SQRL script files
     Result allResults = Files.find(rootDir, 128, FIND_SQRL_SCRIPT)
         .map(script -> analyzer.analyze(script, errors))
-        .reduce(Result.EMPTY, (r1, r2) -> r1.add(r2));
+        .reduce(Result.EMPTY, Result::add);
 
     StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
     Set<NamePath> pkgs = new HashSet<>(allResults.getPkgs());
