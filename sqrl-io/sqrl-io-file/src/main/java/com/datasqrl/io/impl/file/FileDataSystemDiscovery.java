@@ -119,7 +119,7 @@ public class FileDataSystemDiscovery extends DataSystemDiscovery.Base {
               tablesByName.put(tblName, table);
             } else {
               FormatFactory otherFormat = otherTbl.getFormat();
-              if (chosenFormat.getName().equals(otherFormat.getName())) {
+              if (!chosenFormat.getName().equals(otherFormat.getName())) {
                 errors.warn("Table file [%s] does not have the same format [%s] of previously " +
                         "encountered table [%s]. File will be ignored",
                     p, otherFormat.getName(), otherTbl.getName());
