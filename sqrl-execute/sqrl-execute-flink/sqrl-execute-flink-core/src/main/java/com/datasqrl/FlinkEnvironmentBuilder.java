@@ -176,8 +176,9 @@ public class FlinkEnvironmentBuilder implements
     Configuration sEnvConfig = Configuration.fromMap(
         config.getStreamExecutionEnvironmentConfig());
     StreamExecutionEnvironment sEnv;
-    if (config.getStreamExecutionEnvironmentConfig().get(ConfigConstants.LOCAL_START_WEBSERVER) != null &&
-        config.getStreamExecutionEnvironmentConfig().get(ConfigConstants.LOCAL_START_WEBSERVER).equalsIgnoreCase("true")) {
+    String startWebUi = config.getStreamExecutionEnvironmentConfig()
+        .get(ConfigConstants.LOCAL_START_WEBSERVER);
+    if (startWebUi != null && startWebUi.equalsIgnoreCase("true")) {
       sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(sEnvConfig);
     } else {
       sEnv = StreamExecutionEnvironment.getExecutionEnvironment(sEnvConfig);
