@@ -11,26 +11,19 @@ import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.io.ExternalDataType;
-import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
-import com.datasqrl.io.tables.BaseTableConfig;
-import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.PackagerConfig;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.google.common.base.Preconditions;
 import com.datasqrl.kafka.KafkaLogEngineFactory;
-import com.google.common.io.Resources;
-import java.util.Arrays;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -48,7 +41,8 @@ public class PackagerUtil {
     return packagerConfig.getPackager(errors);
   }
 
-  protected static PackagerConfig createPackageConfig(Path[] files, Path rootDir, SqrlConfig config) {
+  protected static PackagerConfig createPackageConfig(Path[] files, Path rootDir,
+      SqrlConfig config) {
     PackagerConfig.PackagerConfigBuilder pkgBuilder =
         PackagerConfig.builder()
             .rootDir(rootDir)
@@ -63,18 +57,19 @@ public class PackagerUtil {
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_FILE_NAME);
 
   public static SqrlConfig getOrCreateDefaultConfiguration(RootCommand root, ErrorCollector errors,
-                                                           Supplier<SqrlConfig> defaultConfig) {
+      Supplier<SqrlConfig> defaultConfig) {
     List<Path> configFiles = getOrCreateDefaultPackageFiles(root, errors, defaultConfig);
-    Preconditions.checkArgument(configFiles.size()>=1);
-    return SqrlConfigCommons.fromFiles(errors,configFiles.get(0),configFiles.subList(1,configFiles.size()).stream().toArray(Path[]::new));
+    Preconditions.checkArgument(configFiles.size() >= 1);
+    return SqrlConfigCommons.fromFiles(errors, configFiles.get(0),
+        configFiles.subList(1, configFiles.size()).stream().toArray(Path[]::new));
   }
 
   public static List<Path> getOrCreateDefaultPackageFiles(RootCommand root, ErrorCollector errors,
-                                                          Supplier<SqrlConfig> defaultConfig) {
+      Supplier<SqrlConfig> defaultConfig) {
     Optional<List<Path>> existingPackageJson = findRootPackageFiles(root);
     return existingPackageJson
-            .orElseGet(() -> List.of(writeEngineConfig(root.getRootDir(),
-                    defaultConfig.get())));
+        .orElseGet(() -> List.of(writeEngineConfig(root.getRootDir(),
+            defaultConfig.get())));
   }
 
   @SneakyThrows
@@ -83,7 +78,7 @@ public class PackagerUtil {
     File file = enginesFile.toFile();
     file.deleteOnExit();
 
-    config.toFile(enginesFile,true);
+    config.toFile(enginesFile, true);
     return enginesFile;
   }
 
@@ -118,25 +113,27 @@ public class PackagerUtil {
     SqrlConfig dbConfig = config.getSubConfig("database");
     dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
     dbConfig.setProperties(JdbcDataSystemConnector.builder()
-            .url("jdbc:postgresql://database:5432/datasqrl")
-            .driver("org.postgresql.Driver")
-            .dialect("postgres")
-            .database("datasqrl")
-            .user("postgres")
-            .password("postgres")
-            .host("database")
-            .port(5432)
-            .build()
+        .url("jdbc:postgresql://database:5432/datasqrl")
+        .driver("org.postgresql.Driver")
+        .dialect("postgres")
+        .database("datasqrl")
+        .user("postgres")
+        .password("postgres")
+        .host("database")
+        .port(5432)
+        .build()
     );
     SqrlConfig flinkConfig = config.getSubConfig("streams");
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
 
     SqrlConfig server = config.getSubConfig("server");
-    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
+    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
+        VertxEngineFactory.ENGINE_NAME);
 
     SqrlConfig logConfig = config.getSubConfig("log");
     logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
-    logConfig.copy(KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, "kafka:9092",
+    logConfig.copy(
+        KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, "kafka:9092",
             JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
 
     return rootConfig;
@@ -169,20 +166,55 @@ public class PackagerUtil {
     SqrlConfig dbConfig = config.getSubConfig("database");
     dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
     dbConfig.setProperties(JdbcDataSystemConnector.builder()
-            .url("jdbc:h2:file:./h2.db")
-            .driver("org.h2.Driver")
-            .dialect("h2")
-            .database("datasqrl")
-            .build()
+        .url("jdbc:h2:file:./h2.db")
+        .driver("org.h2.Driver")
+        .dialect("h2")
+        .database("datasqrl")
+        .build()
     );
 
     SqrlConfig flinkConfig = config.getSubConfig("streams");
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
 
     SqrlConfig server = config.getSubConfig("server");
-    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY, VertxEngineFactory.ENGINE_NAME);
+    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
+        VertxEngineFactory.ENGINE_NAME);
 
     return rootConfig;
   }
 
+  public static SqrlConfig createLocalConfig(String bootstrapServers, ErrorCollector errors) {
+    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    SqrlConfig dbConfig = config.getSubConfig("database");
+    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
+    dbConfig.setProperties(JdbcDataSystemConnector.builder()
+        .url("jdbc:postgresql://localhost/datasqrl")
+        .driver("org.postgresql.Driver")
+        .dialect("postgres")
+        .database("datasqrl")
+            .host("localhost")
+            .port(5432)
+            .user("postgres")
+            .password("postgres")
+        .build()
+    );
+
+    SqrlConfig flinkConfig = config.getSubConfig("streams");
+    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+
+    SqrlConfig server = config.getSubConfig("server");
+    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
+        VertxEngineFactory.ENGINE_NAME);
+
+    SqrlConfig logConfig = config.getSubConfig("log");
+    logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
+    logConfig.copy(
+        KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, bootstrapServers,
+            JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
+
+    return rootConfig;
+  }
 }

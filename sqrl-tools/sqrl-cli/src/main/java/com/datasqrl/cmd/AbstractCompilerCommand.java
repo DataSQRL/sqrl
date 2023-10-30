@@ -16,6 +16,7 @@ import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Optional;
@@ -58,6 +59,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"--nolookup"}, description = "Do not look up package dependencies in the repository",
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
+  private boolean kafkaStarted;
 
   protected AbstractCompilerCommand(boolean execute, boolean startGraphql, boolean startKafka) {
     this.execute = execute;
@@ -95,7 +97,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
   }
 
-  private boolean isGenerateGraphql() {
+  protected boolean isGenerateGraphql() {
     if (generateAPI != null) {
       return Arrays.stream(generateAPI).anyMatch(APIType.GraphQL::equals);
     }
@@ -103,13 +105,13 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   @SneakyThrows
-  private void addGraphql(Path build, Path rootDir) {
+  protected void addGraphql(Path build, Path rootDir) {
     Files.copy(build.resolve(GRAPHQL_NORMALIZED_FILE_NAME),
         rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME));
   }
 
   //Adds in regardless
-  private void addDockerCompose(Optional<Path> mountDir) {
+  protected void addDockerCompose(Optional<Path> mountDir) {
     String yml = DockerCompose.getYml(mountDir);
     Path toFile = targetDir.resolve("docker-compose.yml");
     try {
@@ -121,7 +123,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
   }
 
-  private void addFlinkExecute() {
+  protected void addFlinkExecute() {
     String sh = DockerCompose.getFlinkExecute();
     Path toFile = targetDir.resolve("submit-flink-job.sh");
     try {
@@ -137,12 +139,22 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
   }
 
-  private class DefaultConfigSupplier implements Supplier<SqrlConfig> {
+  protected Supplier<SqrlConfig> getDefaultConfig(boolean startKafka, ErrorCollector errors) {
+    if (startKafka) {
+      startKafka();
+      return ()->PackagerUtil.createLocalConfig(CLUSTER.bootstrapServers(), errors);
+    }
+
+    //Generate docker config
+    return ()->PackagerUtil.createDockerConfig(root.rootDir, targetDir, errors);
+  }
+
+  protected class DefaultConfigSupplier implements Supplier<SqrlConfig> {
 
     boolean usesDefault = false;
     final ErrorCollector errors;
 
-    private DefaultConfigSupplier(ErrorCollector errors) {
+    protected DefaultConfigSupplier(ErrorCollector errors) {
       this.errors = errors;
     }
 
@@ -153,7 +165,18 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
   }
 
-  private void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
+  private void startKafka() {
+    //We're generating an embedded config, start the cluster
+    try {
+      if (!kafkaStarted) {
+        CLUSTER.start();
+      }
+      this.kafkaStarted = true;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  protected void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
     Predicate<ExecutionStage> stageFilter = s -> true;
     if (!startGraphql) stageFilter = s -> s.getEngine().getType()!= Type.SERVER;
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();

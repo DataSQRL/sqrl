@@ -1,8 +1,22 @@
 #!/bin/bash
 set -e
 cd /build
+
+if [ "$1" = "run" ]; then
+  service postgresql start
+
+  # Wait for PostgreSQL to be ready
+  echo "Waiting for PostgreSQL to be ready..."
+  while ! pg_isready -q; do
+      sleep 1
+  done
+fi
+
 echo 'Compiling...this takes about 10 seconds'
 java -jar /usr/src/app/sqrl-cli.jar ${@}
+
+# Start PostgreSQL if the argument is 'run'
+
 
 FILE=/build/build/deploy/flink-plan.json
 if [ -f "$FILE" ] && [ "$1" = "compile" ]; then
