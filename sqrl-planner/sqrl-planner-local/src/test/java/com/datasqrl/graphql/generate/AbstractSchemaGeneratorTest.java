@@ -25,11 +25,11 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
     this.snapshot = Snapshot.of(getClass(), testInfo);
   }
 
-  protected String generateSchema(String sqrlScript, boolean allowAdditionalArgs) {
+  protected String generateSchema(String sqrlScript, boolean addArguments) {
     Namespace ns = plan(sqrlScript);
     SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(planner.getFramework().getSchema());
 
-    GraphQLSchema schema = new SchemaGenerator().generate(sqrlSchemaForInference, allowAdditionalArgs);
+    GraphQLSchema schema = new SchemaGenerator().generate(sqrlSchemaForInference, addArguments);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
@@ -42,8 +42,8 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
     snapshotTest(sqrlScript, true);
   }
 
-  protected void snapshotTest(String sqrlScript, boolean allowAdditionalArgs) {
-    snapshot.addContent(generateSchema(sqrlScript, allowAdditionalArgs));
+  protected void snapshotTest(String sqrlScript, boolean addArguments) {
+    snapshot.addContent(generateSchema(sqrlScript, addArguments));
     snapshot.createOrValidate();
   }
 }

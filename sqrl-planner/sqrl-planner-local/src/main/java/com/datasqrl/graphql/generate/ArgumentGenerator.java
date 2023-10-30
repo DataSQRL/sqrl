@@ -33,7 +33,7 @@ public class ArgumentGenerator implements
     FieldVisitor<List<GraphQLArgument>, SchemaGeneratorContext>,
     SqrlTableVisitor<List<GraphQLArgument>, SchemaGeneratorContext> {
 
-  private final boolean allowAdditionalArgs;
+  private final boolean addArguments;
 
   @Override
   public List<GraphQLArgument> visit(Column column, SchemaGeneratorContext context) {
@@ -49,10 +49,10 @@ public class ArgumentGenerator implements
     List<FunctionParameter> parameters = field.getParameters().stream()
         .filter(f->!((SqrlFunctionParameter)f).isInternal())
         .collect(Collectors.toList());
-    if (allowAdditionalArgs && parameters.isEmpty() && field.getJoinType() == JoinType.JOIN) {
+    if (addArguments && parameters.isEmpty() && field.getJoinType() == JoinType.JOIN) {
       List<GraphQLArgument> limitOffset = generateLimitOffset();
       return limitOffset;
-    } else if (allowAdditionalArgs && parameters.isEmpty()) {
+    } else if (addArguments && parameters.isEmpty()) {
       List<GraphQLArgument> premuted = generatePremuted(field.getToTable());
       List<GraphQLArgument> limitOffset = generateLimitOffset();
 
@@ -81,7 +81,7 @@ public class ArgumentGenerator implements
           .filter(a-> logIfInvalid(isValidGraphQLName(a.getVariableName()), table, a))
           .map(this::createArgument)
           .collect(Collectors.toList());
-    } else if (allowAdditionalArgs) {
+    } else if (addArguments) {
       List<GraphQLArgument> premuted = generatePremuted(table);
       List<GraphQLArgument> limitOffset = generateLimitOffset();
       return ListUtils.union(premuted, limitOffset);

@@ -24,11 +24,11 @@ public class QueryTypeGenerator implements
     CalciteSchemaVisitor<Void, SchemaGeneratorContext> {
 
   private final List<GraphQLFieldDefinition> queryFields;
-  private final boolean allowAdditionalArgs;
+  private final boolean addArguments;
 
-  public QueryTypeGenerator(List<GraphQLFieldDefinition> queryFields, boolean allowAdditionalArgs) {
+  public QueryTypeGenerator(List<GraphQLFieldDefinition> queryFields, boolean addArguments) {
     this.queryFields = queryFields;
-    this.allowAdditionalArgs = allowAdditionalArgs;
+    this.addArguments = addArguments;
   }
 
   @Override
@@ -49,7 +49,7 @@ public class QueryTypeGenerator implements
     GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
         .name(table.getName())
         .type(wrap(getTypeReference(table, context.getNames()), Multiplicity.MANY))
-        .arguments(table.accept(new ArgumentGenerator(allowAdditionalArgs), context))
+        .arguments(table.accept(new ArgumentGenerator(addArguments), context))
         .build();
     queryFields.add(field);
 
