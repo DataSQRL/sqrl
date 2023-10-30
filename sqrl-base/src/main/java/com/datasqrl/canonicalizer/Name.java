@@ -129,4 +129,5 @@ public interface Name extends Serializable, Comparable<Name> {
     return name.startsWith(SYSTEM_HIDDEN_PREFIX);
   }
 
+  boolean hasPrefix(Name variablePrefix);
 }

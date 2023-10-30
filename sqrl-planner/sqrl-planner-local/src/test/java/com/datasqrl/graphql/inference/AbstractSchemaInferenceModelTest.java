@@ -76,8 +76,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     }
 
     //Build queries
-    SchemaBuilder schemaBuilder = new SchemaBuilder(source
-    );
+    SchemaBuilder schemaBuilder = new SchemaBuilder(source);
 
     RootGraphqlModel root = inferredSchema.accept(schemaBuilder, null);
 

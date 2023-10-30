@@ -1,8 +1,5 @@
 package com.datasqrl.calcite.plan;
 
-import static com.datasqrl.plan.validate.ScriptValidator.addError;
-import static com.datasqrl.plan.validate.ScriptValidator.getParentPath;
-
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
@@ -87,7 +84,8 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   @Override
   public Void visit(SqrlAssignTimestamp query, Void context) {
     List<String> tableName = query.getAlias().orElse(query.getIdentifier()).names;
-    RelOptTable table = planner.getCatalogReader().getTableFromPath(tableName);
+    NamePath names = nameUtil.toNamePath(tableName);
+    RelOptTable table = planner.getCatalogReader().getTableFromPath(names);
     RexNode node = planner.planExpression(query.getTimestamp(), table.getRowType());
 
     int timestampIndex;
@@ -110,11 +108,11 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   public Void visit(SqrlAssignment assignment, Void context) {
     SqlNode node = validator.getPreprocessSql().get(assignment);
     boolean materializeSelf = validator.getIsMaterializeTable().get(assignment);
-    List<String> parentPath = getParentPath(assignment);
+    NamePath parentPath = getParentPath(assignment);
     NormalizeTablePath normalizeTablePath = new NormalizeTablePath(planner.getCatalogReader(),
-        validator.getParamMapping());
+        validator.getParamMapping(), new SqlNameUtil(planner.getFramework().getNameCanonicalizer()));
     SqrlToSql sqrlToSql = new SqrlToSql(planner.getCatalogReader(), planner.getOperatorTable(),
-        normalizeTablePath, validator.getParameters().get(assignment), framework.getUniquePkId());
+        normalizeTablePath, validator.getParameters().get(assignment), framework.getUniquePkId(), nameUtil);
     Result result = sqrlToSql.rewrite(node, materializeSelf, parentPath);
 
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
@@ -129,19 +127,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           .collect(Collectors.toList());
       NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
 
-//      NamePath fromTable = path.popLast();
       NamePath toTable = isASqrl.get(isASqrl.size()-1).getAbsolutePath();
-//      String fromSysTable = planner.getSchema().getPathToSysTableMap().get(fromTable);
-//      String toSysTable = planner.getSchema().getPathToSysTableMap().get(toTable);
       Supplier<RelNode> nodeSupplier = ()->expanded;
-
-      int version = framework.getUniqueMacroInt().incrementAndGet();
-      String internalName = String.join(".", path.toStringList()) + "$"
-          + version;
 
       Relationship rel = new Relationship(path.getLast(),
           path, toTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
-          result.getParams(), nodeSupplier, internalName, version);
+          result.getParams(), nodeSupplier);
       planner.getSchema().addRelationship(rel);
     } else {
       List<String> path = assignment.getIdentifier().names;
@@ -161,9 +152,22 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return null;
   }
 
+  public NamePath getParentPath(SqrlAssignment statement) {
+    NamePath path = nameUtil.toNamePath(statement.getIdentifier().names);
+    if (statement instanceof SqrlExpressionQuery) {
+      if (statement.getIdentifier().names.size() > 2) {
+        return path.popLast().popLast();
+      } else {
+        return path.popLast();
+      }
+    } else {
+      return path.popLast();
+    }
+  }
   @Override
   public Void visit(SqrlExpressionQuery node, Void context) {
-    RelOptTable table = planner.getCatalogReader().getTableFromPath(SqrlListUtil.popLast(node.getIdentifier().names));
+    NamePath path = nameUtil.toNamePath(node.getIdentifier().names).popLast();
+    RelOptTable table = planner.getCatalogReader().getTableFromPath(path);
     RexNode rexNode = planner.planExpression(node.getExpression(), table.getRowType());
     addColumn(rexNode, Util.last(node.getIdentifier().names), table);
     return null;

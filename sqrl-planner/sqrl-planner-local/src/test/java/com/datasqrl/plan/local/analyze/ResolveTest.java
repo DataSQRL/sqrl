@@ -690,7 +690,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
       SqrlSchema sqrlSchema, String tableName) {
 
     List<Function> tableFunction =
-        new ArrayList<>(sqrlSchema.getSqrlFramework().getSchema().getFunctions(String.join(".", tableName), false));
+        new ArrayList<>(sqrlSchema.getSqrlFramework().getSchema().getFunctions(tableName, false));
     return tableFunction.size() == 0? Optional.empty() : Optional.of((T)tableFunction.get(0));
   }
 

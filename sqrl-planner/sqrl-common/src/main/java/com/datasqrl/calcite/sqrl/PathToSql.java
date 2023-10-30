@@ -46,15 +46,15 @@ public class PathToSql {
       } else if (item instanceof TableFunctionPathItem) {
         TableFunctionPathItem tableFncItm = (TableFunctionPathItem) item;
 
-        SqlOperator fun = new SqlUnresolvedFunction(new SqlIdentifier(((SqrlTableMacro)tableFncItm.getOp()).getDisplayName(), SqlParserPos.ZERO), (SqlReturnTypeInference)null,
-            (SqlOperandTypeInference)null, (SqlOperandTypeChecker)null, null, SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION);
+        SqlOperator fun = new SqlUnresolvedFunction(new SqlIdentifier(tableFncItm.getFunctionName().getDisplay(), SqlParserPos.ZERO), (SqlReturnTypeInference)null,
+            null, null, null, SqlFunctionCategory.USER_DEFINED_TABLE_FUNCTION);
         SqlCall call = fun.createCall(SqlParserPos.ZERO, tableFncItm.getArguments());
 
         call = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO, call);
         SqlCall aliasedCall = SqlStdOperatorTable.AS.createCall(
             SqlParserPos.ZERO,
             call,
-            new SqlIdentifier(tableFncItm.getAlias(), SqlParserPos.ZERO)
+            new SqlIdentifier(tableFncItm.getAlias().getDisplay(), SqlParserPos.ZERO)
         );
         stack.push(aliasedCall);
       }

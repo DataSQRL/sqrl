@@ -1,5 +1,7 @@
 package com.datasqrl.graphql.inference;
 
+import static com.datasqrl.canonicalizer.ReservedName.VARIABLE_PREFIX;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.TypeFactory;
@@ -8,14 +10,11 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaBuilder.ArgCombination;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.server.Model;
-import com.datasqrl.graphql.server.Model.Argument;
-import com.datasqrl.graphql.server.Model.ArgumentParameter;
-import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.graphql.server.Model.SourceParameter;
-import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import graphql.language.FieldDefinition;
 import graphql.language.IntValue;
@@ -37,8 +36,8 @@ import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -49,7 +48,6 @@ import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.OperandMetadataImpl;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -77,7 +75,7 @@ public class GraphqlQueryBuilder {
 
     if (allowPermutation) {
       for (SqrlFunctionParameter parameter : getInternalParams(operator.getFunction().getParameters())) {
-        queryBuilderHelper.addInternalOperand(parameter.getVariableName(), parameter.getRelDataType()); //todo: how to get scope's name?
+        queryBuilderHelper.addInternalOperand(parameter.getVariableName(), parameter.getRelDataType());
       }
       queryBuilderHelper.scan(operator);
 
@@ -104,12 +102,7 @@ public class GraphqlQueryBuilder {
           String operand = tableArgument.getDefinition().getName();
           RelDataType operandType = graphqlToRelDataType(tableArgument.getDefinition().getType(), framework.getTypeFactory());
 
-          if (tableArgument.getDefaultValue().isPresent()) {
-            Object value = valueToObject(tableArgument.getDefaultValue().get());
-            queryBuilderHelper.addLiteralOperand(operand, operandType, value);
-          } else {
-            queryBuilderHelper.addVariableOperand(operand, operandType);
-          }
+          queryBuilderHelper.addVariableOperand(operand, operandType);
         }
       }
       queryBuilderHelper.scan(operator);
@@ -148,20 +141,25 @@ public class GraphqlQueryBuilder {
     return argumentSet;
   }
 
-  private Object valueToObject(Value value) {
-    return 1;
-  }
-
   private boolean isLimitOrOffset(ArgCombination c) {
     return c.getDefinition().getName().equalsIgnoreCase("limit") ||
         c.getDefinition().getName().equalsIgnoreCase("offset");
   }
 
   private Pair<SqlUserDefinedTableFunction, Boolean> resolveOperator(SqrlTableMacro macro, List<ArgCombination> arg) {
+    // Check for permutation case and bail early. It's costly to check the operands for all cases.
+    List<Function> functions = new ArrayList<>(framework.getSchema()
+        .getFunctions(macro.getDisplayName(), false));
+    if (functions.size() == 1 && getExternalParams(functions.get(0).getParameters()).size() == 0) {
+      List<SqlOperator> operators = getOperators(macro.getDisplayName(), List.of(),
+          getInternalParams(functions.get(0).getParameters()));
+      return Pair.of((SqlUserDefinedTableFunction) Iterables.getOnlyElement(operators), true);
+    }
+
     // Lookup operator with full arguments. If not found, look for table fnc with no args and allow permutation
     List<ArgCombination> pagingRemoved = removePaging(arg);
     List<SqrlFunctionParameter> internalParams = getInternalParams(macro.getParameters());
-    String tableFunctionName = String.join(".", macro.getFullPath().toStringList());
+    String tableFunctionName = macro.getFullPath().getDisplay();
 
     // Look for function with all args
     List<SqlOperator> operators = getOperators(tableFunctionName, pagingRemoved, internalParams);
@@ -183,14 +181,6 @@ public class GraphqlQueryBuilder {
     }
   }
 
-
-  private List<SqrlFunctionParameter> getInternalParams(List<FunctionParameter> params) {
-    return params.stream()
-        .map(p -> (SqrlFunctionParameter) p)
-        .filter(p -> p.isInternal())
-        .collect(Collectors.toList());
-  }
-
   private List<SqrlFunctionParameter> getExternalParams(List<FunctionParameter> params) {
     return params.stream()
         .map(p -> (SqrlFunctionParameter) p)
@@ -198,17 +188,11 @@ public class GraphqlQueryBuilder {
         .collect(Collectors.toList());
   }
 
-  private Pair<Argument, RexDynamicParam> createVariable(List<JdbcParameterHandler> params,
-      String name,
-      RelDataTypeFactory typeFactory) {
-    VariableArgument variableArgument = new VariableArgument(name, null);
-    params.add(new ArgumentParameter(name));
-
-    RelDataType sqlType = typeFactory.createSqlType(
-        SqlTypeName.ANY);
-
-    RexDynamicParam rexDynamicParam = new RexDynamicParam(sqlType, params.size() - 1);
-    return Pair.of(variableArgument, rexDynamicParam);
+  private List<SqrlFunctionParameter> getInternalParams(List<FunctionParameter> params) {
+    return params.stream()
+        .map(p -> (SqrlFunctionParameter) p)
+        .filter(SqrlFunctionParameter::isInternal)
+        .collect(Collectors.toList());
   }
 
   private Optional<ArgCombination> onlyLimit(List<ArgCombination> arg) {
@@ -281,7 +265,7 @@ public class GraphqlQueryBuilder {
 
   private List<String> constructArgNames(List<ArgCombination> args) {
     return args.stream()
-        .map(f -> "@" + f.getDefinition().getName()) //to variable name
+        .map(f -> VARIABLE_PREFIX.getCanonical() + f.getDefinition().getName()) //to variable name
         .collect(Collectors.toList());
   }
 

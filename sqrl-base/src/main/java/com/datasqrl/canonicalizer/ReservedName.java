@@ -29,5 +29,6 @@ public class ReservedName extends AbstractName {
   public static final ReservedName SYSTEM_TIMESTAMP = new ReservedName(SYSTEM_HIDDEN_PREFIX + "timestamp");
   public static final ReservedName PARENT = new ReservedName("parent");
   public static final ReservedName ALL = new ReservedName("*");
+  public static final ReservedName VARIABLE_PREFIX = new ReservedName("@");
 
 }

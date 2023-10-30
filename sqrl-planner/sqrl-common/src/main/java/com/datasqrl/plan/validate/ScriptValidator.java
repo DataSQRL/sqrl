@@ -1,5 +1,7 @@
 package com.datasqrl.plan.validate;
 
+import static com.datasqrl.canonicalizer.ReservedName.SELF_IDENTIFIER;
+import static com.datasqrl.canonicalizer.ReservedName.VARIABLE_PREFIX;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.calcite.ModifiableTable;
@@ -11,6 +13,7 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.CollectedException;
@@ -29,6 +32,7 @@ import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -89,6 +93,7 @@ import org.apache.commons.lang3.tuple.Pair;
 @AllArgsConstructor
 @Getter
 public class ScriptValidator implements StatementVisitor<Void, Void> {
+
   private final SqrlFramework framework;
   private final QueryPlanner planner;
   private final ModuleLoader moduleLoader;
@@ -104,7 +109,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping = new HashMap<>();
   private final Map<SqrlAssignment, SqlNode> preprocessSql = new HashMap<>();
   private final Map<SqrlAssignment, Boolean> isMaterializeTable = new HashMap<>();
-  private final Map<SqrlAssignment, List<String>> fieldNames = new HashMap<>();
   private final ArrayListMultimap<SqlNode, Function> isA = ArrayListMultimap.create();
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
 
@@ -182,7 +186,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
    */
   @Override
   public Void visit(SqrlExportDefinition node, Void context) {
-    Optional<RelOptTable> table = resolveTable(node.getIdentifier(), node.getIdentifier().names);
     Optional<TableSink> sink = LoaderUtil.loadSinkOpt(nameUtil.toNamePath(node.getSinkPath().names),
         errorCollector, moduleLoader);
 
@@ -192,32 +195,32 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       return null;
     }
 
-    exportOps.put(node, new QualifiedExport(node.getIdentifier().names, sink.get()));
+    NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
+    exportOps.put(node, new QualifiedExport(path, sink.get()));
 
     return null;
   }
 
   @Value
   public class QualifiedExport {
-    List<String> table;
+    NamePath table;
     TableSink sink;
   }
 
   @Override
   public Void visit(SqrlAssignment assignment, Void context) {
     if (assignment.getIdentifier().names.size() > 1) {
-      List<String> path = SqrlListUtil.popLast(assignment.getIdentifier().names);
+      NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names).popLast();
       Collection<Function> tableFunction = framework.getQueryPlanner().getSchema()
-          .getFunctions(String.join(".", path), false);
+          .getFunctions(path.getDisplay(), false);
       if (tableFunction.isEmpty()) {
-        throw addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Could not find table: %s", String.join(".", path));
+        throw addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Could not find table: %s", path.getDisplay());
       }
-      Function function = new ArrayList<>(tableFunction).get(0);
+      Function function = Iterables.getOnlyElement(tableFunction);
       if (function instanceof Relationship && ((Relationship) function).getJoinType() != JoinType.CHILD) {
         addError(ErrorLabel.GENERIC, assignment.getIdentifier(), "Cannot assign query to table");
       }
     }
-
 
     return null;
   }
@@ -235,8 +238,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
   private boolean materializeSelfQuery(SqrlSqlQuery node) {
     if (node.getTableArgs().isEmpty()) {
+      NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
       Collection<Function> tableFunction = framework.getQueryPlanner().getSchema()
-          .getFunctions(String.join(".", node.getIdentifier().names), false);
+          .getFunctions(path.getDisplay(), false);
 
       if (tableFunction.size() > 0) {
         throw addError(ErrorLabel.GENERIC, node, "Cannot shadow table");
@@ -253,12 +257,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     //If on root table, use root table
     //If on nested, use @.table
-    List<String> tablePath;
+    NamePath tablePath;
     if (node.getIdentifier().names.size() > 2) {
-      tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical(),
-          node.getIdentifier().names.get(node.getIdentifier().names.size() - 2));
+      Name last = nameUtil.toName(node.getIdentifier().names.get(node.getIdentifier().names.size() - 2));
+      tablePath = ReservedName.SELF_IDENTIFIER.toNamePath().concat(last);
     } else if (node.getIdentifier().names.size() == 2) {
-      tablePath = List.of(ReservedName.SELF_IDENTIFIER.getCanonical());
+      tablePath = ReservedName.SELF_IDENTIFIER.toNamePath();
     } else {
       throw addError(ErrorLabel.GENERIC, node.getExpression(),
           "Cannot assign expression to root");
@@ -268,7 +272,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     if (node.getTableArgs().isPresent()) {
       addError(ErrorLabel.GENERIC, node, "Table arguments for expressions not implemented yet.");
     }
-    List<String> names = SqrlListUtil.popLast(node.getIdentifier().names);
+    NamePath names = nameUtil.toNamePath(node.getIdentifier().names).popLast();
     Optional<RelOptTable> table = resolveModifiableTable(node, names);
 
     List<SqlNode> selectList = new ArrayList<>();
@@ -279,7 +283,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     SqlSelect select = new SqlSelectBuilder()
         .setSelectList(selectList)
-        .setFrom(new SqlIdentifier(tablePath, SqlParserPos.ZERO))
+        .setFrom(new SqlIdentifier(tablePath.toStringList(), SqlParserPos.ZERO))
         .build();
     validateTable(node, select, node.getTableArgs(),
         true);
@@ -335,20 +339,19 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     SqlNode validated;
 
     try {
-      List<String> parent = List.of();
+      NamePath parent = NamePath.ROOT;
       if (statement.getIdentifier().names.size() > 1) {
         parent = getParentPath(statement);
-        Collection<Function> sqrlTable = planner.getSchema().getFunctions(
-            String.join(".", parent), false);
+        Collection<Function> sqrlTable = planner.getSchema().getFunctions(parent.getDisplay(), false);
         if (sqrlTable.isEmpty()) {
           throw addError(ErrorLabel.GENERIC, statement.getIdentifier()
                   .getComponent(statement.getIdentifier().names.size()-1),
               "Could not find parent assignment table: %s",
-              flattenNames(parent));
+              parent.getDisplay());
         }
       }
 
-      SqrlToValidatorSql sqrlToSql = new SqrlToValidatorSql(planner, errorCollector, uniqueId);
+      SqrlToValidatorSql sqrlToSql = new SqrlToValidatorSql(planner, errorCollector, uniqueId, nameUtil);
       result = sqrlToSql.rewrite(query, parent, statement.getTableArgs().orElseGet(()->
           new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
       this.isA.putAll(sqrlToSql.getIsA());
@@ -363,10 +366,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         }
       }
 
-//      System.out.println(sqlNode);
 //      validated = validator.validate(sqlNode);
     } catch (CalciteContextException e) {
-      e.printStackTrace();
       throw addError(ErrorLabel.GENERIC, e);
     } catch (CollectedException e) {
       return;
@@ -374,17 +375,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       e.printStackTrace();
       addError(e, ErrorLabel.GENERIC, statement, e.getMessage());
       return;
-    }
-
-    //we have enough to plan
-//    RelDataType type = validator.getValidatedNodeType(validated);
-//    fieldNames.put(statement, type.getFieldNames());
-    try {
-//      RelNode relNode = planner.plan(Dialect.CALCITE, validated);
-//      type = relNode.getRowType();
-//      return Pair.of(result, type);
-    } catch (Exception e) {
-      errorCollector.exception(ErrorLabel.GENERIC, e.getMessage());
     }
   }
 
@@ -412,20 +402,17 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     }
   }
 
-  public static List<String> getParentPath(SqrlAssignment statement) {
+  public NamePath getParentPath(SqrlAssignment statement) {
+    NamePath path = nameUtil.toNamePath(statement.getIdentifier().names);
     if (statement instanceof SqrlExpressionQuery) {
       if (statement.getIdentifier().names.size() > 2) {
-        return SqrlListUtil.popLast(SqrlListUtil.popLast(statement.getIdentifier().names));
+        return path.popLast().popLast();
       } else {
-        return SqrlListUtil.popLast(statement.getIdentifier().names);
+        return path.popLast();
       }
     } else {
-      return SqrlListUtil.popLast(statement.getIdentifier().names);
+      return path.popLast();
     }
-  }
-
-  public static String flattenNames(List<String> nameList) {
-    return String.join(".", nameList);
   }
 
   public static boolean isSelfTable(SqlNode sqlNode) {
@@ -523,7 +510,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return new SqlShuttle(){
       @Override
       public SqlNode visit(SqlIdentifier id) {
-        if (isSelfField(id.names) && !materializeSelf) {
+        if (isSelfField(nameUtil.toNamePath(id.names)) && !materializeSelf) {
           //Add to param list if not there
           String name = id.names.get(1);
           for (FunctionParameter p : parameterList) {
@@ -549,7 +536,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           paramMapping.put(functionParameter, param);
 
           return param;
-        } else if (isVariable(id.names)) {
+        } else if (isVariable(nameUtil.toNamePath(id.names))) {
           if (id.names.size() > 1) {
             addError(ErrorLabel.GENERIC, id, "Nested variables not yet implemented");
             return id;
@@ -592,11 +579,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     };
   }
-  public static boolean isVariable(List<String> names) {
-    return names.get(0).startsWith("@") && names.get(0).length() > 1;
+  public static boolean isVariable(NamePath names) {
+    return names.get(0).hasPrefix(VARIABLE_PREFIX) && names.get(0).length() > 1;
   }
-  public static boolean isSelfField(List<String> names) {
-    return names.get(0).equalsIgnoreCase("@") && names.size() > 1;
+
+  public static boolean isSelfField(NamePath names) {
+    return names.get(0).equals(SELF_IDENTIFIER) && names.size() > 1;
   }
 
   /**
@@ -612,8 +600,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     boolean materializeSelf = node.getQuery().getFetch() != null;
     isMaterializeTable.put(node, materializeSelf);
     checkAssignable(node);
-    List<String> path = SqrlListUtil.popLast(node.getIdentifier().names);
-    if (path.isEmpty()) {
+    NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
+    NamePath parent = path.popLast();
+    if (parent.isEmpty()) {
       throw addError(ErrorLabel.GENERIC, node.getIdentifier(),
           "Cannot assign join declaration on root");
     }
@@ -685,13 +674,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
   }
 
   private void checkAssignable(SqrlAssignment node) {
-    List<String> path = SqrlListUtil.popLast(node.getIdentifier().names);
+    NamePath path = nameUtil.toNamePath(node.getIdentifier().names).popLast();
     if (path.isEmpty()) {
       return;
     }
 
-    Collection<Function> tableFunction = planner.getSchema().getFunctions(
-        String.join(".", path), false);
+    Collection<Function> tableFunction = planner.getSchema().getFunctions(path.getDisplay(), false);
     if (tableFunction.isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Cannot column or query to table");
     }
@@ -746,7 +734,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       throw addError(ErrorLabel.GENERIC, node.getIdentifier().getComponent(1), "Cannot assign timestamp to nested item");
     }
 
-    Optional<RelOptTable> table = resolveModifiableTable(node, node.getAlias().orElse(node.getIdentifier()).names);
+    Optional<RelOptTable> table = resolveModifiableTable(node, node.getAlias().map(a->nameUtil.toNamePath(a.names))
+        .orElse(nameUtil.toNamePath(node.getIdentifier().names)));
 
     Optional<RexNode> rexNode = table.flatMap(t-> {
         try {
@@ -769,10 +758,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  private Optional<RelOptTable> resolveTable(SqlNode node, List<String> names) {
-    Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader().getTableFromPath(names));
+  private Optional<RelOptTable> resolveTable(SqlNode node, NamePath names) {
+    Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader()
+        .getTableFromPath(names));
     if (table.isEmpty()) {
-      throw addError(ErrorLabel.GENERIC, node, "Could not find table: %s", flattenNames(names));
+      throw addError(ErrorLabel.GENERIC, node, "Could not find table: %s", names.getDisplay());
     }
 
     table.ifPresent((t)->this.tableMap.put(node, t));
@@ -780,10 +770,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return table;
   }
 
-  private Optional<RelOptTable> resolveModifiableTable(SqlNode node, List<String> names) {
+  private Optional<RelOptTable> resolveModifiableTable(SqlNode node, NamePath names) {
     Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader().getTableFromPath(names));
     if (table.isEmpty()) {
-      addError(ErrorLabel.GENERIC, node, "Could not find table: %s", flattenNames(names));
+      addError(ErrorLabel.GENERIC, node, "Could not find table: %s", names.getDisplay());
     }
 
     table.ifPresent((t)->this.tableMap.put(node, t));
@@ -791,9 +781,9 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     table.ifPresent((t) -> {
       ModifiableTable modTable = t.unwrap(ModifiableTable.class);
       if (modTable == null) {
-        addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: %s", flattenNames(names));
+        addError(ErrorLabel.GENERIC, node, "Table cannot have a column added: %s", names.getDisplay());
       } else if (modTable.isLocked()) {
-        addError(ErrorCode.TABLE_LOCKED, node, "Cannot add column to locked table: %s", flattenNames(names));
+        addError(ErrorCode.TABLE_LOCKED, node, "Cannot add column to locked table: %s", names.getDisplay());
       }
     });
 

@@ -1,11 +1,9 @@
 package com.datasqrl.plan.validate;
 
 import static com.datasqrl.plan.validate.ScriptValidator.addError;
-import static com.datasqrl.plan.validate.ScriptValidator.flattenNames;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.calcite.SqrlToSql;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.PathWalker;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
@@ -13,12 +11,14 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.plan.validate.SqrlToValidatorSql.Context;
 import com.datasqrl.plan.validate.SqrlToValidatorSql.Result;
-import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
+import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory.FieldInfoBuilder;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlCall;
@@ -44,7 +42,6 @@ import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLateralOperator;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
@@ -53,7 +50,6 @@ import org.apache.calcite.sql.SqrlTableFunctionDef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 
 @AllArgsConstructor
 @Getter
@@ -64,8 +60,9 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
   final AtomicInteger uniqueId;
   private final Multimap<SqlNode, TableFunction> isA = ArrayListMultimap.create();
   private final List<SqlFunction> plannerFns = new ArrayList<>();
+  final SqlNameUtil nameUtil;
 
-  public Result rewrite(SqlNode query, List<String> currentPath, SqrlTableFunctionDef tableArgs) {
+  public Result rewrite(SqlNode query, NamePath currentPath, SqrlTableFunctionDef tableArgs) {
     Context context = new Context(currentPath, new HashMap<>(), tableArgs, query);
 
     return SqlNodeVisitor.accept(this, query, context);
@@ -83,9 +80,8 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
       if (node instanceof SqlIdentifier) {
         SqlIdentifier ident = (SqlIdentifier) node;
         if (ident.isStar() && ident.names.size() == 1) {
-          for (List<String> path : newContext.getAliasPathMap().values()) {
-            Collection<Function> sqrlTable = planner.getSchema().getFunctions(
-                String.join(".",path), false);
+          for (NamePath path : newContext.getAliasPathMap().values()) {
+            Collection<Function> sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
 
             if (!sqrlTable.isEmpty()) {
               new ArrayList<>(sqrlTable).stream()
@@ -94,9 +90,8 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
             }
           }
         } else if (ident.isStar() && ident.names.size() == 2) {
-          List<String> path = newContext.getAliasPath(ident.names.get(0));
-          Collection<Function> sqrlTable = planner.getSchema().getFunctions(
-              String.join(".",path), false);
+          NamePath path = newContext.getAliasPath(nameUtil.toName(ident.names.get(0)));
+          Collection<Function> sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
 
           if (!sqrlTable.isEmpty()) {
             new ArrayList<>(sqrlTable).stream()
@@ -138,7 +133,7 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
     Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
     SqlAliasCallBuilder aliasBuilder = new SqlAliasCallBuilder(node);
 
-    context.addAlias(aliasBuilder.getAlias(), result.getCurrentPath());
+    context.addAlias(nameUtil.toName(aliasBuilder.getAlias()), result.getCurrentPath());
 
     SqlNode newNode = aliasBuilder.setTable(result.getSqlNode())
         .build();
@@ -166,13 +161,13 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
       return SqlNodeVisitor.accept(this, item, ctx);
     }
 
-    String identifier = getIdentifier(item)
+    Name identifier = getIdentifier(item)
         .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
 
     boolean isAlias = context.hasAlias(identifier);
-    boolean isSelf = identifier.equals(ReservedName.SELF_IDENTIFIER.getCanonical());
+    boolean isSelf = identifier.equals(ReservedName.SELF_IDENTIFIER);
     Collection<Function> tableFunction = planner.getSchema().getFunctions(
-        identifier, false);
+        identifier.getDisplay(), false);
 
     if (!tableFunction.isEmpty()) {
       pathWalker.walk(identifier);
@@ -184,7 +179,7 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
       //Walk the next one and push in table function
       item = input.next();
 
-      Optional<String> nextIdentifier = getIdentifier(item);
+      Optional<Name> nextIdentifier = getIdentifier(item);
       if (nextIdentifier.isEmpty()) {
         throw addError(errorCollector, ErrorLabel.GENERIC, item,
             "Table is not a valid identifier");
@@ -193,34 +188,34 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
       pathWalker.walk(nextIdentifier.get());
       //get table of current path (no args)
       Collection<Function> table = planner.getSchema().getFunctions(
-          String.join(".",pathWalker.getPath()), false);
+          pathWalker.getPath().getDisplay(), false);
 
       if (table.isEmpty()) {
         throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find path: %s",
-            flattenNames(pathWalker.getUserDefined()));
+            pathWalker.getUserDefined().getDisplay());
       }
     } else if (isSelf) {
       pathWalker.setPath(context.getCurrentPath());
       if (!input.hasNext()) {//treat self as a table
         Collection<Function> table = planner.getSchema().getFunctions(
-            String.join(".",context.getCurrentPath()), false);
+            context.getCurrentPath().getDisplay(), false);
         if (table.isEmpty()) {
           throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find parent table: %s",
-              flattenNames(context.getCurrentPath()));
+              context.getCurrentPath().getDisplay());
         }
       } else { //treat self as a parameterized binding to the next function
         item = input.next();
-        Optional<String> nextIdentifier = getIdentifier(item);
+        Optional<Name> nextIdentifier = getIdentifier(item);
         if (nextIdentifier.isEmpty()) {
           throw addError(errorCollector, ErrorLabel.GENERIC, item, "Table is not a valid identifier");
         }
         pathWalker.walk(nextIdentifier.get());
 
         Collection<Function> table =
-            planner.getSchema().getFunctions(String.join(".", pathWalker.getPath()), false);
+            planner.getSchema().getFunctions(pathWalker.getPath().getDisplay(), false);
         if (table.isEmpty()) {
           throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find table: %s",
-              flattenNames(pathWalker.getUserDefined()));
+              pathWalker.getUserDefined().getDisplay());
         }
       }
     } else {
@@ -230,43 +225,38 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
 
     while (input.hasNext()) {
       item = input.next();
-      Optional<String> nextIdentifier = getIdentifier(item);
+      Optional<Name> nextIdentifier = getIdentifier(item);
       if (nextIdentifier.isEmpty()) {
         throw addError(errorCollector, ErrorLabel.GENERIC, item, "Table is not a valid identifier");
       }
       pathWalker.walk(nextIdentifier.get());
 
       Collection<Function> table =
-          planner.getSchema().getFunctions(String.join(".", pathWalker.getPath()), false);
+          planner.getSchema().getFunctions(pathWalker.getPath().getDisplay(), false);
       if (table.isEmpty()) {
         throw addError(errorCollector, ErrorLabel.GENERIC, item, "Could not find table: %s",
-            flattenNames(pathWalker.getUserDefined()));
+            pathWalker.getUserDefined().getDisplay());
       }
     }
 
     SqlCall call1 = SqlStdOperatorTable.COLLECTION_TABLE.createCall(SqlParserPos.ZERO,
-        new SqlIdentifier(String.join(".", pathWalker.getAbsolutePath()), SqlParserPos.ZERO));
+        new SqlIdentifier(pathWalker.getAbsolutePath().getDisplay(), SqlParserPos.ZERO));
     return new Result(call1, pathWalker.getAbsolutePath(), plannerFns);
   }
 
   @Override
   public Result visitCall(SqlCall node, Context context) {
-//    if (node.getOperator() instanceof SqlLateralOperator) {
-//      return new Result(node, List.of(), List.of());
-//    }
     throw addError(errorCollector, ErrorLabel.GENERIC, node, "Call not yet supported %s",
         node.getOperator().getName());
   }
 
-  private String getDisplay(SqlIdentifier node) {
-    return String.join(".", node.names);
-  }
-
-  private Optional<String> getIdentifier(SqlNode item) {
+  private Optional<Name> getIdentifier(SqlNode item) {
     if (item instanceof SqlIdentifier) {
-      return Optional.of(((SqlIdentifier) item).getSimple());
+      return Optional.of(((SqlIdentifier) item).getSimple())
+          .map(nameUtil::toName);
     } else if (item instanceof SqlCall) {
-      return Optional.of(((SqlCall) item).getOperator().getName());
+      return Optional.of(((SqlCall) item).getOperator().getName())
+          .map(nameUtil::toName);
     }
 
     return Optional.empty();
@@ -298,7 +288,7 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
             node.getOperandList().stream()
                 .map(o -> SqlNodeVisitor.accept(this, o, context).getSqlNode())
                 .collect(Collectors.toList())),
-        List.of(), plannerFns);
+        NamePath.ROOT, plannerFns);
   }
 
   @Override
@@ -335,7 +325,7 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
       throw addError(errorCollector, ErrorLabel.GENERIC, node, "Could not find table function %s",
           node.getOperator().getName());
     }
-    return new Result(node, List.of(), List.of());
+    return new Result(node, NamePath.ROOT, List.of());
   }
 
   @AllArgsConstructor
@@ -359,31 +349,31 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
   @Value
   public class Result {
     SqlNode sqlNode;
-    List<String> currentPath;
+    NamePath currentPath;
     List<SqlFunction> fncs;
   }
 
   @Value
   public class Context {
     //unbound replaces @ with system args, bound expands @ to table.
-    List<String> currentPath;
-    Map<String, List<String>> aliasPathMap;
+    NamePath currentPath;
+    Map<Name, NamePath> aliasPathMap;
     SqrlTableFunctionDef tableFunctionDef;
     SqlNode root;
 
-    public void addAlias(String alias, List<String> currentPath) {
+    public void addAlias(Name alias, NamePath currentPath) {
       aliasPathMap.put(alias, currentPath);
     }
 
-    public boolean hasAlias(String alias) {
+    public boolean hasAlias(Name alias) {
       return aliasPathMap.containsKey(alias);
     }
 
-    public List<String> getAliasPath(String alias) {
+    public NamePath getAliasPath(Name alias) {
       if (getAliasPathMap().get(alias) == null) {
         throw new RuntimeException("Could not find alias: " + alias);
       }
-      return new ArrayList<>(getAliasPathMap().get(alias));
+      return getAliasPathMap().get(alias);
     }
   }
 }
