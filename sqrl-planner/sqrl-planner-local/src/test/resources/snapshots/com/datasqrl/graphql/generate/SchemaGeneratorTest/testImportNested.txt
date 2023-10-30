@@ -2,11 +2,11 @@ type Orders {
   id: Float!
   customerid: Float!
   time: String!
-  entries(productid: Float, quantity: Float, unit_price: Float, discount: Float): [entries!]
+  entries(productid: Float, quantity: Float, unit_price: Float, discount: Float, limit: Int = 10, offset: Int = 0): [entries!]
 }
 
 type Query {
-  Orders(id: Float, customerid: Float, time: String): [Orders!]
+  Orders(id: Float, customerid: Float, time: String, limit: Int = 10, offset: Int = 0): [Orders!]
 }
 
 type entries {

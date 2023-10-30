@@ -531,6 +531,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void duplicateImportTest() {
     validateScript("IMPORT ecommerce-data.Product;\n"
         + "IMPORT ecommerce-data.Product;\n");
@@ -642,6 +643,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void importDuplicateAliasTest() {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"

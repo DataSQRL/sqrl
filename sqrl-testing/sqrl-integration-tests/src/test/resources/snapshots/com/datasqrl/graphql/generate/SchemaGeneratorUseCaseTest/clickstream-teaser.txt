@@ -5,10 +5,10 @@ type Click {
 }
 
 type Query {
-  Trending(url: String, total: Float): [Trending!]
-  Click(url: String, timestamp: String, userid: String): [Click!]
-  Recommendation(url: String, rec: String, frequency: Float): [Recommendation!]
-  VisitAfter(beforeURL: String, afterURL: String, timestamp: String): [VisitAfter!]
+  Trending(url: String, total: Float, limit: Int = 10, offset: Int = 0): [Trending!]
+  Click(url: String, timestamp: String, userid: String, limit: Int = 10, offset: Int = 0): [Click!]
+  Recommendation(url: String, rec: String, frequency: Float, limit: Int = 10, offset: Int = 0): [Recommendation!]
+  VisitAfter(beforeURL: String, afterURL: String, timestamp: String, limit: Int = 10, offset: Int = 0): [VisitAfter!]
 }
 
 type Recommendation {

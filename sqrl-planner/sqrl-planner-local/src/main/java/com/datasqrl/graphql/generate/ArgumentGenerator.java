@@ -44,7 +44,9 @@ public class ArgumentGenerator implements
         .filter(f->!((SqrlFunctionParameter)f).isInternal())
         .collect(Collectors.toList());
     if (parameters.isEmpty() && field.getJoinType() == JoinType.JOIN) {
-      return List.of();
+      List<GraphQLArgument> limitOffset = generateLimitOffset();
+
+      return limitOffset;
     } else if (parameters.isEmpty()) {
       List<GraphQLArgument> premuted = generatePremuted(field.getToTable());
       List<GraphQLArgument> limitOffset = generateLimitOffset();

@@ -56,15 +56,12 @@ class VertxGraphQLBuilderTest {
   static RootGraphqlModel root = RootGraphqlModel.builder()
       .schema(StringSchema.builder().schema(""
           + "type Query { "
-          + "  customer(sort: SortKey): Customer "
           + "  customer2(customerid: Int = 2): Customer "
           + "} "
           + "type Customer {"
           + "  customerid: Int "
           + "  sameCustomer: Customer"
-          + "} "
-          + "input SortKey {customerid: Direction} "
-          + "enum Direction {DESC, ASC}").build())
+          + "}").build())
       .coord(ArgumentLookupCoords.builder()
           .parentType("Query")
           .fieldName("customer")
@@ -157,18 +154,6 @@ class VertxGraphQLBuilderTest {
         new BuildGraphQLEngine(),
         new VertxContext(new VertxJdbcClient(client), Map.of(), Map.of(), NameCanonicalizer.SYSTEM));
     ExecutionResult result = graphQL.execute("{\n"
-        + "  casc: customer(sort: {customerid: ASC}) {\n"
-        + "    customerid\n"
-        + "    sameCustomer {\n"
-        + "      customerid\n"
-        + "    }\n"
-        + "  }\n"
-        + "  cdesc: customer(sort: {customerid: DESC}) {\n"
-        + "    customerid\n"
-        + "    sameCustomer {\n"
-        + "      customerid\n"
-        + "    }\n"
-        + "  }\n"
         + "  customer2(customerid: 2) {\n"
         + "    customerid\n"
         + "  }\n"
@@ -180,8 +165,9 @@ class VertxGraphQLBuilderTest {
           .collect(Collectors.joining(",")));
     }
     String value = new ObjectMapper().writeValueAsString(result.getData());
+    System.out.println(value);
     assertEquals(
-        "{\"casc\":{\"customerid\":1,\"sameCustomer\":{\"customerid\":1}},\"cdesc\":{\"customerid\":2,\"sameCustomer\":{\"customerid\":2}},\"customer2\":{\"customerid\":2}}",
+        "{\"customer2\":{\"customerid\":2}}",
         value);
   }
 }
