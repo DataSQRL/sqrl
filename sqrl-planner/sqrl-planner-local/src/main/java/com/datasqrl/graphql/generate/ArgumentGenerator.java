@@ -75,17 +75,16 @@ public class ArgumentGenerator implements
         .collect(Collectors.toList());
 
     if (!params.isEmpty()) {
-      List<GraphQLArgument> arguments = params.stream()
+      return params.stream()
           .map(a->(SqrlFunctionParameter)a)
+          .filter(a -> getInputType(a.getRelDataType()).isPresent())
           .filter(a-> logIfInvalid(isValidGraphQLName(a.getVariableName()), table, a))
           .map(this::createArgument)
           .collect(Collectors.toList());
-      return arguments;
     } else if (allowAdditionalArgs) {
       List<GraphQLArgument> premuted = generatePremuted(table);
       List<GraphQLArgument> limitOffset = generateLimitOffset();
       return ListUtils.union(premuted, limitOffset);
-
     }
 
     return List.of();
