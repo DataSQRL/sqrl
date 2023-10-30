@@ -1,14 +1,14 @@
 type Package {
   name: String!
-  latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
-  versions(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
+  latest(limit: Int = 10, offset: Int = 0): [Submission!]
+  versions(limit: Int = 10, offset: Int = 0): [Submission!]
 }
 
 type Query {
-  Package(name: String): [Package!]
-  TopicPackages(pkgName: String, topicName: String, numSubmissions: Float, lastSubmission: String): [TopicPackages!]
-  Submission(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
-  TopicSearch(topicName: String, numPackages: Float): [TopicSearch!]
+  Package(name: String, limit: Int = 10, offset: Int = 0): [Package!]
+  TopicPackages(pkgName: String, topicName: String, numSubmissions: Float, lastSubmission: String, limit: Int = 10, offset: Int = 0): [TopicPackages!]
+  Submission(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, limit: Int = 10, offset: Int = 0): [Submission!]
+  TopicSearch(topicName: String, numPackages: Float, limit: Int = 10, offset: Int = 0): [TopicSearch!]
 }
 
 type Submission {
@@ -30,7 +30,7 @@ type Submission {
   submissionTime: String!
   variant0: String!
   repoURL: String!
-  keywords(name: String): [keywords!]
+  keywords(name: String, limit: Int = 10, offset: Int = 0): [keywords!]
 }
 
 type TopicPackages {
@@ -38,7 +38,7 @@ type TopicPackages {
   topicName: String!
   numSubmissions: Float!
   lastSubmission: String!
-  latest(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String): [Submission!]
+  latest(limit: Int = 10, offset: Int = 0): [Submission!]
 }
 
 type TopicSearch {

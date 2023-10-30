@@ -1,6 +1,6 @@
 type Category {
   name: String!
-  products(productid: Float, name: String, description: String, category: String, updateTime: String): [Product!]
+  products(limit: Int = 10, offset: Int = 0): [Product!]
 }
 
 type Customer {
@@ -9,15 +9,15 @@ type Customer {
   name: String!
   lastUpdated: Float!
   updateTime: String!
-  orders(id: Float, customerid: Float, time: String): [Orders!]
+  orders(limit: Int = 10, offset: Int = 0): [Orders!]
 }
 
 type Orders {
   id: Float!
   customerid: Float!
   time: String!
-  entries(productid: Float, quantity: Float, unit_price: Float, discount: Float, discount0: Float, total: Float): [entries!]
-  total(price: Float, discount: Float, num: Float): [total!]
+  entries(productid: Float, quantity: Float, unit_price: Float, discount: Float, discount0: Float, total: Float, limit: Int = 10, offset: Int = 0): [entries!]
+  total(price: Float, discount: Float, num: Float, limit: Int = 10, offset: Int = 0): [total!]
 }
 
 type Product {
@@ -29,10 +29,10 @@ type Product {
 }
 
 type Query {
-  Product(productid: Float, name: String, description: String, category: String, updateTime: String): [Product!]
-  Orders(id: Float, customerid: Float, time: String): [Orders!]
-  Customer(customerid: Float, email: String, name: String, lastUpdated: Float, updateTime: String): [Customer!]
-  Category(name: String): [Category!]
+  Product(productid: Float, name: String, description: String, category: String, updateTime: String, limit: Int = 10, offset: Int = 0): [Product!]
+  Orders(id: Float, customerid: Float, time: String, limit: Int = 10, offset: Int = 0): [Orders!]
+  Customer(customerid: Float, email: String, name: String, lastUpdated: Float, updateTime: String, limit: Int = 10, offset: Int = 0): [Customer!]
+  Category(name: String, limit: Int = 10, offset: Int = 0): [Category!]
 }
 
 type entries {
@@ -43,7 +43,7 @@ type entries {
   discount0: Float!
   total: Float!
   parent: Orders!
-  product(productid: Float, name: String, description: String, category: String, updateTime: String): [Product!]
+  product(limit: Int = 10, offset: Int = 0): [Product!]
 }
 
 type total {
