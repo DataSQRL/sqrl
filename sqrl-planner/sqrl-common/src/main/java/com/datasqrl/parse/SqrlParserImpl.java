@@ -53,15 +53,6 @@ public class SqrlParserImpl implements SqrlParser {
       .specialToken(SqlBaseLexer.INTEGER_VALUE, "<integer>")
       .build();
 
-  @SneakyThrows
-  @Override
-  public ScriptNode parse(Path scriptPath) {
-    String scriptContent = Files.readString(scriptPath);
-    ScriptNode scriptNode = parse(scriptContent);
-    scriptNode.setScriptPath(Optional.of(scriptPath));
-    return scriptNode;
-  }
-
   public ScriptNode parse(String sql) {
     ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
     scriptNode.setOriginalScript(sql);

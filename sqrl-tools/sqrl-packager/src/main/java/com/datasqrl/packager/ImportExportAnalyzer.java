@@ -10,6 +10,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.SqlNameUtil;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -27,13 +28,18 @@ public class ImportExportAnalyzer {
   SqrlParser parser = new SqrlParserImpl();
 
   public Result analyze(Path sqrlScript, ErrorCollector errors) {
+
     ScriptNode node;
     try {
-      node = parser.parse(sqrlScript);
+      String scriptContent = Files.readString(sqrlScript);
+      if (errors.getLocation() == null || errors.getLocation().getSourceMap() == null) {
+        errors = errors.withSchema("<schema>", scriptContent);
+      }
+
+      node = parser.parse(scriptContent);
     } catch (Exception e) {
-      errors.handle(e);
       errors.warn("Could not compile SQRL script %s", sqrlScript);
-      throw e;
+      throw errors.handle(e);
     }
 
     return analyze(node);
