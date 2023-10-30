@@ -10,7 +10,6 @@ import com.datasqrl.util.StringUtil;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.TestScript.PhysicalUseCaseProvider;
 import com.datasqrl.util.data.Books;
-import com.datasqrl.util.data.Sensors;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,7 +41,7 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   @SneakyThrows
   protected String produceSchemaString(TestScript script) {
     initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
-    return generateSchema(script.getScript());
+    return generateSchema(script.getScript(), true);
   }
 
   @Test

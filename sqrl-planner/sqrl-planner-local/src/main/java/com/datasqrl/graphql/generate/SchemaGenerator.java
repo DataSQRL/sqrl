@@ -26,10 +26,10 @@ public class SchemaGenerator {
   List<GraphQLFieldDefinition> queryFields = new ArrayList<>();
   List<GraphQLObjectType> objectTypes = new ArrayList<>();
 
-  public GraphQLSchema generate(SqrlSchemaForInference schema) {
+  public GraphQLSchema generate(SqrlSchemaForInference schema, boolean allowAdditionalArgs) {
     SchemaGeneratorContext context = new SchemaGeneratorContext();
-    schema.accept(new QueryTypeGenerator(queryFields), context);
-    schema.accept(new ObjectTypeGenerator(objectTypes), context);
+    schema.accept(new QueryTypeGenerator(queryFields, allowAdditionalArgs), context);
+    schema.accept(new ObjectTypeGenerator(objectTypes, allowAdditionalArgs), context);
 
     postProcess();
 

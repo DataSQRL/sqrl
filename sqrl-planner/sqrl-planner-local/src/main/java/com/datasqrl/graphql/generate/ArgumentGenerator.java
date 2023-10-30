@@ -22,12 +22,16 @@ import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLInputType;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.commons.collections.ListUtils;
 
+@AllArgsConstructor
 public class ArgumentGenerator implements
     FieldVisitor<List<GraphQLArgument>, SchemaGeneratorContext>,
     SqrlTableVisitor<List<GraphQLArgument>, SchemaGeneratorContext> {
+
+  private final boolean allowAdditionalArgs;
 
   @Override
   public List<GraphQLArgument> visit(Column column, SchemaGeneratorContext context) {
@@ -43,11 +47,10 @@ public class ArgumentGenerator implements
     List<FunctionParameter> parameters = field.getParameters().stream()
         .filter(f->!((SqrlFunctionParameter)f).isInternal())
         .collect(Collectors.toList());
-    if (parameters.isEmpty() && field.getJoinType() == JoinType.JOIN) {
+    if (allowAdditionalArgs && parameters.isEmpty() && field.getJoinType() == JoinType.JOIN) {
       List<GraphQLArgument> limitOffset = generateLimitOffset();
-
       return limitOffset;
-    } else if (parameters.isEmpty()) {
+    } else if (allowAdditionalArgs && parameters.isEmpty()) {
       List<GraphQLArgument> premuted = generatePremuted(field.getToTable());
       List<GraphQLArgument> limitOffset = generateLimitOffset();
 
@@ -76,12 +79,14 @@ public class ArgumentGenerator implements
           .map(this::createArgument)
           .collect(Collectors.toList());
       return arguments;
+    } else if (allowAdditionalArgs) {
+      List<GraphQLArgument> premuted = generatePremuted(table);
+      List<GraphQLArgument> limitOffset = generateLimitOffset();
+      return ListUtils.union(premuted, limitOffset);
+
     }
 
-    List<GraphQLArgument> premuted = generatePremuted(table);
-    List<GraphQLArgument> limitOffset = generateLimitOffset();
-
-    return ListUtils.union(premuted, limitOffset);
+    return List.of();
   }
 
   private List<GraphQLArgument> generateLimitOffset() {

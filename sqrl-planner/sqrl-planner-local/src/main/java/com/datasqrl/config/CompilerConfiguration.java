@@ -32,6 +32,9 @@ public class CompilerConfiguration {
   @Default
   List<String> debugTables = List.of();
 
+  @Default
+  boolean allowAdditionalArgs = true;
+
   public static final String COMPILER_KEY = "compiler";
 
   public static CompilerConfiguration fromRootConfig(@NonNull SqrlConfig rootConfig) {
