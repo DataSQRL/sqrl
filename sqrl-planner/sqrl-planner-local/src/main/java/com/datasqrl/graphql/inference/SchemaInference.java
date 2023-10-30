@@ -138,12 +138,16 @@ public class SchemaInference {
       List<InferredField> fields, ObjectTypeDefinition parent) {
     SQRLTable table = resolveRootSQRLTable(fieldDefinition, fieldDefinition.getType(), fieldDefinition.getName(), "Query");
 
-    Function function = framework.getSchema().getFunctions(fieldDefinition.getName(), false)
+    Optional<Function> function = framework.getSchema().getFunctions(fieldDefinition.getName(), false)
         .stream()
-        .findFirst().get();
+        .findFirst();
+
+    if (function.isEmpty()) {
+      throw new RuntimeException(String.format("Could not find Query function %s", fieldDefinition.getName()));
+    }
 
     return inferObjectField(fieldDefinition, table, fields, parent, null, null,
-        createQueries(parent, fieldDefinition, null, table, (SqrlTableMacro) function));
+        createQueries(parent, fieldDefinition, null, table, (SqrlTableMacro) function.get()));
   }
 
   private List<Model.ArgumentSet> createQueries(ObjectTypeDefinition parent, FieldDefinition fieldDefinition,
