@@ -19,14 +19,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import graphql.language.FieldDefinition;
-import graphql.language.IntValue;
 import graphql.language.ListType;
 import graphql.language.NonNullType;
 import graphql.language.Type;
 import graphql.language.TypeName;
-import graphql.language.Value;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -37,11 +34,8 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -49,7 +43,6 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.OperandMetadataImpl;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -233,36 +226,6 @@ public class GraphqlQueryBuilder {
     List<SqlOperator> operators = new ArrayList<>();
     sqlOperatorIterator.forEachRemaining(operators::add);
     return operators;
-  }
-
-  private List<RexNode> argsToRex(List<ArgCombination> args,
-      TableFunction function, OperandMetadataImpl metadata, RexBuilder rexBuilder) {
-    //Reorder arg list
-    List<String> names = metadata.paramNames();
-    args.sort(Comparator.comparingInt(a -> names.indexOf(a.getDefinition().getName())));
-
-    List<RexNode> rexNodes = new ArrayList<>();
-    int ordinal = 0;
-    for (ArgCombination combination : args) {
-      RelDataType type = graphqlToRelDataType(combination.getDefinition().getType(),
-          rexBuilder.getTypeFactory());
-      if (combination.getDefaultValue().isPresent()) {
-        rexNodes.add(rexBuilder.makeLiteral(
-            getDefaultValue(combination.getDefaultValue().get()), type, false));
-      } else {
-        rexNodes.add(rexBuilder.makeDynamicParam(type, ordinal++));
-      }
-    }
-
-    return rexNodes;
-  }
-
-  private Object getDefaultValue(Value value) {
-    if (value instanceof IntValue) {
-      return ((IntValue) value).getValue();
-    }
-
-    return null;
   }
 
   private List<String> constructArgNames(List<ArgCombination> args) {
