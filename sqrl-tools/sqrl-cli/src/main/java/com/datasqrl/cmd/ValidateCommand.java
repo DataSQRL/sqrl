@@ -7,27 +7,24 @@ import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.service.PackagerUtil;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "run", description = "Compiles a SQRL script and runs the entire generated data pipeline")
-public class RunCommand extends AbstractCompilerCommand {
+@CommandLine.Command(name = "validate", description = "Validates a SQRL script")
+public class ValidateCommand extends AbstractCompilerCommand {
 
-  protected RunCommand() {
-    super(true, true, true);
+  protected ValidateCommand() {
+    super(false, false, false);
   }
 
   @Override
   protected SqrlConfig initializeConfig(DefaultConfigSupplier configSupplier, ErrorCollector errors) {
-    return PackagerUtil.getOrCreateDefaultConfiguration(root, errors,
-        getDefaultConfig(true, errors));
+    return getDefaultConfig(false, errors)
+        .get();
   }
+
 
   @Override
   protected void postCompileActions(DefaultConfigSupplier configSupplier, Packager packager,
       CompilerResult result, ErrorCollector errors) {
-    super.postCompileActions(configSupplier, packager, result, errors);
-
-    executePlan(result.getPlan(), errors);
   }
 }

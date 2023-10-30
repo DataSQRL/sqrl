@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.apache.kafka.common.metrics.Sensor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -30,7 +29,8 @@ import org.junit.jupiter.api.TestInfo;
 
 public class TestCmd {
 
-  public static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");
+  private static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");
+  private static final Path SUBSCRIPTION_PATH = Paths.get("src/test/resources/subscriptions");
 
   protected Path buildDir = null;
   SnapshotTest.Snapshot snapshot;
@@ -72,18 +72,23 @@ public class TestCmd {
 
   @Test
   public void compileSubscriptions() {
-    Path root = Paths.get("src/test/resources/subscriptions");
-    execute(root,
-        "compile", root.resolve("script.sqrl").toString(),
-        root.resolve("schema.graphqls").toString());
+    execute(SUBSCRIPTION_PATH,
+        "compile", SUBSCRIPTION_PATH.resolve("script.sqrl").toString(),
+        SUBSCRIPTION_PATH.resolve("schema.graphqls").toString());
+  }
+
+  @Test
+  public void validateTest() {
+    execute(SUBSCRIPTION_PATH,
+        "validate", SUBSCRIPTION_PATH.resolve("script.sqrl").toString(),
+        SUBSCRIPTION_PATH.resolve("schema.graphqls").toString());
   }
 
   @Test
   public void compileSubscriptionsInvalidGraphql() {
-    Path root = Paths.get("src/test/resources/subscriptions");
-    execute(root, ERROR_STATUS_HOOK,
-        "compile", root.resolve("invalidscript.sqrl").toString(),
-        root.resolve("invalidschema.graphqls").toString());
+    execute(SUBSCRIPTION_PATH, ERROR_STATUS_HOOK,
+        "compile", SUBSCRIPTION_PATH.resolve("invalidscript.sqrl").toString(),
+        SUBSCRIPTION_PATH.resolve("invalidschema.graphqls").toString());
     snapshot.createOrValidate();
   }
 

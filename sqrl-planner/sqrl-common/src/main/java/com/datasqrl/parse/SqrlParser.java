@@ -10,6 +10,4 @@ public interface SqrlParser {
   ScriptNode parse(String sql);
 
   SqrlStatement parseStatement(String sql);
-
-  ScriptNode parse(Path scriptPath);
 }

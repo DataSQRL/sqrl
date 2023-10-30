@@ -205,7 +205,6 @@ public class PackagerUtil {
 
     SqrlConfig flinkConfig = config.getSubConfig("streams");
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
-    flinkConfig.setProperty("taskmanager.memory.network.max", "800m");
     flinkConfig.setProperty(ConfigConstants.LOCAL_START_WEBSERVER, "true");
 
     SqrlConfig server = config.getSubConfig("server");
