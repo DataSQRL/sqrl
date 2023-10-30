@@ -15,9 +15,6 @@ fi
 echo 'Compiling...this takes about 10 seconds'
 java -jar /usr/src/app/sqrl-cli.jar ${@}
 
-# Start PostgreSQL if the argument is 'run'
-
-
 FILE=/build/build/deploy/flink-plan.json
 if [ -f "$FILE" ] && [ "$1" = "compile" ]; then
   mkdir -p /build/build/deploy/
