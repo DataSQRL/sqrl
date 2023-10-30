@@ -3,30 +3,54 @@
  */
 package com.datasqrl.graphql.inference;
 
+import static com.datasqrl.graphql.inference.SchemaBuilder.generateCombinations;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.SerializedSqrlConfig;
-import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.generate.SchemaGeneratorUtil;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.*;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
+import com.datasqrl.graphql.inference.SchemaBuilder.ArgCombination;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutation;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredMutations;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredObjectField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredQuery;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredScalarField;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscription;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptions;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.NestedField;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Column;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Field;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
+import com.datasqrl.graphql.server.Model;
+import com.datasqrl.graphql.server.Model.Argument;
+import com.datasqrl.graphql.server.Model.ArgumentParameter;
+import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
-import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.util.SqrlRexUtil;
+import com.google.common.base.Preconditions;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.ImplementingTypeDefinition;
 import graphql.language.InputObjectTypeDefinition;
 import graphql.language.InputValueDefinition;
+import graphql.language.IntValue;
 import graphql.language.ListType;
 import graphql.language.NamedNode;
 import graphql.language.NonNullType;
@@ -36,24 +60,46 @@ import graphql.language.SourceLocation;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
+import graphql.language.Value;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexFieldCollation;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Function;
+import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.TableFunction;
+import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlSyntax;
+import org.apache.calcite.sql.SqlUtil;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.OperandMetadataImpl;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.StringUtils;
-import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Getter
 @Slf4j
@@ -70,6 +116,7 @@ public class SchemaInference {
   private final APIConnectorManager apiManager;
   private final Set<FieldDefinition> visited = new HashSet<>();
   private final Map<ObjectTypeDefinition, SQRLTable> visitedObj = new HashMap<>();
+  private final GraphqlQueryBuilder graphqlQueryBuilder;
 
   public SchemaInference(SqrlFramework framework, String name, ModuleLoader moduleLoader, APISource apiSchema, SqrlSchemaForInference schema,
                          RelBuilder relBuilder, APIConnectorManager apiManager) {
@@ -83,6 +130,7 @@ public class SchemaInference {
         .schema(StringSchema.builder().schema(apiSchema.getSchemaDefinition()).build());
     this.relBuilder = relBuilder;
     this.apiManager = apiManager;
+    this.graphqlQueryBuilder  = new GraphqlQueryBuilder(framework, apiManager);
   }
 
   public InferredSchema accept() {
@@ -120,12 +168,44 @@ public class SchemaInference {
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
     SQRLTable table = resolveRootSQRLTable(fieldDefinition, fieldDefinition.getType(), fieldDefinition.getName(), "Query");
-    //resolve macro
-    List<Function> functions = new ArrayList<>(framework.getSchema()
-        .getFunctions(fieldDefinition.getName(), false));
 
+    Function function = framework.getSchema().getFunctions(fieldDefinition.getName(), false)
+        .stream()
+        .findFirst().get();
 
-    return inferObjectField(fieldDefinition, table, fields, parent, null, (SqrlTableMacro)functions.get(0));
+    return inferObjectField(fieldDefinition, table, fields, parent, null, null,
+        createQueries(parent, fieldDefinition, null, table, (SqrlTableMacro) function));
+  }
+
+  private List<Model.ArgumentSet> createQueries(ObjectTypeDefinition parent, FieldDefinition fieldDefinition,
+      SQRLTable fromTable, SQRLTable table, SqrlTableMacro macro) {
+
+    List<Model.ArgumentSet> arguments = new ArrayList<>();
+
+    List<List<ArgCombination>> argCombinations = generateCombinations(
+        fieldDefinition.getInputValueDefinitions());
+
+    for (List<ArgCombination> arg : argCombinations) {
+      Model.ArgumentSet query1 = graphqlQueryBuilder.create(arg, macro, table, parent.getName(), fieldDefinition);
+      arguments.add(query1);
+    }
+
+    Set<Set<Argument>> seen = new HashSet<>();
+    for (Model.ArgumentSet c : arguments) {
+      if (seen.contains(c.getArguments())) {
+        throw new RuntimeException(
+            String.format("Duplicate argument matches: %s : %s", c.getArguments(), seen));
+      }
+
+      seen.add(c.getArguments());
+
+    }
+    //Assure all arg sets are unique
+    Set s = new HashSet<>(arguments);
+    Preconditions.checkState(s.size() == arguments.size(),
+        "Duplicate arg sets:");
+
+    return arguments;
   }
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
@@ -183,7 +263,7 @@ public class SchemaInference {
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
       List<InferredField> fields, ObjectTypeDefinition parent, SQRLTable parentTable,
-      SqrlTableMacro macro) {
+      SqrlTableMacro macro, List<Model.ArgumentSet> argumentSets) {
     checkValidArrayNonNullType(fieldDefinition.getType());
     TypeDefinition typeDef = unwrapObjectType(fieldDefinition.getType());
 
@@ -202,7 +282,7 @@ public class SchemaInference {
       }
       visitedObj.put(obj, table);
       InferredObjectField inferredObjectField = new InferredObjectField(parentTable, parent, fieldDefinition,
-          (ObjectTypeDefinition) typeDef, table, macro);
+          (ObjectTypeDefinition) typeDef, table, macro, argumentSets);
       fields.addAll(walkChildren((ObjectTypeDefinition) typeDef, table, fields));
       return inferredObjectField;
     } else {
@@ -248,9 +328,13 @@ public class SchemaInference {
 
   private InferredField walkRel(FieldDefinition fieldDefinition, Relationship relationship,
       List<InferredField> fields, ObjectTypeDefinition parent) {
+
+
     return new NestedField(relationship,
         inferObjectField(fieldDefinition, relationship.getToTable(),
-            fields, parent, relationship.getFromTable(), relationship.macro));
+            fields, parent, relationship.getFromTable(), relationship.macro,
+            createQueries(parent, fieldDefinition, relationship.fromTable,
+                relationship.toTable, relationship.getMacro())));//todo
   }
 
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,

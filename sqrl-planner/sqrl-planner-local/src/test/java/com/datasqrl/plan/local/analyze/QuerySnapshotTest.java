@@ -13,7 +13,6 @@ import static org.mockito.Mockito.mock;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
-import com.datasqrl.calcite.Dialect;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
@@ -22,21 +21,13 @@ import com.datasqrl.graphql.inference.SchemaBuilder;
 import com.datasqrl.graphql.inference.SchemaInference;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference;
-import com.datasqrl.graphql.server.Model;
-import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.Model.ArgumentSet;
-import com.datasqrl.graphql.server.Model.Coords;
-import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.data.Retail;
@@ -44,18 +35,11 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rex.RexDynamicParam;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.rex.RexShuttle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -128,36 +112,11 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         mock(APIConnectorManagerImpl.class))
         .accept();
 
-    SchemaBuilder schemaBuilder = new SchemaBuilder(framework, source,
-        sqrlSchemaForInference,
-        planner.createRelBuilder(),
-        planner,
-        framework.getSqrlOperatorTable(),
-        mock(APIConnectorManagerImpl.class));
+    SchemaBuilder schemaBuilder = new SchemaBuilder(source
+    );
 
     RootGraphqlModel root = inferredSchema.accept(schemaBuilder,
         null);
-
-    for (Coords coord : root.getCoords()) {
-      if (coord instanceof FieldLookupCoords) {
-//        System.out.println(((FieldLookupCoords) coord).getColumnName());;
-      } else if (coord instanceof ArgumentLookupCoords) {
-        Set<ArgumentSet> matchs = ((ArgumentLookupCoords) coord).getMatchs();
-        for (ArgumentSet set : matchs){
-          RelNode relNode = ((ApiQueryBase) set.getQuery()).getQuery().getRelNode();
-
-
-          String sql = planner.getFramework().getQueryPlanner().relToString(Dialect.CALCITE,
-              relNode);
-          System.out.println(sql);
-
-          System.out.println(set.getArguments());
-
-
-
-        }
-      }
-    }
 
     if (isBlank(schema)) {
       System.out.println(schema);
@@ -1243,6 +1202,15 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScript("IMPORT ecommerce-data.Orders;\n"
         + "X(@id: Int) := SELECT * FROM Orders WHERE id = @id;\n"
         + "X(@id: Int, @customerid: Int) := SELECT * FROM Orders WHERE id = @id AND customerid = @customerid;\n"
+        + "Y(@id: Int) := SELECT * FROM TABLE(X(2)) AS t JOIN LATERAL TABLE(X(t.id, 3));\n");
+  }
+
+
+  @Test
+  public void paramMatchingTest() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "X(@id: Int) := SELECT id FROM Orders WHERE id = @id;\n"
+        + "X(@id: Int, @customerid: Int) := SELECT id FROM Orders WHERE id = @id AND customerid = @customerid;\n"
         + "Y(@id: Int) := SELECT * FROM TABLE(X(2)) AS t JOIN LATERAL TABLE(X(t.id, 3));\n");
   }
 

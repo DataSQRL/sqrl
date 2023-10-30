@@ -6,6 +6,7 @@ package com.datasqrl.graphql.inference;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
+import com.datasqrl.graphql.server.Model;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;
@@ -146,6 +147,7 @@ public class SchemaInferenceModel {
     ObjectTypeDefinition objectTypeDefinition;
     SQRLTable table;
     SqrlTableMacro macro;
+    List<Model.ArgumentSet> argumentSets;
 
     @Override
     public <R, C> R accept(InferredFieldVisitor<R, C> visitor, C context) {

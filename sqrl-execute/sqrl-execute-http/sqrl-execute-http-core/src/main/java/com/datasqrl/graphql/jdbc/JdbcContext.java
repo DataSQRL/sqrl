@@ -4,13 +4,15 @@ import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.FixedArgument;
-import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
+import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import graphql.schema.DataFetcher;
+import graphql.schema.GraphQLArgument;
 import graphql.schema.PropertyDataFetcher;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,9 +37,15 @@ public class JdbcContext implements Context {
     return (env) -> {
 
       //Map args
-      Set<FixedArgument> argumentSet = GraphQLArgumentWrapper.wrap(
-              env.getArguments())
-          .accept(server, lookupMap);
+      Set<Argument> argumentSet = new HashSet<>();
+      for (GraphQLArgument argument : env.getFieldDefinition().getArguments()) {
+        if (argument.getArgumentDefaultValue().isNotSet()) {
+          argumentSet.add(new VariableArgument(argument.getName(), env.getArguments().get(argument.getName())));
+        } else {
+          argumentSet.add(new FixedArgument(argument.getName(), env.getArguments().get(argument.getName())));
+        }
+      }
+
 
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);

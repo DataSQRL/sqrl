@@ -161,12 +161,8 @@ public class Compiler {
           apiManager)
           .accept();
 
-      SchemaBuilder schemaBuilder = new SchemaBuilder(framework, apiSchema,
-          sqrlSchemaForInference,
-          queryPlanner.createRelBuilder(),
-          queryPlanner,
-          framework.getSqrlOperatorTable(),
-          apiManager);
+      SchemaBuilder schemaBuilder = new SchemaBuilder(apiSchema
+      );
 
       root = inferredSchema.accept(schemaBuilder, null);
     } catch (Exception e) {

@@ -21,7 +21,7 @@ public class OperatorTable implements SqlOperatorTable {
 
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
-    //If we find a function that we used for validation, return early
+      //If we find a function that we used for validation, return early
     if (validatorFncs.containsKey(sqlIdentifier.names.get(0))) {
       list.add(validatorFncs.get(sqlIdentifier.names.get(0)));
       return;
