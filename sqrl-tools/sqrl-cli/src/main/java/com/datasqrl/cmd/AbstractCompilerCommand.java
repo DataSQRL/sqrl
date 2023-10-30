@@ -207,10 +207,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     result.get().get();
 
     // Hold java open if service is not long running
-    try {
-      System.in.read();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    System.in.read();
   }
 }
