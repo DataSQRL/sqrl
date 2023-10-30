@@ -20,6 +20,7 @@ import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -80,9 +81,10 @@ public class ObjectTypeGenerator implements
       return Optional.empty();
     }
 
-    return Optional.of(GraphQLFieldDefinition.newFieldDefinition()
+    Optional<GraphQLOutputType> outputType = getOutputType(column.getType());
+    return outputType.map(t->GraphQLFieldDefinition.newFieldDefinition()
         .name(column.getName().getDisplay())
-        .type(wrap(getOutputType(column.getType()).get(), column.getType()))
+        .type(wrap(t, column.getType()))
         .build());
   }
 
