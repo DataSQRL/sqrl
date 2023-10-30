@@ -1,5 +1,5 @@
 type Query {
-  getPosts: [Post!]
+  post: [Post!]
 }
 
 type Mutation {
