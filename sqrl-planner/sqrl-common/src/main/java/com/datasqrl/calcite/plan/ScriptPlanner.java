@@ -117,7 +117,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
     RelNode expanded = planner.expandMacros(relNode);
-    System.out.println(planner.relToString(Dialect.CALCITE, expanded));
 
     List<Function> isA = validator.getIsA().get(node);
 
