@@ -33,7 +33,7 @@ public class CompilerConfiguration {
   List<String> debugTables = List.of();
 
   @Default
-  boolean allowAdditionalArgs = true;
+  boolean addArguments = true;
 
   public static final String COMPILER_KEY = "compiler";
 

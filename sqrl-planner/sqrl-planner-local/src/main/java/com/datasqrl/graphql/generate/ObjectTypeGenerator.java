@@ -37,11 +37,11 @@ public class ObjectTypeGenerator implements
     FieldVisitor<Optional<GraphQLFieldDefinition>, SchemaGeneratorContext> {
 
   private final List<GraphQLObjectType> objectTypes;
-  private final boolean allowAdditionalArgs;
+  private final boolean addArguments;
 
-  public ObjectTypeGenerator(List<GraphQLObjectType> objectTypes, boolean allowAdditionalArgs) {
+  public ObjectTypeGenerator(List<GraphQLObjectType> objectTypes, boolean addArguments) {
     this.objectTypes = objectTypes;
-    this.allowAdditionalArgs = allowAdditionalArgs;
+    this.addArguments = addArguments;
   }
 
   @Override
@@ -97,7 +97,7 @@ public class ObjectTypeGenerator implements
     return Optional.of(GraphQLFieldDefinition.newFieldDefinition()
         .name(conformName(field.getName().getDisplay()))
         .type(wrap(getTypeReference(field.getToTable(), context.getNames()), field.getMultiplicity()))
-        .arguments(field.accept(new ArgumentGenerator(allowAdditionalArgs), context))
+        .arguments(field.accept(new ArgumentGenerator(addArguments), context))
         .build());
   }
 

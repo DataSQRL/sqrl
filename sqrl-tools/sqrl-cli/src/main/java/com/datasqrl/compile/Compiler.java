@@ -141,7 +141,7 @@ public class Compiler {
         .split("\\.")[0]);
 
     APISource apiSchema = apiSchemaOpt.orElseGet(() ->
-        new APISource(graphqlName, inferGraphQLSchema(sqrlSchemaForInference, compilerConfig.isAllowAdditionalArgs())));
+        new APISource(graphqlName, inferGraphQLSchema(sqrlSchemaForInference, compilerConfig.isAddArguments())));
 
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 
@@ -190,8 +190,8 @@ public class Compiler {
 
   @SneakyThrows
   public static String inferGraphQLSchema(SqrlSchemaForInference schema,
-      boolean allowAdditionalArgs) {
-    GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema, allowAdditionalArgs);
+      boolean addArguments) {
+    GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema, addArguments);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
