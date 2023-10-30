@@ -16,11 +16,14 @@ import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
+import graphql.Scalars;
+import graphql.language.IntValue;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLInputType;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.commons.collections.ListUtils;
 
 public class ArgumentGenerator implements
     FieldVisitor<List<GraphQLArgument>, SchemaGeneratorContext>,
@@ -40,7 +43,9 @@ public class ArgumentGenerator implements
     List<FunctionParameter> parameters = field.getParameters().stream()
         .filter(f->!((SqrlFunctionParameter)f).isInternal())
         .collect(Collectors.toList());
-    if (parameters.isEmpty()) {
+    if (parameters.isEmpty() && field.getJoinType() == JoinType.JOIN) {
+      return List.of();
+    } else if (parameters.isEmpty()) {
       return field.getToTable().accept(this, context);
     } else {
       return parameters.stream()
@@ -67,17 +72,31 @@ public class ArgumentGenerator implements
           .collect(Collectors.toList());
       return arguments;
     }
-
-    return table.getColumns(true)
+    List<GraphQLArgument> args = table.getColumns(true)
         .stream()
         .filter(f -> getInputType(f.getType()).isPresent())
-        .filter(f-> logIfInvalid(isValidGraphQLName(f.getName().getDisplay()), table, f))
+        .filter(f -> logIfInvalid(isValidGraphQLName(f.getName().getDisplay()), table, f))
         .map(f -> GraphQLArgument.newArgument()
             .name(f.getName().getDisplay())
             .type(getInputType(f.getType()).get())
             .build())
         .limit(8)
         .collect(Collectors.toList());
+
+    //add limit / offset
+    GraphQLArgument limit = GraphQLArgument.newArgument()
+        .name("limit")
+        .type(Scalars.GraphQLInt)
+        .defaultValueLiteral(IntValue.of(10))
+        .build();
+
+     GraphQLArgument offset = GraphQLArgument.newArgument()
+      .name("offset")
+      .type(Scalars.GraphQLInt)
+      .defaultValueLiteral(IntValue.of(0))
+      .build();
+
+    return ListUtils.union(args, List.of(limit, offset));
   }
 
   private GraphQLArgument createArgument(FunctionParameter parameter) {

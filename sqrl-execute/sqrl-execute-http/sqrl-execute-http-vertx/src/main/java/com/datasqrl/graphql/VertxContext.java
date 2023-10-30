@@ -9,23 +9,25 @@ import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.JdbcClient;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.FixedArgument;
-import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.ResolvedQuery;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
+import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.GraphQLArgument;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.ext.web.handler.graphql.schema.VertxPropertyDataFetcher;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import lombok.Value;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -52,8 +54,10 @@ public class VertxContext implements Context {
   public DataFetcher<?> createArgumentLookupFetcher(BuildGraphQLEngine server, Map<Set<Argument>, ResolvedQuery> lookupMap) {
     return VertxDataFetcher.create((env, fut) -> {
       //Map args
-      Set<FixedArgument> argumentSet = GraphQLArgumentWrapper.wrap(env.getArguments())
-          .accept(server, lookupMap);
+      Set<Argument> argumentSet = new HashSet<>();
+      for (Entry<String, Object> argument : env.getArguments().entrySet()) {
+        argumentSet.add(new VariableArgument(argument.getKey(), argument.getValue()));
+      }
 
       //Find query
       ResolvedQuery resolvedQuery = lookupMap.get(argumentSet);

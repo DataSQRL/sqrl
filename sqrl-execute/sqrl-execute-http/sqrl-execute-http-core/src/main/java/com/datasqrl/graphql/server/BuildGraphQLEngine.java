@@ -8,8 +8,6 @@ import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.CoordVisitor;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.FixedArgument;
-import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
-import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
@@ -51,7 +49,6 @@ public class BuildGraphQLEngine implements
     RootVisitor<GraphQL, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
-    GraphQLArgumentWrapperVisitor<Set<FixedArgument>, Object>,
     QueryBaseVisitor<ResolvedQuery, Context>,
     ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
 
@@ -138,31 +135,6 @@ public class BuildGraphQLEngine implements
   @Override
   public DataFetcher<?> visitFieldLookup(FieldLookupCoords coords, Context context) {
     return context.createPropertyFetcher(coords.getColumnName());
-  }
-
-  @Override
-  public Set<FixedArgument> visitArgumentWrapper(GraphQLArgumentWrapper graphQLArgumentWrapper,
-      Object context) {
-    Set<FixedArgument> argumentSet = new HashSet<>(graphQLArgumentWrapper.getArgs().size());
-    flattenArgs(graphQLArgumentWrapper.getArgs(), new Stack<>(), argumentSet);
-    return argumentSet;
-  }
-
-  /**
-   * Recursively flatten arguments
-   */
-  private void flattenArgs(Map<String, Object> arguments, Stack<String> names,
-      Set<FixedArgument> argumentSet) {
-    for (Map.Entry<String, Object> o : arguments.entrySet()) {
-      names.push(o.getKey());
-      if (o.getValue() instanceof Map) {
-        flattenArgs((Map<String, Object>) o.getValue(), names, argumentSet);
-      } else {
-        String path = String.join(".", names);
-        argumentSet.add(new FixedArgument(path, o.getValue()));
-      }
-      names.pop();
-    }
   }
 
   @Override

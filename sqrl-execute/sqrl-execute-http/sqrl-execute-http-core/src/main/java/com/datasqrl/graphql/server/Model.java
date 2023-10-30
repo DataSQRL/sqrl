@@ -252,6 +252,7 @@ public class Model {
   public interface Argument {
 
     String getPath();
+    Object getValue();
   }
 
 
@@ -277,24 +278,22 @@ public class Model {
       return visitor.visitVariableArgument(this, context);
     }
 
+    //Exclude the value for variable arguments
     @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
       }
-
-      if (o instanceof Argument) {
-        Argument that = (Argument) o;
-        return Objects.equals(path, that.getPath());
+      if (o == null || getClass() != o.getClass()) {
+        return false;
       }
-
-      return false;
+      VariableArgument that = (VariableArgument) o;
+      return Objects.equals(type, that.type) && Objects.equals(path, that.path);
     }
 
-    //non-standard hash code, hash on 'path' so it can be compared with an ArgumentVariable
     @Override
     public int hashCode() {
-      return Objects.hash(path);
+      return Objects.hash(type, path);
     }
 
     @Override
@@ -327,29 +326,6 @@ public class Model {
 
     public <R, C> R accept(FixedArgumentVisitor<R, C> visitor, C context) {
       return visitor.visitFixedArgument(this, context);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-
-      if (o instanceof VariableArgument) {
-        VariableArgument that = (VariableArgument) o;
-        return Objects.equals(path, that.path);
-      } else if (o instanceof FixedArgument) {
-        FixedArgument that = (FixedArgument) o;
-        return Objects.equals(path, that.path) && Objects.equals(value, that.value);
-      }
-
-      return false;
-    }
-
-    //non-standard hash code, hash on 'path' so it can be compared with an ArgumentVariable
-    @Override
-    public int hashCode() {
-      return Objects.hash(path);
     }
   }
 
@@ -445,26 +421,5 @@ public class Model {
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
       return visitor.visitResolvedPagedJdbcQuery(this, context);
     }
-  }
-
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class GraphQLArgumentWrapper {
-
-    Map<String, Object> args;
-
-    public static GraphQLArgumentWrapper wrap(Map<String, Object> args) {
-      return new GraphQLArgumentWrapper(args);
-    }
-
-    public <R, C> R accept(GraphQLArgumentWrapperVisitor<R, C> visitor, C context) {
-      return visitor.visitArgumentWrapper(this, context);
-    }
-  }
-
-  public interface GraphQLArgumentWrapperVisitor<R, C> {
-
-    R visitArgumentWrapper(GraphQLArgumentWrapper graphQLArgumentWrapper, C context);
   }
 }

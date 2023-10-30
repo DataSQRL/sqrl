@@ -11,8 +11,6 @@ import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.CoordVisitor;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
-import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapper;
-import com.datasqrl.graphql.server.Model.GraphQLArgumentWrapperVisitor;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
@@ -43,7 +41,6 @@ public class ReplaceGraphqlQueries implements
     RootVisitor<Object, Object>,
     CoordVisitor<Object, Object>,
     SchemaVisitor<Object, Object>,
-    GraphQLArgumentWrapperVisitor<Object, Object>,
     QueryBaseVisitor<JdbcQuery, Object>,
     ApiQueryVisitor<JdbcQuery, Object>,
     ResolvedQueryVisitor<Object, Object>,
@@ -155,12 +152,6 @@ public class ReplaceGraphqlQueries implements
 
   @Override
   public Object visitResolvedPagedJdbcQuery(ResolvedPagedJdbcQuery query, Object context) {
-    return null;
-  }
-
-  @Override
-  public Object visitArgumentWrapper(GraphQLArgumentWrapper graphQLArgumentWrapper,
-      Object context) {
     return null;
   }
 }

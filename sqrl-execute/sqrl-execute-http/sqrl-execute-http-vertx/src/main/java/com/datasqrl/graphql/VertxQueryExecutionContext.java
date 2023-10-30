@@ -1,6 +1,7 @@
 package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
+import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
@@ -31,7 +32,7 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
     ParameterHandlerVisitor<Object, QueryExecutionContext> {
   VertxContext context;
   DataFetchingEnvironment environment;
-  Set<FixedArgument> arguments;
+  Set<Argument> arguments;
   Promise<Object> fut;
 
   @Override

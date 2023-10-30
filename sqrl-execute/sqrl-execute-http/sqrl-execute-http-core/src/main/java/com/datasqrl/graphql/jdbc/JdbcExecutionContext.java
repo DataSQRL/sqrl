@@ -1,5 +1,6 @@
 package com.datasqrl.graphql.jdbc;
 
+import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.ParameterHandlerVisitor;
@@ -31,7 +32,7 @@ public class JdbcExecutionContext implements QueryExecutionContext,
 
   JdbcContext context;
   DataFetchingEnvironment environment;
-  Set<FixedArgument> arguments;
+  Set<Argument> arguments;
 
   @Override
   public CompletableFuture runQuery(BuildGraphQLEngine buildGraphQLEngine, ResolvedJdbcQuery pgQuery,

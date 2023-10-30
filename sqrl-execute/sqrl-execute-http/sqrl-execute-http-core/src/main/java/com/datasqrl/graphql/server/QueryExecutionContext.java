@@ -1,5 +1,6 @@
 package com.datasqrl.graphql.server;
 
+import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.ResolvedPagedJdbcQuery;
 import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
@@ -11,7 +12,7 @@ public interface QueryExecutionContext {
 
   Context getContext();
   DataFetchingEnvironment getEnvironment();
-  Set<FixedArgument> getArguments();
+  Set<Argument> getArguments();
   CompletableFuture runQuery(BuildGraphQLEngine buildGraphQLEngine, ResolvedJdbcQuery pgQuery, boolean isList);
   CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
       boolean isList, QueryExecutionContext context);
