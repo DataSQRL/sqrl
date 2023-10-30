@@ -129,9 +129,10 @@ public class SchemaBuilder implements
       for (List<ArgCombination> existing : result) {
 
         if (definition.getDefaultValue() != null) { // A variable or the default value
-          List<ArgCombination> withDefault = new ArrayList<>(existing);
-          withDefault.add(new ArgCombination(definition, Optional.of(definition.getDefaultValue())));
-          newCombinations.add(withDefault);
+          //TODO: include default value
+//          List<ArgCombination> withDefault = new ArrayList<>(existing);
+//          withDefault.add(new ArgCombination(definition, Optional.of(definition.getDefaultValue())));
+//          newCombinations.add(withDefault);
 
           List<ArgCombination> withVariable = new ArrayList<>(existing);
           withVariable.add(new ArgCombination(definition, Optional.empty()));

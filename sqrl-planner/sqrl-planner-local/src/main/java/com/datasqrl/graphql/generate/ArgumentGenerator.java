@@ -9,6 +9,7 @@ import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
 import static graphql.schema.GraphQLNonNull.nonNull;
 
 import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.graphql.inference.SqrlSchemaForInference;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.Column;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.FieldVisitor;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
@@ -20,6 +21,7 @@ import graphql.Scalars;
 import graphql.language.IntValue;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLInputType;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.calcite.schema.FunctionParameter;
@@ -46,7 +48,10 @@ public class ArgumentGenerator implements
     if (parameters.isEmpty() && field.getJoinType() == JoinType.JOIN) {
       return List.of();
     } else if (parameters.isEmpty()) {
-      return field.getToTable().accept(this, context);
+      List<GraphQLArgument> premuted = generatePremuted(field.getToTable());
+      List<GraphQLArgument> limitOffset = generateLimitOffset();
+
+      return ListUtils.union(premuted, limitOffset);
     } else {
       return parameters.stream()
           .filter(p->!((SqrlFunctionParameter)p).isInternal())
@@ -72,7 +77,32 @@ public class ArgumentGenerator implements
           .collect(Collectors.toList());
       return arguments;
     }
-    List<GraphQLArgument> args = table.getColumns(true)
+
+    List<GraphQLArgument> premuted = generatePremuted(table);
+    List<GraphQLArgument> limitOffset = generateLimitOffset();
+
+    return ListUtils.union(premuted, limitOffset);
+  }
+
+  private List<GraphQLArgument> generateLimitOffset() {
+
+    //add limit / offset
+    GraphQLArgument limit = GraphQLArgument.newArgument()
+        .name("limit")
+        .type(Scalars.GraphQLInt)
+        .defaultValueLiteral(IntValue.of(10))
+        .build();
+
+    GraphQLArgument offset = GraphQLArgument.newArgument()
+        .name("offset")
+        .type(Scalars.GraphQLInt)
+        .defaultValueLiteral(IntValue.of(0))
+        .build();
+    return List.of(limit, offset);
+  }
+
+  private List<GraphQLArgument> generatePremuted(SQRLTable table) {
+    return table.getColumns(true)
         .stream()
         .filter(f -> getInputType(f.getType()).isPresent())
         .filter(f -> logIfInvalid(isValidGraphQLName(f.getName().getDisplay()), table, f))
@@ -82,21 +112,6 @@ public class ArgumentGenerator implements
             .build())
         .limit(8)
         .collect(Collectors.toList());
-
-    //add limit / offset
-    GraphQLArgument limit = GraphQLArgument.newArgument()
-        .name("limit")
-        .type(Scalars.GraphQLInt)
-        .defaultValueLiteral(IntValue.of(10))
-        .build();
-
-     GraphQLArgument offset = GraphQLArgument.newArgument()
-      .name("offset")
-      .type(Scalars.GraphQLInt)
-      .defaultValueLiteral(IntValue.of(0))
-      .build();
-
-    return ListUtils.union(args, List.of(limit, offset));
   }
 
   private GraphQLArgument createArgument(FunctionParameter parameter) {

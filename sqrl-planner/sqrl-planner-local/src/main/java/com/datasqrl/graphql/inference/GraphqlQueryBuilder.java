@@ -11,8 +11,10 @@ import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentParameter;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
+import com.datasqrl.graphql.server.Model.SourceParameter;
 import com.datasqrl.graphql.server.Model.VariableArgument;
 import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import graphql.language.FieldDefinition;
@@ -24,9 +26,11 @@ import graphql.language.TypeName;
 import graphql.language.Value;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -58,7 +62,7 @@ public class GraphqlQueryBuilder {
   APIConnectorManager apiManager;
 
   public Model.ArgumentSet create(List<ArgCombination> arg, SqrlTableMacro macro, SQRLTable table,
-      String parentName, FieldDefinition fieldDefinition) {
+      String parentName, FieldDefinition fieldDefinition, RelDataType parentType) {
 
     Pair<SqlUserDefinedTableFunction, Boolean> operatorPair = resolveOperator(macro, arg);
     SqlUserDefinedTableFunction operator = operatorPair.getLeft();
@@ -123,6 +127,24 @@ public class GraphqlQueryBuilder {
     }
 
     Model.ArgumentSet argumentSet = queryBuilderHelper.build();
+
+    //Validate all source args are resolvable
+    List<SourceParameter> sourceParams = queryBuilderHelper.graphqlArguments.stream()
+        .filter(f -> f instanceof SourceParameter)
+        .map(f -> (SourceParameter) f)
+        .collect(Collectors.toList());
+
+    if (parentType != null) {
+      Set<String> parentRowType = new HashSet<>(parentType.getFieldNames());
+      for (SourceParameter p : sourceParams) {
+        if (!parentRowType.contains(p.getKey())) {
+          throw new RuntimeException("Could not correctly create query");
+        }
+      }
+    } else {
+      Preconditions.checkState(sourceParams.isEmpty(), "Expected no source params");
+    }
+
     return argumentSet;
   }
 
