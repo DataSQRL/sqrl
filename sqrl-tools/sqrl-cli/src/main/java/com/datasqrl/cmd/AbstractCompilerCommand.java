@@ -4,6 +4,7 @@
 package com.datasqrl.cmd;
 
 import com.datasqrl.compile.Compiler;
+import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.compile.DockerCompose;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.ExecutionEngine.Type;
@@ -11,7 +12,6 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.service.PackagerUtil;
@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
@@ -68,26 +69,47 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   public void runCommand(ErrorCollector errors) {
+    setupTargetDir();
+
+    DefaultConfigSupplier configSupplier = new DefaultConfigSupplier(errors);
+    SqrlConfig config = initializeConfig(configSupplier, errors);
+    Pair<Packager, Path> packager = createPackager(config, errors);
+    if (errors.hasErrors()) {
+      return;
+    }
+    Compiler.CompilerResult result = compilePackage(packager.getRight(), errors);
+    if (errors.hasErrors()) {
+      return;
+    }
+
+    postCompileActions(configSupplier, packager.getLeft(), result, errors);
+  }
+
+  protected void setupTargetDir() {
     if (DEFAULT_DEPLOY_DIR.equals(targetDir)) {
       targetDir = root.rootDir.resolve(targetDir);
     }
-    DefaultConfigSupplier configSupplier = new DefaultConfigSupplier(errors);
-    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors, configSupplier);
+  }
 
+  protected SqrlConfig initializeConfig(DefaultConfigSupplier configSupplier, ErrorCollector errors) {
+    return PackagerUtil.getOrCreateDefaultConfiguration(root, errors, configSupplier);
+  }
+
+  protected Pair<Packager, Path> createPackager(SqrlConfig config, ErrorCollector errors) {
     Packager packager = PackagerUtil.create(root.rootDir, files, config, errors);
     packager.cleanUp();
-    Path packageFilePath =  packager.populateBuildDir(!noinfer);
-    if (errors.hasErrors()) {
-      return;
-    }
+    Path path = packager.populateBuildDir(!noinfer);
+    return Pair.of(packager, path);
+  }
 
+  protected Compiler.CompilerResult compilePackage(Path packageFilePath, ErrorCollector errors) {
     Compiler compiler = new Compiler();
     Preconditions.checkArgument(Files.isRegularFile(packageFilePath));
-    Compiler.CompilerResult result = compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
+    return compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
+  }
 
-    if (errors.hasErrors()) {
-      return;
-    }
+  protected void postCompileActions(DefaultConfigSupplier configSupplier, Packager packager,
+      CompilerResult result, ErrorCollector errors) {
     if (configSupplier.usesDefault) {
       addDockerCompose(Optional.ofNullable(mountDirectory));
       addFlinkExecute();
