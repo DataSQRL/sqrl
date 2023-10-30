@@ -251,7 +251,7 @@ public class SqrlConfigCommons implements SqrlConfig {
       JsonNode jsonNode = objectMapper.readTree(file.toFile());
       objectMapper.writerWithDefaultPrettyPrinter().writeValue(file.toFile(),jsonNode);
     } catch (ConfigurationException | IOException e) {
-      throw errors.handle(e);
+      throw errors.withConfig(file).handle(e);
     }
   }
 
@@ -295,6 +295,7 @@ public class SqrlConfigCommons implements SqrlConfig {
   public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull Path firstFile, Path... otherFiles) {
     Configurations configs = new Configurations();
     Configuration resultconfig;
+    ErrorCollector localErrors = errors.withConfig(firstFile);
     try {
       Configuration baseconfig = configs.fileBased(JSONConfiguration.class, firstFile.toFile());
 
@@ -302,6 +303,7 @@ public class SqrlConfigCommons implements SqrlConfig {
         NodeCombiner combiner = new OverrideCombiner();
         CombinedConfiguration cc = new CombinedConfiguration(combiner);
         for (int i = otherFiles.length-1; i >= 0; i--) { //iterate backwards so last file takes precedence
+          localErrors = errors.withConfig(otherFiles[i]);
           Configuration nextconfig = configs.fileBased(JSONConfiguration.class, otherFiles[i].toFile());
           cc.addConfiguration(nextconfig);
         }
@@ -313,7 +315,7 @@ public class SqrlConfigCommons implements SqrlConfig {
       String configFilename = firstFile.toString();
       return new SqrlConfigCommons(errors.withConfig(configFilename), configFilename, resultconfig, "");
     } catch (ConfigurationException e) {
-      throw errors.handle(e);
+      throw localErrors.handle(e);
     }
   }
 
@@ -324,7 +326,7 @@ public class SqrlConfigCommons implements SqrlConfig {
       String configFilename = url.toString();
       return new SqrlConfigCommons(errors.withConfig(configFilename), configFilename, config, "");
     } catch (ConfigurationException e) {
-      throw errors.handle(e);
+      throw errors.withConfig(url.toString()).handle(e);
     }
 
   }

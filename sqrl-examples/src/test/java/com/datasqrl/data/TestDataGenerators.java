@@ -14,7 +14,12 @@ public class TestDataGenerators {
 
   @Test
   public void testSensorIoT() {
-    new RootGenerateCommand().getCmd().execute(new String[]{"sensors","-n","10000","-o","sensors/data"});
+    new RootGenerateCommand().getCmd().execute(new String[]{"sensors","-n","10000","-o","sensors/datanew"});
+  }
+
+  @Test
+  public void testPatientSensors() {
+    new RootGenerateCommand().getCmd().execute(new String[]{"sensors","-n","50000","-o","sensors/patientdata"});
   }
 
   @Test

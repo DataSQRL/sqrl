@@ -1,0 +1,15 @@
+{
+  "format" : {
+    "name" : "csv",
+    "header" : [ "sensorid", "time", "temperature" ],
+    "delimiter" : ","
+  },
+  "schema" : "flexible",
+  "identifier" : "sensorreading",
+  "type" : "source",
+  "connector" : {
+    "name" : "file",
+    "directoryURI" : "../../sqrl-examples/sqrl-examples/sensors/patientdata"
+  },
+  "canonicalizer" : "system"
+}
