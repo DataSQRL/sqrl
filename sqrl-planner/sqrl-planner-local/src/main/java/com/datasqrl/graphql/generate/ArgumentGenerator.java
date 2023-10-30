@@ -6,6 +6,8 @@ package com.datasqrl.graphql.generate;
 import static com.datasqrl.graphql.generate.ObjectTypeGenerator.logIfInvalid;
 import static com.datasqrl.graphql.generate.SchemaGenerator.isValidGraphQLName;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
+import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
+import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import static graphql.schema.GraphQLNonNull.nonNull;
 
 import com.datasqrl.function.SqrlFunctionParameter;
@@ -93,13 +95,13 @@ public class ArgumentGenerator implements
 
     //add limit / offset
     GraphQLArgument limit = GraphQLArgument.newArgument()
-        .name("limit")
+        .name(LIMIT)
         .type(Scalars.GraphQLInt)
         .defaultValueLiteral(IntValue.of(10))
         .build();
 
     GraphQLArgument offset = GraphQLArgument.newArgument()
-        .name("offset")
+        .name(OFFSET)
         .type(Scalars.GraphQLInt)
         .defaultValueLiteral(IntValue.of(0))
         .build();
