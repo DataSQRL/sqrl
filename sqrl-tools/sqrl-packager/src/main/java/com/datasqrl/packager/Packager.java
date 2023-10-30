@@ -10,6 +10,7 @@ import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.loaders.StandardLibraryLoader;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
@@ -107,7 +108,9 @@ public class Packager {
         .map(script -> analyzer.analyze(script, errors))
         .reduce(Result.EMPTY, (r1, r2) -> r1.add(r2));
 
-    Set<NamePath> pkgs = allResults.getPkgs();
+    StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
+    Set<NamePath> pkgs = new HashSet<>(allResults.getPkgs());
+    pkgs.removeAll(standardLibraryLoader.loadedLibraries());
 
     Set<NamePath> unloadedDeps = new HashSet<>();
     for (NamePath packagePath : pkgs) {
