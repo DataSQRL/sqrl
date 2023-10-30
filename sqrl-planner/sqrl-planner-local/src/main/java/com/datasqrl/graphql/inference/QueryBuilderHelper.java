@@ -40,7 +40,6 @@ import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
@@ -51,10 +50,8 @@ public class QueryBuilderHelper {
 
 
   private final QueryPlanner queryPlanner;
-  private final SqlOperator operator;
   private final RelBuilder relBuilder;
   private final RexBuilder rexBuilder;
-  private final RelDataType returnType;
   private final String nameId;
   private final APIConnectorManager apiManager;
   List<Argument> graphqlArguments = new ArrayList<>();
@@ -62,16 +59,12 @@ public class QueryBuilderHelper {
   List<Pair<RexNode, JdbcParameterHandler>> parameterHandler = new ArrayList<>();
   List<RexNode> extraFilters = new ArrayList<>();
   private boolean limitOffsetFlag = false;
-  private Optional<ArgCombination> limit;
-  private Optional<ArgCombination> offset;
 
-  public QueryBuilderHelper(QueryPlanner queryPlanner, SqlOperator operator, RelBuilder relBuilder, RelDataType returnType,
+  public QueryBuilderHelper(QueryPlanner queryPlanner, RelBuilder relBuilder,
       String nameId, APIConnectorManager apiManager) {
     this.queryPlanner = queryPlanner;
-    this.operator = operator;
     this.relBuilder = relBuilder;
     this.rexBuilder = relBuilder.getRexBuilder();
-    this.returnType = returnType;
     this.nameId = nameId;
     this.apiManager = apiManager;
   }
@@ -140,10 +133,7 @@ public class QueryBuilderHelper {
     return rexDynamicParam;
   }
 
-  public void limitOffset(Optional<ArgCombination> limit, Optional<ArgCombination> offset,
-      int numPrimaryKeys) {
-    this.limit = limit;
-    this.offset = offset;
+  public void limitOffset(Optional<ArgCombination> limit, Optional<ArgCombination> offset) {
     if (limit.isPresent() || offset.isPresent()) {
       this.limitOffsetFlag = true;
       if (limit.isPresent()) {

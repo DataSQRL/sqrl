@@ -147,11 +147,11 @@ public class SchemaInference {
     }
 
     return inferObjectField(fieldDefinition, table, fields, parent, null, null,
-        createQueries(parent, fieldDefinition, null, table, (SqrlTableMacro) function.get()));
+        createQueries(parent, fieldDefinition, null, (SqrlTableMacro) function.get()));
   }
 
   private List<Model.ArgumentSet> createQueries(ObjectTypeDefinition parent, FieldDefinition fieldDefinition,
-      SQRLTable fromTable, SQRLTable table, SqrlTableMacro macro) {
+      SQRLTable fromTable, SqrlTableMacro macro) {
 
     List<Model.ArgumentSet> arguments = new ArrayList<>();
 
@@ -159,7 +159,7 @@ public class SchemaInference {
         fieldDefinition.getInputValueDefinitions());
 
     for (List<ArgCombination> arg : argCombinations) {
-      Model.ArgumentSet query1 = graphqlQueryBuilder.create(arg, macro, table, parent.getName(), fieldDefinition,
+      Model.ArgumentSet query1 = graphqlQueryBuilder.create(arg, macro, parent.getName(), fieldDefinition,
           fromTable == null ? null : fromTable.getRelOptTable().getRowType(null));
       arguments.add(query1);
     }
@@ -303,12 +303,11 @@ public class SchemaInference {
   private InferredField walkRel(FieldDefinition fieldDefinition, Relationship relationship,
       List<InferredField> fields, ObjectTypeDefinition parent) {
 
-
     return new NestedField(relationship,
         inferObjectField(fieldDefinition, relationship.getToTable(),
             fields, parent, relationship.getFromTable(), relationship.macro,
             createQueries(parent, fieldDefinition, relationship.fromTable,
-                relationship.toTable, relationship.getMacro())));//todo
+                relationship.getMacro())));
   }
 
   private InferredField walkScalar(FieldDefinition fieldDefinition, Column column,

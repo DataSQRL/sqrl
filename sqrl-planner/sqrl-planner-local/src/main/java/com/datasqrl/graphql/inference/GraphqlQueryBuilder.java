@@ -10,10 +10,8 @@ import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaBuilder.ArgCombination;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.SourceParameter;
-import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -54,19 +52,18 @@ public class GraphqlQueryBuilder {
   SqrlFramework framework;
   APIConnectorManager apiManager;
 
-  public Model.ArgumentSet create(List<ArgCombination> arg, SqrlTableMacro macro, SQRLTable table,
+  public Model.ArgumentSet create(List<ArgCombination> arg, SqrlTableMacro macro,
       String parentName, FieldDefinition fieldDefinition, RelDataType parentType) {
 
     Pair<SqlUserDefinedTableFunction, Boolean> operatorPair = resolveOperator(macro, arg);
     SqlUserDefinedTableFunction operator = operatorPair.getLeft();
     boolean allowPermutation = operatorPair.getRight();
 
-    String nameId = parentName + "." + fieldDefinition.getName() + "-"
-        + queryCounter.incrementAndGet();
+    String nameId = generateQueryNameId(parentName, fieldDefinition);
 
     QueryBuilderHelper queryBuilderHelper = new QueryBuilderHelper(framework.getQueryPlanner(),
-        operator, framework.getQueryPlanner().getRelBuilder(),
-        macro.getRowType(), nameId, apiManager);
+        framework.getQueryPlanner().getRelBuilder(),
+        nameId, apiManager);
 
     if (allowPermutation) {
       for (SqrlFunctionParameter parameter : getInternalParams(operator.getFunction().getParameters())) {
@@ -108,10 +105,7 @@ public class GraphqlQueryBuilder {
     Optional<ArgCombination> limit = onlyLimit(arg);
     Optional<ArgCombination> offset = onlyOffset(arg);
     if (limit.isPresent() || offset.isPresent()) {
-      ScriptRelationalTable scriptTable = (ScriptRelationalTable) table.getVt();
-      int numPrimaryKeys = scriptTable.getNumPrimaryKeys();
-
-      queryBuilderHelper.limitOffset(limit, offset, numPrimaryKeys);
+      queryBuilderHelper.limitOffset(limit, offset);
     }
 
     Model.ArgumentSet argumentSet = queryBuilderHelper.build();
@@ -134,6 +128,11 @@ public class GraphqlQueryBuilder {
     }
 
     return argumentSet;
+  }
+
+  private String generateQueryNameId(String parentName, FieldDefinition fieldDefinition) {
+    return parentName + "." + fieldDefinition.getName() + "-"
+        + queryCounter.incrementAndGet();
   }
 
   private boolean isLimitOrOffset(ArgCombination c) {
