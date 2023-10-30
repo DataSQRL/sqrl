@@ -5,12 +5,12 @@ IMPORT patientpackage.SensorReading TIMESTAMP epochMilliToTimestamp(time) AS tim
 IMPORT patientpackage.ObservationGroup;
 
 /* Aggregate sensor readings to minute */
-MinReading := SELECT sensorid, endOfMinute(timestamp) as timeMin,
+SmoothReading := SELECT sensorid, endOfMinute(timestamp) as timeMin,
                      avg(temperature) as smoothTemp
               FROM SensorReading  GROUP BY sensorid, timeMin;
 /* Create table of sensors and relate to readings */
 Sensors := DISTINCT Sensors ON id ORDER BY placedTimestamp DESC;
-Sensors.readings := JOIN MinReading r ON r.sensorid = @.id;
+Sensors.readings := JOIN SmoothReading r ON r.sensorid = @.id;
 
 /* Create aggregates for patients */
 PatientHourly := SELECT patientid, endOfHour(timeMin) as timeHour,

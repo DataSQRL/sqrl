@@ -9,7 +9,7 @@
   "type" : "source",
   "connector" : {
     "name" : "file",
-    "directoryURI" : "../../sqrl-examples/sqrl-examples/sensors/patientdata",
+    "directoryURI" : "../../sqrl-examples/sqrl-examples/sensors/patientdata"
   },
   "canonicalizer" : "system"
 }

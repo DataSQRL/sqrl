@@ -12,7 +12,11 @@ public class ConfigurationExceptionHandler implements ErrorHandler<Configuration
 
   @Override
   public ErrorMessage handle(ConfigurationException e, ErrorLocation baseLocation) {
-    return new ErrorMessage.Implementation(ErrorCode.CONFIG_EXCEPTION, e.getMessage(), baseLocation, ErrorMessage.Severity.FATAL);
+    String message = e.getMessage();
+    if (e.getCause()!=null && e.getCause()!=e) {
+      message += ": " + e.getCause().getMessage();
+    }
+    return new ErrorMessage.Implementation(ErrorCode.CONFIG_EXCEPTION, message, baseLocation, ErrorMessage.Severity.FATAL);
   }
 
   @Override

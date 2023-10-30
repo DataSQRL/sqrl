@@ -7,7 +7,7 @@
   "type" : "source",
   "connector" : {
     "name" : "file",
-    "directoryURI" : "../../sqrl-examples/sensors/patientdata",
+    "directoryURI" : "../../sqrl-examples/sensors/patientdata"
   },
   "canonicalizer" : "system"
 }
