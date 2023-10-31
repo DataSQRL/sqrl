@@ -395,8 +395,6 @@ public class FlinkCodeGen implements
     FormatFactory formatFactory = createFactoryInstance(table.getFormatFactory());
     BaseConnectorFactory connectorFactory = createFactoryInstance(table.getConnectorFactory());
     if (connectorFactory instanceof DataStreamSourceFactory) {
-      System.out.println("Datastream...");
-
       DataStreamSourceFactory sourceFactory = (DataStreamSourceFactory) connectorFactory;
       TableSchemaFactory factory = createFactoryInstance(table.getSchemaFactory());
       String schemaDefinition = table.getSchemaDefinition();
@@ -418,7 +416,6 @@ public class FlinkCodeGen implements
               formatFactory.getClass(),
               UUID.class)
           .build();
-//
 
       OutputTag formatErrorTag = context.createErrorTag();
       builder.addStatement("$T formatErrorTag = new $T<>($S) {\n"
@@ -461,7 +458,6 @@ public class FlinkCodeGen implements
           schemaDefinition);
 
 //      TableSchema schema = factory.create(schemaDefinition, tableConfig.getBase().getCanonicalizer());
-      //todo: fix flexible schema hard referenced
       builder.addStatement("$T schemaValidator = $L.getValidator(\n"
               + "          tableConfig.getSchemaAdjustmentSettings(),\n"
               + "          tableConfig.getConnectorSettings())",
@@ -509,7 +505,7 @@ public class FlinkCodeGen implements
       builder.addStatement("tEnv.createTemporaryView($S, rows, schema)",
           table.getName());
 
-      String methodName = "create" + (i.incrementAndGet());
+      String methodName = "createDataStreamSource" + i.incrementAndGet();
       MethodSpec create = MethodSpec.methodBuilder(methodName)
           .addCode(builder.build())
           .addParameter(ParameterSpec.builder(StreamExecutionEnvironment.class,
@@ -592,9 +588,24 @@ public class FlinkCodeGen implements
                 schemaName)
             .addStatement("tEnv.createTemporaryTable($S, $L)",
                 name,
-                descriptorName)
-        ;
-        return builder.build();
+                descriptorName);
+
+        String methodName = "createSink" + i.incrementAndGet();
+        MethodSpec create = MethodSpec.methodBuilder(methodName)
+            .addCode(builder.build())
+            .addParameter(ParameterSpec.builder(StreamExecutionEnvironment.class,
+                    "sEnv")
+                .build())
+            .addParameter(ParameterSpec.builder(StreamTableEnvironment.class,
+                    "tEnv")
+                .build())
+            .addException(Exception.class)
+            .build();
+        fncs.add(create);
+
+        return CodeBlock.builder()
+            .addStatement("$L(sEnv, tEnv)", methodName)
+            .build();
       } else {
         throw new RuntimeException("Unknown sink type");
       }
