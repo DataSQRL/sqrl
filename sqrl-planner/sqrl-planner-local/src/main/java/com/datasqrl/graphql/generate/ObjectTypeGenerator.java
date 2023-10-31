@@ -57,7 +57,6 @@ public class ObjectTypeGenerator implements
   public Void visit(SQRLTable table, SchemaGeneratorContext context) {
     List<GraphQLFieldDefinition> fields = table.getFields(true)
         .stream()
-        .filter(f-> !(f instanceof Relationship && ((Relationship) f).getJoinType() == JoinType.PARENT))
         .filter(f->logIfInvalid(isValidGraphQLName(f.getName().getDisplay()), table, f))
         .filter(f -> !(f instanceof Column) || getOutputType(((Column) f).getType()).isPresent())
         .map(f -> f.accept(this, context.setSqrlTable(table)))
