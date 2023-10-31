@@ -263,7 +263,7 @@ public class SqlBuilders {
 
     public SqlSelectBuilder setWhere(List<SqlNode> conditions) {
       if (conditions.size() > 1) {
-        SqlNode call = SqlStdOperatorTable.AND.createCall(SqlParserPos.ZERO, conditions);
+        SqlNode call = SqlNodeUtil.and(SqlParserPos.ZERO, conditions);
         select.setWhere(call);
       } else if (conditions.size() == 1){
         select.setWhere(conditions.get(0));
