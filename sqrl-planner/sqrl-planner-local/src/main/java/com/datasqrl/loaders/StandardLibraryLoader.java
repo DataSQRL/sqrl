@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -23,6 +24,9 @@ public class StandardLibraryLoader {
     this.standardLibrary = standardLibrary;
   }
 
+  public Set<NamePath> loadedLibraries() {
+    return standardLibrary.keySet();
+  }
   public List<NamespaceObject> load(NamePath namePath) {
     if (standardLibrary.containsKey(namePath)) {
       return standardLibrary.get(namePath).getNamespaceObjects();

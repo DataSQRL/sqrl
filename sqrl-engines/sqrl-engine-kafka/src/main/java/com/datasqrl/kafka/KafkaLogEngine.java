@@ -1,5 +1,7 @@
 package com.datasqrl.kafka;
 
+import static com.datasqrl.io.tables.TableConfig.CONNECTOR_KEY;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.*;
@@ -22,6 +24,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.internals.Topic;
 
 import java.util.*;
@@ -48,8 +51,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     CreateTopicsResult result;
     log.info("Connecting to admin");
     try (Admin admin = Admin.create(
-        Map.of("bootstrap.servers", config.getConfig()
-            .getSubConfig("connector").asString("bootstrap.servers").get()))) {
+        Map.of(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getConfig()
+            .getSubConfig(CONNECTOR_KEY).asString(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG).get()))) {
       KafkaPhysicalPlan kafkaPhysicalPlan = (KafkaPhysicalPlan) plan;
       log.info("Creating topics");
       result = admin.createTopics(toTopics(kafkaPhysicalPlan.getTopics()));
