@@ -79,7 +79,7 @@ public class QueryBuilderHelper {
     // Todo: check for casting between type and field.getType
     return relBuilder.getRexBuilder()
         .makeInputRef(
-            type,
+            field.getType(),
             field.getIndex());
   }
 

@@ -83,6 +83,8 @@ public class NormalizeTablePath {
       pathWalker.setPath(context.getAliasPath(identifier));
       Name nextIdentifier = getIdentifier(input.next())
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
+      SqrlTableMacro parent = getTable(pathWalker.getPath()).get();
+
       // Update path walker
       pathWalker.walk(nextIdentifier);
 
@@ -93,7 +95,7 @@ public class NormalizeTablePath {
 
       List<SqrlFunctionParameter> internalParams = getInternalParamsOfTable(pathWalker.getPath());
       // Rewrite arguments so internal arguments are prefixed with the alias
-      List<SqlNode> args = rewriteInternalArgs(identifier, internalParams, context, params);
+      List<SqlNode> args = rewriteInternalArgs(identifier, internalParams, context, params, parent.getRowType());
 
       pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
           nameUtil.toName(pathWalker.getPath().getDisplay()), args, alias));
@@ -111,6 +113,8 @@ public class NormalizeTablePath {
       } else {
         Name nextIdentifier = getIdentifier(input.next())
             .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
+        SqrlTableMacro parentTable = getTable(pathWalker.getAbsolutePath()).get();
+
         pathWalker.walk(nextIdentifier);
 
         boolean hasTableFnc = hasTableFunction(pathWalker.getPath());
@@ -121,7 +125,7 @@ public class NormalizeTablePath {
         alias = generateAlias();
         // Rewrite arguments
         List<SqlNode> args = rewriteInternalArgs(ReservedName.SELF_IDENTIFIER, internalParams, context,
-            params);
+            params, parentTable.getRowType());
         pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
             nameUtil.toName(pathWalker.getPath().getDisplay()), args, alias));
       }
@@ -131,6 +135,7 @@ public class NormalizeTablePath {
 
     while (input.hasNext()) {
       item = input.next();
+      SqrlTableMacro parentTable = getTable(pathWalker.getAbsolutePath()).get();
       Name nextIdentifier = getIdentifier(item)
           .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
       pathWalker.walk(nextIdentifier);
@@ -140,7 +145,8 @@ public class NormalizeTablePath {
 
       List<SqrlFunctionParameter> internalParams = getInternalParamsOfTable(pathWalker.getPath());
 
-      List<SqlNode> args = rewriteInternalArgs(alias, internalParams, context, params);
+      List<SqlNode> args = rewriteInternalArgs(alias, internalParams, context, params,
+          parentTable.getRowType());
       Name newAlias = generateAlias();
       pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
           nameUtil.toName(pathWalker.getPath().getDisplay()), args, newAlias));
@@ -179,10 +185,15 @@ public class NormalizeTablePath {
   }
 
   private List<SqlNode> rewriteInternalArgs(Name alias, List<SqrlFunctionParameter> internalParams, Context context,
-      List<FunctionParameter> params) {
+      List<FunctionParameter> params, RelDataType parentRowType) {
     List<SqlNode> nodes = new ArrayList<>();
     for (SqrlFunctionParameter param : internalParams) {
-      SqlIdentifier identifier = new SqlIdentifier(List.of(alias.getDisplay(), param.getName()),
+      Optional<String> parentParameterName = param.getParentName()
+          .resolve(parentRowType, catalogResolver.nameMatcher());
+      if (parentParameterName.isEmpty()) {
+        throw new RuntimeException("Internal error, cannot find parent parameter name: " + param.getVariableName());
+      }
+      SqlIdentifier identifier = new SqlIdentifier(List.of(alias.getDisplay(),parentParameterName.get()),
           SqlParserPos.ZERO);
       SqlNode rewritten = context.isMaterializeSelf()
           ? identifier

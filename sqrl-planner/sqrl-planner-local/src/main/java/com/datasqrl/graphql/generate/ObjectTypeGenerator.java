@@ -18,6 +18,7 @@ import com.datasqrl.graphql.inference.SqrlSchemaForInference.FieldVisitor;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
+import com.datasqrl.schema.Relationship.JoinType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
@@ -56,6 +57,7 @@ public class ObjectTypeGenerator implements
   public Void visit(SQRLTable table, SchemaGeneratorContext context) {
     List<GraphQLFieldDefinition> fields = table.getFields(true)
         .stream()
+        .filter(f-> !(f instanceof Relationship && ((Relationship) f).getJoinType() == JoinType.PARENT))
         .filter(f->logIfInvalid(isValidGraphQLName(f.getName().getDisplay()), table, f))
         .filter(f -> !(f instanceof Column) || getOutputType(((Column) f).getType()).isPresent())
         .map(f -> f.accept(this, context.setSqrlTable(table)))
