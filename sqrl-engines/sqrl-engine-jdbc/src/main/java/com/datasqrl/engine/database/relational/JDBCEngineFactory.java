@@ -4,7 +4,6 @@ import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.serializer.KryoProvider;
 import com.datasqrl.config.serializer.SerializerProvider;
 import com.datasqrl.engine.EngineFactory;
-import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.DatabaseEngineFactory;
 import com.datasqrl.engine.database.relational.metadata.JDBCMetadataStore;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
@@ -19,6 +18,9 @@ import lombok.Value;
 public class JDBCEngineFactory implements DatabaseEngineFactory {
   public static final String ENGINE_NAME = "jdbc";
 
+  public static final String GENERATE_QUERIES_KEY = "generate";
+  public static final boolean GENERATE_QUERIES_DEFAULT = false;
+
   @Override
   public String getEngineName() {
     return ENGINE_NAME;
@@ -31,7 +33,8 @@ public class JDBCEngineFactory implements DatabaseEngineFactory {
 
   @Override
   public JDBCEngine initialize(@NonNull SqrlConfig config) {
-    return new JDBCEngine(getConnector(config));
+    return new JDBCEngine(getConnector(config),
+        config.asBool(GENERATE_QUERIES_KEY).withDefault(GENERATE_QUERIES_DEFAULT).get());
   }
 
   private JdbcDataSystemConnector getConnector(@NonNull SqrlConfig config) {

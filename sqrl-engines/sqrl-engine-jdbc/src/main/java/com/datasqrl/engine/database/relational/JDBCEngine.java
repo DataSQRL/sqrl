@@ -5,6 +5,8 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.config.SqrlConfig;
@@ -20,7 +22,6 @@ import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FunctionTranslationMap;
-import com.datasqrl.function.PgSpecificOperatorTable;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.formats.FormatFactory;
@@ -34,7 +35,6 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
@@ -69,10 +69,13 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   @Getter
   final JdbcDataSystemConnector connector;
 
-  public JDBCEngine(JdbcDataSystemConnector connector) {
+  final boolean generateQueries;
+
+  public JDBCEngine(JdbcDataSystemConnector connector, boolean generateQueries) {
     super(JDBCEngineFactory.ENGINE_NAME, Type.DATABASE, STANDARD_DATABASE);
 //        CAPABILITIES_BY_DIALECT.get(configuration.getDialect()));
     this.connector = connector;
+    this.generateQueries = generateQueries;
   }
 
   @Override
@@ -146,7 +149,18 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = dbPlan.getQueries().stream()
         .collect(Collectors.toMap(ReadQuery::getQuery, q -> new QueryTemplate(q.getRelNode())));
 
-    return new JDBCPhysicalPlan(ddlStatements, databaseQueries);
+    Map<String, String> queryStrings = new HashMap<>();
+    if (generateQueries) {
+      QueryPlanner planner = framework.getQueryPlanner();
+      databaseQueries.forEach((queryId, queryTemplate) -> {
+
+        String queryString = planner.relToString(Dialect.POSTGRES,
+            planner.convertRelToDialect(Dialect.POSTGRES, queryTemplate.getRelNode()));
+        queryStrings.put(queryId.getNameId(), queryString);
+      });
+    }
+
+    return new JDBCPhysicalPlan(ddlStatements, databaseQueries, queryStrings);
   }
 
   private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {

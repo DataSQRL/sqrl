@@ -32,6 +32,8 @@ public class TestCmd {
   private static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");
   private static final Path SUBSCRIPTION_PATH = Paths.get("src/test/resources/subscriptions");
 
+  private static final Path QUERY_GENERATION_PKG = Paths.get("src/test/resources/querygeneration/package.json");
+
   protected Path buildDir = null;
   SnapshotTest.Snapshot snapshot;
 
@@ -163,6 +165,20 @@ public class TestCmd {
     execute(rootDir, "compile",
         script.getScriptPath().toString(),
         "-t", OUTPUT_DIR.toString(),
+        "--nolookup");
+    createSnapshot();
+  }
+
+  @Test
+  public void compileRetailWithQueryGeneration() {
+    Path rootDir = Retail.INSTANCE.getRootPackageDirectory();
+    buildDir = rootDir.resolve("build");
+
+    TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
+    execute(rootDir, "compile",
+        script.getScriptPath().toString(),
+        "-t", OUTPUT_DIR.toString(),
+        "-c", QUERY_GENERATION_PKG.toString(),
         "--nolookup");
     createSnapshot();
   }
