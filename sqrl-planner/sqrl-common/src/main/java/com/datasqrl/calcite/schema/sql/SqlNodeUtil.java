@@ -8,8 +8,8 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class SqlNodeUtil {
 
   public static SqlNode and(SqlParserPos pos, List<SqlNode> conditions) {
-    if (conditions.size() == 0) {
-      throw new RuntimeException("Cannot create condition");
+    if (conditions.size() < 2) {
+      throw new RuntimeException("Cannot create AND condition");
     } else if (conditions.size() == 2) {
       return SqlStdOperatorTable.AND.createCall(pos, conditions.get(0), conditions.get(1));
     }
