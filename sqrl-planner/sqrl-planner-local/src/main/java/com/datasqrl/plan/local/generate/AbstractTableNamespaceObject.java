@@ -2,7 +2,6 @@ package com.datasqrl.plan.local.generate;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.canonicalizer.Name;
@@ -10,6 +9,7 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.function.SqrlFunctionParameter.CasedParameter;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.plan.local.ScriptTableDefinition;
@@ -143,12 +143,12 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
       RelDataTypeField field = fromTable.getRowType().getFieldList().get(i);
 
       SqrlFunctionParameter param = new SqrlFunctionParameter(
-          field.getName(),
+          field1.getName(),
           Optional.empty(),
           SqlDataTypeSpecBuilder.create(field.getType()),
           i,
           field.getType(),
-          true);
+          true, new CasedParameter(field.getName()));
 
       SqlDynamicParam dynamicParam = new SqlDynamicParam(i, SqlParserPos.ZERO);
       parameters.add(param);

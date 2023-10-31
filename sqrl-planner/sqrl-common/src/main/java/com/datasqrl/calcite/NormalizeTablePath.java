@@ -10,6 +10,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.function.SqrlFunctionParameter.UnknownCaseParameter;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -26,7 +27,6 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -206,7 +206,8 @@ public class NormalizeTablePath {
 
     RelDataType anyType = catalogResolver.getTypeFactory().createSqlType(SqlTypeName.ANY);
     SqrlFunctionParameter functionParameter = new SqrlFunctionParameter(id.names.get(1), Optional.empty(),
-        SqlDataTypeSpecBuilder.create(anyType), params.size(), anyType, true);
+        SqlDataTypeSpecBuilder.create(anyType), params.size(), anyType, true,
+        new UnknownCaseParameter(id.names.get(1)));
     params.add(functionParameter);
     SqlDynamicParam param = new SqlDynamicParam(functionParameter.getOrdinal(),
         id.getParserPosition());

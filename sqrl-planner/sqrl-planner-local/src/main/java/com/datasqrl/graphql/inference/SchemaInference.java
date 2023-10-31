@@ -38,6 +38,7 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
+import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
@@ -99,7 +100,8 @@ public class SchemaInference {
         .schema(StringSchema.builder().schema(apiSchema.getSchemaDefinition()).build());
     this.relBuilder = relBuilder;
     this.apiManager = apiManager;
-    this.graphqlQueryBuilder  = new GraphqlQueryBuilder(framework, apiManager);
+    this.graphqlQueryBuilder  = new GraphqlQueryBuilder(framework, apiManager,
+        new SqlNameUtil(framework.getNameCanonicalizer()));
   }
 
   public InferredSchema accept() {

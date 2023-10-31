@@ -16,15 +16,13 @@ public class SqrlTableParamDef extends SqrlSqlNode {
   private final SqlDataTypeSpec type;
   private final Optional<SqlNode> defaultValue;
   private final int index;
-  private final boolean isInternal;
 
   public SqrlTableParamDef(SqlParserPos location, SqlIdentifier name, SqlDataTypeSpec type,
-      Optional<SqlNode> literal, int index, boolean isInternal) {
+      Optional<SqlNode> literal, int index) {
     super(location);
     this.name = name;
     this.type = type;
     this.defaultValue = literal;
     this.index = index;
-    this.isInternal = isInternal;
   }
 }

@@ -62,22 +62,25 @@ public class QueryBuilderHelper {
     VariableArgument variableArgument = new VariableArgument(name, null);
     graphqlArguments.add(variableArgument);
 
-    RexInputRef inputRef = getColumnRef(name);
+    RexInputRef inputRef = getColumnRef(name, type);
     extraFilters.add(relBuilder.equals(inputRef, rexDynamicParam));
   }
 
-  private RexInputRef getColumnRef(String name) {
-    Optional<RelDataTypeField> field = relBuilder.peek().getRowType().getFieldList().stream()
-        .filter(f -> f.getName().equalsIgnoreCase(name))
-        .findAny();
-    if (field.isEmpty()) {
+  private RexInputRef getColumnRef(String name, RelDataType type) {
+    RelDataType rowType = relBuilder.peek().getRowType();
+    int index = queryPlanner.getCatalogReader().nameMatcher()
+        .indexOf(rowType.getFieldNames(), name);
+    if (index == -1) {
       throw new RuntimeException("Could not find filter for graphql column: " + name);
     }
 
+    RelDataTypeField field = rowType.getFieldList().get(index);
+
+    // Todo: check for casting between type and field.getType
     return relBuilder.getRexBuilder()
         .makeInputRef(
-            field.get().getType(),
-            field.get().getIndex());
+            type,
+            field.getIndex());
   }
 
   private RexDynamicParam makeArgumentDynamicParam(String name, RelDataType type) {

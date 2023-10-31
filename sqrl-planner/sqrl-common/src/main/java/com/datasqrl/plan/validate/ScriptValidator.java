@@ -7,7 +7,6 @@ import static org.apache.calcite.sql.SqlUtil.stripAs;
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
@@ -21,6 +20,8 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.function.SqrlFunctionParameter;
+import com.datasqrl.function.SqrlFunctionParameter.NoParameter;
+import com.datasqrl.function.SqrlFunctionParameter.UnknownCaseParameter;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
@@ -51,7 +52,6 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
@@ -61,7 +61,6 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLateralOperator;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -85,7 +84,6 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.commons.lang3.tuple.Pair;
@@ -530,7 +528,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
           SqrlFunctionParameter functionParameter = new SqrlFunctionParameter(name,
               Optional.empty(), SqlDataTypeSpecBuilder
                 .create(anyType), parameterList.size(), anyType,
-              true);
+              true, new UnknownCaseParameter(name));
           parameterList.add(functionParameter);
           SqlDynamicParam param = new SqlDynamicParam(functionParameter.getOrdinal(), id.getParserPosition());
           paramMapping.put(functionParameter, param);
@@ -794,7 +792,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       SqlValidator validator) {
     List<FunctionParameter> parameters = params.stream()
         .map(p->new SqrlFunctionParameter(p.getName().getSimple(), p.getDefaultValue(),
-            p.getType(), p.getIndex(), p.getType().deriveType(validator),p.isInternal()))
+            p.getType(), p.getIndex(), p.getType().deriveType(validator),false, new NoParameter()))
         .collect(Collectors.toList());
     return parameters;
   }
