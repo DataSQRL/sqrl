@@ -6,10 +6,13 @@ package com.datasqrl.packager;
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.io.impl.print.PrintDataSystemFactory;
 import com.datasqrl.loaders.StandardLibraryLoader;
 import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
@@ -111,6 +114,7 @@ public class Packager {
     StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
     Set<NamePath> pkgs = new HashSet<>(allResults.getPkgs());
     pkgs.removeAll(standardLibraryLoader.loadedLibraries());
+    pkgs.remove(Name.system(PrintDataSystemFactory.SYSTEM_NAME).toNamePath());
 
     Set<NamePath> unloadedDeps = new HashSet<>();
     for (NamePath packagePath : pkgs) {
