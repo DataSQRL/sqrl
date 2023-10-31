@@ -3,6 +3,8 @@
  */
 package com.datasqrl.cmd;
 
+import com.datasqrl.FlinkCodeGen;
+import com.datasqrl.FlinkExecutablePlan;
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.compile.DockerCompose;
@@ -11,11 +13,13 @@ import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.service.PackagerUtil;
 import com.google.common.base.Preconditions;
+import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -68,6 +72,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     this.startKafka = startKafka;
   }
 
+  @SneakyThrows
   public void runCommand(ErrorCollector errors) {
     setupTargetDir();
 
@@ -116,6 +121,22 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
     if (isGenerateGraphql()) {
       addGraphql(packager.getBuildDir(), packager.getRootDir());
+    }
+    addFlinkCodeGenSample(packager.getBuildDir(), result);
+  }
+
+  @SneakyThrows
+  private void addFlinkCodeGenSample(Path buildDir, CompilerResult result) {
+    try {
+      FlinkCodeGen codeGen = new FlinkCodeGen();
+      FlinkExecutablePlan executablePlan = result.getPlan()
+          .getPlans(FlinkStreamPhysicalPlan.class).findFirst().get()
+          .getExecutablePlan();
+      TypeSpec accept = executablePlan.accept(codeGen, null);
+      Files.writeString(buildDir.resolve("FlinkMainSample.java"),
+          accept.toString());
+    } catch (Exception e) {
+      //Allow failures
     }
   }
 

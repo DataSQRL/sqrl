@@ -35,5 +35,11 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-core</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.squareup</groupId>
+      <artifactId>javapoet</artifactId>
+      <version>1.13.0</version>
+    </dependency>
   </dependencies>
 </project>
