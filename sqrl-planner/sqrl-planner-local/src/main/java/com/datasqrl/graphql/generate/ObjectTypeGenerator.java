@@ -18,6 +18,7 @@ import com.datasqrl.graphql.inference.SqrlSchemaForInference.FieldVisitor;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable.SqrlTableVisitor;
+import com.datasqrl.schema.Relationship.JoinType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;

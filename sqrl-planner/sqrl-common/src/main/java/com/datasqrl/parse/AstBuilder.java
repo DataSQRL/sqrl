@@ -384,7 +384,7 @@ class AstBuilder
           getType(fCtx.type()),
           fCtx.expression() == null ? Optional.empty() :
               Optional.of(parseExpression(fCtx.expression())),
-          i, false);
+          i);
       defs.add(param);
     }
 

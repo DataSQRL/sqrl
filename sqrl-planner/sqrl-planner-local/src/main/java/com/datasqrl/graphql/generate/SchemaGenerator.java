@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.generate;
 
 import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import graphql.language.ObjectTypeDefinition;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -23,6 +25,7 @@ import java.util.regex.Pattern;
  * Creates a default graphql schema based on the SQRL schema
  */
 public class SchemaGenerator {
+
   List<GraphQLFieldDefinition> queryFields = new ArrayList<>();
   List<GraphQLObjectType> objectTypes = new ArrayList<>();
 
@@ -56,6 +59,7 @@ public class SchemaGenerator {
     do {
       found = false;
       Iterator<GraphQLObjectType> iterator = objectTypes.iterator();
+      List<GraphQLObjectType> replacedType = new ArrayList<>();
       while (iterator.hasNext()) {
         GraphQLObjectType objectType = iterator.next();
         List<GraphQLFieldDefinition> invalidFields = new ArrayList<>();
@@ -68,20 +72,31 @@ public class SchemaGenerator {
 
         // Refactor to remove invalid fields
         List<GraphQLFieldDefinition> fields = new ArrayList<>(objectType.getFields());
-        fields.removeAll(invalidFields);
+        boolean fieldsRemoved = fields.removeAll(invalidFields);
 
         // After removing invalid fields, if an object has no fields, it should be removed
         if (fields.isEmpty()) {
           iterator.remove();
           found = true;
+        } else if (fieldsRemoved) {
+          GraphQLObjectType newObjectType = GraphQLObjectType.newObject(objectType)
+              .clearFields()
+              .fields(fields)
+              .build();
+          replacedType.add(newObjectType);
+          iterator.remove();
+          found = true;
         }
       }
+
+      //Add new types back
+      objectTypes.addAll(replacedType);
 
       found |= queryFields.removeIf(field -> !isValidType(field.getType()));
 
       // Ensure each object has at least one field
       found |= objectTypes.removeIf(objectType -> objectType.getFields().isEmpty());
-    } while(found && --attempts != 0);
+    } while (found && --attempts != 0);
 
     if (found) {
       throw new RuntimeException("Schema too complexity high, could not be reduced");
@@ -92,7 +107,7 @@ public class SchemaGenerator {
     type = unbox(type);
     // You can expand this logic depending on the intricacies of type validation
     if (type instanceof GraphQLTypeReference) {
-      GraphQLTypeReference typeReference = (GraphQLTypeReference)type;
+      GraphQLTypeReference typeReference = (GraphQLTypeReference) type;
       for (GraphQLObjectType objectType : this.objectTypes) {
         if (typeReference.getName().equalsIgnoreCase(objectType.getName())) {
           return true;
@@ -115,6 +130,7 @@ public class SchemaGenerator {
   public static boolean isValidGraphQLName(String name) {
     return Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
   }
+
   boolean isBaseGraphQLType(GraphQLType type) {
     return type instanceof GraphQLScalarType;
   }

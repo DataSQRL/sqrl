@@ -7,11 +7,14 @@ import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaBuilder.ArgCombination;
 import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.SourceParameter;
+import com.datasqrl.util.NameUtil;
+import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -51,6 +55,7 @@ public class GraphqlQueryBuilder {
 
   SqrlFramework framework;
   APIConnectorManager apiManager;
+  SqlNameUtil nameUtil;
 
   public Model.ArgumentSet create(List<ArgCombination> arg, SqrlTableMacro macro,
       String parentName, FieldDefinition fieldDefinition, RelDataType parentType) {
@@ -67,7 +72,12 @@ public class GraphqlQueryBuilder {
 
     if (allowPermutation) {
       for (SqrlFunctionParameter parameter : getInternalParams(operator.getFunction().getParameters())) {
-        queryBuilderHelper.addInternalOperand(parameter.getVariableName(), parameter.getRelDataType());
+        Optional<String> parentFieldName = parameter.getParentName()
+            .resolve(parentType, framework.getCatalogReader().nameMatcher());
+        if (parentFieldName.isEmpty()) {
+          throw new RuntimeException("Could not find parameter: " + parameter.getVariableName());
+        }
+        queryBuilderHelper.addInternalOperand(parentFieldName.get(), parameter.getRelDataType());
       }
       queryBuilderHelper.scan(operator);
 
@@ -81,16 +91,24 @@ public class GraphqlQueryBuilder {
         queryBuilderHelper.filter(columnToFilter, columnType);
       }
     } else {
-      ImmutableMap<String, ArgCombination> nameToArg = Maps.uniqueIndex(arg, a -> a.getDefinition().getName().toLowerCase());
+      ImmutableMap<Name, ArgCombination> nameToArg = Maps.uniqueIndex(arg,
+          a -> nameUtil.toName(a.getDefinition().getName().toLowerCase()));
 
       // Iterate over the table function to resolve all parameters it needs
       for (FunctionParameter functionParameter : operator.getFunction().getParameters()) {
         SqrlFunctionParameter parameter = (SqrlFunctionParameter) functionParameter;
         if (parameter.isInternal()) {
-          queryBuilderHelper.addInternalOperand(parameter.getVariableName(),
-              parameter.getRelDataType());
+          Optional<String> parentFieldName = parameter.getParentName()
+              .resolve(parentType, framework.getCatalogReader().nameMatcher());
+          if (parentFieldName.isEmpty()) {
+            throw new RuntimeException("Could not find parameter: " + parameter.getVariableName());
+          }
+          queryBuilderHelper.addInternalOperand(parentFieldName.get(), parameter.getRelDataType());
         } else {
-          ArgCombination tableArgument = nameToArg.get(parameter.getVariableName().toLowerCase());
+          ArgCombination tableArgument = nameToArg.get(nameUtil.toName(parameter.getVariableName()));
+          if (tableArgument == null) {
+            throw new RuntimeException("Could not find argument: " + parameter.getVariableName());
+          }
           String operand = tableArgument.getDefinition().getName();
           RelDataType operandType = graphqlToRelDataType(tableArgument.getDefinition().getType(), framework.getTypeFactory());
 
