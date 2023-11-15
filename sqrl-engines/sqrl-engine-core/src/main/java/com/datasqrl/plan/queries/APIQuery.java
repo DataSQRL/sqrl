@@ -3,6 +3,9 @@
  */
 package com.datasqrl.plan.queries;
 
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.function.SqrlFunctionParameter;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.ToString;
@@ -17,5 +20,8 @@ public class APIQuery implements IdentifiedQuery {
   @Include
   private final String nameId;
   private final RelNode relNode;
+  private final List<SqrlFunctionParameter> parameterList;
+  private final NamePath namePath;
+  private final boolean isPermutation;
 
 }

@@ -57,7 +57,7 @@ public class TestExecutor {
             Files.readString(deployDir.resolve("database-schema.sql")).split("\n"))
         .filter(s -> !Strings.isEmpty(s)).map(s -> (SqlDDLStatement) () -> s)
         .collect(Collectors.toList());
-    JDBCPhysicalPlan jdbcPhysicalPlan = new JDBCPhysicalPlan(schema, Map.of());
+    JDBCPhysicalPlan jdbcPhysicalPlan = new JDBCPhysicalPlan(schema, Map.of(), Map.of());
     JDBCEngineFactory jdbcEngineFactory = new JDBCEngineFactory();
     JDBCEngine jdbcEngine = jdbcEngineFactory.initialize(eng.getSubConfig("database"));
     jdbcEngine.execute(jdbcPhysicalPlan, ErrorCollector.root()).get();

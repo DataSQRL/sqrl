@@ -68,7 +68,7 @@ public class GraphqlQueryBuilder {
 
     QueryBuilderHelper queryBuilderHelper = new QueryBuilderHelper(framework.getQueryPlanner(),
         framework.getQueryPlanner().getRelBuilder(),
-        nameId, apiManager);
+        nameId, apiManager, macro, allowPermutation);
 
     if (allowPermutation) {
       for (SqrlFunctionParameter parameter : getInternalParams(operator.getFunction().getParameters())) {

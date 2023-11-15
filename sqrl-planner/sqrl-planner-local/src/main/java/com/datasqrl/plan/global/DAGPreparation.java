@@ -45,7 +45,7 @@ public class DAGPreparation {
 
     //Replace default joins with inner joins for API queries
     return apiManager.getQueries().stream().map(apiQuery ->
-      new AnalyzedAPIQuery(apiQuery.getNameId(), APIQueryRewriter.rewrite(relBuilder, apiQuery.getRelNode()))
+      new AnalyzedAPIQuery(apiQuery, APIQueryRewriter.rewrite(relBuilder, apiQuery.getRelNode()))
     ).collect(Collectors.toList());
   }
 
