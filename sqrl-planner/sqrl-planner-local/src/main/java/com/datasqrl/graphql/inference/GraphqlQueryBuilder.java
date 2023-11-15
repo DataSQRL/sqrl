@@ -13,7 +13,6 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaBuilder.ArgCombination;
 import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.SourceParameter;
-import com.datasqrl.util.NameUtil;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -35,7 +34,6 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -68,7 +66,7 @@ public class GraphqlQueryBuilder {
 
     QueryBuilderHelper queryBuilderHelper = new QueryBuilderHelper(framework.getQueryPlanner(),
         framework.getQueryPlanner().getRelBuilder(),
-        nameId, apiManager, macro, allowPermutation);
+        nameId, apiManager, macro);
 
     if (allowPermutation) {
       for (SqrlFunctionParameter parameter : getInternalParams(operator.getFunction().getParameters())) {

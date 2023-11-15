@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperator;
@@ -45,7 +46,7 @@ public class SqrlOptimizeDag extends SqrlPlan {
       SqrlFramework framework,
       ExecutionPipeline pipeline,
       APIConnectorManager apiManager,
-      RootGraphqlModel model,
+      Optional<RootGraphqlModel> model,
       boolean includeJars) {
     DAGPlanner dagPlanner = new DAGPlanner(framework, pipeline, getDebugger(), errors);
     return dagPlanner.plan(framework.getSchema(), apiManager,

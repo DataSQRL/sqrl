@@ -28,6 +28,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +66,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         .inferSchemaModelQueries(planner, schema);
 
     PhysicalDAGPlan dag = physicalPlanner.planDag(framework, ns.getPipeline(), modelAndQueries.getRight(),
-        modelAndQueries.getMiddle(), true);
+        Optional.of(modelAndQueries.getMiddle()), true);
 
     ErrorSink errorSink = injector.getInstance(ErrorSink.class);
     PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())

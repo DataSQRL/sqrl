@@ -20,7 +20,7 @@ public class AnalyzedAPIQuery implements DatabaseQuery {
 
   public AnalyzedAPIQuery(APIQuery apiQuery, RelNode relNode) {
     this.baseQuery = new APIQuery(apiQuery.getNameId(), relNode,
-        apiQuery.getParameterList(), apiQuery.getNamePath(), apiQuery.isPermutation());
+        apiQuery.getParameterList(), apiQuery.getNamePath());
   }
 
   public SQRLConverter.Config getBaseConfig() {

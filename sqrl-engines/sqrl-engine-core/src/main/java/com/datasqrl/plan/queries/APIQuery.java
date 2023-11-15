@@ -22,6 +22,5 @@ public class APIQuery implements IdentifiedQuery {
   private final RelNode relNode;
   private final List<SqrlFunctionParameter> parameterList;
   private final NamePath namePath;
-  private final boolean isPermutation;
 
 }

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexBuilder;
@@ -45,7 +44,6 @@ public class QueryBuilderHelper {
   private final String nameId;
   private final APIConnectorManager apiManager;
   private final SqrlTableMacro macro;
-  private final boolean isPermutation;
   List<Argument> graphqlArguments = new ArrayList<>();
   // Parameter handler and operands should be
   List<Pair<RexNode, JdbcParameterHandler>> parameterHandler = new ArrayList<>();
@@ -53,14 +51,13 @@ public class QueryBuilderHelper {
   private boolean limitOffsetFlag = false;
 
   public QueryBuilderHelper(QueryPlanner queryPlanner, RelBuilder relBuilder,
-      String nameId, APIConnectorManager apiManager, SqrlTableMacro macro, boolean isPermutation) {
+      String nameId, APIConnectorManager apiManager, SqrlTableMacro macro) {
     this.queryPlanner = queryPlanner;
     this.relBuilder = relBuilder;
     this.rexBuilder = relBuilder.getRexBuilder();
     this.nameId = nameId;
     this.apiManager = apiManager;
     this.macro = macro;
-    this.isPermutation = isPermutation;
   }
 
   public void filter(String name, RelDataType type) {
@@ -175,9 +172,9 @@ public class QueryBuilderHelper {
     APIQuery query = new APIQuery(nameId, expanded, macro.getParameters().stream()
         .map(p->(SqrlFunctionParameter) p)
         .collect(Collectors.toList()),
-        macro.getAbsolutePath(),
-        isPermutation
+        macro.getAbsolutePath()
     );
+
     apiManager.addQuery(query);
     List<JdbcParameterHandler> handlers = this.parameterHandler.stream()
         .map(Pair::getRight)
