@@ -6,8 +6,12 @@ package com.datasqrl.engine.database.relational;
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
 import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.DynamicParamSqlPrettyWriter;
 import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.calcite.SqrlConfigurations;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.sql.OrmDynamicParameterStrategy;
+import com.datasqrl.calcite.sql.PostgresDynamicParameterStrategy;
 import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -22,6 +26,7 @@ import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FunctionTranslationMap;
+import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.formats.FormatFactory;
@@ -35,6 +40,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
+import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
@@ -53,6 +59,9 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlWriterConfig;
+import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.commons.collections.ListUtils;
 
 @Slf4j
@@ -153,9 +162,17 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     if (generateQueries) {
       QueryPlanner planner = framework.getQueryPlanner();
       databaseQueries.forEach((queryId, queryTemplate) -> {
-
-        String queryString = planner.relToString(Dialect.POSTGRES,
+        SqlNode queryNode = planner.relToSql(Dialect.POSTGRES,
             planner.convertRelToDialect(Dialect.POSTGRES, queryTemplate.getRelNode()));
+
+        SqlWriterConfig config = SqrlConfigurations.sqlToPostgresString.apply(SqlPrettyWriter.config());
+        Preconditions.checkState(queryId instanceof APIQuery);
+        List<SqrlFunctionParameter> parameterList = ((APIQuery)queryId).getParameterList();
+
+        DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config,
+            new OrmDynamicParameterStrategy(parameterList)); //todo: place function parameters here
+        String queryString = writer.unparse(queryNode);
+
         queryStrings.put(queryId.getNameId(), queryString);
       });
     }

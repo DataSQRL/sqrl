@@ -2,12 +2,12 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
+import com.datasqrl.calcite.sql.PostgresDynamicParameterStrategy;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.calcite.convert.PostgresSqlConverter;
 import java.util.Arrays;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
@@ -43,7 +43,6 @@ import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.calcite.sql2rel.RelDecorrelator;
@@ -401,15 +400,16 @@ public class QueryPlanner {
       case SQRL:
         break;
       case CALCITE:
-        SqlWriterConfig config2 = SqrlConfigurations.sqlToString.apply(SqlPrettyWriter.config());
+        SqlWriterConfig config2 = SqrlConfigurations.sqlToPostgresString.apply(SqlPrettyWriter.config());
         SqlPrettyWriter prettyWriter = new SqlPrettyWriter(config2);
         node.unparse(prettyWriter, 0, 0);
         return prettyWriter.toSqlString().getSql();
       case FLINK:
         break;
       case POSTGRES:
-        SqlWriterConfig config = SqrlConfigurations.sqlToString.apply(SqlPrettyWriter.config());
-        DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
+        SqlWriterConfig config = SqrlConfigurations.sqlToPostgresString.apply(SqlPrettyWriter.config());
+        DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config,
+            new PostgresDynamicParameterStrategy());
         node.unparse(writer, 0, 0);
         return writer.toSqlString().getSql();
     }
