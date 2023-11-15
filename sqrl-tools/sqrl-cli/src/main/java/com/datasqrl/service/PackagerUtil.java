@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.flink.configuration.ConfigConstants;
+import org.apache.flink.configuration.TaskManagerOptions;
 
 @Slf4j
 public class PackagerUtil {
@@ -207,6 +208,9 @@ public class PackagerUtil {
     SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
     flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
     flinkConfig.setProperty(ConfigConstants.LOCAL_START_WEBSERVER, "true");
+    flinkConfig.setProperty(TaskManagerOptions.NETWORK_MEMORY_MIN.key(), "256mb");
+    flinkConfig.setProperty(TaskManagerOptions.NETWORK_MEMORY_MAX.key(), "256mb");
+    flinkConfig.setProperty(TaskManagerOptions.MANAGED_MEMORY_SIZE.key(), "256mb");
 
     SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
     server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
