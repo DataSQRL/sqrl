@@ -170,7 +170,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
         List<SqrlFunctionParameter> parameterList = ((APIQuery)queryId).getParameterList();
 
         DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config,
-            new OrmDynamicParameterStrategy(parameterList)); //todo: place function parameters here
+            new OrmDynamicParameterStrategy(parameterList));
         String queryString = writer.unparse(queryNode);
 
         queryStrings.put(queryId.getNameId(), queryString);
