@@ -77,14 +77,12 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
@@ -118,24 +116,26 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(queries);
     Map<String, ImportedRelationalTable> tables = extractTablesFromQueries(writeQueries);
+    Map<String, String> mutableUdfs = udfs.entrySet().stream()
+            .collect(Collectors.toMap(Entry::getKey, e->e.getValue().getClass().getName()));
     //exclude sqrl NOW for flink's NOW
-    HashMap<String, UserDefinedFunction> mutableUdfs = new HashMap<>(udfs);
     mutableUdfs.remove(DefaultFunctions.NOW.getName().toLowerCase());
-    Map<String, UserDefinedFunction> conversionFunctions = extractDowncastConversionFunctions(writeQueries);
-    mutableUdfs.putAll(conversionFunctions);
-    registerFunctions(mutableUdfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
     extractWatermarks(writeQueries, watermarkCollector);
 
     List<WriteQuery> newQueries = new ArrayList<>();
+    Map<String, String> downcastClassNames = new HashMap<>();
     for (WriteQuery query : writeQueries) {
       Optional<ExecutionEngine> engine = getEngine(query.getSink());
-      RelNode convertedRelNode = applyDowncasting(query.getRelNode(), engine);
+      RelNode convertedRelNode = applyDowncasting(query.getRelNode(), engine, downcastClassNames);
       String tableName = processQuery(convertedRelNode);
       registerSink(tableName, query.getSink().getName());
       newQueries.add(new WriteQuery(query.getSink(), convertedRelNode));
     }
+
+    mutableUdfs.putAll(downcastClassNames);
+    registerFunctions(mutableUdfs);
 
     registerSourceTables(tables, watermarkCollector);
     registerSinkTables(newQueries);
@@ -154,12 +154,13 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .build();
   }
 
-  private RelNode applyDowncasting(RelNode relNode, Optional<ExecutionEngine> engine) {
+  private RelNode applyDowncasting(RelNode relNode, Optional<ExecutionEngine> engine,
+      Map<String, String> downcastClassNames) {
     relBuilder.push(relNode);
 
     AtomicBoolean hasChanged = new AtomicBoolean();
     List<RexNode> fields = relNode.getRowType().getFieldList().stream()
-        .map(field -> convertField(field, hasChanged, relBuilder, engine))
+        .map(field -> convertField(field, hasChanged, relBuilder, engine, downcastClassNames))
         .collect(Collectors.toList());
 
     if (hasChanged.get()) {
@@ -171,7 +172,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   }
 
   private static RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
-      Optional<ExecutionEngine> engine) {
+      Optional<ExecutionEngine> engine, Map<String, String> downcastClassNames) {
     boolean hasNativeSupport = field.getType() instanceof RawRelDataType && engine.isPresent() &&
         engine.get().supportsType(((RawRelDataType) field.getType()).getRawType().getDefaultConversion());
 
@@ -186,6 +187,10 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       downcastFunc = catalogReader.getOperatorList().stream()
           .filter(f -> f.getName().equalsIgnoreCase(downcastFunction.downcastFunctionName()))
           .findFirst();
+      if (downcastFunc.isPresent()) {
+        downcastClassNames.put(downcastFunc.get().getName(), downcastFunction.getDowncastClassName()
+            .getName());
+      }
     }
 
     if (downcastFunc.isPresent()) {
@@ -204,24 +209,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       return Optional.empty();
     }
     throw new RuntimeException("Unsupported sink");
-  }
-
-  private Map<String, UserDefinedFunction> extractDowncastConversionFunctions(
-      List<WriteQuery> writeQueries) {
-
-    return Map.of();
-//    writeQueries.stream()
-//        .flatMap(query -> query.getRelNode().getRowType().getFieldList().stream())
-//        .collect(Collectors.toList());
-
-//        .filter(field -> field.getType() instanceof BridgingFlinkType)
-//        .map(field -> (BridgingFlinkType) field.getType())
-//        .filter(t -> t.getDowncastFunction().isPresent())
-//        .collect(Collectors.toMap(
-//            t -> t.getDowncastFunction().get().getName(),
-//            t -> t.getDowncastFlinkFunction().get(),
-//            (existing, replacement) -> existing
-//        ));
   }
 
   private Map<String, String> getTableConfig(SqrlConfig config) {
@@ -276,11 +263,11 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .build();
   }
 
-  private void registerFunctions(Map<String, UserDefinedFunction> udfs) {
-    for (Entry<String, UserDefinedFunction> function : udfs.entrySet()) {
+  private void registerFunctions(Map<String, String> udfs) {
+    for (Entry<String, String> function : udfs.entrySet()) {
       FlinkJavaFunction javaFunction = FlinkJavaFunction.builder()
           .functionName(function.getKey())
-          .identifier(function.getValue().getClass().getName())
+          .identifier(function.getValue())
           .build();
       this.functions.add(javaFunction);
     }

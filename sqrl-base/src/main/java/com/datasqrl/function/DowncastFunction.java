@@ -5,4 +5,6 @@ public interface DowncastFunction {
   Class getConversionClass();
 
   String downcastFunctionName();
+
+  Class getDowncastClassName();
 }
