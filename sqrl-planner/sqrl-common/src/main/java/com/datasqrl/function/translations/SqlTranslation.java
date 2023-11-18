@@ -7,9 +7,6 @@ import org.apache.calcite.sql.SqlWriter;
 
 public interface SqlTranslation {
   Dialect getDialect();
-
-
   SqlOperator getOperator();
-
   void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec);
 }

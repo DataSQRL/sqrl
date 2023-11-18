@@ -89,6 +89,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 import org.apache.flink.table.types.DataType;
 
 @Slf4j
@@ -168,23 +169,25 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private static RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
       Optional<ExecutionEngine> engine) {
-//    boolean hasNativeSupport =
-//        field.getType() instanceof ForeignType && engine.isPresent() && engine.get()
-//            .supportsType((ForeignType) field.getType());
-//
-//    Optional<SqlFunction> downcastFunction = (field.getType() instanceof ForeignType && !hasNativeSupport)
+    boolean hasNativeSupport =
+        field.getType() instanceof RawRelDataType && engine.isPresent() && engine.get()
+            .supportsType(((RawRelDataType) field.getType()).getRawType().getDefaultConversion());
+
+    Optional<SqlFunction> downcastFunction =
+//        (field.getType() instanceof RawRelDataType && !hasNativeSupport)
 //        ? ((ForeignType) field.getType()).getDowncastFunction()
-//        : Optional.empty();
-//
-//    if (downcastFunction.isPresent()) {
-//      hasChanged.set(true);
-//      return relBuilder.getRexBuilder()
-//          .makeCall(relBuilder.getTypeFactory().createSqlType(SqlTypeName.ANY),
-//              downcastFunction.get(),
-//              List.of(relBuilder.field(field.getIndex())));
-//    } else {
+//        :
+    Optional.empty();
+
+    if (downcastFunction.isPresent()) {
+      hasChanged.set(true);
+      return relBuilder.getRexBuilder()
+          .makeCall(relBuilder.getTypeFactory().createSqlType(SqlTypeName.ANY),
+              downcastFunction.get(),
+              List.of(relBuilder.field(field.getIndex())));
+    } else {
       return relBuilder.field(field.getIndex());
-//    }
+    }
   }
 
   private Optional<ExecutionEngine> getEngine(WriteSink sink) {

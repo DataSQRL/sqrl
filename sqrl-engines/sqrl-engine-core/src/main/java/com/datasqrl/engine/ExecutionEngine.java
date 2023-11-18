@@ -72,4 +72,8 @@ public interface ExecutionEngine {
       throw new UnsupportedOperationException("Not a sink");
     }
   }
+
+  default boolean supportsType(java.lang.reflect.Type type) {
+    return false;
+  }
 }

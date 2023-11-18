@@ -182,18 +182,18 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     return new ArrayList<>(statements);
   }
 
-//  @Override
-//  public boolean supportsType(ForeignType type) {
-//    JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
-//        (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialect,
-//        connector.getDialect(),
-//        (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass().getTypeName(),
-//        type.getConversionClass().getTypeName());
-//
-//    if (jdbcTypeSerializer != null) {
-//      return true;
-//    }
-//
-//    return super.supportsType(type);
-//  }
+  @Override
+  public boolean supportsType(java.lang.reflect.Type type) {
+    JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
+        (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialect,
+        connector.getDialect(),
+        (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass().getTypeName(),
+        type.getTypeName());
+
+    if (jdbcTypeSerializer != null) {
+      return true;
+    }
+
+    return super.supportsType(type);
+  }
 }
