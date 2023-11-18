@@ -7,7 +7,6 @@ import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.CoordVisitor;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
-import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
@@ -36,21 +35,30 @@ import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 public class BuildGraphQLEngine implements
     RootVisitor<GraphQL, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     QueryBaseVisitor<ResolvedQuery, Context>,
     ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
+
+  private List<GraphqlTypeFactory> typeFactory;
+
+  public BuildGraphQLEngine() {
+    typeFactory = new ArrayList<>();
+  }
+
+  public BuildGraphQLEngine(List<GraphqlTypeFactory> typeFactory) {
+    this.typeFactory = typeFactory;
+  }
 
   @Override
   public TypeDefinitionRegistry visitStringDefinition(StringSchema stringSchema, Object context) {
@@ -97,8 +105,9 @@ public class BuildGraphQLEngine implements
     RuntimeWiring.Builder wiring = RuntimeWiring.newRuntimeWiring()
         .codeRegistry(codeRegistry)
         .scalar(CustomScalars.Double)
-        .scalar(CustomScalars.DATETIME)
-        .scalar(new JsonTypeFactory().create());
+        .scalar(CustomScalars.DATETIME);
+
+    typeFactory.forEach(t->wiring.scalar(t.create()));
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {
