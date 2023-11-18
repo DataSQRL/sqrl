@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.type.ForeignType;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -14,12 +13,10 @@ import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
-import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.util.Properties;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.implicit.TypeCoercionFactory;
 
 @Getter
 public class SqrlFramework {
@@ -51,13 +48,13 @@ public class SqrlFramework {
     //Int -> Integer
     this.schema.add("Int", t->typeFactory.createSqlType(SqlTypeName.INTEGER));
 
-    ServiceLoaderDiscovery.getAll(ForeignType.class)
-            .forEach(f->this.schema.add(f.getName(), t->f));
-
-    typeFactory.getTypes().stream()
-        .filter(f->f instanceof RelProtoDataType)
-        .forEach(t->schema.add(t.getFullTypeString(), (RelProtoDataType) t));
-
+//    ServiceLoaderDiscovery.getAll(ForeignType.class)
+//            .forEach(f->this.schema.add(f.getName(), t->f));
+//
+//    typeFactory.getTypes().stream()
+//        .filter(f->f instanceof RelProtoDataType)
+//        .forEach(t->schema.add(t.getFullTypeString(), (RelProtoDataType) t));
+//
     this.relMetadataProvider = relMetadataProvider;
 
     Properties info = new Properties();

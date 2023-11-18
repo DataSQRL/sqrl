@@ -1,37 +1,21 @@
 package com.datasqrl.flink.function;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.type.ForeignType;
-import com.datasqrl.calcite.type.TypeFactory;
-import java.util.stream.IntStream;
-import org.apache.calcite.jdbc.CalciteSchema;
-import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.rel.core.Aggregate.AggCallBinding;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rex.RexCallBinding;
-import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlCallBinding;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperandCountRange;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.SqlOperatorBinding;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlOperandMetadata;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidator.Config;
-import org.apache.calcite.sql.validate.SqlValidatorScope;
-import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.functions.inference.ArgumentCountRange;
+import org.apache.flink.table.planner.functions.inference.TypeInferenceOperandChecker;
 import org.apache.flink.table.types.inference.Signature;
 import org.apache.flink.table.types.inference.TypeInference;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class FlinkOperandMetadata implements SqlOperandMetadata {
   private final FlinkTypeFactory flinkTypeFactory;
@@ -72,62 +56,6 @@ public class FlinkOperandMetadata implements SqlOperandMetadata {
   public boolean checkOperandTypes(SqlCallBinding sqlCallBinding, boolean throwOnFailure) {
     return new FlinkSqlOperandTypeChecker(flinkTypeFactory, dataTypeFactory, definition, typeInference)
         .checkOperandTypes(sqlCallBinding, throwOnFailure);
-  }
-
-  public static SqlCallBinding adaptCallBinding(SqlCallBinding sqlCallBinding, FlinkTypeFactory flinkTypeFactory) {
-    CalciteCatalogReader calciteCatalogReader = new CalciteCatalogReader(
-        CalciteSchema.createRootSchema(false), List.of(), flinkTypeFactory, null);
-    SqlValidator validator = sqlCallBinding.getValidator();
-    return new SqlCallBinding(new SqrlSqlValidator(SqlStdOperatorTable.instance(),
-        calciteCatalogReader, new TypeFactory(), Config.DEFAULT
-    ) {
-      @Override
-      public RelDataType deriveType(SqlValidatorScope scope, SqlNode expr) {
-        RelDataType validatedNodeType = validator.deriveType(scope,expr);
-        if (validatedNodeType instanceof ForeignType) {
-          ForeignType foreignType = (ForeignType) validatedNodeType;
-          return foreignType.getEngineType(Dialect.FLINK);
-        }
-
-        return validator.deriveType(scope, expr);
-      }
-    }, sqlCallBinding.getScope(), sqlCallBinding.getCall());
-  }
-
-  public static AggCallBinding adaptCallBinding(AggCallBinding sqlCallBinding, FlinkTypeFactory flinkTypeFactory,
-      TypeFactory typeFactory) {
-
-    List<RelDataType> types = IntStream.range(0, sqlCallBinding.getOperandCount())
-        .mapToObj(i -> translateToFlinkType(sqlCallBinding.getOperandType(i)))
-        .collect(Collectors.toList());
-
-    AggCallBinding aggCallBinding = new AggCallBinding(flinkTypeFactory, (SqlAggFunction) sqlCallBinding.getOperator(),
-        types, sqlCallBinding.getGroupCount(), sqlCallBinding.hasFilter());
-    return aggCallBinding;
-  }
-
-  public static SqlOperatorBinding adaptCallBinding(RexCallBinding sqlCallBinding,
-      FlinkTypeFactory flinkTypeFactory) {
-
-    List<RelDataType> types = IntStream.range(0, sqlCallBinding.getOperandCount())
-        .mapToObj(i -> translateToFlinkType(sqlCallBinding.getOperandType(i)))
-        .collect(Collectors.toList());
-
-    return new RexCallBinding(flinkTypeFactory,
-        sqlCallBinding.getOperator(), sqlCallBinding.operands(), List.of()) {
-      @Override
-      public RelDataType getOperandType(int ordinal) {
-        return types.get(ordinal);
-      }
-    };
-  }
-
-  private static RelDataType translateToFlinkType(RelDataType relDataType) {
-    if (relDataType instanceof ForeignType) {
-      ForeignType foreignType = (ForeignType) relDataType;
-      return foreignType.getEngineType(Dialect.FLINK);
-    }
-    return relDataType;
   }
 
   @Override

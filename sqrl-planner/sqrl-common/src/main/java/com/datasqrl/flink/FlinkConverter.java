@@ -30,11 +30,14 @@ import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.DataTypeFactory;
+import org.apache.flink.table.catalog.FunctionCatalog;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
+import org.apache.flink.table.planner.calcite.RexFactory;
+import org.apache.flink.table.planner.catalog.FunctionCatalogOperatorTable;
 import org.apache.flink.table.types.inference.TypeInference;
 
 @AllArgsConstructor
@@ -60,7 +63,7 @@ public class FlinkConverter {
   public SqlFunction convertFunction(String flinkName, FunctionDefinition definition) {
     final TypeInference typeInference;
 
-    DataTypeFactory dataTypeFactory = catalogManager.getDataTypeFactory();
+    DataTypeFactory dataTypeFactory =  catalogManager.getDataTypeFactory();
     try {
       typeInference = definition.getTypeInference(dataTypeFactory);
     } catch (Throwable t) {

@@ -1,5 +1,5 @@
 >>>calcite
-SELECT JSONOBJECT('key1', 'value1', 'key2', 123)
+SELECT JSONB_BUILD_OBJECT('key1', 'value1', 'key2', 123)
 FROM "jsondata$2"
 >>>postgres
 SELECT JSONB_BUILD_OBJECT('key1', 'value1', 'key2', 123)
@@ -7,7 +7,7 @@ FROM "jsondata$2"
 >>>Postgres Result
 {"key1": "value1", "key2": 123}
 >>>flink
-SELECT JSONTOSTRING(JSONOBJECT('key1', 'value1', 'key2', 123))
+SELECT JSONOBJECT('key1', 'value1', 'key2', 123)
 FROM `jsondata$2`
 >>>Flink Result
 {"key1":"value1","key2":123}

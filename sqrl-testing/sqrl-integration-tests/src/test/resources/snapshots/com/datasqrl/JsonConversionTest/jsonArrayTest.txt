@@ -1,5 +1,5 @@
 >>>calcite
-SELECT JSONARRAY('a', CAST(NULL AS VARCHAR(1) CHARACTER SET "UTF-16LE"), 'b', 123)
+SELECT JSONB_BUILD_ARRAY('a', CAST(NULL AS VARCHAR(1) CHARACTER SET "UTF-16LE"), 'b', 123)
 FROM "jsondata$2"
 >>>postgres
 SELECT JSONB_BUILD_ARRAY('a', CAST(NULL AS TEXT), 'b', 123)
@@ -7,7 +7,7 @@ FROM "jsondata$2"
 >>>Postgres Result
 ["a", null, "b", 123]
 >>>flink
-SELECT JSONTOSTRING(JSONARRAY('a', CAST(NULL AS VARCHAR(1) CHARACTER SET `UTF-16LE`), 'b', 123))
+SELECT JSONARRAY('a', CAST(NULL AS VARCHAR(1) CHARACTER SET `UTF-16LE`), 'b', 123)
 FROM `jsondata$2`
 >>>Flink Result
 ["a",null,"b",123]

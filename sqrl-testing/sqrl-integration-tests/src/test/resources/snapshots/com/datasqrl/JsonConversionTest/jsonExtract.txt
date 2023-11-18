@@ -1,8 +1,8 @@
 >>>calcite
-SELECT JSONEXTRACT(TOJSON('{"a": "hello"}'), '$.a')
+SELECT JSONEXTRACT(CAST('{"a": "hello"}' AS JSONB), '$.a')
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_PATH_QUERY_FIRST('{"a": "hello"}', '$.a') #>> '{}'
+SELECT JSONB_PATH_QUERY_FIRST(CAST('{"a": "hello"}' AS JSONB), '$.a') #>> '{}'
 FROM "jsondata$2"
 >>>Postgres Result
 hello

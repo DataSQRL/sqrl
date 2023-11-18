@@ -3,7 +3,6 @@
  */
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.calcite.type.BridgingFlinkType;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
 import lombok.Value;
@@ -16,6 +15,7 @@ import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.typeutils.MapTypeInfo;
 import org.apache.flink.api.java.typeutils.ObjectArrayTypeInfo;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Value
 public class FlinkTypeInfoSchemaGenerator implements
@@ -24,8 +24,15 @@ public class FlinkTypeInfoSchemaGenerator implements
 
   @Override
   public TypeInformation convertBasic(RelDataType datatype) {
-    if (datatype instanceof BridgingFlinkType) {
-      return ((BridgingFlinkType)datatype).getPhysicalTypeInformation();
+    if (datatype instanceof RawRelDataType) {
+      RawRelDataType rawRelDataType = (RawRelDataType)datatype;
+      if (rawRelDataType.getRawType().getOriginatingClass().getName().contains("son")) {
+        return BasicTypeInfo.STRING_TYPE_INFO;
+      } else if (rawRelDataType.getRawType().getOriginatingClass().getName().contains("ecto")) {
+        return BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO;
+      }
+
+      throw new RuntimeException();
     }
 
     switch (datatype.getSqlTypeName()) {

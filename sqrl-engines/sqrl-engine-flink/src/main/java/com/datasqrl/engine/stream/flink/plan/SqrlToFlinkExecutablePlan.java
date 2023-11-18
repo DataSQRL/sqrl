@@ -15,8 +15,6 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
-import com.datasqrl.calcite.type.BridgingFlinkType;
-import com.datasqrl.calcite.type.ForeignType;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactory;
@@ -170,23 +168,23 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private static RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
       Optional<ExecutionEngine> engine) {
-    boolean hasNativeSupport =
-        field.getType() instanceof ForeignType && engine.isPresent() && engine.get()
-            .supportsType((ForeignType) field.getType());
-
-    Optional<SqlFunction> downcastFunction = (field.getType() instanceof ForeignType && !hasNativeSupport)
-        ? ((ForeignType) field.getType()).getDowncastFunction()
-        : Optional.empty();
-
-    if (downcastFunction.isPresent()) {
-      hasChanged.set(true);
-      return relBuilder.getRexBuilder()
-          .makeCall(relBuilder.getTypeFactory().createSqlType(SqlTypeName.ANY),
-              downcastFunction.get(),
-              List.of(relBuilder.field(field.getIndex())));
-    } else {
+//    boolean hasNativeSupport =
+//        field.getType() instanceof ForeignType && engine.isPresent() && engine.get()
+//            .supportsType((ForeignType) field.getType());
+//
+//    Optional<SqlFunction> downcastFunction = (field.getType() instanceof ForeignType && !hasNativeSupport)
+//        ? ((ForeignType) field.getType()).getDowncastFunction()
+//        : Optional.empty();
+//
+//    if (downcastFunction.isPresent()) {
+//      hasChanged.set(true);
+//      return relBuilder.getRexBuilder()
+//          .makeCall(relBuilder.getTypeFactory().createSqlType(SqlTypeName.ANY),
+//              downcastFunction.get(),
+//              List.of(relBuilder.field(field.getIndex())));
+//    } else {
       return relBuilder.field(field.getIndex());
-    }
+//    }
   }
 
   private Optional<ExecutionEngine> getEngine(WriteSink sink) {
@@ -200,16 +198,19 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private Map<String, UserDefinedFunction> extractDowncastConversionFunctions(
       List<WriteQuery> writeQueries) {
-    return writeQueries.stream()
-        .flatMap(query -> query.getRelNode().getRowType().getFieldList().stream())
-        .filter(field -> field.getType() instanceof BridgingFlinkType)
-        .map(field -> (BridgingFlinkType) field.getType())
-        .filter(t -> t.getDowncastFunction().isPresent())
-        .collect(Collectors.toMap(
-            t -> t.getDowncastFunction().get().getName(),
-            t -> t.getDowncastFlinkFunction().get(),
-            (existing, replacement) -> existing
-        ));
+    return Map.of();
+//    writeQueries.stream()
+//        .flatMap(query -> query.getRelNode().getRowType().getFieldList().stream())
+//        .collect(Collectors.toList());
+
+//        .filter(field -> field.getType() instanceof BridgingFlinkType)
+//        .map(field -> (BridgingFlinkType) field.getType())
+//        .filter(t -> t.getDowncastFunction().isPresent())
+//        .collect(Collectors.toMap(
+//            t -> t.getDowncastFunction().get().getName(),
+//            t -> t.getDowncastFlinkFunction().get(),
+//            (existing, replacement) -> existing
+//        ));
   }
 
   private Map<String, String> getTableConfig(SqrlConfig config) {

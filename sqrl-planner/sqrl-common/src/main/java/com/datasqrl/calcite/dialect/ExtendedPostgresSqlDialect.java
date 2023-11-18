@@ -2,10 +2,8 @@ package com.datasqrl.calcite.dialect;
 
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.type.PrimitiveType;
 import com.datasqrl.function.translations.SqlTranslation;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.google.common.base.Preconditions;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.Casing;
@@ -18,6 +16,7 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
@@ -41,10 +40,20 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
 
   public SqlDataTypeSpec getCastSpec(RelDataType type) {
     String castSpec;
-    if (type instanceof PrimitiveType) {
-      String physicalType = ((PrimitiveType) type).getPhysicalTypeName(Dialect.POSTGRES);
-      Preconditions.checkNotNull(physicalType, "Could not find type name for: %s", type);
-      castSpec = physicalType;
+    if (type instanceof RawRelDataType) {
+      RawRelDataType rawRelDataType = (RawRelDataType) type;
+      Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
+      if (originatingClass.getName().contains("Json")) {
+        castSpec = "jsonb";
+      } else if (originatingClass.getName().contains("tor")) {
+        castSpec = "vector";
+      } else {
+        throw new RuntimeException();
+      }
+
+//      String physicalType = ((PrimitiveType) type).getPhysicalTypeName(Dialect.POSTGRES);
+//      Preconditions.checkNotNull(physicalType, "Could not find type name for: %s", type);
+//      castSpec = physicalType;
     } else {
       switch (type.getSqlTypeName()) {
         case TINYINT:

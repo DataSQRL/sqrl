@@ -1,108 +1,31 @@
 
 package com.datasqrl.calcite.type;
 
-import com.datasqrl.VectorFunctions;
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.flink.FlinkConverter;
-import com.datasqrl.json.NativeType;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import lombok.Getter;
 import org.apache.calcite.avatica.util.ByteString;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
-import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.runtime.Geometries;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.functions.UserDefinedFunction;
-import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.types.UnresolvedDataType;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
-  @Getter
-  private List<ForeignType> types = new ArrayList<>();
+
   public TypeFactory() {
     super(SqrlTypeSystem.INSTANCE);
-    registerDefaultTypes();
-  }
-
-  private void registerDefaultTypes() {
-    //service load in
-     RelDataType vector = createTypeFromClass(FlinkVectorType.class);
-    VectorType vectorType = new VectorType(vector,
-        VectorFunctions.VEC_TO_DOUBLE, this);
-    registerType(vectorType);
-
-    List<NativeType> nativeTypes = ServiceLoaderDiscovery.getAll(NativeType.class);
-    for (NativeType nativeType : nativeTypes) {
-      RelDataType t = createTypeFromClass(nativeType.getType());
-      UserDefinedBridgingType userDefinedBridgingType = new UserDefinedBridgingType(
-          nativeType,t,
-          (UserDefinedFunction) nativeType.unknownTypeDowncast(), this);
-      registerType(userDefinedBridgingType);
-    }
-
-  }
-
-  @Override
-  public RelDataType createSqlType(SqlTypeName typeName) {
-    return super.createSqlType(typeName);
-  }
-
-  private RelDataType createTypeFromClass(Class clazz) {
-    UnresolvedDataType unresolvedVectorType = DataTypes.of(clazz);
-    DataType flinkDataType = unresolvedVectorType.toDataType(FlinkConverter.catalogManager.getDataTypeFactory());
-    RelDataType flinkRelType = FlinkConverter.flinkTypeFactory
-        .createFieldTypeFromLogicalType(flinkDataType.getLogicalType());
-    return flinkRelType;
-  }
-
-  /**
-   * Translates from an engine type to a SQRL type, usually happens during
-   * function return type inference.
-   */
-  public RelDataType translateToSqrlType(Dialect dialect, RelDataType engineType) {
-    //Add custom type translation here
-    for (ForeignType type : types) {
-      if (type.translates(dialect, engineType)) {
-        return type;
-      }
-    }
-
-    return engineType;
-  }
-
-  /**
-   * Translates a sqrl type to the engine type. Usually happens during function
-   * operand conversion.
-   */
-  public RelDataType translateToEngineType(Dialect dialect, RelDataType type) {
-    if (type instanceof ForeignType) {
-      return ((ForeignType)type).getEngineType(dialect);
-    }
-
-    return type;
-  }
-
-  public static RelDataTypeSystem getSqrlTypeSystem() {
-    return new SqrlTypeSystem();
   }
 
   public static TypeFactory getTypeFactory() {
     return new TypeFactory();
   }
-
 
   public static RelDataType makeTimestampType(RelDataTypeFactory typeFactory) {
     return typeFactory.createSqlType(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, 3);
@@ -130,8 +53,8 @@ public class TypeFactory extends JavaTypeFactoryImpl {
   @Override
   public Type getJavaClass(RelDataType type) {
     //Flink wrapped types
-    if (type instanceof ForeignType) {
-      return ((ForeignType) type).getConversionClass();
+    if (type instanceof RawRelDataType) {
+      return ((RawRelDataType) type).getRawType().getOriginatingClass();
     }
 
     //Need to get raw data type mapping for the particular engine
@@ -213,11 +136,5 @@ public class TypeFactory extends JavaTypeFactoryImpl {
           return null;
       }
     }
-  }
-
-  /**
-   */
-  public void registerType(ForeignType type) {
-    this.types.add(type);
   }
 }

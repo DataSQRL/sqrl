@@ -1,5 +1,5 @@
 >>>calcite
-SELECT JSONARRAY('a', JSONARRAY('nested', 1), 'b', JSONARRAY('nested', 2))
+SELECT JSONB_BUILD_ARRAY('a', JSONB_BUILD_ARRAY('nested', 1), 'b', JSONB_BUILD_ARRAY('nested', 2))
 FROM "jsondata$2"
 >>>postgres
 SELECT JSONB_BUILD_ARRAY('a', JSONB_BUILD_ARRAY('nested', 1), 'b', JSONB_BUILD_ARRAY('nested', 2))
@@ -7,7 +7,7 @@ FROM "jsondata$2"
 >>>Postgres Result
 ["a", ["nested", 1], "b", ["nested", 2]]
 >>>flink
-SELECT JSONTOSTRING(JSONARRAY('a', JSONARRAY('nested', 1), 'b', JSONARRAY('nested', 2)))
+SELECT JSONARRAY('a', JSONARRAY('nested', 1), 'b', JSONARRAY('nested', 2))
 FROM `jsondata$2`
 >>>Flink Result
 ["a",["nested",1],"b",["nested",2]]

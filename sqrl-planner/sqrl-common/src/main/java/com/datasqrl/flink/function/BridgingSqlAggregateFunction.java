@@ -37,6 +37,7 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.RexFactory;
+import org.apache.flink.table.planner.functions.inference.TypeInferenceOperandInference;
 import org.apache.flink.table.types.inference.TypeInference;
 
 /**
@@ -79,7 +80,7 @@ public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction impl
   }
 
   public static SqlOperandTypeInference createSqlOperandTypeInference(String name, FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, FunctionDefinition definition) {
-    return new FlinkSqlOperandTypeInference(flinkTypeFactory, dataTypeFactory, definition, definition.getTypeInference(dataTypeFactory));
+    return new FlinkSqlOperandTypeInference(flinkTypeFactory, new TypeInferenceOperandInference(dataTypeFactory, definition, definition.getTypeInference(dataTypeFactory)));
   }
 
   @Override

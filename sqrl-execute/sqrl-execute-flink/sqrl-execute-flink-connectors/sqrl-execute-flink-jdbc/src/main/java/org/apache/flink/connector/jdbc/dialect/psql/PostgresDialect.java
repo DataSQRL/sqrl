@@ -91,7 +91,7 @@ public class PostgresDialect extends AbstractDialect {
     public void validate(RowType rowType) throws ValidationException {
         List<LogicalType> unsupportedTypes = rowType.getFields().stream()
             .map(RowField::getType)
-            .filter(type -> LogicalTypeRoot.STRUCTURED_TYPE.equals(type.getTypeRoot()))
+            .filter(type -> LogicalTypeRoot.RAW.equals(type.getTypeRoot()))
             .filter(type -> !isSupportedType(type))
             .collect(Collectors.toList());
 
@@ -154,7 +154,7 @@ public class PostgresDialect extends AbstractDialect {
                 LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE,
                 LogicalTypeRoot.ARRAY,
                 LogicalTypeRoot.MAP,
-                LogicalTypeRoot.STRUCTURED_TYPE //see validate() for supported structured types
+                LogicalTypeRoot.RAW //see validate() for supported structured types
             );
     }
 }

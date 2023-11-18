@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONB_AGG(JSONEXTRACT(TOJSON("json"), '$.example[0]', 0))
+SELECT JSONB_AGG(JSONEXTRACT(CAST("json" AS JSONB), '$.example[0]', 0))
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_AGG(COALESCE(CAST(JSONB_PATH_QUERY_FIRST("json", '$.example[0]') AS INTEGER), 0))
+SELECT JSONB_AGG(COALESCE(CAST(JSONB_PATH_QUERY_FIRST(CAST("json" AS JSONB), '$.example[0]') AS INTEGER), 0))
 FROM "jsondata$2"
 >>>Postgres Result
 [1, 4]
 >>>flink
-SELECT JSONTOSTRING(JSONARRAYAGG(JSONEXTRACT(TOJSON(`json`), '$.example[0]', 0)))
+SELECT JSONARRAYAGG(JSONEXTRACT(TOJSON(`json`), '$.example[0]', 0))
 FROM `jsondata$2`
 >>>Flink Result
 [1,4]

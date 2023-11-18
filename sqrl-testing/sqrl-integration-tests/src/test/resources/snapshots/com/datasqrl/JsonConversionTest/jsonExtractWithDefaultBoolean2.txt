@@ -1,8 +1,8 @@
 >>>calcite
-SELECT JSONEXTRACT(TOJSON('{"a": false}'), '$.a', TRUE)
+SELECT JSONEXTRACT(CAST('{"a": false}' AS JSONB), '$.a', TRUE)
 FROM "jsondata$2"
 >>>postgres
-SELECT COALESCE(CAST(JSONB_PATH_QUERY_FIRST('{"a": false}', '$.a') AS BOOLEAN), TRUE)
+SELECT COALESCE(CAST(JSONB_PATH_QUERY_FIRST(CAST('{"a": false}' AS JSONB), '$.a') AS BOOLEAN), TRUE)
 FROM "jsondata$2"
 >>>Postgres Result
 false

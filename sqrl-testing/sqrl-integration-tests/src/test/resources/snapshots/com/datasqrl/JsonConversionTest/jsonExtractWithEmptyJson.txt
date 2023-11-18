@@ -1,8 +1,8 @@
 >>>calcite
-SELECT JSONEXTRACT(TOJSON('{}'), '$.a', 'default')
+SELECT JSONEXTRACT(CAST('{}' AS JSONB), '$.a', 'default')
 FROM "jsondata$2"
 >>>postgres
-SELECT COALESCE(JSONB_PATH_QUERY_FIRST('{}', '$.a') #>> '{}', 'default')
+SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{}' AS JSONB), '$.a') #>> '{}', 'default')
 FROM "jsondata$2"
 >>>Postgres Result
 default

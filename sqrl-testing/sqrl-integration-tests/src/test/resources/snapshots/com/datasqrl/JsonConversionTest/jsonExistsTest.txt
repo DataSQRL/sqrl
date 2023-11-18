@@ -1,8 +1,8 @@
 >>>calcite
-SELECT JSONB_PATH_EXISTS(TOJSON('{"a": true}'), '$.a')
+SELECT JSONB_PATH_EXISTS(CAST('{"a": true}' AS JSONB), '$.a')
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_PATH_EXISTS('{"a": true}', '$.a')
+SELECT JSONB_PATH_EXISTS(CAST('{"a": true}' AS JSONB), '$.a')
 FROM "jsondata$2"
 >>>Postgres Result
 true

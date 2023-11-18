@@ -6,8 +6,6 @@ package com.datasqrl.engine.database.relational;
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.type.ForeignType;
-import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -162,9 +160,9 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     Set<SqlDDLStatement> statements = new HashSet<>();
     //look at relnodes to see if we use a vector type
     for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
-      if (field.getType() instanceof VectorType) {
-        statements.add(new PostgresCreateVectorExtensionStatement());
-      }
+//      if (field.getType() instanceof VectorType) {
+//        statements.add(new PostgresCreateVectorExtensionStatement());
+//      }
     }
 
     Set<String> vecFncs = Set.of("cosinesimilarity", "cosinedistance", "euclideandistance",
@@ -184,18 +182,18 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     return new ArrayList<>(statements);
   }
 
-  @Override
-  public boolean supportsType(ForeignType type) {
-    JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
-        (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialect,
-        connector.getDialect(),
-        (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass().getTypeName(),
-        type.getConversionClass().getTypeName());
-
-    if (jdbcTypeSerializer != null) {
-      return true;
-    }
-
-    return super.supportsType(type);
-  }
+//  @Override
+//  public boolean supportsType(ForeignType type) {
+//    JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
+//        (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialect,
+//        connector.getDialect(),
+//        (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass().getTypeName(),
+//        type.getConversionClass().getTypeName());
+//
+//    if (jdbcTypeSerializer != null) {
+//      return true;
+//    }
+//
+//    return super.supportsType(type);
+//  }
 }

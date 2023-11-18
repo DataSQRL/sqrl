@@ -3,7 +3,7 @@
  */
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.calcite.type.BridgingFlinkType;
+import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
 import lombok.Value;
@@ -11,6 +11,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 import org.apache.flink.table.types.DataType;
 
 
@@ -21,10 +22,13 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
   //NOTE: Does not include nullable in this call, need to call nullable function
   @Override
   public DataType convertBasic(RelDataType datatype) {
-    if (datatype instanceof BridgingFlinkType) {
-      return ((BridgingFlinkType)datatype).getFlinkNativeType();
-    }
+    if (datatype instanceof RawRelDataType) {
+      RawRelDataType rawRelDataType = (RawRelDataType)datatype;
 
+      DataType dataType = DataTypes.of(rawRelDataType.getRawType().getOriginatingClass())
+          .toDataType(FlinkConverter.catalogManager.getDataTypeFactory());
+      return dataType;
+    }
     switch (datatype.getSqlTypeName()) {
       case VARCHAR:
         return DataTypes.VARCHAR(Integer.MAX_VALUE);
@@ -94,6 +98,7 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
       case INTERVAL_MONTH:
         return DataTypes.INTERVAL(DataTypes.MONTH());
     }
+
     throw new UnsupportedOperationException("Unsupported type: " + datatype);
   }
 

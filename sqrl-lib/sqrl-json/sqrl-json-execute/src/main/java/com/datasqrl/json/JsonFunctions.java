@@ -1,10 +1,5 @@
 package com.datasqrl.json;
 
-import static org.apache.flink.table.types.inference.InputTypeStrategies.logical;
-import static org.apache.flink.table.types.inference.InputTypeStrategies.sequence;
-import static org.apache.flink.table.types.inference.TypeStrategies.explicit;
-import static org.apache.flink.table.types.inference.strategies.SpecificInputTypeStrategies.JSON_ARGUMENT;
-
 import com.datasqrl.function.SqrlFunction;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -156,12 +151,14 @@ public class JsonFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
+      DataType dataType = DataTypes.of(FlinkJsonType.class).toDataType(typeFactory);
       InputTypeStrategy inputTypeStrategy = InputTypeStrategies.varyingSequence(
-          SpecificInputTypeStrategies.JSON_ARGUMENT);
+          InputTypeStrategies.or(SpecificInputTypeStrategies.JSON_ARGUMENT,
+              InputTypeStrategies.explicit(dataType)));
 
       return TypeInference.newBuilder()
           .inputTypeStrategy(inputTypeStrategy)
-          .outputTypeStrategy(TypeStrategies.explicit(DataTypes.of(FlinkJsonType.class).toDataType(typeFactory)))
+          .outputTypeStrategy(TypeStrategies.explicit(dataType))
           .build();
     }
 
