@@ -58,9 +58,9 @@ public class OperatorTable implements SqlOperatorTable {
   }
 
   public void addFunction(String canonicalName, SqlOperator function) {
-    if (this.udf.containsKey(List.of(nameCanonicalizer.getCanonical(canonicalName)))) {
-      throw new RuntimeException(String.format("Function already exists: %s", canonicalName));
-    }
+//    if (this.udf.containsKey(List.of(nameCanonicalizer.getCanonical(canonicalName)))) {
+//      throw new RuntimeException(String.format("Function already exists: %s", canonicalName));
+//    }
     this.udf.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
     this.internalNames.put(List.of(function.getName()), function);
   }

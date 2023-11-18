@@ -50,6 +50,7 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.calcite.sql2rel.RelDecorrelator;
@@ -69,6 +70,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import scala.reflect.internal.Names.TypeName;
 
 /**
  * A facade to the calcite planner
@@ -199,6 +201,19 @@ public class QueryPlanner {
    */
   @SneakyThrows
   public RelDataType parseDatatype(String datatype) {
+    // Addl type aliases
+    if (datatype.equalsIgnoreCase("String")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.VARCHAR);
+    } else if (datatype.equalsIgnoreCase("Int")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.INTEGER);
+    } else if (datatype.equalsIgnoreCase("Float")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.FLOAT);
+    } else if (datatype.equalsIgnoreCase("boolean")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BOOLEAN);
+    } else if (datatype.equalsIgnoreCase("double")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.DOUBLE);
+    }
+
     SqlCall sqlNode = (SqlCall) SqlParser.create(String.format("CAST(null AS %s)", datatype))
         .parseExpression();
 

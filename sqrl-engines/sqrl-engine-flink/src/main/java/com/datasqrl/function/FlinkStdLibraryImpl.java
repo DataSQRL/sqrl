@@ -21,7 +21,22 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
   public static final NamePath LIB_NAME = NamePath.of("flink");
 
   private static final List<String> toExclude = List.of(
-      FlinkSqlOperatorTable.NOW.getClass().getName() //use our NOW
+      FlinkSqlOperatorTable.NOW.getClass().getName(), //use our NOW
+      //Provided by calcite std library
+      BuiltInFunctionDefinitions.COALESCE.getName(),
+      BuiltInFunctionDefinitions.JSON_VALUE.getName(),
+      BuiltInFunctionDefinitions.JSON_ARRAY.getName(),
+      BuiltInFunctionDefinitions.JSON_EXISTS.getName(),
+      BuiltInFunctionDefinitions.JSON_OBJECT.getName(),
+      BuiltInFunctionDefinitions.JSON_QUERY.getName(),
+      BuiltInFunctionDefinitions.JSON_ARRAYAGG_ABSENT_ON_NULL.getName(),
+      BuiltInFunctionDefinitions.JSON_ARRAYAGG_NULL_ON_NULL.getName(),
+      BuiltInFunctionDefinitions.JSON_OBJECTAGG_ABSENT_ON_NULL.getName(),
+      BuiltInFunctionDefinitions.JSON_OBJECTAGG_NULL_ON_NULL.getName(),
+      BuiltInFunctionDefinitions.JSON_STRING.getName(),
+      BuiltInFunctionDefinitions.IS_JSON.getName(),
+      //Cast not yet supported, SQRL uses a String type that is not yet compatible
+      BuiltInFunctionDefinitions.CAST.getName().toUpperCase()
   );
 
   private static List<NamespaceObject> SQL_FUNCTIONS = getAllFunctionsFromFlink();

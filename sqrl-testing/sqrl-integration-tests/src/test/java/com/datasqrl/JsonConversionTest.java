@@ -285,6 +285,7 @@ public class JsonConversionTest {
     // Test with a default boolean value
     testScalarReturn("jsonExtract(toJson('{\"a\": 0.2}'), '$.a', 0.0)");
   }
+
   @Test
   public void jsonExtractWithDefaultDouble4() {
     // Test with a default boolean value
@@ -396,8 +397,7 @@ public class JsonConversionTest {
     snapshot.addContent(planner.relToString(Dialect.CALCITE, calciteRelNode).getSql(), "calcite");
 
     RelNode pgRelNode = planner.convertRelToDialect(Dialect.POSTGRES, relNode);
-    String pgQuery = planner.relToString(Dialect.POSTGRES, pgRelNode)
-        .getSql();
+    String pgQuery = planner.relToString(Dialect.POSTGRES, pgRelNode).getSql();
     snapshot.addContent(pgQuery, "postgres");
 
     // Execute Postgres query
@@ -406,19 +406,18 @@ public class JsonConversionTest {
     pgResult = pgResult instanceof PGobject ? ((PGobject) pgResult).getValue() : pgResult;
     pgResult = pgResult == null ? "<null>" : pgResult.toString();
 
-    CreateTableDDL pg = new PostgresDDLFactory()
-        .createTable(new EngineSink("pg", 1, relNode.getRowType(), 0, null));
+    CreateTableDDL pg = new PostgresDDLFactory().createTable(
+        new EngineSink("pg", 1, relNode.getRowType(), 0, null));
 
     snapshot.addContent((String) pgResult, "Postgres Result");
 
     RelNode flinkRelNode = planner.convertRelToDialect(Dialect.FLINK, relNode);
-    String query = planner.relToString(Dialect.FLINK, flinkRelNode)
-        .getSql();
+    String query = planner.relToString(Dialect.FLINK, flinkRelNode).getSql();
     snapshot.addContent(query, "flink");
 
     Object flinkResult = jsonFunctionTest(query);
     if (flinkResult instanceof FlinkJsonType) {
-      flinkResult = ((FlinkJsonType)flinkResult).getJson();
+      flinkResult = ((FlinkJsonType) flinkResult).getJson();
     }
     flinkResult = flinkResult == null ? "<null>" : flinkResult.toString();
     snapshot.addContent((String) flinkResult, "Flink Result");
