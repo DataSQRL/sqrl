@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.plan.global.IndexDefinition;
@@ -16,6 +17,11 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
+import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
+import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
 @AutoService(JdbcDDLFactory.class)
 public class PostgresDDLFactory implements JdbcDDLFactory {
@@ -32,6 +38,7 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
     List<RelDataTypeField> fields = table.getRowType().getFieldList();
     for (int i = 0; i < fields.size(); i++) {
       RelDataTypeField field = fields.get(i);
+
       String column = toSql(field);
       columns.add(column);
       if (i < table.getNumPrimaryKeys()) {
@@ -42,8 +49,15 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
   }
 
   public static String toSql(RelDataTypeField field) {
+    SqlDataTypeSpec castSpec = ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(field.getType());
+    SqlPrettyWriter sqlPrettyWriter = new SqlPrettyWriter();
+    castSpec.unparse(sqlPrettyWriter, 0, 0);
+    String name = sqlPrettyWriter.toSqlString().getSql();
+
     RelDataType datatype = field.getType();
-    return toSql(field.getName(), SqrlToPostgresTypeMapper.getSQLType(datatype), datatype.isNullable());
+
+
+    return toSql(field.getName(), name, datatype.isNullable());
   }
 
   private static String toSql(String name, String sqlType, boolean nullable) {

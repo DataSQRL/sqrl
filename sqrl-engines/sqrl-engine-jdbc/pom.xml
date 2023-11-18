@@ -48,6 +48,10 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-jdbc</artifactId>
+    </dependency>
 
   </dependencies>
 </project>

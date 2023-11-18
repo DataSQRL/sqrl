@@ -54,6 +54,7 @@ import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -781,6 +782,14 @@ public abstract class SqlImplementor {
           }
 
         case LITERAL:
+          //SQRL: preserve null literal casts
+          RexLiteral rexLiteral = (RexLiteral) rex;
+          if (rexLiteral.isNull() && rexLiteral.getType().getSqlTypeName() != SqlTypeName.NULL) {
+            SqlNode sql = SqlImplementor.toSql(program, (RexLiteral) rex);
+            SqlDataTypeSpec castSpec1 = (SqlDataTypeSpec)dialect.getCastSpec(rexLiteral.getType());
+            return SqlStdOperatorTable.CAST.createCall(SqlParserPos.ZERO, sql, castSpec1);
+          }
+
           return SqlImplementor.toSql(program, (RexLiteral) rex);
 
         case CASE:

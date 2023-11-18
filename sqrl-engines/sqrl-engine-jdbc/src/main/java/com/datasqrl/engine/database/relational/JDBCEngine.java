@@ -6,6 +6,7 @@ package com.datasqrl.engine.database.relational;
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.type.ForeignType;
 import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -19,8 +20,6 @@ import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.function.FunctionTranslationMap;
-import com.datasqrl.function.PgSpecificOperatorTable;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.formats.FormatFactory;
@@ -34,10 +33,12 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.type.JdbcTypeSerializer;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -166,11 +167,13 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
       }
     }
 
+    Set<String> vecFncs = Set.of("cosinesimilarity", "cosinedistance", "euclideandistance",
+        "center");
     CalciteUtil.applyRexShuttleRecursively(relNode, new RexShuttle() {
       @Override
       public RexNode visitCall(RexCall call) {
         //todo: generic for any types
-        if (FunctionTranslationMap.vectorTransformMap.containsKey(call.getOperator().getName().toLowerCase())) {
+        if (vecFncs.contains(call.getOperator().getName().toLowerCase())) {
           statements.add(new PostgresCreateVectorExtensionStatement());
         }
 
@@ -179,5 +182,20 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     });
 
     return new ArrayList<>(statements);
+  }
+
+  @Override
+  public boolean supportsType(ForeignType type) {
+    JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
+        (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialect,
+        connector.getDialect(),
+        (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass().getTypeName(),
+        type.getConversionClass().getTypeName());
+
+    if (jdbcTypeSerializer != null) {
+      return true;
+    }
+
+    return super.supportsType(type);
   }
 }

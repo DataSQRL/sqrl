@@ -1,10 +1,16 @@
 package com.datasqrl.calcite.convert;
 
+import com.datasqrl.calcite.Dialect;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 
 //Service loader interface
-public abstract class SqlConverter {
+public interface SqlConverter {
+  SqlNodes convert(RelNode relNode);
 
-  public abstract SqlNode convert(RelNode relNode);
+  Dialect getDialect();
+
+  interface SqlNodes {
+    SqlNode getSqlNode();
+  }
 }

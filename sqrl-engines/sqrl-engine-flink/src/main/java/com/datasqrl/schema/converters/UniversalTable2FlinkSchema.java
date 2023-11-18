@@ -4,7 +4,6 @@
 package com.datasqrl.schema.converters;
 
 import com.datasqrl.calcite.type.BridgingFlinkType;
-import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
 import lombok.Value;

@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONEXTRACT(TOJSON('{"a": [1, 2, 3]}'), '$.a[1]', 'default')
+FROM "jsondata$2"
+>>>postgres
+SELECT COALESCE(JSONB_PATH_QUERY_FIRST('{"a": [1, 2, 3]}', '$.a[1]') #>> '{}', 'default')
+FROM "jsondata$2"
+>>>Postgres Result
+2
+>>>flink
+SELECT JSONEXTRACT(TOJSON('{"a": [1, 2, 3]}'), '$.a[1]', 'default')
+FROM `jsondata$2`
+>>>Flink Result
+2

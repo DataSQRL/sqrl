@@ -2,6 +2,7 @@ package com.datasqrl.calcite.convert;
 
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.plan.hep.HepRuleCall;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.rules.TransformationRule;
@@ -12,6 +13,7 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlOperator;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.calcite.tools.RelBuilder;
 
 public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
     implements TransformationRule {
@@ -26,14 +28,13 @@ public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
   }
 
   public static interface Transform {
-    RexNode transform(RexBuilder rexBuilder, RexCall call);
+    RexNode transform(RelBuilder relBuilder, RexCall call);
   }
 
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
     LogicalProject filter = relOptRuleCall.rel(0);
 
-    RexBuilder rexBuilder = relOptRuleCall.builder().getRexBuilder();
     AtomicBoolean hasTransformed = new AtomicBoolean(false);
 
     RelNode newCall = filter.accept(new RexShuttle() {
@@ -41,7 +42,7 @@ public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
       public RexNode visitCall(RexCall call) {
         if (call.getOperator().equals(operator)) {
           hasTransformed.set(true);
-          return transform.transform(rexBuilder, call);
+          return transform.transform(relOptRuleCall.builder(), call);
         }
 
         return super.visitCall(call);

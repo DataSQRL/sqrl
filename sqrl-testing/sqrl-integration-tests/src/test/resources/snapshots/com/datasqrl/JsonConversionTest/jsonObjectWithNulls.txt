@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONOBJECT('key1', CAST(NULL AS VARCHAR(1) CHARACTER SET "UTF-16LE"), 'key2', 'value2')
+FROM "jsondata$2"
+>>>postgres
+SELECT JSONB_BUILD_OBJECT('key1', CAST(NULL AS TEXT), 'key2', 'value2')
+FROM "jsondata$2"
+>>>Postgres Result
+{"key1": null, "key2": "value2"}
+>>>flink
+SELECT JSONTOSTRING(JSONOBJECT('key1', CAST(NULL AS VARCHAR(1) CHARACTER SET `UTF-16LE`), 'key2', 'value2'))
+FROM `jsondata$2`
+>>>Flink Result
+{"key1":null,"key2":"value2"}

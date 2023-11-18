@@ -1,6 +1,5 @@
 package com.datasqrl.frontend;
 
-import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.datasqrl.calcite.Dialect;
@@ -13,7 +12,6 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderComposite;
-import com.datasqrl.parse.SqrlParser;
 import com.datasqrl.plan.local.generate.*;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.util.SqlNameUtil;
@@ -35,7 +33,7 @@ public class SqrlPlan extends SqrlBase {
   protected SqrlQueryPlanner planner;
 
   @Inject
-  public SqrlPlan(SqrlParser parser, ErrorCollector errors,
+  public SqrlPlan(ErrorCollector errors,
       ModuleLoader moduleLoader, NameCanonicalizer nameCanonicalizer,
       CalciteTableFactory tableFactory,
       SqrlQueryPlanner planner, DebuggerConfig debuggerConfig, SqrlFramework framework,

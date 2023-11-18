@@ -87,11 +87,11 @@ public class FlinkSqlReturnTypeInference implements SqlReturnTypeInference {
       return FlinkOperandMetadata.adaptCallBinding(sqlCallBinding, flinkTypeFactory, typeFactory);
     } else if (opBinding instanceof RexCallBinding) {
       RexCallBinding sqlCallBinding = (RexCallBinding) opBinding;
-      return FlinkOperandMetadata.adaptCallBinding(sqlCallBinding, flinkTypeFactory, typeFactory);
+      return FlinkOperandMetadata.adaptCallBinding(sqlCallBinding, flinkTypeFactory);
 
     }
 
-    return opBinding;
+    throw new RuntimeException("Unknown binding: " + opBinding.getClass().getName());
   }
 
   // --------------------------------------------------------------------------------------------

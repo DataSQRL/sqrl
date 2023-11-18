@@ -9,8 +9,6 @@ import org.apache.calcite.sql.SqlFunction;
 public interface ForeignType extends RelDataType, SqrlType {
 
   Optional<SqlFunction> getDowncastFunction();
-  Optional<SqlFunction> getUpcastFunction();
-
   boolean translates(Dialect dialect, RelDataType engineType);
 
   RelDataType getEngineType(Dialect dialect);

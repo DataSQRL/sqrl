@@ -4,6 +4,8 @@ package com.datasqrl.calcite.type;
 import com.datasqrl.VectorFunctions;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.flink.FlinkConverter;
+import com.datasqrl.json.NativeType;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -23,31 +25,47 @@ import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.UnresolvedDataType;
 
 public class TypeFactory extends JavaTypeFactoryImpl {
   @Getter
   private List<ForeignType> types = new ArrayList<>();
-
   public TypeFactory() {
     super(SqrlTypeSystem.INSTANCE);
     registerDefaultTypes();
   }
 
   private void registerDefaultTypes() {
-    Pair<DataType, RelDataType> vector = createTypeFromClass(FlinkVectorType.class);
-    VectorType vectorType = new VectorType(vector.getLeft(), vector.getRight(),
+    //service load in
+     RelDataType vector = createTypeFromClass(FlinkVectorType.class);
+    VectorType vectorType = new VectorType(vector,
         VectorFunctions.VEC_TO_DOUBLE, this);
     registerType(vectorType);
+
+    List<NativeType> nativeTypes = ServiceLoaderDiscovery.getAll(NativeType.class);
+    for (NativeType nativeType : nativeTypes) {
+      RelDataType t = createTypeFromClass(nativeType.getType());
+      UserDefinedBridgingType userDefinedBridgingType = new UserDefinedBridgingType(
+          nativeType,t,
+          (UserDefinedFunction) nativeType.unknownTypeDowncast(), this);
+      registerType(userDefinedBridgingType);
+    }
+
   }
 
-  private Pair<DataType, RelDataType> createTypeFromClass(Class clazz) {
+  @Override
+  public RelDataType createSqlType(SqlTypeName typeName) {
+    return super.createSqlType(typeName);
+  }
+
+  private RelDataType createTypeFromClass(Class clazz) {
     UnresolvedDataType unresolvedVectorType = DataTypes.of(clazz);
     DataType flinkDataType = unresolvedVectorType.toDataType(FlinkConverter.catalogManager.getDataTypeFactory());
     RelDataType flinkRelType = FlinkConverter.flinkTypeFactory
         .createFieldTypeFromLogicalType(flinkDataType.getLogicalType());
-    return Pair.of(flinkDataType, flinkRelType);
+    return flinkRelType;
   }
 
   /**

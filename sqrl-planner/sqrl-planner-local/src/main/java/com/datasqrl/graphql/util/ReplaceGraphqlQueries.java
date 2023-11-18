@@ -60,7 +60,8 @@ public class ReplaceGraphqlQueries implements
     QueryTemplate template = queries.get(apiQueryBase.getQuery());
 
     String query = planner.relToString(Dialect.POSTGRES,
-        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()));
+        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()))
+        .getSql();
 
     return JdbcQuery.builder()
         .parameters(apiQueryBase.getParameters())
@@ -73,7 +74,8 @@ public class ReplaceGraphqlQueries implements
     QueryTemplate template = queries.get(apiQueryBase.getQuery());
 
     String query = planner.relToString(Dialect.POSTGRES,
-        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()));
+        planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()))
+        .getSql();
 
     int numDynamParams = countParameters(template.getRelNode());
     //number of params may have extra internal params but never less
@@ -93,11 +95,6 @@ public class ReplaceGraphqlQueries implements
       }
     });
     return params.size();
-  }
-
-  public static SqlNode convertToSqlNode(RelNode optimizedNode) {
-    RelToSqlConverter converter = new RelToSqlConverter(PostgresqlSqlDialect.DEFAULT);
-    return converter.visitRoot(optimizedNode).asStatement();
   }
 
   @Override

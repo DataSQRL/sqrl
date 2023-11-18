@@ -5,7 +5,6 @@ package com.datasqrl.util;
 
 import com.datasqrl.DefaultFunctions;
 import com.datasqrl.flink.function.BridgingFunction;
-import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;

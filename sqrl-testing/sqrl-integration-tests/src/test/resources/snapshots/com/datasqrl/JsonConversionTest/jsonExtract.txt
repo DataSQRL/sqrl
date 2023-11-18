@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONEXTRACT(TOJSON('{"a": "hello"}'), '$.a')
+FROM "jsondata$2"
+>>>postgres
+SELECT JSONB_PATH_QUERY_FIRST('{"a": "hello"}', '$.a') #>> '{}'
+FROM "jsondata$2"
+>>>Postgres Result
+hello
+>>>flink
+SELECT JSONEXTRACT(TOJSON('{"a": "hello"}'), '$.a')
+FROM `jsondata$2`
+>>>Flink Result
+hello

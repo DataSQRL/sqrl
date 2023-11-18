@@ -145,4 +145,12 @@ public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction impl
 
     return List.of();
   }
+
+  @Override
+  public String getRuleOperatorName() {
+    if (definition instanceof RuleTransform) {
+      return ((RuleTransform) definition).getRuleOperatorName();
+    }
+    return null;
+  }
 }

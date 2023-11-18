@@ -18,17 +18,20 @@
 
 package org.apache.flink.connector.jdbc.dialect.psql;
 
-import org.apache.flink.connector.jdbc.converter.JdbcRowConverter;
-import org.apache.flink.connector.jdbc.dialect.AbstractDialect;
-import org.apache.flink.connector.jdbc.internal.converter.PostgresRowConverter;
-import org.apache.flink.table.types.logical.LogicalTypeRoot;
-import org.apache.flink.table.types.logical.RowType;
-
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.flink.connector.jdbc.converter.JdbcRowConverter;
+import org.apache.flink.connector.jdbc.dialect.AbstractDialect;
+import org.apache.flink.connector.jdbc.internal.converter.PostgresRowConverter;
+import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.LogicalTypeRoot;
+import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.RowType.RowField;
 
 /** JDBC dialect for PostgreSQL.
  *
@@ -85,6 +88,26 @@ public class PostgresDialect extends AbstractDialect {
     }
 
     @Override
+    public void validate(RowType rowType) throws ValidationException {
+        List<LogicalType> unsupportedTypes = rowType.getFields().stream()
+            .map(RowField::getType)
+            .filter(type -> LogicalTypeRoot.STRUCTURED_TYPE.equals(type.getTypeRoot()))
+            .filter(type -> !isSupportedType(type))
+            .collect(Collectors.toList());
+
+        if (!unsupportedTypes.isEmpty()) {
+            throw new ValidationException(String.format("The %s dialect doesn't support type: %s.", this.dialectName(),
+                unsupportedTypes));
+        }
+
+        super.validate(rowType);
+    }
+
+    private boolean isSupportedType(LogicalType type) {
+        return PostgresRowConverter.sqrlSerializers.containsKey(type.getDefaultConversion());
+    }
+
+    @Override
     public String quoteIdentifier(String identifier) {
         return "\"" + identifier + "\"";
     }
@@ -130,7 +153,8 @@ public class PostgresDialect extends AbstractDialect {
                 LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE,
                 LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE,
                 LogicalTypeRoot.ARRAY,
-                LogicalTypeRoot.MAP
+                LogicalTypeRoot.MAP,
+                LogicalTypeRoot.STRUCTURED_TYPE //see validate() for supported structured types
             );
     }
 }

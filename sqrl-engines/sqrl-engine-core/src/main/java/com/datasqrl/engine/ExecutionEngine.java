@@ -4,6 +4,7 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.type.ForeignType;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
@@ -37,6 +38,10 @@ public interface ExecutionEngine {
   }
 
   boolean supports(EngineCapability capability);
+
+  default boolean supportsType(ForeignType type) {
+    return false;
+  }
 
   Type getType();
 

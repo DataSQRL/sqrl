@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -37,7 +36,7 @@ public class SqrlOptimizeDag extends SqrlPlan {
       DebuggerConfig debuggerConfig,
       SqrlFramework framework,
       ExecutionPipeline pipeline) {
-    super(parser, errors, moduleLoader, nameCanonicalizer, tableFactory, planner,
+    super(errors, moduleLoader, nameCanonicalizer, tableFactory, planner,
         debuggerConfig, framework, pipeline);
   }
 

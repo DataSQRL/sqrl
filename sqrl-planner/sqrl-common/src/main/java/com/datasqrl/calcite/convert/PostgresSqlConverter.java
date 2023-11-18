@@ -1,16 +1,22 @@
 package com.datasqrl.calcite.convert;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.google.auto.service.AutoService;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
-public class PostgresSqlConverter extends SqlConverter {
+@AutoService(SqlConverter.class)
+public class PostgresSqlConverter implements SqlConverter {
 
   @Override
-  public SqlNode convert(RelNode relNode) {
-    RelToSqlConverter converter = new RelToSqlConverter(PostgresqlSqlDialect.DEFAULT);
-    return converter.visitRoot(relNode).asStatement();
+  public SqlNodes convert(RelNode relNode) {
+    RelToSqlConverter converter = new RelToSqlConverter(ExtendedPostgresSqlDialect.DEFAULT);
+    return () -> converter.visitRoot(relNode).asStatement();
   }
 
+  @Override
+  public Dialect getDialect() {
+    return Dialect.POSTGRES;
+  }
 }

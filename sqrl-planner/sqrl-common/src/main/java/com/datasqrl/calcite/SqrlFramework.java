@@ -1,9 +1,11 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.calcite.type.ForeignType;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,13 +14,12 @@ import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.util.Properties;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.implicit.TypeCoercionFactory;
 
 @Getter
 public class SqrlFramework {
@@ -47,8 +48,11 @@ public class SqrlFramework {
     this.schema = new SqrlSchema(this, typeFactory);
     //Add type aliases
     this.schema.add("String", t->typeFactory.createSqlType(SqlTypeName.VARCHAR));
-    //Int -> Integer generally happens in the
+    //Int -> Integer
     this.schema.add("Int", t->typeFactory.createSqlType(SqlTypeName.INTEGER));
+
+    ServiceLoaderDiscovery.getAll(ForeignType.class)
+            .forEach(f->this.schema.add(f.getName(), t->f));
 
     typeFactory.getTypes().stream()
         .filter(f->f instanceof RelProtoDataType)

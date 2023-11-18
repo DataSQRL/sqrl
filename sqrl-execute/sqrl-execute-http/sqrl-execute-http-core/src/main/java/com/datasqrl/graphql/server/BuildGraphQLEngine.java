@@ -97,7 +97,8 @@ public class BuildGraphQLEngine implements
     RuntimeWiring.Builder wiring = RuntimeWiring.newRuntimeWiring()
         .codeRegistry(codeRegistry)
         .scalar(CustomScalars.Double)
-        .scalar(CustomScalars.DATETIME);
+        .scalar(CustomScalars.DATETIME)
+        .scalar(new JsonTypeFactory().create());
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {

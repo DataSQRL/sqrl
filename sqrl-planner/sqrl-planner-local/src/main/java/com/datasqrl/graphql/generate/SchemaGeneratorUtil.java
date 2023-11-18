@@ -80,6 +80,10 @@ public class SchemaGeneratorUtil {
   }
 
   public static Optional<GraphQLType> getInOutTypeHelper(RelDataType type) {
+    if (type.getSqlTypeName() == null) {
+      return Optional.empty(); //todo Lookup type
+    }
+
     switch (type.getSqlTypeName()) {
       case BOOLEAN:
         return Optional.of(Scalars.GraphQLBoolean);

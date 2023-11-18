@@ -11,6 +11,7 @@
         <module>sqrl-engines</module>
         <module>sqrl-examples</module>
         <module>sqrl-io</module>
+        <module>sqrl-lib</module>
         <module>sqrl-planner</module>
         <module>sqrl-testing</module>
         <module>sqrl-tools</module>
@@ -268,6 +269,16 @@
                 <artifactId>sqrl-io-schema-flexible</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-json-execute</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-json-planner</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- tests -->
             <dependency>
                 <groupId>com.datasqrl</groupId>
@@ -513,7 +524,11 @@
                 <artifactId>flink-core</artifactId>
                 <version>${flink.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.apache.flink</groupId>
+                <artifactId>flink-table-common</artifactId>
+                <version>${flink.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-runtime-web</artifactId>

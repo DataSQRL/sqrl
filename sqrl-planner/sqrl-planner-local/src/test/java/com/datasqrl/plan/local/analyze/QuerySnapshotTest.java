@@ -223,6 +223,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void jsonObjectTest() {
+    ScriptBuilder builder = example.getImports()
+            .add("IMPORT json.*")
+            .add("X := SELECT jsonObject('a', null) AS j FROM Orders");
+    validateScript(builder.getScript());
+  }
+
+  @Test
   public void innerJoinTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("X := SELECT e1.discount, e2.discount FROM Orders.entries.parent AS p INNER JOIN p.entries AS e1 INNER JOIN p.entries AS e2");

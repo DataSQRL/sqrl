@@ -7,9 +7,10 @@ IMPORT string.*;
 IMPORT text.*;
 IMPORT vector.*;
 IMPORT time.parseTimestamp;
+IMPORT json.*;
 
+Events.json := toJson('{}');
 Events.id := coalesce(CAST(regexExtract(url, '(\d*)$') AS BIGINT),0);
-
 Events.full_text := concat(title,'\n',abstract);
 Events.embedding := asciiTextTestEmbed(full_text);
 Events.startTime := concat(trim(regexExtract(date, '^[^-]*')),' ',trim(regexExtract(time, '\d\d?:\d\d\s(AM|PM)')));

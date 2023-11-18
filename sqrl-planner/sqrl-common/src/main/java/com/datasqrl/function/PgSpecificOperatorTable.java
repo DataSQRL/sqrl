@@ -24,4 +24,8 @@ public class PgSpecificOperatorTable {
   public static final SqlBinaryOperator EuclideanDistance = new SqlBinaryOperator("<->",
       SqlKind.OTHER_FUNCTION, 22, true, ReturnTypes.explicit(SqlTypeName.DOUBLE),
       null, null);
+
+  public static final SqlBinaryOperator JsonToString = new SqlBinaryOperator("#>>",
+      SqlKind.OTHER_FUNCTION, 22, true, ReturnTypes.explicit(SqlTypeName.ANY),
+      null, null);
 }

@@ -49,14 +49,10 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
     initialize(settings, rootDir, Optional.empty());
   }
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
-    Map<NamePath, SqrlModule> addlModules = Map.of();
-    CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
-    if (rootDir == null) {
-      RetailSqrlModule retailSqrlModule = new RetailSqrlModule();
-      retailSqrlModule.init(tableFactory);
-      addlModules = Map.of(NamePath.of("ecommerce-data"),
-          retailSqrlModule);
-    }
+    Map<NamePath, SqrlModule> addlModules = (rootDir == null)
+        ? TestModuleFactory.createRetail(framework)
+        : Map.of();
+
     Pair<DatabaseHandle, PipelineFactory> engines = settings.getSqrlSettings();
     this.database = engines.getLeft();
     SqrlTestDIModule module = new SqrlTestDIModule(engines.getRight().createPipeline(), settings, rootDir, addlModules, errorDir,

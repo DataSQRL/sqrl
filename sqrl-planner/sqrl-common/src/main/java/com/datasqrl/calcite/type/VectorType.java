@@ -2,7 +2,6 @@ package com.datasqrl.calcite.type;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.flink.FlinkConverter;
-import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -14,17 +13,13 @@ import org.apache.flink.table.types.DataType;
 
 public class VectorType extends BridgingFlinkType implements PrimitiveType {
 
-  private final DataType flinkDataType;
   private final RelDataType flinkRelType;
   private final TypeFactory typeFactory;
 
-  public VectorType(DataType flinkDataType, RelDataType flinkRelType,
+  public VectorType(RelDataType flinkRelType,
       UserDefinedFunction downcastFlinkFunction, TypeFactory typeFactory) {
     super(typeFactory.createType(FlinkVectorType.class),
-        VectorType.class, Optional.of(downcastFlinkFunction),
-        Optional.empty(),
-        Map.of(Dialect.POSTGRES, "VECTOR"));
-    this.flinkDataType = flinkDataType;
+        FlinkVectorType.class, Optional.of(downcastFlinkFunction), "vector");
     this.flinkRelType = flinkRelType;
     this.typeFactory = typeFactory;
   }
@@ -83,7 +78,7 @@ public class VectorType extends BridgingFlinkType implements PrimitiveType {
 
   @Override
   public DataType getFlinkNativeType() {
-    return DataTypes.ARRAY(DataTypes.DOUBLE());
+    return DataTypes.of(FlinkVectorType.class).toDataType(FlinkConverter.catalogManager.getDataTypeFactory());
   }
 
   @Override
