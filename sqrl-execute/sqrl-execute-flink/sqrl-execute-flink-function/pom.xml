@@ -15,4 +15,14 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-json-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-vector-execute</artifactId>
+    </dependency>
+  </dependencies>
 </project>
