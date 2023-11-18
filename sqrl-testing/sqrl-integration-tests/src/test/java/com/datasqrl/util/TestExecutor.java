@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
+import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.logging.log4j.util.Strings;
 
 import java.nio.file.Files;
