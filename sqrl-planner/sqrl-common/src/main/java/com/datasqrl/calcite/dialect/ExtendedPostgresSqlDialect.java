@@ -45,7 +45,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
   private static Map<Class, String> getForeignCastSpecs() {
     Map<Class, String> jdbcTypeSerializer = ServiceLoaderDiscovery.getAll(JdbcTypeSerializer.class)
         .stream()
-        .filter(f->f.getDialect().equalsIgnoreCase("postgres"))
+        .filter(f->f.getDialect().equalsIgnoreCase(Dialect.POSTGRES.name()))
         .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass,
             JdbcTypeSerializer::dialectTypeName));
     return jdbcTypeSerializer;

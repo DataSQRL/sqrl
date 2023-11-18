@@ -16,7 +16,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class CosineDistanceSqlTranslation extends PostgresSqlTranslation {
 
   public CosineDistanceSqlTranslation() {
-    super(lightweightOp("cosinedistance"));
+    super(lightweightOp(VectorFunctions.COSINE_DISTANCE.getFunctionName().getCanonical()));
   }
 
   @Override

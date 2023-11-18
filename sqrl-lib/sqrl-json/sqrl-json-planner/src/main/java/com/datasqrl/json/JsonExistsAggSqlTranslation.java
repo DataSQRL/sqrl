@@ -14,7 +14,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class JsonExistsAggSqlTranslation extends PostgresSqlTranslation {
 
   public JsonExistsAggSqlTranslation() {
-    super(lightweightOp("jsonExists"));
+    super(lightweightOp(JsonFunctions.JSON_EXISTS.getFunctionName().getCanonical()));
   }
 
   @Override

@@ -15,7 +15,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class JsonArrayAggSqlTranslation extends PostgresSqlTranslation {
 
   public JsonArrayAggSqlTranslation() {
-    super(lightweightOp("jsonArrayAgg"));
+    super(lightweightOp(JsonFunctions.JSON_ARRAYAGG.getFunctionName().getCanonical()));
   }
 
   @Override

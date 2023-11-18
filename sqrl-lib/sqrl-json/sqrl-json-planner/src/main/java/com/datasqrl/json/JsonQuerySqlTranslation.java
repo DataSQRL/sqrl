@@ -13,7 +13,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class JsonQuerySqlTranslation extends PostgresSqlTranslation {
 
   public JsonQuerySqlTranslation() {
-    super(lightweightOp("jsonQuery"));
+    super(lightweightOp(JsonFunctions.JSON_QUERY.getFunctionName().getCanonical()));
   }
 
   @Override

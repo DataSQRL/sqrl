@@ -17,7 +17,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class CosineSimilaritySqlTranslation extends PostgresSqlTranslation {
 
   public CosineSimilaritySqlTranslation() {
-    super(lightweightOp("cosinesimilarity"));
+    super(lightweightOp(VectorFunctions.COSINE_SIMILARITY.getFunctionName().getCanonical()));
   }
 
   @Override

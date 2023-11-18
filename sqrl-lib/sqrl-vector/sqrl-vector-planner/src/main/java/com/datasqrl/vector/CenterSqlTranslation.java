@@ -14,7 +14,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class CenterSqlTranslation extends PostgresSqlTranslation {
 
   public CenterSqlTranslation() {
-    super(lightweightOp("center"));
+    super(lightweightOp(VectorFunctions.CENTER.getFunctionName().getCanonical()));
   }
 
   @Override

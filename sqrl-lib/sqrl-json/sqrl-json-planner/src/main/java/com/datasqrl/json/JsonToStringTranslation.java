@@ -16,7 +16,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class JsonToStringTranslation extends PostgresSqlTranslation {
 
   public JsonToStringTranslation() {
-    super(lightweightOp("jsonToString"));
+    super(lightweightOp(JsonFunctions.JSON_TO_STRING.getFunctionName().getCanonical()));
   }
 
   @Override

@@ -16,7 +16,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class EuclideanDistanceSqlTranslation extends PostgresSqlTranslation {
 
   public EuclideanDistanceSqlTranslation() {
-    super(lightweightOp("euclideandistance"));
+    super(lightweightOp(VectorFunctions.EUCLIDEAN_DISTANCE.getFunctionName().getCanonical()));
   }
 
   @Override

@@ -23,6 +23,11 @@
       <artifactId>sqrl-common</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-vector-execute</artifactId>
+    </dependency>
+
   </dependencies>
 
 </project>
