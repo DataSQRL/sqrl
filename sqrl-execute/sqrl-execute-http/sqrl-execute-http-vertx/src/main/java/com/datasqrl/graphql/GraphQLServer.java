@@ -16,7 +16,7 @@ import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
-import com.datasqrl.graphql.type.JsonTypeFactory;
+import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
@@ -177,7 +177,7 @@ public class GraphQLServer extends AbstractVerticle {
   public GraphQL createGraphQL(SqlClient client, Promise<Void> startPromise) {
     try {
       GraphQL graphQL = model.accept(
-          new BuildGraphQLEngine(List.of(new JsonTypeFactory())),
+          new BuildGraphQLEngine(List.of(SqrlVertxScalars.JSON)),
           new VertxContext(new VertxJdbcClient(client), constructSinkProducers(model, vertx),
               constructSubscriptions(model, vertx), canonicalizer));
       return graphQL;

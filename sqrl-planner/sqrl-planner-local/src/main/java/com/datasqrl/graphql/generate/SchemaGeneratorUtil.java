@@ -4,22 +4,48 @@
 package com.datasqrl.graphql.generate;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
-import com.datasqrl.schema.Field;
+import com.datasqrl.graphql.type.SqrlVertxScalars;
+import com.datasqrl.json.GraphqlGeneratorMapping;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import graphql.Scalars;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
+@Slf4j
 public class SchemaGeneratorUtil {
+  public static final Map<Class, GraphqlGeneratorMapping> addlScalars = ServiceLoaderDiscovery
+      .getAll(GraphqlGeneratorMapping.class)
+      .stream()
+      .collect(Collectors.toMap(GraphqlGeneratorMapping::getConversionClass, t->t));
+  public static final Map<String, GraphQLScalarType> allScalars = createScalarMap();
+
+  private static Map<String, GraphQLScalarType> createScalarMap() {
+    return Stream.of(
+        Scalars.GraphQLBoolean,
+        Scalars.GraphQLFloat,
+        Scalars.GraphQLInt,
+        Scalars.GraphQLString,
+        Scalars.GraphQLID,
+        SqrlVertxScalars.JSON
+    ).collect(Collectors.toMap(GraphQLScalarType::getName, t->t));
+  }
 
   public static GraphQLOutputType wrap(GraphQLOutputType gqlType, RelDataType type) {
     if (!type.isNullable()) {
@@ -81,10 +107,26 @@ public class SchemaGeneratorUtil {
 
   public static Optional<GraphQLType> getInOutTypeHelper(RelDataType type) {
     if (type.getSqlTypeName() == null) {
-      return Optional.empty(); //todo Lookup type
+      return Optional.empty();
     }
 
     switch (type.getSqlTypeName()) {
+      case OTHER:
+        if (type instanceof RawRelDataType) {
+          RawRelDataType rawRelDataType = (RawRelDataType) type;
+          Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
+          if (addlScalars.containsKey(originatingClass)) {
+            String scalarName = addlScalars.get(originatingClass).getScalarName();
+            GraphQLScalarType graphQLScalarType = allScalars.get(scalarName);
+            if (graphQLScalarType == null) {
+              log.warn("Graphql type not supported: {}", scalarName);
+              return Optional.empty();
+            }
+            return Optional.of(graphQLScalarType);
+          }
+        }
+
+        return Optional.empty();
       case BOOLEAN:
         return Optional.of(Scalars.GraphQLBoolean);
       case TINYINT:
@@ -130,7 +172,6 @@ public class SchemaGeneratorUtil {
       case SYMBOL:
       case DISTINCT:
       case MAP:
-      case OTHER:
       case CURSOR:
       case COLUMN_LIST:
       case DYNAMIC_STAR:

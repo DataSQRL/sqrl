@@ -30,7 +30,9 @@ import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
@@ -38,7 +40,6 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -50,14 +51,14 @@ public class BuildGraphQLEngine implements
     QueryBaseVisitor<ResolvedQuery, Context>,
     ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
 
-  private List<GraphqlTypeFactory> typeFactory;
+  private List<GraphQLScalarType> addlTypes;
 
   public BuildGraphQLEngine() {
-    typeFactory = new ArrayList<>();
+    addlTypes = new ArrayList<>();
   }
 
-  public BuildGraphQLEngine(List<GraphqlTypeFactory> typeFactory) {
-    this.typeFactory = typeFactory;
+  public BuildGraphQLEngine(List<GraphQLScalarType> addlTypes) {
+    this.addlTypes = addlTypes;
   }
 
   @Override
@@ -107,7 +108,7 @@ public class BuildGraphQLEngine implements
         .scalar(CustomScalars.Double)
         .scalar(CustomScalars.DATETIME);
 
-    typeFactory.forEach(t->wiring.scalar(t.create()));
+    addlTypes.forEach(t->wiring.scalar(t));
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {
