@@ -18,37 +18,15 @@
 //Copied from flink as we incrementally phase out flink code for sqrl code
 package com.datasqrl.flink.function;
 
-import static org.apache.flink.table.planner.calcite.FlinkTypeFactory.toLogicalType;
-import static org.apache.flink.table.types.inference.TypeInferenceUtil.adaptArguments;
-import static org.apache.flink.table.types.inference.TypeInferenceUtil.createInvalidCallException;
-import static org.apache.flink.table.types.inference.TypeInferenceUtil.createInvalidInputException;
-import static org.apache.flink.table.types.inference.TypeInferenceUtil.createUnexpectedException;
-import static org.apache.flink.table.types.logical.utils.LogicalTypeCasts.supportsAvoidingCast;
-
-import java.util.List;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlCallBinding;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperandCountRange;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlOperandTypeChecker;
-import org.apache.calcite.sql.type.SqlTypeUtil;
-import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorNamespace;
-import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.functions.inference.ArgumentCountRange;
-import org.apache.flink.table.planner.functions.inference.CallBindingCallContext;
 import org.apache.flink.table.planner.functions.inference.TypeInferenceOperandChecker;
-import org.apache.flink.table.types.DataType;
-import org.apache.flink.table.types.inference.CallContext;
 import org.apache.flink.table.types.inference.TypeInference;
-import org.apache.flink.table.types.inference.TypeInferenceUtil;
-import org.apache.flink.table.types.logical.LogicalType;
 
 
 public class FlinkSqlOperandTypeChecker implements SqlOperandTypeChecker {

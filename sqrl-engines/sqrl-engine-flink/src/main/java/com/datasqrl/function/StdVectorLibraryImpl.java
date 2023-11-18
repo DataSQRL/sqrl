@@ -1,12 +1,12 @@
 package com.datasqrl.function;
 
-import static com.datasqrl.VectorFunctions.ASCII_TEXT_TEST_EMBED;
-import static com.datasqrl.VectorFunctions.CENTER;
-import static com.datasqrl.VectorFunctions.COSINE_DISTANCE;
-import static com.datasqrl.VectorFunctions.COSINE_SIMILARITY;
-import static com.datasqrl.VectorFunctions.EUCLIDEAN_DISTANCE;
-import static com.datasqrl.VectorFunctions.ONNX_EMBED;
-import static com.datasqrl.VectorFunctions.VEC_TO_DOUBLE;
+import static com.datasqrl.vector.VectorFunctions.ASCII_TEXT_TEST_EMBED;
+import static com.datasqrl.vector.VectorFunctions.CENTER;
+import static com.datasqrl.vector.VectorFunctions.COSINE_DISTANCE;
+import static com.datasqrl.vector.VectorFunctions.COSINE_SIMILARITY;
+import static com.datasqrl.vector.VectorFunctions.EUCLIDEAN_DISTANCE;
+import static com.datasqrl.vector.VectorFunctions.ONNX_EMBED;
+import static com.datasqrl.vector.VectorFunctions.VEC_TO_DOUBLE;
 
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;

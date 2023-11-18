@@ -1,6 +1,6 @@
-package com.datasqrl.type;
+package com.datasqrl.vector;
 
-import com.datasqrl.calcite.type.FlinkVectorType;
+import com.datasqrl.type.JdbcTypeSerializer;
 import com.google.auto.service.AutoService;
 import java.lang.reflect.Type;
 import java.util.Arrays;

@@ -12,7 +12,7 @@ import com.datasqrl.config.SourceFactory;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.function.SqrlFunction;
-import com.datasqrl.function.json.StdJsonLibraryImpl;
+import com.datasqrl.function.StdJsonLibraryImpl;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.InMemSourceFactory;
 import com.datasqrl.io.mem.MemoryConnectorFactory;

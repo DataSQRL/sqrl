@@ -1,4 +1,4 @@
-package com.datasqrl.function.json;
+package com.datasqrl.function;
 
 import com.datasqrl.json.JsonFunctions;
 import com.datasqrl.NamespaceObjectUtil;

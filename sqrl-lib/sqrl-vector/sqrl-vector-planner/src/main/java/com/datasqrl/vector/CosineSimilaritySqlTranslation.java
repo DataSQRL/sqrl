@@ -1,4 +1,4 @@
-package com.datasqrl.function.vector;
+package com.datasqrl.vector;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 

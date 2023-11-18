@@ -1,4 +1,4 @@
-package com.datasqrl.calcite.type;
+package com.datasqrl.vector;
 
 import lombok.Value;
 import org.apache.flink.table.annotation.DataTypeHint;

@@ -1,10 +1,9 @@
-package com.datasqrl;
+package com.datasqrl.vector;
 
-import static com.datasqrl.VectorFunctions.OnnxEmbed.TOKENIZER_FILENAME;
+import static com.datasqrl.vector.VectorFunctions.OnnxEmbed.TOKENIZER_FILENAME;
 
 import ai.onnxruntime.OnnxTensor;
-import com.datasqrl.VectorFunctions.OnnxEmbed.CachedModel;
-import com.datasqrl.calcite.type.FlinkVectorType;
+import com.datasqrl.vector.VectorFunctions.OnnxEmbed.CachedModel;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
@@ -17,12 +16,10 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Predicate;
 import lombok.Value;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;

@@ -26,7 +26,7 @@ public class Tokenizer {
   private String unknownToken;
 
   public Tokenizer(Path tokenizerPath) throws Exception {
-    TokenizerConfig config = loadTokenizer(tokenizerPath);
+    TokenizerConfig config = BERTFeatureExtractor.loadTokenizer(tokenizerPath);
     Wordpiece wordpiece = new Wordpiece(config.tokenIDs.keySet(), config.unknownToken, config.maxInputCharsPerWord);
     this.tokenizer = new WordpieceTokenizer(wordpiece, new WordpieceBasicTokenizer(), config.lowercase, config.stripAccents, Collections.emptySet());
     this.tokenIDs = config.tokenIDs;

@@ -5,12 +5,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.datasqrl</groupId>
-    <artifactId>sqrl-root</artifactId>
+    <artifactId>sqrl-vector</artifactId>
     <version>0.3.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>sqrl-lib</artifactId>
-  <packaging>pom</packaging>
+  <artifactId>sqrl-vector-planner</artifactId>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
@@ -18,8 +17,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <modules>
-    <module>sqrl-json</module>
-    <module>sqrl-vector</module>
-  </modules>
+  <dependencies>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-common</artifactId>
+    </dependency>
+
+  </dependencies>
+
 </project>

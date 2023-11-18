@@ -279,6 +279,16 @@
                 <artifactId>sqrl-json-planner</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-vector-execute</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-vector-planner</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- tests -->
             <dependency>
                 <groupId>com.datasqrl</groupId>

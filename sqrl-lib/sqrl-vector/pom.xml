@@ -5,11 +5,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.datasqrl</groupId>
-    <artifactId>sqrl-root</artifactId>
+    <artifactId>sqrl-lib</artifactId>
     <version>0.3.3-SNAPSHOT</version>
   </parent>
 
-  <artifactId>sqrl-lib</artifactId>
+  <artifactId>sqrl-vector</artifactId>
   <packaging>pom</packaging>
 
   <properties>
@@ -19,7 +19,7 @@
   </properties>
 
   <modules>
-    <module>sqrl-json</module>
-    <module>sqrl-vector</module>
+    <module>sqrl-vector-execute</module>
+    <module>sqrl-vector-planner</module>
   </modules>
 </project>

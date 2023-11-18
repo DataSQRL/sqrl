@@ -1,4 +1,4 @@
-package com.datasqrl.function.json;
+package com.datasqrl.json;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 import static com.datasqrl.function.PgSpecificOperatorTable.JsonToString;
