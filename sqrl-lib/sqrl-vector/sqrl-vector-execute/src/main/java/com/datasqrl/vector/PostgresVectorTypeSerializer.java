@@ -2,7 +2,6 @@ package com.datasqrl.vector;
 
 import com.datasqrl.type.JdbcTypeSerializer;
 import com.google.auto.service.AutoService;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcDeserializationConverter;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcSerializationConverter;
@@ -18,10 +17,14 @@ public class PostgresVectorTypeSerializer implements JdbcTypeSerializer {
   }
 
   @Override
-  public Type getConversionClass() {
+  public Class getConversionClass() {
     return FlinkVectorType.class;
   }
 
+  @Override
+  public String dialectTypeName() {
+    return "vector";
+  }
 
   @Override
   public GenericDeserializationConverter<JdbcDeserializationConverter> getDeserializerConverter() {

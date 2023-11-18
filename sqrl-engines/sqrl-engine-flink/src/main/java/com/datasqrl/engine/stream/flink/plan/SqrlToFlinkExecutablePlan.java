@@ -15,6 +15,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
+import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactory;
@@ -33,6 +34,7 @@ import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule;
+import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
@@ -51,6 +53,7 @@ import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
 import java.net.URL;
 import java.util.ArrayList;
@@ -78,6 +81,7 @@ import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -151,7 +155,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   }
 
   private RelNode applyDowncasting(RelNode relNode, Optional<ExecutionEngine> engine) {
-    RelBuilder relBuilder = new RelBuilder(null, relNode.getCluster(), null){};
     relBuilder.push(relNode);
 
     AtomicBoolean hasChanged = new AtomicBoolean();
@@ -169,22 +172,26 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private static RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
       Optional<ExecutionEngine> engine) {
-    boolean hasNativeSupport =
-        field.getType() instanceof RawRelDataType && engine.isPresent() && engine.get()
-            .supportsType(((RawRelDataType) field.getType()).getRawType().getDefaultConversion());
+    boolean hasNativeSupport = field.getType() instanceof RawRelDataType && engine.isPresent() &&
+        engine.get().supportsType(((RawRelDataType) field.getType()).getRawType().getDefaultConversion());
 
-    Optional<SqlFunction> downcastFunction =
-//        (field.getType() instanceof RawRelDataType && !hasNativeSupport)
-//        ? ((ForeignType) field.getType()).getDowncastFunction()
-//        :
-    Optional.empty();
+    Optional<SqlOperator> downcastFunc = Optional.empty();
+    if (field.getType() instanceof RawRelDataType && !hasNativeSupport) {
+      Class<?> defaultConversion = ((RawRelDataType) field.getType()).getRawType()
+          .getDefaultConversion();
+      CatalogReader catalogReader = (CatalogReader) relBuilder.getRelOptSchema();
+      DowncastFunction downcastFunction = ServiceLoaderDiscovery.get(DowncastFunction.class,
+          e -> e.getConversionClass().getName(),
+          defaultConversion.getName());
+      downcastFunc = catalogReader.getOperatorList().stream()
+          .filter(f -> f.getName().equalsIgnoreCase(downcastFunction.downcastFunctionName()))
+          .findFirst();
+    }
 
-    if (downcastFunction.isPresent()) {
+    if (downcastFunc.isPresent()) {
       hasChanged.set(true);
       return relBuilder.getRexBuilder()
-          .makeCall(relBuilder.getTypeFactory().createSqlType(SqlTypeName.ANY),
-              downcastFunction.get(),
-              List.of(relBuilder.field(field.getIndex())));
+          .makeCall(downcastFunc.get(), List.of(relBuilder.field(field.getIndex())));
     } else {
       return relBuilder.field(field.getIndex());
     }

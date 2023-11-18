@@ -1,12 +1,12 @@
 package com.datasqrl.type;
 
-import java.lang.reflect.Type;
-
 public interface JdbcTypeSerializer<D, S> {
 
   String getDialect();
 
-  Type getConversionClass();
+  Class getConversionClass();
+
+  String dialectTypeName();
 
   GenericDeserializationConverter<D> getDeserializerConverter();
 

@@ -18,8 +18,17 @@ public class PostgresJsonTypeSerializer
   }
 
   @Override
-  public Type getConversionClass() {
+  public Class getConversionClass() {
     return FlinkJsonType.class;
+  }
+
+  @Override
+  public String dialectTypeName() {
+    return "jsonb";
+  }
+
+  public String downcastFunctionName() {
+    return "jsonToString";
   }
 
   @Override

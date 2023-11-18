@@ -3,7 +3,9 @@ package com.datasqrl.calcite.dialect;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.function.translations.SqlTranslation;
+import com.datasqrl.type.JdbcTypeSerializer;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.google.common.base.Function;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.Casing;
@@ -34,8 +36,19 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     DEFAULT = new ExtendedPostgresSqlDialect(DEFAULT_CONTEXT);
   }
 
+  private static final Map<Class, String> foreignCastSpecMap = getForeignCastSpecs();
+
   public ExtendedPostgresSqlDialect(Context context) {
     super(context);
+  }
+
+  private static Map<Class, String> getForeignCastSpecs() {
+    Map<Class, String> jdbcTypeSerializer = ServiceLoaderDiscovery.getAll(JdbcTypeSerializer.class)
+        .stream()
+        .filter(f->f.getDialect().equalsIgnoreCase("postgres"))
+        .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass,
+            JdbcTypeSerializer::dialectTypeName));
+    return jdbcTypeSerializer;
   }
 
   public SqlDataTypeSpec getCastSpec(RelDataType type) {
@@ -43,17 +56,11 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     if (type instanceof RawRelDataType) {
       RawRelDataType rawRelDataType = (RawRelDataType) type;
       Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
-      if (originatingClass.getName().contains("Json")) {
-        castSpec = "jsonb";
-      } else if (originatingClass.getName().contains("tor")) {
-        castSpec = "vector";
+      if (foreignCastSpecMap.containsKey(originatingClass)) {
+        castSpec = foreignCastSpecMap.get(originatingClass);
       } else {
-        throw new RuntimeException();
+        throw new RuntimeException("Could not find type name for: %s" + type);
       }
-
-//      String physicalType = ((PrimitiveType) type).getPhysicalTypeName(Dialect.POSTGRES);
-//      Preconditions.checkNotNull(physicalType, "Could not find type name for: %s", type);
-//      castSpec = physicalType;
     } else {
       switch (type.getSqlTypeName()) {
         case TINYINT:
