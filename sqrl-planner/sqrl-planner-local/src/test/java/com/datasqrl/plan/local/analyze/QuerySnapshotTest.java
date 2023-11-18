@@ -190,6 +190,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void jsonTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT json.toJson AS jsonize");
+    builder.add("X := SELECT jsonize('{}') FROM Product");
+    validateScript(builder.getScript());
+  }
+
+  @Test
   public void differentGroupByFromSelectOrderTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("X := SELECT max(productid) as MAX, name, description "
