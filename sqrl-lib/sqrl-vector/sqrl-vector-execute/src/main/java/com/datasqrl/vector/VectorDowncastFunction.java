@@ -13,7 +13,7 @@ public class VectorDowncastFunction implements DowncastFunction {
 
   @Override
   public String downcastFunctionName() {
-    return "VectorToDouble";
+    return VectorFunctions.VEC_TO_DOUBLE.getFunctionName().getCanonical();
   }
 
   @Override

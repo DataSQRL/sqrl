@@ -13,7 +13,7 @@ public class JsonDowncastFunction implements DowncastFunction {
 
   @Override
   public String downcastFunctionName() {
-    return "jsontostring";
+    return JsonFunctions.JSON_TO_STRING.getFunctionName().getCanonical();
   }
 
   @Override
