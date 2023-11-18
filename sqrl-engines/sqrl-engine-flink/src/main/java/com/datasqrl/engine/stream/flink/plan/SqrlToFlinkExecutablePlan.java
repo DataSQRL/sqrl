@@ -208,6 +208,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private Map<String, UserDefinedFunction> extractDowncastConversionFunctions(
       List<WriteQuery> writeQueries) {
+
     return Map.of();
 //    writeQueries.stream()
 //        .flatMap(query -> query.getRelNode().getRowType().getFieldList().stream())

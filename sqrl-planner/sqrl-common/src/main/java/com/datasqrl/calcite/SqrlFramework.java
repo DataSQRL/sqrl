@@ -48,13 +48,6 @@ public class SqrlFramework {
     //Int -> Integer
     this.schema.add("Int", t->typeFactory.createSqlType(SqlTypeName.INTEGER));
 
-//    ServiceLoaderDiscovery.getAll(ForeignType.class)
-//            .forEach(f->this.schema.add(f.getName(), t->f));
-//
-//    typeFactory.getTypes().stream()
-//        .filter(f->f instanceof RelProtoDataType)
-//        .forEach(t->schema.add(t.getFullTypeString(), (RelProtoDataType) t));
-//
     this.relMetadataProvider = relMetadataProvider;
 
     Properties info = new Properties();
