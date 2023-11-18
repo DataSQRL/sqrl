@@ -205,9 +205,8 @@ public class JsonConversionTest {
   }
 
   @Test
-  @Disabled
-  public void jsonExtractArray() {
-    testJsonReturn("jsonExtract(toJson(json), '$.example', CAST(null AS INTEGER ARRAY))");
+  public void jsonObjectAgg() {
+    testJsonReturn("jsonObjectAgg('key', toJson(json))");
   }
 
   @Test
@@ -311,13 +310,6 @@ public class JsonConversionTest {
   }
 
   @Test
-  @Disabled
-  public void jsonExtractWithInvalidJsonPath() {
-    // Test extraction with an invalid JSON path
-    testScalarReturn("jsonExtract(toJson('{\"a\": \"hello\"}'), '$..', 'default')");
-  }
-
-  @Test
   public void jsonExtractWithComplexJsonPath() {
     // Test extraction with a complex JSON path
     testScalarReturn(
@@ -335,11 +327,11 @@ public class JsonConversionTest {
     // Test extraction with a numeric default value
     testScalarReturn("jsonExtract(toJson('{\"a\": \"hello\"}'), '$.b', 0)");
   }
+
   @Test
-  @Disabled
   public void jsonObject() {
     // Test extraction with a numeric default value
-    testJsonReturn("jsonObject(\"key\", toJson('{\"a\": \"hello\"}'), 'key2', 0)");
+    testJsonReturn("jsonObject('key', toJson('{\"a\": \"hello\"}'), 'key2', 0)");
   }
 
   @Test
@@ -367,7 +359,6 @@ public class JsonConversionTest {
   }
 
   @Test
-  @Disabled
   public void jsonObjectWithNestedObjects() {
     // Testing JSON object creation with nested objects
     testJsonReturn("jsonObject('key1', jsonObject('nestedKey', 'nestedValue'), 'key2', 'value2')");

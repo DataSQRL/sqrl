@@ -44,15 +44,25 @@ public class JsonFunctions {
   public static final JsonArrayAgg JSON_ARRAYAGG = new JsonArrayAgg();
   public static final JsonObjectAgg JSON_OBJECTAGG = new JsonObjectAgg();
 
+  public static final ObjectMapper mapper = new ObjectMapper();
+
+  public static ArgumentTypeStrategy createJsonArgumentTypeStrategy(DataTypeFactory typeFactory) {
+    return InputTypeStrategies.or(SpecificInputTypeStrategies.JSON_ARGUMENT,
+        InputTypeStrategies.explicit(createJsonType(typeFactory)));
+  }
+
+  public static DataType createJsonType(DataTypeFactory typeFactory) {
+    DataType dataType = DataTypes.of(FlinkJsonType.class).toDataType(typeFactory);
+    return dataType;
+  }
+
   public static class ToJson extends ScalarFunction implements SqrlFunction {
 
     public FlinkJsonType eval(String json) {
-      ObjectMapper mapper = new ObjectMapper();
       try {
         return new FlinkJsonType(mapper.readTree(json).toString());
       } catch (JsonProcessingException e) {
-//        ...
-        throw new RuntimeException(e);
+        return null;
       }
     }
 
@@ -65,7 +75,10 @@ public class JsonFunctions {
   public static class JsonToString extends ScalarFunction implements SqrlFunction {
 
     public String eval(FlinkJsonType json) {
-      return json.getJson().toString();
+      if (json == null) {
+        return null;
+      }
+      return json.getJson();
     }
 
     @Override
@@ -96,7 +109,7 @@ public class JsonFunctions {
           FlinkJsonType type = (FlinkJsonType) value;
           objectNode.putIfAbsent(key, mapper.readTree(type.json));
         } else {
-          objectNode.putPOJO(key, value); // putPOJO to handle arbitrary objects
+          objectNode.putPOJO(key, value);
         }
       }
 
@@ -107,20 +120,19 @@ public class JsonFunctions {
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       AndArgumentTypeStrategy and = InputTypeStrategies
-          .and(new ArgumentTypeStrategy[]{
-              InputTypeStrategies.logical(LogicalTypeFamily.CHARACTER_STRING),
-              InputTypeStrategies.LITERAL});
+          .and(InputTypeStrategies.logical(LogicalTypeFamily.CHARACTER_STRING),
+              InputTypeStrategies.LITERAL);
       InputTypeStrategy inputTypeStrategy1 = InputTypeStrategies.repeatingSequence(
-          new ArgumentTypeStrategy[]{
-              and,
-              SpecificInputTypeStrategies.JSON_ARGUMENT});
+          and,
+          createJsonArgumentTypeStrategy(typeFactory));
       InputTypeStrategy inputTypeStrategy = InputTypeStrategies
           .compositeSequence()
           .finishWithVarying(inputTypeStrategy1);
 
       return TypeInference.newBuilder()
           .inputTypeStrategy(inputTypeStrategy)
-          .outputTypeStrategy(TypeStrategies.explicit(DataTypes.of(FlinkJsonType.class).toDataType(typeFactory)))
+          .outputTypeStrategy(
+              TypeStrategies.explicit(DataTypes.of(FlinkJsonType.class).toDataType(typeFactory)))
           .build();
     }
 
@@ -151,14 +163,12 @@ public class JsonFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      DataType dataType = DataTypes.of(FlinkJsonType.class).toDataType(typeFactory);
       InputTypeStrategy inputTypeStrategy = InputTypeStrategies.varyingSequence(
-          InputTypeStrategies.or(SpecificInputTypeStrategies.JSON_ARGUMENT,
-              InputTypeStrategies.explicit(dataType)));
+          createJsonArgumentTypeStrategy(typeFactory));
 
       return TypeInference.newBuilder()
           .inputTypeStrategy(inputTypeStrategy)
-          .outputTypeStrategy(TypeStrategies.explicit(dataType))
+          .outputTypeStrategy(TypeStrategies.explicit(createJsonType(typeFactory)))
           .build();
     }
 
@@ -177,62 +187,46 @@ public class JsonFunctions {
         ReadContext ctx = JsonPath.parse(jsonNode.toString());
         return ctx.read(pathSpec);
       } catch (Exception e) {
-        // Handle exception
         return null;
       }
     }
 
     public String eval(FlinkJsonType input, String pathSpec, String defaultValue) {
       try {
-//        ObjectMapper mapper = new ObjectMapper();
-//        JsonNode jsonNode = mapper.readTree(input);
-        ReadContext ctx = JsonPath.parse(input.getJson().toString());
+        ReadContext ctx = JsonPath.parse(input.getJson());
         JsonPath parse = JsonPath.compile(pathSpec);
         return ctx.read(parse, String.class);
       } catch (Exception e) {
-        // Handle exception
-        e.printStackTrace();
         return defaultValue;
       }
     }
 
     public boolean eval(FlinkJsonType input, String pathSpec, boolean defaultValue) {
       try {
-//        ObjectMapper mapper = new ObjectMapper();
-//        JsonNode jsonNode = mapper.readTree(input);
-        ReadContext ctx = JsonPath.parse(input.getJson().toString());
+        ReadContext ctx = JsonPath.parse(input.getJson());
         JsonPath parse = JsonPath.compile(pathSpec);
         return ctx.read(parse, Boolean.class);
       } catch (Exception e) {
-        // Handle exception
-        e.printStackTrace();
-        return defaultValue;
-      }
-    }
-    public Double eval(FlinkJsonType input, String pathSpec, Double defaultValue) {
-      try {
-//        ObjectMapper mapper = new ObjectMapper();
-//        JsonNode jsonNode = mapper.readTree(input);
-        ReadContext ctx = JsonPath.parse(input.getJson().toString());
-        JsonPath parse = JsonPath.compile(pathSpec);
-        return ctx.read(parse, Double.class);
-      } catch (Exception e) {
-        // Handle exception
-        e.printStackTrace();
         return defaultValue;
       }
     }
 
-  public Integer eval(FlinkJsonType input, String pathSpec, Integer defaultValue) {
+    public Double eval(FlinkJsonType input, String pathSpec, Double defaultValue) {
       try {
-//        ObjectMapper mapper = new ObjectMapper();
-//        JsonNode jsonNode = mapper.readTree(input);
-        ReadContext ctx = JsonPath.parse(input.getJson().toString());
+        ReadContext ctx = JsonPath.parse(input.getJson());
+        JsonPath parse = JsonPath.compile(pathSpec);
+        return ctx.read(parse, Double.class);
+      } catch (Exception e) {
+        return defaultValue;
+      }
+    }
+
+    public Integer eval(FlinkJsonType input, String pathSpec, Integer defaultValue) {
+      try {
+        ReadContext ctx = JsonPath.parse(input.getJson());
         JsonPath parse = JsonPath.compile(pathSpec);
         return ctx.read(parse, Integer.class);
       } catch (Exception e) {
-        // Handle exception
-        e.printStackTrace();
         return defaultValue;
       }
     }
@@ -243,7 +237,7 @@ public class JsonFunctions {
     }
   }
 
-  public static class JsonQuery extends ScalarFunction  implements SqrlFunction{
+  public static class JsonQuery extends ScalarFunction implements SqrlFunction {
 
     public String eval(FlinkJsonType input, String pathSpec) {
       try {
@@ -253,7 +247,6 @@ public class JsonFunctions {
         Object result = ctx.read(pathSpec);
         return mapper.writeValueAsString(result); // Convert the result back to JSON string
       } catch (Exception e) {
-        // Handle exception
         return null;
       }
     }
@@ -264,13 +257,12 @@ public class JsonFunctions {
     }
   }
 
-  public static class JsonExists extends ScalarFunction  implements SqrlFunction{
+  public static class JsonExists extends ScalarFunction implements SqrlFunction {
 
     public Boolean eval(FlinkJsonType json, String path) {
       try {
         return SqlJsonUtils.jsonExists(json.json, path);
       } catch (Exception e) {
-        // Handle exception
         return false;
       }
     }
@@ -280,8 +272,10 @@ public class JsonFunctions {
       return null;
     }
   }
+
   @Value
-  public static class MyAcc {
+  public static class ArrayAgg {
+
     @DataTypeHint(value = "RAW")
     List<Object> objects;
 
@@ -290,45 +284,47 @@ public class JsonFunctions {
     }
   }
 
-  public static class JsonArrayAgg extends AggregateFunction<FlinkJsonType, MyAcc> implements SqrlFunction {
-    private ObjectMapper mapper = new ObjectMapper();
+  public static class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> implements
+      SqrlFunction {
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
 
     @Override
-    public MyAcc createAccumulator() {
-      return new MyAcc(new ArrayList<>());
+    public ArrayAgg createAccumulator() {
+      return new ArrayAgg(new ArrayList<>());
     }
 
-    public void accumulate(MyAcc accumulator, String value) {
+    public void accumulate(ArrayAgg accumulator, String value) {
       accumulator.add(value);
     }
 
     @SneakyThrows
-    public void accumulate(MyAcc accumulator, FlinkJsonType value) {
+    public void accumulate(ArrayAgg accumulator, FlinkJsonType value) {
       accumulator.add(mapper.readTree(value.json));
     }
 
-    public void accumulate(MyAcc accumulator, Double value) {
+    public void accumulate(ArrayAgg accumulator, Double value) {
       accumulator.add(value);
     }
 
-    public void accumulate(MyAcc accumulator, Long value) {
+    public void accumulate(ArrayAgg accumulator, Long value) {
       accumulator.add(value);
     }
 
-    public void accumulate(MyAcc accumulator, Integer value) {
+    public void accumulate(ArrayAgg accumulator, Integer value) {
       accumulator.add(value);
     }
 
     @Override
-    public FlinkJsonType getValue(MyAcc accumulator) {
+    public FlinkJsonType getValue(ArrayAgg accumulator) {
       ArrayNode arrayNode = mapper.createArrayNode();
       for (Object o : accumulator.getObjects()) {
         if (o instanceof FlinkJsonType) {
           try {
             arrayNode.add(mapper.readTree(((FlinkJsonType) o).json));
           } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            return null;
           }
         } else {
           arrayNode.addPOJO(o);
@@ -343,50 +339,74 @@ public class JsonFunctions {
     }
   }
 
+  @Value
+  public static class ObjectAgg {
 
-  public static class JsonObjectAgg extends AggregateFunction<String, Map<String, String>> implements SqrlFunction {
-    private ObjectMapper mapper = new ObjectMapper();
+    @DataTypeHint(value = "RAW")
+    Map<String, Object> objects;
+
+    public void add(String key, Object value) {
+      objects.put(key, value);
+    }
+  }
+
+  public static class JsonObjectAgg extends
+      AggregateFunction<FlinkJsonType, ObjectAgg> implements SqrlFunction {
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
-    public Map<String, String> createAccumulator() {
-      return new HashMap<>();
+    public ObjectAgg createAccumulator() {
+      return new ObjectAgg(new HashMap<>());
     }
 
-    public void accumulate(Map<String, String> accumulator, String key, String value) {
-      try {
-//        accumulator.put(key, mapper.readTree(value));
-      } catch (Exception e) {
-        // Handle parsing exception
-      }
+    public void accumulate(ObjectAgg accumulator, String key, String value) {
+      accumulateObject(accumulator, key, value);
+    }
+
+    @SneakyThrows
+    public void accumulate(ObjectAgg accumulator, String key, FlinkJsonType value) {
+      accumulateObject(accumulator, key, mapper.readTree(value.getJson()));
+    }
+
+    public void accumulate(ObjectAgg accumulator, String key, Double value) {
+      accumulateObject(accumulator, key, value);
+    }
+
+    public void accumulate(ObjectAgg accumulator, String key, Long value) {
+      accumulateObject(accumulator, key, value);
+    }
+
+    public void accumulate(ObjectAgg accumulator, String key, Integer value) {
+      accumulateObject(accumulator, key, value);
+    }
+
+    public void accumulateObject(ObjectAgg accumulator, String key, Object value) {
+      accumulator.add(key, value);
     }
 
     @Override
-    public String getValue(Map<String, String> accumulator) {
+    public FlinkJsonType getValue(ObjectAgg accumulator) {
       ObjectNode objectNode = mapper.createObjectNode();
-//      objectNode.setAll(accumulator);
-      return objectNode.toString();
+      accumulator.getObjects().forEach((key, value) -> {
+        if (value instanceof FlinkJsonType) {
+          try {
+            objectNode.set(key, mapper.readTree(((FlinkJsonType) value).json));
+          } catch (JsonProcessingException e) {
+            // Ignore value
+          }
+        } else {
+          objectNode.putPOJO(key, value);
+        }
+      });
+      return new FlinkJsonType(objectNode.toString());
     }
 
-    @Override
-    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-
-      // Define output type
-      DataType outputType = DataTypes.of(FlinkJsonType.class).toDataType(typeFactory);
-
-      // Build type inference
-      return TypeInference.newBuilder()
-          .inputTypeStrategy(InputTypeStrategies.sequence(InputTypeStrategies.logical(LogicalTypeFamily.CHARACTER_STRING), SpecificInputTypeStrategies.JSON_ARGUMENT))
-          .outputTypeStrategy(TypeStrategies.explicit(outputType))
-          .build();
-    }
     @Override
     public String getDocumentation() {
-      return null;
+      return "This function aggregates key-value pairs into a JSON object.";
     }
 
-    @Override
-    public TypeInformation<String> getResultType() {
-      return Types.STRING;
-    }
+
   }
 }

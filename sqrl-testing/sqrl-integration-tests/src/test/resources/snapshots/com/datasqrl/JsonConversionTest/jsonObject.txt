@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONB_BUILD_OBJECT('key', CAST('{"a": "hello"}' AS JSONB), 'key2', 0)
+FROM "jsondata$2"
+>>>postgres
+SELECT JSONB_BUILD_OBJECT('key', CAST('{"a": "hello"}' AS JSONB), 'key2', 0)
+FROM "jsondata$2"
+>>>Postgres Result
+{"key": {"a": "hello"}, "key2": 0}
+>>>flink
+SELECT JSONOBJECT('key', TOJSON('{"a": "hello"}'), 'key2', 0)
+FROM `jsondata$2`
+>>>Flink Result
+{"key":{"a":"hello"},"key2":0}
