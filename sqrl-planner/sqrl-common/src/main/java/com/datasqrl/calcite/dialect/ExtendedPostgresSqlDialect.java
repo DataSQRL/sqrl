@@ -64,14 +64,14 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     } else {
       switch (type.getSqlTypeName()) {
         case TINYINT:
-          castSpec = "smallint";
+          castSpec = "SMALLINT";
           break;
         case DOUBLE:
-          castSpec = "double precision";
+          castSpec = "DOUBLE PRECISION";
           break;
         case CHAR:
         case VARCHAR:
-          castSpec = "text";// Using TEXT type as it has similar flexibility and avoids size issues
+          castSpec = "TEXT";// Using TEXT type as it has similar flexibility and avoids size issues
           break;
         case DECIMAL:
           castSpec = "NUMERIC"; // DECIMAL or NUMERIC in PostgreSQL
@@ -105,7 +105,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
         case ROW:
         case SYMBOL:
         case MAP:
-          castSpec = "bytea";
+          castSpec = "BYTEA";
           break;
         default:
           return (SqlDataTypeSpec) super.getCastSpec(type);

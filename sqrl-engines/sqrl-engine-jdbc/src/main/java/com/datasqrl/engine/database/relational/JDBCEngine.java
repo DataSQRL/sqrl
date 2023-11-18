@@ -36,6 +36,7 @@ import com.datasqrl.type.JdbcTypeSerializer;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
+import com.datasqrl.vector.FlinkVectorType;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import java.sql.Connection;
@@ -53,6 +54,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.commons.collections.ListUtils;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
 public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
@@ -160,9 +162,9 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     Set<SqlDDLStatement> statements = new HashSet<>();
     //look at relnodes to see if we use a vector type
     for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
-//      if (field.getType() instanceof VectorType) {
-//        statements.add(new PostgresCreateVectorExtensionStatement());
-//      }
+      if (field.getType() instanceof RawRelDataType &&
+        ((RawRelDataType) field.getType()).getRawType().getOriginatingClass() == FlinkVectorType.class)
+        statements.add(new PostgresCreateVectorExtensionStatement());
     }
 
     Set<String> vecFncs = Set.of("cosinesimilarity", "cosinedistance", "euclideandistance",

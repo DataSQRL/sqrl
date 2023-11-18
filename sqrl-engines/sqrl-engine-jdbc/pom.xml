@@ -52,6 +52,10 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-jdbc</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-vector-execute</artifactId>
+    </dependency>
 
   </dependencies>
 </project>
