@@ -26,8 +26,7 @@ jobs:
     - name: Run JaCoCo
       run: mvn test jacoco:report
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
-      with:
-        files: ./target/site/jacoco/jacoco.xml
-        fail_ci_if_error: true
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
