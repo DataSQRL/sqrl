@@ -64,7 +64,7 @@ public class RelDataType2UTBConverter {
             rel.getKey(), rel.getValue() == Multiplicity.MANY, null);
         tblBuilder.addChild(name, child, rel.getValue());
       } else {
-        tblBuilder.addColumn(name, field.getType(), isVisible);
+        tblBuilder.addColumn(name, field.getType());
       }
       index++;
     }

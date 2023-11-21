@@ -3,16 +3,12 @@
  */
 package com.datasqrl.schema;
 
-import static com.datasqrl.canonicalizer.Name.changeDisplayName;
-
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.StandardName;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
@@ -59,7 +55,7 @@ public class UniversalTable {
     Iterator<Column> parentCols = parent.getColumns().iterator();
     for (int i = 0; i < parent.numPrimaryKeys; i++) {
       Column ppk = parentCols.next();
-      addColumn(new Column(ppk.getName(), ppk.getType(), false));
+      addColumn(new Column(ppk.getName(), ppk.getType()));
     }
     this.numPrimaryKeys = parent.numPrimaryKeys + (isSingleton ? 0 : 1);
     this.path = path;
@@ -84,13 +80,9 @@ public class UniversalTable {
     fields.addField(colum);
   }
 
-  public void addColumn(final Name colName, RelDataType type) {
-    addColumn(colName, type, true);
-  }
-
-  public void addColumn(Name colName, RelDataType type, boolean visible) {
+  public void addColumn(Name colName, RelDataType type) {
     //A name may clash with a previously added name, hence we increase the version
-    fields.addField(new Column(colName, type, visible));
+    fields.addField(new Column(colName, type));
   }
 
   public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
@@ -101,12 +93,10 @@ public class UniversalTable {
   public static class Column extends Field {
 
     final RelDataType type;
-    final boolean visible;
 
-    public Column(Name name, RelDataType type, boolean visible) {
+    public Column(Name name, RelDataType type) {
       super(name);
       this.type = type;
-      this.visible = visible;
     }
 
     public boolean isNullable() {
@@ -128,13 +118,9 @@ public class UniversalTable {
     }
   }
 
-  public <T> List<Pair<String, T>> convert(TypeConverter<T> converter) {
-    return convert(converter, true);
-  }
 
-  public <T> List<Pair<String, T>> convert(TypeConverter<T> converter, boolean onlyVisible) {
+  public <T> List<Pair<String, T>> convert(TypeConverter<T> converter) {
     return fields.getFields().stream()
-        .filter(f -> (!onlyVisible || f.isVisible()))
         .map(f -> {
           String name = f.getId().getDisplay();
           T type;
@@ -145,7 +131,7 @@ public class UniversalTable {
           } else {
             ChildRelationship childRel = (ChildRelationship) f;
             T nestedTable = converter.nestedTable(
-                childRel.getChildTable().convert(converter, onlyVisible));
+                childRel.getChildTable().convert(converter));
             nestedTable = converter.nullable(nestedTable,
                 childRel.multiplicity == Multiplicity.ZERO_ONE);
             if (childRel.multiplicity == Multiplicity.MANY) {

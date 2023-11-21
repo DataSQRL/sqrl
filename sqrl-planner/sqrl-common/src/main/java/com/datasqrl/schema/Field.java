@@ -24,10 +24,6 @@ public abstract class Field {
     return name;
   }
 
-  public boolean isVisible() {
-    return true;
-  }
-
   @Override
   public String toString() {
     return getId().toString() + " -> " + getName().toString();
