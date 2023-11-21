@@ -52,7 +52,8 @@ public class DocumentationExamplesTest {
     @Test
     @Disabled
     public void runIndividual() {
-        compileTutorials(Sensors.INSTANCE.getRootPackageDirectory(),"patient-sensor.sqrl", "patientapi.graphqls");
+        compileTutorials(Sensors.INSTANCE.getRootPackageDirectory(),"quicktest.sqrl", null);
+//        compileTutorials(Path.of("/Users/matthias/Data/datasqrl/examples/flipkart"),"aisearch.sqrl", "searchapi.graphqls");
     }
 
     public static final TestCase[] CASES = {
