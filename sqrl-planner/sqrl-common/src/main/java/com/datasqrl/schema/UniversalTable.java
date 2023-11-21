@@ -118,9 +118,13 @@ public class UniversalTable {
     }
   }
 
-
   public <T> List<Pair<String, T>> convert(TypeConverter<T> converter) {
-    return fields.getFields().stream()
+    return convert(converter, Optional.empty());
+  }
+
+  private <T> List<Pair<String, T>> convert(TypeConverter<T> converter, Optional<UniversalTable> parent) {
+    int startIndex = parent.map(p -> p.getNumPrimaryKeys()).orElse(0);
+    return fields.getFields().subList(startIndex, fields.fields.size()).stream()
         .map(f -> {
           String name = f.getId().getDisplay();
           T type;
@@ -131,7 +135,7 @@ public class UniversalTable {
           } else {
             ChildRelationship childRel = (ChildRelationship) f;
             T nestedTable = converter.nestedTable(
-                childRel.getChildTable().convert(converter));
+                childRel.getChildTable().convert(converter, Optional.of(this)));
             nestedTable = converter.nullable(nestedTable,
                 childRel.multiplicity == Multiplicity.ZERO_ONE);
             if (childRel.multiplicity == Multiplicity.MANY) {
