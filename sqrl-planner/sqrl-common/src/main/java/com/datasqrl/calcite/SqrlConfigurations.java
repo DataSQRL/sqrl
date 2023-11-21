@@ -11,7 +11,7 @@ import org.apache.calcite.sql2rel.SqlToRelConverter;
 
 public class SqrlConfigurations {
 
-  public static final UnaryOperator<SqlWriterConfig> sqlToString = c ->
+  public static final UnaryOperator<SqlWriterConfig> sqlToPostgresString = c ->
       c.withAlwaysUseParentheses(false)
       .withSelectListItemsOnSeparateLines(false)
       .withUpdateSetListNewline(false)

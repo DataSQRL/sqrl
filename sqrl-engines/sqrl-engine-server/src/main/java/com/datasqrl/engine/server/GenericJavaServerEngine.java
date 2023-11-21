@@ -13,6 +13,7 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
@@ -73,7 +74,12 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     Preconditions.checkArgument(dbStages.size()==1, "Currently only support a single database stage in server");
     ExecutionEngine engine = Iterables.getOnlyElement(dbStages).getEngine();
     Preconditions.checkArgument(engine instanceof JDBCEngine, "Currently the server only supports JDBC databases");
-    return new ServerPhysicalPlan(((ServerStagePlan) plan).getModel(), ((JDBCEngine)engine).getConnector());
+    Optional<RootGraphqlModel> model = ((ServerStagePlan) plan).getModel();
+    if (model.isEmpty()) {
+      return new NoopServerPhysicalPlan();
+    }
+
+    return new ServerPhysicalPlan(model.get(), ((JDBCEngine)engine).getConnector());
   }
 
   @Override

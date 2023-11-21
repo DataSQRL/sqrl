@@ -71,7 +71,7 @@ public class DAGAssembler {
 
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model, APIConnectorManager apiManager) {
+      Optional<RootGraphqlModel> model, APIConnectorManager apiManager) {
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();

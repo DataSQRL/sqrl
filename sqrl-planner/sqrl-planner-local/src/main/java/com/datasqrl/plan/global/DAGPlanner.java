@@ -15,6 +15,7 @@ import com.google.common.base.Preconditions;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
@@ -79,7 +80,7 @@ public class DAGPlanner {
   }
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, APIConnectorManager apiManager,
-      Set<URL> jars, Map<String, UserDefinedFunction> udfs, RootGraphqlModel model) {
+      Set<URL> jars, Map<String, UserDefinedFunction> udfs, Optional<RootGraphqlModel> model) {
     //Stitch DAG together
     DAGAssembler assembler = new DAGAssembler(framework, framework.getQueryPlanner().getPlanner(),
         sqrlConverter, pipeline, debugger, errors);
@@ -88,7 +89,7 @@ public class DAGPlanner {
 
   public PhysicalDAGPlan plan(SqrlSchema relSchema, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model) {
+      Optional<RootGraphqlModel> model) {
 
     SqrlDAG dag = build(relSchema, apiManager, exports);
     optimize(dag);

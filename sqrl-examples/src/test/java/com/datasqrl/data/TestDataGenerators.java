@@ -19,7 +19,7 @@ public class TestDataGenerators {
 
   @Test
   public void testPatientSensors() {
-    new RootGenerateCommand().getCmd().execute(new String[]{"sensors","-n","50000","-o","sensors/patientdata"});
+    new RootGenerateCommand().getCmd().execute(new String[]{"sensors","-n","100000","-o","/Users/matthias/Data/datasqrl/medidata/workshop/patientproject/patientdata"});
   }
 
   @Test

@@ -1,0 +1,26 @@
+{
+  "compiler":
+  {
+    "addArguments": false
+  },
+  "engines": {
+    "streams" : {
+      "name": "flink"
+    },
+    "database" : {
+      "database" : "datasqrl",
+      "password" : "postgres",
+      "dialect" : "postgres",
+      "driver" : "org.postgresql.Driver",
+      "port" : 5432,
+      "name" : "jdbc",
+      "host" : "database",
+      "user" : "postgres",
+      "url" : "jdbc:postgresql://database:5432/datasqrl",
+      "generate" : true
+    },
+    "server" : {
+      "name" : "vertx"
+    }
+  }
+}
