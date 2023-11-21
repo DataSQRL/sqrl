@@ -5,7 +5,7 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.serializer.Deserializer;
 import java.io.IOException;

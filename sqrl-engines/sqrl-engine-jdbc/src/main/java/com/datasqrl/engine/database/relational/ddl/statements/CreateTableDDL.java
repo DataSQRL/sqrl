@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.database.relational.ddl.statements;
 
-import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.sql.SqlDDLStatement;
 import lombok.Value;
 
 import java.util.List;

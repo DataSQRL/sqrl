@@ -5,11 +5,10 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
-import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.google.auto.service.AutoService;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

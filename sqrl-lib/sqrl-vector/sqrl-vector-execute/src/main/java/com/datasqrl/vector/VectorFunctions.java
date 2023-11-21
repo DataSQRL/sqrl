@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.Value;
@@ -25,6 +26,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.UserDefinedFunction;
 import org.tribuo.interop.onnx.extractors.OnnxRunner;
 import org.tribuo.interop.onnx.extractors.Tokenizer;
 
@@ -44,6 +46,17 @@ public class VectorFunctions {
   public static final AsciiTextTestEmbed ASCII_TEXT_TEST_EMBED = new AsciiTextTestEmbed();
 
   public static final Center CENTER = new Center();
+
+  public static final Set<SqrlFunction> functions = Set.of(
+          COSINE_SIMILARITY,
+          COSINE_DISTANCE,
+          EUCLIDEAN_DISTANCE,
+          VEC_TO_DOUBLE,
+          DOUBLE_TO_VECTOR,
+          ONNX_EMBED,
+          ASCII_TEXT_TEST_EMBED,
+          CENTER
+  );
 
   public static class RandomVector extends ScalarFunction implements SqrlFunction {
     public FlinkVectorType eval(Integer seed, Integer elements) {

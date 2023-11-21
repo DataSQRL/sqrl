@@ -7,7 +7,7 @@ import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
-import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.engine.stream.flink.ExecutionEnvironmentFactory;
@@ -24,7 +24,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import lombok.SneakyThrows;
-import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.logging.log4j.util.Strings;
 
 import java.nio.file.Files;

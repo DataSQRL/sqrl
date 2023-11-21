@@ -4,6 +4,7 @@
 package com.datasqrl.engine.database.relational.ddl;
 
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;

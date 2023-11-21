@@ -5,6 +5,9 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.sql.PgExtension;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -12,8 +15,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.ddl.PostgresCreateVectorExtensionStatement;
-import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -36,7 +38,6 @@ import com.datasqrl.type.JdbcTypeSerializer;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
-import com.datasqrl.vector.FlinkVectorType;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import java.sql.Connection;
@@ -151,30 +152,38 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   }
 
   private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {
+    List<PgExtension> extensions = ServiceLoaderDiscovery.getAll(PgExtension.class);
+
     return queries.stream()
-        .flatMap(relNode -> extractTypeExtensions(relNode.getRelNode()).stream())
+        .flatMap(relNode -> extractTypeExtensions(relNode.getRelNode(), extensions).stream())
         .distinct()
         .collect(Collectors.toList());
   }
 
   //todo: currently vector specific
-  private List<SqlDDLStatement> extractTypeExtensions(RelNode relNode) {
+  private List<SqlDDLStatement> extractTypeExtensions(RelNode relNode, List<PgExtension> extensions) {
     Set<SqlDDLStatement> statements = new HashSet<>();
     //look at relnodes to see if we use a vector type
     for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
-      if (field.getType() instanceof RawRelDataType &&
-        ((RawRelDataType) field.getType()).getRawType().getOriginatingClass() == FlinkVectorType.class)
-        statements.add(new PostgresCreateVectorExtensionStatement());
+
+      for (PgExtension extension : extensions) {
+        if (field.getType() instanceof RawRelDataType &&
+            ((RawRelDataType) field.getType()).getRawType().getOriginatingClass()
+                == extension.typeClass())
+          statements.add(extension.getExtensionDdl());
+      }
     }
 
-    Set<String> vecFncs = Set.of("cosinesimilarity", "cosinedistance", "euclideandistance",
-        "center");
     CalciteUtil.applyRexShuttleRecursively(relNode, new RexShuttle() {
       @Override
       public RexNode visitCall(RexCall call) {
-        //todo: generic for any types
-        if (vecFncs.contains(call.getOperator().getName().toLowerCase())) {
-          statements.add(new PostgresCreateVectorExtensionStatement());
+        for (PgExtension extension : extensions) {
+          for (SqrlFunction function : extension.operators()) {
+            if (function.getFunctionName().equals(
+                Name.system(call.getOperator().getName().toLowerCase()))) {
+              statements.add(extension.getExtensionDdl());
+            }
+          }
         }
 
         return super.visitCall(call);
