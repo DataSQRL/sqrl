@@ -15,7 +15,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
-import com.datasqrl.calcite.type.BridgingFlinkType;
+import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactory;
@@ -23,6 +23,7 @@ import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.TableDescriptorSourceFactory;
+import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.stream.flink.sql.ExtractUniqueSourceVisitor;
 import com.datasqrl.engine.stream.flink.sql.FlinkConnectorServiceLoader;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
@@ -33,6 +34,7 @@ import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule;
+import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.io.tables.TableSink;
@@ -51,6 +53,7 @@ import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
 import java.net.URL;
 import java.util.ArrayList;
@@ -60,6 +63,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -71,10 +75,12 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.rel2sql.FlinkRelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.Program;
@@ -85,6 +91,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 import org.apache.flink.table.types.DataType;
 
 @Slf4j
@@ -109,23 +116,29 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     List<WriteQuery> writeQueries = applyFlinkCompatibilityRules(queries);
     Map<String, ImportedRelationalTable> tables = extractTablesFromQueries(writeQueries);
+    Map<String, String> mutableUdfs = udfs.entrySet().stream()
+            .collect(Collectors.toMap(Entry::getKey, e->e.getValue().getClass().getName()));
     //exclude sqrl NOW for flink's NOW
-    HashMap<String, UserDefinedFunction> mutableUdfs = new HashMap<>(udfs);
     mutableUdfs.remove(DefaultFunctions.NOW.getName().toLowerCase());
-    Map<String, UserDefinedFunction> conversionFunctions = extractDowncastConversionFunctions(writeQueries);
-    mutableUdfs.putAll(conversionFunctions);
-    registerFunctions(mutableUdfs);
 
     WatermarkCollector watermarkCollector = new WatermarkCollector();
     extractWatermarks(writeQueries, watermarkCollector);
 
+    List<WriteQuery> newQueries = new ArrayList<>();
+    Map<String, String> downcastClassNames = new HashMap<>();
     for (WriteQuery query : writeQueries) {
-      String tableName = processQuery(query.getRelNode());
+      Optional<ExecutionEngine> engine = getEngine(query.getSink());
+      RelNode convertedRelNode = applyDowncasting(query.getRelNode(), engine, downcastClassNames);
+      String tableName = processQuery(convertedRelNode);
       registerSink(tableName, query.getSink().getName());
+      newQueries.add(new WriteQuery(query.getSink(), convertedRelNode));
     }
 
+    mutableUdfs.putAll(downcastClassNames);
+    registerFunctions(mutableUdfs);
+
     registerSourceTables(tables, watermarkCollector);
-    registerSinkTables(writeQueries);
+    registerSinkTables(newQueries);
 
     return FlinkBase.builder()
         .config(DefaultFlinkConfig.builder()
@@ -141,18 +154,61 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .build();
   }
 
-  private Map<String, UserDefinedFunction> extractDowncastConversionFunctions(
-      List<WriteQuery> writeQueries) {
-    return writeQueries.stream()
-        .flatMap(query -> query.getRelNode().getRowType().getFieldList().stream())
-        .filter(field -> field.getType() instanceof BridgingFlinkType)
-        .map(field -> (BridgingFlinkType) field.getType())
-        .filter(t -> t.getDowncastFunction().isPresent())
-        .collect(Collectors.toMap(
-            t -> t.getDowncastFunction().get().getName(),
-            t -> t.getDowncastFlinkFunction().get(),
-            (existing, replacement) -> existing
-        ));
+  private RelNode applyDowncasting(RelNode relNode, Optional<ExecutionEngine> engine,
+      Map<String, String> downcastClassNames) {
+    relBuilder.push(relNode);
+
+    AtomicBoolean hasChanged = new AtomicBoolean();
+    List<RexNode> fields = relNode.getRowType().getFieldList().stream()
+        .map(field -> convertField(field, hasChanged, relBuilder, engine, downcastClassNames))
+        .collect(Collectors.toList());
+
+    if (hasChanged.get()) {
+      return relBuilder
+          .project(fields, relNode.getRowType().getFieldNames(), true)
+          .build();
+    }
+    return relNode;
+  }
+
+  private static RexNode convertField(RelDataTypeField field, AtomicBoolean hasChanged, RelBuilder relBuilder,
+      Optional<ExecutionEngine> engine, Map<String, String> downcastClassNames) {
+    boolean hasNativeSupport = field.getType() instanceof RawRelDataType && engine.isPresent() &&
+        engine.get().supportsType(((RawRelDataType) field.getType()).getRawType().getDefaultConversion());
+
+    Optional<SqlOperator> downcastFunc = Optional.empty();
+    if (field.getType() instanceof RawRelDataType && !hasNativeSupport) {
+      Class<?> defaultConversion = ((RawRelDataType) field.getType()).getRawType()
+          .getDefaultConversion();
+      CatalogReader catalogReader = (CatalogReader) relBuilder.getRelOptSchema();
+      DowncastFunction downcastFunction = ServiceLoaderDiscovery.get(DowncastFunction.class,
+          e -> e.getConversionClass().getName(),
+          defaultConversion.getName());
+      downcastFunc = catalogReader.getOperatorList().stream()
+          .filter(f -> f.getName().equalsIgnoreCase(downcastFunction.downcastFunctionName()))
+          .findFirst();
+      if (downcastFunc.isPresent()) {
+        downcastClassNames.put(downcastFunc.get().getName(), downcastFunction.getDowncastClassName()
+            .getName());
+      }
+    }
+
+    if (downcastFunc.isPresent()) {
+      hasChanged.set(true);
+      return relBuilder.getRexBuilder()
+          .makeCall(downcastFunc.get(), List.of(relBuilder.field(field.getIndex())));
+    } else {
+      return relBuilder.field(field.getIndex());
+    }
+  }
+
+  private Optional<ExecutionEngine> getEngine(WriteSink sink) {
+    if (sink instanceof EngineSink) {
+      return Optional.of(((EngineSink) sink).getStage().getEngine());
+    } else if (sink instanceof ExternalSink) {
+      return Optional.empty();
+    }
+    throw new RuntimeException("Unsupported sink");
   }
 
   private Map<String, String> getTableConfig(SqrlConfig config) {
@@ -207,11 +263,11 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .build();
   }
 
-  private void registerFunctions(Map<String, UserDefinedFunction> udfs) {
-    for (Entry<String, UserDefinedFunction> function : udfs.entrySet()) {
+  private void registerFunctions(Map<String, String> udfs) {
+    for (Entry<String, String> function : udfs.entrySet()) {
       FlinkJavaFunction javaFunction = FlinkJavaFunction.builder()
           .functionName(function.getKey())
-          .identifier(function.getValue().getClass().getName())
+          .identifier(function.getValue())
           .build();
       this.functions.add(javaFunction);
     }
@@ -408,7 +464,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   }
 
   private String processQuery(RelNode relNode) {
-    return RelToFlinkSql.convertToSql(relToSqlConverter, relNode);
+    return RelToFlinkSql.convertToTable(relToSqlConverter, relNode);
   }
 
   private void extractWatermarks(List<WriteQuery> writeQueries,

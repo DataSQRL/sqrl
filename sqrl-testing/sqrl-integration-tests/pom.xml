@@ -104,6 +104,23 @@
     </dependency>
 
     <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-json-execute</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-json-planner</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
       <scope>test</scope>

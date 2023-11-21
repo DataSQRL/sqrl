@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONB_BUILD_OBJECT('', 'value1', '', 'value2')
+FROM "jsondata$2"
+>>>postgres
+SELECT JSONB_BUILD_OBJECT('', 'value1', '', 'value2')
+FROM "jsondata$2"
+>>>Postgres Result
+{"": "value2"}
+>>>flink
+SELECT JSONOBJECT('', 'value1', '', 'value2')
+FROM `jsondata$2`
+>>>Flink Result
+{"":"value2"}

@@ -71,7 +71,7 @@ public class RetailSqrlModule implements SqrlModule {
   public void init(CalciteTableFactory tableFactory) {
     dataByClass.forEach((clazz,data)-> {
       NamespaceObject obj = new TableSourceNamespaceObject(
-              createTableSource(clazz, DATASET_NAME), tableFactory);
+              createTableSource(clazz, DATASET_NAME, "ecommerce-data"), tableFactory);
       tables.put(obj.getName(), obj);
       tableData.put(obj.getName().getCanonical(), data);
     });
@@ -83,7 +83,7 @@ public class RetailSqrlModule implements SqrlModule {
 
   }
 
-  public static TableSource createTableSource(Class clazz, String datasetName) {
+  public static TableSource createTableSource(Class clazz, String datasetName, String moduleName) {
     String name = clazz.getSimpleName().toLowerCase();
     TableConfig.Builder builder = TableConfig.builder(name);
     builder.getFormatConfig().setProperty(FormatFactory.FORMAT_NAME_KEY, JsonLineFormat.NAME);
@@ -91,7 +91,7 @@ public class RetailSqrlModule implements SqrlModule {
         .schema(FlexibleTableSchemaFactory.SCHEMA_TYPE).build());
     builder.getConnectorConfig().setProperty(DataSystemConnectorFactory.SYSTEM_NAME_KEY,"in-mem-" + datasetName);
     TableConfig tableConfig = builder.build();
-    return tableConfig.initializeSource(NamePath.of("ecommerce-data"),
+    return tableConfig.initializeSource(NamePath.of(moduleName),
             UtbToFlexibleSchema.createFlexibleSchema(ReflectionToUt.reflection(clazz)));
   }
 

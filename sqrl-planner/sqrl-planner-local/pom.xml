@@ -51,6 +51,14 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-print</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-json-planner</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-vector-planner</artifactId>
+    </dependency>
 
     <!-- Utils -->
     <dependency>
@@ -250,6 +258,10 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-kafka</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-http-vertx</artifactId>
     </dependency>
 
   </dependencies>

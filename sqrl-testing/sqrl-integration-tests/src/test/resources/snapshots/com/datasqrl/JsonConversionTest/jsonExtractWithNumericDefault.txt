@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONEXTRACT(CAST('{"a": "hello"}' AS JSONB), '$.b', 0)
+FROM "jsondata$2"
+>>>postgres
+SELECT COALESCE(CAST(JSONB_PATH_QUERY_FIRST(CAST('{"a": "hello"}' AS JSONB), '$.b') AS INTEGER), 0)
+FROM "jsondata$2"
+>>>Postgres Result
+0
+>>>flink
+SELECT JSONEXTRACT(TOJSON('{"a": "hello"}'), '$.b', 0)
+FROM `jsondata$2`
+>>>Flink Result
+0

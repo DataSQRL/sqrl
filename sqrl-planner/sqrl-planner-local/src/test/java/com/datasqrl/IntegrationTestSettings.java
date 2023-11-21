@@ -25,6 +25,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.configuration.TaskManagerOptions;
 
 @Getter
 @Builder
@@ -67,7 +68,9 @@ public class IntegrationTestSettings {
       SqrlConfig stream = config.getSubConfig("streams");
 
       if (System.getProperty("os.name").toLowerCase().contains("mac")) {
-        stream.setProperty("taskmanager.memory.network.max", "800m");
+        stream.setProperty(TaskManagerOptions.NETWORK_MEMORY_MIN.key(), "256mb");
+        stream.setProperty(TaskManagerOptions.NETWORK_MEMORY_MAX.key(), "256mb");
+        stream.setProperty(TaskManagerOptions.MANAGED_MEMORY_SIZE.key(), "256mb");
       }
     }
 

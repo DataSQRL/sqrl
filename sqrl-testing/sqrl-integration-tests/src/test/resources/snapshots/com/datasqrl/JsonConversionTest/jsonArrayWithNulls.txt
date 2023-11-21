@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONB_BUILD_ARRAY('a', CAST(NULL AS VARCHAR(1) CHARACTER SET "UTF-16LE"), 'b', CAST(NULL AS VARCHAR(1) CHARACTER SET "UTF-16LE"))
+FROM "jsondata$2"
+>>>postgres
+SELECT JSONB_BUILD_ARRAY('a', CAST(NULL AS TEXT), 'b', CAST(NULL AS TEXT))
+FROM "jsondata$2"
+>>>Postgres Result
+["a", null, "b", null]
+>>>flink
+SELECT JSONARRAY('a', CAST(NULL AS VARCHAR(1) CHARACTER SET `UTF-16LE`), 'b', CAST(NULL AS VARCHAR(1) CHARACTER SET `UTF-16LE`))
+FROM `jsondata$2`
+>>>Flink Result
+["a",null,"b",null]

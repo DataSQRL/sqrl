@@ -88,17 +88,10 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     initialize(settings, rootDir, Optional.empty());
   }
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
+    Map<NamePath, SqrlModule> addlModules = (rootDir == null)
+        ? TestModuleFactory.merge(TestModuleFactory.createRetail(framework), TestModuleFactory.createFuzz(framework))
+        : Map.of();
 
-    Map<NamePath, SqrlModule> addlModules = Map.of();
-    CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
-    if (rootDir == null) {
-      RetailSqrlModule retailSqrlModule = new RetailSqrlModule();
-      retailSqrlModule.init(tableFactory);
-      FuzzingRetailSqrlModule fuzzingRetailSqrlModule = new FuzzingRetailSqrlModule();
-      fuzzingRetailSqrlModule.init(tableFactory);
-      addlModules = Map.of(NamePath.of("ecommerce-data"), retailSqrlModule,
-          NamePath.of("ecommerce-data-large"), fuzzingRetailSqrlModule);
-    }
     Pair<DatabaseHandle, PipelineFactory> engines = settings.getSqrlSettings();
     this.database = engines.getLeft();
 
@@ -173,7 +166,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     for (APIQuery query : apiManager.getQueries()) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
 
-      String sqlQuery = framework.getQueryPlanner().relToString(Dialect.POSTGRES, template.getRelNode());
+      String sqlQuery = framework.getQueryPlanner().relToString(Dialect.POSTGRES, template.getRelNode())
+          .getSql();
       log.info("Executing query for {}: {}", query.getNameId(), sqlQuery);
 
       ResultSet resultSet = conn

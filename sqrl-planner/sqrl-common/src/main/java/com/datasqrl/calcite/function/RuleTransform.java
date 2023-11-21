@@ -13,4 +13,6 @@ public interface RuleTransform {
    * as a parameter.
    */
   List<RelRule> transform(Dialect dialect, SqlOperator operator /* todo engine capabilities*/);
+
+  String getRuleOperatorName();
 }

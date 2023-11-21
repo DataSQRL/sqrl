@@ -22,7 +22,6 @@ import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.flink.function.BridgingSqlAggregateFunction;
 import com.datasqrl.flink.function.BridgingSqlScalarFunction;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.flink.api.common.ExecutionConfig;

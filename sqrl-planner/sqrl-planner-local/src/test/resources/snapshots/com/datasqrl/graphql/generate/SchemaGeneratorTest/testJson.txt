@@ -1,0 +1,14 @@
+scalar JSON
+
+type Product {
+  productid: Float!
+  name: String!
+  description: String!
+  category: String!
+  json: JSON
+}
+
+type Query {
+  Product(productid: Float, name: String, description: String, category: String, json: JSON, limit: Int = 10, offset: Int = 0): [Product!]
+}
+

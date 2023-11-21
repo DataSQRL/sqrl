@@ -3,7 +3,6 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.calcite.type.PrimitiveType;
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
@@ -51,7 +50,7 @@ public class CalciteUtil {
   }
 
   private static boolean isPrimitiveType(RelDataType t) {
-    return !t.isStruct() || t instanceof PrimitiveType;
+    return !t.isStruct();
   }
 
   public static Optional<RelDataType> getArrayElementType(RelDataType type) {
@@ -63,7 +62,7 @@ public class CalciteUtil {
   }
 
   public static boolean isBasicOrArrayType(RelDataType type) {
-    return type instanceof PrimitiveType || type instanceof BasicSqlType || type instanceof IntervalSqlType
+    return type instanceof BasicSqlType || type instanceof IntervalSqlType
         || type instanceof ArraySqlType || type instanceof MultisetSqlType;
   }
 

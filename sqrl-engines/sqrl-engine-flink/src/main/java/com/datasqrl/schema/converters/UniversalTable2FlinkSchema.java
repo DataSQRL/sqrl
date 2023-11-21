@@ -3,8 +3,6 @@
  */
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.calcite.type.BridgingFlinkType;
-import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.schema.UniversalTable;
 import java.util.List;
 import lombok.Value;
@@ -12,7 +10,10 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.utils.TypeConversions;
 
 
 @Value
@@ -22,80 +23,8 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
   //NOTE: Does not include nullable in this call, need to call nullable function
   @Override
   public DataType convertBasic(RelDataType datatype) {
-    if (datatype instanceof BridgingFlinkType) {
-      return ((BridgingFlinkType)datatype).getFlinkNativeType();
-    }
-
-    switch (datatype.getSqlTypeName()) {
-      case VARCHAR:
-        return DataTypes.VARCHAR(Integer.MAX_VALUE);
-      case CHAR:
-        return DataTypes.CHAR(datatype.getPrecision());
-      case TIMESTAMP:
-        return DataTypes.TIMESTAMP(datatype.getPrecision());
-      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        return DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(datatype.getPrecision());
-      case BIGINT:
-        return DataTypes.BIGINT();
-      case INTEGER:
-        return DataTypes.INT();
-      case SMALLINT:
-        return DataTypes.SMALLINT();
-      case TINYINT:
-        return DataTypes.TINYINT();
-      case BOOLEAN:
-        return DataTypes.BOOLEAN();
-      case DOUBLE:
-        return DataTypes.DOUBLE();
-      case DECIMAL:
-        return DataTypes.DECIMAL(datatype.getPrecision(), datatype.getScale());
-      case FLOAT:
-        return DataTypes.FLOAT();
-      case REAL:
-        return DataTypes.DOUBLE();
-      case DATE:
-        return DataTypes.DATE();
-      case TIME:
-        return DataTypes.TIME(datatype.getPrecision());
-      case ARRAY:
-        return DataTypes.ARRAY(nullable(convertBasic(datatype.getComponentType()), datatype.isNullable()));
-      case ROW:
-        return DataTypes.ROW(datatype.getFieldList().stream()
-            .map(f -> nullable(convertBasic(f.getType()), datatype.isNullable()))
-            .toArray(DataType[]::new));
-      case TIME_WITH_LOCAL_TIME_ZONE:
-      case BINARY:
-      case VARBINARY:
-      case GEOMETRY:
-      case SYMBOL:
-      case ANY:
-      case NULL:
-      case MAP:
-        return DataTypes.MAP(convertBasic(datatype.getKeyType()), convertBasic(datatype.getValueType()));
-      default:
-        break;
-      case INTERVAL_DAY_HOUR:
-      case INTERVAL_DAY_MINUTE:
-      case INTERVAL_DAY_SECOND:
-      case INTERVAL_HOUR_MINUTE:
-      case INTERVAL_HOUR_SECOND:
-      case INTERVAL_MINUTE_SECOND:
-      case INTERVAL_YEAR_MONTH:
-        throw new UnsupportedOperationException();
-      case INTERVAL_SECOND:
-        return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
-      case INTERVAL_YEAR:
-        return DataTypes.INTERVAL(DataTypes.YEAR(datatype.getPrecision()));
-      case INTERVAL_MINUTE:
-        return DataTypes.INTERVAL(DataTypes.MINUTE());
-      case INTERVAL_HOUR:
-        return DataTypes.INTERVAL(DataTypes.HOUR());
-      case INTERVAL_DAY:
-        return DataTypes.INTERVAL(DataTypes.SECOND(datatype.getPrecision()));
-      case INTERVAL_MONTH:
-        return DataTypes.INTERVAL(DataTypes.MONTH());
-    }
-    throw new UnsupportedOperationException("Unsupported type: " + datatype);
+    LogicalType logicalType = FlinkTypeFactory.toLogicalType(datatype);
+    return TypeConversions.fromLogicalToDataType(logicalType);
   }
 
   @Override

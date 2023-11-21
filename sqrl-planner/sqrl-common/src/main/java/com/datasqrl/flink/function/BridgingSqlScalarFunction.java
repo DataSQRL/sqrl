@@ -46,9 +46,7 @@ import java.util.List;
  * Bridges a Flink function to calcite
  */
 public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements BridgingFunction, RuleTransform {
-  private final DataTypeFactory dataTypeFactory;
-  private final FlinkTypeFactory flinkTypeFactory;
-  private final RexFactory rexFactory;
+
   @Getter
   private final FunctionDefinition definition;
   private final TypeInference typeInference;
@@ -64,9 +62,6 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
         createOperandMetadata(name, flinkTypeFactory, dataTypeFactory, definition),
         createCallableFlinkFunction(flinkTypeFactory, dataTypeFactory, definition),
         createSqlFunctionCategory());
-    this.dataTypeFactory = dataTypeFactory;
-    this.flinkTypeFactory = flinkTypeFactory;
-    this.rexFactory = rexFactory;
     this.definition = definition;
     this.typeInference = typeInference;
   }
@@ -79,12 +74,9 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
     return new FlinkSqlReturnTypeInference(flinkTypeFactory, dataTypeFactory, definition, definition.getTypeInference(dataTypeFactory));
   }
 
-  public static SqlOperandTypeInference createSqlOperandTypeInference(String name, FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, FunctionDefinition definition) {
+  public static SqlOperandTypeInference createSqlOperandTypeInference(String name,
+      FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, FunctionDefinition definition) {
     return new FlinkSqlOperandTypeInference(flinkTypeFactory, dataTypeFactory, definition, definition.getTypeInference(dataTypeFactory));
-  }
-
-  public static SqlOperandTypeChecker createSqlOperandTypeChecker(String name, FlinkTypeFactory flinkTypeFactory, DataTypeFactory dataTypeFactory, FunctionDefinition definition) {
-    return new FlinkSqlOperandTypeChecker(flinkTypeFactory, dataTypeFactory, definition, definition.getTypeInference(dataTypeFactory));
   }
 
   public static SqlFunctionCategory createSqlFunctionCategory() {
@@ -148,5 +140,14 @@ public class BridgingSqlScalarFunction extends SqlUserDefinedFunction implements
     }
 
     return List.of();
+  }
+
+
+  @Override
+  public String getRuleOperatorName() {
+    if (definition instanceof RuleTransform) {
+      return ((RuleTransform) definition).getRuleOperatorName();
+    }
+    return null;
   }
 }

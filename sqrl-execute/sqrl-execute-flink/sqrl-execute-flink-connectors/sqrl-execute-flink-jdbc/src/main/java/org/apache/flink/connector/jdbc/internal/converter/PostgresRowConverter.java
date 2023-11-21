@@ -18,19 +18,16 @@
 
 package org.apache.flink.connector.jdbc.internal.converter;
 
-import static com.datasqrl.type.FlinkArrayTypeUtil.isScalarArray;
-import static com.datasqrl.type.PostgresArrayTypeConverter.getArrayScalarName;
-
-import java.sql.Array;
-import java.sql.PreparedStatement;
+import com.datasqrl.type.JdbcTypeSerializer;
+import com.datasqrl.util.ServiceLoaderDiscovery;
+import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
 import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatementImpl;
-import org.apache.flink.table.data.ArrayData;
 import org.apache.flink.table.data.GenericArrayData;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.data.binary.BinaryArrayData;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
@@ -46,6 +43,16 @@ import org.postgresql.jdbc.PgArray;
 public class PostgresRowConverter extends BaseJdbcRowConverter {
 
     private static final long serialVersionUID = 1L;
+
+    public static final Map<Type, JdbcTypeSerializer<JdbcDeserializationConverter,
+        JdbcSerializationConverter>> sqrlSerializers = discoverSerializers();
+
+    private static Map<Type, JdbcTypeSerializer<JdbcDeserializationConverter, JdbcSerializationConverter>> discoverSerializers() {
+        return ServiceLoaderDiscovery.getAll(JdbcTypeSerializer.class)
+            .stream()
+            .filter(f->f.getDialect().equalsIgnoreCase("postgres"))
+            .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass, t->t));
+    }
 
     @Override
     public String converterName() {
@@ -65,6 +72,38 @@ public class PostgresRowConverter extends BaseJdbcRowConverter {
 //            java.sql.Array sqlArray = flinkPreparedStatement.getStatement()
 //                .getConnection().createArrayOf("bytea", );
             flinkPreparedStatement.getStatement().setBytes(idx, new byte[0]);
+        }
+    }
+
+
+    @Override
+    public JdbcDeserializationConverter createInternalConverter(LogicalType type) {
+        if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
+            return (JdbcDeserializationConverter)sqrlSerializers.get(type.getDefaultConversion())
+                .getDeserializerConverter().create();
+        } else {
+            return super.createInternalConverter(type);
+        }
+    }
+
+    @Override
+    protected JdbcSerializationConverter wrapIntoNullableExternalConverter(
+        JdbcSerializationConverter jdbcSerializationConverter, LogicalType type) {
+        if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
+            return jdbcSerializationConverter::serialize;
+        } else {
+            return super.wrapIntoNullableExternalConverter(jdbcSerializationConverter, type);
+        }
+    }
+
+    @Override
+    protected JdbcSerializationConverter createExternalConverter(LogicalType type) {
+        if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
+            return sqrlSerializers.get(type.getDefaultConversion())
+                .getSerializerConverter()
+                .create();
+        } else {
+            return super.createExternalConverter(type);
         }
     }
 

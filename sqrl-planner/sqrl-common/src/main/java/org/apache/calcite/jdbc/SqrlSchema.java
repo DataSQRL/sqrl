@@ -1,6 +1,7 @@
 package org.apache.calcite.jdbc;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
@@ -9,6 +10,8 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -136,5 +139,9 @@ public class SqrlSchema extends SimpleCalciteSchema {
         .filter(f->f instanceof SqrlTableMacro)
         .map(f->(SqrlTableMacro)f)
         .collect(Collectors.toList());
+  }
+
+  public SqrlTableMacro getTableFunction(String name) {
+    return (SqrlTableMacro)Iterables.getOnlyElement(getFunctions(name, false));
   }
 }

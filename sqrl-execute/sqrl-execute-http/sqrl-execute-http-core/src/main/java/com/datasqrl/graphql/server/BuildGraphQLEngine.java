@@ -7,7 +7,6 @@ import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.CoordVisitor;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
-import com.datasqrl.graphql.server.Model.FixedArgument;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
@@ -31,26 +30,36 @@ import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 public class BuildGraphQLEngine implements
     RootVisitor<GraphQL, Context>,
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     QueryBaseVisitor<ResolvedQuery, Context>,
     ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
+
+  private List<GraphQLScalarType> addlTypes;
+
+  public BuildGraphQLEngine() {
+    addlTypes = new ArrayList<>();
+  }
+
+  public BuildGraphQLEngine(List<GraphQLScalarType> addlTypes) {
+    this.addlTypes = addlTypes;
+  }
 
   @Override
   public TypeDefinitionRegistry visitStringDefinition(StringSchema stringSchema, Object context) {
@@ -98,6 +107,8 @@ public class BuildGraphQLEngine implements
         .codeRegistry(codeRegistry)
         .scalar(CustomScalars.Double)
         .scalar(CustomScalars.DATETIME);
+
+    addlTypes.forEach(t->wiring.scalar(t));
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {

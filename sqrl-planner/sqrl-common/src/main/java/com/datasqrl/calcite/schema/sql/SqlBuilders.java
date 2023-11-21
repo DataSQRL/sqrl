@@ -21,6 +21,7 @@ import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.Symbolizable;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -263,7 +264,7 @@ public class SqlBuilders {
 
     public SqlSelectBuilder setWhere(List<SqlNode> conditions) {
       if (conditions.size() > 1) {
-        SqlNode call = SqlNodeUtil.and(SqlParserPos.ZERO, conditions);
+        SqlNode call = SqlUtil.createCall(SqlStdOperatorTable.AND, SqlParserPos.ZERO, conditions);
         select.setWhere(call);
       } else if (conditions.size() == 1){
         select.setWhere(conditions.get(0));

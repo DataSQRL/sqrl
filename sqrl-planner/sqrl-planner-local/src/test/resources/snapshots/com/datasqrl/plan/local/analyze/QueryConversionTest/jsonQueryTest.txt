@@ -1,0 +1,6 @@
+>>>calcite
+SELECT JSONQUERY('{"a": {"b": 1}}', '$.a') AS "j"
+FROM "customer$2"
+>>>postgres
+SELECT JSONB_PATH_QUERY('{"a": {"b": 1}}', '$.a') AS "j"
+FROM "customer$2"

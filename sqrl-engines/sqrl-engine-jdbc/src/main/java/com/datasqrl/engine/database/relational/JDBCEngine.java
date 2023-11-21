@@ -5,22 +5,21 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.sql.PgExtension;
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.type.VectorType;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.ddl.PostgresCreateVectorExtensionStatement;
-import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.function.FunctionTranslationMap;
-import com.datasqrl.function.PgSpecificOperatorTable;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.formats.FormatFactory;
@@ -34,10 +33,12 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
+import com.datasqrl.type.JdbcTypeSerializer;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -54,6 +55,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.commons.collections.ListUtils;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
 public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
@@ -150,28 +152,38 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
   }
 
   private List<SqlDDLStatement> extractTypeExtensions(List<ReadQuery> queries) {
+    List<PgExtension> extensions = ServiceLoaderDiscovery.getAll(PgExtension.class);
+
     return queries.stream()
-        .flatMap(relNode -> extractTypeExtensions(relNode.getRelNode()).stream())
+        .flatMap(relNode -> extractTypeExtensions(relNode.getRelNode(), extensions).stream())
         .distinct()
         .collect(Collectors.toList());
   }
 
   //todo: currently vector specific
-  private List<SqlDDLStatement> extractTypeExtensions(RelNode relNode) {
+  private List<SqlDDLStatement> extractTypeExtensions(RelNode relNode, List<PgExtension> extensions) {
     Set<SqlDDLStatement> statements = new HashSet<>();
     //look at relnodes to see if we use a vector type
     for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
-      if (field.getType() instanceof VectorType) {
-        statements.add(new PostgresCreateVectorExtensionStatement());
+
+      for (PgExtension extension : extensions) {
+        if (field.getType() instanceof RawRelDataType &&
+            ((RawRelDataType) field.getType()).getRawType().getOriginatingClass()
+                == extension.typeClass())
+          statements.add(extension.getExtensionDdl());
       }
     }
 
     CalciteUtil.applyRexShuttleRecursively(relNode, new RexShuttle() {
       @Override
       public RexNode visitCall(RexCall call) {
-        //todo: generic for any types
-        if (FunctionTranslationMap.vectorTransformMap.containsKey(call.getOperator().getName().toLowerCase())) {
-          statements.add(new PostgresCreateVectorExtensionStatement());
+        for (PgExtension extension : extensions) {
+          for (SqrlFunction function : extension.operators()) {
+            if (function.getFunctionName().equals(
+                Name.system(call.getOperator().getName().toLowerCase()))) {
+              statements.add(extension.getExtensionDdl());
+            }
+          }
         }
 
         return super.visitCall(call);
@@ -179,5 +191,20 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
     });
 
     return new ArrayList<>(statements);
+  }
+
+  @Override
+  public boolean supportsType(java.lang.reflect.Type type) {
+    JdbcTypeSerializer jdbcTypeSerializer = ServiceLoaderDiscovery.get(JdbcTypeSerializer.class,
+        (Function<JdbcTypeSerializer, String>) JdbcTypeSerializer::getDialect,
+        connector.getDialect(),
+        (Function<JdbcTypeSerializer, String>) jdbcTypeSerializer1 -> jdbcTypeSerializer1.getConversionClass().getTypeName(),
+        type.getTypeName());
+
+    if (jdbcTypeSerializer != null) {
+      return true;
+    }
+
+    return super.supportsType(type);
   }
 }

@@ -46,4 +46,10 @@ public class SchemaGeneratorTest extends AbstractSchemaGeneratorTest {
     snapshotTest("IMPORT ecommerce-data.Orders;", false);
   }
 
+  @Test
+  public void testJson() {
+    snapshotTest("IMPORT ecommerce-data.Product;\n"
+        + "IMPORT json.*;\n"
+        + "Product.json := toJson('{}');");
+  }
 }

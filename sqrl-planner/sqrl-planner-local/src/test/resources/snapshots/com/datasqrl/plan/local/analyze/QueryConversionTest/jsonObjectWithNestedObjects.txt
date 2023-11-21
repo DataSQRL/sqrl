@@ -1,0 +1,9 @@
+>>>calcite
+SELECT JSONOBJECT('key1', JSONOBJECT('nestedKey', 'nestedValue'), 'key2', 'value2') AS "j"
+FROM "customer$2"
+>>>postgres
+SELECT JSONB_BUILD_OBJECT('key1', JSONB_BUILD_OBJECT('nestedKey', 'nestedValue'), 'key2', 'value2') AS "j"
+FROM "customer$2"
+>>>flink
+SELECT JSON_OBJECT(KEY 'key1' VALUE JSON_OBJECT(KEY 'nestedKey' VALUE 'nestedValue' NULL ON NULL), KEY 'key2' VALUE 'value2' NULL ON NULL) AS `j`
+FROM `customer$2`

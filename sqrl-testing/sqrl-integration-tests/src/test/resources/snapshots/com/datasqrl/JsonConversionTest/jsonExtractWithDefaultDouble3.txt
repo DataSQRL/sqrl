@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONEXTRACT(CAST('{"a": 0.2}' AS JSONB), '$.a', 0.0)
+FROM "jsondata$2"
+>>>postgres
+SELECT COALESCE(CAST(JSONB_PATH_QUERY_FIRST(CAST('{"a": 0.2}' AS JSONB), '$.a') AS DOUBLE PRECISION), 0.0)
+FROM "jsondata$2"
+>>>Postgres Result
+0.2
+>>>flink
+SELECT JSONEXTRACT(TOJSON('{"a": 0.2}'), '$.a', 0.0)
+FROM `jsondata$2`
+>>>Flink Result
+0.2

@@ -4,7 +4,6 @@
 package com.datasqrl.graphql.generate;
 
 import com.datasqrl.graphql.inference.SqrlSchemaForInference;
-import graphql.language.ObjectTypeDefinition;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
@@ -17,8 +16,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**

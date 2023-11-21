@@ -17,10 +17,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.tribuo</groupId>
-      <artifactId>tribuo-onnx</artifactId>
-      <version>4.3.1</version>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-json-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-vector-execute</artifactId>
     </dependency>
   </dependencies>
-
 </project>

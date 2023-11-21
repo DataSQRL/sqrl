@@ -5,10 +5,9 @@ package com.datasqrl.engine.database.relational.ddl.statements;
 
 import static com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory.quoteIdentifier;
 
-import com.datasqrl.engine.database.relational.ddl.SqlDDLStatement;
+import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.function.IndexType;
 import com.google.common.base.Preconditions;
-import java.util.Collection;
 import java.util.stream.Collectors;
 import lombok.Value;
 

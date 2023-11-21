@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONB_BUILD_ARRAY('', '', '', '')
+FROM "jsondata$2"
+>>>postgres
+SELECT JSONB_BUILD_ARRAY('', '', '', '')
+FROM "jsondata$2"
+>>>Postgres Result
+["", "", "", ""]
+>>>flink
+SELECT JSONARRAY('', '', '', '')
+FROM `jsondata$2`
+>>>Flink Result
+["","","",""]

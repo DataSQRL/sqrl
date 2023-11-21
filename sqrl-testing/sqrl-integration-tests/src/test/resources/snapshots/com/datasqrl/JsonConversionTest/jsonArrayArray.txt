@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONB_BUILD_ARRAY(JSONB_BUILD_ARRAY(1))
+FROM "jsondata$2"
+>>>postgres
+SELECT JSONB_BUILD_ARRAY(JSONB_BUILD_ARRAY(1))
+FROM "jsondata$2"
+>>>Postgres Result
+[[1]]
+>>>flink
+SELECT JSONARRAY(JSONARRAY(1))
+FROM `jsondata$2`
+>>>Flink Result
+[[1]]

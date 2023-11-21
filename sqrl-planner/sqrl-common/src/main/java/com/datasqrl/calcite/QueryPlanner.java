@@ -1,13 +1,23 @@
 package com.datasqrl.calcite;
 
+import com.datasqrl.calcite.convert.RelToSqlNode;
+import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
+import com.datasqrl.calcite.convert.SqlConverterFactory;
+import com.datasqrl.calcite.convert.SqlNodeToString;
+import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
+import com.datasqrl.calcite.convert.SqlToStringFactory;
+import com.datasqrl.calcite.plan.ScriptPlanner;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.parse.SqrlParserImpl;
+import com.datasqrl.plan.validate.ScriptValidator;
 import com.datasqrl.util.DataContextImpl;
-import com.datasqrl.calcite.convert.PostgresSqlConverter;
+import com.datasqrl.util.SqlNameUtil;
 import java.util.Arrays;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
@@ -29,7 +39,6 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
-import org.apache.calcite.rel.rel2sql.RelToSqlConverterWithHints;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.rules.SubQueryRemoveRule;
 import org.apache.calcite.rel.type.RelDataType;
@@ -39,11 +48,9 @@ import org.apache.calcite.runtime.ArrayBindable;
 import org.apache.calcite.runtime.Bindable;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.*;
-import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.pretty.SqlPrettyWriter;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
 import org.apache.calcite.sql2rel.RelDecorrelator;
@@ -127,23 +134,28 @@ public class QueryPlanner {
   }
 
   /* Plan */
-  public SqlNode validate(Dialect dialect, SqlNode query, SqlValidator validator) {
-    switch (dialect) {
-      case SQRL:
-        break;
-      case CALCITE:
-        return validator.validate(query);
-      case FLINK:
-        break;
-      case POSTGRES:
-        break;
-    }
-    return null;
 
+  public void planSqrl(SqrlStatement statement, SqrlTableFactory tableFactory, ModuleLoader moduleLoader,
+      ErrorCollector errors) {
+    SqlNameUtil sqlNameUtil = new SqlNameUtil(framework.getNameCanonicalizer());
+    errors = errors
+        .withSource("")
+        .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
+    ScriptValidator scriptValidator = new ScriptValidator(this.framework,
+        this, moduleLoader, errors, sqlNameUtil);
+    scriptValidator.validateStatement(statement);
+    if (errors.hasErrors()) {
+      throw new RuntimeException("Could not plan");
+    }
+    ScriptPlanner planner1 = new ScriptPlanner(this, scriptValidator,
+        tableFactory, framework, sqlNameUtil, errors);
+    planner1.plan(statement);
   }
 
   public RelNode plan(Dialect dialect, SqlNode query) {
     switch (dialect) {
+      case SQRL:
+        break;
       case CALCITE:
         return planCalcite(query);
       case FLINK:
@@ -188,6 +200,19 @@ public class QueryPlanner {
    */
   @SneakyThrows
   public RelDataType parseDatatype(String datatype) {
+    // Addl type aliases
+    if (datatype.equalsIgnoreCase("String")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.VARCHAR);
+    } else if (datatype.equalsIgnoreCase("Int")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.INTEGER);
+    } else if (datatype.equalsIgnoreCase("Float")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.FLOAT);
+    } else if (datatype.equalsIgnoreCase("boolean")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BOOLEAN);
+    } else if (datatype.equalsIgnoreCase("double")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.DOUBLE);
+    }
+
     SqlCall sqlNode = (SqlCall) SqlParser.create(String.format("CAST(null AS %s)", datatype))
         .parseExpression();
 
@@ -247,36 +272,13 @@ public class QueryPlanner {
   /* Convert */
 
   public RelNode convertRelToDialect(Dialect dialect, RelNode relNode) {
-    switch (dialect) {
-      case SQRL:
-        break;
-      case CALCITE:
-        break;
-      case FLINK:
-        break;
-      case POSTGRES:
-        relNode = new DialectCallConverter(planner)
-            .convert(dialect, relNode);
-        return relNode;
-    }
-
-    throw new RuntimeException("Unknown dialect");
+    return new DialectCallConverter(planner)
+        .convert(dialect, relNode);
   }
 
-  public SqlNode relToSql(Dialect dialect, RelNode relNode) {
-    switch (dialect) {
-      case POSTGRES:
-        return new PostgresSqlConverter()
-            .convert(relNode);
-      case CALCITE:
-        SqlNode node = new RelToSqlConverterWithHints(CalciteSqlDialect.DEFAULT).visitRoot(relNode).asStatement();
-        CalciteFixes.appendSelectLists(node);
-        return node;
-      case SQRL:
-      case FLINK:
-      default:
-        throw new RuntimeException("Unknown dialect");
-    }
+  public SqlNodes relToSql(Dialect dialect, RelNode relNode) {
+    RelToSqlNode relToSql = SqlConverterFactory.get(dialect);
+    return relToSql.convert(relNode);
   }
 
   /* Compile */
@@ -363,7 +365,6 @@ public class QueryPlanner {
   }
 
   /* Factories */
-
   public SqlValidator createSqlValidator() {
     return new SqrlSqlValidator(
         this.operatorTable,
@@ -396,24 +397,9 @@ public class QueryPlanner {
     return new RexBuilder(catalogReader.getTypeFactory());
   }
 
-  public String sqlToString(Dialect dialect, SqlNode node) {
-    switch (dialect) {
-      case SQRL:
-        break;
-      case CALCITE:
-        SqlWriterConfig config2 = SqrlConfigurations.sqlToString.apply(SqlPrettyWriter.config());
-        SqlPrettyWriter prettyWriter = new SqlPrettyWriter(config2);
-        node.unparse(prettyWriter, 0, 0);
-        return prettyWriter.toSqlString().getSql();
-      case FLINK:
-        break;
-      case POSTGRES:
-        SqlWriterConfig config = SqrlConfigurations.sqlToString.apply(SqlPrettyWriter.config());
-        DynamicParamSqlPrettyWriter writer = new DynamicParamSqlPrettyWriter(config);
-        node.unparse(writer, 0, 0);
-        return writer.toSqlString().getSql();
-    }
-    throw new RuntimeException("Unknown dialect");
+  public SqlStrings sqlToString(Dialect dialect, SqlNodes node) {
+    SqlNodeToString sqlToString = SqlToStringFactory.get(dialect);
+    return sqlToString.convert(node);
   }
 
   public RelNode run(RelNode relNode, RelRule... rules) {
@@ -422,7 +408,7 @@ public class QueryPlanner {
             List.of(), List.of());
   }
 
-  public String relToString(Dialect dialect, RelNode relNode) {
+  public SqlStrings relToString(Dialect dialect, RelNode relNode) {
     return sqlToString(dialect, relToSql(dialect, relNode));
   }
 

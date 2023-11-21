@@ -165,9 +165,35 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void nativeJsonTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT flink.*");
+    builder.add("X := SELECT JSON_OBJECT(KEY 'K1' VALUE CAST(NULL AS STRING) NULL ON NULL) AS json"
+        + " FROM Product");
+    validateScript(builder.getScript());
+  }
+
+  @Test
+  public void nativeJsonTest2() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT flink.*");
+    builder.add("X := SELECT JSON_OBJECT(KEY 'K1' VALUE 'V1' NULL ON NULL) AS json"
+        + " FROM Product");
+    validateScript(builder.getScript());
+  }
+
+  @Test
   public void productTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("X := SELECT * FROM Product");
+    validateScript(builder.getScript());
+  }
+
+  @Test
+  public void jsonTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT json.toJson AS jsonize");
+    builder.add("X := SELECT jsonize('{}') FROM Product");
     validateScript(builder.getScript());
   }
 
