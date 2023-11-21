@@ -5,8 +5,8 @@ import com.datasqrl.util.ServiceLoaderDiscovery;
 
 public class SqlToStringFactory {
 
-  public static SqlToString get(Dialect dialect) {
-    return ServiceLoaderDiscovery.get(SqlToString.class, e->e.getDialect().name(),
+  public static SqlNodeToString get(Dialect dialect) {
+    return ServiceLoaderDiscovery.get(SqlNodeToString.class, e->e.getDialect().name(),
         dialect.name());
   }
 }

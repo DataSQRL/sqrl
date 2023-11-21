@@ -2,13 +2,13 @@ package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.SqrlConfigurations;
-import com.datasqrl.calcite.convert.SqlConverter.SqlNodes;
+import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
-@AutoService(SqlToString.class)
-public class CalciteSqlToString implements SqlToString {
+@AutoService(SqlNodeToString.class)
+public class CalciteSqlNodeToString implements SqlNodeToString {
 
   @Override
   public SqlStrings convert(SqlNodes sqlNode) {

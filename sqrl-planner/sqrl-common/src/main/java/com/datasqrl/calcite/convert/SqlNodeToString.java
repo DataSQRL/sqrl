@@ -1,9 +1,9 @@
 package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.SqlConverter.SqlNodes;
+import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 
-public interface SqlToString {
+public interface SqlNodeToString {
   SqlStrings convert(SqlNodes sqlNode);
 
   Dialect getDialect();

@@ -1,10 +1,10 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.convert.SqlConverter;
-import com.datasqrl.calcite.convert.SqlConverter.SqlNodes;
+import com.datasqrl.calcite.convert.RelToSqlNode;
+import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.convert.SqlConverterFactory;
-import com.datasqrl.calcite.convert.SqlToString;
-import com.datasqrl.calcite.convert.SqlToString.SqlStrings;
+import com.datasqrl.calcite.convert.SqlNodeToString;
+import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.calcite.plan.ScriptPlanner;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
@@ -70,7 +70,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import scala.reflect.internal.Names.TypeName;
 
 /**
  * A facade to the calcite planner
@@ -278,7 +277,7 @@ public class QueryPlanner {
   }
 
   public SqlNodes relToSql(Dialect dialect, RelNode relNode) {
-    SqlConverter relToSql = SqlConverterFactory.get(dialect);
+    RelToSqlNode relToSql = SqlConverterFactory.get(dialect);
     return relToSql.convert(relNode);
   }
 
@@ -399,7 +398,7 @@ public class QueryPlanner {
   }
 
   public SqlStrings sqlToString(Dialect dialect, SqlNodes node) {
-    SqlToString sqlToString = SqlToStringFactory.get(dialect);
+    SqlNodeToString sqlToString = SqlToStringFactory.get(dialect);
     return sqlToString.convert(node);
   }
 

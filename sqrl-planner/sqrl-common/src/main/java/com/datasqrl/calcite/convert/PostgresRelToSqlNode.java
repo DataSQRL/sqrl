@@ -6,8 +6,8 @@ import com.google.auto.service.AutoService;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 
-@AutoService(SqlConverter.class)
-public class PostgresSqlConverter implements SqlConverter {
+@AutoService(RelToSqlNode.class)
+public class PostgresRelToSqlNode implements RelToSqlNode {
 
   @Override
   public SqlNodes convert(RelNode relNode) {

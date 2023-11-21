@@ -8,8 +8,8 @@ import org.apache.calcite.sql.CalciteFixes;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
 
-@AutoService(SqlConverter.class)
-public class CalciteSqlConverter implements SqlConverter {
+@AutoService(RelToSqlNode.class)
+public class CalciteRelToSqlNode implements RelToSqlNode {
 
   @Override
   public SqlNodes convert(RelNode relNode) {

@@ -1,13 +1,13 @@
 package com.datasqrl;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.SqlConverter.SqlNodes;
-import com.datasqrl.calcite.convert.SqlToString;
+import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
+import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.google.auto.service.AutoService;
 
-@AutoService(SqlToString.class)
-public class FlinkSqlToString implements SqlToString {
+@AutoService(SqlNodeToString.class)
+public class FlinkSqlNodeToString implements SqlNodeToString {
 
   @Override
   public SqlStrings convert(SqlNodes sqlNode) {
