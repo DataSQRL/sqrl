@@ -65,7 +65,7 @@ public class CalciteTableFactory {
   public ScriptRelationalTable createScriptTable(@NonNull UniversalTable tblBuilder,
       ScriptRelationalTable parent, Name shredFieldName) {
     Name tableId = tableIdFactory.createTableId(tblBuilder.getName());
-    RelDataType rowType = tableConverter.tableToDataType(tblBuilder, true, false);
+    RelDataType rowType = tableConverter.tableToDataType(tblBuilder,  false);
     return LogicalNestedTable.of(
         tableId,
         rowType,

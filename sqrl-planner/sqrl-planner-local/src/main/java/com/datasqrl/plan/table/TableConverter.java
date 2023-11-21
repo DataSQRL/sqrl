@@ -28,9 +28,8 @@ public class TableConverter {
     return converter.convert(path, type, index2Name);
   }
 
-  public RelDataType tableToDataType(UniversalTable tblBuilder, boolean includeNested,
-      boolean onlyVisible) {
-    return new UTB2RelDataTypeConverter(typeFactory).convertSchema(tblBuilder, includeNested, onlyVisible);
+  public RelDataType tableToDataType(UniversalTable tblBuilder, boolean onlyVisible) {
+    return new UTB2RelDataTypeConverter(typeFactory).convertSchema(tblBuilder, onlyVisible);
   }
 
   public UniversalTable sourceToTable(TableSchema tableSchema,

@@ -15,12 +15,9 @@ public abstract class Field {
 
   @NonNull
   protected final Name name;
-  protected final int version;
 
-  protected Field(@NonNull Name name, int version) {
-    Preconditions.checkArgument(version >= 0);
+  protected Field(@NonNull Name name) {
     this.name = name;
-    this.version = version;
   }
 
   public Name getId() {

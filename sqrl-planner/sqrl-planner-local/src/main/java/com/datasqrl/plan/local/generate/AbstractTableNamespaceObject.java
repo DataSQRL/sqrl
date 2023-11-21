@@ -65,7 +65,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     );
 
     // Convert the universal table to a Calcite relational data type
-    RelDataType rootType = tableConverter.tableToDataType(rootTable, true, true);
+    RelDataType rootType = tableConverter.tableToDataType(rootTable,  true);
 
     // Create imported table and its proxy with unique IDs
     ImportedRelationalTableImpl importedTable = tableFactory.createImportedTable(rootType, tableSource, rootTable.getName());

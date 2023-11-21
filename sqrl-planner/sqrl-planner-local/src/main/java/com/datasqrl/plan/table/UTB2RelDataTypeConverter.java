@@ -52,11 +52,10 @@ public class UTB2RelDataTypeConverter implements UniversalTable.TypeConverter<Re
 
   @Override
   public RelDataType convertSchema(UniversalTable tblBuilder) {
-    return convertSchema(tblBuilder, true, true);
+    return convertSchema(tblBuilder,  true);
   }
 
-  public RelDataType convertSchema(UniversalTable tblBuilder, boolean includeNested,
-      boolean onlyVisible) {
-    return nestedTable(tblBuilder.convert(this, includeNested, onlyVisible));
+  public RelDataType convertSchema(UniversalTable tblBuilder, boolean onlyVisible) {
+    return nestedTable(tblBuilder.convert(this, onlyVisible));
   }
 }

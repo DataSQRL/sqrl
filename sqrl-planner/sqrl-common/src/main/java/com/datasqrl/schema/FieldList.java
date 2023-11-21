@@ -21,65 +21,17 @@ public class FieldList {
   @Getter
   List<Field> fields = new ArrayList<>();
 
-  public int nextVersion(Name name) {
-    return fields.stream().filter(f -> f.getName().equals(name)).map(Field::getVersion)
-        .max(Integer::compareTo).map(i -> i + 1).orElse(0);
-  }
-
   public List<Field> toList() {
     return new ArrayList<>(fields);
   }
-
 
   public void addField(Field field) {
     fields.add(field);
   }
 
-  public Stream<Field> getFields(boolean onlyVisible) {
-    Stream<Field> s = fields.stream();
-    if (onlyVisible) {
-      s = s.filter(Field::isVisible);
-    }
-    return s;
-  }
-
-  public Stream<IndexedField> getIndexedFields(boolean onlyVisible) {
+  public Stream<IndexedField> getIndexedFields() {
     IntStream s = IntStream.range(0, fields.size());
-    if (onlyVisible) {
-      s = s.filter(i -> fields.get(i).isVisible());
-    }
     return s.mapToObj(i -> new IndexedField(i, fields.get(i)));
-  }
-
-  public List<Field> getAccessibleFields() {
-    return getAccessibleFields(true);
-  }
-
-  public List<Field> getAccessibleFields(boolean onlyVisible) {
-    Map<Name, Field> fieldsByName = getFields(onlyVisible)
-        .collect(Collectors.toMap(Field::getName, Function.identity(),
-            BinaryOperator.maxBy(Comparator.comparing(Field::getVersion))));
-    return getFields(onlyVisible).filter(f -> fieldsByName.get(f.getName()).equals(f))
-        .collect(Collectors.toList());
-  }
-
-  public Optional<Field> getAccessibleField(@NonNull Name name) {
-    return fields.stream().filter(f -> f.getName().equals(name))
-        .filter(Field::isVisible)
-        .max((a, b) -> Integer.compare(a.getVersion(), b.getVersion()));
-  }
-
-  public List<Column> getColumns() {
-    Map<String, Column> cols = new LinkedHashMap<>();
-    for (Field f : fields) {
-      if (!f.isVisible() || !(f instanceof Column)) {
-        continue;
-      }
-      cols.put(f.getName().getCanonical(), (Column) f);
-    }
-    return cols.entrySet().stream()
-        .map(Entry::getValue)
-        .collect(Collectors.toList());
   }
 
   @Value

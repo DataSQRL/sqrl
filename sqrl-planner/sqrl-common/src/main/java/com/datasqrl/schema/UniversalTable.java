@@ -56,10 +56,10 @@ public class UniversalTable {
       UniversalTable parent, boolean isSingleton, boolean hasSourceTimestamp) {
     this.parent = parent;
     //Add parent primary key columns
-    Iterator<Column> parentCols = parent.getColumns(false).iterator();
+    Iterator<Column> parentCols = parent.getColumns().iterator();
     for (int i = 0; i < parent.numPrimaryKeys; i++) {
       Column ppk = parentCols.next();
-      addColumn(new Column(ppk.getName(), ppk.getVersion(), ppk.getType(), false));
+      addColumn(new Column(ppk.getName(), ppk.getType(), false));
     }
     this.numPrimaryKeys = parent.numPrimaryKeys + (isSingleton ? 0 : 1);
     this.path = path;
@@ -67,17 +67,17 @@ public class UniversalTable {
     this.hasSourceTimestamp = hasSourceTimestamp;
   }
 
-  public List<Column> getColumns(boolean onlyVisible) {
-    return (List) StreamUtil.filterByClass(fields.getFields(onlyVisible), Column.class)
+  public List<Column> getColumns() {
+    return (List) StreamUtil.filterByClass(fields.getFields(), Column.class)
         .collect(Collectors.toList());
   }
 
   public Stream<FieldList.IndexedField> getAllIndexedFields() {
-    return fields.getIndexedFields(false);
+    return fields.getIndexedFields();
   }
 
   public List<Field> getAllFields() {
-    return fields.getFields(false).collect(Collectors.toList());
+    return fields.toList();
   }
 
   protected void addColumn(Column colum) {
@@ -89,15 +89,12 @@ public class UniversalTable {
   }
 
   public void addColumn(Name colName, RelDataType type, boolean visible) {
-    int version = fields.nextVersion(colName);
-
     //A name may clash with a previously added name, hence we increase the version
-    fields.addField(new Column(colName, version, type, visible));
+    fields.addField(new Column(colName, type, visible));
   }
 
   public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
-    int version = fields.nextVersion(name);
-    fields.addField(new ChildRelationship(name, version, child, multiplicity));
+    fields.addField(new ChildRelationship(name, child, multiplicity));
   }
 
   @Getter
@@ -106,8 +103,8 @@ public class UniversalTable {
     final RelDataType type;
     final boolean visible;
 
-    public Column(Name name, int version, RelDataType type, boolean visible) {
-      super(name, version);
+    public Column(Name name, RelDataType type, boolean visible) {
+      super(name);
       this.type = type;
       this.visible = visible;
     }
@@ -123,22 +120,21 @@ public class UniversalTable {
     final UniversalTable childTable;
     final Multiplicity multiplicity;
 
-    public ChildRelationship(Name name, int version, UniversalTable childTable,
+    public ChildRelationship(Name name, UniversalTable childTable,
         Multiplicity multiplicity) {
-      super(name, version);
+      super(name);
       this.childTable = childTable;
       this.multiplicity = multiplicity;
     }
   }
 
   public <T> List<Pair<String, T>> convert(TypeConverter<T> converter) {
-    return convert(converter, true, true);
+    return convert(converter, true);
   }
 
-  public <T> List<Pair<String, T>> convert(TypeConverter<T> converter, boolean includeNested,
-      boolean onlyVisible) {
-    return fields.getFields(false)
-        .filter(f -> (includeNested || (f instanceof Column)) && (!onlyVisible || f.isVisible()))
+  public <T> List<Pair<String, T>> convert(TypeConverter<T> converter, boolean onlyVisible) {
+    return fields.getFields().stream()
+        .filter(f -> (!onlyVisible || f.isVisible()))
         .map(f -> {
           String name = f.getId().getDisplay();
           T type;
@@ -149,7 +145,7 @@ public class UniversalTable {
           } else {
             ChildRelationship childRel = (ChildRelationship) f;
             T nestedTable = converter.nestedTable(
-                childRel.getChildTable().convert(converter, includeNested, onlyVisible));
+                childRel.getChildTable().convert(converter, onlyVisible));
             nestedTable = converter.nullable(nestedTable,
                 childRel.multiplicity == Multiplicity.ZERO_ONE);
             if (childRel.multiplicity == Multiplicity.MANY) {
