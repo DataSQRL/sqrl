@@ -4,9 +4,14 @@
 package com.datasqrl.schema.converters;
 
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.RelDataTypeBuilder;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
@@ -17,17 +22,14 @@ import org.apache.flink.table.types.utils.TypeConversions;
 
 
 @Value
-public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<DataType>,
-    UniversalTable.SchemaConverter<Schema> {
+public class UniversalTable2FlinkSchema implements UniversalTable.SchemaConverter<Schema> {
 
   //NOTE: Does not include nullable in this call, need to call nullable function
-  @Override
-  public DataType convertBasic(RelDataType datatype) {
+  public DataType convertPrimitive(RelDataType datatype) {
     LogicalType logicalType = FlinkTypeFactory.toLogicalType(datatype);
     return TypeConversions.fromLogicalToDataType(logicalType);
   }
 
-  @Override
   public DataType nullable(DataType type, boolean nullable) {
     if (nullable) {
       return type.nullable();
@@ -36,27 +38,48 @@ public class UniversalTable2FlinkSchema implements UniversalTable.TypeConverter<
     }
   }
 
-  @Override
-  public DataType wrapArray(DataType type) {
+  private DataType wrapArray(DataType type) {
     return DataTypes.ARRAY(type);
   }
 
-  @Override
-  public DataType nestedTable(List<Pair<String, DataType>> columns) {
-    DataTypes.Field[] fields = new DataTypes.Field[columns.size()];
+  private DataType nestedTable(List<RelDataTypeField> relation) {
+    DataTypes.Field[] fields = new DataTypes.Field[relation.size()];
     int i = 0;
-    for (Pair<String, DataType> column : columns) {
-      fields[i++] = DataTypes.FIELD(column.getKey(), column.getValue());
+    for (RelDataTypeField column : relation) {
+      fields[i++] = DataTypes.FIELD(column.getName(), convertRelDataType(column.getType()));
     }
     return DataTypes.ROW(fields);
   }
 
-  @Override
-  public Schema convertSchema(UniversalTable tblBuilder) {
-    Schema.Builder schemaBuilder = Schema.newBuilder();
-    for (Pair<String, DataType> column : tblBuilder.convert(this)) {
-      schemaBuilder.column(column.getKey(), column.getValue());
+  private DataType convertRelDataType(RelDataType type) {
+    DataType resultType;
+    if (type.isStruct()) {
+      resultType = nestedTable(type.getFieldList());
+    } else if (CalciteUtil.isArray(type)) {
+      resultType = wrapArray(convertRelDataType(CalciteUtil.getArrayElementType(type).get()));
+    } else {
+      resultType = convertPrimitive(type);
     }
+    return nullable(resultType, type.isNullable());
+  }
+
+  @Override
+  public Schema convertSchema(UniversalTable table) {
+    Schema.Builder schemaBuilder = Schema.newBuilder();
+    convert(table, schemaBuilder::column);
     return schemaBuilder.build();
   }
+
+  public void convert(UniversalTable table, BiConsumer<String, DataType> consumer) {
+    for (RelDataTypeField column : table.getType().getFieldList()) {
+      consumer.accept(column.getName(), convertRelDataType(column.getType()));
+    }
+  }
+
+  public List<Pair<String, DataType>> convertToList(UniversalTable table) {
+    List<Pair<String, DataType>> columns = new ArrayList<>();
+    convert(table, (name, type) -> columns.add(Pair.of(name, type)));
+    return columns;
+  }
+
 }

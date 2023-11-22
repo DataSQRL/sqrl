@@ -23,13 +23,12 @@ public class TableConverter {
   public UniversalTable convert2TableBuilder(@NonNull NamePath path,
       RelDataType type, int numPrimaryKeys,
       LinkedHashMap<Integer, Name> index2Name) {
-    RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory, numPrimaryKeys,
-        canonicalizer);
-    return converter.convert(path, type, index2Name);
+    RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory);
+    return converter.convert(path, type, numPrimaryKeys, index2Name);
   }
 
   public RelDataType tableToDataType(UniversalTable tblBuilder) {
-    return new UTB2RelDataTypeConverter(typeFactory).convertSchema(tblBuilder);
+    return new UTB2RelDataTypeConverter().convertSchema(tblBuilder);
   }
 
   public UniversalTable sourceToTable(TableSchema tableSchema,

@@ -525,10 +525,10 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   private SerializableSchema convertSchema(UniversalTable universalTable, String watermarkName,
       String watermarkExpression, WaterMarkType waterMarkType) {
-    List<Pair<String, DataType>> columns = universalTable.convert(new UniversalTable2FlinkSchema());
+    UniversalTable2FlinkSchema schemaConverter = new UniversalTable2FlinkSchema();
 
     return SerializableSchema.builder()
-        .columns(columns)
+        .columns(schemaConverter.convertToList(universalTable))
         .waterMarkType(waterMarkType)
         .watermarkName(watermarkName)
         .watermarkExpression(watermarkExpression)

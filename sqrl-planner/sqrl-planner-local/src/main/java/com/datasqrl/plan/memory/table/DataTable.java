@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.memory.table;
 
+import com.datasqrl.util.RelDataTypeBuilder;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +35,7 @@ public class DataTable extends AbstractTable implements QueryableTable {
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
-    CalciteUtil.RelDataTypeBuilder builder = CalciteUtil.getRelTypeBuilder(relDataTypeFactory);
+    RelDataTypeBuilder builder = CalciteUtil.getRelTypeBuilder(relDataTypeFactory);
     header
         .forEach(builder::add);
     return builder.build();

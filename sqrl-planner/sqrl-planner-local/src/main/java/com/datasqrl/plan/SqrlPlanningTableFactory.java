@@ -106,7 +106,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
     //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
     //of tblDef.getTable() based on the provided list of fieldNames
-    return tableFactory.createScriptTables(rootTable, baseTable, Optional.empty());
+    return tableFactory.createScriptTables(rootTable, baseTable);
   }
 
   private void validateFieldNames(LPAnalysis analyzedLP, List<Name> fieldNames) {

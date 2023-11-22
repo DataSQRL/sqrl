@@ -11,7 +11,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.schema.UniversalTable;
-import com.datasqrl.schema.UniversalTable.ChildRelationship;
 import com.google.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -62,35 +61,36 @@ public class CalciteTableFactory {
     return new QueryRelationalTable(tableId, name, analyzedLP);
   }
 
-  public ScriptRelationalTable createScriptTable(@NonNull UniversalTable tblBuilder,
-      ScriptRelationalTable parent, Name shredFieldName) {
-    Name tableId = tableIdFactory.createTableId(tblBuilder.getName());
-    RelDataType rowType = tableConverter.tableToDataType(tblBuilder);
+  public ScriptRelationalTable createScriptTable(@NonNull UniversalTable table,
+      ScriptRelationalTable parent) {
+    Name tableId = tableIdFactory.createTableId(table.getName());
+    RelDataType rowType = tableConverter.tableToDataType(table);
     return LogicalNestedTable.of(
         tableId,
         rowType,
         parent,
-        shredFieldName.getCanonical(),
+        table.getName().getCanonical(),
         tableConverter.typeFactory);
   }
 
   public Map<NamePath, ScriptRelationalTable> createScriptTables(UniversalTable builder,
-      ScriptRelationalTable parent, Optional<ChildRelationship> childRel) {
+      ScriptRelationalTable parent) {
     Map<NamePath, ScriptRelationalTable> createdTables = new LinkedHashMap<>();
+    //Special case: at the root we just add to the map
+    final ScriptRelationalTable nextParent;
+    if (builder.getParent().isEmpty()) {
+      assert parent instanceof PhysicalRelationalTable;
+      createdTables.put(builder.getPath(), parent);
+      nextParent = parent;
+    } else {
+      nextParent = createScriptTable(builder, parent);
+    }
 
-    ScriptRelationalTable currentTable = childRel
-        .map(c -> createScriptTable(builder, parent, c.getId()))
-        .orElse(parent);
-    createdTables.put(builder.getPath(), currentTable);
 
-    Map<NamePath, ScriptRelationalTable> childTables = builder.getAllFields().stream()
-        .filter(ChildRelationship.class::isInstance)
-        .map(ChildRelationship.class::cast)
-        .flatMap(c -> createScriptTables(c.getChildTable(), currentTable, Optional.of(c)).entrySet().stream())
+    Map<NamePath, ScriptRelationalTable> childTables = builder.getNestedTables().values().stream()
+        .flatMap(c -> createScriptTables(c, nextParent).entrySet().stream())
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
     createdTables.putAll(childTables);
-
     return createdTables;
   }
 }

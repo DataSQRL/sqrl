@@ -1,17 +1,17 @@
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.schema.UniversalTable.Column;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BooleanType;
 import com.datasqrl.schema.type.basic.TimestampType;
 import com.datasqrl.schema.type.basic.DoubleType;
 import com.datasqrl.schema.type.basic.BigIntType;
 import com.datasqrl.schema.type.basic.StringType;
+import org.apache.calcite.rel.type.RelDataType;
 
-public class UtbTypeToFlexibleType {
+public class RelDataTypeToFlexibleType {
 
-  public static Type toType(Column type) {
-    switch (type.getType().getSqlTypeName()) {
+  public static Type toType(RelDataType type) {
+    switch (type.getSqlTypeName()) {
       case BOOLEAN:
         return new BooleanType();
       case TINYINT:

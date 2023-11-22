@@ -11,6 +11,9 @@ import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.graphql.visitor.GraphqlTypeVisitor;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.UniversalTable.Configuration;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.RelDataTypeBuilder;
 import com.google.common.base.Preconditions;
 import graphql.language.EnumValueDefinition;
 import graphql.language.FieldDefinition;
@@ -66,63 +69,49 @@ public class InputFieldToFlexibleSchemaRelation implements
         GraphqlSchemaVisitor.accept(new TypeResolver(), ((NonNullType) def.getType()).getType(), typeDefinitionRegistry)
             .orElseThrow(()->new RuntimeException("Could not find type:" + def.getName()));
 
-    return
-        GraphqlSchemaVisitor.accept(new InputObjectToFlexibleRelation(),
-        typeDef, new FieldContext(canonicalizer.name(node.getName()),null, 0, true));
+    RelDataType relDataType = GraphqlSchemaVisitor.accept(new InputObjectToRelDataType(),
+        typeDef, new FieldContext(0, true));
+
+    return UniversalTable.of(relDataType, NamePath.of(node.getName()), Configuration.forImport(true),
+        1, typeFactory);
   }
 
-  private class InputObjectToFlexibleRelation implements
-      GraphqlDefinitionVisitor<UniversalTable, FieldContext>,
-      GraphqlInputValueDefinitionVisitor<UniversalTable, FieldContext>,
-      GraphqlTypeVisitor<UniversalTable, FieldContext>
+  private class InputObjectToRelDataType implements
+      GraphqlDefinitionVisitor<RelDataType, FieldContext>,
+      GraphqlInputValueDefinitionVisitor<RelDataType, FieldContext>,
+      GraphqlTypeVisitor<RelDataType, FieldContext>
   {
 
     @Override
-    public UniversalTable visitInputObjectTypeDefinition(InputObjectTypeDefinition node,
+    public RelDataType visitInputObjectTypeDefinition(InputObjectTypeDefinition node,
         FieldContext context) {
-
-      UniversalTable table;
-      Name tableName = context.name;
-      if (context.parent!=null) {
-        //making it a singleton to keep primary keys at 0
-        table = new UniversalTable(tableName, context.parent.getPath().concat(tableName), context.parent, true, false);
-
-        Preconditions.checkArgument(context.listDepth<=1, "Do not support multi-dimensional arrays of types");
-        Multiplicity multiplicity = Multiplicity.ZERO_ONE;
-        if (context.listDepth>0) multiplicity = Multiplicity.MANY;
-        else if (context.isNotNull) multiplicity = Multiplicity.ONE;
-        context.parent.addChild(context.name, table, multiplicity);
-      } else {
-        table = new UniversalTable(tableName, NamePath.of(tableName), 0, false);
-      }
-
-      FieldContext nestedContext = new FieldContext(null, table, 0, false);
+      RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
       node.getInputValueDefinitions().forEach(field ->
-          GraphqlSchemaVisitor.accept(this, field, nestedContext));
-      return table;
+          typeBuilder.add(field.getName(), GraphqlSchemaVisitor.accept(this, field,
+              new FieldContext(0, false))));
+      return addContextToType(typeBuilder.build(),context);
     }
 
     @Override
-    public UniversalTable visitInputValueDefinition(InputValueDefinition node, FieldContext context) {
-      return GraphqlSchemaVisitor.accept(this, node.getType(),
-          new FieldContext(canonicalizer.name(node.getName()), context.parent, 0, false));
+    public RelDataType visitInputValueDefinition(InputValueDefinition node, FieldContext context) {
+      return GraphqlSchemaVisitor.accept(this, node.getType(), context);
     }
 
     @Override
-    public UniversalTable visitListType(ListType node, FieldContext context) {
+    public RelDataType visitListType(ListType node, FieldContext context) {
       context.setListDepth(context.listDepth+1);
       context.setNotNull(false);
       return GraphqlSchemaVisitor.accept(this, node.getType(), context);
     }
 
     @Override
-    public UniversalTable visitNonNullType(NonNullType node, FieldContext context) {
+    public RelDataType visitNonNullType(NonNullType node, FieldContext context) {
       context.setNotNull(true);
       return GraphqlSchemaVisitor.accept(this, node.getType(), context);
     }
 
     @Override
-    public UniversalTable visitTypeName(TypeName node, FieldContext context) {
+    public RelDataType visitTypeName(TypeName node, FieldContext context) {
       TypeDefinition typeDef = typeDefinitionRegistry.getType(node.getName())
           .orElseThrow(()-> new RuntimeException("Could not find node:" + node.getName()));
 
@@ -130,12 +119,12 @@ public class InputFieldToFlexibleSchemaRelation implements
     }
 
     @Override
-    public UniversalTable visitEnumValueDefinition(EnumValueDefinition node, FieldContext context) {
-      return addColumn(typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE), context);
+    public RelDataType visitEnumValueDefinition(EnumValueDefinition node, FieldContext context) {
+      return addContextToType(typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE), context);
     }
 
     @Override
-    public UniversalTable visitScalarTypeDefinition(ScalarTypeDefinition node, FieldContext context) {
+    public RelDataType visitScalarTypeDefinition(ScalarTypeDefinition node, FieldContext context) {
       RelDataType type;
       switch (node.getName()) {
         case "Int":
@@ -157,12 +146,7 @@ public class InputFieldToFlexibleSchemaRelation implements
         default:
           throw new RuntimeException("Unknown Type");
       }
-      return addColumn(type, context);
-    }
-
-    private UniversalTable addColumn(RelDataType type, FieldContext context) {
-      context.parent.addColumn(context.name, addContextToType(type,context));
-      return context.parent;
+      return addContextToType(type, context);
     }
 
     private RelDataType addContextToType(RelDataType type, FieldContext context) {
@@ -178,8 +162,6 @@ public class InputFieldToFlexibleSchemaRelation implements
   @Setter
   @AllArgsConstructor
   private class FieldContext {
-    Name name;
-    UniversalTable parent;
     int listDepth;
     boolean isNotNull;
   }

@@ -4,9 +4,11 @@
 package com.datasqrl.schema.converters;
 
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.util.CalciteUtil;
 import java.util.List;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
@@ -22,37 +24,41 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.utils.TypeConversions;
 
 @Value
-public class FlinkTypeInfoSchemaGenerator implements
-    UniversalTable.TypeConverter<TypeInformation>,
-    UniversalTable.SchemaConverter<TypeInformation> {
+public class FlinkTypeInfoSchemaGenerator implements UniversalTable.SchemaConverter<TypeInformation> {
 
-  @Override
-  public TypeInformation convertBasic(RelDataType datatype) {
+  private TypeInformation convertPrimitive(RelDataType datatype) {
     LogicalType logicalType = FlinkTypeFactory.toLogicalType(datatype);
 
     DataType dataType = TypeConversions.fromLogicalToDataType(logicalType);
     return TypeConversions.fromDataTypeToLegacyInfo(dataType);
   }
 
-  @Override
-  public TypeInformation nullable(TypeInformation type, boolean nullable) {
-    return type; //Does not support nullability
-  }
-
-  @Override
-  public TypeInformation wrapArray(TypeInformation type) {
+  private TypeInformation wrapArray(TypeInformation type) {
     return Types.OBJECT_ARRAY(type);
   }
 
-  @Override
-  public TypeInformation nestedTable(List<Pair<String, TypeInformation>> columns) {
+  private TypeInformation nestedTable(List<RelDataTypeField> relation) {
     return Types.ROW_NAMED(
-        columns.stream().map(Pair::getKey).toArray(i -> new String[i]),
-        columns.stream().map(Pair::getValue).toArray(i -> new TypeInformation[i]));
+        relation.stream().map(RelDataTypeField::getName).toArray(i -> new String[i]),
+        relation.stream().map(RelDataTypeField::getType).map(this::convertRelDataType)
+            .toArray(i -> new TypeInformation[i]));
+  }
+
+  private TypeInformation convertRelDataType(RelDataType type) {
+    TypeInformation resultType;
+    if (type.isStruct()) {
+      resultType = nestedTable(type.getFieldList());
+    } else if (CalciteUtil.isArray(type)) {
+      resultType = wrapArray(convertRelDataType(CalciteUtil.getArrayElementType(type).get()));
+    } else {
+      resultType = convertPrimitive(type);
+    }
+    //TypeInformation does not support nullability
+    return resultType;
   }
 
   @Override
-  public TypeInformation convertSchema(UniversalTable tblBuilder) {
-    return nestedTable(tblBuilder.convert(this));
+  public TypeInformation convertSchema(UniversalTable table) {
+    return convertRelDataType(table.getType());
   }
 }

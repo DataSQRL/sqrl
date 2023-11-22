@@ -116,10 +116,9 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
     } else {
       //otherwise create new log for it
       String logId = ((ScriptRelationalTable) sqrlTable.getVt()).getNameId();
-      RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory, 0,
-          NameCanonicalizer.SYSTEM);
+      RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory);
       UniversalTable schema = converter.convert(sqrlTable.getPath(),
-          ((ScriptRelationalTable) sqrlTable.getVt()).getRowType(),
+          ((ScriptRelationalTable) sqrlTable.getVt()).getRowType(), 0,
           null);
       Log log = logEngine.get().createLog(logId, schema);
       exports.put(sqrlTable, log);

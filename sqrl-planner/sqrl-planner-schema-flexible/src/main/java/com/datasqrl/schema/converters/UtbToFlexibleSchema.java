@@ -1,9 +1,11 @@
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.SpecialName;
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.constraint.Constraint;
 import com.datasqrl.schema.constraint.NotNull;
 import com.datasqrl.schema.input.FlexibleFieldSchema.Field;
 import com.datasqrl.schema.input.FlexibleFieldSchema.FieldType;
@@ -11,10 +13,16 @@ import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.input.RelationType;
 import com.datasqrl.schema.input.SchemaElementDescription;
+import com.datasqrl.util.CalciteUtil;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 public class UtbToFlexibleSchema {
+
+  private static final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM;
 
   public static FlexibleTableSchemaHolder createFlexibleSchema(UniversalTable table) {
     FlexibleTableSchema schema = new FlexibleTableSchema(
@@ -25,47 +33,52 @@ public class UtbToFlexibleSchema {
   }
 
   private static RelationType<Field> createFields(UniversalTable table) {
-    return createFields(table.getFields().getFields());
+    return createFields(table.getType().getFieldList());
   }
 
-  private static RelationType<Field> createFields(List<com.datasqrl.schema.Field> f) {
+  private static RelationType<Field> createFields(List<RelDataTypeField> relFields) {
     List<Field> fields = new ArrayList<>();
-    for (com.datasqrl.schema.Field field : f) {
-      if (field.getName().isHidden()) { //todo: what if a user defines a _ingest_time in the schema.yml?
-        continue;
-      }
-      if (field instanceof UniversalTable.Column) {
-        UniversalTable.Column column = (UniversalTable.Column) field;
+    for (RelDataTypeField field: relFields) {
+      List<Constraint> constraints = field.getType().isNullable()?List.of():List.of(NotNull.INSTANCE);
+      Optional<RelDataType> nestedType = CalciteUtil.getNestedTableType(field.getType());
+      Name fieldName = canonicalizer.name(field.getName());
+      if (nestedType.isPresent()) {
+        RelationType<?> relType = createFields(nestedType.get().getFieldList());
         fields.add(new Field(
-            field.getName(),
-            new SchemaElementDescription(""),
-            null,
-            List.of(new FieldType(
-                SpecialName.SINGLETON,
-                UtbTypeToFlexibleType.toType(column), //other types
-                0,
-                column.isNullable() ? List.of() : List.of(NotNull.INSTANCE) //not null
-            ))
-        ));
-      } else if (field instanceof UniversalTable.ChildRelationship) {
-        UniversalTable.ChildRelationship rel = (UniversalTable.ChildRelationship) field;
-
-        RelationType relType = createFields(rel.getChildTable().getFields().getFields());
-        fields.add(new Field(
-            field.getName(),
+            fieldName,
             new SchemaElementDescription(""),
             null,
             List.of(new FieldType(
                 SpecialName.SINGLETON,
                 relType,
-                rel.getMultiplicity() == Multiplicity.MANY ? 1 : 0, //todo Array
-                List.of()// : List.of(NotNull.INSTANCE)
+                CalciteUtil.isArray(field.getType()) ? 1 : 0,
+                constraints
             ))
         ));
       } else {
-        throw new RuntimeException();
+        RelDataType fieldType = field.getType();
+        int arrayDepth = 0;
+        Optional<RelDataType> elementType;
+        while ((elementType = CalciteUtil.getArrayElementType(fieldType)).isPresent()) {
+          fieldType = elementType.get();
+          arrayDepth++;
+        }
+        fields.add(new Field(
+            fieldName,
+            new SchemaElementDescription(""),
+            null,
+            List.of(new FieldType(
+                SpecialName.SINGLETON,
+                RelDataTypeToFlexibleType.toType(fieldType), //other types
+                arrayDepth,
+                constraints
+            ))
+        ));
       }
     }
     return new RelationType<>(fields);
   }
+
+
+
 }

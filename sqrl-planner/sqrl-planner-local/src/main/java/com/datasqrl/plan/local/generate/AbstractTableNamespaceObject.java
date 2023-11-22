@@ -72,7 +72,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     ProxyImportRelationalTable proxyTable = tableFactory.createProxyTable(rootType, rootTable, importedTable);
 
     // Generate the script tables based on the provided root table
-    return tableFactory.createScriptTables(rootTable, proxyTable, Optional.empty());
+    return tableFactory.createScriptTables(rootTable, proxyTable);
   }
 
   public void registerScriptTable(ScriptTableDefinition tblDef, SqrlFramework framework, Optional<List<FunctionParameter>> parameters,
