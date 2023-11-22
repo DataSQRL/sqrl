@@ -95,7 +95,7 @@ public class UniversalTable {
   }
 
   private UniversalTable createChild(RelDataTypeField field) {
-    Preconditions.checkArgument(CalciteUtil.isNestedTable(field.getType()));
+    RelDataType nestedType = CalciteUtil.getNestedTableType(field.getType()).get();
     boolean isArray = CalciteUtil.isArray(field.getType());
     NamePath newPath = path.concat(Name.system(field.getName()));
     RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
@@ -106,7 +106,7 @@ public class UniversalTable {
     if (isArray && configuration.addArrayIndex) {
       typeBuilder.add(ReservedName.ARRAY_IDX, TypeFactory.makeIntegerType(typeFactory, false));
     }
-    typeBuilder.addAll(field.getType().getFieldList());
+    typeBuilder.addAll(nestedType.getFieldList());
     return new UniversalTable(Optional.of(this), typeBuilder.build(), newPath,
         this.numPrimaryKeys + (isArray?1:0),
         typeFactory, configuration);

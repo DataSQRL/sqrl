@@ -80,11 +80,11 @@ public class CalciteTableFactory {
     final ScriptRelationalTable nextParent;
     if (builder.getParent().isEmpty()) {
       assert parent instanceof PhysicalRelationalTable;
-      createdTables.put(builder.getPath(), parent);
       nextParent = parent;
     } else {
       nextParent = createScriptTable(builder, parent);
     }
+    createdTables.put(builder.getPath(), nextParent);
 
 
     Map<NamePath, ScriptRelationalTable> childTables = builder.getNestedTables().values().stream()

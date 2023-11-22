@@ -28,7 +28,7 @@ public class FlexibleTableConverter {
   public <T> T apply(Visitor<T> visitor) {
     return visitRelation(NamePath.ROOT, getName(),
         schema.getFields(),
-        false, false, visitor);
+        false, true, visitor);
   }
 
   private <T> T visitRelation(NamePath path, Name name,

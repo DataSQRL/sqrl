@@ -51,8 +51,13 @@ public class TypeFactory extends JavaTypeFactoryImpl {
     return typeFactory.createTypeWithNullability(type, nullable);
   }
 
+  public static RelDataType wrapInArray(RelDataTypeFactory typeFactory, RelDataType type) {
+    return typeFactory.createArrayType(type, -1L);
+  }
+
   public RelDataType wrapInArray(RelDataType type) {
-    return createTypeWithNullability(createArrayType(type, -1),false);
+    return wrapInArray(this,type);
+//    return createTypeWithNullability(createArrayType(type, -1),false);
   }
 
   /**

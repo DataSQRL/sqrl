@@ -57,7 +57,7 @@ public class ReflectionToUt {
   private static UniversalTable makeTable(String name, RelDataType type) {
     RelDataTypeFactory typeFactory = TypeFactory.getTypeFactory();
     return UniversalTable.of(type, NamePath.of(name),
-        Configuration.forImport(false), 1,
+        Configuration.forTable(), 0,
         typeFactory);
   }
 

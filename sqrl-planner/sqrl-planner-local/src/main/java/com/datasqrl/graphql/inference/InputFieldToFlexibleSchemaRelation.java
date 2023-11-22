@@ -70,10 +70,10 @@ public class InputFieldToFlexibleSchemaRelation implements
             .orElseThrow(()->new RuntimeException("Could not find type:" + def.getName()));
 
     RelDataType relDataType = GraphqlSchemaVisitor.accept(new InputObjectToRelDataType(),
-        typeDef, new FieldContext(0, true));
+        typeDef, new FieldContext());
 
-    return UniversalTable.of(relDataType, NamePath.of(node.getName()), Configuration.forImport(true),
-        1, typeFactory);
+    return UniversalTable.of(relDataType, NamePath.of(node.getName()), Configuration.forTable(),
+        0, typeFactory);
   }
 
   private class InputObjectToRelDataType implements
@@ -88,8 +88,8 @@ public class InputFieldToFlexibleSchemaRelation implements
       RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
       node.getInputValueDefinitions().forEach(field ->
           typeBuilder.add(field.getName(), GraphqlSchemaVisitor.accept(this, field,
-              new FieldContext(0, false))));
-      return addContextToType(typeBuilder.build(),context);
+              new FieldContext())));
+      return typeBuilder.build();
     }
 
     @Override
@@ -99,15 +99,17 @@ public class InputFieldToFlexibleSchemaRelation implements
 
     @Override
     public RelDataType visitListType(ListType node, FieldContext context) {
-      context.setListDepth(context.listDepth+1);
-      context.setNotNull(false);
-      return GraphqlSchemaVisitor.accept(this, node.getType(), context);
+      RelDataType type = typeFactory.createTypeWithNullability(
+          TypeFactory.wrapInArray(typeFactory, GraphqlSchemaVisitor.accept(this, node.getType(), context)),
+          true);
+      return type;
     }
 
     @Override
     public RelDataType visitNonNullType(NonNullType node, FieldContext context) {
-      context.setNotNull(true);
-      return GraphqlSchemaVisitor.accept(this, node.getType(), context);
+      return TypeFactory.withNullable(typeFactory,
+          GraphqlSchemaVisitor.accept(this, node.getType(), context),
+          false);
     }
 
     @Override
@@ -120,7 +122,7 @@ public class InputFieldToFlexibleSchemaRelation implements
 
     @Override
     public RelDataType visitEnumValueDefinition(EnumValueDefinition node, FieldContext context) {
-      return addContextToType(typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE), context);
+      return typeFactory.createTypeWithNullability(typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE),true);
     }
 
     @Override
@@ -146,24 +148,13 @@ public class InputFieldToFlexibleSchemaRelation implements
         default:
           throw new RuntimeException("Unknown Type");
       }
-      return addContextToType(type, context);
-    }
-
-    private RelDataType addContextToType(RelDataType type, FieldContext context) {
-      type = TypeFactory.withNullable(typeFactory, type, !context.isNotNull);
-      //wrap in array of nested depth;
-      for (int i = 0; i < context.listDepth; i++) {
-        type = typeFactory.createArrayType(type, -1L);
-      }
-      return type;
+      return typeFactory.createTypeWithNullability(type, true);
     }
   }
 
   @Setter
   @AllArgsConstructor
   private class FieldContext {
-    int listDepth;
-    boolean isNotNull;
   }
 
   private class TypeResolver implements

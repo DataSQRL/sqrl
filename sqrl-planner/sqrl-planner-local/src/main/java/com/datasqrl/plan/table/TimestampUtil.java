@@ -34,7 +34,7 @@ public class TimestampUtil {
   }
 
   public static TimestampInference getTimestampInference(UniversalTable tblBuilder) {
-    Preconditions.checkArgument(tblBuilder.getParent() == null,
+    Preconditions.checkArgument(tblBuilder.getParent().isEmpty(),
         "Can only be invoked on root table");
     TimestampInference.ImportBuilder timestamp = TimestampInference.buildImport();
     tblBuilder.getAllIndexedFields().forEach(indexField -> {

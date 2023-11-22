@@ -24,6 +24,7 @@ public class FlexibleSchemaUniversalTableMapper implements SchemaToUniversalTabl
     return FlexibleTableSchemaFactory.SCHEMA_TYPE;
   }
 
+  @Override
   public UniversalTable map(TableSchema schema, DataSystemConnectorSettings connectorSettings,
       Optional<Name> tblAlias) {
     Preconditions.checkArgument(schema instanceof FlexibleTableSchemaHolder);
