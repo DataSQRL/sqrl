@@ -10,7 +10,10 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.google.common.base.Preconditions;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -19,6 +22,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
@@ -64,14 +68,15 @@ public class UniversalTable {
     Preconditions.checkArgument(!configuration.hasUuid || numPrimaryKeys == 1,
         "Invalid import specification: %s", numPrimaryKeys);
     RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
+    NameAdjuster nameAdjuster = new NameAdjuster(type.getFieldNames());
     if (configuration.hasUuid) {
-      typeBuilder.add(ReservedName.UUID, TypeFactory.makeUuidType(typeFactory, false));
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.UUID), TypeFactory.makeUuidType(typeFactory, false));
     }
     if (configuration.hasIngestTime) {
-      typeBuilder.add(ReservedName.INGEST_TIME, TypeFactory.makeTimestampType(typeFactory, false));
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.INGEST_TIME), TypeFactory.makeTimestampType(typeFactory, false));
     }
     if (configuration.hasSourceTime) {
-      typeBuilder.add(ReservedName.SOURCE_TIME, TypeFactory.makeTimestampType(typeFactory,false));
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.SOURCE_TIME), TypeFactory.makeTimestampType(typeFactory,false));
     }
     typeBuilder.addAll(type.getFieldList());
     return new UniversalTable(Optional.empty(), typeBuilder.build(), path, numPrimaryKeys, typeFactory, configuration);
@@ -99,17 +104,43 @@ public class UniversalTable {
     boolean isArray = CalciteUtil.isArray(field.getType());
     NamePath newPath = path.concat(Name.system(field.getName()));
     RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
+    NameAdjuster nameAdjuster = new NameAdjuster(nestedType.getFieldNames());
     //Add parent primary keys
     for (int i = 0; i < numPrimaryKeys; i++) {
-      typeBuilder.add(type.getFieldList().get(i));
+      RelDataTypeField pkField = type.getFieldList().get(i);
+      typeBuilder.add(nameAdjuster.uniquifyName(pkField.getName()), pkField.getType());
     }
     if (isArray && configuration.addArrayIndex) {
-      typeBuilder.add(ReservedName.ARRAY_IDX, TypeFactory.makeIntegerType(typeFactory, false));
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.ARRAY_IDX), TypeFactory.makeIntegerType(typeFactory, false));
     }
     typeBuilder.addAll(nestedType.getFieldList());
     return new UniversalTable(Optional.of(this), typeBuilder.build(), newPath,
         this.numPrimaryKeys + (isArray?1:0),
         typeFactory, configuration);
+  }
+
+  public static class NameAdjuster {
+
+    Set<String> names;
+
+    public NameAdjuster(Collection<String> names) {
+      this.names = new HashSet<>(names);
+      Preconditions.checkArgument(this.names.size() == names.size(), "Duplicate names in set of columns: %s", names);
+    }
+
+    public String uniquifyName(Name name) {
+      return uniquifyName(name.getDisplay());
+    }
+
+    public String uniquifyName(String name) {
+      String uniqueName = SqlValidatorUtil.uniquify(
+          name,
+          names,
+          SqlValidatorUtil.EXPR_SUGGESTER);
+      names.add(uniqueName);
+      return uniqueName;
+    }
+
   }
 
 //
