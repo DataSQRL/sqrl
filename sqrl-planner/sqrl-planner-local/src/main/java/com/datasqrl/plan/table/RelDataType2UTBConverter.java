@@ -34,7 +34,9 @@ public class RelDataType2UTBConverter {
     int index=0;
     for (RelDataTypeField field : datatype.getFieldList()) {
       String fieldName = field.getName();
-      if (index2Name.containsKey(index)) fieldName = index2Name.get(index).getDisplay();
+      if (index2Name!=null && index2Name.containsKey(index)) {
+        fieldName = index2Name.get(index).getDisplay();
+      }
       typeBuilder.add(fieldName,field.getType());
       index++;
     }
