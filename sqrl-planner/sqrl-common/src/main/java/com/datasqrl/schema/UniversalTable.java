@@ -44,22 +44,6 @@ public class UniversalTable {
 
   Configuration configuration;
 
-
-//  private UniversalTable(@NonNull Name name, @NonNull NamePath path,
-//      UniversalTable parent, boolean isSingleton, boolean hasSourceTimestamp) {
-//    this.parent = parent;
-//    //Add parent primary key columns
-//    Iterator<Column> parentCols = parent.getColumns().iterator();
-//    for (int i = 0; i < parent.numPrimaryKeys; i++) {
-//      Column ppk = parentCols.next();
-//      addColumn(new Column(ppk.getName(), ppk.getType()));
-//    }
-//    this.numPrimaryKeys = parent.numPrimaryKeys + (isSingleton ? 0 : 1);
-//    this.path = path;
-//    this.name = name;
-//    this.hasSourceTimestamp = hasSourceTimestamp;
-//  }
-
   public static UniversalTable of(@NonNull RelDataType type, @NonNull NamePath path,
       @NonNull UniversalTable.Configuration configuration, int numPrimaryKeys, RelDataTypeFactory typeFactory) {
     Preconditions.checkArgument(path.size() > 0, "Invalid name: %s", path);
@@ -119,6 +103,12 @@ public class UniversalTable {
         typeFactory, configuration);
   }
 
+  /**
+   * NameAdjuster makes sure that any additional columns we add to a table (e.g. primary keys or timestamps) are unique and do
+   * not clash with existing columns by `uniquifying` them using Calcite's standard way of doing this.
+   * Because we want to preserve the names of the user-defined columns and primary key columns are added first, we have to use
+   * this custom way of uniquifying column names.
+   */
   public static class NameAdjuster {
 
     Set<String> names;
@@ -142,49 +132,6 @@ public class UniversalTable {
     }
 
   }
-
-//
-//  protected void addColumn(Column colum) {
-//    fields.addField(colum);
-//  }
-//
-//  public void addColumn(Name colName, RelDataType type) {
-//    //A name may clash with a previously added name, hence we increase the version
-//    fields.addField(new Column(colName, type));
-//  }
-//
-//  public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
-//    fields.addField(new ChildRelationship(name, child, multiplicity));
-//  }
-//
-//  @Getter
-//  public static class Column extends Field {
-//
-//    final RelDataType type;
-//
-//    public Column(Name name, RelDataType type) {
-//      super(name);
-//      this.type = type;
-//    }
-//
-//    public boolean isNullable() {
-//      return type.isNullable();
-//    }
-//  }
-//
-//  @Getter
-//  public static class ChildRelationship extends Field {
-//
-//    final UniversalTable childTable;
-//    final Multiplicity multiplicity;
-//
-//    public ChildRelationship(Name name, UniversalTable childTable,
-//        Multiplicity multiplicity) {
-//      super(name);
-//      this.childTable = childTable;
-//      this.multiplicity = multiplicity;
-//    }
-//  }
 
   public interface SchemaConverter<S> {
 
