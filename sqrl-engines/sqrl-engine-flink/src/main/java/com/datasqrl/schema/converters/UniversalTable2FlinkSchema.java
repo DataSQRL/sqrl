@@ -38,29 +38,39 @@ public class UniversalTable2FlinkSchema implements UniversalTable.SchemaConverte
     }
   }
 
-  private DataType wrapArray(DataType type) {
-    return DataTypes.ARRAY(type);
-  }
+//  private DataType wrapArray(DataType type) {
+//    return DataTypes.ARRAY(type);
+//  }
+//
+//  private DataType nestedTable(List<RelDataTypeField> relation) {
+//    DataTypes.Field[] fields = new DataTypes.Field[relation.size()];
+//    int i = 0;
+//    for (RelDataTypeField column : relation) {
+//      fields[i++] = DataTypes.FIELD(column.getName(), convertRelDataType(column.getType()));
+//    }
+//    return DataTypes.ROW(fields);
+//  }
 
-  private DataType nestedTable(List<RelDataTypeField> relation) {
-    DataTypes.Field[] fields = new DataTypes.Field[relation.size()];
-    int i = 0;
-    for (RelDataTypeField column : relation) {
-      fields[i++] = DataTypes.FIELD(column.getName(), convertRelDataType(column.getType()));
-    }
-    return DataTypes.ROW(fields);
-  }
-
+  /**
+   * We are relying entirely on {@link #convertPrimitive(RelDataType)} for the conversion
+   * now but are keeping the old code around in case we encounter issues in the future.
+   *
+   * TODO: revisit this decision and remove old code
+   *
+   * @param type
+   * @return
+   */
   private DataType convertRelDataType(RelDataType type) {
-    DataType resultType;
-    if (type.isStruct()) {
-      resultType = nestedTable(type.getFieldList());
-    } else if (CalciteUtil.isArray(type)) {
-      resultType = wrapArray(convertRelDataType(CalciteUtil.getArrayElementType(type).get()));
-    } else {
-      resultType = convertPrimitive(type);
-    }
-    return nullable(resultType, type.isNullable());
+    return convertPrimitive(type);
+//    DataType resultType;
+//    if (type.isStruct()) {
+//      resultType = nestedTable(type.getFieldList());
+//    } else if (CalciteUtil.isArray(type)) {
+//      resultType = wrapArray(convertRelDataType(CalciteUtil.getArrayElementType(type).get()));
+//    } else {
+//      resultType = convertPrimitive(type);
+//    }
+//    return nullable(resultType, type.isNullable());
   }
 
   @Override
