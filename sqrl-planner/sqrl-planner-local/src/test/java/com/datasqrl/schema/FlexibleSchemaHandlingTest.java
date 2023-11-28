@@ -8,22 +8,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.plan.table.TableIdFactory;
-import com.datasqrl.plan.table.UTB2RelDataTypeConverter;
-import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
-import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.table.UTB2RelDataTypeConverter;
 import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.schema.converters.FlexibleTable2UTBConverter;
+import com.datasqrl.schema.converters.FlexibleSchemaUniversalTableMapper;
+import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
+import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.schema.input.FlexibleTableConverter;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.schema.input.external.SchemaImport;
 import com.datasqrl.schema.input.external.TableDefinition;
+import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.junit.ArgumentProvider;
@@ -60,14 +58,13 @@ public class FlexibleSchemaHandlingTest {
       for (boolean hasSourceTimestamp : new boolean[]{true, false}) {
         for (Optional<Name> alias : new Optional[]{Optional.empty(), Optional.of(tableAlias)}) {
           FlexibleTableConverter converter = new FlexibleTableConverter(
-              table, hasSourceTimestamp, alias);
-          FlexibleTable2UTBConverter utbConverter = new FlexibleTable2UTBConverter(false);
-          UniversalTable tblBuilder = converter.apply(utbConverter);
+              table, alias);
+          UniversalTable utb = FlexibleSchemaUniversalTableMapper.buildTable(converter, hasSourceTimestamp);
           if (alias.isPresent()) {
-            assertEquals(tblBuilder.getName(), alias.get());
+            assertEquals(utb.getName(), alias.get());
             continue;
           }
-          S resultSchema = visitorTest.schemaConverter.convertSchema(tblBuilder);
+          S resultSchema = visitorTest.schemaConverter.convertSchema(utb);
           assertNotNull(resultSchema);
           String[] caseName = getCaseName(table.getName().getDisplay(), hasSourceTimestamp);
           snapshot.addContent(resultSchema.toString(), caseName);
@@ -120,7 +117,7 @@ public class FlexibleSchemaHandlingTest {
       List<SchemaConverterTestCase> converters = new ArrayList<>();
 
       //Calcite
-      UTB2RelDataTypeConverter converter = new UTB2RelDataTypeConverter(framework.getTypeFactory());
+      UTB2RelDataTypeConverter converter = new UTB2RelDataTypeConverter();
       converters.add(new SchemaConverterTestCase(converter));
       //Flink
       converters.add(new SchemaConverterTestCase(new FlinkTypeInfoSchemaGenerator()));

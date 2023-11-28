@@ -91,7 +91,7 @@ public class LogicalNestedTable extends ScriptRelationalTable {
         RelDataType type = shredField.getType();
         Preconditions.checkArgument(CalciteUtil.isNestedTable(type));
         //We currently make the hard-coded assumption that children have at most one local primary
-        int numLocalPks = CalciteUtil.getArrayElementType(type).isPresent() ? 1 : 0;
+        int numLocalPks = CalciteUtil.isArray(type) ? 1 : 0;
         //unwrap if type is in array
         //type = CalciteUtil.getArrayElementType(type).orElse(type);
         LogicalNestedTable child = new LogicalNestedTable(nameId, rowType, parent, numLocalPks, shredField.getIndex(), typeFactory);

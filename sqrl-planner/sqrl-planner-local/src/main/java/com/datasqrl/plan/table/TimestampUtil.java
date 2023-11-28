@@ -20,13 +20,13 @@ public class TimestampUtil {
 
   public static final int ADDED_TIMESTAMP_SCORE = 100;
 
-  protected static int getTimestampScore(Name columnName) {
+  protected static int getTimestampScore(String columnName) {
     return DEFAULT_TIMESTAMP_PREFERENCE.entrySet().stream()
-        .filter(e -> e.getKey().matches(columnName.getCanonical()))
+        .filter(e -> e.getKey().matches(Name.system(columnName).getCanonical()))
         .map(Entry::getValue).findFirst().orElse(1);
   }
 
-  public static Optional<Integer> getTimestampScore(Name columnName, RelDataType datatype) {
+  public static Optional<Integer> getTimestampScore(String columnName, RelDataType datatype) {
     if (!CalciteUtil.isTimestamp(datatype)) {
       return Optional.empty();
     }
@@ -34,13 +34,12 @@ public class TimestampUtil {
   }
 
   public static TimestampInference getTimestampInference(UniversalTable tblBuilder) {
-    Preconditions.checkArgument(tblBuilder.getParent() == null,
+    Preconditions.checkArgument(tblBuilder.getParent().isEmpty(),
         "Can only be invoked on root table");
     TimestampInference.ImportBuilder timestamp = TimestampInference.buildImport();
     tblBuilder.getAllIndexedFields().forEach(indexField -> {
-      if (indexField.getField() instanceof UniversalTable.Column) {
-        UniversalTable.Column column = (UniversalTable.Column) indexField.getField();
-        Optional<Integer> score = getTimestampScore(column.getName(), column.getType());
+      if (CalciteUtil.isPrimitiveType(indexField.getType())) {
+        Optional<Integer> score = getTimestampScore(indexField.getName(), indexField.getType());
         score.ifPresent(s -> timestamp.addImport(indexField.getIndex(), s));
       }
     });

@@ -3,14 +3,15 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.canonicalizer.Name;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -36,20 +37,22 @@ import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.MultisetSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class CalciteUtil {
 
   public static boolean isNestedTable(RelDataType type) {
-    if (type.isStruct()) {
-      return true;
-    }
-    return getArrayElementType(type)
-        .map(t-> !isPrimitiveType(t))
-        .orElse(false);
+    return getNestedTableType(type).isPresent();
   }
 
-  private static boolean isPrimitiveType(RelDataType t) {
+  public static Optional<RelDataType> getNestedTableType(RelDataType type) {
+    if (type.isStruct()) return Optional.of(type);
+    return getArrayElementType(type).filter(RelDataType::isStruct);
+  }
+
+  public static boolean isPrimitiveType(RelDataType t) {
     return !t.isStruct();
   }
 
@@ -93,32 +96,6 @@ public class CalciteUtil {
         && !datatype.isNullable();
   }
 
-  public interface RelDataTypeBuilder {
-
-    public default RelDataTypeBuilder add(Name name, RelDataType type) {
-      return add(name.getCanonical(), type);
-    }
-
-    public RelDataTypeBuilder add(String name, RelDataType type);
-
-    public default RelDataTypeBuilder add(Name name, RelDataType type, boolean nullable) {
-      return add(name.getCanonical(), type, nullable);
-    }
-
-    public RelDataTypeBuilder add(String name, RelDataType type, boolean nullable);
-
-    public RelDataTypeBuilder add(RelDataTypeField field);
-
-    public default RelDataTypeBuilder addAll(Iterable<RelDataTypeField> fields) {
-      for (RelDataTypeField field : fields) {
-        add(field);
-      }
-      return this;
-    }
-
-    public RelDataType build();
-
-  }
 
   public static RelDataTypeBuilder getRelTypeBuilder(@NonNull RelDataTypeFactory factory) {
     return new RelDataTypeFieldBuilder(factory.builder().kind(StructKind.FULLY_QUALIFIED));
@@ -193,8 +170,7 @@ public class CalciteUtil {
     private final RelDataTypeFactory.FieldInfoBuilder fieldBuilder;
 
     public RelDataTypeBuilder add(String name, RelDataType type) {
-      fieldBuilder.add(name, type);
-      return this;
+      return add(name, type, type.isNullable());
     }
 
     public RelDataTypeBuilder add(String name, RelDataType type, boolean nullable) {
@@ -203,8 +179,7 @@ public class CalciteUtil {
     }
 
     public RelDataTypeBuilder add(RelDataTypeField field) {
-      fieldBuilder.add(field);
-      return this;
+      return add(field.getName(), field.getType());
     }
 
     public RelDataType build() {

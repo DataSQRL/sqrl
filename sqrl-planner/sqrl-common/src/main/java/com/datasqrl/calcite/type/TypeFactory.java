@@ -43,8 +43,20 @@ public class TypeFactory extends JavaTypeFactoryImpl {
     return withNullable(typeFactory, makeUuidType(typeFactory), nullable);
   }
 
+  public static RelDataType makeIntegerType(RelDataTypeFactory typeFactory, boolean nullable) {
+    return withNullable(typeFactory, typeFactory.createSqlType(SqlTypeName.INTEGER), nullable);
+  }
+
   public static RelDataType withNullable(RelDataTypeFactory typeFactory, RelDataType type, boolean nullable) {
     return typeFactory.createTypeWithNullability(type, nullable);
+  }
+
+  public static RelDataType wrapInArray(RelDataTypeFactory typeFactory, RelDataType type) {
+    return typeFactory.createArrayType(type, -1L);
+  }
+
+  public RelDataType wrapInArray(RelDataType type) {
+    return wrapInArray(this,type);
   }
 
   /**

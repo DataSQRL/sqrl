@@ -65,14 +65,14 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     );
 
     // Convert the universal table to a Calcite relational data type
-    RelDataType rootType = tableConverter.tableToDataType(rootTable, true, true);
+    RelDataType rootType = tableConverter.tableToDataType(rootTable);
 
     // Create imported table and its proxy with unique IDs
     ImportedRelationalTableImpl importedTable = tableFactory.createImportedTable(rootType, tableSource, rootTable.getName());
     ProxyImportRelationalTable proxyTable = tableFactory.createProxyTable(rootType, rootTable, importedTable);
 
     // Generate the script tables based on the provided root table
-    return tableFactory.createScriptTables(rootTable, proxyTable, Optional.empty());
+    return tableFactory.createScriptTables(rootTable, proxyTable);
   }
 
   public void registerScriptTable(ScriptTableDefinition tblDef, SqrlFramework framework, Optional<List<FunctionParameter>> parameters,

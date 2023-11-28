@@ -14,13 +14,13 @@ public class RelNodeToSchemaTransformer {
   public SerializableSchema transform(RelNode relNode, int primaryKeyCount) {
     SerializableSchema.SerializableSchemaBuilder builder = SerializableSchema.builder();
     UniversalTable2FlinkSchema converter = new UniversalTable2FlinkSchema();
-
-    for (int i = 0; i < relNode.getRowType().getFieldCount(); i++) {
-      RelDataTypeField field = relNode.getRowType().getFieldList().get(i);
+    List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
+    // TODO: a primary key column should never be null. We should be able to replace this by UniversalTable2FlinkSchema#convert
+    for (int i = 0; i < fields.size(); i++) {
+      RelDataTypeField field = fields.get(i);
       boolean isNotNull = !field.getType().isNullable() || i < primaryKeyCount;
-
       builder.column(Pair.of(field.getName(), converter.nullable(
-          converter.convertBasic(field.getType()), !isNotNull)));
+          converter.convertPrimitive(field.getType()), !isNotNull)));
     }
 
     if (primaryKeyCount != 0) {

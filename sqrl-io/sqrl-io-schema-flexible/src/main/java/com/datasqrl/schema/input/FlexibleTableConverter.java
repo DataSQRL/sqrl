@@ -19,19 +19,22 @@ import java.util.Optional;
 public class FlexibleTableConverter {
 
   private final FlexibleTableSchema schema;
-  private final boolean hasSourceTimestamp;
   private final Optional<Name> tableAlias;
 
+  public Name getName() {
+    return tableAlias.orElse(schema.getName());
+  }
+
   public <T> T apply(Visitor<T> visitor) {
-    return visitRelation(NamePath.ROOT, tableAlias.orElse(schema.getName()),
+    return visitRelation(NamePath.ROOT, getName(),
         schema.getFields(),
-        false, false, hasSourceTimestamp, visitor);
+        false, true, visitor);
   }
 
   private <T> T visitRelation(NamePath path, Name name,
       RelationType<FlexibleFieldSchema.Field> relation,
-      boolean isNested, boolean isSingleton, boolean hasSourceTime, Visitor<T> visitor) {
-    visitor.beginTable(name, path, isNested, isSingleton, hasSourceTime);
+      boolean isNested, boolean isSingleton, Visitor<T> visitor) {
+    visitor.beginTable(name, path, isNested, isSingleton);
     path = path.concat(name);
 
     for (FlexibleFieldSchema.Field field : relation.getFields()) {
@@ -53,7 +56,7 @@ public class FlexibleTableConverter {
       isSingleton = isSingleton(ftype);
       T nestedTable = visitRelation(path, fieldName,
           (RelationType<FlexibleFieldSchema.Field>) ftype.getType(), true,
-          isSingleton, false, visitor);
+          isSingleton, visitor);
       nullable = isMixedType || hasZeroOneMultiplicity(ftype);
       visitor.addField(fieldName, nestedTable, nullable, isSingleton);
     } else {
@@ -72,8 +75,7 @@ public class FlexibleTableConverter {
 
   public interface Visitor<T> {
 
-    void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton,
-        boolean hasSourceTimestamp);
+    void beginTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton);
 
     T endTable(Name name, NamePath namePath, boolean isNested, boolean isSingleton);
 

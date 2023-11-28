@@ -3,183 +3,133 @@
  */
 package com.datasqrl.schema;
 
-import static com.datasqrl.canonicalizer.Name.changeDisplayName;
-
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.StandardName;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.StreamUtil;
+import com.datasqrl.util.RelDataTypeBuilder;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.google.common.base.Preconditions;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-@Getter
+@Value
 public class UniversalTable {
 
-  @Getter
-  final UniversalTable parent;
-  final FieldList fields = new FieldList();
-  @NonNull
-  final NamePath path;
-  @NonNull
-  final Name name;
+  Optional<UniversalTable> parent;
+  RelDataType type;
+  NamePath path;
+
   //The first n columns are form the primary key for this table
   // We make the assumption that primary key columns are always first!
-  final int numPrimaryKeys;
+  int numPrimaryKeys;
 
-  final boolean hasSourceTimestamp;
+  RelDataTypeFactory typeFactory;
 
-  public UniversalTable(@NonNull Name name, @NonNull NamePath path, int numPrimaryKeys,
-      boolean hasSourceTimestamp) {
-    this.hasSourceTimestamp = hasSourceTimestamp;
-    this.parent = null;
-    this.numPrimaryKeys = numPrimaryKeys;
-    this.name = name;
-    this.path = path;
-  }
+  Configuration configuration;
 
-  public UniversalTable(@NonNull Name name, @NonNull NamePath path,
-      UniversalTable parent, boolean isSingleton, boolean hasSourceTimestamp) {
-    this.parent = parent;
-    //Add parent primary key columns
-    Iterator<Column> parentCols = parent.getColumns(false).iterator();
-    for (int i = 0; i < parent.numPrimaryKeys; i++) {
-      Column ppk = parentCols.next();
-      addColumn(new Column(ppk.getName(), ppk.getVersion(), ppk.getType(), false));
+  public static UniversalTable of(@NonNull RelDataType type, @NonNull NamePath path,
+      @NonNull UniversalTable.Configuration configuration, int numPrimaryKeys, RelDataTypeFactory typeFactory) {
+    Preconditions.checkArgument(path.size() > 0, "Invalid name: %s", path);
+    Preconditions.checkArgument(type.isStruct() && !type.getFieldList().isEmpty(),
+        "Invalid type: %s", type);
+    Preconditions.checkArgument(!configuration.hasUuid || numPrimaryKeys == 1,
+        "Invalid import specification: %s", numPrimaryKeys);
+    RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
+    NameAdjuster nameAdjuster = new NameAdjuster(type.getFieldNames());
+    if (configuration.hasUuid) {
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.UUID), TypeFactory.makeUuidType(typeFactory, false));
     }
-    this.numPrimaryKeys = parent.numPrimaryKeys + (isSingleton ? 0 : 1);
-    this.path = path;
-    this.name = name;
-    this.hasSourceTimestamp = hasSourceTimestamp;
+    if (configuration.hasIngestTime) {
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.INGEST_TIME), TypeFactory.makeTimestampType(typeFactory, false));
+    }
+    if (configuration.hasSourceTime) {
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.SOURCE_TIME), TypeFactory.makeTimestampType(typeFactory,false));
+    }
+    typeBuilder.addAll(type.getFieldList());
+    return new UniversalTable(Optional.empty(), typeBuilder.build(), path, numPrimaryKeys, typeFactory, configuration);
   }
 
-  public List<Column> getColumns(boolean onlyVisible) {
-    return (List) StreamUtil.filterByClass(fields.getFields(onlyVisible), Column.class)
-        .collect(Collectors.toList());
+  public Name getName() {
+    return path.getLast();
   }
 
-  public Stream<FieldList.IndexedField> getAllIndexedFields() {
-    return fields.getIndexedFields(false);
+  public List<RelDataTypeField> getAllIndexedFields() {
+    return getAllFields();
   }
 
-  public List<Field> getAllFields() {
-    return fields.getFields(false).collect(Collectors.toList());
+  public List<RelDataTypeField> getAllFields() {
+    return type.getFieldList();
   }
 
-  protected void addColumn(Column colum) {
-    fields.addField(colum);
+  public Map<String, UniversalTable> getNestedTables() {
+    return type.getFieldList().stream().filter(f -> CalciteUtil.isNestedTable(f.getType()))
+        .collect(Collectors.toMap(RelDataTypeField::getName, this::createChild));
   }
 
-  public void addColumn(final Name colName, RelDataType type) {
-    addColumn(colName, type, true);
+  private UniversalTable createChild(RelDataTypeField field) {
+    RelDataType nestedType = CalciteUtil.getNestedTableType(field.getType()).get();
+    boolean isArray = CalciteUtil.isArray(field.getType());
+    NamePath newPath = path.concat(Name.system(field.getName()));
+    RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
+    NameAdjuster nameAdjuster = new NameAdjuster(nestedType.getFieldNames());
+    //Add parent primary keys
+    for (int i = 0; i < numPrimaryKeys; i++) {
+      RelDataTypeField pkField = type.getFieldList().get(i);
+      typeBuilder.add(nameAdjuster.uniquifyName(pkField.getName()), pkField.getType());
+    }
+    if (isArray && configuration.addArrayIndex) {
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.ARRAY_IDX), TypeFactory.makeIntegerType(typeFactory, false));
+    }
+    typeBuilder.addAll(nestedType.getFieldList());
+    return new UniversalTable(Optional.of(this), typeBuilder.build(), newPath,
+        this.numPrimaryKeys + (isArray?1:0),
+        typeFactory, configuration);
   }
 
-  public void addColumn(Name colName, RelDataType type, boolean visible) {
-    int version = fields.nextVersion(colName);
+  /**
+   * NameAdjuster makes sure that any additional columns we add to a table (e.g. primary keys or timestamps) are unique and do
+   * not clash with existing columns by `uniquifying` them using Calcite's standard way of doing this.
+   * Because we want to preserve the names of the user-defined columns and primary key columns are added first, we have to use
+   * this custom way of uniquifying column names.
+   */
+  public static class NameAdjuster {
 
-    //A name may clash with a previously added name, hence we increase the version
-    fields.addField(new Column(colName, version, type, visible));
-  }
+    Set<String> names;
 
-  public void addChild(Name name, UniversalTable child, Multiplicity multiplicity) {
-    int version = fields.nextVersion(name);
-    fields.addField(new ChildRelationship(name, version, child, multiplicity));
-  }
-
-  @Getter
-  public static class Column extends Field {
-
-    final RelDataType type;
-    final boolean visible;
-
-    public Column(Name name, int version, RelDataType type, boolean visible) {
-      super(name, version);
-      this.type = type;
-      this.visible = visible;
+    public NameAdjuster(Collection<String> names) {
+      this.names = new HashSet<>(names);
+      Preconditions.checkArgument(this.names.size() == names.size(), "Duplicate names in set of columns: %s", names);
     }
 
-    public boolean isNullable() {
-      return type.isNullable();
+    public String uniquifyName(Name name) {
+      return uniquifyName(name.getDisplay());
     }
-  }
 
-  @Getter
-  public static class ChildRelationship extends Field {
-
-    final UniversalTable childTable;
-    final Multiplicity multiplicity;
-
-    public ChildRelationship(Name name, int version, UniversalTable childTable,
-        Multiplicity multiplicity) {
-      super(name, version);
-      this.childTable = childTable;
-      this.multiplicity = multiplicity;
+    public String uniquifyName(String name) {
+      String uniqueName = SqlValidatorUtil.uniquify(
+          name,
+          names,
+          SqlValidatorUtil.EXPR_SUGGESTER);
+      names.add(uniqueName);
+      return uniqueName;
     }
-  }
-
-  public <T> List<Pair<String, T>> convert(TypeConverter<T> converter) {
-    return convert(converter, true, true);
-  }
-
-  public <T> List<Pair<String, T>> convert(TypeConverter<T> converter, boolean includeNested,
-      boolean onlyVisible) {
-    return fields.getFields(false)
-        .filter(f -> (includeNested || (f instanceof Column)) && (!onlyVisible || f.isVisible()))
-        .map(f -> {
-          String name = f.getId().getDisplay();
-          T type;
-          if (f instanceof Column) {
-            Column column = (Column) f;
-            type = converter.nullable(convertType(column.getType(), converter),
-                column.isNullable());
-          } else {
-            ChildRelationship childRel = (ChildRelationship) f;
-            T nestedTable = converter.nestedTable(
-                childRel.getChildTable().convert(converter, includeNested, onlyVisible));
-            nestedTable = converter.nullable(nestedTable,
-                childRel.multiplicity == Multiplicity.ZERO_ONE);
-            if (childRel.multiplicity == Multiplicity.MANY) {
-              nestedTable = converter.nullable(converter.wrapArray(nestedTable), false);
-            }
-            type = nestedTable;
-          }
-          return Pair.of(name, type);
-        }).collect(Collectors.toList());
-  }
-
-  private <T> T convertType(RelDataType type, TypeConverter<T> converter) {
-    Optional<RelDataType> subType = CalciteUtil.getArrayElementType(type);
-    if (subType.isPresent()) {
-      return converter.wrapArray(
-          converter.nullable(convertType(subType.get(), converter), subType.get().isNullable()));
-    } else {
-      return converter.convertBasic(type);
-    }
-  }
-
-  public interface TypeConverter<T> {
-
-    T convertBasic(RelDataType type);
-
-    T nullable(T type, boolean nullable);
-
-    T wrapArray(T type);
-
-    T nestedTable(List<Pair<String, T>> fields);
 
   }
 
@@ -189,72 +139,22 @@ public class UniversalTable {
 
   }
 
-  public interface Factory {
-
-    UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
-        @NonNull UniversalTable parent, boolean isSingleton);
-
-    UniversalTable createTable(@NonNull Name name, @NonNull NamePath path);
-
-  }
-
-  public static abstract class AbstractFactory implements Factory {
-
-    public final RelDataTypeFactory typeFactory;
-
-    protected AbstractFactory(RelDataTypeFactory typeFactory) {
-      this.typeFactory = typeFactory;
-    }
-
-    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
-        @NonNull UniversalTable parent, boolean isSingleton) {
-      return new UniversalTable(name, path, parent, isSingleton, false);
-    }
-
-    public RelDataType withNullable(RelDataType type, boolean nullable) {
-      return TypeFactory.withNullable(typeFactory, type, nullable);
-    }
-
-  }
-
   @Value
-  public static class ImportFactory extends AbstractFactory {
+  public static class Configuration {
 
+    boolean hasUuid;
+    boolean hasIngestTime;
+    boolean hasSourceTime;
     boolean addArrayIndex;
-    boolean hasSourceTimestamp;
 
-    public ImportFactory(RelDataTypeFactory typeFactory, boolean addArrayIndex, boolean hasSourceTimestamp) {
-      super(typeFactory);
-      this.addArrayIndex = addArrayIndex;
-      this.hasSourceTimestamp = hasSourceTimestamp;
+    public static Configuration forImport(boolean hasSourceTime) {
+      return new Configuration(true, true, hasSourceTime, false);
     }
 
-    @Override
-    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
-        @NonNull UniversalTable parent, boolean isSingleton) {
-      UniversalTable tblBuilder = super.createTable(name, path, parent, isSingleton);
-      if (!isSingleton && addArrayIndex) {
-        tblBuilder.addColumn(ReservedName.ARRAY_IDX,
-            withNullable(typeFactory.createSqlType(SqlTypeName.INTEGER), false));
-      }
-      return tblBuilder;
+    public static Configuration forTable() {
+      return new Configuration(false, false, false, false);
     }
 
-    @Override
-    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path) {
-      return createTable(name, path, hasSourceTimestamp);
-    }
-
-    public UniversalTable createTable(@NonNull Name name, @NonNull NamePath path,
-        boolean hasSourceTimestamp) {
-      UniversalTable tblBuilder = new UniversalTable(name, path, 1, hasSourceTimestamp);
-      tblBuilder.addColumn(ReservedName.UUID, TypeFactory.makeUuidType(typeFactory, false));
-      tblBuilder.addColumn(ReservedName.INGEST_TIME, TypeFactory.makeTimestampType(typeFactory,false));
-      if (hasSourceTimestamp) {
-        tblBuilder.addColumn(ReservedName.SOURCE_TIME, TypeFactory.makeTimestampType(typeFactory,false));
-      }
-      return tblBuilder;
-    }
   }
 
 }

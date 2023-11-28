@@ -3,7 +3,9 @@
  */
 package com.datasqrl.calcite.enumerable;
 
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.CalciteUtil.RelDataTypeFieldBuilder;
+import com.datasqrl.util.RelDataTypeBuilder;
 import lombok.AllArgsConstructor;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.linq4j.*;
@@ -29,7 +31,7 @@ public class DataTable extends AbstractTable implements QueryableTable {
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory) {
-    RelDataTypeFieldBuilder builder = new RelDataTypeFieldBuilder(relDataTypeFactory.builder());
+    RelDataTypeBuilder builder = CalciteUtil.getRelTypeBuilder(relDataTypeFactory);
     header
         .forEach(builder::add);
     return builder.build();
