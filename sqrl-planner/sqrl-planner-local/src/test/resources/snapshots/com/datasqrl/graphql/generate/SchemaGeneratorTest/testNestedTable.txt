@@ -6,10 +6,11 @@ type Orders {
 }
 
 type Query {
-  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+  Orders(id: Float, limit: Int = 10, offset: Int = 0): [Orders!]
 }
 
 type entries {
+  id: Float!
   productid: Float!
   quantity: Float!
   unit_price: Float!

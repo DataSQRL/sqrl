@@ -1,8 +1,8 @@
 type Customers {
   id: Float!
-  past_purchases(productid: Float, num_orders: Float, total_quantity: Float, limit: Int = 10, offset: Int = 0): [past_purchases!]
+  past_purchases(productid: Float, limit: Int = 10, offset: Int = 0): [past_purchases!]
   purchases(limit: Int = 10, offset: Int = 0): [Orders!]
-  spending_by_month(month: String, total_spend: Float, total_savings: Float, limit: Int = 10, offset: Int = 0): [spending_by_month!]
+  spending_by_month(month: String, limit: Int = 10, offset: Int = 0): [spending_by_month!]
 }
 
 type Orders {
@@ -10,8 +10,8 @@ type Orders {
   customerid: Float!
   time: Float!
   timestamp: String!
-  items(productid: Float, quantity: Float, unit_price: Float, discount: Float, discount0: Float, total: Float, limit: Int = 10, offset: Int = 0): [items!]
-  totals(price: Float, savings: Float, limit: Int = 10, offset: Int = 0): [totals!]
+  items(limit: Int = 10, offset: Int = 0): [items!]
+  totals(limit: Int = 10, offset: Int = 0): [totals!]
 }
 
 type Products {
@@ -23,13 +23,13 @@ type Products {
   category: String!
   usda_id: Float!
   updated: String!
-  volume_by_day(day: String, quantity: Float, total: Float, total_weight: Float, limit: Int = 10, offset: Int = 0): [volume_by_day!]
+  volume_by_day(day: String, limit: Int = 10, offset: Int = 0): [volume_by_day!]
 }
 
 type Query {
-  Products(id: Float, name: String, sizing: String, weight_in_gram: Float, type: String, category: String, usda_id: Float, updated: String, limit: Int = 10, offset: Int = 0): [Products!]
+  Products(id: Float, limit: Int = 10, offset: Int = 0): [Products!]
   Customers(id: Float, limit: Int = 10, offset: Int = 0): [Customers!]
-  Orders(id: Float, customerid: Float, time: Float, timestamp: String, limit: Int = 10, offset: Int = 0): [Orders!]
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
 }
 
 type items {

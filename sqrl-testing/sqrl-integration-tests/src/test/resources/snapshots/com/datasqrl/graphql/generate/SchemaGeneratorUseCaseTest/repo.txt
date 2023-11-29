@@ -6,9 +6,9 @@ type Package {
 
 type Query {
   Package(name: String, limit: Int = 10, offset: Int = 0): [Package!]
-  TopicPackages(pkgName: String, topicName: String, numSubmissions: Float, lastSubmission: String, limit: Int = 10, offset: Int = 0): [TopicPackages!]
-  Submission(name: String, version: String, variant: String, latest: Boolean, type: String, license: String, repository: String, homepage: String, limit: Int = 10, offset: Int = 0): [Submission!]
-  TopicSearch(topicName: String, numPackages: Float, limit: Int = 10, offset: Int = 0): [TopicSearch!]
+  TopicPackages(pkgName: String, topicName: String, limit: Int = 10, offset: Int = 0): [TopicPackages!]
+  Submission(limit: Int = 10, offset: Int = 0): [Submission!]
+  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]
 }
 
 type Submission {
@@ -30,7 +30,7 @@ type Submission {
   submissionTime: String!
   variant0: String!
   repoURL: String!
-  keywords(name: String, limit: Int = 10, offset: Int = 0): [keywords!]
+  keywords(limit: Int = 10, offset: Int = 0): [keywords!]
 }
 
 type TopicPackages {

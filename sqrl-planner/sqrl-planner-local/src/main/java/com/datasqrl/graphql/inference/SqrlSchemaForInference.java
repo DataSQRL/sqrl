@@ -5,8 +5,9 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.plan.table.LogicalNestedTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.TableVisitor;
 import com.datasqrl.util.StreamUtil;
@@ -19,7 +20,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.jdbc.CalciteSchema.TableEntry;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -72,16 +72,36 @@ public class SqrlSchemaForInference {
 
     SQRLTable sqrlTable = new SQRLTable(macro.getAbsolutePath(), table, macro);
     List<RelDataTypeField> fieldList = macro.getRowType().getFieldList();
-    for (RelDataTypeField field : fieldList) {
+    for (int i = 0; i < fieldList.size(); i++) {
+      RelDataTypeField field = fieldList.get(i);
       if (field.getType() instanceof ArraySqlType || field.getType() instanceof ObjectSqlType) {
         continue;
       }
 
       sqrlTable.fields.add(new Column(field.getType(),
           Name.system(field.getName()),
-          field.getName()));
+          field.getName(),
+          isLocalPrimaryKey(table, i)));
     }
     return sqrlTable;
+  }
+
+  private boolean isLocalPrimaryKey(Table table, int i) {
+    if (table instanceof LogicalNestedTable) {
+      LogicalNestedTable nestedTable = (LogicalNestedTable) table;
+      if (i < nestedTable.getNumPrimaryKeys() - nestedTable.getNumLocalPks()) {
+        return false;
+      } else if (i < nestedTable.getNumPrimaryKeys()) {
+        return true;
+      }
+    } else if (table instanceof ScriptRelationalTable) {
+      ScriptRelationalTable relTable = (ScriptRelationalTable) table;
+      if (i < relTable.getNumPrimaryKeys()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public List<SQRLTable> getRootTables() {
@@ -114,6 +134,7 @@ public class SqrlSchemaForInference {
     RelDataType type;
     Name name;
     String vtName;
+    boolean primaryKey;
 
     @Override
     public <R, C> R accept(FieldVisitor<R, C> visitor, C context) {
@@ -165,6 +186,13 @@ public class SqrlSchemaForInference {
 
     public List<Column> getVisibleColumns() {
       return getColumns(true);
+    }
+
+    public List<Column> getPrimaryKeys() {
+      return getFieldsByClass(Column.class, true)
+          .stream()
+          .filter(Column::isPrimaryKey)
+          .collect(Collectors.toList());
     }
 
     public List<Column> getColumns(boolean onlyVisible) {

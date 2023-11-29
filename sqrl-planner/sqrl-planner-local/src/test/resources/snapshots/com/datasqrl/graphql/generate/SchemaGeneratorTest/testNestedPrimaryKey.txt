@@ -1,0 +1,18 @@
+type Product {
+  productid: Float!
+  name: String!
+  description: String!
+  category: String!
+  nested(productid: Float, limit: Int = 10, offset: Int = 0): [nested!]
+}
+
+type Query {
+  Product(productid: Float, limit: Int = 10, offset: Int = 0): [Product!]
+}
+
+type nested {
+  productid: Float!
+  cnt: Float!
+  parent: Product!
+}
+

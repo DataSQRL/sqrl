@@ -9,6 +9,6 @@ type Product {
 }
 
 type Query {
-  Product(productid: Float, name: String, description: String, category: String, json: JSON, limit: Int = 10, offset: Int = 0): [Product!]
+  Product(limit: Int = 10, offset: Int = 0): [Product!]
 }
 

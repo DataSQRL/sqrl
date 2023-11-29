@@ -1,10 +1,10 @@
 type Query {
-  sensors(id: Float, machineid: Float, placed: String, limit: Int = 10, offset: Int = 0): [sensors!]
-  machinegroup(groupId: Float, groupName: String, created: String, limit: Int = 10, offset: Int = 0): [machinegroup!]
+  sensors(limit: Int = 10, offset: Int = 0): [sensors!]
+  machinegroup(limit: Int = 10, offset: Int = 0): [machinegroup!]
   SecReadingByTemp(temp: Int!): [SecReadingByTemp!]
-  SensorMaxTemp(sensorid: Float, maxTemp: Float, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]
-  SecReading(sensorid: Float, timeSec: String, temp: Float, limit: Int = 10, offset: Int = 0): [SecReading!]
-  sensorreading(sensorid: Float, time: String, temperature: Float, humidity: Float, limit: Int = 10, offset: Int = 0): [sensorreading!]
+  SensorMaxTemp(sensorid: Float, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]
+  SecReading(sensorid: Float, timeSec: String, limit: Int = 10, offset: Int = 0): [SecReading!]
+  sensorreading(limit: Int = 10, offset: Int = 0): [sensorreading!]
 }
 
 type SecReading {
@@ -28,7 +28,7 @@ type machinegroup {
   groupId: Float!
   groupName: String!
   created: String!
-  machines(machineId: Float, limit: Int = 10, offset: Int = 0): [machines!]
+  machines(limit: Int = 10, offset: Int = 0): [machines!]
 }
 
 type machines {
