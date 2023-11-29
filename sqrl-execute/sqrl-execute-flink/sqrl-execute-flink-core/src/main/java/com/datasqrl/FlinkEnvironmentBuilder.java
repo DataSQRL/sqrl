@@ -299,10 +299,25 @@ public class FlinkEnvironmentBuilder implements
   }
 
   private Schema toSchema(SerializableSchema schema) {
+    return toSchema(schema, false, Optional.empty());
+  }
+
+  private Schema toSchema(SerializableSchema schema, boolean setMetadata, Optional<String> sourceTime) {
     Schema.Builder builder = Schema.newBuilder();
 
+    //TODO: This is brittle, it mirrors the structure of UniversalTable by index
+    int index = 0;
     for (Pair<String, DataType> column : schema.getColumns()) {
-      builder.column(column.getKey(), column.getValue());
+      if (setMetadata && index==0) {
+        builder.columnByExpression(column.getKey(), "UuidGenerator()");
+      } else if (setMetadata && index==1) {
+        builder.columnByExpression(column.getKey(), "PROCTIME()");
+      } else if (setMetadata && index==2 && sourceTime.isPresent()) {
+        builder.columnByMetadata(column.getKey(), column.getValue(), sourceTime.get());
+      } else {
+        builder.column(column.getKey(), column.getValue());
+      }
+      index++;
     }
 
     //TODO: make configurable

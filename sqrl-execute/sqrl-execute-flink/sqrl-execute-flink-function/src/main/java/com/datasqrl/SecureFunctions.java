@@ -4,6 +4,7 @@ import com.datasqrl.function.SqrlFunction;
 import com.google.common.base.Preconditions;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Optional;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
@@ -35,6 +36,26 @@ public class SecureFunctions {
     public String getDocumentation() {
       return "Generates a random ID string with the given number of secure random bytes. "
           + "The bytes are base64 encoded so the string length will be longer than the number of bytes";
+    }
+  }
+
+  public static class UUID extends ScalarFunction implements SqrlFunction {
+
+    public String eval() {
+      return java.util.UUID.randomUUID().toString();
+    }
+
+    @Override
+    public TypeInference getTypeInference(DataTypeFactory typeFactory) {
+      return TypeInference.newBuilder()
+          .typedArguments()
+          .outputTypeStrategy(callContext -> Optional.of(DataTypes.STRING().notNull()))
+          .build();
+    }
+
+    @Override
+    public String getDocumentation() {
+      return "Generates a random UUID string";
     }
   }
 

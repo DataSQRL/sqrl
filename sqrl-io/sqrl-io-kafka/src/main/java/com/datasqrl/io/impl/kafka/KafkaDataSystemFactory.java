@@ -26,6 +26,10 @@ public class KafkaDataSystemFactory implements DataSystemImplementationFactory {
 
   public static final String TOPIC_PREFIX_KEY = "prefix";
 
+  public static final Set<String> ALL_KEYS = Set.of(
+      SYSTEM_NAME_KEY,
+      TOPIC_PREFIX_KEY);
+
   @Override
   public String getSystemName() {
     return SYSTEM_NAME;
