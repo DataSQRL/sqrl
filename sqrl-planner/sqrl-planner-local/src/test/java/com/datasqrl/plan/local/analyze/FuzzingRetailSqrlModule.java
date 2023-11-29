@@ -1,5 +1,6 @@
 package com.datasqrl.plan.local.analyze;
 
+import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SourceFactory;
@@ -15,18 +16,15 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
-import com.datasqrl.plan.local.analyze.RetailSqrlModule.Orders;
 import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.schema.converters.UtbToFlexibleSchema;
+import com.datasqrl.schema.converters.RelDataTypeToFlexibleSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.google.auto.service.AutoService;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +123,8 @@ public class FuzzingRetailSqrlModule implements SqrlModule {
     builder.getConnectorConfig().setProperty(DataSystemConnectorFactory.SYSTEM_NAME_KEY,"in-mem-" + datasetName);
     TableConfig tableConfig = builder.build();
     return tableConfig.initializeSource(NamePath.of("ecommerce-data-large"),
-            UtbToFlexibleSchema.createFlexibleSchema(ReflectionToUt.reflection(clazz)));
+            RelDataTypeToFlexibleSchema.createFlexibleSchema(new NamedRelDataType(Name.system(clazz.getSimpleName()),
+                ReflectionToRelDataType.reflectionToRelType(clazz))));
   }
 
   @Override

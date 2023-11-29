@@ -26,18 +26,21 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
   public Optional<TableSchema> create(NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, ErrorCollector errors) {
     Optional<URI> schemaPath = resourceResolver
         .resolveFile(basePath.concat(NamePath.of(getSchemaFilename(tableConfig))));
-
     return schemaPath.map(s->
-      create(BaseFileUtil.readFile(s), tableConfig.getBase().getCanonicalizer()));
+      create(BaseFileUtil.readFile(s), tableConfig.getBase().getCanonicalizer(), schemaPath));
   }
 
   @Override
   public TableSchema create(String schemaDefinition, NameCanonicalizer nameCanonicalizer) {
+    return create(schemaDefinition, nameCanonicalizer, Optional.empty());
+  }
+
+  private FlexibleTableSchemaHolder create(String schemaDefinition, NameCanonicalizer nameCanonicalizer, Optional<URI> location) {
     Deserializer deserializer = new Deserializer();
     TableDefinition schemaDef = deserializer.mapYAML(schemaDefinition, TableDefinition.class);
     SchemaImport importer = new SchemaImport(Constraint.FACTORY_LOOKUP, NameCanonicalizer.SYSTEM);
     FlexibleTableSchema tableSchema = importer.convert(schemaDef, ErrorCollector.root()).get();
-    return new FlexibleTableSchemaHolder(tableSchema, schemaDefinition);
+    return new FlexibleTableSchemaHolder(tableSchema, schemaDefinition, location);
   }
 
 

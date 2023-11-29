@@ -31,7 +31,7 @@ public class TableSourceSinkNamespaceObject extends AbstractTableNamespaceObject
 
   @Override
   public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
-    return importSourceTable(objectName, table, framework);
+    return importSourceTable(objectName, table, framework, errors);
   }
 
   @Override

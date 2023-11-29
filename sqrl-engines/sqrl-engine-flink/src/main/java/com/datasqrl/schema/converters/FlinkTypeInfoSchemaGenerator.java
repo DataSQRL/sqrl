@@ -61,4 +61,5 @@ public class FlinkTypeInfoSchemaGenerator implements UniversalTable.SchemaConver
   public TypeInformation convertSchema(UniversalTable table) {
     return convertRelDataType(table.getType());
   }
+
 }

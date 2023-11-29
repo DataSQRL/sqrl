@@ -8,7 +8,7 @@ import com.datasqrl.schema.type.basic.BigIntType;
 import com.datasqrl.schema.type.basic.StringType;
 import org.apache.calcite.rel.type.RelDataType;
 
-public class RelDataTypeToFlexibleType {
+public class RelDataTypePrimitiveToFlexibleType {
 
   public static Type toType(RelDataType type) {
     switch (type.getSqlTypeName()) {

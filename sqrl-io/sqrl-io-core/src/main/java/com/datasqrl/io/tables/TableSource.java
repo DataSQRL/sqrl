@@ -20,9 +20,9 @@ public class TableSource extends TableInput {
 
   private final TableSchema schema;
 
-  public TableSource(DataSystemConnectorSettings dataset, TableConfig configuration, NamePath path,
+  public TableSource(DataSystemConnectorSettings connectorSettings, TableConfig configuration, NamePath path,
       Name name, TableSchema schema) {
-    super(dataset, configuration, path, name, Optional.of(schema));
+    super(connectorSettings, configuration, path, name, Optional.of(schema));
     this.schema = schema;
 //    this.statistic = TableStatistic.of(1000); //TODO: extract from schema
   }

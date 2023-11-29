@@ -58,6 +58,7 @@
         <calcite.version>1.27.0</calcite.version>
         <graphql-java.version>19.2</graphql-java.version>
         <projectreactor.version>3.5.6</projectreactor.version>
+        <avro.version>1.11.3</avro.version>
 
         <!-- params -->
         <snapshots.update>false</snapshots.update>
@@ -267,6 +268,16 @@
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-io-schema-flexible</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-io-schema-avro</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-planner-schema-avro</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -652,6 +663,13 @@
                 <artifactId>kafka-streams-test-utils</artifactId>
                 <version>${kafka.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <!-- formats -->
+            <dependency>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro</artifactId>
+                <version>${avro.version}</version>
             </dependency>
 
             <!-- database: postgres -->

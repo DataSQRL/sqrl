@@ -1,5 +1,6 @@
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -9,7 +10,6 @@ import com.datasqrl.graphql.visitor.GraphqlFieldDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlInputValueDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.graphql.visitor.GraphqlTypeVisitor;
-import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.UniversalTable.Configuration;
 import com.datasqrl.util.CalciteUtil;
@@ -36,19 +36,19 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 @AllArgsConstructor
-public class InputFieldToFlexibleSchemaRelation implements
-    GraphqlDefinitionVisitor<List<UniversalTable>, Object>,
-    GraphqlFieldDefinitionVisitor<UniversalTable, Object> {
+public class InputFieldToRelDataType implements
+    GraphqlDefinitionVisitor<List<NamedRelDataType>, Object>,
+    GraphqlFieldDefinitionVisitor<NamedRelDataType, Object> {
 
   private final TypeDefinitionRegistry typeDefinitionRegistry;
   private final RelDataTypeFactory typeFactory;
   private final NameCanonicalizer canonicalizer;
 
   @Override
-  public List<UniversalTable> visitObjectTypeDefinition(ObjectTypeDefinition node,
+  public List<NamedRelDataType> visitObjectTypeDefinition(ObjectTypeDefinition node,
       Object context) {
     Preconditions.checkArgument(node.getName().equals("Mutation"),"mutation");
-    List<UniversalTable> schemas = node.getFieldDefinitions().stream()
+    List<NamedRelDataType> schemas = node.getFieldDefinitions().stream()
         .map(f->GraphqlSchemaVisitor.accept(this, f, context))
         .collect(Collectors.toList());
 
@@ -56,7 +56,7 @@ public class InputFieldToFlexibleSchemaRelation implements
   }
 
   @Override
-  public UniversalTable visitFieldDefinition(FieldDefinition node, Object context) {
+  public NamedRelDataType visitFieldDefinition(FieldDefinition node, Object context) {
 //    validateReturnType(fieldType); todo
 
     Preconditions.checkState(node.getInputValueDefinitions().size() == 1, "Too many arguments for mutation '%s'. Must have exactly one.", node.getName());
@@ -72,8 +72,7 @@ public class InputFieldToFlexibleSchemaRelation implements
     RelDataType relDataType = GraphqlSchemaVisitor.accept(new InputObjectToRelDataType(),
         typeDef, new FieldContext());
 
-    return UniversalTable.of(relDataType, NamePath.of(node.getName()), Configuration.forTable(),
-        0, typeFactory);
+    return new NamedRelDataType(Name.system(node.getName()), relDataType);
   }
 
   private class InputObjectToRelDataType implements

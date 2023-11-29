@@ -3,6 +3,8 @@ package com.datasqrl.kafka;
 import static com.datasqrl.io.tables.TableConfig.CONNECTOR_KEY;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.type.NamedRelDataType;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.*;
 import com.datasqrl.engine.log.Log;
@@ -22,6 +24,7 @@ import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -88,7 +91,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   }
 
   @Override
-  public Log createLog(String logId, UniversalTable schema) {
+  public Log createLog(String logId, NamedRelDataType schema) {
     String topicName = sanitizeName(logId);
     Preconditions.checkArgument(Topic.isValid(topicName), "Not a valid topic name: %s", topicName);
     TableSchema tblSchema = schemaFactory.convert(schema);

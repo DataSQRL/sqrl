@@ -1,7 +1,7 @@
 package com.datasqrl.graphql;
 
+import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.log.Log;
@@ -21,10 +21,8 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.plan.table.RelDataType2UTBConverter;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.TableType;
-import com.datasqrl.schema.UniversalTable;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -116,11 +114,9 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
     } else {
       //otherwise create new log for it
       String logId = ((ScriptRelationalTable) sqrlTable.getVt()).getNameId();
-      RelDataType2UTBConverter converter = new RelDataType2UTBConverter(typeFactory);
-      UniversalTable schema = converter.convert(sqrlTable.getPath(),
-          ((ScriptRelationalTable) sqrlTable.getVt()).getRowType(), 0,
-          null);
-      Log log = logEngine.get().createLog(logId, schema);
+      NamedRelDataType tableSchema = new NamedRelDataType(Name.system(sqrlTable.getName()),
+          ((ScriptRelationalTable) sqrlTable.getVt()).getRowType());
+      Log log = logEngine.get().createLog(logId, tableSchema);
       exports.put(sqrlTable, log);
       subscriptionSource = log.getSource();
     }

@@ -16,6 +16,8 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
 import com.datasqrl.calcite.CatalogReader;
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactory;
@@ -34,6 +36,7 @@ import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
@@ -48,8 +51,9 @@ import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.hints.WatermarkHint;
 import com.datasqrl.plan.table.ImportedRelationalTable;
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.UniversalTable.Configuration;
 import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
-import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
+import com.datasqrl.schema.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
@@ -92,7 +96,6 @@ import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
-import org.apache.flink.table.types.DataType;
 
 @Slf4j
 @AllArgsConstructor
@@ -325,9 +328,15 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       Optional<SqlNode> watermarkColumn, Optional<SqlNode> watermarkExpression) {
 
     TableSource tableSource = relationalTable.getTableSource();
-    //TODO: error handling when mapping doesn't work?
-    UniversalTable universalTable = SchemaToUniversalTableMapperFactory.load(tableSource.getSchema())
-            .map(tableSource.getSchema(), tableSource.getConnectorSettings(), Optional.empty());
+
+    ErrorCollector errors = ErrorCollector.root();
+    RelDataType tableType =  SchemaToRelDataTypeFactory.load(tableSource.getSchema())
+        .map(tableSource.getSchema(), tableSource.getName(), errors);
+    Preconditions.checkArgument(tableType!=null && !errors.hasErrors(),
+        "Error converting schema for table [%s]: %s", tableSource.getName(), errors);
+    UniversalTable universalTable =  UniversalTable.of(tableType, NamePath.of(tableName),
+        Configuration.forImport(tableSource.getConnectorSettings().isHasSourceTimestamp()), 1,
+        TypeFactory.getTypeFactory());
 
     final String watermarkName;
     final String watermarkExpr;
@@ -528,7 +537,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     UniversalTable2FlinkSchema schemaConverter = new UniversalTable2FlinkSchema();
 
     return SerializableSchema.builder()
-        .columns(schemaConverter.convertToList(universalTable))
+        .columns(schemaConverter.convertToList(universalTable.getType()))
         .waterMarkType(waterMarkType)
         .watermarkName(watermarkName)
         .watermarkExpression(watermarkExpression)

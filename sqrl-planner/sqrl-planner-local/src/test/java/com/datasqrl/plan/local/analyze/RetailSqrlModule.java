@@ -1,5 +1,6 @@
 package com.datasqrl.plan.local.analyze;
 
+import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.io.DataSystemConnectorFactory;
@@ -16,7 +17,7 @@ import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.schema.converters.UtbToFlexibleSchema;
+import com.datasqrl.schema.converters.RelDataTypeToFlexibleSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.google.auto.service.AutoService;
 import java.time.LocalDateTime;
@@ -92,7 +93,8 @@ public class RetailSqrlModule implements SqrlModule {
     builder.getConnectorConfig().setProperty(DataSystemConnectorFactory.SYSTEM_NAME_KEY,"in-mem-" + datasetName);
     TableConfig tableConfig = builder.build();
     return tableConfig.initializeSource(NamePath.of(moduleName),
-            UtbToFlexibleSchema.createFlexibleSchema(ReflectionToUt.reflection(clazz)));
+            RelDataTypeToFlexibleSchema.createFlexibleSchema(new NamedRelDataType(Name.system(clazz.getSimpleName()),
+                ReflectionToRelDataType.reflectionToRelType(clazz))));
   }
 
   @Override

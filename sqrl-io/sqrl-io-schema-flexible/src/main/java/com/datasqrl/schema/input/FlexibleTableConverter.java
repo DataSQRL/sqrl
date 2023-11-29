@@ -19,10 +19,10 @@ import java.util.Optional;
 public class FlexibleTableConverter {
 
   private final FlexibleTableSchema schema;
-  private final Optional<Name> tableAlias;
+  private final Name tableName;
 
   public Name getName() {
-    return tableAlias.orElse(schema.getName());
+    return tableName;
   }
 
   public <T> T apply(Visitor<T> visitor) {

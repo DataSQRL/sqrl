@@ -28,6 +28,7 @@ public enum ErrorCode implements ErrorLabel {
   PRIMARY_KEY_NULLABLE,
   MULTIPLE_PRIMARY_KEY,
   TABLE_LOCKED,
+  SCHEMA_ERROR,
   NOT_YET_IMPLEMENTED;
 
   @Override

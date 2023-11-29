@@ -1,9 +1,6 @@
 package com.datasqrl.plan.local.analyze;
 
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.schema.UniversalTable;
-import com.datasqrl.schema.UniversalTable.Configuration;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
 import java.lang.reflect.ParameterizedType;
@@ -13,13 +10,9 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.type.SqlTypeName;
 
-public class ReflectionToUt {
+public class ReflectionToRelDataType {
 
-  public static UniversalTable reflection(Class<?> obj) {
-    return makeTable(obj.getSimpleName(), reflectionToRelType(obj));
-  }
-
-  private static RelDataType reflectionToRelType(Class<?> obj) {
+  public static RelDataType reflectionToRelType(Class<?> obj) {
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
     RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
     java.lang.reflect.Field[] fields = obj.getDeclaredFields();
@@ -52,13 +45,6 @@ public class ReflectionToUt {
       }
     }
     return typeBuilder.build();
-  }
-
-  private static UniversalTable makeTable(String name, RelDataType type) {
-    RelDataTypeFactory typeFactory = TypeFactory.getTypeFactory();
-    return UniversalTable.of(type, NamePath.of(name),
-        Configuration.forTable(), 0,
-        typeFactory);
   }
 
   private static RelDataType getSqlTypeName(RelDataTypeFactory typeFactory, Class<?> type) {
