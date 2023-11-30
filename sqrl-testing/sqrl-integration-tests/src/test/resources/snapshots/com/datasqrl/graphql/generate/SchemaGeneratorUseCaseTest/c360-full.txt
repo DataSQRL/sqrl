@@ -9,9 +9,9 @@ type Customer {
   name: String!
   lastUpdated: Float!
   updateTime: String!
-  favorite_categories(category_name: String, total: Float, limit: Int = 10, offset: Int = 0): [favorite_categories!]
-  order_again(productid: Float, quantity: Float, num_orders: Float, most_recent: String, limit: Int = 10, offset: Int = 0): [order_again!]
-  order_stats(total_spend: Float, num_orders: Float, limit: Int = 10, offset: Int = 0): [order_stats!]
+  favorite_categories(category_name: String, limit: Int = 10, offset: Int = 0): [favorite_categories!]
+  order_again(productid: Float, limit: Int = 10, offset: Int = 0): [order_again!]
+  order_stats(limit: Int = 10, offset: Int = 0): [order_stats!]
   orders(limit: Int = 10, offset: Int = 0): [Orders!]
 }
 
@@ -27,8 +27,8 @@ type Orders {
   id: Float!
   customerid: Float!
   time: String!
-  entries(productid: Float, quantity: Float, unit_price: Float, discount: Float, discount0: Float, total: Float, limit: Int = 10, offset: Int = 0): [entries!]
-  total(price: Float, discount: Float, num: Float, limit: Int = 10, offset: Int = 0): [total!]
+  entries(limit: Int = 10, offset: Int = 0): [entries!]
+  total(limit: Int = 10, offset: Int = 0): [total!]
 }
 
 type Product {
@@ -40,10 +40,10 @@ type Product {
 }
 
 type Query {
-  Product(productid: Float, name: String, description: String, category: String, updateTime: String, limit: Int = 10, offset: Int = 0): [Product!]
-  NewCustomerPromotion(customerid: Float, email: String, name: String, total_spend: Float, num_orders: Float, limit: Int = 10, offset: Int = 0): [NewCustomerPromotion!]
-  Orders(id: Float, customerid: Float, time: String, limit: Int = 10, offset: Int = 0): [Orders!]
-  Customer(customerid: Float, email: String, name: String, lastUpdated: Float, updateTime: String, limit: Int = 10, offset: Int = 0): [Customer!]
+  Product(productid: Float, limit: Int = 10, offset: Int = 0): [Product!]
+  NewCustomerPromotion(limit: Int = 10, offset: Int = 0): [NewCustomerPromotion!]
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]
   Category(name: String, limit: Int = 10, offset: Int = 0): [Category!]
 }
 

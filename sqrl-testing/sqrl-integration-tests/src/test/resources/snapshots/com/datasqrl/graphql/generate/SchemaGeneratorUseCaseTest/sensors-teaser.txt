@@ -11,11 +11,11 @@ type MinReadings {
 }
 
 type Query {
-  Sensors(id: Float, machineid: Float, placed: String, limit: Int = 10, offset: Int = 0): [Sensors!]
-  MinReadings(sensorid: Float, timeMin: String, temp: Float, limit: Int = 10, offset: Int = 0): [MinReadings!]
-  machinegroup(groupId: Float, groupName: String, created: String, limit: Int = 10, offset: Int = 0): [machinegroup!]
-  Machine(machineid: Float, maxTemp: Float, avgTemp: Float, limit: Int = 10, offset: Int = 0): [Machine!]
-  sensorreading(sensorid: Float, time: String, temperature: Float, humidity: Float, limit: Int = 10, offset: Int = 0): [sensorreading!]
+  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]
+  MinReadings(sensorid: Float, timeMin: String, limit: Int = 10, offset: Int = 0): [MinReadings!]
+  machinegroup(limit: Int = 10, offset: Int = 0): [machinegroup!]
+  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]
+  sensorreading(limit: Int = 10, offset: Int = 0): [sensorreading!]
 }
 
 type Sensors {
@@ -29,7 +29,7 @@ type machinegroup {
   groupId: Float!
   groupName: String!
   created: String!
-  machines(machineId: Float, limit: Int = 10, offset: Int = 0): [machines!]
+  machines(limit: Int = 10, offset: Int = 0): [machines!]
 }
 
 type machines {

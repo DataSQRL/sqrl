@@ -37,6 +37,32 @@ public class SchemaGeneratorTest extends AbstractSchemaGeneratorTest {
   }
 
   @Test
+  public void testPrimaryKey() {
+    snapshotTest("IMPORT ecommerce-data.Product;\n"
+        + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;");
+  }
+
+  @Test
+  public void testNestedPrimaryKey() {
+    snapshotTest("IMPORT ecommerce-data.Product;\n"
+        + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
+        + "Product.nested := SELECT p.productid, count(*) cnt FROM @ JOIN Product p GROUP BY p.productid;");
+  }
+
+  @Test
+  public void testNestedTable() {
+    snapshotTest("IMPORT ecommerce-data.Orders;\n"
+        + "Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC;\n");
+  }
+
+  @Test
+  public void testNestedNoPrimaryKey() {
+    snapshotTest("IMPORT ecommerce-data.Product;\n"
+        + "Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC;\n"
+        + "Product.nested := SELECT p.productid, p.name FROM @ JOIN Product p");
+  }
+
+  @Test
   public void testImportNested() {
     snapshotTest("IMPORT ecommerce-data.Orders;");
   }

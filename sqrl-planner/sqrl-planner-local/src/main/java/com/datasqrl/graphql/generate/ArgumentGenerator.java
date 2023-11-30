@@ -53,7 +53,7 @@ public class ArgumentGenerator implements
       List<GraphQLArgument> limitOffset = generateLimitOffset();
       return limitOffset;
     } else if (addArguments && parameters.isEmpty()) {
-      List<GraphQLArgument> premuted = generatePremuted(field.getToTable());
+      List<GraphQLArgument> premuted = generatePermuted(field.getToTable());
       List<GraphQLArgument> limitOffset = generateLimitOffset();
 
       return ListUtils.union(premuted, limitOffset);
@@ -82,7 +82,7 @@ public class ArgumentGenerator implements
           .map(this::createArgument)
           .collect(Collectors.toList());
     } else if (addArguments) {
-      List<GraphQLArgument> premuted = generatePremuted(table);
+      List<GraphQLArgument> premuted = generatePermuted(table);
       List<GraphQLArgument> limitOffset = generateLimitOffset();
       return ListUtils.union(premuted, limitOffset);
     }
@@ -107,8 +107,8 @@ public class ArgumentGenerator implements
     return List.of(limit, offset);
   }
 
-  private List<GraphQLArgument> generatePremuted(SQRLTable table) {
-    return table.getColumns(true)
+  private List<GraphQLArgument> generatePermuted(SQRLTable table) {
+    return table.getPrimaryKeys()
         .stream()
         .filter(f -> getInputType(f.getType()).isPresent())
         .filter(f -> logIfInvalid(isValidGraphQLName(f.getName().getDisplay()), table, f))
@@ -116,7 +116,6 @@ public class ArgumentGenerator implements
             .name(f.getName().getDisplay())
             .type(getInputType(f.getType()).get())
             .build())
-        .limit(8)
         .collect(Collectors.toList());
   }
 

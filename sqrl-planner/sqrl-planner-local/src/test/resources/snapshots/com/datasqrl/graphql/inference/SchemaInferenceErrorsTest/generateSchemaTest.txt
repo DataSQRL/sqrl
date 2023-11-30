@@ -1,6 +1,6 @@
 type Orders {
   customerid: Float!
-  entries(discount: Float, limit: Int = 10, offset: Int = 0, productid: Float, quantity: Float, unit_price: Float): [entries!]
+  entries(limit: Int = 10, offset: Int = 0): [entries!]
   id: Float!
   time: String!
 }
@@ -13,8 +13,8 @@ type Product {
 }
 
 type Query {
-  Orders(customerid: Float, id: Float, limit: Int = 10, offset: Int = 0, time: String): [Orders!]
-  Product(category: String, description: String, limit: Int = 10, name: String, offset: Int = 0, productid: Float): [Product!]
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+  Product(limit: Int = 10, offset: Int = 0): [Product!]
 }
 
 type entries {
