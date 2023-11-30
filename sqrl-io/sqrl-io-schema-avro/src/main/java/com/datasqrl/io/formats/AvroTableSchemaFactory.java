@@ -2,6 +2,7 @@ package com.datasqrl.io.formats;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
@@ -22,21 +23,14 @@ public class AvroTableSchemaFactory implements TableSchemaFactory {
   public static final String SCHEMA_TYPE = "avro";
 
   @Override
-  public Optional<TableSchema> create(
-      NamePath basePath, URI baseURI, ResourceResolver resourceResolver, TableConfig tableConfig, ErrorCollector errors) {
-    Optional<URI> schemaPath = resourceResolver
-        .resolveFile(basePath.concat(NamePath.of(getSchemaFilename(tableConfig))));
-    return schemaPath.map(s->
-        create(BaseFileUtil.readFile(s), tableConfig.getBase().getCanonicalizer(), schemaPath));
-  }
-
-  @Override
-  public TableSchema create(String schemaDefinition, NameCanonicalizer nameCanonicalizer) {
-    return create(schemaDefinition, nameCanonicalizer, Optional.empty());
-  }
-
-  private TableSchema create(String schemaDefinition, NameCanonicalizer nameCanonicalizer, Optional<URI> location) {
-    Schema schema = new Schema.Parser().parse(schemaDefinition);
+  public AvroSchemaHolder create(String schemaDefinition, Optional<URI> location, ErrorCollector errors) {
+    if (location.isPresent()) errors = errors.withConfig(location.get());
+    Schema schema;
+    try {
+       schema = new Schema.Parser().parse(schemaDefinition);
+    } catch (Exception e) {
+      throw errors.exception(ErrorCode.SCHEMA_ERROR, "Could not parse schema: %s", e);
+    }
     return new AvroSchemaHolder(schema, schemaDefinition, location);
   }
 

@@ -52,7 +52,7 @@ public class TableConverter {
   public UniversalTable sourceToTable(TableSchema tableSchema,
       boolean hasSourceTime, Name tableName, ErrorCollector errors) {
     if (tableSchema.getLocation().isPresent()) {
-      errors = errors.withConfig(tableSchema.getLocation().get().getPath());
+      errors = errors.withConfig(tableSchema.getLocation().get());
     }
     RelDataType dataType = SchemaToRelDataTypeFactory.load(tableSchema)
         .map(tableSchema, tableName, errors);

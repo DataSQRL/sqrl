@@ -6,10 +6,8 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.StreamUtil;
-import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.avro.Schema;
@@ -27,16 +25,6 @@ public class AvroToRelDataTypeConverter {
   public AvroToRelDataTypeConverter(ErrorCollector errors) {
     this(TypeFactory.getTypeFactory(), errors);
   }
-
-  private static final Map<Schema.Type, SqlTypeName> TYPE_MAPPING = ImmutableMap.<Schema.Type, SqlTypeName>builder()
-      .put(Type.INT, SqlTypeName.INTEGER)
-    .put(Type.STRING, SqlTypeName.VARCHAR)
-    .put(Type.BYTES, SqlTypeName.VARBINARY)
-    .put(Type.BOOLEAN, SqlTypeName.BOOLEAN)
-    .put(Type.LONG, SqlTypeName.BIGINT)
-    .put(Type.DOUBLE, SqlTypeName.DOUBLE)
-    .put(Type.FLOAT, SqlTypeName.FLOAT)
-    .build();
 
   public RelDataType convert(Schema schema) {
     return convertAvroSchemaToCalciteType(schema, NamePath.ROOT);
@@ -79,8 +67,6 @@ public class AvroToRelDataTypeConverter {
           return null;
         }
         return notNull(typeFactory.createStructType(fieldTypes, fieldNames));
-      case ENUM:
-        return notNull(typeFactory.createSqlType(SqlTypeName.VARCHAR));
       case ARRAY:
         relType = convertAvroSchemaToCalciteType(schema.getElementType(), path);
         if (relType==null) return null;
@@ -89,17 +75,60 @@ public class AvroToRelDataTypeConverter {
         relType = convertAvroSchemaToCalciteType(schema.getValueType(), path);
         if (relType==null) return null;
         return notNull(typeFactory.createMapType(typeFactory.createSqlType(SqlTypeName.VARCHAR), relType));
-      case FIXED:
-        return notNull(typeFactory.createSqlType(SqlTypeName.DECIMAL));
-      default:
-        SqlTypeName typeName = TYPE_MAPPING.get(schema.getType());
-        if (typeName==null) {
-          errors.fatal(ErrorCode.SCHEMA_ERROR, "Encountered unknown AVRO type [%s] at: %s", schema.getType(), path);
-          return null;
-        }
-        return notNull(typeFactory.createSqlType(typeName));
+      default: //primitives
+        relType = getPrimitive(schema, path);
+        if (relType!=null) relType = notNull(relType);
+        return relType;
     }
   }
+
+  private RelDataType getPrimitive(Schema schema, NamePath path) {
+    switch (schema.getType()) {
+      case FIXED:
+        if (logicalTypeEquals(schema, "decimal")) {
+          return notNull(typeFactory.createSqlType(SqlTypeName.DECIMAL));
+        } else {
+          errors.fatal(ErrorCode.SCHEMA_ERROR, "Unrecognized FIXED type in AVRO schema [%s] at: %s", schema, path);
+          return null;
+        }
+      case ENUM:
+      case STRING:
+        return typeFactory.createSqlType(SqlTypeName.VARCHAR);
+      case BYTES:
+        return typeFactory.createSqlType(SqlTypeName.VARBINARY);
+      case INT:
+        if (logicalTypeEquals(schema, "date")) {
+          return typeFactory.createSqlType(SqlTypeName.DATE);
+        } else if (logicalTypeEquals(schema, "time-millis")) {
+          return typeFactory.createSqlType(SqlTypeName.TIME);
+        } else {
+          return typeFactory.createSqlType(SqlTypeName.INTEGER);
+        }
+      case LONG:
+        if (logicalTypeEquals(schema, "timestamp-millis")) {
+          return TypeFactory.makeTimestampType(typeFactory);
+        } else {
+          return typeFactory.createSqlType(SqlTypeName.BIGINT);
+        }
+      case FLOAT:
+        return typeFactory.createSqlType(SqlTypeName.FLOAT);
+      case DOUBLE:
+        return typeFactory.createSqlType(SqlTypeName.DOUBLE);
+      case BOOLEAN:
+        return typeFactory.createSqlType(SqlTypeName.BOOLEAN);
+      case NULL:
+        errors.fatal(ErrorCode.SCHEMA_ERROR, "NULL not supported as type at: %s", path);
+        return null;
+      default:
+        errors.fatal(ErrorCode.SCHEMA_ERROR, "Unrecognized AVRO Type [%s] at: %s", schema.getType(), path);
+        return null;
+    }
+  }
+
+  private static boolean logicalTypeEquals(Schema schema, String typeName) {
+    return schema.getLogicalType()!=null && schema.getLogicalType().getName().equalsIgnoreCase(typeName);
+  }
+
 
   private RelDataType notNull(RelDataType type) {
     return typeFactory.createTypeWithNullability(type, false);

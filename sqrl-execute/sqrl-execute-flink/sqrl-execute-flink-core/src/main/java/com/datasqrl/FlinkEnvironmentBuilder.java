@@ -399,7 +399,7 @@ public class FlinkEnvironmentBuilder implements
     errorSideChannels.add(process.getSideOutput(formatErrorTag));
 
     //todo validator may be optional
-    TableSchema schema = factory.create(schemaDefinition, tableConfig.getBase().getCanonicalizer());
+    TableSchema schema = factory.create(schemaDefinition);
     //todo: fix flexible schema hard referenced
     SchemaValidator schemaValidator = schema.getValidator(
             tableConfig.getSchemaAdjustmentSettings(),

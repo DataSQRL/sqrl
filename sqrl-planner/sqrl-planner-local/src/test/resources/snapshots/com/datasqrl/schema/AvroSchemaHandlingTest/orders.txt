@@ -1,0 +1,12 @@
+>>>relType
+RecordType(BIGINT NOT NULL id, BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL time, RecordType(INTEGER NOT NULL productid, INTEGER NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL entries) NOT NULL
+>>>flinkSchema
+(
+  `_uuid` CHAR(36) NOT NULL,
+  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
+  `_source_time` TIMESTAMP_LTZ(3) NOT NULL,
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` STRING NOT NULL,
+  `entries` ARRAY<ROW<`productid` INT NOT NULL, `quantity` INT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE> NOT NULL> NOT NULL
+)

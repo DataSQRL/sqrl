@@ -1,0 +1,16 @@
+{
+  "type" : "source",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "avro"
+  },
+  "name" : "orders",
+  "identifier" : "orders",
+  "schema" : "avro",
+  "connector" : {
+    "directoryURI" : "../../sqrl-examples/retail/data/",
+    "fileURIs" : [ ],
+    "filenamePattern" : "^([^\\.]+?)(?:_part.*)?$",
+    "name" : "file"
+  }
+}
