@@ -100,6 +100,8 @@ public class FlinkEnvironmentBuilder implements
   public static final String ERROR_TAG_PREFIX = "_errors";
   public static final String ERROR_SINK_NAME = "errors_internal_sink";
 
+  public static final String UUID_FCT_NAME = "__DataSQRLUuidGenerator";
+
   private final ErrorCollector errors;
 
   public FlinkEnvironmentBuilder(ErrorCollector errors) {
@@ -309,7 +311,7 @@ public class FlinkEnvironmentBuilder implements
     int index = 0;
     for (Pair<String, DataType> column : schema.getColumns()) {
       if (setMetadata && index==0) {
-        builder.columnByExpression(column.getKey(), "UuidGenerator()");
+        builder.columnByExpression(column.getKey(), UUID_FCT_NAME+"()");
       } else if (setMetadata && index==1) {
         builder.columnByExpression(column.getKey(), "PROCTIME()");
       } else if (setMetadata && index==2 && sourceTime.isPresent()) {
