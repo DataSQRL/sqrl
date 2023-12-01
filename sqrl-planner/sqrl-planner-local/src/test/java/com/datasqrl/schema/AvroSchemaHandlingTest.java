@@ -22,9 +22,12 @@ import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.datasqrl.util.SnapshotTest;
+import com.google.common.collect.ImmutableMap;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -40,6 +43,10 @@ public class AvroSchemaHandlingTest {
 
   private static Path EXAMPLES_PATH = Path.of("..", "..", "sqrl-examples");
   private static final Path RESOURCE_DIR = Paths.get("src", "test", "resources");
+
+  private static final Map<String, String> SYSTEM_SETTINGS = ImmutableMap.of("kafka_servers","111.111.0.1",
+      "something","earliest-offset");
+  public static final String SYSTEM_PREFIX = "datasqrl.";
 
 
   @ParameterizedTest
@@ -63,7 +70,7 @@ public class AvroSchemaHandlingTest {
 
     TableConverter tblConverter = new TableConverter(TypeFactory.getTypeFactory(), NameCanonicalizer.SYSTEM);
     UniversalTable utb = tblConverter.sourceToTable(schema, true, tblName, errors);
-
+    setSystemSettings();
     //Flink Schema
     UniversalTable2FlinkSchema conv1 = new UniversalTable2FlinkSchema();
     snapshot.addContent(conv1.convertSchema(utb).toString(), "flinkSchema");
@@ -81,6 +88,11 @@ public class AvroSchemaHandlingTest {
 
 
     snapshot.createOrValidate();
+  }
+
+  private void setSystemSettings() {
+    SYSTEM_SETTINGS.forEach((k,v) ->
+        System.setProperty(SYSTEM_PREFIX+k,v));
   }
 
   static class SchemaProvider implements ArgumentsProvider {

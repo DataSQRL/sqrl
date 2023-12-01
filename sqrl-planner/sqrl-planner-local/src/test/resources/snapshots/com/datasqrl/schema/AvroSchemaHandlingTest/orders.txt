@@ -24,7 +24,7 @@ RecordType(BIGINT NOT NULL id, BIGINT NOT NULL customerid, VARCHAR(2147483647) C
 COMMENT ''
 
 WITH (
-  'properties.bootstrap.servers' = '111.0.0.100',
+  'properties.bootstrap.servers' = '111.111.0.1',
   'connector' = 'kafka',
   'format' = 'avro',
   'topic' = 'orders'

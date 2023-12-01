@@ -9,6 +9,6 @@
   "schema" : "avro",
   "connector" : {
     "name" : "kafka",
-    "bootstrap.servers": "111.0.0.100"
+    "bootstrap.servers": "${sys:datasqrl.kafka_servers}"
   }
 }

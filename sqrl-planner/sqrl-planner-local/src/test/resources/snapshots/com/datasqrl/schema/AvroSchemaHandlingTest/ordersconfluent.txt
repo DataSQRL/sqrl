@@ -24,12 +24,12 @@ RecordType(BIGINT NOT NULL id, BIGINT NOT NULL customerid, VARCHAR(2147483647) C
 COMMENT ''
 
 WITH (
-  'properties.bootstrap.servers' = '111.0.0.100',
+  'properties.bootstrap.servers' = '${KAFKA_BROKERS}',
   'connector' = 'kafka',
   'format' = 'avro-confluent',
   'avro-confluent.basic-auth.credentials-source' = 'myauth',
   'topic' = 'orders',
-  'avro-confluent.url' = 'http://localhost:8082',
+  'avro-confluent.url' = '${env:SOME_VAR}',
   'properties.group.id' = 'mygroupid',
   'scan.startup.mode' = 'earliest-offset',
   'sink.partitioner' = 'default'

@@ -3,7 +3,7 @@
   "canonicalizer" : "system",
   "format" : {
     "name" : "avro-confluent",
-    "url" : "http://localhost:8082",
+    "url" : "${env:SOME_VAR}",
     "basic-auth.credentials-source": "myauth"
   },
   "name" : "orders",
@@ -11,8 +11,8 @@
   "schema" : "avro",
   "connector" : {
     "name" : "kafka",
-    "bootstrap.servers": "111.0.0.100",
-    "scan.startup.mode": "earliest-offset",
+    "bootstrap.servers": "${KAFKA_BROKERS}",
+    "scan.startup.mode": "${sys:datasqrl.something}",
     "sink.partitioner": "default",
     "group.id": "mygroupid"
   }
