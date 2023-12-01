@@ -107,7 +107,14 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-schema-flexible</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-schema-avro</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-planner-schema-avro</artifactId>
+    </dependency>
     <!-- util -->
     <dependency>
       <groupId>info.picocli</groupId>
