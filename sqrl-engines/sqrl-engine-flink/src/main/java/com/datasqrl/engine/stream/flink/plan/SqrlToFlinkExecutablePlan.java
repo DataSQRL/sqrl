@@ -536,7 +536,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     });
   }
 
-  private SerializableSchema convertSchema(UniversalTable universalTable, String watermarkName,
+  public static SerializableSchema convertSchema(UniversalTable universalTable, String watermarkName,
       String watermarkExpression, WaterMarkType waterMarkType) {
     UniversalTable2FlinkSchema schemaConverter = new UniversalTable2FlinkSchema();
 

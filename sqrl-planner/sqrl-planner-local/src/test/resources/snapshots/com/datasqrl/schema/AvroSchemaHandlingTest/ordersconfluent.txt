@@ -26,6 +26,11 @@ COMMENT ''
 WITH (
   'properties.bootstrap.servers' = '111.0.0.100',
   'connector' = 'kafka',
-  'format' = 'avro',
-  'topic' = 'orders'
+  'format' = 'avro-confluent',
+  'avro-confluent.basic-auth.credentials-source' = 'myauth',
+  'topic' = 'orders',
+  'avro-confluent.url' = 'http://localhost:8082',
+  'properties.group.id' = 'mygroupid',
+  'scan.startup.mode' = 'earliest-offset',
+  'sink.partitioner' = 'default'
 )

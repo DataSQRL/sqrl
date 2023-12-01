@@ -8,9 +8,9 @@ import java.util.Optional;
 import lombok.NonNull;
 
 @AutoService(FormatFactory.class)
-public class ConfluentAvroFormat implements FormatFactory {
+public class AvroConfluentFormat implements FormatFactory {
 
-  public static final String FORMAT_NAME = "confluent-avro";
+  public static final String FORMAT_NAME = "avro-confluent";
   public static final List<String> FORMAT_EXTENSIONS = List.of();
 
   @Override

@@ -300,11 +300,11 @@ public class FlinkEnvironmentBuilder implements
     return null;
   }
 
-  private Schema toSchema(SerializableSchema schema) {
+  private static Schema toSchema(SerializableSchema schema) {
     return toSchema(schema, false, Optional.empty());
   }
 
-  private Schema toSchema(SerializableSchema schema, boolean setMetadata, Optional<String> sourceTime) {
+  private static Schema toSchema(SerializableSchema schema, boolean setMetadata, Optional<String> sourceTime) {
     Schema.Builder builder = Schema.newBuilder();
 
     //TODO: This is brittle, it mirrors the structure of UniversalTable by index
@@ -475,10 +475,9 @@ public class FlinkEnvironmentBuilder implements
       context.getTEnv().createTemporaryView(name, dataStream, toSchema(table.getSchema()));
     } else if (connectorFactory instanceof TableDescriptorSourceFactory) {
       TableDescriptorSourceFactory sourceFactory = (TableDescriptorSourceFactory) connectorFactory;
-      TableDescriptor.Builder builder = sourceFactory.create(new FlinkSourceFactoryContext(context.sEnv, name, tableConfig.serialize(),
-              formatFactory, UUID.randomUUID()));
-      TableDescriptor descriptor = builder.schema(toSchema(table.getSchema()))
-              .build();
+      FlinkSourceFactoryContext factoryContext = new FlinkSourceFactoryContext(context.sEnv, name, tableConfig.serialize(),
+          formatFactory, UUID.randomUUID());
+      TableDescriptor descriptor = getTableDescriptor(sourceFactory, factoryContext, table.getSchema());
       context.getTEnv().createTemporaryTable(name, descriptor);
     } else if (connectorFactory instanceof SinkFactory) {
       SinkFactory sinkFactory = (SinkFactory) connectorFactory;
@@ -500,6 +499,14 @@ public class FlinkEnvironmentBuilder implements
     }
 
     return null;
+  }
+
+  public static TableDescriptor getTableDescriptor(TableDescriptorSourceFactory sourceFactory,
+      FlinkSourceFactoryContext factoryContext, SerializableSchema tableSchema) {
+    TableDescriptor.Builder builder = sourceFactory.create(factoryContext);
+    return builder.schema(toSchema(tableSchema,
+            true, sourceFactory.getSourceTimeMetaData()))
+        .build();
   }
 
 
