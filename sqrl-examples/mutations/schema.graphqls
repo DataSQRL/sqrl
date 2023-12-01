@@ -12,7 +12,7 @@ type Mutation {
 }
 
 type Subscription {
-  receiveEvent: Event
+  event: Event
 }
 
 input GenericEvent {

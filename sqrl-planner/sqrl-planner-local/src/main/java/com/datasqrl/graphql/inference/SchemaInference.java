@@ -138,8 +138,6 @@ public class SchemaInference {
 
   private InferredField resolveQueryFromSchema(FieldDefinition fieldDefinition,
       List<InferredField> fields, ObjectTypeDefinition parent) {
-    SQRLTable table = resolveRootSQRLTable(fieldDefinition, fieldDefinition.getType(), fieldDefinition.getName(), "Query");
-
     Optional<Function> function = framework.getSchema().getFunctions(fieldDefinition.getName(), false)
         .stream()
         .findFirst();
@@ -148,6 +146,7 @@ public class SchemaInference {
       throw new RuntimeException(String.format("Could not find Query function %s", fieldDefinition.getName()));
     }
 
+    SQRLTable table = resolveRootSQRLTable(fieldDefinition, fieldDefinition.getName());
     return inferObjectField(fieldDefinition, table, fields, parent, null, null,
         createQueries(parent, fieldDefinition, null, (SqrlTableMacro) function.get()));
   }
@@ -185,15 +184,9 @@ public class SchemaInference {
   }
 
   private SQRLTable resolveRootSQRLTable(FieldDefinition fieldDefinition,
-      Type fieldType, String fieldName, String rootType) {
+      String fieldName) {
     SQRLTable sqrlTable = schema.getRootSqrlTable(fieldName);
     if (sqrlTable == null) {
-      Optional<SQRLTable> sqrlTableByFieldType = getTypeName(fieldType)
-          .flatMap(name -> getTableOfType(fieldType, name));
-      if (sqrlTableByFieldType.isPresent()) {
-        return sqrlTableByFieldType.get();
-      }
-
       throw new SqrlAstException(ErrorLabel.GENERIC,
           toParserPos(fieldDefinition.getSourceLocation()),
           "Could not find associated SQRL table for field %s on type %s.",
@@ -202,39 +195,6 @@ public class SchemaInference {
           : unwrapObjectType(fieldDefinition.getType()).getName());
     }
     return sqrlTable;
-  }
-
-  private Optional<SQRLTable> getTableOfType(Type type, String name) {
-    for (SQRLTable table : schema.getRootTables()) {
-      if (isNameEqual(table.getName(), name) &&
-          lookupType(type).filter(t -> structurallyEqual(t, table)).isPresent()) {
-        return Optional.of(table);
-      }
-    }
-    return Optional.empty();
-  }
-
-  private Optional<String> getTypeName(Type type) {
-    return registry.getType(type)
-        .map(f->f.getName());
-  }
-
-  private boolean isNameEqual(String canonical, String graphqlName) {
-    String conform = SchemaGeneratorUtil.conformName(canonical);
-
-    return conform.equalsIgnoreCase(Name.system(graphqlName).getCanonical()) ||
-        conform.equalsIgnoreCase(Name.system(stripTrailing(graphqlName)).getCanonical());
-  }
-
-  //Graphql generator may add trailing _ for name collisions
-  private String stripTrailing(String graphqlName) {
-    return StringUtils.stripEnd(graphqlName, "_");
-  }
-
-  private Optional<ImplementingTypeDefinition> lookupType(Type type) {
-    return registry.getType(type)
-        .filter(i -> i instanceof ImplementingTypeDefinition)
-        .map(o -> (ImplementingTypeDefinition) o);
   }
 
   private InferredField inferObjectField(FieldDefinition fieldDefinition, SQRLTable table,
@@ -553,7 +513,7 @@ public class SchemaInference {
     List<InferredField> fields = new ArrayList<>();
 
     for(FieldDefinition def : s.getFieldDefinitions()) {
-      SQRLTable table = resolveRootSQRLTable(def, def.getType(), def.getName(), "Subscription");
+      SQRLTable table = resolveRootSQRLTable(def, def.getName());
       APISubscription subscriptionDef = new APISubscription(Name.system(def.getName()),source);
       TableSource tableSource = apiManager.addSubscription(subscriptionDef, table);
 
