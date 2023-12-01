@@ -3,81 +3,101 @@ package com.datasqrl.graphql;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.datasqrl.engine.ExecutionResult;
-import com.datasqrl.util.data.Sensors;
+import com.datasqrl.io.KafkaBaseTest;
+import com.datasqrl.util.TestScript;
+import com.datasqrl.util.data.Retail;
+import com.datasqrl.util.data.Retail.RetailScriptNames;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Properties;
 
 public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
 
   CompletableFuture<ExecutionResult> fut;
 
+  String orderCounts = "subscription OrderCount {\n"
+      + "  OrderCount {\n"
+      + "    timeSec\n"
+      + "    volume\n"
+      + "    number\n"
+      + "  }\n"
+      + "}";
+
+  Schema avroSchema;
+
+  private static final String TOPIC = "orders";
+
   @BeforeEach
-  void setUp() {
-    fut = execute(Sensors.INSTANCE_MUTATION);
+  void setUp() throws Exception {
+    CLUSTER.createTopic(TOPIC);
+    avroSchema = new Schema.Parser().parse(Retail.INSTANCE.getRootPackageDirectory()
+        .resolve("ecommerce-avro/orders.avsc").toFile());
+    System.setProperty("datasqrl.kafka_servers", CLUSTER.bootstrapServers());
+    TestScript script = Retail.INSTANCE.getScript(RetailScriptNames.AVRO_KAFKA);
+    fut = execute(Retail.INSTANCE.getRootPackageDirectory(), script.getScriptPath(),
+        script.getGraphQLSchemas().get(0).getSchemaPath());
     events = new ArrayList<>();
   }
 
   @SneakyThrows
   @Test
-  @Disabled
   public void singleSubscriptionMutationTest() {
     Thread.sleep(5000);
 
-    CountDownLatch countDownLatch = null;//subscribeToAlert(alert);
+    CountDownLatch countDownLatch = subscribeToAlert(orderCounts);
 
     Thread.sleep(1000);
 
-//    executeMutation(addReading, nontriggerAlertJson);//test subscription filtering
-//    executeMutation(addReading, triggerAlertJson);
+    int numOrders = 10;
+    List<GenericRecord> orders = new ArrayList<>(numOrders);
+    for (int i = 0; i < 10; i++) {
+      orders.add(createRandomOrder());
+    }
+
+    writeToTopic(TOPIC,orders.stream().map(o -> KafkaBaseTest.serializeAvro(o, avroSchema)), ValueType.BYTE);
+
+    Thread.sleep(2000);
+    writeToTopic(TOPIC,orders.stream().map(o -> KafkaBaseTest.serializeAvro(o, avroSchema)), ValueType.BYTE);
+
 
     countDownLatch.await(120, TimeUnit.SECONDS);
     fut.cancel(true);
     assertEquals(countDownLatch.getCount(), 0);
 
-    validateEvents();
+    assertEquals(1, events.size());
+    System.out.println("Event Payload:" + events.get(0));
   }
 
-  private void writeOrders() {
-//    ObjectMapper MAPPER = new ObjectMapper();
-//    Schema schema = new Schema.Parser().parse(AVRO_SCHEMA);
-//    Properties props = new Properties();
-//    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-//    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-//    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, AvroSerializer.class);
-//    KafkaProducer<String, GenericRecord> producer = new KafkaProducer<>(props);
-//
-//    try (BufferedReader br = new BufferedReader(new FileReader("<YourJsonFile>"))) {
-//      String line;
-//      while ((line = br.readLine()) != null) {
-//        JsonNode jsonNode = MAPPER.readTree(line);
-//        GenericRecord avroRecord = new GenericData.Record(schema);
-//        // Populate the Avro record from JsonNode
-//        // Replace with actual field population
-//        avroRecord.put("id", jsonNode.get("id").asLong());
-//        // ...
-//
-//        ProducerRecord<String, GenericRecord> record = new ProducerRecord<>(KAFKA_TOPIC, avroRecord);
-//        producer.send(record);
-//      }
-//    }
-//
-//    producer.close();
+  private static final Random RANDOM = new Random();
+
+  private GenericRecord createRandomOrder() {
+    GenericRecord order = new GenericData.Record(avroSchema);
+    order.put("id", RANDOM.nextLong());
+    order.put("customerid", RANDOM.nextLong());
+    order.put("time", Instant.now().toString());
+
+    List<GenericRecord> entries = new ArrayList<>();
+    for (int i = 0; i < 4; i++) {
+      GenericRecord entry = new GenericData.Record(avroSchema.getField("entries").schema().getElementType());
+      entry.put("productid", RANDOM.nextInt());
+      entry.put("quantity", RANDOM.nextInt(10) + 1);
+      entry.put("unit_price", RANDOM.nextDouble() * 100);
+      entry.put("discount", RANDOM.nextDouble());
+      entries.add(entry);
+    }
+    order.put("entries", entries);
+
+    return order;
   }
 
 }

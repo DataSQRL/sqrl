@@ -50,6 +50,7 @@ import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.model.LogicalStreamMetaData;
 import com.datasqrl.model.StreamType;
 import com.datasqrl.serializer.SerializableSchema;
+import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.google.common.base.Strings;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -322,21 +323,22 @@ public class FlinkEnvironmentBuilder implements
       index++;
     }
 
-    //TODO: make configurable
-    String boundedUnorderedNess = " - INTERVAL '1' SECOND";
-
-    if (!Strings.isNullOrEmpty(schema.getWatermarkExpression())) {
-      builder.columnByExpression(schema.getWatermarkName(), schema.getWatermarkExpression());
-    }
-
-    switch (schema.getWaterMarkType()) {
-      case COLUMN_BY_NAME:
-        builder.watermark(schema.getWatermarkName(), "`" + schema.getWatermarkName() + "`" + boundedUnorderedNess);
-        break;
-      case SOURCE_WATERMARK:
+    if (schema.getWaterMarkType()!=WaterMarkType.NONE) { //Set a watermark
+      //TODO: make configurable
+      String boundedUnorderedNess = " - INTERVAL '1' SECOND";
+      if (!Strings.isNullOrEmpty(schema.getWatermarkExpression())) {
+        builder.columnByExpression(schema.getWatermarkName(), schema.getWatermarkExpression());
+      }
+      if (!setMetadata && schema.getWaterMarkType() == WaterMarkType.SOURCE_WATERMARK) {
         builder.watermark(schema.getWatermarkName(), "SOURCE_WATERMARK()");
-        break;
+      } else {
+        com.google.common.base.Preconditions.checkArgument(
+            setMetadata || schema.getWaterMarkType() == WaterMarkType.COLUMN_BY_NAME);
+        builder.watermark(schema.getWatermarkName(),
+            "`" + schema.getWatermarkName() + "`" + boundedUnorderedNess);
+      }
     }
+
     if (schema.getPrimaryKey() != null && !schema.getPrimaryKey().isEmpty()) {
       builder.primaryKey(schema.getPrimaryKey());
     }

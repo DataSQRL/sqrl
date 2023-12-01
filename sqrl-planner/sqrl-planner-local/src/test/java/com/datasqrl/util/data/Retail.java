@@ -50,6 +50,11 @@ public class Retail implements TestDataset {
                 "product")
             .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("c360-search-graphql")))
             .build());
+    linkedHashMap.put(RetailScriptNames.AVRO_KAFKA,
+        TestScript.of(this, BASE_PATH.resolve("c360-kafka.sqrl"),
+                "ordercount")
+            .graphQLSchemas(TestGraphQLSchema.Directory.of(BASE_PATH.resolve("c360-kafka-graphql")))
+            .build());
     return linkedHashMap;
   }
 
@@ -92,7 +97,7 @@ public class Retail implements TestDataset {
   }
 
   public enum RetailScriptNames {
-    ORDER_STATS, FULL, RECOMMEND, SEARCH
+    ORDER_STATS, FULL, RECOMMEND, SEARCH, AVRO_KAFKA
   }
 
 }

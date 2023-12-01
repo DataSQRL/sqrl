@@ -2,11 +2,13 @@ package com.datasqrl.io;
 
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactoryContext;
+import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.timestamp.ProgressingMonotonicEventTimeWatermarks;
+import com.google.auto.service.AutoService;
 import java.time.Clock;
 import java.time.Duration;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -16,6 +18,7 @@ import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsIni
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 
+@AutoService(SourceFactory.class)
 public class KafkaSourceFactory implements DataStreamSourceFactory {
 
   @Override
