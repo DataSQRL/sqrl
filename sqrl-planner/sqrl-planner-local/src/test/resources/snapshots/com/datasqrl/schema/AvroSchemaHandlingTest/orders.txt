@@ -27,5 +27,7 @@ WITH (
   'properties.bootstrap.servers' = '111.111.0.1',
   'connector' = 'kafka',
   'format' = 'avro',
-  'topic' = 'orders'
+  'topic' = 'orders',
+  'properties.group.id' = 'orders-04858aba-b9e8-4916-b62e-4c708a531413',
+  'scan.startup.mode' = 'earliest-offset'
 )

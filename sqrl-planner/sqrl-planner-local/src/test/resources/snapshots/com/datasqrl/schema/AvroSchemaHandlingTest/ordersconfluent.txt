@@ -29,8 +29,8 @@ WITH (
   'format' = 'avro-confluent',
   'avro-confluent.basic-auth.credentials-source' = 'myauth',
   'topic' = 'orders',
-  'avro-confluent.url' = '${env:SOME_VAR}',
   'properties.group.id' = 'mygroupid',
+  'avro-confluent.url' = '${env:SOME_VAR}',
   'scan.startup.mode' = 'earliest-offset',
   'sink.partitioner' = 'default'
 )
