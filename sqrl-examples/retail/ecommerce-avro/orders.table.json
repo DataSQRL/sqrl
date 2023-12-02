@@ -9,6 +9,7 @@
   "schema" : "avro",
   "connector" : {
     "name" : "kafka",
-    "bootstrap.servers": "${sys:datasqrl.kafka_servers}"
+    "bootstrap.servers": "${sys:datasqrl.kafka_servers}",
+    "group.id": "datasqrl-orders"
   }
 }

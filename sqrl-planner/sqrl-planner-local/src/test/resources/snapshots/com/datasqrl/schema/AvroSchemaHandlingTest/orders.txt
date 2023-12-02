@@ -28,6 +28,6 @@ WITH (
   'connector' = 'kafka',
   'format' = 'avro',
   'topic' = 'orders',
-  'properties.group.id' = 'orders-04858aba-b9e8-4916-b62e-4c708a531413',
+  'properties.group.id' = 'datasqrl-orders',
   'scan.startup.mode' = 'earliest-offset'
 )

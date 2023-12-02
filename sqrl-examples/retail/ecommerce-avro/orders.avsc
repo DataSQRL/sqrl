@@ -12,8 +12,7 @@
     },
     {
       "name": "time",
-      "type": "string",
-      "logicalType": "timestamp-micros"
+      "type": "string"
     },
     {
       "name": "entries",
