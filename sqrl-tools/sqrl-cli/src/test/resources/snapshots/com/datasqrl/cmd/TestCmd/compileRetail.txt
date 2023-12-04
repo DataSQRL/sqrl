@@ -10,6 +10,9 @@ submit-flink-job.sh
 >>>build
 build.gradle
 c360-full.sqrl
+ecommerce-avro
+ecommerce-avro/orders.avsc
+ecommerce-avro/orders.table.json
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
 ecommerce-broken/customer.table.json

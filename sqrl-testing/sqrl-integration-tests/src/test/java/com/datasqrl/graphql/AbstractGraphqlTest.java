@@ -92,12 +92,18 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   }
 
   protected CompletableFuture<ExecutionResult> execute(UseCaseExample example) {
+    return execute(example.getRootPackageDirectory(), example.getScripts().get(0).getScriptPath(),
+                   example.getGraphqlSchemaPath());
+  }
+
+  protected CompletableFuture<ExecutionResult> execute(Path rootPath,
+      Path scriptPath, Path graphqlPath) {
     return executor.executePipeline(
         compiler.compile(
-        example.getRootPackageDirectory(),
-        packageOverride,
-        example.getScripts().get(0).getScriptPath(),
-        example.getGraphqlSchemaPath()));
+            rootPath,
+            packageOverride,
+            scriptPath,
+            graphqlPath));
   }
 
 

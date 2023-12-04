@@ -1,10 +1,12 @@
 package com.datasqrl.plan.queries;
 
+import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.schema.UniversalTable;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.apache.calcite.rel.type.RelDataType;
 
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -14,11 +16,16 @@ public class APIMutation implements APIConnector {
   Name name;
   @EqualsAndHashCode.Include
   APISource source;
-  UniversalTable schema;
+  RelDataType schema;
 
   @Override
   public String toString() {
     return NamePath.of(source.getName(),name).toString();
   }
+
+  public NamedRelDataType getSchema() {
+    return new NamedRelDataType(name, schema);
+  }
+
 
 }

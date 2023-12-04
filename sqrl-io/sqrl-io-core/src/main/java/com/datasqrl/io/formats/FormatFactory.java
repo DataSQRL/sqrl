@@ -5,7 +5,6 @@ package com.datasqrl.io.formats;
 
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.io.impl.InputPreview;
-import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.io.Serializable;
 import java.time.Instant;
@@ -23,15 +22,23 @@ public interface FormatFactory extends Serializable {
   String getName();
 
   /**
-   * Whether this format has an associated schema. If so, it can
-   * be service loaded with the same name {@link #getName()} as the format.
-   *
-   * Otherwise, the schema must be configured explicitly.
+   * Whether this format has an associated schema.
    *
    * @return true if this format has a schema, else false
+   * @see #getSchemaType()
    */
   default boolean hasSchemaFactory() {
-    return false;
+    return getSchemaType().isPresent();
+  }
+
+  /**
+   * If this format has an associated schema, this method returns the schema name
+   * otherwise empty. The schema can then be service loaded via the provided name.
+   *
+   * @return Name of the associated schema or empty if none.
+   */
+  default Optional<String> getSchemaType() {
+    return Optional.empty();
   }
 
   Parser getParser(@NonNull SqrlConfig config);

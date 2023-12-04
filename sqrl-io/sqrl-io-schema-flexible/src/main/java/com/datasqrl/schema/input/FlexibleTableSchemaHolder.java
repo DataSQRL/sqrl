@@ -1,6 +1,5 @@
 package com.datasqrl.schema.input;
 
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.tables.SchemaValidator;
@@ -12,6 +11,8 @@ import com.datasqrl.schema.input.external.SchemaExport;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.base.Strings;
+import java.net.URI;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -23,14 +24,10 @@ public class FlexibleTableSchemaHolder implements TableSchema {
 
   @NonNull FlexibleTableSchema schema;
   String definition;
+  @NonNull Optional<URI> location;
 
   public FlexibleTableSchemaHolder(FlexibleTableSchema schema) {
-    this(schema, null);
-  }
-
-  @Override
-  public Name getTableName() {
-    return schema.getName();
+    this(schema, null, Optional.empty());
   }
 
   @Override

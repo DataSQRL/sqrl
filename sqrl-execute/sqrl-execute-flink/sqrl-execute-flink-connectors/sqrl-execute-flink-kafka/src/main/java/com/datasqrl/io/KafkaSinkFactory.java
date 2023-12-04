@@ -4,12 +4,14 @@ import com.datasqrl.config.FlinkSinkFactoryContext;
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.TableDescriptorSinkFactory;
+import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 import com.google.auto.service.AutoService;
+import org.apache.flink.table.api.FormatDescriptor;
 import org.apache.flink.table.api.TableDescriptor;
 
 @AutoService(SinkFactory.class)
-public class KafkaSinkFactory
+public class KafkaSinkFactory extends AbstractKafkaTableFactory
     implements TableDescriptorSinkFactory {
 
   @Override
@@ -22,35 +24,14 @@ public class KafkaSinkFactory
     SqrlConfig connector = context.getTableConfig().getConnectorConfig();
     String topic = context.getTableConfig().getBase().getIdentifier();
 
+    FormatFactory formatFactory = context.getFormatFactory();
+    FormatDescriptor.Builder formatBuilder = FormatDescriptor.forFormat(formatFactory.getName());
 
     TableDescriptor.Builder builder = TableDescriptor.forConnector("kafka")
         .option("topic", topic)
-        .option("properties.bootstrap.servers", connector.asString("bootstrap.servers").get())
-        .format(context.getFormatFactory().getName());
+        .format(formatBuilder.build());
 
-
-    // Flink takes them as properties
-    // TODO: full list of properties
-    connector.asString("security.protocol").getOptional()
-            .ifPresent(c->builder.option("properties.security.protocol", c));
-    connector.asString("sasl.mechanism").getOptional()
-            .ifPresent(c->builder.option("properties.sasl.mechanism", c));
-    connector.asString("group.id").getOptional()
-            .ifPresent(c->builder.option("properties.group.id", c));
-    connector.asString("sasl.jaas.config").getOptional()
-            .ifPresent(c->builder.option("properties.sasl.jaas.config", c));
-    connector.asString("sasl.client.callback.handler.class").getOptional()
-            .ifPresent(c->builder.option("properties.sasl.client.callback.handler.class", c));
-
-    connector.asString("scan.startup.mode").getOptional()
-        .ifPresent(c->builder.option("scan.startup.mode", c));
-    connector.asString("scan.startup.specific-offsets").getOptional()
-        .ifPresent(c->builder.option("scan.startup.specific-offsets", c));
-    connector.asString("scan.startup.timestamp-millis").getOptional()
-        .ifPresent(c->builder.option("scan.startup.timestamp-millis", c));
-    connector.asString("sink.partitioner").getOptional()
-        .ifPresent(c->builder.option("sink.partitioner", c));
-
+    addOptions(builder, connector);
     return builder;
   }
 }

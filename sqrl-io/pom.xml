@@ -20,5 +20,6 @@
     <module>sqrl-io-schema-flexible</module>
     <module>sqrl-io-format-json</module>
     <module>sqrl-io-format-csv</module>
+    <module>sqrl-io-schema-avro</module>
   </modules>
 </project>

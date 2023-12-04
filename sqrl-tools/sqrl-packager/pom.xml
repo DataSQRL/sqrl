@@ -51,6 +51,11 @@
             <artifactId>sqrl-planner-schema-flexible</artifactId>
             <groupId>com.datasqrl</groupId>
         </dependency>
+        <dependency>
+            <artifactId>sqrl-planner-schema-avro</artifactId>
+            <groupId>com.datasqrl</groupId>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Test -->
         <dependency>

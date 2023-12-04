@@ -13,6 +13,7 @@ import com.datasqrl.engine.stream.flink.AbstractFlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkStreamBuilder;
 import com.datasqrl.engine.stream.flink.FlinkStreamHolder;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.TableSource;
@@ -21,14 +22,14 @@ import com.datasqrl.io.util.StreamInputPreparerImpl;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.engine.stream.RowMapper;
-import com.datasqrl.schema.converters.SchemaToUniversalTableMapperFactory;
+import com.datasqrl.schema.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
 import com.datasqrl.schema.input.FlexibleSchemaValidator;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Retail;
 import java.nio.file.Path;
-import java.util.Optional;
 import lombok.SneakyThrows;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
@@ -82,11 +83,13 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
         ErrorPrefix.INPUT_DATA, SourceRecord.Named.class);
 
     //TODO: error handling when mapping doesn't work?
-    UniversalTable universalTable = SchemaToUniversalTableMapperFactory.load(tblSource.getSchema())
-        .map(tblSource.getSchema(), tblSource.getConnectorSettings(), Optional.empty());
-    Schema flinkSchema = new UniversalTable2FlinkSchema().convertSchema(universalTable);
+    RelDataType tableType = SchemaToRelDataTypeFactory.load(tblSource.getSchema())
+        .map(tblSource.getSchema(), tblSource.getName(),
+            ErrorCollector.root());
+    UniversalTable table = null;
+    Schema flinkSchema = new UniversalTable2FlinkSchema().convertSchema(table);
     TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()
-        .convertSchema(universalTable);
+        .convertSchema(table);
     RowMapper rowMapper = tblSource.getSchema().getRowMapper(FlinkRowConstructor.INSTANCE, tblSource.getConnectorSettings());
     DataStream rows = flinkStream.getStream()
         .map(rowMapper::apply, typeInformation);

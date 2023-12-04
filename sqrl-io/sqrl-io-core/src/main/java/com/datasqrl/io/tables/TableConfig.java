@@ -97,11 +97,11 @@ public class TableConfig {
   }
 
   public Optional<String> getSchemaType() {
-    if (hasFormat() && getFormat().hasSchemaFactory()) {
-      return Optional.of(getFormat().getName());
-    } else {
-      return Optional.ofNullable(base.getSchema());
+    if (hasFormat()) {
+      Optional<String> schemaType = getFormat().getSchemaType();
+      if (schemaType.isPresent()) return schemaType;
     }
+    return Optional.ofNullable(base.getSchema());
   }
 
   public Optional<TableSchemaFactory> getSchemaFactory() {

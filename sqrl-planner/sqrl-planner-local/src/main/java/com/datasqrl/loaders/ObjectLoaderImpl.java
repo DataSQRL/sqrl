@@ -16,6 +16,7 @@ import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.serializer.Deserializer;
+import com.datasqrl.util.BaseFileUtil;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -84,8 +85,10 @@ public class ObjectLoaderImpl implements ObjectLoader {
     TableSchemaFactory tableSchemaFactory = tableConfig.getSchemaFactory().orElseThrow(() ->
             errors.exception("Schema has not been configured for table [%s]", uri));
 
-    Optional<TableSchema> tableSchema = tableSchemaFactory.create(basePath, FileUtil.getParent(uri),
-        resourceResolver, tableConfig, errors);
+    Optional<URI> schemaPath = resourceResolver
+        .resolveFile(basePath.concat(NamePath.of(tableSchemaFactory.getSchemaFilename(tableConfig))));
+    Optional<TableSchema> tableSchema = schemaPath.map(s->
+        tableSchemaFactory.create(BaseFileUtil.readFile(s), schemaPath, errors));
 
     if (tableConfig.getBase().getType() == ExternalDataType.source ||
         tableConfig.getBase().getType() == ExternalDataType.source_and_sink) {

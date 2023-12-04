@@ -1,6 +1,9 @@
 >>>../../sqrl-examples/retail/c360-full.sqrl-../../sqrl-examples/retail/package-exampleWOscript.json-dir
 build.gradle
 c360-full.sqrl
+ecommerce-avro
+ecommerce-avro/orders.avsc
+ecommerce-avro/orders.table.json
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
 ecommerce-broken/customer.table.json
@@ -38,6 +41,9 @@ build.gradle
 c360-full-graphqlv1
 c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
+ecommerce-avro
+ecommerce-avro/orders.avsc
+ecommerce-avro/orders.table.json
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
 ecommerce-broken/customer.table.json
@@ -76,6 +82,9 @@ build.gradle
 c360-full-graphqlv1
 c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
+ecommerce-avro
+ecommerce-avro/orders.avsc
+ecommerce-avro/orders.table.json
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
 ecommerce-broken/customer.table.json
@@ -114,6 +123,9 @@ build.gradle
 c360-full-graphqlv1
 c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
+ecommerce-avro
+ecommerce-avro/orders.avsc
+ecommerce-avro/orders.table.json
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
 ecommerce-broken/customer.table.json
@@ -152,6 +164,9 @@ build.gradle
 c360-full-graphqlv1
 c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
+ecommerce-avro
+ecommerce-avro/orders.avsc
+ecommerce-avro/orders.table.json
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
 ecommerce-broken/customer.table.json
@@ -190,6 +205,9 @@ build.gradle
 c360-full-graphqlv1
 c360-full-graphqlv1/schema.graphqls
 c360-full.sqrl
+ecommerce-avro
+ecommerce-avro/orders.avsc
+ecommerce-avro/orders.table.json
 ecommerce-broken
 ecommerce-broken/customer.schema.yml
 ecommerce-broken/customer.table.json

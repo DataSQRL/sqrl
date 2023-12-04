@@ -8,6 +8,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.function.SqrlFunctionParameter.CasedParameter;
 import com.datasqrl.io.tables.TableSource;
@@ -50,18 +51,22 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     this.canonicalizer = canonicalizer;
   }
 
-  protected boolean importSourceTable(Optional<String> objectName, TableSource table, SqrlFramework framework) {
-    Map<NamePath, ScriptRelationalTable> tables = importTable(table, objectName.map(canonicalizer::name));
+  protected boolean importSourceTable(Optional<String> objectName, TableSource table,
+      SqrlFramework framework, ErrorCollector errors) {
+    Map<NamePath, ScriptRelationalTable> tables = importTable(table,
+        objectName.map(canonicalizer::name).orElse(table.getName()), errors);
     registerScriptTable(new ScriptTableDefinition(tables), framework, Optional.empty(), Optional.empty());
     return true;
   }
 
-  public Map<NamePath, ScriptRelationalTable> importTable(TableSource tableSource, Optional<Name> tblAlias) {
+  public Map<NamePath, ScriptRelationalTable> importTable(TableSource tableSource, Name tableName,
+      ErrorCollector errors) {
     // Convert the source schema to a universal table
     UniversalTable rootTable = tableConverter.sourceToTable(
         tableSource.getTableSchema().get(),
-        tableSource.getConnectorSettings(),
-        tblAlias
+        tableSource.getConnectorSettings().isHasSourceTimestamp(),
+        tableName,
+        errors
     );
 
     // Convert the universal table to a Calcite relational data type

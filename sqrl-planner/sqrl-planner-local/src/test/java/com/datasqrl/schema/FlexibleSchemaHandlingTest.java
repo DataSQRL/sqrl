@@ -8,17 +8,18 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.table.TableConverter;
 import com.datasqrl.plan.table.UTB2RelDataTypeConverter;
 import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.schema.converters.FlexibleSchemaUniversalTableMapper;
 import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.schema.converters.UniversalTable2FlinkSchema;
-import com.datasqrl.schema.input.FlexibleTableConverter;
 import com.datasqrl.schema.input.FlexibleTableSchema;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
+import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.datasqrl.schema.input.external.SchemaImport;
 import com.datasqrl.schema.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
@@ -52,16 +53,19 @@ public class FlexibleSchemaHandlingTest {
   public <S> void conversionTest(InputSchema inputSchema, SchemaConverterTestCase<S> visitorTest) {
     SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), inputSchema.getName(),
         visitorTest.schemaConverter.getClass().getSimpleName());
+    TableConverter converter = new TableConverter(TypeFactory.getTypeFactory(), NameCanonicalizer.SYSTEM);
     Name tableAlias = Name.system("TestTable");
     List<FlexibleTableSchema> schemas = getSchemas(inputSchema);
     for (FlexibleTableSchema table : schemas) {
       for (boolean hasSourceTimestamp : new boolean[]{true, false}) {
         for (Optional<Name> alias : new Optional[]{Optional.empty(), Optional.of(tableAlias)}) {
-          FlexibleTableConverter converter = new FlexibleTableConverter(
-              table, alias);
-          UniversalTable utb = FlexibleSchemaUniversalTableMapper.buildTable(converter, hasSourceTimestamp);
+          Name tableName = alias.orElse(table.getName());
+          ErrorCollector errors = ErrorCollector.root();
+          UniversalTable utb = converter.sourceToTable(new FlexibleTableSchemaHolder(table),
+              hasSourceTimestamp, tableName, errors);
+          assertFalse(errors.hasErrors(), errors.toString());
+          assertEquals(utb.getName(), tableName);
           if (alias.isPresent()) {
-            assertEquals(utb.getName(), alias.get());
             continue;
           }
           S resultSchema = visitorTest.schemaConverter.convertSchema(utb);

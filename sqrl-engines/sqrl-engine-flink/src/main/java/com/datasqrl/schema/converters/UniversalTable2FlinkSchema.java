@@ -54,20 +54,24 @@ public class UniversalTable2FlinkSchema implements UniversalTable.SchemaConverte
 
   @Override
   public Schema convertSchema(UniversalTable table) {
+    return convertSchema(table.getType());
+  }
+
+  private Schema convertSchema(RelDataType tableType) {
     Schema.Builder schemaBuilder = Schema.newBuilder();
-    convert(table, schemaBuilder::column);
+    convert(tableType, schemaBuilder::column);
     return schemaBuilder.build();
   }
 
-  public void convert(UniversalTable table, BiConsumer<String, DataType> consumer) {
-    for (RelDataTypeField column : table.getType().getFieldList()) {
+  public void convert(RelDataType tableType, BiConsumer<String, DataType> consumer) {
+    for (RelDataTypeField column : tableType.getFieldList()) {
       consumer.accept(column.getName(), convertRelDataType(column.getType()));
     }
   }
 
-  public List<Pair<String, DataType>> convertToList(UniversalTable table) {
+  public List<Pair<String, DataType>> convertToList(RelDataType tableType) {
     List<Pair<String, DataType>> columns = new ArrayList<>();
-    convert(table, (name, type) -> columns.add(Pair.of(name, type)));
+    convert(tableType, (name, type) -> columns.add(Pair.of(name, type)));
     return columns;
   }
 

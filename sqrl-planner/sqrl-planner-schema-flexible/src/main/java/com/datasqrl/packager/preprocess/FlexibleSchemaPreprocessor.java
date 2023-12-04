@@ -33,14 +33,10 @@ public class FlexibleSchemaPreprocessor implements Preprocessor {
   public void loader(Path file, ProcessorContext processorContext, ErrorCollector errors) {
     Preconditions.checkArgument(Files.isRegularFile(file), "Not a regular file: %s", file);
 
+    //Check if the directory contains a table json file
     String tablename = StringUtil.removeFromEnd(file.getFileName().toString(), FlexibleTableSchemaFactory.SCHEMA_EXTENSION);
-
-    Path tableFile = NameUtil.namepath2Path(file.getParent(), NamePath.of(tablename + DataSource.TABLE_FILE_SUFFIX));
-    boolean hasTableJson = Files.isRegularFile(tableFile);
-
-    // If the directory does not contain a table json file
-    if (!hasTableJson) {
-      errors.warn("No table file [%s] for schema file [%s], hence schema is ignored", tableFile, file);
+    if (!Preprocessor.tableExists(file.getParent(), tablename)) {
+      errors.warn("No table file [%s] for schema file [%s], hence schema is ignored", tablename, file);
       return;
     }
 

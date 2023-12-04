@@ -1,8 +1,7 @@
 package com.datasqrl.schema.converters;
 
-import com.datasqrl.io.tables.TableSchema;
+import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.schema.TableSchemaExporterFactory;
-import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.schema.input.FlexibleTableSchemaHolder;
 import com.google.auto.service.AutoService;
@@ -12,8 +11,8 @@ import com.google.auto.service.AutoService;
 public class FlexibleSchemaExporter implements TableSchemaExporterFactory {
 
   @Override
-  public FlexibleTableSchemaHolder convert(UniversalTable tableSchema) {
-    return UtbToFlexibleSchema.createFlexibleSchema(tableSchema);
+  public FlexibleTableSchemaHolder convert(NamedRelDataType tableType) {
+    return RelDataTypeToFlexibleSchema.createFlexibleSchema(tableType);
   }
 
   @Override

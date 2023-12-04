@@ -50,6 +50,7 @@ import com.datasqrl.io.util.TimeAnnotatedRecord;
 import com.datasqrl.model.LogicalStreamMetaData;
 import com.datasqrl.model.StreamType;
 import com.datasqrl.serializer.SerializableSchema;
+import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.google.common.base.Strings;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -99,6 +100,8 @@ public class FlinkEnvironmentBuilder implements
 
   public static final String ERROR_TAG_PREFIX = "_errors";
   public static final String ERROR_SINK_NAME = "errors_internal_sink";
+
+  public static final String UUID_FCT_NAME = "__DataSQRLUuidGenerator";
 
   private final ErrorCollector errors;
 
@@ -298,28 +301,44 @@ public class FlinkEnvironmentBuilder implements
     return null;
   }
 
-  private Schema toSchema(SerializableSchema schema) {
+  private static Schema toSchema(SerializableSchema schema) {
+    return toSchema(schema, false, Optional.empty());
+  }
+
+  private static Schema toSchema(SerializableSchema schema, boolean setMetadata, Optional<String> sourceTime) {
     Schema.Builder builder = Schema.newBuilder();
 
+    //TODO: This is brittle, it mirrors the structure of UniversalTable by index
+    int index = 0;
     for (Pair<String, DataType> column : schema.getColumns()) {
-      builder.column(column.getKey(), column.getValue());
+      if (setMetadata && index==0) {
+        builder.columnByExpression(column.getKey(), UUID_FCT_NAME+"()");
+      } else if (setMetadata && index==1) {
+        builder.columnByExpression(column.getKey(), "PROCTIME()");
+      } else if (setMetadata && index==2 && sourceTime.isPresent()) {
+        builder.columnByMetadata(column.getKey(), column.getValue(), sourceTime.get());
+      } else {
+        builder.column(column.getKey(), column.getValue());
+      }
+      index++;
     }
 
-    //TODO: make configurable
-    String boundedUnorderedNess = " - INTERVAL '1' SECOND";
-
-    if (!Strings.isNullOrEmpty(schema.getWatermarkExpression())) {
-      builder.columnByExpression(schema.getWatermarkName(), schema.getWatermarkExpression());
-    }
-
-    switch (schema.getWaterMarkType()) {
-      case COLUMN_BY_NAME:
-        builder.watermark(schema.getWatermarkName(), "`" + schema.getWatermarkName() + "`" + boundedUnorderedNess);
-        break;
-      case SOURCE_WATERMARK:
+    if (schema.getWaterMarkType()!=WaterMarkType.NONE) { //Set a watermark
+      //TODO: make configurable
+      String boundedUnorderedNess = " - INTERVAL '1' SECOND";
+      if (!Strings.isNullOrEmpty(schema.getWatermarkExpression())) {
+        builder.columnByExpression(schema.getWatermarkName(), schema.getWatermarkExpression());
+      }
+      if (!setMetadata && schema.getWaterMarkType() == WaterMarkType.SOURCE_WATERMARK) {
         builder.watermark(schema.getWatermarkName(), "SOURCE_WATERMARK()");
-        break;
+      } else {
+        com.google.common.base.Preconditions.checkArgument(
+            setMetadata || schema.getWaterMarkType() == WaterMarkType.COLUMN_BY_NAME);
+        builder.watermark(schema.getWatermarkName(),
+            "`" + schema.getWatermarkName() + "`" + boundedUnorderedNess);
+      }
     }
+
     if (schema.getPrimaryKey() != null && !schema.getPrimaryKey().isEmpty()) {
       builder.primaryKey(schema.getPrimaryKey());
     }
@@ -382,7 +401,7 @@ public class FlinkEnvironmentBuilder implements
     errorSideChannels.add(process.getSideOutput(formatErrorTag));
 
     //todo validator may be optional
-    TableSchema schema = factory.create(schemaDefinition, tableConfig.getBase().getCanonicalizer());
+    TableSchema schema = factory.create(schemaDefinition);
     //todo: fix flexible schema hard referenced
     SchemaValidator schemaValidator = schema.getValidator(
             tableConfig.getSchemaAdjustmentSettings(),
@@ -458,10 +477,9 @@ public class FlinkEnvironmentBuilder implements
       context.getTEnv().createTemporaryView(name, dataStream, toSchema(table.getSchema()));
     } else if (connectorFactory instanceof TableDescriptorSourceFactory) {
       TableDescriptorSourceFactory sourceFactory = (TableDescriptorSourceFactory) connectorFactory;
-      TableDescriptor.Builder builder = sourceFactory.create(new FlinkSourceFactoryContext(context.sEnv, name, tableConfig.serialize(),
-              formatFactory, UUID.randomUUID()));
-      TableDescriptor descriptor = builder.schema(toSchema(table.getSchema()))
-              .build();
+      FlinkSourceFactoryContext factoryContext = new FlinkSourceFactoryContext(context.sEnv, name, tableConfig.serialize(),
+          formatFactory, UUID.randomUUID());
+      TableDescriptor descriptor = getTableDescriptor(sourceFactory, factoryContext, table.getSchema());
       context.getTEnv().createTemporaryTable(name, descriptor);
     } else if (connectorFactory instanceof SinkFactory) {
       SinkFactory sinkFactory = (SinkFactory) connectorFactory;
@@ -483,6 +501,14 @@ public class FlinkEnvironmentBuilder implements
     }
 
     return null;
+  }
+
+  public static TableDescriptor getTableDescriptor(TableDescriptorSourceFactory sourceFactory,
+      FlinkSourceFactoryContext factoryContext, SerializableSchema tableSchema) {
+    TableDescriptor.Builder builder = sourceFactory.create(factoryContext);
+    return builder.schema(toSchema(tableSchema,
+            true, sourceFactory.getSourceTimeMetaData()))
+        .build();
   }
 
 
