@@ -9,7 +9,7 @@ import java.util.Set;
 
 @AutoService(PgExtension.class)
 public class VectorPgExtension implements PgExtension {
-  public final SqlDDLStatement ddlStatement = () -> "CREATE EXTENSION vector;";
+  public final SqlDDLStatement ddlStatement = () -> "CREATE EXTENSION IF NOT EXISTS vector;";
 
   @Override
   public Class typeClass() {

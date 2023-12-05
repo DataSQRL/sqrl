@@ -27,7 +27,6 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-s3-fs-hadoop</artifactId>
-      <version>${flink.version}</version>
     </dependency>
   </dependencies>
 </project>
