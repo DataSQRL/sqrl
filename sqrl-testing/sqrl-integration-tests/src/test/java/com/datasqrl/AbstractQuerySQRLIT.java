@@ -8,9 +8,11 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
+import com.datasqrl.engine.server.GenericJavaServerEngine;
 import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -19,6 +21,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.Namespace;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.net.ServerSocket;
@@ -92,8 +95,11 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
     CountDownLatch countDownLatch = new CountDownLatch(1);
 
+    ServerConfig serverConfig = new ServerConfig(new JsonObject());
     this.port = getPort(8888);
-    GraphQLServer server = new GraphQLServer(model, port, jdbc, NameCanonicalizer.SYSTEM);
+    GenericJavaServerEngine.applyDefaults(serverConfig, jdbc, this.port);
+
+    GraphQLServer server = new GraphQLServer(model, serverConfig, NameCanonicalizer.SYSTEM);
     vertx.deployVerticle(server, c->countDownLatch.countDown());
     countDownLatch.await(10, TimeUnit.SECONDS);
     if (countDownLatch.getCount() != 0) {

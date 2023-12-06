@@ -31,7 +31,7 @@ public class AwsLambdaEngineFactory extends GenericJavaServerEngineFactory {
   public static class LambdaNativeEngine extends GenericJavaServerEngine {
 
     public LambdaNativeEngine(@NonNull int port) {
-      super(ENGINE_NAME, port, Optional.empty());
+      super(ENGINE_NAME, port, null, Optional.empty());
     }
   }
 }

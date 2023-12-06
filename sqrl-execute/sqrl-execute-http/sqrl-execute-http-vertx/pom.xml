@@ -101,10 +101,6 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-jdbc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-format-json</artifactId>
     </dependency>
 

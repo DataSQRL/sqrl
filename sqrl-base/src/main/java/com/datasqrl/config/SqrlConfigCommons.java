@@ -264,6 +264,9 @@ public class SqrlConfigCommons implements SqrlConfig {
         Object value = config.getProperty(fullKey);
         //TODO: this does not interpolate secrets. need to check type and then use type specific access method
         map.put(localKey, value);
+      } else {
+        SqrlConfigCommons subConfig = getSubConfig(localKey);
+        map.put(localKey, subConfig.toMap());
       }
     });
     return map;
