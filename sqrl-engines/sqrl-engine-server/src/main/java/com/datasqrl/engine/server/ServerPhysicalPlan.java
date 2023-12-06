@@ -24,7 +24,7 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
   public void writeTo(Path deployDir, String stageName, Deserializer serializer) throws IOException {
     serializer.writeJson(deployDir.resolve(getModelFileName(stageName)), model, true);
     Path resolve = deployDir.resolve(getConfigFilename(stageName));
-    String jsonContent = config.toJson().encodePrettily(); // or use jsonObject.toString() for non-pretty printing
+    String jsonContent = config.toJson().encodePrettily();
     Files.write(resolve, jsonContent.getBytes(StandardCharsets.UTF_8));
   }
 

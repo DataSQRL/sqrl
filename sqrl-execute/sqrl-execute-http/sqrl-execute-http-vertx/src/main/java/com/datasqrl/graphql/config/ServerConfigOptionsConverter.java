@@ -18,9 +18,10 @@ public class ServerConfigOptionsConverter {
     serverConfig.setGraphQLHandlerOptions(
         new GraphQLHandlerOptions(json.getJsonObject("graphQLHandlerOptions") == null
             ? new JsonObject() : json.getJsonObject("graphQLHandlerOptions")));
-    serverConfig.setGraphiQLHandlerOptions(
-        new GraphiQLHandlerOptions(json.getJsonObject("graphiQLHandlerOptions") == null
-            ? new JsonObject() : json.getJsonObject("graphiQLHandlerOptions")));
+    if (json.containsKey("graphiQLHandlerOptions")) {
+      serverConfig.setGraphiQLHandlerOptions(
+          new GraphiQLHandlerOptions(json.getJsonObject("graphiQLHandlerOptions")));
+    }
     serverConfig.setHttpServerOptions(
         new HttpServerOptions(json.getJsonObject("httpServerOptions") == null
             ? new JsonObject() : json.getJsonObject("httpServerOptions")));
@@ -50,9 +51,13 @@ public class ServerConfigOptionsConverter {
   public static void toJson(ServerConfig serverConfig, JsonObject json) {
       json.put("servletConfig", serverConfig.getServletConfig().toJson());
       json.put("graphQLHandlerOptions", serverConfig.getGraphQLHandlerOptions().toJson());
-      json.put("graphiQLHandlerOptions", serverConfig.getGraphiQLHandlerOptions().toJson());
+      if (serverConfig.getGraphiQLHandlerOptions() != null) {
+        json.put("graphiQLHandlerOptions", serverConfig.getGraphiQLHandlerOptions().toJson());
+      }
       json.put("httpServerOptions", serverConfig.getHttpServerOptions().toJson());
-      json.put("pgConnectOptions", serverConfig.getPgConnectOptions().toJson());
+      if (serverConfig.getPgConnectOptions() != null) {
+        json.put("pgConnectOptions", serverConfig.getPgConnectOptions().toJson());
+      }
       json.put("jdbcConnectOptions", serverConfig.getJdbcConnectOptions().toJson());
       json.put("poolOptions", serverConfig.getPoolOptions().toJson());
       json.put("corsHandlerOptions", serverConfig.getCorsHandlerOptions().toJson());

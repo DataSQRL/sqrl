@@ -8,6 +8,7 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
+import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,8 +27,10 @@ public class ServerConfig {
 
   ServletConfig servletConfig;
   GraphQLHandlerOptions graphQLHandlerOptions;
+  @Nullable
   GraphiQLHandlerOptions graphiQLHandlerOptions;
   HttpServerOptions httpServerOptions;
+  @Nullable
   PgConnectOptions pgConnectOptions;
   JDBCConnectOptions jdbcConnectOptions;
   PoolOptions poolOptions;

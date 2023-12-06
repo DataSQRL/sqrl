@@ -116,8 +116,10 @@ public class GraphQLServer extends AbstractVerticle {
   protected void setupServer(Promise<Void> startPromise) {
     Router router = Router.router(vertx);
     router.route().handler(LoggerHandler.create());
-    router.route(this.config.getServletConfig().getGraphiQLEndpoint())
-        .handler(GraphiQLHandler.create(this.config.getGraphiQLHandlerOptions()));
+    if (this.config.getGraphiQLHandlerOptions() != null) {
+      router.route(this.config.getServletConfig().getGraphiQLEndpoint())
+          .handler(GraphiQLHandler.create(this.config.getGraphiQLHandlerOptions()));
+    }
 
     router.errorHandler(500, ctx -> {
       ctx.failure().printStackTrace();

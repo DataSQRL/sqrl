@@ -7,6 +7,8 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.Constraints.Default;
 import com.datasqrl.config.Constraints.MinLength;
 import com.datasqrl.config.Constraints.Regex;
+import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConfigUtil;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -28,12 +30,16 @@ import com.google.common.collect.Iterables;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -69,12 +75,13 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
             serverPlan.getModel(), serverPlan.getConfig(), canonicalize))
         .toCompletionStage()
         .toCompletableFuture();
-    if (serverPlan.getConfig().getGraphiQLHandlerOptions().isEnabled()) {
+    if (serverPlan.getConfig().getGraphiQLHandlerOptions() != null &&
+        serverPlan.getConfig().getGraphiQLHandlerOptions().isEnabled()) {
       log.info(String.format("Server started at: %s://%s:%s/%s",
           serverPlan.getConfig().getHttpServerOptions().isSsl() ? "https" : "http",
-          serverPlan.getConfig().getServletConfig().getGraphiQLEndpoint(),
+          serverPlan.getConfig().getHttpServerOptions().getHost(),
           serverPlan.getConfig().getHttpServerOptions().getPort(),
-          serverPlan.getConfig().getServletConfig().getGraphiQLEndpoint()));
+          serverPlan.getConfig().getGraphiQLHandlerOptions().getGraphQLUri()));
     }
     return future.thenApply(Message::new);
   }
@@ -96,7 +103,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   public static ServerConfig applyDefaults(ServerConfig serverConfig, JdbcDataSystemConnector connector, int port) {
     if (connector.getDialect().equals("postgres")) {
       if (serverConfig.getPgConnectOptions() == null) {
-        serverConfig.setPgConnectOptions(new PgConnectOptions());
+        serverConfig.setPgConnectOptions(new PgConnectOptions(new JsonObject()));
       }
       PgConnectOptions pgConnect = serverConfig.getPgConnectOptions();
 
@@ -117,8 +124,14 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
       }
     }
 
+    if (serverConfig.getGraphiQLHandlerOptions() == null) {
+      GraphiQLHandlerOptions graphiql = new GraphiQLHandlerOptions(new JsonObject());
+      graphiql.setEnabled(true);
+      serverConfig.setGraphiQLHandlerOptions(graphiql);
+    }
+
     if (serverConfig.getJdbcConnectOptions() == null) {
-      serverConfig.setJdbcConnectOptions(new JDBCConnectOptions());
+      serverConfig.setJdbcConnectOptions(new JDBCConnectOptions(new JsonObject()));
     }
     JDBCConnectOptions jdbc = serverConfig.getJdbcConnectOptions();
     if (connector.getUrl() != null) {

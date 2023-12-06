@@ -6,6 +6,7 @@ import static com.datasqrl.engine.server.GenericJavaServerEngine.PORT_KEY;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.graphql.config.ServerConfig;
 import com.google.auto.service.AutoService;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -25,13 +26,14 @@ public class AwsLambdaEngineFactory extends GenericJavaServerEngineFactory {
 
   @Override
   public ExecutionEngine initialize(@NonNull SqrlConfig config) {
-    return new LambdaNativeEngine(config.asInt(PORT_KEY).withDefault(PORT_DEFAULT).get());
+    ServerConfig serverConfig = convertServerConfig(config.getSubConfig("config"));
+    return new LambdaNativeEngine(serverConfig, config.asInt(PORT_KEY).withDefault(PORT_DEFAULT).get());
   }
 
   public static class LambdaNativeEngine extends GenericJavaServerEngine {
 
-    public LambdaNativeEngine(@NonNull int port) {
-      super(ENGINE_NAME, port, null, Optional.empty());
+    public LambdaNativeEngine(ServerConfig serverConfig, @NonNull int port) {
+      super(ENGINE_NAME, port, serverConfig, Optional.empty());
     }
   }
 }

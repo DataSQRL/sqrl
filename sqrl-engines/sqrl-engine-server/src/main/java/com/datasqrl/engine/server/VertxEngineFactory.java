@@ -38,20 +38,9 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
   @VisibleForTesting
   public VertxEngine initialize(@NonNull SqrlConfig config, Vertx vertx) {
     Integer port = config.asInt(PORT_KEY).withDefault(PORT_DEFAULT).get();
-    Map<String, Object> map = SqrlConfigUtil.toMap(config.getSubConfig("config"),
-        Function.identity(), List.of());
-    JsonObject jsonObject = new JsonObject(map);
-    ServerConfig serverConfig = new ServerConfig(jsonObject);
+    ServerConfig serverConfig = convertServerConfig(config.getSubConfig("config"));
 
     return new VertxEngine(serverConfig,port, Optional.of(vertx));
-  }
-
-  public ServerConfig convertServerConfig(SqrlConfig config) {
-    Map<String, Object> map = SqrlConfigUtil.toMap(config,
-        Function.identity(), List.of());
-    JsonObject jsonObject = new JsonObject(map);
-    ServerConfig serverConfig = new ServerConfig(jsonObject);
-    return serverConfig;
   }
 
   public static class VertxEngine extends GenericJavaServerEngine {
