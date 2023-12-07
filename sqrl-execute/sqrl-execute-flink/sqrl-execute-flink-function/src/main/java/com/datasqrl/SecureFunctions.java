@@ -49,7 +49,7 @@ public class SecureFunctions {
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
       return TypeInference.newBuilder()
           .typedArguments()
-          .outputTypeStrategy(callContext -> Optional.of(DataTypes.STRING().notNull()))
+          .outputTypeStrategy(callContext -> Optional.of(DataTypes.CHAR(36).notNull()))
           .build();
     }
 
