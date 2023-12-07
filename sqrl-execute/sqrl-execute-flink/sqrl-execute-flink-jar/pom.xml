@@ -67,6 +67,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-schema-avro</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-file</artifactId>
     </dependency>
     <dependency>
