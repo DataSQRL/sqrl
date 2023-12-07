@@ -7,14 +7,13 @@ import java.util.Optional;
 public class DockerCompose {
 
   public static String getYml(Optional<Path> mountDir) {
-    String volumneMnt = mountDir.map(dir -> dir.toAbsolutePath().normalize())
-        .map(dir -> ""
-            + "    volumes:\n"
-            + "      - " + dir.toAbsolutePath() + ":/build\n"
-            + "      - ./init-flink.sh:/exec/init-flink.sh\n")
-        .orElse(""
-            + "    volumes:\n"
-            + "      - ./init-flink.sh:/exec/init-flink.sh\n");
+    String volumneMnt = ""
+        + "    volumes:\n"
+        + mountDir
+        .map(dir -> dir.toAbsolutePath().normalize())
+        .map(dir -> "      - " + dir.toAbsolutePath() + ":/build\n")
+        .orElse("")
+        + "      - ./init-flink.sh:/exec/init-flink.sh\n";
 
     return "# This is a docker-compose template for starting a DataSQRL compiled data pipeline\n"
         + "# This template uses the Apache Flink as the stream engine, Postgres as the database engine, and Vertx as the server engine.\n"
