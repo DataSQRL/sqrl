@@ -131,8 +131,9 @@ public abstract class BaseJdbcRowConverter extends AbstractJdbcRowConverter {
           .createArrayOf(getArrayScalarName(type), boxed);
       statement.setArray(idx, array);
     } else {
+      // If it is not a scalar array (e.g. row type), use an empty byte array.
       Array array = statement.getConnection()
-          .createArrayOf(getArrayType(), ArrayUtils.toObject(data.toByteArray()));
+          .createArrayOf(getArrayType(), new Byte[0]);
       statement.setArray(idx, array);
     }
   }
