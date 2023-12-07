@@ -44,6 +44,7 @@ public class TestClient {
             }
             callback.accept(ar.result());
           } else {
+            log.info(ar.result().bodyAsString());
             log.info("Something went wrong " + ar.cause().getMessage());
             fail();
           }

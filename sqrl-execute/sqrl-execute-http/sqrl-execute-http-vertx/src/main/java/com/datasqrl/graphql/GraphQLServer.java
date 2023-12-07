@@ -3,11 +3,10 @@
  */
 package com.datasqrl.graphql;
 
-import static io.vertx.core.http.HttpMethod.GET;
-import static io.vertx.core.http.HttpMethod.POST;
-
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.config.CorsHandlerOptions;
+import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
@@ -17,36 +16,30 @@ import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
-import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.graphql.ApolloWSHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
-import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
-import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
-import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
-import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,19 +47,16 @@ import lombok.extern.slf4j.Slf4j;
 public class GraphQLServer extends AbstractVerticle {
 
   private final RootGraphqlModel model;
-  private final int port;
-  private final JdbcDataSystemConnector jdbc;
   private final NameCanonicalizer canonicalizer;
+  private ServerConfig config;
 
   public GraphQLServer() {
-    this(readModel(), 8888, createClient(), NameCanonicalizer.SYSTEM);
+    this(readModel(), null, NameCanonicalizer.SYSTEM);
   }
 
-  public GraphQLServer(RootGraphqlModel model,
-      int port, JdbcDataSystemConnector jdbc, NameCanonicalizer canonicalizer) {
+  public GraphQLServer(RootGraphqlModel model, ServerConfig config, NameCanonicalizer canonicalizer) {
     this.model = model;
-    this.port = port;
-    this.jdbc = jdbc;
+    this.config = config;
     this.canonicalizer = canonicalizer;
   }
 
@@ -74,104 +64,138 @@ public class GraphQLServer extends AbstractVerticle {
   private static RootGraphqlModel readModel() {
     ObjectMapper objectMapper = new ObjectMapper();
     return objectMapper.readValue(
-        new File("model.json"),
+        new File("server-model.json"),
         RootGraphqlModel.class);
   }
 
-  @SneakyThrows
-  public static JdbcDataSystemConnector createClient() {
-    ObjectMapper objectMapper = new ObjectMapper();
-    JdbcDataSystemConnector jdbc = objectMapper.readValue(
-        new File("config.json"),
-        JdbcDataSystemConnector.class);
-    return jdbc;
+  private Future<JsonObject> loadConfig() {
+    Promise<JsonObject> promise = Promise.promise();
+    vertx.fileSystem().readFile("server-config.json", result -> {
+      if (result.succeeded()) {
+        try {
+          JsonObject config = new JsonObject(result.result().toString());
+          promise.complete(config);
+        } catch (Exception e) {
+          e.printStackTrace();
+          promise.fail(e);
+        }
+      } else {
+        promise.fail(result.cause());
+      }
+    });
+    return promise.future();
   }
 
   @Override
   public void start(Promise<Void> startPromise) {
-    GraphQLHandlerOptions graphQLHandlerOptions = new GraphQLHandlerOptions().setRequestBatchingEnabled(
-        true);
+    if (this.config == null) {
+      // Config not provided, load from file
+      loadConfig().onComplete(ar -> {
+        if (ar.succeeded()) {
+          this.config = new ServerConfig(ar.result());
+          trySetupServer(startPromise);
+        } else {
+          startPromise.fail(ar.cause());
+        }
+      });
+    } else {
+      // Config already provided, proceed with setup
+      trySetupServer(startPromise);
+    }
+  }
 
+  protected void trySetupServer(Promise<Void> startPromise) {
+    try {
+      setupServer(startPromise);
+    } catch (Exception e) {
+      log.error("Could not start graphql server", e);
+      startPromise.fail(e);
+    }
+  }
+
+  protected void setupServer(Promise<Void> startPromise) {
     Router router = Router.router(vertx);
     router.route().handler(LoggerHandler.create());
-    router.post().handler(BodyHandler.create());
-
-    GraphiQLHandlerOptions graphiQLHandlerOptions = new GraphiQLHandlerOptions().setEnabled(true);
-    router.route("/graphiql/*").handler(GraphiQLHandler.create(graphiQLHandlerOptions));
+    if (this.config.getGraphiQLHandlerOptions() != null) {
+      router.route(this.config.getServletConfig().getGraphiQLEndpoint())
+          .handler(GraphiQLHandler.create(this.config.getGraphiQLHandlerOptions()));
+    }
 
     router.errorHandler(500, ctx -> {
       ctx.failure().printStackTrace();
       ctx.response().setStatusCode(500).end();
     });
 
+    //Todo: Don't spin up the ws endpoint if there are no subscriptions
     SqlClient client = getSqlClient();
-
     GraphQL graphQL = createGraphQL(client, startPromise);
 
-    router.route().handler(CorsHandler.create()
-        .addOrigin("*")
-        .allowedMethod(GET)
-        .allowedMethod(POST));
+    CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
+    router.route().handler(corsHandler);
     router.route().handler(BodyHandler.create());
 
     //Todo: Don't spin up the ws endpoint if there are no subscriptions
     GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
-        graphQLHandlerOptions);
-    router.route("/graphql").handler(graphQLHandler);
-
-    HttpServerOptions httpServerOptions = new HttpServerOptions();
+        this.config.getGraphQLHandlerOptions());
+    router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLHandler);
 
     if (!model.getSubscriptions().isEmpty()) {
-      Handler apGraphQLHandler = ApolloWSHandler.create(graphQL);
-      router.route("/graphql-ws").handler(apGraphQLHandler);
-      httpServerOptions
-          .addWebSocketSubProtocol("graphql-transport-ws")
-          .addWebSocketSubProtocol("graphql-ws");
+      if (this.config.getServletConfig().isUseApolloWs()) {
+        ApolloWSHandler apolloWSHandler = ApolloWSHandler.create(graphQL,
+            this.config.getApolloWSOptions());
+        router.route(this.config.getServletConfig().getGraphQLWsEndpoint())
+            .handler(apolloWSHandler);
+      } else {
+        throw new RuntimeException("Only Apollo style websockets supported at this time");
+      }
     }
 
-    vertx.createHttpServer(httpServerOptions).requestHandler(router).listen(port)
+    vertx.createHttpServer(this.config.getHttpServerOptions()).requestHandler(router)
+        .listen(this.config.getHttpServerOptions().getPort())
         .onFailure((e)-> {
           log.error("Could not start graphql server", e);
           startPromise.fail(e);
         })
         .onSuccess((s)-> {
-          log.info("HTTP server started on port {}", port);
+          log.info("HTTP server started on port {}", this.config.getHttpServerOptions().getPort());
           startPromise.complete();
         });
   }
 
-  private SqlClient getSqlClient() {
-    if (jdbc.getDialect().equalsIgnoreCase("postgres")) {
-      return PgPool.client(vertx, toPgOptions(jdbc),
-          new PgPoolOptions(new PoolOptions()));
-    } else {
-      return JDBCPool.pool(
-          vertx,
-          toJdbcConfig(jdbc),
-          new PoolOptions());
+  private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
+    CorsHandler corsHandler = corsHandlerOptions.getAllowedOrigin() != null
+        ? CorsHandler.create(corsHandlerOptions.getAllowedOrigin())
+        : CorsHandler.create();
+
+    // Empty allowed origin list means nothing is allowed vs null which is permissive
+    if (corsHandlerOptions.getAllowedOrigins() != null) {
+      corsHandler
+          .addOrigins(corsHandlerOptions.getAllowedOrigins());
     }
+
+    return corsHandler
+        .allowedMethods(corsHandlerOptions.getAllowedMethods()
+            .stream()
+            .map(HttpMethod::valueOf)
+            .collect(Collectors.toSet()))
+        .allowedHeaders(corsHandlerOptions.getAllowedHeaders())
+        .exposedHeaders(corsHandlerOptions.getExposedHeaders())
+        .allowCredentials(corsHandlerOptions.isAllowCredentials())
+        .maxAgeSeconds(corsHandlerOptions.getMaxAgeSeconds())
+        .allowPrivateNetwork(corsHandlerOptions.isAllowPrivateNetwork());
   }
 
-  private JDBCConnectOptions toJdbcConfig(JdbcDataSystemConnector config) {
-    JDBCConnectOptions options = new JDBCConnectOptions()
-        .setJdbcUrl(jdbc.getUrl())
-        .setDatabase(jdbc.getDatabase());
-
-    Optional.ofNullable(config.getUser()).map(options::setUser);
-    Optional.ofNullable(config.getPassword()).map(options::setPassword);
-    return options;
-  }
-
-  private PgConnectOptions toPgOptions(JdbcDataSystemConnector jdbcConf) {
-    PgConnectOptions options = new PgConnectOptions();
-    options.setDatabase(jdbcConf.getDatabase());
-    options.setHost(jdbcConf.getHost());
-    options.setPort(jdbcConf.getPort());
-    options.setUser(jdbcConf.getUser());
-    options.setPassword(jdbcConf.getPassword());
-    options.setCachePreparedStatements(true);
-    options.setPipeliningLimit(100_000);
-    return options;
+  private SqlClient getSqlClient() {
+    if (this.config.getPgConnectOptions() != null && this.config.getServletConfig().isUsePgPool()) {
+      return PgPool.client(vertx, this.config.getPgConnectOptions(),
+          new PgPoolOptions(this.config.getPoolOptions())
+              .setPipelined(true));
+    } else if (this.config.getJdbcConnectOptions() != null) {
+      return JDBCPool.pool(vertx, this.config.getJdbcConnectOptions(),
+          this.config.getPoolOptions());
+    } else {
+      throw new RuntimeException("Unknown connection type. Either pgConnectOptions or jdbcConnectOptions should be configured.");
+    }
   }
 
   public GraphQL createGraphQL(SqlClient client, Promise<Void> startPromise) {

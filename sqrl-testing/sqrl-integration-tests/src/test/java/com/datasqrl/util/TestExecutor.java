@@ -7,6 +7,8 @@ import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
+import com.datasqrl.engine.server.GenericJavaServerEngine;
+import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.server.VertxEngineFactory;
@@ -23,6 +25,7 @@ import com.datasqrl.kafka.NewTopic;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 import org.apache.logging.log4j.util.Strings;
 
@@ -72,9 +75,11 @@ public class TestExecutor {
 
     Model.RootGraphqlModel model = mapper.readValue(deployDir.resolve("server-model.json").toFile(),
         Model.RootGraphqlModel.class);
-    JdbcDataSystemConnector jdbc = mapper.readValue(
-        deployDir.resolve("server-config.json").toFile(), JdbcDataSystemConnector.class);
-    ServerPhysicalPlan serverPhysicalPlan = new ServerPhysicalPlan(model, jdbc);
+    String serverConfigStr = Files.readString(deployDir.resolve("server-config.json"));
+    JsonObject serverJsonObject = new JsonObject(serverConfigStr);
+    ServerConfig serverConfig = new ServerConfig(serverJsonObject);
+
+    ServerPhysicalPlan serverPhysicalPlan = new ServerPhysicalPlan(model, serverConfig);
     VertxEngineFactory vertxEngineFactory = new VertxEngineFactory();
     VertxEngineFactory.VertxEngine vertxEngine = vertxEngineFactory.initialize(eng.getSubConfig("server"), vertx);
     vertxEngine.execute(serverPhysicalPlan, ErrorCollector.root()).get();
