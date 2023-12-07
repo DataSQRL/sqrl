@@ -113,6 +113,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     if (configSupplier.usesDefault) {
       addDockerCompose(Optional.ofNullable(mountDirectory));
       addFlinkExecute();
+      addInitFlink();
     }
     if (isGenerateGraphql()) {
       addGraphql(packager.getBuildDir(), packager.getRootDir());
@@ -146,11 +147,20 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   protected void addFlinkExecute() {
-    String sh = DockerCompose.getFlinkExecute();
-    Path toFile = targetDir.resolve("submit-flink-job.sh");
+    String content = DockerCompose.getFlinkExecute();
+    copyExecutableFile("submit-flink-job.sh", content);
+  }
+
+  protected void addInitFlink() {
+    String content = DockerCompose.getInitFlink();
+    copyExecutableFile("init-flink.sh", content);
+  }
+
+  protected void copyExecutableFile(String fileName, String content) {
+    Path toFile = targetDir.resolve(fileName);
     try {
       Files.createDirectories(targetDir);
-      Files.writeString(toFile, sh);
+      Files.writeString(toFile, content);
 
       Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
       Files.setPosixFilePermissions(toFile, perms);

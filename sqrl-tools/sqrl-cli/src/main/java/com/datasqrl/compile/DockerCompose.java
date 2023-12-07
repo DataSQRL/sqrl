@@ -7,9 +7,13 @@ import java.util.Optional;
 public class DockerCompose {
 
   public static String getYml(Optional<Path> mountDir) {
-    String volumneMnt = mountDir.map(dir -> dir.toAbsolutePath().normalize())
-        .map( dir -> "    volumes:\n"
-        + "      - " + dir.toAbsolutePath() + ":/build\n").orElse("");
+    String volumneMnt = ""
+        + "    volumes:\n"
+        + mountDir
+        .map(dir -> dir.toAbsolutePath().normalize())
+        .map(dir -> "      - " + dir.toAbsolutePath() + ":/build\n")
+        .orElse("")
+        + "      - ./init-flink.sh:/exec/init-flink.sh\n";
 
     return "# This is a docker-compose template for starting a DataSQRL compiled data pipeline\n"
         + "# This template uses the Apache Flink as the stream engine, Postgres as the database engine, and Vertx as the server engine.\n"
@@ -37,7 +41,7 @@ public class DockerCompose {
         + "    image: flink:1.16.1-scala_2.12-java11\n"
         + "    ports:\n"
         + "      - \"8081:8081\"\n"
-        + "    command: jobmanager\n"
+        + "    command: /bin/bash /exec/init-flink.sh jobmanager\n"
         + "    environment:\n"
         + "      - |\n"
         + "        FLINK_PROPERTIES=\n"
@@ -48,7 +52,7 @@ public class DockerCompose {
         + "    image: flink:1.16.1-scala_2.12-java11\n"
         + "    depends_on:\n"
         + "      - flink-jobmanager\n"
-        + "    command: taskmanager\n"
+        + "    command: /bin/bash /exec/init-flink.sh taskmanager\n"
         + "    environment:\n"
         + "      - |\n"
         + "        FLINK_PROPERTIES=\n"
@@ -104,6 +108,15 @@ public class DockerCompose {
         + "    driver: local";
   }
 
+  public static String getInitFlink() {
+    return "#!/bin/bash\n"
+        + "\n"
+        + "# Copy the JAR file to the plugins directory\n"
+        + "mkdir -p /opt/flink/plugins/s3-fs-presto\n"
+        + "cp /opt/flink/opt/flink-s3-fs-presto-1.16.1.jar /opt/flink/plugins/s3-fs-presto/\n"
+        + "# Execute the passed command\n"
+        + "exec /docker-entrypoint.sh \"$@\"\n";
+  }
   public static String getFlinkExecute() {
     return "#!/bin/sh\n"
         + "\n"
