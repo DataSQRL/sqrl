@@ -9,55 +9,9 @@ kafka_config = {
 }
 
 # Load Avro schema
-schema = avro.schema.parse("""
-{
-  "type": "record",
-  "name": "Order",
-  "fields": [
-    {
-      "name": "id",
-      "type": "long"
-    },
-    {
-      "name": "customerid",
-      "type": "long"
-    },
-    {
-      "name": "time",
-      "type": "string"
-    },
-    {
-      "name": "entries",
-      "type": {
-        "type": "array",
-        "items": {
-          "type": "record",
-          "name": "OrderEntry",
-          "fields": [
-            {
-              "name": "productid",
-              "type": "int"
-            },
-            {
-              "name": "quantity",
-              "type": "int"
-            },
-            {
-              "name": "unit_price",
-              "type": "double"
-            },
-            {
-              "name": "discount",
-              "type": ["null", "double"],
-              "default": null
-            }
-          ]
-        }
-      }
-    }
-  ]
-}
-""")
+schema_path = 'ecommerce-avro/orders.avsc'
+schema = avro.schema.parse(open(schema_path, "rb").read())
+
 
 # Create an Avro record
 record = {
