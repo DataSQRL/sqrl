@@ -13,6 +13,7 @@ import org.apache.flink.table.types.inference.TypeInference;
 public class SecureFunctions {
 
   public static RandomID RANDOM_ID = new RandomID();
+  public static Uuid UUID = new Uuid();
 
   public static class RandomID extends ScalarFunction implements SqrlFunction {
 
@@ -39,7 +40,7 @@ public class SecureFunctions {
     }
   }
 
-  public static class UUID extends ScalarFunction implements SqrlFunction {
+  public static class Uuid extends ScalarFunction implements SqrlFunction {
 
     public String eval() {
       return java.util.UUID.randomUUID().toString();

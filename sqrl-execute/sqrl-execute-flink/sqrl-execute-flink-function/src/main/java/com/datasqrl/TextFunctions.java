@@ -131,7 +131,8 @@ public class TextFunctions {
 
     @Override
     public String getDocumentation() {
-      return "Replaces the placeholders in the first argument with the remaining arguments in order";
+      return "Returns a numeric score for how well the given query string matches the provided string text. "
+          + "Returns 0 if there is no match. Use this function for full-text search.";
     }
 
     @Override

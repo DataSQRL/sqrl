@@ -234,7 +234,8 @@ public class VectorFunctions {
 
     @Override
     public String getDocumentation() {
-      return "Computes a vector embedding for the given string based on the provided model";
+      return "Computes a vector embedding for the given string based on the provided ONNX vector embedding model. "
+          + "The embedding model should be stored in a directory that is accessible at runtime.";
     }
 
     @Value
@@ -320,7 +321,7 @@ public class VectorFunctions {
 
     @Override
     public String getDocumentation() {
-      return "";
+      return "Aggregates vectors by computing the centroid, i.e. summing up all vectors and dividing the resulting vector by the number of vectors.";
     }
   }
 

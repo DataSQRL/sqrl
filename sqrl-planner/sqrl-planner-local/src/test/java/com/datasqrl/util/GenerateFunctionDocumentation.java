@@ -3,8 +3,12 @@ package com.datasqrl.util;
 import com.datasqrl.TimeFunctions.TimeWindowBucketFunction;
 import com.datasqrl.function.FlinkStdLibraryImpl;
 import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.StdJsonLibraryImpl;
+import com.datasqrl.function.StdSecureLibraryImpl;
 import com.datasqrl.function.StdStringLibraryImpl;
+import com.datasqrl.function.StdTextLibraryImpl;
 import com.datasqrl.function.StdTimeLibraryImpl;
+import com.datasqrl.function.StdVectorLibraryImpl;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.function.CalciteFunctionNsObject;
@@ -60,7 +64,7 @@ public class GenerateFunctionDocumentation {
   public static void main(String[] args) {
     String openAPIKey = args.length>0?args[0]:"";
     GenerateFunctionDocumentation docs = new GenerateFunctionDocumentation(openAPIKey);
-    System.out.println(docs.generateFunctionMarkdownDocumentation(libraries.get(2)));
+    System.out.println(docs.generateFunctionMarkdownDocumentation(libraries.get(6)));
     docs.saveSQLFunctionDocs();
     System.out.println("Number of API calls: "  + docs.numAPICalls);
   }
@@ -163,9 +167,13 @@ public class GenerateFunctionDocumentation {
   }
 
   public static List<LibrarySpec> libraries = List.of(
-    new LibrarySpec(new StdStringLibraryImpl(), false, true),
-    new LibrarySpec(new StdTimeLibraryImpl(), true, false),
-    new LibrarySpec(new FlinkStdLibraryImpl(), true, false)
+      new LibrarySpec(new StdStringLibraryImpl(), false, true),
+      new LibrarySpec(new StdTimeLibraryImpl(), true, false),
+      new LibrarySpec(new FlinkStdLibraryImpl(), true, false),
+      new LibrarySpec(new StdTextLibraryImpl(), false, false),
+      new LibrarySpec(new StdSecureLibraryImpl(), false, false),
+      new LibrarySpec(new StdJsonLibraryImpl(), false, false),
+      new LibrarySpec(new StdVectorLibraryImpl(), false, false)
   );
 
 }
