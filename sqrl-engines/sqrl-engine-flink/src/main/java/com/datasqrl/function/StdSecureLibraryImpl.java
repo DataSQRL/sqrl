@@ -16,7 +16,8 @@ import org.apache.commons.collections.ListUtils;
 public class StdSecureLibraryImpl extends AbstractFunctionModule implements StdLibrary {
   public static final NamePath LIB_NAME = NamePath.of("secure");
   public static final List<SqrlFunction> SQRL_FUNCTIONS = List.of(
-      SecureFunctions.RANDOM_ID
+      SecureFunctions.RANDOM_ID,
+      SecureFunctions.UUID
   );
 
   private static List<NamespaceObject> SQL_FUNCTIONS = List.of(

@@ -16,7 +16,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
-import com.datasqrl.SecureFunctions;
+import com.datasqrl.SecureFunctions.Uuid;
 import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
@@ -142,7 +142,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     mutableUdfs.putAll(downcastClassNames);
     registerFunctions(mutableUdfs);
     //Register needed meta-functions
-    registerFunctions(Map.of(UUID_FCT_NAME, SecureFunctions.UUID.class.getName()));
+    registerFunctions(Map.of(UUID_FCT_NAME, Uuid.class.getName()));
 
     registerSourceTables(tables, watermarkCollector);
     registerSinkTables(newQueries);
