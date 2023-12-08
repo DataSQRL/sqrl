@@ -19,7 +19,7 @@ jobs:
           distribution: 'adopt'
           cache: maven
       - name: Build DataSQRL
-        run: mvn -B -U -T 6 -e clean install
+        run: mvn -B -U -T 1 -e clean install
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:
