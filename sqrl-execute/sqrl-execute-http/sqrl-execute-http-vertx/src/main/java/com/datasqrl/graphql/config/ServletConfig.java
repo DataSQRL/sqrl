@@ -29,6 +29,8 @@ public class ServletConfig {
   @Default
   public boolean useApolloWs = true;
   @Default
+  public boolean allowRest = false;
+  @Default
   public String graphQLWsEndpoint = "/graphql-ws";
 
   public JsonObject toJson() {
