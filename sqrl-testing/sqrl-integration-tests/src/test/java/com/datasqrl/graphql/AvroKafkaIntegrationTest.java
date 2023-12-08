@@ -1,12 +1,21 @@
 package com.datasqrl.graphql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.ExecutionResult;
+import com.datasqrl.graphql.inference.CipherUtil;
 import com.datasqrl.io.KafkaBaseTest;
+import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Retail.RetailScriptNames;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +45,7 @@ public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
   Schema avroSchema;
 
   private static final String TOPIC = "orders";
+  FileResourceResolver fileResourceResolver;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -44,6 +54,8 @@ public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
         .resolve("ecommerce-avro/orders.avsc").toFile());
     System.setProperty("datasqrl.kafka_servers", CLUSTER.bootstrapServers());
     TestScript script = Retail.INSTANCE.getScript(RetailScriptNames.AVRO_KAFKA);
+    fileResourceResolver = new FileResourceResolver(
+        Retail.INSTANCE.getScript(RetailScriptNames.AVRO_KAFKA).getRootPackageDirectory());
     fut = execute(Retail.INSTANCE.getRootPackageDirectory(), script.getScriptPath(),
         script.getGraphQLSchemas().get(0).getSchemaPath());
     events = new ArrayList<>();
@@ -69,6 +81,22 @@ public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
     Thread.sleep(2000);
     writeToTopic(TOPIC,orders.stream().map(o -> KafkaBaseTest.serializeAvro(o, avroSchema)), ValueType.BYTE);
 
+    //Wait for a response
+    String query = Files.readString(Path.of(fileResourceResolver.resolveFile(
+        NamePath.of("c360-kafka-graphql", "schema-queries", "GetOrderCount.graphql")).get()));
+    CountDownLatch queryLatch = new CountDownLatch(1);
+    executePreparsedQueryUntilTrue(CipherUtil.sha256(query),
+        new JsonObject().put("limit", 3), (resp)-> queryLatch.countDown(),
+        (resp) -> {
+          if (resp.statusCode() != 200) {
+            fail(String.format("Non 200 response. %s", resp.body().encode()));
+          }
+          JsonArray jsonArray = resp.body().getJsonObject("data").getJsonArray("OrderCount");
+          return !jsonArray.isEmpty();
+        },
+        20);
+
+    queryLatch.await(120, TimeUnit.SECONDS);
 
     countDownLatch.await(120, TimeUnit.SECONDS);
     fut.cancel(true);

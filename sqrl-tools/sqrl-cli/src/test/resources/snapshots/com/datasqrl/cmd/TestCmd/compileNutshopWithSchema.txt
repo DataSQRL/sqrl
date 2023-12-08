@@ -11,8 +11,15 @@ submit-flink-job.sh
 >>>build
 build.gradle
 customer360
+customer360-api
+customer360-api/queries
+customer360-api/queries/products.graphql
 customer360/nutshopv2-small.sqrl
+customer360/v1graphql
+customer360/v1graphql/product.query.graphql
 customer360/v2graphql
+customer360/v2graphql/allcustomers.query.graphql
+customer360/v2graphql/customer.query.graphql
 customer360/v2graphql/schema.graphqls
 nutshop-compress
 nutshop-compress/orders.schema.yml

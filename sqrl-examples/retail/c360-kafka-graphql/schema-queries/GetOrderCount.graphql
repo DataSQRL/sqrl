@@ -1,0 +1,7 @@
+query GetOrderCount($limit: Int) {
+   OrderCount(limit: $limit) {
+     timeSec
+     number
+     volume
+   }
+ }

@@ -25,6 +25,8 @@ import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.MutationCoords;
+import com.datasqrl.graphql.server.Model.PreparsedQueryVisitor;
+import com.datasqrl.graphql.server.Model.PreparsedQuery;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
@@ -32,6 +34,9 @@ import com.datasqrl.plan.queries.APISource;
 import graphql.language.InputValueDefinition;
 import graphql.language.NonNullType;
 import graphql.language.Value;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +50,8 @@ public class SchemaBuilder implements
     InferredRootObjectVisitor<List<Coords>, Object>,
     InferredMutationObjectVisitor<List<MutationCoords>, Object>,
     InferredSubscriptionObjectVisitor<List<SubscriptionCoords>, Object>,
-    InferredFieldVisitor<Coords, Object> {
+    InferredFieldVisitor<Coords, Object>,
+    PreparsedQueryVisitor<PreparsedQuery, Object> {
 
   private final APISource source;
 
@@ -71,6 +77,12 @@ public class SchemaBuilder implements
         builder.coord(field.accept(this, context));
       }
     }
+
+    List<PreparsedQuery> hashedQueries = schema.getPreparsedQueries().stream()
+        .map(p -> p.accept(this, context))
+        .collect(Collectors.toList());
+
+    builder.preparsedQueries(hashedQueries);
 
     return builder.build();
   }
@@ -154,6 +166,16 @@ public class SchemaBuilder implements
     }
 
     return result;
+  }
+
+  @Override
+  @SneakyThrows
+  public PreparsedQuery visitPreparsedQuery(PreparsedQuery preparsedQuery, Object context) {
+    // Calculate a sha-256 for query
+    String calculatedChecksum = CipherUtil.sha256(preparsedQuery.getQuery());
+    preparsedQuery.setId(calculatedChecksum);
+
+    return preparsedQuery;
   }
 
   @lombok.Value

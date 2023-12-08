@@ -113,6 +113,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.33</version>
+    </dependency>
+    <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-cli</artifactId>
       <scope>test</scope>

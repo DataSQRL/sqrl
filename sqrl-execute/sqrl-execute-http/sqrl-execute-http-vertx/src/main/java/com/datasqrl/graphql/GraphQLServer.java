@@ -126,7 +126,6 @@ public class GraphQLServer extends AbstractVerticle {
       ctx.response().setStatusCode(500).end();
     });
 
-    //Todo: Don't spin up the ws endpoint if there are no subscriptions
     SqlClient client = getSqlClient();
     GraphQL graphQL = createGraphQL(client, startPromise);
 
@@ -134,7 +133,6 @@ public class GraphQLServer extends AbstractVerticle {
     router.route().handler(corsHandler);
     router.route().handler(BodyHandler.create());
 
-    //Todo: Don't spin up the ws endpoint if there are no subscriptions
     GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
         this.config.getGraphQLHandlerOptions());
     router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLHandler);

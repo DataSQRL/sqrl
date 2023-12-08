@@ -1,5 +1,5 @@
 query CategoryTrending($category: String!, $page: String) {
-   categories(filter: { name: {eq: $category}}, limit: 1)
+   categories(name: $category, limit: 1)
    {
      data
      {

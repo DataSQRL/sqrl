@@ -9,6 +9,7 @@ import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
+import com.datasqrl.graphql.server.Model.PreparsedQuery;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
@@ -51,6 +52,8 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   private final Map<SQRLTable, Log> exports = new HashMap<>();
 
   private final List<APIQuery> queries = new ArrayList<>();
+
+  private final List<PreparsedQuery> preparsedQueries = new ArrayList<>();
 
 
   @Inject

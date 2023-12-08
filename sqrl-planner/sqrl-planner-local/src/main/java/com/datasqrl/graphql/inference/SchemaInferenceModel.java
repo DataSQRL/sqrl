@@ -7,6 +7,7 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
 import com.datasqrl.graphql.server.Model;
+import com.datasqrl.graphql.server.Model.PreparsedQuery;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;
@@ -31,6 +32,7 @@ public class SchemaInferenceModel {
     InferredQuery query;
     Optional<InferredMutations> mutation;
     Optional<InferredSubscriptions> subscription;
+    List<PreparsedQuery> preparsedQueries;
 
     public <R, C> R accept(InferredSchemaVisitor<R, C> visitor, C context) {
       return visitor.visitSchema(this, context);
