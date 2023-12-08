@@ -241,10 +241,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
       Collection<Function> tableFunction = framework.getQueryPlanner().getSchema()
           .getFunctions(path.getDisplay(), false);
-
-      if (tableFunction.size() > 0) {
-        throw addError(ErrorLabel.GENERIC, node, "Cannot shadow table");
-      }
     }
     //don't materialize self if we have external arguments, the query will be inlined or called from gql
     return

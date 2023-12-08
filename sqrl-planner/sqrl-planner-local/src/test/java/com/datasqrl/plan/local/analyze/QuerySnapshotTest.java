@@ -1085,6 +1085,24 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void tableShadowing() {
+    validateScript("IMPORT ecommerce-data.Orders;\n"
+        + "CustomerOrders := SELECT * FROM Orders;\n"
+        + "CustomerOrders(customerId: Int) := SELECT * FROM Orders;\n"
+        + "CustomerOrders := SELECT * FROM Orders;\n"
+        + "X := SELECT * FROM CustomerOrders");
+  }
+  
+  @Test
+  public void invalidTableShadowing() {
+    validateScriptInvalid("IMPORT ecommerce-data.Orders;\n"
+        + "CustomerOrders := SELECT * FROM Orders;\n"
+        + "CustomerOrders(customerId: Int) := SELECT * FROM Orders;\n"
+        + "CustomerOrders := SELECT * FROM Orders;\n"
+        + "X := SELECT * FROM TABLE(CustomerOrders(1))");
+  }
+
+  @Test
   public void intervalJoinOnState() {
     validateScriptInvalid("IMPORT ecommerce-data.*;\n"
         + "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;\n"
