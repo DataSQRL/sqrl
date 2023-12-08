@@ -30,6 +30,8 @@ import com.datasqrl.graphql.inference.SqrlSchemaForInference.Relationship;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.graphql.server.Model;
 import com.datasqrl.graphql.server.Model.Argument;
+import com.datasqrl.graphql.server.Model.PreparsedQuery;
+import com.datasqrl.graphql.server.Model.PreparsedQueryParameter;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.io.tables.TableSink;
@@ -40,6 +42,7 @@ import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
+import graphql.language.Document;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.ImplementingTypeDefinition;
@@ -49,11 +52,13 @@ import graphql.language.ListType;
 import graphql.language.NamedNode;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.OperationDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.SourceLocation;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
+import graphql.parser.Parser;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
@@ -118,9 +123,39 @@ public class SchemaInference {
     Optional<InferredSubscriptions> subscription = registry.getType("Subscription")
         .map(s -> resolveSubscriptions((ObjectTypeDefinition) s));
 
+    List<PreparsedQuery> queries = source.getPreparsedQueries().stream()
+        .map(this::parseQuery)
+        .collect(Collectors.toList());
     InferredSchema inferredSchema = new InferredSchema(name, query, mutation, subscription,
-        source.getPreparsedQueries());
+        queries);
     return inferredSchema;
+  }
+
+  private PreparsedQuery parseQuery(String query) {
+    Document document = new Parser().parseDocument(query);
+
+    List<PreparsedQuery> queries = document.getChildren().stream().map(node -> {
+      if (node instanceof OperationDefinition) {
+        OperationDefinition operation = (OperationDefinition) node;
+        String operationName = operation.getName();
+
+        List<PreparsedQueryParameter> params = operation.getVariableDefinitions().stream()
+            .map(variableDefinition -> {
+              String varName = variableDefinition.getName();
+              String varType = variableDefinition.getType().toString();
+
+              return new PreparsedQueryParameter(varName);
+            }).collect(Collectors.toList());
+        return new PreparsedQuery(null, query, operationName, params);
+      } else {
+        throw new RuntimeException("Unsupported preparsed query type : " + query);
+      }
+    }).collect(Collectors.toList());
+
+    if (queries.size() != 1) {
+      throw new RuntimeException("Only one query per preparsed query document: " + query);
+    }
+    return queries.get(0);
   }
 
   private void resolveTypes() {

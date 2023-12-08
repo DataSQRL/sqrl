@@ -13,18 +13,22 @@ import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.BuildGraphQLEngine;
 import com.datasqrl.graphql.server.Model.MutationCoords;
+import com.datasqrl.graphql.server.Model.PreparsedQuery;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import graphql.ExecutionInput;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.LoggerHandler;
@@ -133,6 +137,13 @@ public class GraphQLServer extends AbstractVerticle {
     router.route().handler(corsHandler);
     router.route().handler(BodyHandler.create());
 
+    if (config.getServletConfig().isAllowRest()) {
+      for (PreparsedQuery preparsedQuery : model.getPreparsedQueries()) {
+        router.route(String.format("/api/%s", preparsedQuery.getOperationName()))
+            .handler(c -> handleGenericGraphQLRequest(c, preparsedQuery, graphQL));
+      }
+    }
+
     GraphQLHandler graphQLHandler = GraphQLHandler.create(graphQL,
         this.config.getGraphQLHandlerOptions());
     router.route(this.config.getServletConfig().getGraphQLEndpoint()).handler(graphQLHandler);
@@ -158,6 +169,39 @@ public class GraphQLServer extends AbstractVerticle {
           log.info("HTTP server started on port {}", this.config.getHttpServerOptions().getPort());
           startPromise.complete();
         });
+  }
+
+  private void handleGenericGraphQLRequest(RoutingContext routingContext,
+      PreparsedQuery preparsedQuery, GraphQL graphQL) {
+
+    // Construct variables from parameters
+    JsonObject variables = new JsonObject();
+    routingContext.queryParams().forEach(entry -> {
+      if (preparsedQuery.getParameters().stream().anyMatch(p -> p.getName().equals(entry.getKey()))) {
+        variables.put(entry.getKey(), entry.getValue());
+      }
+    });
+
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput()
+        .query(preparsedQuery.getQuery())
+        .variables(variables.getMap())
+        .build();
+
+    graphQL.executeAsync(executionInput).thenAccept(result -> {
+      if (result.getErrors().isEmpty()) {
+        routingContext.response()
+            .putHeader("Content-Type", "application/json")
+            .end(Json.encodePrettily(result.getData()));
+      } else {
+        routingContext.response()
+            .setStatusCode(500)
+            .putHeader("Content-Type", "application/json")
+            .end(Json.encodePrettily(result.getErrors()));
+      }
+    }).exceptionally(ex -> {
+      routingContext.fail(ex);
+      return null;
+    });
   }
 
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {

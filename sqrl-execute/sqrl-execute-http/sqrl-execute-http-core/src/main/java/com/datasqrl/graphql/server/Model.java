@@ -435,10 +435,19 @@ public class Model {
   public static class PreparsedQuery {
     String id;
     String query;
+    String operationName;
+    List<PreparsedQueryParameter> parameters;
 
     public <R, C> R accept(PreparsedQueryVisitor<R, C> visitor, C context) {
       return visitor.visitPreparsedQuery(this, context);
     }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  @NoArgsConstructor
+  public static class PreparsedQueryParameter {
+    String name;
   }
 
   public interface PreparsedQueryVisitor<R, C> {

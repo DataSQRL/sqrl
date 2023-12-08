@@ -29,9 +29,9 @@ public class APISource {
   @Include
   Name name;
   String schemaDefinition;
-  List<PreparsedQuery> preparsedQueries;
+  List<String> preparsedQueries;
 
-  private APISource(Name name, String schemaDefinition, List<PreparsedQuery> preparsedQueries) {
+  private APISource(Name name, String schemaDefinition, List<String> preparsedQueries) {
     this.name = name;
     this.schemaDefinition = schemaDefinition;
     this.preparsedQueries = preparsedQueries;
@@ -45,7 +45,7 @@ public class APISource {
     return of(name, schemaDefinition, List.of());
   }
 
-  public static APISource of(Name name, String schemaDefinition, List<PreparsedQuery> queries) {
+  public static APISource of(Name name, String schemaDefinition, List<String> queries) {
     return new APISource(name,
         schemaDefinition.replaceAll("\t", "  "),
         queries);
@@ -57,7 +57,7 @@ public class APISource {
     String fileName = path.getFileName().toString().split("\\.")[0];
 
     Path queryFolderPath = path.getParent().resolve(fileName + "-queries");
-    List<PreparsedQuery> queries = new ArrayList<>();
+    List<String> queries = new ArrayList<>();
     if (Files.isDirectory(queryFolderPath)) {
       try (Stream<Path> paths = Files.walk(queryFolderPath)) {
         paths.filter(Files::isRegularFile)
@@ -65,7 +65,7 @@ public class APISource {
             .forEach(p -> {
               try {
                 String content = Files.readString(p);
-                queries.add(new PreparsedQuery(null, content));
+                queries.add(content);
               } catch (IOException e) {
                 log.error("Could not read from filesystem", e);
               }
