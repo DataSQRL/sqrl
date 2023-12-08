@@ -18,10 +18,12 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
           cache: maven
-      # 1. Build DataSQRL (mvn package -DskipTests)
       - name: Build DataSQRL
-        run: mvn -B -U -T 6 -e clean install -DskipTests=true
-
+        run: mvn -B -U -T 6 -e clean install
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       # Set up Docker
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
