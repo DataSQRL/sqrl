@@ -10,6 +10,10 @@ jobs:
     timeout-minutes: 20
     if: "!contains(github.event.head_commit.message, 'maven-release-plugin')"
     steps:
+      - name: Setup Timezone
+        uses: szenius/set-timezone@v1.1
+        with:
+          timezoneLinux: "America/Los_Angeles"
       - name: checkout
         uses: actions/checkout@v3
       - name: Set up JDK 11
