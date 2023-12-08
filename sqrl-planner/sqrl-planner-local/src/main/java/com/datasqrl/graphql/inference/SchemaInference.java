@@ -118,7 +118,8 @@ public class SchemaInference {
     Optional<InferredSubscriptions> subscription = registry.getType("Subscription")
         .map(s -> resolveSubscriptions((ObjectTypeDefinition) s));
 
-    InferredSchema inferredSchema = new InferredSchema(name, query, mutation, subscription);
+    InferredSchema inferredSchema = new InferredSchema(name, query, mutation, subscription,
+        source.getPreparsedQueries());
     return inferredSchema;
   }
 

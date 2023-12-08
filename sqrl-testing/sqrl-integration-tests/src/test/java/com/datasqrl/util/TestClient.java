@@ -37,20 +37,72 @@ public class TestClient {
     client.post(8888, "localhost", "/graphql").putHeader("Content-Type", "application/json")
         .as(BodyCodec.jsonObject()).sendJsonObject(graphqlQuery, ar -> {
           if (ar.succeeded()) {
-            log.info("Received response with status code" + ar.result().statusCode());
-            log.info("Response Body: " + ar.result().body());
+            logResponse(ar.result());
             if (ar.result().statusCode() != 200 || ar.result().body().toString().contains("errors")) {
               fail(ar.result().body().toString());
             }
             callback.accept(ar.result());
           } else {
-            log.info(ar.result().bodyAsString());
-            log.info("Something went wrong " + ar.cause().getMessage());
+            logFailure(ar.cause(), ar.result());
             fail();
           }
         });
   }
 
+  public void executePersistedQuery(String querySha, JsonObject input,
+      Consumer<HttpResponse<JsonObject>> callback) {
+    WebClient client = WebClient.create(vertx);
+
+    // Create JSON object for the persisted query
+    JsonObject graphqlQuery = new JsonObject()
+        .put("extensions", new JsonObject()
+            .put("persistedQuery", new JsonObject()
+                .put("version", 1) // version of persisted query protocol
+                .put("sha256Hash", querySha)))
+        .put("variables", input);
+
+    System.out.println(graphqlQuery.encode());
+
+    // Send the request
+    client.post(8888, "localhost", "/graphql")
+        .putHeader("Content-Type", "application/json")
+        .as(BodyCodec.jsonObject())
+        .sendJsonObject(graphqlQuery, ar -> {
+          if (ar.succeeded()) {
+            // Log the response and invoke the callback
+            logResponse(ar.result());
+            if (ar.result().statusCode() != 200 || ar.result().body().toString().contains("errors")) {
+              fail(ar.result().body().toString());
+            }
+            callback.accept(ar.result());
+          } else {
+            // Handle failure
+            logFailure(ar.cause(), ar.result());
+            fail(ar.cause());
+          }
+        });
+  }
+
+  private void logResponse(HttpResponse<JsonObject> response) {
+    System.out.println("Received response with status code: " + response.statusCode());
+    System.out.println("Response Body: " + response.body().toString());
+    if (response.statusCode() != 200 || response.body().toString().contains("errors")) {
+      System.err.println("GraphQL Error: " + response.body().toString());
+    }
+  }
+
+  private void logFailure(Throwable cause, HttpResponse<JsonObject> response) {
+    if (response != null) {
+      // Attempt to log the raw response body for debugging
+      try {
+        String rawResponse = response.body().toString();
+        System.err.println("Raw response body: " + rawResponse);
+      } catch (Exception e) {
+        System.err.println("Error parsing response body: " + e.getMessage());
+      }
+    }
+    System.err.println("Request failed: " + cause.getMessage());
+  }
   public PromiseImpl listen(String query, Consumer<JsonObject> successHandler) {
     PromiseImpl p = new PromiseImpl();
     vertx.createHttpClient().webSocket(8888, "localhost", "/graphql-ws", websocketRes -> {

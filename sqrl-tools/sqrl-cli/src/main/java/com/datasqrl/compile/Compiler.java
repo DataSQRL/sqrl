@@ -133,7 +133,7 @@ public class Compiler {
 
     apiSchemaOpt.ifPresent(api -> preAnalysis.analyze(api, apiManager));
 
-    Namespace ns = planner.plan(FileUtil.readFile(mainScript), List.of(apiManager.getAsModuleLoader()));
+    planner.plan(FileUtil.readFile(mainScript), List.of(apiManager.getAsModuleLoader()));
 
     SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
 
@@ -141,7 +141,7 @@ public class Compiler {
         .split("\\.")[0]);
 
     APISource apiSchema = apiSchemaOpt.orElseGet(() ->
-        new APISource(graphqlName, inferGraphQLSchema(sqrlSchemaForInference, compilerConfig.isAddArguments())));
+        APISource.of(graphqlName, inferGraphQLSchema(sqrlSchemaForInference, compilerConfig.isAddArguments())));
 
     SqrlQueryPlanner queryPlanner = injector.getInstance(SqrlQueryPlanner.class);
 

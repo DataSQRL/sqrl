@@ -2,11 +2,8 @@ package com.datasqrl;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.resolver.ClasspathResourceResolver;
 import com.datasqrl.serializer.Deserializer;
-import com.google.common.base.Preconditions;
+import com.google.common.io.Resources;
 import java.net.URI;
 import java.util.Optional;
 import lombok.SneakyThrows;
@@ -20,20 +17,18 @@ import org.apache.flink.table.api.TableResult;
 @Slf4j
 public class FlinkMain {
   public static void main(String[] args) {
-    ClasspathResourceResolver resourceResolver = new ClasspathResourceResolver();
 
-    log.info("Files:" + resourceResolver.getFiles());
-    (new FlinkMain()).run(resourceResolver);
+    (new FlinkMain()).run();
   }
 
   @SneakyThrows
-  public void run(ResourceResolver resourceResolver) {
+  public void run() {
     log.info("Hello.");
-    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flink-plan.json"));
-    Preconditions.checkState(flinkPlan.isPresent(), "Could not find flink executable plan.");
+
+    URI flinkPlan = Resources.getResource("build/deploy/flink-plan.json").toURI();
 
     Deserializer deserializer = new Deserializer();
-    FlinkExecutablePlan executablePlan = deserializer.mapJsonFile(flinkPlan.get(), FlinkExecutablePlan.class);
+    FlinkExecutablePlan executablePlan = deserializer.mapJsonFile(flinkPlan, FlinkExecutablePlan.class);
     log.info("Found executable.");
 
     ErrorCollector errors = ErrorCollector.root();

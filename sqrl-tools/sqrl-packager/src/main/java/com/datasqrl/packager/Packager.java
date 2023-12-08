@@ -20,6 +20,7 @@ import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
 import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
+import com.datasqrl.packager.preprocess.PreparsedQueryPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
@@ -197,9 +198,7 @@ public class Packager {
    */
   private void preProcessFiles(SqrlConfig config) throws IOException {
     //Preprocessor will normalize files
-    List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
-            new JarPreprocessor(), new DataSystemPreprocessor()),
-        ServiceLoaderDiscovery.getAll(Preprocessor.class));
+    List<Preprocessor> processorList = ServiceLoaderDiscovery.getAll(Preprocessor.class);
     Preprocessors preprocessors = new Preprocessors(processorList, errors);
     preprocessors.handle(
         PreprocessorsContext.builder()

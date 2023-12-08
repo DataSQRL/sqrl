@@ -19,10 +19,8 @@ public class ScriptConfiguration {
   public static final String MAIN_KEY = "main";
   public static final String GRAPHQL_KEY = "graphql";
   public static final String GRAPHQL_NORMALIZED_FILE_NAME = "schema.graphqls";
-
   public static final String[] FILE_KEYS = {MAIN_KEY, GRAPHQL_KEY};
-  public static final Map<String,Optional<String>> NORMALIZED_FILE_NAMES = ImmutableMap.of(MAIN_KEY,
-      Optional.empty(), GRAPHQL_KEY, Optional.of(GRAPHQL_NORMALIZED_FILE_NAME));
+
 
   public static SqrlConfig fromRootConfig(@NonNull SqrlConfig rootConfig) {
     return rootConfig.getSubConfig(SCRIPT_KEY);

@@ -10,6 +10,8 @@ import com.datasqrl.graphql.server.Model.FieldLookupCoords;
 import com.datasqrl.graphql.server.Model.JdbcQuery;
 import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.PagedJdbcQuery;
+import com.datasqrl.graphql.server.Model.PreparsedQueryVisitor;
+import com.datasqrl.graphql.server.Model.PreparsedQuery;
 import com.datasqrl.graphql.server.Model.QueryBaseVisitor;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.ResolvedJdbcQuery;
@@ -22,6 +24,9 @@ import com.datasqrl.graphql.server.Model.SchemaVisitor;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import graphql.GraphQL;
+import graphql.execution.preparsed.PreparsedDocumentProvider;
+import graphql.execution.preparsed.persisted.ApolloPersistedQuerySupport;
+import graphql.execution.preparsed.persisted.InMemoryPersistedQueryCache;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.TypeDefinition;
 import graphql.schema.DataFetcher;
@@ -32,12 +37,12 @@ import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +54,10 @@ public class BuildGraphQLEngine implements
     CoordVisitor<DataFetcher<?>, Context>,
     SchemaVisitor<TypeDefinitionRegistry, Object>,
     QueryBaseVisitor<ResolvedQuery, Context>,
-    ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext> {
+    ResolvedQueryVisitor<CompletableFuture, QueryExecutionContext>,
+    PreparsedQueryVisitor<PreparsedDocumentProvider, InMemoryPersistedQueryCache>
+
+{
 
   private List<GraphQLScalarType> addlTypes;
 
@@ -99,7 +107,21 @@ public class BuildGraphQLEngine implements
     GraphQLSchema graphQLSchema = new SchemaGenerator()
         .makeExecutableSchema(registry, wiring);
 
-    return GraphQL.newGraphQL(graphQLSchema).build();
+    Map<Object, String> knownQueries = new HashMap<>();
+    InMemoryPersistedQueryCache inMemoryPersistedQueryCache =
+        new InMemoryPersistedQueryCache(knownQueries);
+    ApolloPersistedQuerySupport apolloPersistedQuerySupport =
+        new ApolloPersistedQuerySupport(inMemoryPersistedQueryCache);
+
+    if (root.preparsedQueries != null) {
+      for (PreparsedQuery query : root.preparsedQueries) {
+        query.accept(this, inMemoryPersistedQueryCache);
+      }
+    }
+
+    return GraphQL.newGraphQL(graphQLSchema)
+        .preparsedDocumentProvider(apolloPersistedQuerySupport)
+        .build();
   }
 
   private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
@@ -170,4 +192,10 @@ public class BuildGraphQLEngine implements
     return fieldType.getClass().equals(GraphQLList.class);
   }
 
+  @Override
+  public PreparsedDocumentProvider visitPreparsedQuery(PreparsedQuery query,
+      InMemoryPersistedQueryCache context) {
+    context.getKnownQueries().put(query.getId(), query.getQuery());
+    return null;
+  }
 }

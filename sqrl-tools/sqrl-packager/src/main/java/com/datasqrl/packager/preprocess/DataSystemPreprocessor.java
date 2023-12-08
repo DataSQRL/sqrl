@@ -3,12 +3,14 @@ package com.datasqrl.packager.preprocess;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.DataSource;
 import com.datasqrl.util.FileUtil;
+import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 
+@AutoService(Preprocessor.class)
 public class DataSystemPreprocessor implements Preprocessor {
 
   public static final Pattern DATASYSTEM_REGEX =  Pattern.compile(".*"+FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX)

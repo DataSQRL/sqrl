@@ -14,6 +14,7 @@ import io.vertx.junit5.VertxExtension;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
@@ -129,6 +130,16 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
     client.query(query, input, callback);
   }
 
+  protected void executePersistedQuery(String querySha, JsonObject input, Consumer<HttpResponse<JsonObject>> callback) {
+    client.executePersistedQuery(querySha, input, callback);
+  }
+
+  @FunctionalInterface
+  public interface ExecuteQuery {
+    public void executePersistedQuery(String querySha, JsonObject input,
+        Consumer<HttpResponse<JsonObject>> callback);
+  }
+
   public void executeQueryUntilTrue(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback,
       Predicate<HttpResponse<JsonObject>> waitUntilTrue) {
     executeQueryUntilTrue(query, input, callback, waitUntilTrue, 30);
@@ -137,9 +148,21 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   @SneakyThrows
   public void executeQueryUntilTrue(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback,
       Predicate<HttpResponse<JsonObject>> waitUntilTrue, int times) {
+    executeUntilTrue(query, input, callback, waitUntilTrue, times, this::executeQuery);
+  }
+
+  @SneakyThrows
+  public void executePreparsedQueryUntilTrue(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback,
+      Predicate<HttpResponse<JsonObject>> waitUntilTrue, int times) {
+    executeUntilTrue(query, input, callback, waitUntilTrue, times, this::executePersistedQuery);
+  }
+
+  @SneakyThrows
+  public void executeUntilTrue(String query, JsonObject input, Consumer<HttpResponse<JsonObject>> callback,
+      Predicate<HttpResponse<JsonObject>> waitUntilTrue, int times, ExecuteQuery executeQuery) {
     AtomicBoolean done = new AtomicBoolean(false);
     while (!done.get() && times-- > 0) {
-      executeQuery(query, input, t-> {
+      executeQuery.executePersistedQuery(query, input, t-> {
         if (waitUntilTrue.test(t)) {
           done.set(true);
           callback.accept(t);

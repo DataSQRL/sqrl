@@ -8,13 +8,14 @@ import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 @AutoService(Preprocessor.class)
-public class TablePreprocessor implements Preprocessor {
-  protected static final Pattern TABLE_FILE_REGEX = Pattern.compile(".*"+ FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX));
+public class PreparsedQueryPreprocessor implements Preprocessor {
+  protected static final Pattern QUERY_FILE_REGEX =
+      Pattern.compile(".*"+ FileUtil.toRegex(".graphql"));
 
   @Override
   public Pattern getPattern() {
-    // Pattern to match *.table.json files
-    return TABLE_FILE_REGEX;
+    // Pattern to match any persisted query files
+    return QUERY_FILE_REGEX;
   }
 
   @Override

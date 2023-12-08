@@ -43,16 +43,21 @@ public class Model {
 
     Schema schema;
 
+    @Singular
+    List<PreparsedQuery> preparsedQueries;
+
     @JsonCreator
     public RootGraphqlModel(
         @JsonProperty("coords") List<Coords> coords,
         @JsonProperty("mutations") List<MutationCoords> mutations,
         @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
-        @JsonProperty("schema") Schema schema) {
+        @JsonProperty("schema") Schema schema,
+        @JsonProperty("preparsedQueries") List<PreparsedQuery> preparsedQueries) {
       this.coords = coords;
       this.mutations = mutations == null ? List.of() : mutations;
       this.subscriptions = subscriptions == null ? List.of() : subscriptions;
       this.schema = schema;
+      this.preparsedQueries = preparsedQueries;
     }
 
     public <R, C> R accept(RootVisitor<R, C> visitor, C context) {
@@ -421,5 +426,23 @@ public class Model {
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
       return visitor.visitResolvedPagedJdbcQuery(this, context);
     }
+  }
+
+  @AllArgsConstructor
+  @Getter
+  @NoArgsConstructor
+  @Setter
+  public static class PreparsedQuery {
+    String id;
+    String query;
+
+    public <R, C> R accept(PreparsedQueryVisitor<R, C> visitor, C context) {
+      return visitor.visitPreparsedQuery(this, context);
+    }
+  }
+
+  public interface PreparsedQueryVisitor<R, C> {
+
+    public R visitPreparsedQuery(PreparsedQuery query, C context);
   }
 }
