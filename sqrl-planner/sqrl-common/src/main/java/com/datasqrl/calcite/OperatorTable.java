@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
@@ -12,7 +11,6 @@ public class OperatorTable implements SqlOperatorTable {
   private final Map<List<String>, SqlOperator> internalNames = new HashMap<>();
   private final NameCanonicalizer nameCanonicalizer;
   private final SqlOperatorTable[] chain;
-  private final Map<String, SqlFunction> validatorFncs = new HashMap<>();
 
   public OperatorTable(NameCanonicalizer nameCanonicalizer, SqlOperatorTable... chain) {
     this.nameCanonicalizer = nameCanonicalizer;
@@ -21,12 +19,6 @@ public class OperatorTable implements SqlOperatorTable {
 
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
-      //If we find a function that we used for validation, return early
-    if (validatorFncs.containsKey(sqlIdentifier.names.get(0))) {
-      list.add(validatorFncs.get(sqlIdentifier.names.get(0)));
-      return;
-    }
-
     if (list.isEmpty()) {
       SqlOperator fn = sqlNameMatcher.get(udf, List.of(), List.of(sqlIdentifier.getSimple()));
       if (fn != null) {
@@ -58,9 +50,6 @@ public class OperatorTable implements SqlOperatorTable {
   }
 
   public void addFunction(String canonicalName, SqlOperator function) {
-//    if (this.udf.containsKey(List.of(nameCanonicalizer.getCanonical(canonicalName)))) {
-//      throw new RuntimeException(String.format("Function already exists: %s", canonicalName));
-//    }
     this.udf.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
     this.internalNames.put(List.of(function.getName()), function);
   }
@@ -68,9 +57,4 @@ public class OperatorTable implements SqlOperatorTable {
   public Map<List<String>, SqlOperator> getUdfs() {
     return udf;
   }
-
-  public void addPlanningFnc(List<SqlFunction> fncs) {
-    fncs.forEach(f->this.validatorFncs.put(f.getName(), f));
-  }
-
 }

@@ -44,9 +44,6 @@ import org.apache.flink.table.types.inference.TypeInference;
  * Bridges a Flink function to calcite
  */
 public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction implements BridgingFunction, RuleTransform {
-  private final DataTypeFactory dataTypeFactory;
-  private final FlinkTypeFactory flinkTypeFactory;
-  private final RexFactory rexFactory;
   @Getter
   private final FunctionDefinition definition;
   private final TypeInference typeInference;
@@ -64,9 +61,6 @@ public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction impl
         false,
         false,
         Optionality.IGNORED);
-    this.dataTypeFactory = dataTypeFactory;
-    this.flinkTypeFactory = flinkTypeFactory;
-    this.rexFactory = rexFactory;
     this.definition = definition;
     this.typeInference = typeInference;
   }

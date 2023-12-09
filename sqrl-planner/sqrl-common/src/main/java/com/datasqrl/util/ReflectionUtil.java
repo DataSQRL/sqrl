@@ -3,21 +3,10 @@ package com.datasqrl.util;
 import java.lang.reflect.Method;
 import java.util.List;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class ReflectionUtil {
-  public static Method findMethod(Class<?> clazz, String name) {
-    Method[] methods = clazz.getMethods();
-
-    for(int i = 0; i < methods.length; ++i) {
-      Method method = methods[i];
-      if (method.getName().equals(name) && !method.isBridge()) {
-        return method;
-      }
-    }
-
-    return null;
-  }
-
   @SneakyThrows
   public static Object invokeSuperPrivateMethod(Object instance, String methodName, List<Class> clazz, Object... params)  {
     // Determine the parameter types
@@ -35,5 +24,4 @@ public class ReflectionUtil {
     // Invoke the method
     return method.invoke(instance, params);
   }
-
 }

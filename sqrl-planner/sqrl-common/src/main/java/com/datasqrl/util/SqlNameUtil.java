@@ -34,17 +34,6 @@ public class SqlNameUtil {
         : canonicalizer.name(name);
   }
 
-  public static String toSafeName(String name) {
-    return name.replaceAll("[^_0-9A-Za-z]+", "_");
-  }
-
-  public static List<String> toStringList(NamePath path) {
-    return Arrays.stream(path.getNames())
-        .map(e->e.getDisplay())
-        .collect(Collectors.toList());
-  }
-
-
   public NamePath getParentPath(SqrlAssignment statement) {
     NamePath path = toNamePath(statement.getIdentifier().names);
     if (statement instanceof SqrlExpressionQuery) {

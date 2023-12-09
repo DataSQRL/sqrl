@@ -26,7 +26,7 @@ public interface Preprocessor {
   }
 
   @Getter
-  public static class ProcessorContext {
+  class ProcessorContext {
 
     Set<Path> dependencies, libraries;
     Path rootDir, buildDir;

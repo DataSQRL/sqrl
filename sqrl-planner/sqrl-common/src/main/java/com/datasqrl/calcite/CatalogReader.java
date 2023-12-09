@@ -31,10 +31,6 @@ public class CatalogReader extends CalciteCatalogReader {
     return getTable(List.of(sysTableName));
   }
 
-  public NamePath getSqrlAbsolutePath(List<String> path) {
-    return getSqrlAbsolutePath(NamePath.system(path));
-  }
-
   public NamePath getSqrlAbsolutePath(NamePath path) {
     NamePath rel = schema.getPathToAbsolutePathMap().get(path);
     return (rel == null) ? path : rel;

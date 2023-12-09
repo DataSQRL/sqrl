@@ -81,9 +81,4 @@ public class PathToSql {
 
     stack.push(join);
   }
-
-  @Value
-  public static class PathToSqlResult {
-    SqlNode sqlNode;
-  }
 }
