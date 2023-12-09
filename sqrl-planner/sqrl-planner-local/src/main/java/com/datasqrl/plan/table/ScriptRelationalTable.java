@@ -4,9 +4,12 @@ import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.google.common.collect.ContiguousSet;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.calcite.linq4j.Enumerator;
+import org.apache.calcite.linq4j.Linq4j;
 import org.apache.calcite.linq4j.QueryProvider;
 import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.rel.type.RelDataType;
@@ -16,6 +19,7 @@ import org.apache.calcite.schema.QueryableTable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
+import org.apache.calcite.schema.impl.AbstractTableQueryable;
 import org.apache.calcite.util.ImmutableBitSet;
 
 import java.util.ArrayList;
@@ -95,14 +99,21 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
         return Statistics.of(tableStatistic.getRowCount(), List.of(primaryKey));
     }
 
+    // An empty queryable table, used for tests
     @Override
-    public <T> Queryable<T> asQueryable(QueryProvider queryProvider, SchemaPlus schemaPlus,
-        String s) {
-        return null;
+    public <T> Queryable<T> asQueryable(QueryProvider queryProvider, SchemaPlus schema,
+        String tableName) {
+        return new AbstractTableQueryable<>(queryProvider, schema, this,
+            tableName) {
+            @Override
+            public Enumerator<T> enumerator() {
+                return (Enumerator<T>) Linq4j.asEnumerable(new ArrayList<>()).enumerator();
+            }
+        };
     }
 
     @Override
     public Type getElementType() {
-        return null;
+        return Object[].class;
     }
 }

@@ -15,9 +15,9 @@ import org.apache.calcite.rel.RelNode;
  */
 public interface PhysicalTable {
 
-  public String getNameId();
+  String getNameId();
 
-  public Name getTableName();
+  Name getTableName();
 
   List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors);
 

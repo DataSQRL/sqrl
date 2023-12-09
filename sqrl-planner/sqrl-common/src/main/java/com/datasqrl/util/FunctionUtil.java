@@ -1,10 +1,12 @@
 package com.datasqrl.util;
 
-import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.flink.function.BridgingFunction;
+import com.datasqrl.function.SqrlFunction;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
-import org.apache.flink.table.functions.BuiltInFunctionDefinition;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 public class FunctionUtil {
 
@@ -24,10 +26,14 @@ public class FunctionUtil {
     return Optional.empty();
   }
 
-  public static Name getFunctionNameFromClass(Class clazz) {
-    String fctName = clazz.getSimpleName();
-    fctName = Character.toLowerCase(fctName.charAt(0)) + fctName.substring(1);
-    return Name.system(fctName);
-  }
 
+  public static Optional<SqrlFunction> getSqrlFunction(SqlOperator operator) {
+    if (operator instanceof BridgingFunction) {
+      FunctionDefinition function = ((BridgingFunction)operator).getDefinition();
+      if (function instanceof SqrlFunction) {
+        return Optional.of((SqrlFunction) function);
+      }
+    }
+    return Optional.empty();
+  }
 }
