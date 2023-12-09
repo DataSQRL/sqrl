@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import lombok.experimental.UtilityClass;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
@@ -28,6 +29,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.commons.collections.ListUtils;
 
+@UtilityClass
 public class SqlBuilders {
   public static class SqlAliasCallBuilder {
 
@@ -171,12 +173,6 @@ public class SqlBuilders {
       return this;
     }
 
-    public SqlSelectBuilder setKeyword(Symbolizable symbol) {
-      SqlNode s = symbol.symbol(SqlParserPos.ZERO);
-      select.setOperand(0, new SqlNodeList(List.of(s), SqlParserPos.ZERO));
-      return this;
-    }
-
     public SqlSelectBuilder setFrom(SqlNode sqlNode) {
       select.setFrom(sqlNode);
       return this;
@@ -241,11 +237,6 @@ public class SqlBuilders {
       return this;
     }
 
-    public SqlSelectBuilder setOrder(List<SqlNode> order) {
-      select.setOrderBy(new SqlNodeList(order, SqlParserPos.ZERO));
-      return this;
-    }
-
     public SqlSelectBuilder setLimit(int limit) {
       select.setFetch(SqlLiteral.createExactNumeric(Integer.toString(limit), SqlParserPos.ZERO));
       return this;
@@ -263,12 +254,8 @@ public class SqlBuilders {
     }
 
     public SqlSelectBuilder setWhere(List<SqlNode> conditions) {
-      if (conditions.size() > 1) {
-        SqlNode call = SqlUtil.createCall(SqlStdOperatorTable.AND, SqlParserPos.ZERO, conditions);
-        select.setWhere(call);
-      } else if (conditions.size() == 1){
-        select.setWhere(conditions.get(0));
-      }
+      SqlNode call = SqlUtil.createCall(SqlStdOperatorTable.AND, SqlParserPos.ZERO, conditions);
+      select.setWhere(call);
       return this;
     }
 
@@ -292,14 +279,6 @@ public class SqlBuilders {
 
     public SqlCallBuilder(SqlCall call) {
       this.call = call;
-    }
-
-    public SqlCallBuilder rewriteOperands(Function<SqlNode, SqlNode> fnc) {
-      call = call.getOperator().createCall(call.getParserPosition(),
-          call.getOperandList().stream()
-              .map(fnc::apply)
-              .collect(Collectors.toList()));
-      return this;
     }
 
     public SqlCall build() {

@@ -1,0 +1,4 @@
+>>>customer$2
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], __timestamp=[epochToTimestamp($5)])
+  LogicalTableScan(table=[[customer$1]])
+

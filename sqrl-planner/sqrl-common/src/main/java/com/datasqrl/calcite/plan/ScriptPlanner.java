@@ -10,13 +10,10 @@ import com.datasqrl.calcite.SqrlToSql.Result;
 import com.datasqrl.calcite.NormalizeTablePath;
 import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.calcite.schema.SqrlListUtil;
-import com.datasqrl.calcite.sqrl.PathToSql;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
@@ -109,7 +106,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   public Void visit(SqrlAssignment assignment, Void context) {
     SqlNode node = validator.getPreprocessSql().get(assignment);
     boolean materializeSelf = validator.getIsMaterializeTable().get(assignment);
-    NamePath parentPath = getParentPath(assignment);
+    NamePath parentPath = nameUtil.getParentPath(assignment);
     NormalizeTablePath normalizeTablePath = new NormalizeTablePath(planner.getCatalogReader(),
         validator.getParamMapping(), new SqlNameUtil(planner.getFramework().getNameCanonicalizer()));
     SqrlToSql sqrlToSql = new SqrlToSql(planner.getCatalogReader(), planner.getOperatorTable(),
@@ -158,18 +155,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     return null;
   }
 
-  public NamePath getParentPath(SqrlAssignment statement) {
-    NamePath path = nameUtil.toNamePath(statement.getIdentifier().names);
-    if (statement instanceof SqrlExpressionQuery) {
-      if (statement.getIdentifier().names.size() > 2) {
-        return path.popLast().popLast();
-      } else {
-        return path.popLast();
-      }
-    } else {
-      return path.popLast();
-    }
-  }
   @Override
   public Void visit(SqrlExpressionQuery node, Void context) {
     NamePath path = nameUtil.toNamePath(node.getIdentifier().names).popLast();
