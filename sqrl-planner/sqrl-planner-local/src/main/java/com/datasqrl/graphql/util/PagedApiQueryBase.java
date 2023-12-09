@@ -3,7 +3,6 @@
  */
 package com.datasqrl.graphql.util;
 
-import com.datasqrl.graphql.inference.ArgumentSet;
 import com.datasqrl.graphql.server.Model.*;
 import com.datasqrl.plan.queries.APIQuery;
 import lombok.*;
