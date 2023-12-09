@@ -50,7 +50,6 @@ public class OptimizationStage {
   //Enumerable
   public static final OptimizationStage CALCITE_ENGINE = new OptimizationStage("standardEnumerable",
       Programs.sequence(
-//          SQRLPrograms.ENUMERABLE_VOLCANO,
           Programs.ofRules(Programs.RULE_SET), Programs.CALC_PROGRAM,
           Programs.ofRules(EnumerableRules.ENUMERABLE_RULES)),
             Optional.of(EnumerableConvention.INSTANCE));

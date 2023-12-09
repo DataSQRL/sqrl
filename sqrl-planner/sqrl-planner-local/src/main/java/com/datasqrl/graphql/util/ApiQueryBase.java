@@ -3,7 +3,6 @@
  */
 package com.datasqrl.graphql.util;
 
-import com.datasqrl.graphql.inference.ArgumentSet;
 import com.datasqrl.graphql.server.Model.JdbcParameterHandler;
 import com.datasqrl.graphql.server.Model.QueryBase;
 import com.datasqrl.graphql.server.Model.QueryBaseVisitor;

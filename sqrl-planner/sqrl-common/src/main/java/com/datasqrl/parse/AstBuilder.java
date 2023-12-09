@@ -403,17 +403,6 @@ class AstBuilder
     return visit(context.expression());
   }
 
-  public SqlNodeList getHints(HintContext hint) {
-    if (hint == null) {
-      return new SqlNodeList(SqlParserPos.ZERO);
-    }
-    return new SqlNodeList(
-        hint.hintItem().stream()
-            .map(h -> visitHintItem(h))
-            .collect(toList()),
-        getLocation(hint));
-  }
-
   @Override
   public SqlNode visitHintItem(HintItemContext ctx) {
     return new SqlHint(getLocation(ctx),
@@ -531,12 +520,6 @@ class AstBuilder
   @Override
   protected SqlNode aggregateResult(SqlNode aggregate, SqlNode nextResult) {
     return null;
-  }
-
-  private <T> Optional<T> visitIfPresent(ParserRuleContext context, Class<T> clazz) {
-    return Optional.ofNullable(context)
-        .map(this::visit)
-        .map(clazz::cast);
   }
 
   private <T> List<T> visit(List<? extends ParserRuleContext> contexts, Class<T> clazz) {

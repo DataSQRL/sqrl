@@ -4,7 +4,6 @@
 package com.datasqrl.plan;
 
 import com.datasqrl.engine.ExecutionEngine.Type;
-import com.datasqrl.plan.memory.rule.SqrlDataSourceToEnumerableConverterRule;
 import com.datasqrl.plan.rules.DAGFunctionExpansionRule;
 import com.datasqrl.plan.rules.DAGTableExpansionRule.Read;
 import com.datasqrl.plan.rules.DAGTableExpansionRule.Write;
@@ -99,18 +98,5 @@ public class OptimizationStage {
           CoreRules.FILTER_SET_OP_TRANSPOSE
       ), false, SqrlRelMetadataProvider.INSTANCE),
       Optional.empty());
-
-  //Enumerable
-  public static final OptimizationStage CALCITE_ENGINE = new OptimizationStage("standardEnumerable",
-            Programs.sequence(
-                    Programs.subQuery(DefaultRelMetadataProvider.INSTANCE),
-                    SQRLPrograms.ENUMERABLE_VOLCANO,
-                    Programs.calc(DefaultRelMetadataProvider.INSTANCE),
-                    Programs.hep(
-                            List.of(new SqrlDataSourceToEnumerableConverterRule()), false, DefaultRelMetadataProvider.INSTANCE
-                    )
-            ),
-            Optional.of(EnumerableConvention.INSTANCE));
-
 
 }

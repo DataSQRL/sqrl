@@ -10,7 +10,7 @@ import java.util.List;
 public class DynamicParamSqlPrettyWriter extends SqlPrettyWriter {
 
   @Getter
-  private List<Integer> dynamicParameters = new ArrayList<>();
+  private final List<Integer> dynamicParameters = new ArrayList<>();
 
   public DynamicParamSqlPrettyWriter(SqlWriterConfig config) {
     super(config);
@@ -18,9 +18,6 @@ public class DynamicParamSqlPrettyWriter extends SqlPrettyWriter {
 
   @Override
   public void dynamicParam(int index) {
-    if (dynamicParameters == null) {
-      dynamicParameters = new ArrayList<>();
-    }
     dynamicParameters.add(index);
     print("$" + (index + 1));
     setNeedWhitespace(true);

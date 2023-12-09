@@ -3,6 +3,9 @@
  */
 package com.datasqrl.util;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class ArrayUtil {
 
   public static boolean contains(int[] arr, int value, int endIndex) {

@@ -3,11 +3,13 @@ package com.datasqrl.util;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.parse.SqrlAstException;
 import java.util.Optional;
+import lombok.experimental.UtilityClass;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 import java.util.function.Supplier;
 
+@UtilityClass
 public class CheckUtil {
 
   public static RuntimeException createAstException(Optional<Throwable> cause, ErrorLabel label, Supplier<SqlParserPos> pos,

@@ -8,7 +8,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class StreamUtil {
 
   public static <T, C extends T> Stream<C> filterByClass(Stream<T> stream, Class<C> clazz) {
@@ -19,14 +21,6 @@ public class StreamUtil {
     return col.stream().filter(clazz::isInstance).map(clazz::cast);
   }
 
-  public static <T, C extends T> Function<T,Stream<C>> classFilter(Class<C> clazz) {
-    return (t) -> clazz.isInstance(t)?Stream.of(clazz.cast(t)):Stream.empty();
-  }
-
-  public static <T> Stream<T> getPresent(Stream<Optional<T>> stream) {
-    return stream.filter(Optional::isPresent).map(Optional::get);
-  }
-
   public static <T> Optional<T> getOnlyElement(Stream<T> stream) {
     AtomicReference<T> elements = new AtomicReference<>(null);
     long count = stream.map(e -> { elements.set(e); return e;}).count();
@@ -34,6 +28,4 @@ public class StreamUtil {
     else if (count==1) return Optional.of(elements.get());
     else throw new IllegalArgumentException("Stream contains ["+count+"] elements");
   }
-
-
 }

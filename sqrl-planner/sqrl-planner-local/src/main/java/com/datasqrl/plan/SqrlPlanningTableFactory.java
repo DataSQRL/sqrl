@@ -2,7 +2,6 @@ package com.datasqrl.plan;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlTableFactory;
-import com.datasqrl.calcite.schema.SqrlListUtil;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
@@ -22,7 +21,6 @@ import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

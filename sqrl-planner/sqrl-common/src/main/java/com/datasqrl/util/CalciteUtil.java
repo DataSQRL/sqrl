@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -64,16 +65,6 @@ public class CalciteUtil {
     }
   }
 
-  public static boolean isBasicOrArrayType(RelDataType type) {
-    return type instanceof BasicSqlType || type instanceof IntervalSqlType
-        || type instanceof ArraySqlType || type instanceof MultisetSqlType;
-  }
-
-  public static boolean hasNesting(RelDataType type) {
-    Preconditions.checkState(type.getFieldCount() > 0);
-    return type.getFieldList().stream().map(t -> t.getType()).anyMatch(CalciteUtil::isNestedTable);
-  }
-
   public static RelBuilder projectOutNested(RelBuilder relBuilder) {
     List<RelDataTypeField> fields = relBuilder.peek().getRowType().getFieldList();
     List<RexNode> projects = new ArrayList<>(fields.size());
@@ -109,10 +100,6 @@ public class CalciteUtil {
     builder.addAll(relation.getFieldList());
     builder.add(fieldId, fieldType);
     return builder.build();
-  }
-
-  public static void addIdentityProjection(RelBuilder relBuilder, int numColumns) {
-    addProjection(relBuilder, ContiguousSet.closedOpen(0, numColumns).asList(), null, true);
   }
 
   public static Optional<Integer> isCoalescedWithConstant(RexNode rexNode) {
@@ -192,7 +179,7 @@ public class CalciteUtil {
     return node.accept(new RexShuttleApplier(rexShuttle));
   }
 
-  @Value
+  @AllArgsConstructor
   private static class RexShuttleApplier extends RelShuttleImpl {
 
     RexShuttle rexShuttle;
@@ -207,7 +194,7 @@ public class CalciteUtil {
     return applyRexShuttleRecursively(node, new RexParameterReplacer(parameters, node));
   }
 
-  @Value
+  @AllArgsConstructor
   private static class RexParameterReplacer extends RexShuttle {
 
     private final List<RexNode> parameters;

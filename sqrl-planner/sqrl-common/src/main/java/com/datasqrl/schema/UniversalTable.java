@@ -29,7 +29,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Value
+@AllArgsConstructor
+@Getter
 public class UniversalTable {
 
   Optional<UniversalTable> parent;
@@ -139,7 +140,7 @@ public class UniversalTable {
 
   }
 
-  @Value
+  @AllArgsConstructor
   public static class Configuration {
 
     boolean hasUuid;
@@ -154,7 +155,5 @@ public class UniversalTable {
     public static Configuration forTable() {
       return new Configuration(false, false, false, false);
     }
-
   }
-
 }

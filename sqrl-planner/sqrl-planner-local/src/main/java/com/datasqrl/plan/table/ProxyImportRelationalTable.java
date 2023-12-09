@@ -12,11 +12,9 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;

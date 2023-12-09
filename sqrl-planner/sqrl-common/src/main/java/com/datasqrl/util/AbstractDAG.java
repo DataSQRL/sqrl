@@ -48,34 +48,34 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     return StreamUtil.filterByClass(allNodes.stream(),clazz);
   }
 
-  public D addNodes(Multimap<E, E> inputs) {
-      if (inputs.isEmpty()) {
-          return (D) this;
-      }
-    HashMultimap<E, E> newInputs = HashMultimap.create(this.inputs);
-    inputs.entries().forEach(e -> newInputs.put(e.getKey(), e.getValue()));
-    return create(newInputs);
-  }
+//  public D addNodes(Multimap<E, E> inputs) {
+//      if (inputs.isEmpty()) {
+//          return (D) this;
+//      }
+//    HashMultimap<E, E> newInputs = HashMultimap.create(this.inputs);
+//    inputs.entries().forEach(e -> newInputs.put(e.getKey(), e.getValue()));
+//    return create(newInputs);
+//  }
 
   protected abstract D create(Multimap<E, E> inputs);
 
   public Set<E> getSinks() {
     return sinks;
   }
-
-  /**
-   * Remove all nodes in the DAG that do not reach a sink
-   *
-   * @return
-   */
-  public D trimToSinks() {
-    Set<E> reached = (Set<E>) getAllInputsFromSource(getSinks(), true);
-    return create(Multimaps.filterKeys(inputs, e -> reached.contains(e)));
-  }
-
-  public Set<E> getAllInputsFromSource(E element, boolean includeElement) {
-    return getAllInputsFromSource(List.of(element), includeElement);
-  }
+//
+//  /**
+//   * Remove all nodes in the DAG that do not reach a sink
+//   *
+//   * @return
+//   */
+//  public D trimToSinks() {
+//    Set<E> reached = (Set<E>) getAllInputsFromSource(getSinks(), true);
+//    return create(Multimaps.filterKeys(inputs, e -> reached.contains(e)));
+//  }
+//
+//  public Set<E> getAllInputsFromSource(E element, boolean includeElement) {
+//    return getAllInputsFromSource(List.of(element), includeElement);
+//  }
 
   public Set<E> getAllInputsFromSource(Collection<E> elements, boolean includeElements) {
     Set<E> reached = new HashSet<>();

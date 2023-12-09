@@ -1,5 +1,6 @@
 package com.datasqrl.function;
 
+import lombok.experimental.UtilityClass;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -11,6 +12,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedAggFunction;
 import org.apache.calcite.util.Optionality;
 
+@UtilityClass
 public class CalciteFunctionUtil {
 
   /**

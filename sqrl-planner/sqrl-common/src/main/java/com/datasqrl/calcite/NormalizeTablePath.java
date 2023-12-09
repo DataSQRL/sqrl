@@ -71,7 +71,7 @@ public class NormalizeTablePath {
     Name alias;
     if (getTable(identifier).isPresent()) {
       alias = generateAlias();
-      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(), identifier, List.of(), alias));
+      pathItems.add(new TableFunctionPathItem(identifier, List.of(), alias));
       pathWalker.walk(identifier);
     } else if (context.hasAlias(identifier)) {
       // For tables that start with an alias e.g. `o.entries`
@@ -97,7 +97,7 @@ public class NormalizeTablePath {
       // Rewrite arguments so internal arguments are prefixed with the alias
       List<SqlNode> args = rewriteInternalArgs(identifier, internalParams, context, params, parent.getRowType());
 
-      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
+      pathItems.add(new TableFunctionPathItem(
           nameUtil.toName(pathWalker.getPath().getDisplay()), args, alias));
     } else if (identifier.equals(ReservedName.SELF_IDENTIFIER)) {
       //Tables that start with '@'
@@ -108,7 +108,7 @@ public class NormalizeTablePath {
       if (materializeSelf || !input.hasNext()) {
         // Do a table scan on the source table
         RelOptTable table = catalogResolver.getTableFromPath(pathWalker.getPath());
-        pathItems.add(new SelfTablePathItem(pathWalker.getPath(), table));
+        pathItems.add(new SelfTablePathItem(table));
         alias = ReservedName.SELF_IDENTIFIER;
       } else {
         Name nextIdentifier = getIdentifier(input.next())
@@ -126,7 +126,7 @@ public class NormalizeTablePath {
         // Rewrite arguments
         List<SqlNode> args = rewriteInternalArgs(ReservedName.SELF_IDENTIFIER, internalParams, context,
             params, parentTable.getRowType());
-        pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
+        pathItems.add(new TableFunctionPathItem(
             nameUtil.toName(pathWalker.getPath().getDisplay()), args, alias));
       }
     } else {
@@ -148,7 +148,7 @@ public class NormalizeTablePath {
       List<SqlNode> args = rewriteInternalArgs(alias, internalParams, context, params,
           parentTable.getRowType());
       Name newAlias = generateAlias();
-      pathItems.add(new TableFunctionPathItem(pathWalker.getPath(),
+      pathItems.add(new TableFunctionPathItem(
           nameUtil.toName(pathWalker.getPath().getDisplay()), args, newAlias));
       alias = newAlias;
     }
@@ -231,9 +231,6 @@ public class NormalizeTablePath {
     if (item instanceof SqlIdentifier) {
       return Optional.of(((SqlIdentifier) item).getSimple())
           .map(nameUtil::toName);
-    } else if (item instanceof SqlCall) {
-      return Optional.of(((SqlCall) item).getOperator().getName())
-          .map(nameUtil::toName);
     }
 
     return Optional.empty();
@@ -251,7 +248,6 @@ public class NormalizeTablePath {
   @AllArgsConstructor
   @Getter
   public class TableFunctionPathItem implements PathItem {
-    NamePath path;
     Name functionName;
     List<SqlNode> arguments;
     Name alias;
@@ -260,7 +256,6 @@ public class NormalizeTablePath {
   @AllArgsConstructor
   @Getter
   public class SelfTablePathItem implements PathItem {
-    NamePath path;
     RelOptTable table;
 
     @Override

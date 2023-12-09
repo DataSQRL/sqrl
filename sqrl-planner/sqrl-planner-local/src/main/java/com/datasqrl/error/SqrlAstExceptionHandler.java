@@ -6,7 +6,9 @@ package com.datasqrl.error;
 import com.datasqrl.error.ErrorMessage.Implementation;
 import com.datasqrl.error.ErrorMessage.Severity;
 import com.datasqrl.parse.SqrlAstException;
+import com.google.auto.service.AutoService;
 
+@AutoService(ErrorHandler.class)
 public class SqrlAstExceptionHandler implements ErrorHandler<SqrlAstException> {
 
   @Override

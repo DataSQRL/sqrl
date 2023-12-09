@@ -6,9 +6,10 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import java.util.Optional;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class LoaderUtil {
-
 
   public static TableSink loadSink(@NonNull NamePath sinkPath, ErrorCollector errors,
         ModuleLoader moduleLoader) {

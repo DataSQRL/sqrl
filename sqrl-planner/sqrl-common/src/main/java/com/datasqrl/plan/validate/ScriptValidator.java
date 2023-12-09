@@ -344,7 +344,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     try {
       NamePath parent = NamePath.ROOT;
       if (statement.getIdentifier().names.size() > 1) {
-        parent = getParentPath(statement);
+        parent = nameUtil.getParentPath(statement);
         Collection<Function> sqrlTable = planner.getSchema()
             .getFunctions(parent.getDisplay(), false);
         if (sqrlTable.isEmpty()) {
@@ -404,19 +404,6 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     SqlIdentifier identifier = (SqlIdentifier) lhs;
     if (!identifier.names.get(0).equals(ReservedName.SELF_IDENTIFIER.getCanonical())) {
       throw addError(ErrorLabel.GENERIC, lhs, "Table must start with with '@'");
-    }
-  }
-
-  public NamePath getParentPath(SqrlAssignment statement) {
-    NamePath path = nameUtil.toNamePath(statement.getIdentifier().names);
-    if (statement instanceof SqrlExpressionQuery) {
-      if (statement.getIdentifier().names.size() > 2) {
-        return path.popLast().popLast();
-      } else {
-        return path.popLast();
-      }
-    } else {
-      return path.popLast();
     }
   }
 
@@ -757,28 +744,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         }
     );
 
-    rexNode
-        .filter(r -> !(r instanceof RexInputRef))
-        .ifPresent(r -> {
-          if (node.getTimestampAlias().isEmpty()) {
-            addError(ErrorLabel.GENERIC, node.getTimestamp(),
-                "Alias must be specified for expression timestamps");
-          }
-        });
-
     return null;
-  }
-
-  private Optional<RelOptTable> resolveTable(SqlNode node, NamePath names) {
-    Optional<RelOptTable> table = Optional.ofNullable(framework.getCatalogReader()
-        .getTableFromPath(names));
-    if (table.isEmpty()) {
-      throw addError(ErrorLabel.GENERIC, node, "Could not find table: %s", names.getDisplay());
-    }
-
-    table.ifPresent((t) -> this.tableMap.put(node, t));
-
-    return table;
   }
 
   private Optional<RelOptTable> resolveModifiableTable(SqlNode node, NamePath names) {
