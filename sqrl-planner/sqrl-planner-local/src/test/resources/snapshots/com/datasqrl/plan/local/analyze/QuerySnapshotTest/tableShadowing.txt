@@ -1,0 +1,19 @@
+>>>customerorders$1
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+  LogicalTableScan(table=[[orders$2]])
+
+>>>customerorders$2
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+  LogicalTableScan(table=[[orders$2]])
+
+>>>customerorders$3
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+  LogicalTableScan(table=[[orders$2]])
+
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+
+>>>x$1
+LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5])
+  LogicalTableScan(table=[[customerorders$3]])
+

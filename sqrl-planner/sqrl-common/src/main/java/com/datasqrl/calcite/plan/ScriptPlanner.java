@@ -118,8 +118,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     List<Function> isA = validator.getIsA().get(node);
 
-    if (assignment instanceof SqrlDistinctQuery) {
-      //Allow shadowing for distinct on
+    if (assignment.getTableArgs().isEmpty()) {
       NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
       planner.getSchema().clearFunctions(path);
     }
