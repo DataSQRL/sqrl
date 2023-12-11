@@ -65,8 +65,6 @@ public class DockerCompose {
         + "    ports:\n"
         + "      - \"9092:9092\"\n"
         + "      - \"9094:9094\"\n"
-        + "    volumes:\n"
-        + "      - \"kafka_data:/bitnami\"\n"
         + "    environment:\n"
         + "      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true\n"
         + "      - ALLOW_PLAINTEXT_LISTENER=yes\n"
@@ -104,12 +102,7 @@ public class DockerCompose {
         + "      - ./flink-job.jar:/flink-job.jar\n"
         + "      - ./submit-flink-job.sh:/submit-flink-job.sh\n"
         + "    entrypoint: /submit-flink-job.sh\n"
-        + "\n"
-        + "volumes:\n"
-        + "  database:\n"
-        + "    driver: local\n"
-        + "  kafka_data:\n"
-        + "    driver: local";
+        + "\n";
   }
 
   public static String getInitFlink() {
