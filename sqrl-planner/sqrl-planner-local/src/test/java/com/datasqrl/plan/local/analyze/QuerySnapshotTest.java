@@ -4,7 +4,6 @@
 package com.datasqrl.plan.local.analyze;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -13,10 +12,9 @@ import static org.mockito.Mockito.mock;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
-import com.datasqrl.calcite.Dialect;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.CollectedException;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
@@ -45,7 +43,6 @@ import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -94,7 +91,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         .forEach(table-> {
           SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE).build();
           snapshot.addContent(
-              sqrlConverter.convert(table, config, false, errors).explain(),
+              sqrlConverter.convert(table, config, false,
+                  /*Error already collected during planning*/ErrorCollector.root()).explain(),
               table.getNameId());
         });
 

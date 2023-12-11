@@ -1,9 +1,0 @@
->>>calcite
-SELECT JSONARRAY('a', JSONARRAY('nested', 1), 'b', JSONARRAY('nested', 2)) AS "j"
-FROM "customer$2"
->>>postgres
-SELECT JSONB_BUILD_ARRAY('a', JSONB_BUILD_ARRAY('nested', 1), 'b', JSONB_BUILD_ARRAY('nested', 2)) AS "j"
-FROM "customer$2"
->>>flink
-SELECT JSON_ARRAY('a', JSON_ARRAY('nested', 1 NULL ON NULL), 'b', JSON_ARRAY('nested', 2 NULL ON NULL) NULL ON NULL) AS `j`
-FROM `customer$2`

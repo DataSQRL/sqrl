@@ -1,9 +1,0 @@
->>>calcite
-SELECT JSONEXTRACT('{"a": [1, 2, 3]}', '$.a[1]', 'default') AS "j"
-FROM "customer$2"
->>>postgres
-SELECT JSONB_PATH_QUERY_FIRST('{"a": [1, 2, 3]}', '$.a[1]', 'default') AS "j"
-FROM "customer$2"
->>>flink
-SELECT JSON_VALUE('{`a`: [1, 2, 3]}', '$.a[1]' 'default') AS `j`
-FROM `customer$2`

@@ -1,9 +1,0 @@
->>>calcite
-SELECT JSONEXTRACT('{"a": "hello"}', '$.b', NULL) AS "j"
-FROM "customer$2"
->>>postgres
-SELECT JSONB_PATH_QUERY_FIRST('{"a": "hello"}', '$.b', NULL) AS "j"
-FROM "customer$2"
->>>flink
-SELECT JSON_VALUE('{`a`: `hello`}', '$.b' NULL) AS `j`
-FROM `customer$2`
