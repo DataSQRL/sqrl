@@ -213,10 +213,12 @@ public class SchemaInference {
     //todo clean up, add lazy evaluation
     checkState(structurallyEqual,
         invalidFields.isEmpty() ? typeDef.getSourceLocation() : invalidFields.get(invalidFields.size()-1).getSourceLocation(),
-        "Field%s not allowed [%s]", invalidFields.size() == 1 ? "" : "(s)",
+        "Field(s) [%s] could not be found on type [%s]. Possible fields are: [%s]",
         String.join(",", invalidFields.stream()
-            .map(e->e.getName())
-            .collect(Collectors.toList())), typeDef.getName());
+            .map(FieldDefinition::getName)
+            .collect(Collectors.toList())),
+        typeDef.getName(),
+        String.join(", ", table.tableMacro.getRowType().getFieldNames()));
 
     return typeDef.getFieldDefinitions().stream()
         .filter(f -> !visited.contains(f))

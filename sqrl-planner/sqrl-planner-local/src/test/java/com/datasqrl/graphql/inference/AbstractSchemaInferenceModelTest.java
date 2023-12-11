@@ -73,7 +73,6 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     try {
       inferredSchema = inference.accept();
     } catch (Exception e) {
-      e.printStackTrace();
       errors.withSchema("<schema>", schemaStr).handle(e);
       return null;
     }
