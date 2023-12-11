@@ -289,9 +289,9 @@ public class QueryPlanner {
 
   @SneakyThrows
   protected String generateSource(String className, EnumerableRel enumerableRel,
-      HashMap carryover) {
+      Map<String, Object> contextVariables) {
     EnumerableRelImplementor implementor = new EnumerableRelImplementor(getRexBuilder(),
-        carryover/*note: must be mutable*/);
+        contextVariables/*note: must be mutable*/);
     ClassDeclaration classDeclaration = implementor.implementRoot(enumerableRel,
         EnumerableRel.Prefer.ARRAY);
 
@@ -307,7 +307,7 @@ public class QueryPlanner {
   }
 
   public ClassLoader compile(String className, EnumerableRel enumerableRel,
-      HashMap<String, Object> carryover) {
+      Map<String, Object> carryover) {
     return compile(className, generateSource(className, enumerableRel, carryover),
         defaultClassDir.toPath());
   }
@@ -344,9 +344,9 @@ public class QueryPlanner {
   public Enumerator execute(String uniqueFnName, RelNode relNode, DataContextImpl context) {
     String defaultName = uniqueFnName;
     EnumerableRel enumerableRel = convertToEnumerableRel(relNode);
-    HashMap<String, Object> carryover = new HashMap<>();
-    ClassLoader classLoader = compile(defaultName, enumerableRel, carryover);
-    context.setCarryover(carryover);
+    Map<String, Object> variables = new HashMap<>();
+    ClassLoader classLoader = compile(defaultName, enumerableRel, variables);
+    context.setContextVariables(variables);
     return bindable(classLoader, defaultName)
         .bind(context).enumerator();
   }

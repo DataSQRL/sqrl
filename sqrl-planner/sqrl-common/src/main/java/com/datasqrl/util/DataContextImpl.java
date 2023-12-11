@@ -1,33 +1,21 @@
 package com.datasqrl.util;
 
 import com.datasqrl.calcite.SqrlFramework;
-import java.lang.reflect.Type;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.adapter.java.JavaTypeFactory;
-import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.linq4j.Linq4j;
 import org.apache.calcite.linq4j.QueryProvider;
 import org.apache.calcite.linq4j.QueryProviderImpl;
 import org.apache.calcite.linq4j.Queryable;
-import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.schema.SchemaPlus;
 
 import java.util.HashMap;
 import java.util.Optional;
-import org.apache.calcite.schema.Schemas;
 
 
 public class DataContextImpl implements DataContext {
@@ -40,7 +28,7 @@ public class DataContextImpl implements DataContext {
     this.dataSuppler = dataSuppler;
   }
 
-  private HashMap<String, Object> carryover;
+  private Map<String, Object> contextVariables;
 
   @Override
   public SchemaPlus getRootSchema() {
@@ -66,12 +54,16 @@ public class DataContextImpl implements DataContext {
 
   @Override
   public synchronized Object get(String name) {
-    return Optional.ofNullable(carryover.get(name))
+    return Optional.ofNullable(contextVariables.get(name))
         .orElse(name);
   }
 
 
-  public void setCarryover(HashMap<String, Object> carryover) {
-    this.carryover = carryover;
+  /**
+   *
+   * Supported variables: {@link org.apache.calcite.DataContext.Variable}
+   */
+  public void setContextVariables(Map<String, Object> contextVariables) {
+    this.contextVariables = contextVariables;
   }
 }
