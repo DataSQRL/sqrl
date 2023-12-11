@@ -1,0 +1,6 @@
+>>>errors
+[FATAL] Could not find module [point.at.location] at path: [point/at/location]
+in script:<script> [1:1]:
+IMPORT point.at.location;
+^
+

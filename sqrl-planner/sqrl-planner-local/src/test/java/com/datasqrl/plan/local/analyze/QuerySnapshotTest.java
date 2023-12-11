@@ -340,6 +340,12 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void missingModuleTestTest() {
+    ScriptBuilder builder = ScriptBuilder.of("IMPORT point.at.location");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
   public void fromTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("CustomerById(@id: INT) := FROM Customer WHERE customerid = @id;");
