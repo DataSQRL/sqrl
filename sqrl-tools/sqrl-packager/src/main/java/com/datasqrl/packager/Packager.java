@@ -167,7 +167,6 @@ public class Packager {
     Map<String, Optional<Path>> destinationPaths = copyScriptFilesToBuildDir().entrySet()
         .stream()
         .collect(Collectors.toMap(Entry::getKey, v->canonicalizePath(v.getValue())));
-    System.out.println(destinationPaths);
     //Files should exist, if error occurs its internal, hence we create root error collector
     PackagerConfig.setScriptFiles(buildDir, ScriptConfiguration.fromRootConfig(config),
         destinationPaths, ErrorCollector.root());
