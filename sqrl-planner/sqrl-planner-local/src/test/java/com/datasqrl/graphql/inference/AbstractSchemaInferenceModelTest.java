@@ -21,7 +21,7 @@ import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.TestScript;
-import com.google.inject.Inject;
+import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,19 +30,18 @@ import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.junit.jupiter.api.BeforeEach;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
   protected Namespace ns;
 
-  public AbstractSchemaInferenceModelTest(Namespace ns) {
+  public AbstractSchemaInferenceModelTest(Namespace ns, Injector injector) {
     this.ns = ns;
+    this.injector = injector;
     this.errors = ErrorCollector.root();
   }
 
   public AbstractSchemaInferenceModelTest() {
-    this(null);
   }
 
   @SneakyThrows
