@@ -340,6 +340,20 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void invalidCustomerDistinctNoOrderTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := DISTINCT Customer ON customerid");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
+  public void invalidCustomerDistinctOrderTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY badColumn DESC");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
   public void fromTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("CustomerById(@id: INT) := FROM Customer WHERE customerid = @id;");
