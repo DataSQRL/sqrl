@@ -21,6 +21,7 @@ import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.TestScript;
+import com.google.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.junit.jupiter.api.BeforeEach;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
@@ -57,10 +59,11 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
   public Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
       SqrlQueryPlanner planner, String schemaStr) {
-    APIConnectorManager apiManager = new MockAPIConnectorManager();
     APISource source = APISource.of(schemaStr);
     //Inference
     SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(planner.getFramework().getSchema());
+
+    MockAPIConnectorManager apiManager = injector.getInstance(MockAPIConnectorManager.class);
 
     SchemaInference inference = new SchemaInference(planner.getFramework(), "<schema>", null,source,
         sqrlSchemaForInference,
@@ -76,7 +79,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     }
 
     //Build queries
-    SchemaBuilder schemaBuilder = new SchemaBuilder(source);
+    SchemaBuilder schemaBuilder = new SchemaBuilder(source, apiManager);
 
     RootGraphqlModel root = inferredSchema.accept(schemaBuilder, null);
 

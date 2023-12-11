@@ -1,8 +1,10 @@
 package com.datasqrl.graphql.inference;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.IntegrationTestSettings.LogEngine;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.SnapshotTest.Snapshot;
@@ -15,10 +17,12 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
 
   private Snapshot snapshot;
   public static final String IMPORT_SCRIPT = "IMPORT ecommerce-data.Orders;\n"
-      + "IMPORT ecommerce-data.Product;";
+      + "IMPORT ecommerce-data.Product;\n";
+
   @BeforeEach
   protected void initialize(TestInfo testInfo) {
     initialize(IntegrationTestSettings.builder()
+        .log(LogEngine.KAFKA)
         .build(), null, Optional.empty());
     snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
     ns = plan(IMPORT_SCRIPT);
@@ -57,6 +61,20 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
         "\torders: Orders" +
         "\n}");
     validateErrorsAndAddContent();
+  }
+
+  @Test
+  public void validSubscriptionArrayTest() {
+    ns = plan(
+      "TestOutput := STREAM ON ADD AS SELECT COLLECT(productid) AS id FROM Product;\n");
+    inferSchemaModelQueries(planner, "type Query {\n\torders: [Orders]\n}\n"
+        + "type Subscription {\n\ttestOutput: TestOutput\n}\n"
+        + "input TestInput {\n\tid: [Int!]!\n}\n"
+        + "type TestOutput {\n\tid: [Int!]!\n}\n"
+        + "type Orders {\n\tid: [Int!]!\n}\n"
+    );
+
+    assertTrue(errors.isEmpty(), "Expected no errors");
   }
 
   @Test

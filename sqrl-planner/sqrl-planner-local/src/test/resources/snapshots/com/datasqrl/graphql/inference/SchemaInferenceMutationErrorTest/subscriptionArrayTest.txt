@@ -1,0 +1,7 @@
+[FATAL] Could not find associated SQRL table for field test on type TestOutput.
+in script:<schema> [5:3]:
+}
+type Subscription {
+	test(input: TestInput!): TestOutput
+--^
+
