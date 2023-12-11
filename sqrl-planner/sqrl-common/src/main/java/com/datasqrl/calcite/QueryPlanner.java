@@ -341,8 +341,8 @@ public class QueryPlanner {
     }
   }
 
-  public Enumerator execute(RelNode relNode, DataContextImpl context) {
-    String defaultName = "SqrlExecutable" + framework.getUniqueCompilerId().incrementAndGet();
+  public Enumerator execute(String uniqueFnName, RelNode relNode, DataContextImpl context) {
+    String defaultName = uniqueFnName;
     EnumerableRel enumerableRel = convertToEnumerableRel(relNode);
     HashMap<String, Object> carryover = new HashMap<>();
     ClassLoader classLoader = compile(defaultName, enumerableRel, carryover);

@@ -2,8 +2,10 @@ package com.datasqrl;
 
 import com.datasqrl.function.SqrlFunction;
 import com.google.common.base.Preconditions;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
@@ -20,17 +22,19 @@ public class SecureFunctions {
     private static final SecureRandom random = new SecureRandom();
     private static final Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
 
-    public String eval(Integer numBytes) {
+    public String eval(Long numBytes) {
       if (numBytes==null) return null;
       Preconditions.checkArgument(numBytes>=0);
-      byte[] buffer = new byte[numBytes];
+      byte[] buffer = new byte[numBytes.intValue()];
       random.nextBytes(buffer);
       return encoder.encodeToString(buffer);
     }
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      return SqrlFunctions.basicNullInference(DataTypes.STRING(), DataTypes.INT());
+      return SqrlFunctions.basicNullInferenceBuilder(DataTypes.STRING(), DataTypes.BIGINT())
+          .typedArguments(List.of(DataTypes.BIGINT()))
+          .build();
     }
 
     @Override
