@@ -40,9 +40,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.commons.collections4.ListUtils;
@@ -162,7 +164,10 @@ public class Packager {
    */
 
   private void copyFilesToBuildDir() throws IOException {
-    Map<String, Optional<Path>> destinationPaths = copyScriptFilesToBuildDir();
+    Map<String, Optional<Path>> destinationPaths = copyScriptFilesToBuildDir().entrySet()
+        .stream()
+        .collect(Collectors.toMap(Entry::getKey, v->canonicalizePath(v.getValue())));
+    System.out.println(destinationPaths);
     //Files should exist, if error occurs its internal, hence we create root error collector
     PackagerConfig.setScriptFiles(buildDir, ScriptConfiguration.fromRootConfig(config),
         destinationPaths, ErrorCollector.root());
@@ -170,6 +175,11 @@ public class Packager {
     String buildFile = FileUtil.readResource("build.gradle");
     Files.copy(new ByteArrayInputStream(buildFile.getBytes()),
         buildDir.resolve("build.gradle"));
+  }
+
+  public static Optional<Path> canonicalizePath(Optional<Path> path) {
+     return path.map(p -> p.toString().toLowerCase())
+        .map(Path::of);
   }
 
   /**
