@@ -177,8 +177,11 @@ public class Packager {
   }
 
   public static Optional<Path> canonicalizePath(Optional<Path> path) {
-     return path.map(p -> p.toString().toLowerCase())
-        .map(Path::of);
+     return path.map(Packager::canonicalizePath);
+  }
+
+  public static Path canonicalizePath(Path path) {
+     return Path.of(path.toString().toLowerCase());
   }
 
   /**
@@ -266,7 +269,7 @@ public class Packager {
   public static Path copyFile(Path srcFile, Path destDir, Path relativeDestPath)
       throws IOException {
     Preconditions.checkArgument(Files.isRegularFile(srcFile), "Is not a file: {}", srcFile);
-    Path targetPath = destDir.resolve(relativeDestPath);
+    Path targetPath = canonicalizePath(destDir.resolve(relativeDestPath));
     if (!Files.exists(targetPath.getParent())) {
       Files.createDirectories(targetPath.getParent());
     }
