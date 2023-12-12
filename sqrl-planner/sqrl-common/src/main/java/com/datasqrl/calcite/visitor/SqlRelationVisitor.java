@@ -12,5 +12,6 @@ public interface SqlRelationVisitor<R, C> {
   R visitLateralFunction(SqlCall node, C context);
   R visitUnnestFunction(SqlCall node, C context);
   R visitUserDefinedTableFunction(SqlCall node, C context);
+  R visitOrderedUnion(SqlCall node, C context);
   R visitCall(SqlCall node, C context);
 }

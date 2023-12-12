@@ -78,6 +78,9 @@ public abstract class SqlNodeVisitor<R, C> implements
     } else if (node instanceof SqlCall &&
         ((SqlCall) node).getOperator() instanceof SqlUnresolvedFunction) {
       return visitor.visitUserDefinedTableFunction((SqlCall) node, context);
+    } else if (node instanceof SqlCall && ((SqlCall)node).getOperandList().size() == 1 &&
+        ((SqlCall) node).getOperandList().get(0).getKind() == SqlKind.UNION) {
+      return visitor.visitOrderedUnion((SqlCall) node, context);
     } else if (node instanceof SqlCall) {
       return visitor.visitCall((SqlCall) node, context);
     }

@@ -1,0 +1,8 @@
+>>>errors
+[FATAL] Unsupported call: ORDER BY
+in script:<script> [5:13]:
+IMPORT ecommerce-data.Product;
+IMPORT time.*;
+Customer := SELECT * FROM Customer UNION ALL SELECT * FROM Customer ORDER BY customerid;
+------------^
+

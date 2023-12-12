@@ -328,6 +328,11 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
     return new Result(node, NamePath.ROOT, List.of());
   }
 
+  @Override
+  public Result visitOrderedUnion(SqlCall node, Context context) {
+    return visitAugmentedTable(node, context);
+  }
+
   @AllArgsConstructor
   public class WalkSubqueries extends SqlShuttle {
 

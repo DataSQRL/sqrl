@@ -398,6 +398,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void orderOnUnion() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := SELECT * FROM Customer UNION ALL SELECT * FROM Customer ORDER BY customerid");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
   public void invalidDistinctTableTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Customer := DISTINCT x ON customerid ORDER BY _ingest_time DESC");
