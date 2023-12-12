@@ -231,7 +231,7 @@ public class JsonConversionTest {
 
   @Test
   public void jsonConcat() {
-    testScalarReturn("jsonConcat(toJson('{\"a\": \"hello\"}'), toJson('{\"b\": \"hello\"}'))");
+    testJsonReturn("jsonConcat(toJson('{\"a\": \"hello\"}'), toJson('{\"b\": \"hello\"}'))");
   }
 
   @Test
@@ -382,6 +382,7 @@ public class JsonConversionTest {
     assertEquals(objectMapper.readTree((String) x.first), objectMapper.readTree((String) x.second));
   }
 
+  @SneakyThrows
   private void testScalarReturn(String function) {
     Pair<Object, Object> x = execute(function);
     assertEquals(x.first.toString().trim(), x.second.toString().trim());
