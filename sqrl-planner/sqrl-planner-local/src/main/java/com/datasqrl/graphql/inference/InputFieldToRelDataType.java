@@ -1,5 +1,7 @@
 package com.datasqrl.graphql.inference;
 
+import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
+
 import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
@@ -37,8 +39,8 @@ import org.apache.calcite.sql.type.SqlTypeName;
 
 @AllArgsConstructor
 public class InputFieldToRelDataType implements
-    GraphqlDefinitionVisitor<List<NamedRelDataType>, Object>,
-    GraphqlFieldDefinitionVisitor<NamedRelDataType, Object> {
+    GraphqlDefinitionVisitor<List<NamedRelDataType>, TypeDefinitionRegistry>,
+    GraphqlFieldDefinitionVisitor<NamedRelDataType, TypeDefinitionRegistry> {
 
   private final TypeDefinitionRegistry typeDefinitionRegistry;
   private final RelDataTypeFactory typeFactory;
@@ -46,8 +48,9 @@ public class InputFieldToRelDataType implements
 
   @Override
   public List<NamedRelDataType> visitObjectTypeDefinition(ObjectTypeDefinition node,
-      Object context) {
-    Preconditions.checkArgument(node.getName().equals("Mutation"),"mutation");
+      TypeDefinitionRegistry context) {
+    Preconditions.checkArgument(node.getName().equals(getMutationTypeName(context)),
+        "Mutation is required");
     List<NamedRelDataType> schemas = node.getFieldDefinitions().stream()
         .map(f->GraphqlSchemaVisitor.accept(this, f, context))
         .collect(Collectors.toList());
@@ -56,7 +59,7 @@ public class InputFieldToRelDataType implements
   }
 
   @Override
-  public NamedRelDataType visitFieldDefinition(FieldDefinition node, Object context) {
+  public NamedRelDataType visitFieldDefinition(FieldDefinition node, TypeDefinitionRegistry context) {
 //    validateReturnType(fieldType); todo
 
     Preconditions.checkState(node.getInputValueDefinitions().size() == 1, "Too many arguments for mutation '%s'. Must have exactly one.", node.getName());

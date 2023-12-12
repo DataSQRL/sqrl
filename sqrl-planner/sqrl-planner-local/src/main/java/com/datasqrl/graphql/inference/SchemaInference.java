@@ -6,8 +6,10 @@ package com.datasqrl.graphql.inference;
 import static com.datasqrl.graphql.inference.SchemaBuilder.generateCombinations;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
-import static com.datasqrl.graphql.util.GraphqlCheckUtil.createUnknownThrowable;
 import static com.datasqrl.graphql.server.BuildGraphQLEngine.DUMMY_QUERY;
+import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
+import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryTypeName;
+import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionTypeName;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -103,18 +105,17 @@ public class SchemaInference {
     //resolve additional types
     resolveTypes();
 
-    InferredQuery query = registry.getType("Query")
+    InferredQuery query = registry.getType(getQueryTypeName(registry))
         .map(q -> resolveQueries((ObjectTypeDefinition) q))
-        .orElseGet(() -> createDummyQuery());
+        .orElseGet(this::createDummyQuery);
 
-    Optional<InferredMutations> mutation = registry.getType("Mutation")
+    Optional<InferredMutations> mutation = registry.getType(getMutationTypeName(registry))
         .map(m -> resolveMutations((ObjectTypeDefinition) m));
 
-    Optional<InferredSubscriptions> subscription = registry.getType("Subscription")
+    Optional<InferredSubscriptions> subscription = registry.getType(getSubscriptionTypeName(registry))
         .map(s -> resolveSubscriptions((ObjectTypeDefinition) s));
 
-    InferredSchema inferredSchema = new InferredSchema(name, query, mutation, subscription);
-    return inferredSchema;
+    return new InferredSchema(name, query, mutation, subscription);
   }
 
   private InferredQuery createDummyQuery() {
