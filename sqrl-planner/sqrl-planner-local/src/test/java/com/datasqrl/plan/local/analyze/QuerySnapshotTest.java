@@ -4,7 +4,6 @@
 package com.datasqrl.plan.local.analyze;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -15,6 +14,7 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.CollectedException;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
@@ -91,7 +91,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         .forEach(table-> {
           SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE).build();
           snapshot.addContent(
-              sqrlConverter.convert(table, config, false, errors).explain(),
+              sqrlConverter.convert(table, config, false,
+                  /*Error already collected during planning*/ErrorCollector.root()).explain(),
               table.getNameId());
         });
 

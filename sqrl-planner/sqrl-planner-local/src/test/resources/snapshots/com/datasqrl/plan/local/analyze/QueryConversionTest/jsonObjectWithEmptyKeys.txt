@@ -1,9 +1,0 @@
->>>calcite
-SELECT JSONOBJECT('', 'value1', '', 'value2') AS "j"
-FROM "customer$2"
->>>postgres
-SELECT JSONB_BUILD_OBJECT('', 'value1', '', 'value2') AS "j"
-FROM "customer$2"
->>>flink
-SELECT JSON_OBJECT(KEY '' VALUE 'value1', KEY '' VALUE 'value2' NULL ON NULL) AS `j`
-FROM `customer$2`
