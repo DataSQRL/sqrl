@@ -52,6 +52,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.CalciteFixes;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
@@ -328,6 +329,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       validateHasNestedSelf(query);
     }
 
+    query = CalciteFixes.pushDownOrder(query);
     Pair<List<FunctionParameter>, SqlNode> p = transformArgs(query, materializeSelf,
         tableArgs.orElseGet(() -> new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
     query = p.getRight();
@@ -481,6 +483,14 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
       @Override
       public SqlNode visitUserDefinedTableFunction(SqlCall node, Object context) {
+        List<SqlNode> operands = node.getOperandList().stream()
+            .map(f -> f.accept(rewriteVariables(parameterList, materializeSelf)))
+            .collect(Collectors.toList());
+        return node.getOperator().createCall(node.getParserPosition(), operands);
+      }
+
+      @Override
+      public SqlNode visitOrderedUnion(SqlCall node, Object context) {
         List<SqlNode> operands = node.getOperandList().stream()
             .map(f -> f.accept(rewriteVariables(parameterList, materializeSelf)))
             .collect(Collectors.toList());

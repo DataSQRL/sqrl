@@ -408,6 +408,11 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   }
 
   @Override
+  public Result visitOrderedUnion(SqlCall node, Context context) {
+    return new Result(node, NamePath.ROOT, List.of(), List.of(), Optional.empty(), parameters);
+  }
+
+  @Override
   public Result visitCall(SqlCall node, Context context) {
     throw new RuntimeException("Expected call");
   }
