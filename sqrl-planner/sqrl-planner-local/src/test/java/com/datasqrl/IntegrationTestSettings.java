@@ -13,10 +13,13 @@ import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.database.inmemory.InMemoryDatabaseFactory;
 import com.datasqrl.engine.database.inmemory.InMemoryMetadataStore;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
+import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.inmemory.InMemoryStreamFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.io.ExternalDataType;
+import com.datasqrl.kafka.KafkaLogEngineFactory;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.JDBCTestDatabase;
@@ -30,10 +33,13 @@ import org.apache.flink.configuration.TaskManagerOptions;
 @Getter
 @Builder
 public class IntegrationTestSettings {
+  public enum LogEngine {KAFKA, NONE}
   public enum StreamEngine {FLINK, INMEMORY}
 
   public enum DatabaseEngine {INMEMORY, H2, POSTGRES, SQLITE}
 
+  @Builder.Default
+  final LogEngine log = LogEngine.NONE;
   @Builder.Default
   final StreamEngine stream = StreamEngine.INMEMORY;
   @Builder.Default
@@ -93,6 +99,19 @@ public class IntegrationTestSettings {
       default:
         throw new RuntimeException("Could not find db engine");
     }
+
+    if (getLog() == LogEngine.KAFKA) {
+      SqrlConfig log = config.getSubConfig("log");
+      log.setProperty(KafkaLogEngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
+      log.setProperty("type", ExternalDataType.source_and_sink.name());
+      SqrlConfig connector = log.getSubConfig("connector");
+      connector.setProperty(KafkaLogEngineFactory.ENGINE_NAME_KEY,
+          KafkaLogEngineFactory.ENGINE_NAME);
+      log.getSubConfig("format")
+          .setProperty("name", "json");
+      log.setProperty("schema", "flexible");
+    }
+
 
     PipelineFactory pipelineFactory = new PipelineFactory(config);
     return Pair.of(database, pipelineFactory);

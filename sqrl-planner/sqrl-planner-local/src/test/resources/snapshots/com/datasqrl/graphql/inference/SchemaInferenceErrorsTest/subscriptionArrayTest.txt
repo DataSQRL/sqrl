@@ -1,3 +1,3 @@
 [FATAL] Must have a query type
-in script:<schema> [0:0]:
+in script:<schema>:
 

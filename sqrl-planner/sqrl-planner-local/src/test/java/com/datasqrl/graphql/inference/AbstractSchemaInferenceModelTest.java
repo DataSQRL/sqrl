@@ -21,6 +21,7 @@ import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.TestScript;
+import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -34,13 +35,13 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
   protected Namespace ns;
 
-  public AbstractSchemaInferenceModelTest(Namespace ns) {
+  public AbstractSchemaInferenceModelTest(Namespace ns, Injector injector) {
     this.ns = ns;
+    this.injector = injector;
     this.errors = ErrorCollector.root();
   }
 
   public AbstractSchemaInferenceModelTest() {
-    this(null);
   }
 
   @SneakyThrows
@@ -57,10 +58,11 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
   public Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
       SqrlQueryPlanner planner, String schemaStr) {
-    APIConnectorManager apiManager = new MockAPIConnectorManager();
     APISource source = APISource.of(schemaStr);
     //Inference
     SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(planner.getFramework().getSchema());
+
+    MockAPIConnectorManager apiManager = injector.getInstance(MockAPIConnectorManager.class);
 
     SchemaInference inference = new SchemaInference(planner.getFramework(), "<schema>", null,source,
         sqrlSchemaForInference,
@@ -70,13 +72,12 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     try {
       inferredSchema = inference.accept();
     } catch (Exception e) {
-      e.printStackTrace();
       errors.withSchema("<schema>", schemaStr).handle(e);
       return null;
     }
 
     //Build queries
-    SchemaBuilder schemaBuilder = new SchemaBuilder(source);
+    SchemaBuilder schemaBuilder = new SchemaBuilder(source, apiManager);
 
     RootGraphqlModel root = inferredSchema.accept(schemaBuilder, null);
 

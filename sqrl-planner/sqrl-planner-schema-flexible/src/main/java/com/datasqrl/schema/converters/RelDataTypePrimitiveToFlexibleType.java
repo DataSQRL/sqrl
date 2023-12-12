@@ -1,5 +1,6 @@
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.schema.type.ArrayType;
 import com.datasqrl.schema.type.Type;
 import com.datasqrl.schema.type.basic.BooleanType;
 import com.datasqrl.schema.type.basic.TimestampType;
@@ -31,6 +32,8 @@ public class RelDataTypePrimitiveToFlexibleType {
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
       case TIME:
         return new TimestampType();
+      case MULTISET:
+        return new ArrayType(toType(type.getComponentType()));
       case BINARY:
       case VARBINARY:
       case INTERVAL_YEAR_MONTH:
@@ -39,7 +42,6 @@ public class RelDataTypePrimitiveToFlexibleType {
       case SYMBOL:
       case ARRAY:
       case MAP:
-      case MULTISET:
       case ROW:
       default:
         throw new UnsupportedOperationException("Unsupported type:" + type);
