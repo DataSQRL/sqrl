@@ -260,7 +260,8 @@ public class SchemaInference {
     TypeDefinition type = unwrapObjectType(fieldDefinition.getType());
     //Todo: expand server to allow type coercion
     //Todo: enums
-    checkState(type instanceof ScalarTypeDefinition, type.getSourceLocation(),
+    checkState(type instanceof ScalarTypeDefinition
+            || type instanceof EnumTypeDefinition, type.getSourceLocation(),
         "Unknown type found: %s", type.getName());
 
     return new InferredScalarField(fieldDefinition, column, parent);
@@ -410,14 +411,14 @@ public class SchemaInference {
             inputTypeDef.getName(), defTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof EnumTypeDefinition) {
-        checkState(defTypeDef instanceof EnumTypeDefinition &&
-                inputTypeDef.getName().equals(defTypeDef.getName()), defTypeDef.getSourceLocation(),
-            "Enum types not matching for field [%s]: %s %s", field.getName(),
+        checkState(defTypeDef instanceof EnumTypeDefinition || defTypeDef instanceof ScalarTypeDefinition &&
+                inputTypeDef.getName().equals(defTypeDef.getName()), field.getSourceLocation(),
+            "Enum types not matching for field [%s]: found %s but wanted %s", field.getName(),
             inputTypeDef.getName(), defTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof InputObjectTypeDefinition){
-        checkState(defTypeDef instanceof ObjectTypeDefinition, defTypeDef.getSourceLocation(),
-            "Return object type must match with an input object type not matching for field [%s]: %s %s", field.getName(),
+        checkState(defTypeDef instanceof ObjectTypeDefinition, field.getSourceLocation(),
+            "Return object type must match with an input object type not matching for field [%s]: found %s but wanted %s", field.getName(),
             inputTypeDef.getName(), defTypeDef.getName());
         ObjectTypeDefinition objectDefinition = (ObjectTypeDefinition) defTypeDef;
         InputObjectTypeDefinition inputDefinition = (InputObjectTypeDefinition) inputTypeDef;
