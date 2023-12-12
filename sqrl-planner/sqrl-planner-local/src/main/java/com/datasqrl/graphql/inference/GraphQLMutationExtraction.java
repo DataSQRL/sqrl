@@ -1,5 +1,7 @@
 package com.datasqrl.graphql.inference;
 
+import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
+
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
@@ -31,13 +33,13 @@ public class GraphQLMutationExtraction {
   public void analyze(APISource apiSource, APIConnectorManager apiManager) {
     TypeDefinitionRegistry registry = (new SchemaParser()).parse(apiSource.getSchemaDefinition());
     ObjectTypeDefinition mutationType = (ObjectTypeDefinition) registry
-        .getType("Mutation")
+        .getType(getMutationTypeName(registry))
         .orElse(null);
     if (mutationType == null) {
       log.trace("No mutations in {}", apiSource);
     } else {
       GraphqlSchemaVisitor.accept(new InputFieldToRelDataType(registry, typeFactory, canonicalizer),
-              mutationType, null)
+              mutationType, registry)
           .forEach(namedType -> apiManager.addMutation(new APIMutation(namedType.getName(), apiSource, namedType.getType())));
     }
   }

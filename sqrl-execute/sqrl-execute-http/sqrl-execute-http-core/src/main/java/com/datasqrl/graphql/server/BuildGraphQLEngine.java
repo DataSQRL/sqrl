@@ -3,6 +3,9 @@
  */
 package com.datasqrl.graphql.server;
 
+import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
+import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionTypeName;
+
 import com.datasqrl.graphql.server.Model.Argument;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.CoordVisitor;
@@ -97,7 +100,7 @@ public class BuildGraphQLEngine implements
     if (root.mutations != null) {
       for (MutationCoords mc : root.mutations) {
         codeRegistry.dataFetcher(
-            FieldCoordinates.coordinates("Mutation", mc.getFieldName()),
+            FieldCoordinates.coordinates(getMutationTypeName(registry), mc.getFieldName()),
             context.createSinkFetcher(mc));
       }
     }
@@ -105,7 +108,7 @@ public class BuildGraphQLEngine implements
     if (root.subscriptions != null) {
       for (SubscriptionCoords sc : root.subscriptions) {
         codeRegistry.dataFetcher(
-            FieldCoordinates.coordinates("Subscription", sc.getFieldName()),
+            FieldCoordinates.coordinates(getSubscriptionTypeName(registry), sc.getFieldName()),
             context.createSubscriptionFetcher(sc, sc.filters));
       }
     }

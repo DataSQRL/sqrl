@@ -1,8 +1,13 @@
-type Query {
+schema {
+  query: QueryType
+  mutation: MutationType
+}
+
+type QueryType {
   post: [Post!]
 }
 
-type Mutation {
+type MutationType {
   createPost(input: CreatePostInput!): CreatePostPayload
   upvotePost(input: UpvotePostInput!): UpvotePostPayload
 }
