@@ -1,275 +1,106 @@
->>>customer$2-lp-stream
-LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
-
->>>product$2-lp-stream
-LogicalTableScan(table=[[product$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]], [TimestampHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1], TimestampHint options:[1]]
+>>>customer$3-lp-stream
+LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5]) hints[TimestampHint options:[2]]
+  LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
 
 >>>ObjComplex-lp-database
-LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
-    LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[jsonObject(CONCAT('application#', $5), $3)], __timestamp=[$12])
-      LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-        LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-          LogicalTableScan(table=[[customer$2]])
-          LogicalTableScan(table=[[product$2]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalProject(_customerid=[$0], obj=[jsonObject(CONCAT('application#', $4), $0)], _ingest_time=[$2])
+      LogicalTableScan(table=[[customer$3]])
 
 >>>jsonArrayAggTable-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(_name=[$0], agg=[$1], __timestamp=[$2])
     LogicalProject(_name=[$0], agg=[$1], __timestamp=[$2])
-      LogicalAggregate(group=[{5}], agg=[jsonArrayAgg($5)], __timestamp=[MAX($12)])
-        LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-          LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-            LogicalTableScan(table=[[customer$2]])
-            LogicalTableScan(table=[[product$2]])
+      LogicalAggregate(group=[{4}], agg=[jsonArrayAgg($4)], __timestamp=[MAX($2)])
+        LogicalTableScan(table=[[customer$3]])
 
 >>>jsonArrayTable-lp-database
-LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
-    LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[jsonArray($3)], __timestamp=[$12])
-      LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-        LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-          LogicalTableScan(table=[[customer$2]])
-          LogicalTableScan(table=[[product$2]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalProject(_customerid=[$0], obj=[jsonArray($0)], _ingest_time=[$2])
+      LogicalTableScan(table=[[customer$3]])
 
 >>>jsonConcatTable-lp-database
-LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
-    LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))], __timestamp=[$12])
-      LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-        LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-          LogicalTableScan(table=[[customer$2]])
-          LogicalTableScan(table=[[product$2]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalProject(_customerid=[$0], obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))], _ingest_time=[$2])
+      LogicalTableScan(table=[[customer$3]])
 
 >>>jsonExistsTable-lp-database
-LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
-    LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[jsonExists(toJson('{"a": true}'), '$.a')], __timestamp=[$12])
-      LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-        LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-          LogicalTableScan(table=[[customer$2]])
-          LogicalTableScan(table=[[product$2]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalProject(_customerid=[$0], obj=[jsonExists(toJson('{"a": true}'), '$.a')], _ingest_time=[$2])
+      LogicalTableScan(table=[[customer$3]])
 
 >>>jsonExtractTable-lp-database
-LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
-    LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")], __timestamp=[$12])
-      LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-        LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-          LogicalTableScan(table=[[customer$2]])
-          LogicalTableScan(table=[[product$2]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalProject(_customerid=[$0], obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")], _ingest_time=[$2])
+      LogicalTableScan(table=[[customer$3]])
 
 >>>jsonObjectAggTable-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(_name=[$0], agg=[$1], __timestamp=[$2])
     LogicalProject(_name=[$0], agg=[$1], __timestamp=[$2])
-      LogicalAggregate(group=[{0}], agg=[jsonObjectAgg($1, $0)], __timestamp=[MAX($4)])
-        LogicalProject(name=[$5], $f1=['key'], _uuid=[$0], _uuid0=[$1], __timestamp=[$12])
-          LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-            LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-              LogicalTableScan(table=[[customer$2]])
-              LogicalTableScan(table=[[product$2]])
+      LogicalAggregate(group=[{0}], agg=[jsonObjectAgg($1, $0)], __timestamp=[MAX($3)])
+        LogicalProject(name=[$4], $f1=['key'], customerid=[$0], _ingest_time=[$2])
+          LogicalTableScan(table=[[customer$3]])
 
 >>>jsonQueryTable-lp-database
-LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
-    LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')], __timestamp=[$12])
-      LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-        LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-          LogicalTableScan(table=[[customer$2]])
-          LogicalTableScan(table=[[product$2]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalProject(_customerid=[$0], obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')], _ingest_time=[$2])
+      LogicalTableScan(table=[[customer$3]])
 
 >>>jsonToStringTable-lp-database
-LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
-  LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
-    LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[jsonToString(toJson('{"a": 1}'))], __timestamp=[$12])
-      LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-        LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
-          LogicalTableScan(table=[[customer$2]])
-          LogicalTableScan(table=[[product$2]])
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalProject(_customerid=[$0], obj=[jsonToString(toJson('{"a": 1}'))], _ingest_time=[$2])
+      LogicalTableScan(table=[[customer$3]])
 
 >>>jsonArrayTable-data
-[1000101]
-[1000101]
-[1000101]
-[1000101]
-[1000101]
-[1000101]
-[1000107]
-[1000107]
-[1000107]
-[1000107]
-[1000107]
-[1000107]
-[1000121]
-[1000121]
-[1000121]
-[1000121]
-[1000121]
-[1000121]
-[1000131]
-[1000131]
-[1000131]
-[1000131]
-[1000131]
-[1000131]
+1000101, [1000101]
+1000107, [1000107]
+1000121, [1000121]
+1000131, [1000131]
 >>>jsonObjectAggTable-data
 Emily F. Ludies, {"key": "Emily F. Ludies"}
 John Mekker, {"key": "John Mekker"}
 Mark Spielman, {"key": "Mark Spielman"}
 Michelle Dagnes, {"key": "Michelle Dagnes"}
 >>>jsonToStringTable-data
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
-{"a": 1}
+1000101, {"a": 1}
+1000107, {"a": 1}
+1000121, {"a": 1}
+1000131, {"a": 1}
 >>>jsonExtractTable-data
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
-hello
+1000101, hello
+1000107, hello
+1000121, hello
+1000131, hello
 >>>jsonQueryTable-data
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
-{"b": 1}
+1000101, {"b": 1}
+1000107, {"b": 1}
+1000121, {"b": 1}
+1000131, {"b": 1}
 >>>jsonExistsTable-data
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
-true
+1000101, true
+1000107, true
+1000121, true
+1000131, true
 >>>jsonConcatTable-data
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
-{"a": false}
+1000101, {"a": false}
+1000107, {"a": false}
+1000121, {"a": false}
+1000131, {"a": false}
 >>>jsonArrayAggTable-data
-Emily F. Ludies, ["Emily F. Ludies", "Emily F. Ludies", "Emily F. Ludies", "Emily F. Ludies", "Emily F. Ludies", "Emily F. Ludies"]
-John Mekker, ["John Mekker", "John Mekker", "John Mekker", "John Mekker", "John Mekker", "John Mekker"]
-Mark Spielman, ["Mark Spielman", "Mark Spielman", "Mark Spielman", "Mark Spielman", "Mark Spielman", "Mark Spielman"]
-Michelle Dagnes, ["Michelle Dagnes", "Michelle Dagnes", "Michelle Dagnes", "Michelle Dagnes", "Michelle Dagnes", "Michelle Dagnes"]
+Emily F. Ludies, ["Emily F. Ludies"]
+John Mekker, ["John Mekker"]
+Mark Spielman, ["Mark Spielman"]
+Michelle Dagnes, ["Michelle Dagnes"]
 >>>ObjComplex-data
-{"application#Emily F. Ludies": 1000107}
-{"application#Emily F. Ludies": 1000107}
-{"application#Emily F. Ludies": 1000107}
-{"application#Emily F. Ludies": 1000107}
-{"application#Emily F. Ludies": 1000107}
-{"application#Emily F. Ludies": 1000107}
-{"application#John Mekker": 1000101}
-{"application#John Mekker": 1000101}
-{"application#John Mekker": 1000101}
-{"application#John Mekker": 1000101}
-{"application#John Mekker": 1000101}
-{"application#John Mekker": 1000101}
-{"application#Mark Spielman": 1000131}
-{"application#Mark Spielman": 1000131}
-{"application#Mark Spielman": 1000131}
-{"application#Mark Spielman": 1000131}
-{"application#Mark Spielman": 1000131}
-{"application#Mark Spielman": 1000131}
-{"application#Michelle Dagnes": 1000121}
-{"application#Michelle Dagnes": 1000121}
-{"application#Michelle Dagnes": 1000121}
-{"application#Michelle Dagnes": 1000121}
-{"application#Michelle Dagnes": 1000121}
-{"application#Michelle Dagnes": 1000121}
+1000101, {"application#John Mekker": 1000101}
+1000107, {"application#Emily F. Ludies": 1000107}
+1000121, {"application#Michelle Dagnes": 1000121}
+1000131, {"application#Mark Spielman": 1000131}

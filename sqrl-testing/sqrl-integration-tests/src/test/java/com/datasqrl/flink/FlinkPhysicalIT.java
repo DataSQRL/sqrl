@@ -86,20 +86,18 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     ScriptBuilder builder = example.getImports();
     builder.add("IMPORT json.*");
     builder.add("IMPORT string.*");
-    if (inDatabase) {
-      builder.add("Customer := SELECT * FROM Customer JOIN Product on true");
-    } else {
-      builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC");
-    }
-    builder.add("jsonArrayTable := SELECT jsonArray(customerid) AS obj FROM Customer");
-    builder.add("jsonObjectAggTable := SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name");
-    builder.add("jsonToStringTable := SELECT jsonToString(toJson('{\"a\": 1}')) AS obj FROM Customer");
-    builder.add("jsonExtractTable := SELECT jsonExtract(toJson('{\"a\": \"hello\"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer");
-    builder.add("jsonQueryTable := SELECT jsonQuery(toJson('{\"a\": {\"b\": 1}}'), '$.a') AS obj FROM Customer");
-    builder.add("jsonExistsTable := SELECT jsonExists(toJson('{\"a\": true}'), '$.a') AS obj FROM Customer");
-    builder.add("jsonConcatTable := SELECT jsonConcat(toJson('{\"a\": true}'), toJson('{\"a\": false}')) AS obj FROM Customer");
-    builder.add("jsonArrayAggTable := SELECT jsonArrayAgg(name) AS agg FROM Customer GROUP BY name");
-    builder.add("ObjComplex := SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer");
+
+    String hint = inDatabase ? "/*+ EXEC(database) */ " : "";
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC");
+    builder.add(hint + "jsonArrayTable := SELECT jsonArray(customerid) AS obj FROM Customer");
+    builder.add(hint + "jsonObjectAggTable := SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name");
+    builder.add(hint + "jsonToStringTable := SELECT jsonToString(toJson('{\"a\": 1}')) AS obj FROM Customer");
+    builder.add(hint + "jsonExtractTable := SELECT jsonExtract(toJson('{\"a\": \"hello\"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer");
+    builder.add(hint + "jsonQueryTable := SELECT jsonQuery(toJson('{\"a\": {\"b\": 1}}'), '$.a') AS obj FROM Customer");
+    builder.add(hint + "jsonExistsTable := SELECT jsonExists(toJson('{\"a\": true}'), '$.a') AS obj FROM Customer");
+    builder.add(hint + "jsonConcatTable := SELECT jsonConcat(toJson('{\"a\": true}'), toJson('{\"a\": false}')) AS obj FROM Customer");
+    builder.add(hint + "jsonArrayAggTable := SELECT jsonArrayAgg(name) AS agg FROM Customer GROUP BY name");
+    builder.add(hint + "ObjComplex := SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer");
 
     validateTables(builder.getScript(), "jsonArrayTable", "jsonObjectAggTable", "jsonToStringTable",
         "jsonExtractTable", "jsonQueryTable", "jsonExistsTable", "jsonConcatTable", "jsonArrayAggTable", "ObjComplex");
