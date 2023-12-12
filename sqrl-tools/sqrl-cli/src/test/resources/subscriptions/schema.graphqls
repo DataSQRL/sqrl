@@ -28,7 +28,7 @@ type UpvotedPosts {
 type CreatePostPayload {
   id: String
   title: String
-  author: String
+  author: Author
   url: String
 }
 
@@ -50,7 +50,7 @@ type PostUpvoteCount {
 input CreatePostInput {
   id: String
   title: String
-  author: String
+  author: Author
   url: String
 }
 
