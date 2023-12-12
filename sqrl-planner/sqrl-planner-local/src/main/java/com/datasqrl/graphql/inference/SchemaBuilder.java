@@ -3,6 +3,9 @@
  */
 package com.datasqrl.graphql.inference;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.SerializedSqrlConfig;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredComputedField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredFieldVisitor;
@@ -16,6 +19,7 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredRootObjectVis
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredScalarField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchemaVisitor;
+import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscription;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptionObjectVisitor;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptionScalarField;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSubscriptions;
@@ -28,7 +32,9 @@ import com.datasqrl.graphql.server.Model.MutationCoords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
+import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISubscription;
 import graphql.language.InputValueDefinition;
 import graphql.language.NonNullType;
 import graphql.language.Value;
@@ -48,9 +54,11 @@ public class SchemaBuilder implements
     InferredFieldVisitor<Coords, Object> {
 
   private final APISource source;
+  private final APIConnectorManager apiManager;
 
-  public SchemaBuilder(APISource source) {
+  public SchemaBuilder(APISource source, APIConnectorManager apiManager) {
     this.source = source;
+    this.apiManager = apiManager;
   }
 
   @Override
@@ -90,11 +98,19 @@ public class SchemaBuilder implements
   }
 
   @Override
-  public List<SubscriptionCoords> visitSubscriptions(InferredSubscriptions rootObject,
+  public List<SubscriptionCoords> visitSubscriptions(InferredSubscriptions subscription,
       Object context) {
-    return rootObject.getSubscriptions().stream()
-        .map(sub -> new SubscriptionCoords(sub.getName(), sub.getSinkConfig(), sub.getFilters()))
+    return subscription.getSubscriptions().stream()
+        .map(sub -> new SubscriptionCoords(sub.getName(), createConfig(sub), sub.getFilters()))
         .collect(Collectors.toList());
+  }
+
+  public SerializedSqrlConfig createConfig(InferredSubscription subscription) {
+    APISubscription apiSubscription = new APISubscription(Name.system(subscription.getName()),
+        subscription.getSource());
+    TableSource tableSource = apiManager.addSubscription(apiSubscription, subscription.getTable());
+
+    return tableSource.getConfiguration().getConfig().serialize();
   }
 
   @Override

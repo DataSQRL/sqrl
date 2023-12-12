@@ -63,7 +63,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
     Namespace ns = plan(script);
 
-    AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns);
+    AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns, injector);
     Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> modelAndQueries = t
         .inferSchemaModelQueries(planner, schema);
 

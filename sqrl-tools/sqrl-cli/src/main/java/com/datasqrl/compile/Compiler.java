@@ -162,8 +162,7 @@ public class Compiler {
           apiManager)
           .accept();
 
-      SchemaBuilder schemaBuilder = new SchemaBuilder(apiSchema
-      );
+      SchemaBuilder schemaBuilder = new SchemaBuilder(apiSchema, apiManager);
 
       root = inferredSchema.accept(schemaBuilder, null);
     } catch (Exception e) {

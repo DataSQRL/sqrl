@@ -1,4 +1,4 @@
-[FATAL] Field not allowed [missingField]
+[FATAL] Field(s) [missingField] could not be found on type [Orders]. Possible fields are: [_uuid, _ingest_time, id, customerid, time, entries]
 in script:<schema> [2:3]:
 type Orders {
 	missingField: String

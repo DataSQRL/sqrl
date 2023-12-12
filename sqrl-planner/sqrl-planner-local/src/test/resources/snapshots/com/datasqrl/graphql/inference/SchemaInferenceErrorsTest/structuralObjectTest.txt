@@ -1,4 +1,4 @@
-[FATAL] Field not allowed [invalidField]
+[FATAL] Field(s) [invalidField] could not be found on type [Entries]. Possible fields are: [_uuid, _idx, productid, quantity, unit_price, discount, __timestamp]
 in script:<schema> [5:3]:
 }
 type Entries {

@@ -13,9 +13,7 @@ import static org.mockito.Mockito.mock;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
-import com.datasqrl.calcite.Dialect;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
@@ -45,7 +43,6 @@ import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -111,6 +108,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
     APISource source = APISource.of(schema);
 
+    APIConnectorManagerImpl apiManager = mock(APIConnectorManagerImpl.class);
     InferredSchema inferredSchema = new SchemaInference(
         framework,
         "<>",
@@ -118,11 +116,10 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         source,
         sqrlSchemaForInference,
         planner.createRelBuilder(),
-        mock(APIConnectorManagerImpl.class))
+        apiManager)
         .accept();
 
-    SchemaBuilder schemaBuilder = new SchemaBuilder(source
-    );
+    SchemaBuilder schemaBuilder = new SchemaBuilder(source, apiManager);
 
     RootGraphqlModel root = inferredSchema.accept(schemaBuilder,
         null);
@@ -342,6 +339,19 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void missingModuleTestTest() {
     ScriptBuilder builder = ScriptBuilder.of("IMPORT point.at.location");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  public void invalidCustomerDistinctNoOrderTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := DISTINCT Customer ON customerid");
+    validateScriptInvalid(builder.getScript());
+  }
+
+  @Test
+  public void invalidCustomerDistinctOrderTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY badColumn DESC");
     validateScriptInvalid(builder.getScript());
   }
 

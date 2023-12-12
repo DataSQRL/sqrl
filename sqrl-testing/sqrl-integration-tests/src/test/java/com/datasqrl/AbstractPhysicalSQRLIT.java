@@ -126,7 +126,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     Namespace ns = plan(script);
 
     //We add a scan query for every query table
-    APIConnectorManager apiManager = new MockAPIConnectorManager();
+    APIConnectorManager apiManager = injector.getInstance(MockAPIConnectorManager.class);
     SqrlSchema sqrlSchema = planner.getSchema();
     for (String tableName : queryTables) {
       Optional<ScriptRelationalTable> vtOpt = ResolveTest.getLatestTable(sqrlSchema, tableName,

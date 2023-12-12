@@ -68,7 +68,7 @@ fromDeclaration
 distinctQuerySpec
    : DISTINCT identifier
      ON onExpr
-     ORDER BY orderExpr=expression
+     (ORDER BY orderExpr=expression)?
    ;
 
 onExpr

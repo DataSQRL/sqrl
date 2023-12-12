@@ -106,7 +106,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   public TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable) {
     errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
     errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType() == TableType.STREAM,
-        "Table %s for subscription %s is not a stream table", sqrlTable, subscription);
+        "Table %s for subscription %s is not a stream table", sqrlTable.getName(), subscription.getName());
     //Check if we already exported it
     TableSource subscriptionSource;
     if (exports.containsKey(sqrlTable)) {
@@ -152,7 +152,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
     return mutation.getSource().getName().getCanonical() + "-" + mutation.getName().getCanonical();
   }
 
-  private class LogModule implements SqrlModule {
+  public class LogModule implements SqrlModule {
 
     Map<Name, Log> entries = new HashMap<>();
 

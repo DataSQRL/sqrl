@@ -39,6 +39,12 @@ public class SqrlFunctions {
         .build();
   }
 
+  public static TypeInference.Builder basicNullInferenceBuilder(DataType outputType, DataType inputType) {
+    return TypeInference.newBuilder()
+        .typedArguments(inputType)
+        .outputTypeStrategy(nullPreservingOutputStrategy(outputType));
+  }
+
   @SneakyThrows
   public static DataType getFirstArgumentType(CallContext callContext) {
     if (callContext instanceof AdaptedCallContext) {

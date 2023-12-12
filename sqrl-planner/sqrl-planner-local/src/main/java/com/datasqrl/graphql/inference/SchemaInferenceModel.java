@@ -7,6 +7,7 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.*;
 import com.datasqrl.graphql.server.Model;
+import com.datasqrl.plan.queries.APISource;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import java.util.List;
@@ -88,7 +89,8 @@ public class SchemaInferenceModel {
   @Value
   public static class InferredSubscription {
     String name;
-    SerializedSqrlConfig sinkConfig;
+    SQRLTable table;
+    APISource source;
     Map<String, String> filters;
   }
 

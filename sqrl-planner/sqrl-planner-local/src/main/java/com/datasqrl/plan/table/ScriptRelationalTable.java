@@ -103,11 +103,12 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
     @Override
     public <T> Queryable<T> asQueryable(QueryProvider queryProvider, SchemaPlus schema,
         String tableName) {
-        return new AbstractTableQueryable<>(queryProvider, schema, this,
+        return new AbstractTableQueryable<>(queryProvider, schema,
+            this,
             tableName) {
             @Override
             public Enumerator<T> enumerator() {
-                return (Enumerator<T>) Linq4j.asEnumerable(new ArrayList<>()).enumerator();
+                return queryProvider.executeQuery(this);
             }
         };
     }

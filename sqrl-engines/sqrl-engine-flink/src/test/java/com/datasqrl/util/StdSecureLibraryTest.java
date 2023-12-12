@@ -11,7 +11,7 @@ public class StdSecureLibraryTest {
 
   @Test
   public void testRandomId() {
-    assertEquals(27, SecureFunctions.RANDOM_ID.eval(20).length());
+    assertEquals(27, SecureFunctions.RANDOM_ID.eval(20L).length());
   }
 
   @Test

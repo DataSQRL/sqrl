@@ -124,4 +124,11 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
         + "type Query {\n\torders: Orders\n}");
     validateErrorsAndAddContent();
   }
+
+  @Test
+  public void tooManyFields() {
+    inferSchemaModelQueries(planner, "type Orders {\n  _uuid: String\n  x: Int!\n}\n"
+        + "type Query {\n  orders: Orders\n}");
+    validateErrorsAndAddContent();
+  }
 }

@@ -1,4 +1,4 @@
-[FATAL] Field not allowed [invalidField]
+[FATAL] Field(s) [invalidField] could not be found on type [Post]. Possible fields are: [_uuid, _ingest_time, _source_time, id, title, author, url]
 in script:invalidschema [14:3]:
 
 type Post {
