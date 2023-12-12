@@ -165,8 +165,8 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
     for (APIQuery query : apiManager.getQueries()) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);
-
-      String sqlQuery = framework.getQueryPlanner().relToString(Dialect.POSTGRES, template.getRelNode())
+      String sqlQuery = framework.getQueryPlanner().relToString(Dialect.POSTGRES,
+              framework.getQueryPlanner().convertRelToDialect(Dialect.POSTGRES, template.getRelNode()))
           .getSql();
       log.info("Executing query for {}: {}", query.getNameId(), sqlQuery);
 

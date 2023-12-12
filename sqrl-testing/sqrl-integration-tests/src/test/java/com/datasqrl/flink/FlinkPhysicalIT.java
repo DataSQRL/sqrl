@@ -82,14 +82,14 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("Array := SELECT jsonArray(customerid) AS obj FROM BigJoin");
     builder.add("Agg := SELECT jsonObjectAgg('key', name) AS agg FROM BigJoin GROUP BY name");
     builder.add("ToString := SELECT jsonToString(toJson('{}')) AS obj FROM BigJoin");
-//    builder.add("Extract := SELECT jsonExtract(toJson('{\"a\": \"hello\"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM BigJoin");
+    builder.add("Ext := SELECT jsonExtract(toJson('{\"a\": \"hello\"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM BigJoin");
     builder.add("Query := SELECT jsonQuery(toJson('{\"a\": {\"b\": 1}}'), '$.a') AS obj FROM BigJoin");
     builder.add("Exist := SELECT jsonExists(toJson('{\"a\": true}'), '$.a') AS obj FROM BigJoin");
     builder.add("ConcatJson := SELECT jsonConcat(toJson('{\"a\": true}'), toJson('{\"a\": false}')) AS obj FROM BigJoin");
     builder.add("ArrayAgg := SELECT jsonArrayAgg(name) AS agg FROM BigJoin GROUP BY name");
     builder.add("ObjComplex := SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM BigJoin");
 
-    validateTables(builder.getScript(), "Array", "Agg", "ToString",  "Query", "Exist", "ConcatJson", "ArrayAgg", "ObjComplex");
+    validateTables(builder.getScript(), "Array", "Agg", "ToString", "Ext", "Query", "Exist", "ConcatJson", "ArrayAgg", "ObjComplex");
   }
 
   @Test

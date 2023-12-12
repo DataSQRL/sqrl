@@ -1,6 +1,5 @@
 package com.datasqrl.json;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightAggOp;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import com.datasqrl.function.translations.PostgresSqlTranslation;
