@@ -74,20 +74,19 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
 
   @Test
   public void jsonInStreamTest() {
-    jsonTest(false);
+    jsonTest("/*+ EXEC(streams) */ ");
   }
 
   @Test
   public void jsonInDatabaseTest() {
-    jsonTest(true);
+    jsonTest( "/*+ EXEC(database) */ ");
   }
 
-  public void jsonTest(boolean inDatabase) {
+  public void jsonTest(String hint) {
     ScriptBuilder builder = example.getImports();
     builder.add("IMPORT json.*");
     builder.add("IMPORT string.*");
 
-    String hint = inDatabase ? "/*+ EXEC(database) */ " : "";
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC");
     builder.add(hint + "jsonArrayTable := SELECT jsonArray(customerid) AS obj FROM Customer");
     builder.add(hint + "jsonObjectAggTable := SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name");
