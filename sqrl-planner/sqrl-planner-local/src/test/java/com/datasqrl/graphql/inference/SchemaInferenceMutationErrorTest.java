@@ -39,10 +39,8 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
 
   @Test
   public void mustHaveQueryType() {
-    super.inferSchemaModelQueries(this.planner,"type Orders {\n\t_uuid: String\n}\n"
-        + "input OrderInput {\n\tid: Int!\n}\n"
-        + "type Mutation {\n\taddOrder(input: OrderInput): Orders\n}");
-    validateErrorsAndAddContent();
+    super.inferSchemaModelQueries(this.planner,"type Orders {\n\tid: Int\n}\n");
+    assertTrue(errors.isEmpty());
   }
 
   @Test

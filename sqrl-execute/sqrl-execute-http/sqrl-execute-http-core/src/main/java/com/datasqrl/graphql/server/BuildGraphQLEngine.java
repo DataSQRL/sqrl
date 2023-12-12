@@ -22,8 +22,11 @@ import com.datasqrl.graphql.server.Model.SchemaVisitor;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import graphql.GraphQL;
+import graphql.language.FieldDefinition;
 import graphql.language.InterfaceTypeDefinition;
+import graphql.language.ObjectTypeDefinition;
 import graphql.language.TypeDefinition;
+import graphql.language.TypeName;
 import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLCodeRegistry;
@@ -53,6 +56,14 @@ public class BuildGraphQLEngine implements
 
   private List<GraphQLScalarType> addlTypes;
 
+  public static final ObjectTypeDefinition DUMMY_QUERY = ObjectTypeDefinition.newObjectTypeDefinition()
+      .name("Query")
+      .fieldDefinition(FieldDefinition.newFieldDefinition()
+          .name("_dummy")
+          .type(TypeName.newTypeName("String").build())
+          .build())
+      .build();
+
   public BuildGraphQLEngine() {
     addlTypes = new ArrayList<>();
   }
@@ -63,7 +74,11 @@ public class BuildGraphQLEngine implements
 
   @Override
   public TypeDefinitionRegistry visitStringDefinition(StringSchema stringSchema, Object context) {
-    return (new SchemaParser()).parse(stringSchema.getSchema());
+    TypeDefinitionRegistry registry = (new SchemaParser()).parse(stringSchema.getSchema());
+    if (!registry.hasType(new TypeName("Query"))) {
+      registry.add(DUMMY_QUERY);
+    }
+    return registry;
   }
 
   @Override
