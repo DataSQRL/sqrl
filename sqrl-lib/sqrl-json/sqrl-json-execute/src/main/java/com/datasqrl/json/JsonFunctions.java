@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.Value;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
@@ -28,9 +26,7 @@ import org.apache.flink.table.types.inference.InputTypeStrategies;
 import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
-import org.apache.flink.table.types.inference.strategies.AndArgumentTypeStrategy;
 import org.apache.flink.table.types.inference.strategies.SpecificInputTypeStrategies;
-import org.apache.flink.table.types.logical.LogicalTypeFamily;
 
 public class JsonFunctions {
 
@@ -119,15 +115,12 @@ public class JsonFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      AndArgumentTypeStrategy and = InputTypeStrategies
-          .and(InputTypeStrategies.logical(LogicalTypeFamily.CHARACTER_STRING),
-              InputTypeStrategies.LITERAL);
-      InputTypeStrategy inputTypeStrategy1 = InputTypeStrategies.repeatingSequence(
-          and,
-          createJsonArgumentTypeStrategy(typeFactory));
+      InputTypeStrategy anyJsonCompatibleArg =
+          InputTypeStrategies.repeatingSequence(createJsonArgumentTypeStrategy(typeFactory));
+
       InputTypeStrategy inputTypeStrategy = InputTypeStrategies
           .compositeSequence()
-          .finishWithVarying(inputTypeStrategy1);
+          .finishWithVarying(anyJsonCompatibleArg);
 
       return TypeInference.newBuilder()
           .inputTypeStrategy(inputTypeStrategy)
