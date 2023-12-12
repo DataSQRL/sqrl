@@ -45,7 +45,6 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   }
 
   @Test
-  @Disabled
   public void writeSchemaFile() {
     TestScript script = Books.INSTANCE.getScripts().get(0);
     String schema = produceSchemaString(script);
