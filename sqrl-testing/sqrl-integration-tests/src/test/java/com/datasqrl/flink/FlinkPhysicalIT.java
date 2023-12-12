@@ -74,6 +74,15 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   }
 
   @Test
+  public void jsonAggTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("IMPORT json.*;");
+    builder.add("BigJoin := SELECT * FROM Customer JOIN Product on true;");
+    builder.add("Agg := SELECT jsonArrayAgg(name) AS agg FROM BigJoin GROUP BY name;");
+    validateTables(builder.getScript(), "Agg");
+  }
+
+  @Test
   public void functionTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("IMPORT text.*");

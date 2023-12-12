@@ -20,10 +20,22 @@ package com.datasqrl.flink.function;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.function.RuleTransform;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.List;
 import lombok.Getter;
+import org.apache.calcite.adapter.enumerable.AggAddContext;
+import org.apache.calcite.adapter.enumerable.AggContext;
+import org.apache.calcite.adapter.enumerable.AggImplementor;
+import org.apache.calcite.adapter.enumerable.AggResetContext;
+import org.apache.calcite.adapter.enumerable.AggResultContext;
+import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.AggregateFunction;
+import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.ImplementableAggFunction;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
@@ -33,6 +45,7 @@ import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.validate.SqlUserDefinedAggFunction;
 import org.apache.calcite.util.Optionality;
+import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
@@ -111,25 +124,45 @@ public class BridgingSqlAggregateFunction extends SqlUserDefinedAggFunction impl
 //        valueTypes.add(type);
 //      }
 //    }
-//
-//    return new ImplementableAggFunction() {
-//      @Override
-//      public RelDataType getReturnType(RelDataTypeFactory relDataTypeFactory) {
-//        throw new RuntimeException("todo");
-//      }
-//
-//      @Override
-//      public AggImplementor getImplementor(boolean b) {
-//        return new RexImpTable.UserDefinedAggReflectiveImplementor(this);
-//      }
-//
-//      @Override
-//      public List<FunctionParameter> getParameters() {
-//        //derive parameters (necessary?)
-//        return List.of();
-//      }
-//    };
-    return null;
+
+    return new ImplementableAggFunction() {
+
+      @Override
+      public List<FunctionParameter> getParameters() {
+        return List.of();
+      }
+
+      @Override
+      public RelDataType getReturnType(RelDataTypeFactory relDataTypeFactory) {
+        return null;
+      }
+
+      @Override
+      public AggImplementor getImplementor(boolean b) {
+        return new AggImplementor() {
+          @Override
+          public List<Type> getStateType(AggContext aggContext) {
+            return null;
+          }
+
+          @Override
+          public void implementReset(AggContext aggContext, AggResetContext aggResetContext) {
+
+          }
+
+          @Override
+          public void implementAdd(AggContext aggContext, AggAddContext aggAddContext) {
+
+          }
+
+          @Override
+          public Expression implementResult(AggContext aggContext,
+              AggResultContext aggResultContext) {
+            return null;
+          }
+        };
+      }
+    };
   }
 
   @Override
