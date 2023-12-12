@@ -34,6 +34,15 @@ LogicalSort(sort0=[$0], dir0=[ASC])
             LogicalTableScan(table=[[customer$2]])
             LogicalTableScan(table=[[product$2]])
 
+>>>ConcatJson-lp-database
+LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
+  LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
+    LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))], __timestamp=[$12])
+      LogicalProject(_uuid=[$0], _uuid0=[$6], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _ingest_time0=[$7], productid=[$8], name0=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
+        LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 0, NONE]]
+          LogicalTableScan(table=[[customer$2]])
+          LogicalTableScan(table=[[product$2]])
+
 >>>Exist-lp-database
 LogicalSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
   LogicalProject(_uuid=[$0], _uuid0=[$1], obj=[$2], __timestamp=[$3])
@@ -175,6 +184,31 @@ true
 true
 true
 true
+>>>ConcatJson-data
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
+{"a": false}
 >>>ArrayAgg-data
 Emily F. Ludies, ["Emily F. Ludies", "Emily F. Ludies", "Emily F. Ludies", "Emily F. Ludies", "Emily F. Ludies", "Emily F. Ludies"]
 John Mekker, ["John Mekker", "John Mekker", "John Mekker", "John Mekker", "John Mekker", "John Mekker"]

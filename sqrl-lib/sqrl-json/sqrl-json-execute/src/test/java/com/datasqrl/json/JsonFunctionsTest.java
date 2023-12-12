@@ -192,6 +192,40 @@ class JsonFunctionsTest {
   }
 
   @Nested
+  class JsonConcatTest {
+
+    @Test
+    void testSimpleMerge() {
+      FlinkJsonType json1 = new FlinkJsonType("{\"key1\": \"value1\"}");
+      FlinkJsonType json2 = new FlinkJsonType("{\"key2\": \"value2\"}");
+      FlinkJsonType result = JsonFunctions.JSON_CONCAT.eval(json1, json2);
+      assertEquals("{\"key1\":\"value1\",\"key2\":\"value2\"}", result.getJson());
+    }
+
+    @Test
+    void testOverlappingKeys() {
+      FlinkJsonType json1 = new FlinkJsonType("{\"key\": \"value1\"}");
+      FlinkJsonType json2 = new FlinkJsonType("{\"key\": \"value2\"}");
+      FlinkJsonType result = JsonFunctions.JSON_CONCAT.eval(json1, json2);
+      assertEquals("{\"key\":\"value2\"}", result.getJson());
+    }
+
+    @Test
+    void testNullInput() {
+      FlinkJsonType json1 = new FlinkJsonType("{\"key1\": \"value1\"}");
+      FlinkJsonType result = JsonFunctions.JSON_CONCAT.eval(json1, null);
+      assertNull(result);
+    }
+
+    @Test
+    void testInvalidJson() {
+      FlinkJsonType json1 = new FlinkJsonType("{\"key1\": \"value1\"");
+      FlinkJsonType json2 = new FlinkJsonType("{\"key2\": \"value2\"}");
+      FlinkJsonType result = JsonFunctions.JSON_CONCAT.eval(json1, json2);
+      assertNull(result);
+    }
+  }
+  @Nested
   class JsonArrayAggTest {
 
     @Test

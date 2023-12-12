@@ -22,6 +22,7 @@ public class StdJsonLibraryImpl extends AbstractFunctionModule implements StdLib
       JsonFunctions.JSON_EXTRACT,
       JsonFunctions.JSON_QUERY,
       JsonFunctions.JSON_EXISTS,
+      JsonFunctions.JSON_CONCAT,
       JsonFunctions.JSON_ARRAYAGG,
       JsonFunctions.JSON_OBJECTAGG
   );

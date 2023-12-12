@@ -39,6 +39,7 @@ public class JsonFunctions {
   public static final JsonExists JSON_EXISTS = new JsonExists();
   public static final JsonArrayAgg JSON_ARRAYAGG = new JsonArrayAgg();
   public static final JsonObjectAgg JSON_OBJECTAGG = new JsonObjectAgg();
+  public static final JsonConcat JSON_CONCAT = new JsonConcat();
 
   public static final ObjectMapper mapper = new ObjectMapper();
 
@@ -267,6 +268,28 @@ public class JsonFunctions {
     @Override
     public String getDocumentation() {
       return "For a given JSON object, checks whether the provided JSON path exists";
+    }
+  }
+
+  public static class JsonConcat extends ScalarFunction implements SqrlFunction {
+
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public FlinkJsonType eval(FlinkJsonType json1, FlinkJsonType json2) {
+      try {
+        ObjectNode node1 = (ObjectNode) mapper.readTree(json1.getJson());
+        ObjectNode node2 = (ObjectNode) mapper.readTree(json2.getJson());
+
+        node1.setAll(node2);
+        return new FlinkJsonType(node1.toString());
+      } catch (Exception e) {
+        return null;
+      }
+    }
+
+    @Override
+    public String getDocumentation() {
+      return "Merges two JSON objects into one. If two objects share the same key, the value from the later object is used.";
     }
   }
 
