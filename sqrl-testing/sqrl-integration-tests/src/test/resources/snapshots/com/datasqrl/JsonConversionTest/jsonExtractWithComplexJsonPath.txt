@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONEXTRACT(CAST('{"a": {"b": {"c": "value"}}}' AS JSONB), '$.a.b.c', 'default')
+SELECT JSONEXTRACT(CAST('{"a": {"b": {"c": "value"}}}' AS JSONB), '$.a.b.c', 'default') AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{"a": {"b": {"c": "value"}}}' AS JSONB), '$.a.b.c') #>> '{}', 'default')
+SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{"a": {"b": {"c": "value"}}}' AS JSONB), '$.a.b.c') #>> '{}', 'default') AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 value
 >>>flink
-SELECT JSONEXTRACT(TOJSON('{"a": {"b": {"c": "value"}}}'), '$.a.b.c', 'default')
+SELECT JSONEXTRACT(TOJSON('{"a": {"b": {"c": "value"}}}'), '$.a.b.c', 'default') AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 value

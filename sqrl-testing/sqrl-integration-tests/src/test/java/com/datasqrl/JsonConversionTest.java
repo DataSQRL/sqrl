@@ -384,7 +384,7 @@ public class JsonConversionTest {
 
   private Pair<Object, Object> execute(String fncName) {
     planner.planSqrl("IMPORT json.*")
-        .planSqrl("X(@a: Int) := SELECT " + fncName + " FROM jsondata");
+        .planSqrl("X(@a: Int) := SELECT " + fncName + " AS json FROM jsondata");
     return convert("X");
   }
 

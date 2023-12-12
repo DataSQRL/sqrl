@@ -2,6 +2,6 @@
 LogicalTableScan(table=[[orders$1]])
 
 >>>unnamed$1
-LogicalProject(__pk1$_uuid=[$0], EXPR$1=[COALESCE($3, 0:BIGINT)], _time=[$4])
+LogicalProject(__pk1$_uuid=[$0], expr=[COALESCE($3, 0:BIGINT)], _time=[$4])
   LogicalTableScan(table=[[orders$2]])
 

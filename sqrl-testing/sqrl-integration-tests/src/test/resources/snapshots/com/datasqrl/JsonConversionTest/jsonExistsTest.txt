@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONB_PATH_EXISTS(CAST('{"a": true}' AS JSONB), '$.a')
+SELECT JSONB_PATH_EXISTS(CAST('{"a": true}' AS JSONB), '$.a') AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_PATH_EXISTS(CAST('{"a": true}' AS JSONB), '$.a')
+SELECT JSONB_PATH_EXISTS(CAST('{"a": true}' AS JSONB), '$.a') AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 true
 >>>flink
-SELECT JSONEXISTS(TOJSON('{"a": true}'), '$.a')
+SELECT JSONEXISTS(TOJSON('{"a": true}'), '$.a') AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 true

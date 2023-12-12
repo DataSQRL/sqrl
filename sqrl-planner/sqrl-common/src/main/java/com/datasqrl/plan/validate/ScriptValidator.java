@@ -12,6 +12,7 @@ import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.calcite.visitor.SqlNodeVisitor;
 import com.datasqrl.calcite.visitor.SqlRelationVisitor;
+import com.datasqrl.calcite.visitor.SqlTopLevelRelationVisitor;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -65,6 +66,8 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
 import org.apache.calcite.sql.SqrlAssignment;
@@ -361,6 +364,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       this.isA.putAll(sqrlToSql.getIsA());
 
       sqlNode = result.getSqlNode();
+      
+      validateTopLevelNamed(sqlNode);
 
       if (statement instanceof SqrlExpressionQuery) {
         SqlNode aggregate = ((SqrlSqlValidator) validator).getAggregate((SqlSelect) sqlNode);
@@ -380,6 +385,46 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       addError(e, ErrorLabel.GENERIC, statement, e.getMessage());
       return;
     }
+  }
+
+  private boolean validateTopLevelNamed(SqlNode sqlNode) {
+    return SqlNodeVisitor.accept(new SqlTopLevelRelationVisitor<Boolean, Object>() {
+
+      @Override
+      public Boolean visitQuerySpecification(SqlSelect select, Object context) {
+        boolean isValid = true;
+        for (SqlNode node : select.getSelectList()) {
+          isValid &= validSelectName(node);
+        }
+        return isValid;
+      }
+
+      private boolean validSelectName(SqlNode node) {
+        if (node.getKind() != SqlKind.AS && node.getKind() != SqlKind.IDENTIFIER) {
+          addError(ErrorLabel.GENERIC, node,
+              "Selected column is missing a name. Try using the AS keyword.");
+          return false;
+        }
+        return true;
+      }
+
+      @Override
+      public Boolean visitOrderedUnion(SqlOrderBy node, Object context) {
+        return SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+      }
+
+      @Override
+      public Boolean visitSetOperation(SqlCall node, Object context) {
+        for (SqlNode operator : node.getOperandList()) {
+          boolean isValid = validateTopLevelNamed(operator);
+          //only show one arm of unnamed columns
+          if (!isValid) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, sqlNode, null);
   }
 
   private void validateHasNestedSelf(SqlNode query) {
@@ -490,11 +535,10 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       }
 
       @Override
-      public SqlNode visitOrderedUnion(SqlCall node, Object context) {
-        List<SqlNode> operands = node.getOperandList().stream()
-            .map(f -> f.accept(rewriteVariables(parameterList, materializeSelf)))
-            .collect(Collectors.toList());
-        return node.getOperator().createCall(node.getParserPosition(), operands);
+      public SqlNode visitOrderedUnion(SqlOrderBy node, Object context) {
+        SqlNode query = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+        return node.getOperator().createCall(node.getParserPosition(),
+            query, node.getOperandList().get(1), node.getOperandList().get(2), node.getOperandList().get(3));
       }
 
       @Override

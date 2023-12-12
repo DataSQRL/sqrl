@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONB_PATH_QUERY(CAST('{"a": {"b": 1}}' AS JSONB), '$.a')
+SELECT JSONB_PATH_QUERY(CAST('{"a": {"b": 1}}' AS JSONB), '$.a') AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_PATH_QUERY(CAST('{"a": {"b": 1}}' AS JSONB), '$.a')
+SELECT JSONB_PATH_QUERY(CAST('{"a": {"b": 1}}' AS JSONB), '$.a') AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 {"b": 1}
 >>>flink
-SELECT JSONQUERY(TOJSON('{"a": {"b": 1}}'), '$.a')
+SELECT JSONQUERY(TOJSON('{"a": {"b": 1}}'), '$.a') AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 {"b":1}
