@@ -383,6 +383,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
+  public void duplicateColumnTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("Customer2 := SELECT customerid AS customerid1, customerid FROM Customer;");
+    validateScript(builder.getScript());
+  }
+
+  @Test
   public void invalidDistinctSelectTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Customer := DISTINCT Customer ON x ORDER BY _ingest_time DESC");

@@ -1,0 +1,13 @@
+>>>customer$2
+LogicalTableScan(table=[[customer$1]])
+
+  >>>customer2$1
+  LogicalProject(_uuid=[$0], customerid1=[$2], customerid=[$2], _ingest_time=[$1])
+    LogicalTableScan(table=[[customer$2]])
+
+>>>orders$2
+LogicalTableScan(table=[[orders$1]])
+
+>>>product$2
+LogicalTableScan(table=[[product$1]])
+

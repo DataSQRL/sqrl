@@ -419,7 +419,6 @@ public class AnnotatedLP implements RelHolder {
           }
         });
 
-
     relBuilder.push(input.relNode);
     relBuilder.project(projects, updatedFieldNames, true); //Force to make sure fields are renamed
     RelNode relNode = relBuilder.build();
