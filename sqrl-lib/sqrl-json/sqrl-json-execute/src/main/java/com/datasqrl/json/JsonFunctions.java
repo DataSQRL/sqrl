@@ -39,6 +39,7 @@ public class JsonFunctions {
   public static final JsonExists JSON_EXISTS = new JsonExists();
   public static final JsonArrayAgg JSON_ARRAYAGG = new JsonArrayAgg();
   public static final JsonObjectAgg JSON_OBJECTAGG = new JsonObjectAgg();
+  public static final JsonConcat JSON_CONCAT = new JsonConcat();
 
   public static final ObjectMapper mapper = new ObjectMapper();
 
@@ -270,6 +271,28 @@ public class JsonFunctions {
     }
   }
 
+  public static class JsonConcat extends ScalarFunction implements SqrlFunction {
+
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public FlinkJsonType eval(FlinkJsonType json1, FlinkJsonType json2) {
+      try {
+        ObjectNode node1 = (ObjectNode) mapper.readTree(json1.getJson());
+        ObjectNode node2 = (ObjectNode) mapper.readTree(json2.getJson());
+
+        node1.setAll(node2);
+        return new FlinkJsonType(node1.toString());
+      } catch (Exception e) {
+        return null;
+      }
+    }
+
+    @Override
+    public String getDocumentation() {
+      return "Merges two JSON objects into one. If two objects share the same key, the value from the later object is used.";
+    }
+  }
+
   @Value
   public static class ArrayAgg {
 
@@ -277,6 +300,10 @@ public class JsonFunctions {
     List<Object> objects;
 
     public void add(Object value) {
+      objects.add(value);
+    }
+
+    public void remove(Object value) {
       objects.add(value);
     }
   }
@@ -313,6 +340,28 @@ public class JsonFunctions {
       accumulator.add(value);
     }
 
+    public void retract(ArrayAgg accumulator, String value) {
+      accumulator.remove(value);
+    }
+
+    @SneakyThrows
+    public void retract(ArrayAgg accumulator, FlinkJsonType value) {
+      JsonNode jsonNode = mapper.readTree(value.json);
+      accumulator.remove(jsonNode);
+    }
+
+    public void retract(ArrayAgg accumulator, Double value) {
+      accumulator.remove(value);
+    }
+
+    public void retract(ArrayAgg accumulator, Long value) {
+      accumulator.remove(value);
+    }
+
+    public void retract(ArrayAgg accumulator, Integer value) {
+      accumulator.remove(value);
+    }
+
     @Override
     public FlinkJsonType getValue(ArrayAgg accumulator) {
       ArrayNode arrayNode = mapper.createArrayNode();
@@ -344,6 +393,10 @@ public class JsonFunctions {
 
     public void add(String key, Object value) {
       objects.put(key, value);
+    }
+
+    public void remove(String key) {
+      objects.remove(key);
     }
   }
 
@@ -380,6 +433,30 @@ public class JsonFunctions {
 
     public void accumulateObject(ObjectAgg accumulator, String key, Object value) {
       accumulator.add(key, value);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, String value) {
+      retractObject(accumulator, key, null);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, FlinkJsonType value) {
+      retractObject(accumulator, key, null);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, Double value) {
+      retractObject(accumulator, key, value);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, Long value) {
+      retractObject(accumulator, key, value);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, Integer value) {
+      retractObject(accumulator, key, value);
+    }
+
+    public void retractObject(ObjectAgg accumulator, String key, Object value) {
+      accumulator.remove(key);
     }
 
     @Override
