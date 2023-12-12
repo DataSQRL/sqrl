@@ -302,6 +302,10 @@ public class JsonFunctions {
     public void add(Object value) {
       objects.add(value);
     }
+
+    public void remove(Object value) {
+      objects.add(value);
+    }
   }
 
   public static class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> implements
@@ -336,6 +340,28 @@ public class JsonFunctions {
       accumulator.add(value);
     }
 
+    public void retract(ArrayAgg accumulator, String value) {
+      accumulator.remove(value);
+    }
+
+    @SneakyThrows
+    public void retract(ArrayAgg accumulator, FlinkJsonType value) {
+      JsonNode jsonNode = mapper.readTree(value.json);
+      accumulator.remove(jsonNode);
+    }
+
+    public void retract(ArrayAgg accumulator, Double value) {
+      accumulator.remove(value);
+    }
+
+    public void retract(ArrayAgg accumulator, Long value) {
+      accumulator.remove(value);
+    }
+
+    public void retract(ArrayAgg accumulator, Integer value) {
+      accumulator.remove(value);
+    }
+
     @Override
     public FlinkJsonType getValue(ArrayAgg accumulator) {
       ArrayNode arrayNode = mapper.createArrayNode();
@@ -367,6 +393,10 @@ public class JsonFunctions {
 
     public void add(String key, Object value) {
       objects.put(key, value);
+    }
+
+    public void remove(String key) {
+      objects.remove(key);
     }
   }
 
@@ -403,6 +433,30 @@ public class JsonFunctions {
 
     public void accumulateObject(ObjectAgg accumulator, String key, Object value) {
       accumulator.add(key, value);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, String value) {
+      retractObject(accumulator, key, null);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, FlinkJsonType value) {
+      retractObject(accumulator, key, null);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, Double value) {
+      retractObject(accumulator, key, value);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, Long value) {
+      retractObject(accumulator, key, value);
+    }
+
+    public void retract(ObjectAgg accumulator, String key, Integer value) {
+      retractObject(accumulator, key, value);
+    }
+
+    public void retractObject(ObjectAgg accumulator, String key, Object value) {
+      accumulator.remove(key);
     }
 
     @Override
