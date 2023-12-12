@@ -69,7 +69,6 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
         tables.stream().map(TableSource::getName).map(Name::getCanonical)
             .collect(Collectors.toSet()));
 
-    SchemaExport export = new SchemaExport();
     //Write out table configurations
     for (TableSource table : tables) {
       assertTrue(Iterables.size(table.getConfiguration().getConfig().getKeys()) > 0);

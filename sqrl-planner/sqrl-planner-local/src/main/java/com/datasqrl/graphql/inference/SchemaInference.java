@@ -7,6 +7,7 @@ import static com.datasqrl.graphql.inference.SchemaBuilder.generateCombinations;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.createUnknownThrowable;
+import static com.datasqrl.graphql.server.BuildGraphQLEngine.DUMMY_QUERY;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -104,7 +105,7 @@ public class SchemaInference {
 
     InferredQuery query = registry.getType("Query")
         .map(q -> resolveQueries((ObjectTypeDefinition) q))
-        .orElseThrow(() -> createUnknownThrowable("Must have a query type"));
+        .orElseGet(() -> createDummyQuery());
 
     Optional<InferredMutations> mutation = registry.getType("Mutation")
         .map(m -> resolveMutations((ObjectTypeDefinition) m));
@@ -114,6 +115,11 @@ public class SchemaInference {
 
     InferredSchema inferredSchema = new InferredSchema(name, query, mutation, subscription);
     return inferredSchema;
+  }
+
+  private InferredQuery createDummyQuery() {
+    return new InferredQuery(DUMMY_QUERY,
+        List.of());
   }
 
   private void resolveTypes() {
@@ -399,7 +405,7 @@ public class SchemaInference {
       if (inputTypeDef instanceof ScalarTypeDefinition) {
         checkState(defTypeDef instanceof ScalarTypeDefinition &&
             inputTypeDef.getName().equals(defTypeDef.getName()), field.getSourceLocation(),
-            "Scalar types not matching for field [%s]: %s %s", field.getName(),
+            "Scalar types not matching for field [%s]: found %s but wanted %s", field.getName(),
             inputTypeDef.getName(), defTypeDef.getName());
         return null;
       } else if (inputTypeDef instanceof EnumTypeDefinition) {

@@ -1,4 +1,4 @@
-[FATAL] Scalar types not matching for field [id]: String Int
+[FATAL] Scalar types not matching for field [id]: found String but wanted Int
 in script:<schema> [2:3]:
 type Orders {
 	id: Int
