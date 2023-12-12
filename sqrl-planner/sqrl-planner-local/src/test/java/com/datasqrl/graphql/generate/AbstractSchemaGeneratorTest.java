@@ -26,7 +26,7 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
   }
 
   protected String generateSchema(String sqrlScript, boolean addArguments) {
-    Namespace ns = plan(sqrlScript);
+    plan(sqrlScript);
     SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(planner.getFramework().getSchema());
 
     GraphQLSchema schema = new SchemaGenerator().generate(sqrlSchemaForInference, addArguments);

@@ -25,7 +25,7 @@ CoReviewsUndirected := SELECT previousBook_id AS book_id, nextBook_id AS otherBo
                                rating_diff, timestamp FROM CoReviews
 
 Books.coReviewed := SELECT c.otherBook_id, SUM(c.rating_diff) as rating_diff, COUNT(*) as num_reviews
-                    FROM CoReviewsUndirected c WHERE c.book_id = @.book_id GROUP BY c.otherBook_id
+                    FROM @ JOIN CoReviewsUndirected c WHERE c.book_id = @.book_id GROUP BY c.otherBook_id
                     ORDER BY num_reviews;
 
 BookRatingCount := SELECT r.book_id, COUNT(*) as num_reviews
