@@ -338,6 +338,11 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  public void missingModuleTestTest() {
+    ScriptBuilder builder = ScriptBuilder.of("IMPORT point.at.location");
+    validateScriptInvalid(builder.getScript());
+  }
+
   public void invalidCustomerDistinctNoOrderTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Customer := DISTINCT Customer ON customerid");

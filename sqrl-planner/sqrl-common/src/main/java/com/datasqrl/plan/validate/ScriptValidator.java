@@ -126,7 +126,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     Optional<SqrlModule> moduleOpt = moduleLoader.getModule(path.popLast());
 
     if (moduleOpt.isEmpty()) {
-      addError(ErrorCode.GENERIC, node, "Could not find module [%s]", path);
+      addError(ErrorCode.GENERIC, node, "Could not find module [%s] at path: [%s]", path,
+          String.join("/",path.toStringList()));
       return null; //end processing
     }
 

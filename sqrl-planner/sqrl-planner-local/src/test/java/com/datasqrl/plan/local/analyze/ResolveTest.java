@@ -110,7 +110,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void timestampColumnDefinition() {
     String script = ScriptBuilder.of("IMPORT time.*",
-            "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp");
+            "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp")
+        .toString();
     plan(script);
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.fixed(6));
@@ -120,7 +121,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void timestampColumnDefinitionWithPropagation() {
     String script = ScriptBuilder.of("IMPORT time.*",
             "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp",
-        "CustomerCopy := SELECT timestamp, endOfMonth(endOfMonth(timestamp)) as month FROM Customer");
+        "CustomerCopy := SELECT timestamp, endOfMonth(endOfMonth(timestamp)) as month FROM Customer")
+        .toString();
     plan(script);
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.fixed(6));
@@ -148,7 +150,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     String script = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
         "Orders.col1 := (id + customerid)/2",
         "Orders.entries.discount2 := coalesce(discount,0.0)",
-        "OrderEntry := SELECT o.col1, o.time, e.productid, e.discount2, o._ingest_time FROM Orders o JOIN o.entries e");
+        "OrderEntry := SELECT o.col1, o.time, e.productid, e.discount2, o._ingest_time FROM Orders o JOIN o.entries e")
+        .toString();
     plan(script);
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.candidates(1,4));
@@ -169,7 +172,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void tableDefinitionTest() {
     String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
-        "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;");
+        "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;")
+        .toString();
     plan(sqrl);
     validateQueryTable("entrycount", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 2,
         TimestampTest.fixed(3)); //4 cols = 1 select col + 2 pk cols + 1 timestamp cols
@@ -187,7 +191,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC",
         "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e",
         "OrdersInline := SELECT o.id, o.customerid, o.time, t.price, t.num FROM Orders o JOIN o.total t",
-        "Customer.orders_by_day := SELECT endOfDay(o.time) as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day");
+        "Customer.orders_by_day := SELECT endOfDay(o.time) as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day")
+        .toString();
     plan(sqrl);
     validateQueryTable("total", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(4));

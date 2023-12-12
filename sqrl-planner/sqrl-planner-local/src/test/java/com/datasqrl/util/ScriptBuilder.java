@@ -35,12 +35,11 @@ public class ScriptBuilder {
     return s.toString();
   }
 
-  public static String of(String... statements) {
+  public static ScriptBuilder of(String... statements) {
     ScriptBuilder s = new ScriptBuilder();
     for (String statement : statements) {
       s.add(statement);
     }
-    return s.toString();
+    return s;
   }
-
 }
