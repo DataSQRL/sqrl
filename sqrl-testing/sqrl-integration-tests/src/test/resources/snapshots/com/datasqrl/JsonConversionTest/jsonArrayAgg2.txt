@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONB_AGG("id")
+SELECT JSONB_AGG("id") AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_AGG("id")
+SELECT JSONB_AGG("id") AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 [1, 2]
 >>>flink
-SELECT JSONARRAYAGG(`id`)
+SELECT JSONARRAYAGG(`id`) AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 [1,2]

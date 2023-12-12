@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONB_OBJECT_AGG('key', CAST("json" AS JSONB))
+SELECT JSONB_OBJECT_AGG('key', CAST("json" AS JSONB)) AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_OBJECT_AGG('key', CAST("json" AS JSONB))
+SELECT JSONB_OBJECT_AGG('key', CAST("json" AS JSONB)) AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 {"key": {"example": [4, 5, 6]}}
 >>>flink
-SELECT JSONOBJECTAGG('key', TOJSON(`json`))
+SELECT JSONOBJECTAGG('key', TOJSON(`json`)) AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 {"key":{"example":[4,5,6]}}

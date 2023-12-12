@@ -48,6 +48,7 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSyntax;
@@ -408,8 +409,18 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
   }
 
   @Override
-  public Result visitOrderedUnion(SqlCall node, Context context) {
-    return new Result(node, NamePath.ROOT, List.of(), List.of(), Optional.empty(), parameters);
+  public Result visitOrderedUnion(SqlOrderBy node, Context context) {
+    Result result = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context);
+    SqlNode query = result.getSqlNode();
+
+    WalkExpressions walkExpressions = new WalkExpressions(context);
+    SqlNode expr = node.getOperandList().get(1).accept(walkExpressions);
+    SqlCall call = node.getOperator().createCall(node.getParserPosition(),
+        query, expr, node.getOperandList().get(2),
+        node.getOperandList().get(3));
+
+    return new Result(call, NamePath.ROOT, result.getPullupColumns(), result.getTableReferences(),
+        result.getCondition(), result.getParams());
   }
 
   @Override

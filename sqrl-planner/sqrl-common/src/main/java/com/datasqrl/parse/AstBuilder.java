@@ -117,8 +117,15 @@ class AstBuilder
     return adjustPosition(node, offset);
   }
 
+  private SqlParserPos adjustOrderedUnionOffset(SqlNode node) {
+    if (node.getKind() == SqlKind.ORDER_BY && ((SqlOrderBy)node).getOperandList().get(0).getKind() == SqlKind.UNION) {
+      return ((SqlOrderBy)node).getOperandList().get(0).getParserPosition();
+    }
+    return node.getParserPosition();
+  }
+
   private SqlNode adjustPosition(SqlNode node, SqlParserPos offset) {
-    return node.accept(new PositionAdjustingSqlShuttle(offset, node.getParserPosition()));
+    return node.accept(new PositionAdjustingSqlShuttle(offset, adjustOrderedUnionOffset(node)));
   }
 
   private Exception adjustSqlParseException(SqlParseException e, SqlParserPos offset) {

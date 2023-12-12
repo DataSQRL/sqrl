@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONEXTRACT(CAST('{"a": false}' AS JSONB), '$.a', TRUE)
+SELECT JSONEXTRACT(CAST('{"a": false}' AS JSONB), '$.a', TRUE) AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT COALESCE(CAST(JSONB_PATH_QUERY_FIRST(CAST('{"a": false}' AS JSONB), '$.a') AS BOOLEAN), TRUE)
+SELECT COALESCE(CAST(JSONB_PATH_QUERY_FIRST(CAST('{"a": false}' AS JSONB), '$.a') AS BOOLEAN), TRUE) AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 false
 >>>flink
-SELECT JSONEXTRACT(TOJSON('{"a": false}'), '$.a', TRUE)
+SELECT JSONEXTRACT(TOJSON('{"a": false}'), '$.a', TRUE) AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 false

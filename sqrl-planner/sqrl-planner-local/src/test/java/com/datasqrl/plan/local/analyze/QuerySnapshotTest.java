@@ -83,7 +83,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   protected void validateScript(String script) {
-    Namespace ns = plan(script);
+    Namespace ns;
+    try {
+      ns = plan(script);
+    } catch (CollectedException e) {
+      System.out.println(ErrorPrinter.prettyPrint(errors));
+      throw e;
+    }
     SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
     Stream.concat(ns.getSchema().getFunctionStream(QueryTableFunction.class).map(QueryTableFunction::getQueryTable),
         ns.getSchema().getTableStream(PhysicalRelationalTable.class))
@@ -191,7 +197,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void jsonTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("IMPORT json.toJson AS jsonize");
-    builder.add("X := SELECT jsonize('{}') FROM Product");
+    builder.add("X := SELECT jsonize('{}') AS json FROM Product");
     validateScript(builder.getScript());
   }
 
@@ -237,6 +243,13 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = example.getImports();
     builder.add("X := SELECT discount FROM Orders.entries");
     validateScript(builder.getScript());
+  }
+
+  @Test
+  public void invalidUnaliasedNameTest() {
+    ScriptBuilder builder = example.getImports();
+    builder.add("X := SELECT 10 FROM Orders");
+    validateScriptInvalid(builder.getScript());
   }
 
   @Test
@@ -398,13 +411,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
-  public void orderOnUnion() {
-    ScriptBuilder builder = example.getImports();
-    builder.add("Customer := SELECT * FROM Customer UNION ALL SELECT * FROM Customer ORDER BY customerid");
-    validateScriptInvalid(builder.getScript());
-  }
-
-  @Test
   public void invalidDistinctTableTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("Customer := DISTINCT x ON customerid ORDER BY _ingest_time DESC");
@@ -532,7 +538,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   @Test
   public void ordersNewIdTest() {
     ScriptBuilder builder = example.getImports();
-    builder.add("Orders.newid := SELECT NOW(), ParseTimestamp(TimestampToString(EpochToTimestamp(100))) FROM @ JOIN Orders;");
+    builder.add("Orders.newid := SELECT NOW() AS now, ParseTimestamp(TimestampToString(EpochToTimestamp(100))) AS expr FROM @ JOIN Orders;");
     validateScript(builder.getScript());
   }
 
@@ -569,7 +575,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void testCatchingCalciteErrorTest() {
     validateScriptInvalid("IMPORT ecommerce-data.Product;\n"
         //Expression 'productid' is not being grouped
-        + "X := SELECT productid, SUM(productid) FROM Product GROUP BY name");
+        + "X := SELECT productid, SUM(productid) AS sumid FROM Product GROUP BY name");
   }
 
   // IMPORTS
@@ -1202,7 +1208,28 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   public void unnamedColumn() {
     validateScript(
         "IMPORT ecommerce-data.Orders;\n"
-            + "Orders.unnamed := SELECT coalesce(customerid,0) FROM @;\n");
+            + "Orders.unnamed := SELECT coalesce(customerid,0) AS expr FROM @;\n");
+  }
+
+  @Test
+  public void unnamedUnionColumn() {
+    validateScriptInvalid(
+        "IMPORT ecommerce-data.Orders;\n"
+            + "X := SELECT 0 FROM Orders UNION ALL SELECT 0 FROM Orders;\n");
+  }
+
+  @Test
+  public void unnamedOrderedUnionColumn() {
+    validateScriptInvalid(
+        "IMPORT ecommerce-data.Orders;\n"
+            + "X := SELECT customerid, 0 FROM Orders UNION ALL SELECT customerid, 0 FROM Orders ORDER BY customerid; \n");
+  }
+
+  @Test
+  public void validOrderedUnionColumn() {
+    validateScript(
+        "IMPORT ecommerce-data.Orders;\n"
+            + "X := SELECT customerid, 0 AS x FROM Orders UNION ALL SELECT customerid, 0 AS x FROM Orders ORDER BY customerid; \n");
   }
 
   @Test

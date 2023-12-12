@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONB_BUILD_ARRAY('', '', '', '')
+SELECT JSONB_BUILD_ARRAY('', '', '', '') AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_BUILD_ARRAY('', '', '', '')
+SELECT JSONB_BUILD_ARRAY('', '', '', '') AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 ["", "", "", ""]
 >>>flink
-SELECT JSONARRAY('', '', '', '')
+SELECT JSONARRAY('', '', '', '') AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 ["","","",""]

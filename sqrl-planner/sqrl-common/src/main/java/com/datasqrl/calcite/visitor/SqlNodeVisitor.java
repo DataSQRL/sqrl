@@ -7,6 +7,7 @@ import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLateralOperator;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlUnnestOperator;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
@@ -53,6 +54,20 @@ public abstract class SqlNodeVisitor<R, C> implements
     throw new RuntimeException("Unknown sql statement node:" + node);
   }
 
+  public static <R, C> R accept(SqlTopLevelRelationVisitor<R, C> visitor, SqlNode node, C context) {
+    Preconditions.checkNotNull(node, "Could not rewrite query.");
+    if (node instanceof SqlSelect) {
+      return visitor.visitQuerySpecification((SqlSelect) node, context);
+    } else if (node instanceof SqlCall
+        && SqlKind.SET_QUERY.contains(node.getKind())) {
+      return visitor.visitSetOperation((SqlCall) node, context);
+    } else if (node instanceof SqlCall && node.getKind() == SqlKind.ORDER_BY &&
+        ((SqlCall) node).getOperandList().get(0).getKind() == SqlKind.UNION) {
+      return visitor.visitOrderedUnion((SqlOrderBy) node, context);
+    }
+    throw new RuntimeException("Unknown sql statement node:" + node);
+  }
+
   public static <R, C> R accept(SqlRelationVisitor<R, C> visitor, SqlNode node, C context) {
     Preconditions.checkNotNull(node, "Could not rewrite query.");
     if (node.getKind() == SqlKind.AS) {
@@ -78,9 +93,9 @@ public abstract class SqlNodeVisitor<R, C> implements
     } else if (node instanceof SqlCall &&
         ((SqlCall) node).getOperator() instanceof SqlUnresolvedFunction) {
       return visitor.visitUserDefinedTableFunction((SqlCall) node, context);
-    } else if (node instanceof SqlCall && ((SqlCall)node).getOperandList().size() == 1 &&
+    } else if (node instanceof SqlCall && node.getKind() == SqlKind.ORDER_BY &&
         ((SqlCall) node).getOperandList().get(0).getKind() == SqlKind.UNION) {
-      return visitor.visitOrderedUnion((SqlCall) node, context);
+      return visitor.visitOrderedUnion((SqlOrderBy) node, context);
     } else if (node instanceof SqlCall) {
       return visitor.visitCall((SqlCall) node, context);
     }

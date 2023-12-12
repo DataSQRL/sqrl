@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONB_BUILD_OBJECT('string', 'text', 'number', 123, 'boolean', TRUE)
+SELECT JSONB_BUILD_OBJECT('string', 'text', 'number', 123, 'boolean', TRUE) AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_BUILD_OBJECT('string', 'text', 'number', 123, 'boolean', TRUE)
+SELECT JSONB_BUILD_OBJECT('string', 'text', 'number', 123, 'boolean', TRUE) AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 {"number": 123, "string": "text", "boolean": true}
 >>>flink
-SELECT JSONOBJECT('string', 'text', 'number', 123, 'boolean', TRUE)
+SELECT JSONOBJECT('string', 'text', 'number', 123, 'boolean', TRUE) AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 {"string":"text","number":123,"boolean":true}

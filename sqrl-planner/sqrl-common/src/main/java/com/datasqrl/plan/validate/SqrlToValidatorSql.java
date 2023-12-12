@@ -44,6 +44,7 @@ import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
@@ -329,8 +330,14 @@ public class SqrlToValidatorSql implements SqlRelationVisitor<Result, Context> {
   }
 
   @Override
-  public Result visitOrderedUnion(SqlCall node, Context context) {
-    return visitAugmentedTable(node, context);
+  public Result visitOrderedUnion(SqlOrderBy node, Context context) {
+    SqlNode query = SqlNodeVisitor.accept(this, node.getOperandList().get(0), context)
+        .getSqlNode();
+
+    SqlCall call = node.getOperator().createCall(node.getParserPosition(),
+        query, node.getOperandList().get(1), node.getOperandList().get(2), node.getOperandList().get(3));
+
+    return new Result(call, NamePath.ROOT, plannerFns);
   }
 
   @AllArgsConstructor
