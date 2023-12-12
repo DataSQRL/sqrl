@@ -24,6 +24,9 @@ public class GraphqlCheckUtil {
   }
 
   public static SqlParserPos toParserPos(SourceLocation sourceLocation) {
+    if (sourceLocation == null) {
+      return new SqlParserPos(0,0);
+    }
     return new SqlParserPos(sourceLocation.getLine(), sourceLocation.getColumn());
   }
 }

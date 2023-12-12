@@ -15,7 +15,7 @@ type Subscription {
 type Post {
   id: String
   title: String
-  author: String
+  author: Author
   url: String
   upvote: PostUpvoteCount
 }
@@ -30,6 +30,13 @@ type CreatePostPayload {
   title: String
   author: String
   url: String
+}
+
+enum Author {
+  Shakespeare
+  Tolkien
+  Austen
+  Dickens
 }
 
 type UpvotePostPayload {

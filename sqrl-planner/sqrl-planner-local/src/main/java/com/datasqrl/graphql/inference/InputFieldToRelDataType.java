@@ -15,6 +15,7 @@ import com.datasqrl.schema.UniversalTable.Configuration;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.google.common.base.Preconditions;
+import graphql.language.EnumTypeDefinition;
 import graphql.language.EnumValueDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.InputObjectTypeDefinition;
@@ -117,6 +118,11 @@ public class InputFieldToRelDataType implements
           .orElseThrow(()-> new RuntimeException("Could not find node:" + node.getName()));
 
       return GraphqlSchemaVisitor.accept(this, typeDef, context);
+    }
+
+    @Override
+    public RelDataType visitEnumTypeDefinition(EnumTypeDefinition node, FieldContext context) {
+      return typeFactory.createTypeWithNullability(typeFactory.createSqlType(SqlTypeName.VARCHAR, Short.MAX_VALUE),true);
     }
 
     @Override
