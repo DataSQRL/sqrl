@@ -38,7 +38,7 @@ public class PackagerConfig {
 
   private void checkRequiredArguments(ErrorCollector errors) {
     errors.checkFatal(rootDir!=null && Files.isDirectory(rootDir), "Not a valid root directory: %s", rootDir);
-    errors.checkFatal(mainScript == null || Files.isRegularFile(mainScript), "Could not find script file: %s", mainScript);
+    errors.checkFatal(mainScript == null || Files.isRegularFile(mainScript), "Could not find script file: %s", mainScript.toAbsolutePath().toString());
     errors.checkFatal(graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile), "Could not find API file: %s", graphQLSchemaFile);
   }
 
