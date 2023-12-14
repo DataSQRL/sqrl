@@ -24,13 +24,25 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
         .getTypeFactory());
 
     SqlFunction convertedFunction = flinkConverter
-        .convertFunction(
-            ((SqrlFunction) function).getFunctionName().getDisplay(), function);
+        .convertFunction(getFunctionName(function), function);
 
     framework.getSqrlOperatorTable()
         .addFunction(objectName.orElse(name.getDisplay()), convertedFunction);
 
     jarUrl.ifPresent((url)->framework.getSchema().addJar(url));
     return true;
+  }
+
+  private String getFunctionName(FunctionDefinition function) {
+    if (function instanceof SqrlFunction) {
+      return ((SqrlFunction) function).getFunctionName().getDisplay();
+    }
+
+    return getFunctionNameFromClass(function.getClass()).getDisplay();
+  }
+  static Name getFunctionNameFromClass(Class clazz) {
+    String fctName = clazz.getSimpleName();
+    fctName = Character.toLowerCase(fctName.charAt(0)) + fctName.substring(1);
+    return Name.system(fctName);
   }
 }

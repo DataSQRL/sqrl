@@ -2,3 +2,5 @@
 
 ##
 [sqrl-examples/avro](sqrl-examples/avro)
+
+[sqrl-examples/udf](sqrl-examples/udf)
