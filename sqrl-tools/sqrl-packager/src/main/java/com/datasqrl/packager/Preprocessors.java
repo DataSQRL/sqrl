@@ -95,10 +95,9 @@ public class Preprocessors {
 
   @SneakyThrows
   private void copy(Path fileOrDir, Path copyDir) {
-      fileOrDir = canonicalizePath(fileOrDir);
-      copyDir = canonicalizePath(copyDir);
-      Files.createDirectories(copyDir);
       Path copyPath = copyDir.resolve(fileOrDir.getFileName());
+      copyPath = canonicalizePath(copyPath);
+      Files.createDirectories(copyPath.getParent());
       Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
   }
 
