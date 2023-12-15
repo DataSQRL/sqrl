@@ -20,6 +20,8 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.TableFunction;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 @AutoService(Preprocessor.class)
 /*
@@ -32,7 +34,8 @@ public class JarPreprocessor implements Preprocessor {
   public static final String SERVICES_PATH = "META-INF/services/";
   public static final Set<String> flinkUdfs = Set.of(
       ScalarFunction.class.getCanonicalName(),
-      AggregateFunction.class.getCanonicalName()
+      AggregateFunction.class.getCanonicalName(),
+      UserDefinedFunction.class.getCanonicalName()
   );
 
   @Override
@@ -71,7 +74,6 @@ public class JarPreprocessor implements Preprocessor {
       ObjectNode obj = mapper.createObjectNode();
       obj.put("language", "java");
       obj.put("functionClass", clazz);
-      obj.put("className", "com.datasqrl.loaders.JavaFunctionLoader");
       obj.put("jarPath", path.toString());
 
       // Create a file in a temporary directory
