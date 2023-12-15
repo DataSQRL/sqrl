@@ -8,6 +8,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexVisitorImpl;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 @Value
 public class ExecutionAnalysis {
@@ -94,7 +96,7 @@ public class ExecutionAnalysis {
       if (SqrlRexUtil.isNOW(call.getOperator())) {
         capabilities.add(EngineCapability.NOW);
       } else {
-        Optional<SqrlFunction> sqrlFunction = SqrlRexUtil.getSqrlFunction(call.getOperator());
+        Optional<FunctionDefinition> sqrlFunction = FunctionUtil.getSqrlFunction(call.getOperator());
         if (sqrlFunction.filter(func -> func instanceof TimestampPreservingFunction)
             .isPresent()) {
           capabilities.add(EngineCapability.EXTENDED_FUNCTIONS);

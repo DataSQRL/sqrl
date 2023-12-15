@@ -9,10 +9,12 @@ import com.datasqrl.canonicalizer.Name;
 import java.net.URL;
 import java.util.Optional;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 @Value
+@Slf4j
 public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinition> {
   Name name;
   FunctionDefinition function;
@@ -25,11 +27,16 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
 
     String name = objectName.orElseGet(() -> getFunctionName(function));
 
-    SqlFunction convertedFunction = flinkConverter
+    Optional<SqlFunction> convertedFunction = flinkConverter
         .convertFunction(name, function);
 
+    if (convertedFunction.isEmpty()) {
+      log.info("Could not resolve function: " + name);
+      return false;
+    }
+
     framework.getSqrlOperatorTable()
-        .addFunction(name, convertedFunction);
+        .addFunction(name, convertedFunction.get());
 
     jarUrl.ifPresent((url)->framework.getSchema().addJar(url));
     return true;

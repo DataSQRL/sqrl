@@ -64,6 +64,13 @@ LogicalProject(_customerid=[$0], obj=[jsonObject(CONCAT('application#', $4), $0)
       LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5])
         LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
 
+>>>tojson$1-lp-stream
+LogicalProject(_customerid=[$0], obj=[toJson('{"a": 1}')], _ingest_time=[$2]) hints[TimestampHint options:[2]]
+  LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
+    LogicalProject(customerid=[$0], _uuid=[$1], _ingest_time=[$2], email=[$3], name=[$4], lastUpdated=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+      LogicalProject(customerid=[$2], _uuid=[$0], _ingest_time=[$1], email=[$3], name=[$4], lastUpdated=[$5])
+        LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
 >>>ObjComplex-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
@@ -109,6 +116,16 @@ LogicalSort(sort0=[$0], dir0=[ASC])
   LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
     LogicalTableScan(table=[[jsontostringtable$1]])
 
+>>>toJson-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalTableScan(table=[[tojson$1]])
+
+>>>toJson-data
+1000101, {"a": 1}
+1000107, {"a": 1}
+1000121, {"a": 1}
+1000131, {"a": 1}
 >>>jsonArrayTable-data
 1000101, [1000101]
 1000107, [1000107]

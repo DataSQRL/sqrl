@@ -59,6 +59,17 @@ LogicalSort(sort0=[$0], dir0=[ASC])
     LogicalProject(_customerid=[$0], obj=[jsonToString(toJson('{"a": 1}'))], _ingest_time=[$2])
       LogicalTableScan(table=[[customer$3]])
 
+>>>toJson-lp-database
+LogicalSort(sort0=[$0], dir0=[ASC])
+  LogicalProject(_customerid=[$0], obj=[$1], _ingest_time=[$2])
+    LogicalProject(_customerid=[$0], obj=[toJson('{"a": 1}')], _ingest_time=[$2])
+      LogicalTableScan(table=[[customer$3]])
+
+>>>toJson-data
+1000101, {"a": 1}
+1000107, {"a": 1}
+1000121, {"a": 1}
+1000131, {"a": 1}
 >>>jsonArrayTable-data
 1000101, [1000101]
 1000107, [1000107]

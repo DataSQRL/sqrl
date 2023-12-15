@@ -174,7 +174,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   // ~ Instance fields --------------------------------------------------------
 
   private final SqlOperatorTable opTab;
-  final SqlValidatorCatalogReader catalogReader;
+  //SQRL make public
+  public final SqlValidatorCatalogReader catalogReader;
 
   /**
    * Maps {@link SqlParserPos} strings to the {@link SqlIdentifier} identifier objects at these

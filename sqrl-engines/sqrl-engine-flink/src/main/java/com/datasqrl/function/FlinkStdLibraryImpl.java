@@ -36,7 +36,26 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
       BuiltInFunctionDefinitions.JSON_STRING.getName(),
       BuiltInFunctionDefinitions.IS_JSON.getName(),
       //Cast not yet supported, SQRL uses a String type that is not yet compatible
-      BuiltInFunctionDefinitions.CAST.getName().toUpperCase()
+      BuiltInFunctionDefinitions.CAST.getName().toUpperCase(),
+      //system functions that cannot be converted to bridging functions
+      "FLATTEN",
+      "GET",
+      "WINDOW_START",
+      "WINDOW_END",
+      "ORDER_ASC",
+      "ORDER_DESC",
+      "PROCTIME",
+      "ROWTIME",
+      "OVER",
+      "UNBOUNDED_RANGE",
+      "UNBOUNDED_ROW",
+      "CURRENT_RANGE",
+      "CURRENT_ROW",
+      "WITH_COLUMNS",
+      "WITHOUT_COLUMNS",
+      "AS",
+      "STREAM_RECORD_TIMESTAMP",
+      "RANGE_TO"
   );
 
   private static List<NamespaceObject> SQL_FUNCTIONS = getAllFunctionsFromFlink();

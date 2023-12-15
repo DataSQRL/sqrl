@@ -88,6 +88,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add("IMPORT string.*");
 
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC");
+    builder.add(hint + "toJson := SELECT toJson('{\"a\": 1}') AS obj FROM Customer");
     builder.add(hint + "jsonArrayTable := SELECT jsonArray(customerid) AS obj FROM Customer");
     builder.add(hint + "jsonObjectAggTable := SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name");
     builder.add(hint + "jsonToStringTable := SELECT jsonToString(toJson('{\"a\": 1}')) AS obj FROM Customer");
@@ -98,7 +99,7 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
     builder.add(hint + "jsonArrayAggTable := SELECT jsonArrayAgg(name) AS agg FROM Customer GROUP BY name");
     builder.add(hint + "ObjComplex := SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer");
 
-    validateTables(builder.getScript(), "jsonArrayTable", "jsonObjectAggTable", "jsonToStringTable",
+    validateTables(builder.getScript(), "toJson", "jsonArrayTable", "jsonObjectAggTable", "jsonToStringTable",
         "jsonExtractTable", "jsonQueryTable", "jsonExistsTable", "jsonConcatTable", "jsonArrayAggTable", "ObjComplex");
   }
 

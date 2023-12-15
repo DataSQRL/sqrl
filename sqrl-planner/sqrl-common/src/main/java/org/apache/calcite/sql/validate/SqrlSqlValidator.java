@@ -41,9 +41,10 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.util.Static;
 import org.apache.calcite.util.Util;
+import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 import org.apache.flink.table.types.logical.DecimalType;
 
-public class SqrlSqlValidator extends SqlValidatorImpl {
+public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
   // Enables CallContext#getOutputDataType() when validating SQL expressions.
   private SqlNode sqlNodeForExpectedOutputType;
   private RelDataType expectedOutputType;

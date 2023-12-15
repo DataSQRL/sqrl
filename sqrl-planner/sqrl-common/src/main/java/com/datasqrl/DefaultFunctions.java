@@ -18,13 +18,17 @@ public class DefaultFunctions {
   public static SqlFunction NOW;
   static {
     COALESCE = converter
-        .convertFunction(BuiltInFunctionDefinitions.COALESCE.getName(), BuiltInFunctionDefinitions.COALESCE);
+        .convertFunction(BuiltInFunctionDefinitions.COALESCE.getName(), BuiltInFunctionDefinitions.COALESCE)
+        .get();
     GREATEST = converter
-        .convertFunction(BuiltInFunctionDefinitions.GREATEST.getName(), BuiltInFunctionDefinitions.GREATEST);
+        .convertFunction(BuiltInFunctionDefinitions.GREATEST.getName(), BuiltInFunctionDefinitions.GREATEST)
+        .get();
     LEAST = converter
-        .convertFunction(BuiltInFunctionDefinitions.LEAST.getName(), BuiltInFunctionDefinitions.LEAST);
+        .convertFunction(BuiltInFunctionDefinitions.LEAST.getName(), BuiltInFunctionDefinitions.LEAST)
+        .get();
     NOW = converter
-        .convertFunction("NOW", new Now());
+        .convertFunction("NOW", new Now())
+        .get();
   }
 
   public static class Now extends ScalarFunction implements SqrlFunction {
