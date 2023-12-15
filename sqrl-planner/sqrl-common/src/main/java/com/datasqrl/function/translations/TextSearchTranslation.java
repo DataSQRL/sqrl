@@ -50,9 +50,6 @@ public class TextSearchTranslation implements RuleTransform {
           } else {
             throw new IllegalArgumentException("Not a valid predicate");
           }
-//          Preconditions.checkArgument(FunctionUtil.getSqrlFunction(textSearch.getOperator())
-//                  .filter(fct -> extractName(fct).getFunctionName().equals(Name.system("TextSearch"))).isPresent(),
-//              "Not a valid %s predicate", getFunctionName());
           //TODO generalize to other literals by adding ts_rank_cd to the filter condition
           Preconditions.checkArgument(other instanceof RexLiteral &&
                   ((RexLiteral) other).getValueAs(Number.class).doubleValue() == 0,
@@ -69,9 +66,6 @@ public class TextSearchTranslation implements RuleTransform {
                   operands.size())), makeTsQuery(rexBuilder, language, operands.get(0)));
         }),
         new SimpleCallTransform(operator, (rexBuilder, call) -> {
-//          Preconditions.checkArgument(FunctionUtil.getSqrlFunction(call.getOperator())
-//                  .filter(fct -> fct.getFunctionName().equals(Name.system("TextSearch"))).isPresent(),
-//              "Not a valid %s predicate", getFunctionName());
           RexLiteral language = rexBuilder.getRexBuilder().makeLiteral("english");
           List<RexNode> operands = call.getOperands();
           Preconditions.checkArgument(operands.size() > 1);
