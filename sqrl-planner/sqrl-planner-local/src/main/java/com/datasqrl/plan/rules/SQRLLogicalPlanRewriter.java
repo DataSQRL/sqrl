@@ -38,6 +38,7 @@ import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.*;
+import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.logical.*;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -45,6 +46,7 @@ import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.schema.TableFunction;
+import org.apache.calcite.sql.JoinModifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
@@ -630,7 +632,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     AnnotatedLP leftInput = leftIn.inlineTopN(makeRelBuilder(), exec);
     AnnotatedLP rightInput = rightIn.inlineTopN(makeRelBuilder(), exec);
 //    JoinRelType joinType = logicalJoin.getJoinType();
-    JoinAnalysis joinAnalysis = JoinAnalysis.of(logicalJoin.getJoinType());
+    JoinAnalysis joinAnalysis = JoinAnalysis.of(logicalJoin.getJoinType(),
+        getJoinModifier(logicalJoin.getHints()));
 
     //We normalize the join by: 1) flipping right to left joins and 2) putting the stream on the left for stream-on-state joins
     if (joinAnalysis.isA(Side.RIGHT) ||
@@ -1002,6 +1005,19 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE,
         joinedPk, resultTimestamp, joinedIndexMap,
         List.of(leftInputF, rightInputF)).sort(joinedSort).build());
+  }
+
+  private JoinModifier getJoinModifier(ImmutableList<RelHint> hints) {
+    for (RelHint hint : hints) {
+      if (hint.hintName.equals(JoinModifierHint.HINT_NAME)) {
+        return JoinModifierHint.CONSTRUCTOR.fromHint(hint)
+            .getJoinModifier();
+      }
+    }
+
+    return JoinModifier.NONE;
+
+//    throw new RuntimeException("Unknown join modifier");
   }
 
   private static <T, R> R apply2JoinSide(int joinIndex, int leftSideMaxIdx, T left, T right,

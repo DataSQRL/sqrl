@@ -11,8 +11,8 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.sql.JoinConditionType;
+import org.apache.calcite.sql.JoinModifier;
 import org.apache.calcite.sql.JoinType;
-import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -23,8 +23,6 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlOperandTypeChecker;
-import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 
 @AllArgsConstructor
@@ -73,10 +71,11 @@ public class PathToSql {
         SqlParserPos.ZERO,
         left,
         SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-        JoinType.DEFAULT.symbol(SqlParserPos.ZERO),
+        JoinType.INNER.symbol(SqlParserPos.ZERO),
         SqlStdOperatorTable.LATERAL.createCall(SqlParserPos.ZERO, right),
-        JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
-        null
+        JoinConditionType.ON.symbol(SqlParserPos.ZERO),
+        SqlLiteral.createBoolean(true, SqlParserPos.ZERO),
+        JoinModifier.DEFAULT.symbol(SqlParserPos.ZERO)
     );
 
     stack.push(join);

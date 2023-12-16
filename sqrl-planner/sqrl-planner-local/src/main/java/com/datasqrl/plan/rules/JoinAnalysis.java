@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.sql.JoinModifier;
 
 @Value
 @AllArgsConstructor
@@ -96,23 +97,51 @@ public class JoinAnalysis {
 
   }
 
-  public static JoinAnalysis of(JoinRelType join) {
+  public static JoinAnalysis of(JoinRelType join, JoinModifier joinModifier) {
+    Side side;
     switch (join) {
-      case DEFAULT: return new JoinAnalysis(Type.DEFAULT, Side.NONE);
-      case LEFT_DEFAULT: return new JoinAnalysis(Type.DEFAULT, Side.LEFT);
-      case RIGHT_DEFAULT:  return new JoinAnalysis(Type.DEFAULT, Side.RIGHT);
-      case INNER: return new JoinAnalysis(Type.INNER, Side.NONE);
-      case FULL: return new JoinAnalysis(Type.OUTER, Side.NONE);
-      case LEFT: return new JoinAnalysis(Type.OUTER, Side.LEFT);
-      case RIGHT: return new JoinAnalysis(Type.OUTER, Side.RIGHT);
-      case TEMPORAL: return new JoinAnalysis(Type.TEMPORAL, Side.NONE);
-      case LEFT_TEMPORAL: return new JoinAnalysis(Type.TEMPORAL, Side.LEFT);
-      case RIGHT_TEMPORAL: return new JoinAnalysis(Type.TEMPORAL, Side.RIGHT);
-      case INTERVAL: return new JoinAnalysis(Type.INTERVAL, Side.NONE);
-      case LEFT_INTERVAL: return new JoinAnalysis(Type.INTERVAL, Side.LEFT);
-      case RIGHT_INTERVAL: return new JoinAnalysis(Type.INTERVAL, Side.RIGHT);
-      default: throw new NotYetImplementedException("Unsupported join type: " + join);
+      case FULL:
+      case INNER:
+        side = Side.NONE;
+        break;
+      case LEFT:
+        side = Side.LEFT;
+        break;
+      case RIGHT:
+        side = Side.RIGHT;
+        break;
+      default:
+        throw new NotYetImplementedException("Unsupported join type: " + join);
     }
+
+    Type joinType = null;
+    switch (joinModifier) {
+      case TEMPORAL:
+        joinType = Type.TEMPORAL;
+        break;
+      case INTERVAL:
+        joinType = Type.INTERVAL;
+        break;
+      case DEFAULT:
+        joinType = Type.DEFAULT;
+        break;
+      case NONE:
+        switch (join) {
+          case INNER:
+            joinType = Type.INNER;
+            break;
+          case LEFT:
+          case RIGHT:
+          case FULL:
+            joinType = Type.OUTER;
+            break;
+        }
+        break;
+      default:
+        throw new NotYetImplementedException("Unsupported join type: " + join);
+    }
+
+    return new JoinAnalysis(joinType, side);
   }
 
 }

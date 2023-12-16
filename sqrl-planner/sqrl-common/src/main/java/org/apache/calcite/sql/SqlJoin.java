@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql;
 
+import lombok.Getter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.ImmutableNullableList;
@@ -51,12 +52,31 @@ public class SqlJoin extends SqlCall {
    */
   SqlLiteral conditionType;
   SqlNode condition;
+  //Sqrl: add modifier
+  @Getter
+  SqlLiteral modifier;
 
   //~ Constructors -----------------------------------------------------------
 
   public SqlJoin(SqlParserPos pos, SqlNode left, SqlLiteral natural,
       SqlLiteral joinType, SqlNode right, SqlLiteral conditionType,
       SqlNode condition) {
+    this(pos, left, natural, joinType, right, conditionType, condition, null);
+//    this.left = left;
+//    this.natural = Objects.requireNonNull(natural);
+//    this.joinType = Objects.requireNonNull(joinType);
+//    this.right = right;
+//    this.conditionType = Objects.requireNonNull(conditionType);
+//    this.condition = condition;
+//
+//    Preconditions.checkArgument(natural.getTypeName() == SqlTypeName.BOOLEAN);
+//    Objects.requireNonNull(conditionType.symbolValue(JoinConditionType.class));
+//    Objects.requireNonNull(joinType.symbolValue(JoinType.class));
+  }
+
+  public SqlJoin(SqlParserPos pos, SqlNode left, SqlLiteral natural,
+      SqlLiteral joinType, SqlNode right, SqlLiteral conditionType,
+      SqlNode condition, SqlLiteral modifier) {
     super(pos);
     this.left = left;
     this.natural = Objects.requireNonNull(natural);
@@ -64,6 +84,7 @@ public class SqlJoin extends SqlCall {
     this.right = right;
     this.conditionType = Objects.requireNonNull(conditionType);
     this.condition = condition;
+    this.modifier = modifier;
 
     Preconditions.checkArgument(natural.getTypeName() == SqlTypeName.BOOLEAN);
     Objects.requireNonNull(conditionType.symbolValue(JoinConditionType.class));
@@ -83,7 +104,7 @@ public class SqlJoin extends SqlCall {
 
   public List<SqlNode> getOperandList() {
     return ImmutableNullableList.of(left, natural, joinType, right,
-        conditionType, condition);
+        conditionType, condition, modifier);
   }
 
   @Override
@@ -106,6 +127,9 @@ public class SqlJoin extends SqlCall {
         break;
       case 5:
         condition = operand;
+        break;
+      case 6:
+        modifier =  (SqlLiteral) operand;
         break;
       default:
         throw new AssertionError(i);
@@ -191,7 +215,7 @@ public class SqlJoin extends SqlCall {
       assert functionQualifier == null;
       return new SqlJoin(pos, operands[0], (SqlLiteral) operands[1],
           (SqlLiteral) operands[2], operands[3], (SqlLiteral) operands[4],
-          operands[5]);
+          operands[5],  (SqlLiteral) operands[6]);
     }
 
     @Override
@@ -229,33 +253,33 @@ public class SqlJoin extends SqlCall {
         case RIGHT:
           writer.sep(join.isNatural() ? "NATURAL RIGHT JOIN" : "RIGHT JOIN");
           break;
-        case DEFAULT:
-          writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "DEFAULT JOIN");
-          break;
-        case TEMPORAL:
-          writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "TEMPORAL JOIN");
-          break;
-        case INTERVAL:
-          writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "INTERVAL JOIN");
-          break;
-        case LEFT_DEFAULT:
-          writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "LEFT DEFAULT JOIN");
-          break;
-        case LEFT_TEMPORAL:
-          writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "LEFT TEMPORAL JOIN");
-          break;
-        case LEFT_INTERVAL:
-          writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "LEFT INTERVAL JOIN");
-          break;
-        case RIGHT_DEFAULT:
-          writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "RIGHT DEFAULT JOIN");
-          break;
-        case RIGHT_TEMPORAL:
-          writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "RIGHT TEMPORAL JOIN");
-          break;
-        case RIGHT_INTERVAL:
-          writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "RIGHT INTERVAL JOIN");
-          break;
+//        case DEFAULT:
+//          writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "DEFAULT JOIN");
+//          break;
+//        case TEMPORAL:
+//          writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "TEMPORAL JOIN");
+//          break;
+//        case INTERVAL:
+//          writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "INTERVAL JOIN");
+//          break;
+//        case LEFT_DEFAULT:
+//          writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "LEFT DEFAULT JOIN");
+//          break;
+//        case LEFT_TEMPORAL:
+//          writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "LEFT TEMPORAL JOIN");
+//          break;
+//        case LEFT_INTERVAL:
+//          writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "LEFT INTERVAL JOIN");
+//          break;
+//        case RIGHT_DEFAULT:
+//          writer.sep(join.isNatural() ? "NATURAL DEFAULT JOIN" : "RIGHT DEFAULT JOIN");
+//          break;
+//        case RIGHT_TEMPORAL:
+//          writer.sep(join.isNatural() ? "NATURAL TEMPORAL JOIN" : "RIGHT TEMPORAL JOIN");
+//          break;
+//        case RIGHT_INTERVAL:
+//          writer.sep(join.isNatural() ? "NATURAL INTERVAL JOIN" : "RIGHT INTERVAL JOIN");
+//          break;
         default:
           throw Util.unexpected(join.getJoinType());
       }

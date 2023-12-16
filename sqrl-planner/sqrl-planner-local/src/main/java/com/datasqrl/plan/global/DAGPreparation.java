@@ -20,7 +20,6 @@ import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -79,10 +78,10 @@ public class DAGPreparation {
 
     @Override
     public RelNode visit(LogicalJoin join) {
-      if (join.getJoinType() == JoinRelType.DEFAULT) { //replace DEFAULT joins with INNER
-        join = join.copy(join.getTraitSet(), join.getCondition(), join.getLeft(), join.getRight(),
-            JoinRelType.INNER, join.isSemiJoinDone());
-      }
+//      if (join.getJoinType() == JoinRelType.DEFAULT) { //replace DEFAULT joins with INNER
+//        join = join.copy(join.getTraitSet(), join.getCondition(), join.getLeft(), join.getRight(),
+//            JoinRelType.INNER, join.isSemiJoinDone());
+//      }
       return super.visit(join);
     }
   }

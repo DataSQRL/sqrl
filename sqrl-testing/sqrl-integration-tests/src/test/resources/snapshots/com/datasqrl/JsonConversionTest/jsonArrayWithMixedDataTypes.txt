@@ -1,13 +1,13 @@
 >>>calcite
-SELECT JSONB_BUILD_ARRAY('a', 1, TRUE, CAST(NULL AS VARCHAR(1) CHARACTER SET "UTF-16LE"), 3.14) AS "json"
+SELECT JSONB_BUILD_ARRAY('a', 1, TRUE, NULL, 3.14) AS "json"
 FROM "jsondata$2"
 >>>postgres
-SELECT JSONB_BUILD_ARRAY('a', 1, TRUE, CAST(NULL AS TEXT), 3.14) AS "json"
+SELECT JSONB_BUILD_ARRAY('a', 1, TRUE, NULL, 3.14) AS "json"
 FROM "jsondata$2"
 >>>Postgres Result
 ["a", 1, true, null, 3.14]
 >>>flink
-SELECT JSONARRAY('a', 1, TRUE, CAST(NULL AS VARCHAR(1) CHARACTER SET `UTF-16LE`), 3.14) AS `json`
+SELECT JSONARRAY('a', 1, TRUE, NULL, 3.14) AS `json`
 FROM `jsondata$2`
 >>>Flink Result
 ["a",1,true,null,3.14]
