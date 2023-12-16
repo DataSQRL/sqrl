@@ -46,8 +46,7 @@ public class SqrlRelDecorrelator extends RelDecorrelator {
       newRootRel = decorrelator.decorrelate(newRootRel);
     }
 
-    // Re-propagate the hints.
-//    newRootRel = RelOptUtil.propagateRelHints(newRootRel, false);// sqrl, dont reset hint?
+    //Sqrl: re-propagate the hints not necessary
 
     return newRootRel;
   }
