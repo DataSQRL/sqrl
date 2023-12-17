@@ -98,52 +98,38 @@ public class JoinAnalysis {
   }
 
   public static JoinAnalysis of(JoinRelType join, JoinModifier joinModifier) {
-    Side side;
-    switch (join) {
-      case FULL:
-      case INNER:
-        side = Side.NONE;
-        break;
-      case LEFT:
-        side = Side.LEFT;
-        break;
-      case RIGHT:
-        side = Side.RIGHT;
-        break;
-      default:
-        throw new NotYetImplementedException("Unsupported join type: " + join);
-    }
-
-    Type joinType = null;
-    switch (joinModifier) {
-      case TEMPORAL:
-        joinType = Type.TEMPORAL;
-        break;
-      case INTERVAL:
-        joinType = Type.INTERVAL;
-        break;
-      case DEFAULT:
-        joinType = Type.DEFAULT;
-        break;
-      case OUTER:
-        joinType = Type.OUTER;
-      case NONE:
-        switch (join) {
-          case INNER:
-            joinType = Type.INNER;
-            break;
-          case LEFT:
-          case RIGHT:
-          case FULL:
-            joinType = Type.OUTER;
-            break;
-        }
-        break;
-      default:
-        throw new NotYetImplementedException("Unsupported join type: " + join);
-    }
-
+    Side side = determineSide(join);
+    Type joinType = determineJoinType(join, joinModifier);
     return new JoinAnalysis(joinType, side);
   }
 
+  private static Side determineSide(JoinRelType join) {
+    if (join == JoinRelType.LEFT) {
+      return Side.LEFT;
+    } else if (join == JoinRelType.RIGHT) {
+      return Side.RIGHT;
+    } else {
+      return Side.NONE;
+    }
+  }
+
+  private static Type determineJoinType(JoinRelType join, JoinModifier joinModifier) {
+    switch (joinModifier) {
+      case TEMPORAL:
+        return Type.TEMPORAL;
+      case INTERVAL:
+        return Type.INTERVAL;
+      case DEFAULT:
+        return Type.DEFAULT;
+      case OUTER:
+      case NONE:
+        if (join == JoinRelType.INNER) {
+          return Type.INNER;
+        } else {
+          return Type.OUTER;
+        }
+      default:
+        throw new NotYetImplementedException("Unsupported join modifier: " + joinModifier);
+    }
+  }
 }

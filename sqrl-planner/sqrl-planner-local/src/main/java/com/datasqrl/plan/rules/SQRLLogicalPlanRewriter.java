@@ -1015,9 +1015,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       }
     }
 
+    // Added during rule application (e.g. subquery removal)
     return JoinModifier.NONE;
-
-//    throw new RuntimeException("Unknown join modifier");
   }
 
   private static <T, R> R apply2JoinSide(int joinIndex, int leftSideMaxIdx, T left, T right,
