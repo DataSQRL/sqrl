@@ -467,7 +467,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;");
     builder.add(
-        "Customer.distinctOrders := SELECT DISTINCT @.customerid FROM @ LEFT JOIN Orders o ON @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
+        "Customer.distinctOrders := SELECT DISTINCT @.id FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.id DESC LIMIT 10;");
     builder.add(
         "Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM @ JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
 //    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM @.distinctOrders d");
