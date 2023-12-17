@@ -418,7 +418,7 @@ public class QueryPlanner {
 
     //Convert lateral joins
     relNode = SqrlRelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
-//    relNode = run(relNode, CoreRules.FILTER_INTO_JOIN);
+    relNode = run(relNode, CoreRules.FILTER_INTO_JOIN);
     return relNode;
   }
 }
