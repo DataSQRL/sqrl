@@ -5,7 +5,6 @@ package com.datasqrl;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.datasqrl.config.EngineSettings;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
@@ -13,7 +12,6 @@ import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.database.inmemory.InMemoryDatabaseFactory;
 import com.datasqrl.engine.database.inmemory.InMemoryMetadataStore;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
-import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.inmemory.InMemoryStreamFactory;
 import com.datasqrl.error.ErrorCollector;
@@ -28,6 +26,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.flink.configuration.TaskManagerOptions;
 
 @Getter
@@ -50,7 +49,7 @@ public class IntegrationTestSettings {
   final NamePath errorSink = NamePath.of("print","errors");
 
 
-  public Pair<DatabaseHandle, PipelineFactory> getSqrlSettings() {
+  public Triple<DatabaseHandle, PipelineFactory, ErrorCollector> createSqrlSettings() {
     ErrorCollector errors = ErrorCollector.root();
     SqrlConfig config = SqrlConfigCommons.create(errors);
 
@@ -114,7 +113,7 @@ public class IntegrationTestSettings {
 
 
     PipelineFactory pipelineFactory = new PipelineFactory(config);
-    return Pair.of(database, pipelineFactory);
+    return Triple.of(database, pipelineFactory, errors);
   }
 
   public static IntegrationTestSettings getInMemory() {

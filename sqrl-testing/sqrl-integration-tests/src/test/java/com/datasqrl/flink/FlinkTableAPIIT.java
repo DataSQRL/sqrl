@@ -28,6 +28,7 @@ import com.datasqrl.schema.input.FlexibleSchemaValidator;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.data.Retail;
 import java.nio.file.Path;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
@@ -58,7 +59,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
     initialize(IntegrationTestSettings.builder()
             .stream(IntegrationTestSettings.StreamEngine.FLINK)
             .database(IntegrationTestSettings.DatabaseEngine.POSTGRES).build(),
-        (Path) null);
+        (Path) null, Optional.empty());
   }
 
   @SneakyThrows
@@ -66,7 +67,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
   @Disabled
   public void testFlinkTableAPIIntegration() {
 
-    TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"));
+    TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"), moduleLoader);
 
     AbstractFlinkStreamEngine flink = new FlinkEngineFactory().initialize(SqrlConfig.EMPTY);
     FlinkStreamBuilder streamBuilder = flink.createJob();

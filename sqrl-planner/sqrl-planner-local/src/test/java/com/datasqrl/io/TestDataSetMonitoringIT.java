@@ -29,6 +29,7 @@ import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.junit.ArgumentProvider;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,14 +45,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class TestDataSetMonitoringIT extends AbstractEngineIT {
 
-  private PipelineFactory pipelineFactory;
-
-  @Override
-  protected PipelineFactory initialize(IntegrationTestSettings settings) {
-    this.pipelineFactory = super.initialize(settings);
-    return this.pipelineFactory;
-  }
-
   @SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(TestDatasetPlusStreamEngine.class)
@@ -59,7 +52,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
       IntegrationTestSettings.EnginePair engine) {
     initialize(
         IntegrationTestSettings.builder().stream(engine.getStream()).database(engine.getDatabase())
-            .build());
+            .build(), null, Optional.empty());
     SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), example.getName(),
         engine.getName());
 
@@ -127,7 +120,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
   public void generateTableConfigAndSchemaInDataDir(TestDataset example,
       IntegrationTestSettings settings) {
     assertTrue(example.getNumTables() > 0);
-    initialize(settings);
+    initialize(settings, null, Optional.empty());
     List<TableSource> tables = discoverSchema(example);
     TableWriter writer = new TableWriter();
     writer.writeToFile(example.getDataPackageDirectory(), tables);
@@ -136,7 +129,7 @@ public class TestDataSetMonitoringIT extends AbstractEngineIT {
   @Test
   @Disabled("For testing with local data")
   public void generateSchemaFromDir() {
-    initialize(IntegrationTestSettings.getInMemory());
+    initialize(IntegrationTestSettings.getInMemory(), null, Optional.empty());
     ErrorCollector errors = ErrorCollector.root();
     DataDiscovery discovery = DataDiscoveryFactory.fromPipeline(pipelineFactory, errors);
     TableConfig discoveryConfig = FileDataSystemFactory.getFileDiscoveryConfig("testrun",

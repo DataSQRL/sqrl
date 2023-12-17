@@ -9,6 +9,7 @@ import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Retail.RetailScriptNames;
+import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
 
   @BeforeEach
   public void setup() throws IOException {
-    initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getInMemory(), example.getRootPackageDirectory(), Optional.empty());
   }
 
   @Test

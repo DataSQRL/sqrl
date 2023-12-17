@@ -23,7 +23,6 @@ import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.TableType;
-import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,8 +51,6 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
   private final List<APIQuery> queries = new ArrayList<>();
 
-
-  @Inject
   public APIConnectorManagerImpl(CalciteTableFactory tableFactory, ExecutionPipeline pipeline,
       ErrorCollector errors, ModuleLoader moduleLoader, RelDataTypeFactory typeFactory) {
     this.tableFactory = tableFactory;

@@ -19,7 +19,6 @@ import com.datasqrl.plan.global.DAGPreparation;
 import com.datasqrl.plan.global.SqrlDAG;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.plan.global.StageAnalysis.Cost;
-import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.*;
 import com.datasqrl.util.FileUtil;
@@ -31,7 +30,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,7 +43,7 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.schema.Function;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
+import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +53,6 @@ import org.junit.jupiter.api.TestInfo;
 public class ResolveTest extends AbstractLogicalSQRLIT {
   protected SnapshotTest.Snapshot snapshot;
   private SqrlSchema schema;
-  private Namespace namespace;
 
   private Map<PhysicalTable, ExecutionEngine.Type> validatedTables;
 
@@ -80,13 +77,6 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     snapshot.createOrValidate();
     FileUtil.deleteDirectory(exportPath);
   }
-
-  @Override
-  protected Namespace plan(String query) {
-    this.namespace = super.plan(query);
-    return namespace;
-  }
-
 
   /*
   ===== IMPORT TESTS ======
@@ -700,10 +690,12 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   private void createSnapshots() {
-    new DAGPreparation(planner.createRelBuilder(), errors).prepareInputs(planner.getSchema(),
-        injector.getInstance(MockAPIConnectorManager.class), Collections.EMPTY_LIST);
-    DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(planner.createRelBuilder()),
-        namespace.getPipeline(), errors);
+    RelBuilder relBuilder = framework.getQueryPlanner().getRelBuilder();
+
+    new DAGPreparation(relBuilder, errors).prepareInputs(framework.getSchema(),
+        new MockAPIConnectorManager(framework, pipeline), Collections.EMPTY_LIST);
+    DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(relBuilder),
+        pipeline, errors);
     validatedTables.forEach((table, execType) -> {
       Map<ExecutionStage, StageAnalysis> stageAnalysis = dagBuilder.planStages(table);
       assertEquals(execType, SqrlDAG.SqrlNode.findCheapestStage(stageAnalysis).getStage().getEngine().getType(),

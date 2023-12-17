@@ -3,6 +3,8 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
+
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
@@ -17,8 +19,9 @@ import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
+import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
-import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.plan.local.generate.Debugger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -58,19 +61,19 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   }
 
   @SneakyThrows
-  protected void validateSchemaAndQueries(String script, String schema,
-      Map<String, String> queries) {
+  protected void validateSchemaAndQueries(String script, String schema, Map<String, String> queries) {
 
-    Namespace ns = plan(script);
+    plan(script);
 
-    AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest(ns, injector);
-    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> modelAndQueries = t
-        .inferSchemaModelQueries(planner, schema);
+    AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest();
+    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> modelAndQueries =
+        AbstractSchemaInferenceModelTest.inferSchemaModelQueries(schema, framework, pipeline, errors);
 
-    PhysicalDAGPlan dag = physicalPlanner.planDag(framework, ns.getPipeline(), modelAndQueries.getRight(),
-        modelAndQueries.getMiddle(), true);
+    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
+        modelAndQueries.getRight(), framework.getSchema().getExports(),
+        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
+        modelAndQueries.getMiddle(), pipeline, errors, debugger);
 
-    ErrorSink errorSink = injector.getInstance(ErrorSink.class);
     PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
         .plan(dag);
 
@@ -97,7 +100,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
     ServerConfig serverConfig = new ServerConfig(new JsonObject());
     this.port = getPort(8888);
-    GenericJavaServerEngine.applyDefaults(serverConfig, jdbc, this.port);
+    GenericJavaServerEngine.applyDefaults(serverConfig, jdbc.get(), this.port);
 
     GraphQLServer server = new GraphQLServer(model, serverConfig, NameCanonicalizer.SYSTEM);
     vertx.deployVerticle(server, c->countDownLatch.countDown());

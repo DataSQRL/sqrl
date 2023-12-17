@@ -3,9 +3,13 @@
  */
 package com.datasqrl.graphql.inference;
 
+import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
+
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
@@ -17,56 +21,46 @@ import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.local.generate.Debugger;
-import com.datasqrl.plan.local.generate.Namespace;
-import com.datasqrl.plan.local.generate.SqrlQueryPlanner;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.TestScript;
-import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
-  protected Namespace ns;
-
-  public AbstractSchemaInferenceModelTest(Namespace ns, Injector injector) {
-    this.ns = ns;
-    this.injector = injector;
-    this.errors = ErrorCollector.root();
-  }
-
   public AbstractSchemaInferenceModelTest() {
+    this.errors = ErrorCollector.root();
   }
 
   @SneakyThrows
   public Pair<InferredSchema, APIConnectorManager> inferSchemaAndQueries(TestScript script,
       Path schemaPath) {
-    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory(), Optional.empty());
     String schemaStr = Files.readString(schemaPath);
-    ns = plan(script.getScript());
+    plan(script.getScript());
     Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
-        planner,
-        schemaStr);
+        schemaStr, framework, pipeline, errors);
     return Pair.of(result.getLeft(), result.getRight());
   }
 
-  public Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
-      SqrlQueryPlanner planner, String schemaStr) {
+  public static Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
+      String schemaStr, SqrlFramework framework, ExecutionPipeline pipeline, ErrorCollector errors) {
     APISource source = APISource.of(schemaStr);
     //Inference
-    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(planner.getFramework().getSchema());
+    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
 
-    MockAPIConnectorManager apiManager = injector.getInstance(MockAPIConnectorManager.class);
+    MockAPIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline);
 
-    SchemaInference inference = new SchemaInference(planner.getFramework(), "<schema>", null,source,
+    SchemaInference inference = new SchemaInference(framework, "<schema>", null,source,
         sqrlSchemaForInference,
-        planner.createRelBuilder(), apiManager);
+        framework.getQueryPlanner().getRelBuilder(), apiManager);
 
     InferredSchema inferredSchema;
     try {
@@ -84,22 +78,15 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     return Triple.of(inferredSchema, root, apiManager);
   }
 
-  public Pair<RootGraphqlModel, APIConnectorManager> getModelAndQueries(SqrlQueryPlanner planner,
-      String schemaStr) {
-    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
-        planner, schemaStr);
-    return Pair.of(result.getMiddle(), result.getRight());
-  }
-
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
     APIConnectorManager apiManager = inferSchemaAndQueries(script, schemaPath).getValue();
-    /// plan dag
-    DAGPlanner dagPlanner = new DAGPlanner(planner.getFramework(),
-        ns.getPipeline(), Debugger.NONE, errors);
-    PhysicalDAGPlan dag = dagPlanner.plan(ns.getSchema(), apiManager, ns.getExports(), ns.getJars(),
-        ns.getUdfs(), null);
+    // plan dag
+    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
+        apiManager, framework.getSchema().getExports(),
+        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()), null, pipeline,
+        errors, debugger);
 
-    IndexSelector indexSelector = new IndexSelector(planner.getFramework(),
+    IndexSelector indexSelector = new IndexSelector(framework,
         IndexSelectorConfigByDialect.of("POSTGRES"));
     List<QueryIndexSummary> allIndexes = new ArrayList<>();
     for (PhysicalDAGPlan.ReadQuery query : dag.getReadQueries()) {

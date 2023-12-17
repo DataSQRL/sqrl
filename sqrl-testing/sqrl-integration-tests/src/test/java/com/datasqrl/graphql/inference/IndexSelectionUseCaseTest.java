@@ -11,6 +11,7 @@ import com.datasqrl.util.TestScript.QueryUseCaseProvider;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Retail.RetailScriptNames;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ public class IndexSelectionUseCaseTest extends AbstractSchemaInferenceModelTest 
   public void fullScriptTest(TestScript script, TestGraphQLSchema graphQLSchema) {
     SnapshotTest.Snapshot snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(),
         graphQLSchema.getName());
-    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory(), Optional.empty());
     String result = selectIndexes(script, graphQLSchema.getSchemaPath()).entrySet().stream()
         .map(e -> String.format("%s - %.3f",e.getKey().getName(),e.getValue())).sorted()
         .collect(Collectors.joining(System.lineSeparator()));

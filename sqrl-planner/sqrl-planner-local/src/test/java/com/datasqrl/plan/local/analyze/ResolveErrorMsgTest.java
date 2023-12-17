@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -50,14 +51,14 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void basicImportErrors() {
-    initialize(IntegrationTestSettings.getInMemory(), (Path) null);
+    initialize(IntegrationTestSettings.getInMemory(), (Path) null, Optional.empty());
     generateInvalid("import",
         "IMPORT ecommerce-data.Customerrr");
   }
 
   @Test
   public void basicExportErrors() {
-    initialize(IntegrationTestSettings.getInMemory(), (Path) null);
+    initialize(IntegrationTestSettings.getInMemory(), (Path) null, Optional.empty());
     generateInvalid("export",
         "IMPORT ecommerce-data.Customer",
         "EXPORT Customer TO outputt.customer");
@@ -65,7 +66,7 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void logicalPlanErrors() {
-    initialize(IntegrationTestSettings.getInMemory(), (Path) null);
+    initialize(IntegrationTestSettings.getInMemory(), (Path) null, Optional.empty());
     generateInvalid("distincton",
         "IMPORT ecommerce-data.Customer",
         "Customer1 := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC",
@@ -77,7 +78,7 @@ public class ResolveErrorMsgTest extends AbstractLogicalSQRLIT {
   public void debugErrors() {
     initialize(IntegrationTestSettings.builder().debugger(
             DebuggerConfig.of(NamePath.of("missing"),null))
-        .build(), (Path) null);
+        .build(), (Path) null, Optional.empty());
     generateInvalid("wrong-sink",
         "IMPORT ecommerce-data.Customer",
         "Customer2 := SELECT * FROM Customer WHERE customerid > 0",

@@ -11,10 +11,8 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.schema.UniversalTable;
-import com.google.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
@@ -26,7 +24,6 @@ public class CalciteTableFactory {
   private final TableIdFactory tableIdFactory;
   private final TableConverter tableConverter;
 
-  @Inject
   public CalciteTableFactory(SqrlFramework framework) {
     this.tableIdFactory = new TableIdFactory(framework.getTableNameToIdMap());
     this.tableConverter = new TableConverter(framework.getTypeFactory(), framework.getNameCanonicalizer());

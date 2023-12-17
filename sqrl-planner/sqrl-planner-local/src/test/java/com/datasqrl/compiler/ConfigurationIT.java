@@ -5,7 +5,7 @@ package com.datasqrl.compiler;
 
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.config.PipelineFactory;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,10 +14,8 @@ public class ConfigurationIT extends AbstractEngineIT {
 
   @Test
   public void testSettings() {
-    PipelineFactory pipelineFactory = initialize(IntegrationTestSettings.getInMemory());
+    initialize(IntegrationTestSettings.getInMemory(), null, Optional.empty());
     assertNotNull(database);
     assertNotNull(pipelineFactory);
   }
-
-
 }

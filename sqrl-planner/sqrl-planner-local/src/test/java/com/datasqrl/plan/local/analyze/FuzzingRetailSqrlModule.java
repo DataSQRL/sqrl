@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Value;
@@ -51,7 +53,6 @@ public class FuzzingRetailSqrlModule implements SqrlModule {
       new Product(6, "Product with large quantity", "Test product", "Test Category")
   );
 
-  static Random random = new Random(0);
   static List<Orders> orders = new ArrayList<>(List.of(
       createOrder("simple-two-item-order", 1000101, "2023-05-19T01:29:39.553244Z", List.of(createEntry(7235, 1, 17.35, 0.0), createEntry(8757, 2, 57.5, 11.5))),
       createOrder("simple-single-item-order", 1000107, "2023-05-19T01:45:39.553244Z", List.of(createEntry(3571, 1, 41.95, 0.0))),
@@ -98,20 +99,13 @@ public class FuzzingRetailSqrlModule implements SqrlModule {
   private static final Map<Name, NamespaceObject> tables = new HashMap<>();
   private static final Map<String, List<?>> tableData = new HashMap<>();
 
-
   public void init(CalciteTableFactory tableFactory) {
-    dataByClass.forEach((clazz,data)-> {
+    dataByClass.forEach((clazz, data) -> {
       NamespaceObject obj = new TableSourceNamespaceObject(
-              createTableSource(clazz, DATASET_NAME), tableFactory);
+          createTableSource(clazz, DATASET_NAME), tableFactory);
       tables.put(obj.getName(), obj);
       tableData.put(obj.getName().getCanonical(), data);
     });
-  }
-
-
-
-  public FuzzingRetailSqrlModule() {
-
   }
 
   public static TableSource createTableSource(Class clazz, String datasetName) {

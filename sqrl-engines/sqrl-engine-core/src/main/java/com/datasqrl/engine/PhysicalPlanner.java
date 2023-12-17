@@ -10,13 +10,15 @@ import com.datasqrl.util.StreamUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import org.apache.calcite.tools.RelBuilder;
 
-@AllArgsConstructor
 public class PhysicalPlanner {
   SqrlFramework framework;
   TableSink errorSink;
+
+  public PhysicalPlanner(SqrlFramework framework, TableSink errorSink) {
+    this.framework = framework;
+    this.errorSink = errorSink;
+  }
 
   public PhysicalPlan plan(PhysicalDAGPlan plan) {
     List<PhysicalPlan.StagePlan> physicalStages = new ArrayList<>();
