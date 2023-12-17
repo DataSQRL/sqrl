@@ -123,12 +123,12 @@
 >             <INNER> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
 >         |
 >             LOOKAHEAD(3)
->             <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
+>             <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.OUTER.symbol(getPos());}
 >         |
 >             <LEFT> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos()); }
 >         |
 >             LOOKAHEAD(3)
->             <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
+>             <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.OUTER.symbol(getPos());}
 >         |
 >             <RIGHT> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos()); }
 >         |
@@ -189,12 +189,12 @@
 >                 <INNER> <JOIN> { joinType = JoinType.INNER.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
 >             |
 >                 LOOKAHEAD(3)
->                 <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
+>                 <LEFT> <OUTER> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.OUTER.symbol(getPos());}
 >             |
 >                 <LEFT> <JOIN> { joinType = JoinType.LEFT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos()); }
 >             |
 >                 LOOKAHEAD(3)
->                 <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.NONE.symbol(getPos());}
+>                 <RIGHT> <OUTER> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.OUTER.symbol(getPos());}
 >             |
 >                 <RIGHT> <JOIN> { joinType = JoinType.RIGHT.symbol(getPos()); modifier = JoinModifier.DEFAULT.symbol(getPos()); }
 >             |

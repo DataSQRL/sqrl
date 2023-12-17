@@ -125,6 +125,8 @@ public class JoinAnalysis {
       case DEFAULT:
         joinType = Type.DEFAULT;
         break;
+      case OUTER:
+        joinType = Type.OUTER;
       case NONE:
         switch (join) {
           case INNER:
