@@ -23,11 +23,13 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
     FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
         .getTypeFactory());
 
+    String name = objectName.orElseGet(() -> getFunctionName(function));
+
     SqlFunction convertedFunction = flinkConverter
-        .convertFunction(getFunctionName(function), function);
+        .convertFunction(name, function);
 
     framework.getSqrlOperatorTable()
-        .addFunction(objectName.orElse(name.getDisplay()), convertedFunction);
+        .addFunction(name, convertedFunction);
 
     jarUrl.ifPresent((url)->framework.getSchema().addJar(url));
     return true;
