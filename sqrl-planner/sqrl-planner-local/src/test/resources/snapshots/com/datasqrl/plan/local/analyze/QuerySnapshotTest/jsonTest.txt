@@ -8,6 +8,6 @@ LogicalTableScan(table=[[orders$1]])
 LogicalTableScan(table=[[product$1]])
 
 >>>x$1
-LogicalProject(_uuid=[$0], json=[toJson('{}')], _ingest_time=[$1])
+LogicalProject(_uuid=[$0], json=[jsonize('{}')], _ingest_time=[$1])
   LogicalTableScan(table=[[product$2]])
 

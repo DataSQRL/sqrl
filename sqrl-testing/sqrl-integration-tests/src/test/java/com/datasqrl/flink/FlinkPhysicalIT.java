@@ -103,6 +103,17 @@ class FlinkPhysicalIT extends AbstractPhysicalSQRLIT {
   }
 
   @Test
+  public void flinkFunctionRenameTest() {
+    ScriptBuilder builder = example.getImports();
+    // Json functions use the same resolver as UDTs
+    builder.add("IMPORT json.jsonArray AS jsonArrays");
+    builder.add("IMPORT string.*");
+    builder.add("/*+ EXEC(streams) */ jsonArrayTable := SELECT jsonArrays(customerid) AS obj FROM Customer");
+
+    validateTables(builder.getScript(), "jsonArrayTable");
+  }
+
+  @Test
   public void functionTest() {
     ScriptBuilder builder = example.getImports();
     builder.add("IMPORT text.*");
