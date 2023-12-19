@@ -1,6 +1,7 @@
 package com.datasqrl;
 
 import com.datasqrl.config.BaseConnectorFactory;
+import com.datasqrl.config.JobListenerFactory;
 import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.model.StreamType;
@@ -54,6 +55,7 @@ public class FlinkExecutablePlan {
     List<FlinkTableDefinition> tableDefinitions;
     List<FlinkQuery> queries;
     List<FlinkSink> sinks;
+    List<FlinkJobListener> jobListeners;
 
     FlinkErrorSink errorSink;
 
@@ -310,6 +312,25 @@ public class FlinkExecutablePlan {
 
     <R, C> R accept(FlinkSinkVisitor<R, C> visitor, C context);
 
+  }
+
+  public interface FlinkJobListenerVisitor<R, C> {
+    R visitJobListener(FlinkJobListenerFactory table, C context);
+  }
+
+  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
+  public interface FlinkJobListener {
+    <R, C> R accept(FlinkJobListenerVisitor<R, C> visitor, C context);
+  }
+
+  @Value
+  public static class FlinkJobListenerFactory implements FlinkJobListener {
+    Class<? extends JobListenerFactory> jobListenerClass;
+
+    @Override
+    public <R, C> R accept(FlinkJobListenerVisitor<R, C> visitor, C context) {
+      return visitor.visitJobListener(this, context);
+    }
   }
 
   @Value

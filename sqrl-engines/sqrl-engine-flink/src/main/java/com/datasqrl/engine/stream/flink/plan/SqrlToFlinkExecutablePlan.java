@@ -11,6 +11,8 @@ import com.datasqrl.FlinkExecutablePlan.FlinkFactoryDefinition;
 import com.datasqrl.FlinkExecutablePlan.FlinkFunction;
 import com.datasqrl.FlinkExecutablePlan.FlinkJarStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkJavaFunction;
+import com.datasqrl.FlinkExecutablePlan.FlinkJobListener;
+import com.datasqrl.FlinkExecutablePlan.FlinkJobListenerFactory;
 import com.datasqrl.FlinkExecutablePlan.FlinkQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
@@ -23,6 +25,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactory;
+import com.datasqrl.config.JobListenerFactory;
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.SourceFactory;
 import com.datasqrl.config.SqrlConfig;
@@ -147,9 +150,17 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     registerSourceTables(tables, watermarkCollector);
     registerSinkTables(newQueries);
 
+    Map<String, String> flinkConfig = getFlinkConfig(config);
+    List<FlinkJobListener> jobListenerFactories =
+        ServiceLoaderDiscovery.getAll(JobListenerFactory.class)
+            .stream()
+            .filter(f->f.isEnabled(flinkConfig))
+            .map(f->new FlinkJobListenerFactory(f.getClass()))
+            .collect(Collectors.toList());
+
     return FlinkBase.builder()
         .config(DefaultFlinkConfig.builder()
-            .streamExecutionEnvironmentConfig(getStreamConfig(config))
+            .streamExecutionEnvironmentConfig(flinkConfig)
             .tableEnvironmentConfig(getTableConfig(config))
             .build())
         .statements(this.statements)
@@ -158,6 +169,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .tableDefinitions(this.tableDefs)
         .queries(this.queries)
         .errorSink(createErrorSink(errorSink))
+        .jobListeners(jobListenerFactories)
         .build();
   }
 
@@ -237,7 +249,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     return key.startsWith("table.") || key.startsWith("sql-client.");
   }
 
-  private Map<String, String> getStreamConfig(SqrlConfig config) {
+  private Map<String, String> getFlinkConfig(SqrlConfig config) {
     Map<String, String> conf = new HashMap<>();
     for (Map.Entry<String, String> entry : config.toStringMap().entrySet()) {
       if (entry.getKey().contains(".") && !isTableConfigValue(entry.getKey())) {
