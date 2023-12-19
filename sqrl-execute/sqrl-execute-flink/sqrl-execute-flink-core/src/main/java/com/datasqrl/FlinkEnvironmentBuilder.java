@@ -12,6 +12,8 @@ import com.datasqrl.FlinkExecutablePlan.FlinkFactoryDefinition;
 import com.datasqrl.FlinkExecutablePlan.FlinkFunctionVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkJarStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkJavaFunction;
+import com.datasqrl.FlinkExecutablePlan.FlinkJobListenerFactory;
+import com.datasqrl.FlinkExecutablePlan.FlinkJobListenerVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkQueryVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkSinkVisitor;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlFunction;
@@ -31,6 +33,7 @@ import com.datasqrl.config.BaseConnectorFactory;
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSinkFactoryContext;
 import com.datasqrl.config.FlinkSourceFactoryContext;
+import com.datasqrl.config.JobListenerFactory;
 import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.config.TableDescriptorSourceFactory;
@@ -67,8 +70,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.ConfigConstants;
-import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.core.execution.JobListener;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -96,7 +99,8 @@ public class FlinkEnvironmentBuilder implements
     FlinkQueryVisitor<Object, PlanContext>,
     FlinkSinkVisitor<Object, PlanContext>,
     FlinkErrorSinkVisitor<Object, PlanContext>,
-    FlinkStatementVisitor<Object, PlanContext> {
+    FlinkStatementVisitor<Object, PlanContext>,
+    FlinkJobListenerVisitor<Object, PlanContext> {
 
   public static final String ERROR_TAG_PREFIX = "_errors";
   public static final String ERROR_SINK_NAME = "errors_internal_sink";
@@ -130,6 +134,8 @@ public class FlinkEnvironmentBuilder implements
     base.getQueries().stream()
         .forEach(f -> f.accept(this, planCtx));
     base.getSinks().stream()
+        .forEach(f -> f.accept(this, planCtx));
+    base.getJobListeners().stream()
         .forEach(f -> f.accept(this, planCtx));
 
     if (base.getErrorSink() != null) {
@@ -187,12 +193,11 @@ public class FlinkEnvironmentBuilder implements
       sEnv = StreamExecutionEnvironment.getExecutionEnvironment(sEnvConfig);
     }
 
-
     EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
         .withConfiguration(Configuration.fromMap(config.getTableEnvironmentConfig())).build();
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
 
-    return new PlanContext(sEnv, tEnv, tEnv.createStatementSet());
+    return new PlanContext(sEnv, tEnv, tEnv.createStatementSet(), config);
   }
 
   @Override
@@ -356,6 +361,17 @@ public class FlinkEnvironmentBuilder implements
   @Override
   public Object visitJarStatement(FlinkJarStatement statement, PlanContext context) {
     TableResult result = context.getTEnv().executeSql(String.format("ADD JAR '%s'", statement.getPath()));
+    return null;
+  }
+
+  @Override
+  public Object visitJobListener(FlinkJobListenerFactory table, PlanContext context) {
+    Class<? extends JobListenerFactory> jobListenerClass = table.getJobListenerClass();
+    JobListenerFactory connectorFactory = createFactoryInstance(jobListenerClass);
+
+    JobListener jobListener = connectorFactory.create(context.sEnv,
+        context.flinkConfig.getStreamExecutionEnvironmentConfig());
+    context.sEnv.registerJobListener(jobListener);
     return null;
   }
 
@@ -530,6 +546,7 @@ public class FlinkEnvironmentBuilder implements
     StreamTableEnvironment tEnv;
 
     StatementSet statementSet;
+    DefaultFlinkConfig flinkConfig;
 
     List<DataStream> errorStreams = new ArrayList<>();
     AtomicInteger errorTagCount = new AtomicInteger(0);
