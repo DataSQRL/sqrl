@@ -627,13 +627,6 @@
                 <version>${flink.version}</version>
             </dependency>
 
-            <!-- flink open-lineage -->
-            <dependency>
-                <groupId>io.openlineage</groupId>
-                <artifactId>openlineage-flink</artifactId>
-                <version>1.6.2</version>
-            </dependency>
-
             <!-- stream: csv -->
             <dependency>
                 <groupId>com.opencsv</groupId>
