@@ -55,7 +55,8 @@ public class FlinkExecutablePlan {
     List<FlinkTableDefinition> tableDefinitions;
     List<FlinkQuery> queries;
     List<FlinkSink> sinks;
-    List<FlinkJobListener> jobListeners;
+    @Builder.Default
+    List<FlinkJobListener> jobListeners = new ArrayList<>();
 
     FlinkErrorSink errorSink;
 
