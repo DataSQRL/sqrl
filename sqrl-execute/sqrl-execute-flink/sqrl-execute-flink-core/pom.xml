@@ -29,10 +29,6 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-function</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.openlineage</groupId>
-      <artifactId>openlineage-flink</artifactId>
-    </dependency>
 
     <!-- Flink -->
     <dependency>
