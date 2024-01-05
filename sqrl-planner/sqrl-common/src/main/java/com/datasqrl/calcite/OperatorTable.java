@@ -7,7 +7,8 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 import java.util.*;
 
 public class OperatorTable implements SqlOperatorTable {
-  private final Map<List<String>, SqlOperator> udf = new HashMap<>();
+  private final Map<String, SqlOperator> udf = new HashMap<>();
+  private final Map<List<String>, SqlOperator> udfListMap = new HashMap<>();
   private final Map<List<String>, SqlOperator> internalNames = new HashMap<>();
   private final NameCanonicalizer nameCanonicalizer;
   private final SqlOperatorTable[] chain;
@@ -20,7 +21,7 @@ public class OperatorTable implements SqlOperatorTable {
   @Override
   public void lookupOperatorOverloads(SqlIdentifier sqlIdentifier, SqlFunctionCategory sqlFunctionCategory, SqlSyntax sqlSyntax, List<SqlOperator> list, SqlNameMatcher sqlNameMatcher) {
     if (list.isEmpty()) {
-      SqlOperator fn = sqlNameMatcher.get(udf, List.of(), List.of(sqlIdentifier.getSimple()));
+      SqlOperator fn = sqlNameMatcher.get(udfListMap, List.of(), List.of(sqlIdentifier.getSimple()));
       if (fn != null) {
         list.add(fn);
       }
@@ -50,11 +51,12 @@ public class OperatorTable implements SqlOperatorTable {
   }
 
   public void addFunction(String canonicalName, SqlOperator function) {
-    this.udf.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
+    this.udf.put(nameCanonicalizer.getCanonical(canonicalName), function);
+    this.udfListMap.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
     this.internalNames.put(List.of(function.getName()), function);
   }
 
-  public Map<List<String>, SqlOperator> getUdfs() {
+  public Map<String, SqlOperator> getUdfs() {
     return udf;
   }
 }

@@ -8,6 +8,7 @@ import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
+import java.util.Optional;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -24,7 +25,7 @@ public class FlinkJdbcEnginesTest extends AbstractQuerySQRLIT {
     snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(), graphQLSchema.getName(),
         engine.name());
     initialize(IntegrationTestSettings.getFlinkWithDB(engine),
-        script.getRootPackageDirectory());
+        script.getRootPackageDirectory(), Optional.empty());
     validateSchemaAndQueries(script.getScript(), graphQLSchema.getSchema(),
         graphQLSchema.getQueries());
   }

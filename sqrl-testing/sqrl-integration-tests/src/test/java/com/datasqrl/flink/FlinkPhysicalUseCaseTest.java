@@ -13,6 +13,7 @@ import com.datasqrl.util.data.Sensors;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -37,7 +38,7 @@ public class FlinkPhysicalUseCaseTest extends AbstractPhysicalSQRLIT {
 
   @SneakyThrows
   private void scriptTest(TestScript script, boolean removeTimestamps, boolean snapshotData) {
-    initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getFlinkWithDB(), script.getRootPackageDirectory(), Optional.empty());
     validateTables(Files.readString(script.getScriptPath()), script.getResultTables(),
         removeTimestamps ? ImmutableSet.copyOf(script.getResultTables()) : Set.of(),
         snapshotData ? Set.of() : ImmutableSet.copyOf(script.getResultTables()));

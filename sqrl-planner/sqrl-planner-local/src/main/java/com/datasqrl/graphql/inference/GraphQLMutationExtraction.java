@@ -7,8 +7,6 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APISource;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -17,14 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 @Slf4j
-@Singleton
 public class GraphQLMutationExtraction {
 
   private final RelDataTypeFactory typeFactory;
   @Getter
   private final NameCanonicalizer canonicalizer;
 
-  @Inject
   public GraphQLMutationExtraction(RelDataTypeFactory typeFactory, NameCanonicalizer nameCanonicalizer) {
     this.typeFactory = typeFactory;
     this.canonicalizer = nameCanonicalizer;

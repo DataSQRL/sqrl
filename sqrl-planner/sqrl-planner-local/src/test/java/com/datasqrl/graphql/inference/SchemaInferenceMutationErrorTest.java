@@ -25,7 +25,7 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
         .log(LogEngine.KAFKA)
         .build(), null, Optional.empty());
     snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
-    ns = plan(IMPORT_SCRIPT);
+    plan(IMPORT_SCRIPT);
   }
 
   protected void validateErrorsAndAddContent() {
@@ -39,13 +39,13 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
 
   @Test
   public void mustHaveQueryType() {
-    super.inferSchemaModelQueries(this.planner,"type Orders {\n\tid: Int\n}\n");
+    super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n", framework, pipeline, errors);
     assertTrue(errors.isEmpty());
   }
 
   @Test
   public void inputMustBeNonnull() {
-    super.inferSchemaModelQueries(this.planner,"type Orders {\n" +
+    super.inferSchemaModelQueries("type Orders {\n" +
         "\t_uuid: String\n" +
         "}\n"
         + "input OrderInput {\n" +
@@ -57,19 +57,19 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
         "}\n"
         + "type Query {\n" +
         "\torders: Orders" +
-        "\n}");
+        "\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void validSubscriptionArrayTest() {
-    ns = plan(
+    plan(
       "TestOutput := STREAM ON ADD AS SELECT COLLECT(productid) AS id FROM Product;\n");
-    inferSchemaModelQueries(planner, "type Query {\n\torders: [Orders]\n}\n"
+    inferSchemaModelQueries("type Query {\n\torders: [Orders]\n}\n"
         + "type Subscription {\n\ttestOutput: TestOutput\n}\n"
         + "input TestInput {\n\tid: [Int!]!\n}\n"
         + "type TestOutput {\n\tid: [Int!]!\n}\n"
-        + "type Orders {\n\tid: [Int!]!\n}\n"
+        + "type Orders {\n\tid: [Int!]!\n}\n", framework, pipeline, errors
     );
 
     assertTrue(errors.isEmpty(), "Expected no errors");
@@ -77,19 +77,19 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
 
   @Test
   public void nonMatchingInputAndOutputTypes() {
-    super.inferSchemaModelQueries(this.planner,"type Orders {\n\tid: Int\n}\n"
+    super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n"
         + "input OrderInput {\n\tid: String!\n}\n"
         + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
-        + "type Query {\n\torders: Orders\n}");
+        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void mutationNotASink() {
-   super.inferSchemaModelQueries(this.planner,"type Orders {\n\tid: Int!\n}\n"
+   super.inferSchemaModelQueries("type Orders {\n\tid: Int!\n}\n"
         + "input OrderInput {\n\tid: Int!\n}\n"
         + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
-        + "type Query {\n\torders: Orders\n}");
+        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 }

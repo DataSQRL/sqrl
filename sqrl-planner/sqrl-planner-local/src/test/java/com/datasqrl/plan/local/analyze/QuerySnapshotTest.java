@@ -28,7 +28,6 @@ import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
-import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
@@ -43,6 +42,7 @@ import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -63,14 +63,14 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     initialize(IntegrationTestSettings.builder()
             .stream(IntegrationTestSettings.StreamEngine.FLINK)
             .database(DatabaseEngine.INMEMORY).build(),
-        (Path)null);
+        (Path)null, Optional.empty());
 
     snapshot = SnapshotTest.Snapshot.of(getClass(), info);
   }
 
   protected void validateScriptInvalid(String script) {
     try {
-      Namespace ns = plan(script);
+      plan(script);
       fail("Expected an exception but did not encounter one");
     } catch (CollectedException e) {
       snapshot.addContent(ErrorPrinter.prettyPrint(errors), "errors");
@@ -83,16 +83,15 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   protected void validateScript(String script) {
-    Namespace ns;
     try {
-      ns = plan(script);
+      plan(script);
     } catch (CollectedException e) {
       System.out.println(ErrorPrinter.prettyPrint(errors));
       throw e;
     }
-    SQRLConverter sqrlConverter = new SQRLConverter(planner.createRelBuilder());
-    Stream.concat(ns.getSchema().getFunctionStream(QueryTableFunction.class).map(QueryTableFunction::getQueryTable),
-        ns.getSchema().getTableStream(PhysicalRelationalTable.class))
+    SQRLConverter sqrlConverter = new SQRLConverter(framework.getQueryPlanner().getRelBuilder());
+    Stream.concat(framework.getSchema().getFunctionStream(QueryTableFunction.class).map(QueryTableFunction::getQueryTable),
+            framework.getSchema().getTableStream(PhysicalRelationalTable.class))
         .sorted(Comparator.comparing(f->f.getNameId()))
         .forEach(table-> {
           SQRLConverter.Config config = table.getBaseConfig().stage(IdealExecutionStage.INSTANCE).build();
@@ -122,7 +121,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
         mock(MockModuleLoader.class),
         source,
         sqrlSchemaForInference,
-        planner.createRelBuilder(),
+        framework.getQueryPlanner().getRelBuilder(),
         apiManager)
         .accept();
 

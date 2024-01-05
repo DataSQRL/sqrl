@@ -26,7 +26,7 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
     initialize(IntegrationTestSettings.builder()
         .build(), null, Optional.empty());
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
-    ns = plan(IMPORT_SCRIPT);
+    plan(IMPORT_SCRIPT);
   }
 
   protected void validateErrorsAndAddContent() {
@@ -40,7 +40,8 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void generateSchemaTest() {
-    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(planner.getFramework().getSchema());
+    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(
+        framework.getSchema());
 
     GraphQLSchema gqlSchema = new SchemaGenerator().generate(sqrlSchemaForInference, true);
 
@@ -54,33 +55,33 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void invalidFieldTest() {
-    inferSchemaModelQueries(planner,
+    inferSchemaModelQueries(
             "type Orders {\n\tmissingField: String\n}\n"
-                + "type Query {\n\torders: Orders\n}");
+                + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void invalidTableTest() {
-    inferSchemaModelQueries(planner, "type Orders {\n\tmissingField: String\n}\n"
-        + "type Query {\n\torders: DOESNOTEXIST\n}");
+    inferSchemaModelQueries( "type Orders {\n\tmissingField: String\n}\n"
+        + "type Query {\n\torders: DOESNOTEXIST\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void missingNestedTable() {
-    inferSchemaModelQueries(planner,
+    inferSchemaModelQueries(
         "type Orders {\n\tentries: MISSING\n}\n"
-            + "type Query {\n\torders: Orders\n}");
+            + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void renameNestedTableTest() {
-    inferSchemaModelQueries(planner,
+    inferSchemaModelQueries(
         "type Orders {\n\tentries: OrderEntries\n}\n"
             + "type OrderEntries {\n\tproductid: Int\n}\n"
-            + "type Query {\n\torders: Orders\n}");
+            + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
     if (errors.hasErrors()) {
       fail("No errors expected");
     }
@@ -88,47 +89,47 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void structuralObjectTest() {
-    inferSchemaModelQueries(planner, ""
+    inferSchemaModelQueries(""
         + "type Orders {\n\t_uuid: String, entries: Entries\n}\n"
         + "type Entries {\n\tinvalidField: String\n}\n"
-        + "type Query {\n\torders: Orders\n\tproduct: Orders\n}");
+        + "type Query {\n\torders: Orders\n\tproduct: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void arrayType() {
-    inferSchemaModelQueries(planner, "type Orders {\n\t_uuid: String\n}\n"
-        + "type Query {\n\torders: [[Orders]]\n}");
+    inferSchemaModelQueries("type Orders {\n\t_uuid: String\n}\n"
+        + "type Query {\n\torders: [[Orders]]\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void array2Type() {
-    inferSchemaModelQueries(planner, "type Orders {\n\t_uuid: String\n}\n"
-        + "type Query {\n\torders: [[Orders!]]!\n}");
+    inferSchemaModelQueries("type Orders {\n\t_uuid: String\n}\n"
+        + "type Query {\n\torders: [[Orders!]]!\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void array3Type() {
-    inferSchemaModelQueries(planner, "type Orders {\n\t_uuid: String\n\tentries: [[Entries]]\n}\n"
+    inferSchemaModelQueries("type Orders {\n\t_uuid: String\n\tentries: [[Entries]]\n}\n"
         + "type Entries {\n\tproductid: String\n}\n"
-        + "type Query {\n\torders: Orders\n}");
+        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void array4Type() {
-    inferSchemaModelQueries(planner, "type Orders {\n\t_uuid: String\n\tentries: [[Entries!]!]!\n}\n"
+    inferSchemaModelQueries("type Orders {\n\t_uuid: String\n\tentries: [[Entries!]!]!\n}\n"
         + "type Entries {\n\tproductid: String\n}\n"
-        + "type Query {\n\torders: Orders\n}");
+        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void tooManyFields() {
-    inferSchemaModelQueries(planner, "type Orders {\n  _uuid: String\n  x: Int!\n}\n"
-        + "type Query {\n  orders: Orders\n}");
+    inferSchemaModelQueries("type Orders {\n  _uuid: String\n  x: Int!\n}\n"
+        + "type Query {\n  orders: Orders\n}", framework, pipeline, errors);
     validateErrorsAndAddContent();
   }
 }

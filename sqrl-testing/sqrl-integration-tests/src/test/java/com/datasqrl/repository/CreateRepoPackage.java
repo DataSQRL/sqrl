@@ -17,6 +17,7 @@ import com.datasqrl.util.data.UseCaseExample;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +64,7 @@ public class CreateRepoPackage extends AbstractPhysicalSQRLIT {
 
   public void testDataPackage(Path packagePath, Set<String> tables) {
     Path root = packagePath.getParent();
-    initialize(IntegrationTestSettings.getFlinkWithDB(), root);
+    initialize(IntegrationTestSettings.getFlinkWithDB(), root, Optional.empty());
 
     ScriptBuilder script = new ScriptBuilder();
     script.add("IMPORT " + packagePath.getFileName().toString() + ".*;");

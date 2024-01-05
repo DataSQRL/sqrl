@@ -54,7 +54,7 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
     TestScript script = example.getScript(RetailScriptNames.FULL);
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
           .debugger(DebuggerConfig.of(NamePath.of("output"),null))
-        .build(),(Path) script.getScriptPath().getParent(), Optional.of(outputPath));
+        .build(), script.getScriptPath().getParent(), Optional.of(outputPath));
     validateTables(script.getScript(), "order_stats", "order_again");
   }
 

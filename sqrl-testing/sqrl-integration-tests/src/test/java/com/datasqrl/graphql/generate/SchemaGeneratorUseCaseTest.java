@@ -13,6 +13,7 @@ import com.datasqrl.util.data.Books;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,13 +35,13 @@ public class SchemaGeneratorUseCaseTest extends AbstractSchemaGeneratorTest {
   @ParameterizedTest
   @ArgumentsSource(PhysicalUseCaseProvider.class)
   public void fullScriptTest(TestScript script) {
-    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory(), Optional.empty());
     snapshotTest(script.getScript());
   }
 
   @SneakyThrows
   protected String produceSchemaString(TestScript script) {
-    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory());
+    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory(), Optional.empty());
     return generateSchema(script.getScript(), true);
   }
 

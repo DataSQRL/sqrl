@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +54,7 @@ public class KafkaMonitoringTest extends KafkaBaseTest {
   public void monitorOrdersTest() {
     String topic = "orders";
     createTopics(new String[]{topic});
-    initialize(IntegrationTestSettings.getFlinkWithDB());
+    initialize(IntegrationTestSettings.getFlinkWithDB(), null, Optional.empty());
 
     int recordsWritten = writeTextFilesToTopic(topic, Retail.INSTANCE.getDataDirectory().resolve("orders.json"));
     assertEquals(4, recordsWritten);
@@ -67,7 +68,7 @@ public class KafkaMonitoringTest extends KafkaBaseTest {
   public void monitor2OrdersTest() {
     String[] topics = {"example.orders1", "example.orders2"};
     createTopics(topics);
-    initialize(IntegrationTestSettings.getFlinkWithDB());
+    initialize(IntegrationTestSettings.getFlinkWithDB(), null, Optional.empty());
 
     int recordsWritten = writeTextFilesToTopic(topics[0], Retail.INSTANCE.getDataDirectory().resolve("orders.json"));
     assertEquals(4, recordsWritten);

@@ -13,6 +13,7 @@ import com.datasqrl.util.TestScript.QueryUseCaseProvider;
 import com.datasqrl.util.data.Clickstream;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
+import java.util.Optional;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,7 +29,7 @@ public class FlinkQueryUseCaseTest extends AbstractQuerySQRLIT {
     this.vertxContext = testContext;
     snapshot = SnapshotTest.Snapshot.of(getClass(), script.getName(), graphQLSchema.getName());
     initialize(IntegrationTestSettings.getFlinkWithDB(DatabaseEngine.POSTGRES),
-        script.getRootPackageDirectory());
+        script.getRootPackageDirectory(), Optional.empty());
     validateSchemaAndQueries(script.getScript(), graphQLSchema.getSchema(),
         graphQLSchema.getQueries());
   }

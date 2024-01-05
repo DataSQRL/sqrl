@@ -8,7 +8,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.plan.table.CalciteTableFactory;
-import com.google.inject.Inject;
 import java.util.Optional;
 import lombok.Value;
 import lombok.experimental.Delegate;
@@ -19,7 +18,6 @@ public class MockAPIConnectorManager implements APIConnectorManager {
   @Delegate
   APIConnectorManagerImpl apiConnectorManager;
 
-  @Inject
   public MockAPIConnectorManager(SqrlFramework framework, ExecutionPipeline pipeline) {
     ErrorCollector errors = ErrorCollector.root();
 

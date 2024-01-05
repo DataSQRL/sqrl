@@ -3,24 +3,81 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.loaders.LoaderUtil.loadSink;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.engine.database.relational.JDBCEngine;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.frontend.ErrorSink;
+import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ObjectLoaderImpl;
+import com.datasqrl.module.SqrlModule;
+import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
+import com.datasqrl.plan.local.analyze.MockModuleLoader;
+import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
+import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.util.DatabaseHandle;
-import com.google.inject.Injector;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.AfterEach;
 
 public abstract class AbstractEngineIT {
 
   public DatabaseHandle database = null;
-  protected Injector injector;
 
-  public SqrlFramework framework = createFramework();
+  public SqrlFramework framework;
+  public IntegrationTestSettings settings;
+  public ExecutionPipeline pipeline;
+  public ErrorCollector errors;
+  public NameCanonicalizer nameCanonicalizer;
+  public Path rootDir;
+  public Optional<Path> errorDir;
+  public ModuleLoader moduleLoader;
+  public ErrorSink errorSink;
+  public Optional<JdbcDataSystemConnector> jdbc;
+  public PipelineFactory pipelineFactory;
+  public Debugger debugger;
 
-  public SqrlFramework createFramework() {
+  protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
+    this.framework = createFramework();
+    this.errors = ErrorCollector.root();
+
+    Map<NamePath, SqrlModule> addlModules = (rootDir == null)
+        ? TestModuleFactory.merge(TestModuleFactory.createRetail(framework),
+        TestModuleFactory.createFuzz(framework))
+        : Map.of();
+
+    this.moduleLoader = createModuleLoader(rootDir, addlModules, errors,
+        errorDir, new CalciteTableFactory(framework));
+    this.nameCanonicalizer = NameCanonicalizer.SYSTEM;
+    this.errorSink = new ErrorSink(loadSink(settings.getErrorSink(), errors, moduleLoader));
+
+    Triple<DatabaseHandle, PipelineFactory, ErrorCollector> setup = settings.createSqrlSettings();
+    this.settings = settings;
+    this.database = setup.getLeft();
+    this.pipelineFactory = setup.getMiddle();
+    this.pipeline = setup.getMiddle().createPipeline();
+    this.errors = setup.getRight();
+    this.rootDir = rootDir;
+    this.errorDir = errorDir;
+    this.jdbc = pipeline.getStages().stream()
+        .filter(f->f.getEngine() instanceof JDBCEngine)
+        .map(f->((JDBCEngine) f.getEngine()).getConnector())
+        .findAny();
+    this.debugger = new Debugger(settings.debugger, moduleLoader);
+  }
+
+  private SqrlFramework createFramework() {
     framework = new SqrlFramework(SqrlRelMetadataProvider.INSTANCE,
         SqrlHintStrategyTable.getHintStrategyTable(), NameCanonicalizer.SYSTEM);
     DefaultFunctions functions = new DefaultFunctions();
@@ -30,26 +87,22 @@ public abstract class AbstractEngineIT {
     return framework;
   }
 
+  public static ModuleLoader createModuleLoader(Path rootDir, Map<NamePath, SqrlModule> addlModules,
+      ErrorCollector errors, Optional<Path> errorDir, CalciteTableFactory tableFactory) {
+    if (rootDir != null) {
+      ObjectLoaderImpl objectLoader = new ObjectLoaderImpl(new FileResourceResolver(rootDir),
+          errors, tableFactory);
+      return new MockModuleLoader(objectLoader, addlModules, errorDir);
+    } else {
+      return new MockModuleLoader(null, addlModules, errorDir);
+    }
+  }
+
   @AfterEach
   public void tearDown() {
     if (database != null) {
       database.cleanUp();
       database = null;
-    }
-  }
-
-  protected PipelineFactory initialize(IntegrationTestSettings settings, Injector injector) {
-    this.injector = injector;
-    return this.initialize(settings);
-  }
-
-  protected PipelineFactory initialize(IntegrationTestSettings settings) {
-    if (database == null) {
-      Pair<DatabaseHandle, PipelineFactory> setup = settings.getSqrlSettings();
-      database = setup.getLeft();
-      return setup.getRight();
-    } else {
-      return null;
     }
   }
 }

@@ -3,9 +3,10 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
+
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.config.PipelineFactory;
@@ -15,10 +16,6 @@ import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.database.relational.JDBCEngine;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.frontend.ErrorSink;
-import com.datasqrl.frontend.SqrlPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
@@ -27,16 +24,14 @@ import com.datasqrl.io.impl.file.FilePathConfig;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.module.SqrlModule;
+import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
-import com.datasqrl.plan.local.analyze.FuzzingRetailSqrlModule;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.local.analyze.ResolveTest;
-import com.datasqrl.plan.local.analyze.RetailSqrlModule;
-import com.datasqrl.plan.local.generate.Namespace;
+import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.queries.APIQuery;
-import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.DatabaseHandle;
@@ -47,8 +42,6 @@ import com.datasqrl.util.StreamUtil;
 import com.datasqrl.util.TestRelWriter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -59,6 +52,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -78,37 +72,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(MiniClusterExtension.class)
 public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
-  public SqrlPhysicalPlan physicalPlanner;
-  JdbcDataSystemConnector jdbc;
-
   protected SnapshotTest.Snapshot snapshot;
   protected boolean closeSnapshotOnValidate = true;
-
-  protected void initialize(IntegrationTestSettings settings, Path rootDir) {
-    initialize(settings, rootDir, Optional.empty());
-  }
-  protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
-    Map<NamePath, SqrlModule> addlModules = (rootDir == null)
-        ? TestModuleFactory.merge(TestModuleFactory.createRetail(framework), TestModuleFactory.createFuzz(framework))
-        : Map.of();
-
-    Pair<DatabaseHandle, PipelineFactory> engines = settings.getSqrlSettings();
-    this.database = engines.getLeft();
-
-    SqrlTestDIModule module = new SqrlTestDIModule(engines.getRight().createPipeline(), settings, rootDir, addlModules, errorDir,
-        ErrorCollector.root(), framework, NameCanonicalizer.SYSTEM);
-    Injector injector = Guice.createInjector(module);
-
-    super.initialize(settings, rootDir, injector);
-
-    jdbc = injector.getInstance(ExecutionPipeline.class).getStages().stream()
-      .filter(f->f.getEngine() instanceof JDBCEngine)
-      .map(f->((JDBCEngine) f.getEngine()).getConnector())
-      .findAny()
-      .orElseThrow();
-
-    physicalPlanner = injector.getInstance(SqrlPhysicalPlan.class);
-  }
 
 
   protected void validateTables(String script, String... queryTables) {
@@ -123,27 +88,28 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
   @SneakyThrows
   protected void validateTables(String script, Collection<String> queryTables,
       Set<String> tableWithoutTimestamp, Set<String> tableNoDataSnapshot) {
-    Namespace ns = plan(script);
+    plan(script);
 
     //We add a scan query for every query table
-    APIConnectorManager apiManager = injector.getInstance(MockAPIConnectorManager.class);
-    SqrlSchema sqrlSchema = planner.getSchema();
+    APIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline);
+    SqrlSchema sqrlSchema = framework.getSchema();
     for (String tableName : queryTables) {
       Optional<ScriptRelationalTable> vtOpt = ResolveTest.getLatestTable(sqrlSchema, tableName,
               ScriptRelationalTable.class);
       Preconditions.checkArgument(vtOpt.isPresent(), "No such table: %s", tableName);
       ScriptRelationalTable vt = vtOpt.get();
-      RelBuilder relBuilder = planner.createRelBuilder().scan(vt.getNameId());
+      RelBuilder relBuilder = framework.getQueryPlanner().getRelBuilder()
+          .scan(vt.getNameId());
       relBuilder = CalciteUtil.projectOutNested(relBuilder);
       apiManager.addQuery(new APIQuery(tableName, relBuilder.build()));
     }
 
-    PhysicalDAGPlan dag = physicalPlanner.planDag(planner.getFramework(), ns.getPipeline(),
-        apiManager, null, true);
+    PhysicalDAGPlan dag = DAGPlanner.plan(framework, apiManager, framework.getSchema().getExports(),
+        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
+        null, pipeline, errors, debugger);
     addContent(dag);
 
-    ErrorSink errorSink = injector.getInstance(ErrorSink.class);
-    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+    PhysicalPlan physicalPlan = new PhysicalPlanner(framework, errorSink.getErrorSink())
         .plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
@@ -153,15 +119,9 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     CompletableFuture.allOf(completableFutures)
         .get();
 
-    //todo: filter out jdbc engine
-    StagePlan db = physicalPlan.getStagePlans().stream()
-        .filter(e-> e.getStage().getEngine() instanceof JDBCEngine)
-        .findAny()
-        .orElseThrow();
-    JDBCEngine dbEngine = (JDBCEngine) db.getStage().getEngine();
-    Connection conn = DriverManager.getConnection(dbEngine.getConnector()
-        .getUrl(), dbEngine.getConnector().getUser(),
-        dbEngine.getConnector().getPassword());
+    JdbcDataSystemConnector jdbcDataSystemConnector = jdbc.get();
+    Connection conn = DriverManager.getConnection(jdbcDataSystemConnector.getUrl(),
+        jdbcDataSystemConnector.getUser(), jdbcDataSystemConnector.getPassword());
 
     for (APIQuery query : apiManager.getQueries()) {
       QueryTemplate template = physicalPlan.getDatabaseQueries().get(query);

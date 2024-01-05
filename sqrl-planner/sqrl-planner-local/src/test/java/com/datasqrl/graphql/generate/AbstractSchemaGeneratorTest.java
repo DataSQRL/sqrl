@@ -5,7 +5,6 @@ package com.datasqrl.graphql.generate;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference;
-import com.datasqrl.plan.local.generate.Namespace;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
@@ -27,7 +26,7 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
 
   protected String generateSchema(String sqrlScript, boolean addArguments) {
     plan(sqrlScript);
-    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(planner.getFramework().getSchema());
+    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
 
     GraphQLSchema schema = new SchemaGenerator().generate(sqrlSchemaForInference, addArguments);
 
