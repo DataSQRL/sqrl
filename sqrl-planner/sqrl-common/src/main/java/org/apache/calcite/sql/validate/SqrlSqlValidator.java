@@ -18,35 +18,26 @@
 
 package org.apache.calcite.sql.validate;
 
-import static org.apache.calcite.sql.type.SqlTypeName.DECIMAL;
 import static org.apache.calcite.util.Static.RESOURCE;
 
 import com.datasqrl.util.ReflectionUtil;
 import com.google.common.base.Preconditions;
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
-import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.SqlTypeUtil;
-import org.apache.calcite.util.Static;
 import org.apache.calcite.util.Util;
-import org.apache.flink.table.types.logical.DecimalType;
+import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
-public class SqrlSqlValidator extends SqlValidatorImpl {
-  // Enables CallContext#getOutputDataType() when validating SQL expressions.
-  private SqlNode sqlNodeForExpectedOutputType;
-  private RelDataType expectedOutputType;
+public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
 
   public SqrlSqlValidator(SqlOperatorTable opTab, SqlValidatorCatalogReader catalogReader,
       RelDataTypeFactory typeFactory, Config config) {
@@ -175,39 +166,6 @@ public class SqrlSqlValidator extends SqlValidatorImpl {
       default:
         throw Util.unexpected(joinType);
     }
-  }
-
-  public void setExpectedOutputType(SqlNode sqlNode, RelDataType expectedOutputType) {
-    this.sqlNodeForExpectedOutputType = sqlNode;
-    this.expectedOutputType = expectedOutputType;
-  }
-
-  public Optional<RelDataType> getExpectedOutputType(SqlNode sqlNode) {
-    if (sqlNode == sqlNodeForExpectedOutputType) {
-      return Optional.of(expectedOutputType);
-    }
-    return Optional.empty();
-  }
-
-  @Override
-  public void validateLiteral(SqlLiteral literal) {
-    if (literal.getTypeName() == DECIMAL) {
-      final BigDecimal decimal = literal.getValueAs(BigDecimal.class);
-      if (decimal.precision() > DecimalType.MAX_PRECISION) {
-        throw newValidationError(
-            literal, Static.RESOURCE.numberLiteralOutOfRange(decimal.toString()));
-      }
-    }
-    super.validateLiteral(literal);
-  }
-
-  @Override
-  public void validateColumnListParams(
-      SqlFunction function, List<RelDataType> argTypes, List<SqlNode> operands) {
-    // we don't support column lists and translate them into the unknown type in the type
-    // factory,
-    // this makes it possible to ignore them in the validator and fall back to regular row types
-    // see also SqlFunction#deriveType
   }
 
   public SqlNode getAggregate(SqlSelect select) {

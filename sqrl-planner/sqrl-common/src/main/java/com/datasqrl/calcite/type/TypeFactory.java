@@ -15,12 +15,13 @@ import org.apache.calcite.runtime.Geometries;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
-public class TypeFactory extends JavaTypeFactoryImpl {
+public class TypeFactory extends FlinkTypeFactory {
 
   public TypeFactory() {
-    super(SqrlTypeSystem.INSTANCE);
+    super(TypeFactory.class.getClassLoader(), SqrlTypeSystem.INSTANCE);
   }
 
   public static TypeFactory getTypeFactory() {

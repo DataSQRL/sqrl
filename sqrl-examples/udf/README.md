@@ -8,12 +8,12 @@ User-defined functions (UDFs) in Flink are powerful tools that allow for the ext
 ## Creating a User-Defined Function
 1. **Project Structure:** The `myjavafunction` folder contains a sample Java project, demonstrating the structure and necessary components of a Flink UDF.
 
-2. **Defining the Function:** The main component of this project is the MyScalarFunction class. This is the implementation of a custom flink function. DataSQRL recognizes flink functions that extend either ScalarFunction or AggregateFunction.
+2. **Defining the Function:** The main component of this project is the MyScalarFunction class. This is the implementation of a custom flink function. DataSQRL recognizes flink functions that extend UserDefinedFunction.
 
 3. **ServiceLoader Entry:** The function must be registered with a ServiceLoader entry. This is essential for DataSQRL to recognize and use your UDF.
 - **AutoService Library:** The example includes the AutoService library by Google, simplifying the creation of ServiceLoader META-INF manifest entries.
 
-4. **Jar Compiling:** Compile the sample project and build a jar. This jar is what DataSQRL will use to discover your function. It reads the manifest entries for any ScalarFunction or AggregateFunction classes and load them into DataSQRL for use in queries. It can be placed into any folder relative to the sqrl root folder which will translate to the import path. In the example, we will use the `target` directory that the compilation process creates.
+4. **Jar Compiling:** Compile the sample project and build a jar. This jar is what DataSQRL will use to discover your function. It reads the manifest entries for any UserDefinedFunction classes and load them into DataSQRL for use in queries. It can be placed into any folder relative to the sqrl root folder which will translate to the import path. In the example, we will use the `target` directory that the compilation process creates.
 
 ## SQRL Compilation and Packaging
 1. **SQRL Compilation:** Compile the SQRL using DataSQRL's command interface, which prepares your script for deployment in the Flink environment.

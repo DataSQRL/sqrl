@@ -7,6 +7,7 @@ import static org.apache.calcite.sql.SqlUtil.stripAs;
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
@@ -33,6 +34,7 @@ import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
@@ -48,7 +50,7 @@ import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.Function;
@@ -66,7 +68,6 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqrlAssignTimestamp;
@@ -328,15 +329,21 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       Optional<SqrlTableFunctionDef> tableArgs, boolean materializeSelf) {
     SqlValidator validator = planner.createSqlValidator();
 
+    Optional<SqrlTableMacro> parentTable = Optional.empty();
     if (statement.getIdentifier().names.size() > 1) {
       validateHasNestedSelf(query);
+      NamePath parent = nameUtil.getParentPath(statement);
+      Collection<Function> sqrlTable = planner.getSchema()
+          .getFunctions(parent.getDisplay(), false);
+      parentTable = Optional.of((SqrlTableMacro)Iterables.getOnlyElement(sqrlTable));
     }
 
     query = CalciteFixes.pushDownOrder(query);
-    Pair<List<FunctionParameter>, SqlNode> p = transformArgs(query, materializeSelf,
+
+    Pair<List<FunctionParameter>, SqlNode> argResult = transformArgs(parentTable, query, materializeSelf,
         tableArgs.orElseGet(() -> new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
-    query = p.getRight();
-    this.parameters.putAll(statement, p.getLeft());
+    query = argResult.getRight();
+    this.parameters.putAll(statement, argResult.getLeft());
 
     preprocessSql.put(statement, query);
     SqlNode sqlNode;
@@ -462,7 +469,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     return false;
   }
 
-  private Pair<List<FunctionParameter>, SqlNode> transformArgs(SqlNode query,
+  private Pair<List<FunctionParameter>, SqlNode> transformArgs(Optional<SqrlTableMacro> parentTable,
+      SqlNode query,
       boolean materializeSelf, SqrlTableFunctionDef sqrlTableFunctionDef) {
     List<FunctionParameter> parameterList = toParams(sqrlTableFunctionDef.getParameters(),
         planner.createSqlValidator());
@@ -473,7 +481,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       public SqlNode visitQuerySpecification(SqlSelect node, Object context) {
         return new SqlSelectBuilder(node)
             .setFrom(SqlNodeVisitor.accept(this, node.getFrom(), null))
-            .rewriteExpressions(rewriteVariables(parameterList, materializeSelf))
+            .rewriteExpressions(rewriteVariables(parentTable, parameterList, materializeSelf))
             .build();
       }
 
@@ -494,7 +502,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         return new SqlJoinBuilder(node)
             .setLeft(SqlNodeVisitor.accept(this, node.getLeft(), null))
             .setRight(SqlNodeVisitor.accept(this, node.getRight(), null))
-            .rewriteExpressions(rewriteVariables(parameterList, materializeSelf))
+            .rewriteExpressions(rewriteVariables(parentTable, parameterList, materializeSelf))
             .build();
       }
 
@@ -529,7 +537,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       @Override
       public SqlNode visitUserDefinedTableFunction(SqlCall node, Object context) {
         List<SqlNode> operands = node.getOperandList().stream()
-            .map(f -> f.accept(rewriteVariables(parameterList, materializeSelf)))
+            .map(f -> f.accept(rewriteVariables(parentTable, parameterList, materializeSelf)))
             .collect(Collectors.toList());
         return node.getOperator().createCall(node.getParserPosition(), operands);
       }
@@ -552,7 +560,7 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
   }
 
-  public SqlShuttle rewriteVariables(List<FunctionParameter> parameterList,
+  public SqlShuttle rewriteVariables(Optional<SqrlTableMacro> parentTable, List<FunctionParameter> parameterList,
       boolean materializeSelf) {
     return new SqlShuttle() {
       @Override
@@ -572,12 +580,18 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
             }
           }
 
-          //todo: Type?
-          RelDataType anyType = planner.getCatalogReader().getTypeFactory()
-              .createSqlType(SqlTypeName.ANY);
+          //get the type from the current context
+          if (parentTable.isEmpty()) {
+            throw addError(ErrorLabel.GENERIC, id, "Cannot derive argument on root table");
+          }
+          RelDataTypeField field = planner.getCatalogReader().nameMatcher().field(
+              parentTable.get().getRowType(), name);
+          if (field == null) {
+            throw addError(ErrorLabel.GENERIC, id, "Cannot find field on parent table");
+          }
           SqrlFunctionParameter functionParameter = new SqrlFunctionParameter(name,
               Optional.empty(), SqlDataTypeSpecBuilder
-              .create(anyType), parameterList.size(), anyType,
+              .create(field.getType()), parameterList.size(), field.getType(),
               true, new UnknownCaseParameter(name));
           parameterList.add(functionParameter);
           SqlDynamicParam param = new SqlDynamicParam(functionParameter.getOrdinal(),

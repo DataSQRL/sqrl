@@ -19,9 +19,10 @@
 package com.datasqrl.flink;
 
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.flink.function.BridgingSqlAggregateFunction;
-import com.datasqrl.flink.function.BridgingSqlScalarFunction;
+import java.util.Optional;
+import javax.swing.text.html.Option;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.flink.api.common.ExecutionConfig;
@@ -29,15 +30,21 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogManager;
+import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.functions.FunctionIdentifier;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
+import org.apache.flink.table.planner.calcite.RexFactory;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
 @AllArgsConstructor
+@Slf4j
 public class FlinkConverter {
 
   static EnvironmentSettings settings = EnvironmentSettings.newInstance().build();
@@ -57,7 +64,7 @@ public class FlinkConverter {
   public static FlinkTypeFactory flinkTypeFactory = new FlinkTypeFactory(FlinkConverter.class.getClassLoader(),
       FlinkTypeSystem.INSTANCE);
 
-  public SqlFunction convertFunction(String flinkName, FunctionDefinition definition) {
+  public Optional<SqlFunction> convertFunction(String flinkName, FunctionDefinition definition) {
     final TypeInference typeInference;
 
     DataTypeFactory dataTypeFactory = catalogManager.getDataTypeFactory();
@@ -71,30 +78,26 @@ public class FlinkConverter {
           t);
     }
 
-    final SqlFunction function;
-    if (definition.getKind() == FunctionKind.AGGREGATE
-        || definition.getKind() == FunctionKind.TABLE_AGGREGATE) {
-      function =
-          new BridgingSqlAggregateFunction(
-              flinkName,
-              dataTypeFactory,
+    if(definition.getKind() == FunctionKind.SCALAR || definition.getKind() == FunctionKind.TABLE) {
+      return Optional.of(
+          BridgingSqlFunction.of(dataTypeFactory,
               flinkTypeFactory,
-              null,
+              new RexFactory(flinkTypeFactory, ()->null, ()->null, (x)->null),
               SqlKind.OTHER_FUNCTION,
-              definition,
-              typeInference);
+              ContextResolvedFunction.permanent(
+                  FunctionIdentifier.of(flinkName), definition),
+              typeInference));
+    } else if (definition.getKind() == FunctionKind.AGGREGATE
+        || definition.getKind() == FunctionKind.TABLE_AGGREGATE){
+      return Optional.of(BridgingSqlAggFunction.of(dataTypeFactory,
+              flinkTypeFactory,
+              SqlKind.OTHER_FUNCTION,
+              ContextResolvedFunction.permanent(
+                  FunctionIdentifier.of(flinkName), definition),
+              typeInference));
     } else {
-      function =
-          new BridgingSqlScalarFunction(
-              flinkName,
-              dataTypeFactory,
-              flinkTypeFactory,
-              null,
-              SqlKind.OTHER_FUNCTION,
-              definition,
-              typeInference);
+      log.info("Could not register: " + flinkName);
+      return Optional.empty();
     }
-
-    return function;
   }
 }

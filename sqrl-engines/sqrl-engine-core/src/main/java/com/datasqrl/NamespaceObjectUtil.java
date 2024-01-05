@@ -35,9 +35,9 @@ public class NamespaceObjectUtil {
         originalName.toUpperCase(Locale.ROOT));
     Preconditions.checkArgument(function.isPresent(), "Could not find function %s", name);
     BuiltInFunctionDefinition fnc = function.get();
-    SqlFunction function1 = converter.convertFunction(originalName, fnc);
+    SqlFunction sqlFunction = converter.convertFunction(originalName, fnc).get();
 
-    return new CalciteFunctionNsObject(Name.system(name), function1, originalName);
+    return new CalciteFunctionNsObject(Name.system(name), sqlFunction, originalName);
   }
 
   public static NamespaceObject createFunctionFromStdOpTable(String name) {

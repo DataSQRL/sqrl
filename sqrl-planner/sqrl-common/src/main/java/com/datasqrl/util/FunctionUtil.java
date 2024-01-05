@@ -1,12 +1,15 @@
 package com.datasqrl.util;
 
-import com.datasqrl.flink.function.BridgingFunction;
 import com.datasqrl.function.SqrlFunction;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.functions.FunctionIdentifier;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 
 public class FunctionUtil {
 
@@ -26,13 +29,11 @@ public class FunctionUtil {
     return Optional.empty();
   }
 
-
-  public static Optional<SqrlFunction> getSqrlFunction(SqlOperator operator) {
-    if (operator instanceof BridgingFunction) {
-      FunctionDefinition function = ((BridgingFunction)operator).getDefinition();
-      if (function instanceof SqrlFunction) {
-        return Optional.of((SqrlFunction) function);
-      }
+  public static Optional<FunctionDefinition> getSqrlFunction(SqlOperator operator) {
+    if (operator instanceof BridgingSqlFunction) {
+      return Optional.of(((org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction)operator).getDefinition());
+    } else if (operator instanceof BridgingSqlAggFunction) {
+      return Optional.of(((org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction)operator).getDefinition());
     }
     return Optional.empty();
   }

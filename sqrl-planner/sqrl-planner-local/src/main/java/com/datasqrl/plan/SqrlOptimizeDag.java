@@ -4,15 +4,16 @@ import com.datasqrl.calcite.OperatorTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.flink.function.BridgingFunction;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.Debugger;
+import com.datasqrl.util.FunctionUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
@@ -38,11 +39,10 @@ public class SqrlOptimizeDag {
   public static Map<String, UserDefinedFunction> extractFlinkFunctions(OperatorTable sqrlOperatorTable) {
     Map<String, UserDefinedFunction> fncs = new HashMap<>();
     for (Map.Entry<String, SqlOperator> fnc : sqrlOperatorTable.getUdfs().entrySet()) {
-      if (fnc.getValue() instanceof BridgingFunction) {
-        FunctionDefinition definition = ((BridgingFunction) fnc.getValue()).getDefinition();
-        if (definition instanceof UserDefinedFunction) {
-          fncs.put(fnc.getKey(),
-              (UserDefinedFunction) definition);
+      Optional<FunctionDefinition> definition = FunctionUtil.getSqrlFunction(fnc.getValue());
+      if (definition.isPresent()) {
+        if (definition.get() instanceof UserDefinedFunction) {
+          fncs.put(fnc.getKey(), (UserDefinedFunction)definition.get());
         }
       }
     }

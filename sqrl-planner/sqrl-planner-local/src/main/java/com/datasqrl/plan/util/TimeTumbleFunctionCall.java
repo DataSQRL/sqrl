@@ -6,6 +6,7 @@ package com.datasqrl.plan.util;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import lombok.Value;
@@ -31,7 +32,7 @@ public class TimeTumbleFunctionCall {
           return Optional.empty();
       }
     RexCall call = (RexCall) rexNode;
-    Optional<SqrlTimeTumbleFunction> fnc = SqrlRexUtil.getSqrlFunction(call.getOperator())
+    Optional<SqrlTimeTumbleFunction> fnc = FunctionUtil.getSqrlFunction(call.getOperator())
         .filter(o -> o instanceof SqrlTimeTumbleFunction)
         .map(o -> (SqrlTimeTumbleFunction) o);
       if (fnc.isEmpty()) {
