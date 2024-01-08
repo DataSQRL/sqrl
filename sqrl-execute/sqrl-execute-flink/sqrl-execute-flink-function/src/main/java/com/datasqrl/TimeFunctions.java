@@ -372,15 +372,13 @@ public class TimeFunctions {
     }
 
     public Instant eval(String s, String format) {
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format, Locale.US);
-      try {
-        return LocalDateTime.parse(s, formatter)
-            .atZone(ZoneId.systemDefault())
-            .toInstant();
-      } catch (Exception e) {
-        log.warn(e.getMessage());
-        return null;
-      }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format, Locale.US);
+        try {
+            return ZonedDateTime.parse(s, formatter).toInstant();
+        } catch (Exception e) {
+            log.warn(e.getMessage());
+            return null;
+        }
     }
 
     @Override
