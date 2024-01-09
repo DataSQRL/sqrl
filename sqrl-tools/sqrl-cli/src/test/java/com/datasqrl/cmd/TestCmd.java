@@ -182,7 +182,7 @@ public class TestCmd {
 //    execute(basePath,
 //        "discover", basePath.resolve("data").toString(), "-o", basePath.resolve("creditcard").toString());
     execute(basePath,
-        "compile", basePath.resolve("creditcard.sqrl").toString());
+        "compile", basePath.resolve("creditcard.sqrl").toString(), basePath.resolve("creditcard.graphqls").toString());
   }
 
   public static int execute(Path rootDir, String... args) {
