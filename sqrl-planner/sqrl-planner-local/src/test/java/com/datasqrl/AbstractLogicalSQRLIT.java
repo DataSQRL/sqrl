@@ -8,6 +8,7 @@ import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.plan.ScriptPlanner;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {
@@ -28,6 +29,6 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
 
   protected void plan(String query) {
-    ScriptPlanner.plan(query, framework, moduleLoader, nameCanonicalizer, errors);
+    ScriptPlanner.plan(query, List.of(), framework, moduleLoader, nameCanonicalizer, errors);
   }
 }

@@ -61,6 +61,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.NonNull;
@@ -136,7 +137,7 @@ public class Compiler {
           .moduleLoader(moduleLoader)
           .moduleLoader(apiManager.getAsModuleLoader())
           .build();
-    ScriptPlanner.plan(FileUtil.readFile(mainScript), framework, updatedModuleLoader,
+    ScriptPlanner.plan(FileUtil.readFile(mainScript), List.of(), framework, updatedModuleLoader,
         nameCanonicalizer, errors);
 
     SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());

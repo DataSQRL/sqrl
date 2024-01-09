@@ -1,6 +1,7 @@
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.calcite.plan.ScriptPlanner.exportTable;
+
+import static com.datasqrl.plan.validate.ScriptPlanner.exportTable;
 
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.error.ErrorCollector;

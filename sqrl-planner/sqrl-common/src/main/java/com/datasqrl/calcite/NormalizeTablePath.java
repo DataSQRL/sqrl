@@ -1,6 +1,7 @@
 package com.datasqrl.calcite;
 
-import static com.datasqrl.plan.validate.ScriptValidator.isSelfField;
+import static com.datasqrl.plan.validate.ScriptPlanner.addError;
+import static com.datasqrl.plan.validate.ScriptPlanner.isSelfField;
 
 import com.datasqrl.calcite.SqrlToSql.Context;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -9,6 +10,8 @@ import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.function.SqrlFunctionParameter.UnknownCaseParameter;
 import com.datasqrl.util.SqlNameUtil;
@@ -27,7 +30,6 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -43,12 +45,14 @@ public class NormalizeTablePath {
   private final Map<FunctionParameter, SqlDynamicParam> paramMapping;
   private final AtomicInteger aliasInt = new AtomicInteger(0);
   private final SqlNameUtil nameUtil;
+  private final ErrorCollector errors;
 
   public NormalizeTablePath(CatalogReader catalogReader, Map<FunctionParameter, SqlDynamicParam> paramMapping,
-      SqlNameUtil nameUtil) {
+      SqlNameUtil nameUtil, ErrorCollector errors) {
     this.catalogResolver = catalogReader;
     this.paramMapping = paramMapping;
     this.nameUtil = nameUtil;
+    this.errors = errors;
   }
 
   public TablePathResult convert(List<SqlNode> items, Context context, List<FunctionParameter> parameters) {
@@ -76,7 +80,7 @@ public class NormalizeTablePath {
     } else if (context.hasAlias(identifier)) {
       // For tables that start with an alias e.g. `o.entries`
       if (!input.hasNext()) {
-        throw new RuntimeException("Alias by itself.");
+        throw addError(errors, ErrorLabel.GENERIC, item, "Alias by itself.");
       }
       alias = generateAlias();
       // Get absolute path of alias `o`
@@ -91,7 +95,7 @@ public class NormalizeTablePath {
       // Lookup function
       Optional<SqrlTableMacro> fnc = getTable(pathWalker.getPath());
       boolean hasTableFnc = hasTableFunction(pathWalker.getPath());
-      Preconditions.checkState(hasTableFnc, "Table function not found %s", pathWalker.getPath());
+      Preconditions.checkState(hasTableFnc, "Could not find table: %s", pathWalker.getPath());
 
       List<SqrlFunctionParameter> internalParams = getInternalParamsOfTable(pathWalker.getPath());
       // Rewrite arguments so internal arguments are prefixed with the alias
@@ -118,7 +122,7 @@ public class NormalizeTablePath {
         pathWalker.walk(nextIdentifier);
 
         boolean hasTableFnc = hasTableFunction(pathWalker.getPath());
-        Preconditions.checkState(hasTableFnc, "Table function not found %s", pathWalker.getPath());
+        Preconditions.checkState(hasTableFnc, "Could not find table: %s", pathWalker.getPath());
 
         List<SqrlFunctionParameter> internalParams = getInternalParamsOfTable(pathWalker.getPath());
 
@@ -130,19 +134,22 @@ public class NormalizeTablePath {
             nameUtil.toName(pathWalker.getPath().getDisplay()), args, alias));
       }
     } else {
-      throw new RuntimeException("Unknown table: " + item);
+      throw addError(errors, ErrorLabel.GENERIC, item,
+          "Could not find table: %s", identifier);
     }
 
     while (input.hasNext()) {
       item = input.next();
       SqrlTableMacro parentTable = getTable(pathWalker.getAbsolutePath()).get();
+      SqlNode finalNode = item;
       Name nextIdentifier = getIdentifier(item)
-          .orElseThrow(() -> new RuntimeException("Subqueries are not yet implemented"));
+          .orElseThrow(() -> addError(errors, ErrorLabel.GENERIC, finalNode, "Subqueries are not yet implemented"));
       pathWalker.walk(nextIdentifier);
 
       boolean hasTableFnc = hasTableFunction(pathWalker.getPath());
-      Preconditions.checkState(hasTableFnc, "Table function not found %s", pathWalker.getPath());
-
+      if (!hasTableFnc) {
+        throw addError(errors, ErrorLabel.GENERIC, item, "Could not find table: %s", pathWalker.getPath());
+      }
       List<SqrlFunctionParameter> internalParams = getInternalParamsOfTable(pathWalker.getPath());
 
       List<SqlNode> args = rewriteInternalArgs(alias, internalParams, context, params,

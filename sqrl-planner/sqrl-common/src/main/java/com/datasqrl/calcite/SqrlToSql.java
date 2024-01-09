@@ -1,13 +1,15 @@
 package com.datasqrl.calcite;
 
-import static com.datasqrl.plan.validate.ScriptValidator.isSelfTable;
-import static com.datasqrl.plan.validate.ScriptValidator.isVariable;
+import static com.datasqrl.plan.validate.ScriptPlanner.isSelfTable;
+import static com.datasqrl.plan.validate.ScriptPlanner.isVariable;
+import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.calcite.SqrlToSql.Context;
 import com.datasqrl.calcite.SqrlToSql.Result;
 import com.datasqrl.calcite.NormalizeTablePath.PathItem;
 import com.datasqrl.calcite.NormalizeTablePath.SelfTablePathItem;
 import com.datasqrl.calcite.NormalizeTablePath.TablePathResult;
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlAliasCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlCallBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
@@ -21,6 +23,8 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.plan.hints.TopNHint.Type;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,9 +38,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.CalciteFixes;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
@@ -58,16 +65,20 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
 public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
+  final QueryPlanner planner;
   private final CatalogReader catalogReader;
   private final SqlOperatorTable operatorTable;
   private final NormalizeTablePath normalizeTablePath;
   private List<FunctionParameter> parameters;
   private final AtomicInteger uniquePkId;
   private final SqlNameUtil nameUtil;
+  @Getter
+  private final Multimap<SqlNode, TableFunction> isA = ArrayListMultimap.create();
 
-  public SqrlToSql(CatalogReader catalogReader, SqlOperatorTable operatorTable,
+  public SqrlToSql(QueryPlanner planner, CatalogReader catalogReader, SqlOperatorTable operatorTable,
       NormalizeTablePath normalizeTablePath, List<FunctionParameter> parameters,
       AtomicInteger uniquePkId, SqlNameUtil nameUtil) {
+    this.planner = planner;
     this.catalogReader = catalogReader;
     this.operatorTable = operatorTable;
     this.normalizeTablePath = normalizeTablePath;
@@ -91,6 +102,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
         .setAliasPathMap(new HashMap<>()) //clear any alias mapping
         .build();
     Result result = SqlNodeVisitor.accept(this, appendAliasIfRequired(call.getFrom()), newContext);
+
+    determineIsA(call, newContext, result);
 
     //retain distinct hint too
     if (isDistinctOnHintPresent(call)) {
@@ -154,6 +167,37 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
 
     return new Result(select.build(), result.getCurrentPath(), List.of(), List.of(), Optional.empty(),
         result.params);
+  }
+
+  private void determineIsA(SqlSelect call, Context newContext, Result result) {
+
+    for (SqlNode node : call.getSelectList()) {
+      node = stripAs(node);
+      if (node instanceof SqlIdentifier) {
+        SqlIdentifier ident = (SqlIdentifier) node;
+        if (ident.isStar() && ident.names.size() == 1) {
+          for (NamePath path : newContext.getAliasPathMap().values()) {
+            Collection<Function> sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
+
+            if (!sqrlTable.isEmpty()) {
+              new ArrayList<>(sqrlTable).stream()
+                  .map(f->(SqrlTableMacro)f)
+                  .forEach(f->isA.put(call, f));
+            }
+          }
+        } else if (ident.isStar() && ident.names.size() == 2) {
+          NamePath path = newContext.getAliasPath(nameUtil.toName(ident.names.get(0)));
+          Collection<Function> sqrlTable = planner.getSchema().getFunctions(path.getDisplay(), false);
+
+          if (!sqrlTable.isEmpty()) {
+            new ArrayList<>(sqrlTable).stream()
+                .map(f->(SqrlTableMacro)f)
+                .forEach(f->isA.put(call, f));
+          }
+        }
+      }
+    }
+
   }
 
   private SqlNode appendAliasIfRequired(SqlNode sqlNode) {
@@ -494,6 +538,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       NamePath currentPath;
       Map<Name, NamePath> aliasPathMap;
       public boolean isNested;
+
 
       public ContextBuilder(Context context) {
         this.materializeSelf = context.materializeSelf;

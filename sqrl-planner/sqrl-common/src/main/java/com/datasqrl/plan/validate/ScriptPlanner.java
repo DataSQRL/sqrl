@@ -4,9 +4,14 @@ import static com.datasqrl.canonicalizer.ReservedName.SELF_IDENTIFIER;
 import static com.datasqrl.canonicalizer.ReservedName.VARIABLE_PREFIX;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.ModifiableTable;
+import com.datasqrl.calcite.NormalizeTablePath;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.SqrlTableFactory;
+import com.datasqrl.calcite.SqrlToSql;
+import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlJoinBuilder;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
@@ -17,7 +22,6 @@ import com.datasqrl.calcite.visitor.SqlTopLevelRelationVisitor;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
@@ -29,7 +33,9 @@ import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
-import com.datasqrl.plan.validate.SqrlToValidatorSql.Result;
+import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.rel.LogicalStream;
+import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CheckUtil;
@@ -44,17 +50,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.CalciteFixes;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlCall;
@@ -91,17 +101,21 @@ import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor
 @Getter
-public class ScriptValidator implements StatementVisitor<Void, Void> {
+public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
   private final SqrlFramework framework;
   private final QueryPlanner planner;
   private final ModuleLoader moduleLoader;
   private final ErrorCollector errorCollector;
   private final SqlNameUtil nameUtil;
+  private final SqrlTableFactory tableFactory;
+
 
   private final Map<SqrlImportDefinition, List<QualifiedImport>> importOps = new HashMap<>();
   private final Map<SqrlExportDefinition, QualifiedExport> exportOps = new HashMap<>();
@@ -167,6 +181,11 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
       }
     }
 
+    List<QualifiedImport> qualifiedImports = getImportOps().get(node);
+    if (qualifiedImports != null) {
+      qualifiedImports.forEach(i -> i.getObject().apply(i.getAlias(), framework, errorCollector));
+    }
+
     return null;
   }
 
@@ -202,7 +221,20 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
     exportOps.put(node, new QualifiedExport(path, sink.get()));
 
+    QualifiedExport export = getExportOps().get(node);
+    ModifiableTable table = planner.getCatalogReader().getTableFromPath(export.getTable())
+        .unwrap(ModifiableTable.class);
+
+    ResolvedExport resolvedExport = exportTable(table, export.getSink(), planner.getRelBuilder());
+    framework.getSchema().add(resolvedExport);
+
     return null;
+  }
+
+  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder) {
+    RelNode export = relBuilder.scan(table.getNameId())
+        .build();
+    return new ResolvedExport(table.getNameId(), export, sink);
   }
 
   @Value
@@ -239,6 +271,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     visit((SqrlAssignment) node, null);
     validateTable(node, node.getQuery(), node.getTableArgs(), materializeSelf);
+    postvisit(node, context);
+
     return null;
   }
 
@@ -295,6 +329,15 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         true);
 
     isMaterializeTable.put(node, true);
+
+    if (!errorCollector.isEmpty()) {
+      return null;
+    }
+//    NamePath path = nameUtil.toNamePath(node.getIdentifier().names).popLast();
+//    RelOptTable table = planner.getCatalogReader().getTableFromPath(path);
+    RexNode rexNode = planner.planExpression(node.getExpression(), table.get().getRowType());
+    addColumn(rexNode, Util.last(node.getIdentifier().names), table.get());
+
     return null;
   }
 
@@ -305,6 +348,64 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     visit((SqrlAssignment) node, null);
     validateTable(node, node.getQuery(), node.getTableArgs(), materializeSelf);
+
+    postvisit(node, context);
+    return null;
+  }
+
+
+  public Void postvisit(SqrlAssignment assignment, Void context) {
+    if (!errorCollector.isEmpty()) {
+      return null;
+    }
+    SqlNode node = getPreprocessSql().get(assignment);
+    boolean materializeSelf = getIsMaterializeTable().get(assignment);
+    NamePath parentPath = nameUtil.getParentPath(assignment);
+    NormalizeTablePath normalizeTablePath = new NormalizeTablePath(planner.getCatalogReader(),
+        getParamMapping(), new SqlNameUtil(planner.getFramework().getNameCanonicalizer()), errorCollector);
+    SqrlToSql sqrlToSql = new SqrlToSql(planner, planner.getCatalogReader(), planner.getOperatorTable(),
+        normalizeTablePath, getParameters().get(assignment), framework.getUniquePkId(), nameUtil);
+    SqrlToSql.Result result = sqrlToSql.rewrite(node, materializeSelf, parentPath);
+    this.isA.putAll(sqrlToSql.getIsA());
+    validateTopLevelNamed(result.getSqlNode());
+
+    RelNode relNode = planner.plan(Dialect.CALCITE, result.getSqlNode());
+    RelNode expanded = planner.expandMacros(relNode);
+
+    List<Function> isA = getIsA().get(node);
+
+    if (assignment.getTableArgs().isEmpty()) {
+      NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
+      planner.getSchema().clearFunctions(path);
+    }
+
+    if (assignment instanceof SqrlJoinQuery) {
+      List<SqrlTableMacro> isASqrl = isA.stream()
+          .map(f->((SqrlTableMacro)f))
+          .collect(Collectors.toList());
+      NamePath path = nameUtil.toNamePath(assignment.getIdentifier().names);
+
+      NamePath toTable = isASqrl.get(isASqrl.size()-1).getAbsolutePath();
+      Supplier<RelNode> nodeSupplier = ()->expanded;
+
+      Relationship rel = new Relationship(path.getLast(),
+          path, toTable, Relationship.JoinType.JOIN, Multiplicity.MANY,
+          result.getParams(), nodeSupplier);
+      planner.getSchema().addRelationship(rel);
+    } else {
+      List<String> path = assignment.getIdentifier().names;
+      RelNode rel = assignment instanceof SqrlStreamQuery
+          ? LogicalStream.create(expanded, ((SqrlStreamQuery)assignment).getType())
+          : expanded;
+
+      Optional<Supplier<RelNode>> nodeSupplier = result.getParams().isEmpty()
+          ? Optional.empty()
+          : Optional.of(()->rel);
+
+      tableFactory.createTable(path, rel, null,
+          assignment.getHints(), result.getParams(), isA,
+          materializeSelf, nodeSupplier, errorCollector);
+    }
 
     return null;
   }
@@ -346,51 +447,26 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
     this.parameters.putAll(statement, argResult.getLeft());
 
     preprocessSql.put(statement, query);
-    SqlNode sqlNode;
-    Result result;
-    SqlNode validated;
 
-    try {
-      NamePath parent = NamePath.ROOT;
-      if (statement.getIdentifier().names.size() > 1) {
-        parent = nameUtil.getParentPath(statement);
-        Collection<Function> sqrlTable = planner.getSchema()
-            .getFunctions(parent.getDisplay(), false);
-        if (sqrlTable.isEmpty()) {
-          throw addError(ErrorLabel.GENERIC, statement.getIdentifier()
-                  .getComponent(statement.getIdentifier().names.size() - 1),
-              "Could not find parent assignment table: %s",
-              parent.getDisplay());
-        }
+    NamePath parent;
+    if (statement.getIdentifier().names.size() > 1) {
+      parent = nameUtil.getParentPath(statement);
+      Collection<Function> sqrlTable = planner.getSchema()
+          .getFunctions(parent.getDisplay(), false);
+      if (sqrlTable.isEmpty()) {
+        throw addError(ErrorLabel.GENERIC, statement.getIdentifier()
+                .getComponent(statement.getIdentifier().names.size() - 1),
+            "Could not find parent assignment table: %s",
+            parent.getDisplay());
       }
+    }
 
-      SqrlToValidatorSql sqrlToSql = new SqrlToValidatorSql(planner, errorCollector, uniqueId,
-          nameUtil);
-      result = sqrlToSql.rewrite(query, parent, statement.getTableArgs().orElseGet(() ->
-          new SqrlTableFunctionDef(SqlParserPos.ZERO, List.of())));
-      this.isA.putAll(sqrlToSql.getIsA());
-
-      sqlNode = result.getSqlNode();
-      
-      validateTopLevelNamed(sqlNode);
-
-      if (statement instanceof SqrlExpressionQuery) {
-        SqlNode aggregate = ((SqrlSqlValidator) validator).getAggregate((SqlSelect) sqlNode);
-        if (aggregate != null) {
-          throw addError(ErrorLabel.GENERIC, aggregate,
-              "Aggregate functions not yet allowed");
-        }
+    if (statement instanceof SqrlExpressionQuery) {
+      SqlNode aggregate = ((SqrlSqlValidator) validator).getAggregate((SqlSelect) query);
+      if (aggregate != null) {
+        throw addError(ErrorLabel.GENERIC, aggregate,
+            "Aggregate functions not yet allowed");
       }
-
-//      validated = validator.validate(sqlNode);
-    } catch (CalciteContextException e) {
-      throw addError(ErrorLabel.GENERIC, e);
-    } catch (CollectedException e) {
-      return;
-    } catch (Exception e) {
-      e.printStackTrace();
-      addError(e, ErrorLabel.GENERIC, statement, e.getMessage());
-      return;
     }
   }
 
@@ -681,6 +757,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     preprocessSql.put(node, select);
     validateTable(node, select, node.getTableArgs(), materializeSelf);
+    postvisit(node, context);
+
     return null;
   }
 
@@ -756,6 +834,12 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     validateTable(node, node.getQuery(), node.getTableArgs(), false);
 
+
+    if (!errorCollector.isEmpty()) {
+      return null;
+    }
+
+    postvisit(node, context);
     return null;
   }
 
@@ -781,6 +865,8 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
 
     validateTable(node, node.getSelect(), Optional.empty(), false);
 
+    postvisit(node, context);
+
     return null;
   }
 
@@ -799,17 +885,41 @@ public class ScriptValidator implements StatementVisitor<Void, Void> {
         node.getAlias().map(a -> nameUtil.toNamePath(a.names))
             .orElse(nameUtil.toNamePath(node.getIdentifier().names)));
 
-    Optional<RexNode> rexNode = table.flatMap(t -> {
+    RexNode rexNode = table.flatMap(t -> {
           try {
             return Optional.of(planner.planExpression(node.getTimestamp(), t.getRowType()));
           } catch (Exception e) {
-            addError(ErrorLabel.GENERIC, node.getTimestamp(), e.getMessage());
-            return Optional.empty();
+            throw addError(ErrorLabel.GENERIC, node.getTimestamp(), e.getMessage());
           }
         }
-    );
+    ).get();
+
+    List<String> tableName = node.getAlias().orElse(node.getIdentifier()).names;
+    NamePath names = nameUtil.toNamePath(tableName);
+
+    int timestampIndex;
+    if (!(rexNode instanceof RexInputRef) && node.getTimestampAlias().isEmpty()) {
+      timestampIndex = addColumn(rexNode, ReservedName.SYSTEM_TIMESTAMP.getCanonical(), table.get());
+    } else if (node.getTimestampAlias().isPresent()) {
+      //otherwise, add new column
+      timestampIndex = addColumn(rexNode, node.getTimestampAlias().get().getSimple(), table.get());
+    } else {
+      timestampIndex = ((RexInputRef) rexNode).getIndex();
+    }
+
+    TimestampAssignableTable timestampAssignableTable = table.get().unwrap(TimestampAssignableTable.class);
+    timestampAssignableTable.assignTimestamp(timestampIndex);
 
     return null;
+  }
+
+  private int addColumn(RexNode node, String cName, RelOptTable table) {
+    if (table.unwrap(ModifiableTable.class) != null) {
+      ModifiableTable table1 = (ModifiableTable) table.unwrap(Table.class);
+      return table1.addColumn(cName, node, framework.getTypeFactory());
+    } else {
+      throw new RuntimeException();
+    }
   }
 
   private Optional<RelOptTable> resolveModifiableTable(SqlNode node, NamePath names) {

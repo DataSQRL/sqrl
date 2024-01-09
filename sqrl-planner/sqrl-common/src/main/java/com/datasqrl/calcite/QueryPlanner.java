@@ -6,7 +6,6 @@ import com.datasqrl.calcite.convert.SqlConverterFactory;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
-import com.datasqrl.calcite.plan.ScriptPlanner;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -14,7 +13,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.parse.SqrlParserImpl;
-import com.datasqrl.plan.validate.ScriptValidator;
+import com.datasqrl.plan.validate.ScriptPlanner;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.util.SqlNameUtil;
 import java.util.Arrays;
@@ -141,15 +140,12 @@ public class QueryPlanner {
     errors = errors
         .withSource("")
         .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
-    ScriptValidator scriptValidator = new ScriptValidator(this.framework,
-        this, moduleLoader, errors, sqlNameUtil);
-    scriptValidator.validateStatement(statement);
+    ScriptPlanner scriptPlanner = new ScriptPlanner(this.framework,
+        this, moduleLoader, errors, sqlNameUtil, tableFactory);
+    scriptPlanner.validateStatement(statement);
     if (errors.hasErrors()) {
       throw new RuntimeException("Could not plan");
     }
-    ScriptPlanner planner1 = new ScriptPlanner(this, scriptValidator,
-        tableFactory, framework, sqlNameUtil, errors);
-    planner1.plan(statement);
   }
 
   public RelNode plan(Dialect dialect, SqlNode query) {
