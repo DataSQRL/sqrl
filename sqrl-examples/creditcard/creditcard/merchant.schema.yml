@@ -1,0 +1,21 @@
+---
+name: "merchant"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "merchantId"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "name"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "category"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "updatedTime"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"

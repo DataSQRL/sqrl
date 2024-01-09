@@ -7,6 +7,10 @@ import com.datasqrl.util.WriterUtil;
 import com.github.javafaker.Book;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -15,6 +19,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
@@ -33,18 +39,34 @@ public class GenerateClickstream extends AbstractGenerateCommand {
 
     long numDays = Math.max(1,root.getNumber()/config.avgClicksPerDay);
     Instant startTime = getStartTime(numDays);
+    List<? extends Content> contents;
 
-    List<Content> contents = IntStream.range(0,config.numContent).mapToObj(i -> new Content(faker.book(), startTime))
-        .collect(Collectors.toList());
-    ListMultimap<Content,Content> transitionGraph = ArrayListMultimap.create();
-    for (Content current : contents) {
-      int numConnections = (int)Math.min(contents.size(),Math.max(1,Math.round(sampler.nextNormal(
-          config.avgContentConnections,
-          config.avgContentConnectionsDeviation))));
-      transitionGraph.putAll(current, sampler.withoutReplacement(numConnections, contents));
+    if (config.contentFile==null) {
+      List<BookContent> bookContents = IntStream.range(0, config.numContent)
+          .mapToObj(i -> new BookContent(faker.book(), startTime))
+          .collect(Collectors.toList());
+      WriterUtil.writeToFile(bookContents, getOutputDir().resolve(CONTENT_FILE), BookContent.header(), null);
+      contents = bookContents;
+    } else {
+      //Read from file
+      Path filePath = Paths.get(config.contentFile);
+      List<GenericContent> lines = new ArrayList<>();
+      try (Stream<String> stream = Files.lines(filePath)) {
+        lines = stream.map(GenericContent::new).collect(Collectors.toList());
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      contents = lines;
     }
 
-    WriterUtil.writeToFile(contents, getOutputDir().resolve(CONTENT_FILE), Content.header(), null);
+    ListMultimap<Content, Content> transitionGraph = ArrayListMultimap.create();
+    for (Content current : contents) {
+      int numConnections = (int) Math.min(contents.size(),
+          Math.max(1, Math.round(sampler.nextNormal(
+              config.avgContentConnections,
+              config.avgContentConnectionsDeviation))));
+      transitionGraph.putAll(current, sampler.withoutReplacement(numConnections, contents));
+    }
 
     List<User> users = IntStream.range(0,config.numUsers).mapToObj(i -> new User(sampler.nextUUID()))
         .collect(Collectors.toList());
@@ -76,8 +98,19 @@ public class GenerateClickstream extends AbstractGenerateCommand {
     }
   }
 
-  public static class Content {
+  public static interface Content {
 
+    String getUrl();
+  }
+
+  @Value
+  public static class GenericContent implements Content {
+    String url;
+  }
+
+  public static class BookContent implements Content {
+
+    @Getter
     String url;
 
     String category;
@@ -86,7 +119,7 @@ public class GenerateClickstream extends AbstractGenerateCommand {
 
     Instant updated;
 
-    public Content(Book book, Instant updated) {
+    public BookContent(Book book, Instant updated) {
       this.url = StringTransformer.toURL(book.publisher(), book.title());
       this.category = book.genre();
       this.author = book.author();
@@ -114,7 +147,7 @@ public class GenerateClickstream extends AbstractGenerateCommand {
     String userid;
 
     public Click(User user, Content content, Instant timestamp) {
-      this.url = content.url;
+      this.url = content.getUrl();
       this.userid = user.id.toString();
       this.timestamp = timestamp;
     }
@@ -144,6 +177,8 @@ public class GenerateClickstream extends AbstractGenerateCommand {
     public int avgSessionClicks = 5;
 
     public double avgSessionClicksDeviation = 1.0;
+
+    public String contentFile = null;
 
     public int numContent = 50;
 

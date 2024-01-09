@@ -15,6 +15,7 @@ import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Sensors;
+import com.datasqrl.util.data.UseCaseExample;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -172,6 +173,16 @@ public class TestCmd {
     execute(Retail.INSTANCE.getRootPackageDirectory(),
         "discover", Retail.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString());
     createSnapshot();
+  }
+
+  @Test
+  @Disabled
+  public void testIndividual() {
+    Path basePath = UseCaseExample.BASE_PATH.resolve("creditcard");
+//    execute(basePath,
+//        "discover", basePath.resolve("data").toString(), "-o", basePath.resolve("creditcard").toString());
+    execute(basePath,
+        "compile", basePath.resolve("creditcard.sqrl").toString());
   }
 
   public static int execute(Path rootDir, String... args) {
