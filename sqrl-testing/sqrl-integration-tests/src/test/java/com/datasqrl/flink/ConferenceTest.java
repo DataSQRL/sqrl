@@ -38,7 +38,7 @@ public class ConferenceTest extends AbstractGraphqlTest {
   @SneakyThrows
   @Test
   public void run() {
-    CountDownLatch countDownLatch = new CountDownLatch(2);
+    CountDownLatch countDownLatch = new CountDownLatch(1);
 
     executeMutation("mutation {\n"
         + "  Likes(liked: {\n"
