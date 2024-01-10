@@ -15,13 +15,8 @@ import com.google.common.base.Preconditions;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.JoinRelType;
-import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.tools.RelBuilder;
 
 @Value
@@ -46,7 +41,7 @@ public class DAGPreparation {
 
     //Replace default joins with inner joins for API queries
     return apiManager.getQueries().stream().map(apiQuery ->
-      new AnalyzedAPIQuery(apiQuery.getNameId(), APIQueryRewriter.rewrite(relBuilder, apiQuery.getRelNode()))
+      new AnalyzedAPIQuery(apiQuery.getNameId(), apiQuery.getRelNode())
     ).collect(Collectors.toList());
   }
 
@@ -62,28 +57,5 @@ public class DAGPreparation {
       table.getTimestamp().selectTimestamp();
     }
     Preconditions.checkArgument(!table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp());
-  }
-
-  /**
-   * Replaces default joins with inner joins
-   */
-  @AllArgsConstructor
-  private static class APIQueryRewriter extends RelShuttleImpl {
-
-    final RelBuilder relBuilder;
-
-    public static RelNode rewrite(RelBuilder relBuilder, RelNode query) {
-      APIQueryRewriter rewriter = new APIQueryRewriter(relBuilder);
-      return query.accept(rewriter);
-    }
-
-    @Override
-    public RelNode visit(LogicalJoin join) {
-      if (join.getJoinType() == JoinRelType.DEFAULT) { //replace DEFAULT joins with INNER
-        join = join.copy(join.getTraitSet(), join.getCondition(), join.getLeft(), join.getRight(),
-            JoinRelType.INNER, join.isSemiJoinDone());
-      }
-      return super.visit(join);
-    }
   }
 }

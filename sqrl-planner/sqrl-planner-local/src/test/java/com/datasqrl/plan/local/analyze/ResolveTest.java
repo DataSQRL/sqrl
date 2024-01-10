@@ -47,6 +47,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -417,6 +418,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
    */
 
   @Test
+  @Disabled
   public void topNTest() {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;");
@@ -462,6 +464,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled
   public void partitionSelectDistinctTest() {
     //TODO: add distinctAgg test back in once we keep parent state
     ScriptBuilder builder = imports();

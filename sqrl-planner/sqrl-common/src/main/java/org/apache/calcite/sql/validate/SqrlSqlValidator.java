@@ -39,9 +39,12 @@ import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 
 public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
 
+  private final SqlValidatorCatalogReader catalogReader;
+
   public SqrlSqlValidator(SqlOperatorTable opTab, SqlValidatorCatalogReader catalogReader,
       RelDataTypeFactory typeFactory, Config config) {
     super(opTab, catalogReader, typeFactory, config);
+    this.catalogReader = catalogReader;
   }
 
   protected void validateJoin(SqlJoin join, SqlValidatorScope scope) {
@@ -139,18 +142,6 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
         if ((condition == null) && !natural) {
           throw newValidationError(join, RESOURCE.joinRequiresCondition());
         }
-        break;
-      // Custom SQRL join types
-      case DEFAULT:
-      case LEFT_DEFAULT:
-      case RIGHT_DEFAULT:
-      case TEMPORAL:
-      case RIGHT_TEMPORAL:
-      case LEFT_TEMPORAL:
-      case INTERVAL:
-      case LEFT_INTERVAL:
-      case RIGHT_INTERVAL:
-      case IMPLICIT:
         break;
       case COMMA:
       case CROSS:

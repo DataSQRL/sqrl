@@ -52,8 +52,8 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqrlSqlValidator;
-import org.apache.calcite.sql2rel.RelDecorrelator;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
+import org.apache.calcite.sql2rel.SqrlRelDecorrelator;
 import org.apache.calcite.sql2rel.SqrlSqlToRelConverter;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RelBuilder;
@@ -185,7 +185,7 @@ public class QueryPlanner {
     root = sqlToRelConverter.convertQuery(sqlNode, false, true);
     final RelBuilder relBuilder = getRelBuilder();
     root = root.withRel(
-        RelDecorrelator.decorrelateQuery(root.rel, relBuilder));
+        SqrlRelDecorrelator.decorrelateQuery(root.rel, relBuilder));
 
     return root;
   }
@@ -417,7 +417,7 @@ public class QueryPlanner {
         new ExpandTableMacroRule());
 
     //Convert lateral joins
-    relNode = RelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
+    relNode = SqrlRelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
     relNode = run(relNode, CoreRules.FILTER_INTO_JOIN);
     return relNode;
   }

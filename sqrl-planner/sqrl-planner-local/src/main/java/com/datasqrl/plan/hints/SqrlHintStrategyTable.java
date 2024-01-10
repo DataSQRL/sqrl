@@ -15,6 +15,7 @@ public class SqrlHintStrategyTable {
 
   @Getter
   static HintStrategyTable hintStrategyTable = HintStrategyTable.builder()
+      .hintStrategy(JoinModifierHint.HINT_NAME, HintPredicates.JOIN)
       .hintStrategy(TopNHint.Type.DISTINCT_ON.name(), HintPredicates.PROJECT)
       .hintStrategy(TopNHint.Type.SELECT_DISTINCT.name(), HintPredicates.PROJECT)
       .hintStrategy(TopNHint.Type.TOP_N.name(), HintPredicates.PROJECT)

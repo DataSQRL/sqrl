@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.sql.JoinModifier;
 
 @Value
 @AllArgsConstructor
@@ -96,23 +97,39 @@ public class JoinAnalysis {
 
   }
 
-  public static JoinAnalysis of(JoinRelType join) {
-    switch (join) {
-      case DEFAULT: return new JoinAnalysis(Type.DEFAULT, Side.NONE);
-      case LEFT_DEFAULT: return new JoinAnalysis(Type.DEFAULT, Side.LEFT);
-      case RIGHT_DEFAULT:  return new JoinAnalysis(Type.DEFAULT, Side.RIGHT);
-      case INNER: return new JoinAnalysis(Type.INNER, Side.NONE);
-      case FULL: return new JoinAnalysis(Type.OUTER, Side.NONE);
-      case LEFT: return new JoinAnalysis(Type.OUTER, Side.LEFT);
-      case RIGHT: return new JoinAnalysis(Type.OUTER, Side.RIGHT);
-      case TEMPORAL: return new JoinAnalysis(Type.TEMPORAL, Side.NONE);
-      case LEFT_TEMPORAL: return new JoinAnalysis(Type.TEMPORAL, Side.LEFT);
-      case RIGHT_TEMPORAL: return new JoinAnalysis(Type.TEMPORAL, Side.RIGHT);
-      case INTERVAL: return new JoinAnalysis(Type.INTERVAL, Side.NONE);
-      case LEFT_INTERVAL: return new JoinAnalysis(Type.INTERVAL, Side.LEFT);
-      case RIGHT_INTERVAL: return new JoinAnalysis(Type.INTERVAL, Side.RIGHT);
-      default: throw new NotYetImplementedException("Unsupported join type: " + join);
+  public static JoinAnalysis of(JoinRelType join, JoinModifier joinModifier) {
+    Side side = determineSide(join);
+    Type joinType = determineJoinType(join, joinModifier);
+    return new JoinAnalysis(joinType, side);
+  }
+
+  private static Side determineSide(JoinRelType join) {
+    if (join == JoinRelType.LEFT) {
+      return Side.LEFT;
+    } else if (join == JoinRelType.RIGHT) {
+      return Side.RIGHT;
+    } else {
+      return Side.NONE;
     }
   }
 
+  private static Type determineJoinType(JoinRelType join, JoinModifier joinModifier) {
+    switch (joinModifier) {
+      case TEMPORAL:
+        return Type.TEMPORAL;
+      case INTERVAL:
+        return Type.INTERVAL;
+      case DEFAULT:
+        return Type.DEFAULT;
+      case OUTER:
+      case NONE:
+        if (join == JoinRelType.INNER) {
+          return Type.INNER;
+        } else {
+          return Type.OUTER;
+        }
+      default:
+        throw new NotYetImplementedException("Unsupported join modifier: " + joinModifier);
+    }
+  }
 }

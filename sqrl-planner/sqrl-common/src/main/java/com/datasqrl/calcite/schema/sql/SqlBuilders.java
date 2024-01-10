@@ -23,7 +23,6 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlUtil;
-import org.apache.calcite.sql.Symbolizable;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
@@ -61,11 +60,6 @@ public class SqlBuilders {
 
     private final SqlJoin join;
 
-    public SqlJoinBuilder() {
-      this(new SqlJoin(SqlParserPos.ZERO, null, SqlLiteral.createBoolean(false, SqlParserPos.ZERO),
-          JoinType.DEFAULT.symbol(SqlParserPos.ZERO),null,
-          JoinConditionType.NONE.symbol(SqlParserPos.ZERO),null));
-    }
     public SqlJoinBuilder(SqlJoin call) {
       this.join = new SqlJoin(SqlParserPos.ZERO,
           call.operand(0),
@@ -77,7 +71,9 @@ public class SqlBuilders {
               : call.operand(4),
           shouldAddOnCondition(call)
               ? SqlLiteral.createBoolean(true, SqlParserPos.ZERO)
-              : call.operand(5));
+              : call.operand(5),
+          call.operand(6)
+          );
     }
 
     public boolean shouldAddOnCondition(SqlJoin call) {
