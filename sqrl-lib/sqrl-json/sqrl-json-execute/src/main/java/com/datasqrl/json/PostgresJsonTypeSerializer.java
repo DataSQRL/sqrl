@@ -2,13 +2,11 @@ package com.datasqrl.json;
 
 import com.datasqrl.type.JdbcTypeSerializer;
 import com.google.auto.service.AutoService;
-import java.lang.reflect.Type;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcDeserializationConverter;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcSerializationConverter;
 import org.apache.flink.table.data.RawValueData;
-import org.apache.flink.table.data.StringData;
 import org.postgresql.util.PGobject;
 
 @AutoService(JdbcTypeSerializer.class)

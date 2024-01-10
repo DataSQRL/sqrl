@@ -30,12 +30,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 
 public class ReplaceGraphqlQueries implements
     RootVisitor<Object, Object>,

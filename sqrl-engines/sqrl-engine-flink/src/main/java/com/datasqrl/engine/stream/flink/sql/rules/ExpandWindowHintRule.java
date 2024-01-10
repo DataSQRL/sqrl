@@ -12,10 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.plan.RelRule.Config;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.core.RelFactories;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
@@ -25,15 +29,18 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
+import org.immutables.value.Value;
+import org.jetbrains.annotations.Nullable;
 
 public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
     implements TransformationRule {
 
-  public ExpandWindowHintRule() {
-    super(ExpandWindowHintRule.Config.DEFAULT);
+  public ExpandWindowHintRule(Config config) {
+    super(config);
   }
 
   @Override
@@ -199,16 +206,18 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
 
 
   /** Rule configuration. */
-  public interface Config extends RelRule.Config {
-    ExpandWindowHintRule.Config DEFAULT = EMPTY
-        .withOperandSupplier(b0 ->
+  @Value.Immutable
+  public interface ExpandWindowHintRuleConfig extends RelRule.Config {
+    ExpandWindowHintRule.Config DEFAULT = ImmutableExpandWindowHintRuleConfig.builder()
+        .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
+        .description("ExpandWindowHintRule")
+        .operandSupplier(b0 ->
             b0.operand(LogicalAggregate.class).oneInput(
                 b1 -> b1.operand(RelNode.class).anyInputs()))
-        .withDescription("ExpandWindowHintRule")
-        .as(ExpandWindowHintRule.Config.class);
+        .build();
 
     @Override default ExpandWindowHintRule toRule() {
-      return new ExpandWindowHintRule();
+      return new ExpandWindowHintRule(this);
     }
   }
 }

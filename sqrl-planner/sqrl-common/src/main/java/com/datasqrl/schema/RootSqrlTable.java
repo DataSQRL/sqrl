@@ -30,15 +30,9 @@ public class RootSqrlTable implements SqrlTableMacro {
     this.fullPath = NamePath.of(name);
   }
 
-
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
     return viewTransform.get().getRowType();
-  }
-
-  @Override
-  public Type getElementType(List<Object> list) {
-    return Object.class;
   }
 
   @Override

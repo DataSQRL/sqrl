@@ -37,10 +37,10 @@ import com.datasqrl.engine.stream.flink.sql.RelNodeToSchemaTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelNodeToTypeInformationTransformer;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.engine.stream.flink.sql.rules.ExpandTemporalJoinRule;
-import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule;
-import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule;
-import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule;
-import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule;
+import com.datasqrl.engine.stream.flink.sql.rules.ExpandWindowHintRule.ExpandWindowHintRuleConfig;
+import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule.PushDownWatermarkHintConfig;
+import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule.PushWatermarkHintToTableScanConfig;
+import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule.ShapeBushyCorrelateJoinRuleConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.io.tables.TableConfig;
@@ -432,11 +432,11 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     Program program = Programs.hep(
         List.of(
-            PushDownWatermarkHintRule.Config.DEFAULT.toRule(),
-            PushWatermarkHintToTableScanRule.Config.DEFAULT.toRule(),
+            PushDownWatermarkHintConfig.DEFAULT.toRule(),
+            PushWatermarkHintToTableScanConfig.DEFAULT.toRule(),
             new ExpandTemporalJoinRule(),
-            ExpandWindowHintRule.Config.DEFAULT.toRule(),
-            ShapeBushyCorrelateJoinRule.Config.DEFAULT.toRule()
+            ExpandWindowHintRuleConfig.DEFAULT.toRule(),
+            ShapeBushyCorrelateJoinRuleConfig.DEFAULT.toRule()
         ),
         false, FlinkDefaultRelMetadataProvider.INSTANCE());
 

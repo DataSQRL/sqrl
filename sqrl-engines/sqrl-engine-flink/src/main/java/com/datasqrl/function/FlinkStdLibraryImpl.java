@@ -21,7 +21,7 @@ public class FlinkStdLibraryImpl extends AbstractFunctionModule implements StdLi
   public static final NamePath LIB_NAME = NamePath.of("flink");
 
   private static final List<String> toExclude = List.of(
-      FlinkSqlOperatorTable.NOW.getClass().getName(), //use our NOW
+//      BuiltInFunctionDefinitions.NOW.getClass().getName(), //use our NOW
       //Provided by calcite std library
       BuiltInFunctionDefinitions.COALESCE.getName(),
       BuiltInFunctionDefinitions.JSON_VALUE.getName(),

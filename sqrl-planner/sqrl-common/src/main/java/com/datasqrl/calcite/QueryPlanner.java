@@ -6,7 +6,7 @@ import com.datasqrl.calcite.convert.SqlConverterFactory;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
-import com.datasqrl.calcite.schema.ExpandTableMacroRule;
+import com.datasqrl.calcite.schema.ExpandTableMacroRule.ExpandTableMacroConfig;
 import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
@@ -29,6 +29,7 @@ import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.linq4j.tree.ClassDeclaration;
 import org.apache.calcite.linq4j.tree.Expressions;
 import org.apache.calcite.plan.*;
+import org.apache.calcite.plan.RelRule.Config;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelNode;
@@ -410,11 +411,12 @@ public class QueryPlanner {
 
   public RelNode expandMacros(RelNode relNode) {
     //Before macro expansion, clean up the rel
+    Config expandTableMacroConfig = ExpandTableMacroConfig.DEFAULT;
     relNode = run(relNode,
         SubQueryRemoveRule.Config.PROJECT.toRule(),
         SubQueryRemoveRule.Config.FILTER.toRule(),
         SubQueryRemoveRule.Config.JOIN.toRule(),
-        new ExpandTableMacroRule());
+        (RelRule) expandTableMacroConfig.toRule());
 
     //Convert lateral joins
     relNode = SqrlRelDecorrelator.decorrelateQuery(relNode, getRelBuilder());

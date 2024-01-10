@@ -79,11 +79,6 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-h2</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-file</artifactId>
       <scope>test</scope>
     </dependency>
@@ -95,11 +90,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-print</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-sqlite</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

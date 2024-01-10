@@ -75,10 +75,6 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-h2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-jdbc</artifactId>
     </dependency>
     <dependency>
@@ -93,11 +89,6 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-print</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-sqlite</artifactId>
-    </dependency>
-
   </dependencies>
 
 

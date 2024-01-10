@@ -3,7 +3,9 @@
  */
 package com.datasqrl.calcite;
 
+import org.apache.calcite.sql.fun.SqlLibrary;
 import org.apache.calcite.sql.validate.SqlConformance;
+import org.apache.calcite.sql.validate.SqlConformanceEnum;
 
 /**
  * Defines the SQL standard conformance of the SqlParser and validator
@@ -155,4 +157,9 @@ public class SqrlConformance implements SqlConformance {
   public boolean allowQualifyingCommonColumn() {
     return false;
   }
+
+//  @Override
+//  public SqlLibrary semantics() {
+//    return SqlConformanceEnum.DEFAULT.semantics();
+//  }
 }

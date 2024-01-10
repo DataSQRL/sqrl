@@ -111,6 +111,7 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
           log.trace("Creating: " + dml);
           stmt.executeUpdate(dml);
         } catch (SQLException e) {
+          log.error("Could not execute SQL query", e);
           throw new RuntimeException("Could not execute SQL query", e);
         }
       }

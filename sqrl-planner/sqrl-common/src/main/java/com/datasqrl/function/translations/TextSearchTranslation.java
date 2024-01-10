@@ -2,9 +2,13 @@ package com.datasqrl.function.translations;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform;
+import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
 import com.datasqrl.calcite.convert.SimplePredicateTransform;
+import com.datasqrl.calcite.convert.SimplePredicateTransform.SimplePredicateTransformConfig;
 import com.datasqrl.calcite.function.RuleTransform;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.PgSpecificOperatorTable;
+import com.datasqrl.util.FunctionUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import java.util.List;
@@ -26,9 +30,8 @@ public class TextSearchTranslation implements RuleTransform {
     if (dialect != Dialect.POSTGRES) {
       return List.of();
     }
-
     return List.of(
-        new SimplePredicateTransform(operator, (rexBuilder, predicate) -> {
+        (RelRule)SimplePredicateTransformConfig.createConfig(operator, (rexBuilder, predicate) -> {
           Preconditions.checkArgument(
               predicate.isA(SqlKind.BINARY_COMPARISON) && predicate.getOperands().size() == 2,
               "Expected %s in comparison predicate but got: %s",
@@ -64,8 +67,11 @@ public class TextSearchTranslation implements RuleTransform {
               PgSpecificOperatorTable.MATCH,
               makeTsVector(rexBuilder, language, operands.subList(1,
                   operands.size())), makeTsQuery(rexBuilder, language, operands.get(0)));
-        }),
-        new SimpleCallTransform(operator, (rexBuilder, call) -> {
+        }).toRule(),
+        (RelRule)SimpleCallTransformConfig.createConfig(operator, (rexBuilder, call) -> {
+//          Preconditions.checkArgument(FunctionUtil.getSqrlFunction(call.getOperator())
+//                  .filter(fct -> fct.getFunctionName().equals(Name.system("TextSearch"))).isPresent(),
+//              "Not a valid %s predicate", getFunctionName());
           RexLiteral language = rexBuilder.getRexBuilder().makeLiteral("english");
           List<RexNode> operands = call.getOperands();
           Preconditions.checkArgument(operands.size() > 1);
@@ -74,7 +80,7 @@ public class TextSearchTranslation implements RuleTransform {
               makeTsVector(rexBuilder.getRexBuilder(), language, operands.subList(1,
                   operands.size())),
               makeTsQuery(rexBuilder.getRexBuilder(), language, operands.get(0)));
-        })
+        }).toRule()
     );
   }
 

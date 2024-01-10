@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rex.RexCall;
@@ -16,12 +17,15 @@ import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
+import org.apache.flink.table.planner.plan.rules.logical.EventTimeTemporalJoinRewriteRule;
+import org.apache.flink.table.planner.plan.rules.logical.EventTimeTemporalJoinRewriteRule.Config;
+import org.immutables.value.Value;
 
 public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
     implements TransformationRule {
 
-  public ExpandTableMacroRule() {
-    super(ExpandTableMacroRule.Config.DEFAULT);
+  public ExpandTableMacroRule(Config config) {
+    super(config);
   }
 
   @Override
@@ -51,11 +55,16 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
     }
   }
 
-  public interface Config extends RelRule.Config {
-    ExpandTableMacroRule.Config DEFAULT = EMPTY
-        .withOperandSupplier(b0 ->
+  @Value.Immutable
+  public interface ExpandTableMacroConfig extends RelRule.Config {
+    static ExpandTableMacroRule.Config DEFAULT = ImmutableExpandTableMacroConfig.builder()
+        .description("ExpandTableMacro")
+        .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
+        .operandSupplier(b0 ->
             b0.operand(LogicalTableFunctionScan.class).anyInputs())
-        .withDescription("ExpandTableMacroRule")
-        .as(ExpandTableMacroRule.Config.class);
+        .build();
+    @Override default ExpandTableMacroRule toRule() {
+      return new ExpandTableMacroRule(this);
+    }
   }
 }

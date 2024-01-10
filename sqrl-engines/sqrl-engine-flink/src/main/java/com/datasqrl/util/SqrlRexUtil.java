@@ -405,7 +405,7 @@ public class SqrlRexUtil {
   }
 
   public AggregateCall makeMaxAggCall(int colIdx, String name, int groupCount, RelNode input) {
-    return AggregateCall.create(SqlStdOperatorTable.MAX, false, false, false,
+    return AggregateCall.create(SqlStdOperatorTable.MAX, false, false,
         List.of(colIdx) , -1, RelCollations.EMPTY, groupCount, input, null, name);
   }
 
