@@ -37,7 +37,6 @@ public class ServiceHandler implements
   public static final GenericJdbcClient client = createClient();
   public static Class clazz = createClass();
   //used for native compilation
-  public static Class h2Driver = org.h2.Driver.class;
   public static Class postgres = org.postgresql.Driver.class;
   public static final GraphQL graphQL = create(client);
 

@@ -1,28 +1,36 @@
 package com.datasqrl.engine.stream.flink.sql.rules;
 
+import com.datasqrl.calcite.schema.ExpandTableMacroRule;
+import com.datasqrl.calcite.schema.ImmutableExpandTableMacroConfig;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.hints.WatermarkHint;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.plan.RelRule.Config;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalProject;
+import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.util.ImmutableBeans;
+import org.apache.calcite.tools.RelBuilderFactory;
+import org.immutables.value.Value;
+import org.jetbrains.annotations.Nullable;
 
 public class PushDownWatermarkHintRule extends RelRule<PushDownWatermarkHintRule.Config>
     implements TransformationRule {
 
-  protected PushDownWatermarkHintRule() {
-    super(PushDownWatermarkHintRule.Config.DEFAULT);
+  protected PushDownWatermarkHintRule(Config config) {
+    super(config);
   }
 
   @Override
@@ -68,26 +76,18 @@ public class PushDownWatermarkHintRule extends RelRule<PushDownWatermarkHintRule
         .collect(Collectors.toList());
   }
 
+  @Value.Immutable
+  public interface PushDownWatermarkHintConfig extends RelRule.Config {
+     PushDownWatermarkHintRule.Config DEFAULT = ImmutablePushDownWatermarkHintConfig.builder()
+         .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
+         .description("PushDownWatermarkHintRule")
+         .operandSupplier(b0 ->
+             b0.operand(LogicalProject.class).oneInput(
+                 b1 -> b1.operand(RelNode.class).anyInputs()))
+        .build();
 
-  /** Rule configuration. */
-  public interface Config extends RelRule.Config {
-    PushDownWatermarkHintRule.Config DEFAULT = EMPTY
-        .withOperandSupplier(b0 ->
-            b0.operand(LogicalProject.class).oneInput(
-                b1 -> b1.operand(RelNode.class).anyInputs()))
-        .withDescription("PushDownWatermarkHintRule")
-        .as(PushDownWatermarkHintRule.Config.class);
-
-    @Override default PushDownWatermarkHintRule toRule() {
-      return new PushDownWatermarkHintRule();
+    @Override default RelOptRule toRule() {
+      return new PushDownWatermarkHintRule(this);
     }
-
-    /** Whether to include outer joins, default false. */
-    @ImmutableBeans.Property
-    @ImmutableBeans.BooleanDefault(false)
-    boolean isIncludeOuter();
-
-    /** Sets {@link #isIncludeOuter()}. */
-    PushDownWatermarkHintRule.Config withIncludeOuter(boolean includeOuter);
   }
 }

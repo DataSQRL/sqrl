@@ -3,20 +3,26 @@ package com.datasqrl.engine.stream.flink.sql.rules;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.plan.RelRule.Config;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.RelFactories;
+import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.util.ImmutableBeans;
+import org.apache.calcite.tools.RelBuilderFactory;
+import org.immutables.value.Value;
+import org.jetbrains.annotations.Nullable;
 
 public class ShapeBushyCorrelateJoinRule extends RelRule<ShapeBushyCorrelateJoinRule.Config>
     implements TransformationRule {
 
-  protected ShapeBushyCorrelateJoinRule() {
-    super(ShapeBushyCorrelateJoinRule.Config.DEFAULT);
+  protected ShapeBushyCorrelateJoinRule(Config config) {
+    super(config);
   }
 
   @Override
@@ -49,25 +55,19 @@ public class ShapeBushyCorrelateJoinRule extends RelRule<ShapeBushyCorrelateJoin
 
 
   /** Rule configuration. */
-  public interface Config extends RelRule.Config {
-    ShapeBushyCorrelateJoinRule.Config DEFAULT = EMPTY
-        .withOperandSupplier(b0 ->
+  @Value.Immutable
+  public interface ShapeBushyCorrelateJoinRuleConfig extends RelRule.Config {
+    public ShapeBushyCorrelateJoinRule.Config DEFAULT = ImmutableShapeBushyCorrelateJoinRuleConfig.builder()
+        .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
+        .operandSupplier(b0 ->
             b0.operand(LogicalCorrelate.class).inputs(
                 b1 -> b1.operand(LogicalCorrelate.class).anyInputs(),
                 b2 -> b2.operand(RelNode.class).anyInputs()))
-        .withDescription("ShapeBushyCorrelateJoinRule")
-        .as(ShapeBushyCorrelateJoinRule.Config.class);
+        .description("ShapeBushyCorrelateJoinRule")
+        .build();
 
     @Override default ShapeBushyCorrelateJoinRule toRule() {
-      return new ShapeBushyCorrelateJoinRule();
+      return new ShapeBushyCorrelateJoinRule(this);
     }
-
-    /** Whether to include outer joins, default false. */
-    @ImmutableBeans.Property
-    @ImmutableBeans.BooleanDefault(false)
-    boolean isIncludeOuter();
-
-    /** Sets {@link #isIncludeOuter()}. */
-    ShapeBushyCorrelateJoinRule.Config withIncludeOuter(boolean includeOuter);
   }
 }

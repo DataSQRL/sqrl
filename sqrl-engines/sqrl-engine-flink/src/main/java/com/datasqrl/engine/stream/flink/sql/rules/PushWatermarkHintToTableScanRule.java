@@ -4,20 +4,24 @@ import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.hints.WatermarkHint;
 import java.util.List;
 import java.util.Optional;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.util.ImmutableBeans;
+import org.apache.calcite.tools.RelBuilderFactory;
+import org.immutables.value.Value;
+import org.jetbrains.annotations.Nullable;
 
 public class PushWatermarkHintToTableScanRule extends RelRule<PushWatermarkHintToTableScanRule.Config>
     implements TransformationRule {
 
-  protected PushWatermarkHintToTableScanRule() {
-    super(PushWatermarkHintToTableScanRule.Config.DEFAULT);
+  protected PushWatermarkHintToTableScanRule(Config config) {
+    super(config);
   }
 
   @Override
@@ -41,24 +45,18 @@ public class PushWatermarkHintToTableScanRule extends RelRule<PushWatermarkHintT
   }
 
   /** Rule configuration. */
-  public interface Config extends RelRule.Config {
-    PushWatermarkHintToTableScanRule.Config DEFAULT = EMPTY
-        .withOperandSupplier(b0 ->
+  @Value.Immutable
+  public interface PushWatermarkHintToTableScanConfig extends RelRule.Config {
+    PushWatermarkHintToTableScanRule.Config DEFAULT = ImmutablePushWatermarkHintToTableScanConfig.builder()
+        .relBuilderFactory(RelFactories.LOGICAL_BUILDER)
+        .operandSupplier(b0 ->
             b0.operand(LogicalProject.class).oneInput(
                 b1 -> b1.operand(TableScan.class).anyInputs()))
-        .withDescription("PushWatermarkHintToTableScanRule")
-        .as(PushWatermarkHintToTableScanRule.Config.class);
+        .description("PushWatermarkHintToTableScanRule")
+        .build();
 
     @Override default PushWatermarkHintToTableScanRule toRule() {
-      return new PushWatermarkHintToTableScanRule();
+      return new PushWatermarkHintToTableScanRule(this);
     }
-
-    /** Whether to include outer joins, default false. */
-    @ImmutableBeans.Property
-    @ImmutableBeans.BooleanDefault(false)
-    boolean isIncludeOuter();
-
-    /** Sets {@link #isIncludeOuter()}. */
-    PushWatermarkHintToTableScanRule.Config withIncludeOuter(boolean includeOuter);
   }
 }

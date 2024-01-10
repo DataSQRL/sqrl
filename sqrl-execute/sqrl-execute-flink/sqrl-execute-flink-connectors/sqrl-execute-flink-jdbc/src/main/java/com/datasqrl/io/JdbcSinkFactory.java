@@ -4,13 +4,16 @@
 package com.datasqrl.io;
 
 import com.datasqrl.config.FlinkSinkFactoryContext;
+import com.datasqrl.config.SinkFactory;
 import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnectorFactory;
+import com.google.auto.service.AutoService;
 import java.util.Optional;
 import org.apache.flink.connector.jdbc.table.JdbcConnectorOptions;
 import org.apache.flink.table.api.TableDescriptor;
 
+@AutoService(SinkFactory.class)
 public class JdbcSinkFactory
     implements TableDescriptorSinkFactory {
 

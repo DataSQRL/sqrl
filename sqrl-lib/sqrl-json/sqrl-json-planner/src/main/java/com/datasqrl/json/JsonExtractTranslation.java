@@ -5,6 +5,7 @@ import static com.datasqrl.function.PgSpecificOperatorTable.JsonToString;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform;
+import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
 import com.datasqrl.calcite.function.RuleTransform;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.google.auto.service.AutoService;
@@ -45,7 +46,7 @@ public class JsonExtractTranslation implements RuleTransform {
   }
 
   private List<RelRule> postgresTransform(SqlOperator operator) {
-    return List.of(new SimpleCallTransform(operator, (rexBuilder, call) -> {
+    return List.of((RelRule) SimpleCallTransformConfig.createConfig(operator, (rexBuilder, call) -> {
       List<RexNode> operands = new ArrayList<>(call.getOperands());
       if (call.getOperands().size() == 3 && call.getOperands().get(2).getType().getSqlTypeName() != SqlTypeName.NULL) {
 
@@ -75,6 +76,6 @@ public class JsonExtractTranslation implements RuleTransform {
           PG_JSONB_PATH_QUERY_FIRST, operands.subList(0, 2));
       return rexBuilder.getRexBuilder().makeCall(JsonToString, query,
           rexBuilder.getRexBuilder().makeLiteral("{}"));
-    }));
+    }).toRule());
   }
 }

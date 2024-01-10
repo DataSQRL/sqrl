@@ -23,7 +23,11 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <scope>compile</scope>
+    </dependency>
     <!-- Flink -->
     <!-- TODO: We only use calcite in this dep as the classes are not shaded and
                will break flink's in-process execution if its modified.
@@ -131,6 +135,7 @@
                   <groupId>org.apache.calcite</groupId>
                   <artifactId>calcite-core</artifactId>
                   <version>1.26.0</version>
+<!--                  <version>1.29.0</version>-->
                   <type>jar</type>
                   <overWrite>true</overWrite>
                   <outputDirectory>${project.build.directory}/</outputDirectory>

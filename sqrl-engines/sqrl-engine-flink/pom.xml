@@ -73,6 +73,11 @@
       <artifactId>testcontainers</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <scope>compile</scope>
+    </dependency>
 
     <!-- Test -->
     <dependency>

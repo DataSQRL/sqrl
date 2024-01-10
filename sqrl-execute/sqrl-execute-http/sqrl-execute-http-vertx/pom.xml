@@ -105,10 +105,6 @@
     </dependency>
 
     <!-- TODO: the drivers can be loaded by the jar assembly -->
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.postgresql</groupId>
