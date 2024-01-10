@@ -1,7 +1,6 @@
 type Query {
   CustomerTransactions(customerid: Int!, fromTime: String!, toTime: String!, limit: Int = 10, offset: Int = 0): [CustomerTransactions!]
-  CustomerSpendingByWeek(customerid: Int!, limit: Int = 10, offset: Int = 0): [CustomerSpendingByWeek!]
-  CustomerSpendingByDay(customerid: Int!, limit: Int = 10, offset: Int = 0): [CustomerSpendingByDay!]
+  CustomerSpending(customerid: Int!, fromTime: String!, toTime: String!, limit: Int = 10, offset: Int = 0): [CustomerSpending!]
 }
 
 type CustomerTransactions {
@@ -13,19 +12,7 @@ type CustomerTransactions {
   category: String!
 }
 
-interface CustomerSpending {
-  category: String!
-  spending: Float!
-}
-
-type CustomerSpendingByDay implements CustomerSpending {
-  timeDay: String!
-  category: String!
-  spending: Float!
-}
-
-type CustomerSpendingByWeek implements CustomerSpending {
-  timeWeek: String!
+type CustomerSpending {
   category: String!
   spending: Float!
 }

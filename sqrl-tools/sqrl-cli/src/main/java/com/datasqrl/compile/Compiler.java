@@ -91,7 +91,7 @@ public class Compiler {
     } else {
       Files.createDirectories(deployDir);
     }
-
+    log.info("Loading compiler configuration");
     SqrlConfig config = SqrlConfigCommons.fromFiles(errors,buildDir.resolve(
         Packager.PACKAGE_FILE_NAME));
 
@@ -117,6 +117,7 @@ public class Compiler {
     ExecutionPipeline pipeline = pipelineFactory.createPipeline();
     ErrorSink errorSink = new ErrorSink(errorTableSink);
 
+    log.info("API schema pre-analysis");
     GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(framework.getTypeFactory(),
         nameCanonicalizer);
     APIConnectorManager apiManager = new APIConnectorManagerImpl(new CalciteTableFactory(framework),
@@ -150,6 +151,7 @@ public class Compiler {
 
     errors = errors.withSchema(apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
 
+    log.info("API schema inference");
     RootGraphqlModel root;
     //todo: move
     try {
@@ -169,13 +171,14 @@ public class Compiler {
     } catch (Exception e) {
       throw errors.handle(e);
     }
-
     PhysicalDAGPlan dag = SqrlOptimizeDag.planDag(framework, pipelineFactory.createPipeline(), apiManager, root,
        false,new Debugger(debugger, moduleLoader), errors);
+    log.info("Building physical plan");
     PhysicalPlan physicalPlan = createPhysicalPlan(dag, errorTableSink, framework);
-
+    log.info("Updating GraphQL Plan");
     root = updateGraphqlPlan(framework.getQueryPlanner(), root, physicalPlan.getDatabaseQueries());
 
+    log.info("Writing artifacts");
     CompilerResult result = new CompilerResult(root, apiSchema.getSchemaDefinition(), physicalPlan);
     writeDeployArtifacts(result, deployDir);
     writeSchema(buildDir, result.getGraphQLSchema());
