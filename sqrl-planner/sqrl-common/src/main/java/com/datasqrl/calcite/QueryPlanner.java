@@ -100,8 +100,8 @@ public class QueryPlanner {
     this.planner = new VolcanoPlanner(null, Contexts.empty());
     planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
     planner.addRelTraitDef(RelCollationTraitDef.INSTANCE);
-    RelOptUtil.registerDefaultRules(planner, true, true);
-//    RelOptRules.CALC_RULES.forEach(planner::addRule);
+
+    PlannerRules.registerDefaultRules(planner, true, true);
     EnumerableRules.rules().forEach(planner::addRule);
 
     RelOptRules.MATERIALIZATION_RULES.forEach(planner::addRule);
