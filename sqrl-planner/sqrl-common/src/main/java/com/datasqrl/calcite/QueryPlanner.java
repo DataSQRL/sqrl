@@ -101,7 +101,7 @@ public class QueryPlanner {
     planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
     planner.addRelTraitDef(RelCollationTraitDef.INSTANCE);
 
-    PlannerRules.registerDefaultRules(planner, true, true);
+    PlannerRules.registerDefaultRules(planner);
     EnumerableRules.rules().forEach(planner::addRule);
 
     RelOptRules.MATERIALIZATION_RULES.forEach(planner::addRule);

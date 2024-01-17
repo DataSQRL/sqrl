@@ -40,8 +40,7 @@ public class PlannerRules {
                 CoreRules.PROJECT_TO_CALC,
                 CoreRules.CALC_MERGE,
                 CoreRules.FILTER_CALC_MERGE,
-                CoreRules.PROJECT_CALC_MERGE,
-                new RelOptRule[0]);
+                CoreRules.PROJECT_CALC_MERGE);
         BASE_RULES = ImmutableList.of(CoreRules.AGGREGATE_STAR_TABLE,
                 CoreRules.AGGREGATE_PROJECT_STAR_TABLE,
                 CoreRules.PROJECT_MERGE,
@@ -96,9 +95,9 @@ public class PlannerRules {
                 CoreRules.PROJECT_AGGREGATE_MERGE,
                 CoreRules.AGGREGATE_JOIN_TRANSPOSE,
                 CoreRules.AGGREGATE_MERGE,
-                new RelOptRule[]{CoreRules.AGGREGATE_PROJECT_MERGE,
-                        CoreRules.CALC_REMOVE,
-                        CoreRules.SORT_REMOVE});
+                CoreRules.AGGREGATE_PROJECT_MERGE,
+                CoreRules.CALC_REMOVE,
+                CoreRules.SORT_REMOVE);
         CONSTANT_REDUCTION_RULES = ImmutableList.of(CoreRules.PROJECT_REDUCE_EXPRESSIONS,
                 CoreRules.FILTER_REDUCE_EXPRESSIONS,
                 CoreRules.CALC_REDUCE_EXPRESSIONS,
@@ -117,26 +116,17 @@ public class PlannerRules {
                 MaterializedViewRules.AGGREGATE);
     }
 
-    public static void registerDefaultRules(RelOptPlanner planner, boolean enableMaterializations, boolean enableBindable) {
+    public static void registerDefaultRules(RelOptPlanner planner) {
         if (CalciteSystemProperty.ENABLE_COLLATION_TRAIT.value()) {
             registerAbstractRelationalRules(planner);
         }
 
         registerAbstractRules(planner);
         registerBaseRules(planner);
-        if (enableMaterializations) {
-            registerMaterializationRules(planner);
-        }
+        registerMaterializationRules(planner);
 
-        UnmodifiableIterator var3;
-        RelOptRule rule;
-        if (enableBindable) {
-            var3 = Bindables.RULES.iterator();
-
-            while (var3.hasNext()) {
-                rule = (RelOptRule) var3.next();
-                planner.addRule(rule);
-            }
+        for (RelOptRule relOptRule : Bindables.RULES) {
+            planner.addRule(relOptRule);
         }
 
         planner.addRule(Bindables.BINDABLE_TABLE_SCAN_RULE);
@@ -147,17 +137,12 @@ public class PlannerRules {
             planner.addRule(EnumerableRules.TO_INTERPRETER);
         }
 
-        if (enableBindable && CalciteSystemProperty.ENABLE_ENUMERABLE.value()) {
+        if (CalciteSystemProperty.ENABLE_ENUMERABLE.value()) {
             planner.addRule(EnumerableRules.TO_BINDABLE);
         }
 
-        if (CalciteSystemProperty.ENABLE_STREAM.value()) {
-            var3 = StreamRules.RULES.iterator();
-
-            while (var3.hasNext()) {
-                rule = (RelOptRule) var3.next();
-                planner.addRule(rule);
-            }
+        for (RelOptRule relOptRule : StreamRules.RULES) {
+            planner.addRule(relOptRule);
         }
 
         planner.addRule(CoreRules.FILTER_REDUCE_EXPRESSIONS);
