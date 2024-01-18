@@ -5,6 +5,7 @@ package com.datasqrl.graphql.generate;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
+import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.type.SqrlVertxScalars;
 import com.datasqrl.json.GraphqlGeneratorMapping;
 import com.datasqrl.schema.Multiplicity;
@@ -144,6 +145,7 @@ public class SchemaGeneratorUtil {
       case TIME_WITH_LOCAL_TIME_ZONE:
       case TIMESTAMP:
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+        return Optional.of(CustomScalars.DATETIME);
       case INTERVAL_YEAR:
       case INTERVAL_YEAR_MONTH:
       case INTERVAL_MONTH:

@@ -1,3 +1,6 @@
+"A basic date time"
+scalar DateTime
+
 type Package {
   name: String!
   latest(limit: Int = 10, offset: Int = 0): [Submission!]
@@ -27,7 +30,7 @@ type Submission {
   file: String!
   hash: String!
   authorid: String!
-  submissionTime: String!
+  submissionTime: DateTime!
   variant0: String!
   repoURL: String!
   keywords(limit: Int = 10, offset: Int = 0): [keywords!]
@@ -37,7 +40,7 @@ type TopicPackages {
   pkgName: String!
   topicName: String!
   numSubmissions: Float!
-  lastSubmission: String!
+  lastSubmission: DateTime!
   latest(limit: Int = 10, offset: Int = 0): [Submission!]
 }
 

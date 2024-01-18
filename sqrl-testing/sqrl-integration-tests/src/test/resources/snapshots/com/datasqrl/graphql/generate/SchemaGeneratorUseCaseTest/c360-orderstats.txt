@@ -4,10 +4,13 @@ type CustomerOrderStats {
   num_orders: Float!
 }
 
+"A basic date time"
+scalar DateTime
+
 type Orders {
   id: Float!
   customerid: Float!
-  time: String!
+  time: DateTime!
   entries(limit: Int = 10, offset: Int = 0): [entries!]
   totals(limit: Int = 10, offset: Int = 0): [totals!]
 }

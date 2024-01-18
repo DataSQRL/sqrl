@@ -1,21 +1,24 @@
+"A basic date time"
+scalar DateTime
+
 type Query {
   sensors(limit: Int = 10, offset: Int = 0): [sensors!]
   machinegroup(limit: Int = 10, offset: Int = 0): [machinegroup!]
   SecReadingByTemp(temp: Int!): [SecReadingByTemp!]
   SensorMaxTemp(sensorid: Float, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]
-  SecReading(sensorid: Float, timeSec: String, limit: Int = 10, offset: Int = 0): [SecReading!]
+  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]
   sensorreading(limit: Int = 10, offset: Int = 0): [sensorreading!]
 }
 
 type SecReading {
   sensorid: Float!
-  timeSec: String!
+  timeSec: DateTime!
   temp: Float!
 }
 
 type SecReadingByTemp {
   sensorid: Float!
-  timeSec: String!
+  timeSec: DateTime!
   temp: Float!
 }
 
@@ -27,7 +30,7 @@ type SensorMaxTemp {
 type machinegroup {
   groupId: Float!
   groupName: String!
-  created: String!
+  created: DateTime!
   machines(limit: Int = 10, offset: Int = 0): [machines!]
 }
 
@@ -38,7 +41,7 @@ type machines {
 
 type sensorreading {
   sensorid: Float!
-  time: String!
+  time: DateTime!
   temperature: Float!
   humidity: Float!
 }
@@ -46,6 +49,6 @@ type sensorreading {
 type sensors {
   id: Float!
   machineid: Float!
-  placed: String!
+  placed: DateTime!
 }
 

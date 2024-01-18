@@ -48,7 +48,7 @@ type Books {
 type CoReviews {
   previousBook_id: Float!
   nextBook_id: Float!
-  timestamp: String!
+  timestamp: DateTime!
   rating_diff: Float!
 }
 
@@ -56,8 +56,11 @@ type CoReviewsUndirected {
   book_id: Float!
   otherBook_id: Float!
   rating_diff: Float!
-  timestamp: String!
+  timestamp: DateTime!
 }
+
+"A basic date time"
+scalar DateTime
 
 type PositiveReviews {
   user_id: String!
@@ -71,7 +74,7 @@ type PositiveReviews {
   started_at: String!
   n_votes: Float!
   n_comments: Float!
-  timestamp: String!
+  timestamp: DateTime!
 }
 
 type Query {
@@ -96,7 +99,7 @@ type Reviews {
   started_at: String!
   n_votes: Float!
   n_comments: Float!
-  timestamp: String!
+  timestamp: DateTime!
 }
 
 type authors {

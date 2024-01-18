@@ -1,8 +1,11 @@
 type Click {
   url: String!
-  timestamp: String!
+  timestamp: DateTime!
   userid: String!
 }
+
+"A basic date time"
+scalar DateTime
 
 type Query {
   Trending(url: String, limit: Int = 10, offset: Int = 0): [Trending!]
@@ -25,6 +28,6 @@ type Trending {
 type VisitAfter {
   beforeURL: String!
   afterURL: String!
-  timestamp: String!
+  timestamp: DateTime!
 }
 

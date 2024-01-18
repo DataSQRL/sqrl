@@ -1,14 +1,17 @@
 type Customers {
   id: Float!
   purchases(limit: Int = 10, offset: Int = 0): [Orders!]
-  spending_by_month(month: String, limit: Int = 10, offset: Int = 0): [spending_by_month!]
+  spending_by_month(month: DateTime, limit: Int = 10, offset: Int = 0): [spending_by_month!]
 }
+
+"A basic date time"
+scalar DateTime
 
 type Orders {
   id: Float!
   customerid: Float!
   time: Float!
-  timestamp: String!
+  timestamp: DateTime!
   items(limit: Int = 10, offset: Int = 0): [items!]
   totals(limit: Int = 10, offset: Int = 0): [totals!]
 }
@@ -21,7 +24,7 @@ type Products {
   type: String!
   category: String!
   usda_id: Float!
-  updated: String!
+  updated: DateTime!
 }
 
 type Query {
@@ -42,7 +45,7 @@ type items {
 }
 
 type spending_by_month {
-  month: String!
+  month: DateTime!
   total_spend: Float!
   total_savings: Float!
   parent: Customers!

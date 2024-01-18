@@ -208,6 +208,8 @@ public class QueryPlanner {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BOOLEAN);
     } else if (datatype.equalsIgnoreCase("double")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.DOUBLE);
+    } else if (datatype.equalsIgnoreCase("datetime")) {
+      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP);
     }
 
     SqlCall sqlNode = (SqlCall) SqlParser.create(String.format("CAST(null AS %s)", datatype))

@@ -8,14 +8,17 @@ type Customer {
   email: String!
   name: String!
   lastUpdated: Float!
-  updateTime: String!
+  updateTime: DateTime!
   orders(limit: Int = 10, offset: Int = 0): [Orders!]
 }
+
+"A basic date time"
+scalar DateTime
 
 type Orders {
   id: Float!
   customerid: Float!
-  time: String!
+  time: DateTime!
   entries(limit: Int = 10, offset: Int = 0): [entries!]
   total(limit: Int = 10, offset: Int = 0): [total!]
 }
@@ -25,7 +28,7 @@ type Product {
   name: String!
   description: String!
   category: String!
-  updateTime: String!
+  updateTime: DateTime!
 }
 
 type Query {

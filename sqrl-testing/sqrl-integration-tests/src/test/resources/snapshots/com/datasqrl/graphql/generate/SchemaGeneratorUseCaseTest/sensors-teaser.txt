@@ -1,3 +1,6 @@
+"A basic date time"
+scalar DateTime
+
 type Machine {
   machineid: Float!
   maxTemp: Float!
@@ -6,13 +9,13 @@ type Machine {
 
 type MinReadings {
   sensorid: Float!
-  timeMin: String!
+  timeMin: DateTime!
   temp: Float!
 }
 
 type Query {
   Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]
-  MinReadings(sensorid: Float, timeMin: String, limit: Int = 10, offset: Int = 0): [MinReadings!]
+  MinReadings(sensorid: Float, timeMin: DateTime, limit: Int = 10, offset: Int = 0): [MinReadings!]
   machinegroup(limit: Int = 10, offset: Int = 0): [machinegroup!]
   Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]
   sensorreading(limit: Int = 10, offset: Int = 0): [sensorreading!]
@@ -21,14 +24,14 @@ type Query {
 type Sensors {
   id: Float!
   machineid: Float!
-  placed: String!
+  placed: DateTime!
   readings(limit: Int = 10, offset: Int = 0): [MinReadings!]
 }
 
 type machinegroup {
   groupId: Float!
   groupName: String!
-  created: String!
+  created: DateTime!
   machines(limit: Int = 10, offset: Int = 0): [machines!]
 }
 
@@ -39,7 +42,7 @@ type machines {
 
 type sensorreading {
   sensorid: Float!
-  time: String!
+  time: DateTime!
   temperature: Float!
   humidity: Float!
 }

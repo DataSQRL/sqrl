@@ -1,3 +1,6 @@
+"A basic date time"
+scalar DateTime
+
 type Query {
   product(limit: Int = 10, offset: Int = 0): [product!]
 }
