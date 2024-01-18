@@ -4,6 +4,7 @@
 package com.datasqrl.graphql.generate;
 
 import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import com.datasqrl.graphql.server.CustomScalars;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
@@ -45,6 +46,7 @@ public class SchemaGenerator {
     return GraphQLSchema.newSchema()
         .query(query)
         .additionalTypes(new LinkedHashSet<>(objectTypes))
+        .additionalType(CustomScalars.DATETIME)
         .build();
   }
 

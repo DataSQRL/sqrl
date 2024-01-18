@@ -1,7 +1,10 @@
+"A basic date time"
+scalar DateTime
+
 type Orders {
   id: Float!
   customerid: Float!
-  time: String!
+  time: DateTime!
   items(limit: Int = 10, offset: Int = 0): [items!]
   totals(limit: Int = 10, offset: Int = 0): [totals!]
 }
@@ -14,7 +17,7 @@ type Query {
 type Users {
   id: Float!
   purchases(limit: Int = 10, offset: Int = 0): [Orders!]
-  spending(week: String, limit: Int = 10, offset: Int = 0): [spending!]
+  spending(week: DateTime, limit: Int = 10, offset: Int = 0): [spending!]
 }
 
 type items {
@@ -27,7 +30,7 @@ type items {
 }
 
 type spending {
-  week: String!
+  week: DateTime!
   spend: Float!
   saved: Float!
   parent: Users!

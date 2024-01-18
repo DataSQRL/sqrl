@@ -2,7 +2,7 @@ type Orders {
   customerid: Float!
   entries(limit: Int = 10, offset: Int = 0): [entries!]
   id: Float!
-  time: String!
+  time: DateTime!
 }
 
 type Product {
@@ -24,4 +24,7 @@ type entries {
   quantity: Float!
   unit_price: Float!
 }
+
+"A basic date time"
+scalar DateTime
 

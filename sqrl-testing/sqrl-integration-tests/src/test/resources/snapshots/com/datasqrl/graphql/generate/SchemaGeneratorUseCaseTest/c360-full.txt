@@ -8,12 +8,15 @@ type Customer {
   email: String!
   name: String!
   lastUpdated: Float!
-  updateTime: String!
+  updateTime: DateTime!
   favorite_categories(category_name: String, limit: Int = 10, offset: Int = 0): [favorite_categories!]
   order_again(productid: Float, limit: Int = 10, offset: Int = 0): [order_again!]
   order_stats(limit: Int = 10, offset: Int = 0): [order_stats!]
   orders(limit: Int = 10, offset: Int = 0): [Orders!]
 }
+
+"A basic date time"
+scalar DateTime
 
 type NewCustomerPromotion {
   customerid: Float!
@@ -26,7 +29,7 @@ type NewCustomerPromotion {
 type Orders {
   id: Float!
   customerid: Float!
-  time: String!
+  time: DateTime!
   entries(limit: Int = 10, offset: Int = 0): [entries!]
   total(limit: Int = 10, offset: Int = 0): [total!]
 }
@@ -36,7 +39,7 @@ type Product {
   name: String!
   description: String!
   category: String!
-  updateTime: String!
+  updateTime: DateTime!
 }
 
 type Query {
@@ -69,7 +72,7 @@ type order_again {
   productid: Float!
   quantity: Float!
   num_orders: Float!
-  most_recent: String!
+  most_recent: DateTime!
   parent: Customer!
 }
 

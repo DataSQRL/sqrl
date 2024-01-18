@@ -1,3 +1,6 @@
+"A basic date time"
+scalar DateTime
+
 scalar JSON
 
 type Product {

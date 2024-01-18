@@ -1,3 +1,6 @@
+"A basic date time"
+scalar DateTime
+
 type Product {
   productid: Float!
   name: String!
