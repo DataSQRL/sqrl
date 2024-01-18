@@ -177,7 +177,6 @@ public class TestCmd {
 
   // SQRL #479 - Infinite loop replication
   @Test
-  @Disabled
   public void testCreditCardInfiniteLoop() {
     Path basePath = CC_PATH;
     execute(basePath,
