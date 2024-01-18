@@ -1,0 +1,8 @@
+type Query {
+  CustomerSpending(customerid: Int!, fromTime: String!, toTime: String!, limit: Int = 10, offset: Int = 0): [CustomerSpending!]
+}
+
+type CustomerSpending {
+  category: String!
+  spending: Float!
+}

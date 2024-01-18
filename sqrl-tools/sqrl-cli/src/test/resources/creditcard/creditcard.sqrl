@@ -1,0 +1,19 @@
+IMPORT creditcard.Merchant;
+IMPORT creditcard.Assignment AS CardAssignment;
+IMPORT creditcard.Transaction;
+IMPORT time.*;
+
+Merchant := DISTINCT Merchant ON merchantId ORDER BY updatedTime DESC;
+CardAssignment := DISTINCT CardAssignment ON cardNo ORDER BY timestamp DESC;
+
+CustomerSpendingByDay := SELECT customerid, endOfDay(time) as timeDay, category, SUM(amount) as spending
+                         FROM Transaction t
+                         JOIN CardAssignment c ON t.cardNo = c.cardNo
+                         JOIN Merchant m ON t.merchantId = m.merchantid
+                         GROUP BY customerid, timeDay, category;
+
+CustomerSpending(@customerid: BIGINT, @fromTime: TIMESTAMP, @toTime: TIMESTAMP) :=
+    SELECT category, SUM(spending) as spending
+    FROM CustomerSpendingByDay WHERE customerid = @customerid AND @fromTime <= timeDay AND @toTime > timeDay
+    GROUP BY category ORDER BY category ASC;
+

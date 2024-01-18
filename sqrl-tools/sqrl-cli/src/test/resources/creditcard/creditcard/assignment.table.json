@@ -1,0 +1,13 @@
+{
+  "format" : {
+    "name" : "json"
+  },
+  "schema" : "flexible",
+  "identifier" : "assignment",
+  "type" : "source",
+  "connector" : {
+    "name" : "file",
+    "directoryURI" : "../../sqrl-examples/creditcard/data"
+  },
+  "canonicalizer" : "system"
+}
