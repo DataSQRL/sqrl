@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -57,6 +58,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Value
+@Slf4j
 public class DAGAssembler {
 
   private final SqrlFramework framework;
@@ -73,6 +75,7 @@ public class DAGAssembler {
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
       RootGraphqlModel model, APIConnectorManager apiManager) {
     //Plan final version of all tables
+    log.info("Final Table Relnode conversion");
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();
       Preconditions.checkNotNull(stage);
@@ -111,6 +114,7 @@ public class DAGAssembler {
 
     List<PhysicalDAGPlan.StagePlan> databasePlans = new ArrayList<>();
 
+    log.info("Assembling database physical plans");
     //We want to preserve pipeline order in our iteration
     for (ExecutionStage database : Iterables.filter(pipeline.getStages(),queriesByStage::containsKey)) {
       Preconditions.checkArgument(database.getEngine().getType() == Type.DATABASE);
@@ -135,6 +139,7 @@ public class DAGAssembler {
 
       //Fill all table sinks
       //First, all the tables that need to be written to the database in normalized form
+      log.info("Building {} normalized table sinks for DB[{}]", normalizedTables.size(), database.getName());
       for (LogicalNestedTable normTable : normalizedTables) {
         RelNode scanTable = sqrlConverter.getRelBuilder().scan(normTable.getNameId()).build();
         SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBaseConfig();
@@ -150,6 +155,7 @@ public class DAGAssembler {
             processedRelnode));
       }
       //Second, all tables that need to be written in denormalized form
+      log.info("Building {} denormalized table sinks for DB[{}]", denormalizedTables.size(), database.getName());
       for (PhysicalRelationalTable denormTable : denormalizedTables) {
         RelNode processedRelnode = produceWriteTree(denormTable.getPlannedRelNode(),
                 denormTable.getTimestamp().getTimestampCandidate().getIndex());
@@ -162,10 +168,12 @@ public class DAGAssembler {
 
       //Third, pick index structures for materialized tables
       //Pick index structures for database tables based on the database queries
+      log.info("Optimizing indexes for DB[{}]", database.getName());
       IndexSelector indexSelector = new IndexSelector(framework,
           ((DatabaseEngine) database.getEngine()).getIndexSelectorConfig());
       Collection<QueryIndexSummary> queryIndexSummaries = readDAG.stream().map(indexSelector::getIndexSelection)
           .flatMap(List::stream).collect(Collectors.toList());
+      log.info("Optimizing indexes for DB[{}] with {} queries", database.getName(), queryIndexSummaries.size());
       Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(
               queryIndexSummaries)
           .keySet();

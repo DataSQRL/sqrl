@@ -2,8 +2,10 @@ package com.datasqrl.util;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.Iterables;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -70,6 +72,11 @@ public class RandomSampler {
 
   public<E> E next(List<E> elements) {
     return elements.get(nextInt(0, elements.size()));
+  }
+
+  public<E> E next(Collection<E> elements) {
+    int position = nextInt(0, elements.size());
+    return Iterables.get(elements, position);
   }
 
   public UUID nextUUID() {

@@ -16,12 +16,14 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of
  * two stages: stream and database.
  */
+@Slf4j
 public class DAGPlanner {
 
   public static SqrlDAG build(SqrlFramework framework, APIConnectorManager apiManager,
@@ -72,9 +74,11 @@ public class DAGPlanner {
       Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
       RootGraphqlModel model, ExecutionPipeline pipeline, ErrorCollector errors,
       Debugger debugger) {
-
+    log.info("Building Computational DAG");
     SqrlDAG dag = build(framework, apiManager, exports, pipeline, errors);
+    log.info("Optimizing Computational DAG");
     optimize(dag, pipeline);
+    log.info("Assemble Computational DAG");
     return assemble(dag, apiManager, jars, udfs, model, framework, new SQRLConverter(framework.getQueryPlanner().getRelBuilder()),
         pipeline, debugger, errors);
   }

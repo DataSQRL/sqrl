@@ -1,0 +1,17 @@
+---
+name: "assignment"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "customerId"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "cardNo"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "timestamp"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"
