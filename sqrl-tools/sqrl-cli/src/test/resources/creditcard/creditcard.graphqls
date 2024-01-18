@@ -1,15 +1,5 @@
 type Query {
-  CustomerTransactions(customerid: Int!, fromTime: String!, toTime: String!, limit: Int = 10, offset: Int = 0): [CustomerTransactions!]
   CustomerSpending(customerid: Int!, fromTime: String!, toTime: String!, limit: Int = 10, offset: Int = 0): [CustomerSpending!]
-}
-
-type CustomerTransactions {
-  transactionId: Float!
-  cardNo: String!
-  time: String!
-  amount: Float!
-  merchantName: String!
-  category: String!
 }
 
 type CustomerSpending {
