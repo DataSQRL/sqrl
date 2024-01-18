@@ -31,6 +31,7 @@ public class TestCmd {
 
   private static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");
   private static final Path SUBSCRIPTION_PATH = Paths.get("src/test/resources/subscriptions");
+  private static final Path CC_PATH = Paths.get("src/test/resources/creditcard");
 
   protected Path buildDir = null;
   SnapshotTest.Snapshot snapshot;
@@ -172,6 +173,15 @@ public class TestCmd {
     execute(Retail.INSTANCE.getRootPackageDirectory(),
         "discover", Retail.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString());
     createSnapshot();
+  }
+
+  // SQRL #479 - Infinite loop replication
+  @Test
+  @Disabled
+  public void testCreditCardInfiniteLoop() {
+    Path basePath = CC_PATH;
+    execute(basePath,
+        "compile", basePath.resolve("creditcard.sqrl").toString(), basePath.resolve("creditcard.graphqls").toString());
   }
 
   public static int execute(Path rootDir, String... args) {
