@@ -68,6 +68,7 @@ public class GenerateCreditCards extends AbstractGenerateCommand {
     Instant startOfDay = startTime;
     long transactionId = sampler.nextLong(100000,10000000L);
     for (int i = 0; i < numDays; i++) {
+      System.out.println("Day#" + (i+1));
       //Transactions
       List<Transaction> transactions = new ArrayList<>();
       for (String cardNo : cardAssignment.keySet()) {
@@ -187,47 +188,31 @@ public class GenerateCreditCards extends AbstractGenerateCommand {
 
     public double cardUpdateIssuanceProbability = 0.8;
 
-    public double avgTransactionPerDay = 10;
+    public double avgTransactionPerDay = 3;
 
-    public double avgTransactionPerDayDeviation = 10;
+    public double avgTransactionPerDayDeviation = 5;
 
 
 
     @Override
     public void scale(long scaleFactor, long number) {
-      numCustomers = (int)Math.min(10000000,Math.max(20, number/(86400*60)));
+      numCustomers = (int)Math.min(10000000,Math.max(numCustomers, number/(avgCardsPerCustomer*avgTransactionPerDay*1000)));
     }
   }
 
   public enum MerchantCategory {
-    Rent("Rent & Mortgage", 300, 10000),
-    Utilities("Utilities", 30, 600),
+    Housing("Housing & Utilities", 30, 3000),
     Groceries("Groceries", 7, 800),
     Restaurants("Restaurants & Dining", 15, 400),
-    Health("Health Insurance", 250, 1500),
-    CarInsurance("Car Insurance", 20, 800),
-    HomeInsurance("Home Insurance", 80, 500),
-    LifeInsurance("Life Insurance", 15, 200),
-    CarPayments("Car Payments", 150, 1200),
-    Fuel("Fuel", 25, 120),
-    PublicTransit("Public Transportation", 2, 30),
-    Home("Home Maintenance & Repair", 200, 12000),
-    CarMaintenance("Car Maintenance & Repair", 100, 5000),
-    Wellness("Health & Wellness", 30, 200),
-    Personal("Personal Care", 4, 50),
+    Health("Health & Wellness", 25, 500),
+    Transportation("Transportation", 20, 800),
     Clothing("Clothing & Apparel", 20, 500),
-    Entertainment("Entertainment", 5, 50),
-    Hobbies("Hobbies", 2, 500),
-    Education("Education", 200, 4000),
-    Childcare("Childcare", 500, 4000),
-    Pet("Pet Care", 10, 200),
-    Travel("Travel & Vacations", 400, 10000),
-    Gifts("Gifts & Donations", 10, 10000),
-    Digital("Digital Services", 2, 200),
-    Cell("Cell Phone Bill", 15, 250),
-    Internet("Internet Bill", 20, 200),
-    HomeDecor("Home Furnishing & Decor", 15, 1800),
-    Miscellaneous("Miscellaneous", 1, 2000);
+    Entertainment("Entertainment", 5, 150),
+    Education("Education", 200, 1000),
+    Childcare("Childcare", 500, 2000),
+    Travel("Travel & Vacations", 400, 1000),
+    Communication("Communication", 15, 250),
+    Miscellaneous("Miscellaneous", 1, 1000);
 
     public final String name;
     public final double min;

@@ -1,0 +1,29 @@
+---
+name: "submission"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "userid"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "title"
+  type: "STRING"
+  tests:
+    - "not_null"
+- name: "type"
+  type: "STRING"
+  tests:
+    - "not_null"
+- name: "content"
+  type: "STRING"
+  tests:
+    - "not_null"
+- name: "timestamp"
+  type: "TIMESTAMP"
+  tests:
+    - "not_null"

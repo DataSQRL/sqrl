@@ -1,0 +1,14 @@
+{
+  "type": "source",
+  "canonicalizer": "system",
+  "format": {
+    "name" : "json"
+  },
+  "name": "submission",
+  "identifier": "submission",
+  "schema": "flexible",
+  "connector" : {
+    "name" : "file",
+    "directoryURI" : "/build/repodata-files"
+  }
+}

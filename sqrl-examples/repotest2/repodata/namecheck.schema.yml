@@ -1,0 +1,13 @@
+---
+name: "submission"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "word"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "isBanned"
+  type: "BOOLEAN"
+- name: "isReserved"
+  type: "BOOLEAN"

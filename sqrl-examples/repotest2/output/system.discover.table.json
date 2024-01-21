@@ -1,0 +1,12 @@
+{
+  "type": "sink",
+  "canonicalizer": "system",
+  "format": {
+    "charset": "UTF-8",
+    "name": "json"
+  },
+  "connector": {
+    "directoryURI": "/build/output-files/",
+    "name": "file"
+  }
+}

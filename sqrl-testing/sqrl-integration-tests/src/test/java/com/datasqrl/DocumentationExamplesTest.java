@@ -52,7 +52,9 @@ public class DocumentationExamplesTest {
     @Test
     @Disabled
     public void runIndividual() {
-        compileTutorials(Sensors.INSTANCE.getRootPackageDirectory(),"patient-sensor.sqrl", "patientapi.graphqls");
+//        compileTutorials(Path.of("/Users/matthias/git/datasqrl-clinical-views/src/main/datasqrl/rave"),"mikes_clinical_views.sqrl", null);
+        compileTutorials(Path.of("../../sqrl-examples/repotest2/"),"repo.sqrl", "repoapi.graphqls");
+//        compileTutorials(Path.of("/Users/matthias/Data/datasqrl/demo/clickstream"),"recommendation.sqrl", "recommendation.graphqls");
     }
 
     public static final TestCase[] CASES = {

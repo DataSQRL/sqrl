@@ -1,0 +1,168 @@
+type Query {
+  PackageForUser(name: String!, orgids: String = ""): Package
+  Notifications(userid: String!, limit: Int = 20, offset: Int = 0): [Notification!]
+  OrganizationPackages(orgid: String!, isMember: Boolean = false): [Package!]
+
+  Search(query: String!, orgids: String = "", resultType: String = "", limit: Int = 10, offset: Int = 0): [SearchResult!]!
+  TopicPackages(topicName: String!, orgids: String = "", limit: Int = 10, offset: Int = 0): [PackageResult!]
+  PackageRecommendation(orgids: String = "", limit: Int = 10, offset: Int = 0): [PackageResult!]
+  TopicRecommendation(orgids: String = "", limit: Int = 10, offset: Int = 0): [TopicResult!]
+
+  NameCheck(name: String!): NameCheck
+}
+
+type SearchResult {
+  name: String!
+  type: String!
+  isPublic: Boolean!
+  description: String
+  score: Float!
+}
+
+interface PackageDescription {
+  name: String!
+  type: String
+  description: String
+  orgid: String!
+  isPublic: Boolean!
+}
+
+type PackageResult implements PackageDescription {
+  name: String!
+  type: String
+  description: String
+  orgid: String!
+  isPublic: Boolean!
+}
+
+type Package implements PackageDescription {
+  name: String!
+  type: String
+  description: String
+  orgid: String!
+  isPublic: Boolean!
+  latest: Submission
+  versions(version: String, variant: String, limit: Int = 10, offset: Int = 0): [Submission!]
+}
+
+type Submission implements PackageDescription {
+  name: String!
+  version: String!
+  variant: String!
+  latest: Boolean!
+  type: String
+  license: String
+  repository: String
+  homepage: String
+  documentation: String
+  readme: String
+  description: String
+  topics: [Topic!]
+  orgid: String!
+
+  uniqueId: String!
+  file: String!
+  hash: String!
+  userid: String!
+
+  submissionTime: String!
+  repoURL: String!
+}
+
+type Topic {
+  name: String!
+}
+
+type TopicResult {
+  topicName: String!
+  numPackages: Int!
+}
+
+type Notification {
+  id: String!
+  userid: String!
+  title: String!
+  """
+  The type of notification. One of 'error', 'warning', or 'information'.
+  """
+  type: String!
+  """
+  The content of the notification either in plain text or markdown syntax.
+  """
+  content: String!
+  timestamp: String!
+}
+
+type NameCheck {
+  isBanned: Boolean!
+  isReserved: Boolean!
+}
+
+type Subscription {
+  NotificationStream(userid: String!): Notification
+}
+
+type Mutation {
+  UserUpdate(user: UserUpdate!): UserUpdateEvent
+  Submission(submission: SubmissionInput!): SubmissionEvent
+  PackageAccess(update: PackageAccess!): PackageAccessEvent
+}
+
+input Membership {
+  orgid: String
+  role: String
+}
+
+input UserUpdate {
+  userid : String!
+  email: String!
+  accessProvider: String!
+  memberships: [Membership!]
+}
+
+type UserUpdateEvent {
+  userid : String!
+  _source_time: String!
+}
+
+input SubmissionInput {
+  name: String!
+  version: String!
+  variant: String!
+  latest: Boolean!
+  type: String
+  license: String
+  repository: String
+  homepage: String
+  documentation: String
+  readme: String
+  description: String
+  topics: [TopicInput!]
+  orgid: String!
+
+  uniqueId: String!
+  file: String!
+  hash: String!
+  userid: String!
+}
+
+input TopicInput {
+  name: String!
+}
+
+type SubmissionEvent {
+  uniqueId: String!
+  _source_time: String!
+}
+
+input PackageAccess {
+  name: String!
+  isPublic: Boolean!
+  userid: String!
+  orgid: String!
+}
+
+type PackageAccessEvent {
+  name: String!
+  _source_time: String!
+}

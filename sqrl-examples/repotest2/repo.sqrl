@@ -1,0 +1,104 @@
+IMPORT repodata.Submission AS StoredSubmission TIMESTAMP submissionTime;
+IMPORT repoapi.Submission AS AcceptedSubmission TIMESTAMP _source_time AS submissionTime;
+IMPORT repodata.Notification AS StoredNotification TIMESTAMP timestamp;
+IMPORT repodata.Namecheck TIMESTAMP _ingest_time;
+IMPORT repoapi.Userupdate TIMESTAMP _source_time AS updateTime;
+IMPORT repoapi.PackageAccess TIMESTAMP _source_time AS updateTime;
+IMPORT string.concat;
+IMPORT text.textsearch;
+IMPORT secure.uuid;
+
+Namecheck := SELECT word AS name, coalesce(isBanned, false) AS isBanned, coalesce(isReserved, false) AS isReserved
+             FROM NameCheck;
+Namecheck := DISTINCT Namecheck ON name ORDER BY _ingest_time DESC;
+
+NotificationStream := SELECT uuid() as id, userid,
+                             concat('Successfully published package ', name) AS title,
+                             'Your published a new version of your package' AS content,
+                             'notice' AS type,
+                             submissionTime AS timestamp
+                      FROM AcceptedSubmission;
+
+Notifications := SELECT id, userid, title, content, type, timestamp FROM NotificationStream
+                    UNION ALL
+                 SELECT id, userid, title, content, type, timestamp FROM StoredNotification
+
+EXPORT Userupdate TO output.UserUpdate; --save on disk
+
+PackageAccess := DISTINCT PackageAccess ON name ORDER BY updateTime DESC;
+
+Submission := SELECT name,  version, COALESCE(variant, 'default') AS variant, latest, type, license, repository,
+                     homepage, documentation, readme, description, topics, orgid, uniqueId, file, hash, userid,
+                     submissionTime
+              FROM StoredSubmission
+    UNION ALL
+              SELECT name,  version, COALESCE(variant, 'default') AS variant, latest, type, license, repository,
+                     homepage, documentation, readme, description, topics, orgid, uniqueId, file, hash, userid,
+                     submissionTime
+              FROM AcceptedSubmission
+
+Submission.repoURL := concat('https://repository.datasqrl.com/',file);
+
+
+
+SubmissionPackageInfo := SELECT name, type, description, topics, orgid, latest, submissionTime
+                         FROM Submission;
+
+PackageName := DISTINCT SubmissionPackageInfo ON name ORDER BY submissionTime DESC;
+
+LatestSubmissionPackageInfo := SELECT * FROM SubmissionPackageInfo WHERE latest = TRUE;
+
+LatestPackageInfo := DISTINCT LatestSubmissionPackageInfo ON name ORDER BY submissionTime DESC;
+
+-- exec(STREAMS)
+Package := SELECT n.name, n.orgid,
+                      coalesce(l.type, n.type) AS type,
+                      coalesce(l.description, n.description) AS description,
+                      coalesce(a.isPublic, false) AS isPublic,
+                  n.submissionTime AS lastUpdated
+               FROM PackageName n
+               LEFT JOIN LatestPackageInfo l ON n.name = l.name
+               LEFT JOIN PackageAccess a ON n.name = a.name
+
+Package._searchText := concat(name, ' ', description);
+
+Package.latest := JOIN Submission s ON @.name = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC;
+Package.versions := JOIN Submission s ON @.name = s.name ORDER BY s.submissionTime DESC;
+
+PackageForUser(@name: STRING, @orgids: STRING) := SELECT * FROM Package
+    WHERE name = @name AND ((isPublic IS TRUE) OR (@orgids LIKE CONCAT('%', orgid, '%')));
+
+OrganizationPackages(@orgid: STRING, @isMember: BOOLEAN) := SELECT * FROM Package
+    WHERE orgid = @orgid AND (@isMember IS TRUE OR isPublic IS TRUE);
+
+SubmissionTopics := SELECT s.name, s.orgid, t.name as topicName, s.submissionTime
+                    FROM Submission s JOIN s.topics t;
+
+PackageTopics := DISTINCT SubmissionTopics ON name, topicName ORDER BY submissionTime DESC;
+
+--exec(STREAMS)
+PackageTopicsInfo := SELECT t.*, p.isPublic, p.type, p.description
+                     FROM PackageTopics t
+                     INNER JOIN Package p ON t.name = p.name AND t.orgid = p.orgid;
+
+--exec(STREAMS)
+TopicResult := SELECT topicName, count(1) AS numPackages
+                    FROM PackageTopicsInfo WHERE isPublic IS TRUE GROUP BY topicName;
+
+TopicRecommendation(@orgids: STRING) := SELECT * FROM TopicResult ORDER BY numPackages DESC;
+
+PackageRecommendation(@orgids: STRING) := SELECT * FROM Package WHERE isPublic IS TRUE ORDER BY lastUpdated DESC;
+
+TopicPackages(@topicName: STRING, @orgids: STRING) := SELECT * FROM PackageTopicsInfo
+    WHERE topicName = @topicName AND (isPublic IS TRUE OR @orgids LIKE CONCAT('%', orgid, '%'))
+
+Search(@query: STRING, @orgids: STRING) := SELECT * FROM (
+    SELECT topicName AS name, 'topic' AS type, TRUE AS isPublic,
+            CONCAT('The topic named ', topicName) AS description,
+            textsearch(@query, topicName) AS score
+     FROM TopicResult WHERE textsearch(@query, topicName)>0
+     UNION ALL
+    SELECT name, type, isPublic, description, textsearch(@query, _searchText) AS score
+     FROM Package WHERE textsearch(@query, _searchText) >0
+                        AND (isPublic IS TRUE OR @orgids LIKE CONCAT('%', orgid, '%'))
+) ORDER BY score DESC;
