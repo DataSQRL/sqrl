@@ -12,7 +12,7 @@ type Customer {
   orders(limit: Int = 10, offset: Int = 0): [Orders!]
 }
 
-"A basic date time"
+"An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
 
 type Orders {

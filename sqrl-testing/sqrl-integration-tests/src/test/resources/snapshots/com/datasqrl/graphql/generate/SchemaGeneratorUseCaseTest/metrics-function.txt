@@ -1,4 +1,4 @@
-"A basic date time"
+"An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
 
 type Query {
