@@ -60,6 +60,10 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"--nolookup"}, description = "Do not look up package dependencies in the repository",
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
+
+  @CommandLine.Option(names = {"-p", "--profile"}, description = "An alternative set of configuration values which override the default package.json")
+  protected String[] profiles = new String[0];
+
   private boolean kafkaStarted;
 
   protected AbstractCompilerCommand(boolean execute, boolean startGraphql, boolean startKafka) {
@@ -96,7 +100,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   protected Pair<Packager, Path> createPackager(SqrlConfig config, ErrorCollector errors) {
-    Packager packager = PackagerUtil.create(root.rootDir, files, config, errors);
+    Packager packager = PackagerUtil.create(root.rootDir, files, profiles,config, errors);
     packager.cleanUp();
     Path path = packager.populateBuildDir(!noinfer);
     return Pair.of(packager, path);

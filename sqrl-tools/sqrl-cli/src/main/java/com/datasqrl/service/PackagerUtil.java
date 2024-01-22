@@ -37,18 +37,19 @@ import org.apache.flink.configuration.TaskManagerOptions;
 public class PackagerUtil {
 
   @SneakyThrows
-  public static Packager create(Path rootDir, Path[] files, SqrlConfig config,
-      ErrorCollector errors) {
+  public static Packager create(Path rootDir, Path[] files, String[] profiles,
+      SqrlConfig config, ErrorCollector errors) {
     errors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
-    PackagerConfig packagerConfig = createPackageConfig(files, rootDir, config);
+    PackagerConfig packagerConfig = createPackageConfig(files, rootDir, profiles, config);
     return packagerConfig.getPackager(errors);
   }
 
   protected static PackagerConfig createPackageConfig(Path[] files, Path rootDir,
-      SqrlConfig config) {
+      String[] profiles, SqrlConfig config) {
     PackagerConfig.PackagerConfigBuilder pkgBuilder =
         PackagerConfig.builder()
             .rootDir(rootDir)
+            .profiles(profiles)
             .config(config)
             .mainScript(files[0]);
     if (files.length > 1) {

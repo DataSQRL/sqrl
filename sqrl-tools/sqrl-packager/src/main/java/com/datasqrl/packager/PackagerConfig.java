@@ -26,6 +26,7 @@ public class PackagerConfig {
   Path mainScript;
   Path graphQLSchemaFile;
   SqrlConfig config;
+  String[] profiles;
 
   Repository repository;
 
@@ -33,7 +34,7 @@ public class PackagerConfig {
     checkRequiredArguments(errors);
     Repository repository = getRepository(errors);
     updateScriptConfig(errors);
-    return new Packager(repository, rootDir, config, errors);
+    return new Packager(repository, rootDir, config, profiles, errors);
   }
 
   private void checkRequiredArguments(ErrorCollector errors) {

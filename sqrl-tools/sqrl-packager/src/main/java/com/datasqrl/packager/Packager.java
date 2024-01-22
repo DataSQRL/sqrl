@@ -7,8 +7,8 @@ import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.canonicalizer.NamePath;
@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,16 +66,19 @@ public class Packager {
   SqrlConfig config;
   ErrorCollector errors;
   Path buildDir;
+  String[] profiles;
 
   public Packager(@NonNull Repository repository, @NonNull Path rootDir,
       @NonNull SqrlConfig config,
+      String[] profiles,
       @NonNull ErrorCollector errors) {
+    this.profiles = profiles;
     Preconditions.checkArgument(Files.isDirectory(rootDir));
     this.repository = repository;
     this.rootDir = rootDir;
     this.buildDir = rootDir.resolve(BUILD_DIR_NAME);
-    this.config = config;
     this.errors = errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_FILE_NAME));
+    this.config = handleProfileConfigs();
   }
 
   public Path populateBuildDir(boolean inferDependencies) {
@@ -96,6 +100,27 @@ public class Packager {
     } catch (IOException e) {
       throw errors.handle(e);
     }
+  }
+
+  private SqrlConfig handleProfileConfigs() {
+    List<Path> configFiles = new ArrayList<>();
+    // Add the base config file
+    configFiles.add(rootDir.resolve(PACKAGE_FILE_NAME));
+
+    // Add profile config files
+    for (String profile : profiles) {
+      Path profilePath = rootDir.resolve(profile).resolve(PACKAGE_FILE_NAME);
+      if (Files.isRegularFile(profilePath)) {
+        configFiles.add(profilePath);
+      } else {
+        // Handle error or log missing profile config
+        errors.handle(new IOException("Profile config not found: " + profile));
+      }
+    }
+
+    // Merge all configurations
+    return SqrlConfigCommons.fromFiles(errors, configFiles.get(0),
+        configFiles.subList(1, configFiles.size()).toArray(new Path[0]));
   }
 
   private void createBuildDir() throws IOException {
