@@ -2,6 +2,7 @@ package com.datasqrl.graphql.server;
 
 import graphql.Scalars;
 import graphql.language.StringValue;
+import graphql.scalars.datetime.DateTimeScalar;
 import graphql.schema.Coercing;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
@@ -42,24 +43,5 @@ public class CustomScalars {
       .build();
 
 
-  public static final GraphQLScalarType DATETIME = GraphQLScalarType.newScalar()
-      .name("DateTime")
-      .description("A basic date time")
-      .coercing(new Coercing() {
-        @Override
-        public Object serialize(Object dataFetcherResult) {
-          return Scalars.GraphQLString.getCoercing().serialize(dataFetcherResult);
-        }
-
-        @Override
-        public Object parseValue(Object input) {
-          return OffsetDateTime.parse(((StringValue)input).getValue());
-        }
-
-        @Override
-        public Object parseLiteral(Object input) {
-          return OffsetDateTime.parse(((StringValue)input).getValue());
-        }
-      })
-      .build();
+  public static final GraphQLScalarType DATETIME = DateTimeScalar.INSTANCE;
 }
