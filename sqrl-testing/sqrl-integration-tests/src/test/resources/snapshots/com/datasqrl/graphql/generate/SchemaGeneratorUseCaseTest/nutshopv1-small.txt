@@ -4,7 +4,7 @@ type Customers {
   spending_by_month(month: DateTime, limit: Int = 10, offset: Int = 0): [spending_by_month!]
 }
 
-"A basic date time"
+"An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
 
 type Orders {
