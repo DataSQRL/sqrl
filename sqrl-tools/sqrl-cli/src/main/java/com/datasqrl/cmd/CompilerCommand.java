@@ -8,8 +8,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "compile", description = "Compiles an SQRL script and produces all build artifacts")
 public class CompilerCommand extends AbstractCompilerCommand {
 
-  protected CompilerCommand() {
-    super(false, false, false);
+  public CompilerCommand() {
+    super(CompileTarget.COMPILE);
   }
-
 }

@@ -1,10 +1,30 @@
-package com.datasqrl.compile;
+package com.datasqrl.packager.postprocess;
 
-import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
-public class DockerCompose {
+@Slf4j
+public class DockerPostprocessor implements Postprocessor {
+
+  //Writes a dockercompose.yml
+  @Override
+  public void process(ProcessorContext context) {
+    addDockerCompose(context.getMountDir(), context.getTargetDir());
+  }
+
+  protected void addDockerCompose(Optional<Path> mountDir, Path targetDir) {
+    String yml = getYml(mountDir);
+    Path toFile = targetDir.resolve("docker-compose.yml");
+    try {
+      Files.createDirectories(targetDir);
+      Files.writeString(toFile, yml);
+    } catch (Exception e) {
+      log.error("Could not copy docker-compose file.");
+      throw new RuntimeException(e);
+    }
+  }
 
   public static String getYml(Optional<Path> mountDir) {
     String volumneMnt = ""
@@ -103,35 +123,5 @@ public class DockerCompose {
         + "      - ./submit-flink-job.sh:/submit-flink-job.sh\n"
         + "    entrypoint: /submit-flink-job.sh\n"
         + "\n";
-  }
-
-  public static String getInitFlink() {
-    return "#!/bin/bash\n"
-        + "\n"
-        + "# Copy the JAR file to the plugins directory\n"
-        + "mkdir -p /opt/flink/plugins/s3-fs-presto\n"
-        + "cp /opt/flink/opt/flink-s3-fs-presto-1.16.1.jar /opt/flink/plugins/s3-fs-presto/\n"
-        + "# Execute the passed command\n"
-        + "exec /docker-entrypoint.sh \"$@\"\n";
-  }
-  public static String getFlinkExecute() {
-    return "#!/bin/sh\n"
-        + "\n"
-        + "while ! curl -s http://flink-jobmanager:8081/overview | grep -q '\"taskmanagers\":1'; do\n"
-        + "  echo 'Waiting for Flink JobManager REST API...';\n"
-        + "  sleep 5;\n"
-        + "done;\n"
-        + "echo 'Submitting Flink job...';\n"
-        + "upload_response=$(curl -X POST -H \"Expect:\" -F \"jarfile=@flink-job.jar\" http://flink-jobmanager:8081/jars/upload);\n"
-        + "echo \"$upload_response\";\n"
-        + "jar_id=$(echo \"$upload_response\" | jq -r '.filename');\n"
-        + "echo \"$jar_id\";\n"
-        + "filename=$(echo \"$jar_id\" | awk -F'/' '{print $NF}');\n"
-        + "sleep 3;\n"
-        + "echo \"$filename\"\n"
-        + "echo \"curl -X POST \"http://flink-jobmanager:8081/jars/${filename}/run\";\";\n"
-        + "post_response=$(curl -X POST \"http://flink-jobmanager:8081/jars/${filename}/run\");\n"
-        + "echo \"$post_response\";\n"
-        + "echo 'Job submitted.'";
   }
 }

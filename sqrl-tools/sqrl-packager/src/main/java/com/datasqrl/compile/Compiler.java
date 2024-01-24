@@ -93,7 +93,7 @@ public class Compiler {
     }
 
     SqrlConfig config = SqrlConfigCommons.fromFiles(errors,buildDir.resolve(
-        Packager.PACKAGE_FILE_NAME));
+        Packager.PACKAGE_JSON));
 
     CompilerConfiguration compilerConfig = CompilerConfiguration.fromRootConfig(config);
     PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);

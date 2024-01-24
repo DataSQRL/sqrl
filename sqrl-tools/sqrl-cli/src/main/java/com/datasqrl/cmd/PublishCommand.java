@@ -1,5 +1,7 @@
 package com.datasqrl.cmd;
 
+import static com.datasqrl.packager.Packager.DEFAULT_PACKAGE;
+
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.NotYetImplementedException;
@@ -27,14 +29,14 @@ public class PublishCommand extends AbstractCommand {
     private boolean toRemote = false;
 
     @Override
-    protected void runCommand(ErrorCollector errors) throws IOException {
+    protected void execute(ErrorCollector errors) throws IOException {
         if (toRemote) NotYetImplementedException.trigger("Publishing to remote repository is not yet supported");
 
         Path packageRoot = root.rootDir;
-        Optional<List<Path>> packageConfigsOpt = PackagerUtil.findRootPackageFiles(root);
-        errors.checkFatal(packageConfigsOpt.isPresent(),"Directory does not contain [%s] package configuration file", Packager.PACKAGE_FILE_NAME);
-        List<Path> packageconfigs = packageConfigsOpt.get();
-        Path defaultPkgConfig = packageRoot.resolve(PackagerUtil.DEFAULT_PACKAGE);
+//        Optional<List<Path>> packageConfigsOpt = PackagerUtil.findRootPackageFiles(root.rootDir, root.packageFiles);
+//        errors.checkFatal(packageConfigsOpt.isPresent(),"Directory does not contain [%s] package configuration file", Packager.PACKAGE_FILE_NAME);
+        List<Path> packageconfigs = null;//packageConfigsOpt.get();
+        Path defaultPkgConfig = packageRoot.resolve(DEFAULT_PACKAGE);
 
         LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors);
         Publisher publisher = new Publisher(errors);

@@ -1,0 +1,10 @@
+{
+  "engines" : {
+    "streams" : {
+      "name" : "flink",
+      "taskmanager.memory.network.max" : "256mb",
+      "taskmanager.memory.network.min" : "256mb",
+      "taskmanager.memory.managed.size" : "256mb"
+    }
+  }
+}

@@ -5,6 +5,7 @@ package com.datasqrl.cmd;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.DataDiscovery;
 import com.datasqrl.discovery.DataDiscoveryFactory;
 import com.datasqrl.discovery.TableWriter;
@@ -18,9 +19,9 @@ import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.service.PackagerUtil;
+import com.datasqrl.packager.Packager;
 import com.google.common.base.Stopwatch;
-import org.apache.flink.connector.file.table.FileSystemConnectorOptions;
+import java.util.Optional;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class DiscoverCommand extends AbstractCommand {
   private long maxExecutionTimeSec = MAX_EXECUTION_TIME_DEFAULT_SEC;
 
   @Override
-  protected void runCommand(ErrorCollector errors) throws IOException {
+  protected void execute(ErrorCollector errors) throws IOException {
     errors.checkFatal(!statistics, ErrorCode.NOT_YET_IMPLEMENTED, "Statistics generation not yet supported");
     TableConfig discoveryConfig = null;
     if (inputFile != null && Files.isRegularFile(inputFile)) {
@@ -67,8 +68,11 @@ public class DiscoverCommand extends AbstractCommand {
       statistics = false;
     }
 
-    SqrlConfig config = PackagerUtil.getOrCreateDefaultConfiguration(root, errors,
-                ()-> PackagerUtil.createEmbeddedConfig(root.rootDir, errors));
+    //check package json, or use embedded config
+    SqrlConfig config = Packager.findPackageFile(root.rootDir, this.root.packageFiles)
+        .map(p -> SqrlConfigCommons.fromFiles(errors, p))
+        .orElseGet(()->Packager.createEmbeddedConfig(root.rootDir, errors));
+
     DataDiscovery discovery = DataDiscoveryFactory.fromConfig(config,errors);
 
     //Setup output directory to write to

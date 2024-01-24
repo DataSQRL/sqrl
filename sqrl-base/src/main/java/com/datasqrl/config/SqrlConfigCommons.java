@@ -295,6 +295,10 @@ public class SqrlConfigCommons implements SqrlConfig {
     return new SqrlConfigCommons(errors,null,config,"");
   }
 
+  public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull List<Path> files) {
+    return fromFiles(errors, files.get(0),
+        files.subList(1, files.size()).toArray(new Path[0]));
+  }
   public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull Path firstFile, Path... otherFiles) {
     Configurations configs = new Configurations();
     Configuration resultconfig;

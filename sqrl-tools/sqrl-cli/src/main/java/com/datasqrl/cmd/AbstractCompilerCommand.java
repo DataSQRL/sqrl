@@ -3,44 +3,35 @@
  */
 package com.datasqrl.cmd;
 
+import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
+
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.Compiler.CompilerResult;
-import com.datasqrl.compile.DockerCompose;
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.engine.ExecutionEngine.Type;
-import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.PhysicalPlanExecutor;
-import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.service.PackagerUtil;
+import com.datasqrl.packager.repository.CompositeRepositoryImpl;
+import com.datasqrl.packager.repository.LocalRepositoryImplementation;
+import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
+import com.datasqrl.packager.repository.Repository;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-
-import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 @Slf4j
 public abstract class AbstractCompilerCommand extends AbstractCommand {
-
   public static final Path DEFAULT_DEPLOY_DIR = Path.of("build", "deploy");
-  protected final boolean execute;
-  protected final boolean startGraphql;
+
+  private final CompileTarget target;
 
   @CommandLine.Parameters(arity = "1..2", description = "Main script and (optional) API specification")
   protected Path[] files;
@@ -64,65 +55,74 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Option(names = {"-p", "--profile"}, description = "An alternative set of configuration values which override the default package.json")
   protected String[] profiles = new String[0];
 
-  private boolean kafkaStarted;
-
-  protected AbstractCompilerCommand(boolean execute, boolean startGraphql, boolean startKafka) {
-    this.execute = execute;
-    this.startGraphql = startGraphql;
-    this.startKafka = startKafka;
+  public AbstractCompilerCommand(CompileTarget target) {
+    this.target = target;
   }
 
-  public void runCommand(ErrorCollector errors) {
-    setupTargetDir();
+  public void execute(ErrorCollector errors) {
+    errors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
-    DefaultConfigSupplier configSupplier = new DefaultConfigSupplier(errors);
-    SqrlConfig config = initializeConfig(configSupplier, errors);
-    Pair<Packager, Path> packager = createPackager(config, errors);
+    Path mainScript = files[0];
+    Path graphQLSchemaFile = null;
+    if (files.length > 1) {
+      graphQLSchemaFile = files[1];
+    }
+
+    if (profiles.length == 0) { //setup profiles from target
+      switch (target) {
+        case VALIDATE:
+        case COMPILE:
+          // create default docker profile
+          profiles = new String[]{"compile"};
+          break;
+        case RUN:
+          profiles = new String[]{"run"};
+          // create initial profile
+          break;
+      }
+    } else { // profile specified, run validation
+      if (target == CompileTarget.RUN) {
+        throw new RuntimeException("Cannot specify run target with profiles");
+      }
+    }
+
+    Path rootDir = root.rootDir;
+    Path script = root.rootDir.resolve(mainScript);
+    Path graphql = graphQLSchemaFile == null ? null : root.rootDir.resolve(graphQLSchemaFile);
+    List<Path> packageFiles = root.packageFiles;
+
+    //Todo: the graphql file can be missing for configurations with no database
+    Packager packager = new Packager(createRepository(errors), rootDir, script, packageFiles,
+        graphql, profiles, Optional.ofNullable(mountDirectory), errors);
+
+    Path path = packager.preprocess(!noinfer);
+
     if (errors.hasErrors()) {
       return;
     }
-    Compiler.CompilerResult result = compilePackage(packager.getRight(), errors);
-    if (errors.hasErrors()) {
-      return;
-    }
 
-    postCompileActions(configSupplier, packager.getLeft(), result, errors);
-  }
-
-  protected void setupTargetDir() {
-    if (DEFAULT_DEPLOY_DIR.equals(targetDir)) {
-      targetDir = root.rootDir.resolve(targetDir);
-    }
-  }
-
-  protected SqrlConfig initializeConfig(DefaultConfigSupplier configSupplier, ErrorCollector errors) {
-    return PackagerUtil.getOrCreateDefaultConfiguration(root, errors, configSupplier);
-  }
-
-  protected Pair<Packager, Path> createPackager(SqrlConfig config, ErrorCollector errors) {
-    Packager packager = PackagerUtil.create(root.rootDir, files, profiles,config, errors);
-    packager.cleanUp();
-    Path path = packager.populateBuildDir(!noinfer);
-    return Pair.of(packager, path);
-  }
-
-  protected Compiler.CompilerResult compilePackage(Path packageFilePath, ErrorCollector errors) {
     Compiler compiler = new Compiler();
-    Preconditions.checkArgument(Files.isRegularFile(packageFilePath));
-    return compiler.run(errors, packageFilePath.getParent(), debug, targetDir);
+    Preconditions.checkArgument(Files.isRegularFile(path));
+
+    Compiler.CompilerResult result = compiler.run(errors, path.getParent(), debug, getTargetDir());
+
+    if (errors.hasErrors()) {
+      return;
+    }
+
+    if (isGenerateGraphql()) {
+      addGraphql(rootDir.resolve(Packager.BUILD_DIR_NAME), root.rootDir);
+   }
+
+    postprocess(packager, result, getTargetDir(), errors);
   }
 
-  protected void postCompileActions(DefaultConfigSupplier configSupplier, Packager packager,
-      CompilerResult result, ErrorCollector errors) {
-    if (configSupplier.usesDefault) {
-      addDockerCompose(Optional.ofNullable(mountDirectory));
-      addFlinkExecute();
-      addInitFlink();
-    }
-    if (isGenerateGraphql()) {
-      addGraphql(packager.getBuildDir(), packager.getRootDir());
-    }
+  protected void postprocess(Packager packager, CompilerResult result, Path targetDir,
+      ErrorCollector errors) {
+    // Also add mnt directory
+    packager.postprocess(result, getTargetDir());
   }
+
 
   protected boolean isGenerateGraphql() {
     if (generateAPI != null) {
@@ -137,91 +137,22 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME));
   }
 
-  //Adds in regardless
-  protected void addDockerCompose(Optional<Path> mountDir) {
-    String yml = DockerCompose.getYml(mountDir);
-    Path toFile = targetDir.resolve("docker-compose.yml");
-    try {
-      Files.createDirectories(targetDir);
-      Files.writeString(toFile, yml);
-    } catch (Exception e) {
-      log.error("Could not copy docker-compose file.");
-      throw new RuntimeException(e);
+  private Path getTargetDir() {
+    if (DEFAULT_DEPLOY_DIR.equals(targetDir)) {
+      return root.rootDir.resolve(targetDir);
     }
+    return targetDir;
   }
 
-  protected void addFlinkExecute() {
-    String content = DockerCompose.getFlinkExecute();
-    copyExecutableFile("submit-flink-job.sh", content);
+  protected Repository createRepository(ErrorCollector errors) {
+    LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors);
+    //TODO: read remote repository URLs from configuration?
+    RemoteRepositoryImplementation remoteRepo = new RemoteRepositoryImplementation();
+    remoteRepo.setCacheRepository(localRepo);
+    return new CompositeRepositoryImpl(List.of(localRepo, remoteRepo));
   }
 
-  protected void addInitFlink() {
-    String content = DockerCompose.getInitFlink();
-    copyExecutableFile("init-flink.sh", content);
-  }
-
-  protected void copyExecutableFile(String fileName, String content) {
-    Path toFile = targetDir.resolve(fileName);
-    try {
-      Files.createDirectories(targetDir);
-      Files.writeString(toFile, content);
-
-      Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxr-xr-x");
-      Files.setPosixFilePermissions(toFile, perms);
-
-    } catch (Exception e) {
-      log.error("Could not copy flink executor file.");
-      throw new RuntimeException(e);
-    }
-  }
-
-  protected Supplier<SqrlConfig> getDefaultConfig(boolean startKafka, ErrorCollector errors) {
-    if (startKafka) {
-      startKafka();
-      return ()->PackagerUtil.createLocalConfig(CLUSTER.bootstrapServers(), errors);
-    }
-
-    //Generate docker config
-    return ()->PackagerUtil.createDockerConfig(root.rootDir, targetDir, errors);
-  }
-
-  protected class DefaultConfigSupplier implements Supplier<SqrlConfig> {
-
-    boolean usesDefault = false;
-    final ErrorCollector errors;
-
-    protected DefaultConfigSupplier(ErrorCollector errors) {
-      this.errors = errors;
-    }
-
-    @Override
-    public SqrlConfig get() {
-      usesDefault = true;
-      return PackagerUtil.createDockerConfig(root.rootDir, targetDir, errors);
-    }
-  }
-
-  private void startKafka() {
-    //We're generating an embedded config, start the cluster
-    try {
-      if (!kafkaStarted) {
-        CLUSTER.start();
-      }
-      this.kafkaStarted = true;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @SneakyThrows
-  protected void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
-    Predicate<ExecutionStage> stageFilter = s -> true;
-    if (!startGraphql) stageFilter = s -> s.getEngine().getType()!= Type.SERVER;
-    PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
-    PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
-    result.get().get();
-
-    // Hold java open if service is not long running
-    System.in.read();
+  public enum CompileTarget {
+    RUN, COMPILE, VALIDATE
   }
 }

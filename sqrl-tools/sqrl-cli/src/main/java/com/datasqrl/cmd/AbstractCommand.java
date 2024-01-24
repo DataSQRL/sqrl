@@ -9,7 +9,6 @@ import com.datasqrl.error.ErrorPrinter;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import picocli.CommandLine;
 import picocli.CommandLine.IExitCodeGenerator;
 
@@ -18,16 +17,13 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
 
   @CommandLine.ParentCommand
   protected RootCommand root;
-  EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
-  protected boolean startKafka;
   public AtomicInteger exitCode = new AtomicInteger(0);
-
 
   @SneakyThrows
   public void run() {
     ErrorCollector collector = ErrorCollector.root();
     try {
-      runCommand(collector);
+      execute(collector);
       root.statusHook.onSuccess();
     } catch (CollectedException e) {
       if (e.isInternalError()) e.printStackTrace();
@@ -36,10 +32,6 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
       collector.getCatcher().handle(e);
       e.printStackTrace();
       root.statusHook.onFailure(e, collector);
-    } finally {
-      if (CLUSTER != null && startKafka) {
-        CLUSTER.stop();
-      }
     }
     if (!collector.isEmpty()) {
       if (collector.hasErrors()) exitCode.set(1);
@@ -47,7 +39,7 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
     }
   }
 
-  protected abstract void runCommand(ErrorCollector errors) throws Exception;
+  protected abstract void execute(ErrorCollector errors) throws Exception;
 
   @Override
   public int getExitCode() {

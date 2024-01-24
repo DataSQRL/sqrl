@@ -32,6 +32,7 @@ public class TestCmd {
   private static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");
   private static final Path SUBSCRIPTION_PATH = Paths.get("src/test/resources/subscriptions");
   private static final Path CC_PATH = Paths.get("src/test/resources/creditcard");
+  private static final Path PROFILES_PATH = Paths.get("src/test/resources/profiles");
 
   protected Path buildDir = null;
   SnapshotTest.Snapshot snapshot;
@@ -67,29 +68,29 @@ public class TestCmd {
   public void compileMutations() {
     Path root = Paths.get("../../sqrl-examples/mutations");
     execute(root,
-        "compile", root.resolve("script.sqrl").toString(),
-        root.resolve("schema.graphqls").toString());
+        "compile", "script.sqrl",
+        "schema.graphqls");
   }
 
   @Test
   public void compileSubscriptions() {
     execute(SUBSCRIPTION_PATH,
-        "compile", SUBSCRIPTION_PATH.resolve("script.sqrl").toString(),
-        SUBSCRIPTION_PATH.resolve("schema.graphqls").toString());
+        "compile", "script.sqrl",
+       "schema.graphqls");
   }
 
   @Test
   public void validateTest() {
     execute(SUBSCRIPTION_PATH,
-        "validate", SUBSCRIPTION_PATH.resolve("script.sqrl").toString(),
-        SUBSCRIPTION_PATH.resolve("schema.graphqls").toString());
+        "validate", "script.sqrl",
+       "schema.graphqls");
   }
 
   @Test
   public void compileSubscriptionsInvalidGraphql() {
     execute(SUBSCRIPTION_PATH, ERROR_STATUS_HOOK,
-        "compile", SUBSCRIPTION_PATH.resolve("invalidscript.sqrl").toString(),
-        SUBSCRIPTION_PATH.resolve("invalidschema.graphqls").toString());
+        "compile","invalidscript.sqrl",
+       "invalidschema.graphqls");
     snapshot.createOrValidate();
   }
 
@@ -104,8 +105,8 @@ public class TestCmd {
   @Disabled
   public void discoverExternal() {
     execute(Sensors.INSTANCE.getRootPackageDirectory(),
-        "discover", Sensors.INSTANCE.getRootPackageDirectory().resolve("patientdata").toString(),
-        "-o", Sensors.INSTANCE.getRootPackageDirectory().resolve("patientpackage").toString(), "-l", "3600");
+        "discover", "patientdata",
+        "-o", "patientpackage", "-l", "3600");
   }
 
   @Test
@@ -115,11 +116,27 @@ public class TestCmd {
 
     TestScript script = Nutshop.INSTANCE.getScripts().get(1);
     execute(rootDir, "compile",
-        script.getScriptPath().toString(),
-        script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
+        script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
+        script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
         "-t", OUTPUT_DIR.toString(),
         "--nolookup",
         "--mnt", rootDir.toString());
+    createSnapshot();
+  }
+
+  @SneakyThrows
+  @Test
+  public void compileProfiles() {
+    execute(PROFILES_PATH, "compile",
+        "myscript.sqrl", "schema.graphqls",
+        "-t", OUTPUT_DIR.toString(),
+        "--nolookup",
+        "-p", "profile1",
+        "-p", "profile2"
+    );
+
+    snapshot.addContent(
+        Files.readString(PROFILES_PATH.resolve("build").resolve("package.json")));
     createSnapshot();
   }
 
@@ -132,7 +149,7 @@ public class TestCmd {
     TestScript script = Nutshop.INSTANCE.getScripts().get(1);
 
     int statusCode = execute(rootDir, StatusHook.NONE,"compile",
-        script.getScriptPath().toString(),
+        script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
         "doesNotExist.graphql");
     assertEquals(1, statusCode, "Non-zero status code expected");
   }
@@ -145,8 +162,8 @@ public class TestCmd {
 
     TestScript script = Nutshop.INSTANCE.getScripts().get(1);
     execute(rootDir, "compile",
-            script.getScriptPath().toString(),
-            script.getGraphQLSchemas().get(0).getSchemaPath().toString(),
+        script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
+        script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
             "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
     Path schemaFile = rootDir.resolve(ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME);
     assertTrue(Files.isRegularFile(schemaFile),
@@ -162,7 +179,7 @@ public class TestCmd {
 
     TestScript script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
     execute(rootDir, "compile",
-        script.getScriptPath().toString(),
+        script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
         "-t", OUTPUT_DIR.toString(),
         "--nolookup");
     createSnapshot();
@@ -180,7 +197,8 @@ public class TestCmd {
   public void testCreditCardInfiniteLoop() {
     Path basePath = CC_PATH;
     execute(basePath,
-        "compile", basePath.resolve("creditcard.sqrl").toString(), basePath.resolve("creditcard.graphqls").toString());
+        "compile", "creditcard.sqrl",
+        "creditcard.graphqls");
   }
 
   public static int execute(Path rootDir, String... args) {

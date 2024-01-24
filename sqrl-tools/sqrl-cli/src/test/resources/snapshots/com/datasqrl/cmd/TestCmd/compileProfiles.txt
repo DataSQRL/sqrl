@@ -1,0 +1,50 @@
+{
+  "engines" : {
+    "server" : {
+      "name" : "vertx"
+    },
+    "database" : {
+      "database" : "datasqrl",
+      "password" : "postgres",
+      "dialect" : "postgres",
+      "driver" : "org.postgresql.Driver",
+      "port" : 5432,
+      "name" : "jdbc",
+      "host" : "database",
+      "user" : "postgres",
+      "url" : "jdbc:postgresql://database:5432/datasqrl"
+    },
+    "log" : {
+      "name" : "kafka",
+      "schema" : "flexible",
+      "format" : {
+        "name" : "json"
+      },
+      "connector" : {
+        "name" : "kafka",
+        "bootstrap.servers" : "kafkaoverride:9092"
+      },
+      "type" : "source_and_sink"
+    },
+    "streams" : {
+      "name" : "flink",
+      "taskmanager.memory.network.max" : "256mb",
+      "taskmanager.memory.network.min" : "256mb",
+      "taskmanager.memory.managed.size" : "256mb"
+    }
+  },
+  "script" : {
+    "graphql" : "schema.graphqls",
+    "main" : "myscript.sqrl"
+  }
+}
+>>>output
+create-topics.sh
+database-schema.sql
+docker-compose.yml
+flink-plan.json
+init-flink.sh
+kafka-plan.json
+server-config.json
+server-model.json
+submit-flink-job.sh
