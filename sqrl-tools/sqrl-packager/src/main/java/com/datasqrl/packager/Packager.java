@@ -72,15 +72,6 @@ import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 
 @AllArgsConstructor
 public class Packager {
-  /**
-   * Config merging:
-   * 1. If package json does not exist: create a simple one and discover any dependencies
-   * - this always happens, even if a profile is specified
-   * 1. Copy to profiles to build dir
-   * 1. Merge whatever profiles
-   * 1. Create docker compose based on compiler result
-   */
-
   public static final String BUILD_DIR_NAME = "build";
 
   // this is the default package name, but not the specified package name.
@@ -126,122 +117,6 @@ public class Packager {
     this.errors = errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON));
     this.config = handleProfileConfigs();
   }
-
-  public void test() {
-//    DefaultConfigSupplier configSupplier = new DefaultConfigSupplier(errors);
-//    SqrlConfig config = initializeConfig(configSupplier, errors);
-
-  }
-//
-//  public static SqrlConfig getOrCreateDefaultConfiguration(Path rootDir, List<Path> packageFiles,
-//      ErrorCollector errors,
-//      Supplier<SqrlConfig> defaultConfig) {
-//    List<Path> configFiles = getOrCreateDefaultPackageFiles(rootDir, packageFiles, errors, defaultConfig);
-//    Preconditions.checkArgument(configFiles.size() >= 1);
-//    return SqrlConfigCommons.fromFiles(errors, configFiles.get(0),
-//        configFiles.subList(1, configFiles.size()).stream().toArray(Path[]::new));
-//  }
-
-  public static List<Path> getOrCreateDefaultPackageFiles(Path rootDir, List<Path> packageFiles,
-      ErrorCollector errors,
-      Supplier<SqrlConfig> defaultConfig) {
-    Optional<List<Path>> existingPackageJson = findRootPackageFiles(rootDir, packageFiles);
-    return existingPackageJson
-        .orElseGet(() -> List.of(writeEngineConfig(rootDir,
-            defaultConfig.get())));
-  }
-
-  @SneakyThrows
-  public static Path writeEngineConfig(Path rootDir, SqrlConfig config) {
-    Path enginesFile = Files.createTempFile(rootDir, "package-engines", ".json");
-    File file = enginesFile.toFile();
-    file.deleteOnExit();
-
-    config.toFile(enginesFile, true);
-    return enginesFile;
-  }
-
-  public static Optional<List<Path>> findRootPackageFiles(Path rootDir, List<Path> packageFiles) {
-    return findPackageFile(rootDir, packageFiles);
-  }
-
-  public static Optional<List<Path>> findPackageFile(Path rootDir, List<Path> packageFiles) {
-    if (packageFiles.isEmpty()) {
-      Path defaultPkg = rootDir.resolve(DEFAULT_PACKAGE);
-      if (Files.isRegularFile(defaultPkg)) {
-        return Optional.of(List.of(defaultPkg));
-      } else {
-        return Optional.empty();
-      }
-    } else {
-      return Optional.of(packageFiles);
-    }
-  }
-//
-  @SneakyThrows
-  public static SqrlConfig createEmbeddedConfig(Path rootDir, ErrorCollector errors) {
-    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
-
-    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
-
-    SqrlConfig dbConfig = config.getSubConfig("database");
-    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
-    dbConfig.setProperties(JdbcDataSystemConnector.builder()
-        .url("jdbc:h2:file:./h2.db")
-        .driver("org.h2.Driver")
-        .dialect("h2")
-        .database("datasqrl")
-        .build()
-    );
-
-    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
-    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
-
-    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
-    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
-        VertxEngineFactory.ENGINE_NAME);
-
-    return rootConfig;
-  }
-//
-//  public static SqrlConfig createLocalConfig(String bootstrapServers, ErrorCollector errors) {
-//    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
-//
-//    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
-//
-//    SqrlConfig dbConfig = config.getSubConfig(EngineKeys.DATABASE);
-//    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
-//    dbConfig.setProperties(JdbcDataSystemConnector.builder()
-//        .url("jdbc:postgresql://localhost/datasqrl")
-//        .driver("org.postgresql.Driver")
-//        .dialect("postgres")
-//        .database("datasqrl")
-//        .host("localhost")
-//        .port(5432)
-//        .user("postgres")
-//        .password("postgres")
-//        .build()
-//    );
-//
-//    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
-//    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
-//    flinkConfig.setProperty(ConfigConstants.LOCAL_START_WEBSERVER, "true");
-//    flinkConfig.setProperty(TaskManagerOptions.NETWORK_MEMORY_MIN.key(), "256mb");
-//    flinkConfig.setProperty(TaskManagerOptions.NETWORK_MEMORY_MAX.key(), "256mb");
-//    flinkConfig.setProperty(TaskManagerOptions.MANAGED_MEMORY_SIZE.key(), "256mb");
-//
-//    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
-//    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
-//        VertxEngineFactory.ENGINE_NAME);
-//
-//    SqrlConfig logConfig = config.getSubConfig(EngineKeys.LOG);
-//    logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
-//    logConfig.copy(
-//        KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, bootstrapServers,
-//            JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
-//
-//    return rootConfig;
-//  }
 
   public Path preprocess(boolean inferDependencies) {
     errors.checkFatal(
@@ -400,7 +275,6 @@ public class Packager {
               () -> errors.checkFatal(true, "Could not infer dependency: %s", unloadedDep));
     }
 
-    // Should we do this still?
     // Add inferred dependencies to package config
     inferredDependencies.forEach((key, dep) -> {
       config.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
@@ -423,10 +297,6 @@ public class Packager {
         .flatMap(Optional::stream)
         .forEach(failedDep -> depErrors.fatal("Could not retrieve dependency: %s", failedDep));
   }
-
-  /**
-   * Helper function to copy files to build directory.
-   */
 
   private void copyFilesToBuildDir() throws IOException {
     Map<String, Optional<Path>> destinationPaths = copyScriptFilesToBuildDir().entrySet()
@@ -497,10 +367,6 @@ public class Packager {
             .build());
   }
 
-
-  /**
-   * Helper function to update package config.
-   */
   private void writePackageConfig() throws IOException {
     config.toFile(buildDir.resolve(PACKAGE_JSON), true);
   }
@@ -556,5 +422,28 @@ public class Packager {
   public void postprocess(CompilerResult result, Path targetDir) {
     List.of(new DockerPostprocessor(), new FlinkPostprocessor())
         .forEach(p->p.process(new ProcessorContext(targetDir, result, mountDirectory)));
+  }
+
+  @SneakyThrows
+  public static Path writeEngineConfig(Path rootDir, SqrlConfig config) {
+    Path enginesFile = Files.createTempFile(rootDir, "package-engines", ".json");
+    File file = enginesFile.toFile();
+    file.deleteOnExit();
+
+    config.toFile(enginesFile, true);
+    return enginesFile;
+  }
+
+  public static Optional<List<Path>> findPackageFile(Path rootDir, List<Path> packageFiles) {
+    if (packageFiles.isEmpty()) {
+      Path defaultPkg = rootDir.resolve(DEFAULT_PACKAGE);
+      if (Files.isRegularFile(defaultPkg)) {
+        return Optional.of(List.of(defaultPkg));
+      } else {
+        return Optional.empty();
+      }
+    } else {
+      return Optional.of(packageFiles);
+    }
   }
 }

@@ -4,11 +4,17 @@
 package com.datasqrl.cmd;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.EngineKeys;
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.DataDiscovery;
 import com.datasqrl.discovery.DataDiscoveryFactory;
 import com.datasqrl.discovery.TableWriter;
+import com.datasqrl.engine.database.relational.JDBCEngineFactory;
+import com.datasqrl.engine.server.GenericJavaServerEngineFactory;
+import com.datasqrl.engine.server.VertxEngineFactory;
+import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.engine.stream.monitor.DataMonitor.Job.Status;
 import com.datasqrl.error.ErrorCode;
@@ -16,12 +22,14 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.FileConfigOptions;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
+import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableInput;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.packager.Packager;
 import com.google.common.base.Stopwatch;
 import java.util.Optional;
+import lombok.SneakyThrows;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -71,7 +79,7 @@ public class DiscoverCommand extends AbstractCommand {
     //check package json, or use embedded config
     SqrlConfig config = Packager.findPackageFile(root.rootDir, this.root.packageFiles)
         .map(p -> SqrlConfigCommons.fromFiles(errors, p))
-        .orElseGet(()->Packager.createEmbeddedConfig(root.rootDir, errors));
+        .orElseGet(() -> createEmbeddedConfig(errors));
 
     DataDiscovery discovery = DataDiscoveryFactory.fromConfig(config,errors);
 
@@ -133,5 +141,31 @@ public class DiscoverCommand extends AbstractCommand {
 
   private void applyConnectorOverrides(SqrlConfig connectorConfig) {
     connectorConfig.setProperty(FileConfigOptions.MONITOR_INTERVAL_MS, "0");
+  }
+
+  @SneakyThrows
+  public SqrlConfig createEmbeddedConfig(ErrorCollector errors) {
+    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    SqrlConfig dbConfig = config.getSubConfig("database");
+    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
+    dbConfig.setProperties(JdbcDataSystemConnector.builder()
+        .url("jdbc:h2:file:./h2.db")
+        .driver("org.h2.Driver")
+        .dialect("h2")
+        .database("datasqrl")
+        .build()
+    );
+
+    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
+    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+
+    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
+    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
+        VertxEngineFactory.ENGINE_NAME);
+
+    return rootConfig;
   }
 }
