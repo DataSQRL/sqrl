@@ -5,19 +5,15 @@ import static com.datasqrl.packager.Packager.DEFAULT_PACKAGE;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.NotYetImplementedException;
-import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
-import com.datasqrl.service.PackagerUtil;
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
+import picocli.CommandLine;
 
 @CommandLine.Command(name = "publish", description = "Publishes a package to local and remote repository")
 public class PublishCommand extends AbstractCommand {

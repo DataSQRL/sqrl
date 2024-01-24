@@ -64,13 +64,14 @@ import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 
-@AllArgsConstructor
+@Getter
 public class Packager {
   public static final String BUILD_DIR_NAME = "build";
 
@@ -93,7 +94,7 @@ public class Packager {
 
   public Packager(@NonNull Repository repository,
       @NonNull Path rootDir,
-      @NonNull Path mainScript,
+      Path mainScript,
       List<Path> packageFiles,
       Path graphQLSchemaFile,
       String[] profiles,
@@ -103,7 +104,6 @@ public class Packager {
     this.graphQLSchemaFile = graphQLSchemaFile;
     this.mountDirectory = mountDirectory;
     errors.checkFatal(Files.isDirectory(rootDir), "Not a valid root directory: %s", rootDir);
-    errors.checkFatal(Files.isRegularFile(mainScript), "Could not find script file: %s", mainScript);
     errors.checkFatal(graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile), "Could not find API file: %s", graphQLSchemaFile);
 
     this.profiles = profiles;
