@@ -1,15 +1,17 @@
 # DataSQRL
 
-DataSQRL compiles SQL to optimized streaming data pipelines and streaming databases, eliminating the manual work of integrating and optimizing data pipelines that have multiple steps or components.
+DataSQRL compiles SQL to optimized data pipelines and data microservices, eliminating the manual work of integrating and tuning data architectures that have multiple steps or components.
 
-DataSQRL compiles SQL plus an (optional) API definition into an optimized data pipeline that processes data according to the SQL transformations, serves the results through a database, and (optionally) exposes them through the API.
+DataSQRL compiles SQL plus an (optional) API definition into an realtime data pipeline that processes data according to the SQL transformations, serves the results through a database, and (optionally) exposes them through a responsive API.
 
-You declaratively define your data sources (in JSON), your data processing (in SQL), and optionally your data serving API (in GraphQL) which DataSQRL compiles to an integrated data pipeline that integrates Flink, database, and optionally API server.
+You declaratively define your data sources (in JSON), your data processing (in SQL), and optionally your data serving API (in GraphQL) which DataSQRL compiles to an integrated data pipeline based on Apache Flink, database, and optionally API server.
 
-![DataSQRL Compiled Data Pipeline](docs/img/pipeline_example.svg)
+[![DataSQRL Compiled Data Pipeline](docs/img/pipeline_example.svg)](https://youtu.be/kq6SDR-TJpM)
 
 DataSQRL has a pluggable engine model that supports technologies like Apache Kafka, Apache Flink, Postgres, and Eclipse Vert.x to execute the steps of the pipeline. The topology of the data pipeline is defined in a JSON package file which specifies the engines to use in the pipeline. DataSQRL's optimizer builds efficient data pipelines against the configured engines that optimize partial view materialization, physical data models, partitioning, and data flow. <br /> 
 DataSQRL has adapters for various data sources like Apache Kafka, file system, S3, etc. Additional engines and adapters can be added to the compiler (it's open-source, wink wink).
+
+What [this video](https://youtu.be/kq6SDR-TJpM) for an explanation of what DataSQRL does, how it works, and how to use it.
 
 ## Why DataSQRL?
 
