@@ -41,10 +41,9 @@ SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
                  WHERE timeSec >= now() - INTERVAL 1 MINUTE
                  GROUP BY sensorid;
 ```
-- Invoke `docker run --rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl` to compile the SQL script into a data pipeline with the executables located in the `build/deploy` directory.
-- Run the entire data pipeline in docker with the command: `(cd build/deploy; docker compose up)`
+- Run `docker run -it -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run metrics.sqrl` to compile the SQL script and run the resulting data pipeline (use `${PWD}` in Powershell on Windows). This requires that you have Docker installed and takes a minute to start up.
 
-Once the data pipeline is up and running, you can query the results through the default GraphQL API that DataSQRL generates. Open [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) in your browser and run GraphQL queries against the API. Once you are done, terminate the pipeline with the command: `(cd build/deploy; docker compose down -v)`
+Once the data pipeline is up and running, you can query the results through the default GraphQL API that DataSQRL generates. Open [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) in your browser and run GraphQL queries against the API. Once you are done, terminate the pipeline with `CTRL-C`.
 
 For a detailed explanation of this example, take a look at the [Quickstart Tutorial](https://www.datasqrl.com/docs/getting-started/quickstart) which shows you how to customize the API, create realtime alerts, and more.
 
