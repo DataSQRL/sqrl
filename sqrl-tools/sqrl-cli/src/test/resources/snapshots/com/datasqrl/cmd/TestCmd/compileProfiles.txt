@@ -1,4 +1,5 @@
 {
+  "profiles" : [ "profile1", "profile2" ],
   "engines" : {
     "server" : {
       "name" : "vertx"

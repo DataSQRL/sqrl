@@ -206,6 +206,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     // Merge all configurations
     SqrlConfig sqrlConfig = SqrlConfigCommons.fromFiles(errors, configFiles);
 
+    sqrlConfig.setProperty(PROFILES_KEY, profiles);
+
     //Add dependencies of discovered profiles
     dependencies.forEach((key, dep) -> {
       sqrlConfig.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
