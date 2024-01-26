@@ -93,7 +93,8 @@ public class PackageBootstrap {
           SqrlConfig depConfig = existingConfig.get()
               .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
               .getSubConfig(profile);
-          dependency = Optional.of(new Dependency(depConfig.asString(PKG_NAME_KEY).get(),
+          dependency = Optional.of(new Dependency(depConfig.asString(PKG_NAME_KEY).getOptional()
+                .orElse(null),
               depConfig.asString(VERSION_KEY).get(),
               depConfig.asString(VARIANT_KEY).getOptional()
                   .orElse(PackageConfiguration.DEFAULT_VARIANT)));
