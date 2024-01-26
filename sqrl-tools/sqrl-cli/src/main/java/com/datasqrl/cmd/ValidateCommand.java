@@ -15,7 +15,7 @@ import picocli.CommandLine;
 public class ValidateCommand extends AbstractCompilerCommand {
 
   @Override
-  public SqrlConfig createSqrlConfig(ErrorCollector errors) {
+  public SqrlConfig createDefaultConfig(ErrorCollector errors) {
     return Packager.createDockerConfig(errors);
   }
 

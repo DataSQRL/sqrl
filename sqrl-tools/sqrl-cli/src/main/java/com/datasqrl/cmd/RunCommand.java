@@ -15,7 +15,6 @@ import com.datasqrl.engine.EngineFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.database.relational.JDBCEngineFactory;
-import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.server.GenericJavaServerEngineFactory;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
@@ -27,9 +26,6 @@ import com.datasqrl.kafka.KafkaLogEngineFactory;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Properties;
-import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.ConfigConstants;
 import org.apache.flink.configuration.TaskManagerOptions;
@@ -44,18 +40,35 @@ public class RunCommand extends AbstractCompilerCommand {
   @SneakyThrows
   @Override
   public void execute(ErrorCollector errors) {
-    SqrlConfig sqrlConfig = createRunConfig(root.rootDir, errors);
-    Path config = Packager.writeEngineConfig(root.rootDir, sqrlConfig);
-
-    this.root.packageFiles = new ArrayList<>(this.root.packageFiles);
-    this.root.packageFiles.add(config);
-
     super.execute(errors);
   }
 
   @Override
-  public SqrlConfig createSqrlConfig(ErrorCollector errors) {
+  public SqrlConfig createDefaultConfig(ErrorCollector errors) {
     return createRunConfig(root.rootDir, errors);
+  }
+
+  @Override
+  public SqrlConfig postProcessConfig(SqrlConfig config, ErrorCollector errors) {
+    //If missing engine config, create one
+    setDefaultConfigs(config);
+
+    // Overwrite the bootstrap servers if one is not specified
+    Value<String> bootstrapServers = config
+        .getSubConfig(PipelineFactory.ENGINES_PROPERTY)
+        .getSubConfig(EngineKeys.LOG)
+        .getSubConfig(CONNECTOR_KEY)
+        .asString(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG);
+
+    if (bootstrapServers.getOptional().isEmpty()) {
+      config
+          .getSubConfig(PipelineFactory.ENGINES_PROPERTY)
+          .getSubConfig(EngineKeys.LOG)
+          .getSubConfig(CONNECTOR_KEY)
+          .setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:56789");
+    }
+
+    return super.postProcessConfig(config, errors);
   }
 
   @Override
@@ -70,7 +83,7 @@ public class RunCommand extends AbstractCompilerCommand {
     //start services
     CLUSTER.start();
     int port = Integer.parseInt(CLUSTER.bootstrapServers().split(":")[1]);
-    PortForwarder forwarder = new PortForwarder(56789, port);
+    PortForwarder forwarder = new PortForwarder(9094, port);
     new Thread(()->forwarder.start()).start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> CLUSTER.stop()));
 
@@ -86,62 +99,95 @@ public class RunCommand extends AbstractCompilerCommand {
   protected SqrlConfig createRunConfig(Path rootDir, ErrorCollector errors) {
     SqrlConfig userConfig = Packager.findPackageFile(rootDir, this.root.packageFiles)
         .map(p -> SqrlConfigCommons.fromFiles(errors, p))
-        .orElseGet(() -> createLocalConfig("127.0.0.1:56789", errors));
+        .orElseGet(() -> createLocalConfig(errors));
 
+    setBootstrap(userConfig);
+    return userConfig;
+  }
+
+  public static SqrlConfig createLocalConfig(ErrorCollector errors) {
+    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+    return setDefaultConfigs(rootConfig);
+  }
+
+  private static SqrlConfig setDefaultConfigs(SqrlConfig rootConfig) {
+    setDatabaseConfig(rootConfig);
+    setLogConfig(rootConfig);
+    setFlinkConfig(rootConfig);
+    setServerConfig(rootConfig);
+    return rootConfig;
+  }
+
+  private static void setLogConfig(SqrlConfig rootConfig) {
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    if (!config.hasSubConfig(EngineKeys.LOG)) {
+      SqrlConfig logConfig = config.getSubConfig(EngineKeys.LOG);
+      logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
+      logConfig.copy(
+          KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME,
+              "127.0.0.1:9094",
+              JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
+    }
+  }
+
+  private static void setServerConfig(SqrlConfig rootConfig) {
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    if (!config.hasSubConfig(EngineKeys.SERVER)) {
+      SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
+      server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
+          VertxEngineFactory.ENGINE_NAME);
+    }
+  }
+
+  private static void setFlinkConfig(SqrlConfig rootConfig) {
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    if (!config.hasSubConfig(EngineKeys.STREAMS)) {
+      SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
+      flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+      flinkConfig.setProperty(ConfigConstants.LOCAL_START_WEBSERVER, "true");
+      flinkConfig.setProperty(TaskManagerOptions.NETWORK_MEMORY_MIN.key(), "256mb");
+      flinkConfig.setProperty(TaskManagerOptions.NETWORK_MEMORY_MAX.key(), "256mb");
+      flinkConfig.setProperty(TaskManagerOptions.MANAGED_MEMORY_SIZE.key(), "256mb");
+    }
+  }
+
+  private static void setDatabaseConfig(SqrlConfig rootConfig) {
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    if (!config.hasSubConfig(EngineKeys.DATABASE)) {
+      SqrlConfig dbConfig = config.getSubConfig(EngineKeys.DATABASE);
+      dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
+      dbConfig.setProperties(JdbcDataSystemConnector.builder()
+          .url("jdbc:postgresql://localhost/datasqrl")
+          .driver("org.postgresql.Driver")
+          .dialect("postgres")
+          .database("datasqrl")
+          .host("localhost")
+          .port(5432)
+          .user("postgres")
+          .password("postgres")
+          .build()
+      );
+    }
+  }
+
+  private void setBootstrap(SqrlConfig userConfig) {
     // Overwrite the bootstrap servers since they change per invocation
     Value<String> bootstrapServers = userConfig
-        .getSubConfig(EngineKeys.ENGINES)
+        .getSubConfig(PipelineFactory.ENGINES_PROPERTY)
         .getSubConfig(EngineKeys.LOG)
         .getSubConfig(CONNECTOR_KEY)
         .asString(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG);
 
     if (bootstrapServers.getOptional().isEmpty()) {
       userConfig
-          .getSubConfig(EngineKeys.ENGINES)
+          .getSubConfig(PipelineFactory.ENGINES_PROPERTY)
           .getSubConfig(EngineKeys.LOG)
           .getSubConfig(CONNECTOR_KEY)
-          .setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:56789");
+          .setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9094");
     }
-
-    return userConfig;
-  }
-
-  public static SqrlConfig createLocalConfig(String bootstrapServers, ErrorCollector errors) {
-    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
-
-    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
-
-    SqrlConfig dbConfig = config.getSubConfig(EngineKeys.DATABASE);
-    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
-    dbConfig.setProperties(JdbcDataSystemConnector.builder()
-        .url("jdbc:postgresql://localhost/datasqrl")
-        .driver("org.postgresql.Driver")
-        .dialect("postgres")
-        .database("datasqrl")
-        .host("localhost")
-        .port(5432)
-        .user("postgres")
-        .password("postgres")
-        .build()
-    );
-
-    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
-    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
-    flinkConfig.setProperty(ConfigConstants.LOCAL_START_WEBSERVER, "true");
-    flinkConfig.setProperty(TaskManagerOptions.NETWORK_MEMORY_MIN.key(), "256mb");
-    flinkConfig.setProperty(TaskManagerOptions.NETWORK_MEMORY_MAX.key(), "256mb");
-    flinkConfig.setProperty(TaskManagerOptions.MANAGED_MEMORY_SIZE.key(), "256mb");
-
-    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
-    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
-        VertxEngineFactory.ENGINE_NAME);
-
-    SqrlConfig logConfig = config.getSubConfig(EngineKeys.LOG);
-    logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
-    logConfig.copy(
-        KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, bootstrapServers,
-            JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
-
-    return rootConfig;
   }
 }

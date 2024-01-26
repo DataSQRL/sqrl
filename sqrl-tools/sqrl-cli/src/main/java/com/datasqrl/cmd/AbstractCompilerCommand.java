@@ -102,7 +102,6 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     //Create build dir to unpack resolved dependencies
     Path buildDir = root.rootDir.resolve(Packager.BUILD_DIR_NAME);
-    Packager.cleanUp(buildDir);
     Packager.cleanBuildDir(buildDir);
     Packager.createBuildDir(buildDir);
 
@@ -149,7 +148,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     if (root.packageFiles.isEmpty() && configFiles.isEmpty()) { //No profiles found, use default
-      SqrlConfig defaultConfig = createSqrlConfig(errors);
+      SqrlConfig defaultConfig = createDefaultConfig(errors);
       Path path = buildDir.resolve(PACKAGE_JSON);
       defaultConfig.toFile(path);
       configFiles.add(path);
@@ -194,10 +193,14 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       errors.fatal("GraphQL schema file is not a regular file: %s", graphQLSchemaFile.get());
     }
 
-    return sqrlConfig;
+    return postProcessConfig(sqrlConfig, errors);
   }
 
-  public abstract SqrlConfig createSqrlConfig(ErrorCollector errors);
+  public abstract SqrlConfig createDefaultConfig(ErrorCollector errors);
+
+  public SqrlConfig postProcessConfig(SqrlConfig config, ErrorCollector errors) {
+    return config;
+  }
 
   protected void postprocess(Packager packager, CompilerResult result, Path targetDir,
       ErrorCollector errors) {

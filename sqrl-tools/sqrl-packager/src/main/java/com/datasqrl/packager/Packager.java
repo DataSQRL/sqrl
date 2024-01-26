@@ -98,7 +98,6 @@ public class Packager {
             .getOptional().map(StringUtils::isNotBlank).orElse(false),
         "No config or main script specified");
     try {
-      cleanUp(buildDir);
       cleanBuildDir(buildDir);
       createBuildDir(buildDir);
       if (inferDependencies) {
@@ -271,17 +270,6 @@ public class Packager {
         "Dependency [%s] conflicts with existing module structure in directory: [%s]", dependency,
         targetPath);
     return repository.retrieveDependency(targetPath, dependency);
-  }
-
-  public static void cleanUp(Path rootDir) {
-    try {
-      Path buildDir = rootDir.resolve(BUILD_DIR_NAME);
-      if (Files.exists(buildDir)) {
-        FileUtils.deleteDirectory(buildDir.toFile());
-      }
-    } catch (IOException e) {
-      throw new IllegalStateException("Could not read or write files on local file-system", e);
-    }
   }
 
   public static Path copyRelativeFile(Path srcFile, Path srcDir, Path destDir) throws IOException {

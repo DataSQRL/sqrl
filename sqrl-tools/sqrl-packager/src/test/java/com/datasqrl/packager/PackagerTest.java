@@ -104,9 +104,9 @@ public class PackagerTest {
     setScriptFiles(packageFile.getParent(), main, graphQl, sqrlConfig, errors);
     Packager pkg = new Packager(repository, packageFile.getParent(), sqrlConfig, errors);
     Path buildDir = packageFile.getParent().resolve(BUILD_DIR_NAME);
-    pkg.cleanUp(buildDir);
+    pkg.cleanBuildDir(buildDir);
     populateBuildDirAndTakeSnapshot(pkg, main, graphQl, packageFile);
-    pkg.cleanUp(buildDir);
+    pkg.cleanBuildDir(buildDir);
   }
 
   @SneakyThrows

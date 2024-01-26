@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 public interface SqrlConfig {
 
   public SqrlConfig getSubConfig(String name);
+  public boolean hasSubConfig(String name);
 
   /**
    * Returns the keys that are at the local level in the configuration

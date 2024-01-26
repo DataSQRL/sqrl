@@ -12,7 +12,7 @@ import picocli.CommandLine;
 public class CompilerCommand extends AbstractCompilerCommand {
 
   @Override
-  public SqrlConfig createSqrlConfig(ErrorCollector errors) {
+  public SqrlConfig createDefaultConfig(ErrorCollector errors) {
     return Packager.createDockerConfig(errors);
   }
 }

@@ -64,6 +64,14 @@ public class SqrlConfigCommons implements SqrlConfig {
     return new SqrlConfigCommons(errors,configFilename,config,getPrefix(name));
   }
 
+  @Override
+  public boolean hasSubConfig(String name) {
+    String subConfigPrefix = getFullKey(name) + DELIMITER;
+
+    return config.getKeys(subConfigPrefix)
+        .hasNext(); // If there is at least one key, return true
+  }
+
   private String getPrefix(String name) {
     return getFullKey(name) + DELIMITER;
   }

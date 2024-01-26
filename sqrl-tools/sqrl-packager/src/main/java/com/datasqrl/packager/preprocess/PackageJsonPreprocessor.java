@@ -25,13 +25,13 @@ public class PackageJsonPreprocessor implements Preprocessor {
 
   @SneakyThrows
   @Override
-  public void processFile(Path dir, ProcessorContext processorContext, ErrorCollector errors) {
+  public void processFile(Path file, ProcessorContext processorContext, ErrorCollector errors) {
     // Ignore root package json
-    if (dir.getParent().equals(processorContext.rootDir)) {
+    if (file.getParent() == null || file.getParent().equals(processorContext.rootDir)) {
       return;
     }
 
-    for (Path path : Files.newDirectoryStream(dir.getParent(), "*")) {
+    for (Path path : Files.newDirectoryStream(file.getParent(), "*")) {
       processorContext.addDependency(path);
     }
   }
