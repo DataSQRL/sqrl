@@ -4,11 +4,15 @@
 package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.Packager.PACKAGE_JSON;
+import static com.datasqrl.packager.config.DependencyConfig.PKG_NAME_KEY;
+import static com.datasqrl.packager.config.DependencyConfig.VARIANT_KEY;
+import static com.datasqrl.packager.config.DependencyConfig.VERSION_KEY;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConfig.Value;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
@@ -16,6 +20,7 @@ import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
+import com.datasqrl.packager.config.PackageConfiguration;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
@@ -105,13 +110,36 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     Packager.cleanBuildDir(buildDir);
     Packager.createBuildDir(buildDir);
 
+    Optional<List<Path>> existingPackage = Packager.findPackageFile(root.rootDir, root.packageFiles);
+    Optional<SqrlConfig> existingConfig;
+    if (existingPackage.isPresent()) {
+      existingConfig = Optional.of(SqrlConfigCommons.fromFiles(errors, existingPackage.get()));
+    } else {
+      existingConfig = Optional.empty();
+    }
+
     Map<String, Dependency> dependencies = new HashMap<>();
     //Download any profiles
     for (String profile : profiles) {
       if (profile.contains(".")) { //possible repo profile
-        Optional<Dependency> dependency = repository.resolveDependency(profile);
+        //check to see if it's already in the package json, download the correct dep
+        Optional<Dependency> dependency;
+        if (hasVersionedProfileDependency(existingConfig, profile)) {
+          SqrlConfig depConfig = existingConfig.get()
+              .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
+              .getSubConfig(profile);
+          dependency = Optional.of(new Dependency(depConfig.asString(PKG_NAME_KEY).get(),
+              depConfig.asString(VERSION_KEY).get(),
+              depConfig.asString(VARIANT_KEY).getOptional()
+                .orElse(PackageConfiguration.DEFAULT_VARIANT)));
+        } else {
+          dependency = repository.resolveDependency(profile);
+        }
+
+        repository.resolveDependency(profile);
         if (dependency.isPresent()) {
-          boolean success = repository.retrieveDependency(root.rootDir.resolve("build"), dependency.get());
+          boolean success = repository.retrieveDependency(root.rootDir.resolve("build"),
+              dependency.get());
           if (success) {
             dependencies.put(profile, dependency.get());
           } else {
@@ -194,6 +222,17 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     return postProcessConfig(sqrlConfig, errors);
+  }
+
+  private boolean hasVersionedProfileDependency(Optional<SqrlConfig> existingConfig, String profile) {
+    return existingConfig.isPresent()
+        && existingConfig.get()
+            .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
+            .hasSubConfig(profile)
+        && existingConfig.get()
+            .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
+            .getSubConfig(profile)
+            .asString(VERSION_KEY).getOptional().isPresent();
   }
 
   public abstract SqrlConfig createDefaultConfig(ErrorCollector errors);
