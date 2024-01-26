@@ -5,6 +5,7 @@ import static com.datasqrl.packager.Packager.DEFAULT_PACKAGE;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.NotYetImplementedException;
+import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.ScriptConfiguration;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "publish", description = "Publishes a package to local and remote repository")
@@ -29,9 +31,10 @@ public class PublishCommand extends AbstractCommand {
         if (toRemote) NotYetImplementedException.trigger("Publishing to remote repository is not yet supported");
 
         Path packageRoot = root.rootDir;
-//        Optional<List<Path>> packageConfigsOpt = PackagerUtil.findRootPackageFiles(root.rootDir, root.packageFiles);
-//        errors.checkFatal(packageConfigsOpt.isPresent(),"Directory does not contain [%s] package configuration file", Packager.PACKAGE_FILE_NAME);
-        List<Path> packageconfigs = null;//packageConfigsOpt.get();
+        Optional<List<Path>> packageConfigsOpt = Packager.findPackageFile(root.rootDir, root.packageFiles);
+        errors.checkFatal(packageConfigsOpt.isPresent(),"Directory does not contain [%s] package configuration file",
+            Packager.PACKAGE_JSON);
+        List<Path> packageconfigs = packageConfigsOpt.get();
         Path defaultPkgConfig = packageRoot.resolve(DEFAULT_PACKAGE);
 
         LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors);
