@@ -49,7 +49,7 @@ public class RunCommand extends AbstractCompilerCommand {
   }
 
   @Override
-  public SqrlConfig postProcessConfig(SqrlConfig config, ErrorCollector errors) {
+  public SqrlConfig postProcessConfig(SqrlConfig config) {
     //If missing engine config, create one
     setDefaultConfigs(config);
 
@@ -68,7 +68,7 @@ public class RunCommand extends AbstractCompilerCommand {
           .setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:56789");
     }
 
-    return super.postProcessConfig(config, errors);
+    return super.postProcessConfig(config);
   }
 
   @Override

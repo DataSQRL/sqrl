@@ -6,7 +6,7 @@ package com.datasqrl.packager;
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
-import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.EngineKeys;
 import com.datasqrl.config.PipelineFactory;
@@ -19,17 +19,14 @@ import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
-import com.datasqrl.io.impl.print.PrintDataSystemFactory;
 import com.datasqrl.kafka.KafkaLogEngineFactory;
-import com.datasqrl.loaders.StandardLibraryLoader;
-import com.datasqrl.packager.ImportExportAnalyzer.Result;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.postprocess.DockerPostprocessor;
 import com.datasqrl.packager.postprocess.FlinkPostprocessor;
 import com.datasqrl.packager.postprocess.Postprocessor.ProcessorContext;
@@ -39,7 +36,6 @@ import com.datasqrl.packager.preprocess.PackageJsonPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
-import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
@@ -50,24 +46,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 
 @Getter
 public class Packager {
@@ -93,7 +84,7 @@ public class Packager {
     this.config = sqrlConfig;
   }
 
-  public Path preprocess(boolean inferDependencies) {
+  public Path preprocess() {
     errors.checkFatal(
         ScriptConfiguration.fromScriptConfig(config).asString(ScriptConfiguration.MAIN_KEY)
             .getOptional().map(StringUtils::isNotBlank).orElse(false),
@@ -101,9 +92,6 @@ public class Packager {
     try {
       cleanBuildDir(buildDir);
       createBuildDir(buildDir);
-      if (inferDependencies) {
-        inferDependencies();
-      }
       retrieveDependencies();
       copyFilesToBuildDir();
       preProcessFiles(config);
@@ -117,49 +105,6 @@ public class Packager {
   @SneakyThrows
   public static void createBuildDir(Path buildDir) {
     Files.createDirectories(buildDir);
-  }
-
-  //Pass in dependencies ?
-  private void inferDependencies() throws IOException {
-    //Analyze all local SQRL files to discovery transitive or undeclared dependencies
-    //At the end, we'll add the new dependencies to the package config.
-    ImportExportAnalyzer analyzer = new ImportExportAnalyzer();
-
-    BiPredicate<Path, BasicFileAttributes> FIND_SQRL_SCRIPT = (p, f) ->
-        f.isRegularFile() && p.getFileName().toString().toLowerCase().endsWith(".sqrl");
-
-    // Find all SQRL script files
-    Result allResults = Files.find(rootDir, 128, FIND_SQRL_SCRIPT)
-        .map(script -> analyzer.analyze(script, errors))
-        .reduce(Result.EMPTY, Result::add);
-
-    StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
-    Set<NamePath> pkgs = new HashSet<>(allResults.getPkgs());
-    pkgs.removeAll(standardLibraryLoader.loadedLibraries());
-    pkgs.remove(Name.system(PrintDataSystemFactory.SYSTEM_NAME).toNamePath());
-
-    Set<NamePath> unloadedDeps = new HashSet<>();
-    for (NamePath packagePath : pkgs) {
-      Path dir = namepath2Path(rootDir, packagePath);
-      if (!Files.exists(dir)) {
-        unloadedDeps.add(packagePath);
-      }
-    }
-
-    LinkedHashMap<String, Dependency> inferredDependencies = new LinkedHashMap<>();
-
-    //Resolve dependencies
-    for (NamePath unloadedDep : unloadedDeps) {
-      repository
-          .resolveDependency(unloadedDep.toString())
-          .ifPresentOrElse((dep) -> inferredDependencies.put(unloadedDep.toString(), dep),
-              () -> errors.checkFatal(true, "Could not infer dependency: %s", unloadedDep));
-    }
-
-    // Add inferred dependencies to package config
-    inferredDependencies.forEach((key, dep) -> {
-      config.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
-    });
   }
 
   /**
@@ -279,7 +224,7 @@ public class Packager {
 
   public static Path copyFile(Path srcFile, Path destDir, Path relativeDestPath)
       throws IOException {
-    Preconditions.checkArgument(Files.isRegularFile(srcFile), "Is not a file: {}", srcFile);
+    Preconditions.checkArgument(Files.isRegularFile(srcFile), "Is not a file: %s", srcFile);
     Path targetPath = canonicalizePath(destDir.resolve(relativeDestPath));
     if (!Files.exists(targetPath.getParent())) {
       Files.createDirectories(targetPath.getParent());

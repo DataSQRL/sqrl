@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.packager;
+package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.Packager.BUILD_DIR_NAME;
 import static com.datasqrl.packager.Packager.PACKAGE_JSON;
 import static com.datasqrl.packager.Packager.setScriptFiles;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
+import static com.datasqrl.util.TestResources.RESOURCE_DIR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.config.ConfigurationTest;
+import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.util.FileTestUtil;
@@ -35,7 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-public class PackagerTest {
+public class PackageBootstrapTest {
 
   SnapshotTest.Snapshot snapshot;
 
@@ -64,7 +64,7 @@ public class PackagerTest {
     snapshot.createOrValidate();
   }
 
-  private static final Path baseDependencyPath = ConfigurationTest.RESOURCE_DIR.resolve("dependency");
+  private static final Path baseDependencyPath = RESOURCE_DIR.resolve("dependency");
   private static final List<Path> depScripts = new ArrayList<>();
   static {
     IntStream.rangeClosed(1,2)
@@ -100,9 +100,17 @@ public class PackagerTest {
   @SneakyThrows
   private void testCombination(Path main, Path graphQl, Path packageFile, Repository repository) {
     ErrorCollector errors = ErrorCollector.root();
-    SqrlConfig sqrlConfig = SqrlConfigCommons.fromFiles(errors, packageFile);
-    setScriptFiles(packageFile.getParent(), main, graphQl, sqrlConfig, errors);
-    Packager pkg = new Packager(repository, packageFile.getParent(), sqrlConfig, errors);
+    List<Path> files = new ArrayList<>();
+    if (main != null) {
+      files.add(packageFile.getParent().relativize(main));
+    }
+    if (graphQl != null) {
+      files.add(packageFile.getParent().relativize(graphQl));
+    }
+    PackageBootstrap bootstrap = new PackageBootstrap(packageFile.getParent(),
+        List.of(packageFile), new String[0], files.toArray(Path[]::new), true);
+    SqrlConfig config = bootstrap.bootstrap(repository, errors, (e) -> null, (c) -> c);
+    Packager pkg = new Packager(repository, packageFile.getParent(), config, errors);
     Path buildDir = packageFile.getParent().resolve(BUILD_DIR_NAME);
     pkg.cleanBuildDir(buildDir);
     populateBuildDirAndTakeSnapshot(pkg, main, graphQl, packageFile);
@@ -112,7 +120,7 @@ public class PackagerTest {
   @SneakyThrows
   private void populateBuildDirAndTakeSnapshot(Packager pkg, Path main, Path graphQl, Path packageFile) {
     Path buildDir = pkg.getRootDir().resolve(Packager.BUILD_DIR_NAME);
-    pkg.preprocess(true);
+    pkg.preprocess();
     String[] caseNames = Stream.of(main, graphQl, packageFile)
         .filter(Predicate.not(Objects::isNull)).map(String::valueOf)
         .toArray(size -> new String[size + 1]);

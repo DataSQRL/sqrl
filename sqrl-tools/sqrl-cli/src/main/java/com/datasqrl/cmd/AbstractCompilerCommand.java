@@ -3,26 +3,14 @@
  */
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.Packager.PACKAGE_JSON;
-import static com.datasqrl.packager.Packager.PROFILES_KEY;
-import static com.datasqrl.packager.config.DependencyConfig.PKG_NAME_KEY;
-import static com.datasqrl.packager.config.DependencyConfig.VARIANT_KEY;
-import static com.datasqrl.packager.config.DependencyConfig.VERSION_KEY;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 import com.datasqrl.compile.Compiler;
 import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfig.Value;
-import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
-import com.datasqrl.packager.config.Dependency;
-import com.datasqrl.packager.config.DependencyConfig;
-import com.datasqrl.packager.config.PackageConfiguration;
-import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
@@ -30,14 +18,9 @@ import com.datasqrl.packager.repository.Repository;
 import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -79,10 +62,14 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   public void execute(ErrorCollector errors) {
     Repository repository = createRepository(errors);
 
-    SqrlConfig sqrlConfig = bootstrapPackageJson(repository, errors);
+    PackageBootstrap packageBootstrap = new PackageBootstrap(root.rootDir,
+        this.root.packageFiles, this.profiles, this.files, !noinfer);
+    SqrlConfig sqrlConfig = packageBootstrap.bootstrap(repository, errors,
+        this::createDefaultConfig,
+        (c)-> postProcessConfig(c));
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
-    Path path = packager.preprocess(!noinfer);
+    Path path = packager.preprocess();
 
     if (errors.hasErrors()) {
       return;
@@ -104,164 +91,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     postprocess(packager, result, getTargetDir(), errors);
   }
 
-  @SneakyThrows
-  private SqrlConfig bootstrapPackageJson(Repository repository, ErrorCollector errors) {
-    errors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
-
-    //Create build dir to unpack resolved dependencies
-    Path buildDir = root.rootDir.resolve(Packager.BUILD_DIR_NAME);
-    Packager.cleanBuildDir(buildDir);
-    Packager.createBuildDir(buildDir);
-
-    Optional<List<Path>> existingPackage = Packager.findPackageFile(root.rootDir, root.packageFiles);
-    Optional<SqrlConfig> existingConfig;
-    if (existingPackage.isPresent()) {
-      existingConfig = Optional.of(SqrlConfigCommons.fromFiles(errors, existingPackage.get()));
-    } else {
-      existingConfig = Optional.empty();
-    }
-
-    Map<String, Dependency> dependencies = new HashMap<>();
-    // Check if 'profiles' key is set, merge result with switches
-    String[] profiles;
-    if (existingConfig.isPresent() && existingConfig.get().hasKey(PROFILES_KEY)) {
-      List<String> configProfiles = existingConfig.get().asList(PROFILES_KEY, String.class)
-          .get();
-      Set<String> profileSet = new LinkedHashSet<>();
-      profileSet.addAll(configProfiles);
-      profileSet.addAll(Arrays.asList(this.profiles));
-      profiles = profileSet.toArray(String[]::new);
-    } else {
-      profiles = this.profiles;
-    }
-
-    //Download any profiles
-    for (String profile : profiles) {
-      if (profile.contains(".")) { //possible repo profile
-        //check to see if it's already in the package json, download the correct dep
-        Optional<Dependency> dependency;
-        if (hasVersionedProfileDependency(existingConfig, profile)) {
-          SqrlConfig depConfig = existingConfig.get()
-              .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
-              .getSubConfig(profile);
-          dependency = Optional.of(new Dependency(depConfig.asString(PKG_NAME_KEY).get(),
-              depConfig.asString(VERSION_KEY).get(),
-              depConfig.asString(VARIANT_KEY).getOptional()
-                .orElse(PackageConfiguration.DEFAULT_VARIANT)));
-        } else {
-          dependency = repository.resolveDependency(profile);
-        }
-
-        repository.resolveDependency(profile);
-        if (dependency.isPresent()) {
-          boolean success = repository.retrieveDependency(root.rootDir.resolve("build"),
-              dependency.get());
-          if (success) {
-            dependencies.put(profile, dependency.get());
-          } else {
-            throw new RuntimeException("Could not retrieve profile dependency: " + profile);
-          }
-        }
-      }
-    }
-
-    //Create package.json
-    List<Path> configFiles = new ArrayList<>();
-
-    //explicit cli package overrides
-    if (!root.packageFiles.isEmpty()) {
-      configFiles.addAll(root.packageFiles);
-    } else { //check for implicit package json
-      if (Files.exists(root.rootDir.resolve(PACKAGE_JSON))) {
-        configFiles.add(root.rootDir.resolve(PACKAGE_JSON));
-      }
-    }
-
-    // Add profile config files
-    for (String profile : profiles) {
-      Path localProfile = root.rootDir.resolve(profile).resolve(PACKAGE_JSON);
-      Path remoteProfile = root.rootDir.resolve(Packager.BUILD_DIR_NAME).resolve(profile).resolve(PACKAGE_JSON);
-
-      if (Files.isRegularFile(localProfile)) {//Look for local
-        configFiles.add(localProfile);
-      } else if (Files.isRegularFile(remoteProfile)) { //look for remote
-        configFiles.add(remoteProfile);
-      } else {
-        throw new RuntimeException("Could not find profile: " + profile);
-      }
-    }
-
-    if (root.packageFiles.isEmpty() && configFiles.isEmpty()) { //No profiles found, use default
-      SqrlConfig defaultConfig = createDefaultConfig(errors);
-      Path path = buildDir.resolve(PACKAGE_JSON);
-      defaultConfig.toFile(path);
-      configFiles.add(path);
-    }
-
-    // Could not find any package json
-    if (configFiles.isEmpty()) {
-      throw new RuntimeException("Could not find package.json");
-    }
-
-    // Merge all configurations
-    SqrlConfig sqrlConfig = SqrlConfigCommons.fromFiles(errors, configFiles);
-
-    sqrlConfig.setProperty(PROFILES_KEY, profiles);
-
-    //Add dependencies of discovered profiles
-    dependencies.forEach((key, dep) -> {
-      sqrlConfig.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
-    });
-
-    //Override main and graphql if they are specified as command line arguments
-    Optional<Path> mainScript = (files.length > 0) ? Optional.of(root.rootDir.resolve(files[0])) : Optional.empty();
-    Optional<Path> graphQLSchemaFile = (files.length > 1) ? Optional.of(root.rootDir.resolve(files[1])) : Optional.empty();
-
-    SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(sqrlConfig);
-    boolean isMainScriptSet = scriptConfig.asString(ScriptConfiguration.MAIN_KEY).getOptional()
-        .isPresent();
-    boolean isGraphQLSet = scriptConfig.asString(ScriptConfiguration.GRAPHQL_KEY).getOptional()
-        .isPresent();
-
-    // Set main script if not already set and if it's a regular file
-    if (mainScript.isPresent() && Files.isRegularFile(mainScript.get())) {
-      Path path = relativize(mainScript);
-      scriptConfig.setProperty(ScriptConfiguration.MAIN_KEY, path.toString());
-    } else if (!isMainScriptSet && mainScript.isPresent()) {
-      errors.fatal("Main script is not a regular file: %s", mainScript.get());
-    } else {
-      errors.fatal("No main sqrl script specified");
-    }
-
-    // Set GraphQL schema file if not already set and if it's a regular file
-    if (graphQLSchemaFile.isPresent() && Files.isRegularFile(graphQLSchemaFile.get())) {
-      Path path = relativize(graphQLSchemaFile);
-      scriptConfig.setProperty(ScriptConfiguration.GRAPHQL_KEY, path.toString());
-    } else if (!isGraphQLSet && graphQLSchemaFile.isPresent()) {
-      errors.fatal("GraphQL schema file is not a regular file: %s", graphQLSchemaFile.get());
-    }
-
-    return postProcessConfig(sqrlConfig, errors);
-  }
-
-  private Path relativize(Optional<Path> path) {
-    return path.get().isAbsolute() ? path.get() : root.rootDir.relativize(path.get()).normalize();
-  }
-
-  private boolean hasVersionedProfileDependency(Optional<SqrlConfig> existingConfig, String profile) {
-    return existingConfig.isPresent()
-        && existingConfig.get()
-            .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
-            .hasSubConfig(profile)
-        && existingConfig.get()
-            .getSubConfig(DependencyConfig.DEPENDENCIES_KEY)
-            .getSubConfig(profile)
-            .asString(VERSION_KEY).getOptional().isPresent();
-  }
-
   public abstract SqrlConfig createDefaultConfig(ErrorCollector errors);
 
-  public SqrlConfig postProcessConfig(SqrlConfig config, ErrorCollector errors) {
+  public SqrlConfig postProcessConfig(SqrlConfig config) {
     return config;
   }
 
