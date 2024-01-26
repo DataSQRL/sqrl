@@ -76,6 +76,8 @@ public interface SqrlConfig {
     return as(key, Boolean.class);
   }
 
+  boolean hasKey(String profiles);
+
   interface Value<T> {
 
     T get();

@@ -72,6 +72,7 @@ import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 @Getter
 public class Packager {
   public static final String BUILD_DIR_NAME = "build";
+  public static final String PROFILES_KEY = "profiles";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
 

@@ -298,6 +298,12 @@ public class SqrlConfigCommons implements SqrlConfig {
     return new Serialized(configFilename, map, prefix);
   }
 
+  @Override
+  public boolean hasKey(String key) {
+    String fullKey = getFullKey(key);
+    return config.containsKey(fullKey);
+  }
+
   public static SqrlConfig create(ErrorCollector errors) {
     Configuration config = new BaseHierarchicalConfiguration();
     return new SqrlConfigCommons(errors,null,config,"");

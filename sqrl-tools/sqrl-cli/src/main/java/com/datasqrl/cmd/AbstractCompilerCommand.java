@@ -4,6 +4,7 @@
 package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.Packager.PACKAGE_JSON;
+import static com.datasqrl.packager.Packager.PROFILES_KEY;
 import static com.datasqrl.packager.config.DependencyConfig.PKG_NAME_KEY;
 import static com.datasqrl.packager.config.DependencyConfig.VARIANT_KEY;
 import static com.datasqrl.packager.config.DependencyConfig.VERSION_KEY;
@@ -32,9 +33,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -119,6 +122,19 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     }
 
     Map<String, Dependency> dependencies = new HashMap<>();
+    // Check if 'profiles' key is set, merge result with switches
+    String[] profiles;
+    if (existingConfig.isPresent() && existingConfig.get().hasKey(PROFILES_KEY)) {
+      List<String> configProfiles = existingConfig.get().asList(PROFILES_KEY, String.class)
+          .get();
+      Set<String> profileSet = new LinkedHashSet<>();
+      profileSet.addAll(configProfiles);
+      profileSet.addAll(Arrays.asList(this.profiles));
+      profiles = profileSet.toArray(String[]::new);
+    } else {
+      profiles = this.profiles;
+    }
+
     //Download any profiles
     for (String profile : profiles) {
       if (profile.contains(".")) { //possible repo profile
