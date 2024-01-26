@@ -4,7 +4,6 @@
 package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.Packager.PACKAGE_JSON;
-import static com.datasqrl.packager.Packager.setScriptFiles;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 import com.datasqrl.compile.Compiler;
@@ -17,6 +16,7 @@ import com.datasqrl.graphql.APIType;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
@@ -43,42 +43,62 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   @CommandLine.Parameters(arity = "1..2", description = "Main script and (optional) API specification")
   protected Path[] files;
 
-  @CommandLine.Option(names = {"-a",
-      "--api"}, description = "Generates the API specification for the given type")
+  @CommandLine.Option(names = {"-a", "--api"},
+      description = "Generates the API specification for the given type")
   protected APIType[] generateAPI = new APIType[0];
 
-  @CommandLine.Option(names = {"-d",
-      "--debug"}, description = "Outputs table changestream to configured sink for debugging")
+  @CommandLine.Option(names = {"-d", "--debug"},
+      description = "Outputs table changestream to configured sink for debugging")
   protected boolean debug = false;
 
-  @CommandLine.Option(names = {"-t",
-      "--target"}, description = "Target directory for deployment artifacts")
+  @CommandLine.Option(names = {"-t", "--target"},
+      description = "Target directory for deployment artifacts")
   protected Path targetDir = DEFAULT_DEPLOY_DIR;
 
   @CommandLine.Option(names = {"--mnt"}, description = "Local directory to mount for data access")
   protected Path mountDirectory = null;
 
-  @CommandLine.Option(names = {
-      "--nolookup"}, description = "Do not look up package dependencies in the repository",
+  @CommandLine.Option(names = {"--nolookup"},
+      description = "Do not look up package dependencies in the repository",
       scope = ScopeType.INHERIT)
   protected boolean noinfer = false;
 
-  @CommandLine.Option(names = {"-p",
-      "--profile"}, description = "An alternative set of configuration values which override the default package.json")
+  @CommandLine.Option(names = {"-p", "--profile"},
+      description = "An alternative set of configuration values which override the default package.json")
   protected String[] profiles = new String[0];
 
   @SneakyThrows
   public void execute(ErrorCollector errors) {
-    errors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
+    Repository repository = createRepository(errors);
 
-    Path mainScript = files[0];
-    Path graphQLSchemaFile = null;
-    if (files.length > 1) {
-      graphQLSchemaFile = files[1];
+    SqrlConfig sqrlConfig = bootstrapPackageJson(repository, errors);
+
+    Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
+    Path path = packager.preprocess(!noinfer);
+
+    if (errors.hasErrors()) {
+      return;
     }
 
-    //To unpack profiles
-    Repository repository = createRepository(errors);
+    Compiler compiler = new Compiler();
+    Preconditions.checkArgument(Files.isRegularFile(path));
+
+    Compiler.CompilerResult result = compiler.run(errors, path.getParent(), debug, getTargetDir());
+
+    if (errors.hasErrors()) {
+      return;
+    }
+
+    if (isGenerateGraphql()) {
+      addGraphql(root.rootDir.resolve(Packager.BUILD_DIR_NAME), root.rootDir);
+    }
+
+    postprocess(packager, result, getTargetDir(), errors);
+  }
+
+  @SneakyThrows
+  private SqrlConfig bootstrapPackageJson(Repository repository, ErrorCollector errors) {
+    errors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
     //Create build dir to unpack resolved dependencies
     Path buildDir = root.rootDir.resolve(Packager.BUILD_DIR_NAME);
@@ -148,33 +168,33 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       sqrlConfig.getSubConfig(DependencyConfig.DEPENDENCIES_KEY).getSubConfig(key).setProperties(dep);
     });
 
-    //Set main and graphql
-    Path script = root.rootDir.resolve(mainScript);
-    Path graphql = graphQLSchemaFile == null ? null : root.rootDir.resolve(graphQLSchemaFile);
-    setScriptFiles(root.rootDir, script, graphql, sqrlConfig, errors);
+    //Override main and graphql if they are specified as command line arguments
+    Optional<Path> mainScript = (files.length > 0) ? Optional.of(root.rootDir.resolve(files[0])) : Optional.empty();
+    Optional<Path> graphQLSchemaFile = (files.length > 1) ? Optional.of(root.rootDir.resolve(files[1])) : Optional.empty();
 
-    //Script bootstrapped, execute packager
-    Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
-    Path path = packager.preprocess(!noinfer);
+    SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(sqrlConfig);
+    boolean isMainScriptSet = scriptConfig.asString(ScriptConfiguration.MAIN_KEY).getOptional()
+        .isPresent();
+    boolean isGraphQLSet = scriptConfig.asString(ScriptConfiguration.GRAPHQL_KEY).getOptional()
+        .isPresent();
 
-    if (errors.hasErrors()) {
-      return;
+    // Set main script if not already set and if it's a regular file
+    if (mainScript.isPresent() && Files.isRegularFile(mainScript.get())) {
+      scriptConfig.setProperty(ScriptConfiguration.MAIN_KEY, root.rootDir.relativize(mainScript.get()).normalize().toString());
+    } else if (!isMainScriptSet && mainScript.isPresent()) {
+      errors.fatal("Main script is not a regular file: %s", mainScript.get());
+    } else {
+      errors.fatal("No main sqrl script specified");
     }
 
-    Compiler compiler = new Compiler();
-    Preconditions.checkArgument(Files.isRegularFile(path));
-
-    Compiler.CompilerResult result = compiler.run(errors, path.getParent(), debug, getTargetDir());
-
-    if (errors.hasErrors()) {
-      return;
+    // Set GraphQL schema file if not already set and if it's a regular file
+    if (graphQLSchemaFile.isPresent() && Files.isRegularFile(graphQLSchemaFile.get())) {
+      scriptConfig.setProperty(ScriptConfiguration.GRAPHQL_KEY, root.rootDir.relativize(graphQLSchemaFile.get()).normalize().toString());
+    } else if (!isGraphQLSet && graphQLSchemaFile.isPresent()) {
+      errors.fatal("GraphQL schema file is not a regular file: %s", graphQLSchemaFile.get());
     }
 
-    if (isGenerateGraphql()) {
-      addGraphql(root.rootDir.resolve(Packager.BUILD_DIR_NAME), root.rootDir);
-    }
-
-    postprocess(packager, result, getTargetDir(), errors);
+    return sqrlConfig;
   }
 
   public abstract SqrlConfig createSqrlConfig(ErrorCollector errors);

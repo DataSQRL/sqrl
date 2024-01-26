@@ -18,10 +18,6 @@ public interface Preprocessor {
 
   void processFile(Path dir, ProcessorContext processorContext, ErrorCollector errors);
 
-  default void finalizeProcessing() {
-
-  }
-
   @Getter
   class ProcessorContext {
 

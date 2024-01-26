@@ -368,17 +368,7 @@ public class Packager {
     errors.checkFatal(!(graphQLSchemaFile != null && !Files.isRegularFile(graphQLSchemaFile)), "Could not find API file: %s", graphQLSchemaFile);
 
     SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(sqrlConfig);
-    addFileToPackageJsonConfig2(rootDir, scriptConfig, Map.of(ScriptConfiguration.MAIN_KEY, Optional.ofNullable(mainScript),
+    addFileToPackageJsonConfig(rootDir, scriptConfig, Map.of(ScriptConfiguration.MAIN_KEY, Optional.ofNullable(mainScript),
         ScriptConfiguration.GRAPHQL_KEY, Optional.ofNullable(graphQLSchemaFile)), errors);
-  }
-
-  public static void addFileToPackageJsonConfig2(Path rootDir, SqrlConfig config, Map<String, Optional<Path>> filesByKey,
-      ErrorCollector errors) {
-    filesByKey.forEach((key, file) -> {
-      if (file.isPresent()) {
-        errors.checkFatal(Files.isRegularFile(file.get()), "Could not locate %s file: %s", key, file.get());
-        config.setProperty(key,rootDir.relativize(file.get()).normalize().toString());
-      }
-    });
   }
 }
