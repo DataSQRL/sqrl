@@ -101,7 +101,6 @@ public class PackageBootstrap {
           dependency = repository.resolveDependency(profile);
         }
 
-        repository.resolveDependency(profile);
         if (dependency.isPresent()) {
           boolean success = repository.retrieveDependency(rootDir.resolve("build"),
               dependency.get());
