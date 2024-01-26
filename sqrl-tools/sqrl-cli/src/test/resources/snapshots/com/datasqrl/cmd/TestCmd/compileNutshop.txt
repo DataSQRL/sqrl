@@ -32,6 +32,7 @@ nutshop-small/products.table.json
 nutshop-url
 nutshop-url/orders.schema.yml
 nutshop-url/orders.table.json
+nutshop-url/package.json
 nutshop-url/products.schema.yml
 nutshop-url/products.table.json
 package.json

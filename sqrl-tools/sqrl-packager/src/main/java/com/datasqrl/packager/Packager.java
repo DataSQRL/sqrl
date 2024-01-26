@@ -35,6 +35,7 @@ import com.datasqrl.packager.postprocess.FlinkPostprocessor;
 import com.datasqrl.packager.postprocess.Postprocessor.ProcessorContext;
 import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
+import com.datasqrl.packager.preprocess.PackageJsonPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
 import com.datasqrl.packager.repository.Repository;
@@ -50,7 +51,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,9 +61,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -74,48 +72,24 @@ import org.apache.flink.calcite.shaded.org.apache.commons.io.FileUtils;
 @Getter
 public class Packager {
   public static final String BUILD_DIR_NAME = "build";
-
-  // this is the default package name, but not the specified package name.
   public static final String PACKAGE_JSON = "package.json";
-
   public static final Path DEFAULT_PACKAGE = Path.of(Packager.PACKAGE_JSON);
 
-  Repository repository;
-  Path rootDir;
-  // remove config?
-  SqrlConfig config;
-  ErrorCollector errors;
-  Path buildDir;
-  String[] profiles;
-  private final Path mainScript;
-  private final List<Path> packageFiles;
-  private final Path graphQLSchemaFile;
-  private final Optional<Path> mountDirectory;
+  private final Repository repository;
+  private final Path rootDir;
+  private final SqrlConfig config;
+  private final Path buildDir;
+  private final ErrorCollector errors;
 
-  public Packager(@NonNull Repository repository,
-      @NonNull Path rootDir,
-      Path mainScript,
-      List<Path> packageFiles,
-      Path graphQLSchemaFile,
-      String[] profiles,
-      Optional<Path> mountDirectory, @NonNull ErrorCollector errors) {
-    this.mainScript = mainScript;
-    this.packageFiles = packageFiles;
-    this.graphQLSchemaFile = graphQLSchemaFile;
-    this.mountDirectory = mountDirectory;
+  public Packager(@NonNull Repository repository, @NonNull Path rootDir,
+      @NonNull SqrlConfig sqrlConfig, @NonNull ErrorCollector errors) {
     errors.checkFatal(Files.isDirectory(rootDir), "Not a valid root directory: %s", rootDir);
-    errors.checkFatal(graphQLSchemaFile == null || Files.isRegularFile(graphQLSchemaFile), "Could not find API file: %s", graphQLSchemaFile);
-
-    this.profiles = profiles;
     Preconditions.checkArgument(Files.isDirectory(rootDir));
     this.repository = repository;
     this.rootDir = rootDir;
     this.buildDir = rootDir.resolve(BUILD_DIR_NAME);
-    cleanUp();
-    createBuildDir();
-
     this.errors = errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON));
-    this.config = handleProfileConfigs();
+    this.config = sqrlConfig;
   }
 
   public Path preprocess(boolean inferDependencies) {
@@ -124,9 +98,9 @@ public class Packager {
             .getOptional().map(StringUtils::isNotBlank).orElse(false),
         "No config or main script specified");
     try {
-      cleanUp();
-      cleanBuildDir();
-      createBuildDir();
+      cleanUp(buildDir);
+      cleanBuildDir(buildDir);
+      createBuildDir(buildDir);
       if (inferDependencies) {
         inferDependencies();
       }
@@ -140,101 +114,8 @@ public class Packager {
     }
   }
 
-  private SqrlConfig handleProfileConfigs() {
-    List<Path> configFiles = new ArrayList<>();
-
-    //explicit cli package overrides
-    if (!packageFiles.isEmpty()) {
-      configFiles.addAll(packageFiles);
-    } else { //implicit package json
-      if (Files.exists(rootDir.resolve(PACKAGE_JSON))) {
-        configFiles.add(rootDir.resolve(PACKAGE_JSON));
-      }
-    }
-
-    // Add profile config files
-    for (String profile : profiles) {
-      Path profilePath = rootDir.resolve(profile).resolve(PACKAGE_JSON);
-      if (Files.isRegularFile(profilePath)) {
-        configFiles.add(profilePath);
-      } else if (isSystemProfile(profile)) {
-        if (packageFiles.isEmpty()) { //create default
-          if (profile.equalsIgnoreCase("compile")) {
-            SqrlConfig dockerConfig = createDockerConfig(errors);
-            Path path = buildDir.resolve(PACKAGE_JSON);
-            dockerConfig.toFile(path);
-            configFiles.add(path);
-          } else if (profile.equalsIgnoreCase("run")) {
-            SqrlConfig dockerConfig = createDockerConfig(errors);
-            dockerConfig.toFile(buildDir.resolve(PACKAGE_JSON));
-          }
-        }
-      } else {
-        // Handle error or log missing profile config
-        throw errors.handle(new IOException("Profile config not found: " + profile));
-      }
-    }
-
-    // Could not find any package json
-    if (configFiles.isEmpty()) {
-      throw new RuntimeException("Could not find package.json");
-    }
-
-    // Merge all configurations
-    SqrlConfig sqrlConfig = SqrlConfigCommons.fromFiles(errors, configFiles);
-
-    setScriptFiles(rootDir, mainScript, graphQLSchemaFile, sqrlConfig, errors);
-
-    return sqrlConfig;
-  }
-
-  public static void setScriptFiles(Path rootDir, Path mainScript, Path graphQLSchemaFile,
-      SqrlConfig sqrlConfig, ErrorCollector errors) {
-    SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(sqrlConfig);
-    addFileToPackageJsonConfig(rootDir, scriptConfig, Map.of(ScriptConfiguration.MAIN_KEY, Optional.ofNullable(mainScript),
-        ScriptConfiguration.GRAPHQL_KEY, Optional.ofNullable(graphQLSchemaFile)), errors);
-  }
-
-  private boolean isSystemProfile(String profile) {
-    return profile.equalsIgnoreCase("compile") || profile.equalsIgnoreCase("run");
-  }
-
-  public static SqrlConfig createDockerConfig(ErrorCollector errors) {
-    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
-
-    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
-
-    SqrlConfig dbConfig = config.getSubConfig("database");
-    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
-    dbConfig.setProperties(JdbcDataSystemConnector.builder()
-        .url("jdbc:postgresql://database:5432/datasqrl")
-        .driver("org.postgresql.Driver")
-        .dialect("postgres")
-        .database("datasqrl")
-        .user("postgres")
-        .password("postgres")
-        .host("database")
-        .port(5432)
-        .build()
-    );
-    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
-    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
-
-    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
-    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
-        VertxEngineFactory.ENGINE_NAME);
-
-    SqrlConfig logConfig = config.getSubConfig(EngineKeys.LOG);
-    logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
-    logConfig.copy(
-        KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, "kafka:9092",
-            JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
-
-    return rootConfig;
-  }
-
   @SneakyThrows
-  private void createBuildDir() {
+  public static void createBuildDir(Path buildDir) {
     Files.createDirectories(buildDir);
   }
 
@@ -356,7 +237,7 @@ public class Packager {
   private void preProcessFiles(SqrlConfig config) throws IOException {
     //Preprocessor will normalize files
     List<Preprocessor> processorList = ListUtils.union(List.of(new TablePreprocessor(),
-            new JarPreprocessor(), new DataSystemPreprocessor()),
+            new JarPreprocessor(), new DataSystemPreprocessor(), new PackageJsonPreprocessor()),
         ServiceLoaderDiscovery.getAll(Preprocessor.class));
     Preprocessors preprocessors = new Preprocessors(processorList, errors);
     preprocessors.handle(
@@ -371,8 +252,7 @@ public class Packager {
     config.toFile(buildDir.resolve(PACKAGE_JSON), true);
   }
 
-  //Todo; remove for cleanUp
-  private void cleanBuildDir() throws IOException {
+  public static void cleanBuildDir(Path buildDir) throws IOException {
     if (Files.exists(buildDir) && Files.isDirectory(buildDir)) {
       Files.walk(buildDir)
           // Sort the paths in reverse order so that directories are deleted last
@@ -393,7 +273,7 @@ public class Packager {
     return repository.retrieveDependency(targetPath, dependency);
   }
 
-  public void cleanUp() {
+  public static void cleanUp(Path rootDir) {
     try {
       Path buildDir = rootDir.resolve(BUILD_DIR_NAME);
       if (Files.exists(buildDir)) {
@@ -419,9 +299,10 @@ public class Packager {
     return targetPath;
   }
 
-  public void postprocess(CompilerResult result, Path targetDir) {
+  public void postprocess(CompilerResult result, Path targetDir, Optional<Path> mountDirectory,
+      String[] profiles) {
     List.of(new DockerPostprocessor(), new FlinkPostprocessor())
-        .forEach(p->p.process(new ProcessorContext(targetDir, result, mountDirectory)));
+        .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, result, mountDirectory, profiles)));
   }
 
   @SneakyThrows
@@ -445,5 +326,59 @@ public class Packager {
     } else {
       return Optional.of(packageFiles);
     }
+  }
+
+  public static SqrlConfig createDockerConfig(ErrorCollector errors) {
+    SqrlConfig rootConfig = SqrlConfigCommons.create(errors);
+
+    SqrlConfig config = rootConfig.getSubConfig(PipelineFactory.ENGINES_PROPERTY);
+
+    SqrlConfig dbConfig = config.getSubConfig("database");
+    dbConfig.setProperty(JDBCEngineFactory.ENGINE_NAME_KEY, JDBCEngineFactory.ENGINE_NAME);
+    dbConfig.setProperties(JdbcDataSystemConnector.builder()
+        .url("jdbc:postgresql://database:5432/datasqrl")
+        .driver("org.postgresql.Driver")
+        .dialect("postgres")
+        .database("datasqrl")
+        .user("postgres")
+        .password("postgres")
+        .host("database")
+        .port(5432)
+        .build()
+    );
+    SqrlConfig flinkConfig = config.getSubConfig(EngineKeys.STREAMS);
+    flinkConfig.setProperty(FlinkEngineFactory.ENGINE_NAME_KEY, FlinkEngineFactory.ENGINE_NAME);
+
+    SqrlConfig server = config.getSubConfig(EngineKeys.SERVER);
+    server.setProperty(GenericJavaServerEngineFactory.ENGINE_NAME_KEY,
+        VertxEngineFactory.ENGINE_NAME);
+
+    SqrlConfig logConfig = config.getSubConfig(EngineKeys.LOG);
+    logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
+    logConfig.copy(
+        KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME, "kafka:9092",
+            JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
+
+    return rootConfig;
+  }
+
+  public static void setScriptFiles(Path rootDir, Path mainScript, Path graphQLSchemaFile,
+      SqrlConfig sqrlConfig, ErrorCollector errors) {
+    errors.checkFatal(mainScript == null || Files.isRegularFile(mainScript), "Could not find sqrl file: %s", mainScript);
+    errors.checkFatal(!(graphQLSchemaFile != null && !Files.isRegularFile(graphQLSchemaFile)), "Could not find API file: %s", graphQLSchemaFile);
+
+    SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(sqrlConfig);
+    addFileToPackageJsonConfig2(rootDir, scriptConfig, Map.of(ScriptConfiguration.MAIN_KEY, Optional.ofNullable(mainScript),
+        ScriptConfiguration.GRAPHQL_KEY, Optional.ofNullable(graphQLSchemaFile)), errors);
+  }
+
+  public static void addFileToPackageJsonConfig2(Path rootDir, SqrlConfig config, Map<String, Optional<Path>> filesByKey,
+      ErrorCollector errors) {
+    filesByKey.forEach((key, file) -> {
+      if (file.isPresent()) {
+        errors.checkFatal(Files.isRegularFile(file.get()), "Could not locate %s file: %s", key, file.get());
+        config.setProperty(key,rootDir.relativize(file.get()).normalize().toString());
+      }
+    });
   }
 }

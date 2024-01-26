@@ -11,8 +11,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import org.testcontainers.shaded.org.bouncycastle.util.Pack;
 
+import static com.datasqrl.packager.Packager.setScriptFiles;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestCompiler {
@@ -53,11 +53,10 @@ public class TestCompiler {
     return Optional.empty();
   }
 
-
   @SneakyThrows
   public Path createDefaultPackage(Path rootDir, Path script, Path graphql) {
     SqrlConfig config = Packager.createDockerConfig(ErrorCollector.root());
-    Packager.setScriptFiles(rootDir, script, graphql, config, ErrorCollector.root());
+    setScriptFiles(rootDir, script, graphql, config, ErrorCollector.root());
 
     Path defaultPackage = Files.createTempFile("pkJson", ".json");
     config.toFile(defaultPackage, true);

@@ -62,7 +62,7 @@ public class Preprocessors {
   private void invokePreprocessor(Preprocessor preprocessor, Path userDir, PreprocessorsContext ctx) {
     ProcessorContext context = new ProcessorContext(ctx.rootDir, ctx.buildDir, ctx.config);
     log.trace("Invoking preprocessor: {}", preprocessor.getClass());
-    preprocessor.loader(userDir, context, errors);
+    preprocessor.processFile(userDir, context, errors);
     copyRelativeFiles(context.getDependencies(),
         getModulePath(context.getName(), ctx.rootDir, ctx.buildDir, userDir));
     copy(context.getLibraries(), ctx.buildDir);
@@ -117,6 +117,8 @@ public class Preprocessors {
   public static class PreprocessorsContext {
     Path rootDir;
     Path buildDir;
+    // The user specified config
     SqrlConfig config;
+    String[] profiles;
   }
 }

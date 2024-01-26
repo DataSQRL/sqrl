@@ -28,6 +28,7 @@ import com.datasqrl.packager.Packager;
 import com.datasqrl.schema.input.FlexibleTableSchemaFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Properties;
 import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.ConfigConstants;
@@ -40,17 +41,10 @@ import picocli.CommandLine;
 public class RunCommand extends AbstractCompilerCommand {
   EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
 
-  public RunCommand() {
-    super(CompileTarget.RUN);
-  }
-
   @SneakyThrows
   @Override
   public void execute(ErrorCollector errors) {
-    //start services, if there is no package json, create one and add it,
-    CLUSTER.start();
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> CLUSTER.stop()));
-    SqrlConfig sqrlConfig = initializeConfig(root.rootDir, errors);
+    SqrlConfig sqrlConfig = createRunConfig(root.rootDir, errors);
     Path config = Packager.writeEngineConfig(root.rootDir, sqrlConfig);
 
     this.root.packageFiles = new ArrayList<>(this.root.packageFiles);
@@ -60,16 +54,26 @@ public class RunCommand extends AbstractCompilerCommand {
   }
 
   @Override
+  public SqrlConfig createSqrlConfig(ErrorCollector errors) {
+    return createRunConfig(root.rootDir, errors);
+  }
+
+  @Override
   protected void postprocess(Packager packager, CompilerResult result, Path targetDir,
       ErrorCollector errors) {
     super.postprocess(packager, result, targetDir, errors);
     executePlan(result.getPlan(), errors);
-
   }
+
   @SneakyThrows
   protected void executePlan(PhysicalPlan physicalPlan, ErrorCollector errors) {
-    Predicate<ExecutionStage> stageFilter = s -> true;
-//    if (!startGraphql) stageFilter = s -> s.getEngine().getType()!= Type.SERVER;
+    //start services
+    CLUSTER.start();
+    int port = Integer.parseInt(CLUSTER.bootstrapServers().split(":")[1]);
+    PortForwarder forwarder = new PortForwarder(56789, port);
+    new Thread(()->forwarder.start()).start();
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> CLUSTER.stop()));
+
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);
     result.get().get();
@@ -79,10 +83,10 @@ public class RunCommand extends AbstractCompilerCommand {
   }
 
   @SneakyThrows
-  protected SqrlConfig initializeConfig(Path rootDir, ErrorCollector errors) {
+  protected SqrlConfig createRunConfig(Path rootDir, ErrorCollector errors) {
     SqrlConfig userConfig = Packager.findPackageFile(rootDir, this.root.packageFiles)
         .map(p -> SqrlConfigCommons.fromFiles(errors, p))
-        .orElseGet(() -> createLocalConfig(CLUSTER.bootstrapServers(), errors));
+        .orElseGet(() -> createLocalConfig("127.0.0.1:56789", errors));
 
     // Overwrite the bootstrap servers since they change per invocation
     Value<String> bootstrapServers = userConfig
@@ -96,7 +100,7 @@ public class RunCommand extends AbstractCompilerCommand {
           .getSubConfig(EngineKeys.ENGINES)
           .getSubConfig(EngineKeys.LOG)
           .getSubConfig(CONNECTOR_KEY)
-          .setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+          .setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:56789");
     }
 
     return userConfig;

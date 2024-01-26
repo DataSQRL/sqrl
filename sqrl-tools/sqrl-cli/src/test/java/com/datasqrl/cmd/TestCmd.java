@@ -129,14 +129,17 @@ public class TestCmd {
   public void compileProfiles() {
     execute(PROFILES_PATH, "compile",
         "myscript.sqrl", "schema.graphqls",
-        "-t", OUTPUT_DIR.toString(),
         "--nolookup",
         "-p", "profile1",
-        "-p", "profile2"
+        "-p", "profile2",
+        "--mnt", "/example/dir"
     );
 
     snapshot.addContent(
         Files.readString(PROFILES_PATH.resolve("build").resolve("package.json")));
+
+    snapshot.addContent(
+        Files.readString(PROFILES_PATH.resolve("build").resolve("deploy").resolve("docker-compose.yml")));
     createSnapshot();
   }
 

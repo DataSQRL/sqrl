@@ -1,0 +1,78 @@
+version: "3.8"
+services:
+  database:
+    image: ankane/pgvector:v0.5.0
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=datasqrl
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./database-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
+
+  flink-jobmanager:
+    image: flink:1.16.1-scala_2.12-java11
+    ports:
+      - "8081:8081"
+    command: /bin/bash /exec/init-flink.sh jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+
+  flink-taskmanager:
+    image: flink:1.16.1-scala_2.12-java11
+    depends_on:
+      - flink-jobmanager
+    command: /bin/bash /exec/init-flink.sh taskmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.numberOfTaskSlots: 1
+
+  kafka:
+    image: docker.io/bitnami/kafka:3.4.0-debian-11-r38
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+  kafka-setup:
+    image: docker.io/bitnami/kafka:3.4.0-debian-11-r38
+    volumes:
+      - './create-topics.sh:/create-topics.sh'
+    command: ['/bin/bash', '/create-topics.sh']
+    depends_on:
+      - kafka
+
+  server:
+    image: eclipse-temurin:11
+    command: java -jar vertx-server.jar
+    depends_on:
+      - database
+      - kafka-setup
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./server-model.json:/server-model.json
+      - ./server-config.json:/server-config.json
+      - ./vertx-server.jar:/vertx-server.jar
+
+  flink-job-submitter:
+    image: badouralix/curl-jq:alpine
+    depends_on:
+      - flink-jobmanager
+      - database
+      - kafka-setup
+    volumes:
+      - ./flink-job.jar:/flink-job.jar
+      - ./submit-flink-job.sh:/submit-flink-job.sh
+    entrypoint: /submit-flink-job.sh
+

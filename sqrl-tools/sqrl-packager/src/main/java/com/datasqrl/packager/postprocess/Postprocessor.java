@@ -11,8 +11,10 @@ public interface Postprocessor {
 
   @Value
   public class ProcessorContext {
+    Path buildDir;
     Path targetDir;
     CompilerResult compilerResult;
     Optional<Path> mountDir;
+    String[] profiles;
   }
 }

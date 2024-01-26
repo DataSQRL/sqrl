@@ -3,12 +3,16 @@
  */
 package com.datasqrl.cmd;
 
+import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.Packager;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "compile", description = "Compiles an SQRL script and produces all build artifacts")
 public class CompilerCommand extends AbstractCompilerCommand {
 
-  public CompilerCommand() {
-    super(CompileTarget.COMPILE);
+  @Override
+  public SqrlConfig createSqrlConfig(ErrorCollector errors) {
+    return Packager.createDockerConfig(errors);
   }
 }

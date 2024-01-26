@@ -3,11 +3,14 @@
  */
 package com.datasqrl.packager;
 
+import static com.datasqrl.packager.Packager.BUILD_DIR_NAME;
 import static com.datasqrl.packager.Packager.PACKAGE_JSON;
+import static com.datasqrl.packager.Packager.setScriptFiles;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.config.ConfigurationTest;
@@ -96,11 +99,14 @@ public class PackagerTest {
 
   @SneakyThrows
   private void testCombination(Path main, Path graphQl, Path packageFile, Repository repository) {
-    Packager pkg = new Packager(repository, packageFile.getParent(),
-        main, List.of(packageFile), graphQl, new String[0], Optional.empty(), ErrorCollector.root());
-    pkg.cleanUp();
+    ErrorCollector errors = ErrorCollector.root();
+    SqrlConfig sqrlConfig = SqrlConfigCommons.fromFiles(errors, packageFile);
+    setScriptFiles(packageFile.getParent(), main, graphQl, sqrlConfig, errors);
+    Packager pkg = new Packager(repository, packageFile.getParent(), sqrlConfig, errors);
+    Path buildDir = packageFile.getParent().resolve(BUILD_DIR_NAME);
+    pkg.cleanUp(buildDir);
     populateBuildDirAndTakeSnapshot(pkg, main, graphQl, packageFile);
-    pkg.cleanUp();
+    pkg.cleanUp(buildDir);
   }
 
   @SneakyThrows
