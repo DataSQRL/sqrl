@@ -225,7 +225,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     // Set main script if not already set and if it's a regular file
     if (mainScript.isPresent() && Files.isRegularFile(mainScript.get())) {
-      scriptConfig.setProperty(ScriptConfiguration.MAIN_KEY, root.rootDir.relativize(mainScript.get()).normalize().toString());
+      Path path = relativize(mainScript);
+      scriptConfig.setProperty(ScriptConfiguration.MAIN_KEY, path.toString());
     } else if (!isMainScriptSet && mainScript.isPresent()) {
       errors.fatal("Main script is not a regular file: %s", mainScript.get());
     } else {
@@ -234,12 +235,17 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     // Set GraphQL schema file if not already set and if it's a regular file
     if (graphQLSchemaFile.isPresent() && Files.isRegularFile(graphQLSchemaFile.get())) {
-      scriptConfig.setProperty(ScriptConfiguration.GRAPHQL_KEY, root.rootDir.relativize(graphQLSchemaFile.get()).normalize().toString());
+      Path path = relativize(graphQLSchemaFile);
+      scriptConfig.setProperty(ScriptConfiguration.GRAPHQL_KEY, path.toString());
     } else if (!isGraphQLSet && graphQLSchemaFile.isPresent()) {
       errors.fatal("GraphQL schema file is not a regular file: %s", graphQLSchemaFile.get());
     }
 
     return postProcessConfig(sqrlConfig, errors);
+  }
+
+  private Path relativize(Optional<Path> path) {
+    return path.get().isAbsolute() ? path.get() : root.rootDir.relativize(path.get()).normalize();
   }
 
   private boolean hasVersionedProfileDependency(Optional<SqrlConfig> existingConfig, String profile) {
