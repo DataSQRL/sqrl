@@ -83,7 +83,7 @@ public class RunCommand extends AbstractCompilerCommand {
     //start services
     CLUSTER.start();
     int port = Integer.parseInt(CLUSTER.bootstrapServers().split(":")[1]);
-    PortForwarder forwarder = new PortForwarder(9094, port);
+    PortForwarder forwarder = new PortForwarder(9092, port);
     new Thread(()->forwarder.start()).start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> CLUSTER.stop()));
 
@@ -126,7 +126,7 @@ public class RunCommand extends AbstractCompilerCommand {
       logConfig.setProperty(EngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
       logConfig.copy(
           KafkaDataSystemFactory.getKafkaEngineConfig(KafkaLogEngineFactory.ENGINE_NAME,
-              "127.0.0.1:9094",
+              "127.0.0.1:9092",
               JsonLineFormat.NAME, FlexibleTableSchemaFactory.SCHEMA_TYPE));
     }
   }
@@ -187,7 +187,7 @@ public class RunCommand extends AbstractCompilerCommand {
           .getSubConfig(PipelineFactory.ENGINES_PROPERTY)
           .getSubConfig(EngineKeys.LOG)
           .getSubConfig(CONNECTOR_KEY)
-          .setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9094");
+          .setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
     }
   }
 }
