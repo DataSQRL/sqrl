@@ -12,7 +12,7 @@ RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-
     apt-get install -y postgresql-${POSTGRES_VERSION}-pgvector && \
     rm -rf /var/lib/apt/lists/*
 
-#postgresql-16-pgvector
+# Install pgvector
 RUN service postgresql start && \
     su - postgres -c "psql -U postgres -c \"ALTER USER postgres WITH PASSWORD 'postgres';\"" && \
     su - postgres -c "psql -U postgres -c \"CREATE DATABASE datasqrl;\"" && \
