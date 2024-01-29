@@ -1,18 +1,25 @@
 FROM eclipse-temurin:11.0.22_7-jdk
 WORKDIR /usr/src/app
-ARG POSTGRES_VERSION=14
+ARG POSTGRES_VERSION=15
 
-# Install PostgreSQL
-RUN apt-get update && apt-get install -y postgresql postgresql-contrib lsb-release gnupg && rm -rf /var/lib/apt/lists/*
-
-# Install pgvector extension package
-RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'  && \
-    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -  && \
-    apt-get update && \
-    apt-get install -y postgresql-${POSTGRES_VERSION}-pgvector && \
+RUN apt-get update && \
+    apt-get install -y lsb-release gnupg && \
     rm -rf /var/lib/apt/lists/*
 
-# Install pgvector
+# Add postgresql repo
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'  && \
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+
+
+# Install PostgreSQL and its extensions
+RUN apt-get update && \
+    apt-get install -y postgresql-${POSTGRES_VERSION} \
+                       postgresql-contrib-${POSTGRES_VERSION} \
+                       postgresql-${POSTGRES_VERSION}-pgvector && \
+                       rm -rf /var/lib/apt/lists/*
+
+
+# Setup postgres
 RUN service postgresql start && \
     su - postgres -c "psql -U postgres -c \"ALTER USER postgres WITH PASSWORD 'postgres';\"" && \
     su - postgres -c "psql -U postgres -c \"CREATE DATABASE datasqrl;\"" && \
