@@ -5,8 +5,8 @@ type Query {
 
   Search(query: String!, orgids: String = "", resultType: String = "", limit: Int = 10, offset: Int = 0): [SearchResult!]!
   TopicPackages(topicName: String!, orgids: String = "", limit: Int = 10, offset: Int = 0): [PackageResult!]
-  PackageRecommendation(orgids: String = "", limit: Int = 10, offset: Int = 0): [PackageResult!]
-  TopicRecommendation(orgids: String = "", limit: Int = 10, offset: Int = 0): [TopicResult!]
+  PackageRecommendation(limit: Int = 10, offset: Int = 0): [PackageResult!]
+  TopicRecommendation(limit: Int = 10, offset: Int = 0): [TopicResult!]
 
   NameCheck(name: String!): NameCheck
 }
@@ -24,7 +24,6 @@ interface PackageDescription {
   type: String
   description: String
   orgid: String!
-  isPublic: Boolean!
 }
 
 type PackageResult implements PackageDescription {
