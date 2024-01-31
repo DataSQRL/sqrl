@@ -24,6 +24,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -50,10 +51,11 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
   }
 
   @Test
+  //TODO: Change the debug sink back to "output" once we support Flink table file sinks with updates
   public void debugC3602OutputTest() {
     TestScript script = example.getScript(RetailScriptNames.FULL);
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
-          .debugger(DebuggerConfig.of(NamePath.of("output"),null))
+          .debugger(DebuggerConfig.of(NamePath.of("print"),null))
         .build(), script.getScriptPath().getParent(), Optional.of(outputPath));
     validateTables(script.getScript(), "order_stats", "order_again");
   }
@@ -63,7 +65,7 @@ class FlinkDebugPhysicalIT extends AbstractPhysicalSQRLIT {
     TestScript script = example.getScript(RetailScriptNames.FULL);
     initialize(IntegrationTestSettings.getFlinkWithDBConfig()
             .debugger(DebuggerConfig.of(NamePath.of("output"),
-                toName("order_stats", "NewCustomerPromotion", "order_again", "total")))
+                toName("customer", "category", "NewCustomerPromotion", "_spending_by_month_category", "total")))
             .build(),
         (Path) script.getScriptPath().getParent(),
         Optional.of(outputPath));

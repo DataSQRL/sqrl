@@ -8,6 +8,7 @@ LogicalTableScan(table=[[orders$1]])
 LogicalTableScan(table=[[product$1]])
 
 >>>x$1
-LogicalProject(description=[$3], name=[$4], MAX=[MAX($2) IGNORE NULLS OVER (PARTITION BY $3, $4 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
-  LogicalTableScan(table=[[product$2]])
+LogicalProject(description=[$1], name=[$0], MAX=[$2], __timestamp=[$3])
+  LogicalAggregate(group=[{3, 4}], MAX=[MAX($2)], __timestamp=[MAX($1)])
+    LogicalTableScan(table=[[product$2]])
 

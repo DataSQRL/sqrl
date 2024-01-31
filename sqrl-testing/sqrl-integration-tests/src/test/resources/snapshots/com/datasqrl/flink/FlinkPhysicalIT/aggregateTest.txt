@@ -8,8 +8,9 @@ LogicalProject(customer=[$0], bucket=[$1], order_count=[$2]) hints[TimestampHint
       LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>orderagg2$1-lp-stream
-LogicalProject(_pk=[1], order_count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4]) hints[TimestampHint options:[2]]
-  LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+LogicalProject(_pk=[1], order_count=[$0], __timestamp=[$1]) hints[TimestampHint options:[2]]
+  LogicalAggregate(group=[{}], order_count=[COUNT()], __timestamp=[MAX($4)])
+    LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
 
 >>>orderaugment$1-lp-stream
 LogicalProject(_uuid=[$0], id=[$2], time=[$4], order_count=[$7]) hints[TimestampHint options:[2]]
@@ -64,7 +65,7 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 
 >>>orderagg2-lp-database
 LogicalSort(sort0=[$0], dir0=[ASC])
-  LogicalProject(_pk=[$0], order_count=[$1], _time=[$2])
+  LogicalProject(_pk=[$0], order_count=[$1], __timestamp=[$2])
     LogicalTableScan(table=[[orderagg2$1]])
 
 >>>orderaugment-lp-database
@@ -108,7 +109,7 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC])
 1000107, 2023-05-19 03:14:59.999, 1
 1000121, 2023-05-19 03:14:59.999, 1
 >>>orderagg2-data
-1, 4, 2023-05-19 02:28:39.553
+1, 4
 >>>ordertime1-data
 1000101, 2023-05-19 01:29:39.999, 1
 1000107, 2023-05-19 01:45:39.999, 1

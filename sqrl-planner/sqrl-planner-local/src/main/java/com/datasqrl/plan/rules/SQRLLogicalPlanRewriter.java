@@ -1313,65 +1313,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
               timestamp, pkAndSelect.select, input)
           .topN(dedup).build();
     } else {
-      //Convert aggregation to window-based aggregation in a project so we can preserve timestamp followed by dedup
-      AnnotatedLP nowInput = input.inlineNowFilter(makeRelBuilder(), exec);
-
-      int selectLength = targetLength;
-      //Adding timestamp column to output relation if not already present
-      if (maxTimestamp.isEmpty()) targetLength += 1;
-
-      RelNode inputRel = nowInput.relNode;
-      RelBuilder relB = makeRelBuilder();
-      relB.push(inputRel);
-
-      RexInputRef timestampRef = RexInputRef.of(candidate.getIndex(), inputRel.getRowType());
-
-      List<RexNode> partitionKeys = new ArrayList<>(groupByIdx.size());
-      List<RexNode> projects = new ArrayList<>(targetLength);
-      List<String> projectNames = new ArrayList<>(targetLength);
-      //Add groupByKeys in a sorted order
-      List<Integer> sortedGroupByKeys = groupByIdx.stream().sorted().collect(Collectors.toList());
-      for (Integer keyIdx : sortedGroupByKeys) {
-        RexInputRef ref = RexInputRef.of(keyIdx, inputRel.getRowType());
-        projects.add(ref);
-        projectNames.add(null);
-        partitionKeys.add(ref);
-      }
-      RexFieldCollation orderBy = new RexFieldCollation(timestampRef, Set.of());
-
-      //Add aggregate functions
-      for (int i = 0; i < aggregateCalls.size(); i++) {
-        AggregateCall call = aggregateCalls.get(i);
-        RexNode agg = rexUtil.getBuilder().makeOver(call.getType(), call.getAggregation(),
-            call.getArgList().stream()
-                .map(idx -> RexInputRef.of(idx, inputRel.getRowType()))
-                .collect(Collectors.toList()),
-            partitionKeys,
-            ImmutableList.of(orderBy),
-            RexWindowBounds.UNBOUNDED_PRECEDING,
-            RexWindowBounds.CURRENT_ROW,
-            true, true, false, false, true
-        );
-        projects.add(agg);
-        projectNames.add(aggregate.getNamedAggCalls().get(i).getValue());
-      }
-
-      TimestampInference outputTimestamp;
-      if (maxTimestamp.isPresent()) {
-        outputTimestamp = TimestampInference.ofDerived(sortedGroupByKeys.size() + maxTimestamp.get().getAggCallIdx(), candidate);
-      } else {
-        //Add timestamp as last project
-        outputTimestamp = TimestampInference.ofDerived(targetLength-1, candidate);
-        projects.add(timestampRef);
-        projectNames.add(null);
-      }
-
-      relB.project(projects, projectNames);
-      PkAndSelect pkSelect = aggregatePkAndSelect(sortedGroupByKeys, sortedGroupByKeys, selectLength);
-      TopNConstraint dedup = TopNConstraint.makeDeduplication(pkSelect.pk.asList(),
-          outputTimestamp.getTimestampCandidate().getIndex());
-      return AnnotatedLP.build(relB.build(), TableType.DEDUP_STREAM, pkSelect.pk,
-          outputTimestamp, pkSelect.select, input).topN(dedup).build();
+      return handleStandardAggregation(input, groupByIdx, aggregateCalls, maxTimestamp, targetLength);
     }
   }
 

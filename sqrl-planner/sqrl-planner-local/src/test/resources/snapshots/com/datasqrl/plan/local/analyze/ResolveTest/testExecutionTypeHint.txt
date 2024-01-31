@@ -4,20 +4,16 @@ LogicalProject(customerid=[$1], num=[$2], _ingest_time=[$0])
     LogicalTableScan(table=[[customer$2]])
 
 >>>customeragg1$1-lp-DATABASE
-LogicalProject(customerid=[$0], num=[$1], _ingest_time=[$2])
-  LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], num=[$1], _ingest_time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-      LogicalProject(customerid=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
-        LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
-          LogicalTableScan(table=[[customer$2]])
+LogicalProject(customerid=[$0], num=[$1], __timestamp=[$2])
+  LogicalAggregate(group=[{2}], num=[COUNT()], __timestamp=[MAX($1)])
+    LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
+      LogicalTableScan(table=[[customer$2]])
 
 >>>customeragg2$1-lp-DATABASE
-LogicalProject(customerid=[$0], num=[$1], _ingest_time=[$2])
-  LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
-    LogicalProject(customerid=[$0], num=[$1], _ingest_time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-      LogicalProject(customerid=[$2], num=[COUNT() IGNORE NULLS OVER (PARTITION BY $2 ORDER BY $1 ROWS UNBOUNDED PRECEDING)], _ingest_time=[$1])
-        LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
-          LogicalTableScan(table=[[customer$2]])
+LogicalProject(customerid=[$0], num=[$1], __timestamp=[$2])
+  LogicalAggregate(group=[{2}], num=[COUNT()], __timestamp=[MAX($1)])
+    LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
+      LogicalTableScan(table=[[customer$2]])
 
 >>>customeragg3$1-lp-STREAM
 LogicalProject(customerid=[$1], num=[$2], _ingest_time=[$0])

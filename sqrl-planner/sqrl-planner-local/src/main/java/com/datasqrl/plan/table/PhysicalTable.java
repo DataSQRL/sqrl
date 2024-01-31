@@ -19,6 +19,8 @@ public interface PhysicalTable {
 
   Name getTableName();
 
+  TableType getType();
+
   List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors);
 
   SQRLConverter.Config.ConfigBuilder getBaseConfig();

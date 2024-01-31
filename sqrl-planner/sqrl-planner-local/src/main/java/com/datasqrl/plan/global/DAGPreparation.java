@@ -28,8 +28,8 @@ public class DAGPreparation {
 
   public Collection<AnalyzedAPIQuery> prepareInputs(SqrlSchema sqrlSchema, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports) {
-    //Add subscriptions as exports
 
+    //Add subscriptions as exports
     apiManager.getExports().forEach((sqrlTable, log) -> exports.add(exportTable((ModifiableTable) sqrlTable.getVt(),
         log.getSink(), relBuilder)));
 

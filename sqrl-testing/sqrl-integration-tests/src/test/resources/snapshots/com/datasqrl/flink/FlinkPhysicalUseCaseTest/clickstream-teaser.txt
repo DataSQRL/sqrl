@@ -1,9 +1,10 @@
 >>>recommendation$1-lp-stream
-LogicalProject(url=[$2], rec=[$3], frequency=[COUNT() IGNORE NULLS OVER (PARTITION BY $2, $3 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _timestamp=[$4]) hints[TimestampHint options:[3]]
-  LogicalProject(_uuid=[$0], _uuid0=[$5], beforeURL=[$2], afterURL=[$7], timestamp=[$8])
-    LogicalJoin(condition=[AND(=($4, $9), <($3, $8), >=($3, -($8, *(60000:INTERVAL MINUTE, 10))))], joinType=[inner]) hints[IntervalJoin]
-      LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
-      LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+LogicalProject(url=[$0], rec=[$1], frequency=[$2], __timestamp=[$3]) hints[TimestampHint options:[3]]
+  LogicalAggregate(group=[{2, 3}], frequency=[COUNT()], __timestamp=[MAX($4)])
+    LogicalProject(_uuid=[$0], _uuid0=[$5], beforeURL=[$2], afterURL=[$7], timestamp=[$8])
+      LogicalJoin(condition=[AND(=($4, $9), <($3, $8), >=($3, -($8, *(60000:INTERVAL MINUTE, 10))))], joinType=[inner]) hints[IntervalJoin]
+        LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
+        LogicalTableScan(table=[[click$1]], hints=[[[WatermarkHint inheritPath:[] options:[3]]]]) hints[WatermarkHint options:[3]]
 
 >>>trending$1-lp-stream
 LogicalProject(url=[$0], total=[$2], _timestamp=[$1]) hints[TimestampHint options:[2]]
@@ -18,7 +19,7 @@ LogicalProject(_uuid=[$0], _uuid0=[$5], beforeURL=[$2], afterURL=[$7], timestamp
 
 >>>recommendation-lp-database
 LogicalSort(sort0=[$0], sort1=[$2], sort2=[$1], dir0=[ASC], dir1=[DESC], dir2=[ASC])
-  LogicalProject(url=[$0], rec=[$1], frequency=[$2], _timestamp=[$3])
+  LogicalProject(url=[$0], rec=[$1], frequency=[$2], __timestamp=[$3])
     LogicalTableScan(table=[[recommendation$1]])
 
 >>>trending-lp-database
