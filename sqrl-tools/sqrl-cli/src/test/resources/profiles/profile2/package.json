@@ -1,0 +1,11 @@
+{
+  "engines" : {
+    "log" : {
+      "name" : "kafka",
+      "connector" : {
+        "name" : "kafka",
+        "bootstrap.servers" : "kafkaoverride:9092"
+      }
+    }
+  }
+}

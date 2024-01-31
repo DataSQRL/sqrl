@@ -4,8 +4,7 @@ import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.PackagerConfig;
-import com.datasqrl.service.PackagerUtil;
+import com.datasqrl.packager.Packager;
 import lombok.SneakyThrows;
 
 import java.nio.file.DirectoryStream;
@@ -13,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import static com.datasqrl.packager.Packager.setScriptFiles;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestCompiler {
@@ -28,11 +28,15 @@ public class TestCompiler {
     return rootDir;
   }
 
+  @SneakyThrows
   public Path compile(Path rootDir, Path packageOverride, Path script, Path graphql) {
     Path defaultPackage = createDefaultPackage(rootDir, script, graphql);
 
     picocli.CommandLine rootCommand = new RootCommand(rootDir, AssertStatusHook.INSTANCE).getCmd();
-    int code = rootCommand.execute("compile", script.toString(), graphql.toString(), "-c", defaultPackage.toAbsolutePath().toString(), "-c", packageOverride.toAbsolutePath().toString(), "--nolookup");
+    int code = rootCommand.execute("compile", script.toString(), graphql.toString(),
+        "-c", defaultPackage.toAbsolutePath().toString(),
+        "-c", packageOverride.toAbsolutePath().toString(),
+        "--nolookup");
     assertEquals(0, code, "Non-zero exit code");
     return rootDir;
   }
@@ -49,15 +53,14 @@ public class TestCompiler {
     return Optional.empty();
   }
 
-
   @SneakyThrows
   public Path createDefaultPackage(Path rootDir, Path script, Path graphql) {
-    SqrlConfig config = PackagerUtil.createDockerConfig(null, null, ErrorCollector.root());
-    PackagerConfig.PackagerConfigBuilder pkgBuilder = PackagerConfig.builder().rootDir(rootDir).config(config).mainScript(script).graphQLSchemaFile(graphql);
-    PackagerConfig packagerConfig = pkgBuilder.build();
+    SqrlConfig config = Packager.createDockerConfig(ErrorCollector.root());
+    setScriptFiles(rootDir, script, graphql, config, ErrorCollector.root());
 
     Path defaultPackage = Files.createTempFile("pkJson", ".json");
     config.toFile(defaultPackage, true);
+    defaultPackage.toFile().deleteOnExit();
     return defaultPackage;
   }
 }

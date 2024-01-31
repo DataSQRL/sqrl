@@ -1,0 +1,25 @@
+type Query {
+  post: [Post!]
+}
+
+type Mutation {
+  createPost(input: CreatePostInput!): CreatePostPayload
+}
+
+type Post {
+  id: String
+  title: String
+  url: String
+}
+
+type CreatePostPayload {
+  id: String
+  title: String
+  url: String
+}
+
+input CreatePostInput {
+  id: String
+  title: String
+  url: String
+}

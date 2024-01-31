@@ -64,6 +64,14 @@ public class SqrlConfigCommons implements SqrlConfig {
     return new SqrlConfigCommons(errors,configFilename,config,getPrefix(name));
   }
 
+  @Override
+  public boolean hasSubConfig(String name) {
+    String subConfigPrefix = getFullKey(name) + DELIMITER;
+
+    return config.getKeys(subConfigPrefix)
+        .hasNext(); // If there is at least one key, return true
+  }
+
   private String getPrefix(String name) {
     return getFullKey(name) + DELIMITER;
   }
@@ -290,11 +298,21 @@ public class SqrlConfigCommons implements SqrlConfig {
     return new Serialized(configFilename, map, prefix);
   }
 
+  @Override
+  public boolean hasKey(String key) {
+    String fullKey = getFullKey(key);
+    return config.containsKey(fullKey);
+  }
+
   public static SqrlConfig create(ErrorCollector errors) {
     Configuration config = new BaseHierarchicalConfiguration();
     return new SqrlConfigCommons(errors,null,config,"");
   }
 
+  public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull List<Path> files) {
+    return fromFiles(errors, files.get(0),
+        files.subList(1, files.size()).toArray(new Path[0]));
+  }
   public static SqrlConfig fromFiles(ErrorCollector errors, @NonNull Path firstFile, Path... otherFiles) {
     Configurations configs = new Configurations();
     Configuration resultconfig;

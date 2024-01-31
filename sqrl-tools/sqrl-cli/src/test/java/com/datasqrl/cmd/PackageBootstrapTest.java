@@ -1,15 +1,19 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.packager;
+package com.datasqrl.cmd;
 
+import static com.datasqrl.packager.Packager.BUILD_DIR_NAME;
+import static com.datasqrl.packager.Packager.PACKAGE_JSON;
+import static com.datasqrl.packager.Packager.setScriptFiles;
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
+import static com.datasqrl.util.TestResources.RESOURCE_DIR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.config.ConfigurationTest;
+import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.util.FileTestUtil;
@@ -31,7 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-public class PackagerTest {
+public class PackageBootstrapTest {
 
   SnapshotTest.Snapshot snapshot;
 
@@ -60,7 +64,7 @@ public class PackagerTest {
     snapshot.createOrValidate();
   }
 
-  private static final Path baseDependencyPath = ConfigurationTest.RESOURCE_DIR.resolve("dependency");
+  private static final Path baseDependencyPath = RESOURCE_DIR.resolve("dependency");
   private static final List<Path> depScripts = new ArrayList<>();
   static {
     IntStream.rangeClosed(1,2)
@@ -95,42 +99,35 @@ public class PackagerTest {
 
   @SneakyThrows
   private void testCombination(Path main, Path graphQl, Path packageFile, Repository repository) {
-    PackagerConfig config = buildPackagerConfig(main, graphQl, packageFile, repository);
-    Packager pkg = config.getPackager(ErrorCollector.root());
-    pkg.cleanUp();
-    populateBuildDirAndTakeSnapshot(pkg, main, graphQl, packageFile);
-    pkg.cleanUp();
-  }
-
-  private PackagerConfig buildPackagerConfig(Path main, Path graphQl, Path packageFile,
-      Repository repository) {
-    assertNotNull(packageFile);
-    PackagerConfig.PackagerConfigBuilder builder = PackagerConfig.builder();
-    builder.rootDir(packageFile.getParent());
-    builder.config(SqrlConfigCommons.fromFiles(ErrorCollector.root(),packageFile));
+    ErrorCollector errors = ErrorCollector.root();
+    List<Path> files = new ArrayList<>();
     if (main != null) {
-      builder.mainScript(main);
+      files.add(packageFile.getParent().relativize(main));
     }
     if (graphQl != null) {
-      builder.graphQLSchemaFile(graphQl);
+      files.add(packageFile.getParent().relativize(graphQl));
     }
-    if (repository != null) {
-      builder.repository(repository);
-    }
-    return builder.build();
+    PackageBootstrap bootstrap = new PackageBootstrap(packageFile.getParent(),
+        List.of(packageFile), new String[0], files.toArray(Path[]::new), true);
+    SqrlConfig config = bootstrap.bootstrap(repository, errors, (e) -> null, (c) -> c);
+    Packager pkg = new Packager(repository, packageFile.getParent(), config, errors);
+    Path buildDir = packageFile.getParent().resolve(BUILD_DIR_NAME);
+    pkg.cleanBuildDir(buildDir);
+    populateBuildDirAndTakeSnapshot(pkg, main, graphQl, packageFile);
+    pkg.cleanBuildDir(buildDir);
   }
 
   @SneakyThrows
   private void populateBuildDirAndTakeSnapshot(Packager pkg, Path main, Path graphQl, Path packageFile) {
     Path buildDir = pkg.getRootDir().resolve(Packager.BUILD_DIR_NAME);
-    pkg.populateBuildDir(true);
+    pkg.preprocess();
     String[] caseNames = Stream.of(main, graphQl, packageFile)
         .filter(Predicate.not(Objects::isNull)).map(String::valueOf)
         .toArray(size -> new String[size + 1]);
     caseNames[caseNames.length - 1] = "dir";
     snapshot.addContent(FileTestUtil.getAllFilesAsString(buildDir), caseNames);
     caseNames[caseNames.length - 1] = "package";
-    snapshot.addContent(Files.readString(buildDir.resolve(Packager.PACKAGE_FILE_NAME)), caseNames);
+    snapshot.addContent(Files.readString(buildDir.resolve(PACKAGE_JSON)), caseNames);
   }
 
   private static class MockRepository implements Repository {
@@ -152,7 +149,5 @@ public class PackagerTest {
     }
 
     private static final Dependency NUTSHOP = new Dependency("datasqrl.examples.Nutshop","0.1.0","dev");
-
   }
-
 }

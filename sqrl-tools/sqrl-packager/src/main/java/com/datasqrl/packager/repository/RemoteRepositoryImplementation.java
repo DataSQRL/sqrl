@@ -3,6 +3,10 @@
  */
 package com.datasqrl.packager.repository;
 
+import static com.datasqrl.packager.config.DependencyConfig.PKG_NAME_KEY;
+import static com.datasqrl.packager.config.DependencyConfig.VARIANT_KEY;
+import static com.datasqrl.packager.config.DependencyConfig.VERSION_KEY;
+
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.util.FileHash;
 import com.datasqrl.packager.util.Zipper;
@@ -49,9 +53,9 @@ public class RemoteRepositoryImplementation implements Repository {
   @Override
   public boolean retrieveDependency(Path targetPath, Dependency dependency) throws IOException {
     JsonNode result = executeQuery(Query.getDependency, Map.of(
-        "pkgName", dependency.getName(),
-        "version", dependency.getVersion(),
-        "variant", dependency.getVariant()));
+        PKG_NAME_KEY, dependency.getName(),
+        VERSION_KEY, dependency.getVersion(),
+        VARIANT_KEY, dependency.getVariant()));
     return getDependencyVersion(result)
         .map(dep -> downloadDependency(targetPath, dep, dependency))
         .orElse(false);

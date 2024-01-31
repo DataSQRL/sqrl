@@ -16,7 +16,7 @@ public class TablePreprocessor implements Preprocessor {
   }
 
   @Override
-  public void loader(Path path, ProcessorContext processorContext, ErrorCollector errors) {
+  public void processFile(Path path, ProcessorContext processorContext, ErrorCollector errors) {
     processorContext.addDependency(path);
   }
 }

@@ -20,7 +20,7 @@ public class Publisher {
 
     public PackageConfiguration publish(Path packageRoot, PublishRepository publishRepo) {
         Preconditions.checkArgument(Files.isDirectory(packageRoot));
-        Path packageInfo = packageRoot.resolve(Packager.PACKAGE_FILE_NAME);
+        Path packageInfo = packageRoot.resolve(Packager.PACKAGE_JSON);
         errors.checkFatal(Files.isRegularFile(packageInfo),"Directory does not contain [%s] package configuration file", packageInfo);
         SqrlConfig pkgConfig = SqrlConfigCommons.fromFiles(errors,packageInfo);
 

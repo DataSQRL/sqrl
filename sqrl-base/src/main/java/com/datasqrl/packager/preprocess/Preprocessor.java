@@ -3,8 +3,6 @@ package com.datasqrl.packager.preprocess;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.DataSource;
-import com.datasqrl.util.NameUtil;
 import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,12 +16,7 @@ public interface Preprocessor {
 
   Pattern getPattern();
 
-  void loader(Path dir, ProcessorContext processorContext, ErrorCollector errors);
-
-  static boolean tableExists(Path basePath, String tableName) {
-    Path tableFile = NameUtil.namepath2Path(basePath, NamePath.of(tableName + DataSource.TABLE_FILE_SUFFIX));
-    return Files.isRegularFile(tableFile);
-  }
+  void processFile(Path dir, ProcessorContext processorContext, ErrorCollector errors);
 
   @Getter
   class ProcessorContext {

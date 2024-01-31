@@ -7,24 +7,20 @@ import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
+import com.ongres.scram.common.bouncycastle.pbkdf2.Pack;
+import java.nio.file.Path;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "validate", description = "Validates a SQRL script")
 public class ValidateCommand extends AbstractCompilerCommand {
 
-  protected ValidateCommand() {
-    super(false, false, false);
+  @Override
+  public SqrlConfig createDefaultConfig(ErrorCollector errors) {
+    return Packager.createDockerConfig(errors);
   }
 
   @Override
-  protected SqrlConfig initializeConfig(DefaultConfigSupplier configSupplier, ErrorCollector errors) {
-    return getDefaultConfig(false, errors)
-        .get();
-  }
-
-
-  @Override
-  protected void postCompileActions(DefaultConfigSupplier configSupplier, Packager packager,
-      CompilerResult result, ErrorCollector errors) {
+  protected void postprocess(Packager packager, CompilerResult result, Path targetDir,
+      ErrorCollector errors) {
   }
 }

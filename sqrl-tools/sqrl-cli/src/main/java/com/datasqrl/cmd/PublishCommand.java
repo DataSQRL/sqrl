@@ -1,5 +1,7 @@
 package com.datasqrl.cmd;
 
+import static com.datasqrl.packager.Packager.DEFAULT_PACKAGE;
+
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.NotYetImplementedException;
@@ -8,14 +10,12 @@ import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
-import com.datasqrl.service.PackagerUtil;
-import picocli.CommandLine;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import picocli.CommandLine;
 
 @CommandLine.Command(name = "publish", description = "Publishes a package to local and remote repository")
 public class PublishCommand extends AbstractCommand {
@@ -27,14 +27,15 @@ public class PublishCommand extends AbstractCommand {
     private boolean toRemote = false;
 
     @Override
-    protected void runCommand(ErrorCollector errors) throws IOException {
+    protected void execute(ErrorCollector errors) throws IOException {
         if (toRemote) NotYetImplementedException.trigger("Publishing to remote repository is not yet supported");
 
         Path packageRoot = root.rootDir;
-        Optional<List<Path>> packageConfigsOpt = PackagerUtil.findRootPackageFiles(root);
-        errors.checkFatal(packageConfigsOpt.isPresent(),"Directory does not contain [%s] package configuration file", Packager.PACKAGE_FILE_NAME);
+        Optional<List<Path>> packageConfigsOpt = Packager.findPackageFile(root.rootDir, root.packageFiles);
+        errors.checkFatal(packageConfigsOpt.isPresent(),"Directory does not contain [%s] package configuration file",
+            Packager.PACKAGE_JSON);
         List<Path> packageconfigs = packageConfigsOpt.get();
-        Path defaultPkgConfig = packageRoot.resolve(PackagerUtil.DEFAULT_PACKAGE);
+        Path defaultPkgConfig = packageRoot.resolve(DEFAULT_PACKAGE);
 
         LocalRepositoryImplementation localRepo = LocalRepositoryImplementation.of(errors);
         Publisher publisher = new Publisher(errors);

@@ -21,7 +21,7 @@ public class DataSystemPreprocessor implements Preprocessor {
 
   @SneakyThrows
   @Override
-  public void loader(Path dir, ProcessorContext processorContext, ErrorCollector errors) {
+  public void processFile(Path dir, ProcessorContext processorContext, ErrorCollector errors) {
     Preconditions.checkArgument(Files.isRegularFile(dir), "Not a regular file: %s", dir);
 
     processorContext.addDependency(dir);

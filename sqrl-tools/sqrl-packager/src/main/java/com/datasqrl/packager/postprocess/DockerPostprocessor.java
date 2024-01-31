@@ -1,14 +1,25 @@
-package com.datasqrl.compile;
+package com.datasqrl.packager.postprocess;
 
-import java.net.URL;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
-public class DockerCompose {
+@Slf4j
+public class DockerPostprocessor implements Postprocessor {
 
   public static String getYml(Optional<Path> mountDir) {
-    String volumneMnt = ""
-        + "    volumes:\n"
+    String volumneMnt = "    volumes:\n"
         + mountDir
         .map(dir -> dir.toAbsolutePath().normalize())
         .map(dir -> "      - " + dir.toAbsolutePath() + ":/build\n")
@@ -105,33 +116,75 @@ public class DockerCompose {
         + "\n";
   }
 
-  public static String getInitFlink() {
-    return "#!/bin/bash\n"
-        + "\n"
-        + "# Copy the JAR file to the plugins directory\n"
-        + "mkdir -p /opt/flink/plugins/s3-fs-presto\n"
-        + "cp /opt/flink/opt/flink-s3-fs-presto-1.16.1.jar /opt/flink/plugins/s3-fs-presto/\n"
-        + "# Execute the passed command\n"
-        + "exec /docker-entrypoint.sh \"$@\"\n";
+  //Writes a dockercompose.yml
+  @Override
+  public void process(ProcessorContext context) {
+    //Check if there is a docker-compose.yml in a profile
+    Optional<Path> dockerCompose = getDockerCompose(context.getBuildDir(), context.getProfiles());
+
+    String yml = dockerCompose
+        .map(p -> replaceMountDirs(p, context.getMountDir()))
+        .orElseGet(() -> addDockerCompose(context.getMountDir(), context.getTargetDir()));
+
+    Path toFile = context.getTargetDir().resolve("docker-compose.yml");
+    try {
+      Files.createDirectories(context.getTargetDir());
+      Files.writeString(toFile, yml);
+    } catch (Exception e) {
+      log.error("Could not copy docker-compose file.");
+      throw new RuntimeException(e);
+    }
   }
-  public static String getFlinkExecute() {
-    return "#!/bin/sh\n"
-        + "\n"
-        + "while ! curl -s http://flink-jobmanager:8081/overview | grep -q '\"taskmanagers\":1'; do\n"
-        + "  echo 'Waiting for Flink JobManager REST API...';\n"
-        + "  sleep 5;\n"
-        + "done;\n"
-        + "echo 'Submitting Flink job...';\n"
-        + "upload_response=$(curl -X POST -H \"Expect:\" -F \"jarfile=@flink-job.jar\" http://flink-jobmanager:8081/jars/upload);\n"
-        + "echo \"$upload_response\";\n"
-        + "jar_id=$(echo \"$upload_response\" | jq -r '.filename');\n"
-        + "echo \"$jar_id\";\n"
-        + "filename=$(echo \"$jar_id\" | awk -F'/' '{print $NF}');\n"
-        + "sleep 3;\n"
-        + "echo \"$filename\"\n"
-        + "echo \"curl -X POST \"http://flink-jobmanager:8081/jars/${filename}/run\";\";\n"
-        + "post_response=$(curl -X POST \"http://flink-jobmanager:8081/jars/${filename}/run\");\n"
-        + "echo \"$post_response\";\n"
-        + "echo 'Job submitted.'";
+
+  @SneakyThrows
+  private String replaceMountDirs(Path compose, Optional<Path> mountDir) {
+    try {
+      String yamlContent = Files.readString(compose);
+      ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+
+      Map<String, Object> yamlMap = mapper.readValue(yamlContent, LinkedHashMap.class);
+      updateServices(yamlMap, "flink-jobmanager", mountDir);
+      updateServices(yamlMap, "flink-taskmanager", mountDir);
+
+      return mapper.writeValueAsString(yamlMap);
+    } catch (IOException e) {
+      log.error("Error processing docker-compose file: " + e.getMessage(), e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void updateServices(Map<String, Object> yamlMap, String serviceName,
+      Optional<Path> mountDir) {
+    Map<String, Object> services = (Map<String, Object>) yamlMap.get("services");
+    if (services != null && services.containsKey(serviceName)) {
+      Map<String, Object> service = (Map<String, Object>) services.get(serviceName);
+      List<String> existingVolumes = (List<String>) service.get("volumes");
+      if (existingVolumes == null) {
+        ArrayList volumes = new ArrayList<>();
+        mountDir.ifPresent(dir -> volumes.add(dir.toAbsolutePath().normalize() + ":/build"));
+        volumes.add("./init-flink.sh:/exec/init-flink.sh");
+        service.put("volumes", volumes);
+      }
+    }
+  }
+
+  private Optional<Path> getDockerCompose(Path buildDir, String[] profiles) {
+    List<Path> composeFiles = Arrays.stream(profiles)
+        .map(p -> buildDir.resolve(p).resolve("docker-compose.yml"))
+        .filter(f -> Files.isRegularFile(f))
+        .collect(Collectors.toList());
+
+    if (composeFiles.size() > 1) {
+      throw new RuntimeException(
+          "Multiple docker-compose.yml in profiles is not currently supported.");
+    }
+    if (composeFiles.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(composeFiles.get(0));
+  }
+
+  protected String addDockerCompose(Optional<Path> mountDir, Path targetDir) {
+    return getYml(mountDir);
   }
 }

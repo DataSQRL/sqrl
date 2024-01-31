@@ -24,12 +24,12 @@ public class ScriptConfiguration {
   public static final Map<String,Optional<String>> NORMALIZED_FILE_NAMES = ImmutableMap.of(MAIN_KEY,
       Optional.empty(), GRAPHQL_KEY, Optional.of(GRAPHQL_NORMALIZED_FILE_NAME));
 
-  public static SqrlConfig fromRootConfig(@NonNull SqrlConfig rootConfig) {
+  public static SqrlConfig fromScriptConfig(@NonNull SqrlConfig rootConfig) {
     return rootConfig.getSubConfig(SCRIPT_KEY);
   }
 
   public static Map<String,Optional<String>> getFiles(@NonNull SqrlConfig rootConfig) {
-    SqrlConfig config = fromRootConfig(rootConfig);
+    SqrlConfig config = fromScriptConfig(rootConfig);
     return Arrays.stream(FILE_KEYS).collect(Collectors.toMap(Function.identity(),
         fileKey -> config.asString(fileKey).getOptional()));
   }

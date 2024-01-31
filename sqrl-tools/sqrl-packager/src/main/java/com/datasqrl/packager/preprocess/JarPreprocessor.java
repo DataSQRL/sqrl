@@ -45,7 +45,7 @@ public class JarPreprocessor implements Preprocessor {
 
   @SneakyThrows
   @Override
-  public void loader(Path path, ProcessorContext processorContext, ErrorCollector errors) {
+  public void processFile(Path path, ProcessorContext processorContext, ErrorCollector errors) {
     try (java.util.jar.JarFile file = new java.util.jar.JarFile(path.toFile())) {
       file.stream()
           .filter(this::isValidEntry)

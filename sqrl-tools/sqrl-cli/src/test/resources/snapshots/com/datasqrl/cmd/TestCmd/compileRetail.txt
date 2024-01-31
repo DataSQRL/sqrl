@@ -26,6 +26,7 @@ ecommerce-data/customer.schema.yml
 ecommerce-data/customer.table.json
 ecommerce-data/orders.schema.yml
 ecommerce-data/orders.table.json
+ecommerce-data/package.json
 ecommerce-data/product.schema.yml
 ecommerce-data/product.table.json
 output
