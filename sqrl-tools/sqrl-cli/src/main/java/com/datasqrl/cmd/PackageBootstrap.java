@@ -163,7 +163,7 @@ public class PackageBootstrap {
     });
 
     //Override main and graphql if they are specified as command line arguments
-    Optional<Path> mainScript = (files.length > 0) ? Optional.of(files[0]) : Optional.empty();
+    Optional<Path> mainScript = (files.length > 0 && files[0].getFileName().toString().toLowerCase().endsWith(".sqrl")) ? Optional.of(files[0]) : Optional.empty();
     Optional<Path> graphQLSchemaFile = (files.length > 1) ? Optional.of(files[1]) : Optional.empty();
 
     SqrlConfig scriptConfig = ScriptConfiguration.fromScriptConfig(sqrlConfig);
@@ -177,6 +177,8 @@ public class PackageBootstrap {
       scriptConfig.setProperty(ScriptConfiguration.MAIN_KEY, mainScript.get().toString());
     } else if (!isMainScriptSet && mainScript.isPresent()) {
       errors.fatal("Main script is not a regular file: %s", mainScript.get());
+    } else if (!isMainScriptSet && files.length > 0) {
+      errors.fatal("Main script is not a sqrl script: %s", files[0].getFileName().toString());
     } else if (!isMainScriptSet && mainScript.isEmpty()){
       errors.fatal("No main sqrl script specified");
     }

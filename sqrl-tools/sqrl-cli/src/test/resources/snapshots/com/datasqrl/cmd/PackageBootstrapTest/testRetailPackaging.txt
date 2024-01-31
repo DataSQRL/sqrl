@@ -209,6 +209,7 @@ package.json
 build.gradle
 c360-full-graphqlv1
 c360-full-graphqlv1/schema.graphqls
+c360-full.sqrl
 ecommerce-avro
 ecommerce-avro/orders.avsc
 ecommerce-avro/orders.table.json
@@ -237,7 +238,7 @@ package.json
   },
   "script" : {
     "graphql" : "c360-full-graphqlv1/schema.graphqls",
-    "main" : "c360-full-graphqlv1/schema.graphqls"
+    "main" : "c360-full.sqrl"
   },
   "package" : {
     "name" : "datasqrl.examples.Retail",
