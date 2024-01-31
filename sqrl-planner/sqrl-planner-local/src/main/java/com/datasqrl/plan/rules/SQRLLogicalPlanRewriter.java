@@ -1002,7 +1002,9 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         rightBest.getIndex()+leftSideMaxIdx, relB.peek());
     rexUtil.appendColumn(relB, maxTimestamp, ReservedName.SYSTEM_TIMESTAMP.getCanonical());
 
-    return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STATE,
+    TableType resultType = leftInputF.type.isStream() && rightInputF.type.isStream()?TableType.STREAM:TableType.STATE;
+
+    return setRelHolder(AnnotatedLP.build(relB.build(), resultType,
         joinedPk, resultTimestamp, joinedIndexMap,
         List.of(leftInputF, rightInputF)).sort(joinedSort).build());
   }

@@ -355,7 +355,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
 
   public Void postvisit(SqrlAssignment assignment, Void context) {
-    if (!errorCollector.isEmpty()) {
+    if (errorCollector.hasErrors()) {
       return null;
     }
     SqlNode node = getPreprocessSql().get(assignment);
