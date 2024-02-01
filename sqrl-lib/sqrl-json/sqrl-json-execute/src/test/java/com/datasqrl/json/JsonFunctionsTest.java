@@ -299,6 +299,50 @@ class JsonFunctionsTest {
       // Depending on implementation, the result might include the null or ignore it
       assertEquals("[{\"key1\":\"value1\"},null]", result.getJson());
     }
+    @Test
+    void testRetractJsonTypes() {
+      JsonFunctions.ArrayAgg accumulator = JsonFunctions.JSON_ARRAYAGG.createAccumulator();
+      FlinkJsonType json1 = new FlinkJsonType("{\"key\": \"value1\"}");
+      FlinkJsonType json2 = new FlinkJsonType("{\"key\": \"value2\"}");
+      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, json1);
+      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, json2);
+
+      // Now retract one of the JSON objects
+      JsonFunctions.JSON_ARRAYAGG.retract(accumulator, json1);
+
+      FlinkJsonType result = JsonFunctions.JSON_ARRAYAGG.getValue(accumulator);
+      assertNotNull(result);
+      assertEquals("[{\"key\":\"value2\"}]", result.getJson());
+    }
+
+    @Test
+    void testRetractNullJsonType() {
+      JsonFunctions.ArrayAgg accumulator = JsonFunctions.JSON_ARRAYAGG.createAccumulator();
+      FlinkJsonType json1 = new FlinkJsonType("{\"key\": \"value1\"}");
+      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, json1);
+      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator,(FlinkJsonType) null);
+
+      // Now retract a null JSON object
+      JsonFunctions.JSON_ARRAYAGG.retract(accumulator, (FlinkJsonType) null);
+
+      FlinkJsonType result = JsonFunctions.JSON_ARRAYAGG.getValue(accumulator);
+      assertNotNull(result);
+      assertEquals("[{\"key\":\"value1\"}]", result.getJson());
+    }
+
+    @Test
+    void testRetractNullFromNonExisting() {
+      JsonFunctions.ArrayAgg accumulator = JsonFunctions.JSON_ARRAYAGG.createAccumulator();
+      FlinkJsonType json1 = new FlinkJsonType("{\"key\": \"value1\"}");
+      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, json1);
+
+      // Attempt to retract a null value that was never accumulated
+      JsonFunctions.JSON_ARRAYAGG.retract(accumulator,(FlinkJsonType) null);
+
+      FlinkJsonType result = JsonFunctions.JSON_ARRAYAGG.getValue(accumulator);
+      assertNotNull(result);
+      assertEquals("[{\"key\":\"value1\"}]", result.getJson());
+    }
   }
 
   @Nested
@@ -349,6 +393,48 @@ class JsonFunctionsTest {
       assertNotNull(result);
       // The expected output might vary based on how the function is designed to handle this case
       assertEquals("{\"key1\":[null,null,null]}", result.getJson());
+    }
+
+    @Test
+    void testRetractJsonTypes() {
+      JsonFunctions.ObjectAgg accumulator = JsonFunctions.JSON_OBJECTAGG.createAccumulator();
+      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key1", new FlinkJsonType("{\"nestedKey1\": \"nestedValue1\"}"));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key2", new FlinkJsonType("{\"nestedKey2\": \"nestedValue2\"}"));
+
+      // Now retract a key-value pair
+      JsonFunctions.JSON_OBJECTAGG.retract(accumulator, "key1", new FlinkJsonType("{\"nestedKey1\": \"nestedValue1\"}"));
+
+      FlinkJsonType result = JsonFunctions.JSON_OBJECTAGG.getValue(accumulator);
+      assertNotNull(result);
+      assertEquals("{\"key2\":{\"nestedKey2\":\"nestedValue2\"}}", result.getJson());
+    }
+
+    @Test
+    void testRetractNullJsonValue() {
+      JsonFunctions.ObjectAgg accumulator = JsonFunctions.JSON_OBJECTAGG.createAccumulator();
+      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key1", new FlinkJsonType("{\"nestedKey1\": \"nestedValue1\"}"));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key2", (FlinkJsonType) null);
+
+      // Now retract a null value
+      JsonFunctions.JSON_OBJECTAGG.retract(accumulator, "key2", (FlinkJsonType) null);
+
+      FlinkJsonType result = JsonFunctions.JSON_OBJECTAGG.getValue(accumulator);
+      assertNotNull(result);
+      assertEquals("{\"key1\":{\"nestedKey1\":\"nestedValue1\"}}", result.getJson());
+    }
+
+    @Test
+    void testRetractNullKey() {
+      JsonFunctions.ObjectAgg accumulator = JsonFunctions.JSON_OBJECTAGG.createAccumulator();
+      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, "key1", new FlinkJsonType("{\"nestedKey1\": \"nestedValue1\"}"));
+      JsonFunctions.JSON_OBJECTAGG.accumulate(accumulator, null, "someValue");
+
+      // Attempt to retract a key-value pair where the key is null
+      JsonFunctions.JSON_OBJECTAGG.retract(accumulator, null, "someValue");
+
+      FlinkJsonType result = JsonFunctions.JSON_OBJECTAGG.getValue(accumulator);
+      assertNotNull(result);
+      assertEquals("{\"key1\":{\"nestedKey1\":\"nestedValue1\"}}", result.getJson());
     }
   }
 }
