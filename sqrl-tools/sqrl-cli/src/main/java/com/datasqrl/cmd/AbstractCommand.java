@@ -33,10 +33,8 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
       e.printStackTrace();
       root.statusHook.onFailure(e, collector);
     }
-    if (!collector.isEmpty()) {
-      if (collector.hasErrors()) exitCode.set(1);
-      System.out.println(ErrorPrinter.prettyPrint(collector));
-    }
+    if (collector.hasErrors()) exitCode.set(1);
+    System.out.println(ErrorPrinter.prettyPrint(collector));
   }
 
   protected abstract void execute(ErrorCollector errors) throws Exception;

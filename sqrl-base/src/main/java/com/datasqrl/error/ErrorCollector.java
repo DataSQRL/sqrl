@@ -121,8 +121,8 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     return errors.hasErrors();
   }
 
-  public boolean isEmpty() {
-    return errors.isEmpty();
+  public boolean hasErrorsWarningsOrNotices() {
+    return errors.hasErrorsWarningsOrNotices();
   }
 
   public boolean isFatal() {

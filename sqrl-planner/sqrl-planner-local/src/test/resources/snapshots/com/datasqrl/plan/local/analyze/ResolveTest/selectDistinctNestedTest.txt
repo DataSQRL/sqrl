@@ -30,16 +30,17 @@ LogicalProject(_uuid=[$0], _idx=[$6], id=[$2], productid=[$11], _time=[$4])
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]
 
 >>>suborders$1-lp-STREAM
-LogicalProject(__pk1$productid=[$2], orderid=[$11], numOrders=[COUNT() IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)], lastOrder=[MAX($4) IGNORE NULLS OVER (PARTITION BY $2, $11 ORDER BY $4 ROWS UNBOUNDED PRECEDING)])
-  LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
-    LogicalCorrelate(correlation=[$cor20], joinType=[inner], requiredColumns=[{5}])
-      LogicalTableScan(table=[[orders$2]])
-      Uncollect
-        LogicalProject($f0=[$cor20.entries])
-          LogicalValues(tuples=[[{ 0 }]])
-    LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
-      LogicalProject(productid=[$0], _time=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
-        LogicalTableScan(table=[[productid$1]])
+LogicalProject(__pk1$productid=[$1], orderid=[$0], numOrders=[$2], lastOrder=[$3])
+  LogicalAggregate(group=[{2, 11}], numOrders=[COUNT()], lastOrder=[MAX($4)])
+    LogicalJoin(condition=[=($7, $11)], joinType=[inner]) hints[TemporalJoinHint options:[4, 1, 0]]
+      LogicalCorrelate(correlation=[$cor20], joinType=[inner], requiredColumns=[{5}])
+        LogicalTableScan(table=[[orders$2]])
+        Uncollect
+          LogicalProject($f0=[$cor20.entries])
+            LogicalValues(tuples=[[{ 0 }]])
+      LogicalFilter(condition=[=($2, 1)]) hints[DedupHint]
+        LogicalProject(productid=[$0], _time=[$1], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+          LogicalTableScan(table=[[productid$1]])
 
 >>>suborders$1-lp-DATABASE
 Stage [database] does not support capabilities: [TEMPORAL_JOIN]

@@ -42,12 +42,12 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
   }
 
   public void addAll(@NonNull ErrorCollection other, ErrorLocation baseLocation) {
-    if (other == null || other.isEmpty()) return;
+    if (other == null || !other.hasErrorsWarningsOrNotices()) return;
     other.stream().forEach(err -> add(err, baseLocation));
   }
 
-  public boolean isEmpty() {
-    return errors.isEmpty();
+  public boolean hasErrorsWarningsOrNotices() {
+    return !errors.isEmpty();
   }
 
   public boolean hasErrors() {

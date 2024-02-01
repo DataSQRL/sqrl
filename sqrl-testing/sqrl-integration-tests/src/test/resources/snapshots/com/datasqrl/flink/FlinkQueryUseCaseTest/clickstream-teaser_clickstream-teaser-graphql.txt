@@ -1,5 +1,5 @@
 >>>database
-CREATE TABLE IF NOT EXISTS recommendation$1 ("url" TEXT NOT NULL,"rec" TEXT NOT NULL,"frequency" BIGINT NOT NULL,"_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("url","rec"));
+CREATE TABLE IF NOT EXISTS recommendation$1 ("url" TEXT NOT NULL,"rec" TEXT NOT NULL,"frequency" BIGINT NOT NULL,"__timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("url","rec"));
 CREATE TABLE IF NOT EXISTS trending$1 ("url" TEXT NOT NULL,"total" BIGINT NOT NULL,"_timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("url"));
 >>>query-recommendation
 {

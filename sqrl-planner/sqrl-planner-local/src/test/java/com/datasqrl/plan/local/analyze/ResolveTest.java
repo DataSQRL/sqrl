@@ -199,33 +199,54 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
    */
 
   @Test
-  public void tableJoinTest() {
+  public void tableStreamJoinTest() {
+    tableJoinTest(TableType.STREAM);
+  }
+
+  @Test
+  public void tableStateJoinTest() {
+    tableJoinTest(TableType.STATE);
+  }
+
+  private void tableJoinTest(TableType joinType) {
     ScriptBuilder builder = imports();
+    int offset = 0;
+    String ordersid = "_uuid"; String defaultOrdersid = "''";
+    ExecutionEngine.Type stageType = Type.DATABASE;
+    if (joinType.isState()) {
+      builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC");
+      builder.add("Orders := DISTINCT Orders ON id ORDER BY _ingest_time DESC");
+      offset = 1; ordersid = "id"; defaultOrdersid = "0";
+      stageType = Type.STREAM;
+      builder.add(
+          "OrderCustomerLeft := SELECT c._uuid, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;");
+    } else {
+      builder.add(
+          "OrderCustomerLeft := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;");
+    }
     builder.add(
-        "OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid;");
+        "OrderCustomer := SELECT o._uuid, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;");
     builder.add(
-        "OrderCustomerLeft := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;");
+        "OrderCustomerLeftExcluded := SELECT o._uuid, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c._uuid IS NULL;");
     builder.add(
-        "OrderCustomerLeftExcluded := SELECT o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c._uuid IS NULL;");
+        "OrderCustomerRight := SELECT coalesce(o."+ordersid+", "+defaultOrdersid+") as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;");
     builder.add(
-        "OrderCustomerRight := SELECT coalesce(o._uuid, '') as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;");
+        "OrderCustomerRightExcluded := SELECT c._uuid, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o."+ordersid+" IS NULL;");
     builder.add(
-        "OrderCustomerRightExcluded := SELECT c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o._uuid IS NULL;");
-    builder.add(
-        "OrderCustomerConstant := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id = 5;");
+        "OrderCustomerConstant := SELECT o._uuid, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;");
     plan(builder.toString());
-    validateQueryTable("ordercustomer", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
-        TimestampTest.fixed(5)); //numCols = 3 selected cols + 2 uuid cols for pk + 1 for timestamp
-    validateQueryTable("ordercustomerleft", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
-        TimestampTest.fixed(5));
-    validateQueryTable("ordercustomerleftexcluded", TableType.STATE, ExecutionEngine.Type.DATABASE, 4, 1,
+    validateQueryTable("ordercustomer", joinType, stageType, 6-offset, 2-offset,
+        TimestampTest.fixed(5-offset));
+    validateQueryTable("ordercustomerleft", joinType, stageType, 6-offset, 2-offset,
+        TimestampTest.fixed(5-offset));
+    validateQueryTable("ordercustomerleftexcluded", joinType, stageType, 4, 1,
         TimestampTest.fixed(3));
-    validateQueryTable("ordercustomerright", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
+    validateQueryTable("ordercustomerright", joinType, stageType, 6, 2,
         TimestampTest.fixed(5));
-    validateQueryTable("ordercustomerrightexcluded", TableType.STATE, ExecutionEngine.Type.DATABASE, 4, 1,
+    validateQueryTable("ordercustomerrightexcluded", joinType, stageType, 4, 1,
         TimestampTest.fixed(3));
-    validateQueryTable("ordercustomerconstant", TableType.STATE, ExecutionEngine.Type.DATABASE, 6, 2,
-        TimestampTest.fixed(5));
+    validateQueryTable("ordercustomerconstant", joinType, stageType, 6-offset, 2-offset,
+        TimestampTest.fixed(5-offset));
   }
 
   @Test
@@ -248,6 +269,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled("needs to be rewritten to use WINDOW OVER aggregation")
   public void tableTemporalJoinTest() {
     ScriptBuilder builder = imports();
     builder.add(
@@ -302,10 +324,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY customer");
     builder.add("OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;");
     plan(builder.toString());
-    validateQueryTable("orderagg1", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
-        TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build()); //timestamp column is added
-    validateQueryTable("orderagg2", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
-        TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("orderagg1", TableType.STATE, ExecutionEngine.Type.STREAM, 3, 1,
+        TimestampTest.fixed(2), PullupTest.builder().build()); //timestamp column is added
+    validateQueryTable("orderagg2", TableType.STATE, ExecutionEngine.Type.STREAM, 3, 1,
+        TimestampTest.fixed(2), PullupTest.builder().build());
   }
 
   @Test
@@ -380,10 +402,10 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("OrderAgg3 := SELECT customerid, COUNT(1) as count FROM OrdersState GROUP BY customerid");
     builder.add("OrderAgg4 := SELECT customerid, MAX(time) as timestamp, COUNT(1) as count FROM OrdersState GROUP BY customerid");
     plan(builder.toString());
-    validateQueryTable("orderagg1", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
-        TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
-    validateQueryTable("orderagg2", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
-        TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("orderagg1", TableType.STATE, ExecutionEngine.Type.STREAM, 3, 1,
+        TimestampTest.fixed(2), PullupTest.builder().build());
+    validateQueryTable("orderagg2", TableType.STATE, ExecutionEngine.Type.STREAM, 3, 1,
+        TimestampTest.fixed(1), PullupTest.builder().build());
     validateQueryTable("orderagg3", TableType.STATE, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2), PullupTest.EMPTY);
     validateQueryTable("orderagg4", TableType.STATE, ExecutionEngine.Type.STREAM, 3, 1,
@@ -418,12 +440,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
    */
 
   @Test
-  @Disabled
   public void topNTest() {
     ScriptBuilder builder = imports();
     builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;");
     builder.add(
-        "Customer.recentOrders := SELECT o.id, o.time FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
+        "Customer.recentOrders := SELECT o.id, o.time FROM @ TEMPORAL JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
     plan(builder.toString());
     validateQueryTable("customer", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(2),
@@ -459,8 +480,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("productorders", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 2,
         TimestampTest.fixed(4));
-    validateQueryTable("suborders", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 4, 2,
-        TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).hasSort(true).build());
+    validateQueryTable("suborders", TableType.STATE, ExecutionEngine.Type.STREAM, 4, 2,
+        TimestampTest.fixed(3), PullupTest.builder().hasSort(true).build());
   }
 
   @Test
@@ -542,8 +563,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "CountStream := STREAM ON ADD AS SELECT productid, name, quantity FROM ProductCount WHERE quantity > 1");
     builder.add("ProductCount2 := DISTINCT CountStream ON productid ORDER BY _source_time DESC");
     plan(builder.toString());
-    validateQueryTable("productcount", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 4, 2,
-        TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
+    validateQueryTable("productcount", TableType.STATE, ExecutionEngine.Type.STREAM, 4, 2,
+        TimestampTest.fixed(3), PullupTest.builder().build());
     validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(1));
     validateQueryTable("productcount2", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 5, 1,
@@ -702,7 +723,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     validatedTables.forEach((table, execType) -> {
       Map<ExecutionStage, StageAnalysis> stageAnalysis = dagBuilder.planStages(table);
       assertEquals(execType, SqrlDAG.SqrlNode.findCheapestStage(stageAnalysis).getStage().getEngine().getType(),
-          "execution type");
+          "execution type for table: " + table.getTableName() );
       stageAnalysis.forEach( (stage, analysis) -> {
         String content;
         if (analysis instanceof Cost) {

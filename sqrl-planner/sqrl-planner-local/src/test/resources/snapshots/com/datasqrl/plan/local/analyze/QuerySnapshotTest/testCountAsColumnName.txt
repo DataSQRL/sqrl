@@ -1,6 +1,7 @@
 >>>order_time$1
-LogicalProject(_pk=[1], count=[COUNT() IGNORE NULLS OVER (ORDER BY $4 ROWS UNBOUNDED PRECEDING)], _time=[$4])
-  LogicalTableScan(table=[[orders$2]])
+LogicalProject(_pk=[1], count=[$0], __timestamp=[$1])
+  LogicalAggregate(group=[{}], count=[COUNT()], __timestamp=[MAX($4)])
+    LogicalTableScan(table=[[orders$2]])
 
 >>>orders$2
 LogicalTableScan(table=[[orders$1]])
