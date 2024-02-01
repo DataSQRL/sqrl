@@ -56,6 +56,9 @@ public class JsonFunctions {
   public static class ToJson extends ScalarFunction implements SqrlFunction {
 
     public FlinkJsonType eval(String json) {
+      if (json == null) {
+        return null;
+      }
       try {
         return new FlinkJsonType(mapper.readTree(json).toString());
       } catch (JsonProcessingException e) {
@@ -177,6 +180,9 @@ public class JsonFunctions {
   public static class JsonExtract extends ScalarFunction implements SqrlFunction {
 
     public String eval(FlinkJsonType input, String pathSpec) {
+      if (input == null) {
+        return null;
+      }
       try {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonNode = mapper.readTree(input.getJson());
@@ -188,6 +194,9 @@ public class JsonFunctions {
     }
 
     public String eval(FlinkJsonType input, String pathSpec, String defaultValue) {
+      if (input == null) {
+        return null;
+      }
       try {
         ReadContext ctx = JsonPath.parse(input.getJson());
         JsonPath parse = JsonPath.compile(pathSpec);
@@ -197,7 +206,10 @@ public class JsonFunctions {
       }
     }
 
-    public boolean eval(FlinkJsonType input, String pathSpec, boolean defaultValue) {
+    public Boolean eval(FlinkJsonType input, String pathSpec, boolean defaultValue) {
+      if (input == null) {
+        return null;
+      }
       try {
         ReadContext ctx = JsonPath.parse(input.getJson());
         JsonPath parse = JsonPath.compile(pathSpec);
@@ -208,6 +220,9 @@ public class JsonFunctions {
     }
 
     public Double eval(FlinkJsonType input, String pathSpec, Double defaultValue) {
+      if (input == null) {
+        return null;
+      }
       try {
         ReadContext ctx = JsonPath.parse(input.getJson());
         JsonPath parse = JsonPath.compile(pathSpec);
@@ -218,6 +233,9 @@ public class JsonFunctions {
     }
 
     public Integer eval(FlinkJsonType input, String pathSpec, Integer defaultValue) {
+      if (input == null) {
+        return null;
+      }
       try {
         ReadContext ctx = JsonPath.parse(input.getJson());
         JsonPath parse = JsonPath.compile(pathSpec);
@@ -238,6 +256,9 @@ public class JsonFunctions {
   public static class JsonQuery extends ScalarFunction implements SqrlFunction {
 
     public String eval(FlinkJsonType input, String pathSpec) {
+      if (input == null) {
+        return null;
+      }
       try {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonNode = mapper.readTree(input.getJson());
@@ -258,6 +279,9 @@ public class JsonFunctions {
   public static class JsonExists extends ScalarFunction implements SqrlFunction {
 
     public Boolean eval(FlinkJsonType json, String path) {
+      if (json == null) {
+        return null;
+      }
       try {
         return SqlJsonUtils.jsonExists(json.json, path);
       } catch (Exception e) {
@@ -276,6 +300,9 @@ public class JsonFunctions {
     private final ObjectMapper mapper = new ObjectMapper();
 
     public FlinkJsonType eval(FlinkJsonType json1, FlinkJsonType json2) {
+      if (json1 == null || json2 == null) {
+        return null;
+      }
       try {
         ObjectNode node1 = (ObjectNode) mapper.readTree(json1.getJson());
         ObjectNode node2 = (ObjectNode) mapper.readTree(json2.getJson());
@@ -304,7 +331,7 @@ public class JsonFunctions {
     }
 
     public void remove(Object value) {
-      objects.add(value);
+      objects.remove(value);
     }
   }
 
@@ -325,7 +352,11 @@ public class JsonFunctions {
 
     @SneakyThrows
     public void accumulate(ArrayAgg accumulator, FlinkJsonType value) {
-      accumulator.add(mapper.readTree(value.json));
+      if (value != null) {
+        accumulator.add(mapper.readTree(value.json));
+      } else {
+        accumulator.add(null);
+      }
     }
 
     public void accumulate(ArrayAgg accumulator, Double value) {
@@ -346,8 +377,12 @@ public class JsonFunctions {
 
     @SneakyThrows
     public void retract(ArrayAgg accumulator, FlinkJsonType value) {
-      JsonNode jsonNode = mapper.readTree(value.json);
-      accumulator.remove(jsonNode);
+      if (value != null) {
+        JsonNode jsonNode = mapper.readTree(value.json);
+        accumulator.remove(jsonNode);
+      } else {
+        accumulator.remove(null);
+      }
     }
 
     public void retract(ArrayAgg accumulator, Double value) {
@@ -392,11 +427,15 @@ public class JsonFunctions {
     Map<String, Object> objects;
 
     public void add(String key, Object value) {
-      objects.put(key, value);
+      if (key != null) {
+        objects.put(key, value);
+      }
     }
 
     public void remove(String key) {
-      objects.remove(key);
+      if (key != null) {
+        objects.remove(key);
+      }
     }
   }
 
@@ -416,7 +455,11 @@ public class JsonFunctions {
 
     @SneakyThrows
     public void accumulate(ObjectAgg accumulator, String key, FlinkJsonType value) {
-      accumulateObject(accumulator, key, mapper.readTree(value.getJson()));
+      if (value != null) {
+        accumulateObject(accumulator, key, mapper.readTree(value.getJson()));
+      } else {
+        accumulator.add(key, null);
+      }
     }
 
     public void accumulate(ObjectAgg accumulator, String key, Double value) {
@@ -436,26 +479,26 @@ public class JsonFunctions {
     }
 
     public void retract(ObjectAgg accumulator, String key, String value) {
-      retractObject(accumulator, key, null);
+      retractObject(accumulator, key);
     }
 
     public void retract(ObjectAgg accumulator, String key, FlinkJsonType value) {
-      retractObject(accumulator, key, null);
+      retractObject(accumulator, key);
     }
 
     public void retract(ObjectAgg accumulator, String key, Double value) {
-      retractObject(accumulator, key, value);
+      retractObject(accumulator, key);
     }
 
     public void retract(ObjectAgg accumulator, String key, Long value) {
-      retractObject(accumulator, key, value);
+      retractObject(accumulator, key);
     }
 
     public void retract(ObjectAgg accumulator, String key, Integer value) {
-      retractObject(accumulator, key, value);
+      retractObject(accumulator, key);
     }
 
-    public void retractObject(ObjectAgg accumulator, String key, Object value) {
+    public void retractObject(ObjectAgg accumulator, String key) {
       accumulator.remove(key);
     }
 
@@ -481,7 +524,5 @@ public class JsonFunctions {
       return "Aggregation function that merges JSON objects into a single JSON object. If two JSON"
           + "objects share the same field name, the value of the later one is used in the aggregated result.";
     }
-
-
   }
 }

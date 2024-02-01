@@ -215,6 +215,11 @@ public class JsonConversionTest {
   }
 
   @Test
+  public void jsonArrayAggNull() {
+    testJsonReturn("jsonArrayAgg(toJson(null))");
+  }
+
+  @Test
   public void jsonArrayArray() {
     testJsonReturn("JSONARRAY(JSONARRAY(1))");
   }
