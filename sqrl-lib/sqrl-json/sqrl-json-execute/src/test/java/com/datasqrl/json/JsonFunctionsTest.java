@@ -287,7 +287,7 @@ class JsonFunctionsTest {
       JsonFunctions.ArrayAgg accumulator = JsonFunctions.JSON_ARRAYAGG.createAccumulator();
       JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, (FlinkJsonType) null);
       FlinkJsonType result = JsonFunctions.JSON_ARRAYAGG.getValue(accumulator);
-      assertEquals("[]", result.getJson());
+      assertEquals("[null]", result.getJson());
     }
 
     @Test
