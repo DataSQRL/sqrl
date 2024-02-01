@@ -327,15 +327,11 @@ public class JsonFunctions {
     List<Object> objects;
 
     public void add(Object value) {
-      if (value != null) {
-        objects.add(value);
-      }
+      objects.add(value);
     }
 
     public void remove(Object value) {
-      if (value != null) {
-        objects.remove(value);
-      }
+      objects.remove(value);
     }
   }
 
@@ -358,6 +354,8 @@ public class JsonFunctions {
     public void accumulate(ArrayAgg accumulator, FlinkJsonType value) {
       if (value != null) {
         accumulator.add(mapper.readTree(value.json));
+      } else {
+        accumulator.add(null);
       }
     }
 
@@ -382,6 +380,8 @@ public class JsonFunctions {
       if (value != null) {
         JsonNode jsonNode = mapper.readTree(value.json);
         accumulator.remove(jsonNode);
+      } else {
+        accumulator.add(null);
       }
     }
 
@@ -457,6 +457,8 @@ public class JsonFunctions {
     public void accumulate(ObjectAgg accumulator, String key, FlinkJsonType value) {
       if (value != null) {
         accumulateObject(accumulator, key, mapper.readTree(value.getJson()));
+      } else {
+        accumulator.add(key, null);
       }
     }
 

@@ -1,0 +1,13 @@
+>>>calcite
+SELECT JSONB_AGG(CAST(NULL AS JSONB)) AS "json"
+FROM "jsondata$2"
+>>>postgres
+SELECT JSONB_AGG(CAST(NULL AS JSONB)) AS "json"
+FROM "jsondata$2"
+>>>Postgres Result
+[null, null]
+>>>flink
+SELECT JSONARRAYAGG(TOJSON(NULL)) AS `json`
+FROM `jsondata$2`
+>>>Flink Result
+[null,null]
