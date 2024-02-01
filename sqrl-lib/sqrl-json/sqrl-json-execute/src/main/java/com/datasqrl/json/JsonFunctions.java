@@ -381,7 +381,7 @@ public class JsonFunctions {
         JsonNode jsonNode = mapper.readTree(value.json);
         accumulator.remove(jsonNode);
       } else {
-        accumulator.add(null);
+        accumulator.remove(null);
       }
     }
 
