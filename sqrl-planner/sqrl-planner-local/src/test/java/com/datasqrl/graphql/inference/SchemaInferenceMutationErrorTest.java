@@ -1,5 +1,6 @@
 package com.datasqrl.graphql.inference;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -40,7 +41,7 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
   @Test
   public void mustHaveQueryType() {
     super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n", framework, pipeline, errors);
-    assertTrue(errors.isEmpty());
+    assertFalse(errors.hasErrorsWarningsOrNotices());
   }
 
   @Test
@@ -72,7 +73,7 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
         + "type Orders {\n\tid: [Int!]!\n}\n", framework, pipeline, errors
     );
 
-    assertTrue(errors.isEmpty(), "Expected no errors");
+    assertFalse(errors.hasErrorsWarningsOrNotices());
   }
 
   @Test

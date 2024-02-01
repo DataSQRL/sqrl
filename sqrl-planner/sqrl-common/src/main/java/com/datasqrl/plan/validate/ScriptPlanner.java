@@ -330,7 +330,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     isMaterializeTable.put(node, true);
 
-    if (!errorCollector.isEmpty()) {
+    if (errorCollector.hasErrors()) {
       return null;
     }
 //    NamePath path = nameUtil.toNamePath(node.getIdentifier().names).popLast();
@@ -835,7 +835,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     validateTable(node, node.getQuery(), node.getTableArgs(), false);
 
 
-    if (!errorCollector.isEmpty()) {
+    if (errorCollector.hasErrors()) {
       return null;
     }
 

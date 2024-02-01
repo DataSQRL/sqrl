@@ -149,7 +149,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
       throw new RuntimeException("Could not validate graphql.");
     }
 
-    if (!errors.isEmpty()) {
+    if (errors.hasErrorsWarningsOrNotices()) {
       snapshot.addContent(ErrorPrinter.prettyPrint(errors), "warnings");
     }
     snapshot.createOrValidate();

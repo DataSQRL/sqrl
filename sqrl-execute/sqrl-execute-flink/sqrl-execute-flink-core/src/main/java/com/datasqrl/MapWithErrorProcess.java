@@ -37,7 +37,7 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
     } catch (Exception e) {
       errorHolder.get().handle(e);
     }
-    if (!errorHolder.isEmpty()) {
+    if (errorHolder.hasErrorsWarningsOrNotices()) {
       InputError inputErr = InputError.of(errorHolder.errors, input);
       context.output(errorTag, inputErr);
       inputErr.printToLog(log);
@@ -61,8 +61,8 @@ public class MapWithErrorProcess<Input, Output> extends ProcessFunction<Input, O
       this.location = location;
     }
 
-    public boolean isEmpty() {
-      return errors == null || errors.isEmpty();
+    public boolean hasErrorsWarningsOrNotices() {
+      return errors != null && errors.hasErrorsWarningsOrNotices();
     }
 
     @Override

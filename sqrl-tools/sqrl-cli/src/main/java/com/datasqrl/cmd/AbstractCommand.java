@@ -41,10 +41,8 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
         CLUSTER.stop();
       }
     }
-    if (!collector.isEmpty()) {
-      if (collector.hasErrors()) exitCode.set(1);
-      System.out.println(ErrorPrinter.prettyPrint(collector));
-    }
+    if (collector.hasErrors()) exitCode.set(1);
+    System.out.println(ErrorPrinter.prettyPrint(collector));
   }
 
   protected abstract void runCommand(ErrorCollector errors) throws Exception;
