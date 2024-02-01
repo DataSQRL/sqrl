@@ -24,6 +24,11 @@ class JsonFunctionsTest {
       FlinkJsonType result = JsonFunctions.TO_JSON.eval(json);
       assertNull(result);
     }
+
+    @Test
+    void testNullInput() {
+      assertNull(JsonFunctions.TO_JSON.eval(null));
+    }
   }
 
   @Nested
@@ -58,6 +63,13 @@ class JsonFunctionsTest {
       assertThrows(IllegalArgumentException.class,
           () -> JsonFunctions.JSON_OBJECT.eval("key1", "value1", "key2"));
     }
+
+    @Test
+    void testNullKeyOrValue() {
+      FlinkJsonType resultWithNullValue = JsonFunctions.JSON_OBJECT.eval("key1", null);
+      assertNotNull(resultWithNullValue);
+      assertEquals("{\"key1\":null}", resultWithNullValue.getJson());
+    }
   }
   @Nested
   class JsonArrayTest {
@@ -76,6 +88,13 @@ class JsonFunctionsTest {
       FlinkJsonType result = JsonFunctions.JSON_ARRAY.eval("stringValue", 123, true);
       assertNotNull(result);
       assertEquals("[\"stringValue\",123,true]", result.getJson());
+    }
+
+    @Test
+    void testArrayWithNullValues() {
+      FlinkJsonType result = JsonFunctions.JSON_ARRAY.eval((Object) null);
+      assertNotNull(result);
+      assertEquals("[null]", result.getJson());
     }
   }
 
@@ -189,6 +208,12 @@ class JsonFunctionsTest {
       Boolean result = JsonFunctions.JSON_EXISTS.eval(json, "$.nonexistentKey");
       assertFalse(result);
     }
+
+    @Test
+    void testNullInput() {
+      Boolean result = JsonFunctions.JSON_EXISTS.eval(null, "$.key");
+      assertNull(result);
+    }
   }
 
   @Nested
@@ -214,6 +239,13 @@ class JsonFunctionsTest {
     void testNullInput() {
       FlinkJsonType json1 = new FlinkJsonType("{\"key1\": \"value1\"}");
       FlinkJsonType result = JsonFunctions.JSON_CONCAT.eval(json1, null);
+      assertNull(result);
+    }
+
+    @Test
+    void testNullInput2() {
+      FlinkJsonType json1 = new FlinkJsonType("{\"key1\": \"value1\"}");
+      FlinkJsonType result = JsonFunctions.JSON_CONCAT.eval(null, json1);
       assertNull(result);
     }
 
@@ -249,6 +281,24 @@ class JsonFunctionsTest {
       assertNotNull(result);
       assertEquals("[\"stringValue\",123]", result.getJson());
     }
+
+    @Test
+    void testAccumulateNullValues() {
+      JsonFunctions.ArrayAgg accumulator = JsonFunctions.JSON_ARRAYAGG.createAccumulator();
+      JsonFunctions.JSON_ARRAYAGG.accumulate(accumulator, (FlinkJsonType) null);
+      FlinkJsonType result = JsonFunctions.JSON_ARRAYAGG.getValue(accumulator);
+      assertEquals("[]", result.getJson());
+    }
+
+    @Test
+    void testArrayWithNullElements() {
+      FlinkJsonType json1 = new FlinkJsonType("{\"key1\": \"value1\"}");
+      FlinkJsonType json2 = null; // null JSON object
+      FlinkJsonType result = JsonFunctions.JSON_ARRAY.eval(json1, json2);
+      assertNotNull(result);
+      // Depending on implementation, the result might include the null or ignore it
+      assertEquals("[{\"key1\":\"value1\"},null]", result.getJson());
+    }
   }
 
   @Nested
@@ -274,6 +324,31 @@ class JsonFunctionsTest {
       FlinkJsonType result = JsonFunctions.JSON_OBJECTAGG.getValue(accumulator);
       assertNotNull(result);
       assertEquals("{\"key\":\"value2\"}", result.getJson()); // The last value for the same key should be retained
+    }
+
+    @Test
+    void testNullKey() {
+      assertThrows(IllegalArgumentException.class, () -> JsonFunctions.JSON_OBJECT.eval(null, "value1"));
+    }
+
+    @Test
+    void testNullValue() {
+      FlinkJsonType result = JsonFunctions.JSON_OBJECT.eval("key1", null);
+      assertNotNull(result);
+      assertEquals("{\"key1\":null}", result.getJson());
+    }
+
+    @Test
+    void testNullKeyValue() {
+      assertThrows(IllegalArgumentException.class, () -> JsonFunctions.JSON_OBJECT.eval(null, null));
+    }
+
+    @Test
+    void testArrayOfNullValues() {
+      FlinkJsonType result = JsonFunctions.JSON_OBJECT.eval("key1", new Object[]{null, null, null});
+      assertNotNull(result);
+      // The expected output might vary based on how the function is designed to handle this case
+      assertEquals("{\"key1\":[null,null,null]}", result.getJson());
     }
   }
 }
