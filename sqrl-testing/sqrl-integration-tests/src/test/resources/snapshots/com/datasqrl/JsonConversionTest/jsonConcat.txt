@@ -1,6 +1,3 @@
->>>calcite
-SELECT CAST('{"a": "hello"}' AS JSONB) || CAST('{"b": "hello"}' AS JSONB) AS "json"
-FROM "jsondata$2"
 >>>postgres
 SELECT CAST('{"a": "hello"}' AS JSONB) || CAST('{"b": "hello"}' AS JSONB) AS "json"
 FROM "jsondata$2"

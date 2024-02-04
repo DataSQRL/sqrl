@@ -99,4 +99,8 @@ public class Deserializer {
     return yamlMapper.writeValueAsString(object);
   }
 
+  public<O> void writeYML(Path file, O object) throws IOException {
+    ObjectWriter writer = yamlMapper.writer().withDefaultPrettyPrinter();
+    writer.writeValue(file.toFile(),object);
+  }
 }

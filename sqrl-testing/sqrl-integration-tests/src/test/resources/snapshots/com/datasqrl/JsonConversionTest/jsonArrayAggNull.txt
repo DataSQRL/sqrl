@@ -1,6 +1,3 @@
->>>calcite
-SELECT JSONB_AGG(CAST(NULL AS JSONB)) AS "json"
-FROM "jsondata$2"
 >>>postgres
 SELECT JSONB_AGG(CAST(NULL AS JSONB)) AS "json"
 FROM "jsondata$2"

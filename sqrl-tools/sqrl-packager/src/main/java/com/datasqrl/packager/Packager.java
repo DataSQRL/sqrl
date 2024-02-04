@@ -29,6 +29,7 @@ import com.datasqrl.packager.config.DependencyConfig;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.postprocess.DockerPostprocessor;
 import com.datasqrl.packager.postprocess.FlinkPostprocessor;
+import com.datasqrl.packager.postprocess.FlinkSqlPostprocessor;
 import com.datasqrl.packager.postprocess.Postprocessor.ProcessorContext;
 import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
@@ -235,7 +236,7 @@ public class Packager {
 
   public void postprocess(CompilerResult result, Path targetDir, Optional<Path> mountDirectory,
       String[] profiles) {
-    List.of(new DockerPostprocessor(), new FlinkPostprocessor())
+    List.of(new FlinkSqlPostprocessor(), new DockerPostprocessor(), new FlinkPostprocessor())
         .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, result, mountDirectory, profiles)));
   }
 

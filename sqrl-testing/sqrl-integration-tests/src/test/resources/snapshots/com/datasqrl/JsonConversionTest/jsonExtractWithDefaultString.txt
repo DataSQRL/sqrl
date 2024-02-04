@@ -1,6 +1,3 @@
->>>calcite
-SELECT JSONEXTRACT(CAST('{"a": "hello"}' AS JSONB), '$.b', 'defaultString') AS "json"
-FROM "jsondata$2"
 >>>postgres
 SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{"a": "hello"}' AS JSONB), '$.b') #>> '{}', 'defaultString') AS "json"
 FROM "jsondata$2"

@@ -1,6 +1,3 @@
->>>calcite
-SELECT JSONEXTRACT(CAST('{"a": 0.2}' AS JSONB), '$.a', 0.0) AS "json"
-FROM "jsondata$2"
 >>>postgres
 SELECT COALESCE(CAST(JSONB_PATH_QUERY_FIRST(CAST('{"a": 0.2}' AS JSONB), '$.a') AS DOUBLE PRECISION), 0.0) AS "json"
 FROM "jsondata$2"

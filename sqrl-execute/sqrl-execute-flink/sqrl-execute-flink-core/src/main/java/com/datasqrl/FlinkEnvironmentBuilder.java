@@ -306,11 +306,11 @@ public class FlinkEnvironmentBuilder implements
     return null;
   }
 
-  private static Schema toSchema(SerializableSchema schema) {
+  public static Schema toSchema(SerializableSchema schema) {
     return toSchema(schema, false, Optional.empty());
   }
 
-  private static Schema toSchema(SerializableSchema schema, boolean setMetadata, Optional<String> sourceTime) {
+  public static Schema toSchema(SerializableSchema schema, boolean setMetadata, Optional<String> sourceTime) {
     Schema.Builder builder = Schema.newBuilder();
 
     //TODO: This is brittle, it mirrors the structure of UniversalTable by index

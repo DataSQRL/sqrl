@@ -1,6 +1,5 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import java.util.function.UnaryOperator;
 import org.apache.calcite.avatica.util.Quoting;
 import org.apache.calcite.sql.SqlWriterConfig;
@@ -16,8 +15,6 @@ public class SqrlConfigurations {
       .withSelectListItemsOnSeparateLines(false)
       .withUpdateSetListNewline(false)
       .withIndentation(1)
-      .withQuoteAllIdentifiers(true)
-      .withDialect(ExtendedPostgresSqlDialect.DEFAULT)
       .withSelectFolding(null);
 
   public static final SqlToRelConverter.Config sqlToRelConverterConfig = SqlToRelConverter

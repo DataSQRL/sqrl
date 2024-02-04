@@ -404,9 +404,6 @@ public class JsonConversionTest {
     SqrlTableMacro x = planner.getSchema().getTableFunction(fncName);
     RelNode relNode = x.getViewTransform().get();
 
-    RelNode calciteRelNode = planner.convertRelToDialect(Dialect.CALCITE, relNode);
-    snapshot.addContent(planner.relToString(Dialect.CALCITE, calciteRelNode).getSql(), "calcite");
-
     RelNode pgRelNode = planner.convertRelToDialect(Dialect.POSTGRES, relNode);
     String pgQuery = planner.relToString(Dialect.POSTGRES, pgRelNode).getSql();
     snapshot.addContent(pgQuery, "postgres");

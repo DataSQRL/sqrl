@@ -322,8 +322,11 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
             tableConfig.getConnectorName(), determineFactory(tableConfig));
     Class<? extends TableSchemaFactory> schemaFactoryClass = tableConfig.getSchemaFactory().map(TableSchemaFactory::getClass).orElse(null);
 
-    Pair<TypeInformation, SerializableSchema> type = createTypeInformation(tableName, relationalTable, watermarkColumn,
+    Pair<UniversalTable, SerializableSchema> type = createTypeInformation(tableName, relationalTable, watermarkColumn,
         watermarkExpression);
+
+    TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()
+        .convertSchema(type.getKey());
 
     FlinkFactoryDefinition factoryDefinition = FlinkFactoryDefinition.builder()
         .name(tableName)
@@ -331,7 +334,10 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .formatFactory(tableConfig.getFormat().getClass())
         .schemaFactory(schemaFactoryClass)
         .schemaDefinition(relationalTable.getTableSource().getSchema().getDefinition())
-        .typeInformation(type.getKey())
+        .typeInformation(typeInformation)
+        .relDataType(type.getKey().getType())
+        .watermarkColumn(watermarkColumn)
+        .watermarkExpression(watermarkExpression)
         .schema(type.getValue())
         .tableConfig(tableConfig.serialize())
         .build();
@@ -339,7 +345,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     this.tableDefs.add(factoryDefinition);
   }
 
-  private Pair<TypeInformation, SerializableSchema> createTypeInformation(String tableName,
+  private Pair<UniversalTable, SerializableSchema> createTypeInformation(String tableName,
       ImportedRelationalTable relationalTable,
       Optional<SqlNode> watermarkColumn, Optional<SqlNode> watermarkExpression) {
 
@@ -386,10 +392,8 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     SerializableSchema flinkSchema = convertSchema(universalTable, watermarkName, watermarkExpr,
         waterMarkType);
 
-    TypeInformation typeInformation = new FlinkTypeInfoSchemaGenerator()
-        .convertSchema(universalTable);
 
-    return Pair.of(typeInformation, flinkSchema);
+    return Pair.of(universalTable, flinkSchema);
   }
 
   private void registerSinkTables(List<WriteQuery> writeQueries) {
@@ -483,6 +487,9 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         .schema(schema)
         .typeInformation(typeInformation)
         .tableConfig(tableConfig.serialize())
+        .relDataType(relNode.getRowType())
+        .watermarkColumn(Optional.empty())
+        .watermarkExpression(Optional.empty())
         .build();
 
     this.tableDefs.add(factoryDefinition);
@@ -561,7 +568,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   }
 
 
-  private String removeAllQuotes(String str) {
+  public static String removeAllQuotes(String str) {
     return str.replaceAll("`", "");
   }
 }

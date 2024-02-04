@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -94,6 +93,10 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   protected CompletableFuture<ExecutionResult> execute(UseCaseExample example) {
     return execute(example.getRootPackageDirectory(), example.getScripts().get(0).getScriptPath(),
                    example.getGraphqlSchemaPath());
+  }
+
+  protected CompletableFuture<ExecutionResult> executeSql(Path compile) {
+    return executor.executePipeline(compile, true);
   }
 
   protected CompletableFuture<ExecutionResult> execute(Path rootPath,
