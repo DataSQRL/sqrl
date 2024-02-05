@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -42,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Slf4j
 @Testcontainers
 @ExtendWith(VertxExtension.class)
+@ExtendWith(MiniClusterExtension.class)
 public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   protected List<String> events = new ArrayList<>();
 

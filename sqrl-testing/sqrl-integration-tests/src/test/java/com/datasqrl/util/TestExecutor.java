@@ -119,8 +119,8 @@ public class TestExecutor {
       String[] commands = sql.split(PLAN_SEPARATOR);
 
       Configuration sEnvConfig = Configuration.fromMap(configMap);
-      StreamExecutionEnvironment sEnv;
-        sEnv = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(sEnvConfig);
+      StreamExecutionEnvironment sEnv = StreamExecutionEnvironment
+          .getExecutionEnvironment(sEnvConfig);
 
       EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
           .withConfiguration(Configuration.fromMap(configMap)).build();
