@@ -13,7 +13,6 @@ import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(MiniClusterExtension.class)
 public class MultipleSensorsTest extends SensorsTest {
 
   @SneakyThrows
