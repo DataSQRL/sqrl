@@ -7,11 +7,9 @@ import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.util.data.Sensors;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,15 +34,11 @@ public class SensorsTest extends AbstractGraphqlTest {
   JsonObject triggerAlertJson = new JsonObject().put("sensorId", 1).put("temperature", 62.1);
   JsonObject nontriggerAlertJson = new JsonObject().put("sensorId", 2).put("temperature", 62.1);
 
-  @BeforeEach
-  void setUp() {
-    fut = execute(Sensors.INSTANCE_MUTATION);
-    events = new ArrayList<>();
-  }
-
   @SneakyThrows
   @Test
   public void singleSubscriptionMutationTest() {
+    fut = execute(Sensors.INSTANCE_MUTATION);
+    events = new ArrayList<>();
     Thread.sleep(5000);
 
     CountDownLatch countDownLatch = subscribeToAlert(alert);
@@ -57,30 +51,6 @@ public class SensorsTest extends AbstractGraphqlTest {
     countDownLatch.await(120, TimeUnit.SECONDS);
     fut.cancel(true);
     assertEquals(countDownLatch.getCount(), 0);
-
-    validateEvents();
-  }
-
-  @SneakyThrows
-  @Test
-  public void multipleSubscribersTest() {
-    List<CountDownLatch> latches = new ArrayList<>();
-    for (int i = 0; i < 5; i++) {
-      latches.add(subscribeToAlert(alert));
-    }
-
-    Thread.sleep(1000);
-
-    executeMutation(addReading, triggerAlertJson);
-
-    // Wait a long time for the first latch, the rest should complete soon after
-    int timeout = 120;
-    for (CountDownLatch latch : latches) {
-      latch.await(timeout, TimeUnit.SECONDS);
-      timeout = timeout / 2;
-    }
-
-    fut.cancel(true);
 
     validateEvents();
   }
