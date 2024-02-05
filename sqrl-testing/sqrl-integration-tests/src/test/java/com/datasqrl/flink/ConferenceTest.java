@@ -20,11 +20,14 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
+@ExtendWith(MiniClusterExtension.class)
 public class ConferenceTest extends AbstractGraphqlTest {
 
   CompletableFuture<ExecutionResult> fut;

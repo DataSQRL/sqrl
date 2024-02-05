@@ -14,6 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,6 +29,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
+import org.apache.flink.runtime.util.jartestprogram.AnonymousInStaticMethod.A;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -50,17 +54,17 @@ public class KafkaBaseTest extends AbstractEngineIT {
 
   public static final EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(NUM_BROKERS);
 
-  @BeforeAll
-  public static void startCluster() throws IOException {
-    CLUSTER.start();
-  }
-
-  @AfterAll
-  public static void closeCluster() {
-    CLUSTER.stop();
-  }
+  static boolean hasStarted = false;
 
   String bootstrapServers;
+
+  @BeforeAll
+  public static void startCluster() throws IOException {
+    if (!hasStarted) {
+      CLUSTER.start();
+      hasStarted = true;
+    }
+  }
 
   public void createTopics(String[] topics) throws Exception {
     bootstrapServers = CLUSTER.bootstrapServers();

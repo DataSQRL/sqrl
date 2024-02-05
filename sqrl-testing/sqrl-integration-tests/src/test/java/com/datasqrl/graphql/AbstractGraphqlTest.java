@@ -11,12 +11,18 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.junit5.VertxExtension;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,12 +49,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Slf4j
 @Testcontainers
 @ExtendWith(VertxExtension.class)
-@ExtendWith(MiniClusterExtension.class)
 public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   protected List<String> events = new ArrayList<>();
 
-  @Container
-  static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
+  protected static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
       DockerImageName.parse("ankane/pgvector:v0.5.0")
       .asCompatibleSubstituteFor("postgres"));
 
@@ -58,10 +62,40 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   protected TestCompiler compiler;
   protected TestExecutor executor;
   protected TestClient client;
+  static boolean startedPostgres = false;
+  @BeforeAll
+  public static void beforeAll() {
+    if (!startedPostgres) {
+      testDatabase.start();
+      startedPostgres = true;
+    }
+  }
+
+  @SneakyThrows
+  @AfterAll
+  public static void afterAll() {
+    Connection connection = getPostgresConnection();
+    try (Statement statement = connection.createStatement()) {
+      // Disable foreign key checks to allow truncating tables with foreign key constraints
+      statement.execute("SET session_replication_role = 'replica';");
+
+      // Fetch the list of tables
+      ResultSet resultSet = statement.executeQuery(
+          "SELECT tablename FROM pg_tables WHERE schemaname = 'public';");
+      List<String> tables = new ArrayList<>();
+      while (resultSet.next()) {
+        tables.add(resultSet.getString(1));
+      }
+
+      // Truncate all tables
+      for (String table : tables) {
+        statement.execute("DROP TABLE " + table);
+      }
+    }
+  }
 
   @BeforeEach
   public void setup(TestInfo testInfo, Vertx vertx) throws IOException {
-    CLUSTER.start();
     log.info("Kafka started: " + CLUSTER.getAllTopicsInCluster());
     packageOverride = createPackageOverride(CLUSTER, testDatabase);
 
@@ -85,6 +119,12 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
     }
 
     Files.deleteIfExists(packageOverride);
+  }
+
+  @SneakyThrows
+  protected static Connection getPostgresConnection() {
+    return DriverManager.getConnection(testDatabase.getJdbcUrl(), testDatabase.getUsername(),
+        testDatabase.getPassword());
   }
 
   protected CompletableFuture<ExecutionResult> execute(String path) {

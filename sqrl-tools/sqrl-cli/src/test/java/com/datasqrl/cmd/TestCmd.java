@@ -22,12 +22,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(MiniClusterExtension.class)
 public class TestCmd {
 
   private static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");

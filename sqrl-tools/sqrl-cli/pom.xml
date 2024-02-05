@@ -135,6 +135,11 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-runtime-web</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-test-utils</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <!-- Kafka -->
     <dependency>

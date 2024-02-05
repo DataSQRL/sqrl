@@ -19,9 +19,12 @@ import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(MiniClusterExtension.class)
 public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
 
   CompletableFuture<ExecutionResult> fut;

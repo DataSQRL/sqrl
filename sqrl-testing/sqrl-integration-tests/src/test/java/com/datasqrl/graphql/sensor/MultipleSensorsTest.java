@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.graphql.sensor;
 
 import com.datasqrl.util.data.Sensors;
 import java.util.ArrayList;
@@ -9,8 +9,11 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import lombok.SneakyThrows;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(MiniClusterExtension.class)
 public class MultipleSensorsTest extends SensorsTest {
 
   @SneakyThrows

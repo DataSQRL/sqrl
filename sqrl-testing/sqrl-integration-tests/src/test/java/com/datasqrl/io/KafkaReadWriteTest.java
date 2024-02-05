@@ -8,12 +8,15 @@ import com.google.common.collect.ImmutableList;
 import java.time.Duration;
 import java.util.Set;
 import lombok.SneakyThrows;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(MiniClusterExtension.class)
 public class KafkaReadWriteTest extends KafkaBaseTest {
 
   @Test
