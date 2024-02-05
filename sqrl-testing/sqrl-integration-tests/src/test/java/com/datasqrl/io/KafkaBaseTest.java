@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -44,26 +45,34 @@ import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
-@ExtendWith(MiniClusterExtension.class)
 public class KafkaBaseTest extends AbstractEngineIT {
 
   public static final int NUM_BROKERS = 1;
 
   public static final EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(NUM_BROKERS);
 
-  static boolean hasStarted = false;
-
   String bootstrapServers;
 
+  @SneakyThrows
   @BeforeAll
   public static void startCluster() throws IOException {
-    if (!hasStarted) {
-      CLUSTER.start();
-      hasStarted = true;
-    }
+    CLUSTER.start();
+  }
+
+  @SneakyThrows
+  @BeforeEach
+  public void clear() {
+    CLUSTER.deleteAllTopicsAndWait(-1L);
+  }
+
+//
+  @AfterAll
+  public static void stopCluster() throws IOException {
+    CLUSTER.stop();
   }
 
   public void createTopics(String[] topics) throws Exception {
@@ -73,7 +82,13 @@ public class KafkaBaseTest extends AbstractEngineIT {
 
   @AfterEach
   public void after() throws Exception {
-    CLUSTER.deleteAllTopicsAndWait(0L);
+
+    CLUSTER.deleteAllTopicsAndWait(-1L);
+
+//    while (true) {
+//      System.out.println(CLUSTER.getAllTopicsInCluster());
+//      Thread.sleep(1000);
+//    }
   }
 
   public static Properties getAdminProps() {

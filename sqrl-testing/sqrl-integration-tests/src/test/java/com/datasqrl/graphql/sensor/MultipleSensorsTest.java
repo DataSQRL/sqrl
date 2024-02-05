@@ -36,8 +36,6 @@ public class MultipleSensorsTest extends SensorsTest {
       timeout = timeout / 2;
     }
 
-    fut.cancel(true);
-
     validateEvents();
   }
 }
