@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(MiniClusterExtension.class)
 public class KafkaMonitoringTest extends KafkaBaseTest {
 
   protected SnapshotTest.Snapshot snapshot;
