@@ -8,6 +8,7 @@ import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.function.IndexableFunction.OperandSelector;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.rules.SqrlRelMdRowCount;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.SqrlRexUtil;
@@ -41,7 +42,7 @@ public class QueryIndexSummary {
   public static final String INDEX_NAME = "_index_";
 
   @Include
-  ScriptRelationalTable table;
+  PhysicalRelationalTable table;
   @Include
   Set<Integer> equalityColumns;
   @Include
@@ -56,7 +57,7 @@ public class QueryIndexSummary {
    */
   double count = 1.0;
 
-  public static Optional<QueryIndexSummary> ofFilter(@NonNull ScriptRelationalTable table, RexNode filter,
+  public static Optional<QueryIndexSummary> ofFilter(@NonNull PhysicalRelationalTable table, RexNode filter,
       SqrlRexUtil rexUtil) {
     List<RexNode> conjunctions = rexUtil.getConjunctions(filter);
     Set<Integer> equalityColumns = new HashSet<>();
@@ -85,7 +86,7 @@ public class QueryIndexSummary {
     }
   }
 
-  public static Optional<QueryIndexSummary> ofSort(@NonNull ScriptRelationalTable table, RexNode node) {
+  public static Optional<QueryIndexSummary> ofSort(@NonNull PhysicalRelationalTable table, RexNode node) {
     if (node instanceof RexCall) {
       RexCall call = (RexCall) node;
       IndexableFinder idxFinder = new IndexableFinder();
@@ -98,7 +99,7 @@ public class QueryIndexSummary {
     return Optional.empty();
   }
 
-  public static Optional<QueryIndexSummary> ofSort(@NonNull ScriptRelationalTable table, int columnIndex) {
+  public static Optional<QueryIndexSummary> ofSort(@NonNull PhysicalRelationalTable table, int columnIndex) {
     return Optional.of(new QueryIndexSummary(table, Set.of(), ImmutableSet.of(columnIndex), Set.of(), 1.0));
   }
 

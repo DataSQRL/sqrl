@@ -1,5 +1,6 @@
 package com.datasqrl.plan.rules;
 
+import com.datasqrl.plan.table.Timestamps;
 import java.util.Optional;
 
 import com.datasqrl.plan.table.TimestampInference;
@@ -10,16 +11,16 @@ import org.apache.calcite.rel.RelFieldCollation.Direction;
 
 public class LPConverterUtil {
 
-  public static Optional<TimestampInference.Candidate> getTimestampOrderIndex(RelCollation collation, TimestampInference timestamp) {
+  public static Optional<Integer> getTimestampOrderIndex(RelCollation collation, Timestamps timestamp) {
     if (collation.getFieldCollations().isEmpty()) return Optional.empty();
     RelFieldCollation fieldCol = collation.getFieldCollations().get(0);
     if (fieldCol.direction!= Direction.DESCENDING) return Optional.empty();
-    return timestamp.getOptCandidateByIndex(fieldCol.getFieldIndex());
+    return Optional.of(fieldCol.getFieldIndex());
   }
 
-  public static RelCollation getTimestampCollation(TimestampInference.Candidate timestamp) {
+  public static RelCollation getTimestampCollation(int timestampIndex) {
     return RelCollations.of(
-        new RelFieldCollation(timestamp.getIndex(),
+        new RelFieldCollation(timestampIndex,
             RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
   }
 

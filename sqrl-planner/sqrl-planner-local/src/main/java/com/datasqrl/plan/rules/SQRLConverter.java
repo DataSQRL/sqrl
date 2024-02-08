@@ -69,7 +69,7 @@ public class SQRLConverter {
     addColumns(builder, table.getAddedColumns(), SelectIndexMap.identity(table.getNumColumns(), table.getNumColumns()), exec);
     RelNode relNode = builder.build();
     if (addWatermark) {
-      int timestampIdx = table.getTimestamp().getTimestampCandidate().getIndex();
+      int timestampIdx = table.getTimestamp().getOnlyCandidate();
       Preconditions.checkArgument(timestampIdx < relNode.getRowType().getFieldCount());
       WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
       relNode = ((Hintable) relNode).attachHints(List.of(watermarkHint.getHint()));

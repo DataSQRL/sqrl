@@ -14,6 +14,7 @@ import com.datasqrl.io.DataSystemConnectorSettings;
 import com.datasqrl.io.DataSystemDiscovery;
 import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.DataSystemImplementationFactory;
+import com.datasqrl.io.ExternalDataType;
 import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.schema.input.SchemaAdjustmentSettings;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Strings;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -35,6 +37,9 @@ public class TableConfig {
 
   public static final String CONNECTOR_KEY = "connector";
   public static final String FORMAT_KEY = "format";
+  public static final String METADATA_KEY = "metadata";
+  public static final String TABLE_KEY = "table";
+
 
   @NonNull Name name;
   @NonNull SqrlConfig config;
@@ -87,6 +92,10 @@ public class TableConfig {
   public SqrlConfig getConnectorConfig() {
     return config.getSubConfig(CONNECTOR_KEY);
   }
+
+  public SqrlConfig getMetadataConfig() { return config.getSubConfig(METADATA_KEY); }
+
+  public Base getBaseTableConfig() { return new Base(config.getSubConfig(TABLE_KEY)); }
 
   public DataSystemConnectorSettings getConnectorSettings() {
     return connectorSettings;
@@ -141,6 +150,38 @@ public class TableConfig {
     getErrors().checkFatal(!Strings.isNullOrEmpty(base.getIdentifier()), "Need to specify a table identifier");
     getErrors().checkFatal(hasFormat(), "Need to define a table format");
   }
+
+  @Value
+  public static class Base {
+
+    SqrlConfig baseConfig;
+
+    public static final String NAME_KEY = "name";
+    public static String PRIMARYKEY_KEY = "primaryKey";
+    public static final String TYPE_KEY = "type";
+    public static final String TIMESTAMP_COL_KEY = "timestampColumn";
+    public static final String TIMESTAMP_HINT_KEY = "timestampHint";
+
+    public String getName() {
+      return baseConfig.asString(NAME_KEY).get();
+    }
+
+    public ExternalDataType getType() {
+      return SqrlConfig.getEnum(baseConfig.asString(TYPE_KEY), ExternalDataType.class);
+    }
+
+    public SqrlConfig.Value<String> getTimestampColumn() {
+      return baseConfig.asString(TIMESTAMP_COL_KEY);
+    }
+
+    public SqrlConfig.Value<List<String>> getPrimaryKey() {
+      return baseConfig.asList(PRIMARYKEY_KEY, String.class);
+    }
+
+
+
+  }
+
 
   public TableSource initializeSource(NamePath basePath, TableSchema schema) {
     validateTable();

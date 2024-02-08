@@ -80,24 +80,24 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
 
     public abstract TableStatistic getTableStatistic();
 
-    public abstract int getNumPrimaryKeys();
+//    public abstract int getNumPrimaryKeys();
 
-    public int getNumLocalPks() {
-        return getNumPrimaryKeys();
-    }
+//    public int getNumLocalPks() {
+//        return getNumPrimaryKeys();
+//    }
 
     public abstract boolean isRoot();
 
     public abstract PhysicalRelationalTable getRoot();
 
-    public Statistic getStatistic() {
-        TableStatistic tableStatistic = getTableStatistic();
-        if (tableStatistic.isUnknown()) {
-            return Statistics.UNKNOWN;
-        }
-        ImmutableBitSet primaryKey = ImmutableBitSet.of(ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
-        return Statistics.of(tableStatistic.getRowCount(), List.of(primaryKey));
-    }
+//    public Statistic getStatistic() {
+//        TableStatistic tableStatistic = getTableStatistic();
+//        if (tableStatistic.isUnknown()) {
+//            return Statistics.UNKNOWN;
+//        }
+//        ImmutableBitSet primaryKey = ImmutableBitSet.of(ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
+//        return Statistics.of(tableStatistic.getRowCount(), List.of(primaryKey));
+//    }
 
     // An empty queryable table, used for tests
     @Override

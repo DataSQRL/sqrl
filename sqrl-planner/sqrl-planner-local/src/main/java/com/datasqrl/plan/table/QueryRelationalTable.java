@@ -1,5 +1,6 @@
 package com.datasqrl.plan.table;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
@@ -19,12 +20,12 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
 
   private final LPAnalysis analyzedLP;
 
-  public QueryRelationalTable(Name rootTableId, Name tableName, @NonNull LPAnalysis analyzedLP) {
-    super(rootTableId, tableName,
+  public QueryRelationalTable(Name rootTableId, NamePath tablePath, @NonNull LPAnalysis analyzedLP) {
+    super(rootTableId, tablePath,
         analyzedLP.getConvertedRelnode().getType(),
         analyzedLP.getConvertedRelnode().getRelNode().getRowType(),
-        analyzedLP.getConvertedRelnode().getTimestamp().finalizeAsBase(),
-        analyzedLP.getConvertedRelnode().getPrimaryKey().getLength(),
+        analyzedLP.getConvertedRelnode().getTimestamp(),
+        PrimaryKey.of(analyzedLP.getConvertedRelnode().getPrimaryKey()),
         TableStatistic.of(analyzedLP.getConvertedRelnode().estimateRowCount()));
     this.analyzedLP = analyzedLP;
   }

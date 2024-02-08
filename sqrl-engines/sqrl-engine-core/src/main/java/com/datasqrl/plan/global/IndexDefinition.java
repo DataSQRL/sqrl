@@ -34,9 +34,9 @@ public class IndexDefinition {
         columns.stream().map(i -> "c" + i).collect(Collectors.joining());
   }
 
-  public static IndexDefinition getPrimaryKeyIndex(String tableId, int numPrimaryKeys,
+  public static IndexDefinition getPrimaryKeyIndex(String tableId, List<Integer> primaryKeys,
       List<String> fieldNames) {
-    return new IndexDefinition(tableId, ContiguousSet.closedOpen(0, numPrimaryKeys).asList(),
+    return new IndexDefinition(tableId, primaryKeys,
         fieldNames, IndexType.BTREE);
   }
 

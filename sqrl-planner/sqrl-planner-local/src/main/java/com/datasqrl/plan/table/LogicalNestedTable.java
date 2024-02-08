@@ -60,24 +60,6 @@ public class LogicalNestedTable extends ScriptRelationalTable {
         return getRoot().getTableStatistic().nested();
     }
 
-    public int getNumParentPks() {
-        return parent.getNumPrimaryKeys();
-    }
-
-    @Override
-    public int getNumPrimaryKeys() {
-        return parent.getNumPrimaryKeys() + numLocalPks;
-    }
-
-    @Override
-    public int getNumLocalPks() {
-        return numLocalPks;
-    }
-
-    public int getNumDenormalizedColumns() {
-        return super.getNumColumns() - parent.getNumPrimaryKeys();
-    }
-
     @Override
     public boolean isRoot() {
         return false;

@@ -34,11 +34,11 @@ public class H2DDLFactory implements JdbcDDLFactory {
       RelDataTypeField field = fields.get(i);
       String column = toSql(field);
       columns.add(column);
-      if (i < table.getNumPrimaryKeys()) {
-        pk.add("\"" + field.getName() + "\"");
-      }
     }
-
+    for (int pkIdx : table.getPrimaryKeys()) {
+      RelDataTypeField field = fields.get(pkIdx);
+      pk.add("\"" + field.getName() + "\"");
+    }
     return new CreateTableDDL("\"" + table.getNameId() + "\"", columns, pk);
   }
 

@@ -881,10 +881,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           "Cannot assign timestamp to nested item");
     }
 
+    //Find table
     Optional<RelOptTable> table = resolveModifiableTable(node,
         node.getAlias().map(a -> nameUtil.toNamePath(a.names))
             .orElse(nameUtil.toNamePath(node.getIdentifier().names)));
 
+    //Plan timestamp expression
     RexNode rexNode = table.flatMap(t -> {
           try {
             return Optional.of(planner.planExpression(node.getTimestamp(), t.getRowType()));
@@ -894,19 +896,14 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         }
     ).get();
 
-    List<String> tableName = node.getAlias().orElse(node.getIdentifier()).names;
-    NamePath names = nameUtil.toNamePath(tableName);
-
+    //Add timestamp to table
     int timestampIndex;
-    if (!(rexNode instanceof RexInputRef) && node.getTimestampAlias().isEmpty()) {
-      timestampIndex = addColumn(rexNode, ReservedName.SYSTEM_TIMESTAMP.getCanonical(), table.get());
-    } else if (node.getTimestampAlias().isPresent()) {
-      //otherwise, add new column
-      timestampIndex = addColumn(rexNode, node.getTimestampAlias().get().getSimple(), table.get());
-    } else {
+    if (rexNode instanceof RexInputRef) {
       timestampIndex = ((RexInputRef) rexNode).getIndex();
+    } else {
+      //otherwise, add new column
+      timestampIndex = addColumn(rexNode, node.getTimestampAlias().map(SqlIdentifier::getSimple).orElse(ReservedName.SYSTEM_TIMESTAMP.getCanonical()), table.get());
     }
-
     TimestampAssignableTable timestampAssignableTable = table.get().unwrap(TimestampAssignableTable.class);
     timestampAssignableTable.assignTimestamp(timestampIndex);
 

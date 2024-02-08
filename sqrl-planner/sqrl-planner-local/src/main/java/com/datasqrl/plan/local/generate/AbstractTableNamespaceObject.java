@@ -13,18 +13,23 @@ import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.function.SqrlFunctionParameter.CasedParameter;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.module.TableNamespaceObject;
-import com.datasqrl.plan.local.ScriptTableDefinition;
-import com.datasqrl.plan.table.*;
+import com.datasqrl.plan.table.AbstractRelationalTable;
+import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.ImportedRelationalTableImpl;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.PrimaryKey;
+import com.datasqrl.plan.table.ProxyImportRelationalTable;
+import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.TableConverter;
 import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.schema.RootSqrlTable;
-import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.calcite.rel.RelNode;
@@ -53,83 +58,112 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
 
   protected boolean importSourceTable(Optional<String> objectName, TableSource table,
       SqrlFramework framework, ErrorCollector errors) {
-    Map<NamePath, ScriptRelationalTable> tables = importTable(table,
+    ProxyImportRelationalTable importTable = importTable(table,
         objectName.map(canonicalizer::name).orElse(table.getName()), errors);
-    registerScriptTable(new ScriptTableDefinition(tables), framework, Optional.empty(), Optional.empty());
+    registerScriptTable(importTable, framework, Optional.empty(), Optional.empty());
     return true;
   }
 
-  public Map<NamePath, ScriptRelationalTable> importTable(TableSource tableSource, Name tableName,
+  public ProxyImportRelationalTable importTable(TableSource tableSource, Name tableName,
       ErrorCollector errors) {
     // Convert the source schema to a universal table
-    UniversalTable rootTable = tableConverter.sourceToTable(
+    TableConverter.SourceTableType tableType = tableConverter.sourceToTable(
         tableSource.getTableSchema().get(),
-        tableSource.getConnectorSettings().isHasSourceTimestamp(),
+        tableSource.getConfiguration(),
         tableName,
         errors
     );
 
-    // Convert the universal table to a Calcite relational data type
-    RelDataType rootType = tableConverter.tableToDataType(rootTable);
-
     // Create imported table and its proxy with unique IDs
-    ImportedRelationalTableImpl importedTable = tableFactory.createImportedTable(rootType, tableSource, rootTable.getName());
-    ProxyImportRelationalTable proxyTable = tableFactory.createProxyTable(rootType, rootTable, importedTable);
+    ImportedRelationalTableImpl importedTable = tableFactory.createImportedTable(tableType.getType(), tableSource, tableName);
+    ProxyImportRelationalTable proxyTable = tableFactory.createProxyTable(tableType.getType(), NamePath.of(tableName), importedTable, tableType.getTimestampIndex(), tableType.getPrimaryKey());
 
     // Generate the script tables based on the provided root table
-    return tableFactory.createScriptTables(rootTable, proxyTable);
+    return proxyTable;
   }
 
-  public void registerScriptTable(ScriptTableDefinition tblDef, SqrlFramework framework, Optional<List<FunctionParameter>> parameters,
+  public void registerScriptTable(PhysicalRelationalTable table, SqrlFramework framework, Optional<List<FunctionParameter>> parameters,
       Optional<Supplier<RelNode>> relNodeSupplier) {
 
-    for(Entry<NamePath, ScriptRelationalTable> entry : tblDef.getShredTableMap().entrySet()) {
-      NamePath path = entry.getKey();
-      ScriptRelationalTable table = entry.getValue();
+    NamePath path =  table.getTablePath();
 
-      framework.getSchema().add(table.getNameId(), table);
-      framework.getSchema().addTableMapping(path, table.getNameId());
-      if (tblDef.getBaseTable() instanceof ProxyImportRelationalTable) {
-        AbstractRelationalTable impTable = ((ProxyImportRelationalTable) tblDef.getBaseTable()).getBaseTable();
-        framework.getSchema().add(impTable.getNameId(), impTable);
-      }
-
-      if (path.size() == 1) {
-        framework.getSchema().addTableMapping(path, table.getNameId());
-        Supplier<RelNode> nodeSupplier = relNodeSupplier
-            .orElse(() -> framework.getQueryPlanner().getRelBuilder().scan(table.getNameId()).build());
-        RootSqrlTable tbl = new RootSqrlTable(
-            path.getFirst(),
-            table,
-            parameters.orElse(List.of()),
-            nodeSupplier);
-        framework.getSchema().addTable(tbl);
-      } else { //add nested
-        NamePath parentPath = path.popLast();
-        String parentId = framework.getSchema().getPathToSysTableMap().get(parentPath);
-        Preconditions.checkNotNull(parentId);
-        Table parentTable = framework.getSchema().getTable(parentId, false)
-            .getTable();
-        ScriptRelationalTable scriptParentTable = (ScriptRelationalTable) parentTable;
-
-        Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(scriptParentTable, table);
-        Relationship relationship = new Relationship(path.getLast(), path, path,
-            JoinType.CHILD,
-            Multiplicity.MANY, //todo fix multiplicity
-            pkWrapper.getLeft(),
-            () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
-        framework.getSchema().addRelationship(relationship);
-
-        Relationship rel = createParent(framework, path, scriptParentTable, table);
-        framework.getSchema().addRelationship(rel);
-      }
+    framework.getSchema().add(table.getNameId(), table);
+    framework.getSchema().addTableMapping(path, table.getNameId());
+    if (table instanceof ProxyImportRelationalTable) {
+      AbstractRelationalTable impTable = ((ProxyImportRelationalTable) table).getBaseTable();
+      framework.getSchema().add(impTable.getNameId(), impTable);
     }
+
+    if (path.size() == 1) {
+      framework.getSchema().addTableMapping(path, table.getNameId());
+      Supplier<RelNode> nodeSupplier = relNodeSupplier
+          .orElse(() -> framework.getQueryPlanner().getRelBuilder().scan(table.getNameId()).build());
+      RootSqrlTable tbl = new RootSqrlTable(
+          path.getFirst(),
+          table,
+          parameters.orElse(List.of()),
+          nodeSupplier);
+      framework.getSchema().addTable(tbl);
+    } else { //add parent-child relationships
+      NamePath parentPath = path.popLast();
+      String parentId = framework.getSchema().getPathToSysTableMap().get(parentPath);
+      Preconditions.checkNotNull(parentId);
+      PhysicalRelationalTable parentTable = (PhysicalRelationalTable) framework.getSchema().getTable(parentId, false)
+          .getTable();;
+      Preconditions.checkArgument(parentTable.getPrimaryKey().isDefined());
+      Preconditions.checkArgument(table.getPrimaryKey().isDefined());
+
+      Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(parentTable, table);
+      Multiplicity multiplicity = parentTable.getPrimaryKey().size()<table.getPrimaryKey().size()?
+                                  Multiplicity.MANY : Multiplicity.ZERO_ONE;
+      Relationship relationship = new Relationship(path.getLast(), path, path,
+          JoinType.CHILD,
+          multiplicity,
+          pkWrapper.getLeft(),
+          () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
+      framework.getSchema().addRelationship(relationship);
+
+      Relationship rel = createParent(framework, path, parentTable, table);
+      framework.getSchema().addRelationship(rel);
+    }
+    //Add nested relationships
+    createNested(table.getRowType(), path, framework);
   }
 
-  public Relationship createParent(SqrlFramework framework, NamePath path, ScriptRelationalTable parentScriptTable,
-      ScriptRelationalTable childScriptTable) {
-    Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(childScriptTable,
-        parentScriptTable);
+  private void createNested(RelDataType type, NamePath path, SqrlFramework framework) {
+    type.getFieldList().stream().filter(f -> CalciteUtil.isNestedTable(f.getType()))
+        .forEach(field -> createdNestedChild(field, path, framework));
+  }
+
+  private void createdNestedChild(RelDataTypeField field, NamePath path, SqrlFramework framework) {
+    path = path.concat(canonicalizer.name(field.getName()));
+    RelDataType nestedType = CalciteUtil.getNestedTableType(field.getType()).get();
+    Multiplicity multiplicity = Multiplicity.MANY;
+    //TODO: We make the hard-coded assumption that the first field is the pk-field for now
+    int[] pks = {0};
+    if (!CalciteUtil.isArray(field.getType())) {
+      if (field.getType().isNullable()) multiplicity = Multiplicity.ZERO_ONE;
+      else multiplicity = Multiplicity.ONE;
+      pks = new int[0];
+    }
+    Name name = path.getLast();
+    SqrlFunctionParameter param = new SqrlFunctionParameter(
+        name.getDisplay(),
+        Optional.empty(),
+        SqlDataTypeSpecBuilder.create(field.getType()),
+        0,
+        field.getType(),
+        true, new CasedParameter(field.getName()));
+    NestedRelationship relationship = new NestedRelationship(name, path, path,
+        multiplicity, List.of(param), nestedType, pks);
+    framework.getSchema().addRelationship(relationship);
+    createNested(field.getType(), path, framework);
+  }
+
+  public Relationship createParent(SqrlFramework framework, NamePath path, PhysicalRelationalTable parentTable,
+      PhysicalRelationalTable childTable) {
+    Pair<List<FunctionParameter>, SqlNode> pkWrapper = createPkWrapper(childTable,
+        parentTable);
     NamePath relPath = path.concat(ReservedName.PARENT);
 
     return new Relationship(ReservedName.PARENT,
@@ -138,27 +172,32 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
         () -> framework.getQueryPlanner().plan(Dialect.CALCITE, pkWrapper.getRight()));
   }
 
-  public static Pair<List<FunctionParameter>, SqlNode> createPkWrapper(ScriptRelationalTable fromTable,
-      ScriptRelationalTable toTable) {
+  public static Pair<List<FunctionParameter>, SqlNode> createPkWrapper(PhysicalRelationalTable fromTable,
+      PhysicalRelationalTable toTable) {
+    //Tables must have defined primary keys
+    Preconditions.checkArgument(fromTable.getPrimaryKey().isDefined());
+    Preconditions.checkArgument(toTable.getPrimaryKey().isDefined());
     //Parameters
     List<FunctionParameter> parameters = new ArrayList<>();
     List<SqlNode> conditions = new ArrayList<>();
-    for (int i = 0; i < Math.min(toTable.getNumPrimaryKeys(), fromTable.getNumPrimaryKeys()); i++) {
-      RelDataTypeField field1 = toTable.getRowType().getFieldList().get(i);
-      RelDataTypeField field = fromTable.getRowType().getFieldList().get(i);
+    PrimaryKey toPk = toTable.getPrimaryKey(), fromPk = fromTable.getPrimaryKey();
+    //This is for a parent-child relationship, meaning the first indexes are shared
+    for (int i = 0; i < Math.min(toPk.size(), fromPk.size()); i++) {
+      RelDataTypeField toField = toTable.getRowType().getFieldList().get(toPk.get(i));
+      RelDataTypeField fromField = fromTable.getRowType().getFieldList().get(fromPk.get(i));
 
       SqrlFunctionParameter param = new SqrlFunctionParameter(
-          field1.getName(),
+          toField.getName(),
           Optional.empty(),
-          SqlDataTypeSpecBuilder.create(field.getType()),
+          SqlDataTypeSpecBuilder.create(fromField.getType()),
           i,
-          field.getType(),
-          true, new CasedParameter(field.getName()));
+          fromField.getType(),
+          true, new CasedParameter(fromField.getName()));
 
       SqlDynamicParam dynamicParam = new SqlDynamicParam(i, SqlParserPos.ZERO);
       parameters.add(param);
       conditions.add(SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO,
-          new SqlIdentifier(field1.getName(), SqlParserPos.ZERO),
+          new SqlIdentifier(toField.getName(), SqlParserPos.ZERO),
           dynamicParam));
     }
 

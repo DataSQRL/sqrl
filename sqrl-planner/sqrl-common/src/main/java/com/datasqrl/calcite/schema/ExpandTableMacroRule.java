@@ -2,6 +2,7 @@ package com.datasqrl.calcite.schema;
 
 
 import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import java.util.List;
@@ -35,6 +36,8 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
     if (call.getOperator() instanceof SqlUserDefinedTableFunction &&
         ((SqlUserDefinedTableFunction) call.getOperator()).getFunction() instanceof SqrlTableMacro) {
       SqrlTableMacro function = (SqrlTableMacro)((SqlUserDefinedTableFunction) call.getOperator()).getFunction();
+      //Don't transform nested relationships
+      if (function instanceof NestedRelationship) return;
 
       RelNode relNode = CalciteUtil.applyRexShuttleRecursively(function.getViewTransform().get(),
           new ReplaceArgumentWithOperand(((RexCall) node.getCall()).getOperands()));

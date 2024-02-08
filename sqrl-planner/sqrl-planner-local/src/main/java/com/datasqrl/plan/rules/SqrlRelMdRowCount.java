@@ -4,6 +4,7 @@
 package com.datasqrl.plan.rules;
 
 import com.datasqrl.plan.global.QueryIndexSummary;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.RelNode;
@@ -46,10 +47,10 @@ public class SqrlRelMdRowCount extends RelMdRowCount
     return RelMdUtil.estimateFilteredRows(rel.getInput(), rel.getCondition(), mq);
   }
 
-  public static Double getRowCount(ScriptRelationalTable table,
+  public static Double getRowCount(PhysicalRelationalTable table,
                                    QueryIndexSummary constraints) {
     Set<Integer> equalCols = constraints.getEqualityColumns();
-    if (IntStream.range(0, table.getNumPrimaryKeys()).allMatch(equalCols::contains)) {
+    if (IntStream.of(table.getPrimaryKey().asArray()).allMatch(equalCols::contains)) {
       return 1.0;
     }
     return getRowCount(table) * SqrlRelMdSelectivity.getSelectivity(table, constraints);

@@ -11,6 +11,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.util.CalciteUtil;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -41,9 +42,10 @@ public class PostgresDDLFactory implements JdbcDDLFactory {
 
       String column = toSql(field);
       columns.add(column);
-      if (i < table.getNumPrimaryKeys()) {
-        pk.add(quoteIdentifier(field.getName()));
-      }
+    }
+    for (int pkIdx : table.getPrimaryKeys()) {
+      RelDataTypeField field = fields.get(pkIdx);
+      pk.add(quoteIdentifier(field.getName()));
     }
     return new CreateTableDDL(table.getNameId(), columns, pk);
   }

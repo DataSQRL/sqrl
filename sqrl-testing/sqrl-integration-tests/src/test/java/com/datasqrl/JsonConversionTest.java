@@ -418,7 +418,7 @@ public class JsonConversionTest {
     pgResult = pgResult == null ? "<null>" : pgResult.toString();
 
     CreateTableDDL pg = new PostgresDDLFactory().createTable(
-        new EngineSink("pg", 1, relNode.getRowType(), 0, null));
+        new EngineSink("pg", new int[]{0}, relNode.getRowType(), 0, null));
 
     snapshot.addContent((String) pgResult, "Postgres Result");
 

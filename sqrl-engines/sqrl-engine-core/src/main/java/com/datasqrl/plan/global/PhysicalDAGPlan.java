@@ -136,7 +136,7 @@ public class PhysicalDAGPlan {
   public static class EngineSink implements WriteSink, StageSink {
 
     final String nameId;
-    final int numPrimaryKeys;
+    final int[] primaryKeys;
     final RelDataType rowType;
     final int timestampIdx;
     final ExecutionStage stage;

@@ -24,7 +24,9 @@ import org.apache.calcite.rel.logical.LogicalValues;
 public interface SqrlRelShuttle extends RelShuttle {
 
 
-  RelNode visit(LogicalStream logicalStream);
+  default RelNode visit(LogicalStream logicalStream) {
+    throw new UnsupportedOperationException("Not yet supported.");
+  }
 
     /*
     ====== Rel Nodes are not yet supported =====
@@ -39,13 +41,6 @@ public interface SqrlRelShuttle extends RelShuttle {
   default RelNode visit(LogicalMinus logicalMinus) {
     throw new UnsupportedOperationException("Not yet supported.");
   }
-
-  @Override
-  default RelNode visit(LogicalValues logicalValues) {
-    throw new UnsupportedOperationException("Not yet supported.");
-  }
-
-
 
   @Override
   default RelNode visit(RelNode relNode) {
@@ -65,11 +60,6 @@ public interface SqrlRelShuttle extends RelShuttle {
   /*
   ====== Rel Nodes that do not occur in SQRL =====
   */
-
-  @Override
-  default RelNode visit(LogicalCorrelate logicalCorrelate) {
-    return visit((RelNode) logicalCorrelate);
-  }
 
   @Override
   default RelNode visit(LogicalCalc logicalCalc) {

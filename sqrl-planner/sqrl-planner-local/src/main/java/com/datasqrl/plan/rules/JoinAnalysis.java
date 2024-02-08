@@ -120,7 +120,8 @@ public class JoinAnalysis {
       case INTERVAL:
         return Type.INTERVAL;
       case DEFAULT:
-        return Type.DEFAULT;
+        if (join==JoinRelType.LEFT || join==JoinRelType.RIGHT) return Type.INNER;
+        else return Type.DEFAULT;
       case OUTER:
       case NONE:
         if (join == JoinRelType.INNER) {

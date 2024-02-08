@@ -128,35 +128,17 @@ public class DAGAssembler {
       Preconditions.checkArgument(tableScanVisitor.scanFunctions.isEmpty(),
           "Should not encounter table functions in materialized queries");
       Set<AbstractRelationalTable> materializedTables = tableScanVisitor.scanTables;
-      List<LogicalNestedTable> normalizedTables = StreamUtil.filterByClass(materializedTables,
-              LogicalNestedTable.class).sorted().collect(Collectors.toList());
       List<PhysicalRelationalTable> denormalizedTables = StreamUtil.filterByClass(materializedTables,
           PhysicalRelationalTable.class).sorted().collect(Collectors.toList());
 
-      //Fill all table sinks
-      //First, all the tables that need to be written to the database in normalized form
-      for (LogicalNestedTable normTable : normalizedTables) {
-        RelNode scanTable = sqrlConverter.getRelBuilder().scan(normTable.getNameId()).build();
-        SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBaseConfig();
-        RelNode processedRelnode = produceWriteTree(scanTable,
-            configBuilder.build(), errors);
-        Preconditions.checkArgument(normTable.getRowType().equals(processedRelnode.getRowType()),
-            "Rowtypes do not match: \n%s \n vs \n%s",
-            normTable.getRowType(), processedRelnode.getRowType());
-        int timestampIndex = normTable.getNumColumns()-1; //timestamp is always at the end
-        streamQueries.add(new PhysicalDAGPlan.WriteQuery(
-            new EngineSink(normTable.getNameId(), normTable.getNumPrimaryKeys(),
-                normTable.getRowType(), timestampIndex, database),
-            processedRelnode));
-      }
       //Second, all tables that need to be written in denormalized form
       for (PhysicalRelationalTable denormTable : denormalizedTables) {
         RelNode processedRelnode = produceWriteTree(denormTable.getPlannedRelNode(),
-                denormTable.getTimestamp().getTimestampCandidate().getIndex());
+                denormTable.getTimestamp().getOnlyCandidate());
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
-            new EngineSink(denormTable.getNameId(), denormTable.getNumPrimaryKeys(),
+            new EngineSink(denormTable.getNameId(), denormTable.getPrimaryKey().getPkIndexes(),
                 denormTable.getRowType(),
-                denormTable.getTimestamp().getTimestampCandidate().getIndex(), database),
+                denormTable.getTimestamp().getOnlyCandidate(), database),
             processedRelnode));
       }
 
@@ -196,7 +178,7 @@ public class DAGAssembler {
         .forEach(table -> {
           Name debugSinkName = table.getTableName().suffix("debug" + debugCounter.incrementAndGet());
           TableSink sink = debugger.getDebugSink(debugSinkName, errors);
-          RelNode expandedRelNode = produceWriteTree(table.getPlannedRelNode(), table.getTimestamp().getTimestampCandidate().getIndex());
+          RelNode expandedRelNode = produceWriteTree(table.getPlannedRelNode(), table.getTimestamp().getOnlyCandidate());
           streamQueries.add(new PhysicalDAGPlan.WriteQuery(
               new PhysicalDAGPlan.ExternalSink(debugSinkName.getCanonical(), sink),
               expandedRelNode));
@@ -233,7 +215,7 @@ public class DAGAssembler {
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree
-    return produceWriteTree(convertedRelNode, alp.getTimestamp().getTimestampCandidate().getIndex());
+    return produceWriteTree(convertedRelNode, alp.getTimestamp().getOnlyCandidate());
   }
 
   private RelNode produceWriteTree(RelNode convertedRelNode, int timestampIndex) {

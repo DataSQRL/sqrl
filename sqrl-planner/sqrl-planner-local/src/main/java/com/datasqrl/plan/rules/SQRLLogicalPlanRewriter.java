@@ -8,26 +8,21 @@ import com.datasqrl.engine.EngineCapability;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
-import com.datasqrl.model.LogicalStreamMetaData;
-import com.datasqrl.model.StreamType;
 import com.datasqrl.plan.hints.*;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
-import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
 import com.datasqrl.plan.rules.JoinAnalysis.Type;
-import com.datasqrl.plan.rules.JoinTable.NormType;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.util.*;
-import com.datasqrl.plan.util.SelectIndexMap.Builder;
 import com.datasqrl.plan.util.TimestampAnalysis.MaxTimestamp;
+import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
 import lombok.NonNull;
@@ -40,23 +35,17 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.*;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.logical.*;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
-import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.rex.*;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.JoinModifier;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
-import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -93,7 +82,9 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   protected RelNode setRelHolder(AnnotatedLP relHolder) {
-    Preconditions.checkArgument(relHolder.timestamp.hasCandidates(),"Invalid timestamp");
+    Preconditions.checkArgument(!(relHolder.type.hasTimestamp() && relHolder.timestamp.is(
+        Timestamps.Type.UNDEFINED)),"Timestamp required");
+    Preconditions.checkArgument(!(relHolder.type.hasPrimaryKey() && relHolder.primaryKey.isUndefined()),"Primary key required");
     if (!exec.supports(EngineCapability.PULLUP_OPTIMIZATION)) {
       //Inline all pullups
       RelBuilder relB = makeRelBuilder();
@@ -110,229 +101,72 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   }
 
   public AnnotatedLP processTableScan(TableScan tableScan) {
-    //The base scan tables for all SQRL queries are ScriptRelationalTable
-    ScriptRelationalTable vtable = tableScan.getTable().unwrap(ScriptRelationalTable.class);
-    Preconditions.checkArgument(vtable != null);
-
-    PhysicalRelationalTable queryTable = vtable.getRoot();
-    config.getSourceTableConsumer().accept(queryTable);
-    vtable.lock();
-
-    Optional<Integer> numRootPks = Optional.of(vtable.getRoot().getNumPrimaryKeys());
-
-    if (exec.supports(EngineCapability.DENORMALIZE)) {
-      //We have to append a timestamp to nested tables that are being normalized when
-      //all columns are selected
-      return denormalizeTable(queryTable, vtable, numRootPks);
-    } else {
-      if (vtable.isRoot()) {
-        return createAnnotatedRootTable(tableScan, queryTable, numRootPks);
-      } else {
-        return createAnnotatedChildTableScan(queryTable, (LogicalNestedTable) vtable, numRootPks);
-      }
-    }
+    //The base scan tables for all SQRL queries are PhysicalRelationalTable
+    PhysicalRelationalTable table = tableScan.getTable().unwrap(PhysicalRelationalTable.class);
+    Preconditions.checkArgument(table != null);
+    return createAnnotatedRootTable(tableScan, table);
   }
 
-  @Override
-  public RelNode visit(TableFunctionScan functionScan) {
-    exec.require(EngineCapability.TABLE_FUNCTION_SCAN); //We only support table functions on the read side
-    Optional<TableFunction> tableFunction = SqrlRexUtil.getCustomTableFunction(functionScan);
-    errors.checkFatal(tableFunction.isPresent() && tableFunction.get() instanceof QueryTableFunction,
-        "Invalid table function encountered in query: %s", functionScan);
-    QueryTableFunction tblFct = (QueryTableFunction) tableFunction.get();
-    QueryRelationalTable queryTable = tblFct.getQueryTable();
-    config.getSourceTableConsumer().accept(queryTable);
-    queryTable.lock();
+  private AnnotatedLP createAnnotatedRootTable(RelNode relNode, PhysicalRelationalTable table) {
+    config.getSourceTableConsumer().accept(table);
+    table.lock();
 
-    return setRelHolder(createAnnotatedRootTable(functionScan, queryTable, Optional.empty()));
-  }
-
-  private AnnotatedLP denormalizeTable(PhysicalRelationalTable queryTable,
-                                       ScriptRelationalTable vtable, Optional<Integer> numRootPks) {
-    //Shred the virtual table all the way to root:
-    //First, we prepare all the data structures
-    Builder selectBuilder = SelectIndexMap.builder(vtable.getNumColumns());
-    PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey = PrimaryKeyMap.builder();
-    List<JoinTable> joinTables = new ArrayList<>();
-    //Now, we shred
-    RelNode relNode = shredTable(vtable, primaryKey, selectBuilder, joinTables, true).build();
-
-    //Append timestamp if nested
-    TimestampInference timestamp = queryTable.getTimestamp().asDerived();
-    if (!vtable.isRoot()) {
-      TimestampInference.Candidate best = queryTable.getTimestamp().getBestCandidate();
-      selectBuilder.add(best.getIndex());
-    }
-
-    int targetLength = relNode.getRowType().getFieldCount();
-    SelectIndexMap selectMap = selectBuilder.build(targetLength);
-    PrimaryKeyMap pk = primaryKey.build();
-    assert pk.getLength() == vtable.getNumPrimaryKeys();
-
-    AnnotatedLP result = new AnnotatedLP(relNode, queryTable.getType(),
-        pk, timestamp,
-        selectMap, joinTables, numRootPks,
-        queryTable.getPullups().getNowFilter(), queryTable.getPullups().getTopN(),
-        queryTable.getPullups().getSort(), List.of());
-    return result;
-  }
-
-  private AnnotatedLP createAnnotatedRootTable(RelNode relNode, PhysicalRelationalTable queryTable, Optional<Integer> numRootPks) {
-    int numColumns = queryTable.getNumColumns();
-    PullupOperator.Container pullups = queryTable.getPullups();
+    int numColumns = table.getNumColumns();
+    PullupOperator.Container pullups = table.getPullups();
 
     TopNConstraint topN = pullups.getTopN();
-    if (exec.isMaterialize(queryTable) && topN.isDeduplication()) {
+    if (exec.isMaterialize(table) && topN.isDeduplication()) {
       // We can drop topN since that gets enforced by writing to DB with primary key
       topN = TopNConstraint.EMPTY;
     }
-    return new AnnotatedLP(relNode, queryTable.getType(),
-        PrimaryKeyMap.firstN(queryTable.getNumPrimaryKeys()),
-        queryTable.getTimestamp().asDerived(),
+    PrimaryKeyMap pkMap = PrimaryKeyMap.UNDEFINED;
+    Optional<Integer> numRootPks = Optional.empty();
+    if (table.getPrimaryKey().isDefined()) {
+      numRootPks = Optional.of(table.getPrimaryKey().size());
+      pkMap = PrimaryKeyMap.of(table.getPrimaryKey().asArray());
+    }
+    if (CalciteUtil.isNestedTable(table.getRowType())) {
+      exec.require(EngineCapability.DENORMALIZE);
+    };
+    return new AnnotatedLP(relNode, table.getType(),
+        pkMap,
+        table.getTimestamp(),
         SelectIndexMap.identity(numColumns, numColumns),
-         List.of(JoinTable.ofRoot(queryTable, NormType.NORMALIZED)), numRootPks,
+        numRootPks,
         pullups.getNowFilter(), topN,
         pullups.getSort(), List.of());
   }
 
-  private AnnotatedLP createAnnotatedChildTableScan(PhysicalRelationalTable queryTable,
-                                                    LogicalNestedTable childTable, Optional<Integer> numRootPks) {
-    int numColumns = childTable.getNumColumns();
-    PullupOperator.Container pullups = queryTable.getPullups();
-    Preconditions.checkArgument(pullups.getTopN().isEmpty() && pullups.getNowFilter().isEmpty());
-
-    //For this stage, data is normalized and we need to re-scan the LogicalNestedTable
-    //because it now has a timestamp at the end
-    RelBuilder builder = makeRelBuilder();
-    builder.scan(childTable.getNameId()); //table now has a timestamp column at the end
-    Preconditions.checkArgument(numColumns==builder.peek().getRowType().getFieldCount());
-
-    Preconditions.checkArgument(queryTable.getTimestamp().hasFixedTimestamp());
-    TimestampInference.Candidate timestamp = queryTable.getTimestamp().getTimestampCandidate();
-    int timestampIdx = numColumns-1;
-
-    JoinTable joinTable = new JoinTable(childTable, null, JoinRelType.INNER, 0, NormType.NORMALIZED);
-    return new AnnotatedLP(builder.build(), queryTable.getType(),
-        PrimaryKeyMap.firstN(childTable.getNumPrimaryKeys()),
-        TimestampInference.buildDerived().add(timestampIdx, timestamp).build(),
-        SelectIndexMap.identity(numColumns, numColumns),
-         List.of(joinTable), numRootPks,
-        NowFilter.EMPTY, TopNConstraint.EMPTY,
-        SortOrder.EMPTY, List.of());
-  }
-
-  private RelBuilder shredTable(ScriptRelationalTable vtable,
-                                PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
-                                SelectIndexMap.Builder select, List<JoinTable> joinTables,
-                                boolean isLeaf) {
-    Preconditions.checkArgument(joinTables.isEmpty());
-    return shredTable(vtable, primaryKey, select, joinTables, null, JoinRelType.INNER, isLeaf);
-  }
-
-  private RelBuilder shredTable(ScriptRelationalTable vtable,
-      PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
-      List<JoinTable> joinTables, Pair<JoinTable, RelBuilder> startingBase,
-      JoinRelType joinType) {
-    Preconditions.checkArgument(joinTables.isEmpty());
-    return shredTable(vtable, primaryKey, null, joinTables, startingBase, joinType, false);
-  }
-
-  @Value
-  public static class ShredTableResult {
-    RelBuilder builder;
-    int offset;
-    JoinTable joinTable;
-  }
-
-  private RelBuilder shredTable(ScriptRelationalTable vtable,
-                                PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
-                                SelectIndexMap.Builder select, List<JoinTable> joinTables,
-                                Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType,
-                                boolean isLeaf) {
-    Preconditions.checkArgument(joinType == JoinRelType.INNER || joinType == JoinRelType.LEFT);
-
-    if (startingBase != null && startingBase.getKey().getTable().equals(vtable)) {
-      joinTables.add(startingBase.getKey());
-      return startingBase.getValue();
-    }
-
-    ShredTableResult tableResult;
-    if (vtable.isRoot()) {
-      tableResult = shredRootTable((PhysicalRelationalTable) vtable);
+  @Override
+  public RelNode visit(TableFunctionScan functionScan) {
+    Optional<TableFunction> tableFunctionOpt = SqrlRexUtil.getCustomTableFunction(functionScan);
+    errors.checkFatal(tableFunctionOpt.isPresent(), "Invalid table function encountered in query: %s", functionScan);
+    TableFunction tableFunction = tableFunctionOpt.get();
+    if (tableFunction instanceof NestedRelationship) {
+      NestedRelationship nestedRel = (NestedRelationship)tableFunction;
+      RexCall call = (RexCall) functionScan.getCall();
+      Preconditions.checkArgument(call.getOperands().size()==1);
+      int numColumns = nestedRel.getRowType().getFieldCount();
+      return setRelHolder(new AnnotatedLP(functionScan, TableType.NESTED,
+          PrimaryKeyMap.of(nestedRel.getLocalPKs()),
+          Timestamps.UNDEFINED,
+          SelectIndexMap.identity(numColumns, numColumns),
+          Optional.empty(),
+          NowFilter.EMPTY, TopNConstraint.EMPTY,
+          SortOrder.EMPTY, List.of()));
+    } else if (tableFunction instanceof QueryTableFunction) {
+      exec.require(EngineCapability.TABLE_FUNCTION_SCAN); //We only support table functions on the read side
+      QueryTableFunction tblFct = (QueryTableFunction) tableFunction;
+      QueryRelationalTable queryTable = tblFct.getQueryTable();
+      return setRelHolder(createAnnotatedRootTable(functionScan, queryTable));
     } else {
-      tableResult = shredChildTable((LogicalNestedTable) vtable, primaryKey, select, joinTables, startingBase,
-          joinType);
-      addAdditionalColumns((LogicalNestedTable) vtable, tableResult.getBuilder(), tableResult.getJoinTable());
+      throw errors.exception("Invalid table function encountered in query: %s [%s]", functionScan, tableFunction.getClass());
     }
-    int offset = tableResult.getOffset();
-    for (int i = 0; i < vtable.getNumLocalPks(); i++) {
-      primaryKey.pkIndex(offset);
-      if (startingBase == null) {
-        select.add(offset);
-      }
-      offset++;
-    }
-    joinTables.add(tableResult.getJoinTable());
-    //All primary key columns have already been selected, add remaining columns to select
-    if (isLeaf && startingBase == null) {
-      //We append a timestamp on nested tables, so we don't select the last column
-      for (int i = 0; i < vtable.getNumColumns() - vtable.getNumPrimaryKeys() - (vtable.isRoot()?0:1); i++) {
-        select.add(offset + i);
-      }
-    }
-    return tableResult.getBuilder();
   }
 
-  private ShredTableResult shredRootTable(PhysicalRelationalTable root) {
-    RelBuilder builder = makeRelBuilder();
-    builder.scan(root.getNameId());
-    JoinTable joinTable = JoinTable.ofRoot(root, NormType.DENORMALIZED);
-    return new ShredTableResult(builder, 0, joinTable);
-  }
-
-  private ShredTableResult shredChildTable(LogicalNestedTable child, PrimaryKeyMap.PrimaryKeyMapBuilder primaryKey,
-                                           SelectIndexMap.Builder select, List<JoinTable> joinTables,
-                                           Pair<JoinTable, RelBuilder> startingBase, JoinRelType joinType) {
-    RelBuilder builder = shredTable(child.getParent(), primaryKey, select, joinTables, startingBase,
-        joinType, false);
-    JoinTable parentJoinTable = Iterables.getLast(joinTables);
-    int indexOfShredField = parentJoinTable.getOffset() + child.getShredIndex();
-    CorrelationId id = builder.getCluster().createCorrel();
-    RelDataType base = builder.peek().getRowType();
-    int offset = base.getFieldCount();
-    JoinTable joinTable = new JoinTable(child, parentJoinTable, joinType, offset, NormType.DENORMALIZED);
-
-    builder
-        .values(List.of(List.of(rexUtil.getBuilder().makeExactLiteral(BigDecimal.ZERO))),
-            new RelRecordType(List.of(new RelDataTypeFieldImpl(
-                "ZERO",
-                0,
-                builder.getTypeFactory().createSqlType(SqlTypeName.INTEGER)))))
-        .project(
-            List.of(rexUtil.getBuilder()
-                .makeFieldAccess(
-                    rexUtil.getBuilder().makeCorrel(base, id),
-                    indexOfShredField)))
-        .uncollect(List.of(), false)
-        .correlate(joinType, id, RexInputRef.of(indexOfShredField, base));
-    return new ShredTableResult(builder, offset, joinTable);
-  }
-
-  /**
-   * We only have to add columns to nested child tables when shredding.
-   * For the root {@link PhysicalRelationalTable} we add the columns in {@link SQRLConverter} when planning the final
-   * {@link RelNode}.
-   *
-   * @param childTable
-   * @param builder
-   * @param joinTable
-   */
-  private void addAdditionalColumns(LogicalNestedTable childTable, RelBuilder builder, JoinTable joinTable) {
-    JoinTable.Path path = JoinTable.Path.of(joinTable);
-    for (AddedColumn column : childTable.getAddedColumns()) {
-      RexNode added = column.getExpression(path.mapLeafTable(), builder.peek().getRowType());
-      rexUtil.appendColumn(builder, added, column.getNameId());
-    }
+  @Override
+  public RelNode visit(LogicalValues logicalValues) {
+    return null;
   }
 
   private static final SqrlRexUtil.RexFinder FIND_NOW = SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
@@ -340,10 +174,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {
     AnnotatedLP input = getRelHolder(logicalFilter.getInput().accept(this));
-    input = input.inlineTopN(makeRelBuilder(), exec); //Filtering doesn't preserve deduplication
+    input = input.inlineTimestamp(makeRelBuilder(), exec).inlineTopN(makeRelBuilder(), exec); //Filtering doesn't preserve deduplication
     RexNode condition = logicalFilter.getCondition();
     condition = input.select.map(condition, input.relNode.getRowType());
-    TimestampInference timestamp = input.timestamp;
+    Timestamps timestamp = input.timestamp;
     NowFilter nowFilter = input.nowFilter;
 
     //Check if it has a now() predicate and pull out or throw an exception if malformed
@@ -393,7 +227,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       errors.checkFatal(resultFilter.isPresent(),"Found one or multiple now-filters that cannot be satisfied.");
       nowFilter = resultFilter.get();
       int timestampIdx = nowFilter.getTimestampIndex();
-      timestamp = TimestampInference.ofDerived(timestamp.getCandidateByIndex(timestampIdx));
+      timestamp = Timestamps.ofFixed(timestampIdx);
       //Add as static time filter (to push down to source)
       NowFilter localNowFilter = combinedFilter.get();
       //TODO: add back in, push down to push into source, then remove
@@ -441,7 +275,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
         PrimaryKeyMap pk = baseInput.primaryKey;
         SelectIndexMap select = trivialMap;
-        TimestampInference timestamp = baseInput.timestamp;
+        Timestamps timestamp = baseInput.timestamp;
         boolean isDistinct = false;
         if (topNHint.getType() == TopNHint.Type.SELECT_DISTINCT) {
           List<Integer> distincts = SqrlRexUtil.combineIndexes(partition,
@@ -451,8 +285,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
             //If there is no partition, we can ignore the sort order plus limit and turn this into a simple deduplication
             partition = pk.asList();
             if (timestamp.hasCandidates()) {
-              timestamp = TimestampInference.ofDerived(timestamp.getBestCandidate());
-              collation = LPConverterUtil.getTimestampCollation(timestamp.getTimestampCandidate());
+              timestamp = Timestamps.ofFixed(timestamp.getBestCandidate());
+              collation = LPConverterUtil.getTimestampCollation(timestamp.getOnlyCandidate());
             } else {
               collation = RelCollations.of(distincts.get(0));
             }
@@ -463,7 +297,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         } else if (topNHint.getType() == TopNHint.Type.DISTINCT_ON) {
           Preconditions.checkArgument(!partition.isEmpty());
           Preconditions.checkArgument(!collation.getFieldCollations().isEmpty());
-          errors.checkFatal(LPConverterUtil.getTimestampOrderIndex(collation, timestamp).isPresent(),
+          errors.checkFatal(LPConverterUtil.getTimestampOrderIndex(collation, timestamp)
+                  .filter(timestamp.isCandidatePredicate()).isPresent(),
               DISTINCT_ON_TIMESTAMP, "Not a valid timestamp order in ORDER BY clause: %s",
               rexUtil.getCollationName(collation, baseInput.relNode));
           errors.checkFatal(baseInput.type.isStream(), WRONG_TABLE_TYPE,
@@ -472,10 +307,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
           pk = PrimaryKeyMap.of(partition);
           select = SelectIndexMap.identity(targetLength, targetLength); //Select everything
           //Extract timestamp from collation
-          TimestampInference.Candidate candidate = LPConverterUtil.getTimestampOrderIndex(
+          Integer timestampIdx = LPConverterUtil.getTimestampOrderIndex(
               collation, timestamp).get();
-          collation = LPConverterUtil.getTimestampCollation(candidate);
-          timestamp = TimestampInference.ofDerived(candidate);
+          collation = LPConverterUtil.getTimestampCollation(timestampIdx);
+          timestamp = Timestamps.ofFixed(timestampIdx);
           limit = Optional.of(1); //distinct on has implicit limit of 1
         } else if (topNHint.getType() == TopNHint.Type.TOP_N) {
           //Prepend partition to primary key
@@ -486,58 +321,70 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         TopNConstraint topN = new TopNConstraint(partition, isDistinct, collation, limit,
             LPConverterUtil.getTimestampOrderIndex(collation, timestamp).isPresent());
         TableType resultType = TableType.STATE;
-        if (baseInput.type.isStream() && topN.isDeduplication()) resultType = TableType.DEDUP_STREAM;
+        if (baseInput.type.isStream() && topN.isDeduplication()) resultType = TableType.VERSIONED_STATE;
         return setRelHolder(baseInput.copy().type(resultType)
             .primaryKey(pk).select(select).timestamp(timestamp)
-            .joinTables(null).topN(topN).sort(SortOrder.EMPTY).build());
+            .topN(topN).sort(SortOrder.EMPTY).build());
       } else {
         //If it's a trivial project, we remove it and only update the indexMap. This is needed to eliminate self-joins
         return setRelHolder(rawInput.copy().select(trivialMap).build());
       }
     }
+    Timestamps.TimestampsBuilder timestampBuilder = Timestamps.build(Timestamps.Type.OR);
     AnnotatedLP input = rawInput.inlineTopN(makeRelBuilder(), exec);
+    boolean foundGreatest = false;
+    if (input.timestamp.is(Timestamps.Type.AND)) {
+      //TODO: don't inline timestamps immediately - check if project has a "greatest" function that matches
+      for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
+        if (CalciteUtil.isGreatestOf(exp.e, input.timestamp.asSet())) {
+          timestampBuilder.index(exp.i);
+          foundGreatest = true;
+        }
+      }
+    }
+    Timestamps inputTimestamp;
+    if (!foundGreatest) {
+      input = input.inlineTimestamp(makeRelBuilder(), exec);
+      inputTimestamp = input.timestamp;
+    } else {
+      //Use empty input timestamp so no other timestamps are mapped through
+      inputTimestamp = Timestamps.build(Timestamps.Type.OR).build();
+    }
     //Update index mappings
     List<RexNode> updatedProjects = new ArrayList<>();
     List<String> updatedNames = new ArrayList<>();
     //We only keep track of the first mapped project and consider it to be the "preserving one" for primary keys and timestamps
     Map<Integer, Integer> mappedProjects = new HashMap<>();
-    TimestampInference.DerivedBuilder timestampBuilder = TimestampInference.buildDerived();
     NowFilter nowFilter = NowFilter.EMPTY;
     for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
       RexNode mapRex = input.select.map(exp.e, input.relNode.getRowType());
       updatedProjects.add(exp.i, mapRex);
       updatedNames.add(exp.i, logicalProject.getRowType().getFieldNames().get(exp.i));
       int originalIndex = -1;
-      if (mapRex instanceof RexInputRef) { //Direct mapping
-        originalIndex = (((RexInputRef) mapRex)).getIndex();
-      } else { //Check for preserved timestamps and primary keys
+      Optional<Integer> inputRef = CalciteUtil.getInputRefRobust(mapRex);
+      Optional<Integer> preservedTimestamp;
+      if (inputRef.isPresent()) { //Direct mapping
+        originalIndex = inputRef.get();
+      } else if ((preservedTimestamp = TimestampAnalysis.getPreservedTimestamp(
+          mapRex, inputTimestamp)).isPresent()) { //Check for preserved timestamps
         //1. Timestamps: Timestamps are preserved if they are mapped through timestamp-preserving functions
-        Optional<TimestampInference.Candidate> preservedCandidate = TimestampAnalysis.getPreservedTimestamp(
-            mapRex, input.timestamp);
-        //2. Primary Keys: Primary keys are preserved if they are mapped through coalesce with constant
-        //   This would be done after an outer join to replace null values.
-        Optional<Integer> coalescedWithConstant = CalciteUtil.isCoalescedWithConstant(mapRex);
-        if (preservedCandidate.isPresent()) {
-          originalIndex = preservedCandidate.get().getIndex();
-          //See if we can preserve the now-filter as well or need to inline it
-          if (!input.nowFilter.isEmpty() && input.nowFilter.getTimestampIndex() == originalIndex) {
-            Optional<TimeTumbleFunctionCall> bucketFct = TimeTumbleFunctionCall.from(mapRex,
-                rexUtil.getBuilder());
-            if (bucketFct.isPresent()) {
-              long intervalExpansion = bucketFct.get().getSpecification().getWindowWidthMillis();
-              nowFilter = input.nowFilter.map(tp -> new TimePredicate(tp.getSmallerIndex(),
-                  exp.i, tp.getComparison(), tp.getIntervalLength() + intervalExpansion));
-            } else {
-              input = input.inlineNowFilter(makeRelBuilder(), exec);
-            }
+        originalIndex = preservedTimestamp.get();
+        //See if we can preserve the now-filter as well or need to inline it
+        if (!input.nowFilter.isEmpty() && input.nowFilter.getTimestampIndex() == originalIndex) {
+          Optional<TimeTumbleFunctionCall> bucketFct = TimeTumbleFunctionCall.from(mapRex,
+              rexUtil.getBuilder());
+          if (bucketFct.isPresent()) {
+            long intervalExpansion = bucketFct.get().getSpecification().getWindowWidthMillis();
+            nowFilter = input.nowFilter.map(tp -> new TimePredicate(tp.getSmallerIndex(),
+                exp.i, tp.getComparison(), tp.getIntervalLength() + intervalExpansion));
+          } else {
+            input = input.inlineNowFilter(makeRelBuilder(), exec);
           }
-        } else if (coalescedWithConstant.isPresent()) {
-          originalIndex = coalescedWithConstant.get();
         }
       }
       if (originalIndex >= 0) {
-        input.timestamp.getOptCandidateByIndex(
-                originalIndex).ifPresent(cand -> timestampBuilder.add(exp.i, cand));
+        //Map timestamps and primary keys through
+        if (inputTimestamp.isCandidate(originalIndex)) timestampBuilder.index(exp.i);
         if (mappedProjects.putIfAbsent(originalIndex, exp.i) != null) {
           //We are ignoring this mapping because the prior one takes precedence, let's see if we should warn the user
           if (input.primaryKey.containsIndex(originalIndex)) {
@@ -559,26 +406,23 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       }
       primaryKey.pkIndex(target);
     }
-    //Make sure we are pulling all timestamp candidates through
-    for (TimestampInference.Candidate candidate : input.timestamp.getCandidates()) {
-      //Check if candidate has already been mapped ...
-      Integer target = mappedProjects.get(candidate.getIndex());
-      if (target == null) {
-        //... if not, need to add candidate
-        target = updatedProjects.size();
-        updatedProjects.add(target,
-            RexInputRef.of(candidate.getIndex(), input.relNode.getRowType()));
-        updatedNames.add(null);
-        mappedProjects.put(candidate.getIndex(), target);
-        timestampBuilder.add(target, candidate);
-      }
-      //Update now-filter if it matches candidate
-      if (!input.nowFilter.isEmpty()
-          && input.nowFilter.getTimestampIndex() == candidate.getIndex()) {
-        nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(), target));
-      }
+    //Make sure we are pulling at least one timestamp candidates through
+    Timestamps timestamp = timestampBuilder.build();
+    if (!timestamp.hasCandidates()) {
+      int oldTimestampIdx = inputTimestamp.getBestCandidate();
+      Preconditions.checkArgument(!mappedProjects.containsKey(oldTimestampIdx));
+      int target = updatedProjects.size();
+      updatedProjects.add(target,
+          RexInputRef.of(oldTimestampIdx, input.relNode.getRowType()));
+      updatedNames.add(null);
+      mappedProjects.put(oldTimestampIdx, target);
+      timestampBuilder.index(target);
+      timestamp = timestampBuilder.build();
     }
-    TimestampInference timestamp = timestampBuilder.build();
+    //Update now-filter because timestamp are updated
+    if (!input.nowFilter.isEmpty()) {
+      nowFilter = input.nowFilter.remap(IndexMap.of(mappedProjects));
+    }
     //NowFilter must have been preserved
     assert !nowFilter.isEmpty() || input.nowFilter.isEmpty();
 
@@ -658,109 +502,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     JoinConditionDecomposition eqDecomp = rexUtil.decomposeJoinCondition(
         condition, leftSideMaxIdx);
 
-    //Identify if this is an identical self-join for a nested tree
-    boolean hasTransformativePullups =
-        !leftIn.topN.isEmpty() || !rightIn.topN.isEmpty();
-    if ((joinAnalysis.canBe(Type.INNER) || joinAnalysis.canBe(Type.OUTER, Side.LEFT))
-        && JoinTable.compatible(leftInput.joinTables, rightInput.joinTables)
-        && !hasTransformativePullups
-        && eqDecomp.getRemainingPredicates().isEmpty() && !eqDecomp.getTwoSidedEqualities().isEmpty()) {
-      errors.checkFatal(JoinTable.getRoots(rightInput.joinTables).size() == 1,
-          ErrorCode.NOT_YET_IMPLEMENTED,
-          "Current assuming a single table on the right for self-join elimination.");
-      errors.checkFatal(!joinAnalysis.isFlipped(),
-          ErrorCode.NOT_YET_IMPLEMENTED,
-          "RIGHT joins not yet supported between parent and child tables. Convert to LEFT join.");
-
-      //Determine if we can map the tables from both branches of the join onto each-other
-      Map<JoinTable, JoinTable> right2left;
-      if (exec.supports(EngineCapability.DENORMALIZE)) {
-        right2left = JoinTable.joinTreeMap(leftInput.joinTables, leftSideMaxIdx,
-            rightInput.joinTables, eqDecomp.getTwoSidedEqualities());
-      } else {
-        right2left = JoinTable.joinListMap(leftInput.joinTables, leftSideMaxIdx,
-            rightInput.joinTables, eqDecomp.getTwoSidedEqualities());
-      }
-      if (!right2left.isEmpty()) {
-        JoinTable rightLeaf = Iterables.getOnlyElement(JoinTable.getLeafs(rightInput.joinTables));
-        RelBuilder relBuilder = makeRelBuilder().push(leftInput.getRelNode());
-        PrimaryKeyMap newPk = leftInput.primaryKey;
-        List<JoinTable> joinTables = new ArrayList<>(leftInput.joinTables);
-        joinAnalysis = joinAnalysis.makeGeneric();
-        if (!right2left.containsKey(rightLeaf)) {
-          //Find closest ancestor that was mapped and shred from there
-          List<JoinTable> ancestorPath = new ArrayList<>();
-          int numAddedPks = 0;
-          ancestorPath.add(rightLeaf);
-          JoinTable ancestor = rightLeaf;
-          while (!right2left.containsKey(ancestor)) {
-            numAddedPks += ancestor.getNumLocalPk();
-            ancestor = ancestor.parent;
-            ancestorPath.add(ancestor);
-          }
-          Collections.reverse(
-              ancestorPath); //To match the order of addedTables when shredding (i.e. from root to leaf)
-          PrimaryKeyMap.PrimaryKeyMapBuilder addedPk = newPk.toBuilder();
-          List<JoinTable> addedTables = new ArrayList<>();
-          relBuilder = shredTable(rightLeaf.table, addedPk, addedTables,
-              Pair.of(right2left.get(ancestor), relBuilder), joinAnalysis.export());
-          newPk = addedPk.build();
-          Preconditions.checkArgument(ancestorPath.size() == addedTables.size());
-          for (int i = 1; i < addedTables.size();
-              i++) { //First table is the already mapped root ancestor
-            joinTables.add(addedTables.get(i));
-            right2left.put(ancestorPath.get(i), addedTables.get(i));
-          }
-        } else if (!right2left.get(rightLeaf).getTable().equals(rightLeaf.getTable())) {
-          //When mapping normalized tables, the mapping might map siblings which we need to join
-          Preconditions.checkArgument(!exec.supports(EngineCapability.DENORMALIZE));
-          JoinTable leftTbl = right2left.get(rightLeaf);
-          relBuilder.push(rightInput.getRelNode());
-          relBuilder.join(joinAnalysis.export(), condition);
-          JoinTable rightTbl = rightLeaf.withOffset(leftSideMaxIdx);
-          joinTables.add(rightTbl);
-          right2left.put(rightLeaf,rightTbl);
-          //Add any additional pks
-          int rightNumPk = rightLeaf.getNumPkNormalized(), leftNumPk = leftTbl.getNumPkNormalized();
-          if (rightNumPk > leftNumPk) {
-            int deltaPk = rightNumPk - leftNumPk;
-            PrimaryKeyMap.PrimaryKeyMapBuilder addedPk = newPk.toBuilder();
-            for (int i = 0; i < deltaPk; i++) {
-              addedPk.pkIndex(rightTbl.getGlobalIndex(leftNumPk + i));
-            }
-            newPk = addedPk.build();
-          }
-         }
-        RelNode relNode = relBuilder.build();
-        //Update indexMap based on the mapping of join tables
-        final List<JoinTable> rightTables = rightInput.joinTables;
-        SelectIndexMap remapedRight = rightInput.select.remap(
-            index -> {
-              JoinTable jt = JoinTable.find(rightTables, index).get();
-              return right2left.get(jt).getGlobalIndex(jt.getLocalIndex(index));
-            });
-        //Combine now-filters if they exist
-        NowFilter resultNowFilter = leftInput.nowFilter;
-        if (!rightInput.nowFilter.isEmpty()) {
-          resultNowFilter = leftInput.nowFilter.merge(
-                  rightInput.nowFilter.remap(IndexMap.singleton( //remap to use left timestamp
-                      rightInput.timestamp.getTimestampCandidate().getIndex(),
-                      leftInput.timestamp.getTimestampCandidate().getIndex())))
-              .orElseGet(() -> {
-                errors.fatal("Could not combine now-filters");
-                return NowFilter.EMPTY;
-              });
-        }
-
-
-        SelectIndexMap indexMap = leftInput.select.append(remapedRight);
-        return setRelHolder(AnnotatedLP.build(relNode, leftInput.type, newPk, leftInput.timestamp,
-                indexMap, leftInput)
-            .numRootPks(leftInput.numRootPks).nowFilter(resultNowFilter)
-            .joinTables(joinTables).build());
-      }
-    }
-
     /*We are going to detect if all the pk columns on the left or right hand side of the join
       are covered by equality constraints since that determines the resulting pk and is used
       in temporal join detection */
@@ -797,26 +538,21 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
             //eqDecomp.getRemainingPredicates().isEmpty() && eqDecomp.getEqualities().size() ==
             // rightInput.primaryKey.getSourceLength() && TODO: Do we need to ensure there are no other conditions?
             rightInput.nowFilter.isEmpty()) {
+          leftInput = leftInput.inlineTimestamp(makeRelBuilder(), exec);
           RelBuilder relB = makeRelBuilder();
           relB.push(leftInput.relNode);
-          if (rightInput.type!=TableType.DEDUP_STREAM && !exec.supports(EngineCapability.TEMPORAL_JOIN_ON_STATE)) {
-            //Need to convert to stream and add dedup to make this work
-            AnnotatedLP state2stream = makeStream(rightInput, StreamType.UPDATE);
-            //stream has the same order of fields
-//            TopNConstraint dedup = TopNConstraint.makeDeduplication(pkAndSelect.pk.targetsAsList(),
-//                timestamp.getTimestampCandidate().getIndex());
+          if (rightInput.type!=TableType.VERSIONED_STATE && !exec.supports(EngineCapability.TEMPORAL_JOIN_ON_STATE)) {
             errors.checkFatal(false, ErrorCode.NOT_YET_IMPLEMENTED,
-                "Currently temporal joins are limited to states that are deduplicated streams.");
+                "Currently temporal joins are limited to versioned states.");
           }
 
           relB.push(rightInput.relNode);
-          Preconditions.checkArgument(rightInput.timestamp.hasFixedTimestamp());
-          TimestampInference joinTimestamp = TimestampInference.ofDerived(leftInput.timestamp.getBestCandidate());
+          Timestamps joinTimestamp = leftInput.timestamp.asBest();
 
           PrimaryKeyMap pk = leftInput.primaryKey.toBuilder().build();
           TemporalJoinHint hint = new TemporalJoinHint(
-              joinTimestamp.getTimestampCandidate().getIndex(),
-              rightInput.timestamp.getTimestampCandidate().getIndex(),
+              joinTimestamp.getOnlyCandidate(),
+              rightInput.timestamp.getOnlyCandidate(),
               rightInput.primaryKey.asArray());
           joinAnalysis = joinAnalysis.makeA(Type.TEMPORAL);
           relB.join(joinAnalysis.export(), condition);
@@ -825,7 +561,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
           return setRelHolder(AnnotatedLP.build(relB.build(), TableType.STREAM,
                   pk, joinTimestamp, joinedIndexMap,
                   List.of(leftInput, rightInput))
-              .joinTables(leftInput.joinTables)
               .numRootPks(leftInput.numRootPks).nowFilter(leftInput.nowFilter).sort(leftInput.sort)
               .build());
         } else if (joinAnalysis.isA(Type.TEMPORAL)) {
@@ -911,8 +646,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         if (eqDecomp.getEqualities().containsAll(rootPkPairs)) {
           //Change primary key to only include root pk once and add equality time condition because timestamps must be equal
           TimePredicate eqCondition = new TimePredicate(
-              rightInputF.timestamp.getBestCandidate().getIndex() + leftSideMaxIdx,
-              leftInputF.timestamp.getBestCandidate().getIndex(), SqlKind.EQUALS, 0);
+              rightInputF.timestamp.getBestCandidate() + leftSideMaxIdx,
+              leftInputF.timestamp.getBestCandidate(), SqlKind.EQUALS, 0);
           timePredicates.add(eqCondition);
           conjunctions.add(eqCondition.createRexNode(rexUtil.getBuilder(), idxResolver, false));
 
@@ -927,47 +662,27 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         }
       }
       /*
+      Check if timePredicates contains an equality or constrains both sides of the join
+       */
+      boolean isEquality = timePredicates.stream().anyMatch(TimePredicate::isEquality);
+      boolean leftSideSmaller = timePredicates.stream().anyMatch(tp -> tp.getSmallerIndex() < leftSideMaxIdx);
+      boolean rightSideSmaller = timePredicates.stream().anyMatch(tp -> tp.getSmallerIndex() >= leftSideMaxIdx);
+
+      /*
       If we have time predicates that constraint timestamps from both sides of the join this is an interval join.
       We lock in the timestamps and pick the timestamp that is the upper bound as the resulting timestamp.
        */
-      if (!timePredicates.isEmpty()) {
+      if (isEquality || (leftSideSmaller && rightSideSmaller)) {
         Set<Integer> timestampIndexes = timePredicates.stream()
             .flatMap(tp -> tp.getIndexes().stream()).collect(Collectors.toSet());
         errors.checkFatal(timestampIndexes.size() == 2, WRONG_INTERVAL_JOIN,
-            "Invalid interval condition - more than 2 timestamp columns: %s", condition);
+            "Invalid interval condition - more than 2 timestamp columns used: %s", condition);
         errors.checkFatal(timePredicates.stream()
                 .filter(TimePredicate::isUpperBound).count() == 1, WRONG_INTERVAL_JOIN,
             "Expected exactly one upper bound time predicate, but got: %s", condition);
-        int upperBoundTimestampIndex = timePredicates.stream().filter(TimePredicate::isUpperBound)
-            .findFirst().get().getLargerIndex();
-        TimestampInference joinTimestamp = null;
-        /* Lock in timestamp candidates for both sides and propagate timestamp. For timestamp propagation,
-           we pick the timestamp on the left or right side of the join if it is a LEFT or RIGHT join, respectively,
-           or the timestamp that is the upper bound in the constraint.
-           */
-        for (int tidx : timestampIndexes) {
-          TimestampInference newTimestamp = apply2JoinSide(tidx, leftSideMaxIdx, leftInputF,
-              rightInputF,
-              (prel, idx) -> {
-            TimestampInference.Candidate fixedCandidate = prel.timestamp.getCandidateByIndex(idx);
-            return TimestampInference.ofDerived(tidx, fixedCandidate);
-              });
-          if (joinAnalysis.isA(Side.LEFT)) { //it can only be left or none because we flipped right joins
-            if (tidx < leftSideMaxIdx) {
-              joinTimestamp = newTimestamp;
-            }
-          } else if (tidx == upperBoundTimestampIndex) {
-            joinTimestamp = newTimestamp;
-          }
-        }
-        assert joinTimestamp != null;
+        Timestamps joinTimestamp = Timestamps.build(isEquality?Timestamps.Type.OR: Timestamps.Type.AND)
+            .indexes(timestampIndexes).build();;
 
-        if (timePredicates.size() == 1 && !timePredicates.get(0).isEquality()) {
-          //We only have an upper bound, add (very loose) bound in other direction - Flink requires this
-          conjunctions.add(Iterables.getOnlyElement(timePredicates)
-              .inverseWithInterval(UPPER_BOUND_INTERVAL_MS).createRexNode(rexUtil.getBuilder(),
-                  idxResolver, false));
-        }
         condition = RexUtil.composeConjunction(rexUtil.getBuilder(), conjunctions);
         joinAnalysis = joinAnalysis.makeA(Type.INTERVAL);
         relB.join(joinAnalysis.export(), condition); //Can treat as "standard" inner join since no modification is necessary in physical plan
@@ -985,28 +700,27 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     //We detected no special time-based joins, so make it a generic join
     joinAnalysis = joinAnalysis.makeGeneric();
-
-    //Default inner join creates a state table
     relB.join(joinAnalysis.export(), condition);
-    //Default joins without primary key constraints can be expensive, so we create a hint for the cost model
+    //Default joins without primary key constraints or interval bounds can be expensive, so we create a hint for the cost model
     new JoinCostHint(leftInputF.type, rightInputF.type, eqDecomp.getEqualities().size(), singletonSide).addTo(
         relB);
 
     //Determine timestamps for each side and add the max of those two as the resulting timestamp
-    TimestampInference.Candidate leftBest = leftInputF.timestamp.getBestCandidate();
-    TimestampInference.Candidate rightBest = rightInputF.timestamp.getBestCandidate();
-    //New timestamp column is added at the end
-    TimestampInference resultTimestamp = TimestampInference.ofDerived(relB.peek().getRowType().getFieldCount(),
-            leftBest, rightBest);
-    RexNode maxTimestamp = rexUtil.maxOfTwoColumnsNotNull(leftBest.getIndex(),
-        rightBest.getIndex()+leftSideMaxIdx, relB.peek());
-    rexUtil.appendColumn(relB, maxTimestamp, ReservedName.SYSTEM_TIMESTAMP.getCanonical());
+    Timestamps joinTimestamp = Timestamps.build(Timestamps.Type.AND)
+        .index(leftInputF.timestamp.getBestCandidate())
+        .index(rightInputF.timestamp.getBestCandidate())
+        .build();
 
     TableType resultType = leftInputF.type.isStream() && rightInputF.type.isStream()?TableType.STREAM:TableType.STATE;
 
     return setRelHolder(AnnotatedLP.build(relB.build(), resultType,
-        joinedPk, resultTimestamp, joinedIndexMap,
+        joinedPk, joinTimestamp, joinedIndexMap,
         List.of(leftInputF, rightInputF)).sort(joinedSort).build());
+  }
+
+  @Override
+  public RelNode visit(LogicalCorrelate logicalCorrelate) {
+    return null;
   }
 
   private JoinModifier getJoinModifier(ImmutableList<RelHint> hints) {
@@ -1021,25 +735,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     return JoinModifier.NONE;
   }
 
-  private static <T, R> R apply2JoinSide(int joinIndex, int leftSideMaxIdx, T left, T right,
-      BiFunction<T, Integer, R> function) {
-    int idx;
-    if (joinIndex >= leftSideMaxIdx) {
-      idx = joinIndex - leftSideMaxIdx;
-      return function.apply(right, idx);
-    } else {
-      idx = joinIndex;
-      return function.apply(left, idx);
-    }
-  }
-
   @Override
   public RelNode visit(LogicalUnion logicalUnion) {
     errors.checkFatal(logicalUnion.all, NOT_YET_IMPLEMENTED,
         "Currently, only UNION ALL is supported. Combine with SELECT DISTINCT for UNION");
 
     List<AnnotatedLP> inputs = logicalUnion.getInputs().stream()
-        .map(in -> getRelHolder(in.accept(this)).inlineTopN(makeRelBuilder(), exec))
+        .map(in -> getRelHolder(in.accept(this)).inlineTopN(makeRelBuilder(), exec).inlineTimestamp(makeRelBuilder(), exec))
         .map(meta -> meta.copy().sort(SortOrder.EMPTY)
             .build()) //We ignore the sorts of the inputs (if any) since they are streams and we union them the default sort is timestamp
         .map(meta -> meta.postProcess(
@@ -1076,7 +778,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       and are identical across all inputs. If this set is non-empty, it becomes the new timestamp. Otherwise, we pick
       the best timestamp candidate for each input, fix it, and append it as timestamp.
      */
-    Set<Integer> timestampIndexes = inputs.get(0).timestamp.getCandidateIndexes().stream()
+    Set<Integer> timestampIndexes = inputs.get(0).timestamp.asList().stream()
         .filter(idx -> idx < maxSelectIdx).collect(Collectors.toSet());
     for (AnnotatedLP input : inputs) {
       errors.checkFatal(select.equals(input.select),
@@ -1084,13 +786,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       //Validate primary key and selects line up between the streams
       errors.checkFatal(selectIndexes.containsAll(input.primaryKey.asList()),
           "The tables in the union have different primary keys. UNION requires uniform primary keys.");
-      timestampIndexes.retainAll(input.timestamp.getCandidateIndexes());
+      timestampIndexes.retainAll(input.timestamp.asList());
       numRootPks = numRootPks.flatMap(npk -> input.numRootPks.filter(npk2 -> npk.equals(npk2)));
     }
 
-    Map<Integer, TimestampInference.Candidate[]> indexToCandidates = timestampIndexes.isEmpty()?
-            ImmutableMap.of(maxSelectIdx, new TimestampInference.Candidate[inputs.size()]):
-            timestampIndexes.stream().collect(Collectors.toUnmodifiableMap(Function.identity(), i -> new TimestampInference.Candidate[inputs.size()]));
     List<Integer> unionPk = new ArrayList<>();
     for (int i = 0; i < inputs.size(); i++) {
       AnnotatedLP input = inputs.get(i);
@@ -1098,29 +797,22 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       List<Integer> localSelectIndexes = new ArrayList<>(selectIndexes);
       List<String> localSelectNames = new ArrayList<>(selectNames);
       if (timestampIndexes.isEmpty()) { //Pick best and append
-        TimestampInference.Candidate bestCand = input.timestamp.getBestCandidate();
-        localSelectIndexes.add(bestCand.getIndex());
-        localSelectNames.add(UNION_TIMESTAMP_COLUMN_NAME);
-        bestCand.fixAsTimestamp();
-        indexToCandidates.get(maxSelectIdx)[i]=bestCand;
-        localTimestamp = TimestampInference.ofDerived(maxSelectIdx, bestCand);
-      } else {
-        for (int idx : timestampIndexes) {
-          indexToCandidates.get(idx)[i]=input.timestamp.getCandidateByIndex(idx);
-        }
+        Integer timestampIdx = input.timestamp.getBestCandidate();
+        localSelectIndexes.add(timestampIdx);
+        localSelectNames.add(ReservedName.SYSTEM_TIMESTAMP.getCanonical());
       }
       input.primaryKey.asList().stream().filter(idx -> !unionPk.contains(idx)).forEach(unionPk::add);
 
       relBuilder.push(input.relNode);
       CalciteUtil.addProjection(relBuilder, localSelectIndexes, localSelectNames);
     }
-    TimestampInference.DerivedBuilder timestamp = TimestampInference.buildDerived();
-    indexToCandidates.forEach(timestamp::add);
+    timestampIndexes = Set.of(maxSelectIdx); //Timestamp was appended at the end
+    Timestamps timestamp = Timestamps.build(Timestamps.Type.OR).indexes(timestampIndexes).build();
     relBuilder.union(true, inputs.size());
     PrimaryKeyMap newPk = PrimaryKeyMap.of(unionPk);
     if (!isStream) exec.require(EngineCapability.UNION_STATE);
     return setRelHolder(
-        AnnotatedLP.build(relBuilder.build(), isStream?TableType.STREAM:TableType.STATE, newPk, timestamp.build(), select, inputs)
+        AnnotatedLP.build(relBuilder.build(), isStream?TableType.STREAM:TableType.STATE, newPk, timestamp, select, inputs)
             .numRootPks(numRootPks).build());
   }
 
@@ -1132,7 +824,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   public AnnotatedLP processAggregate(LogicalAggregate aggregate) {
     //Need to inline TopN before we aggregate, but we postpone inlining now-filter in case we can push it through
     final AnnotatedLP input = getRelHolder(aggregate.getInput().accept(this))
-        .inlineTopN(makeRelBuilder(), exec);
+        .inlineTopN(makeRelBuilder(), exec).inlineTimestamp(makeRelBuilder(), exec);
     errors.checkFatal(aggregate.groupSets.size() == 1, NOT_YET_IMPLEMENTED,
         "Do not yet support GROUPING SETS.");
     final List<Integer> groupByIdx = aggregate.getGroupSet().asList().stream()
@@ -1152,11 +844,11 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
 
     //Check if this is a time-window aggregation (i.e. a roll-up)
-    Pair<TimestampInference.Candidate, Integer> timeKey;
+    Pair<Integer, Integer> timestampAndGroupKey;
     if (input.type == TableType.STREAM && input.getRelNode() instanceof LogicalProject
-        && (timeKey = findTimestampInGroupBy(groupByIdx, input.timestamp, input.relNode))!=null) {
+        && (timestampAndGroupKey = findTimestampInGroupBy(groupByIdx, input.timestamp, input.relNode))!=null) {
       return handleTimeWindowAggregation(input, groupByIdx, aggregateCalls, targetLength,
-          timeKey.getLeft(), timeKey.getRight());
+          timestampAndGroupKey.getLeft(), timestampAndGroupKey.getRight());
     }
 
     /* Check if any of the aggregate calls is a max(timestamp candidate) in which
@@ -1192,25 +884,25 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   private AnnotatedLP handleNestedAggregationInStream(AnnotatedLP input, List<Integer> groupByIdx,
       List<AggregateCall> aggregateCalls) {
     //Find candidate that's in the groupBy, else use the best option
-    TimestampInference.Candidate candidate = input.timestamp.getBestCandidate();
-    for (TimestampInference.Candidate cand : input.timestamp.getCandidates()) {
-      if (groupByIdx.contains(cand.getIndex())) {
-        candidate = cand;
+    int timestampIdx = input.timestamp.getBestCandidate();
+    for (int cand : input.timestamp.getCandidates()) {
+      if (groupByIdx.contains(cand)) {
+        timestampIdx = cand;
         break;
       }
     }
 
     RelBuilder relB = makeRelBuilder();
     relB.push(input.relNode);
-    Pair<PkAndSelect, TimestampInference> addedTimestamp =
-        addTimestampAggregate(relB, groupByIdx, candidate, aggregateCalls);
+    Pair<PkAndSelect, Timestamps> addedTimestamp =
+        addTimestampAggregate(relB, groupByIdx, timestampIdx, aggregateCalls);
     PkAndSelect pkSelect = addedTimestamp.getKey();
-    TimestampInference timestamp = addedTimestamp.getValue();
+    Timestamps timestamp = addedTimestamp.getValue();
 
-    TumbleAggregationHint.instantOf(candidate.getIndex()).addTo(relB);
+    TumbleAggregationHint.instantOf(timestampIdx).addTo(relB);
 
-    NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(candidate.getIndex(),
-        timestamp.getTimestampCandidate().getIndex()));
+    NowFilter nowFilter = input.nowFilter.remap(IndexMap.singleton(timestampIdx,
+        timestamp.getOnlyCandidate()));
 
     return AnnotatedLP.build(relB.build(), TableType.STREAM, pkSelect.pk, timestamp, pkSelect.select,
                 input)
@@ -1218,51 +910,50 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
             .nowFilter(nowFilter).build();
   }
 
-  private Pair<TimestampInference.Candidate, Integer> findTimestampInGroupBy(
-      List<Integer> groupByIdx, TimestampInference timestamp, RelNode input) {
+  private Pair<Integer, Integer> findTimestampInGroupBy(
+      List<Integer> groupByIdx, Timestamps timestamp, RelNode input) {
     //Determine if one of the groupBy keys is a timestamp
-    TimestampInference.Candidate keyCandidate = null;
+    Integer timestampIdx = null;
     int keyIdx = -1;
     for (int i = 0; i < groupByIdx.size(); i++) {
       int idx = groupByIdx.get(i);
       if (timestamp.isCandidate(idx)) {
-        if (keyCandidate!=null) {
+        if (timestampIdx!=null) {
           errors.fatal(ErrorCode.NOT_YET_IMPLEMENTED, "Do not currently support grouping by "
               + "multiple timestamp columns: [%s] and [%s]",
-              rexUtil.getFieldName(idx,input), rexUtil.getFieldName(keyCandidate.getIndex(),input));
+              rexUtil.getFieldName(idx,input), rexUtil.getFieldName(timestampIdx,input));
         }
-        keyCandidate = timestamp.getCandidateByIndex(idx);
+        timestampIdx = idx;
         keyIdx = i;
-        assert keyCandidate.getIndex() == idx;
       }
     }
-    if (keyCandidate == null) return null;
-    return Pair.of(keyCandidate, keyIdx);
+    if (timestampIdx == null) return null;
+    return Pair.of(timestampIdx, keyIdx);
   }
 
   private AnnotatedLP handleTimeWindowAggregation(AnnotatedLP input,
       List<Integer> groupByIdx, List<AggregateCall> aggregateCalls, int targetLength,
-                                                  TimestampInference.Candidate keyCandidate, int keyIdx) {
+                                                  int timestampIdx, int keyIdx) {
     LogicalProject inputProject = (LogicalProject) input.getRelNode();
-    RexNode timeAgg = inputProject.getProjects().get(keyCandidate.getIndex());
+    RexNode timeAgg = inputProject.getProjects().get(timestampIdx);
     TimeTumbleFunctionCall bucketFct = TimeTumbleFunctionCall.from(timeAgg,
         rexUtil.getBuilder()).orElseThrow(
         () -> errors.exception("Not a valid time aggregation function: %s", timeAgg)
     );
 
     //Fix timestamp (if not already fixed)
-    TimestampInference newTimestamp = TimestampInference.ofDerived(keyIdx, keyCandidate);
+    Timestamps newTimestamp = Timestamps.ofFixed(keyIdx);
     //Now filters must be on the timestamp - this is an internal check
     Preconditions.checkArgument(input.nowFilter.isEmpty()
-        || input.nowFilter.getTimestampIndex() == keyCandidate.getIndex());
+        || input.nowFilter.getTimestampIndex() == timestampIdx);
     NowFilter nowFilter = input.nowFilter.remap(
-        IndexMap.singleton(keyCandidate.getIndex(), keyIdx));
+        IndexMap.singleton(timestampIdx, keyIdx));
 
     RelBuilder relB = makeRelBuilder();
     relB.push(input.relNode);
     relB.aggregate(relB.groupKey(Ints.toArray(groupByIdx)), aggregateCalls);
     SqrlTimeTumbleFunction.Specification windowSpec = bucketFct.getSpecification();
-    TumbleAggregationHint.functionOf(keyCandidate.getIndex(),
+    TumbleAggregationHint.functionOf(timestampIdx,
         bucketFct.getTimestampColumnIndex(),
         windowSpec.getWindowWidthMillis(), windowSpec.getWindowOffsetMillis()).addTo(relB);
     PkAndSelect pkSelect = aggregatePkAndSelect(groupByIdx, targetLength);
@@ -1283,23 +974,23 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       Optional<TimestampAnalysis.MaxTimestamp> maxTimestamp, int targetLength) {
 
     //Fix best timestamp (if not already fixed)
-    TimestampInference inputTimestamp = input.timestamp;
-    TimestampInference.Candidate candidate = maxTimestamp.map(MaxTimestamp::getCandidate)
+    Timestamps inputTimestamp = input.timestamp;
+    int timestampIdx = maxTimestamp.map(MaxTimestamp::getTimestampIdx)
         .orElse(inputTimestamp.getBestCandidate());
 
     if (!input.nowFilter.isEmpty() && exec.supports(EngineCapability.STREAM_WINDOW_AGGREGATION)) {
       NowFilter nowFilter = input.nowFilter;
       //Determine timestamp, add to group-By and
-      Preconditions.checkArgument(nowFilter.getTimestampIndex() == candidate.getIndex(),
+      Preconditions.checkArgument(nowFilter.getTimestampIndex() == timestampIdx,
           "Timestamp indexes don't match");
-      errors.checkFatal(!groupByIdx.contains(candidate.getIndex()),
-          "Cannot group on timestamp: %s", rexUtil.getFieldName(candidate.getIndex(), input.relNode));
+      errors.checkFatal(!groupByIdx.contains(timestampIdx),
+          "Cannot group on timestamp: %s", rexUtil.getFieldName(timestampIdx, input.relNode));
       RelBuilder relB = makeRelBuilder();
       relB.push(input.relNode);
-      Pair<PkAndSelect, TimestampInference> addedTimestamp =
-          addTimestampAggregate(relB, groupByIdx, candidate, aggregateCalls);
+      Pair<PkAndSelect, Timestamps> addedTimestamp =
+          addTimestampAggregate(relB, groupByIdx, timestampIdx, aggregateCalls);
       PkAndSelect pkAndSelect = addedTimestamp.getKey();
-      TimestampInference timestamp = addedTimestamp.getValue();
+      Timestamps timestamp = addedTimestamp.getValue();
 
       //Convert now-filter to sliding window and add as hint
       long intervalWidthMs = nowFilter.getPredicate().getIntervalLength();
@@ -1307,11 +998,11 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       long slideWidthMs = intervalWidthMs / config.getSlideWindowPanes();
       errors.checkFatal(slideWidthMs > 0 && slideWidthMs < intervalWidthMs,
           "Invalid sliding window widths: %s - %s", intervalWidthMs, slideWidthMs);
-      new SlidingAggregationHint(candidate.getIndex(), intervalWidthMs, slideWidthMs).addTo(relB);
+      new SlidingAggregationHint(timestampIdx, intervalWidthMs, slideWidthMs).addTo(relB);
 
       TopNConstraint dedup = TopNConstraint.makeDeduplication(pkAndSelect.pk.asList(),
-          timestamp.getTimestampCandidate().getIndex());
-      return AnnotatedLP.build(relB.build(), TableType.DEDUP_STREAM, pkAndSelect.pk,
+          timestamp.getOnlyCandidate());
+      return AnnotatedLP.build(relB.build(), TableType.VERSIONED_STATE, pkAndSelect.pk,
               timestamp, pkAndSelect.select, input)
           .topN(dedup).build();
     } else {
@@ -1326,16 +1017,16 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     input = input.inlineNowFilter(makeRelBuilder(), exec);
     RelBuilder relB = makeRelBuilder();
     relB.push(input.relNode);
-    TimestampInference resultTimestamp;
+    Timestamps resultTimestamp;
     int selectLength = targetLength;
     if (maxTimestamp.isPresent()) {
       TimestampAnalysis.MaxTimestamp mt = maxTimestamp.get();
-      resultTimestamp = TimestampInference.ofDerived(groupByIdx.size() + mt.getAggCallIdx(), mt.getCandidate());
+      resultTimestamp = Timestamps.ofFixed(groupByIdx.size() + mt.getAggCallIdx());
     } else { //add max timestamp
-      TimestampInference.Candidate bestCand = input.timestamp.getBestCandidate();
+      int bestTimestampIdx = input.timestamp.getBestCandidate();
       //New timestamp column is added at the end
-      resultTimestamp = TimestampInference.ofDerived(targetLength, bestCand);
-      AggregateCall maxTimestampAgg = rexUtil.makeMaxAggCall(bestCand.getIndex(),
+      resultTimestamp = Timestamps.ofFixed(targetLength);
+      AggregateCall maxTimestampAgg = rexUtil.makeMaxAggCall(bestTimestampIdx,
           ReservedName.SYSTEM_TIMESTAMP.getCanonical(), groupByIdx.size(), relB.peek());
       aggregateCalls.add(maxTimestampAgg);
       targetLength++;
@@ -1347,8 +1038,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         resultTimestamp, pkSelect.select, input).build();
   }
 
-  private Pair<PkAndSelect, TimestampInference> addTimestampAggregate(
-      RelBuilder relBuilder, List<Integer> groupByIdx, TimestampInference.Candidate candidate,
+  private Pair<PkAndSelect, Timestamps> addTimestampAggregate(
+      RelBuilder relBuilder, List<Integer> groupByIdx, int timestampIdx,
       List<AggregateCall> aggregateCalls) {
     int targetLength = groupByIdx.size() + aggregateCalls.size();
     //if agg-calls return types are nullable because there are no group-by keys, we have to make then non-null
@@ -1358,14 +1049,14 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
 
     List<Integer> groupByIdxTimestamp = new ArrayList<>(groupByIdx);
-    boolean addedTimestamp = !groupByIdxTimestamp.contains(candidate.getIndex());
+    boolean addedTimestamp = !groupByIdxTimestamp.contains(timestampIdx);
     if (addedTimestamp) {
-      groupByIdxTimestamp.add(candidate.getIndex());
+      groupByIdxTimestamp.add(timestampIdx);
       targetLength++;
     }
     Collections.sort(groupByIdxTimestamp);
-    int newTimestampIdx = groupByIdxTimestamp.indexOf(candidate.getIndex());
-    TimestampInference timestamp = TimestampInference.ofDerived(newTimestampIdx, candidate);
+    int newTimestampIdx = groupByIdxTimestamp.indexOf(timestampIdx);
+    Timestamps timestamp = Timestamps.ofFixed(newTimestampIdx);
 
     relBuilder.aggregate(relBuilder.groupKey(Ints.toArray(groupByIdxTimestamp)), aggregateCalls);
     //Restore original order of groupByIdx in primary key and select
@@ -1413,31 +1104,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     PrimaryKeyMap pk;
     SelectIndexMap select;
-  }
-
-
-  @Override
-  public RelNode visit(LogicalStream logicalStream) {
-    AnnotatedLP input = getRelHolder(logicalStream.getInput().accept(this));
-    return setRelHolder(makeStream(input, logicalStream.getStreamType()));
-  }
-
-  private AnnotatedLP makeStream(AnnotatedLP state, StreamType streamType) {
-    errors.checkFatal(state.type.isState(),
-        "Underlying table is already a stream");
-    RelBuilder relBuilder = makeRelBuilder();
-    state = state.dropSort().inlineNowFilter(relBuilder, exec).inlineTopN(relBuilder, exec);
-    TimestampInference.Candidate candidate = state.timestamp.getBestCandidate();
-    TimestampInference timestamp = TimestampInference.ofDerived(1, candidate);
-
-    RelNode relNode = LogicalStream.create(state.relNode,streamType,
-        new LogicalStreamMetaData(state.primaryKey.asArray(), state.select.targetsAsArray(), candidate.getIndex()));
-    PrimaryKeyMap pk = PrimaryKeyMap.firstN(1);
-    int numFields = relNode.getRowType().getFieldCount();
-    SelectIndexMap select = SelectIndexMap.identity(numFields, numFields);
-    exec.require(EngineCapability.TO_STREAM);
-    return AnnotatedLP.build(relNode, TableType.STREAM, pk, timestamp,
-        select, state).build();
   }
 
   @Override

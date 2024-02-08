@@ -5,12 +5,15 @@ package com.datasqrl.plan.table;
 
 import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
+import com.datasqrl.plan.table.Timestamps.Type;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,10 +33,10 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
   @Getter
   private final ImportedRelationalTableImpl baseTable;
 
-  public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull Name tableName,
-      @NonNull TimestampInference timestamp, @NonNull RelDataType rowType,
+  public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull NamePath tablePath,
+      @NonNull Timestamps timestamp, @NonNull RelDataType rowType, @NonNull PrimaryKey primaryKey,
       ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
-    super(rootTableId, tableName, TableType.STREAM, rowType, timestamp,   1, tableStatistic);
+    super(rootTableId, tablePath, TableType.STREAM, rowType, timestamp,  primaryKey, tableStatistic);
     this.baseTable = baseTable;
   }
 
@@ -56,20 +59,8 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
 
   @Override
   public void assignTimestamp(int index) {
-    timestamp.getCandidateByIndex(index).fixAsTimestamp();
-  }
-
-  @Override
-  public int addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
-    int colIdx = super.addColumn(column, typeFactory);
-    if (CalciteUtil.isTimestamp(column.getDataType())) {
-      //Add timestamp candidate
-      TimestampInference.ImportBuilder timestampBuilder = TimestampInference.buildImport();
-      timestamp.getCandidates().forEach(cand -> timestampBuilder.addImport(cand.getIndex(), cand.getScore()));
-      timestampBuilder.addImport(colIdx, TimestampUtil.ADDED_TIMESTAMP_SCORE);
-      timestamp = timestampBuilder.build();
-    }
-    return colIdx;
+    Preconditions.checkArgument(timestamp.is(Type.UNDEFINED),"Timestamp is already set");
+    this.timestamp = Timestamps.ofFixed(index);
   }
 
 }

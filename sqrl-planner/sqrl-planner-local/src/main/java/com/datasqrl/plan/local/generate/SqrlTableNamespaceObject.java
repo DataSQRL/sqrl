@@ -6,6 +6,7 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -18,7 +19,7 @@ import org.apache.calcite.sql.SqrlTableFunctionDef;
 @Getter
 public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<ScriptTableDefinition> {
   private final Name name;
-  private final ScriptTableDefinition table;
+  private final PhysicalRelationalTable table;
   private final SqrlTableFunctionDef args;
   private final List<FunctionParameter> parameters;
   private final List<Function> isA;
@@ -27,7 +28,7 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Scrip
   private final Optional<Supplier<RelNode>> relNodeSupplier;
   private final List<FunctionParameter> functionParameterList;
 
-  public SqrlTableNamespaceObject(Name name, ScriptTableDefinition table, CalciteTableFactory tableFactory,
+  public SqrlTableNamespaceObject(Name name, PhysicalRelationalTable table, CalciteTableFactory tableFactory,
       SqrlTableFunctionDef args,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
       List<FunctionParameter> functionParameters, Optional<Supplier<RelNode>> relNodeSupplier,

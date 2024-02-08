@@ -33,12 +33,6 @@ public class DAGPreparation {
     apiManager.getExports().forEach((sqrlTable, log) -> exports.add(exportTable((ModifiableTable) sqrlTable.getVt(),
         log.getSink(), relBuilder)));
 
-    //Assign timestamps to imports which propagate and restrict remaining timestamps in downstream tables
-    StreamUtil.filterByClass(getAllPhysicalTables(sqrlSchema), ProxyImportRelationalTable.class)
-        .forEach(this::finalizeTimestampOnTable);
-    //Some downstream tables have multiple timestamp candidates because the timestamp was selected multiple times, pick the best one
-    getAllPhysicalTables(sqrlSchema).forEach(this::finalizeTimestampOnTable);
-
     //Replace default joins with inner joins for API queries
     return apiManager.getQueries().stream().map(apiQuery ->
       new AnalyzedAPIQuery(apiQuery.getNameId(), apiQuery.getRelNode())
@@ -51,11 +45,4 @@ public class DAGPreparation {
                     QueryTableFunction::getQueryTable));
   }
 
-  private void finalizeTimestampOnTable(PhysicalRelationalTable table) {
-    // Determine best timestamp if not already fixed
-    if (table.getType().hasTimestamp() && !table.getTimestamp().hasFixedTimestamp()) {
-      table.getTimestamp().selectTimestamp();
-    }
-    Preconditions.checkArgument(!table.getType().hasTimestamp() || table.getTimestamp().hasFixedTimestamp());
-  }
 }

@@ -102,16 +102,43 @@ public class CalciteUtil {
     return builder.build();
   }
 
-  public static Optional<Integer> isCoalescedWithConstant(RexNode rexNode) {
-    if (!(rexNode instanceof RexCall)) return Optional.empty();
-    //if (!rexNode.isA(SqlKind.COALESCE)) return Optional.empty(); Doesn't work for Flink functions
-    RexCall call = (RexCall)rexNode;
-    if (!call.getOperator().isName("coalesce", false)) return Optional.empty();
-    List<RexNode> operands = call.getOperands();
-    if (operands.size()!=2) return Optional.empty();
-    if (!(operands.get(1) instanceof RexLiteral)) return Optional.empty();
-    if (!(operands.get(0) instanceof RexInputRef)) return Optional.empty();
-    return Optional.of(((RexInputRef)operands.get(0)).getIndex());
+  /**
+   * Determines the original index of the column with non-altering transformations.
+   * @param rexNode
+   * @return
+   */
+  public static Optional<Integer> getInputRefRobust(RexNode rexNode) {
+    if (rexNode instanceof RexInputRef) { //Direct mapping
+      return Optional.of(((RexInputRef) rexNode).getIndex());
+    } else if (rexNode instanceof RexCall) {
+      RexCall call = (RexCall)rexNode;
+      List<RexNode> operands = call.getOperands();
+      if (call.getOperator().isName("coalesce", false)) {
+        if (operands.size()!=2) return Optional.empty();
+        if (!(operands.get(1) instanceof RexLiteral)) return Optional.empty();
+        return getInputRefRobust(operands.get(0));
+      } else if (call.getOperator().isName("cast", false)) {
+        if (operands.size()!=2) return Optional.empty();
+        return getInputRefRobust(operands.get(0));
+      }
+    }
+    return Optional.empty();
+  }
+
+
+  public static boolean isGreatestOf(RexNode rexNode, Set<Integer> columnIndexes) {
+    if (!(rexNode instanceof RexCall)) return false;
+    RexCall call = (RexCall) rexNode;
+    if (call.getOperator().isName("greatest", false)) {
+      Set<Integer> greatestSet = new HashSet<>();
+      for (RexNode operand : call.getOperands()) {
+        Optional<Integer> ref = getInputRefRobust(operand);
+        if (ref.isEmpty()) return false;
+        greatestSet.add(ref.get());
+      }
+      return columnIndexes.equals(greatestSet);
+    }
+    return false;
   }
 
   public static Optional<Integer> isEqualToConstant(RexNode rexNode) {
@@ -167,6 +194,11 @@ public class CalciteUtil {
 
     public RelDataTypeBuilder add(RelDataTypeField field) {
       return add(field.getName(), field.getType());
+    }
+
+    @Override
+    public int getFieldCount() {
+      return fieldBuilder.getFieldCount();
     }
 
     public RelDataType build() {

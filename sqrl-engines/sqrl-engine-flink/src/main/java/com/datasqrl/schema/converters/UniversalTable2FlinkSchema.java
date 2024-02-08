@@ -3,9 +3,9 @@
  */
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.schema.SchemaConverter;
 import com.datasqrl.schema.UniversalTable;
-import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.RelDataTypeBuilder;
+import com.datasqrl.schema.UniversalTable.SchemaConverterUTB;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -13,7 +13,6 @@ import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.types.DataType;
@@ -22,7 +21,7 @@ import org.apache.flink.table.types.utils.TypeConversions;
 
 
 @Value
-public class UniversalTable2FlinkSchema implements UniversalTable.SchemaConverter<Schema> {
+public class UniversalTable2FlinkSchema implements SchemaConverterUTB<Schema>, SchemaConverter<Schema> {
 
   //NOTE: Does not include nullable in this call, need to call nullable function
   public DataType convertPrimitive(RelDataType datatype) {
@@ -57,7 +56,8 @@ public class UniversalTable2FlinkSchema implements UniversalTable.SchemaConverte
     return convertSchema(table.getType());
   }
 
-  private Schema convertSchema(RelDataType tableType) {
+  @Override
+  public Schema convertSchema(RelDataType tableType) {
     Schema.Builder schemaBuilder = Schema.newBuilder();
     convert(tableType, schemaBuilder::column);
     return schemaBuilder.build();

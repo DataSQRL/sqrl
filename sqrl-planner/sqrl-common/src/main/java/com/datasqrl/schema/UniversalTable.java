@@ -21,9 +21,7 @@ import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 import java.util.Optional;
@@ -110,6 +108,7 @@ public class UniversalTable {
    * Because we want to preserve the names of the user-defined columns and primary key columns are added first, we have to use
    * this custom way of uniquifying column names.
    */
+  @Value
   public static class NameAdjuster {
 
     Set<String> names;
@@ -134,7 +133,12 @@ public class UniversalTable {
 
   }
 
-  public interface SchemaConverter<S> {
+  /**
+   * Remove in favor of SchemaConverter
+   * @deprecated
+   * @param <S>
+   */
+  public interface SchemaConverterUTB<S> {
 
     S convertSchema(UniversalTable tblBuilder);
 

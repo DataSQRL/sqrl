@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Singular;
@@ -19,15 +20,29 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 @Builder
+@AllArgsConstructor
 public class PrimaryKeyMap implements IndexMap, Serializable {
 
   @Singular
   final List<Integer> pkIndexes;
+  final boolean undefined;
 
   public PrimaryKeyMap(List<Integer> pkIndexes) {
     Preconditions.checkArgument(Set.copyOf(pkIndexes).size() == pkIndexes.size(),
             "Duplicate primary key index: %s", pkIndexes);
     this.pkIndexes = pkIndexes;
+    this.undefined = false;
+  }
+
+  public static final PrimaryKeyMap UNDEFINED = new PrimaryKeyMap();
+
+  private PrimaryKeyMap() {
+    this.pkIndexes = List.of();
+    this.undefined = true;
+  }
+
+  public boolean isUndefined() {
+    return undefined;
   }
 
   @Override
@@ -41,10 +56,12 @@ public class PrimaryKeyMap implements IndexMap, Serializable {
   }
 
   public List<Integer> asList() {
+    if (undefined) return null;
     return new ArrayList<>(pkIndexes);
   }
 
   public int[] asArray() {
+    if (undefined) return null;
     return pkIndexes.stream().mapToInt(Integer::intValue).toArray();
   }
 
@@ -59,11 +76,16 @@ public class PrimaryKeyMap implements IndexMap, Serializable {
   public PrimaryKeyMapBuilder toBuilder() {
     PrimaryKeyMapBuilder builder = builder();
     pkIndexes.forEach(builder::pkIndex);
+    builder.undefined(this.undefined);
     return builder;
   }
 
   public static PrimaryKeyMap of(List<Integer> pks) {
     return new PrimaryKeyMap(List.copyOf(pks));
+  }
+
+  public static PrimaryKeyMap of(int[] pks) {
+    return new PrimaryKeyMap(IntStream.of(pks).boxed().collect(Collectors.toList()));
   }
 
   public static PrimaryKeyMap firstN(int length) {

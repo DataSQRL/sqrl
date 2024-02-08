@@ -300,7 +300,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("OrderCustomer4 := SELECT o.id, c.name FROM Orders o LEFT OUTER JOIN Customer c ON o.customerid = c.customerid");
 
     plan(builder.toString());
-    validateQueryTable("totals", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 4, 2,
+    validateQueryTable("totals", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 4, 2,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("ordercustomer", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
         TimestampTest.fixed(3));
@@ -364,7 +364,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         TimestampTest.fixed(1), PullupTest.builder().hasNowFilter(true).build());
     validateQueryTable("ordernow2", TableType.STREAM, ExecutionEngine.Type.STREAM, 2, 1,
         TimestampTest.fixed(0), PullupTest.builder().hasNowFilter(true).build());
-    validateQueryTable("ordernow3", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
+    validateQueryTable("ordernow3", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("orderaugment", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
         TimestampTest.fixed(2));
@@ -376,7 +376,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add("RecentTotal := SELECT sum(e.unit_price * e.quantity) AS total, sum(e.quantity) AS quantity "
         + "FROM Orders o JOIN o.entries e WHERE o.time > now() - INTERVAL 7 DAY;");
     plan(builder.getScript());
-    validateQueryTable("recenttotal", TableType.DEDUP_STREAM, Type.STREAM, 4, 1,
+    validateQueryTable("recenttotal", TableType.VERSIONED_STATE, Type.STREAM, 4, 1,
         TimestampTest.fixed(3), PullupTest.builder().hasTopN(true).build());
 
   }
@@ -446,7 +446,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "Customer.recentOrders := SELECT o.id, o.time FROM @ TEMPORAL JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
     plan(builder.toString());
-    validateQueryTable("customer", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 6, 1,
+    validateQueryTable("customer", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(2),
         PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
     validateQueryTable("recentOrders", TableType.STATE, ExecutionEngine.Type.STREAM, 4, 2,
@@ -460,7 +460,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "CustomerOrders := SELECT o.id, c.customerid FROM CustomerId c JOIN Orders o ON o.customerid = c.customerid");
     plan(builder.toString());
-    validateQueryTable("customerid", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 2, 1,
+    validateQueryTable("customerid", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 2, 1,
         TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("customerorders", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, 1,
         TimestampTest.fixed(3));
@@ -476,7 +476,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "ProductId.suborders := SELECT o.id as orderid, COUNT(1) AS numOrders, MAX(o.time) AS lastOrder FROM @ "
             + "JOIN Orders.entries e ON e.productid = @.productid JOIN e.parent o GROUP BY orderid ORDER BY numOrders DESC");
     plan(builder.toString());
-    validateQueryTable("productid", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 2, 1,
+    validateQueryTable("productid", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 2, 1,
         TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
     validateQueryTable("productorders", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 2,
         TimestampTest.fixed(4));
@@ -496,7 +496,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "Customer.distinctOrdersTime := SELECT DISTINCT o.id, o.time FROM @ LEFT JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
 //    builder.add("Customer.distinctAgg := SELECT COUNT(d.id) FROM @.distinctOrders d");
     plan(builder.toString());
-    validateQueryTable("customer", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 6, 1,
+    validateQueryTable("customer", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(2),
         PullupTest.builder().hasTopN(true).build()); //customerid got moved to the front
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, 1,
@@ -513,7 +513,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     ScriptBuilder builder = imports();
     builder.add("Orders := DISTINCT Orders ON id ORDER BY time DESC");
     plan(builder.toString());
-    validateQueryTable("orders", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 6, 1,
+    validateQueryTable("orders", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 6, 1,
         TimestampTest.fixed(4)); //pullup is inlined because nested
   }
 
@@ -567,7 +567,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         TimestampTest.fixed(3), PullupTest.builder().build());
     validateQueryTable("countstream", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(1));
-    validateQueryTable("productcount2", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 5, 1,
+    validateQueryTable("productcount2", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 5, 1,
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
   }
 
@@ -617,11 +617,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "/*+ EXEC(streams) */ CustomerAgg3 := SELECT customerid, COUNT(1) as num FROM Customer WHERE _ingest_time > NOW() - INTERVAL 1 HOUR GROUP BY customerid");
 
     plan(builder.getScript());
-    validateQueryTable("customeragg1", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
+    validateQueryTable("customeragg1", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
-    validateQueryTable("customeragg2", TableType.DEDUP_STREAM, ExecutionEngine.Type.DATABASE, 3,
+    validateQueryTable("customeragg2", TableType.VERSIONED_STATE, ExecutionEngine.Type.DATABASE, 3,
         1, TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
-    validateQueryTable("customeragg3", TableType.DEDUP_STREAM, ExecutionEngine.Type.STREAM, 3, 1,
+    validateQueryTable("customeragg3", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 3, 1,
         TimestampTest.fixed(2), PullupTest.builder().hasTopN(true).build());
   }
 

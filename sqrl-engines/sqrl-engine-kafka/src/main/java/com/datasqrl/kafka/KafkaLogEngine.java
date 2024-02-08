@@ -4,9 +4,11 @@ import static com.datasqrl.io.tables.TableConfig.CONNECTOR_KEY;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.NamedRelDataType;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.engine.*;
+import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -20,20 +22,21 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.schema.TableSchemaExporterFactory;
-import com.datasqrl.schema.UniversalTable;
 import com.google.common.base.Preconditions;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.internals.Topic;
-
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {

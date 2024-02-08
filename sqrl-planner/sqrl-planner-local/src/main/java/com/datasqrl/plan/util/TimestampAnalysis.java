@@ -6,6 +6,7 @@ package com.datasqrl.plan.util;
 import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.plan.table.TimestampInference;
+import com.datasqrl.plan.table.Timestamps;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.SqrlRexUtil;
@@ -24,13 +25,14 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class TimestampAnalysis {
 
-  public static Optional<TimestampInference.Candidate> getPreservedTimestamp(
-      @NonNull RexNode rexNode, @NonNull TimestampInference timestamp) {
+  public static Optional<Integer> getPreservedTimestamp(
+      @NonNull RexNode rexNode, @NonNull Timestamps timestamp) {
     if (!(CalciteUtil.isTimestamp(rexNode.getType()))) {
       return Optional.empty();
     }
     if (rexNode instanceof RexInputRef) {
-      return timestamp.getOptCandidateByIndex(((RexInputRef) rexNode).getIndex());
+      int index = ((RexInputRef) rexNode).getIndex();
+      return timestamp.isCandidate(index)?Optional.of(index):Optional.empty();
     } else if (rexNode instanceof RexCall) {
       //Determine recursively but ensure there is only one timestamp
       RexCall call = (RexCall) rexNode;
@@ -71,13 +73,12 @@ public class TimestampAnalysis {
 
   @Value
   public static class MaxTimestamp {
-    TimestampInference.Candidate candidate;
     int timestampIdx;
     int aggCallIdx;
   }
 
   public static Optional<MaxTimestamp> findMaxTimestamp(List<AggregateCall> aggregateCalls,
-                                                        TimestampInference timestamp) {
+                                                        Timestamps timestamp) {
     for (int idx = 0; idx < aggregateCalls.size(); idx++) {
       AggregateCall aggCall = aggregateCalls.get(idx);
       if (aggCall.getAggregation().equals(SqlStdOperatorTable.MAX)
@@ -87,9 +88,8 @@ public class TimestampAnalysis {
       ) {
         //Check if input is a timestamp candidate
         int inputIdx = aggCall.getArgList().get(0);
-        Optional<TimestampInference.Candidate> candidate = timestamp.getOptCandidateByIndex(inputIdx);
-        if (candidate.isPresent()) {
-          return Optional.of(new MaxTimestamp(candidate.get(), inputIdx, idx));
+        if (timestamp.isCandidate(inputIdx)) {
+          return Optional.of(new MaxTimestamp(inputIdx, idx));
         }
       }
     }
