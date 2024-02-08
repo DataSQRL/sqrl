@@ -47,9 +47,9 @@ public class FlinkMain {
     log.info("Hello.");
 
     Optional<URI> flinkSqlPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flink-plan.sql"));
-    Optional<URI> flinkConfig = resourceResolver.resolveFile(NamePath.of("deploy", "flink-config.yaml"));
+    Optional<URI> flinkConfig = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_CONFIG));
 
-    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flink-plan.json"));
+    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_SQL));
     Preconditions.checkState(flinkPlan.isPresent(), "Could not find flink executable plan.");
 
     Deserializer deserializer = new Deserializer();

@@ -82,13 +82,7 @@ public class KafkaBaseTest extends AbstractEngineIT {
 
   @AfterEach
   public void after() throws Exception {
-
     CLUSTER.deleteAllTopicsAndWait(-1L);
-
-//    while (true) {
-//      System.out.println(CLUSTER.getAllTopicsInCluster());
-//      Thread.sleep(1000);
-//    }
   }
 
   public static Properties getAdminProps() {

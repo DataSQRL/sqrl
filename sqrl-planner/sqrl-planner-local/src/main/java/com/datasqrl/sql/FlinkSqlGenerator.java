@@ -242,42 +242,21 @@ public class FlinkSqlGenerator implements
     if (!setMetadata) {
       return null;
     }
-    final String watermarkName;
     final WaterMarkType waterMarkType;
     if (watermarkColumn.isPresent()) { //watermark is a timestamp column
-      watermarkName = removeAllQuotes(RelToFlinkSql.convertToString(watermarkColumn.get()));
-      if (ReservedName.SOURCE_TIME.matches(watermarkName)) {
-        waterMarkType = WaterMarkType.SOURCE_WATERMARK;
-      } else {
-        waterMarkType = WaterMarkType.COLUMN_BY_NAME;
-      }
+      waterMarkType = WaterMarkType.COLUMN_BY_NAME;
     } else { //watermark is a timestamp expression
       Preconditions.checkArgument(watermarkExpression.isPresent());
-      SqlCall call = (SqlCall) watermarkExpression.get();
-
-      SqlNode expr = stripAs(call);
-
-      if (expr instanceof SqlIdentifier && ReservedName.SOURCE_TIME.matches(((SqlIdentifier)expr).getSimple())) {
-        waterMarkType = WaterMarkType.SOURCE_WATERMARK;
-      } else {
-        waterMarkType = WaterMarkType.COLUMN_BY_NAME;
-      }
+      waterMarkType = WaterMarkType.COLUMN_BY_NAME;
     }
 
     String name = getWatermarkName(watermarkColumn, watermarkExpression);
 
-    if (!setMetadata && waterMarkType == WaterMarkType.SOURCE_WATERMARK) {
-      return new SqlWatermark(SqlParserPos.ZERO,
-          identifier(name),
-          lightweightOp("SOURCE_WATERMARK").createCall(SqlParserPos.ZERO));
-    } else {
-      com.google.common.base.Preconditions.checkArgument(
-          setMetadata || waterMarkType == WaterMarkType.COLUMN_BY_NAME);
-      return new SqlWatermark(SqlParserPos.ZERO,
-          identifier(name),
-          boundedStrategy(name, "1"));
-    }
-
+    com.google.common.base.Preconditions.checkArgument(
+        setMetadata || waterMarkType == WaterMarkType.COLUMN_BY_NAME);
+    return new SqlWatermark(SqlParserPos.ZERO,
+        identifier(name),
+        boundedStrategy(name, "1"));
   }
 
   private String getWatermarkName(Optional<SqlNode> watermarkColumn,

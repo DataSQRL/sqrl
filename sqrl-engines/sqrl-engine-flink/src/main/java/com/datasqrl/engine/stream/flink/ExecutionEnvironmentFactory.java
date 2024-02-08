@@ -16,7 +16,7 @@ public class ExecutionEnvironmentFactory {
   public StreamExecutionEnvironment createEnvironment() {
     Map conf = new HashMap(flinkConf);
 
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
         org.apache.flink.configuration.Configuration.fromMap(conf));
     env.getConfig().enableObjectReuse();
     env.setRuntimeMode(RuntimeExecutionMode.STREAMING); //todo add to config

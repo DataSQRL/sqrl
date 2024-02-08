@@ -67,9 +67,6 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 @ExtendWith(MiniClusterExtension.class)
 public class JsonConversionTest extends AbstractGraphqlTest {
 
-//  @Container
-//  static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
-//      DockerImageName.parse("ankane/pgvector:v0.5.0").asCompatibleSubstituteFor("postgres"));
   protected SnapshotTest.Snapshot snapshot;
   ObjectMapper objectMapper = new ObjectMapper();
   private TestQueryPlanner planner;
@@ -77,7 +74,6 @@ public class JsonConversionTest extends AbstractGraphqlTest {
 
   @BeforeAll
   public static void setupAll() {
-//    testDatabase.start();
     createPostgresTable();
     insertDataIntoPostgresTable();
   }
