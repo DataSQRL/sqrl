@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.rules;
 
-import static com.datasqrl.error.ErrorCode.MULTIPLE_PRIMARY_KEY;
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
 import com.datasqrl.canonicalizer.Name;
@@ -17,20 +16,17 @@ import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.table.Timestamps.Type;
 import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.plan.util.PrimaryKeyMap;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -71,7 +67,7 @@ public class AnnotatedLP implements RelHolder {
   public SelectIndexMap select;
   @Builder.Default
   @NonNull
-  public Optional<Integer> numRootPks = Optional.empty();
+  public Optional<PhysicalRelationalTable> rootTable = Optional.empty();
 
   @Builder.Default
   @NonNull
@@ -109,7 +105,7 @@ public class AnnotatedLP implements RelHolder {
     builder.primaryKey(primaryKey);
     builder.timestamp(timestamp);
     builder.select(select);
-    builder.numRootPks(numRootPks);
+    builder.rootTable(rootTable);
     builder.nowFilter(nowFilter);
     builder.topN(topN);
     builder.sort(sort);
@@ -447,7 +443,7 @@ public class AnnotatedLP implements RelHolder {
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
         timestampBuilder.build(), updatedSelect,
-        input.numRootPks,
+        input.rootTable,
         input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap),
         List.of(this));
   }

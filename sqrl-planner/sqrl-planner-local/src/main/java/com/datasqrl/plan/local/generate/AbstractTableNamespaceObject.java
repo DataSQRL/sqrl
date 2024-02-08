@@ -157,7 +157,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     NestedRelationship relationship = new NestedRelationship(name, path, path,
         multiplicity, List.of(param), nestedType, pks);
     framework.getSchema().addRelationship(relationship);
-    createNested(field.getType(), path, framework);
+    createNested(nestedType, path, framework);
   }
 
   public Relationship createParent(SqrlFramework framework, NamePath path, PhysicalRelationalTable parentTable,

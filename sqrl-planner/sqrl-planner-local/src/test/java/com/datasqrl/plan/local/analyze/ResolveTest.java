@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.local.analyze;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -116,7 +118,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   public void timestampColumnDefinitionWithPropagation() {
     String script = ScriptBuilder.of("IMPORT time.*",
             "IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp",
-        "CustomerCopy := SELECT timestamp, endOfMonth(endOfMonth(timestamp)) as month FROM Customer")
+        "CustomerCopy := SELECT endOfMonth(endOfMonth(timestamp)) as month, timestamp  FROM Customer")
         .toString();
     plan(script);
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, pk(0),
@@ -142,14 +144,13 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void addingSimpleColumns() {
-    String script = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
+    String script = ScriptBuilder.of("IMPORT ecommerce-data.Orders TIMESTAMP time",
         "Orders.col1 := (id + customerid)/2",
-        "Orders.entries.discount2 := coalesce(discount,0.0)",
-        "OrderEntry := SELECT o.col1, o.time, e.productid, e.discount2, o._ingest_time FROM Orders o JOIN o.entries e")
+        "OrderEntry := SELECT o.col1, o.time, e.productid, e.discount, o._ingest_time FROM Orders o JOIN o.entries e")
         .toString();
     plan(script);
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, pk(0),
-        TimestampTest.fixed(1));
+        TimestampTest.fixed(4));
     validateQueryTable("orderentry", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, pk(0, 1),
         TimestampTest.fixed(3));
   }
@@ -166,7 +167,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void tableDefinitionTest() {
-    String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
+    String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders TIMESTAMP time",
         "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;")
         .toString();
     plan(sqrl);
@@ -306,8 +307,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void tableTemporalJoinWithTimeFilterTest() {
-    ScriptBuilder builder = imports();
-    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC");
+    ScriptBuilder builder = imports(true);
+    builder.add("Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC");
     builder.add("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC");
     builder.add("Customer.orders := JOIN Orders ON Orders.customerid = @.customerid");
     builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid");
@@ -645,11 +646,15 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   }
 
   private ScriptBuilder imports() {
+    return imports(false);
+  }
+
+  private ScriptBuilder imports(boolean useNaturalTimestamp) {
     ScriptBuilder builder = new ScriptBuilder();
-    builder.append("IMPORT ecommerce-data.Customer");
-    builder.append("IMPORT ecommerce-data.Orders");
-    builder.append("IMPORT ecommerce-data.Product");
     builder.append("IMPORT time.*");
+    builder.append("IMPORT ecommerce-data.Customer  TIMESTAMP " + (useNaturalTimestamp? "epochToTimestamp(lastUpdated) AS timestamp" : "_ingest_time"));
+    builder.append("IMPORT ecommerce-data.Orders TIMESTAMP " + (useNaturalTimestamp? "time": "_ingest_time"));
+    builder.append("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time");
     return builder;
   }
 
@@ -690,7 +695,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
                                              int numCols, int[] primaryKeys, TimestampTest timestampTest,
                                              PullupTest pullupTest) {
     assertEquals(tableType, table.getType(), "table type");
-    assertEquals(primaryKeys, table.getPrimaryKey().asArray(), "primary key size");
+    assertArrayEquals(primaryKeys, table.getPrimaryKey().asArray(), "primary key");
     assertEquals(numCols, table.getRowType().getFieldCount(), "field count");
     timestampTest.test(table.getTimestamp());
     pullupTest.test(table.getPullups());

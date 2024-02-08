@@ -53,6 +53,11 @@ public class CalciteUtil {
     return getArrayElementType(type).filter(RelDataType::isStruct);
   }
 
+  public static boolean hasNestedTable(RelDataType type) {
+    if (!type.isStruct()) return false;
+    return type.getFieldList().stream().map(RelDataTypeField::getType).anyMatch(CalciteUtil::isNestedTable);
+  }
+
   public static boolean isPrimitiveType(RelDataType t) {
     return !t.isStruct();
   }

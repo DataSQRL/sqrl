@@ -56,7 +56,6 @@ public class TableConverter {
     }
 
     RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
-    typeBuilder.addAll(dataType.getFieldList());
     NameAdjuster nameAdjuster = new NameAdjuster(dataType.getFieldNames());
 
 //    SqrlConfig metadataConfig = tableConfig.getMetadataConfig();
@@ -74,6 +73,8 @@ public class TableConverter {
     if (tableConfig.getConnectorSettings().isHasSourceTimestamp()) {
       typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.SOURCE_TIME), TypeFactory.makeTimestampType(typeFactory,false));
     }
+
+    typeBuilder.addAll(dataType.getFieldList());
     RelDataType finalType = typeBuilder.build();
 
 //    TableConfig.Base baseTblConfig = tableConfig.getBaseTableConfig();
@@ -98,7 +99,8 @@ public class TableConverter {
 
     //Look up table type
     TableType tableType = CONNECTOR_TYPE_MAP.get(tableConfig.getConnectorName().toLowerCase());
-    Preconditions.checkArgument(tableType!=null, "Unrecognized connector: %s", tableConfig.getConnectorName());
+    if (tableType==null) tableType = TableType.STREAM;
+//    Preconditions.checkArgument(tableType!=null, "Unrecognized connector: %s", tableConfig.getConnectorName());
 
     return new SourceTableDefinition(finalType, new PrimaryKey(pkIndexes), timestampCol.map(col -> getFieldIndex(finalType, col)), tableType);
   }

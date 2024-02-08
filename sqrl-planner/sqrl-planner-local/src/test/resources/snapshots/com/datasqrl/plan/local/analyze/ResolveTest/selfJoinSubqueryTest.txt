@@ -1,8 +1,9 @@
 >>>orders2$1-lp-STREAM
-LogicalProject(_uuid=[$0], _time=[$4])
-  LogicalTableScan(table=[[orders$2]])
+LogicalProject(_uuid=[$0], _ingest_time=[$1])
+  LogicalJoin(condition=[AND(=($6, $0), =($7, $1))], joinType=[inner]) hints[IntervalJoin]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[orders$2]])
 
 >>>orders2$1-lp-DATABASE
-LogicalProject(_uuid=[$0], _time=[$4])
-  LogicalTableScan(table=[[orders$2]])
+Stage [database] does not support capabilities: [DENORMALIZE]
 
