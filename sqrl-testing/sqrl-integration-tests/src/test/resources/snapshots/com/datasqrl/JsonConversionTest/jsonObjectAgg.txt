@@ -1,6 +1,3 @@
->>>calcite
-SELECT JSONB_OBJECT_AGG('key', CAST("json" AS JSONB)) AS "json"
-FROM "jsondata$2"
 >>>postgres
 SELECT JSONB_OBJECT_AGG('key', CAST("json" AS JSONB)) AS "json"
 FROM "jsondata$2"

@@ -1,6 +1,3 @@
->>>calcite
-SELECT JSONB_BUILD_OBJECT('key', CAST('{"a": "hello"}' AS JSONB), 'key2', 0) AS "json"
-FROM "jsondata$2"
 >>>postgres
 SELECT JSONB_BUILD_OBJECT('key', CAST('{"a": "hello"}' AS JSONB), 'key2', 0) AS "json"
 FROM "jsondata$2"

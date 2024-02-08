@@ -7,6 +7,7 @@ import com.datasqrl.io.KafkaBaseTest;
 import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Retail.RetailScriptNames;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +19,12 @@ import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(MiniClusterExtension.class)
 public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
 
   CompletableFuture<ExecutionResult> fut;
@@ -44,8 +48,11 @@ public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
         .resolve("ecommerce-avro/orders.avsc").toFile());
     System.setProperty("datasqrl.kafka_servers", CLUSTER.bootstrapServers());
     TestScript script = Retail.INSTANCE.getScript(RetailScriptNames.AVRO_KAFKA);
-    fut = execute(Retail.INSTANCE.getRootPackageDirectory(), script.getScriptPath(),
+    Path compile = compiler.compile(
+        Retail.INSTANCE.getRootPackageDirectory(), packageOverride, script.getScriptPath(),
         script.getGraphQLSchemas().get(0).getSchemaPath());
+
+    fut = executeSql(compile);
     events = new ArrayList<>();
   }
 
@@ -69,8 +76,8 @@ public class AvroKafkaIntegrationTest extends AbstractGraphqlTest {
     Thread.sleep(2000);
     writeToTopic(TOPIC,orders.stream().map(o -> KafkaBaseTest.serializeAvro(o, avroSchema)), ValueType.BYTE);
 
-
     countDownLatch.await(120, TimeUnit.SECONDS);
+
     fut.cancel(true);
     assertEquals(countDownLatch.getCount(), 0);
 

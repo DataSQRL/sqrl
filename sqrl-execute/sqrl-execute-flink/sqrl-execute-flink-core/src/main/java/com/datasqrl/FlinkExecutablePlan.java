@@ -9,6 +9,7 @@ import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.model.LogicalStreamMetaData;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +96,7 @@ public class FlinkExecutablePlan {
 
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "className")
-  interface FlinkConfig {
+  public interface FlinkConfig {
 
     <R, C> R accept(FlinkConfigVisitor<R, C> visitor, C context);
   }
@@ -243,6 +244,12 @@ public class FlinkExecutablePlan {
     String schemaDefinition;
     TypeInformation typeInformation;
     SerializableSchema schema;
+    @JsonIgnore
+    Object relDataType;
+    @JsonIgnore
+    Object watermarkColumn;
+    @JsonIgnore
+    Object watermarkExpression;
 
     @Override
     public <R, C> R accept(FlinkTableDefinitionVisitor<R, C> visitor, C context) {
@@ -274,6 +281,8 @@ public class FlinkExecutablePlan {
 
     String name;
     String query;
+    @JsonIgnore
+    Object node; //sql node
 
     @Override
     public <R, C> R accept(FlinkQueryVisitor<R, C> visitor, C context) {

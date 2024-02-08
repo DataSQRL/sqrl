@@ -10,6 +10,7 @@ import com.datasqrl.util.data.Sensors;
 import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,12 +20,14 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.datasqrl.util.TestClient.FAIL_HANDLER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Slf4j
+@ExtendWith(MiniClusterExtension.class)
 public class BankingTest extends AbstractGraphqlTest {
   CompletableFuture<ExecutionResult> fut;
   private List<String> events;

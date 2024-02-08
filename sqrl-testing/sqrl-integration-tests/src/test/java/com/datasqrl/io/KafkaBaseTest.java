@@ -14,7 +14,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -26,6 +30,8 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
+import org.apache.flink.runtime.util.jartestprogram.AnonymousInStaticMethod.A;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -39,6 +45,8 @@ import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
 public class KafkaBaseTest extends AbstractEngineIT {
@@ -47,17 +55,25 @@ public class KafkaBaseTest extends AbstractEngineIT {
 
   public static final EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(NUM_BROKERS);
 
+  String bootstrapServers;
+
+  @SneakyThrows
   @BeforeAll
   public static void startCluster() throws IOException {
     CLUSTER.start();
   }
 
-  @AfterAll
-  public static void closeCluster() {
-    CLUSTER.stop();
+  @SneakyThrows
+  @BeforeEach
+  public void clear() {
+    CLUSTER.deleteAllTopicsAndWait(-1L);
   }
 
-  String bootstrapServers;
+//
+  @AfterAll
+  public static void stopCluster() throws IOException {
+    CLUSTER.stop();
+  }
 
   public void createTopics(String[] topics) throws Exception {
     bootstrapServers = CLUSTER.bootstrapServers();
@@ -66,7 +82,7 @@ public class KafkaBaseTest extends AbstractEngineIT {
 
   @AfterEach
   public void after() throws Exception {
-    CLUSTER.deleteAllTopicsAndWait(0L);
+    CLUSTER.deleteAllTopicsAndWait(-1L);
   }
 
   public static Properties getAdminProps() {

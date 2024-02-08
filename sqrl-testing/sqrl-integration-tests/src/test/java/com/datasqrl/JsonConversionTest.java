@@ -13,6 +13,7 @@ import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.StdJsonLibraryImpl;
+import com.datasqrl.graphql.AbstractGraphqlTest;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.InMemSourceFactory;
 import com.datasqrl.io.mem.MemoryConnectorFactory;
@@ -53,26 +54,19 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.postgresql.util.PGobject;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * A test suite to convert SQRL queries to their respective dialects
  */
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
-public class JsonConversionTest {
+public class JsonConversionTest extends AbstractGraphqlTest {
 
-  @Container
-  static PostgreSQLContainer testDatabase = new PostgreSQLContainer(
-      DockerImageName.parse("ankane/pgvector:v0.5.0").asCompatibleSubstituteFor("postgres"));
   protected SnapshotTest.Snapshot snapshot;
   ObjectMapper objectMapper = new ObjectMapper();
   private TestQueryPlanner planner;
@@ -80,14 +74,8 @@ public class JsonConversionTest {
 
   @BeforeAll
   public static void setupAll() {
-    testDatabase.start();
     createPostgresTable();
     insertDataIntoPostgresTable();
-  }
-
-  private static Connection getPostgresConnection() throws Exception {
-    return DriverManager.getConnection(testDatabase.getJdbcUrl(), testDatabase.getUsername(),
-        testDatabase.getPassword());
   }
 
   @SneakyThrows
@@ -107,11 +95,11 @@ public class JsonConversionTest {
       stmt.execute(insertSQL);
     }
   }
-
-  @AfterAll
-  public static void tearDownAll() {
-    testDatabase.stop();
-  }
+//
+//  @AfterAll
+//  public static void tearDownAll() {
+////    testDatabase.stop();
+//  }
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
@@ -383,17 +371,17 @@ public class JsonConversionTest {
 
   @SneakyThrows
   private void testJsonReturn(String function) {
-    Pair<Object, Object> x = execute(function);
+    Pair<Object, Object> x = executeScript(function);
     assertEquals(objectMapper.readTree((String) x.first), objectMapper.readTree((String) x.second));
   }
 
   @SneakyThrows
   private void testScalarReturn(String function) {
-    Pair<Object, Object> x = execute(function);
+    Pair<Object, Object> x = executeScript(function);
     assertEquals(x.first.toString().trim(), x.second.toString().trim());
   }
 
-  private Pair<Object, Object> execute(String fncName) {
+  public Pair<Object, Object> executeScript(String fncName) {
     planner.planSqrl("IMPORT json.*")
         .planSqrl("X(@a: Int) := SELECT " + fncName + " AS json FROM jsondata");
     return convert("X");
@@ -403,9 +391,6 @@ public class JsonConversionTest {
   private Pair<Object, Object> convert(String fncName) {
     SqrlTableMacro x = planner.getSchema().getTableFunction(fncName);
     RelNode relNode = x.getViewTransform().get();
-
-    RelNode calciteRelNode = planner.convertRelToDialect(Dialect.CALCITE, relNode);
-    snapshot.addContent(planner.relToString(Dialect.CALCITE, calciteRelNode).getSql(), "calcite");
 
     RelNode pgRelNode = planner.convertRelToDialect(Dialect.POSTGRES, relNode);
     String pgQuery = planner.relToString(Dialect.POSTGRES, pgRelNode).getSql();

@@ -106,6 +106,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
       queryList.add(FlinkSqlQuery.builder()
           .name(q.getTableName())
           .query(q.getSql())
+          .node(q.getNode())
           .build());
     }
     queries.add(q);

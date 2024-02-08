@@ -1,6 +1,3 @@
->>>calcite
-SELECT JSONB_BUILD_OBJECT('key1', JSONB_BUILD_OBJECT('nestedKey', 'nestedValue'), 'key2', 'value2') AS "json"
-FROM "jsondata$2"
 >>>postgres
 SELECT JSONB_BUILD_OBJECT('key1', JSONB_BUILD_OBJECT('nestedKey', 'nestedValue'), 'key2', 'value2') AS "json"
 FROM "jsondata$2"

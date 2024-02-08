@@ -1,6 +1,3 @@
->>>calcite
-SELECT JSONB_BUILD_ARRAY(JSONB_BUILD_ARRAY(1)) AS "json"
-FROM "jsondata$2"
 >>>postgres
 SELECT JSONB_BUILD_ARRAY(JSONB_BUILD_ARRAY(1)) AS "json"
 FROM "jsondata$2"

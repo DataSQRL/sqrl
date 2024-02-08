@@ -17,10 +17,12 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import lombok.SneakyThrows;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 public class KafkaMonitoringTest extends KafkaBaseTest {
 
