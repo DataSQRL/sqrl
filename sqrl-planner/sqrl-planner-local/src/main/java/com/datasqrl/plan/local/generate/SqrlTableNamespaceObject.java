@@ -17,7 +17,7 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqrlTableFunctionDef;
 
 @Getter
-public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<ScriptTableDefinition> {
+public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<PhysicalRelationalTable> {
   private final Name name;
   private final PhysicalRelationalTable table;
   private final SqrlTableFunctionDef args;

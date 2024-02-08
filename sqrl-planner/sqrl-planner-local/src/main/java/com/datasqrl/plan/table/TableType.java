@@ -12,7 +12,8 @@ public enum TableType {
   STATE, //table with natural primary key that ensures uniqueness but not a versioned change-stream
   NESTED, //table that represents nested data to be joined with parent
   LOOKUP, //table that allows lookup by primary key but no other form of processing
-  RELATION; //Relational data without timestamp, primary key or explicit stream-state semantics
+  RELATION, //Relational data without timestamp, primary key or explicit stream-state semantics
+  FIXED; //A set of data that does not change over time and valid for all time (e.g. values)
 
   public boolean hasTimestamp() {
     switch(this) {
@@ -25,12 +26,17 @@ public enum TableType {
     }
   }
 
+  public boolean isLocked() {
+    return this==LOOKUP;
+  }
+
   public boolean hasPrimaryKey() {
     switch(this) {
       case STREAM:
       case VERSIONED_STATE:
       case STATE:
       case LOOKUP:
+      case FIXED:
         return true;
       default:
         return false; //NESTED and RELATION
@@ -43,6 +49,7 @@ public enum TableType {
       case VERSIONED_STATE:
       case STATE:
       case RELATION:
+      case FIXED:
         return true;
       default:
         return false; //NESTED and LOOKUP

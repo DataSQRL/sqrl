@@ -34,13 +34,13 @@ public class CalciteTableFactory {
   }
 
   public ProxyImportRelationalTable createProxyTable(RelDataType rootType, NamePath tablePath,
-      ImportedRelationalTableImpl importedTable, Optional<Integer> timestampIndex, PrimaryKey primaryKey) {
+      ImportedRelationalTableImpl importedTable, TableType tableType, Optional<Integer> timestampIndex, PrimaryKey primaryKey) {
     Name proxyName = tableIdFactory.createTableId(tablePath.getLast());
     return new ProxyImportRelationalTable(
         proxyName,
         tablePath,
         timestampIndex.map(Timestamps::ofFixed).orElse(Timestamps.UNDEFINED),
-        rootType, primaryKey,
+        rootType, tableType, primaryKey,
         importedTable,
         TableStatistic.of(1000)
     );

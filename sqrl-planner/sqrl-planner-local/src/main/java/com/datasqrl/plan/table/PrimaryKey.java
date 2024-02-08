@@ -1,6 +1,7 @@
 package com.datasqrl.plan.table;
 
 import com.datasqrl.plan.util.PrimaryKeyMap;
+import com.datasqrl.util.ArrayUtil;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +30,11 @@ public class PrimaryKey {
   public int size() {
     Preconditions.checkArgument(isDefined());
     return pkIndexes.length;
+  }
+
+  public boolean contains(int index) {
+    Preconditions.checkArgument(isDefined());
+    return ArrayUtil.contains(pkIndexes, index);
   }
 
   public int[] asArray() {

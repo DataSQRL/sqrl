@@ -13,9 +13,12 @@ import com.datasqrl.schema.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -27,15 +30,20 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 @AllArgsConstructor
 public class TableConverter {
 
-  public static String METADATA_COLUMN_TYPE_KEY = "type";
-  public static String PRIMARYKEY_KEY = "primaryKey";
-
+  //TODO: Move to engine and look up via configured engine. For now, this is hard-coded for Flink
+  public static Map<String,TableType> CONNECTOR_TYPE_MAP = ImmutableMap.of(
+      "kafka",TableType.STREAM,
+      "file", TableType.STREAM,
+      "filesystem", TableType.STREAM,
+      "upsert-kafka", TableType.VERSIONED_STATE,
+      "jdbc", TableType.LOOKUP
+      );
 
   TypeFactory typeFactory;
   QueryPlanner planner;
 
 
-  public SourceTableType sourceToTable(
+  public SourceTableDefinition sourceToTable(
       TableSchema tableSchema, TableConfig tableConfig,
       Name tableName, ErrorCollector errors) {
     if (tableSchema.getLocation().isPresent()) {
@@ -51,41 +59,48 @@ public class TableConverter {
     typeBuilder.addAll(dataType.getFieldList());
     NameAdjuster nameAdjuster = new NameAdjuster(dataType.getFieldNames());
 
-    SqrlConfig metadataConfig = tableConfig.getMetadataConfig();
-    for (String columName : metadataConfig.getKeys()) {
-      SqrlConfig colConfig = metadataConfig.getSubConfig(columName);
-      String datatype = colConfig.asString(METADATA_COLUMN_TYPE_KEY).validate(this::isValidDatatype,
-          "Not a valid SQRL data type. Please check the documentation for supported SQRL types.").get();
-      typeBuilder.add(nameAdjuster.uniquifyName(columName), planner.parseDatatype(
-          datatype));
-    }
+//    SqrlConfig metadataConfig = tableConfig.getMetadataConfig();
+//    for (String columName : metadataConfig.getKeys()) {
+//      SqrlConfig colConfig = metadataConfig.getSubConfig(columName);
+//      String datatype = colConfig.asString(TableConfig.METADATA_COLUMN_TYPE_KEY).validate(this::isValidDatatype,
+//          "Not a valid SQRL data type. Please check the documentation for supported SQRL types.").get();
+//      typeBuilder.add(nameAdjuster.uniquifyName(columName), planner.parseDatatype(
+//          datatype));
+//    }
 
-    TableConfig.Base baseTblConfig = tableConfig.getBaseTableConfig();
-
-    Optional<List<String>> primaryKeysOpt = baseTblConfig
-        .getPrimaryKey().validate(list -> list.stream().allMatch(nameAdjuster::containsName),
-            String.format("Primary key column not found. Must be one of: %s", nameAdjuster))
-        .getOptional();
-
-    List<String> primaryKeys;
-    if (primaryKeysOpt.isEmpty()) {
-      String pkName = nameAdjuster.uniquifyName(ReservedName.UUID);
-      typeBuilder.add(pkName, TypeFactory.makeUuidType(typeFactory, false));
-      primaryKeys = List.of(pkName);
-    } else {
-      primaryKeys = primaryKeysOpt.get();
+    //Remove the following in favor of the above
+    typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.UUID), TypeFactory.makeUuidType(typeFactory, false));
+    typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.INGEST_TIME), TypeFactory.makeTimestampType(typeFactory, false));
+    if (tableConfig.getConnectorSettings().isHasSourceTimestamp()) {
+      typeBuilder.add(nameAdjuster.uniquifyName(ReservedName.SOURCE_TIME), TypeFactory.makeTimestampType(typeFactory,false));
     }
     RelDataType finalType = typeBuilder.build();
 
-    int[] pkIndexes = new int[primaryKeys.size()];
-    for (int i = 0; i < primaryKeys.size(); i++) {
-      pkIndexes[i]=getFieldIndex(finalType, primaryKeys.get(i));
-    }
+//    TableConfig.Base baseTblConfig = tableConfig.getBaseTableConfig();
+//    List<String> primaryKeys = baseTblConfig
+//        .getPrimaryKey()
+//        .validate(list -> list!=null && !list.isEmpty(), "Need to specify a primary key to unique identify records in table")
+//        .validate(list -> list.stream().allMatch(nameAdjuster::containsName),
+//            String.format("Primary key column not found. Must be one of: %s", nameAdjuster))
+//        .get();
+//
+//    int[] pkIndexes = new int[primaryKeys.size()];
+//    for (int i = 0; i < primaryKeys.size(); i++) {
+//      pkIndexes[i]=getFieldIndex(finalType, primaryKeys.get(i));
+//    }
 
-    Optional<String> timestampCol = baseTblConfig.getTimestampColumn()
-        .validate(nameAdjuster::containsName, String.format("Column not found. Must be one of: %s", nameAdjuster)).getOptional();
+    //Remove the following in favor of the above
+    int[] pkIndexes = new int[]{getFieldIndex(finalType, ReservedName.UUID.getDisplay())};
 
-    return new SourceTableType(finalType, new PrimaryKey(pkIndexes), timestampCol.map(col -> getFieldIndex(finalType, col)));
+    Optional<String> timestampCol = Optional.empty();
+//        baseTblConfig.getTimestampColumn()
+//        .validate(nameAdjuster::containsName, String.format("Column not found. Must be one of: %s", nameAdjuster)).getOptional();
+
+    //Look up table type
+    TableType tableType = CONNECTOR_TYPE_MAP.get(tableConfig.getConnectorName().toLowerCase());
+    Preconditions.checkArgument(tableType!=null, "Unrecognized connector: %s", tableConfig.getConnectorName());
+
+    return new SourceTableDefinition(finalType, new PrimaryKey(pkIndexes), timestampCol.map(col -> getFieldIndex(finalType, col)), tableType);
   }
 
   private static int getFieldIndex(RelDataType type, String fieldName) {
@@ -104,10 +119,11 @@ public class TableConverter {
   }
 
   @Value
-  public static class SourceTableType {
-    RelDataType type;
+  public static class SourceTableDefinition {
+    RelDataType dataType;
     PrimaryKey primaryKey;
     Optional<Integer> timestampIndex;
+    TableType tableType;
   }
 
   /**

@@ -6,6 +6,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.plan.table.LogicalNestedTable;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
@@ -87,20 +88,9 @@ public class SqrlSchemaForInference {
   }
 
   private boolean isLocalPrimaryKey(Table table, int i) {
-    if (table instanceof LogicalNestedTable) {
-      LogicalNestedTable nestedTable = (LogicalNestedTable) table;
-      if (i < nestedTable.getNumPrimaryKeys() - nestedTable.getNumLocalPks()) {
-        return false;
-      } else if (i < nestedTable.getNumPrimaryKeys()) {
-        return true;
-      }
-    } else if (table instanceof ScriptRelationalTable) {
-      ScriptRelationalTable relTable = (ScriptRelationalTable) table;
-      if (i < relTable.getNumPrimaryKeys()) {
-        return true;
-      }
+    if (table instanceof PhysicalRelationalTable) {
+      return ((PhysicalRelationalTable)table).getPrimaryKey().contains(i);
     }
-
     return false;
   }
 

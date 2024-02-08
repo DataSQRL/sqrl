@@ -34,10 +34,11 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
   private final ImportedRelationalTableImpl baseTable;
 
   public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull NamePath tablePath,
-      @NonNull Timestamps timestamp, @NonNull RelDataType rowType, @NonNull PrimaryKey primaryKey,
+      @NonNull Timestamps timestamp, @NonNull RelDataType rowType, @NonNull TableType tableType, @NonNull PrimaryKey primaryKey,
       ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
-    super(rootTableId, tablePath, TableType.STREAM, rowType, timestamp,  primaryKey, tableStatistic);
+    super(rootTableId, tablePath, tableType, rowType, timestamp,  primaryKey, tableStatistic);
     this.baseTable = baseTable;
+    if (tableType.isLocked()) lock();
   }
 
   @Override

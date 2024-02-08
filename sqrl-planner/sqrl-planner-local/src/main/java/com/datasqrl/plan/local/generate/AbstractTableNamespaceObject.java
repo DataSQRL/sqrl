@@ -19,8 +19,8 @@ import com.datasqrl.plan.table.ImportedRelationalTableImpl;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.PrimaryKey;
 import com.datasqrl.plan.table.ProxyImportRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.TableConverter;
+import com.datasqrl.plan.table.TableConverter.SourceTableDefinition;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.NestedRelationship;
 import com.datasqrl.schema.Relationship;
@@ -36,7 +36,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -67,7 +66,7 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
   public ProxyImportRelationalTable importTable(TableSource tableSource, Name tableName,
       ErrorCollector errors) {
     // Convert the source schema to a universal table
-    TableConverter.SourceTableType tableType = tableConverter.sourceToTable(
+    SourceTableDefinition tableDef = tableConverter.sourceToTable(
         tableSource.getTableSchema().get(),
         tableSource.getConfiguration(),
         tableName,
@@ -75,8 +74,9 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     );
 
     // Create imported table and its proxy with unique IDs
-    ImportedRelationalTableImpl importedTable = tableFactory.createImportedTable(tableType.getType(), tableSource, tableName);
-    ProxyImportRelationalTable proxyTable = tableFactory.createProxyTable(tableType.getType(), NamePath.of(tableName), importedTable, tableType.getTimestampIndex(), tableType.getPrimaryKey());
+    ImportedRelationalTableImpl importedTable = tableFactory.createImportedTable(tableDef.getDataType(), tableSource, tableName);
+    ProxyImportRelationalTable proxyTable = tableFactory.createProxyTable(tableDef.getDataType(), NamePath.of(tableName),
+        importedTable, tableDef.getTableType(), tableDef.getTimestampIndex(), tableDef.getPrimaryKey());
 
     // Generate the script tables based on the provided root table
     return proxyTable;

@@ -37,8 +37,10 @@ public class TableConfig {
 
   public static final String CONNECTOR_KEY = "connector";
   public static final String FORMAT_KEY = "format";
-  public static final String METADATA_KEY = "metadata";
-  public static final String TABLE_KEY = "table";
+
+//  public static final String METADATA_KEY = "metadata";
+//  public static String METADATA_COLUMN_TYPE_KEY = "type";
+//  public static final String TABLE_KEY = "table";
 
 
   @NonNull Name name;
@@ -52,10 +54,10 @@ public class TableConfig {
 
   public TableConfig(@NonNull Name name, @NonNull SqrlConfig config,
       @NonNull DataSystemConnectorSettings connectorSettings) {
-    this(name, config, config.allAs(BaseTableConfig.class).get(), connectorSettings);
+    this(name, config, config.allAs(BaseTableConfig.class).getOptional().orElse(null), connectorSettings);
   }
 
-  public TableConfig(@NonNull Name name, @NonNull SqrlConfig config, @NonNull BaseTableConfig baseTableConfig,
+  public TableConfig(@NonNull Name name, @NonNull SqrlConfig config, BaseTableConfig baseTableConfig,
       @NonNull DataSystemConnectorSettings connectorSettings) {
     this.name = name;
     this.config = config;
@@ -93,9 +95,9 @@ public class TableConfig {
     return config.getSubConfig(CONNECTOR_KEY);
   }
 
-  public SqrlConfig getMetadataConfig() { return config.getSubConfig(METADATA_KEY); }
-
-  public Base getBaseTableConfig() { return new Base(config.getSubConfig(TABLE_KEY)); }
+//  public SqrlConfig getMetadataConfig() { return config.getSubConfig(METADATA_KEY); }
+//
+//  public Base getBaseTableConfig() { return new Base(config.getSubConfig(TABLE_KEY)); }
 
   public DataSystemConnectorSettings getConnectorSettings() {
     return connectorSettings;
@@ -177,8 +179,6 @@ public class TableConfig {
     public SqrlConfig.Value<List<String>> getPrimaryKey() {
       return baseConfig.asList(PRIMARYKEY_KEY, String.class);
     }
-
-
 
   }
 
