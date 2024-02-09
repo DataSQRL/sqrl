@@ -198,16 +198,10 @@ public class QueryPlanner {
   @SneakyThrows
   public RelDataType parseDatatype(String datatype) {
     // Addl type aliases
-    if (datatype.equalsIgnoreCase("String")) {
+    if (datatype.equalsIgnoreCase("string")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.VARCHAR);
-    } else if (datatype.equalsIgnoreCase("Int")) {
+    } else if (datatype.equalsIgnoreCase("int")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.INTEGER);
-    } else if (datatype.equalsIgnoreCase("Float")) {
-      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.FLOAT);
-    } else if (datatype.equalsIgnoreCase("boolean")) {
-      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.BOOLEAN);
-    } else if (datatype.equalsIgnoreCase("double")) {
-      return this.cluster.getTypeFactory().createSqlType(SqlTypeName.DOUBLE);
     } else if (datatype.equalsIgnoreCase("datetime")) {
       return this.cluster.getTypeFactory().createSqlType(SqlTypeName.TIMESTAMP);
     }

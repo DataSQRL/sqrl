@@ -38,6 +38,10 @@ public class ImportedRelationalTableImpl extends SourceRelationalTableImpl imple
     this.tableSource = tableSource;
   }
 
+  public TableSource getTableSource() {
+    return tableSource;
+  }
+
   @Override
   public RelDataType getRowType() {
     return baseRowType;
