@@ -67,7 +67,7 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
 
     SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(),
         new ScriptTableDefinition(scriptTableDefinition),
-        tableFactory, null, parameters, isA, materializeSelf, parameters, relNodeSupplier, parameters);
+        tableFactory, null, parameters, isA, materializeSelf, parameters, relNodeSupplier);
 
     nsObj.apply(Optional.empty(), framework, errors);
   }

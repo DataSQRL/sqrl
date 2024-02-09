@@ -25,13 +25,11 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Scrip
   private final boolean materializeSelf;
   private final List<FunctionParameter> functionParameters;
   private final Optional<Supplier<RelNode>> relNodeSupplier;
-  private final List<FunctionParameter> functionParameterList;
 
   public SqrlTableNamespaceObject(Name name, ScriptTableDefinition table, CalciteTableFactory tableFactory,
       SqrlTableFunctionDef args,
       List<FunctionParameter> parameters, List<Function> isA, boolean materializeSelf,
-      List<FunctionParameter> functionParameters, Optional<Supplier<RelNode>> relNodeSupplier,
-      List<FunctionParameter> functionParameterList) {
+      List<FunctionParameter> functionParameters, Optional<Supplier<RelNode>> relNodeSupplier) {
     super(tableFactory, NameCanonicalizer.SYSTEM);
     this.name = name;
     this.table = table;
@@ -41,7 +39,6 @@ public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<Scrip
     this.materializeSelf = materializeSelf;
     this.functionParameters = functionParameters;
     this.relNodeSupplier = relNodeSupplier;
-    this.functionParameterList = functionParameterList;
   }
 
   @Override

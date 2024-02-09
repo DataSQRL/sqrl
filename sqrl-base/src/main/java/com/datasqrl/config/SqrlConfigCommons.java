@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -349,7 +350,19 @@ public class SqrlConfigCommons implements SqrlConfig {
     } catch (ConfigurationException e) {
       throw errors.withConfig(url.toString()).handle(e);
     }
+  }
 
+  public static SqrlConfig fromString(ErrorCollector errors, @NonNull String string) {
+    try {
+      StringReader reader = new StringReader(string);
+
+      JSONConfiguration config = new JSONConfiguration();
+      config.read(reader);
+      String configFilename = "local";
+      return new SqrlConfigCommons(errors.withConfig(configFilename), configFilename, config, "");
+    } catch (ConfigurationException e) {
+      throw errors.withConfig("local").handle(e);
+    }
   }
 
   public static class ValueImpl<T> implements Value<T> {
