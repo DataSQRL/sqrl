@@ -1,14 +1,9 @@
 >>>entrycount$1-lp-STREAM
 LogicalProject(_uuid=[$0], _idx=[$6], price=[-(*($8, $9), $10)], _time=[$4])
-  LogicalCorrelate(correlation=[$cor4], joinType=[inner], requiredColumns=[{5}])
+  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$2]])
-    Uncollect
-      LogicalProject($f0=[$cor4.entries])
-        LogicalValues(tuples=[[{ 0 }]])
+    LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
 
 >>>entrycount$1-lp-DATABASE
-LogicalProject(_uuid=[$0], _idx=[$7], price=[-(*($9, $10), $11)], _time=[$4])
-  LogicalJoin(condition=[=($0, $6)], joinType=[inner])
-    LogicalTableScan(table=[[orders$2]])
-    LogicalTableScan(table=[[entries$1]])
+Stage [database] does not support capabilities: [DENORMALIZE]
 

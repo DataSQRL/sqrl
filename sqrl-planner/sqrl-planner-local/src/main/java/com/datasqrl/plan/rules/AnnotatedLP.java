@@ -130,6 +130,7 @@ public class AnnotatedLP implements RelHolder {
     if (!nowFilter.isEmpty()) {
       return inlineNowFilter(relBuilder, exec).inlineTopN(relBuilder, exec);
     }
+    Preconditions.checkArgument(!timestamp.requiresInlining());
     Preconditions.checkArgument(nowFilter.isEmpty());
 
     relBuilder.push(relNode);
@@ -273,20 +274,6 @@ public class AnnotatedLP implements RelHolder {
         .sort(SortOrder.EMPTY).build();
   }
 
-  public AnnotatedLP inlineTimestamp(RelBuilder relB, ExecutionAnalysis exec) {
-    if (!timestamp.is(Type.AND)) {
-      return this;
-    }
-    //Need to take the greatest of all timestamps
-    SqrlRexUtil rexUtil = new SqrlRexUtil(relB);
-    Preconditions.checkArgument(timestamp.size()>=2);
-    RexNode greatestTimestamp = rexUtil.greatestNotNull(timestamp.asList(), relNode);
-    relB.push(relNode);
-    Timestamps newTimestamp = Timestamps.ofFixed(relNode.getRowType().getFieldCount());
-    rexUtil.appendColumn(relB, greatestTimestamp, ReservedName.SYSTEM_TIMESTAMP.getCanonical());
-    return copy().relNode(relB.build()).timestamp(newTimestamp).build();
-  }
-
   public AnnotatedLP dropSort() {
     return copy().sort(SortOrder.EMPTY).build();
   }
@@ -314,7 +301,7 @@ public class AnnotatedLP implements RelHolder {
     //If stream, timestamp first then pk, otherwise just pk
     List<RelFieldCollation> collations = new ArrayList<>();
     if (alp.getType().isStream()) {
-      collations.add(new RelFieldCollation(alp.getTimestamp().getBestCandidate(),
+      collations.add(new RelFieldCollation(alp.getTimestamp().getOnlyCandidate(),
           RelFieldCollation.Direction.DESCENDING, RelFieldCollation.NullDirection.LAST));
     }
     return new SortOrder(RelCollations.of(collations)).ensurePrimaryKeyPresent(alp.primaryKey);
@@ -332,7 +319,8 @@ public class AnnotatedLP implements RelHolder {
   public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
       ExecutionAnalysis exec, ErrorCollector errors) {
     List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
-    AnnotatedLP input = this.inlineTimestamp(relBuilder, exec);
+    AnnotatedLP input = this;
+    relBuilder.push(input.relNode);
 
     HashMap<Integer, Integer> remapping = new HashMap<>();
     int index = 0;
@@ -366,7 +354,7 @@ public class AnnotatedLP implements RelHolder {
     }
     if (!mappedAny) {
       //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
-      Integer bestCandidate = input.timestamp.getBestCandidate();
+      Integer bestCandidate = input.timestamp.getBestCandidate(relBuilder);
       int nextIndex = index++;
       remapping.put(bestCandidate, nextIndex);
       timestampBuilder.index(nextIndex);

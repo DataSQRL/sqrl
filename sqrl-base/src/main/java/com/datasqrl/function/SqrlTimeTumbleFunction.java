@@ -7,6 +7,11 @@ public interface SqrlTimeTumbleFunction extends TimestampPreservingFunction {
 
   public Specification getSpecification(long[] arguments);
 
+  @Override
+  default boolean preservesSingleTimestampArgument() {
+    return true;
+  }
+
   interface Specification {
 
     long getWindowWidthMillis();

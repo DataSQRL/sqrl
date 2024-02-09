@@ -11,8 +11,10 @@ import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.core.AggregateCall;
@@ -25,6 +27,14 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class TimestampAnalysis {
 
+  /**
+   * Returns an optional with the input index of the preserved timestamp or -1 if multiple timestamps
+   * are preserved together (e.g. in a greatest function call). Returns empty if no timestamp is preserved.
+   *
+   * @param rexNode
+   * @param timestamp
+   * @return
+   */
   public static Optional<Integer> getPreservedTimestamp(
       @NonNull RexNode rexNode, @NonNull Timestamps timestamp) {
     if (!(CalciteUtil.isTimestamp(rexNode.getType()))) {
@@ -36,21 +46,22 @@ public class TimestampAnalysis {
     } else if (rexNode instanceof RexCall) {
       //Determine recursively but ensure there is only one timestamp
       RexCall call = (RexCall) rexNode;
-      if (!isTimestampPreservingFunction(call)) {
-        return Optional.empty();
-      }
-      //The above check guarantees that the call only has one timestamp operand which allows us to return the first (if any)
-      return call.getOperands().stream().map(param -> getPreservedTimestamp(param, timestamp))
-          .filter(Optional::isPresent).findFirst().orElse(Optional.empty());
+      return isTimestampPreservingFunction(call, timestamp);
     } else {
       return Optional.empty();
     }
   }
 
-  private static boolean isTimestampPreservingFunction(RexCall call) {
+  private static Optional<Integer> isTimestampPreservingFunction(RexCall call, Timestamps timestamp) {
     SqlOperator operator = call.getOperator();
     if (operator.getKind().equals(SqlKind.CAST)) {
-      return true;
+      return getPreservedTimestamp(call.getOperands().get(0), timestamp);
+    } else if (call.getOperator().isName("greatest", false)) {
+      if (call.getOperands().stream().map(n -> getPreservedTimestamp(n, timestamp)).allMatch(Optional::isPresent)) {
+        return Optional.of(-1);
+      } else {
+        return Optional.empty();
+      }
     }
     Optional<TimestampPreservingFunction> fnc = Optional.of(operator)
         .flatMap(f-> FunctionUtil.getSqrlFunction(operator))
@@ -59,15 +70,17 @@ public class TimestampAnalysis {
         .filter(TimestampPreservingFunction::isTimestampPreserving);
     if (fnc.isPresent()) {
       //Internal validation that this is a legit timestamp-preserving function
-      long numTimeParams = call.getOperands().stream().map(param -> param.getType())
-          .filter(CalciteUtil::isTimestamp).count();
-      Preconditions.checkArgument(numTimeParams == 1,
-          "%s is an invalid time-preserving function as it allows %s number of timestamp arguments",
-          operator, numTimeParams);
-      return true;
-    } else {
-      return false;
+      Optional<Optional<Integer>> foundTimestamp = call.getOperands().stream().map(node -> getPreservedTimestamp(node, timestamp))
+          .filter(Optional::isPresent).findFirst();
+      if (foundTimestamp.isPresent()) {
+        if (fnc.get().preservesSingleTimestampArgument()) {
+          return foundTimestamp.get();
+        } else {
+          return Optional.of(-1); //Mapping multiple timestamps so there isn't "one" to return.
+        }
+      }
     }
+    return Optional.empty();
   }
 
 

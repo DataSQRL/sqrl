@@ -1,6 +1,8 @@
 package com.datasqrl.plan.table;
 
+import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.plan.util.IndexMap;
+import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -12,6 +14,9 @@ import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.tools.RelBuilder;
 
 @Value
 @Builder
@@ -28,8 +33,7 @@ public class Timestamps {
   public static Timestamps UNDEFINED = new Timestamps(ImmutableSet.of(), Type.UNDEFINED);
 
   public Timestamps(Set<Integer> indexes, Type type) {
-    Preconditions.checkArgument((type==Type.UNDEFINED && indexes.isEmpty()) ||
-        (type!=Type.UNDEFINED && !indexes.isEmpty()), "Invalid timestamp definition");
+    Preconditions.checkArgument(type!=Type.UNDEFINED || indexes.isEmpty(), "Invalid timestamp definition");
     this.indexes = indexes;
     this.type = type;
   }
@@ -47,17 +51,34 @@ public class Timestamps {
   }
 
   public boolean hasCandidates() {
-    Preconditions.checkArgument(is(Type.OR));
     return !indexes.isEmpty();
   }
 
-  public Integer getBestCandidate() {
-    Preconditions.checkArgument(hasCandidates());
+  public Integer getBestCandidate(RelBuilder relB) {
+    if (indexes.isEmpty()) {
+      throw new UnsupportedOperationException("Undefined timestamp does not have candidates");
+    } else if (is(Type.OR) || size()==1) { //Pick first
+      return indexes.stream().sorted().findFirst().get();
+    } else {  // is(Type.AND)
+      SqrlRexUtil rexUtil = new SqrlRexUtil(relB);
+      RelNode input = relB.peek();
+      RexNode greatestTimestamp = rexUtil.greatestNotNull(asList(), input);
+      rexUtil.appendColumn(relB, greatestTimestamp, ReservedName.SYSTEM_TIMESTAMP.getCanonical());
+      return input.getRowType().getFieldCount();
+    }
+  }
+
+  public Integer getAnyCandidate() {
+    Preconditions.checkArgument(is(Type.OR));
     return indexes.stream().sorted().findFirst().get();
   }
 
-  public Timestamps asBest() {
-    return Timestamps.ofFixed(getBestCandidate());
+  public boolean requiresInlining() {
+    return is(Type.AND) && size()>1;
+  }
+
+  public Timestamps asBest(RelBuilder relB) {
+    return Timestamps.ofFixed(getBestCandidate(relB));
   }
 
   public Integer getOnlyCandidate() {
@@ -66,12 +87,10 @@ public class Timestamps {
   }
 
   public boolean isCandidate(int index) {
-    Preconditions.checkArgument(is(Type.OR));
     return indexes.contains(index);
   }
 
   public Predicate<Integer> isCandidatePredicate() {
-    Preconditions.checkArgument(is(Type.OR));
     return indexes::contains;
   }
 
