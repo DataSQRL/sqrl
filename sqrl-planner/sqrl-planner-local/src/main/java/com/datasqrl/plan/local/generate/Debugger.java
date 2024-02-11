@@ -13,6 +13,7 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
+//todo turn to an interface
 @AllArgsConstructor
 public class Debugger {
 

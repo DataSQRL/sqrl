@@ -7,6 +7,7 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.util.StreamUtil;
+import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ public class PhysicalPlanner {
   SqrlFramework framework;
   TableSink errorSink;
 
+  @Inject
   public PhysicalPlanner(SqrlFramework framework, TableSink errorSink) {
     this.framework = framework;
     this.errorSink = errorSink;

@@ -5,17 +5,20 @@ package com.datasqrl.cmd;
 
 import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
-import com.datasqrl.compile.Compiler;
-import com.datasqrl.compile.Compiler.CompilerResult;
+import com.datasqrl.compile.CompilationProcess;
+import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
+import com.datasqrl.inject.SqrlInjector;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import com.datasqrl.packager.repository.RemoteRepositoryImplementation;
 import com.datasqrl.packager.repository.Repository;
 import com.google.common.base.Preconditions;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -66,7 +69,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         this.root.packageFiles, this.profiles, this.files, !noinfer);
     SqrlConfig sqrlConfig = packageBootstrap.bootstrap(repository, errors,
         this::createDefaultConfig,
-        (c)-> postProcessConfig(c));
+        this::postProcessConfig);
 
     Packager packager = new Packager(repository, root.rootDir, sqrlConfig, errors);
     Path path = packager.preprocess();
@@ -75,10 +78,14 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       return;
     }
 
-    Compiler compiler = new Compiler();
     Preconditions.checkArgument(Files.isRegularFile(path));
 
-    Compiler.CompilerResult result = compiler.run(errors, path.getParent(), debug, getTargetDir());
+    DirectoryManager.prepareTargetDirectory(getTargetDir());
+
+    Injector injector = Guice.createInjector(new SqrlInjector(errors, root.rootDir,
+        getTargetDir(), debug, sqrlConfig));
+    CompilationProcess compilationProcess = injector.getInstance(CompilationProcess.class);
+    compilationProcess.executeCompilation();
 
     if (errors.hasErrors()) {
       return;
@@ -88,7 +95,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       addGraphql(root.rootDir.resolve(Packager.BUILD_DIR_NAME), root.rootDir);
     }
 
-    postprocess(packager, result, getTargetDir(), errors);
+    postprocess(packager, getTargetDir(), errors);
   }
 
   public abstract SqrlConfig createDefaultConfig(ErrorCollector errors);
@@ -97,9 +104,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     return config;
   }
 
-  protected void postprocess(Packager packager, CompilerResult result, Path targetDir,
+  protected void postprocess(Packager packager, Path targetDir,
       ErrorCollector errors) {
-    packager.postprocess(result, getTargetDir(), Optional.ofNullable(mountDirectory), profiles);
+    packager.postprocess(getTargetDir(), Optional.ofNullable(mountDirectory), profiles);
   }
 
   protected boolean isGenerateGraphql() {

@@ -86,10 +86,11 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
     APIConnectorManager apiManager = inferSchemaAndQueries(script, schemaPath).getValue();
     // plan dag
-    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
-        apiManager, framework.getSchema().getExports(),
-        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()), null, pipeline,
-        errors, debugger);
+    PhysicalDAGPlan dag = null;
+//    DAGPlanner.plan(framework,
+//        apiManager, framework.getSchema().getExports(),
+//        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()), pipeline,
+//        errors, debugger);
 
     IndexSelector indexSelector = new IndexSelector(framework,
         IndexSelectorConfigByDialect.of("POSTGRES"));

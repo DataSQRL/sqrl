@@ -3,11 +3,9 @@
  */
 package com.datasqrl.cmd;
 
-import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
-import com.ongres.scram.common.bouncycastle.pbkdf2.Pack;
 import java.nio.file.Path;
 import picocli.CommandLine;
 
@@ -20,7 +18,7 @@ public class ValidateCommand extends AbstractCompilerCommand {
   }
 
   @Override
-  protected void postprocess(Packager packager, CompilerResult result, Path targetDir,
+  protected void postprocess(Packager packager, Path targetDir,
       ErrorCollector errors) {
   }
 }

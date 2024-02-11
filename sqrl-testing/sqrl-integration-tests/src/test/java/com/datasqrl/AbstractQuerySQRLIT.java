@@ -74,7 +74,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     PhysicalDAGPlan dag = DAGPlanner.plan(framework,
         modelAndQueries.getRight(), framework.getSchema().getExports(),
         framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
-        modelAndQueries.getMiddle(), pipeline, errors, debugger);
+        pipeline, errors, debugger);
 
     PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
         .plan(dag);

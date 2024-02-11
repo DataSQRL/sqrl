@@ -21,20 +21,19 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 
 public class SqrlOptimizeDag {
 
-  public static PhysicalDAGPlan planDag(
-      SqrlFramework framework,
-      ExecutionPipeline pipeline,
-      APIConnectorManager apiManager,
-      RootGraphqlModel model,
-      boolean includeJars,
-      Debugger debugger,
-      ErrorCollector errors) {
-    return DAGPlanner.plan(framework, apiManager,
-        framework.getSchema().getExports(),
-        includeJars ? framework.getSchema().getJars() : Set.of(),
-        extractFlinkFunctions(framework.getSqrlOperatorTable()), model,pipeline,
-        errors, debugger);
-  }
+//  public static PhysicalDAGPlan planDag(
+//      SqrlFramework framework,
+//      ExecutionPipeline pipeline,
+//      APIConnectorManager apiManager,
+//      boolean includeJars,
+//      Debugger debugger,
+//      ErrorCollector errors) {
+//    return DAGPlanner.plan(framework, apiManager,
+//        framework.getSchema().getExports(),
+//        includeJars ? framework.getSchema().getJars() : Set.of(),
+//        extractFlinkFunctions(framework.getSqrlOperatorTable()), pipeline,
+//        errors, debugger);
+//  }
 
   public static Map<String, UserDefinedFunction> extractFlinkFunctions(OperatorTable sqrlOperatorTable) {
     Map<String, UserDefinedFunction> fncs = new HashMap<>();

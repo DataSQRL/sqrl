@@ -71,7 +71,7 @@ public class DAGAssembler {
 
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model, APIConnectorManager apiManager) {
+       APIConnectorManager apiManager) {
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
       ExecutionStage stage = tableNode.getChosenStage();
@@ -212,7 +212,7 @@ public class DAGAssembler {
 
     if (serverStage.isPresent()) {
       PhysicalDAGPlan.StagePlan serverPlan = new PhysicalDAGPlan.ServerStagePlan(
-          serverStage.get(), model, serverQueries);
+          serverStage.get(), serverQueries);
       allPlans.add(serverPlan);
     }
     Optional<ExecutionStage> logStage = pipeline.getStage(Type.LOG);

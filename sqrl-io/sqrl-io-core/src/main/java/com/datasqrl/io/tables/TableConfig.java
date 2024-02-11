@@ -171,7 +171,7 @@ public class TableConfig {
     getErrors().checkFatal(base.getType().isSink(), "Table is not a sink: %s", name);
     DataSystemConnectorSettings connector = getConnectorSettings();
     Name tableName = getName();
-    return new TableSink(connector,this, basePath.concat(tableName), tableName, schema);
+    return new TableSinkImpl(connector,this, basePath.concat(tableName), tableName, schema);
   }
 
   public DataSystemDiscovery initializeDiscovery() {

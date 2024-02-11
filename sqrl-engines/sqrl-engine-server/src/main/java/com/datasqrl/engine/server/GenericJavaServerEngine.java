@@ -68,22 +68,23 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
-    Preconditions.checkArgument(plan instanceof ServerPhysicalPlan);
-    ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
-    Vertx vertx = this.vertx.orElseGet(Vertx::vertx);
-    CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
-            serverPlan.getModel(), serverPlan.getConfig(), canonicalize))
-        .toCompletionStage()
-        .toCompletableFuture();
-    if (serverPlan.getConfig().getGraphiQLHandlerOptions() != null &&
-        serverPlan.getConfig().getGraphiQLHandlerOptions().isEnabled()) {
-      log.info(String.format("Server started at: %s://%s:%s/%s",
-          serverPlan.getConfig().getHttpServerOptions().isSsl() ? "https" : "http",
-          serverPlan.getConfig().getHttpServerOptions().getHost(),
-          serverPlan.getConfig().getHttpServerOptions().getPort(),
-          serverPlan.getConfig().getGraphiQLHandlerOptions().getGraphQLUri()));
-    }
-    return future.thenApply(Message::new);
+//    Preconditions.checkArgument(plan instanceof ServerPhysicalPlan);
+//    ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
+//    Vertx vertx = this.vertx.orElseGet(Vertx::vertx);
+//    CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
+//            serverPlan.getModel(), serverPlan.getConfig(), canonicalize))
+//        .toCompletionStage()
+//        .toCompletableFuture();
+//    if (serverPlan.getConfig().getGraphiQLHandlerOptions() != null &&
+//        serverPlan.getConfig().getGraphiQLHandlerOptions().isEnabled()) {
+//      log.info(String.format("Server started at: %s://%s:%s/%s",
+//          serverPlan.getConfig().getHttpServerOptions().isSsl() ? "https" : "http",
+//          serverPlan.getConfig().getHttpServerOptions().getHost(),
+//          serverPlan.getConfig().getHttpServerOptions().getPort(),
+//          serverPlan.getConfig().getGraphiQLHandlerOptions().getGraphQLUri()));
+//    }
+//    return future.thenApply(Message::new);
+    return null;
   }
 
   @Override
@@ -97,7 +98,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     Preconditions.checkArgument(engine instanceof JDBCEngine, "Currently the server only supports JDBC databases");
 
     ServerConfig updatedConfig = applyDefaults(serverConfig, ((JDBCEngine)engine).getConnector(), this.port);
-    return new ServerPhysicalPlan(((ServerStagePlan) plan).getModel(), updatedConfig);
+    return new ServerPhysicalPlan(null, updatedConfig);
   }
 
   public static ServerConfig applyDefaults(ServerConfig serverConfig, JdbcDataSystemConnector connector, int port) {

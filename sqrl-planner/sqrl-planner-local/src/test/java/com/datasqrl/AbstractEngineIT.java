@@ -27,7 +27,6 @@ import com.datasqrl.util.DatabaseHandle;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.text.StringSubstitutor;
 import org.apache.flink.configuration.Configuration;

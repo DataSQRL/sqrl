@@ -26,21 +26,36 @@ public class PipelineFactory {
   public static final String ENGINES_PROPERTY = "engines";
 
   @NonNull
-  @Getter //temporary to aid migration until DI is landed
-  private final SqrlConfig config;
+  @Getter
+  private final SqrlConfig engineConfig;
 
-  public PipelineFactory(@NonNull SqrlConfig config) {
-    this.config = config;
+  public PipelineFactory(@NonNull SqrlConfig engineConfig) {
+    this.engineConfig = engineConfig;
   }
 
   public static PipelineFactory fromRootConfig(@NonNull SqrlConfig config) {
     return new PipelineFactory(config.getSubConfig(ENGINES_PROPERTY));
   }
 
+//  public MetadataStoreProvider getMetaDataStoreProvider(Optional<String> engineIdentifier) {
+//    for (String engineId : engineConfig.getKeys()) {
+//      SqrlConfig engineConfig = this.engineConfig.getSubConfig(engineId);
+//      EngineFactory engineFactory = EngineFactory.fromConfig(engineConfig);
+//      if (engineIdentifier.map(id -> id.equalsIgnoreCase(engineId))
+//          .orElse(engineFactory.getEngineType()==Type.DATABASE)) {
+//        this.engineConfig.getErrorCollector().checkFatal(engineFactory instanceof DatabaseEngineFactory,
+//            "Selected or default engine [%s] for metadata is not a database engine", engineId);
+//        return ((DatabaseEngineFactory)engineFactory).getMetadataStore(engineConfig);
+//      }
+//    }
+//    throw engineConfig.getErrorCollector().exception("Could not find database engine for metadata");
+//  }
+//
+
   private Map<String, ExecutionEngine> getEngines(Optional<ExecutionEngine.Type> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
-    for (String engineId : config.getKeys()) {
-      SqrlConfig engineConfig = config.getSubConfig(engineId);
+    for (String engineId : engineConfig.getKeys()) {
+      SqrlConfig engineConfig = this.engineConfig.getSubConfig(engineId);
       EngineFactory engineFactory = EngineFactory.fromConfig(engineConfig);
       if (engineType.map(type -> engineFactory.getEngineType()==type).orElse(true)) {
         engines.put(engineId, engineFactory.initialize(engineConfig));
@@ -55,8 +70,8 @@ public class PipelineFactory {
 
   public Pair<String,ExecutionEngine> getEngine(ExecutionEngine.Type type) {
     Map<String,ExecutionEngine> engines = getEngines(Optional.of(type));
-    config.getErrorCollector().checkFatal(!engines.isEmpty(), "Need to configure a %s engine", type.name().toLowerCase());
-    config.getErrorCollector().checkFatal(engines.size()==1, "Currently support only a single %s engine", type.name().toLowerCase());
+    engineConfig.getErrorCollector().checkFatal(!engines.isEmpty(), "Need to configure a %s engine", type.name().toLowerCase());
+    engineConfig.getErrorCollector().checkFatal(engines.size()==1, "Currently support only a single %s engine", type.name().toLowerCase());
     return Pair.of(engines.entrySet().iterator().next());
   }
 
@@ -70,6 +85,6 @@ public class PipelineFactory {
 
 
   public ExecutionPipeline createPipeline() {
-    return SimplePipeline.of(getEngines(), config.getErrorCollector());
+    return SimplePipeline.of(getEngines(), engineConfig.getErrorCollector());
   }
 }

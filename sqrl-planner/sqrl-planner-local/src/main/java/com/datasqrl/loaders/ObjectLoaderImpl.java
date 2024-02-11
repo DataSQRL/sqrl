@@ -23,6 +23,7 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
@@ -37,15 +38,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@AllArgsConstructor
 public class ObjectLoaderImpl implements ObjectLoader {
 
   public static final String FUNCTION_JSON = ".function.json";
   private static final Predicate<String> DATA_SYSTEM_FILE = Pattern.compile(".*"+FileUtil.toRegex(DataSource.DATASYSTEM_FILE_PREFIX)
       + ".*" + FileUtil.toRegex(DataSource.TABLE_FILE_SUFFIX)+"$").asMatchPredicate();
-  ResourceResolver resourceResolver;
-  ErrorCollector errors;
-  CalciteTableFactory tableFactory;
+  private final ResourceResolver resourceResolver;
+  private final ErrorCollector errors;
+  private final CalciteTableFactory tableFactory;
+
+  @Inject
+  public ObjectLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors, CalciteTableFactory tableFactory) {
+    this.resourceResolver = resourceResolver;
+    this.errors = errors;
+    this.tableFactory = tableFactory;
+  }
 
   final static Deserializer SERIALIZER = new Deserializer();
 

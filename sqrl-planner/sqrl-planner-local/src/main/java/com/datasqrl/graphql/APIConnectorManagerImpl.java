@@ -12,7 +12,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderPreloaded;
 import com.datasqrl.loaders.TableSourceSinkNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
@@ -26,6 +25,8 @@ import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.table.TableType;
 import com.datasqrl.schema.RootSqrlTable;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 @Getter
+@Singleton
 public class APIConnectorManagerImpl implements APIConnectorManager {
 
   private final CalciteTableFactory tableFactory;
@@ -54,8 +56,11 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
   private final List<APIQuery> queries = new ArrayList<>();
 
-  public APIConnectorManagerImpl(CalciteTableFactory tableFactory, ExecutionPipeline pipeline,
-      ErrorCollector errors, ModuleLoader moduleLoader, RelDataTypeFactory typeFactory) {
+  @Inject
+  public APIConnectorManagerImpl(CalciteTableFactory tableFactory,
+      ExecutionPipeline pipeline,
+      ErrorCollector errors, ModuleLoader moduleLoader,
+      RelDataTypeFactory typeFactory) {
     this.tableFactory = tableFactory;
     this.errors = errors;
     this.moduleLoader = moduleLoader;
@@ -132,8 +137,10 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   }
 
   @Override
-  public ModuleLoader getAsModuleLoader() {
-    return ModuleLoaderPreloaded.builder().modules(modules).build();
+  public void updateModuleLoader(ModuleLoader moduleLoader) {
+    for (Map.Entry<NamePath, LogModule> module : modules.entrySet()) {
+      moduleLoader.add(module.getKey(), module.getValue());
+    }
   }
 
   @Override

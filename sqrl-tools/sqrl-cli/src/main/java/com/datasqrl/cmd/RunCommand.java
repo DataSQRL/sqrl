@@ -5,7 +5,6 @@ package com.datasqrl.cmd;
 
 import static com.datasqrl.io.tables.TableConfig.CONNECTOR_KEY;
 
-import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.EngineKeys;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
@@ -72,10 +71,10 @@ public class RunCommand extends AbstractCompilerCommand {
   }
 
   @Override
-  protected void postprocess(Packager packager, CompilerResult result, Path targetDir,
+  protected void postprocess(Packager packager, Path targetDir,
       ErrorCollector errors) {
-    super.postprocess(packager, result, targetDir, errors);
-    executePlan(result.getPlan(), errors);
+    super.postprocess(packager, targetDir, errors);
+//    executePlan(result.getPlan(), errors);
   }
 
   @SneakyThrows

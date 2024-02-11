@@ -29,7 +29,7 @@ public interface APIConnectorManager {
 
   void addQuery(APIQuery query);
 
-  ModuleLoader getAsModuleLoader();
+  void updateModuleLoader(ModuleLoader moduleLoader);
 
   List<Log> getLogs();
 

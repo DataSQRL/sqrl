@@ -7,44 +7,49 @@ import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.util.SqlNameUtil;
-import java.util.List;
+import com.google.inject.Inject;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlStatement;
 
 public class ScriptPlanner {
-  public static void plan(String script, List<ModuleLoader> additionalModules, SqrlFramework framework, ModuleLoader moduleLoader,
-      NameCanonicalizer nameCanonicalizer, ErrorCollector errorCollector) {
+
+  private final SqrlFramework framework;
+  private final ModuleLoader moduleLoader;
+  private final ErrorCollector errorCollector;
+
+  @Inject
+  public ScriptPlanner(SqrlFramework framework, ModuleLoader moduleLoader, ErrorCollector errorCollector) {
+    this.framework = framework;
+    this.moduleLoader = moduleLoader;
+    this.errorCollector = errorCollector;
+  }
+
+  public void plan(MainScript mainScript) {
+    ErrorCollector errors = errorCollector;
     if (errorCollector.getLocation() == null
         || errorCollector.getLocation().getSourceMap() == null) {
-      errorCollector = errorCollector.withSchema("<schema>", script);
+      errors = errorCollector.withSchema("<schema>", mainScript.getContent());
     }
 
     ScriptNode scriptNode;
     try {
       scriptNode = (ScriptNode) framework.getQueryPlanner().parse(Dialect.SQRL,
-          script);
+          mainScript.getContent());
     } catch (Exception e) {
-      throw errorCollector.handle(e);
+      throw errors.handle(e);
     }
 
-    ErrorCollector collector = errorCollector.withScript("<script>", script);
-    plan(scriptNode, additionalModules, moduleLoader, framework, nameCanonicalizer,collector);
+    //wtf is this, fix it
+    ErrorCollector scriptErrors = errorCollector.withScript("<script>", mainScript.getContent());
+    plan(scriptNode, moduleLoader, framework, framework.getNameCanonicalizer(), scriptErrors);
   }
 
-  private static void plan(ScriptNode node, List<ModuleLoader> additionalModules,
+  private static void plan(ScriptNode node,
       ModuleLoader moduleLoader, SqrlFramework framework, NameCanonicalizer nameCanonicalizer,
       ErrorCollector collector) {
-    ModuleLoader updatedModuleLoader = moduleLoader;
-    if (!additionalModules.isEmpty()) {
-      updatedModuleLoader = ModuleLoaderComposite.builder()
-          .moduleLoader(moduleLoader)
-          .moduleLoaders(additionalModules)
-          .build();
-    }
 
     framework.resetPlanner();
     for (SqlNode statement : node.getStatements()) {
@@ -53,7 +58,7 @@ public class ScriptPlanner {
             .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
 
         com.datasqrl.plan.validate.ScriptPlanner validator = new com.datasqrl.plan.validate.ScriptPlanner(framework, framework.getQueryPlanner(),
-            updatedModuleLoader, errors, new SqlNameUtil(nameCanonicalizer), new SqrlPlanningTableFactory(framework));
+            moduleLoader, errors, new SqlNameUtil(nameCanonicalizer), new SqrlPlanningTableFactory(framework));
         validator.validateStatement((SqrlStatement) statement);
         if (errors.hasErrors()) {
           System.out.println(ErrorPrinter.prettyPrint(errors));

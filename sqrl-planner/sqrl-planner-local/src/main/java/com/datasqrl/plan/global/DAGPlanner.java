@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.global;
 
+import com.datasqrl.calcite.OperatorTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -11,11 +12,18 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.util.FunctionUtil;
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
@@ -23,6 +31,24 @@ import org.apache.flink.table.functions.UserDefinedFunction;
  * two stages: stream and database.
  */
 public class DAGPlanner {
+
+  private final SqrlFramework framework;
+  private final APIConnectorManager apiManager;
+  private final ExecutionPipeline pipeline;
+  private final ErrorCollector errors;
+  private final Debugger debugger;
+
+  @Inject
+  public DAGPlanner(SqrlFramework framework, APIConnectorManager apiManager,
+      ExecutionPipeline pipeline, ErrorCollector errors,
+      Debugger debugger) {
+
+    this.framework = framework;
+    this.apiManager = apiManager;
+    this.pipeline = pipeline;
+    this.errors = errors;
+    this.debugger = debugger;
+  }
 
   public static SqrlDAG build(SqrlFramework framework, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports, ExecutionPipeline pipeline, ErrorCollector errors) {
@@ -59,23 +85,37 @@ public class DAGPlanner {
   }
 
   public static PhysicalDAGPlan assemble(SqrlDAG dag, APIConnectorManager apiManager,
-      Set<URL> jars, Map<String, UserDefinedFunction> udfs, RootGraphqlModel model,
+      Set<URL> jars, Map<String, UserDefinedFunction> udfs,
       SqrlFramework framework, SQRLConverter sqrlConverter, ExecutionPipeline pipeline,
       Debugger debugger, ErrorCollector errors) {
     //Stitch DAG together
     DAGAssembler assembler = new DAGAssembler(framework, framework.getQueryPlanner().getPlanner(),
         sqrlConverter, pipeline, debugger, errors);
-    return assembler.assemble(dag, jars, udfs, model, apiManager);
+    return assembler.assemble(dag, jars, udfs, apiManager);
   }
 
-  public static PhysicalDAGPlan plan(SqrlFramework framework, APIConnectorManager apiManager,
-      Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model, ExecutionPipeline pipeline, ErrorCollector errors,
-      Debugger debugger) {
+  public PhysicalDAGPlan plan() {
+    List<ResolvedExport> exports = framework.getSchema().getExports();
+
 
     SqrlDAG dag = build(framework, apiManager, exports, pipeline, errors);
     optimize(dag, pipeline);
-    return assemble(dag, apiManager, jars, udfs, model, framework, new SQRLConverter(framework.getQueryPlanner().getRelBuilder()),
+    return assemble(dag, apiManager, framework.getSchema().getJars(),
+        extractFlinkFunctions(framework.getSqrlOperatorTable()), framework, new SQRLConverter(framework.getQueryPlanner().getRelBuilder()),
         pipeline, debugger, errors);
+  }
+
+  public static Map<String, UserDefinedFunction> extractFlinkFunctions(
+      OperatorTable sqrlOperatorTable) {
+    Map<String, UserDefinedFunction> fncs = new HashMap<>();
+    for (Map.Entry<String, SqlOperator> fnc : sqrlOperatorTable.getUdfs().entrySet()) {
+      Optional<FunctionDefinition> definition = FunctionUtil.getSqrlFunction(fnc.getValue());
+      if (definition.isPresent()) {
+        if (definition.get() instanceof UserDefinedFunction) {
+          fncs.put(fnc.getKey(), (UserDefinedFunction)definition.get());
+        }
+      }
+    }
+    return fncs;
   }
 }

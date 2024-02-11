@@ -62,22 +62,23 @@ public class GraphqlSchemaFactory {
   private final SqrlSchema schema;
   private final boolean addArguments;
   // Root path signifying the 'Query' type.
-  private final Map<NamePath, List<SqrlTableMacro>> objectPathToTables;
+  private Map<NamePath, List<SqrlTableMacro>> objectPathToTables;
   // The path from root
-  private final Map<NamePath, List<SqrlTableMacro>> fieldPathToTables;
+  private Map<NamePath, List<SqrlTableMacro>> fieldPathToTables;
 
   public GraphqlSchemaFactory(SqrlSchema schema, boolean addArguments) {
     this.schema = schema;
     this.addArguments = addArguments;
+
+  }
+
+  public GraphQLSchema generate() {
     this.objectPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(e -> e.getFullPath().popLast(),
             LinkedHashMap::new, Collectors.toList()));
     this.fieldPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(SqrlTableMacro::getAbsolutePath,
             LinkedHashMap::new, Collectors.toList()));
-  }
-
-  public GraphQLSchema generate() {
     for (Map.Entry<NamePath, List<SqrlTableMacro>> path : fieldPathToTables.entrySet()) {
       if (path.getKey().getLast().isHidden()) continue;
 

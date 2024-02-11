@@ -19,38 +19,40 @@ import java.util.List;
 import java.util.Map;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlSet;
+import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.injector.PostplanHook;
 
 /**
  */
-public class FlinkSqlPostprocessor implements Postprocessor {
+public class FlinkSqlPostprocessor implements PostplanHook {
 
   @Override
-  public void process(ProcessorContext context) {
-    FlinkSqlGenerator flinkSqlGenerator = new FlinkSqlGenerator();
-    FlinkExecutablePlan executablePlan = context.getCompilerResult().getPlan()
-        .getPlans(FlinkStreamPhysicalPlan.class).findFirst().get()
-        .getExecutablePlan();
-    try {
-      List<SqlNode> flinkSql = executablePlan.accept(flinkSqlGenerator,
-          new FlinkSqlGenerator.FlinkSqlContext());
-      SqlNodeToString sqlNodeToString = SqlToStringFactory.get(Dialect.CALCITE);
-      Map<String, String> config = new LinkedHashMap<>();
-      List<String> plan = new ArrayList<>();
-      for (SqlNode sqlNode : flinkSql) {
-        if (sqlNode instanceof SqlSet) {
-          SqlSet set = (SqlSet)sqlNode;
-          config.put(set.getKeyString(), set.getValueString());
-        } else {
-          plan.add(sqlNodeToString.convert(() -> sqlNode).getSql() + ";");
-        }
-      }
-      Path planPath = context.getTargetDir().resolve(PLAN_SQL);
-      Path configPath = context.getTargetDir().resolve(PLAN_CONFIG);
-      new Deserializer().writeYML(configPath, config);
-      Files.writeString(planPath, String.join(PLAN_SEPARATOR, plan));
-
-    } catch (Exception e) {
-      //allowed to fail, fallback on legacy flink-plan.json
-    }
+  public void runHook(PhysicalPlan plan) {
+//    FlinkSqlGenerator flinkSqlGenerator = new FlinkSqlGenerator();
+//    FlinkExecutablePlan executablePlan = context.getPhysicalPlan().get()
+//        .getPlans(FlinkStreamPhysicalPlan.class).findFirst().get()
+//        .getExecutablePlan();
+//    try {
+//      List<SqlNode> flinkSql = executablePlan.accept(flinkSqlGenerator,
+//          new FlinkSqlGenerator.FlinkSqlContext());
+//      SqlNodeToString sqlNodeToString = SqlToStringFactory.get(Dialect.CALCITE);
+//      Map<String, String> config = new LinkedHashMap<>();
+//      List<String> plan = new ArrayList<>();
+//      for (SqlNode sqlNode : flinkSql) {
+//        if (sqlNode instanceof SqlSet) {
+//          SqlSet set = (SqlSet)sqlNode;
+//          config.put(set.getKeyString(), set.getValueString());
+//        } else {
+//          plan.add(sqlNodeToString.convert(() -> sqlNode).getSql() + ";");
+//        }
+//      }
+//      Path planPath = context.getTargetDir().resolve(PLAN_SQL);
+//      Path configPath = context.getTargetDir().resolve(PLAN_CONFIG);
+//      new Deserializer().writeYML(configPath, config);
+//      Files.writeString(planPath, String.join(PLAN_SEPARATOR, plan));
+//
+//    } catch (Exception e) {
+//      //allowed to fail, fallback on legacy flink-plan.json
+//    }
   }
 }

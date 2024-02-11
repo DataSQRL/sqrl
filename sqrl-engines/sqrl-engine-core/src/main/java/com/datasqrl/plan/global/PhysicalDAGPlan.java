@@ -89,8 +89,6 @@ public class PhysicalDAGPlan {
     @NonNull
     ExecutionStage stage;
 
-    RootGraphqlModel model;
-
     List<ReadQuery> queries;
   }
 
