@@ -52,29 +52,24 @@ public class DAGBuilder {
     //1. Add all queries as sinks
     List<ExecutionStage> readStages = pipeline.getReadStages();
     if (readStages.isEmpty()) {
-      export(readStages, exports, table2Node, dagInputs);
+      export(exports, table2Node, dagInputs);
       return new SqrlDAG(dagInputs);
     }
-    errors.checkFatal(!readStages.isEmpty(), "Configured Pipeline does not include"
-        + " any read stages to execute API queries: %s",pipeline);
     for (AnalyzedAPIQuery query : queries) {
       add2DAG(query.getRelNode(), query.getBaseConfig(), readStages, dagInputs,
           stageAnalysis -> new QueryNode(stageAnalysis, query), table2Node);
     }
     //2. Add all exports as sinks
-    export(readStages, exports, table2Node, dagInputs);
-
+    export(exports, table2Node, dagInputs);
     return new SqrlDAG(dagInputs);
   }
 
-  private void export(List<ExecutionStage> readStages, Collection<ResolvedExport> exports,
+  private void export(Collection<ResolvedExport> exports,
       Map<PhysicalRelationalTable, TableNode> table2Node, Multimap<SqrlNode, SqrlNode> dagInputs) {
     int numExports = 1;
     List<ExecutionStage> exportStages = pipeline.getStages().stream().filter(s -> s.supports(
         EngineCapability.EXPORT)).collect(Collectors.toList());
     if (exportStages.isEmpty()) return;
-    errors.checkFatal(!exportStages.isEmpty(), "Configured Pipeline does not include "
-        + "any stages that support export: %s",pipeline);
     for (ResolvedExport export : exports) {
       String name = Name.addSuffix(export.getTable(), String.valueOf(numExports++));
       add2DAG(export.getRelNode(), getExportBaseConfig(), exportStages, dagInputs,

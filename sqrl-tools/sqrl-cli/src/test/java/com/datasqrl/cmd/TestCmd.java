@@ -4,6 +4,7 @@
  */
 package com.datasqrl.cmd;
 
+import static com.datasqrl.PlanConstants.PLAN_SQL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,9 +32,12 @@ import org.junit.jupiter.api.TestInfo;
 public class TestCmd {
 
   private static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");
-  private static final Path SUBSCRIPTION_PATH = Paths.get("src/test/resources/subscriptions");
-  private static final Path CC_PATH = Paths.get("src/test/resources/creditcard");
-  private static final Path PROFILES_PATH = Paths.get("src/test/resources/profiles");
+
+  private static final Path RESOURCES = Paths.get("src/test/resources/");
+  private static final Path SUBSCRIPTION_PATH = RESOURCES.resolve("subscriptions");
+  private static final Path CC_PATH = RESOURCES.resolve("creditcard");
+  private static final Path PROFILES_PATH = RESOURCES.resolve("profiles");
+  private static final Path AVRO_PATH = RESOURCES.resolve("avro");
 
   protected Path buildDir = null;
   SnapshotTest.Snapshot snapshot;
@@ -174,6 +178,38 @@ public class TestCmd {
         () -> String.format("Schema file could not be found: %s", schemaFile));
     Files.deleteIfExists(schemaFile);
     createSnapshot();
+  }
+
+  @Test
+  public void compileAvroWOdatabase() {
+    compileAvro("packageWOdatabase.json");
+  }
+
+  @Test
+  public void compileAvroWOserver() {
+    compileAvro("packageWOserver.json");
+  }
+
+  @Test
+  public void compileAvroWserverdatabase() {
+    compileAvro("packageWserverdatabase.json");
+  }
+
+  private void compileAvro(String pkg) {
+    buildDir = AVRO_PATH.resolve("build");
+    execute(AVRO_PATH, "compile",
+        "c360.sqrl",
+        "-t", OUTPUT_DIR.toString(),
+        "-c", AVRO_PATH.resolve(pkg).toString(),
+        "--nolookup");
+    snapshotSql();
+  }
+
+  @SneakyThrows
+  private void snapshotSql() {
+    snapshot.addContent(Files.readString(OUTPUT_DIR.resolve(PLAN_SQL)),
+        "sql");
+    snapshot.createOrValidate();
   }
 
   @Test
