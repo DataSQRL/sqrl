@@ -143,7 +143,7 @@ public class QueryPlanner {
         .withSource("")
         .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
     ScriptPlanner scriptPlanner = new ScriptPlanner(this.framework,
-        this, moduleLoader, errors, sqlNameUtil, tableFactory);
+        moduleLoader, errors, sqlNameUtil, tableFactory);
     scriptPlanner.validateStatement(statement);
     if (errors.hasErrors()) {
       throw new RuntimeException("Could not plan");

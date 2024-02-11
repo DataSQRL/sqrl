@@ -22,6 +22,7 @@ import com.datasqrl.calcite.visitor.SqlTopLevelRelationVisitor;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
@@ -33,6 +34,8 @@ import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
+import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rel.LogicalStream;
 import com.datasqrl.schema.Multiplicity;
@@ -106,17 +109,15 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.tuple.Pair;
 
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_=@Inject)
 @Getter
 public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
   private final SqrlFramework framework;
-  private final QueryPlanner planner;
   private final ModuleLoader moduleLoader;
   private final ErrorCollector errorCollector;
   private final SqlNameUtil nameUtil;
   private final SqrlTableFactory tableFactory;
-
 
   private final Map<SqrlImportDefinition, List<QualifiedImport>> importOps = new HashMap<>();
   private final Map<SqrlExportDefinition, QualifiedExport> exportOps = new HashMap<>();
@@ -222,6 +223,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     NamePath path = nameUtil.toNamePath(node.getIdentifier().names);
     exportOps.put(node, new QualifiedExport(path, sink.get()));
 
+    QueryPlanner planner = framework.getQueryPlanner();
     QualifiedExport export = getExportOps().get(node);
     ModifiableTable table = planner.getCatalogReader().getTableFromPath(export.getTable())
         .unwrap(ModifiableTable.class);
@@ -336,7 +338,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     }
 //    NamePath path = nameUtil.toNamePath(node.getIdentifier().names).popLast();
 //    RelOptTable table = planner.getCatalogReader().getTableFromPath(path);
-    RexNode rexNode = planner.planExpression(node.getExpression(), table.get().getRowType());
+    RexNode rexNode = framework.getQueryPlanner().planExpression(node.getExpression(), table.get().getRowType());
     addColumn(rexNode, Util.last(node.getIdentifier().names), table.get());
 
     return null;
@@ -359,6 +361,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     if (errorCollector.hasErrors()) {
       return null;
     }
+    QueryPlanner planner = framework.getQueryPlanner();
     SqlNode node = getPreprocessSql().get(assignment);
     boolean materializeSelf = getIsMaterializeTable().get(assignment);
     NamePath parentPath = nameUtil.getParentPath(assignment);
@@ -429,6 +432,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
    */
   public void validateTable(SqrlAssignment statement, SqlNode query,
       Optional<SqrlTableFunctionDef> tableArgs, boolean materializeSelf) {
+    QueryPlanner planner = framework.getQueryPlanner();
     SqlValidator validator = planner.createSqlValidator();
 
     Optional<SqrlTableMacro> parentTable = Optional.empty();
@@ -550,7 +554,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       SqlNode query,
       boolean materializeSelf, SqrlTableFunctionDef sqrlTableFunctionDef) {
     List<FunctionParameter> parameterList = toParams(sqrlTableFunctionDef.getParameters(),
-        planner.createSqlValidator());
+        framework.getQueryPlanner().createSqlValidator());
 
     SqlNode node = SqlNodeVisitor.accept(new SqlRelationVisitor<>() {
 
@@ -661,7 +665,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           if (parentTable.isEmpty()) {
             throw addError(ErrorLabel.GENERIC, id, "Cannot derive argument on root table");
           }
-          RelDataTypeField field = planner.getCatalogReader().nameMatcher().field(
+          RelDataTypeField field = framework.getQueryPlanner().getCatalogReader().nameMatcher().field(
               parentTable.get().getRowType(), name);
           if (field == null) {
             throw addError(ErrorLabel.GENERIC, id, "Cannot find field on parent table");
@@ -817,7 +821,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
       return;
     }
 
-    Collection<Function> tableFunction = planner.getSchema().getFunctions(path.getDisplay(), false);
+    Collection<Function> tableFunction = framework.getQueryPlanner().getSchema().getFunctions(path.getDisplay(), false);
     if (tableFunction.isEmpty()) {
       addError(ErrorLabel.GENERIC, node, "Cannot column or query to table");
     }
@@ -888,7 +892,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
     RexNode rexNode = table.flatMap(t -> {
           try {
-            return Optional.of(planner.planExpression(node.getTimestamp(), t.getRowType()));
+            return Optional.of(framework.getQueryPlanner().planExpression(node.getTimestamp(), t.getRowType()));
           } catch (Exception e) {
             throw addError(ErrorLabel.GENERIC, node.getTimestamp(), e.getMessage());
           }
@@ -998,5 +1002,50 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
 
   public void validateStatement(SqrlStatement sqlNode) {
     SqlNodeVisitor.accept(this, sqlNode, null);
+  }
+
+  public void plan(MainScript mainScript) {
+    ErrorCollector errors = errorCollector;
+    if (errorCollector.getLocation() == null
+        || errorCollector.getLocation().getSourceMap() == null) {
+      errors = errorCollector.withSchema("<schema>", mainScript.getContent());
+    }
+
+    ScriptNode scriptNode;
+    try {
+      scriptNode = (ScriptNode) framework.getQueryPlanner().parse(Dialect.SQRL,
+          mainScript.getContent());
+    } catch (Exception e) {
+      throw errors.handle(e);
+    }
+
+    //wtf is this, fix it
+    ErrorCollector scriptErrors = errorCollector.withScript("<script>", mainScript.getContent());
+
+    framework.resetPlanner();
+    for (SqlNode statement : scriptNode.getStatements()) {
+      try {
+        ErrorCollector lineErrors = scriptErrors
+            .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
+
+        validateStatement((SqrlStatement) statement);
+        if (lineErrors.hasErrors()) {
+          throw new CollectedException(new RuntimeException("Script cannot validate"));
+        }
+      } catch (CollectedException e) {
+        throw e;
+      } catch (Exception e) {
+        //Print stack trace for unknown exceptions
+        if (e.getMessage() == null || e instanceof IllegalStateException
+            || e instanceof NullPointerException) {
+          e.printStackTrace();
+        }
+
+        ErrorCollector statementErrors = scriptErrors
+            .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
+
+        throw statementErrors.handle(e);
+      }
+    }
   }
 }
