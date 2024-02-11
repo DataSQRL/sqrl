@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
@@ -30,6 +31,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of
  * two stages: stream and database.
  */
+@AllArgsConstructor(onConstructor_=@Inject)
 public class DAGPlanner {
 
   private final SqrlFramework framework;
@@ -37,18 +39,6 @@ public class DAGPlanner {
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
   private final Debugger debugger;
-
-  @Inject
-  public DAGPlanner(SqrlFramework framework, APIConnectorManager apiManager,
-      ExecutionPipeline pipeline, ErrorCollector errors,
-      Debugger debugger) {
-
-    this.framework = framework;
-    this.apiManager = apiManager;
-    this.pipeline = pipeline;
-    this.errors = errors;
-    this.debugger = debugger;
-  }
 
   public static SqrlDAG build(SqrlFramework framework, APIConnectorManager apiManager,
       Collection<ResolvedExport> exports, ExecutionPipeline pipeline, ErrorCollector errors) {

@@ -7,7 +7,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
-import com.datasqrl.plan.ScriptPlanner;
 import org.junit.jupiter.api.AfterEach;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {

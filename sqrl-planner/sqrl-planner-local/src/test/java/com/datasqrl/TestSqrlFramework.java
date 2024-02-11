@@ -10,6 +10,12 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
+import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.TableConverter;
+import com.datasqrl.plan.table.TableIdFactory;
+import com.datasqrl.util.SqlNameUtil;
+import com.google.inject.Inject;
+import lombok.AllArgsConstructor;
 import lombok.experimental.Delegate;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqrlStatement;
@@ -43,7 +49,9 @@ public class TestSqrlFramework extends SqrlFramework {
     public TestQueryPlanner planSqrl(String statement) {
       try {
         planSqrl(parseSqrlStatement(statement),
-            new SqrlPlanningTableFactory(getFramework()), moduleLoader, errors);
+            new SqrlPlanningTableFactory(getFramework(), new SqlNameUtil(getFramework().getNameCanonicalizer()),
+                new CalciteTableFactory(new TableIdFactory(getFramework().getTableNameToIdMap()),
+                    new TableConverter(getFramework().getTypeFactory(), getFramework().getNameCanonicalizer()))), moduleLoader, errors);
       } catch (Exception e) {
         System.out.println(ErrorPrinter.prettyPrint(errors));
         throw e;

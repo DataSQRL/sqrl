@@ -15,25 +15,21 @@ import com.google.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
 
 @Getter
+@AllArgsConstructor(onConstructor_=@Inject)
 public class CalciteTableFactory {
 
   private final TableIdFactory tableIdFactory;
   private final TableConverter tableConverter;
 
-  @Inject
   public CalciteTableFactory(SqrlFramework framework) {
     this(new TableIdFactory(framework.getTableNameToIdMap()),
         new TableConverter(framework.getTypeFactory(), framework.getNameCanonicalizer()));
-  }
-
-  public CalciteTableFactory(TableIdFactory tableIdFactory, TableConverter tableConverter) {
-    this.tableIdFactory = tableIdFactory;
-    this.tableConverter = tableConverter;
   }
 
   public ImportedRelationalTableImpl createImportedTable(RelDataType rootType,

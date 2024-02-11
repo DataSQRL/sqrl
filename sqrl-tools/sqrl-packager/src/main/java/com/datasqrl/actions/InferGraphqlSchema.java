@@ -1,11 +1,10 @@
-package com.datasqrl.hooks;
+package com.datasqrl.actions;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.CompilerConfiguration;
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -15,61 +14,40 @@ import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.inject.AutoBind;
-import com.datasqrl.injector.PostcompileHook;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.packager.config.ScriptFiles;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.util.SqlNameUtil;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.SchemaPrinter;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.calcite.jdbc.SqrlSchema;
 
 /**
  * Creates new table functions from the graphql schema
  */
-@AutoBind(PostcompileHook.class)
-public class GraphqlInferencePostcompileHook implements PostcompileHook {
+@AllArgsConstructor(onConstructor_=@Inject)
+public class InferGraphqlSchema {
 
   private final ExecutionPipeline pipeline;
   private final SqrlFramework framework;
-  private final Map<String, Optional<String>> scriptFiles;
+  private final ScriptFiles scriptFiles;
   private final ResourceResolver resourceResolver;
   private final CompilerConfiguration compilerConfig;
   private final ErrorCollector errorCollector;
   private final APIConnectorManager apiManager;
   private final ModuleLoader moduleLoader;
-
-  @Inject
-  public GraphqlInferencePostcompileHook(ExecutionPipeline pipeline,
-      SqrlFramework framework, SqrlConfig config,
-      ResourceResolver resourceResolver,
-      CompilerConfiguration compilerConfig, ErrorCollector errorCollector,
-      APIConnectorManager apiManager, ModuleLoader moduleLoader) {
-    this.pipeline = pipeline;
-
-    this.framework = framework;
-    this.resourceResolver = resourceResolver;
-    this.compilerConfig = compilerConfig;
-    this.errorCollector = errorCollector;
-    this.apiManager = apiManager;
-    this.moduleLoader = moduleLoader;
-
-    scriptFiles = ScriptConfiguration.getFiles(config);
-    Preconditions.checkArgument(!scriptFiles.isEmpty());
-  }
 
   @SneakyThrows
   public static String inferGraphQLSchema(SqrlSchema schema,
@@ -82,13 +60,6 @@ public class GraphqlInferencePostcompileHook implements PostcompileHook {
 
     return new SchemaPrinter(opts).print(gqlSchema);
   }
-
-  @Override
-  public void runHook() {
-    throw new RuntimeException("tbd");
-    //todo migrate graphql to add table functions
-  }
-
   public void run() {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {
       if (pipeline.getStage(Type.DATABASE).isPresent()) {

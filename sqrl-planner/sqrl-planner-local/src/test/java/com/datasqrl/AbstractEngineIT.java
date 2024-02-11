@@ -23,6 +23,8 @@ import com.datasqrl.plan.local.analyze.MockModuleLoader;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.TableConverter;
+import com.datasqrl.plan.table.TableIdFactory;
 import com.datasqrl.util.DatabaseHandle;
 import java.nio.file.Path;
 import java.util.Map;
@@ -63,7 +65,9 @@ public abstract class AbstractEngineIT {
         : Map.of();
 
     this.moduleLoader = createModuleLoader(rootDir, addlModules, errors,
-        errorDir, new CalciteTableFactory(framework));
+        errorDir, new CalciteTableFactory(new TableIdFactory(framework.getTableNameToIdMap()),
+            new TableConverter(framework.getTypeFactory(),
+            framework.getNameCanonicalizer())));
     this.nameCanonicalizer = NameCanonicalizer.SYSTEM;
     this.errorSink = new ErrorSink(loadSink(settings.getErrorSink(), errors, moduleLoader));
 

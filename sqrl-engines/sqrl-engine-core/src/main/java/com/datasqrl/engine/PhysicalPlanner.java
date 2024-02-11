@@ -11,16 +11,12 @@ import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor(onConstructor_=@Inject)
 public class PhysicalPlanner {
   SqrlFramework framework;
   TableSink errorSink;
-
-  @Inject
-  public PhysicalPlanner(SqrlFramework framework, TableSink errorSink) {
-    this.framework = framework;
-    this.errorSink = errorSink;
-  }
 
   public PhysicalPlan plan(PhysicalDAGPlan plan) {
     List<PhysicalPlan.StagePlan> physicalStages = new ArrayList<>();

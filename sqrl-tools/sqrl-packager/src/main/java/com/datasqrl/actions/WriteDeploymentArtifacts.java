@@ -1,7 +1,7 @@
-package com.datasqrl.hooks;
+package com.datasqrl.actions;
 
+import static com.datasqrl.actions.InferGraphqlSchema.inferGraphQLSchema;
 import static com.datasqrl.engine.server.ServerPhysicalPlan.getModelFileName;
-import static com.datasqrl.hooks.GraphqlInferencePostcompileHook.inferGraphQLSchema;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
@@ -9,51 +9,44 @@ import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.injector.PostplanHook;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.packager.config.ScriptFiles;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.serializer.Deserializer;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
 import java.util.Optional;
 import lombok.SneakyThrows;
 
-public class WriteDeploymentArtifacts implements PostplanHook {
+public class WriteDeploymentArtifacts {
 
   private final SqrlFramework framework;
-  private final Map<String, Optional<String>> scriptFiles;
+  @Named("buildDir")
   private final Path buildDir;
+  @Named("targetDir")
   private final Path targetDir;
   private final ResourceResolver resourceResolver;
   private final CompilerConfiguration compilerConfig;
+  private final ScriptFiles scriptFiles;
 
   @Inject
   public WriteDeploymentArtifacts(
       SqrlFramework framework, SqrlConfig config,
       ResourceResolver resourceResolver,
       CompilerConfiguration compilerConfig,
+      ScriptFiles scriptFiles,
       @Named("buildDir") Path buildDir,
       @Named("targetDir") Path targetDir) {
-
     this.framework = framework;
     this.resourceResolver = resourceResolver;
     this.compilerConfig = compilerConfig;
-
-    scriptFiles = ScriptConfiguration.getFiles(config);
+    this.scriptFiles = scriptFiles;
     this.buildDir = buildDir;
     this.targetDir = targetDir;
-    Preconditions.checkArgument(!scriptFiles.isEmpty());
-  }
-
-  @Override
-  public void runHook(PhysicalPlan plan) {
-    throw new RuntimeException("tbd");
   }
 
   public void run(Optional<RootGraphqlModel> model, PhysicalPlan physicalPlan) {

@@ -3,6 +3,7 @@ package com.datasqrl.plan.local.analyze;
 import com.datasqrl.TestModuleFactory;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.config.LogEngineSupplier;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -23,7 +24,7 @@ public class MockAPIConnectorManager implements APIConnectorManager {
 
     apiConnectorManager  = new APIConnectorManagerImpl(
         new CalciteTableFactory(framework),
-        pipeline,
+        new LogEngineSupplier(pipeline),
         errors,
         new MockModuleLoader(null, TestModuleFactory.createRetail(framework), Optional.empty()),
         new TypeFactory()

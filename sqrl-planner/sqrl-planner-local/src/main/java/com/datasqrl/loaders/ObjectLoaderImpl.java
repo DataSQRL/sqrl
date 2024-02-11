@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor(onConstructor_=@Inject)
 public class ObjectLoaderImpl implements ObjectLoader {
 
   public static final String FUNCTION_JSON = ".function.json";
@@ -46,13 +47,6 @@ public class ObjectLoaderImpl implements ObjectLoader {
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
   private final CalciteTableFactory tableFactory;
-
-  @Inject
-  public ObjectLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors, CalciteTableFactory tableFactory) {
-    this.resourceResolver = resourceResolver;
-    this.errors = errors;
-    this.tableFactory = tableFactory;
-  }
 
   final static Deserializer SERIALIZER = new Deserializer();
 

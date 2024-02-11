@@ -16,6 +16,7 @@ import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.util.SqlNameUtil;
+import com.google.inject.Inject;
 import java.util.Arrays;
 import lombok.Getter;
 import lombok.SneakyThrows;

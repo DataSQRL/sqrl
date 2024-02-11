@@ -10,22 +10,18 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.parse.SqrlAstException;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
+import lombok.AllArgsConstructor;
 import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlStatement;
 
+@AllArgsConstructor(onConstructor_=@Inject)
 public class ScriptPlanner {
 
   private final SqrlFramework framework;
   private final ModuleLoader moduleLoader;
   private final ErrorCollector errorCollector;
-
-  @Inject
-  public ScriptPlanner(SqrlFramework framework, ModuleLoader moduleLoader, ErrorCollector errorCollector) {
-    this.framework = framework;
-    this.moduleLoader = moduleLoader;
-    this.errorCollector = errorCollector;
-  }
+  private final SqrlPlanningTableFactory planningTableFactory;
 
   public void plan(MainScript mainScript) {
     ErrorCollector errors = errorCollector;
@@ -44,12 +40,10 @@ public class ScriptPlanner {
 
     //wtf is this, fix it
     ErrorCollector scriptErrors = errorCollector.withScript("<script>", mainScript.getContent());
-    plan(scriptNode, moduleLoader, framework, framework.getNameCanonicalizer(), scriptErrors);
+    plan(scriptNode, scriptErrors);
   }
 
-  private static void plan(ScriptNode node,
-      ModuleLoader moduleLoader, SqrlFramework framework, NameCanonicalizer nameCanonicalizer,
-      ErrorCollector collector) {
+  private void plan(ScriptNode node, ErrorCollector collector) {
 
     framework.resetPlanner();
     for (SqlNode statement : node.getStatements()) {
@@ -58,10 +52,9 @@ public class ScriptPlanner {
             .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
 
         com.datasqrl.plan.validate.ScriptPlanner validator = new com.datasqrl.plan.validate.ScriptPlanner(framework, framework.getQueryPlanner(),
-            moduleLoader, errors, new SqlNameUtil(nameCanonicalizer), new SqrlPlanningTableFactory(framework));
+            moduleLoader, errors, new SqlNameUtil(framework.getNameCanonicalizer()), planningTableFactory);
         validator.validateStatement((SqrlStatement) statement);
         if (errors.hasErrors()) {
-          System.out.println(ErrorPrinter.prettyPrint(errors));
           throw new CollectedException(new RuntimeException("Script cannot validate"));
         }
       } catch (CollectedException e) {

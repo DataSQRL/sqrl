@@ -1,4 +1,4 @@
-package com.datasqrl.hooks;
+package com.datasqrl.actions;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
@@ -11,42 +11,24 @@ import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
-import com.datasqrl.inject.AutoBind;
-import com.datasqrl.injector.PostplanHook;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.packager.config.ScriptFiles;
 import com.datasqrl.plan.queries.APISource;
 import com.google.inject.Inject;
 import graphql.schema.idl.SchemaParser;
 import java.util.Map;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 
-@AutoBind(PostplanHook.class)
-public class GraphqlPostplanHook implements PostplanHook {
+@AllArgsConstructor(onConstructor_=@Inject)
+public class GraphqlPostplanHook {
 
   private final ExecutionPipeline pipeline;
   private final SqrlFramework framework;
-  private final Map<String, Optional<String>> scriptFiles;
   private final ResourceResolver resourceResolver;
   private final APIConnectorManager apiManager;
-
-  @Inject
-  public GraphqlPostplanHook(ExecutionPipeline pipeline, SqrlFramework framework,
-      SqrlConfig config, ResourceResolver resourceResolver,
-      APIConnectorManager apiManager) {
-    this.pipeline = pipeline;
-    this.framework = framework;
-
-    scriptFiles = ScriptConfiguration.getFiles(config);
-    this.resourceResolver = resourceResolver;
-    this.apiManager = apiManager;
-  }
-
-  @Override
-  public void runHook(PhysicalPlan plan) {
-    throw new RuntimeException("tbd");
-    //todo: migrate graphql inference to simpler two-step process
-  }
+  private final ScriptFiles scriptFiles;
 
   public Optional<RootGraphqlModel> run(PhysicalPlan physicalPlan) {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {

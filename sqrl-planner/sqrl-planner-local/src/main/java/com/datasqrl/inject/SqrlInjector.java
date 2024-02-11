@@ -1,7 +1,9 @@
 package com.datasqrl.inject;
 
 import com.datasqrl.MainScriptImpl;
+import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigDebugger;
@@ -22,6 +24,7 @@ import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -63,26 +66,8 @@ public class SqrlInjector extends AbstractModule {
     bind(Debugger.class).to(SqrlConfigDebugger.class);
     bind(TableSink.class).to(SqrlConfigTableSink.class);
     bind(CompilerConfiguration.class).to(SqrlCompilerConfiguration.class);
-
-//    Reflections reflections = new Reflections("com.datasqrl");
-//    Set<Class<?>> annotated = reflections.getTypesAnnotatedWith(AutoBind.class);
-
-
-//    autobind(annotated, PrecompileHook.class);
-//    autobind(annotated, PostcompileHook.class);
-//    autobind(annotated, PostplanHook.class);
+    bind(SqrlTableFactory.class).to(SqrlPlanningTableFactory.class);
   }
-
-//  private void autobind(Set<Class<?>> annotated, Class<?> toFind) {
-//    Multibinder binder = Multibinder.newSetBinder(binder(), toFind);
-//
-//    for (Class<?> clazz : annotated) {
-//      AutoBind annotation = clazz.getAnnotation(AutoBind.class);
-//      if (toFind.isAssignableFrom(clazz) && annotation.value() == toFind) {
-//        binder.addBinding().to(clazz);
-//      }
-//    }
-//  }
 
   @Provides
   @Named("rootDir")
@@ -111,6 +96,11 @@ public class SqrlInjector extends AbstractModule {
   @Provides
   public ResourceResolver provideResourceResolver() {
     return new FileResourceResolver(this.rootDir);
+  }
+
+  @Provides
+  public NameCanonicalizer provideNameCanonicalizer() {
+    return NameCanonicalizer.SYSTEM;
   }
 
   @Provides

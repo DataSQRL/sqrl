@@ -14,8 +14,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
+@AllArgsConstructor(onConstructor_=@Inject)
 public class MainScriptImpl implements MainScript {
 
   public static final String SCRIPT_KEY = "script";
@@ -25,12 +27,6 @@ public class MainScriptImpl implements MainScript {
 
   private final SqrlConfig config;
   private final ResourceResolver resourceResolver;
-
-  @Inject
-  public MainScriptImpl(SqrlConfig config, ResourceResolver resourceResolver) {
-    this.config = config;
-    this.resourceResolver = resourceResolver;
-  }
 
   public String getContent() {
     URI mainScript = getMainScript(config).flatMap(resourceResolver::resolveFile)

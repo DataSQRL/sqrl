@@ -1,4 +1,4 @@
-package com.datasqrl.hooks;
+package com.datasqrl.actions;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.SqrlConfig;
@@ -6,20 +6,18 @@ import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
-import com.datasqrl.inject.AutoBind;
-import com.datasqrl.injector.PrecompileHook;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.plan.queries.APISource;
-import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 
-@AutoBind(PrecompileHook.class)
-public class AnalyzeGqlSchemaHook implements PrecompileHook {
+@AllArgsConstructor(onConstructor_=@Inject)
+public class AnalyzeGqlSchema {
 
   private final ExecutionPipeline pipeline;
   private final SqrlFramework framework;
@@ -28,21 +26,7 @@ public class AnalyzeGqlSchemaHook implements PrecompileHook {
   private final APIConnectorManager apiManager;
   private final ModuleLoader moduleLoader;
 
-  @Inject
-  public AnalyzeGqlSchemaHook(ExecutionPipeline pipeline, SqrlFramework framework,
-      SqrlConfig config, ResourceResolver resourceResolver,
-      APIConnectorManager apiManager, ModuleLoader moduleLoader) {
-    this.pipeline = pipeline;
-
-    this.framework = framework;
-    this.config = config;
-    this.resourceResolver = resourceResolver;
-    this.apiManager = apiManager;
-    this.moduleLoader = moduleLoader;
-  }
-
-  @Override
-  public void runHook() {
+  public void run() {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {
       return;
     }

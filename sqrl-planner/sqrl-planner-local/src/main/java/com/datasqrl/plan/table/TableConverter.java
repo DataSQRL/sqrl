@@ -1,5 +1,6 @@
 package com.datasqrl.plan.table;
 
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -12,13 +13,14 @@ import com.datasqrl.schema.UniversalTable.Configuration;
 import com.datasqrl.schema.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.RelDataTypeBuilder;
+import com.google.inject.Inject;
 import java.util.LinkedHashMap;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_=@Inject)
 public class TableConverter {
 
   TypeFactory typeFactory;

@@ -13,16 +13,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@AllArgsConstructor(onConstructor_=@Inject)
 @Singleton //todo shouldn't be singleton
 public class ModuleLoaderImpl implements ModuleLoader {
   final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
   ObjectLoader objectLoader;
   private final Map<NamePath, SqrlModule> modules = new HashMap<>();
-
-  @Inject
-  public ModuleLoaderImpl(ObjectLoader objectLoader) {
-    this.objectLoader = objectLoader;
-  }
 
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {

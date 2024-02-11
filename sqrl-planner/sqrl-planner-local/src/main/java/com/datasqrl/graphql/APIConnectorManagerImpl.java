@@ -4,6 +4,7 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.LogEngineSupplier;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
@@ -33,15 +34,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 @Getter
 @Singleton
+@AllArgsConstructor(onConstructor_=@Inject)
 public class APIConnectorManagerImpl implements APIConnectorManager {
 
   private final CalciteTableFactory tableFactory;
-  private final Optional<LogEngine> logEngine;
+  private final LogEngineSupplier logEngine;
   private final ErrorCollector errors;
   private final ModuleLoader moduleLoader;
   private final RelDataTypeFactory typeFactory;
@@ -55,18 +58,6 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   private final Map<SqrlTableMacro, Log> exports = new HashMap<>();
 
   private final List<APIQuery> queries = new ArrayList<>();
-
-  @Inject
-  public APIConnectorManagerImpl(CalciteTableFactory tableFactory,
-      ExecutionPipeline pipeline,
-      ErrorCollector errors, ModuleLoader moduleLoader,
-      RelDataTypeFactory typeFactory) {
-    this.tableFactory = tableFactory;
-    this.errors = errors;
-    this.moduleLoader = moduleLoader;
-    this.logEngine = pipeline.getStage(Type.LOG).map(stage -> (LogEngine) stage.getEngine());
-    this.typeFactory = typeFactory;
-  }
 
   /**
    * Adds mutation by connecting it to a table source and sink.
