@@ -5,11 +5,12 @@ package com.datasqrl.plan.rules;
 
 import org.apache.calcite.rel.metadata.*;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 
 public class SqrlRelMetadataProvider extends ChainedRelMetadataProvider {
 
   public static final RelMetadataProvider INSTANCE =
-      new SqrlRelMetadataProvider();
+      DefaultRelMetadataProvider.INSTANCE;
 
   public SqrlRelMetadataProvider() {
     super(

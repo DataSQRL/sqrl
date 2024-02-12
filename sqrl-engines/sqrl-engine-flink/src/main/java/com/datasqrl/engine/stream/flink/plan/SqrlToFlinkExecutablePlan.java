@@ -224,7 +224,8 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    SqrlFramework framework = catalogReader.getSchema().getSqrlFramework();
+    SqrlFramework framework = null;
+    if (true) throw new RuntimeException("todo");
 
     FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
         .getTypeFactory());

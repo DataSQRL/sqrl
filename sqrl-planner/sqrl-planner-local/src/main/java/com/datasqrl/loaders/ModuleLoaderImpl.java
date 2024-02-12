@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class ModuleLoaderImpl implements ModuleLoader {

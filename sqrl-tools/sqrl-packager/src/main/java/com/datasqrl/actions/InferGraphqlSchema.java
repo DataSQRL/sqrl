@@ -33,7 +33,11 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+<<<<<<< HEAD
 import org.apache.calcite.jdbc.SqrlSchema;
+=======
+import org.apache.commons.lang3.tuple.Pair;
+>>>>>>> 4ceb27ed0 (Add more di)
 
 /**
  * Creates new table functions from the graphql schema
@@ -108,5 +112,6 @@ public class InferGraphqlSchema {
     } catch (Exception e) {
       throw apiErrors.handle(e);
     }
+    return;
   }
 }

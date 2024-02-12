@@ -97,7 +97,7 @@ public class TestExecutor {
     ServerPhysicalPlan serverPhysicalPlan = new ServerPhysicalPlan(serverConfig);
     VertxEngineFactory vertxEngineFactory = new VertxEngineFactory();
     VertxEngineFactory.VertxEngine vertxEngine = vertxEngineFactory.initialize(eng.getSubConfig("server"), vertx);
-    vertxEngine.execute(serverPhysicalPlan, ErrorCollector.root()).get();
+    vertxEngine.execute(serverPhysicalPlan, ErrorCollector.root(), model).get();
 
     if (!executeSql) {
       FlinkExecutablePlan flinkPlan = mapper.readValue(

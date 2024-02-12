@@ -11,8 +11,10 @@ import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
@@ -58,23 +60,26 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @Override
   public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors) {
-//    Preconditions.checkArgument(plan instanceof ServerPhysicalPlan);
-//    ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
-//    Vertx vertx = this.vertx.orElseGet(Vertx::vertx);
-//    CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
-//            serverPlan.getModel(), serverPlan.getConfig(), canonicalize))
-//        .toCompletionStage()
-//        .toCompletableFuture();
-//    if (serverPlan.getConfig().getGraphiQLHandlerOptions() != null &&
-//        serverPlan.getConfig().getGraphiQLHandlerOptions().isEnabled()) {
-//      log.info(String.format("Server started at: %s://%s:%s/%s",
-//          serverPlan.getConfig().getHttpServerOptions().isSsl() ? "https" : "http",
-//          serverPlan.getConfig().getHttpServerOptions().getHost(),
-//          serverPlan.getConfig().getHttpServerOptions().getPort(),
-//          serverPlan.getConfig().getGraphiQLHandlerOptions().getGraphQLUri()));
-//    }
-//    return future.thenApply(Message::new);
-    return null;
+    return CompletableFuture.supplyAsync(()->(ExecutionResult)null);
+  }
+  public CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector error,
+      RootGraphqlModel model) {
+    Preconditions.checkArgument(plan instanceof ServerPhysicalPlan);
+    ServerPhysicalPlan serverPlan = (ServerPhysicalPlan)plan;
+    Vertx vertx = this.vertx.orElseGet(Vertx::vertx);
+    CompletableFuture<String> future = vertx.deployVerticle(new GraphQLServer(
+            model, serverPlan.getConfig(), canonicalize))
+        .toCompletionStage()
+        .toCompletableFuture();
+    if (serverPlan.getConfig().getGraphiQLHandlerOptions() != null &&
+        serverPlan.getConfig().getGraphiQLHandlerOptions().isEnabled()) {
+      log.info(String.format("Server started at: %s://%s:%s/%s",
+          serverPlan.getConfig().getHttpServerOptions().isSsl() ? "https" : "http",
+          serverPlan.getConfig().getHttpServerOptions().getHost(),
+          serverPlan.getConfig().getHttpServerOptions().getPort(),
+          serverPlan.getConfig().getGraphiQLHandlerOptions().getGraphQLUri()));
+    }
+    return future.thenApply(f->new ExecutionResult.Message(f));
   }
 
   @Override

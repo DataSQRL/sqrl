@@ -8,15 +8,19 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.ScriptConfiguration;
+import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.packager.config.ScriptConfiguration;
-import com.datasqrl.packager.config.ScriptFiles;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.google.inject.Inject;
 import graphql.schema.idl.SchemaParser;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -35,11 +39,18 @@ public class GraphqlPostplanHook {
       return Optional.empty();
     }
 
+
     Name graphqlName = Name.system(
         scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>").split("\\.")[0]);
 
     Optional<APISource> apiSource = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
-        .map(file -> APISource.of(file, framework.getNameCanonicalizer(), resourceResolver));
+        .map(file -> {
+          try {
+            return new APISourceImpl(graphqlName, Files.readString(Path.of(file)));
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
 
     Optional<RootGraphqlModel> root;
     if (apiSource.isPresent()) {

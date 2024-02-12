@@ -5,12 +5,16 @@ import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
+import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import lombok.SneakyThrows;
 
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMetadataQueryBase;
+import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 
 import static com.datasqrl.packager.Packager.setScriptFiles;
 import static org.junit.jupiter.api.Assertions.assertEquals;

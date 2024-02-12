@@ -18,10 +18,15 @@ import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.google.inject.Inject;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMetadataQueryBase;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class CompilationProcess {

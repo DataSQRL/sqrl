@@ -13,6 +13,7 @@ import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.file.FilePath;
@@ -60,7 +61,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
-public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
+public class AbstractPhysicalSQRLIT extends AbstractSchemaInferenceModelTest {
 
   protected SnapshotTest.Snapshot snapshot;
   protected boolean closeSnapshotOnValidate = true;

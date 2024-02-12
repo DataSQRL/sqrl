@@ -3,14 +3,16 @@
  */
 package com.datasqrl;
 
-import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
-
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.GenericJavaServerEngine;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -19,9 +21,13 @@ import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
+import com.datasqrl.plan.global.DAGAssembler;
+import com.datasqrl.plan.global.DAGBuilder;
 import com.datasqrl.plan.global.DAGPlanner;
+import com.datasqrl.plan.global.DAGPreparation;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.schema.idl.SchemaParser;
 import io.vertx.core.Vertx;
@@ -66,17 +72,21 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   protected void validateSchemaAndQueries(String script, String schema, Map<String, String> queries) {
 
     plan(script);
-
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest();
     Triple<Object, RootGraphqlModel, APIConnectorManager> modelAndQueries =
         AbstractSchemaInferenceModelTest.inferSchemaModelQueries(schema, framework, pipeline, errors);
 
-    DAGPlanner dagPlanner = injector.getInstance(DAGPlanner.class);
-    PhysicalDAGPlan dag = dagPlanner.plan();
+    PhysicalDAGPlan dag = new DAGPlanner(injector.getInstance(SqrlFramework.class),
+        modelAndQueries.getRight(),
+        injector.getInstance(ExecutionPipeline.class),
+        injector.getInstance(ErrorCollector.class),
+        injector.getInstance(DAGAssembler.class),
+        injector.getInstance(DAGBuilder.class),
+        injector.getInstance(DAGPreparation.class)).plan();
 
     PhysicalPlan physicalPlan = injector.getInstance(PhysicalPlanner.class)
         .plan(dag);
-    APISource source = APISource.of(schema);
+    APISource source = new APISourceImpl(Name.system("<schema>"), schema);
 
     GraphqlModelGenerator queryGenerator = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
         framework.getSchema(), (new SchemaParser()).parse(source.getSchemaDefinition()), source,
