@@ -82,9 +82,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   protected RelNode setRelHolder(AnnotatedLP relHolder) {
-    Preconditions.checkArgument(!(relHolder.type.hasTimestamp() && relHolder.timestamp.is(
-        Timestamps.Type.UNDEFINED)),"Timestamp required");
-    Preconditions.checkArgument(!(relHolder.type.hasPrimaryKey() && relHolder.primaryKey.isUndefined()),"Primary key required");
     if (!exec.supports(EngineCapability.PULLUP_OPTIMIZATION)) {
       //Inline all pullups
       RelBuilder relB = makeRelBuilder();
@@ -92,7 +89,29 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     }
     super.setRelHolder(relHolder);
     this.relHolder = relHolder;
-    return relHolder.getRelNode();
+    RelNode result = relHolder.getRelNode();
+    //Some sanity checks
+    Preconditions.checkArgument(!relHolder.type.hasTimestamp() || !relHolder.timestamp.is(
+        Timestamps.Type.UNDEFINED),"Timestamp required");
+    Preconditions.checkArgument(!relHolder.type.hasPrimaryKey() || !relHolder.primaryKey.isUndefined(),
+        "Primary key required");
+    errors.checkFatal(relHolder.type!=TableType.LOOKUP || result instanceof LogicalTableScan, "Lookup tables can only be used in temporal joins");
+    return result;
+  }
+
+  private boolean isRelation(List<AnnotatedLP> inputs) {
+    return inputs.stream().anyMatch(input -> input.type==TableType.RELATION);
+  }
+
+  private RelNode processRelation(List<AnnotatedLP> inputs, RelNode node) {
+    Preconditions.checkArgument(node.getInputs().size()==inputs.size());
+    List<RelNode> newInputs = inputs.stream().map(AnnotatedLP::toRelation).map(AnnotatedLP::getRelNode)
+            .collect(Collectors.toUnmodifiableList());
+
+    RelNode newNode = node.copy(node.getTraitSet(), newInputs);
+    int numColumns = newNode.getRowType().getFieldCount();
+    return setRelHolder(AnnotatedLP.build(newNode, TableType.RELATION, PrimaryKeyMap.UNDEFINED, Timestamps.UNDEFINED,
+        SelectIndexMap.identity(numColumns, numColumns), inputs).build());
   }
 
   @Override
@@ -119,17 +138,13 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       // We can drop topN since that gets enforced by writing to DB with primary key
       topN = TopNConstraint.EMPTY;
     }
-    PrimaryKeyMap pkMap = PrimaryKeyMap.UNDEFINED;
-    Optional<PhysicalRelationalTable> rootTable = Optional.empty();
-    if (table.getPrimaryKey().isDefined()) {
-      rootTable = Optional.of(table);
-      pkMap = PrimaryKeyMap.of(table.getPrimaryKey().asArray());
-    }
+    Optional<PhysicalRelationalTable> rootTable = table.getType()==TableType.STREAM?
+        Optional.of(table):Optional.empty();
     if (CalciteUtil.hasNestedTable(table.getRowType())) {
       exec.require(EngineCapability.DENORMALIZE);
     };
     return new AnnotatedLP(relNode, table.getType(),
-        pkMap,
+        table.getPrimaryKey().toKeyMap(),
         table.getTimestamp(),
         SelectIndexMap.identity(numColumns, numColumns),
         rootTable,
@@ -147,7 +162,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       RexCall call = (RexCall) functionScan.getCall();
       Preconditions.checkArgument(call.getOperands().size()==1);
       int numColumns = nestedRel.getRowType().getFieldCount();
-      return setRelHolder(new AnnotatedLP(functionScan, TableType.NESTED,
+      return setRelHolder(new AnnotatedLP(functionScan, TableType.STATIC,
           PrimaryKeyMap.of(nestedRel.getLocalPKs()),
           Timestamps.UNDEFINED,
           SelectIndexMap.identity(numColumns, numColumns),
@@ -716,7 +731,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     final int leftSideMaxIdx = leftInput.getFieldLength();
     SelectIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx, false);
 
-    if (rightInput.type==TableType.NESTED) {
+    if (rightInput.type==TableType.STATIC) {
+      //TODO: generalize to arbitrary table functions
       RelBuilder relB = makeRelBuilder();
       relB.push(leftInput.relNode);
       int requiredColumn = leftInput.select.map(

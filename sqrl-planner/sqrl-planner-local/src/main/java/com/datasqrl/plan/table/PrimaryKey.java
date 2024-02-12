@@ -51,5 +51,9 @@ public class PrimaryKey {
     else return new PrimaryKey(pkMap.asArray());
   }
 
+  public PrimaryKeyMap toKeyMap() {
+    if (isUndefined()) return PrimaryKeyMap.UNDEFINED;
+    else return new PrimaryKeyMap(asList());
+  }
 
 }

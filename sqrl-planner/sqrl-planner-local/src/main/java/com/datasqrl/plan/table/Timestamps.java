@@ -34,6 +34,7 @@ public class Timestamps {
 
   public Timestamps(Set<Integer> indexes, Type type) {
     Preconditions.checkArgument(type!=Type.UNDEFINED || indexes.isEmpty(), "Invalid timestamp definition");
+    if (type==Type.AND && indexes.size()<2) type = Type.OR;
     this.indexes = indexes;
     this.type = type;
   }

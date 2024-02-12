@@ -38,6 +38,8 @@ import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalSort;
+import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
+import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -307,6 +309,11 @@ public class AnnotatedLP implements RelHolder {
     return new SortOrder(RelCollations.of(collations)).ensurePrimaryKeyPresent(alp.primaryKey);
   }
 
+  public AnnotatedLP toRelation() {
+    //inline everything
+    //add select for select map
+  }
+
 
   /**
    * Moves the primary key columns to the front and adds projection to only return columns that the
@@ -318,6 +325,9 @@ public class AnnotatedLP implements RelHolder {
    */
   public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
       ExecutionAnalysis exec, ErrorCollector errors) {
+    errors.checkFatal(type!=TableType.LOOKUP, "Lookup tables can only be used in temporal joins");
+
+
     List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
     AnnotatedLP input = this;
     relBuilder.push(input.relNode);
