@@ -1,4 +1,4 @@
-package com.datasqrl.schema.converters;
+package com.datasqrl.format;
 
 import com.datasqrl.io.tables.SchemaValidator;
 import java.util.Map;

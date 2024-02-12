@@ -1,4 +1,4 @@
-package com.datasqrl.schema.converters;
+package com.datasqrl.format;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
