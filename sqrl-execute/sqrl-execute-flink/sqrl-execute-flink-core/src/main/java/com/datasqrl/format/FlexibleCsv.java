@@ -1,4 +1,4 @@
-package com.datasqrl.schema.converters;
+package com.datasqrl.format;
 
 import com.google.auto.service.AutoService;
 import java.io.IOException;
