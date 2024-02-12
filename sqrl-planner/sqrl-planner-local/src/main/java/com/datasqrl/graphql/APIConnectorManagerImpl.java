@@ -5,15 +5,11 @@ import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.LogEngineSupplier;
-import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.engine.log.LogEngine;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.ModuleLoaderStd;
 import com.datasqrl.loaders.TableSourceSinkNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
@@ -127,6 +123,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   public void updateModuleLoader(ModuleLoader moduleLoader) {
   }
 
+  @Override
   public ModuleLoader getModuleLoader() {
     return new ModuleLoaderStd(sqrlSchema.getModules());
   }

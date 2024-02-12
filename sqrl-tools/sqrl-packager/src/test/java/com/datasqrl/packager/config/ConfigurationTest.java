@@ -40,7 +40,7 @@ public class ConfigurationTest {
     ExecutionPipeline executionPipeline = pipelineFactory.createPipeline();
 //    pipelineFactory.getDatabaseEngine();
 //    pipelineFactory.getStreamEngine();
-    getMetaDataStoreProvider(pipelineFactory.getConfig(), Optional.empty());
+    getMetaDataStoreProvider(pipelineFactory.getEngineConfig(), Optional.empty());
 
     LinkedHashMap<String, Dependency> dependencies = DependencyConfig.fromRootConfig(config);
     assertEquals(2, dependencies.size());

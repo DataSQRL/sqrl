@@ -15,13 +15,10 @@ import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
 import com.datasqrl.loaders.ModuleLoader;
-<<<<<<< HEAD
-import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.util.SqlNameUtil;
-import com.datasqrl.graphql.ScriptConfiguration;
 import com.datasqrl.plan.queries.APISourceImpl;
 import com.google.inject.Inject;
 import graphql.schema.GraphQLSchema;

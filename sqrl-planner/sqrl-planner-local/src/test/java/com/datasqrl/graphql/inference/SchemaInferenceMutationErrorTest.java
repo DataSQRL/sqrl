@@ -40,8 +40,8 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
 
   @Test
   public void mustHaveQueryType() {
-    super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n", framework, pipeline, errors);
-    assertTrue(errors.hasErrorsWarningsOrNotices());
+    super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n", framework, errors);
+    assertFalse(errors.hasErrorsWarningsOrNotices());
   }
 
   @Test
@@ -58,7 +58,7 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
         "}\n"
         + "type Query {\n" +
         "\torders: Orders" +
-        "\n}", framework, pipeline, errors);
+        "\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
@@ -70,7 +70,7 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
         + "type Subscription {\n\ttestOutput: TestOutput\n}\n"
         + "input TestInput {\n\tid: [Int!]!\n}\n"
         + "type TestOutput {\n\tid: [Int!]!\n}\n"
-        + "type Orders {\n\tid: [Int!]!\n}\n", framework, pipeline, errors
+        + "type Orders {\n\tid: [Int!]!\n}\n", framework, errors
     );
 
     assertFalse(errors.hasErrorsWarningsOrNotices());
@@ -81,7 +81,16 @@ class SchemaInferenceMutationErrorTest extends AbstractSchemaInferenceModelTest 
     super.inferSchemaModelQueries("type Orders {\n\tid: Int\n}\n"
         + "input OrderInput {\n\tid: String!\n}\n"
         + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
-        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
+        + "type Query {\n\torders: Orders\n}", framework, errors);
+    validateErrorsAndAddContent();
+  }
+
+  @Test
+  public void mutationNotASink() {
+   super.inferSchemaModelQueries("type Orders {\n\tid: Int!\n}\n"
+        + "input OrderInput {\n\tid: Int!\n}\n"
+        + "type Mutation {\n\taddOrder(input: OrderInput!): Orders\n}"
+        + "type Query {\n\torders: Orders\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 }

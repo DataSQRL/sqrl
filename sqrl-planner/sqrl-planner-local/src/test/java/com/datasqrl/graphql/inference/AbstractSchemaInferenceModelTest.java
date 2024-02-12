@@ -19,7 +19,6 @@ import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.QueryIndexSummary;
-import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.plan.queries.APISourceImpl;
@@ -42,20 +41,19 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     String schemaStr = Files.readString(schemaPath);
     plan(script.getScript());
     Triple<Object, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
-        schemaStr, framework, pipeline, errors);
+        schemaStr, framework, errors);
     return Pair.of(result.getLeft(), result.getRight());
   }
 
-  public static Triple<Object, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
-      String schemaStr, SqrlFramework framework, ExecutionPipeline pipeline, ErrorCollector errors) {
+  public Triple<Object, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
+      String schemaStr, SqrlFramework framework, ErrorCollector errors) {
     APISource source = APISourceImpl.of(schemaStr);
     //Inference
 //    GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(
 //        framework.getTypeFactory(),
 //        NameCanonicalizer.SYSTEM);
 
-    MockAPIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline, errors);
-
+    APIConnectorManager apiManager = this.injector.getInstance(APIConnectorManager.class);
     try {
       //todo readd once moved
 //      preAnalysis.analyze(source);

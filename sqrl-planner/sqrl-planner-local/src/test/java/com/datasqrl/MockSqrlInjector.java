@@ -120,6 +120,9 @@ public class MockSqrlInjector extends AbstractModule {
 
   @Provides
   public ResourceResolver provideResourceResolver() {
+    if (rootDir == null) {
+      return null;
+    }
     return new FileResourceResolver(rootDir);
   }
 

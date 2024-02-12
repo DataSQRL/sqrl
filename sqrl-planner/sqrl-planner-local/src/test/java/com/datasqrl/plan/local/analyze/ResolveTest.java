@@ -14,6 +14,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.global.DAGBuilder;
 import com.datasqrl.plan.global.DAGPreparation;
 import com.datasqrl.plan.global.SqrlDAG;
@@ -716,8 +717,9 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   private void createSnapshots() {
     RelBuilder relBuilder = framework.getQueryPlanner().getRelBuilder();
+    APIConnectorManager apiConnectorManager = injector.getInstance(APIConnectorManager.class);
 
-    new DAGPreparation(relBuilder, new MockAPIConnectorManager(framework, pipeline, errors))
+    new DAGPreparation(relBuilder, apiConnectorManager)
         .prepareInputs(framework.getSchema(), Collections.EMPTY_LIST);
     DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(relBuilder),
         pipeline, errors);

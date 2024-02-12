@@ -31,6 +31,8 @@ public interface APIConnectorManager {
 
   void updateModuleLoader(ModuleLoader moduleLoader);
 
+  ModuleLoader getModuleLoader();
+
   List<Log> getLogs();
 
   List<APIQuery> getQueries();

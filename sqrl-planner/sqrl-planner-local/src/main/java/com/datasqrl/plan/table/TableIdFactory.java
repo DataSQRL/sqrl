@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.lang3.StringUtils;
 
 @AllArgsConstructor
@@ -14,8 +15,8 @@ public class TableIdFactory {
   private Map<Name, AtomicInteger> tableNameToIdMap;
 
   @Inject
-  public TableIdFactory(SqrlFramework framework) {
-    this(framework.getSchema().getTableNameToIdMap());
+  public TableIdFactory(SqrlSchema schema) {
+    this(schema.getTableNameToIdMap());
   }
 
   public Name createTableId(@NonNull Name name) {

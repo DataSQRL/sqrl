@@ -72,9 +72,8 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   protected void validateSchemaAndQueries(String script, String schema, Map<String, String> queries) {
 
     plan(script);
-    AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest();
     Triple<Object, RootGraphqlModel, APIConnectorManager> modelAndQueries =
-        AbstractSchemaInferenceModelTest.inferSchemaModelQueries(schema, framework, pipeline, errors);
+        inferSchemaModelQueries(schema, framework, errors);
 
     PhysicalDAGPlan dag = new DAGPlanner(injector.getInstance(SqrlFramework.class),
         modelAndQueries.getRight(),

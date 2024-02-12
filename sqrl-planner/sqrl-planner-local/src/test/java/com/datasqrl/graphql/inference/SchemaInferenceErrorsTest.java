@@ -54,14 +54,14 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
   public void invalidFieldTest() {
     inferSchemaModelQueries(
             "type Orders {\n\tmissingField: String\n}\n"
-                + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
+                + "type Query {\n\torders: Orders\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void invalidTableTest() {
     inferSchemaModelQueries( "type Orders {\n\tmissingField: String\n}\n"
-        + "type Query {\n\torders: DOESNOTEXIST\n}", framework, pipeline, errors);
+        + "type Query {\n\torders: DOESNOTEXIST\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
@@ -69,7 +69,7 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
   public void missingNestedTable() {
     inferSchemaModelQueries(
         "type Orders {\n\tentries: MISSING\n}\n"
-            + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
+            + "type Query {\n\torders: Orders\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
@@ -78,7 +78,7 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
     inferSchemaModelQueries(
         "type Orders {\n\tentries: OrderEntries\n}\n"
             + "type OrderEntries {\n\tproductid: Int\n}\n"
-            + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
+            + "type Query {\n\torders: Orders\n}", framework, errors);
     if (errors.hasErrors()) {
       fail("No errors expected");
     }
@@ -89,21 +89,21 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
     inferSchemaModelQueries(""
         + "type Orders {\n\t_uuid: String, entries: Entries\n}\n"
         + "type Entries {\n\tinvalidField: String\n}\n"
-        + "type Query {\n\torders: Orders\n\tproduct: Orders\n}", framework, pipeline, errors);
+        + "type Query {\n\torders: Orders\n\tproduct: Orders\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void arrayType() {
     inferSchemaModelQueries("type Orders {\n\t_uuid: String\n}\n"
-        + "type Query {\n\torders: [[Orders]]\n}", framework, pipeline, errors);
+        + "type Query {\n\torders: [[Orders]]\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void array2Type() {
     inferSchemaModelQueries("type Orders {\n\t_uuid: String\n}\n"
-        + "type Query {\n\torders: [[Orders!]]!\n}", framework, pipeline, errors);
+        + "type Query {\n\torders: [[Orders!]]!\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
@@ -111,7 +111,7 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
   public void array3Type() {
     inferSchemaModelQueries("type Orders {\n\t_uuid: String\n\tentries: [[Entries]]\n}\n"
         + "type Entries {\n\tproductid: String\n}\n"
-        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
+        + "type Query {\n\torders: Orders\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
@@ -119,14 +119,14 @@ class SchemaInferenceErrorsTest extends AbstractSchemaInferenceModelTest {
   public void array4Type() {
     inferSchemaModelQueries("type Orders {\n\t_uuid: String\n\tentries: [[Entries!]!]!\n}\n"
         + "type Entries {\n\tproductid: String\n}\n"
-        + "type Query {\n\torders: Orders\n}", framework, pipeline, errors);
+        + "type Query {\n\torders: Orders\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 
   @Test
   public void tooManyFields() {
     inferSchemaModelQueries("type Orders {\n  _uuid: String\n  x: Int!\n}\n"
-        + "type Query {\n  orders: Orders\n}", framework, pipeline, errors);
+        + "type Query {\n  orders: Orders\n}", framework, errors);
     validateErrorsAndAddContent();
   }
 }
