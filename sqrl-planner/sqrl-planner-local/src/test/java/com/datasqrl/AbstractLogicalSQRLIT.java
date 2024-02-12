@@ -7,6 +7,10 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
+import com.datasqrl.plan.MainScript;
+import com.datasqrl.plan.validate.ScriptPlanner;
+import java.nio.file.Path;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 
 public class AbstractLogicalSQRLIT extends AbstractEngineIT {
@@ -27,6 +31,17 @@ public class AbstractLogicalSQRLIT extends AbstractEngineIT {
   }
 
   protected void plan(String query) {
-//    ScriptPlanner.plan(query, framework, moduleLoader, errors);
+    ScriptPlanner planner = injector.getInstance(ScriptPlanner.class);
+    planner.plan(new MainScript() {
+      @Override
+      public Optional<Path> getPath() {
+        return Optional.empty();
+      }
+
+      @Override
+      public String getContent() {
+        return query;
+      }
+    }, moduleLoader);
   }
 }

@@ -6,8 +6,10 @@ import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import lombok.experimental.Delegate;
 
+@Singleton
 public class SqrlConfigPipeline implements ExecutionPipeline {
 
   @Delegate

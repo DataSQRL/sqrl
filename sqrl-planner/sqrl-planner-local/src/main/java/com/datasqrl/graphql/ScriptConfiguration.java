@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.packager.config;
+package com.datasqrl.graphql;
 
 import com.datasqrl.config.SqrlConfig;
 import com.google.common.collect.ImmutableMap;

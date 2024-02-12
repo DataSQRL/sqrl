@@ -4,6 +4,7 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.util.StreamUtil;
@@ -17,6 +18,7 @@ import lombok.AllArgsConstructor;
 public class PhysicalPlanner {
   SqrlFramework framework;
   TableSink errorSink;
+  ErrorCollector errorCollector;
 
   public PhysicalPlan plan(PhysicalDAGPlan plan) {
     List<PhysicalPlan.StagePlan> physicalStages = new ArrayList<>();
@@ -28,7 +30,7 @@ public class PhysicalPlanner {
           .filter(sink -> sink.getStage().equals(stagePlan.getStage()))
           .collect(Collectors.toList());
       EnginePhysicalPlan physicalPlan = stagePlan.getStage().getEngine().plan(stagePlan, inputs,
-          plan.getPipeline(), framework, errorSink);
+          plan.getPipeline(), framework, errorSink, errorCollector);
       physicalStages.add(new PhysicalPlan.StagePlan(stagePlan.getStage(), physicalPlan));
     }
 

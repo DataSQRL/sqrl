@@ -9,6 +9,4 @@ import java.util.Optional;
 
 public interface ModuleLoader {
   Optional<SqrlModule> getModule(NamePath namePath);
-
-  void add(NamePath apiNamePath, SqrlModule module);
 }

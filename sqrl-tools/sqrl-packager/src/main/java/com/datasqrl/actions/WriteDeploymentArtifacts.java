@@ -5,49 +5,33 @@ import static com.datasqrl.engine.server.ServerPhysicalPlan.getModelFileName;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.CompilerConfiguration;
-import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.GraphqlSourceFactory;
+import com.datasqrl.config.TargetPath;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.packager.config.ScriptConfiguration;
-import com.datasqrl.packager.config.ScriptFiles;
+import com.datasqrl.graphql.ScriptConfiguration;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.serializer.Deserializer;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
+@AllArgsConstructor(onConstructor_=@Inject)
 public class WriteDeploymentArtifacts {
 
   private final SqrlFramework framework;
-  @Named("buildDir")
-  private final Path buildDir;
-  @Named("targetDir")
-  private final Path targetDir;
-  private final ResourceResolver resourceResolver;
-  private final CompilerConfiguration compilerConfig;
-  private final ScriptFiles scriptFiles;
+  private final GraphqlSourceFactory graphqlSource;
 
-  @Inject
-  public WriteDeploymentArtifacts(
-      SqrlFramework framework, SqrlConfig config,
-      ResourceResolver resourceResolver,
-      CompilerConfiguration compilerConfig,
-      ScriptFiles scriptFiles,
-      @Named("buildDir") Path buildDir,
-      @Named("targetDir") Path targetDir) {
-    this.framework = framework;
-    this.resourceResolver = resourceResolver;
-    this.compilerConfig = compilerConfig;
-    this.scriptFiles = scriptFiles;
-    this.buildDir = buildDir;
-    this.targetDir = targetDir;
-  }
+  private final BuildPath buildDir;
+  private final TargetPath targetDir;
+  private final CompilerConfiguration compilerConfig;
 
   public void run(Optional<RootGraphqlModel> model, PhysicalPlan physicalPlan) {
     writeDeployArtifacts(physicalPlan, targetDir);
@@ -66,16 +50,11 @@ public class WriteDeploymentArtifacts {
   }
 
   public void writeGraphqlSchema() {
-
-
-    Name graphqlName = Name.system(
-        scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>").split("\\.")[0]);
-
-    Optional<APISource> apiSchemaOpt = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
-        .map(file -> APISource.of(file, framework.getNameCanonicalizer(), resourceResolver));
-
-    APISource apiSchema = apiSchemaOpt.orElseGet(() -> new APISource(graphqlName,
-        inferGraphQLSchema(framework.getSchema(), compilerConfig.isAddArguments())));
+    APISource apiSchema = graphqlSource.get()
+        .orElseGet(() ->
+            new APISourceImpl(Name.system("<schema>"),
+                inferGraphQLSchema(framework.getSchema(),
+                    compilerConfig.isAddArguments())));
 
     writeSchema(buildDir, apiSchema.getSchemaDefinition());
   }

@@ -3,7 +3,7 @@
  */
 package com.datasqrl.graphql.generate;
 
-import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
+import static com.datasqrl.graphql.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.StringUtil;

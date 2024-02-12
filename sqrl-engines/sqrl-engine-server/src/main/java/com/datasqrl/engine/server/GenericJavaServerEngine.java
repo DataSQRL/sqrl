@@ -4,20 +4,13 @@ import static com.datasqrl.engine.EngineCapability.NO_CAPABILITIES;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.config.Constraints.Default;
-import com.datasqrl.config.Constraints.MinLength;
-import com.datasqrl.config.Constraints.Regex;
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigUtil;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
-import com.datasqrl.engine.ExecutionResult.Message;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
@@ -28,18 +21,15 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +79,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @Override
   public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      SqrlFramework relBuilder, TableSink errorSink) {
+      SqrlFramework relBuilder, TableSink errorSink, ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof ServerStagePlan);
     Set<ExecutionStage> dbStages = pipeline.getStages().stream().filter(s -> s.getEngine().getType()==Type.DATABASE).collect(
         Collectors.toSet());

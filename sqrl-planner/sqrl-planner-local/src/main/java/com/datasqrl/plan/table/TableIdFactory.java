@@ -15,7 +15,7 @@ public class TableIdFactory {
 
   @Inject
   public TableIdFactory(SqrlFramework framework) {
-    this(framework.getTableNameToIdMap());
+    this(framework.getSchema().getTableNameToIdMap());
   }
 
   public Name createTableId(@NonNull Name name) {

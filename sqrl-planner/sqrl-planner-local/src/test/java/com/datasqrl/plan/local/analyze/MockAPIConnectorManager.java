@@ -3,6 +3,7 @@ package com.datasqrl.plan.local.analyze;
 import com.datasqrl.TestModuleFactory;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.LogEngineSupplier;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -12,6 +13,7 @@ import com.datasqrl.plan.table.CalciteTableFactory;
 import java.util.Optional;
 import lombok.Value;
 import lombok.experimental.Delegate;
+import org.apache.calcite.jdbc.SqrlSchema;
 
 @Value
 public class MockAPIConnectorManager implements APIConnectorManager {
@@ -19,15 +21,14 @@ public class MockAPIConnectorManager implements APIConnectorManager {
   @Delegate
   APIConnectorManagerImpl apiConnectorManager;
 
-  public MockAPIConnectorManager(SqrlFramework framework, ExecutionPipeline pipeline) {
-    ErrorCollector errors = ErrorCollector.root();
-
+  public MockAPIConnectorManager(SqrlFramework framework, ExecutionPipeline pipeline,
+      ErrorCollector errors) {
     apiConnectorManager  = new APIConnectorManagerImpl(
         new CalciteTableFactory(framework),
         new LogEngineSupplier(pipeline),
         errors,
         new MockModuleLoader(null, TestModuleFactory.createRetail(framework), Optional.empty()),
-        new TypeFactory()
+        new TypeFactory(),new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)
     );
   }
 }

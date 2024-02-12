@@ -71,12 +71,10 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     Triple<Object, RootGraphqlModel, APIConnectorManager> modelAndQueries =
         AbstractSchemaInferenceModelTest.inferSchemaModelQueries(schema, framework, pipeline, errors);
 
-    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
-        modelAndQueries.getRight(), framework.getSchema().getExports(),
-        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
-        pipeline, errors, debugger);
+    DAGPlanner dagPlanner = injector.getInstance(DAGPlanner.class);
+    PhysicalDAGPlan dag = dagPlanner.plan();
 
-    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+    PhysicalPlan physicalPlan = injector.getInstance(PhysicalPlanner.class)
         .plan(dag);
     APISource source = APISource.of(schema);
 

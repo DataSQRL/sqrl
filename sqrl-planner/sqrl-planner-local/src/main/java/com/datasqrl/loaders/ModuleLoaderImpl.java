@@ -14,18 +14,12 @@ import java.util.Map;
 import java.util.Optional;
 
 @AllArgsConstructor(onConstructor_=@Inject)
-@Singleton //todo shouldn't be singleton
 public class ModuleLoaderImpl implements ModuleLoader {
   final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
   ObjectLoader objectLoader;
-  private final Map<NamePath, SqrlModule> modules = new HashMap<>();
 
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
-    SqrlModule module;
-    if ((module = modules.get(namePath))!=null) {
-      return Optional.of(module);
-    }
     // Load modules from standard library
     List<NamespaceObject> nsObjects = new ArrayList<>(loadFromStandardLibrary(namePath));
 
@@ -39,11 +33,6 @@ public class ModuleLoaderImpl implements ModuleLoader {
     }
 
     return Optional.of(new SqrlDirectoryModule(nsObjects));
-  }
-
-  @Override
-  public void add(NamePath namePath, SqrlModule module) {
-    modules.put(namePath, module);
   }
 
   private static boolean isPrintSink(NamePath namePath) {

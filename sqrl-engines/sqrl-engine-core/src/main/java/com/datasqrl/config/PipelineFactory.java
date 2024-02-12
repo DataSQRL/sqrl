@@ -10,6 +10,7 @@ import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.engine.stream.StreamEngine;
+import com.google.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +30,7 @@ public class PipelineFactory {
   @Getter
   private final SqrlConfig engineConfig;
 
+  @Inject
   public PipelineFactory(@NonNull SqrlConfig engineConfig) {
     this.engineConfig = engineConfig;
   }

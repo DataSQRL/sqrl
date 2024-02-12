@@ -3,8 +3,6 @@
  */
 package com.datasqrl.graphql.inference;
 
-import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
-
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.calcite.SqrlFramework;
@@ -14,7 +12,10 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
+import com.datasqrl.plan.global.DAGAssembler;
+import com.datasqrl.plan.global.DAGBuilder;
 import com.datasqrl.plan.global.DAGPlanner;
+import com.datasqrl.plan.global.DAGPreparation;
 import com.datasqrl.plan.global.QueryIndexSummary;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
@@ -22,6 +23,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.SqlNameUtil;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.util.TestScript;
 import graphql.schema.idl.SchemaParser;
 import java.nio.file.Files;
@@ -36,14 +38,9 @@ import org.apache.commons.lang3.tuple.Triple;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
-  public AbstractSchemaInferenceModelTest() {
-    this.errors = ErrorCollector.root();
-  }
-
   @SneakyThrows
   public Pair<Object, APIConnectorManager> inferSchemaAndQueries(TestScript script,
       Path schemaPath) {
-    initialize(IntegrationTestSettings.getInMemory(), script.getRootPackageDirectory(), Optional.empty());
     String schemaStr = Files.readString(schemaPath);
     plan(script.getScript());
     Triple<Object, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
@@ -53,16 +50,17 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
   public static Triple<Object, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
       String schemaStr, SqrlFramework framework, ExecutionPipeline pipeline, ErrorCollector errors) {
-    APISource source = APISource.of(schemaStr);
+    APISource source = APISourceImpl.of(schemaStr);
     //Inference
-    GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(
-        framework.getTypeFactory(),
-        NameCanonicalizer.SYSTEM);
+//    GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(
+//        framework.getTypeFactory(),
+//        NameCanonicalizer.SYSTEM);
 
-    MockAPIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline);
+    MockAPIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline, errors);
 
     try {
-      preAnalysis.analyze(source, apiManager);
+      //todo readd once moved
+//      preAnalysis.analyze(source);
 
       GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(
           framework.getCatalogReader().nameMatcher(),
@@ -83,14 +81,19 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
     return Triple.of(null, null, apiManager);
   }
 
+  @SneakyThrows
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
+
     APIConnectorManager apiManager = inferSchemaAndQueries(script, schemaPath).getValue();
     // plan dag
-    PhysicalDAGPlan dag = null;
-//    DAGPlanner.plan(framework,
-//        apiManager, framework.getSchema().getExports(),
-//        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()), pipeline,
-//        errors, debugger);
+    PhysicalDAGPlan dag = new DAGPlanner(
+        injector.getInstance(SqrlFramework.class),
+        apiManager,
+        injector.getInstance(ExecutionPipeline.class),
+        injector.getInstance(ErrorCollector.class),
+        injector.getInstance(DAGAssembler.class),
+        injector.getInstance(DAGBuilder.class),
+        injector.getInstance(DAGPreparation.class)).plan();
 
     IndexSelector indexSelector = new IndexSelector(framework,
         IndexSelectorConfigByDialect.of("POSTGRES"));

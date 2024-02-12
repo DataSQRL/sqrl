@@ -124,7 +124,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   @Test
   public void timestampExpressionTest() {
     plan(
-        "IMPORT time.*; IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp;\n");
+        "IMPORT time.*; IMPORT ecommerce-data.Customer TIMESTAMP epochToTimestamp(lastUpdated) AS timestamp;\n"
+    );
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, 1,
         TimestampTest.fixed(6));
   }
@@ -709,15 +710,15 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
       SqrlSchema sqrlSchema, String tableName) {
 
     List<Function> tableFunction =
-        new ArrayList<>(sqrlSchema.getSqrlFramework().getSchema().getFunctions(tableName, false));
+        new ArrayList<>(sqrlSchema.getFunctions(tableName, false));
     return tableFunction.size() == 0? Optional.empty() : Optional.of((T)tableFunction.get(0));
   }
 
   private void createSnapshots() {
     RelBuilder relBuilder = framework.getQueryPlanner().getRelBuilder();
 
-    new DAGPreparation(relBuilder, errors).prepareInputs(framework.getSchema(),
-        new MockAPIConnectorManager(framework, pipeline), Collections.EMPTY_LIST);
+    new DAGPreparation(relBuilder, new MockAPIConnectorManager(framework, pipeline, errors))
+        .prepareInputs(framework.getSchema(), Collections.EMPTY_LIST);
     DAGBuilder dagBuilder = new DAGBuilder(new SQRLConverter(relBuilder),
         pipeline, errors);
     validatedTables.forEach((table, execType) -> {

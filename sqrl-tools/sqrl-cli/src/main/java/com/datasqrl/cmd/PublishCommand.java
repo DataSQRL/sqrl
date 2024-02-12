@@ -8,7 +8,7 @@ import com.datasqrl.error.NotYetImplementedException;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.Publisher;
 import com.datasqrl.packager.config.Dependency;
-import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.graphql.ScriptConfiguration;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
 import java.io.IOException;
 import java.nio.file.Files;

@@ -68,6 +68,7 @@ import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -108,11 +109,12 @@ import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvi
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_=@Inject)
 public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
   TableSink errorSink;
   RelBuilder relBuilder;
+  ErrorCollector errors;
 
   private final List<FlinkStatement> statements = new ArrayList<>();
   private final List<FlinkFunction> functions = new ArrayList<>();
@@ -394,7 +396,6 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
 
     TableSource tableSource = relationalTable.getTableSource();
 
-    ErrorCollector errors = ErrorCollector.root();
     RelDataType tableType =  SchemaToRelDataTypeFactory.load(tableSource.getSchema())
         .map(tableSource.getSchema(), tableSource.getName(), errors);
     Preconditions.checkArgument(tableType!=null && !errors.hasErrors(),

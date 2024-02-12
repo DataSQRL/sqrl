@@ -65,11 +65,6 @@ public class MockModuleLoader implements ModuleLoader {
         new SqrlDirectoryModule(objects));
   }
 
-  @Override
-  public void add(NamePath apiNamePath, SqrlModule module) {
-
-  }
-
   private List<NamespaceObject> applyTestSettings(List<NamespaceObject> objects) {
     for (NamespaceObject object : objects) {
       if (object instanceof TableSourceNamespaceObject) {

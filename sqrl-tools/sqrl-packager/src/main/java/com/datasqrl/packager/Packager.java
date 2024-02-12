@@ -25,7 +25,7 @@ import com.datasqrl.kafka.KafkaLogEngineFactory;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
-import com.datasqrl.packager.config.ScriptConfiguration;
+import com.datasqrl.graphql.ScriptConfiguration;
 import com.datasqrl.packager.postprocess.DockerPostprocessor;
 import com.datasqrl.packager.postprocess.FlinkPostprocessor;
 import com.datasqrl.packager.postprocess.Postprocessor.ProcessorContext;
@@ -129,7 +129,7 @@ public class Packager {
         .collect(Collectors.toMap(Entry::getKey, v->canonicalizePath(v.getValue())));
     //Files should exist, if error occurs its internal, hence we create root error collector
     addFileToPackageJsonConfig(buildDir, ScriptConfiguration.fromScriptConfig(config),
-        destinationPaths, ErrorCollector.root());
+        destinationPaths, errors);
 
     // Shouldn't be here, move to postprocessor for flink
     String buildFile = FileUtil.readResource("build.gradle");

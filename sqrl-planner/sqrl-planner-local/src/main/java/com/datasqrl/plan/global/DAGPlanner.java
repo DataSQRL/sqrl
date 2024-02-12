@@ -38,13 +38,14 @@ public class DAGPlanner {
   private final APIConnectorManager apiManager;
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
-  private final Debugger debugger;
+  private final DAGAssembler assembler;
+  private final DAGBuilder dagBuilder;
+  private final DAGPreparation dagPreparation;
 
-  public static SqrlDAG build(SqrlFramework framework, APIConnectorManager apiManager,
-      Collection<ResolvedExport> exports, ExecutionPipeline pipeline, ErrorCollector errors) {
+  public SqrlDAG build(Collection<ResolvedExport> exports) {
     //Prepare the inputs
     Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(framework.getQueryPlanner().getRelBuilder(),
-        errors).prepareInputs(framework.getSchema(), apiManager, exports);
+        apiManager).prepareInputs(framework.getSchema(), exports);
 
     //Assemble DAG
     SQRLConverter sqrlConverter = new SQRLConverter(framework.getQueryPlanner().getRelBuilder());
@@ -64,7 +65,7 @@ public class DAGPlanner {
     return dag;
   }
 
-  public static void optimize(SqrlDAG dag, ExecutionPipeline pipeline) {
+  public void optimize(SqrlDAG dag) {
     //Pick most cost-effective stage for each node and assign
     for (SqrlDAG.SqrlNode node : dag) {
       if (node.setCheapestStage()) {
@@ -74,28 +75,21 @@ public class DAGPlanner {
     }
   }
 
-  public static PhysicalDAGPlan assemble(SqrlDAG dag, APIConnectorManager apiManager,
-      Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      SqrlFramework framework, SQRLConverter sqrlConverter, ExecutionPipeline pipeline,
-      Debugger debugger, ErrorCollector errors) {
+  public PhysicalDAGPlan assemble(SqrlDAG dag,
+      Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //Stitch DAG together
-    DAGAssembler assembler = new DAGAssembler(framework, framework.getQueryPlanner().getPlanner(),
-        sqrlConverter, pipeline, debugger, errors);
-    return assembler.assemble(dag, jars, udfs, apiManager);
+    return assembler.assemble(dag, jars, udfs);
   }
 
   public PhysicalDAGPlan plan() {
     List<ResolvedExport> exports = framework.getSchema().getExports();
-
-
-    SqrlDAG dag = build(framework, apiManager, exports, pipeline, errors);
-    optimize(dag, pipeline);
-    return assemble(dag, apiManager, framework.getSchema().getJars(),
-        extractFlinkFunctions(framework.getSqrlOperatorTable()), framework, new SQRLConverter(framework.getQueryPlanner().getRelBuilder()),
-        pipeline, debugger, errors);
+    SqrlDAG dag = build(exports);
+    optimize(dag);
+    return assemble(dag, framework.getSchema().getJars(),
+        extractFlinkFunctions(framework.getSqrlOperatorTable()));
   }
 
-  public static Map<String, UserDefinedFunction> extractFlinkFunctions(
+  public Map<String, UserDefinedFunction> extractFlinkFunctions(
       OperatorTable sqrlOperatorTable) {
     Map<String, UserDefinedFunction> fncs = new HashMap<>();
     for (Map.Entry<String, SqlOperator> fnc : sqrlOperatorTable.getUdfs().entrySet()) {

@@ -81,7 +81,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
     plan(script);
 
     //We add a scan query for every query table
-    APIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline);
+    APIConnectorManager apiManager = injector.getInstance(APIConnectorManager.class);//new MockAPIConnectorManager(framework, pipeline, errors);
     SqrlSchema sqrlSchema = framework.getSchema();
     for (String tableName : queryTables) {
       Optional<ScriptRelationalTable> vtOpt = ResolveTest.getLatestTable(sqrlSchema, tableName,
@@ -94,12 +94,14 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       apiManager.addQuery(new APIQuery(tableName, null, relBuilder.build(), null, null, false));
     }
 
-    PhysicalDAGPlan dag = DAGPlanner.plan(framework, apiManager, framework.getSchema().getExports(),
-        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
-        pipeline, errors, debugger);
+    DAGPlanner dagPlanner = injector.getInstance(DAGPlanner.class);
+    PhysicalDAGPlan dag = dagPlanner.plan();
+//        DAGPlanner.plan(framework, apiManager, framework.getSchema().getExports(),
+//        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
+//        pipeline, errors, debugger);
     addContent(dag);
 
-    PhysicalPlan physicalPlan = new PhysicalPlanner(framework, errorSink.getErrorSink())
+    PhysicalPlan physicalPlan = injector.getInstance(PhysicalPlanner.class)
         .plan(dag);
     PhysicalPlanExecutor executor = new PhysicalPlanExecutor();
     PhysicalPlanExecutor.Result result = executor.execute(physicalPlan, errors);

@@ -27,6 +27,9 @@ class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
 
   @Test
   public void testC360Inference() {
+    initialize(IntegrationTestSettings.getInMemory(), example.getScript(RetailScriptNames.FULL)
+        .getRootPackageDirectory(), Optional.empty());
+
     Pair<Object, APIConnectorManager> result = inferSchemaAndQueries(
         example.getScript(RetailScriptNames.FULL),
         Path.of("src/test/resources/c360bundle/schema.full.graphqls"));

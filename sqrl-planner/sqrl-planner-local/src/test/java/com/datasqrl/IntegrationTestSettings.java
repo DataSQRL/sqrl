@@ -3,6 +3,7 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.datasqrl.config.PipelineFactory;
@@ -25,7 +26,6 @@ import com.google.common.base.Strings;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.flink.configuration.TaskManagerOptions;
 
@@ -49,10 +49,11 @@ public class IntegrationTestSettings {
   final NamePath errorSink = NamePath.of("print","errors");
 
 
-  public Triple<DatabaseHandle, PipelineFactory, ErrorCollector> createSqrlSettings() {
-    ErrorCollector errors = ErrorCollector.root();
+  public Triple<DatabaseHandle, PipelineFactory, SqrlConfig> createSqrlSettings(
+      ErrorCollector errors) {
     SqrlConfig config = SqrlConfigCommons.create(errors);
 
+    SqrlConfig engineConfig = config.getSubConfig(ENGINES_PROPERTY);
     //Stream engine
     String streamEngineName = null;
     switch (getStream()) {
@@ -64,13 +65,13 @@ public class IntegrationTestSettings {
         break;
     }
     if (!Strings.isNullOrEmpty(streamEngineName)) {
-      config.getSubConfig("streams")
+      engineConfig.getSubConfig("streams")
           .setProperty(EngineFactory.ENGINE_NAME_KEY, streamEngineName);
     }
 
     //Flink config
     if (getStream() == StreamEngine.FLINK) {
-      SqrlConfig stream = config.getSubConfig("streams");
+      SqrlConfig stream = engineConfig.getSubConfig("streams");
 
       if (System.getProperty("os.name").toLowerCase().contains("mac")) {
         stream.setProperty(TaskManagerOptions.NETWORK_MEMORY_MIN.key(), "256mb");
@@ -81,7 +82,7 @@ public class IntegrationTestSettings {
 
     //Database engine
     DatabaseHandle database = null;
-    SqrlConfig dbconfig = config.getSubConfig("database");
+    SqrlConfig dbconfig = engineConfig.getSubConfig("database");
     switch (getDatabase()) {
       case INMEMORY:
         dbconfig.setProperty(InMemoryDatabaseFactory.ENGINE_NAME_KEY, InMemoryDatabaseFactory.ENGINE_NAME);
@@ -100,7 +101,7 @@ public class IntegrationTestSettings {
     }
 
     if (getLog() == LogEngine.KAFKA) {
-      SqrlConfig log = config.getSubConfig("log");
+      SqrlConfig log = engineConfig.getSubConfig("log");
       log.setProperty(KafkaLogEngineFactory.ENGINE_NAME_KEY, KafkaLogEngineFactory.ENGINE_NAME);
       log.setProperty("type", ExternalDataType.source_and_sink.name());
       SqrlConfig connector = log.getSubConfig("connector");
@@ -112,8 +113,7 @@ public class IntegrationTestSettings {
     }
 
 
-    PipelineFactory pipelineFactory = new PipelineFactory(config);
-    return Triple.of(database, pipelineFactory, errors);
+    return Triple.of(database, null, config);
   }
 
   public static IntegrationTestSettings getInMemory() {

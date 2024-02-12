@@ -28,7 +28,7 @@ public class CalciteTableFactory {
   private final TableConverter tableConverter;
 
   public CalciteTableFactory(SqrlFramework framework) {
-    this(new TableIdFactory(framework.getTableNameToIdMap()),
+    this(new TableIdFactory(framework.getSchema().getTableNameToIdMap()),
         new TableConverter(framework.getTypeFactory(), framework.getNameCanonicalizer()));
   }
 

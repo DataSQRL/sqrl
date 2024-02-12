@@ -8,8 +8,9 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
 
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -51,8 +52,9 @@ public interface ExecutionEngine {
 
   CompletableFuture<ExecutionResult> execute(EnginePhysicalPlan plan, ErrorCollector errors);
 
-  EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-      ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink);
+  EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+      ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink,
+      ErrorCollector errorCollector);
 
   @AllArgsConstructor
   @Getter

@@ -3,14 +3,17 @@
  */
 package com.datasqrl.cmd;
 
-import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
+import static com.datasqrl.graphql.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.inject.SqrlInjector;
+import com.datasqrl.inject.StatefulModule;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.repository.CompositeRepositoryImpl;
 import com.datasqrl.packager.repository.LocalRepositoryImplementation;
@@ -26,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.SqrlSchema;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
@@ -82,8 +86,9 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
 
-    Injector injector = Guice.createInjector(new SqrlInjector(errors, root.rootDir,
-        getTargetDir(), debug, sqrlConfig));
+    Injector injector = Guice.createInjector(
+        new SqrlInjector(errors, root.rootDir, getTargetDir(), debug, sqrlConfig),
+        new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     CompilationProcess compilationProcess = injector.getInstance(CompilationProcess.class);
     compilationProcess.executeCompilation();
 

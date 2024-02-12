@@ -1,7 +1,5 @@
-package com.datasqrl.packager.config;
+package com.datasqrl.graphql;
 
-import static com.datasqrl.packager.config.ScriptConfiguration.FILE_KEYS;
-import static com.datasqrl.packager.config.ScriptConfiguration.fromScriptConfig;
 
 import com.datasqrl.config.SqrlConfig;
 import com.google.common.base.Preconditions;
@@ -18,8 +16,8 @@ public class ScriptFiles {
 
   @Inject
   public ScriptFiles(SqrlConfig rootConfig) {
-    SqrlConfig config = fromScriptConfig(rootConfig);
-    Map<String,Optional<String>> scriptFiles = Arrays.stream(FILE_KEYS)
+    SqrlConfig config = ScriptConfiguration.fromScriptConfig(rootConfig);
+    Map<String,Optional<String>> scriptFiles = Arrays.stream(ScriptConfiguration.FILE_KEYS)
         .collect(Collectors.toMap(Function.identity(),
             fileKey -> config.asString(fileKey).getOptional()));
     Preconditions.checkArgument(!scriptFiles.isEmpty());

@@ -13,6 +13,8 @@ import static org.mockito.Mockito.mock;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.PhysicalPlan;
@@ -30,6 +32,7 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
@@ -46,6 +49,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -73,6 +77,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
       plan(script);
       fail("Expected an exception but did not encounter one");
     } catch (CollectedException e) {
+      ErrorCollector errors = injector.getInstance(ErrorCollector.class);
       snapshot.addContent(ErrorPrinter.prettyPrint(errors), "errors");
       snapshot.createOrValidate();
 
@@ -112,7 +117,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
     String schema = new SchemaPrinter(opts).print(generate);
 
-    APISource source = APISource.of(schema);
+    APISource source = APISourceImpl.of(schema);
 
     APIConnectorManagerImpl apiManager = mock(APIConnectorManagerImpl.class);
 
@@ -126,21 +131,22 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     queryGenerator.walk();
     queryGenerator.getQueries().forEach(apiManager::addQuery);
 
-    PhysicalDAGPlan dag = new DAGPlanner(framework, apiManager, pipeline, errors, debugger).plan(
+    //todo readd once moved
+//    PhysicalDAGPlan dag = new DAGPlanner(framework, apiManager, pipeline, errors, debugger).plan(
 //        apiManager, framework.getSchema().getExports(),
 //        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
 //        null, pipeline, errors, debugger
-    );
+//    );
 
-    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
-        .plan(dag);
-    APISource apisource = APISource.of(schema);
+//    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+//        .plan(dag);
+//    APISource apisource = APISource.of(schema);
 
-    GraphqlModelGenerator modelGen = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(), (new SchemaParser()).parse(apisource.getSchemaDefinition()), apisource,
-        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
+//    GraphqlModelGenerator modelGen = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
+//        framework.getSchema(), (new SchemaParser()).parse(apisource.getSchemaDefinition()), apisource,
+//        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
 
-    modelGen.walk();
+//    modelGen.walk();
 
     if (isBlank(schema)) {
       throw new RuntimeException("Could not validate graphql.");

@@ -43,7 +43,6 @@ import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
 import com.datasqrl.util.CheckUtil;
 import com.datasqrl.util.SqlNameUtil;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
@@ -61,7 +60,6 @@ import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -74,7 +72,6 @@ import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDynamicParam;
-import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -100,7 +97,6 @@ import org.apache.calcite.sql.SqrlTableParamDef;
 import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -112,16 +108,16 @@ import org.apache.commons.lang3.tuple.Pair;
 @AllArgsConstructor(onConstructor_=@Inject)
 @Getter
 public class ScriptPlanner implements StatementVisitor<Void, Void> {
-
+  //stateful
   private final SqrlFramework framework;
-  private final ModuleLoader moduleLoader;
-  private final ErrorCollector errorCollector;
-  private final SqlNameUtil nameUtil;
+  private ModuleLoader moduleLoader;
+  private ErrorCollector errorCollector;
   private final SqrlTableFactory tableFactory;
+
+  private final SqlNameUtil nameUtil;
 
   private final Map<SqrlImportDefinition, List<QualifiedImport>> importOps = new HashMap<>();
   private final Map<SqrlExportDefinition, QualifiedExport> exportOps = new HashMap<>();
-
   private final Map<SqlNode, Object> schemaTable = new HashMap<>();
   private final AtomicInteger uniqueId = new AtomicInteger(0);
   private final Map<SqlNode, RelOptTable> tableMap = new HashMap<>();
@@ -130,8 +126,6 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
   private final Map<SqrlAssignment, Boolean> isMaterializeTable = new HashMap<>();
   private final ArrayListMultimap<SqlNode, Function> isA = ArrayListMultimap.create();
   private final ArrayListMultimap<SqlNode, FunctionParameter> parameters = ArrayListMultimap.create();
-
-  private final List<SqlFunction> plannerFns = new ArrayList<>();
 
   @Override
   public Void visit(SqrlImportDefinition node, Void context) {
@@ -368,7 +362,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     NormalizeTablePath normalizeTablePath = new NormalizeTablePath(planner.getCatalogReader(),
         getParamMapping(), new SqlNameUtil(planner.getFramework().getNameCanonicalizer()), errorCollector);
     SqrlToSql sqrlToSql = new SqrlToSql(planner, planner.getCatalogReader(), planner.getOperatorTable(),
-        normalizeTablePath, getParameters().get(assignment), framework.getUniquePkId(), nameUtil);
+        normalizeTablePath, getParameters().get(assignment), framework.getSchema().getUniquePkId(), nameUtil);
     SqrlToSql.Result result = sqrlToSql.rewrite(node, materializeSelf, parentPath);
     this.isA.putAll(sqrlToSql.getIsA());
     validateTopLevelNamed(result.getSqlNode());
@@ -1004,7 +998,7 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     SqlNodeVisitor.accept(this, sqlNode, null);
   }
 
-  public void plan(MainScript mainScript) {
+  public void plan(MainScript mainScript, ModuleLoader composite) {
     ErrorCollector errors = errorCollector;
     if (errorCollector.getLocation() == null
         || errorCollector.getLocation().getSourceMap() == null) {
@@ -1022,12 +1016,13 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     //wtf is this, fix it
     ErrorCollector scriptErrors = errorCollector.withScript("<script>", mainScript.getContent());
 
-    framework.resetPlanner();
+//    framework.resetPlanner();
     for (SqlNode statement : scriptNode.getStatements()) {
       try {
         ErrorCollector lineErrors = scriptErrors
             .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
-
+        errorCollector = lineErrors;
+        moduleLoader = composite;
         validateStatement((SqrlStatement) statement);
         if (lineErrors.hasErrors()) {
           throw new CollectedException(new RuntimeException("Script cannot validate"));

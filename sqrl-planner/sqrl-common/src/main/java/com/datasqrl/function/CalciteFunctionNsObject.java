@@ -24,7 +24,7 @@ public class CalciteFunctionNsObject implements FunctionNamespaceObject<SqlOpera
 
   @Override
   public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
-    framework.getSqrlOperatorTable()
+    framework.getSchema()
         .addFunction(objectName.orElse(name.getDisplay()), function);
     return true;
   }

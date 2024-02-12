@@ -5,6 +5,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.CompilerConfiguration;
+import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -13,15 +14,15 @@ import com.datasqrl.graphql.generate.GraphqlSchemaFactory;
 import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
-import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.packager.config.ScriptConfiguration;
-import com.datasqrl.packager.config.ScriptFiles;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.util.SqlNameUtil;
+import com.datasqrl.graphql.ScriptConfiguration;
+import com.datasqrl.graphql.ScriptFiles;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.google.inject.Inject;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
@@ -37,7 +38,7 @@ import org.apache.calcite.jdbc.SqrlSchema;
 /**
  * Creates new table functions from the graphql schema
  */
-@AllArgsConstructor(onConstructor_=@Inject)
+@AllArgsConstructor(onConstructor_ = @Inject)
 public class InferGraphqlSchema {
 
   private final ExecutionPipeline pipeline;
@@ -48,6 +49,8 @@ public class InferGraphqlSchema {
   private final ErrorCollector errorCollector;
   private final APIConnectorManager apiManager;
   private final ModuleLoader moduleLoader;
+  private final GraphqlSchemaFactory schemaFactory;
+  private final GraphqlSourceFactory graphqlSourceFactory;
 
   @SneakyThrows
   public static String inferGraphQLSchema(SqrlSchema schema,
@@ -60,6 +63,7 @@ public class InferGraphqlSchema {
 
     return new SchemaPrinter(opts).print(gqlSchema);
   }
+
   public void run() {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {
       if (pipeline.getStage(Type.DATABASE).isPresent()) {
@@ -76,14 +80,11 @@ public class InferGraphqlSchema {
       return;
     }
 
-    Name graphqlName = Name.system(
-        scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>").split("\\.")[0]);
-
-    Optional<APISource> apiSchemaOpt = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
-        .map(file -> APISource.of(file, framework.getNameCanonicalizer(), resourceResolver));
-
-    APISource apiSchema = apiSchemaOpt.orElseGet(() -> new APISource(graphqlName,
-        inferGraphQLSchema(framework.getSchema(), compilerConfig.isAddArguments())));
+    APISource apiSchema = graphqlSourceFactory.get()
+        .orElseGet(() ->
+            new APISourceImpl(Name.system("<schema>"),
+                inferGraphQLSchema(framework.getSchema(),
+                    compilerConfig.isAddArguments())));
 
     ErrorCollector apiErrors = errorCollector.withSchema(apiSchema.getName().getDisplay(),
         apiSchema.getSchemaDefinition());
@@ -108,5 +109,4 @@ public class InferGraphqlSchema {
       throw apiErrors.handle(e);
     }
   }
-
 }
