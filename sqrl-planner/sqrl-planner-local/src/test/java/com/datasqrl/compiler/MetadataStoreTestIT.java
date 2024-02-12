@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.metadata.MetadataStore;
 import com.google.common.collect.ImmutableSet;
 import java.util.Optional;

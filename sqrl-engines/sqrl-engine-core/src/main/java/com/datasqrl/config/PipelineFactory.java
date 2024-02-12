@@ -30,7 +30,6 @@ public class PipelineFactory {
   @Getter
   private final SqrlConfig engineConfig;
 
-  @Inject
   public PipelineFactory(@NonNull SqrlConfig engineConfig) {
     this.engineConfig = engineConfig;
   }

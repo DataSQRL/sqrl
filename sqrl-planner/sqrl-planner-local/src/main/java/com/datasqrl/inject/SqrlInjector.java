@@ -90,7 +90,7 @@ public class SqrlInjector extends AbstractModule {
 
   @Provides
   public ResourceResolver provideResourceResolver() {
-    return new FileResourceResolver(this.rootDir);
+    return new FileResourceResolver(buildDir);
   }
 
   @Provides

@@ -3,6 +3,7 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
 import static com.datasqrl.loaders.LoaderUtil.loadSink;
 
 import com.datasqrl.calcite.SqrlFramework;
@@ -11,23 +12,19 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.engine.database.relational.JDBCEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
-import com.datasqrl.inject.MockSqrlInjector;
 import com.datasqrl.inject.StatefulModule;
 import com.datasqrl.io.impl.jdbc.JdbcDataSystemConnector;
 import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.resolver.FileResourceResolver;
-import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.local.analyze.MockModuleLoader;
 import com.datasqrl.plan.local.generate.Debugger;
-import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.TableConverter;
 import com.datasqrl.plan.table.TableIdFactory;
@@ -35,7 +32,6 @@ import com.datasqrl.util.DatabaseHandle;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -60,52 +56,29 @@ public abstract class AbstractEngineIT {
   public Path rootDir;
   public Optional<Path> errorDir;
   public ModuleLoader moduleLoader;
-  public ErrorSink errorSink;
   public Optional<JdbcDataSystemConnector> jdbc;
   public PipelineFactory pipelineFactory;
-  public Debugger debugger;
   public Injector injector;
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir) {
-    ModuleLoader loader;
-    this.errors = ErrorCollector.root();
-    if (rootDir != null) {
-      loader = new ModuleLoaderImpl(new ObjectLoaderImpl(new FileResourceResolver(rootDir),
-          errors, new CalciteTableFactory(new TableIdFactory(new HashMap<>()), new TableConverter(new TypeFactory(),
-          NameCanonicalizer.SYSTEM))));
-    } else {
-      loader = new MockModuleLoader(null, Map.of(), errorDir);
-    }
-    initialize(settings, rootDir, errorDir, loader, errors);
+    initialize(settings, rootDir, errorDir, ErrorCollector.root(), null, false);
   }
 
   protected void initialize(IntegrationTestSettings settings, Path rootDir, Optional<Path> errorDir,
-      ModuleLoader moduleLoader, ErrorCollector errors) {
+      ErrorCollector errors, Map<NamePath, SqrlModule> addlModules, boolean isDebug) {
     this.errors = errors;
-
     Triple<DatabaseHandle, PipelineFactory, SqrlConfig> setup = settings.createSqrlSettings(errors);
-
     injector = Guice.createInjector(
-        new MockSqrlInjector(moduleLoader, errors, setup.getRight()),
+        new MockSqrlInjector(errors, setup.getRight(), errorDir, rootDir, addlModules, isDebug),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
 
     this.framework = injector.getInstance(SqrlFramework.class);
 
-    Map<NamePath, SqrlModule> addlModules = (rootDir == null)
-        ? TestModuleFactory.merge(TestModuleFactory.createRetail(framework),
-        TestModuleFactory.createFuzz(framework))
-        : Map.of();
-
-    this.moduleLoader = createModuleLoader(rootDir, addlModules, errors,
-        errorDir, new CalciteTableFactory(new TableIdFactory(framework.getSchema().getTableNameToIdMap()),
-            new TableConverter(framework.getTypeFactory(),
-            framework.getNameCanonicalizer())));
+    this.moduleLoader = injector.getInstance(ModuleLoader.class);
     this.nameCanonicalizer = NameCanonicalizer.SYSTEM;
-    this.errorSink = new ErrorSink(loadSink(settings.getErrorSink(), errors, moduleLoader));
 
     this.settings = settings;
     this.database = setup.getLeft();
-    this.pipelineFactory = injector.getInstance(PipelineFactory.class);
     this.pipeline = injector.getInstance(ExecutionPipeline.class);
     this.rootDir = rootDir;
     this.errorDir = errorDir;
@@ -113,19 +86,18 @@ public abstract class AbstractEngineIT {
         .filter(f->f.getEngine() instanceof JDBCEngine)
         .map(f->((JDBCEngine) f.getEngine()).getConnector())
         .findAny();
-    this.debugger = new Debugger(settings.debugger, moduleLoader);
   }
-
-  public static ModuleLoader createModuleLoader(Path rootDir, Map<NamePath, SqrlModule> addlModules,
-      ErrorCollector errors, Optional<Path> errorDir, CalciteTableFactory tableFactory) {
-    if (rootDir != null) {
-      ObjectLoaderImpl objectLoader = new ObjectLoaderImpl(new FileResourceResolver(rootDir),
-          errors, tableFactory);
-      return new MockModuleLoader(objectLoader, addlModules, errorDir);
-    } else {
-      return new MockModuleLoader(null, addlModules, errorDir);
-    }
-  }
+//
+//  public static ModuleLoader createModuleLoader(Path rootDir, Map<NamePath, SqrlModule> addlModules,
+//      ErrorCollector errors, Optional<Path> errorDir, CalciteTableFactory tableFactory) {
+//    if (rootDir != null) {
+//      ObjectLoaderImpl objectLoader = new ObjectLoaderImpl(new FileResourceResolver(rootDir),
+//          errors, tableFactory);
+//      return new MockModuleLoader(objectLoader, addlModules, errorDir);
+//    } else {
+//      return new MockModuleLoader(null, addlModules, errorDir);
+//    }
+//  }
 
   protected TableResult executeSql(String flinkSql) {
 

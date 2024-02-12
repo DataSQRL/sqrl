@@ -15,13 +15,13 @@ import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
 import com.datasqrl.loaders.ModuleLoader;
+<<<<<<< HEAD
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.graphql.ScriptConfiguration;
-import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.plan.queries.APISourceImpl;
 import com.google.inject.Inject;
 import graphql.schema.GraphQLSchema;
@@ -33,11 +33,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-<<<<<<< HEAD
 import org.apache.calcite.jdbc.SqrlSchema;
-=======
 import org.apache.commons.lang3.tuple.Pair;
->>>>>>> 4ceb27ed0 (Add more di)
 
 /**
  * Creates new table functions from the graphql schema
@@ -47,8 +44,6 @@ public class InferGraphqlSchema {
 
   private final ExecutionPipeline pipeline;
   private final SqrlFramework framework;
-  private final ScriptFiles scriptFiles;
-  private final ResourceResolver resourceResolver;
   private final CompilerConfiguration compilerConfig;
   private final ErrorCollector errorCollector;
   private final APIConnectorManager apiManager;
@@ -68,7 +63,7 @@ public class InferGraphqlSchema {
     return new SchemaPrinter(opts).print(gqlSchema);
   }
 
-  public void run() {
+  public Optional<APISource> run() {
     if (pipeline.getStage(Type.SERVER).isEmpty()) {
       if (pipeline.getStage(Type.DATABASE).isPresent()) {
         AtomicInteger i = new AtomicInteger();
@@ -81,7 +76,7 @@ public class InferGraphqlSchema {
                 List.of(), false)));
       }
 
-      return;
+      return Optional.empty();
     }
 
     APISource apiSchema = graphqlSourceFactory.get()
@@ -112,6 +107,6 @@ public class InferGraphqlSchema {
     } catch (Exception e) {
       throw apiErrors.handle(e);
     }
-    return;
+    return Optional.of(apiSchema);
   }
 }

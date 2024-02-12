@@ -109,8 +109,8 @@ public class JsonConversionTest extends AbstractGraphqlTest {
 
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    MockModuleLoader moduleLoader = new MockModuleLoader(null, createJson(), Optional.empty());
-    initialize(IntegrationTestSettings.getInMemory(), null, Optional.empty(), moduleLoader, ErrorCollector.root());
+    initialize(IntegrationTestSettings.getInMemory(), null, Optional.empty(), ErrorCollector.root(),
+        createJson(), false);
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
 

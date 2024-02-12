@@ -1,11 +1,11 @@
-package com.datasqrl.inject;
+package com.datasqrl;
 
-import com.datasqrl.MainScriptImpl;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlFrameworkImpl;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfig;
@@ -21,35 +21,43 @@ import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ObjectLoader;
 import com.datasqrl.loaders.ObjectLoaderImpl;
+import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.SqrlPlanningTableFactory;
+import com.datasqrl.plan.local.analyze.MockModuleLoaderImpl;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.tools.RelBuilder;
 
 public class MockSqrlInjector extends AbstractModule {
 
-  private final ModuleLoader moduleLoader;
   private final ErrorCollector errors;
   private final SqrlConfig config;
   private final boolean debug;
+  private final Path rootDir;
+  private final Map<NamePath, SqrlModule> addlModules;
+  private final Optional<Path> errorDir;
 
-  public MockSqrlInjector(ModuleLoader moduleLoader,
-      ErrorCollector errors, SqrlConfig config) {
-    this.moduleLoader = moduleLoader;
+  public MockSqrlInjector(
+      ErrorCollector errors, SqrlConfig config, Optional<Path> errorDir, Path rootDir,
+      Map<NamePath, SqrlModule> addlModules, boolean isDebug) {
     this.errors = errors;
     this.config = config;
 
-//    this.rootDir = rootDir;
+    this.rootDir = rootDir;
 //    this.buildDir = rootDir.resolve("build");
 //    this.targetDir = targetDir;
-    this.debug = false;
+    this.debug = isDebug;
+    this.errorDir = errorDir;
 //    this.sqrlConfig = sqrlConfig;
+    this.addlModules = addlModules;
   }
 
   @Override
@@ -65,17 +73,13 @@ public class MockSqrlInjector extends AbstractModule {
     bind(CompilerConfiguration.class).to(SqrlCompilerConfiguration.class);
     bind(SqrlTableFactory.class).to(SqrlPlanningTableFactory.class);
     bind(RelBuilder.class).to(SqrlRelBuilder.class);
+    bind(ModuleLoader.class).to(MockModuleLoaderImpl.class);
   }
 
   @Provides
   @Named("debugFlag")
   public boolean provideDebugFlag() {
     return debug;
-  }
-
-  @Provides
-  public ModuleLoader provideModuleLoader() {
-    return moduleLoader;
   }
 
   @Provides
@@ -88,6 +92,12 @@ public class MockSqrlInjector extends AbstractModule {
   }
 
   @Provides
+  @Named("rootDir")
+  public Path provideRootDir() {
+    return rootDir;
+  }
+
+  @Provides
   @Named("buildDir")
   public Path provideBuildDir() {
     return null;
@@ -97,6 +107,18 @@ public class MockSqrlInjector extends AbstractModule {
   @Named("targetDir")
   public Path provideTargetDir() {
     return null;
+  }
+
+  @Provides
+  @Named("errorDir")
+  public Optional<Path> provideErrorDir() {
+    return errorDir;
+  }
+
+  @Provides
+  @Named("addlModules")
+  public Map<NamePath, SqrlModule> provideAddlModules() {
+    return addlModules;
   }
 
   @Provides

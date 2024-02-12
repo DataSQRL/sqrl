@@ -11,16 +11,14 @@ import java.util.Map;
 
 public class TestModuleFactory {
 
-  public static Map<NamePath, SqrlModule> createRetail(SqrlFramework framework) {
-    CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
+  public static Map<NamePath, SqrlModule> createRetail(CalciteTableFactory tableFactory) {
     RetailSqrlModule retailSqrlModule = new RetailSqrlModule();
     retailSqrlModule.init(tableFactory);
     return Map.of(NamePath.of("ecommerce-data"),
         retailSqrlModule);
   }
 
-  public static Map<NamePath, SqrlModule> createFuzz(SqrlFramework framework) {
-    CalciteTableFactory tableFactory = new CalciteTableFactory(framework);
+  public static Map<NamePath, SqrlModule> createFuzz(CalciteTableFactory tableFactory) {
     FuzzingRetailSqrlModule fuzzingRetailSqrlModule = new FuzzingRetailSqrlModule();
     fuzzingRetailSqrlModule.init(tableFactory);
     return Map.of(NamePath.of("ecommerce-data-large"), fuzzingRetailSqrlModule);

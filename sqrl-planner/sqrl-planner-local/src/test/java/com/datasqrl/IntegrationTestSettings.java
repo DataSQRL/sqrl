@@ -3,6 +3,7 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.config.CompilerConfiguration.COMPILER_KEY;
 import static com.datasqrl.config.PipelineFactory.ENGINES_PROPERTY;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -23,6 +24,7 @@ import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.util.DatabaseHandle;
 import com.datasqrl.util.JDBCTestDatabase;
 import com.google.common.base.Strings;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
@@ -52,6 +54,18 @@ public class IntegrationTestSettings {
   public Triple<DatabaseHandle, PipelineFactory, SqrlConfig> createSqrlSettings(
       ErrorCollector errors) {
     SqrlConfig config = SqrlConfigCommons.create(errors);
+    SqrlConfig compilerConfig = config.getSubConfig(COMPILER_KEY);
+    if (debugger != DebuggerConfig.NONE) {
+
+      compilerConfig.setProperty("debugSink", debugger.getSinkBasePath().getDisplay());
+      if (debugger.getDebugTables() != null) {
+        compilerConfig.setProperty("debugTables", debugger.getDebugTables().stream()
+            .map(e -> e.getDisplay()).collect(Collectors.toList()));
+      }
+    }
+
+    compilerConfig.setProperty("errorSink", errorSink.getDisplay());
+
 
     SqrlConfig engineConfig = config.getSubConfig(ENGINES_PROPERTY);
     //Stream engine

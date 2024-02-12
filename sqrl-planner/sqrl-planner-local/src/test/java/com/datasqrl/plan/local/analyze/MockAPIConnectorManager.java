@@ -23,11 +23,12 @@ public class MockAPIConnectorManager implements APIConnectorManager {
 
   public MockAPIConnectorManager(SqrlFramework framework, ExecutionPipeline pipeline,
       ErrorCollector errors) {
+    CalciteTableFactory calciteTableFactory = new CalciteTableFactory(framework);
     apiConnectorManager  = new APIConnectorManagerImpl(
-        new CalciteTableFactory(framework),
+        calciteTableFactory,
         new LogEngineSupplier(pipeline),
         errors,
-        new MockModuleLoader(null, TestModuleFactory.createRetail(framework), Optional.empty()),
+        new MockModuleLoader(null, TestModuleFactory.createRetail(calciteTableFactory), Optional.empty()),
         new TypeFactory(),new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)
     );
   }
