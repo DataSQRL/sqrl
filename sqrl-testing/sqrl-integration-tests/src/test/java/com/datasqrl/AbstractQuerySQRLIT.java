@@ -154,12 +154,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
   }
 
   @SneakyThrows
-  private String prettyPrintObj(Object body) {
-    return mapper.writerWithDefaultPrettyPrinter()
-        .writeValueAsString(body);
-  }
-
-  @SneakyThrows
   private String prettyPrint(String body) {
     return mapper.writerWithDefaultPrettyPrinter()
         .writeValueAsString(mapper.readTree(body));

@@ -3,8 +3,6 @@
  */
 package com.datasqrl;
 
-import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
-
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -24,7 +22,6 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
-import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.local.analyze.ResolveTest;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.table.ScriptRelationalTable;
@@ -97,9 +94,6 @@ public class AbstractPhysicalSQRLIT extends AbstractSchemaInferenceModelTest {
 
     DAGPlanner dagPlanner = injector.getInstance(DAGPlanner.class);
     PhysicalDAGPlan dag = dagPlanner.plan();
-//        DAGPlanner.plan(framework, apiManager, framework.getSchema().getExports(),
-//        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
-//        pipeline, errors, debugger);
     addContent(dag);
 
     PhysicalPlan physicalPlan = injector.getInstance(PhysicalPlanner.class)

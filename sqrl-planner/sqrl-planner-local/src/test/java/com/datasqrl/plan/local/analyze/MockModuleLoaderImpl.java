@@ -9,6 +9,7 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.resolver.FileResourceResolver;
+import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.TableConverter;
 import com.datasqrl.plan.table.TableIdFactory;
@@ -33,9 +34,10 @@ public class MockModuleLoaderImpl implements ModuleLoader {
       @Named("errorDir") Optional<Path> errorDir,
       CalciteTableFactory tableFactory,
       ErrorCollector errors,
-      @Nullable @Named("addlModules") Map<NamePath, SqrlModule> tables) {
+      @Nullable @Named("addlModules") Map<NamePath, SqrlModule> tables,
+      @Nullable ResourceResolver resourceResolver) {
     if (rootDir != null) {
-      ObjectLoaderImpl objectLoader = new ObjectLoaderImpl(new FileResourceResolver(rootDir),
+      ObjectLoaderImpl objectLoader = new ObjectLoaderImpl(resourceResolver,
           errors, tableFactory);
       loader = new MockModuleLoader(objectLoader, Map.of(), errorDir);
     } else if (tables != null) {

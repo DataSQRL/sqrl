@@ -16,6 +16,7 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 
 @Getter
+@AllArgsConstructor
 public class Relationship implements SqrlTableMacro {
   private final Name name;
   private final NamePath fullPath;
@@ -25,18 +26,6 @@ public class Relationship implements SqrlTableMacro {
 
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
-
-  public Relationship(Name name, NamePath fullPath, NamePath absolutePath, JoinType joinType,
-      Multiplicity multiplicity, List<FunctionParameter> parameters,
-      Supplier<RelNode> viewTransform) {
-    this.name = name;
-    this.fullPath = fullPath;
-    this.absolutePath = absolutePath;
-    this.joinType = joinType;
-    this.multiplicity = multiplicity;
-    this.parameters = parameters;
-    this.viewTransform = viewTransform;
-  }
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {

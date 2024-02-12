@@ -4,7 +4,6 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
-import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect;
@@ -16,10 +15,10 @@ import com.datasqrl.plan.global.DAGAssembler;
 import com.datasqrl.plan.global.DAGBuilder;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.DAGPreparation;
-import com.datasqrl.plan.global.QueryIndexSummary;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.QueryIndexSummary;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.SqlNameUtil;
@@ -31,7 +30,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;

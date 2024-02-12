@@ -22,6 +22,7 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ObjectLoader;
 import com.datasqrl.loaders.ObjectLoaderImpl;
 import com.datasqrl.module.SqrlModule;
+import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.SqrlPlanningTableFactory;
@@ -45,18 +46,13 @@ public class MockSqrlInjector extends AbstractModule {
   private final Map<NamePath, SqrlModule> addlModules;
   private final Optional<Path> errorDir;
 
-  public MockSqrlInjector(
-      ErrorCollector errors, SqrlConfig config, Optional<Path> errorDir, Path rootDir,
-      Map<NamePath, SqrlModule> addlModules, boolean isDebug) {
+  public MockSqrlInjector(ErrorCollector errors, SqrlConfig config, Optional<Path> errorDir,
+      Path rootDir, Map<NamePath, SqrlModule> addlModules, boolean isDebug) {
     this.errors = errors;
     this.config = config;
-
     this.rootDir = rootDir;
-//    this.buildDir = rootDir.resolve("build");
-//    this.targetDir = targetDir;
     this.debug = isDebug;
     this.errorDir = errorDir;
-//    this.sqrlConfig = sqrlConfig;
     this.addlModules = addlModules;
   }
 
@@ -86,6 +82,7 @@ public class MockSqrlInjector extends AbstractModule {
   public ErrorCollector provideErrorCollector() {
     return errors;
   }
+
   @Provides
   public NameCanonicalizer provideNameCanonicalizer() {
     return NameCanonicalizer.SYSTEM;
@@ -100,13 +97,13 @@ public class MockSqrlInjector extends AbstractModule {
   @Provides
   @Named("buildDir")
   public Path provideBuildDir() {
-    return null;
+    return rootDir.resolve("build");
   }
 
   @Provides
   @Named("targetDir")
   public Path provideTargetDir() {
-    return null;
+    return rootDir.resolve("build").resolve("deploy");
   }
 
   @Provides
@@ -123,7 +120,7 @@ public class MockSqrlInjector extends AbstractModule {
 
   @Provides
   public ResourceResolver provideResourceResolver() {
-    return null;
+    return new FileResourceResolver(rootDir);
   }
 
 

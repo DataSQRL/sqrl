@@ -19,6 +19,8 @@ import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.io.util.StreamInputPreparer;
 import com.datasqrl.io.util.StreamInputPreparerImpl;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.schema.converters.FlinkTypeInfoSchemaGenerator;
 import com.datasqrl.engine.stream.RowMapper;
@@ -66,6 +68,7 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
   @Test
   @Disabled
   public void testFlinkTableAPIIntegration() {
+    ModuleLoader moduleLoader = injector.getInstance(ModuleLoader.class);
 
     TableSource tblSource = loadTable(NamePath.of("ecommerce-data", "Orders"), moduleLoader);
 
@@ -152,5 +155,14 @@ public class FlinkTableAPIIT extends AbstractPhysicalSQRLIT {
       }
       collector.collect(Row.ofKind(RowKind.INSERT, data));
     }
+  }
+
+  protected TableSource loadTable(NamePath path, ModuleLoader moduleLoader) {
+    TableSourceNamespaceObject ns = (TableSourceNamespaceObject)moduleLoader
+        .getModule(path.popLast())
+        .get()
+        .getNamespaceObject(path.getLast())
+        .get();
+    return ns.getTable();
   }
 }
