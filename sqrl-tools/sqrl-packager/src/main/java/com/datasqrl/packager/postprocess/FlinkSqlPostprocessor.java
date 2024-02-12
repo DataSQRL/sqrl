@@ -6,7 +6,6 @@ import static com.datasqrl.PlanConstants.PLAN_SQL;
 
 import com.datasqrl.FlinkExecutablePlan;
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
@@ -15,7 +14,6 @@ import com.datasqrl.sql.FlinkSqlGenerator;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

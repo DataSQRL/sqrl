@@ -51,11 +51,11 @@ public class DAGBuilder {
     Multimap<SqrlNode, SqrlNode> dagInputs = HashMultimap.create();
     //1. Add all queries as sinks
     List<ExecutionStage> readStages = pipeline.getReadStages();
-    errors.checkFatal(!readStages.isEmpty(), "Configured Pipeline does not include"
-        + " any read stages to execute API queries: %s",pipeline);
-    for (AnalyzedAPIQuery query : queries) {
-      add2DAG(query.getRelNode(), query.getBaseConfig(), readStages, dagInputs,
-          stageAnalysis -> new QueryNode(stageAnalysis, query), table2Node);
+    if (!readStages.isEmpty()) {
+      for (AnalyzedAPIQuery query : queries) {
+        add2DAG(query.getRelNode(), query.getBaseConfig(), readStages, dagInputs,
+            stageAnalysis -> new QueryNode(stageAnalysis, query), table2Node);
+      }
     }
     //2. Add all exports as sinks
     int numExports = 1;

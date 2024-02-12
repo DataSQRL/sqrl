@@ -48,8 +48,7 @@ public class SimplePipeline implements ExecutionPipeline {
     getStage(Type.LOG, engines).ifPresent(stages::add);
     stages.add(getStage(Type.STREAM, engines).orElseThrow(
         () -> errors.exception("Need to configure a stream engine")));
-    stages.add(getStage(Type.DATABASE, engines).orElseThrow(
-        () -> errors.exception("Need to configure a database engine")));
+    getStage(Type.DATABASE, engines).ifPresent(stages::add);
     getStage(Type.SERVER, engines).ifPresent(stages::add);
     return new SimplePipeline(stages);
   }

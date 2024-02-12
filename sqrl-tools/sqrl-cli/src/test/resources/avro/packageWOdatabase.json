@@ -1,0 +1,23 @@
+{
+  "engines" : {
+    "log" : {
+      "name" : "kafka",
+      "schema" : "flexible",
+      "format" : {
+        "name" : "json"
+      },
+      "type" : "source_and_sink",
+      "connector" : {
+        "name" : "kafka",
+        "bootstrap.servers" : "kafka:9092"
+      }
+    },
+    "streams" : {
+      "name" : "flink"
+    }
+  },
+  "script" : {
+    "graphql" : "schema.graphqls",
+    "main" : "c360.sqrl"
+  }
+}

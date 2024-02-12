@@ -1,0 +1,15 @@
+{
+  "type" : "sink",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "avro"
+  },
+  "name" : "orders",
+  "identifier" : "orders",
+  "schema" : "avro",
+  "connector" : {
+    "name" : "kafka",
+    "bootstrap.servers": "kafka:9092",
+    "group.id": "datasqrl-orders"
+  }
+}

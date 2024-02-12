@@ -13,12 +13,14 @@ import com.datasqrl.config.CompilerConfiguration;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.frontend.ErrorSink;
+import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.plan.SqrlOptimizeDag;
 import com.datasqrl.loaders.ModuleLoaderComposite;
 import com.datasqrl.plan.ScriptPlanner;
@@ -45,6 +47,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
+import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
@@ -61,9 +64,12 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -97,6 +103,7 @@ public class Compiler {
 
     CompilerConfiguration compilerConfig = CompilerConfiguration.fromRootConfig(config);
     PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
+    ExecutionPipeline pipeline = pipelineFactory.createPipeline();
 
     DebuggerConfig debugger = DebuggerConfig.NONE;
     if (debug) debugger = compilerConfig.getDebugger();
@@ -114,71 +121,87 @@ public class Compiler {
         new CalciteTableFactory(framework)));
     TableSink errorTableSink = loadErrorSink(moduleLoader, compilerConfig.getErrorSink(), errors);
 
-    ExecutionPipeline pipeline = pipelineFactory.createPipeline();
-    ErrorSink errorSink = new ErrorSink(errorTableSink);
-
-    GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(framework.getTypeFactory(),
-        nameCanonicalizer);
-    APIConnectorManager apiManager = new APIConnectorManagerImpl(new CalciteTableFactory(framework),
-        pipeline, errors, moduleLoader, framework.getTypeFactory());
-
     Map<String, Optional<String>> scriptFiles = ScriptConfiguration.getFiles(config);
     Preconditions.checkArgument(!scriptFiles.isEmpty());
     URI mainScript = resourceResolver
         .resolveFile(NamePath.of(scriptFiles.get(ScriptConfiguration.MAIN_KEY).get()))
         .orElseThrow();
+    APIConnectorManager apiManager = new APIConnectorManagerImpl(
+        new CalciteTableFactory(framework),
+        pipeline, errors, moduleLoader, framework.getTypeFactory());
+
     Optional<APISource> apiSchemaOpt = scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY)
-        .map(file -> APISource.of(file, preAnalysis.getCanonicalizer(), resourceResolver));
+        .map(file -> APISource.of(file, framework.getNameCanonicalizer(), resourceResolver));
 
-    apiSchemaOpt.ifPresent(api -> preAnalysis.analyze(api, apiManager));
+    if (pipeline.getStage(Type.SERVER).isPresent()) {
+      GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(
+          framework.getTypeFactory(),
+          nameCanonicalizer);
 
+      apiSchemaOpt.ifPresent(api -> preAnalysis.analyze(api, apiManager));
 
-    ModuleLoader updatedModuleLoader = ModuleLoaderComposite.builder()
+      moduleLoader = ModuleLoaderComposite.builder()
           .moduleLoader(moduleLoader)
           .moduleLoader(apiManager.getAsModuleLoader())
           .build();
-    ScriptPlanner.plan(FileUtil.readFile(mainScript), List.of(), framework, updatedModuleLoader,
-        nameCanonicalizer, errors);
-
-    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
-
-    Name graphqlName = Name.system(scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>")
-        .split("\\.")[0]);
-
-    APISource apiSchema = apiSchemaOpt.orElseGet(() ->
-        new APISource(graphqlName, inferGraphQLSchema(sqrlSchemaForInference, compilerConfig.isAddArguments())));
-
-    errors = errors.withSchema(apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
-
-    RootGraphqlModel root;
-    //todo: move
-    try {
-      InferredSchema inferredSchema = new SchemaInference(
-          framework,
-          apiSchema.getName().getDisplay(),
-          moduleLoader,
-          apiSchema,
-          sqrlSchemaForInference,
-          framework.getQueryPlanner().getRelBuilder(),
-          apiManager)
-          .accept();
-
-      SchemaBuilder schemaBuilder = new SchemaBuilder(apiSchema, apiManager);
-
-      root = inferredSchema.accept(schemaBuilder, null);
-    } catch (Exception e) {
-      throw errors.handle(e);
     }
 
-    PhysicalDAGPlan dag = SqrlOptimizeDag.planDag(framework, pipelineFactory.createPipeline(), apiManager, root,
-       false,new Debugger(debugger, moduleLoader), errors);
+    ScriptPlanner.plan(FileUtil.readFile(mainScript), List.of(), framework, moduleLoader,
+        nameCanonicalizer, errors);
+
+    Optional<RootGraphqlModel> root = Optional.empty();
+
+    Optional<APISource> apiSource = Optional.empty();
+    if (pipeline.getStage(Type.SERVER).isPresent()) {
+      SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(
+          framework.getSchema());
+
+      Name graphqlName = Name.system(
+          scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>")
+              .split("\\.")[0]);
+
+      APISource apiSchema = apiSchemaOpt.orElseGet(() ->
+          new APISource(graphqlName,
+              inferGraphQLSchema(sqrlSchemaForInference, compilerConfig.isAddArguments())));
+      apiSource = Optional.of(apiSchema);
+      errors = errors.withSchema(apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
+
+      //todo: move
+      try {
+        InferredSchema inferredSchema = new SchemaInference(
+            framework,
+            apiSchema.getName().getDisplay(),
+            moduleLoader,
+            apiSchema,
+            sqrlSchemaForInference,
+            framework.getQueryPlanner().getRelBuilder(),
+            apiManager)
+            .accept();
+
+        SchemaBuilder schemaBuilder = new SchemaBuilder(apiSchema, apiManager);
+
+        root = Optional.of(inferredSchema.accept(schemaBuilder, null));
+      } catch (Exception e) {
+        throw errors.handle(e);
+      }
+    } else if (pipeline.getStage(Type.DATABASE).isPresent()) {
+      AtomicInteger i = new AtomicInteger();
+      framework.getSchema().getTableFunctions()
+          .forEach(t->apiManager.addQuery(new APIQuery(
+              "query" + i.incrementAndGet(),
+              framework.getQueryPlanner().expandMacros(t.getViewTransform().get()))));
+    }
+
+    PhysicalDAGPlan dag = SqrlOptimizeDag.planDag(framework, pipelineFactory.createPipeline(), apiManager, root.orElse(null),
+        false,new Debugger(debugger, moduleLoader), errors);
     PhysicalPlan physicalPlan = createPhysicalPlan(dag, errorTableSink, framework);
 
-    root = updateGraphqlPlan(framework.getQueryPlanner(), root, physicalPlan.getDatabaseQueries());
+    root = root.map(model->updateGraphqlPlan(framework.getQueryPlanner(), model, physicalPlan.getDatabaseQueries()));
 
-    CompilerResult result = new CompilerResult(root, apiSchema.getSchemaDefinition(), physicalPlan);
+    CompilerResult result = new CompilerResult(root, apiSource.map(APISource::getSchemaDefinition), physicalPlan);
+
     writeDeployArtifacts(result, deployDir);
-    writeSchema(buildDir, result.getGraphQLSchema());
+    result.getGraphQLSchema().ifPresent(s->writeSchema(buildDir, s));
 
     return result;
   }
@@ -217,8 +240,8 @@ public class Compiler {
   @Value
   public class CompilerResult {
 
-    RootGraphqlModel model;
-    String graphQLSchema;
+    Optional<RootGraphqlModel> model;
+    Optional<String> graphQLSchema;
     PhysicalPlan plan;
   }
 
@@ -234,5 +257,4 @@ public class Compiler {
   public void writeDeployArtifacts(CompilerResult result, Path deployDir) {
     result.plan.writeTo(deployDir, new Deserializer());
   }
-
 }

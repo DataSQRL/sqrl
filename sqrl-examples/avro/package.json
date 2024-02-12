@@ -1,0 +1,37 @@
+{
+  "engines" : {
+    "server" : {
+      "name" : "vertx"
+    },
+    "database" : {
+      "database" : "datasqrl",
+      "password" : "postgres",
+      "dialect" : "postgres",
+      "driver" : "org.postgresql.Driver",
+      "port" : 5432,
+      "name" : "jdbc",
+      "host" : "database",
+      "user" : "postgres",
+      "url" : "jdbc:postgresql://database:5432/datasqrl"
+    },
+    "log" : {
+      "name" : "kafka",
+      "schema" : "flexible",
+      "format" : {
+        "name" : "json"
+      },
+      "type" : "source_and_sink",
+      "connector" : {
+        "name" : "kafka",
+        "bootstrap.servers" : "kafka:9092"
+      }
+    },
+    "streams" : {
+      "name" : "flink"
+    }
+  },
+  "script" : {
+    "graphql" : "schema.graphqls",
+    "main" : "c360.sqrl"
+  }
+}

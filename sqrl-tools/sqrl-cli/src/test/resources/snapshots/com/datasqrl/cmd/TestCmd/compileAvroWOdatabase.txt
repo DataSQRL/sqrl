@@ -1,0 +1,77 @@
+>>>sql
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.TimeFunctions$TimestampToString' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.TimeFunctions$EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.TimeFunctions$EndOfWeek' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.TimeFunctions$ParseTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.TimeFunctions$EpochMilliToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.TimeFunctions$EndOfMinute' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.TimeFunctions$TimestampToEpoch' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.TimeFunctions$EndOfSecond' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.TimeFunctions$EpochToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.TimeFunctions$EndOfDay' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.TimeFunctions$AtZone' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.TimeFunctions$EndOfHour' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.TimeFunctions$EndOfYear' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `__DataSQRLUuidGenerator` AS 'com.datasqrl.SecureFunctions$Uuid' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `orders$1` (
+  `_uuid` AS __DATASQRLUUIDGENERATOR(),
+  `_ingest_time` AS PROCTIME(),
+  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `entries` ROW(`productid` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  WATERMARK FOR `_source_time` AS (`_source_time` - INTERVAL '1' SECOND)
+) WITH (
+  'properties.bootstrap.servers' = 'kafka:9092',
+  'connector' = 'kafka',
+  'format' = 'avro',
+  'topic' = 'orders',
+  'properties.group.id' = 'datasqrl-orders',
+  'scan.startup.mode' = 'earliest-offset'
+);
+
+CREATE TEMPORARY TABLE `ordercount$1$1` (
+  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `number` BIGINT NOT NULL,
+  `volume` INTEGER NOT NULL
+) WITH (
+  'properties.bootstrap.servers' = 'kafka:9092',
+  'connector' = 'kafka',
+  'format' = 'avro',
+  'topic' = 'orders',
+  'properties.group.id' = 'datasqrl-orders'
+);
+
+CREATE VIEW `query$1`
+AS
+SELECT `$cor6`.`_source_time` AS `timeSec`, `t00`.`quantity`, `$cor6`.`_uuid`, `t00`.`productid`
+FROM `orders$1` AS `$cor6`,
+UNNEST(`$cor6`.`entries`) AS `t00`;
+
+CREATE VIEW `root$2`
+AS
+SELECT `window_time` AS `timeSec`, COUNT(*) AS `number`, SUM(`quantity`) AS `volume`
+FROM TABLE(TUMBLE((TABLE `query$1`), (DESCRIPTOR(`timeSec`)), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`
+GROUP BY `window_start`, `window_end`, `window_time`;
+
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `ordercount$1$1`
+(SELECT *
+FROM `root$2`)
+;
+END;
