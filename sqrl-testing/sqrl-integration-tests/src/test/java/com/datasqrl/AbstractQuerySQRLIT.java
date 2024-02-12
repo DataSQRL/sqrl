@@ -3,6 +3,7 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.actions.GraphqlPostplanHook;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -47,6 +48,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,26 +72,18 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
   @SneakyThrows
   protected void validateSchemaAndQueries(String script, String schema, Map<String, String> queries) {
-
     plan(script);
-    Triple<Object, RootGraphqlModel, APIConnectorManager> modelAndQueries =
-        inferSchemaModelQueries(schema, framework, errors);
-
-    PhysicalDAGPlan dag = new DAGPlanner(injector.getInstance(SqrlFramework.class),
-        modelAndQueries.getRight(),
-        injector.getInstance(ExecutionPipeline.class),
-        injector.getInstance(ErrorCollector.class),
-        injector.getInstance(DAGAssembler.class),
-        injector.getInstance(DAGBuilder.class),
-        injector.getInstance(DAGPreparation.class)).plan();
-
+//        inferSchemaModelQueries(schema, framework, errors);
+    APIConnectorManager apiManager = injector.getInstance(APIConnectorManager.class);
+    PhysicalDAGPlan dag = injector.getInstance(DAGPlanner.class).plan();
     PhysicalPlan physicalPlan = injector.getInstance(PhysicalPlanner.class)
         .plan(dag);
+//<<<<<<< HEAD
     APISource source = new APISourceImpl(Name.system("<schema>"), schema);
 
     GraphqlModelGenerator queryGenerator = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
         framework.getSchema(), (new SchemaParser()).parse(source.getSchemaDefinition()), source,
-        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), modelAndQueries.getRight());
+        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
 
     queryGenerator.walk();
 
@@ -99,7 +93,9 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         .coords(coords)
         .schema(StringSchema.builder().schema(source.getSchemaDefinition()).build())
         .build();
-
+//    RootGraphqlModel model = injector.getInstance(GraphqlPostplanHook.class)
+//        .run(modelAndQueries.getRight(), physicalPlan);
+//
     snapshot.addContent(
         physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream()
             .map(ddl -> ddl.toSql())

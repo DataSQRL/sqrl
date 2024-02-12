@@ -31,65 +31,92 @@ import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
 public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
 
   @SneakyThrows
+
+//    String schemaStr = Files.readString(schemaPath);
+//    plan(script.getScript());
+//    Triple<Object, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
+//        schemaStr, framework, errors);
+//    return Pair.of(result.getLeft(), result.getRight());
+//  }
+//
+  public void inferSchemaModelQueries(
+      String schemaStr, SqrlFramework framework, ErrorCollector errors) {
+    throw  new RuntimeException();
+
+  }
+//    APISource source = APISourceImpl.of(schemaStr);
+//    //Inference
+////    GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(
+////        framework.getTypeFactory(),
+////        NameCanonicalizer.SYSTEM);
+//
+//    APIConnectorManager apiManager = this.injector.getInstance(APIConnectorManager.class);
+//=======
   public Pair<Object, APIConnectorManager> inferSchemaAndQueries(TestScript script,
       Path schemaPath) {
-    String schemaStr = Files.readString(schemaPath);
-    plan(script.getScript());
-    Triple<Object, RootGraphqlModel, APIConnectorManager> result = inferSchemaModelQueries(
-        schemaStr, framework, errors);
-    return Pair.of(result.getLeft(), result.getRight());
+    throw  new RuntimeException();
+
   }
-
-  public Triple<Object, RootGraphqlModel, APIConnectorManager> inferSchemaModelQueries(
-      String schemaStr, SqrlFramework framework, ErrorCollector errors) {
-    APISource source = APISourceImpl.of(schemaStr);
-    //Inference
-//    GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(
-//        framework.getTypeFactory(),
-//        NameCanonicalizer.SYSTEM);
-
-    APIConnectorManager apiManager = this.injector.getInstance(APIConnectorManager.class);
-    try {
+//    String schemaStr = Files.readString(schemaPath);
+//    plan(script.getScript());
+//    return inferSchemaModelQueries(schemaStr, framework, errors)
+//        .getLeft();
+//  }
+//
+//  public Pair<InferredSchema, RootGraphqlModel> inferSchemaModelQueries(String schemaStr,
+//      SqrlFramework framework, ErrorCollector errors) {
+//    APISource source = APISourceImpl.of(schemaStr);
+//    //Inference
+//    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(
+//        framework.getSchema());
+//
+//    APIConnectorManager apiManager = injector.getInstance(APIConnectorManager.class);
+//    SchemaInference inference = new SchemaInference(framework, "<schema>",
+//        apiManager.getModuleLoader(), source, sqrlSchemaForInference,
+//        framework.getQueryPlanner().getRelBuilder(), apiManager);
+//
+//    InferredSchema inferredSchema;
+//>>>>>>> 8622af179 (Reuse more code)
+//    try {
       //todo readd once moved
 //      preAnalysis.analyze(source);
-
-      GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(
-          framework.getCatalogReader().nameMatcher(),
-          framework.getSchema(), source, (new SchemaParser()).parse(source.getSchemaDefinition()),
-          apiManager);
-      schemaValidator.validate(source, errors);
-
-      GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
-          framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
-          new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
-
-      queryGenerator.walk();
-      queryGenerator.getQueries().forEach(apiManager::addQuery);
-    } catch (Exception e) {
-      errors.withSchema(source.getName().getDisplay(), source.getSchemaDefinition()).handle(e);
-      return null;
-    }
-    return Triple.of(null, null, apiManager);
-  }
+//
+//      GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(
+//          framework.getCatalogReader().nameMatcher(),
+//          framework.getSchema(), source, (new SchemaParser()).parse(source.getSchemaDefinition()),
+//          apiManager);
+//      schemaValidator.validate(source, errors);
+//
+//      GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
+//          framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
+//          new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
+//
+//      queryGenerator.walk();
+//      queryGenerator.getQueries().forEach(apiManager::addQuery);
+//    } catch (Exception e) {
+//      errors.withSchema(source.getName().getDisplay(), source.getSchemaDefinition()).handle(e);
+//      return null;
+//    }
+//<<<<<<< HEAD
+//    return Triple.of(null, null, apiManager);
+//=======
+//
+//    //Build queries
+//    SchemaBuilder schemaBuilder = new SchemaBuilder(source, apiManager);
+//
+//    RootGraphqlModel root = inferredSchema.accept(schemaBuilder, null);
+//
+//    return Pair.of(inferredSchema, root);
 
   @SneakyThrows
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
-
-    APIConnectorManager apiManager = inferSchemaAndQueries(script, schemaPath).getValue();
+//    inferSchemaAndQueries(script, schemaPath);
     // plan dag
-    PhysicalDAGPlan dag = new DAGPlanner(
-        injector.getInstance(SqrlFramework.class),
-        apiManager,
-        injector.getInstance(ExecutionPipeline.class),
-        injector.getInstance(ErrorCollector.class),
-        injector.getInstance(DAGAssembler.class),
-        injector.getInstance(DAGBuilder.class),
-        injector.getInstance(DAGPreparation.class)).plan();
+    PhysicalDAGPlan dag = injector.getInstance(DAGPlanner.class).plan();
 
     IndexSelector indexSelector = new IndexSelector(framework,
         IndexSelectorConfigByDialect.of("POSTGRES"));

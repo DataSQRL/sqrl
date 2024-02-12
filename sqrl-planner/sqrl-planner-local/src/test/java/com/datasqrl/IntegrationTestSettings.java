@@ -38,11 +38,14 @@ public class IntegrationTestSettings {
   public enum StreamEngine {FLINK, INMEMORY}
 
   public enum DatabaseEngine {INMEMORY, H2, POSTGRES, SQLITE}
+  public enum ServerEngine {VERTX}
 
   @Builder.Default
   final LogEngine log = LogEngine.NONE;
   @Builder.Default
   final StreamEngine stream = StreamEngine.INMEMORY;
+  @Builder.Default
+  final ServerEngine server = ServerEngine.VERTX;
   @Builder.Default
   final DatabaseEngine database = DatabaseEngine.INMEMORY;
   @Builder.Default
@@ -92,6 +95,11 @@ public class IntegrationTestSettings {
         stream.setProperty(TaskManagerOptions.NETWORK_MEMORY_MAX.key(), "256mb");
         stream.setProperty(TaskManagerOptions.MANAGED_MEMORY_SIZE.key(), "256mb");
       }
+    }
+
+    if (getServer() == ServerEngine.VERTX) {
+      SqrlConfig server = engineConfig.getSubConfig("server");
+      server.setProperty("name", "vertx");
     }
 
     //Database engine

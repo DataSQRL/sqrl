@@ -39,7 +39,6 @@ public class GraphqlPostplanHook {
       return Optional.empty();
     }
 
-
     Name graphqlName = Name.system(
         scriptFiles.get(ScriptConfiguration.GRAPHQL_KEY).orElse("<schema>").split("\\.")[0]);
 
@@ -73,7 +72,6 @@ public class GraphqlPostplanHook {
     } else {
       root = Optional.empty();
     }
-
     return root;
   }
 }
