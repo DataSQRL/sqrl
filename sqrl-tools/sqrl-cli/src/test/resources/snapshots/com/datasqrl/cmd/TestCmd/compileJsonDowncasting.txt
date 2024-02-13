@@ -1,0 +1,169 @@
+>>>sql
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.TimeFunctions$TimestampToString' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.TimeFunctions$EndOfMonth' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonarray` AS 'com.datasqrl.json.JsonFunctions$JsonArray' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.JsonFunctions$ToJson' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonobjectagg` AS 'com.datasqrl.json.JsonFunctions$JsonObjectAgg' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.TimeFunctions$EndOfWeek' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonextract` AS 'com.datasqrl.json.JsonFunctions$JsonExtract' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonarrayagg` AS 'com.datasqrl.json.JsonFunctions$JsonArrayAgg' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonconcat` AS 'com.datasqrl.json.JsonFunctions$JsonConcat' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.TimeFunctions$ParseTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsontostring` AS 'com.datasqrl.json.JsonFunctions$JsonToString' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonobject` AS 'com.datasqrl.json.JsonFunctions$JsonObject' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.TimeFunctions$EpochMilliToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonquery` AS 'com.datasqrl.json.JsonFunctions$JsonQuery' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.TimeFunctions$EndOfMinute' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonexists` AS 'com.datasqrl.json.JsonFunctions$JsonExists' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.TimeFunctions$TimestampToEpoch' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.TimeFunctions$EndOfSecond' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.TimeFunctions$EpochToTimestamp' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.TimeFunctions$EndOfDay' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.TimeFunctions$AtZone' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.TimeFunctions$EndOfHour' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.TimeFunctions$EndOfYear' LANGUAGE JAVA;
+
+CREATE TEMPORARY FUNCTION IF NOT EXISTS `__DataSQRLUuidGenerator` AS 'com.datasqrl.SecureFunctions$Uuid' LANGUAGE JAVA;
+
+CREATE TEMPORARY TABLE `orders$1` (
+  `_uuid` AS __DATASQRLUUIDGENERATOR(),
+  `_ingest_time` AS PROCTIME(),
+  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL METADATA FROM 'timestamp',
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `entries` ROW(`productid` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  WATERMARK FOR `_source_time` AS (`_source_time` - INTERVAL '1' SECOND)
+) WITH (
+  'properties.bootstrap.servers' = 'kafka:9092',
+  'connector' = 'kafka',
+  'format' = 'avro',
+  'topic' = 'orders',
+  'properties.group.id' = 'datasqrl-orders',
+  'scan.startup.mode' = 'earliest-offset'
+);
+
+CREATE TEMPORARY TABLE `entries$1` (
+  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
+  `productid` INTEGER NOT NULL,
+  `quantity` INTEGER NOT NULL,
+  `unit_price` DOUBLE NOT NULL,
+  `discount` DOUBLE,
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`_uuid`, `productid`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'entries$1',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE TEMPORARY TABLE `customer$1` (
+  `_id` BIGINT NOT NULL,
+  `json` RAW('class com.datasqrl.json.FlinkJsonType', 'AEdvcmcuYXBhY2hlLmZsaW5rLmFwaS5qYXZhLnR5cGV1dGlscy5ydW50aW1lLmtyeW8uS3J5b1NlcmlhbGl6ZXJTbmFwc2hvdAAAAAIAH2NvbS5kYXRhc3FybC5qc29uLkZsaW5rSnNvblR5cGUAAATyxpo9cAAAAAIAH2NvbS5kYXRhc3FybC5qc29uLkZsaW5rSnNvblR5cGUBAAAAIQAfY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZQEAAAAlAB9jb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlAAAAAAApb3JnLmFwYWNoZS5hdnJvLmdlbmVyaWMuR2VuZXJpY0RhdGEkQXJyYXkBAAAAKwApb3JnLmFwYWNoZS5hdnJvLmdlbmVyaWMuR2VuZXJpY0RhdGEkQXJyYXkBAAAB8AApb3JnLmFwYWNoZS5hdnJvLmdlbmVyaWMuR2VuZXJpY0RhdGEkQXJyYXkAAAACrO0ABXNyAEJvcmcuYXBhY2hlLmZsaW5rLmFwaS5jb21tb24uRXhlY3V0aW9uQ29uZmlnJFNlcmlhbGl6YWJsZVNlcmlhbGl6ZXJBDr5NoiCPtQIAAUwACnNlcmlhbGl6ZXJ0ACZMY29tL2Vzb3Rlcmljc29mdHdhcmUva3J5by9TZXJpYWxpemVyO3hwc3IAbW9yZy5hcGFjaGUuZmxpbmsuYXBpLmphdmEudHlwZXV0aWxzLnJ1bnRpbWUua3J5by5TZXJpYWxpemVycyRTcGVjaWZpY0luc3RhbmNlQ29sbGVjdGlvblNlcmlhbGl6ZXJGb3JBcnJheUxpc3QAAAAAAAAAAQIAAHhyAGFvcmcuYXBhY2hlLmZsaW5rLmFwaS5qYXZhLnR5cGV1dGlscy5ydW50aW1lLmtyeW8uU2VyaWFsaXplcnMkU3BlY2lmaWNJbnN0YW5jZUNvbGxlY3Rpb25TZXJpYWxpemVyAAAAAAAAAAECAAFMAAR0eXBldAARTGphdmEvbGFuZy9DbGFzczt4cHZyABNqYXZhLnV0aWwuQXJyYXlMaXN0eIHSHZnHYZ0DAAFJAARzaXpleHAAAATyxpo9cAAAAAAAAATyxpo9cAAAAAA='),
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`_id`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'customer$1',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE TEMPORARY TABLE `orders$2` (
+  `_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `entries` ROW(`productid` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`_uuid`) NOT ENFORCED
+) WITH (
+  'password' = 'postgres',
+  'connector' = 'jdbc',
+  'driver' = 'org.postgresql.Driver',
+  'table-name' = 'orders$2',
+  'url' = 'jdbc:postgresql://database:5432/datasqrl',
+  'username' = 'postgres'
+);
+
+CREATE TEMPORARY TABLE `customer$1$1` (
+  `_id` BIGINT NOT NULL,
+  `json` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'properties.bootstrap.servers' = 'kafka:9092',
+  'connector' = 'kafka',
+  'format' = 'avro',
+  'topic' = 'orders',
+  'properties.group.id' = 'datasqrl-orders'
+);
+
+CREATE VIEW `root$1`
+AS
+SELECT `$cor0`.`_uuid`, `t00`.`productid`, `t00`.`quantity`, `t00`.`unit_price`, `t00`.`discount`, `$cor0`.`_source_time` AS `__timestamp`
+FROM `orders$1` AS `$cor0`,
+UNNEST(`$cor0`.`entries`) AS `t00`;
+
+CREATE VIEW `root$2`
+AS
+SELECT `id` AS `_id`, JSONOBJECTAGG('name', `id`) AS `json`, MAX(`_source_time`) AS `__timestamp`
+FROM `orders$1`
+GROUP BY `id`;
+
+CREATE VIEW `root$3`
+AS
+SELECT *
+FROM `orders$1`;
+
+CREATE VIEW `root$4`
+AS
+SELECT `id` AS `_id`, JSONTOSTRING(JSONOBJECTAGG('name', `id`)) AS `json`, MAX(`_source_time`) AS `__timestamp`
+FROM `orders$1`
+GROUP BY `id`;
+
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `entries$1`
+(SELECT *
+FROM `root$1`)
+;
+INSERT INTO `customer$1`
+(SELECT *
+FROM `root$2`)
+;
+INSERT INTO `orders$2`
+(SELECT *
+FROM `root$3`)
+;
+INSERT INTO `customer$1$1`
+(SELECT *
+FROM `root$4`)
+;
+END;
