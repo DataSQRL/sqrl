@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import lombok.SneakyThrows;
@@ -46,7 +47,10 @@ public class FlinkMain {
     Optional<URI> flinkSqlPlan = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_SQL));
     Optional<URI> flinkConfig = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_CONFIG));
 
-    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_JSON));
+    Path path = Path.of(
+            "/Users/henneberger/data-product-data-connect-cv/src/main/datasqrl/build/deploy")
+        .resolve(PLAN_JSON);
+    Optional<URI> flinkPlan = Optional.of(path.toUri());//resourceResolver.resolveFile(NamePath.of("deploy", PLAN_JSON));
     Preconditions.checkState(flinkPlan.isPresent(), "Could not find flink executable plan.");
 
     Deserializer deserializer = new Deserializer();
@@ -68,7 +72,7 @@ public class FlinkMain {
         String[] commands = plan.split(PLAN_SEPARATOR);
 
         Configuration sEnvConfig = Configuration.fromMap(configMap);
-        StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(sEnvConfig);
+        StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.createLocalEnvironment(sEnvConfig);
         EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
             .withConfiguration(Configuration.fromMap(configMap)).build();
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
@@ -88,6 +92,7 @@ public class FlinkMain {
       }
     } catch (Exception e) {
       errors.getCatcher().handle(e);
+      e.printStackTrace();
     }
     if (errors.hasErrors()) {
       log.error(ErrorPrinter.prettyPrint(errors));

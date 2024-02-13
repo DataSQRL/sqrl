@@ -7,7 +7,9 @@ import com.datasqrl.config.TableDescriptorSinkFactory;
 import com.datasqrl.io.formats.FormatFactory;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 import com.google.auto.service.AutoService;
+import java.util.Map;
 import org.apache.flink.table.api.FormatDescriptor;
+import org.apache.flink.table.api.FormatDescriptor.Builder;
 import org.apache.flink.table.api.TableDescriptor;
 
 @AutoService(SinkFactory.class)
@@ -26,7 +28,8 @@ public class KafkaSinkFactory extends AbstractKafkaTableFactory
 
     FormatFactory formatFactory = context.getFormatFactory();
     FormatDescriptor.Builder formatBuilder = FormatDescriptor.forFormat(formatFactory.getName());
-
+    addOptions(formatBuilder, context.getTableConfig().getFormatConfig());
+//    addFormatProps(formatBuilder, formatFactory.getAddlProps());
     TableDescriptor.Builder builder = TableDescriptor.forConnector("kafka")
         .option("topic", topic)
         .format(formatBuilder.build());
