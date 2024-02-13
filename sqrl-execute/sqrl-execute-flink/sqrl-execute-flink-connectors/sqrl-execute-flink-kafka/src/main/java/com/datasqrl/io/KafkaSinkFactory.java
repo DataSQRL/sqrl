@@ -29,7 +29,6 @@ public class KafkaSinkFactory extends AbstractKafkaTableFactory
     FormatFactory formatFactory = context.getFormatFactory();
     FormatDescriptor.Builder formatBuilder = FormatDescriptor.forFormat(formatFactory.getName());
     addOptions(formatBuilder, context.getTableConfig().getFormatConfig());
-//    addFormatProps(formatBuilder, formatFactory.getAddlProps());
     TableDescriptor.Builder builder = TableDescriptor.forConnector("kafka")
         .option("topic", topic)
         .format(formatBuilder.build());

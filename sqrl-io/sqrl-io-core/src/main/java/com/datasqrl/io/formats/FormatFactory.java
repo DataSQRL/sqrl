@@ -43,10 +43,6 @@ public interface FormatFactory extends Serializable {
 
   Parser getParser(@NonNull SqrlConfig config);
 
-  default Map<String, String> getAddlProps() {
-    return Map.of();
-  }
-
   interface Parser<IN> extends Serializable {
 
     Result parse(@NonNull IN input);
