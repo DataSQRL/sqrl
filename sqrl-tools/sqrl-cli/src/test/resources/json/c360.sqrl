@@ -1,0 +1,8 @@
+IMPORT ecommerce-avro.Orders;
+IMPORT json.jsonObjectAgg;
+
+Customer := SELECT jsonObjectAgg('name', id) AS json
+            FROM Orders
+            GROUP BY id;
+
+EXPORT Customer TO ecommerce-avro.Order_sink;

@@ -18,6 +18,7 @@ import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlCollectionTypeNameSpec;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlRowTypeNameSpec;
 import org.apache.calcite.sql.SqlTypeNameSpec;
 import org.apache.calcite.sql.SqlWriter;
@@ -26,7 +27,9 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.flink.sql.parser.type.ExtendedSqlCollectionTypeNameSpec;
 import org.apache.flink.sql.parser.type.ExtendedSqlRowTypeNameSpec;
-import org.apache.flink.sql.parser.type.SqlMapTypeNameSpec;
+import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
+import org.apache.flink.table.types.logical.RawType;
 
 @UtilityClass
 public class SqlDataTypeSpecBuilder {
@@ -57,16 +60,28 @@ public class SqlDataTypeSpecBuilder {
             convertTypeToSpec(type.getComponentType()).getTypeNameSpec(), type.isNullable(),
             typeName, true, SqlParserPos.ZERO);
       } else {
-        if (!isRow(type)) {
-          throw new UnsupportedOperationException("Unsupported type when convertTypeToSpec: " + typeName);
+        if (type instanceof RawRelDataType) {
+          RawType<?> rawType = ((RawRelDataType) type).getRawType();
+          typeNameSpec = new SqlRawTypeNameSpec(
+              SqlLiteral.createCharString(rawType.getOriginatingClass().toString(),
+                  SqlParserPos.ZERO),
+              SqlLiteral.createCharString(rawType.getSerializerString(), SqlParserPos.ZERO),
+              SqlParserPos.ZERO);
+        } else if (!isRow(type)) {
+          throw new UnsupportedOperationException(
+              "Unsupported type when convertTypeToSpec: " + typeName);
+        } else {
+          RelRecordType recordType = (RelRecordType) type;
+          List<RelDataTypeField> fields = recordType.getFieldList();
+          List<SqlIdentifier> fieldNames = fields.stream()
+              .map((f) -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
+              .collect(Collectors.toList());
+          List fieldTypes = fields.stream().map((f) -> convertTypeToSpec(f.getType()))
+              .collect(Collectors.toList());
+          typeNameSpec = new ExtendedSqlRowTypeNameSpec(SqlParserPos.ZERO, fieldNames, fieldTypes,
+              fieldNames.stream().map(e -> (SqlCharStringLiteral) null)
+                  .collect(Collectors.toList()), true);
         }
-
-        RelRecordType recordType = (RelRecordType)type;
-        List<RelDataTypeField> fields = recordType.getFieldList();
-        List<SqlIdentifier> fieldNames = fields.stream().map((f) -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO)).collect(Collectors.toList());
-        List fieldTypes = fields.stream().map((f) -> convertTypeToSpec(f.getType())).collect(Collectors.toList());
-        typeNameSpec = new ExtendedSqlRowTypeNameSpec(SqlParserPos.ZERO, fieldNames, fieldTypes,
-            fieldNames.stream().map(e->(SqlCharStringLiteral)null).collect(Collectors.toList()), true);
       }
     } else {
       int precision = typeName.allowsPrec() ? type.getPrecision() : -1;

@@ -20,6 +20,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
 import com.datasqrl.SecureFunctions.Uuid;
 import com.datasqrl.calcite.CatalogReader;
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -42,6 +43,7 @@ import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule.Push
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule.PushWatermarkHintToTableScanConfig;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule.ShapeBushyCorrelateJoinRuleConfig;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
@@ -64,6 +66,7 @@ import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,11 +89,14 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
@@ -98,6 +104,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
@@ -195,30 +202,46 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     boolean hasNativeSupport = field.getType() instanceof RawRelDataType && engine.isPresent() &&
         engine.get().supportsType(((RawRelDataType) field.getType()).getRawType().getDefaultConversion());
 
-    Optional<SqlOperator> downcastFunc = Optional.empty();
     if (field.getType() instanceof RawRelDataType && !hasNativeSupport) {
       Class<?> defaultConversion = ((RawRelDataType) field.getType()).getRawType()
           .getDefaultConversion();
       CatalogReader catalogReader = (CatalogReader) relBuilder.getRelOptSchema();
+
       DowncastFunction downcastFunction = ServiceLoaderDiscovery.get(DowncastFunction.class,
           e -> e.getConversionClass().getName(),
           defaultConversion.getName());
-      downcastFunc = catalogReader.getOperatorList().stream()
-          .filter(f -> f.getName().equalsIgnoreCase(downcastFunction.downcastFunctionName()))
-          .findFirst();
-      if (downcastFunc.isPresent()) {
-        downcastClassNames.put(downcastFunc.get().getName(), downcastFunction.getDowncastClassName()
-            .getName());
+      if (downcastFunction == null) {
+        throw new RuntimeException("Needed downcast function but could not find one: " + defaultConversion.getName());
       }
-    }
+      String fncName = downcastFunction.downcastFunctionName().toLowerCase();
+      FunctionDefinition functionDef;
+      try {
+        functionDef = (FunctionDefinition)downcastFunction.getDowncastClassName()
+            .getDeclaredConstructor().newInstance();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      SqrlFramework framework = catalogReader.getSchema().getSqrlFramework();
 
-    if (downcastFunc.isPresent()) {
+      FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
+          .getTypeFactory());
+
+      Optional<SqlFunction> convertedFunction = flinkConverter
+          .convertFunction(fncName, functionDef);
+
+      if (convertedFunction.isEmpty()) {
+        throw new RuntimeException("Could not convert downcast function");
+      }
+
+      downcastClassNames.put(fncName,
+          downcastFunction.getDowncastClassName().getName());
+
       hasChanged.set(true);
       return relBuilder.getRexBuilder()
-          .makeCall(downcastFunc.get(), List.of(relBuilder.field(field.getIndex())));
-    } else {
-      return relBuilder.field(field.getIndex());
+          .makeCall(convertedFunction.get(), List.of(relBuilder.field(field.getIndex())));
     }
+
+    return relBuilder.field(field.getIndex());
   }
 
   private Optional<ExecutionEngine> getEngine(WriteSink sink) {
