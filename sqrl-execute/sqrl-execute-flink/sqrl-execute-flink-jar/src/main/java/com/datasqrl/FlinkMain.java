@@ -6,6 +6,7 @@ import static com.datasqrl.PlanConstants.PLAN_SQL;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.module.resolver.ClasspathResourceResolver;
@@ -45,6 +46,7 @@ public class FlinkMain {
   @SneakyThrows
   public void run(ResourceResolver resourceResolver) {
     log.info("Hello.");
+    FlinkJsonType
 
     Optional<URI> flinkSqlPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flink-plan.sql"));
     Optional<URI> flinkConfig = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_CONFIG));

@@ -21,8 +21,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.jooq.JSON;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -38,6 +41,7 @@ public class TestCmd {
   private static final Path CC_PATH = RESOURCES.resolve("creditcard");
   private static final Path PROFILES_PATH = RESOURCES.resolve("profiles");
   private static final Path AVRO_PATH = RESOURCES.resolve("avro");
+  private static final Path JSON_PATH = RESOURCES.resolve("json");
 
   protected Path buildDir = null;
   SnapshotTest.Snapshot snapshot;
@@ -181,27 +185,44 @@ public class TestCmd {
   }
 
   @Test
+  public void compileJsonDowncasting() {
+    // Should have a raw json type for postgres and a jsontostring for kafka
+    compilePlan(JSON_PATH, null, null);
+  }
+
+  @Test
   public void compileAvroWOdatabase() {
-    compileAvro("packageWOdatabase.json");
+    compilePlan(AVRO_PATH, "packageWOdatabase.json", "schema.graphqls");
   }
 
   @Test
   public void compileAvroWOserver() {
-    compileAvro("packageWOserver.json");
+    compilePlan(AVRO_PATH, "packageWOserver.json", "schema.graphqls");
   }
 
   @Test
   public void compileAvroWserverdatabase() {
-    compileAvro("packageWserverdatabase.json");
+    compilePlan(AVRO_PATH, "packageWserverdatabase.json", "schema.graphqls");
   }
 
-  private void compileAvro(String pkg) {
-    buildDir = AVRO_PATH.resolve("build");
-    execute(AVRO_PATH, "compile",
-        "c360.sqrl",
-        "-t", OUTPUT_DIR.toString(),
-        "-c", AVRO_PATH.resolve(pkg).toString(),
-        "--nolookup");
+  private void compilePlan(Path path, String pkg, String graphql) {
+    buildDir = path.resolve("build");
+    List<String> args = new ArrayList<>();
+    args.add("compile");
+    args.add("c360.sqrl");
+    args.add("-t");
+    args.add(OUTPUT_DIR.toString());
+
+    if (pkg != null) {
+      args.add("-c");
+      args.add(path.resolve(pkg).toString());
+    }
+    args.add("--nolookup");
+    if (graphql != null) {
+      args.add(graphql);
+    }
+
+    execute(path, args.toArray(a->new String[a]));
     snapshotSql();
   }
 

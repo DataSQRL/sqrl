@@ -1,6 +1,7 @@
 package com.datasqrl.engine.stream.flink.plan;
 
 import static com.datasqrl.FlinkEnvironmentBuilder.UUID_FCT_NAME;
+import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.DefaultFunctions;
@@ -86,11 +87,13 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
@@ -195,30 +198,36 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     boolean hasNativeSupport = field.getType() instanceof RawRelDataType && engine.isPresent() &&
         engine.get().supportsType(((RawRelDataType) field.getType()).getRawType().getDefaultConversion());
 
-    Optional<SqlOperator> downcastFunc = Optional.empty();
     if (field.getType() instanceof RawRelDataType && !hasNativeSupport) {
       Class<?> defaultConversion = ((RawRelDataType) field.getType()).getRawType()
           .getDefaultConversion();
       CatalogReader catalogReader = (CatalogReader) relBuilder.getRelOptSchema();
+
       DowncastFunction downcastFunction = ServiceLoaderDiscovery.get(DowncastFunction.class,
           e -> e.getConversionClass().getName(),
           defaultConversion.getName());
-      downcastFunc = catalogReader.getOperatorList().stream()
-          .filter(f -> f.getName().equalsIgnoreCase(downcastFunction.downcastFunctionName()))
-          .findFirst();
-      if (downcastFunc.isPresent()) {
-        downcastClassNames.put(downcastFunc.get().getName(), downcastFunction.getDowncastClassName()
-            .getName());
+      if (downcastFunction == null) {
+        throw new RuntimeException("Needed downcast function but could not find one: " + defaultConversion.getName());
       }
-    }
+      String fncName = downcastFunction.downcastFunctionName().toLowerCase();
 
-    if (downcastFunc.isPresent()) {
+      List<SqlOperator> operators = new ArrayList<>();
+      catalogReader.getSchema().getSqrlFramework()
+          .getSqrlOperatorTable().lookupOperatorOverloads(
+              new SqlIdentifier(fncName, SqlParserPos.ZERO), SqlFunctionCategory.USER_DEFINED_FUNCTION,
+              SqlSyntax.FUNCTION, operators, catalogReader.nameMatcher());
+      Preconditions.checkState(operators.size() == 1,
+          String.format("Could not find operator for downcasting: %s", fncName));
+
+      downcastClassNames.put(fncName,
+          downcastFunction.getDowncastClassName().getName());
+
       hasChanged.set(true);
       return relBuilder.getRexBuilder()
-          .makeCall(downcastFunc.get(), List.of(relBuilder.field(field.getIndex())));
-    } else {
-      return relBuilder.field(field.getIndex());
+          .makeCall(operators.get(0), List.of(relBuilder.field(field.getIndex())));
     }
+
+    return relBuilder.field(field.getIndex());
   }
 
   private Optional<ExecutionEngine> getEngine(WriteSink sink) {
