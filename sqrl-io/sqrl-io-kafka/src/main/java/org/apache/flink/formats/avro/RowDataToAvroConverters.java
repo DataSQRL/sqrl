@@ -150,6 +150,7 @@ public class RowDataToAvroConverters {
                             }
                         };
                 break;
+                //Sqrl added types
             case TIMESTAMP_WITH_TIME_ZONE:
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
             case TIMESTAMP_WITHOUT_TIME_ZONE:

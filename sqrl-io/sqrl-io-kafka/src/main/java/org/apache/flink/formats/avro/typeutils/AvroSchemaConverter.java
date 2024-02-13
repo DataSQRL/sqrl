@@ -349,6 +349,7 @@ public class AvroSchemaConverter {
             case VARBINARY:
                 Schema binary = SchemaBuilder.builder().bytesType();
                 return nullable ? nullableSchema(binary) : binary;
+            //Sqrl added types
             case TIMESTAMP_WITH_TIME_ZONE:
                 final ZonedTimestampType zonedtimestampType = (ZonedTimestampType) logicalType;
                 precision = zonedtimestampType.getPrecision();
