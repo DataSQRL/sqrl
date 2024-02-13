@@ -1,6 +1,5 @@
 IMPORT ecommerce-avro.Orders;
-IMPORT time.*;
-IMPORT json.*;
+IMPORT json.jsonObjectAgg;
 
 Customer := SELECT jsonObjectAgg('name', id) AS json
             FROM Orders

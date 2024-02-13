@@ -1,7 +1,6 @@
 package com.datasqrl.engine.stream.flink.plan;
 
 import static com.datasqrl.FlinkEnvironmentBuilder.UUID_FCT_NAME;
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
 import com.datasqrl.DefaultFunctions;
@@ -21,6 +20,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkStatement;
 import com.datasqrl.FlinkExecutablePlan.FlinkTableDefinition;
 import com.datasqrl.SecureFunctions.Uuid;
 import com.datasqrl.calcite.CatalogReader;
+import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -43,6 +43,7 @@ import com.datasqrl.engine.stream.flink.sql.rules.PushDownWatermarkHintRule.Push
 import com.datasqrl.engine.stream.flink.sql.rules.PushWatermarkHintToTableScanRule.PushWatermarkHintToTableScanConfig;
 import com.datasqrl.engine.stream.flink.sql.rules.ShapeBushyCorrelateJoinRule.ShapeBushyCorrelateJoinRuleConfig;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.flink.FlinkConverter;
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.io.tables.TableSchemaFactory;
@@ -65,6 +66,7 @@ import com.datasqrl.serializer.SerializableSchema;
 import com.datasqrl.serializer.SerializableSchema.WaterMarkType;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,6 +89,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -101,6 +104,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
@@ -210,21 +214,31 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
         throw new RuntimeException("Needed downcast function but could not find one: " + defaultConversion.getName());
       }
       String fncName = downcastFunction.downcastFunctionName().toLowerCase();
+      FunctionDefinition functionDef;
+      try {
+        functionDef = (FunctionDefinition)downcastFunction.getDowncastClassName()
+            .getDeclaredConstructor().newInstance();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      SqrlFramework framework = catalogReader.getSchema().getSqrlFramework();
 
-      List<SqlOperator> operators = new ArrayList<>();
-      catalogReader.getSchema().getSqrlFramework()
-          .getSqrlOperatorTable().lookupOperatorOverloads(
-              new SqlIdentifier(fncName, SqlParserPos.ZERO), SqlFunctionCategory.USER_DEFINED_FUNCTION,
-              SqlSyntax.FUNCTION, operators, catalogReader.nameMatcher());
-      Preconditions.checkState(operators.size() == 1,
-          String.format("Could not find operator for downcasting: %s", fncName));
+      FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
+          .getTypeFactory());
+
+      Optional<SqlFunction> convertedFunction = flinkConverter
+          .convertFunction(fncName, functionDef);
+
+      if (convertedFunction.isEmpty()) {
+        throw new RuntimeException("Could not convert downcast function");
+      }
 
       downcastClassNames.put(fncName,
           downcastFunction.getDowncastClassName().getName());
 
       hasChanged.set(true);
       return relBuilder.getRexBuilder()
-          .makeCall(operators.get(0), List.of(relBuilder.field(field.getIndex())));
+          .makeCall(convertedFunction.get(), List.of(relBuilder.field(field.getIndex())));
     }
 
     return relBuilder.field(field.getIndex());
