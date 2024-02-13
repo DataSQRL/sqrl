@@ -1,6 +1,7 @@
 package com.datasqrl;
 
 import static com.datasqrl.PlanConstants.PLAN_CONFIG;
+import static com.datasqrl.PlanConstants.PLAN_JSON;
 import static com.datasqrl.PlanConstants.PLAN_SEPARATOR;
 import static com.datasqrl.PlanConstants.PLAN_SQL;
 
@@ -42,10 +43,10 @@ public class FlinkMain {
   public void run(ResourceResolver resourceResolver) {
     log.info("Hello.");
 
-    Optional<URI> flinkSqlPlan = resourceResolver.resolveFile(NamePath.of("deploy", "flink-plan.sql"));
+    Optional<URI> flinkSqlPlan = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_SQL));
     Optional<URI> flinkConfig = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_CONFIG));
 
-    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_SQL));
+    Optional<URI> flinkPlan = resourceResolver.resolveFile(NamePath.of("deploy", PLAN_JSON));
     Preconditions.checkState(flinkPlan.isPresent(), "Could not find flink executable plan.");
 
     Deserializer deserializer = new Deserializer();
