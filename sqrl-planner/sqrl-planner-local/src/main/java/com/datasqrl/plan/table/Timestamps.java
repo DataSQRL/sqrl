@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -103,12 +104,17 @@ public class Timestamps {
     return indexes.stream().sorted().collect(Collectors.toUnmodifiableList());
   }
 
-  public Set<Integer> asSet() {
-    return indexes;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Timestamps that = (Timestamps) o;
+    return Objects.equals(indexes, that.indexes) && type == that.type;
   }
 
-  public Timestamps remapIndexes(IndexMap map) {
-    return new Timestamps(indexes.stream().map(map::map).collect(Collectors.toUnmodifiableSet()), type);
+  @Override
+  public int hashCode() {
+    return Objects.hash(indexes, type);
   }
 
   public static TimestampsBuilder build(Type type) {

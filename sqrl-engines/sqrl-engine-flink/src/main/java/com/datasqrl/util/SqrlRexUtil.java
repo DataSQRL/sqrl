@@ -6,6 +6,7 @@ package com.datasqrl.util;
 import com.datasqrl.DefaultFunctions;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -267,6 +268,11 @@ public class SqrlRexUtil {
   public List<RexNode> getIdentityProject(RelNode input, int size) {
     return IntStream.range(0, size).mapToObj(i -> rexBuilder.makeInputRef(input, i))
         .collect(Collectors.toList());
+  }
+
+  public List<RexNode> getProjection(SelectIndexMap select, RelNode input) {
+    return select.targetsAsList().stream().map(idx -> rexBuilder.makeInputRef(input, idx))
+            .collect(Collectors.toUnmodifiableList());
   }
 
   public RelBuilder appendColumn(RelBuilder relBuilder, RexNode rexNode, String fieldName) {

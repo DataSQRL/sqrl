@@ -4,7 +4,7 @@
 package com.datasqrl.util;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ContiguousSet;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
+
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -34,13 +36,8 @@ import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
-import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.sql.type.IntervalSqlType;
-import org.apache.calcite.sql.type.MultisetSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class CalciteUtil {
 
@@ -112,22 +109,53 @@ public class CalciteUtil {
    * @param rexNode
    * @return
    */
-  public static Optional<Integer> getInputRefRobust(RexNode rexNode) {
+  public static Optional<Integer> getNonAlteredInputRef(RexNode rexNode) {
+    return getInputRefThroughTransform(rexNode, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM));
+  }
+
+  public static Optional<Integer> getInputRefThroughTransform(RexNode rexNode, List<InputRefTransformation> transformations) {
     if (rexNode instanceof RexInputRef) { //Direct mapping
       return Optional.of(((RexInputRef) rexNode).getIndex());
     } else if (rexNode instanceof RexCall) {
       RexCall call = (RexCall)rexNode;
       List<RexNode> operands = call.getOperands();
-      if (call.getOperator().isName("coalesce", false)) {
-        if (operands.size()!=2) return Optional.empty();
-        if (!(operands.get(1) instanceof RexLiteral)) return Optional.empty();
-        return getInputRefRobust(operands.get(0));
-      } else if (call.getOperator().isName("cast", false)) {
-        if (operands.size()!=2) return Optional.empty();
-        return getInputRefRobust(operands.get(0));
-      }
+      Optional<InputRefTransformation> transform = StreamUtil.getOnlyElement(transformations.stream()
+              .filter(t -> call.getOperator().isName(t.getName(), false)));
+      return transform.filter(t -> t.validate(operands)).flatMap(t -> getNonAlteredInputRef(t.getOperand(operands)));
     }
     return Optional.empty();
+  }
+
+  public interface InputRefTransformation {
+
+    String getName();
+    boolean validate(List<RexNode> operands);
+
+    RexNode getOperand(List<RexNode> operands);
+
+  }
+
+  public static final InputRefTransformation COALESCE_TRANSFORM = new BasicInputRefTransformation("coalesce",
+          ops -> ops.size()==2 && (ops.get(1) instanceof RexLiteral), 0);
+  public static final InputRefTransformation CAST_TRANSFORM = new BasicInputRefTransformation("cast",
+          ops -> ops.size()==2, 0);
+
+  @Value
+  public static class BasicInputRefTransformation implements InputRefTransformation {
+
+    String name;
+    Predicate<List<RexNode>> validationFunction;
+    int operandIndex;
+
+    @Override
+    public boolean validate(List<RexNode> operands) {
+      return validationFunction.test(operands);
+    }
+
+    @Override
+    public RexNode getOperand(List<RexNode> operands) {
+      return operands.get(operandIndex);
+    }
   }
 
 
@@ -137,7 +165,7 @@ public class CalciteUtil {
     if (call.getOperator().isName("greatest", false)) {
       Set<Integer> greatestSet = new HashSet<>();
       for (RexNode operand : call.getOperands()) {
-        Optional<Integer> ref = getInputRefRobust(operand);
+        Optional<Integer> ref = getNonAlteredInputRef(operand);
         if (ref.isEmpty()) return false;
         greatestSet.add(ref.get());
       }
@@ -147,13 +175,19 @@ public class CalciteUtil {
   }
 
   public static Optional<Integer> isEqualToConstant(RexNode rexNode) {
-    if (!rexNode.isA(SqlKind.EQUALS) && !rexNode.isA(SqlKind.IS_NULL)) return Optional.empty();
+    int arity;
+    if (rexNode.isA(SqlKind.EQUALS)) arity = 2;
+    else if (rexNode.isA(SqlKind.IS_NULL)) arity = 1;
+    else return Optional.empty();
+
     List<RexNode> operands = ((RexCall) rexNode).getOperands();
-    if (!(operands.get(0) instanceof RexInputRef)) return Optional.empty();
-    RexInputRef ref = (RexInputRef) operands.get(0);
-    if (rexNode.isA(SqlKind.EQUALS) &&
-        !isConstant(operands.get(1))) return Optional.empty();
-    return Optional.of(ref.getIndex());
+    assert arity==1 || arity==2;
+    if (arity==1 || isConstant(operands.get(1))) {
+      return getInputRefThroughTransform(operands.get(0), List.of(CAST_TRANSFORM));
+    } else if (arity==2 && isConstant(operands.get(0))) {
+      return getInputRefThroughTransform(operands.get(1), List.of(CAST_TRANSFORM));
+    }
+    return Optional.empty();
   }
 
   public static boolean isConstant(RexNode rexNode) {

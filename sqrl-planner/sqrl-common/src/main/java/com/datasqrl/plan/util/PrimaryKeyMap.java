@@ -46,6 +46,19 @@ public class PrimaryKeyMap implements IndexMap, Serializable {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PrimaryKeyMap that = (PrimaryKeyMap) o;
+    return undefined == that.undefined && Objects.equals(pkIndexes, that.pkIndexes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(pkIndexes, undefined);
+  }
+
+  @Override
   public int map(int index) {
     Preconditions.checkArgument(index>=0 && index<pkIndexes.size(),"Primary key index out of bounds: %s", index);
     return pkIndexes.get(index);

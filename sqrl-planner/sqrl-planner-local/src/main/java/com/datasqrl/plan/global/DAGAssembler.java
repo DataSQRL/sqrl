@@ -9,6 +9,7 @@ import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
@@ -114,7 +115,7 @@ public class DAGAssembler {
     //We want to preserve pipeline order in our iteration
     for (ExecutionStage database : Iterables.filter(pipeline.getStages(),queriesByStage::containsKey)) {
       Preconditions.checkArgument(database.getEngine().getType() == Type.DATABASE);
-      List<PhysicalDAGPlan.ReadQuery> readDAG = new ArrayList<>();
+      List<PhysicalDAGPlan.ReadQuery> databaseQueries = new ArrayList<>();
 
       VisitTableScans tableScanVisitor = new VisitTableScans();
       queriesByStage.get(database).stream().sorted(Comparator.comparing(DatabaseQuery::getName))
@@ -122,23 +123,24 @@ public class DAGAssembler {
         RelNode relNode = query.getRelNode(database, sqrlConverter, errors);
         relNode = RelStageRunner.runStage(DATABASE_DAG_STITCHING, relNode, planner);
         tableScanVisitor.findScans(relNode);
-        readDAG.add(new PhysicalDAGPlan.ReadQuery(query.getQueryId(), relNode));
+        databaseQueries.add(new PhysicalDAGPlan.ReadQuery(query.getQueryId(), relNode));
       });
 
       Preconditions.checkArgument(tableScanVisitor.scanFunctions.isEmpty(),
           "Should not encounter table functions in materialized queries");
-      Set<AbstractRelationalTable> materializedTables = tableScanVisitor.scanTables;
-      List<PhysicalRelationalTable> denormalizedTables = StreamUtil.filterByClass(materializedTables,
-          PhysicalRelationalTable.class).sorted().collect(Collectors.toList());
+      List<PhysicalRelationalTable> materializedTables = tableScanVisitor.scanTables.stream()
+              .sorted().collect(Collectors.toList());
 
       //Second, all tables that need to be written in denormalized form
-      for (PhysicalRelationalTable denormTable : denormalizedTables) {
-        RelNode processedRelnode = produceWriteTree(denormTable.getPlannedRelNode(),
-                denormTable.getTimestamp().getOnlyCandidate());
+      for (PhysicalRelationalTable materializedTable : materializedTables) {
+        errors.checkFatal(materializedTable.getPrimaryKey().isDefined(), ErrorCode.TALBE_NOT_MATERIALIZE,"Table [%s] does not have a primary key and can therefore not be materialized", materializedTable);
+        errors.checkFatal(materializedTable.getTimestamp().hasCandidates(), ErrorCode.TALBE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
+        RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(),
+                materializedTable.getTimestamp().getOnlyCandidate());
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
-            new EngineSink(denormTable.getNameId(), denormTable.getPrimaryKey().getPkIndexes(),
-                denormTable.getRowType(),
-                denormTable.getTimestamp().getOnlyCandidate(), database),
+            new EngineSink(materializedTable.getNameId(), materializedTable.getPrimaryKey().getPkIndexes(),
+                materializedTable.getRowType(),
+                materializedTable.getTimestamp().getOnlyCandidate(), database),
             processedRelnode));
       }
 
@@ -146,12 +148,11 @@ public class DAGAssembler {
       //Pick index structures for database tables based on the database queries
       IndexSelector indexSelector = new IndexSelector(framework,
           ((DatabaseEngine) database.getEngine()).getIndexSelectorConfig());
-      Collection<QueryIndexSummary> queryIndexSummaries = readDAG.stream().map(indexSelector::getIndexSelection)
+      Collection<QueryIndexSummary> queryIndexSummaries = databaseQueries.stream().map(indexSelector::getIndexSelection)
           .flatMap(List::stream).collect(Collectors.toList());
-      Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(
-              queryIndexSummaries)
+      Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(queryIndexSummaries)
           .keySet();
-      databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, readDAG, indexDefinitions));
+      databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, databaseQueries, indexDefinitions));
     }
 
     //Add exported tables
@@ -232,7 +233,7 @@ public class DAGAssembler {
    */
   private static class VisitTableScans extends RelShuttleImpl {
 
-    final Set<AbstractRelationalTable> scanTables = new HashSet<>();
+    final Set<PhysicalRelationalTable> scanTables = new HashSet<>();
     final Set<QueryTableFunction> scanFunctions = new HashSet<>();
 
     public void findScans(RelNode relNode) {
@@ -242,13 +243,8 @@ public class DAGAssembler {
     @Override
     public RelNode visit(TableScan scan) {
       PhysicalRelationalTable table = scan.getTable().unwrap(PhysicalRelationalTable.class);
-      if (table == null) { //It's a normalized query
-        LogicalNestedTable vtable = scan.getTable().unwrap(LogicalNestedTable.class);
-        Preconditions.checkNotNull(vtable);
-        scanTables.add(vtable);
-      } else {
-        scanTables.add(table);
-      }
+      Preconditions.checkArgument(table!=null, "Encountered unexpected table: %s", scan);
+      scanTables.add(table);
       return super.visit(scan);
     }
 

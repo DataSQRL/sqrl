@@ -3,8 +3,10 @@
  */
 package com.datasqrl.plan.rules;
 
+import com.datasqrl.plan.rel.LogicalStream;
 import com.google.common.base.Preconditions;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.TableFunctionScan;
 
 public abstract class AbstractSqrlRelShuttle<V extends RelHolder> implements SqrlRelShuttle {
 

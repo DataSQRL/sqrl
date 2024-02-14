@@ -17,6 +17,7 @@ import com.datasqrl.plan.table.Timestamps.Type;
 import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.plan.util.IndexMap;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
@@ -69,7 +70,7 @@ public class AnnotatedLP implements RelHolder {
   public SelectIndexMap select;
   @Builder.Default
   @NonNull
-  public Optional<PhysicalRelationalTable> rootTable = Optional.empty();
+  public Optional<PhysicalRelationalTable> rootTable = Optional.empty(); //Used to detect whether the operator applies to a single stream record so we can optimize
 
   @Builder.Default
   @NonNull
@@ -309,17 +310,25 @@ public class AnnotatedLP implements RelHolder {
     return new SortOrder(RelCollations.of(collations)).ensurePrimaryKeyPresent(alp.primaryKey);
   }
 
-  public AnnotatedLP toRelation() {
+  public AnnotatedLP toRelation(RelBuilder relB, ExecutionAnalysis exec) {
     //inline everything
+    AnnotatedLP inlined = inlineNowFilter(relB, exec).inlineTopN(relB, exec).inlineSort(relB, exec);
     //add select for select map
+    relB.push(inlined.relNode);
+    SqrlRexUtil rexUtil = new SqrlRexUtil(relB);
+    relB.project(rexUtil.getProjection(inlined.select, relB.peek()));
+
+    return AnnotatedLP.build(relB.build(), TableType.RELATION,
+            PrimaryKeyMap.UNDEFINED, Timestamps.UNDEFINED,
+            SelectIndexMap.identity(inlined.select.getSourceLength(), inlined.select.getSourceLength()),
+            inlined).build();
   }
 
 
   /**
-   * Moves the primary key columns to the front and adds projection to only return columns that the
-   * user selected, are part of the primary key, a timestamp candidate, or part of the sort order.
-   * <p>
-   * Inlines deduplication in case of nested data.
+   * Finalizes the RelNode by adding a projection for all the selected columns plus inferred
+   * primary key and timestamp (if any).
+   * This preserves the order of the select fields and may add additional fields at the end
    *
    * @return
    */
