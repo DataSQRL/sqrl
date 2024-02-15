@@ -10,6 +10,7 @@
   "connector" : {
     "name" : "kafka",
     "bootstrap.servers": "kafka:9092",
-    "group.id": "datasqrl-orders"
+    "group.id": "datasqrl-orders",
+    "key.fields": "id;customerid"
   }
 }

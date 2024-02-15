@@ -81,7 +81,8 @@ CREATE TEMPORARY TABLE `customer$1$1` (
   'connector' = 'kafka',
   'format' = 'avro',
   'topic' = 'orders',
-  'properties.group.id' = 'datasqrl-orders'
+  'properties.group.id' = 'datasqrl-orders',
+  'key.fields' = 'id;customerid'
 );
 
 CREATE VIEW `root$1`
