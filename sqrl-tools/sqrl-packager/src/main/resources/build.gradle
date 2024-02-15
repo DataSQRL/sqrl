@@ -15,14 +15,7 @@ shadowJar {
     }
     from('.') {
         include '**'
-        exclude 'build.gradle'
-        exclude 'lib'
-        exclude 'gradle'
-        exclude 'deploy/flink-plan.sql'
-        exclude '.gradle'
-        exclude 'build'
-        exclude '.idea'
-        exclude 'gradle*'
+        exclude 'build.gradle', 'lib', 'gradle', 'deploy/flink-plan.sql', '.gradle', 'build', '.idea', 'gradle*'
         into('build')
     }
 
