@@ -18,6 +18,7 @@ shadowJar {
         exclude 'build.gradle'
         exclude 'lib'
         exclude 'gradle'
+        exclude 'deploy/flink-plan.sql'
         exclude '.gradle'
         exclude 'build'
         exclude '.idea'
