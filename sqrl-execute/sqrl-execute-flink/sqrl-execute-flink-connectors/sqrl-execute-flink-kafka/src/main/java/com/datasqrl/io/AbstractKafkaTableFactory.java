@@ -13,7 +13,7 @@ public abstract class AbstractKafkaTableFactory {
 
   public static final String FLINK_PROPERTIES_PREFIX = "properties.";
 
-  public static final List<String> FLINK_PREFIXES = List.of("scan.","sink.");
+  public static final List<String> FLINK_PREFIXES = List.of("scan.","sink.","key.","value.");
 
   protected void addOptions(TableDescriptor.Builder tblBuilder, SqrlConfig connectorConfig) {
     for (String key : connectorConfig.getKeys()) {
