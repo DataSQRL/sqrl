@@ -20,6 +20,12 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
   FunctionDefinition function;
   Optional<URL> jarUrl;
 
+  public FlinkUdfNsObject(String name, FunctionDefinition function, Optional<URL> jarUrl) {
+    this.name = Name.system(name);
+    this.function = function;
+    this.jarUrl = jarUrl;
+  }
+
   @Override
   public boolean apply(Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
     FlinkConverter flinkConverter = new FlinkConverter((TypeFactory) framework.getQueryPlanner().getCatalogReader()
@@ -44,7 +50,7 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
 
   private String getFunctionName(FunctionDefinition function) {
     if (function instanceof SqrlFunction) {
-      return ((SqrlFunction) function).getFunctionName().getDisplay();
+      return ((SqrlFunction) function).getFunctionName();
     }
 
     return getFunctionNameFromClass(function.getClass()).getDisplay();

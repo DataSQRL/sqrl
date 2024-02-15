@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.jooq.JSON;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -55,8 +54,8 @@ public class TestCmd {
 
   @AfterEach
   public void clearDirs() throws IOException {
-    clearDir(OUTPUT_DIR);
-    clearDir(buildDir);
+//    clearDir(OUTPUT_DIR);
+//    clearDir(buildDir);
   }
 
   protected void createSnapshot() {

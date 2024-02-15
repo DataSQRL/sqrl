@@ -22,6 +22,10 @@
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-base</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-core</artifactId>
     </dependency>
     <!-- aws specific -->
@@ -92,6 +96,36 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-function</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-json-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-secure-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-text-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-time-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-vector-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_2.12</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-clients</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

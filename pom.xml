@@ -11,7 +11,6 @@
         <module>sqrl-engines</module>
         <module>sqrl-examples</module>
         <module>sqrl-io</module>
-        <module>sqrl-lib</module>
         <module>sqrl-planner</module>
         <module>sqrl-testing</module>
         <module>sqrl-tools</module>
@@ -282,22 +281,32 @@
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-flink-planner</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-json-execute</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-json-planner</artifactId>
+                <artifactId>sqrl-secure-execute</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-text-execute</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.datasqrl</groupId>
+                <artifactId>sqrl-time-execute</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.datasqrl</groupId>
                 <artifactId>sqrl-vector-execute</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datasqrl</groupId>
-                <artifactId>sqrl-vector-planner</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- tests -->
