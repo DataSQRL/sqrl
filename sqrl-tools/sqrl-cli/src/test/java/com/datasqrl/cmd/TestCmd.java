@@ -54,8 +54,8 @@ public class TestCmd {
 
   @AfterEach
   public void clearDirs() throws IOException {
-//    clearDir(OUTPUT_DIR);
-//    clearDir(buildDir);
+    clearDir(OUTPUT_DIR);
+    clearDir(buildDir);
   }
 
   protected void createSnapshot() {
