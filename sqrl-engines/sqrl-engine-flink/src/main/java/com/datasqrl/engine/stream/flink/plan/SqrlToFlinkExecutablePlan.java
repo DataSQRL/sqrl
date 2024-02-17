@@ -143,10 +143,11 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
     Map<String, String> downcastClassNames = new HashMap<>();
     for (WriteQuery query : writeQueries) {
       Optional<ExecutionEngine> engine = getEngine(query.getSink());
-      RelNode convertedRelNode = applyDowncasting(query.getRelNode(), engine, downcastClassNames);
-      String tableName = processQuery(convertedRelNode);
+      RelNode relNode = query.getRelNode();
+//      RelNode relNode = applyDowncasting(query.getRelNode(), engine, downcastClassNames);
+      String tableName = processQuery(relNode);
       registerSink(tableName, query.getSink().getName());
-      newQueries.add(new WriteQuery(query.getSink(), convertedRelNode));
+      newQueries.add(new WriteQuery(query.getSink(), relNode));
     }
 
     mutableUdfs.putAll(downcastClassNames);
