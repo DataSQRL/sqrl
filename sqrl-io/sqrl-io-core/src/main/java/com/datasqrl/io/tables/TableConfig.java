@@ -105,7 +105,13 @@ public class TableConfig {
   }
 
   public Optional<TableSchemaFactory> getSchemaFactory() {
-    return getSchemaType().map(TableSchemaFactory::load);
+    return getSchemaType().flatMap(f-> {
+        try {
+          return Optional.of(TableSchemaFactory.load(f));
+        } catch (Exception e) {
+          return Optional.empty();
+        }
+    });
   }
 
   /**
