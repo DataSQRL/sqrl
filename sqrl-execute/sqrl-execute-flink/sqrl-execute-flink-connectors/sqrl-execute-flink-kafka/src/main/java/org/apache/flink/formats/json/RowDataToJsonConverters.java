@@ -172,7 +172,7 @@ public class RowDataToJsonConverters implements Serializable {
                 return null;
             }
             try {
-                return mapper.getNodeFactory().pojoNode(mapper.readTree(o.getJson()));
+                return mapper.readTree(o.getJson());
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
                 return null;
