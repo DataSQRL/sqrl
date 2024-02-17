@@ -15,6 +15,8 @@ import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.flink.table.annotation.DataTypeHint;
+import org.apache.flink.table.annotation.FunctionHint;
+import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.AggregateFunction;
@@ -474,6 +476,12 @@ public class JsonFunctions {
       accumulateObject(accumulator, key, value);
     }
 
+    @FunctionHint(input = {@DataTypeHint(bridgedTo = String.class),
+        @DataTypeHint(inputGroup = InputGroup.ANY)})
+    public void accumulate(ObjectAgg accumulator, String key, Object value) {
+      accumulateObject(accumulator, key, value);
+    }
+
     public void accumulateObject(ObjectAgg accumulator, String key, Object value) {
       accumulator.add(key, value);
     }
@@ -495,6 +503,12 @@ public class JsonFunctions {
     }
 
     public void retract(ObjectAgg accumulator, String key, Integer value) {
+      retractObject(accumulator, key);
+    }
+
+    @FunctionHint(input = {@DataTypeHint(bridgedTo = String.class),
+        @DataTypeHint(inputGroup = InputGroup.ANY)})
+    public void retract(ObjectAgg accumulator, String key, Object value) {
       retractObject(accumulator, key);
     }
 
