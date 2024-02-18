@@ -17,7 +17,6 @@ import com.datasqrl.graphql.AbstractGraphqlTest;
 import com.datasqrl.io.DataSystemConnectorFactory;
 import com.datasqrl.io.InMemSourceFactory;
 import com.datasqrl.io.mem.MemoryConnectorFactory;
-import com.datasqrl.json.FlinkJsonType;
 import com.datasqrl.loaders.TableSourceNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
@@ -29,7 +28,6 @@ import com.google.auto.service.AutoService;
 import com.ibm.icu.impl.Pair;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -50,10 +48,10 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.flink.types.Row;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -291,6 +289,7 @@ public class JsonConversionTest extends AbstractGraphqlTest {
   }
 
   @Test
+  @Disabled //this is an invalid case b/c null is not typed, must cast to use
   public void jsonExtractWithDefaultNull() {
     // Test with a default null value
     testScalarReturn("jsonExtract(toJson('{\"a\": \"hello\"}'), '$.b', null)");
@@ -412,9 +411,6 @@ public class JsonConversionTest extends AbstractGraphqlTest {
     snapshot.addContent(query, "flink");
 
     Object flinkResult = jsonFunctionTest(query);
-    if (flinkResult instanceof FlinkJsonType) {
-      flinkResult = ((FlinkJsonType) flinkResult).getJson();
-    }
     flinkResult = flinkResult == null ? "<null>" : flinkResult.toString();
     snapshot.addContent((String) flinkResult, "Flink Result");
     return Pair.of(pgResult, flinkResult);

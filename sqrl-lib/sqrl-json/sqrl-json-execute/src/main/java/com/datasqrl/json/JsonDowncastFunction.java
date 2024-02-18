@@ -2,13 +2,14 @@ package com.datasqrl.json;
 
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.json.JsonFunctions.JsonToString;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.auto.service.AutoService;
 
 @AutoService(DowncastFunction.class)
 public class JsonDowncastFunction implements DowncastFunction {
   @Override
   public Class getConversionClass() {
-    return FlinkJsonType.class;
+    return JsonNode.class;
   }
 
   @Override
