@@ -20,6 +20,7 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
+import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.AggregateFunction;
@@ -61,7 +62,7 @@ public class JsonFunctions {
   @FunctionHint(output = @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class))
   public static class ToJson extends ScalarFunction implements SqrlFunction {
 
-    @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)
+    //todo: Add other types here
     public JsonNode eval(String json) {
       if (json == null) {
         return null;
@@ -130,26 +131,22 @@ public class JsonFunctions {
 
     @Override
     public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-      InputTypeStrategy anyJsonCompatibleArg =
-          InputTypeStrategies.repeatingSequence(createJsonArgumentTypeStrategy(typeFactory));
+      InputTypeStrategy anyJsonCompatibleArg = InputTypeStrategies.repeatingSequence(
+          createJsonArgumentTypeStrategy(typeFactory));
 
-      InputTypeStrategy inputTypeStrategy = InputTypeStrategies
-          .compositeSequence()
+      InputTypeStrategy inputTypeStrategy = InputTypeStrategies.compositeSequence()
           .finishWithVarying(anyJsonCompatibleArg);
 
-      return TypeInference.newBuilder()
-          .inputTypeStrategy(inputTypeStrategy)
-          .outputTypeStrategy(
-              TypeStrategies.explicit(
-                  typeFactory.createRawDataType(JsonNode.class)))
-          .build();
+      return TypeInference.newBuilder().inputTypeStrategy(inputTypeStrategy).outputTypeStrategy(
+          TypeStrategies.explicit(typeFactory.createRawDataType(JsonNode.class))).build();
     }
 
     @Override
     public String getDocumentation() {
-      return "Creates a JSON object from key-value pairs, where the key is mapped to a field with the associated value."
-          + " Key-value pairs are provided as a list of even length, with the first element of each pair being the key and the second being the value."
-          + " If multiple key-value pairs have the same key, the last pair is added to the JSON object.";
+      return
+          "Creates a JSON object from key-value pairs, where the key is mapped to a field with the associated value."
+              + " Key-value pairs are provided as a list of even length, with the first element of each pair being the key and the second being the value."
+              + " If multiple key-value pairs have the same key, the last pair is added to the JSON object.";
     }
   }
 
@@ -179,10 +176,8 @@ public class JsonFunctions {
       InputTypeStrategy inputTypeStrategy = InputTypeStrategies.varyingSequence(
           createJsonArgumentTypeStrategy(typeFactory));
 
-      return TypeInference.newBuilder()
-          .inputTypeStrategy(inputTypeStrategy)
-          .outputTypeStrategy(TypeStrategies.explicit(createJsonType(typeFactory)))
-          .build();
+      return TypeInference.newBuilder().inputTypeStrategy(inputTypeStrategy)
+          .outputTypeStrategy(TypeStrategies.explicit(createJsonType(typeFactory))).build();
     }
 
     @Override
@@ -194,10 +189,8 @@ public class JsonFunctions {
   public static class JsonExtract extends ScalarFunction implements SqrlFunction {
 
     @SneakyThrows
-    @FunctionHint(input = {
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
-        @DataTypeHint(bridgedTo = String.class)
-    })
+    @FunctionHint(input = {@DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
+        @DataTypeHint(bridgedTo = String.class)})
     public String eval(JsonNode input, String pathSpec) {
       if (input == null) {
         return null;
@@ -211,11 +204,9 @@ public class JsonFunctions {
       }
     }
 
-    @FunctionHint(input = {
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
-        @DataTypeHint(bridgedTo = String.class),
-        @DataTypeHint(bridgedTo = String.class),
-    })
+    //Todo, migrate to better type inference strategy
+    @FunctionHint(input = {@DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
+        @DataTypeHint(bridgedTo = String.class), @DataTypeHint(bridgedTo = String.class),})
     public String eval(JsonNode input, String pathSpec, String defaultValue) {
       if (input == null) {
         return null;
@@ -230,11 +221,8 @@ public class JsonFunctions {
       }
     }
 
-    @FunctionHint(input = {
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
-        @DataTypeHint(bridgedTo = String.class),
-        @DataTypeHint(bridgedTo = Boolean.class),
-    })
+    @FunctionHint(input = {@DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
+        @DataTypeHint(bridgedTo = String.class), @DataTypeHint(bridgedTo = Boolean.class),})
     public Boolean eval(JsonNode input, String pathSpec, Boolean defaultValue) {
       if (input == null) {
         return null;
@@ -248,11 +236,8 @@ public class JsonFunctions {
       }
     }
 
-    @FunctionHint(input = {
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
-        @DataTypeHint(bridgedTo = String.class),
-        @DataTypeHint(bridgedTo = Double.class),
-    })
+    @FunctionHint(input = {@DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
+        @DataTypeHint(bridgedTo = String.class), @DataTypeHint(bridgedTo = Double.class),})
     public Double eval(JsonNode input, String pathSpec, Double defaultValue) {
       if (input == null) {
         return null;
@@ -266,11 +251,8 @@ public class JsonFunctions {
       }
     }
 
-    @FunctionHint(input = {
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
-        @DataTypeHint(bridgedTo = String.class),
-        @DataTypeHint(bridgedTo = Integer.class),
-    })
+    @FunctionHint(input = {@DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
+        @DataTypeHint(bridgedTo = String.class), @DataTypeHint(bridgedTo = Integer.class),})
     public Integer eval(JsonNode input, String pathSpec, Integer defaultValue) {
       if (input == null) {
         return null;
@@ -286,18 +268,19 @@ public class JsonFunctions {
 
     @Override
     public String getDocumentation() {
-      return "Extracts a value from the JSON object based on the provided JSON path. An optional third "
-          + "argument can be provided to specify a default value when the given JSON path does not yield "
-          + "a value for the JSON object.";
+      return
+          "Extracts a value from the JSON object based on the provided JSON path. An optional third "
+              + "argument can be provided to specify a default value when the given JSON path does not yield "
+              + "a value for the JSON object.";
     }
   }
 
   public static class JsonQuery extends ScalarFunction implements SqrlFunction {
+
     static ObjectMapper mapper = new ObjectMapper();
-    @FunctionHint(input = {
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
-        @DataTypeHint(bridgedTo = String.class),
-    })
+
+    @FunctionHint(input = {@DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
+        @DataTypeHint(bridgedTo = String.class),})
     public String eval(JsonNode input, String pathSpec) {
       if (input == null) {
         return null;
@@ -305,7 +288,7 @@ public class JsonFunctions {
       try {
         ReadContext ctx = JsonPath.parse(input.toString());
         Object result = ctx.read(pathSpec);
-        return (String) mapper.writeValueAsString(result); // Convert the result back to JSON string
+        return mapper.writeValueAsString(result); // Convert the result back to JSON string
       } catch (Exception e) {
         e.printStackTrace();
         return null;
@@ -320,17 +303,13 @@ public class JsonFunctions {
 
   public static class JsonExists extends ScalarFunction implements SqrlFunction {
 
-    @FunctionHint(input = {
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
-        @DataTypeHint("String")
-    }
-    )
+    @FunctionHint(input = {@DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
+        @DataTypeHint("String")})
     public Boolean eval(JsonNode json, String path) {
       if (json == null) {
         return null;
       }
       try {
-        //todo fix tostring
         return SqlJsonUtils.jsonExists(json.toString(), path);
       } catch (Exception e) {
         return false;
@@ -348,12 +327,8 @@ public class JsonFunctions {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @FunctionHint(input = {
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)
-    },
-    output =  @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)
-    )
+    @FunctionHint(input = {@DataTypeHint(value = "RAW", bridgedTo = JsonNode.class),
+        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)}, output = @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class))
     public JsonNode eval(JsonNode json1, JsonNode json2) {
       if (json1 == null || json2 == null) {
         return null;
@@ -375,7 +350,8 @@ public class JsonFunctions {
       ArrayNode jsonNode = json1.deepCopy();
       return jsonNode.addAll(json2);
     }
-  public ObjectNode evalObj(ObjectNode json1, ObjectNode json2) {
+
+    public ObjectNode evalObj(ObjectNode json1, ObjectNode json2) {
       if (json1 == null || json2 == null) {
         return null;
       }
@@ -404,11 +380,7 @@ public class JsonFunctions {
     }
   }
 
-  @FunctionHint(
-//      input = {@DataTypeHint("RAW"), @DataTypeHint("RAW")},
-//      accumulator = @DataTypeHint("RAW"),
-      output = @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)
-  )
+  @FunctionHint(output = @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class))
   public static class JsonArrayAgg extends AggregateFunction<JsonNode, ArrayAgg> implements
       SqrlFunction {
 
@@ -424,54 +396,30 @@ public class JsonFunctions {
       accumulator.add(new TextNode(value));
     }
 
-    @SneakyThrows
-    @FunctionHint(input = {//@DataTypeHint(bridgedTo = String.class),
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)})
-    public void accumulate(ArrayAgg accumulator, JsonNode value) {
-      accumulator.add((JsonNode) value);
+
+    @FunctionHint(input = {@DataTypeHint(inputGroup = InputGroup.ANY)})
+    public void accumulate(ArrayAgg accumulator, Object value) {
+      if (value instanceof JsonNode) {
+        accumulator.add((JsonNode) value);
+      } else {
+        accumulator.add(mapper.getNodeFactory().pojoNode(value));
+      }
     }
 
-
-    public void accumulate(ArrayAgg accumulator, Double value) {
-      accumulator.add(new DoubleNode(value));
-    }
-
-    public void accumulate(ArrayAgg accumulator, Long value) {
-      accumulator.add(new LongNode(value));
-    }
-
-    public void accumulate(ArrayAgg accumulator, Integer value) {
-      accumulator.add(new IntNode(value));
-    }
-
-    public void retract(ArrayAgg accumulator, String value) {
-      accumulator.remove(new TextNode(value));
-    }
-
-    @SneakyThrows
-    @FunctionHint(input = {//@DataTypeHint(bridgedTo = String.class),
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)})
-    public void retract(ArrayAgg accumulator, JsonNode value) {
-      accumulator.remove(value);
-    }
-
-    public void retract(ArrayAgg accumulator, Double value) {
-      accumulator.remove(new DoubleNode(value));
-    }
-
-    public void retract(ArrayAgg accumulator, Long value) {
-      accumulator.remove(new LongNode(value));
-    }
-
-    public void retract(ArrayAgg accumulator, Integer value) {
-      accumulator.remove(new IntNode(value));
+    @FunctionHint(input = {@DataTypeHint(inputGroup = InputGroup.ANY)})
+    public void retract(ArrayAgg accumulator, Object value) {
+      if (value instanceof JsonNode) {
+        accumulator.remove((JsonNode) value);
+      } else {
+        accumulator.remove(mapper.getNodeFactory().pojoNode(value));
+      }
     }
 
     @Override
     public JsonNode getValue(ArrayAgg accumulator) {
       ArrayNode arrayNode = mapper.createArrayNode();
       for (JsonNode o : accumulator.getObjects()) {
-          arrayNode.add(o);
+        arrayNode.add(o);
       }
       return arrayNode;
     }
@@ -501,13 +449,9 @@ public class JsonFunctions {
     }
   }
 
-  @FunctionHint(
-//      input = {@DataTypeHint("RAW"), @DataTypeHint("RAW")},
-//      accumulator = @DataTypeHint("RAW"),
-      output = @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)
-  )
-  public static class JsonObjectAgg extends
-      AggregateFunction<JsonNode, ObjectAgg> implements SqrlFunction {
+  @FunctionHint(output = @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class))
+  public static class JsonObjectAgg extends AggregateFunction<JsonNode, ObjectAgg> implements
+      SqrlFunction {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -516,68 +460,21 @@ public class JsonFunctions {
       return new ObjectAgg(new HashMap<>());
     }
 
-    public void accumulate(ObjectAgg accumulator, String key, String value) {
-      accumulator.add(key, new TextNode(value));
-    }
-
     @SneakyThrows
-        @FunctionHint(input = {@DataTypeHint(bridgedTo = String.class),
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)})
-    public void accumulate(ObjectAgg accumulator, String key, JsonNode value) {
-      accumulator.add(key, value);
-    }
-
-    public void accumulate(ObjectAgg accumulator, String key, Double value) {
-      accumulator.add(key, new DoubleNode(value));
-    }
-
-    public void accumulate(ObjectAgg accumulator, String key, Long value) {
-      accumulator.add(key, new LongNode(value));
-    }
-
-    public void accumulate(ObjectAgg accumulator, String key, Integer value) {
-      accumulator.add(key, new IntNode(value));
-    }
-
-
-    //todo add boolean
-
-//    @FunctionHint(input = {@DataTypeHint(bridgedTo = String.class),
-//        @DataTypeHint(inputGroup = InputGroup.ANY)})
-//    public void accumulate(ObjectAgg accumulator, String key, Object value) {
-//      accumulator.add(key, mapper.);
-//    }
-
-    public void retract(ObjectAgg accumulator, String key, String value) {
-      retractObject(accumulator, key);
+    @FunctionHint(input = {@DataTypeHint(bridgedTo = String.class),
+        @DataTypeHint(inputGroup = InputGroup.ANY)})
+    public void accumulate(ObjectAgg accumulator, String key, Object value) {
+      if (value instanceof JsonNode) {
+        accumulator.add(key, (JsonNode) value);
+      } else {
+        accumulator.add(key, mapper.getNodeFactory().pojoNode(value));
+      }
     }
 
     @SneakyThrows
     @FunctionHint(input = {@DataTypeHint(bridgedTo = String.class),
-        @DataTypeHint(value = "RAW", bridgedTo = JsonNode.class)})
-    public void retract(ObjectAgg accumulator, String key, JsonNode value) {
-      retractObject(accumulator, key);
-    }
-
-    public void retract(ObjectAgg accumulator, String key, Double value) {
-      retractObject(accumulator, key);
-    }
-
-    public void retract(ObjectAgg accumulator, String key, Long value) {
-      retractObject(accumulator, key);
-    }
-
-    public void retract(ObjectAgg accumulator, String key, Integer value) {
-      retractObject(accumulator, key);
-    }
-
-//    @FunctionHint(input = {@DataTypeHint(bridgedTo = String.class),
-//        @DataTypeHint(inputGroup = InputGroup.ANY)})
-//    public void retract(ObjectAgg accumulator, String key, Object value) {
-//      retractObject(accumulator, key);
-//    }
-
-    public void retractObject(ObjectAgg accumulator, String key) {
+        @DataTypeHint(inputGroup = InputGroup.ANY)})
+    public void retract(ObjectAgg accumulator, String key, Object value) {
       accumulator.remove(key);
     }
 
