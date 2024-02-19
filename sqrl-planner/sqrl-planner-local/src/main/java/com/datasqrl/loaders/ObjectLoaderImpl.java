@@ -82,13 +82,12 @@ public class ObjectLoaderImpl implements ObjectLoader {
     String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(uri),DataSource.TABLE_FILE_SUFFIX);
     errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
     TableConfig tableConfig = TableConfig.load(uri, Name.system(tableName), errors);
-    TableSchemaFactory tableSchemaFactory = tableConfig.getSchemaFactory().orElseThrow(() ->
-            errors.exception("Schema has not been configured for table [%s]", uri));
+    Optional<TableSchemaFactory> tableSchemaFactory = tableConfig.getSchemaFactory();
 
-    Optional<URI> schemaPath = resourceResolver
-        .resolveFile(basePath.concat(NamePath.of(tableSchemaFactory.getSchemaFilename(tableConfig))));
-    Optional<TableSchema> tableSchema = schemaPath.map(s->
-        tableSchemaFactory.create(BaseFileUtil.readFile(s), schemaPath, errors));
+    Optional<URI> schemaPath = tableSchemaFactory.flatMap(f->resourceResolver
+        .resolveFile(basePath.concat(NamePath.of(f.getSchemaFilename(tableConfig)))));
+    Optional<TableSchema> tableSchema = tableSchemaFactory.flatMap(f->schemaPath.map(s->
+        f.create(BaseFileUtil.readFile(s), schemaPath, errors)));
 
     if (tableConfig.getBase().getType() == ExternalDataType.source ||
         tableConfig.getBase().getType() == ExternalDataType.source_and_sink) {

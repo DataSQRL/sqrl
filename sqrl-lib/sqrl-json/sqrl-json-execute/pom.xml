@@ -16,9 +16,10 @@
   </properties>
 
   <dependencies>
+    <!-- todo: migrate back to limited scope when we move to JsonObject -->
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-base</artifactId>
+      <artifactId>sqrl-execute-flink-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -45,5 +46,7 @@
       <artifactId>flink-connector-jdbc</artifactId>
       <scope>provided</scope>
     </dependency>
+
+
   </dependencies>
 </project>

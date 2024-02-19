@@ -26,16 +26,12 @@ public class KafkaTableSourceFactory extends AbstractKafkaTableFactory implement
     String topic = context.getTableConfig().getBase().getIdentifier();
     String groupId = context.getFlinkName() + "-" + context.getUuid();
 
-
-    FormatFactory formatFactory = context.getFormatFactory();
-    FormatDescriptor.Builder formatBuilder = FormatDescriptor.forFormat(formatFactory.getName());
-    addOptions(formatBuilder, context.getTableConfig().getFormatConfig());
-
     TableDescriptor.Builder builder = TableDescriptor.forConnector("kafka")
         .option("topic", topic)
         .option("properties.group.id", groupId)
         .option("scan.startup.mode", "earliest-offset")
-        .format(formatBuilder.build());
+        .format(createFormat(context.getFormatFactory(),
+            context.getTableConfig().getFormatConfig()).build());
 
     addOptions(builder, connector);
     return builder;

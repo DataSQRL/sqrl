@@ -1,0 +1,15 @@
+{
+  "type" : "sink",
+  "canonicalizer" : "system",
+  "format" : {
+    "name" : "json"
+  },
+  "name" : "orders",
+  "identifier" : "orders",
+  "schema" : "flexible",
+  "connector" : {
+    "name" : "kafka",
+    "bootstrap.servers": "kafka:9092",
+    "group.id": "datasqrl-orders"
+  }
+}

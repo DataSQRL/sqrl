@@ -1,0 +1,6 @@
+IMPORT ecommerce-avro.Orders;
+IMPORT json.tojson;
+
+Orders.json := tojson('{}');
+
+EXPORT Orders TO ecommerce-avro.Order_sink;

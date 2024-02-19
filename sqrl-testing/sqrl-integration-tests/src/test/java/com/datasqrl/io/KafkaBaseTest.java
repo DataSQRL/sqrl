@@ -10,15 +10,15 @@ import com.datasqrl.io.formats.JsonLineFormat;
 import com.datasqrl.io.impl.kafka.KafkaDataSystemFactory;
 import com.datasqrl.io.tables.TableConfig;
 import com.datasqrl.util.FileStreamUtil;
+import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -30,9 +30,10 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.flink.runtime.util.jartestprogram.AnonymousInStaticMethod.A;
-import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -46,7 +47,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 @Slf4j
 public class KafkaBaseTest extends AbstractEngineIT {
@@ -59,8 +59,9 @@ public class KafkaBaseTest extends AbstractEngineIT {
 
   @SneakyThrows
   @BeforeAll
-  public static void startCluster() throws IOException {
+  public static void startCluster() {
     CLUSTER.start();
+    System.setProperty("kafka.bootstrap", CLUSTER.bootstrapServers());
   }
 
   @SneakyThrows
@@ -171,6 +172,19 @@ public class KafkaBaseTest extends AbstractEngineIT {
     }
 
     return bytes;
+  }
+
+  public List<ConsumerRecord<String, String>> getAllInTopic(String topicName) {
+    List<ConsumerRecord<String, String>> allRecords = new ArrayList<>();
+    try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(getConsumerProps("grouppid"))) {
+      consumer.subscribe(ImmutableList.of(topicName));
+
+      ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(2));
+      for (ConsumerRecord<String, String> record : records) {
+        allRecords.add(record);
+      }
+    }
+    return allRecords;
   }
 
 

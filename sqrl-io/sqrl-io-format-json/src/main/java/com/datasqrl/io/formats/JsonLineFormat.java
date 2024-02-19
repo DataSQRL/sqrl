@@ -41,6 +41,11 @@ public class JsonLineFormat implements TextLineFormat {
   }
 
   @Override
+  public String getTableApiSerializerName() {
+    return "flexible-json";
+  }
+
+  @Override
   public Writer getWriter(@NonNull SqrlConfig config) {
     final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
     return new Writer() {

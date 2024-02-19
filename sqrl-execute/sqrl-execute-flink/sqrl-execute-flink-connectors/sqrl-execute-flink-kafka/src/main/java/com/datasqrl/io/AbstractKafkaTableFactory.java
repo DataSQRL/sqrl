@@ -27,15 +27,4 @@ public abstract class AbstractKafkaTableFactory {
       }
     }
   }
-
-  protected void addOptions(FormatDescriptor.Builder formatBuilder, SqrlConfig formatConfig) {
-    for (String key: formatConfig.getKeys()) {
-      if (key.equals(FormatFactory.FORMAT_NAME_KEY)) continue;
-      formatBuilder.option(key, formatConfig.asString(key).get());
-    }
-  }
-
-
-
-
 }
