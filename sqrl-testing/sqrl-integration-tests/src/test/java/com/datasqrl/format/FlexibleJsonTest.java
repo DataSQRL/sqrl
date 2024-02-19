@@ -13,16 +13,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
-import org.apache.commons.text.StringSubstitutor;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
@@ -41,22 +34,10 @@ class FlexibleJsonTest extends KafkaBaseTest {
 
     CLUSTER.createTopic("orders");
 
-    String[] flinkSql = Resources.toString(Resources.getResource("flexible-json/c360.sql"),
-        StandardCharsets.UTF_8).split("\n\n");
+    String flinkSql = Resources.toString(Resources.getResource("flexible-json/c360.sql"),
+        StandardCharsets.UTF_8);
 
-    Configuration sEnvConfig = Configuration.fromMap(Map.of());
-    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(sEnvConfig);
-
-    EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
-        .withConfiguration(Configuration.fromMap(Map.of())).build();
-    StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
-    StringSubstitutor substitutor = new StringSubstitutor((Map) System.getProperties());
-
-    TableResult tableResult = null;
-    for (String sql : flinkSql) {
-      String replacedSql = substitutor.replace(sql);
-      tableResult = tEnv.executeSql(replacedSql);
-    }
+    TableResult tableResult = executeSql(flinkSql);
 
     tableResult.print();
 

@@ -29,6 +29,12 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.text.StringSubstitutor;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.jupiter.api.AfterEach;
 
 public abstract class AbstractEngineIT {
@@ -96,6 +102,24 @@ public abstract class AbstractEngineIT {
     } else {
       return new MockModuleLoader(null, addlModules, errorDir);
     }
+  }
+
+  protected TableResult executeSql(String flinkSql) {
+
+    Configuration sEnvConfig = Configuration.fromMap(Map.of());
+    StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment(sEnvConfig);
+
+    EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
+        .withConfiguration(Configuration.fromMap(Map.of())).build();
+    StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
+    StringSubstitutor substitutor = new StringSubstitutor((Map) System.getProperties());
+
+    TableResult tableResult = null;
+    for (String sql : flinkSql.split("\n\n")) {
+      String replacedSql = substitutor.replace(sql);
+      tableResult = tEnv.executeSql(replacedSql);
+    }
+    return tableResult;
   }
 
   @AfterEach
