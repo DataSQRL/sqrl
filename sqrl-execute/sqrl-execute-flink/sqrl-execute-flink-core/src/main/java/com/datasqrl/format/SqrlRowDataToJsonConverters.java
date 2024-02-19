@@ -1,10 +1,9 @@
 package com.datasqrl.format;
 
-import com.datasqrl.json.FlinkJsonType;
 import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.formats.json.JsonFormatOptions.MapNullKeyMode;
 import org.apache.flink.formats.json.RowDataToJsonConverters;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.table.data.binary.BinaryRawValueData;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RawType;
@@ -24,7 +23,7 @@ public class SqrlRowDataToJsonConverters extends RowDataToJsonConverters {
       case RAW:
         //sqrl add raw type
         RawType rawType = (RawType) type;
-        if (rawType.getOriginatingClass() == FlinkJsonType.class) {
+        if (rawType.getOriginatingClass() == JsonNode.class) {
           return createJsonConverter((RawType) type);
         }
     }
@@ -38,16 +37,7 @@ public class SqrlRowDataToJsonConverters extends RowDataToJsonConverters {
         return null;
       }
       BinaryRawValueData binaryRawValueData = (BinaryRawValueData) value;
-      FlinkJsonType o = (FlinkJsonType)binaryRawValueData.toObject(type.getTypeSerializer());
-      if (o == null) {
-        return null;
-      }
-      try {
-        return mapper.readTree(o.getJson());
-      } catch (JsonProcessingException e) {
-        e.printStackTrace();
-        return null;
-      }
+      return (JsonNode) binaryRawValueData.toObject(type.getTypeSerializer());
     };
   }
 }

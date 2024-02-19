@@ -1,15 +1,6 @@
 package com.datasqrl.json;
 
 import com.datasqrl.function.SqrlFunction;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.LongNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
 import java.util.ArrayList;
@@ -18,10 +9,14 @@ import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.Value;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.annotation.InputGroup;
-import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.ScalarFunction;
@@ -119,7 +114,7 @@ public class JsonFunctions {
         Object value = objects[i + 1];
         if (value instanceof JsonNode) {
           JsonNode type = (JsonNode) value;
-          objectNode.putIfAbsent(key, type);
+          objectNode.replace(key, type);
         } else {
           objectNode.putPOJO(key, value);
         }
@@ -386,16 +381,10 @@ public class JsonFunctions {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-
     @Override
     public ArrayAgg createAccumulator() {
       return new ArrayAgg(new ArrayList<>());
     }
-
-    public void accumulate(ArrayAgg accumulator, String value) {
-      accumulator.add(new TextNode(value));
-    }
-
 
     @FunctionHint(input = {@DataTypeHint(inputGroup = InputGroup.ANY)})
     public void accumulate(ArrayAgg accumulator, Object value) {

@@ -1,13 +1,12 @@
 package com.datasqrl.json;
 
 import com.datasqrl.type.JdbcTypeSerializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.service.AutoService;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcDeserializationConverter;
 import org.apache.flink.connector.jdbc.converter.AbstractJdbcRowConverter.JdbcSerializationConverter;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.table.data.RawValueData;
 import org.postgresql.util.PGobject;
 
@@ -33,7 +32,6 @@ public class PostgresJsonTypeSerializer
   @Override
   public GenericDeserializationConverter<JdbcDeserializationConverter> getDeserializerConverter() {
     return () -> {
-      ObjectMapper mapper = new ObjectMapper();
       return (val) -> {
         JsonNode t = (JsonNode) val;
         return t.toString();

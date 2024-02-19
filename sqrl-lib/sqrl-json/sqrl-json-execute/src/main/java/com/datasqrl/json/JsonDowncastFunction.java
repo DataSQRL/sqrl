@@ -2,8 +2,8 @@ package com.datasqrl.json;
 
 import com.datasqrl.function.DowncastFunction;
 import com.datasqrl.json.JsonFunctions.JsonToString;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.auto.service.AutoService;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 
 @AutoService(DowncastFunction.class)
 public class JsonDowncastFunction implements DowncastFunction {
