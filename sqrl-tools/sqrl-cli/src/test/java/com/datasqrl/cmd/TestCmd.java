@@ -191,6 +191,12 @@ public class TestCmd {
   }
 
   @Test
+  public void compileFlexibleJson() {
+    // Should have a raw json type for postgres and a jsontostring for kafka
+    compilePlan(RESOURCES.resolve("flexible-json"), "package.json", null);
+  }
+
+  @Test
   public void compileAvroWOdatabase() {
     compilePlan(AVRO_PATH, "packageWOdatabase.json", "schema.graphqls");
   }

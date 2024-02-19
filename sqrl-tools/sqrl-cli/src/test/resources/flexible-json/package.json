@@ -1,0 +1,18 @@
+{
+  "engines" : {
+    "log" : {
+      "name" : "kafka",
+      "schema" : "flexible",
+      "format" : {
+        "name" : "json"
+      },
+      "type" : "source_and_sink",
+      "connector" : {
+        "name" : "kafka"
+      }
+    },
+    "streams" : {
+      "name" : "flink"
+    }
+  }
+}

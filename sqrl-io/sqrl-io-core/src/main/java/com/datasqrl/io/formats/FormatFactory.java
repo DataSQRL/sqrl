@@ -43,6 +43,14 @@ public interface FormatFactory extends Serializable {
 
   Parser getParser(@NonNull SqrlConfig config);
 
+  default String getTableApiSerializerName() {
+    return getName();
+  }
+
+  default String getTableApiDeserializerName() {
+    return getName();
+  }
+
   interface Parser<IN> extends Serializable {
 
     Result parse(@NonNull IN input);

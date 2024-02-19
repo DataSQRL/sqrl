@@ -78,7 +78,7 @@ CREATE TEMPORARY TABLE `ordercount$1$2` (
 ) WITH (
   'properties.bootstrap.servers' = 'kafka:9092',
   'connector' = 'kafka',
-  'format' = 'json',
+  'format' = 'flexible-json',
   'topic' = 'ordercount-1'
 );
 

@@ -23,8 +23,9 @@ public class FileSinkFactory implements TableDescriptorSinkFactory {
     TableDescriptor.Builder tblBuilder = TableDescriptor.forConnector("filesystem")
         .option("path",
             fpConfig.getDirectory().resolve(tableConfig.getBase().getIdentifier())
-                .toString());
-    tblBuilder.format(context.getFormatFactory().getName());
+                .toString())
+        .format(createFormat(context.getFormatFactory(),
+            context.getTableConfig().getFormatConfig()).build());
     return tblBuilder;
   }
 

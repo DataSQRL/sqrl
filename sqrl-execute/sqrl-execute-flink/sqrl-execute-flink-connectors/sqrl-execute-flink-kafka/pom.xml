@@ -25,6 +25,10 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-json-execute</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

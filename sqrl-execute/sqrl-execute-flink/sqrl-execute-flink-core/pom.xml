@@ -44,15 +44,12 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-function</artifactId>
-    </dependency>
 
     <!-- Flink -->
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-core</artifactId>
     </dependency>
+
   </dependencies>
 </project>
