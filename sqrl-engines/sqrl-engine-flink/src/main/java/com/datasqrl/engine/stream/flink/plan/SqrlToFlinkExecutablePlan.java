@@ -115,6 +115,7 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
   TableSink errorSink;
   RelBuilder relBuilder;
   ErrorCollector errors;
+  SqrlFramework framework;
 
   private final List<FlinkStatement> statements = new ArrayList<>();
   private final List<FlinkFunction> functions = new ArrayList<>();

@@ -72,7 +72,7 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
     return new FlinkPhysicalPlanner(new SqrlToFlinkExecutablePlan(errorSink,
-        framework.getQueryPlanner().getRelBuilder(), errorCollector), framework.getQueryPlanner().getRelBuilder())
+        framework.getQueryPlanner().getRelBuilder(), errorCollector, framework), framework.getQueryPlanner().getRelBuilder())
         .createStreamGraph(this.config,
         plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
   }

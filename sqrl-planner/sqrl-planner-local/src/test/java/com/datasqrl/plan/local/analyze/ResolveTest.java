@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
+import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
+import com.datasqrl.IntegrationTestSettings.StreamEngine;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutionEngine;
@@ -61,7 +63,11 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
   private Path exportPath = Retail.INSTANCE.getRootPackageDirectory().resolve("export-data");
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
-    initialize(IntegrationTestSettings.getInMemory(), null, Optional.of(exportPath));
+    initialize(IntegrationTestSettings.builder()
+        .stream(StreamEngine.INMEMORY)
+        .database(DatabaseEngine.INMEMORY)
+        .server(null)
+        .build(), null, Optional.of(exportPath));
     schema = framework.getSchema();
 
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
