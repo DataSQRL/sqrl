@@ -10,7 +10,7 @@ import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvi
 public class SqrlRelMetadataProvider extends ChainedRelMetadataProvider {
 
   public static final RelMetadataProvider INSTANCE =
-      DefaultRelMetadataProvider.INSTANCE;
+      new SqrlRelMetadataProvider();
 
   public SqrlRelMetadataProvider() {
     super(

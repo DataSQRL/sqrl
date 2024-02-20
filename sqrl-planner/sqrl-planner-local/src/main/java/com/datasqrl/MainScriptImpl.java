@@ -39,6 +39,7 @@ public class MainScriptImpl implements MainScript {
     Preconditions.checkArgument(!scriptFiles.isEmpty());
     return scriptFiles.get(MAIN_KEY).map(NamePath::of);
   }
+
   public static Map<String,Optional<String>> getFiles(@NonNull SqrlConfig rootConfig) {
     SqrlConfig config = fromScriptConfig(rootConfig);
     return Arrays.stream(FILE_KEYS).collect(Collectors.toMap(Function.identity(),
@@ -49,9 +50,8 @@ public class MainScriptImpl implements MainScript {
     return rootConfig.getSubConfig(SCRIPT_KEY);
   }
 
-
-  @Override
   public Optional<Path> getPath() {
-    return Optional.empty(); //todo fix me
+    return getMainScript(config).flatMap(resourceResolver::resolveFile)
+        .map(Path::of);
   }
 }
