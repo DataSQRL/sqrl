@@ -9,6 +9,10 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+/**
+ * Generates a random ID string with the given number of secure random bytes. The bytes are base64
+ * encoded so the string length will be longer than the number of bytes
+ */
 public class RandomID extends ScalarFunction {
 
   private static final SecureRandom random = new SecureRandom();
@@ -29,10 +33,4 @@ public class RandomID extends ScalarFunction {
     return FlinkTypeUtil.basicNullInferenceBuilder(DataTypes.STRING(), DataTypes.BIGINT())
         .typedArguments(List.of(DataTypes.BIGINT())).build();
   }
-
-//    @Override
-//    public String getDocumentation() {
-//      return "Generates a random ID string with the given number of secure random bytes. "
-//          + "The bytes are base64 encoded so the string length will be longer than the number of bytes";
-//    }
 }

@@ -4,6 +4,9 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonProcessin
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.table.functions.ScalarFunction;
 
+/**
+ * Parses a JSON object from string
+ */
 public class ToJson extends ScalarFunction {
 
   public static final ObjectMapper mapper = new ObjectMapper();

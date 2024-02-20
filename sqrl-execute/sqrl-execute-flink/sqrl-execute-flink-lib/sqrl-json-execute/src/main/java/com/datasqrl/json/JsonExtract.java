@@ -6,6 +6,11 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.table.functions.ScalarFunction;
 
+/**
+ * Extracts a value from the JSON object based on the provided JSON path. An optional third argument
+ * can be provided to specify a default value when the given JSON path does not yield a value for
+ * the JSON object.
+ */
 public class JsonExtract extends ScalarFunction {
 
   public String eval(FlinkJsonType input, String pathSpec) {

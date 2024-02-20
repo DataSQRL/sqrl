@@ -5,6 +5,9 @@ import static com.datasqrl.vector.VectorFunctions.convert;
 
 import org.apache.flink.table.functions.AggregateFunction;
 
+/**
+ * Aggregates vectors by computing the centroid, i.e. summing up all vectors and dividing the resulting vector by the number of vectors.
+ */
 public class Center extends AggregateFunction<FlinkVectorType, CenterAccumulator> {
 
   @Override
@@ -39,9 +42,5 @@ public class Center extends AggregateFunction<FlinkVectorType, CenterAccumulator
     acc.count = 0;
     acc.sum = null;
   }
-//
-//  @Override
-//  public String getDocumentation() {
-//    return "Aggregates vectors by computing the centroid, i.e. summing up all vectors and dividing the resulting vector by the number of vectors.";
-//  }
+
 }

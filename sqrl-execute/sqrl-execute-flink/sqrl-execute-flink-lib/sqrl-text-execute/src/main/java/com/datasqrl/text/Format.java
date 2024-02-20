@@ -7,6 +7,9 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+/**
+ * Replaces the placeholders in the first argument with the remaining arguments in order.
+ */
 public class Format extends ScalarFunction {
 
   public String eval(String text, String... arguments) {

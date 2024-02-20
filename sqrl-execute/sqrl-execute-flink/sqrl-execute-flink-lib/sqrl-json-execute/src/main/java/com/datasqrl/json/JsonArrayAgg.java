@@ -8,6 +8,9 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMap
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.flink.table.functions.AggregateFunction;
 
+/**
+ * Aggregation function that aggregates JSON objects into a JSON array.
+ */
 public class JsonArrayAgg extends AggregateFunction<FlinkJsonType, ArrayAgg> {
 
   private final ObjectMapper mapper = new ObjectMapper();

@@ -6,6 +6,9 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.table.functions.ScalarFunction;
 
+/**
+ * For a given JSON object, executes a JSON path query against the object and returns the result as string.
+ */
 public class JsonQuery extends ScalarFunction {
 
   public String eval(FlinkJsonType input, String pathSpec) {

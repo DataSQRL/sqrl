@@ -7,6 +7,10 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMap
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.table.functions.AggregateFunction;
 
+/**
+ * Aggregation function that merges JSON objects into a single JSON object. If two JSON objects
+ * share the same field name, the value of the later one is used in the aggregated result.
+ */
 public class JsonObjectAgg extends AggregateFunction<FlinkJsonType, ObjectAgg> {
 
   private final ObjectMapper mapper = new ObjectMapper();

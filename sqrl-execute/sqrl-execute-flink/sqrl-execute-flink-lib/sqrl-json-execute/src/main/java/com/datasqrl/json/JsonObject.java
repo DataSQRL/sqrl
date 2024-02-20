@@ -13,6 +13,12 @@ import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 
+/**
+ * Creates a JSON object from key-value pairs, where the key is mapped to a field with the
+ * associated value. Key-value pairs are provided as a list of even length, with the first element
+ * of each pair being the key and the second being the value. If multiple key-value pairs have the
+ * same key, the last pair is added to the JSON object.
+ */
 public class JsonObject extends ScalarFunction {
 
   public FlinkJsonType eval(Object... objects) {

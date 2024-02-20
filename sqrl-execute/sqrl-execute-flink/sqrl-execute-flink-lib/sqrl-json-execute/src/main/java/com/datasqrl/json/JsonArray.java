@@ -13,6 +13,9 @@ import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 
+/**
+ * Creates a JSON array from the list of JSON objects and scalar values.
+ */
 public class JsonArray extends ScalarFunction {
 
   public FlinkJsonType eval(Object... objects) {
@@ -28,7 +31,7 @@ public class JsonArray extends ScalarFunction {
           throw new RuntimeException(e);
         }
       } else {
-        arrayNode.addPOJO(value); // putPOJO to handle arbitrary objects
+        arrayNode.addPOJO(value);
       }
     }
 

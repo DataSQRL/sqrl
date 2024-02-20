@@ -13,6 +13,9 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+/**
+ * Parses a timestamp from an ISO timestamp string.
+ */
 @Slf4j
 public class ParseTimestamp extends ScalarFunction {
 

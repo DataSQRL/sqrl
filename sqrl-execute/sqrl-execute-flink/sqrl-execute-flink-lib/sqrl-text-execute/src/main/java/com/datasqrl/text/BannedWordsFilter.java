@@ -12,6 +12,9 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+/**
+ * Returns false if the given text contains a banned word, else true
+ */
 public class BannedWordsFilter extends ScalarFunction {
 
   private static final String BANNED_WORDS_FILENAME = "banned_words_list.txt";

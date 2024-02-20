@@ -6,6 +6,9 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+/**
+ * Generates a random UUID string
+ */
 public class Uuid extends ScalarFunction {
 
   public String eval() {
@@ -17,9 +20,4 @@ public class Uuid extends ScalarFunction {
     return TypeInference.newBuilder().typedArguments()
         .outputTypeStrategy(callContext -> Optional.of(DataTypes.CHAR(36).notNull())).build();
   }
-
-//    @Override
-//    public String getDocumentation() {
-//      return "Generates a random UUID string";
-//    }
 }

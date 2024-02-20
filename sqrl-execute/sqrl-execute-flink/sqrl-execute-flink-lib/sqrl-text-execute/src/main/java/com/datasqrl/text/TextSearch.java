@@ -5,7 +5,6 @@ import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +14,10 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+/**
+ * Returns a numeric score for how well the given query string matches the provided string text.
+ * Returns 0 if there is no match. Use this function for full-text search.
+ */
 public class TextSearch extends ScalarFunction {
 
   public static void tokenizeTo(String text, Collection<String> collection) {
