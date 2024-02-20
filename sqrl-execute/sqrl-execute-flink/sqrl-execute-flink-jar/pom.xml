@@ -89,8 +89,11 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-flink-print</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-function</artifactId>
+    </dependency>
   </dependencies>
-
 
   <build>
     <plugins>
