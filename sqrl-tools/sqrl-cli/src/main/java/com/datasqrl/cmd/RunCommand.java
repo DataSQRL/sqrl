@@ -72,9 +72,10 @@ public class RunCommand extends AbstractCompilerCommand {
 
   @Override
   protected void postprocess(Packager packager, Path targetDir,
-      ErrorCollector errors) {
-    super.postprocess(packager, targetDir, errors);
-//    executePlan(result.getPlan(), errors);
+      PhysicalPlan plan, ErrorCollector errors) {
+    super.postprocess(packager, targetDir, plan, errors);
+
+    executePlan(plan, errors);
   }
 
   @SneakyThrows

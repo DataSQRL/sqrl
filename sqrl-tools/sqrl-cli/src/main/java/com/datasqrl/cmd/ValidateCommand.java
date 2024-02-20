@@ -4,6 +4,7 @@
 package com.datasqrl.cmd;
 
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
 import java.nio.file.Path;
@@ -19,6 +20,6 @@ public class ValidateCommand extends AbstractCompilerCommand {
 
   @Override
   protected void postprocess(Packager packager, Path targetDir,
-      ErrorCollector errors) {
+      PhysicalPlan plan, ErrorCollector errors) {
   }
 }

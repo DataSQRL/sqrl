@@ -3,13 +3,14 @@
  */
 package com.datasqrl.cmd;
 
-import static com.datasqrl.graphql.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
+import static com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
 
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.inject.SqrlInjector;
@@ -90,7 +91,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
         new SqrlInjector(errors, root.rootDir, getTargetDir(), debug, sqrlConfig),
         new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
     CompilationProcess compilationProcess = injector.getInstance(CompilationProcess.class);
-    compilationProcess.executeCompilation();
+    PhysicalPlan plan = compilationProcess.executeCompilation();
 
     if (errors.hasErrors()) {
       return;
@@ -100,7 +101,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       addGraphql(root.rootDir.resolve(Packager.BUILD_DIR_NAME), root.rootDir);
     }
 
-    postprocess(packager, getTargetDir(), errors);
+    postprocess(packager, getTargetDir(), plan, errors);
   }
 
   public abstract SqrlConfig createDefaultConfig(ErrorCollector errors);
@@ -110,7 +111,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   }
 
   protected void postprocess(Packager packager, Path targetDir,
-      ErrorCollector errors) {
+      PhysicalPlan plan, ErrorCollector errors) {
     packager.postprocess(getTargetDir(), Optional.ofNullable(mountDirectory), profiles);
   }
 

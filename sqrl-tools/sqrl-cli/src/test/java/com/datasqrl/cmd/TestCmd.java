@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.graphql.ScriptConfiguration;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestScript;

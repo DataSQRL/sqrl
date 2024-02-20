@@ -1,7 +1,7 @@
 package com.datasqrl.config;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.graphql.ScriptConfiguration;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.queries.APISource;

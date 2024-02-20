@@ -25,7 +25,7 @@ import com.datasqrl.kafka.KafkaLogEngineFactory;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
-import com.datasqrl.graphql.ScriptConfiguration;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.postprocess.DockerPostprocessor;
 import com.datasqrl.packager.postprocess.FlinkPostprocessor;
 import com.datasqrl.packager.postprocess.Postprocessor.ProcessorContext;

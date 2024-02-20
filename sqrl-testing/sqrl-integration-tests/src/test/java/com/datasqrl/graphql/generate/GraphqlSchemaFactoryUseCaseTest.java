@@ -3,8 +3,6 @@
  */
 package com.datasqrl.graphql.generate;
 
-import static com.datasqrl.graphql.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
-
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.util.StringUtil;
 import com.datasqrl.util.TestScript;
@@ -57,7 +55,7 @@ public class GraphqlSchemaFactoryUseCaseTest extends AbstractGraphqlSchemaFactor
     if (filename.endsWith(".sqrl")) {
       filename = StringUtil.removeFromEnd(filename, ".sqrl");
     }
-    filename += "." + GRAPHQL_NORMALIZED_FILE_NAME;
+    filename += "." + com.datasqrl.packager.config.ScriptConfiguration.GRAPHQL_NORMALIZED_FILE_NAME;
     Path path = script.getScriptPath().getParent().resolve(filename);
     Files.writeString(path, schema);
   }

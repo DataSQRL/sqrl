@@ -21,7 +21,7 @@ import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.config.Dependency;
 import com.datasqrl.packager.config.DependencyConfig;
 import com.datasqrl.packager.config.PackageConfiguration;
-import com.datasqrl.graphql.ScriptConfiguration;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.repository.Repository;
 import java.io.IOException;
 import java.nio.file.Files;

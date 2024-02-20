@@ -2,6 +2,7 @@ package com.datasqrl.graphql;
 
 
 import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.packager.config.ScriptConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.Arrays;

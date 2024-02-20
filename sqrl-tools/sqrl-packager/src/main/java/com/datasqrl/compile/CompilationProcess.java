@@ -43,7 +43,7 @@ public class CompilationProcess {
   private final GraphQLMutationExtraction graphQLMutationExtraction;
   private final ExecutionPipeline pipeline;
 
-  public void executeCompilation() {
+  public PhysicalPlan executeCompilation() {
     pipeline.getStage(Type.SERVER)
         .flatMap(p->graphqlSourceFactory.get())
         .ifPresent(graphQLMutationExtraction::analyze);
@@ -62,6 +62,7 @@ public class CompilationProcess {
     Optional<RootGraphqlModel> model = graphqlPostplanHook.run(physicalPlan);
     writeDeploymentArtifactsHook.run(model, source, physicalPlan);
     flinkSqlPostprocessor.run(physicalPlan);
+    return physicalPlan;
   }
 
   private void postcompileHooks() {
