@@ -11,6 +11,8 @@ import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
@@ -24,9 +26,11 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
     super(rootTableId, tablePath,
         analyzedLP.getConvertedRelnode().getType(),
         analyzedLP.getConvertedRelnode().getRelNode().getRowType(),
+        analyzedLP.getConvertedRelnode().select.getSourceLength(),
         analyzedLP.getConvertedRelnode().getTimestamp(),
         PrimaryKey.of(analyzedLP.getConvertedRelnode().getPrimaryKey()),
         TableStatistic.of(analyzedLP.getConvertedRelnode().estimateRowCount()));
+    Preconditions.checkArgument(analyzedLP.getConvertedRelnode().select.isIdentity(), "We assume an identity select");
     this.analyzedLP = analyzedLP;
   }
 

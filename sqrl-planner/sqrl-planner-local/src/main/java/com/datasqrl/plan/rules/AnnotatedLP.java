@@ -7,11 +7,9 @@ import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.DedupHint;
-import com.datasqrl.plan.hints.SqrlHint;
-import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.table.Timestamps.Type;
 import com.datasqrl.plan.util.SelectIndexMap;
@@ -21,13 +19,10 @@ import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,8 +34,6 @@ import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalSort;
-import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
-import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -60,6 +53,7 @@ public class AnnotatedLP implements RelHolder {
 
   @NonNull
   public RelNode relNode;
+  /* Metadata we keep track of for each RelNode */
   @NonNull
   public TableType type;
   @NonNull
@@ -68,10 +62,14 @@ public class AnnotatedLP implements RelHolder {
   public Timestamps timestamp;
   @NonNull
   public SelectIndexMap select;
+  /**
+   * Used to detect whether the operator applies to a single stream record so we can optimize
+   */
   @Builder.Default
   @NonNull
-  public Optional<PhysicalRelationalTable> rootTable = Optional.empty(); //Used to detect whether the operator applies to a single stream record so we can optimize
+  public Optional<PhysicalRelationalTable> rootTable = Optional.empty();
 
+  /* Operators we pull up */
   @Builder.Default
   @NonNull
   public NowFilter nowFilter = NowFilter.EMPTY; //Applies before topN
@@ -82,6 +80,9 @@ public class AnnotatedLP implements RelHolder {
   @NonNull
   public SortOrder sort = SortOrder.EMPTY;
 
+  /**
+   * We keep track of the inputs for data lineage so we can track processing
+   */
   @Builder.Default
   @NonNull
   public List<AnnotatedLP> inputs = List.of();
@@ -146,7 +147,7 @@ public class AnnotatedLP implements RelHolder {
           relBuilder.sort(collation);
         }
         relBuilder.limit(0, topN.getLimit());
-        exec.require(EngineCapability.GLOBAL_SORT);
+        exec.requireFeature(EngineFeature.GLOBAL_SORT);
       } else { //Lift up sort and prepend partition (if any)
         newSort = newSort.ifEmpty(SortOrder.of(topN.getPartition(), collation));
       }
@@ -196,20 +197,20 @@ public class AnnotatedLP implements RelHolder {
       //Add row_number (since it always applies)
       projects.add(rexUtil.createRowFunction(SqlStdOperatorTable.ROW_NUMBER, partitionKeys,
           fieldCollations));
-      projectNames.add(Name.hidden("rownum").getCanonical());
+      projectNames.add(Name.hiddenString("rownum"));
       int rowNumberIdx = projectIdx.size(), rankIdx = rowNumberIdx + 1, denserankIdx =
           rowNumberIdx + 2;
       if (topN.isDistinct()) {
         //Add rank and dense_rank if we have a limit
         projects.add(
             rexUtil.createRowFunction(SqlStdOperatorTable.RANK, partitionKeys, fieldCollations));
-        projectNames.add(Name.hidden("rank").getCanonical());
+        projectNames.add(Name.hiddenString("rank"));
         if (topN.hasLimit()) {
           projects.add(rexUtil.createRowFunction(SqlStdOperatorTable.DENSE_RANK, partitionKeys,
               fieldCollations));
-          projectNames.add(Name.hidden("denserank").getCanonical());
+          projectNames.add(Name.hiddenString("denserank"));
         }
-        exec.require(EngineCapability.MULTI_RANK);
+        exec.requireFeature(EngineFeature.MULTI_RANK);
       }
 
       relBuilder.project(projects, projectNames);
@@ -253,7 +254,7 @@ public class AnnotatedLP implements RelHolder {
     if (nowFilter.isEmpty()) {
       return this;
     }
-    exec.require(EngineCapability.NOW);
+    exec.requireFeature(EngineFeature.NOW);
     nowFilter.addFilterTo(relB.push(relNode));
     return copy().relNode(relB.build())
         .nowFilter(NowFilter.EMPTY).build();
@@ -271,7 +272,7 @@ public class AnnotatedLP implements RelHolder {
     if (!topN.isEmpty()) {
       return inlineTopN(relB, exec).inlineSort(relB, exec);
     }
-    exec.require(EngineCapability.GLOBAL_SORT);
+    exec.requireFeature(EngineFeature.GLOBAL_SORT);
     sort.addTo(relB.push(relNode));
     return copy().relNode(relB.build())
         .sort(SortOrder.EMPTY).build();
@@ -326,47 +327,58 @@ public class AnnotatedLP implements RelHolder {
 
 
   /**
-   * Finalizes the RelNode by adding a projection for all the selected columns plus inferred
-   * primary key and timestamp (if any).
-   * This preserves the order of the select fields and may add additional fields at the end
+   * Postprocessing constructs the final RelNode to be almost identical to the user defined
+   * projection/select plus additional metadata.
    *
-   * @return
+   * Finalizes the RelNode by adding a projection for all the selected columns plus inferred
+   * primary key and timestamp (if any) as well as sort orders.
+   * This preserves the order of the select fields and may add additional fields at the end for
+   * primary key and timestamp metadata as well as columns needed in the pulled up sort.
+   *
+   * Note, that we pick a single timestamp even when there are multiple viable candidates to
+   * ensure that a table has a single timestamp. We either pick the first viable timestamp the
+   * user selected or the best candidate according to {@link Timestamps#getBestCandidate(RelBuilder)}.
+   *
+   * @return An updated {@link AnnotatedLP} with an additional projection.
    */
   public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
       ExecutionAnalysis exec, ErrorCollector errors) {
     errors.checkFatal(type!=TableType.LOOKUP, "Lookup tables can only be used in temporal joins");
 
-
-    List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
     AnnotatedLP input = this;
     relBuilder.push(input.relNode);
 
     HashMap<Integer, Integer> remapping = new HashMap<>();
+    Set<Integer> isMetadata = new HashSet<>();
     int index = 0;
-    boolean addedPk = false;
-    for (int i = 0; i < input.primaryKey.getLength(); i++) {
-      remapping.put(input.primaryKey.map(i), index++);
-    }
-    if (input.primaryKey.getLength() == 0) {
-      //If we don't have a primary key, we add a static one to resolve uniqueness in the database
-      addedPk = true;
-      index++;
-    }
+    //Add all the selects first
     for (int i = 0; i < input.select.getSourceLength(); i++) {
-      int target = input.select.map(i);
+      remapping.put(input.select.map(i), index++);
+    }
+    //Add any primary key columns not already added
+    for (int i = 0; i < input.primaryKey.getLength(); i++) {
+      int target = input.primaryKey.map(i);
       if (!remapping.containsKey(target)) {
+        isMetadata.add(index);
         remapping.put(target, index++);
       }
     }
 
-
+    int addedPkIndex;
+    if (input.primaryKey.getLength() == 0) {
+      //If we don't have a primary key, we add a static one to resolve uniqueness in the database
+      isMetadata.add(index);
+      addedPkIndex = index++;
+    } else {
+      addedPkIndex = -1;
+    }
     //Determine which timestamp candidates have already been mapped and map the candidates accordingly
     Timestamps.TimestampsBuilder timestampBuilder = Timestamps.build(Type.OR);
     boolean mappedAny = false;
     for (Integer timeIdx : input.timestamp.getCandidates()) {
       Integer mappedIndex;
       if ((mappedIndex = remapping.get(timeIdx))!=null) {
-        timestampBuilder.index(mappedIndex);
+        timestampBuilder.candidate(mappedIndex);
         mappedAny = true;
         break; //We only map the first timestamp if there are multiple
       }
@@ -375,13 +387,15 @@ public class AnnotatedLP implements RelHolder {
       //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
       Integer bestCandidate = input.timestamp.getBestCandidate(relBuilder);
       int nextIndex = index++;
+      isMetadata.add(nextIndex);
       remapping.put(bestCandidate, nextIndex);
-      timestampBuilder.index(nextIndex);
+      timestampBuilder.candidate(nextIndex);
     }
 
     //Make sure we preserve sort orders if they aren't selected
     for (RelFieldCollation fieldcol : input.sort.getCollation().getFieldCollations()) {
       if (!remapping.containsKey(fieldcol.getFieldIndex())) {
+        isMetadata.add(index);
         remapping.put(fieldcol.getFieldIndex(), index++);
       }
     }
@@ -389,64 +403,56 @@ public class AnnotatedLP implements RelHolder {
     int projectLength = index;
     int inputLength = input.getFieldLength();
     Preconditions.checkArgument(remapping.keySet().stream().allMatch(idx -> idx < inputLength)
-        && remapping.size() + (addedPk ? 1 : 0) == index && projectLength <= inputLength + (addedPk
-        ? 1 : 0));
+            && remapping.size() + (addedPkIndex>=0 ? 1 : 0) == index && projectLength <= inputLength + (addedPkIndex>=0
+            ? 1 : 0), "Selected field counts don't add up");
     IndexMap remap = IndexMap.of(remapping);
     SelectIndexMap updatedSelect = input.select.remap(remap);
+    Preconditions.checkArgument(updatedSelect.isIdentity(), "Something went wrong in mapping selected fields: %s", updatedSelect);
 
     List<RexNode> projects = new ArrayList<>(projectLength);
-    List<String> updatedFieldNames = Arrays.asList(new String[projectLength]);
-    PrimaryKeyMap primaryKey = input.primaryKey.remap(remap);
-    if (addedPk) {
-      primaryKey = PrimaryKeyMap.firstN(1);
-      projects.add(0, relBuilder.literal(1));
-      updatedFieldNames.set(0, SQRLLogicalPlanRewriter.DEFAULT_PRIMARY_KEY_COLUMN_NAME);
-    }
+    List<String> updatedFieldNames = new ArrayList<>(projectLength);
     RelDataType rowType = input.relNode.getRowType();
+    List<RelDataTypeField> fieldList = rowType.getFieldList();
 
-    //Set names of columns
-    Function<String,String> renameExtraColumn;
-    if (originalRelNode==null ||
-            SqrlHint.fromRel(originalRelNode, TopNHint.CONSTRUCTOR)
-                    .filter(topN -> topN.getType()== TopNHint.Type.DISTINCT_ON).isPresent()) {
-      //Use processed fieldnames for distinct_on or when relnode is absent
-      renameExtraColumn = Function.identity();
-    } else {
-      //otherwise, use the field names from the original relnode since we may have lost them in processing
-      List<String> fieldNames = originalRelNode.getRowType().getFieldNames();
-      Preconditions.checkArgument(fieldNames.size() == select.getSourceLength());
-      for (int i = 0; i < fieldNames.size(); i++) {
-        updatedFieldNames.set(updatedSelect.map(i), fieldNames.get(i));
-      }
-      Set<String> fieldNamesSet = Set.copyOf(fieldNames);
-      renameExtraColumn = name -> {
-        if (!Name.isHiddenString(name)) name = Name.hiddenString(name);
-        while (fieldNamesSet.contains(name)) {
-          name = Name.hiddenString(name);
-        }
-        return name;
-      };
-    }
+    NameAdjuster nameAdjuster = new NameAdjuster(remapping.keySet().stream().map(i -> fieldList.get(i).getName())
+            .collect(Collectors.toUnmodifiableList()));
     remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(), e.getValue()))
-        .sorted((a, b) -> Integer.compare(a.getTarget(), b.getTarget()))
-        .forEach(p -> {
-          projects.add(p.getTarget(), RexInputRef.of(p.getSource(), rowType));
-          if (updatedFieldNames.get(p.getTarget())==null) {
-            updatedFieldNames.set(p.getTarget(), renameExtraColumn.apply(rowType.getFieldList().get(p.getSource()).getName()));
-          }
-        });
+            .sorted((a, b) -> Integer.compare(a.getTarget(), b.getTarget()))
+            .forEach(p -> {
+              int position = p.getTarget();
+              int reference = p.getSource();
+              if (position==addedPkIndex) {
+                projects.add(position, relBuilder.literal(1));
+                updatedFieldNames.add(position, ReservedName.SYSTEM_PRIMARY_KEY.getDisplay());
+              } else {
+                projects.add(position, RexInputRef.of(reference, rowType));
+                if (isMetadata.contains(position)) {
+                  //Rename field to "hide" it
+                  String name = fieldList.get(reference).getName();
+                  name = nameAdjuster.uniquifyName(Name.hiddenString(name));
+                  updatedFieldNames.add(position, name);
+                } else {
+                  updatedFieldNames.add(position, null); //Preserve name
+                }
+              }
+            });
+
+
+    PrimaryKeyMap primaryKey = input.primaryKey.remap(remap);
+    if (addedPkIndex>=0) {
+      primaryKey = PrimaryKeyMap.of(new int[]{addedPkIndex});
+    }
 
     relBuilder.push(input.relNode);
-    relBuilder.project(projects, updatedFieldNames, true); //Force to make sure fields are renamed
+    relBuilder.project(projects);
     RelNode relNode = relBuilder.build();
 
     //Verify that all primary key columns are not null which is required by databases
-    List<RelDataTypeField> relTypes = relNode.getRowType().getFieldList();
-    for (int i = 0; i < primaryKey.getLength(); i++) {
-      RelDataTypeField field = relTypes.get(i);
-      errors.checkFatal(!field.getType().isNullable(), PRIMARY_KEY_NULLABLE, "The primary key field %s is nullable", field.getName());
+    //For now, we just issue a warning and fail in the DAG planner
+    List<String> nullablePks = CalciteUtil.identifyNullableFields(relNode.getRowType(), primaryKey.asList());
+    if (!nullablePks.isEmpty()) {
+      errors.warn(PRIMARY_KEY_NULLABLE, "The primary key field(s) [%s] are nullable", nullablePks);
     }
-
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
         timestampBuilder.build(), updatedSelect,

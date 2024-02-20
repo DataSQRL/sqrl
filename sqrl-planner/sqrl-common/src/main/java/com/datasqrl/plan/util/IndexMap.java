@@ -62,7 +62,7 @@ public interface IndexMap {
   static IndexMap of(final Map<Integer, Integer> mapping) {
     return idx -> {
       Integer map = mapping.get(idx);
-      Preconditions.checkArgument(map != null, "Invalid index: %s", map);
+      Preconditions.checkArgument(map != null, "Invalid index: %s", idx);
       return map;
     };
   }

@@ -6,14 +6,13 @@ package com.datasqrl.discovery;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.discovery.store.MetricStoreProvider;
 import com.datasqrl.discovery.store.TableStatisticsStore;
-import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.io.DataSystemDiscovery;
-import com.datasqrl.io.DataSystemDiscoveryFactory;
 import com.datasqrl.io.SourceRecord;
 import com.datasqrl.io.stats.DefaultSchemaGenerator;
 import com.datasqrl.io.stats.SourceTableStatistics;
@@ -45,7 +44,7 @@ public class DataDiscovery {
       @NonNull MetadataStoreProvider metadataStoreProvider) {
     this.errors = errors;
     this.streamEngine = streamEngine;
-    Preconditions.checkArgument(streamEngine.supports(EngineCapability.DATA_MONITORING));
+    Preconditions.checkArgument(streamEngine.supports(EngineFeature.DATA_MONITORING));
     this.metadataStoreProvider = metadataStoreProvider;
     streamPreparer = new StreamInputPreparerImpl();
   }

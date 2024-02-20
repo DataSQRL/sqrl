@@ -9,6 +9,10 @@ public interface ModifiableTable {
 
   RelDataType getRowType();
 
+  int getNumColumns();
+
+  int getNumSelects();
+
   String getNameId();
 
   boolean isLocked();

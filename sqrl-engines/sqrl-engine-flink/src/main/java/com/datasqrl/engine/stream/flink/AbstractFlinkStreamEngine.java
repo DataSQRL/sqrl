@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
+import static com.datasqrl.engine.EngineFeature.STANDARD_STREAM;
 
 import com.datasqrl.FlinkEnvironmentBuilder;
 import com.datasqrl.calcite.SqrlFramework;
@@ -27,12 +27,13 @@ import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.api.StatementSet;
 import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 @Slf4j
 public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base implements
     StreamEngine {
 
-  public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = STANDARD_STREAM;
+  public static final EnumSet<EngineFeature> FLINK_CAPABILITIES = STANDARD_STREAM;
   final ExecutionEnvironmentFactory execFactory;
   private final SqrlConfig config;
 
@@ -40,6 +41,11 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
     this.execFactory = execFactory;
     this.config = config;
+  }
+
+  @Override
+  public boolean supports(FunctionDefinition function) {
+    return true;
   }
 
   @Override

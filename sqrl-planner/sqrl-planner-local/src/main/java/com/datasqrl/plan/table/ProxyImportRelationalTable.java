@@ -36,7 +36,7 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
   public ProxyImportRelationalTable(@NonNull Name rootTableId, @NonNull NamePath tablePath,
       @NonNull Timestamps timestamp, @NonNull RelDataType rowType, @NonNull TableType tableType, @NonNull PrimaryKey primaryKey,
       ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
-    super(rootTableId, tablePath, tableType, rowType, timestamp,  primaryKey, tableStatistic);
+    super(rootTableId, tablePath, tableType, rowType, rowType.getFieldCount(), timestamp,  primaryKey, tableStatistic);
     this.baseTable = baseTable;
     if (tableType.isLocked()) lock();
   }

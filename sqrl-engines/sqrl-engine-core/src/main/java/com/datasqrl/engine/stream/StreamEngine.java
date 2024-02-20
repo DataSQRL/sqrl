@@ -3,6 +3,7 @@
  */
 package com.datasqrl.engine.stream;
 
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.stream.monitor.DataMonitor;
 import java.io.Closeable;
@@ -10,7 +11,7 @@ import java.io.Closeable;
 public interface StreamEngine extends Closeable, ExecutionEngine {
 
   /**
-   * This method must be implemented if the engine supports {@link com.datasqrl.engine.EngineCapability#DATA_MONITORING}
+   * This method must be implemented if the engine supports {@link EngineFeature#DATA_MONITORING}
    * otherwise it can be ignored.
    *
    * @return

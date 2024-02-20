@@ -1,5 +1,6 @@
 package com.datasqrl.plan.global;
 
+import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 import static com.datasqrl.plan.OptimizationStage.DATABASE_DAG_STITCHING;
 import static com.datasqrl.plan.OptimizationStage.SERVER_DAG_STITCHING;
 import static com.datasqrl.plan.OptimizationStage.STREAM_DAG_STITCHING;
@@ -20,14 +21,13 @@ import com.datasqrl.plan.hints.TimestampHint;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.AbstractRelationalTable;
-import com.datasqrl.plan.table.LogicalNestedTable;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -133,6 +133,8 @@ public class DAGAssembler {
 
       //Second, all tables that need to be written in denormalized form
       for (PhysicalRelationalTable materializedTable : materializedTables) {
+        List<String> nullablePks = CalciteUtil.identifyNullableFields(materializedTable.getRowType(), materializedTable.getPrimaryKey().asList());
+        errors.checkFatal(nullablePks.isEmpty(), PRIMARY_KEY_NULLABLE, "Cannot materialize table [%s] with nullable primary key: %s", materializedTable, nullablePks);
         errors.checkFatal(materializedTable.getPrimaryKey().isDefined(), ErrorCode.TALBE_NOT_MATERIALIZE,"Table [%s] does not have a primary key and can therefore not be materialized", materializedTable);
         errors.checkFatal(materializedTable.getTimestamp().hasCandidates(), ErrorCode.TALBE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
         RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(),
@@ -163,8 +165,8 @@ public class DAGAssembler {
           getExportBaseConfig().withStage(exportNode.getChosenStage()), errors);
       //Pick only the selected keys
       RelBuilder relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
-      relBuilder1.project(export.getRelNode().getRowType().getFieldNames().stream()
-          .map(n -> relBuilder1.field(n)).collect(Collectors.toList()));
+      Preconditions.checkArgument(relBuilder1.peek().getRowType().getFieldCount()>=export.getNumSelects());
+      relBuilder1.project(CalciteUtil.getIdentityRex(relBuilder1, export.getNumSelects()));
       processedRelnode = relBuilder1.build();
       streamQueries.add(new PhysicalDAGPlan.WriteQuery(
           new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink()),

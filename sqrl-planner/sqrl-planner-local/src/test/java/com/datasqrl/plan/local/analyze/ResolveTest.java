@@ -123,7 +123,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     plan(script);
     validateQueryTable("customer", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, pk(0),
         TimestampTest.fixed(6));
-    validateQueryTable("customercopy", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, pk(0),
+    validateQueryTable("customercopy", TableType.STREAM, ExecutionEngine.Type.STREAM, 3, pk(2),
         TimestampTest.fixed(1));
   }
 
@@ -151,8 +151,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     plan(script);
     validateQueryTable("orders", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, pk(0),
         TimestampTest.fixed(4));
-    validateQueryTable("orderentry", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, pk(0, 1),
-        TimestampTest.fixed(3));
+    validateQueryTable("orderentry", TableType.STREAM, ExecutionEngine.Type.STREAM, 7, pk(5, 6),
+        TimestampTest.fixed(1));
   }
 
   @Test

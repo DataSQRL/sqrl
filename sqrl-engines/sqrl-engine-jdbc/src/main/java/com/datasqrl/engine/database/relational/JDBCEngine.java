@@ -3,10 +3,11 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
+import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.sql.PgExtension;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.SqrlConfig;
@@ -55,6 +56,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.commons.collections.ListUtils;
+import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
@@ -76,6 +78,12 @@ public class JDBCEngine extends ExecutionEngine.Base implements DatabaseEngine {
 //        CAPABILITIES_BY_DIALECT.get(configuration.getDialect()));
     this.connector = connector;
   }
+
+  @Override
+  public boolean supports(FunctionDefinition function) {
+    return !(function instanceof SqrlTimeTumbleFunction); //TODO: @Daniel: change to determining which functions are supported by dialect & database type
+  }
+
 
   @Override
   public TableConfig getSinkConfig(String sinkName) {

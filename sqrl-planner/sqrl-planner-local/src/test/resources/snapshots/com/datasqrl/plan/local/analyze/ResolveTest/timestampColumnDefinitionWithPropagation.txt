@@ -1,0 +1,11 @@
+>>>customer$2-lp-STREAM
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+  LogicalTableScan(table=[[customer$1]])
+
+>>>customercopy$1-lp-STREAM
+LogicalProject(month=[endOfMonth(endOfMonth($6))], timestamp=[$6], _uuid=[$0])
+  LogicalTableScan(table=[[customer$2]])
+
+>>>customercopy$1-lp-DATABASE
+Stage [database] does not support capabilities: [EndOfMonth [function]]
+

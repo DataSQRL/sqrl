@@ -97,12 +97,12 @@ public class PrimaryKeyMap implements IndexMap, Serializable {
     return new PrimaryKeyMap(List.copyOf(pks));
   }
 
-  public static PrimaryKeyMap of(int[] pks) {
-    return new PrimaryKeyMap(IntStream.of(pks).boxed().collect(Collectors.toList()));
+  public static PrimaryKeyMap none() {
+    return new PrimaryKeyMap(List.of());
   }
 
-  public static PrimaryKeyMap firstN(int length) {
-    return new PrimaryKeyMap(IntStream.range(0,length).mapToObj(Integer::valueOf).collect(Collectors.toList()));
+  public static PrimaryKeyMap of(int[] pks) {
+    return new PrimaryKeyMap(IntStream.of(pks).boxed().collect(Collectors.toList()));
   }
 
 }

@@ -225,16 +225,17 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     ModifiableTable table = planner.getCatalogReader().getTableFromPath(export.getTable())
         .unwrap(ModifiableTable.class);
 
-    ResolvedExport resolvedExport = exportTable(table, export.getSink(), planner.getRelBuilder());
+    ResolvedExport resolvedExport = exportTable(table, export.getSink(), planner.getRelBuilder(), true);
     framework.getSchema().add(resolvedExport);
 
     return null;
   }
 
-  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder) {
+  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder, boolean selectedFieldsOnly) {
     RelNode export = relBuilder.scan(table.getNameId())
         .build();
-    return new ResolvedExport(table.getNameId(), export, sink);
+    int numSelects = selectedFieldsOnly?table.getNumSelects():table.getNumColumns();
+    return new ResolvedExport(table.getNameId(), export, numSelects, sink);
   }
 
   @Value

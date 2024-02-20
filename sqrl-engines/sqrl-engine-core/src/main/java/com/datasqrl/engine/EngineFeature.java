@@ -5,7 +5,7 @@ package com.datasqrl.engine;
 
 import java.util.EnumSet;
 
-public enum EngineCapability {
+public enum EngineFeature {
 
   //Engine supports denormalized (or nested) data
   DENORMALIZE,
@@ -40,12 +40,12 @@ public enum EngineCapability {
   //Engine supports data monitoring
   DATA_MONITORING;
 
-  public static EnumSet<EngineCapability> STANDARD_STREAM = EnumSet.of(DENORMALIZE,
+  public static EnumSet<EngineFeature> STANDARD_STREAM = EnumSet.of(DENORMALIZE,
       TEMPORAL_JOIN, TO_STREAM, STREAM_WINDOW_AGGREGATION, EXTENDED_FUNCTIONS, CUSTOM_FUNCTIONS,
       EXPORT, PULLUP_OPTIMIZATION, DATA_MONITORING);
 
-  public static EnumSet<EngineCapability> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
+  public static EnumSet<EngineFeature> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
       MULTI_RANK, TABLE_FUNCTION_SCAN, UNION_STATE);
 
-  public static EnumSet<EngineCapability> NO_CAPABILITIES = EnumSet.noneOf(EngineCapability.class);
+  public static EnumSet<EngineFeature> NO_CAPABILITIES = EnumSet.noneOf(EngineFeature.class);
 }

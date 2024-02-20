@@ -113,10 +113,6 @@ public interface Name extends Serializable, Comparable<Name> {
     return of(name, NameCanonicalizer.SYSTEM);
   }
 
-  static Name hidden(String name) {
-    return system(hiddenString(name));
-  }
-
   static String hiddenString(String name) {
     return HIDDEN_PREFIX + name;
   }

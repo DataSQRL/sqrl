@@ -1,6 +1,6 @@
 package com.datasqrl.util;
 
-import com.datasqrl.TimeFunctions.TimeWindowBucketFunction;
+import com.datasqrl.TimeFunctions.TimeTumbleWindowFunction;
 import com.datasqrl.function.FlinkStdLibraryImpl;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.StdJsonLibraryImpl;
@@ -126,7 +126,7 @@ public class GenerateFunctionDocumentation {
         if (fObj.getFunction() instanceof SqrlFunction) {
           SqrlFunction function = (SqrlFunction) fObj.getFunction();
           columns[1] = function.getDocumentation();
-          isTimeWindow.accept(function instanceof TimeWindowBucketFunction);
+          isTimeWindow.accept(function instanceof TimeTumbleWindowFunction);
           sqlNameSetter.accept("-");
         } else if (fObj.getFunction() instanceof SqlFunction) {
           String sqlName = ((CalciteFunctionNsObject)fct).getSqlName().toUpperCase();

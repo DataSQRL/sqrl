@@ -59,6 +59,11 @@ public class SelectIndexMap implements IndexMap, Serializable {
     return new SelectIndexMap(combined);
   }
 
+  public boolean isIdentity() {
+    Preconditions.checkArgument(targets.length>0);
+    return IntStream.range(0,targets.length).allMatch(i -> targets[i]==i);
+  }
+
   public SelectIndexMap append(SelectIndexMap add) {
     int[] combined = new int[targets.length + add.targets.length];
     System.arraycopy(targets, 0, combined, 0, targets.length);

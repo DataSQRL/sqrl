@@ -2,9 +2,9 @@ package com.datasqrl;
 
 import com.datasqrl.SqrlFunctions.VariableArguments;
 import com.datasqrl.error.NotYetImplementedException;
+import com.datasqrl.function.InputPreservingFunction;
 import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
-import com.datasqrl.function.TimestampPreservingFunction;
 import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
 import java.time.Duration;
@@ -16,7 +16,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -91,7 +90,7 @@ public class TimeFunctions {
 
   }
 
-  private interface TimeWindowBucketFunctionEval {
+  private interface TimeTumbleWindowFunctionEval {
 
     Instant eval(Instant instant, Long multiple, Long offset);
 
@@ -106,8 +105,8 @@ public class TimeFunctions {
   }
 
   @AllArgsConstructor
-  public abstract static class TimeWindowBucketFunction extends ScalarFunction implements SqrlFunction,
-      SqrlTimeTumbleFunction, TimeWindowBucketFunctionEval {
+  public abstract static class TimeTumbleWindowFunction extends ScalarFunction implements SqrlFunction,
+      SqrlTimeTumbleFunction, TimeTumbleWindowFunctionEval {
 
     protected final ChronoUnit timeUnit;
     protected final ChronoUnit offsetUnit;
@@ -204,7 +203,7 @@ public class TimeFunctions {
 
   }
 
-  public static class EndOfSecond extends TimeWindowBucketFunction {
+  public static class EndOfSecond extends TimeTumbleWindowFunction {
 
     public EndOfSecond() {
       super(ChronoUnit.SECONDS, ChronoUnit.MILLIS);
@@ -213,7 +212,7 @@ public class TimeFunctions {
 
   }
 
-  public static class EndOfMinute extends TimeWindowBucketFunction {
+  public static class EndOfMinute extends TimeTumbleWindowFunction {
 
     public EndOfMinute() {
       super(ChronoUnit.MINUTES, ChronoUnit.SECONDS);
@@ -221,7 +220,7 @@ public class TimeFunctions {
 
   }
 
-  public static class EndOfHour extends TimeWindowBucketFunction {
+  public static class EndOfHour extends TimeTumbleWindowFunction {
 
     public EndOfHour() {
       super(ChronoUnit.HOURS, ChronoUnit.MINUTES);
@@ -229,7 +228,7 @@ public class TimeFunctions {
 
   }
 
-  public static class EndOfDay extends TimeWindowBucketFunction {
+  public static class EndOfDay extends TimeTumbleWindowFunction {
 
     public EndOfDay() {
       super(ChronoUnit.DAYS, ChronoUnit.HOURS);
@@ -238,7 +237,7 @@ public class TimeFunctions {
 
   }
 
-  public static class EndOfWeek extends TimeWindowBucketFunction {
+  public static class EndOfWeek extends TimeTumbleWindowFunction {
 
     public EndOfWeek() {
       super(ChronoUnit.WEEKS, ChronoUnit.DAYS);
@@ -263,7 +262,7 @@ public class TimeFunctions {
 
   }
 
-  public static class EndOfMonth extends TimeWindowBucketFunction {
+  public static class EndOfMonth extends TimeTumbleWindowFunction {
 
     public EndOfMonth() {
       super(ChronoUnit.MONTHS, ChronoUnit.DAYS);
@@ -285,7 +284,7 @@ public class TimeFunctions {
 
   }
 
-  public static class EndOfYear extends TimeWindowBucketFunction {
+  public static class EndOfYear extends TimeTumbleWindowFunction {
 
     public EndOfYear() {
       super(ChronoUnit.YEARS, ChronoUnit.DAYS);
@@ -319,7 +318,7 @@ public class TimeFunctions {
   }
 
   public static class AtZone extends ScalarFunction implements SqrlFunction,
-      TimestampPreservingFunction {
+          InputPreservingFunction {
 
     public ZonedDateTime eval(Instant instant, String zoneId) {
       return instant.atZone(ZoneId.of(zoneId));
@@ -344,6 +343,11 @@ public class TimeFunctions {
     @Override
     public String getDocumentation() {
       return String.format("Returns the timestamp at the given timezone.");
+    }
+
+    @Override
+    public int preservedOperandIndex() {
+      return 0;
     }
   }
 

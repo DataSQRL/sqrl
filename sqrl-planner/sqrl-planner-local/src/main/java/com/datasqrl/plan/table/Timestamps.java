@@ -1,14 +1,15 @@
 package com.datasqrl.plan.table;
 
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.plan.util.IndexMap;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -28,16 +29,25 @@ public class Timestamps {
   }
 
   @Singular
-  Set<Integer> indexes;
+  Set<Integer> candidates;
   Type type;
+  @Singular
+  Set<TimeWindow> windows;
+
 
   public static Timestamps UNDEFINED = new Timestamps(ImmutableSet.of(), Type.UNDEFINED);
 
-  public Timestamps(Set<Integer> indexes, Type type) {
-    Preconditions.checkArgument(type!=Type.UNDEFINED || indexes.isEmpty(), "Invalid timestamp definition");
-    if (type==Type.AND && indexes.size()<2) type = Type.OR;
-    this.indexes = indexes;
+  public Timestamps(Set<Integer> candidates, Type type) {
+    this(candidates,type, Set.of());
+  }
+
+  public Timestamps(Set<Integer> candidates, Type type, Set<TimeWindow> windows) {
+    Preconditions.checkArgument(type!=Type.UNDEFINED || (candidates.isEmpty() && windows.isEmpty()), "Invalid timestamp definition");
+    Preconditions.checkArgument(windows.stream().map(TimeWindow::getTimestampIndex).allMatch(candidates::contains));
+    if (type==Type.AND && candidates.size()<2) type = Type.OR;
+    this.candidates = candidates;
     this.type = type;
+    this.windows = windows;
   }
 
   public boolean is(Type type) {
@@ -49,18 +59,18 @@ public class Timestamps {
   }
 
   public int size() {
-    return indexes.size();
+    return candidates.size();
   }
 
   public boolean hasCandidates() {
-    return !indexes.isEmpty();
+    return !candidates.isEmpty();
   }
 
   public Integer getBestCandidate(RelBuilder relB) {
-    if (indexes.isEmpty()) {
+    if (candidates.isEmpty()) {
       throw new UnsupportedOperationException("Undefined timestamp does not have candidates");
     } else if (is(Type.OR) || size()==1) { //Pick first
-      return indexes.stream().sorted().findFirst().get();
+      return candidates.stream().sorted().findFirst().get();
     } else {  // is(Type.AND)
       SqrlRexUtil rexUtil = new SqrlRexUtil(relB);
       RelNode input = relB.peek();
@@ -72,7 +82,7 @@ public class Timestamps {
 
   public Integer getAnyCandidate() {
     Preconditions.checkArgument(is(Type.OR));
-    return indexes.stream().sorted().findFirst().get();
+    return candidates.stream().sorted().findFirst().get();
   }
 
   public boolean requiresInlining() {
@@ -84,24 +94,24 @@ public class Timestamps {
   }
 
   public Integer getOnlyCandidate() {
-    Preconditions.checkArgument(indexes.size()==1);
-    return Iterables.getOnlyElement(indexes);
+    Preconditions.checkArgument(candidates.size()==1);
+    return Iterables.getOnlyElement(candidates);
   }
 
   public boolean isCandidate(int index) {
-    return indexes.contains(index);
+    return candidates.contains(index);
   }
 
   public Predicate<Integer> isCandidatePredicate() {
-    return indexes::contains;
+    return candidates::contains;
   }
 
-  public Iterable<Integer> getCandidates() {
-    return indexes;
+  public Collection<Integer> getCandidates() {
+    return candidates;
   }
 
   public List<Integer> asList() {
-    return indexes.stream().sorted().collect(Collectors.toUnmodifiableList());
+    return candidates.stream().sorted().collect(Collectors.toUnmodifiableList());
   }
 
   @Override
@@ -109,18 +119,76 @@ public class Timestamps {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Timestamps that = (Timestamps) o;
-    return Objects.equals(indexes, that.indexes) && type == that.type;
+    return Objects.equals(candidates, that.candidates) && type == that.type;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(indexes, type);
+    return Objects.hash(candidates, type);
   }
 
   public static TimestampsBuilder build(Type type) {
     TimestampsBuilder builder = builder();
     builder.type(type);
     return builder;
+  }
+
+  public interface TimeWindow {
+
+    int getTimestampIndex();
+
+    TimeWindow withTimestampIndex(int newIndex);
+
+    boolean qualifiesWindow(List<Integer> indexes);
+
+  }
+
+  /**
+   * A time window created by a {@link SqrlTimeTumbleFunction}.
+   */
+  @Value
+  public static class SimpleTumbleWindow implements TimeWindow {
+
+    int windowIndex;
+    int timestampIndex;
+    long windowWidthMillis;
+    long windowOffsetMillis;
+
+    @Override
+    public TimeWindow withTimestampIndex(int newIndex) {
+      return new SimpleTumbleWindow(this.windowIndex, newIndex, this.windowWidthMillis, this.windowOffsetMillis);
+    }
+
+    @Override
+    public boolean qualifiesWindow(List<Integer> indexes) {
+      return indexes.contains(windowIndex);
+    }
+  }
+
+  /**
+   * A time-window created by one of Flink's TVF window functions
+   */
+  @Value
+  public static class FlinkTVFWindow implements TimeWindow {
+
+    int windowStartIndex;
+    int windowEndIndex;
+    int windowTimeIndex;
+
+    @Override
+    public int getTimestampIndex() {
+      return windowTimeIndex;
+    }
+
+    @Override
+    public TimeWindow withTimestampIndex(int newIndex) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean qualifiesWindow(List<Integer> indexes) {
+      return indexes.contains(windowStartIndex) && indexes.contains(windowEndIndex);
+    }
   }
 
 

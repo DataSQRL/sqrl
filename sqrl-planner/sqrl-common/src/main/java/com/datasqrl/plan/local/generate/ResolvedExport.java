@@ -8,5 +8,6 @@ import org.apache.calcite.rel.RelNode;
 public class ResolvedExport {
   String table;
   RelNode relNode;
+  int numSelects;
   TableSink sink;
 }

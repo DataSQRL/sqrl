@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.stream.inmemory;
 
-import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
+import static com.datasqrl.engine.EngineFeature.STANDARD_STREAM;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -46,12 +46,18 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 @Slf4j
 public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
 
   public InMemStreamEngine() {
     super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM, STANDARD_STREAM);
+  }
+
+  @Override
+  public boolean supports(FunctionDefinition function) {
+    return true;
   }
 
   @Override

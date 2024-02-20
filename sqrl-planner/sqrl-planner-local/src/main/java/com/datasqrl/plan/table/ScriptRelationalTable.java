@@ -2,6 +2,7 @@ package com.datasqrl.plan.table;
 
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.util.CalciteUtil;
 import com.google.common.collect.ContiguousSet;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -34,6 +35,13 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
     @NonNull
     protected RelDataType rowType;
 
+    /**
+     * The number of selected columns. The first columns are the ones the user actively selected.
+     * Additional metadata columns may have been added at the end.
+     */
+    @Getter
+    protected int numSelects;
+
     @NonNull
     private final List<AddedColumn> addedColumns = new ArrayList<>();
 
@@ -43,9 +51,10 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
     @Getter
     private boolean isLocked;
 
-    protected ScriptRelationalTable(@NonNull Name nameId, @NonNull RelDataType rowType) {
+    protected ScriptRelationalTable(@NonNull Name nameId, @NonNull RelDataType rowType, int numSelects) {
         super(nameId);
         this.rowType = rowType;
+        this.numSelects = numSelects;
     }
 
     public void lock() {
@@ -57,19 +66,23 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
         return rowType;
     }
 
+    @Override
     public int getNumColumns() {
         return getRowType().getFieldCount();
     }
 
+
+
     public int addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
         if (isLocked()) throw new UnsupportedOperationException("Table is locked: " + getNameId());
-        int index = getNumColumns();
+        int index = numSelects;
+        numSelects++;
         addedColumns.add(column);
-        rowType = column.appendTo(rowType, typeFactory);
+        rowType = CalciteUtil.addField(rowType, index, column.getNameId(), column.getDataType(), typeFactory);
         return index;
     }
 
-    public Iterable<AddedColumn> getAddedColumns() {
+    public List<AddedColumn> getAddedColumns() {
         return addedColumns;
     }
 
@@ -80,24 +93,9 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
 
     public abstract TableStatistic getTableStatistic();
 
-//    public abstract int getNumPrimaryKeys();
-
-//    public int getNumLocalPks() {
-//        return getNumPrimaryKeys();
-//    }
-
     public abstract boolean isRoot();
 
     public abstract PhysicalRelationalTable getRoot();
-
-//    public Statistic getStatistic() {
-//        TableStatistic tableStatistic = getTableStatistic();
-//        if (tableStatistic.isUnknown()) {
-//            return Statistics.UNKNOWN;
-//        }
-//        ImmutableBitSet primaryKey = ImmutableBitSet.of(ContiguousSet.closedOpen(0, getNumPrimaryKeys()));
-//        return Statistics.of(tableStatistic.getRowCount(), List.of(primaryKey));
-//    }
 
     // An empty queryable table, used for tests
     @Override

@@ -5,7 +5,7 @@ import static com.datasqrl.io.tables.TableConfig.CONNECTOR_KEY;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
@@ -45,7 +45,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final TableSchemaExporterFactory schemaFactory;
 
   public KafkaLogEngine(TableConfig config, TableSchemaExporterFactory schemaFactory) {
-    super(KafkaLogEngineFactory.ENGINE_NAME, Type.LOG, EnumSet.noneOf(EngineCapability.class));
+    super(KafkaLogEngineFactory.ENGINE_NAME, Type.LOG, EnumSet.noneOf(EngineFeature.class));
     this.config = config;
     this.schemaFactory = schemaFactory;
   }

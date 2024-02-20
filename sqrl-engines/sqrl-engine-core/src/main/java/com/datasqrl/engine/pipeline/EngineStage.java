@@ -3,16 +3,10 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.engine.EngineCapability;
-import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.ExecutionResult;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
-import java.util.List;
 import lombok.Value;
-import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 @Value
 public class EngineStage implements ExecutionStage {
@@ -21,8 +15,13 @@ public class EngineStage implements ExecutionStage {
   ExecutionEngine engine;
 
   @Override
-  public boolean supports(EngineCapability capability) {
+  public boolean supportsFeature(EngineFeature capability) {
     return engine.supports(capability);
+  }
+
+  @Override
+  public boolean supportsFunction(FunctionDefinition function) {
+    return engine.supports(function);
   }
 
 }

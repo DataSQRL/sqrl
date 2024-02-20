@@ -3,6 +3,8 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.function.InputPreservingFunction;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.google.common.base.Preconditions;
 
 import java.math.BigDecimal;
@@ -13,7 +15,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import com.google.common.collect.ContiguousSet;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -34,8 +39,10 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
+import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 
@@ -94,14 +101,33 @@ public class CalciteUtil {
     return new RelDataTypeFieldBuilder(factory.builder().kind(StructKind.FULLY_QUALIFIED));
   }
 
-  public static RelDataType appendField(@NonNull RelDataType relation, @NonNull String fieldId,
+  public static RelDataType addField(@NonNull RelDataType relation, int atIndex,
+                                        @NonNull String fieldId,
       @NonNull RelDataType fieldType,
       @NonNull RelDataTypeFactory factory) {
     Preconditions.checkArgument(relation.isStruct());
     RelDataTypeBuilder builder = getRelTypeBuilder(factory);
-    builder.addAll(relation.getFieldList());
-    builder.add(fieldId, fieldType);
+    int index = 0;
+    if (index==atIndex) builder.add(fieldId, fieldType);
+    for (RelDataTypeField field : relation.getFieldList()) {
+      builder.add(field);
+      index++;
+      if (index==atIndex) builder.add(fieldId, fieldType);
+    }
+    Preconditions.checkArgument(index>=atIndex, "Provided index [%s] larger than length [%s]", atIndex, index);
     return builder.build();
+  }
+
+  public static List<String> identifyNullableFields(RelDataType datatype, List<Integer> indexes) {
+    List<String> fieldNames = new ArrayList<>();
+    List<RelDataTypeField> fields = datatype.getFieldList();
+    for (int index : indexes) {
+      RelDataTypeField field = fields.get(index);
+      if (field.getType().isNullable()) {
+        fieldNames.add(field.getName());
+      }
+    }
+    return fieldNames;
   }
 
   /**
@@ -110,7 +136,7 @@ public class CalciteUtil {
    * @return
    */
   public static Optional<Integer> getNonAlteredInputRef(RexNode rexNode) {
-    return getInputRefThroughTransform(rexNode, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM));
+    return getInputRefThroughTransform(rexNode, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM, INPUT_PRESERVING_TRANSFORM));
   }
 
   public static Optional<Integer> getInputRefThroughTransform(RexNode rexNode, List<InputRefTransformation> transformations) {
@@ -118,22 +144,43 @@ public class CalciteUtil {
       return Optional.of(((RexInputRef) rexNode).getIndex());
     } else if (rexNode instanceof RexCall) {
       RexCall call = (RexCall)rexNode;
+      SqlOperator operator = call.getOperator();
       List<RexNode> operands = call.getOperands();
       Optional<InputRefTransformation> transform = StreamUtil.getOnlyElement(transformations.stream()
-              .filter(t -> call.getOperator().isName(t.getName(), false)));
-      return transform.filter(t -> t.validate(operands)).flatMap(t -> getNonAlteredInputRef(t.getOperand(operands)));
+              .filter(t -> t.appliesTo(operator)));
+      return transform.filter(t -> t.validate(operator, operands)).flatMap(t -> getNonAlteredInputRef(t.getOperand(operator, operands)));
     }
     return Optional.empty();
   }
 
   public interface InputRefTransformation {
 
-    String getName();
-    boolean validate(List<RexNode> operands);
+    boolean appliesTo(SqlOperator operator);
+    boolean validate(SqlOperator operator, List<RexNode> operands);
 
-    RexNode getOperand(List<RexNode> operands);
+    RexNode getOperand(SqlOperator operator, List<RexNode> operands);
 
   }
+
+  public static final InputRefTransformation INPUT_PRESERVING_TRANSFORM = new InputRefTransformation() {
+    @Override
+    public boolean appliesTo(SqlOperator operator) {
+      return FunctionUtil.getSqrlFunction(operator)
+              .filter(o -> o instanceof InputPreservingFunction)
+              .isPresent();
+    }
+
+    @Override
+    public boolean validate(SqlOperator operator, List<RexNode> operands) {
+      return true;
+    }
+
+    @Override
+    public RexNode getOperand(SqlOperator operator, List<RexNode> operands) {
+      int index = ((InputPreservingFunction)FunctionUtil.getSqrlFunction(operator).get()).preservedOperandIndex();
+      return operands.get(index);
+    }
+  };
 
   public static final InputRefTransformation COALESCE_TRANSFORM = new BasicInputRefTransformation("coalesce",
           ops -> ops.size()==2 && (ops.get(1) instanceof RexLiteral), 0);
@@ -148,31 +195,23 @@ public class CalciteUtil {
     int operandIndex;
 
     @Override
-    public boolean validate(List<RexNode> operands) {
+    public boolean appliesTo(SqlOperator operator) {
+      return operator.isName(name, false);
+    }
+
+    @Override
+    public boolean validate(SqlOperator operator, List<RexNode> operands) {
       return validationFunction.test(operands);
     }
 
     @Override
-    public RexNode getOperand(List<RexNode> operands) {
+    public RexNode getOperand(SqlOperator operator, List<RexNode> operands) {
       return operands.get(operandIndex);
     }
   }
 
 
-  public static boolean isGreatestOf(RexNode rexNode, Set<Integer> columnIndexes) {
-    if (!(rexNode instanceof RexCall)) return false;
-    RexCall call = (RexCall) rexNode;
-    if (call.getOperator().isName("greatest", false)) {
-      Set<Integer> greatestSet = new HashSet<>();
-      for (RexNode operand : call.getOperands()) {
-        Optional<Integer> ref = getNonAlteredInputRef(operand);
-        if (ref.isEmpty()) return false;
-        greatestSet.add(ref.get());
-      }
-      return columnIndexes.equals(greatestSet);
-    }
-    return false;
-  }
+
 
   public static Optional<Integer> isEqualToConstant(RexNode rexNode) {
     int arity;
@@ -197,6 +236,10 @@ public class CalciteUtil {
   public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
       List<String> fieldNames) {
     addProjection(relBuilder, selectIdx, fieldNames, false);
+  }
+
+  public static List<RexNode> getIdentityRex(@NonNull RelBuilder relBuilder, @NonNull int firstN) {
+    return getSelectRex(relBuilder, IntStream.range(0,firstN).boxed().collect(Collectors.toUnmodifiableList()));
   }
 
   public static List<RexNode> getSelectRex(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx) {
@@ -343,6 +386,30 @@ public class CalciteUtil {
       return RexLiteral.intValue(literal) == 0;
     }
     return false;
+  }
+
+  public static boolean isBasicType(RelDataType type) {
+    if (!(type instanceof BasicSqlType)) return false;
+    SqlTypeName sqlType = type.getSqlTypeName();
+    switch (sqlType) {
+      case CHAR:
+      case VARCHAR:
+      case BOOLEAN:
+      case TINYINT:
+      case SMALLINT:
+      case INTEGER:
+      case BIGINT:
+      case FLOAT:
+      case REAL:
+      case DOUBLE:
+      case DATE:
+      case TIME:
+      case TIMESTAMP:
+      case DECIMAL:
+        return true;
+      default:
+        return false;
+    }
   }
 
 }

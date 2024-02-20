@@ -49,10 +49,10 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   @NonNull
   protected final TableStatistic tableStatistic;
 
-  public PhysicalRelationalTable( Name rootTableId, @NonNull NamePath tablePath, @NonNull TableType type,
-                                  RelDataType rowType, @NonNull Timestamps timestamp,
+  public PhysicalRelationalTable(Name rootTableId, @NonNull NamePath tablePath, @NonNull TableType type,
+                                  RelDataType rowType, int numSelects, @NonNull Timestamps timestamp,
                                  @NonNull PrimaryKey primaryKey, @NonNull TableStatistic tableStatistic) {
-    super(rootTableId, rowType);
+    super(rootTableId, rowType, numSelects);
     this.tablePath = tablePath;
     this.type = type;
     this.timestamp = timestamp;
