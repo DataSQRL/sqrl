@@ -15,6 +15,7 @@ import com.datasqrl.plan.rules.SQRLConverter.Config.ConfigBuilder;
 import com.datasqrl.plan.table.Timestamps.Type;
 import com.google.common.base.Preconditions;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.datasqrl.util.CalciteUtil;
@@ -39,6 +40,12 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
     super(rootTableId, tablePath, tableType, rowType, rowType.getFieldCount(), timestamp,  primaryKey, tableStatistic);
     this.baseTable = baseTable;
     if (tableType.isLocked()) lock();
+  }
+
+  @Override
+  public Optional<PhysicalRelationalTable> getStreamRoot() {
+    if (getType().isStream()) return Optional.of(this);
+    else return Optional.empty();
   }
 
   @Override

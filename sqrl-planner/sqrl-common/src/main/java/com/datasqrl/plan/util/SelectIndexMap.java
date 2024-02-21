@@ -28,9 +28,9 @@ public class SelectIndexMap implements IndexMap, Serializable {
   final int[] targets;
 
   @Override
-  public int map(int index) {
-    int result = targets[index];
-    return result;
+  public int mapUnsafe(int index) {
+    if (index<0 || index>=targets.length) return -1;
+    return targets[index];
   }
 
   public int getSourceLength() {

@@ -21,6 +21,7 @@ import org.apache.calcite.rel.RelNode;
 public class QueryRelationalTable extends PhysicalRelationalTable {
 
   private final LPAnalysis analyzedLP;
+  private final Optional<PhysicalRelationalTable> streamRoot;
 
   public QueryRelationalTable(Name rootTableId, NamePath tablePath, @NonNull LPAnalysis analyzedLP) {
     super(rootTableId, tablePath,
@@ -32,6 +33,7 @@ public class QueryRelationalTable extends PhysicalRelationalTable {
         TableStatistic.of(analyzedLP.getConvertedRelnode().estimateRowCount()));
     Preconditions.checkArgument(analyzedLP.getConvertedRelnode().select.isIdentity(), "We assume an identity select");
     this.analyzedLP = analyzedLP;
+    this.streamRoot = analyzedLP.getConvertedRelnode().getStreamRoot();
   }
 
   @Override

@@ -134,10 +134,8 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       return new Result(top, result.getCurrentPath(), List.of(), List.of(), Optional.empty(), result.params);
     } else if (call.isKeywordPresent(SqlSelectKeyword.DISTINCT) || (context.isNested() && call.getFetch() != null)) {
       //if is nested, get primary key nodes
-      int keySize = context.isNested()
-          ? catalogReader.getTableFromPath(context.currentPath).getKeys().get(0)
-          .asSet().size()
-          : 0;
+      Set<Integer> pkColumns = context.isNested()?
+              getPrimaryKeyColumns(catalogReader.getTableFromPath(context.currentPath)):Set.of();
 
       SqlSelectBuilder inner = new SqlSelectBuilder(call)
           .clearKeywords()
@@ -149,7 +147,7 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
       SqlSelectBuilder topSelect = new SqlSelectBuilder()
           .setFrom(inner.build())
           .setTopNHint(call.isKeywordPresent(SqlSelectKeyword.DISTINCT)
-              ? Type.SELECT_DISTINCT : Type.TOP_N, SqlSelectBuilder.sqlIntRange(keySize));
+              ? Type.SELECT_DISTINCT : Type.TOP_N, SqlSelectBuilder.sqlIntRange(pkColumns));
 
       return new Result(topSelect.build(),
           result.getCurrentPath(), List.of(), List.of(),
@@ -339,10 +337,14 @@ public class SqrlToSql implements SqlRelationVisitor<Result, Context> {
     return select.build();
   }
 
+  private static Set<Integer> getPrimaryKeyColumns(RelOptTable table) {
+    return table.getKeys().get(0).asSet();
+  }
+
   private List<PullupColumn> buildPullupColumns(SelfTablePathItem selfTablePathItem) {
     RelOptTable table = selfTablePathItem.table;
-    return IntStream.range(0, table.getKeys().get(0).asSet().size())
-        .mapToObj(i -> new PullupColumn(
+    return getPrimaryKeyColumns(table).stream()
+        .map(i -> new PullupColumn(
             table.getRowType().getFieldList().get(i).getName(),
             String.format("%spk%d$%s", ReservedName.SYSTEM_HIDDEN_PREFIX, uniquePkId.incrementAndGet(),
                 table.getRowType().getFieldList().get(i).getName()),

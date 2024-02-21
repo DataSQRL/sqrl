@@ -5,7 +5,7 @@
     <script src="https://unpkg.com/cytoscape@latest/dist/cytoscape.min.js"></script>
     <script src="https://unpkg.com/@dagrejs/dagre@latest/dist/dagre.min.js"></script>
     <script src="https://unpkg.com/cytoscape-dagre@latest/cytoscape-dagre.js"></script>
-    <script src="dag_data.js"></script>
+    <script src="dag_test1.js"></script>
 
     <style>
         #cy {
@@ -25,6 +25,11 @@
             overflow: auto;
             display: none;
             font-family: sans-serif;
+        }
+
+        textarea {
+            white-space: pre;
+            overflow: auto;
         }
     </style>
 </head>
@@ -97,11 +102,13 @@
             })
             .selector('node[type="import"], node[type="export"]')
             .css({
-                'shape': 'oval'
+                'font-weight': 'normal',
+                'shape': 'ellipse'
             })
             .selector('node[type="query"]')
             .css({
-                'shape': 'circle'
+                'font-weight': 'normal',
+                'shape': 'tag'
             }),
 
         elements: {
@@ -124,18 +131,20 @@
                 <p><strong>Stage:</strong> ${node.data('stage')}</p>
                 <p><strong>Schema:</strong></p>
                 <ul>
-                    ${node.data('schema').map(field => `<li>${field.name} ${field.type} ${field.qualifier || ''}</li>`).join('')}
+                    ${node.data('schema').map(field => `<li>${field.name}: ${field.type}</li>`).join('')}
                 </ul>
                 <p><strong>Primary Key:</strong> ${node.data('primary_key').join(', ')}</p>
                 <p><strong>Timestamp:</strong> ${node.data('timestamp')}</p>
                 <p><strong>Id:</strong> ${node.data('id')}</p>
-                <p><strong>Plan:</strong> ${node.data('plan')}</p>
+                <p><strong>Plan:</strong></p>
+                <textarea style="width:100%;" rows="${Math.max(7,node.data('plan').split('\n').length+1)}" readonly>${node.data('plan')}</textarea>
             `;
         } else if (type === 'query') {
             content = `
-                <p><strong>Number of Queries:</strong> ${node.data('name')}</p>
                 <p><strong>Type:</strong> ${node.data('type')}</p>
-                <p><strong>Id:</strong> ${node.data('id')}</p>
+                <p><strong>Id:</strong> ${node.data('name')}</p>
+                <p><strong>Plan:</strong></p>
+                <textarea style="width:100%;" rows="${node.data('plan').split('\n').length}" readonly>${node.data('plan')}</textarea>
             `;
         } else {
             content = `

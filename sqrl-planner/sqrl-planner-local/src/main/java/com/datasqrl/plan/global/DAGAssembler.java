@@ -1,51 +1,33 @@
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
-import static com.datasqrl.plan.OptimizationStage.DATABASE_DAG_STITCHING;
-import static com.datasqrl.plan.OptimizationStage.SERVER_DAG_STITCHING;
-import static com.datasqrl.plan.OptimizationStage.STREAM_DAG_STITCHING;
-
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.APIConnectorLookup;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.RelStageRunner;
+import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
+import com.datasqrl.plan.global.SqrlDAG.ExportNode;
 import com.datasqrl.plan.hints.TimestampHint;
+import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.PhysicalTable;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
-import com.datasqrl.plan.global.SqrlDAG.ExportNode;
-import com.datasqrl.plan.local.generate.Debugger;
-import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
-import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.rel.RelNode;
@@ -54,8 +36,16 @@ import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
+
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
+import static com.datasqrl.plan.OptimizationStage.*;
 
 @Value
 public class DAGAssembler {
@@ -72,17 +62,7 @@ public class DAGAssembler {
 
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model, APIConnectorManager apiManager) {
-    //Plan final version of all tables
-    dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
-      ExecutionStage stage = tableNode.getChosenStage();
-      Preconditions.checkNotNull(stage);
-      PhysicalTable table = tableNode.getTable();
-      table.assignStage(stage); //this stage on the config below
-      SQRLConverter.Config config = table.getBaseConfig().build();
-      table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
-    });
-
+      RootGraphqlModel model, APIConnectorLookup apiManager) {
     //We make the assumption that there is a single stream stage
     ExecutionStage streamStage = pipeline.getStage(Type.STREAM).get();
     List<PhysicalDAGPlan.WriteQuery> streamQueries = new ArrayList<>();

@@ -6,6 +6,7 @@ import com.datasqrl.plan.hints.TopNHint.Type;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -157,9 +158,9 @@ public class SqlBuilders {
       return this;
     }
 
-    public static List<SqlNode> sqlIntRange(int size) {
-      return IntStream.range(0, size)
-          .mapToObj(i -> new SqlIdentifier(Integer.toString(i), SqlParserPos.ZERO))
+    public static List<SqlNode> sqlIntRange(Set<Integer> keySet) {
+      return keySet.stream()
+          .map(i -> new SqlIdentifier(Integer.toString(i), SqlParserPos.ZERO))
           .collect(Collectors.toList());
     }
 

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Value;
+import org.apache.calcite.adapter.java.Array;
 
 @Value
 public class PrimaryKey {
@@ -48,12 +49,14 @@ public class PrimaryKey {
 
   public static PrimaryKey of(PrimaryKeyMap pkMap) {
     if (pkMap.isUndefined()) return new PrimaryKey(null);
-    else return new PrimaryKey(pkMap.asArray());
+    //Post-processing ensures the pk is simple
+    int[] pkCols = ArrayUtil.toArray(pkMap.asSimpleList());
+    return new PrimaryKey(pkCols);
   }
 
   public PrimaryKeyMap toKeyMap() {
     if (isUndefined()) return PrimaryKeyMap.UNDEFINED;
-    else return new PrimaryKeyMap(asList());
+    else return PrimaryKeyMap.of(asList());
   }
 
 }

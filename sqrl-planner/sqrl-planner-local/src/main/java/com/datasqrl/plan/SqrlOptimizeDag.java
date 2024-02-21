@@ -11,7 +11,6 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.util.FunctionUtil;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -29,7 +28,7 @@ public class SqrlOptimizeDag {
       boolean includeJars,
       Debugger debugger,
       ErrorCollector errors) {
-    return DAGPlanner.plan(framework, apiManager,
+    return DAGPlanner.planPhysical(framework, apiManager,
         framework.getSchema().getExports(),
         includeJars ? framework.getSchema().getJars() : Set.of(),
         extractFlinkFunctions(framework.getSqrlOperatorTable()), model,pipeline,

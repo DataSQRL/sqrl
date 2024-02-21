@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.rules;
 
+import static com.datasqrl.error.ErrorCode.MULTIPLE_PRIMARY_KEY;
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
 import com.datasqrl.canonicalizer.Name;
@@ -24,6 +25,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
@@ -67,7 +69,7 @@ public class AnnotatedLP implements RelHolder {
    */
   @Builder.Default
   @NonNull
-  public Optional<PhysicalRelationalTable> rootTable = Optional.empty();
+  public Optional<PhysicalRelationalTable> streamRoot = Optional.empty();
 
   /* Operators we pull up */
   @Builder.Default
@@ -109,7 +111,7 @@ public class AnnotatedLP implements RelHolder {
     builder.primaryKey(primaryKey);
     builder.timestamp(timestamp);
     builder.select(select);
-    builder.rootTable(rootTable);
+    builder.streamRoot(streamRoot);
     builder.nowFilter(nowFilter);
     builder.topN(topN);
     builder.sort(sort);
@@ -184,10 +186,13 @@ public class AnnotatedLP implements RelHolder {
       fieldCollations.addAll(SqrlRexUtil.translateCollation(topN.getCollation(), inputType));
       if (topN.isDistinct()) {
         //Add all other selects that are not partition indexes or collations to the sort
-        List<Integer> remainingDistincts = primaryKey.asList();
-        topN.getCollation().getFieldCollations().stream().map(RelFieldCollation::getFieldIndex)
-            .forEach(remainingDistincts::remove);
-        topN.getPartition().stream().forEach(remainingDistincts::remove);
+        Set<Integer> excludedIndexes = topN.getCollation().getFieldCollations().stream().map(RelFieldCollation::getFieldIndex)
+                .collect(Collectors.toSet());
+        excludedIndexes.addAll(topN.getPartition());
+        List<Integer> remainingDistincts = primaryKey.asList().stream()
+                .filter(col -> !col.containsAny(excludedIndexes))
+                .map(col -> col.pickBest(inputType))
+                .collect(Collectors.toList());
         remainingDistincts.stream().map(idx -> new RexFieldCollation(RexInputRef.of(idx, inputType),
                 Set.of(SqlKind.NULLS_LAST)))
             .forEach(fieldCollations::add);
@@ -357,10 +362,13 @@ public class AnnotatedLP implements RelHolder {
     }
     //Add any primary key columns not already added
     for (int i = 0; i < input.primaryKey.getLength(); i++) {
-      int target = input.primaryKey.map(i);
-      if (!remapping.containsKey(target)) {
+      PrimaryKeyMap.ColumnSet columnSet = input.primaryKey.get(i);
+      Set<Integer> mappedColumns = Sets.intersection(columnSet.getIndexes(), remapping.keySet());
+      if (mappedColumns.isEmpty()) {
+        //Pick smallest column index and append
+        int pkIndex = columnSet.getIndexes().stream().sorted().findFirst().get();
         isMetadata.add(index);
-        remapping.put(target, index++);
+        remapping.put(pkIndex, index++);
       }
     }
 
@@ -401,7 +409,9 @@ public class AnnotatedLP implements RelHolder {
     }
 
     int projectLength = index;
-    int inputLength = input.getFieldLength();
+    RelDataType rowType = relBuilder.peek().getRowType();
+    int inputLength = rowType.getFieldCount();
+    List<RelDataTypeField> fieldList = rowType.getFieldList();
     Preconditions.checkArgument(remapping.keySet().stream().allMatch(idx -> idx < inputLength)
             && remapping.size() + (addedPkIndex>=0 ? 1 : 0) == index && projectLength <= inputLength + (addedPkIndex>=0
             ? 1 : 0), "Selected field counts don't add up");
@@ -411,8 +421,6 @@ public class AnnotatedLP implements RelHolder {
 
     List<RexNode> projects = new ArrayList<>(projectLength);
     List<String> updatedFieldNames = new ArrayList<>(projectLength);
-    RelDataType rowType = input.relNode.getRowType();
-    List<RelDataTypeField> fieldList = rowType.getFieldList();
 
     NameAdjuster nameAdjuster = new NameAdjuster(remapping.keySet().stream().map(i -> fieldList.get(i).getName())
             .collect(Collectors.toUnmodifiableList()));
@@ -438,25 +446,37 @@ public class AnnotatedLP implements RelHolder {
             });
 
 
-    PrimaryKeyMap primaryKey = input.primaryKey.remap(remap);
-    if (addedPkIndex>=0) {
-      primaryKey = PrimaryKeyMap.of(new int[]{addedPkIndex});
-    }
-
-    relBuilder.push(input.relNode);
-    relBuilder.project(projects);
+    relBuilder.project(projects, updatedFieldNames);
     RelNode relNode = relBuilder.build();
 
-    //Verify that all primary key columns are not null which is required by databases
-    //For now, we just issue a warning and fail in the DAG planner
-    List<String> nullablePks = CalciteUtil.identifyNullableFields(relNode.getRowType(), primaryKey.asList());
-    if (!nullablePks.isEmpty()) {
-      errors.warn(PRIMARY_KEY_NULLABLE, "The primary key field(s) [%s] are nullable", nullablePks);
+    List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
+    Function<Integer,String> getFieldName = idx -> fields.get(idx).getName();
+
+    PrimaryKeyMap primaryKey;
+    if (addedPkIndex>=0) {
+      primaryKey = PrimaryKeyMap.of(new int[]{addedPkIndex});
+    } else {
+      PrimaryKeyMap remappedPk = input.primaryKey.remap(remap);
+      List<Integer> chosenColumns = remappedPk.asList().stream()
+              .map(col -> {
+                assert col.getIndexes().size()>0;
+                if (col.getIndexes().size()>1) {
+                  errors.warn(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
+                          col.getIndexes().stream().map(getFieldName));
+                }
+                //Let's pick the first non-null version
+                int chosen = col.pickBest(relNode.getRowType());
+                if (fields.get(chosen).getType().isNullable()) {
+                  errors.warn(PRIMARY_KEY_NULLABLE, "The primary key field(s) [%s] are nullable", col.getIndexes().stream().map(getFieldName));
+                }
+                return chosen;
+              }).collect(Collectors.toUnmodifiableList());
+      primaryKey = PrimaryKeyMap.of(chosenColumns);
     }
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
         timestampBuilder.build(), updatedSelect,
-        input.rootTable,
+        input.streamRoot,
         input.nowFilter.remap(remap), input.topN.remap(remap), input.sort.remap(remap),
         List.of(this));
   }

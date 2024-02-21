@@ -1,23 +1,21 @@
 package com.datasqrl.plan.global;
 
 
-import static com.datasqrl.plan.validate.ScriptPlanner.exportTable;
-
 import com.datasqrl.calcite.ModifiableTable;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.APIConnectorLookup;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.table.ProxyImportRelationalTable;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
-import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.tools.RelBuilder;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.datasqrl.plan.validate.ScriptPlanner.exportTable;
 
 @Value
 public class DAGPreparation {
@@ -26,7 +24,7 @@ public class DAGPreparation {
 
   private final ErrorCollector errors;
 
-  public Collection<AnalyzedAPIQuery> prepareInputs(SqrlSchema sqrlSchema, APIConnectorManager apiManager,
+  public Collection<AnalyzedAPIQuery> prepareInputs(SqrlSchema sqrlSchema, APIConnectorLookup apiManager,
       Collection<ResolvedExport> exports) {
 
     //Add subscriptions as exports

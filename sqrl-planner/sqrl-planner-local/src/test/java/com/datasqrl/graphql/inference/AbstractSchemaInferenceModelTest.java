@@ -20,7 +20,6 @@ import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelector;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
-import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.util.TestScript;
 import java.nio.file.Files;
@@ -81,7 +80,7 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
   public Map<IndexDefinition, Double> selectIndexes(TestScript script, Path schemaPath) {
     APIConnectorManager apiManager = inferSchemaAndQueries(script, schemaPath).getValue();
     // plan dag
-    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
+    PhysicalDAGPlan dag = DAGPlanner.planPhysical(framework,
         apiManager, framework.getSchema().getExports(),
         framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()), null, pipeline,
         errors, debugger);

@@ -22,6 +22,13 @@ public class ScriptBuilder {
     return this;
   }
 
+  public ScriptBuilder add(String... statements) {
+    for (String statement : statements) {
+      add(statement);
+    }
+    return this;
+  }
+
   public ScriptBuilder append(String statement) {
     return add(statement);
   }

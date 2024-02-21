@@ -5,18 +5,21 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.APIConnectorLookup;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.table.PhysicalTable;
 import com.google.common.base.Preconditions;
+import org.apache.flink.table.functions.UserDefinedFunction;
+
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of
@@ -24,7 +27,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
  */
 public class DAGPlanner {
 
-  public static SqrlDAG build(SqrlFramework framework, APIConnectorManager apiManager,
+  public static SqrlDAG build(SqrlFramework framework, APIConnectorLookup apiManager,
       Collection<ResolvedExport> exports, ExecutionPipeline pipeline, ErrorCollector errors) {
     //Prepare the inputs
     Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(framework.getQueryPlanner().getRelBuilder(),
@@ -48,7 +51,7 @@ public class DAGPlanner {
     return dag;
   }
 
-  public static void optimize(SqrlDAG dag, ExecutionPipeline pipeline) {
+  public static void optimize(SqrlDAG dag, ExecutionPipeline pipeline, SQRLConverter sqrlConverter, ErrorCollector errors) {
     //Pick most cost-effective stage for each node and assign
     for (SqrlDAG.SqrlNode node : dag) {
       if (node.setCheapestStage()) {
@@ -56,9 +59,18 @@ public class DAGPlanner {
         dag.eliminateInviableStages(pipeline);
       }
     }
+    //Plan final version of all tables
+    dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
+      ExecutionStage stage = tableNode.getChosenStage();
+      Preconditions.checkNotNull(stage);
+      PhysicalTable table = tableNode.getTable();
+      table.assignStage(stage); //this stage on the config below
+      SQRLConverter.Config config = table.getBaseConfig().build();
+      table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
+    });
   }
 
-  public static PhysicalDAGPlan assemble(SqrlDAG dag, APIConnectorManager apiManager,
+  public static PhysicalDAGPlan assemble(SqrlDAG dag, APIConnectorLookup apiManager,
       Set<URL> jars, Map<String, UserDefinedFunction> udfs, RootGraphqlModel model,
       SqrlFramework framework, SQRLConverter sqrlConverter, ExecutionPipeline pipeline,
       Debugger debugger, ErrorCollector errors) {
@@ -68,13 +80,19 @@ public class DAGPlanner {
     return assembler.assemble(dag, jars, udfs, model, apiManager);
   }
 
-  public static PhysicalDAGPlan plan(SqrlFramework framework, APIConnectorManager apiManager,
-      Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
-      RootGraphqlModel model, ExecutionPipeline pipeline, ErrorCollector errors,
-      Debugger debugger) {
-
+  public static SqrlDAG planLogical(SqrlFramework framework, APIConnectorLookup apiManager,
+                                    Collection<ResolvedExport> exports, ExecutionPipeline pipeline, ErrorCollector errors) {
     SqrlDAG dag = build(framework, apiManager, exports, pipeline, errors);
-    optimize(dag, pipeline);
+    SQRLConverter converter = new SQRLConverter(framework.getQueryPlanner().getRelBuilder());
+    optimize(dag, pipeline, converter, errors);
+    return dag;
+  }
+
+  public static PhysicalDAGPlan planPhysical(SqrlFramework framework, APIConnectorLookup apiManager,
+                                             Collection<ResolvedExport> exports, Set<URL> jars, Map<String, UserDefinedFunction> udfs,
+                                             RootGraphqlModel model, ExecutionPipeline pipeline, ErrorCollector errors,
+                                             Debugger debugger) {
+    SqrlDAG dag = planLogical(framework, apiManager, exports, pipeline, errors);
     return assemble(dag, apiManager, jars, udfs, model, framework, new SQRLConverter(framework.getQueryPlanner().getRelBuilder()),
         pipeline, debugger, errors);
   }

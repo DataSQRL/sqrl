@@ -4,6 +4,7 @@
 package com.datasqrl.plan.util;
 
 import com.google.common.base.Preconditions;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.calcite.rel.RelCollation;
@@ -23,7 +24,20 @@ public interface IndexMap {
 
   final IndexMap IDENTITY = idx -> idx;
 
-  int map(int index);
+  /**
+   * Maps the given index. Returns a negative integer if the given index does not have
+   * a mapping.
+   *
+   * @param index
+   * @return
+   */
+  int mapUnsafe(int index);
+
+  default int map(int index) {
+    int target = mapUnsafe(index);
+    Preconditions.checkArgument(target>=0, "Invalid index: %s",  index);
+    return target;
+  }
 
   default RexNode map(@NonNull RexNode node, @NonNull RelDataType inputType) {
     return map(node, inputType.getFieldList());
@@ -38,7 +52,7 @@ public interface IndexMap {
         .map(fc -> fc.withFieldIndex(this.map(fc.getFieldIndex()))).collect(Collectors.toList()));
   }
 
-  @Value
+  @AllArgsConstructor
   class RexIndexMapShuttle extends RexShuttle {
 
     private final IndexMap map;
@@ -62,24 +76,13 @@ public interface IndexMap {
   static IndexMap of(final Map<Integer, Integer> mapping) {
     return idx -> {
       Integer map = mapping.get(idx);
-      Preconditions.checkArgument(map != null, "Invalid index: %s", idx);
-      return map;
-    };
-  }
-
-  static IndexMap inverse(final List<Integer> mappingByPosition) {
-    return idx -> {
-      int pos = mappingByPosition.indexOf(idx);
-      Preconditions.checkArgument(pos >= 0, "Invalid index: %d", idx);
-      return pos;
+      return map!=null?map:-1;
     };
   }
 
   static IndexMap singleton(final int source, final int target) {
     return idx -> {
-      Preconditions.checkArgument(idx == source, "Only maps a single source [%d] but given: %d",
-          source, idx);
-      return target;
+      return idx==source?target:-1;
     };
   }
 

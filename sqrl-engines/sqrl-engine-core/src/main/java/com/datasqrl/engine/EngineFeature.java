@@ -45,7 +45,7 @@ public enum EngineFeature {
       EXPORT, PULLUP_OPTIMIZATION, DATA_MONITORING);
 
   public static EnumSet<EngineFeature> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
-      MULTI_RANK, TABLE_FUNCTION_SCAN, UNION_STATE);
+      MULTI_RANK, TABLE_FUNCTION_SCAN, UNION_STATE, DENORMALIZE);
 
   public static EnumSet<EngineFeature> NO_CAPABILITIES = EnumSet.noneOf(EngineFeature.class);
 }

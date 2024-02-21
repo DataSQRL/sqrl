@@ -118,8 +118,8 @@ public class SqrlRexUtil {
   private Optional<EqualityCondition> decomposeEqualityCondition(RexNode predicate, int leftSideMaxIdx) {
     if (predicate.isA(SqlKind.EQUALS)) {
       RexCall equality = (RexCall) predicate;
-      Optional<Integer> leftIndex = getInputRefIndex(equality.getOperands().get(0));
-      Optional<Integer> rightIndex = getInputRefIndex(equality.getOperands().get(1));
+      Optional<Integer> leftIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(0));
+      Optional<Integer> rightIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(1));
       if (leftIndex.isPresent() && rightIndex.isPresent()) {
         int leftIdx = Math.min(leftIndex.get(), rightIndex.get());
         int rightIdx = Math.max(leftIndex.get(), rightIndex.get());
@@ -129,6 +129,8 @@ public class SqrlRexUtil {
           return Optional.empty();
         }
       }
+      //Check if the constrained side is constrained by an expression that contains entirely of constants of
+      //input references from the other side.
       RexNode otherSide;
       int constrainedIdx;
       if (leftIndex.isPresent()) {

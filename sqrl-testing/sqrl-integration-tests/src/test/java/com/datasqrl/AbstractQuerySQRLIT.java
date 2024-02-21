@@ -11,7 +11,6 @@ import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
 import com.datasqrl.engine.server.GenericJavaServerEngine;
-import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -21,7 +20,6 @@ import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
-import com.datasqrl.plan.local.generate.Debugger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -69,7 +67,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> modelAndQueries =
         AbstractSchemaInferenceModelTest.inferSchemaModelQueries(schema, framework, pipeline, errors);
 
-    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
+    PhysicalDAGPlan dag = DAGPlanner.planPhysical(framework,
         modelAndQueries.getRight(), framework.getSchema().getExports(),
         framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
         modelAndQueries.getMiddle(), pipeline, errors, debugger);

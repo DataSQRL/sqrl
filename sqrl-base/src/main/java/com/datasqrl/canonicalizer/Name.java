@@ -114,6 +114,7 @@ public interface Name extends Serializable, Comparable<Name> {
   }
 
   static String hiddenString(String name) {
+    if (isHiddenString(name)) return name;
     return HIDDEN_PREFIX + name;
   }
 

@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -31,14 +30,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.google.common.collect.Iterables;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
@@ -46,7 +43,6 @@ import lombok.Value;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.schema.Function;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -171,7 +167,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
         "EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;")
         .toString();
     plan(sqrl);
-    validateQueryTable("entrycount", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, pk(0,1),
+    validateQueryTable("entrycount", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, pk(1,2),
         TimestampTest.fixed(3)); //4 cols = 1 select col + 2 pk cols + 1 timestamp cols
   }
 
@@ -181,8 +177,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void nestedAggregationAndSelfJoinTest() {
-    String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders",
-        "IMPORT ecommerce-data.Customer",
+    String sqrl = ScriptBuilder.of("IMPORT ecommerce-data.Orders TIMESTAMP time",
+        "IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time",
         "IMPORT time.*",
         "Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC",
         "Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e",
@@ -192,8 +188,8 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     plan(sqrl);
     validateQueryTable("total", TableType.STREAM, ExecutionEngine.Type.STREAM, 5, pk(0),
         TimestampTest.fixed(4));
-    validateQueryTable("ordersinline", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, pk(0),
-        TimestampTest.fixed(3));
+    validateQueryTable("ordersinline", TableType.STREAM, ExecutionEngine.Type.STREAM, 6, pk(5),
+        TimestampTest.fixed(2));
     validateQueryTable("orders_by_day", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, pk(0,1),
         TimestampTest.fixed(1));
   }
@@ -204,9 +200,23 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
    */
 
   @Test
+  public void joinTimestampPropagationTest() {
+    ScriptBuilder builder = imports();
+    builder.add("OrderCustomer1 := SELECT o.id, c.name FROM Orders o JOIN Customer c on o.customerid = c.customerid");
+    builder.add("OrderCustomer2 := SELECT o.id, c.name, GREATEST(o._ingest_time, c._ingest_time) AS timestamp FROM Orders o JOIN Customer c on o.customerid = c.customerid");
+    builder.add("OrderCustomer3 := SELECT o.id, c.name, p.name FROM Orders o JOIN Customer c on o.customerid = c.customerid JOIN Product p ON p.productid = c.customerid");
+    plan(builder.toString());
+    validateQueryTable("ordercustomer1", TableType.STREAM, Type.DATABASE, 5, pk(2,3),
+            TimestampTest.fixed(4));
+    validateQueryTable("ordercustomer2", TableType.STREAM, Type.DATABASE, 5, pk(3,4),
+            TimestampTest.fixed(2));
+    validateQueryTable("ordercustomer3", TableType.STREAM, Type.DATABASE, 7, pk(3,4,5),
+            TimestampTest.fixed(6));
+  }
+
+  @Test
   public void tableStreamJoinTest() {
     ScriptBuilder builder = imports();
-    int offset = 0;
     ExecutionEngine.Type stageType = Type.DATABASE;
     builder.add(
        "OrderCustomerLeft := SELECT coalesce(c._uuid, '') as cuuid, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;");
@@ -221,7 +231,7 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     builder.add(
         "OrderCustomerConstant := SELECT o._uuid, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;");
     plan(builder.toString());
-    validateQueryTable("ordercustomer", TableType.STREAM, stageType, 6, pk(0,1),
+    validateQueryTable("ordercustomer", TableType.STREAM, stageType, 6, pk(0,4),
         TimestampTest.fixed(5));
     validateQueryTable("ordercustomerleft", TableType.STREAM, stageType, 6, pk(0,1),
         TimestampTest.fixed(5));
@@ -475,14 +485,14 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void selectDistinctTest() {
-    ScriptBuilder builder = imports();
+    ScriptBuilder builder = imports(true);
     builder.add("CustomerId := SELECT DISTINCT customerid FROM Customer;");
     builder.add(
         "CustomerOrders := SELECT o.id, c.customerid FROM CustomerId c JOIN Orders o ON o.customerid = c.customerid");
     plan(builder.toString());
     validateQueryTable("customerid", TableType.VERSIONED_STATE, ExecutionEngine.Type.STREAM, 2, pk(0),
         TimestampTest.fixed(1), PullupTest.builder().hasTopN(true).build());
-    validateQueryTable("customerorders", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, pk(0),
+    validateQueryTable("customerorders", TableType.STREAM, ExecutionEngine.Type.STREAM, 4, pk(2),
         TimestampTest.fixed(3));
   }
 
@@ -699,26 +709,6 @@ public class ResolveTest extends AbstractLogicalSQRLIT {
     assertEquals(numCols, table.getRowType().getFieldCount(), "field count");
     timestampTest.test(table.getTimestamp());
     pullupTest.test(table.getPullups());
-  }
-
-  public static <T extends AbstractRelationalTable> Optional<T> getLatestTable(
-      SqrlSchema sqrlSchema, String tableName, Class<T> tableClass) {
-    String normalizedName = Name.system(tableName).getCanonical();
-    //Table names have an appended uuid - find the right tablename first. We assume tables are in the order in which they were created
-    return sqrlSchema.getTableNames().stream().filter(s -> s.indexOf(Name.NAME_DELIMITER) != -1)
-        .filter(s -> s.substring(0, s.indexOf(Name.NAME_DELIMITER)).equals(normalizedName))
-        .filter(s ->
-            tableClass.isInstance(sqrlSchema.getTable(s, false).getTable()))
-        //Get most recently added table
-        .sorted((a, b) -> -Integer.compare(getTableOrdinal(a),
-            getTableOrdinal(b)))
-        .findFirst().map(s -> tableClass.cast(sqrlSchema.getTable(s, false).getTable()))
-       ;
-  }
-
-  public static int getTableOrdinal(String tableId) {
-    int idx = tableId.lastIndexOf(Name.NAME_DELIMITER);
-    return Integer.parseInt(tableId.substring(idx + 1));
   }
 
   private void validateAccessTableFunction(String tableName, String baseTableName, ExecutionEngine.Type execType) {

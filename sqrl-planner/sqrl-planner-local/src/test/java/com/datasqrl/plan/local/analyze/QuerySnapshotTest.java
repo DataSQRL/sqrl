@@ -102,6 +102,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               table.getNameId());
         });
 
+    //TODO: @Daniel - do we need all that stuff below?
+
     SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
 
     SchemaGenerator schemaGenerator = new SchemaGenerator();

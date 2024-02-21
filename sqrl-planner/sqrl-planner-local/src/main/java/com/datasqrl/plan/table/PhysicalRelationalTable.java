@@ -42,7 +42,7 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   protected final PrimaryKey primaryKey;
   @NonNull
   protected Timestamps timestamp;
-  @Setter
+
   protected RelNode plannedRelNode;
   @Setter
   protected Optional<ExecutionStage> assignedStage = Optional.empty();
@@ -71,6 +71,8 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
     return Container.EMPTY;
   }
 
+  public abstract Optional<PhysicalRelationalTable> getStreamRoot();
+
   /**
    *
    * @return the assigned execution stage or empty if no stage has been assigned yet
@@ -88,9 +90,16 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
     this.assignedStage = Optional.of(stage);
   }
 
+  @Override
   public RelNode getPlannedRelNode() {
     Preconditions.checkState(plannedRelNode != null, "Table has not been planned");
     return plannedRelNode;
+  }
+
+  @Override
+  public void setPlannedRelNode(@NonNull RelNode relNode) {
+    Preconditions.checkArgument(relNode.getRowType().equals(getRowType()), "Row types do not match");
+    this.plannedRelNode = relNode;
   }
 
   @Override
