@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
  */
-package com.datasqrl.util;
+package com.datasqrl.plan.util;
 
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
@@ -18,17 +18,17 @@ import java.util.List;
 /**
  * Methods copied from Calcite's {@link RelWriterImpl} to add hints to the output
  */
-public class TestRelWriter extends RelWriterImpl {
+public class RelWriterWithHints extends RelWriterImpl {
 
   public boolean withHints = true;
 
-  public TestRelWriter(PrintWriter pw) {
+  public RelWriterWithHints(PrintWriter pw) {
     super(pw, SqlExplainLevel.EXPPLAN_ATTRIBUTES, false);
   }
 
   public static String explain(RelNode rel) {
     StringWriter sw = new StringWriter();
-    TestRelWriter writer = new TestRelWriter(new PrintWriter(sw));
+    RelWriterWithHints writer = new RelWriterWithHints(new PrintWriter(sw));
     rel.explain(writer);
     return sw.toString();
   }

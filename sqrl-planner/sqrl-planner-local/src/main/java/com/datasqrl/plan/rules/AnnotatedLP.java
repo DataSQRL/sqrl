@@ -424,8 +424,9 @@ public class AnnotatedLP implements RelHolder {
 
     NameAdjuster nameAdjuster = new NameAdjuster(remapping.keySet().stream().map(i -> fieldList.get(i).getName())
             .collect(Collectors.toUnmodifiableList()));
-    remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(), e.getValue()))
-            .sorted((a, b) -> Integer.compare(a.getTarget(), b.getTarget()))
+    List<IndexMap.Pair> mappings = remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(), e.getValue())).collect(Collectors.toList());
+    if (addedPkIndex>=0) mappings.add(new IndexMap.Pair(-1,addedPkIndex));
+    mappings.stream().sorted((a, b) -> Integer.compare(a.getTarget(), b.getTarget()))
             .forEach(p -> {
               int position = p.getTarget();
               int reference = p.getSource();

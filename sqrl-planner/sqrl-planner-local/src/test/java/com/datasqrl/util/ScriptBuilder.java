@@ -3,12 +3,17 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.canonicalizer.NamePath;
 import lombok.Value;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Value
 public class ScriptBuilder {
 
-  private final StringBuilder s = new StringBuilder();
+  StringBuilder s = new StringBuilder();
+  List<String> tables = new ArrayList<>();
 
   public ScriptBuilder add(String statement) {
     s.append(statement);
@@ -22,12 +27,13 @@ public class ScriptBuilder {
     return this;
   }
 
-  public ScriptBuilder add(String... statements) {
-    for (String statement : statements) {
-      add(statement);
-    }
+  public ScriptBuilder add(String tblName, String statement) {
+    add(tblName + " := " + statement);
+    String tableId = NamePath.parse(tblName).getLast().getDisplay();
+    tables.add(tableId);
     return this;
   }
+
 
   public ScriptBuilder append(String statement) {
     return add(statement);

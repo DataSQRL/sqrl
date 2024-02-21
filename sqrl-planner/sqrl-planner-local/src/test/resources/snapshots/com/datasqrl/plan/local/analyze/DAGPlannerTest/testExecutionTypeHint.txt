@@ -1,0 +1,70 @@
+=== Customer
+ID:     customer$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : _ingest_time
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+Plan:
+LogicalTableScan(table=[[customer$1]], hints=[[[WatermarkHint inheritPath:[] options:[1]]]]) hints[WatermarkHint options:[1]]
+
+=== CustomerAgg1
+ID:     customeragg1$1
+Type:   state
+Stage:  streams
+Inputs: customer$2
+Primary Key: customerid
+Timestamp  : _ingest_time0
+Schema:
+ - customerid: BIGINT NOT NULL
+ - num: BIGINT NOT NULL
+ - _ingest_time0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=customerid limit=1 sort=#2: _ingest_time0 TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(customerid=[$1], num=[$2], _ingest_time0=[$0])
+  LogicalAggregate(group=[{1, 2}], num=[COUNT()]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
+    LogicalTableScan(table=[[customer$2]])
+
+=== CustomerAgg2
+ID:     customeragg2$1
+Type:   state
+Stage:  database
+Inputs: customer$2
+Primary Key: customerid
+Timestamp  : _ingest_time0
+Schema:
+ - customerid: BIGINT NOT NULL
+ - num: BIGINT NOT NULL
+ - _ingest_time0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=customerid limit=1 sort=#2: _ingest_time0 TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalAggregate(group=[{2}], num=[COUNT()], __timestamp=[MAX($1)])
+  LogicalFilter(condition=[<(NOW(), +($1, 3600000:INTERVAL SECOND(7)))])
+    LogicalTableScan(table=[[customer$2]])
+
+=== CustomerAgg3
+ID:     customeragg3$1
+Type:   state
+Stage:  streams
+Inputs: customer$2
+Primary Key: customerid
+Timestamp  : _ingest_time0
+Schema:
+ - customerid: BIGINT NOT NULL
+ - num: BIGINT NOT NULL
+ - _ingest_time0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=customerid limit=1 sort=#2: _ingest_time0 TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(customerid=[$1], num=[$2], _ingest_time0=[$0])
+  LogicalAggregate(group=[{1, 2}], num=[COUNT()]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
+    LogicalTableScan(table=[[customer$2]])
+

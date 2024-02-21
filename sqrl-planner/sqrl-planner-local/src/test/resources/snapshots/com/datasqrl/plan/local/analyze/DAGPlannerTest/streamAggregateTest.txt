@@ -1,0 +1,96 @@
+=== OrderAgg1
+ID:     orderagg1$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer
+Timestamp  : __timestamp
+Schema:
+ - customer: BIGINT NOT NULL
+ - order_count: BIGINT NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalAggregate(group=[{0}], order_count=[COUNT()], __timestamp=[MAX($2)])
+  LogicalProject(customer=[$3], _uuid=[$0], time=[$4])
+    LogicalTableScan(table=[[orders$2]])
+
+=== OrderAgg2
+ID:     orderagg2$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: __pk
+Timestamp  : __timestamp0
+Schema:
+ - order_count: BIGINT NOT NULL
+ - __pk: INTEGER NOT NULL
+ - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Plan:
+LogicalProject(order_count=[$0], __pk=[1], __timestamp0=[$1])
+  LogicalAggregate(group=[{}], order_count=[COUNT()], __timestamp=[MAX($4)])
+    LogicalTableScan(table=[[orders$2]])
+
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : time
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== Ordertime1
+ID:     ordertime1$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer, bucket
+Timestamp  : bucket
+Schema:
+ - customer: BIGINT NOT NULL
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 1000, 0]]
+  LogicalProject(customer=[$3], bucket=[endOfSecond($4)], _uuid=[$0], time=[$4])
+    LogicalTableScan(table=[[orders$2]])
+
+=== Ordertime2
+ID:     ordertime2$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer, bucket
+Timestamp  : bucket
+Schema:
+ - customer: BIGINT NOT NULL
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 60000, 15000]]
+  LogicalProject(customer=[$3], bucket=[endOfMinute($4, 1:BIGINT, 15:BIGINT)], _uuid=[$0], time=[$4])
+    LogicalTableScan(table=[[orders$2]])
+
+=== Ordertime3
+ID:     ordertime3$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer, bucket
+Timestamp  : bucket
+Schema:
+ - customer: BIGINT NOT NULL
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 18000000, 1800000]]
+  LogicalProject(customer=[$3], bucket=[endOfHour($4, 5:BIGINT, 30:BIGINT)], _uuid=[$0], time=[$4])
+    LogicalTableScan(table=[[orders$2]])
+

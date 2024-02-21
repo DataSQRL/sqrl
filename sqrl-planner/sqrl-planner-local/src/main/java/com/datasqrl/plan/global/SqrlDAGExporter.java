@@ -2,6 +2,7 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.table.*;
+import com.datasqrl.plan.util.RelWriterWithHints;
 import com.datasqrl.plan.util.TimePredicate;
 import com.google.common.base.Preconditions;
 import lombok.AllArgsConstructor;
@@ -11,10 +12,12 @@ import lombok.Value;
 import lombok.experimental.SuperBuilder;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelFieldCollation;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,10 +34,14 @@ public class SqrlDAGExporter {
     @Builder.Default
     boolean includeImports = true;
 
+    @Builder.Default
+    boolean withHints = false;
+
+
     public List<Node> export(SqrlDAG dag) {
         List<Node> result = new ArrayList<>();
         for (SqrlDAG.SqrlNode node : dag) {
-            List<String> inputs = dag.getInputs(node).stream().map(SqrlDAG.SqrlNode::getId).collect(Collectors.toUnmodifiableList());
+            List<String> inputs = dag.getInputs(node).stream().map(SqrlDAG.SqrlNode::getId).sorted().collect(Collectors.toUnmodifiableList());
             String stage = node.getChosenStage().getName();
             if (node instanceof SqrlDAG.TableNode) {
                 SqrlDAG.TableNode tableNode = (SqrlDAG.TableNode)node;
@@ -57,7 +64,7 @@ public class SqrlDAGExporter {
                         .type(NodeType.from(table.getType()).getName())
                         .stage(stage)
                         .inputs(importInput!=null?List.of(importInput):inputs)
-                        .plan(table.getPlannedRelNode().explain())
+                        .plan(explain(table.getPlannedRelNode()))
                         .primary_key(table.getPrimaryKey().asList().stream().map(fields::get).map(RelDataTypeField::getName).collect(Collectors.toUnmodifiableList()))
                         .timestamp(table.getTimestamp().is(Timestamps.Type.UNDEFINED)?"none":fields.get(table.getTimestamp().getOnlyCandidate()).getName())
                         .schema(fields.stream().map(field -> new SchemaColumn(field.getName(), field.getType().getFullTypeString())).collect(Collectors.toUnmodifiableList()))
@@ -80,7 +87,7 @@ public class SqrlDAGExporter {
                         .name(query.getName())
                         .type(NodeType.QUERY.getName())
                         .stage(stage)
-                        .plan(query.getBaseQuery().getRelNode().explain())
+                        .plan(explain(query.getBaseQuery().getRelNode()))
                         .inputs(inputs)
                         .build());
             } else {
@@ -88,6 +95,14 @@ public class SqrlDAGExporter {
             }
         }
         return result;
+    }
+
+    private String explain(RelNode relNode) {
+        if (withHints) {
+            return RelWriterWithHints.explain(relNode);
+        } else {
+            return relNode.explain();
+        }
     }
 
     private static List<PostProcessor> convert(PullupOperator.Container pullups, List<RelDataTypeField> fields) {
@@ -158,7 +173,7 @@ public class SqrlDAGExporter {
      */
     @Getter
     @SuperBuilder
-    public static class Node {
+    public static class Node implements Comparable<Node> {
 
         String id;
         String name;
@@ -184,6 +199,10 @@ public class SqrlDAGExporter {
             return s.toString();
         }
 
+        @Override
+        public int compareTo(SqrlDAGExporter.Node other) {
+            return this.getId().compareTo(other.getId());
+        }
     }
 
     @Getter

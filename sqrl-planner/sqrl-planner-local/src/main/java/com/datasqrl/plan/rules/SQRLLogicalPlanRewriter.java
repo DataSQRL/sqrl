@@ -47,6 +47,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -431,11 +432,11 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     //We only keep track of the first mapped project and consider it to be the "preserving one" for primary keys and timestamps
     LinkedHashMultimap<Integer, Integer> mappedProjects = LinkedHashMultimap.create();
     RelDataType rowType = input.relNode.getRowType();
-    Function<Integer, Integer> preserveIndex = originalIndex -> {
+    BiFunction<Integer, RelDataType, Integer> preserveIndex = (originalIndex, inputType) -> {
       Set<Integer> mapsTo = mappedProjects.get(originalIndex);
       if (mapsTo.isEmpty()) {
         int newIndex = updatedProjects.size();
-        updatedProjects.add(newIndex, RexInputRef.of(originalIndex, rowType));
+        updatedProjects.add(newIndex, RexInputRef.of(originalIndex, inputType));
         updatedNames.add(null);
         mappedProjects.put(originalIndex, newIndex);
         return newIndex;
@@ -469,7 +470,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     for (PrimaryKeyMap.ColumnSet colSet : input.primaryKey.asList()) {
       Set<Integer> mappedTo = colSet.getIndexes().stream().flatMap(idx -> mappedProjects.get(idx).stream()).collect(Collectors.toUnmodifiableSet());
       if (mappedTo.isEmpty()) {
-        primaryKey.add(preserveIndex.apply(colSet.pickBest(input.relNode.getRowType())));
+        primaryKey.add(preserveIndex.apply(colSet.pickBest(input.relNode.getRowType()),rowType));
       } else {
         primaryKey.add(mappedTo);
       }
@@ -482,7 +483,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     if (!input.nowFilter.isEmpty()) {
       //Preserve now-filter
       int oldTimestampIdx = input.nowFilter.getTimestampIndex();
-      int newTimestampIdx = preserveIndex.apply(oldTimestampIdx);
+      int newTimestampIdx = preserveIndex.apply(oldTimestampIdx,rowType);
       timestampBuilder.candidate(newTimestampIdx);
       nowFilter = input.nowFilter.remap(IndexMap.singleton(oldTimestampIdx, newTimestampIdx));
     }
@@ -491,14 +492,14 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     //Preserve sorts
     List<RelFieldCollation> collations = input.sort.getCollation().getFieldCollations().stream()
-            .map(collation -> collation.withFieldIndex(preserveIndex.apply(collation.getFieldIndex())))
+            .map(collation -> collation.withFieldIndex(preserveIndex.apply(collation.getFieldIndex(),rowType)))
             .collect(Collectors.toUnmodifiableList());
     SortOrder sort = new SortOrder(RelCollations.of(collations));
 
 
     //Add windows and make sure we map timestamps through
     for (Timestamps.TimeWindow window : timeWindows) {
-      int mapsTo = preserveIndex.apply(window.getTimestampIndex());
+      int mapsTo = preserveIndex.apply(window.getTimestampIndex(),rowType);
       timestampBuilder.candidate(mapsTo);
       timestampBuilder.window(window.withTimestampIndex(mapsTo));
     }
@@ -506,7 +507,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     //Make sure we are pulling at least one viable timestamp candidates through
     if (input.timestamp.hasCandidates() && !timestamp.hasCandidates()) {
       int oldTimestampIdx = input.timestamp.getBestCandidate(relB);
-      int newTimestampIdx = preserveIndex.apply(oldTimestampIdx);
+      int newTimestampIdx = preserveIndex.apply(oldTimestampIdx, relB.peek().getRowType());
       timestampBuilder.candidate(newTimestampIdx);
       timestamp = timestampBuilder.build();
     }
@@ -823,12 +824,11 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       //TODO: generalize to arbitrary table functions
       RelBuilder relB = makeRelBuilder();
       relB.push(leftInput.relNode);
-      int requiredColumn = leftInput.select.map(
-          Iterables.getOnlyElement(logicalCorrelate.getRequiredColumns().asList()));
-      RexNode requiredNode = rexUtil.makeInputRef(requiredColumn, relB);
-      Preconditions.checkArgument(CalciteUtil.isNestedTable(requiredNode.getType()));
+      List<RexNode> requiredNodes = logicalCorrelate.getRequiredColumns().asList().stream().map(leftInput.select::map)
+              .map(idx -> rexUtil.makeInputRef(idx, relB)).collect(Collectors.toList());
+      Preconditions.checkArgument(requiredNodes.stream().map(RexNode::getType).anyMatch(CalciteUtil::isNestedTable));
       relB.push(rightInput.relNode);
-      relB.correlate(logicalCorrelate.getJoinType(), logicalCorrelate.getCorrelationId(), requiredNode);
+      relB.correlate(logicalCorrelate.getJoinType(), logicalCorrelate.getCorrelationId(), requiredNodes);
       PrimaryKeyMap.Builder pkBuilder = leftInput.getPrimaryKey().toBuilder();
       pkBuilder.addAll(rightInput.getPrimaryKey().remap(idx -> idx + leftSideMaxIdx).asList());
       return setRelHolder(AnnotatedLP.build(relB.build(), leftInput.getType(),
@@ -857,9 +857,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   public RelNode visit(LogicalUnion logicalUnion) {
-    errors.checkFatal(logicalUnion.all, NOT_YET_IMPLEMENTED,
-        "Currently, only UNION ALL is supported. Combine with SELECT DISTINCT for UNION");
-
     List<AnnotatedLP> rawInputs = logicalUnion.getInputs().stream()
         .map(in -> getRelHolder(in.accept(this)).inlineTopN(makeRelBuilder(), exec))
             .collect(Collectors.toUnmodifiableList());
@@ -895,7 +892,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     List<Integer> selectIndexes = new ArrayList<>();
     selectIndexes.addAll(select.targetsAsList());
-    List<String> selectNames = Collections.nCopies(selectIndexes.size(), null); //those names must be the same, just copy them
+    List<String> selectNames = new ArrayList<>();
+    IntStream.range(0,selectIndexes.size()).forEach(i -> selectNames.add(i,null)); //those names must be the same, just copy them
     //Add names for any added columns
     Stream.concat(IntStream.range(0, pk.getLength()).mapToObj(pkNo -> Pair.of(ReservedName.SYSTEM_PRIMARY_KEY.suffix(String.valueOf(pkNo)), pk.get(pkNo).getOnly())),
                     timestamp.getCandidates().stream().map(idx -> Pair.of(ReservedName.SYSTEM_TIMESTAMP, idx))).
@@ -911,6 +909,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       relBuilder.push(input.relNode);
       CalciteUtil.addProjection(relBuilder, selectIndexes, selectNames);
     }
+    relBuilder.union(true,inputs.size());
     return setRelHolder(
         AnnotatedLP.build(relBuilder.build(), TableType.STREAM, pk, timestamp, select, inputs)
             .streamRoot(Optional.empty()).build());
@@ -991,13 +990,14 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     //Find candidate that's in the groupBy, else use the best option
     RelBuilder relB = makeRelBuilder();
     relB.push(input.relNode);
-    int timestampIdx = input.timestamp.getBestCandidate(relB);
+    int timestampIdx = -1;
     for (int cand : input.timestamp.getCandidates()) {
       if (groupByIdx.contains(cand)) {
         timestampIdx = cand;
         break;
       }
     }
+    if (timestampIdx<0) timestampIdx=input.timestamp.getBestCandidate(relB);
 
     Pair<PkAndSelect, Timestamps> addedTimestamp =
         addTimestampAggregate(relB, groupByIdx, timestampIdx, aggregateCalls);

@@ -13,7 +13,6 @@ import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.graphql.APIConnectorLookup;
-import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.io.impl.file.FileDataSystemConfig;
 import com.datasqrl.io.impl.file.FileDataSystemFactory;
 import com.datasqrl.io.impl.file.FilePath;
@@ -24,17 +23,12 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.ExternalSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
-import com.datasqrl.plan.local.analyze.MockAPIConnectorManager;
-import com.datasqrl.plan.local.analyze.ResolveTest;
 import com.datasqrl.plan.queries.APIQuery;
-import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.ResultSetPrinter;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.StreamUtil;
-import com.datasqrl.util.TestRelWriter;
-import com.google.common.base.Preconditions;
+import com.datasqrl.plan.util.RelWriterWithHints;
 import com.google.common.base.Predicates;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,15 +40,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -148,10 +139,10 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
 
   private void addContent(PhysicalDAGPlan dag, String... caseNames) {
     dag.getWriteQueries().stream().sorted(Comparator.comparing(wq -> wq.getSink().getName()))
-        .forEach(mq -> snapshot.addContent(TestRelWriter.explain(mq.getRelNode()),
+        .forEach(mq -> snapshot.addContent(RelWriterWithHints.explain(mq.getRelNode()),
         ArrayUtils.addAll(caseNames, mq.getSink().getName(), "lp-stream")));
     dag.getReadQueries().stream().sorted(Comparator.comparing(rq -> rq.getQuery().getNameId()))
-        .forEach(dq -> snapshot.addContent(TestRelWriter.explain(dq.getRelNode()),
+        .forEach(dq -> snapshot.addContent(RelWriterWithHints.explain(dq.getRelNode()),
         ArrayUtils.addAll(caseNames, dq.getQuery().getNameId(), "lp-database")));
   }
 

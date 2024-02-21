@@ -1,0 +1,80 @@
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : time
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== ProductId
+ID:     productid$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: productid
+Timestamp  : _time
+Schema:
+ - productid: BIGINT NOT NULL
+ - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=productid limit=1 sort=#1: _time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(productid=[$7], _time=[$4])
+  LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+
+=== ProductOrders
+ID:     productorders$1
+Type:   state
+Stage:  database
+Inputs: orders$2, productid$1
+Primary Key: _uuid0, productid, _idx0
+Timestamp  : __timestamp0
+Schema:
+ - id: BIGINT NOT NULL
+ - productid: BIGINT NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _idx0: INTEGER NOT NULL
+ - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$2], productid=[$6], _uuid0=[$0], _idx0=[$8], __timestamp0=[CASE(<($4, $7), $7, $4)])
+  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{5, 6}])
+    LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, VERSIONED_STATE, 0, NONE]]
+      LogicalTableScan(table=[[orders$2]])
+      LogicalTableScan(table=[[productid$1]])
+    LogicalFilter(condition=[=($1, $cor1.productid)])
+      LogicalTableFunctionScan(invocation=[Orders.entries($cor1.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+
+=== suborders
+ID:     suborders$1
+Type:   state
+Stage:  database
+Inputs: orders$2, productid$1
+Primary Key: __pk1$productid, orderid
+Timestamp  : lastOrder
+Schema:
+ - __pk1$productid: BIGINT NOT NULL
+ - orderid: BIGINT NOT NULL
+ - numOrders: BIGINT NOT NULL
+ - lastOrder: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - sort: #0: __pk1$productid BIGINT ASC, #2: numOrders BIGINT DESC
+Plan:
+LogicalAggregate(group=[{0, 1}], numOrders=[COUNT()], lastOrder=[MAX($2)])
+  LogicalProject(__pk1$productid=[$6], orderid=[$2], time=[$4], _uuid=[$0], _idx=[$8])
+    LogicalCorrelate(correlation=[$cor2], joinType=[inner], requiredColumns=[{5, 6}])
+      LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, VERSIONED_STATE, 0, NONE]]
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableScan(table=[[productid$1]])
+      LogicalFilter(condition=[=($1, $cor2.productid)])
+        LogicalTableFunctionScan(invocation=[Orders.entries($cor2.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+

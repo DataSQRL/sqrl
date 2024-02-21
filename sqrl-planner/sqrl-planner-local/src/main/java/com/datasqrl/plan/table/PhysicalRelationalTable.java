@@ -98,7 +98,8 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
 
   @Override
   public void setPlannedRelNode(@NonNull RelNode relNode) {
-    Preconditions.checkArgument(relNode.getRowType().equals(getRowType()), "Row types do not match");
+    Preconditions.checkArgument(relNode.getRowType().equalsSansFieldNames(getRowType()), "Row types do not match");
+    Preconditions.checkArgument(relNode.getRowType().getFieldNames().subList(0,getNumSelects()).equals(getRowType().getFieldNames().subList(0,getNumSelects())), "Names do not match");
     this.plannedRelNode = relNode;
   }
 

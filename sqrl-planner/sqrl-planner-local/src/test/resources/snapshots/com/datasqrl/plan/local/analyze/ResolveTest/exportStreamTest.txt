@@ -1,9 +1,0 @@
->>>countstream$1-lp-STREAM
-LogicalProject(_uuid=[$0], _source_time=[$1], customerid=[$2], num_orders=[$3])
-  LogicalStream(stream=[ADD])
-    LogicalAggregate(group=[{3}], num_orders=[COUNT()], __timestamp=[MAX($4)])
-      LogicalTableScan(table=[[orders$2]])
-
->>>countstream$1-lp-DATABASE
-Stage [database] does not support capabilities: [TO_STREAM]
-

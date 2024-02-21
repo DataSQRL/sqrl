@@ -15,6 +15,7 @@ import org.junit.jupiter.api.TestInfo;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,7 +41,7 @@ public class DAGExporterTest extends AbstractLogicalSQRLIT {
 
     @Test
     public void joinTimestampPropagationTest() {
-        ScriptBuilder builder = imports(false);
+        ScriptBuilder builder = DAGPlannerTest.imports(false);
         builder.add("OrderCustomer1 := SELECT o.id, c.name FROM Orders o JOIN Customer c on o.customerid = c.customerid");
         builder.add("OrderCustomer2 := SELECT o.id, c.name, GREATEST(o._ingest_time, c._ingest_time) AS timestamp FROM Orders o JOIN Customer c on o.customerid = c.customerid");
         builder.add("OrderCustomer3 := SELECT o.id, c.name, p.name FROM Orders o JOIN Customer c on o.customerid = c.customerid JOIN Product p ON p.productid = c.customerid");
@@ -56,20 +57,11 @@ public class DAGExporterTest extends AbstractLogicalSQRLIT {
         SqrlDAGExporter exporter = SqrlDAGExporter.builder()
                 .build();
         List<SqrlDAGExporter.Node> nodes = exporter.export(dag);
+        Collections.sort(nodes); //make order deterministic
         String text = nodes.stream().map(SqrlDAGExporter.Node::toString)
                 .collect(Collectors.joining("\n"));
         snapshot.addContent(text, "TEXT");
         snapshot.addContent(deserializer.toJson(nodes), "JSON");
-    }
-
-
-    private ScriptBuilder imports(boolean useNaturalTimestamp) {
-        ScriptBuilder builder = new ScriptBuilder();
-        builder.append("IMPORT time.*");
-        builder.append("IMPORT ecommerce-data.Customer  TIMESTAMP " + (useNaturalTimestamp? "epochToTimestamp(lastUpdated) AS timestamp" : "_ingest_time"));
-        builder.append("IMPORT ecommerce-data.Orders TIMESTAMP " + (useNaturalTimestamp? "time": "_ingest_time"));
-        builder.append("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time");
-        return builder;
     }
 
 }
