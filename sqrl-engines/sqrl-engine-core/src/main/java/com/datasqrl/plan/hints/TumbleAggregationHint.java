@@ -16,7 +16,7 @@ public class TumbleAggregationHint implements SqrlHint {
   public enum Type {FUNCTION, INSTANT}
 
   @Getter
-  final int timestampIdx;
+  final int windowFunctionIdx;
   @Getter
   final Type type;
   @Getter
@@ -27,18 +27,18 @@ public class TumbleAggregationHint implements SqrlHint {
   final long windowOffsetMs;
 
   public static TumbleAggregationHint instantOf(int timestampIdx) {
-    return new TumbleAggregationHint(timestampIdx, Type.INSTANT, -1, 1, 0);
+    return new TumbleAggregationHint(timestampIdx, Type.INSTANT, timestampIdx, 1, 0);
   }
 
-  public static TumbleAggregationHint functionOf(int timestampIdx, int inputTimestampIdx,
+  public static TumbleAggregationHint functionOf(int windowFunctionIdx, int inputTimestampIdx,
       long windowWidthMs, long windowOffsetMs) {
-    return new TumbleAggregationHint(timestampIdx, Type.FUNCTION, inputTimestampIdx, windowWidthMs, windowOffsetMs);
+    return new TumbleAggregationHint(windowFunctionIdx, Type.FUNCTION, inputTimestampIdx, windowWidthMs, windowOffsetMs);
   }
 
   @Override
   public RelHint getHint() {
     return RelHint.builder(getHintName())
-        .hintOptions(List.of(String.valueOf(timestampIdx), String.valueOf(type),
+        .hintOptions(List.of(String.valueOf(windowFunctionIdx), String.valueOf(type),
             String.valueOf(inputTimestampIdx), String.valueOf(windowWidthMs),
             String.valueOf(windowOffsetMs))).build();
   }
