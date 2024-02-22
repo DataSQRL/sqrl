@@ -821,12 +821,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     SelectIndexMap joinedIndexMap = leftInput.select.join(rightInput.select, leftSideMaxIdx, false);
 
     if (rightInput.type==TableType.STATIC) {
-      //TODO: generalize to arbitrary table functions
       RelBuilder relB = makeRelBuilder();
       relB.push(leftInput.relNode);
       List<RexNode> requiredNodes = logicalCorrelate.getRequiredColumns().asList().stream().map(leftInput.select::map)
               .map(idx -> rexUtil.makeInputRef(idx, relB)).collect(Collectors.toList());
-      Preconditions.checkArgument(requiredNodes.stream().map(RexNode::getType).anyMatch(CalciteUtil::isNestedTable));
       relB.push(rightInput.relNode);
       relB.correlate(logicalCorrelate.getJoinType(), logicalCorrelate.getCorrelationId(), requiredNodes);
       PrimaryKeyMap.Builder pkBuilder = leftInput.getPrimaryKey().toBuilder();
@@ -840,7 +838,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
     leftInput = leftInput.inlineNowFilter(makeRelBuilder(), exec);
     rightInput = rightInput.inlineNowFilter(makeRelBuilder(), exec);
-    throw new UnsupportedOperationException("Correlate not yet supported");
+    throw new UnsupportedOperationException("Correlate currently only supported on table functions and static data");
   }
 
   private JoinModifier getJoinModifier(ImmutableList<RelHint> hints) {
