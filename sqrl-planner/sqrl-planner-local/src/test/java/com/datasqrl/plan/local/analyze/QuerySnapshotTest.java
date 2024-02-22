@@ -650,6 +650,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled("no longer supported")
   public void importWithTimestamp() {
     validateScript("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time AS c_ts;");
     RelOptTable table = framework.getCatalogReader().getTableFromPath(Name.system("Customer").toNamePath());
@@ -659,6 +660,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
   }
 
   @Test
+  @Disabled("no longer supported")
   public void importWithTimestampAndAlias() {
     validateScript("IMPORT ecommerce-data.Customer AS C2 TIMESTAMP _ingest_time AS c_ts;");
     RelOptTable table = framework.getCatalogReader().getTableFromPath(Name.system("C2").toNamePath());
@@ -865,7 +867,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
   @Test
   public void unionTest() {
-    validateScriptInvalid("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;\n"
+    validateScript("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;\n"
         + "Product2 := SELECT * FROM Product UNION DISTINCT SELECT * FROM Product;");
   }
 
