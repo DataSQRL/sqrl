@@ -316,6 +316,15 @@ public class DAGPlannerTest extends AbstractLogicalSQRLIT {
         validateTables(builder);
     }
 
+    @Test
+    @Disabled("add once we support its supported in parser")
+    public void staticDataTest() {
+        ScriptBuilder builder = imports(true);
+        builder.add("Numbers := SELECT * FROM (VALUES (1), (2), (3), (4), (5)) AS T(id)");
+        builder.add("OrderNumbers := SELECT o.id, o.time FROM Orders o JOIN Numbers n WHERE o.customerid = n.id");
+        validateTables(builder);
+    }
+
   /*
   ===== EXPORT TESTS ======
    */
