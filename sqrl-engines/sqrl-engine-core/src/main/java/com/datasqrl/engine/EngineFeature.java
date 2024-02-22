@@ -35,8 +35,8 @@ public enum EngineFeature {
   PULLUP_OPTIMIZATION,
   //Writing/upserting data into engine by primary key will deduplicate data
   MATERIALIZE_ON_KEY,
-  //Engine supports union of state
-  UNION_STATE,
+  //Engine supports relations (i.e. no primary key)
+  RELATIONS,
   //Engine supports data monitoring
   DATA_MONITORING;
 
@@ -45,7 +45,7 @@ public enum EngineFeature {
       EXPORT, PULLUP_OPTIMIZATION, DATA_MONITORING);
 
   public static EnumSet<EngineFeature> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
-      MULTI_RANK, TABLE_FUNCTION_SCAN, UNION_STATE, DENORMALIZE);
+      MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS, DENORMALIZE);
 
   public static EnumSet<EngineFeature> NO_CAPABILITIES = EnumSet.noneOf(EngineFeature.class);
 }

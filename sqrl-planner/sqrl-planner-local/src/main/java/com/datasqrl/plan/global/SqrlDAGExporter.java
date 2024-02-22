@@ -65,8 +65,8 @@ public class SqrlDAGExporter {
                         .stage(stage)
                         .inputs(importInput!=null?List.of(importInput):inputs)
                         .plan(explain(table.getPlannedRelNode()))
-                        .primary_key(table.getPrimaryKey().asList().stream().map(fields::get).map(RelDataTypeField::getName).collect(Collectors.toUnmodifiableList()))
-                        .timestamp(table.getTimestamp().is(Timestamps.Type.UNDEFINED)?"none":fields.get(table.getTimestamp().getOnlyCandidate()).getName())
+                        .primary_key(table.getPrimaryKey().isUndefined()?null:table.getPrimaryKey().asList().stream().map(fields::get).map(RelDataTypeField::getName).collect(Collectors.toUnmodifiableList()))
+                        .timestamp(table.getTimestamp().is(Timestamps.Type.UNDEFINED)?"-":fields.get(table.getTimestamp().getOnlyCandidate()).getName())
                         .schema(fields.stream().map(field -> new SchemaColumn(field.getName(), field.getType().getFullTypeString())).collect(Collectors.toUnmodifiableList()))
                         .post_processors(convert(table.getPullups(),fields))
                         .build());
@@ -237,7 +237,7 @@ public class SqrlDAGExporter {
         public String toString() {
             StringBuilder s = new StringBuilder();
             s.append(baseToString());
-            s.append("Primary Key: ").append(StringUtils.join(primary_key,", ")).append(LINEBREAK);
+            s.append("Primary Key: ").append(primary_key==null?"-":StringUtils.join(primary_key,", ")).append(LINEBREAK);
             s.append("Timestamp  : ").append(timestamp).append(LINEBREAK);
             s.append("Schema:").append(LINEBREAK);
             toListString(s, schema);

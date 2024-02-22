@@ -304,6 +304,18 @@ public class DAGPlannerTest extends AbstractLogicalSQRLIT {
         validateTables(builder);
     }
 
+    @Test
+    public void setOperationRelationTest() {
+        ScriptBuilder builder = imports(true);
+        builder.add("Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC");
+        builder.add("CombinedIds","SELECT o.customerid FROM Orders o" +
+                " UNION " +
+                "SELECT c.customerid FROM Customer c;");
+        builder.add("OrderJoin","SELECT o.id, o.time, GREATEST(o.customerid, i.customerid) AS newid FROM Orders o JOIN CombinedIds i ON o.customerid = i.customerid ORDER BY o.time DESC LIMIT 10");
+        builder.add("CombinedIdsCount","SELECT COUNT(customerid) AS num_count FROM CombinedIds");
+        validateTables(builder);
+    }
+
   /*
   ===== EXPORT TESTS ======
    */

@@ -182,7 +182,6 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   private AnnotatedLP createAnnotatedRootTable(RelNode relNode, PhysicalRelationalTable table) {
     config.getSourceTableConsumer().accept(table);
     table.lock();
-    Preconditions.checkArgument(table.getTimestamp().hasCandidates(), "Table is missing timestamp: %s", table);
     int numColumns = table.getNumColumns();
     PullupOperator.Container pullups = table.getPullups();
 

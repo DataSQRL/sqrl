@@ -333,6 +333,8 @@ public class AnnotatedLP implements RelHolder {
             inlined).build();
   }
 
+  private static final int PK_LITERAL_IDENTIFIER = -10;
+
 
   /**
    * Postprocessing constructs the final RelNode to be almost identical to the user defined
@@ -352,6 +354,7 @@ public class AnnotatedLP implements RelHolder {
   public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
       ExecutionAnalysis exec, ErrorCollector errors) {
     errors.checkFatal(type!=TableType.LOOKUP, "Lookup tables can only be used in temporal joins");
+    if (type==TableType.RELATION) exec.requireFeature(EngineFeature.RELATIONS);
 
     AnnotatedLP input = this;
     relBuilder.push(input.relNode);
@@ -383,64 +386,75 @@ public class AnnotatedLP implements RelHolder {
       projectNames.add(originalFieldNames.get(i));
     }
     //Add any primary key columns not already added and select the best one in case of duplicates
-    List<Integer> chosenPks = new ArrayList<>();
-    for (int i = 0; i < input.primaryKey.getLength(); i++) {
-      PrimaryKeyMap.ColumnSet columnSet = input.primaryKey.get(i);
-      //Find all indexes that map onto pk columns
-      int[] newPkIndexes = IntStream.range(0, projectIndexes.size()).filter(idx -> columnSet.contains(projectIndexes.get(idx))).toArray();
-      List<Integer> oldPkIndexes = Arrays.stream(newPkIndexes).mapToObj(projectIndexes::get).collect(Collectors.toList());
-      if (newPkIndexes.length>1) {
-        errors.warn(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
-                oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
+    PrimaryKeyMap primaryKey;
+    if (!input.primaryKey.isUndefined()) {
+      List<Integer> chosenPks = new ArrayList<>();
+      for (int i = 0; i < input.primaryKey.getLength(); i++) {
+        PrimaryKeyMap.ColumnSet columnSet = input.primaryKey.get(i);
+        //Find all indexes that map onto pk columns
+        int[] newPkIndexes = IntStream.range(0, projectIndexes.size()).filter(idx -> columnSet.contains(projectIndexes.get(idx))).toArray();
+        List<Integer> oldPkIndexes = Arrays.stream(newPkIndexes).mapToObj(projectIndexes::get).collect(Collectors.toList());
+        if (newPkIndexes.length > 1) {
+          errors.warn(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
+                  oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
+        }
+        if (newPkIndexes.length == 0) {
+          //Append pk column
+          oldPkIndexes = columnSet.getIndexes().stream().sorted().collect(Collectors.toList());
+        }
+        assert !oldPkIndexes.isEmpty();
+        //If we have multiple options for pk column, pick the first not-null one
+        int oldChosenPkIdx = oldPkIndexes.stream().filter(idx -> !getField.apply(idx).getType().isNullable()).findFirst()
+                .orElse(oldPkIndexes.get(0));
+        if (getField.apply(oldChosenPkIdx).getType().isNullable()) {
+          errors.warn(PRIMARY_KEY_NULLABLE, "The primary key field(s) [%s] are nullable",
+                  oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
+        }
+        int newChosenPkIdx;
+        if (newPkIndexes.length == 0) {
+          //Need to append
+          newChosenPkIdx = projectIndexes.size();
+          projectIndexes.add(oldChosenPkIdx);
+          projectNames.add(makeMeta.apply(oldChosenPkIdx));
+        } else {
+          newChosenPkIdx = newPkIndexes[oldPkIndexes.indexOf(oldChosenPkIdx)];
+        }
+        chosenPks.add(newChosenPkIdx);
       }
-      if (newPkIndexes.length==0) {
-        //Append pk column
-        oldPkIndexes = columnSet.getIndexes().stream().sorted().collect(Collectors.toList());
+      if (input.primaryKey.getLength() == 0) {
+        //If we don't have a primary key, we add a static one to resolve uniqueness in the database
+        chosenPks = List.of(projectIndexes.size());
+        projectIndexes.add(PK_LITERAL_IDENTIFIER);
+        projectNames.add(ReservedName.SYSTEM_PRIMARY_KEY.getDisplay());
       }
-      assert !oldPkIndexes.isEmpty();
-      //If we have multiple options for pk column, pick the first not-null one
-      int oldChosenPkIdx = oldPkIndexes.stream().filter(idx -> !getField.apply(idx).getType().isNullable()).findFirst()
-              .orElse(oldPkIndexes.get(0));
-      if (getField.apply(oldChosenPkIdx).getType().isNullable()) {
-        errors.warn(PRIMARY_KEY_NULLABLE, "The primary key field(s) [%s] are nullable",
-                oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
-      }
-      int newChosenPkIdx;
-      if (newPkIndexes.length==0) {
-        //Need to append
-        newChosenPkIdx = projectIndexes.size();
-        projectIndexes.add(oldChosenPkIdx);
-        projectNames.add(makeMeta.apply(oldChosenPkIdx));
-      } else {
-        newChosenPkIdx = newPkIndexes[oldPkIndexes.indexOf(oldChosenPkIdx)];
-      }
-      chosenPks.add(newChosenPkIdx);
+      primaryKey = PrimaryKeyMap.of(chosenPks);
+    } else {
+      primaryKey = PrimaryKeyMap.UNDEFINED;
     }
-    final int PK_LITERAL_IDENTIFIER = -10;
-    if (input.primaryKey.getLength() == 0) {
-      //If we don't have a primary key, we add a static one to resolve uniqueness in the database
-      chosenPks = List.of(projectIndexes.size());
-      projectIndexes.add(PK_LITERAL_IDENTIFIER);
-      projectNames.add(ReservedName.SYSTEM_PRIMARY_KEY.getDisplay());
-    }
-    //Determine which timestamp candidates have already been mapped and map the candidates accordingly
-    Timestamps.TimestampsBuilder timestampBuilder = Timestamps.build(Type.OR);
-    boolean mappedAny = false;
-    for (Integer timeIdx : input.timestamp.getCandidates()) {
-      int newIdx = projectIndexes.indexOf(timeIdx);
-      if (newIdx>=0) {
-        timestampBuilder.candidate(newIdx);
-        mappedAny=true;
-        break;
-      }
-    }
-    if (!mappedAny) {
-      //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
-      Integer bestCandidate = input.timestamp.getBestCandidate(relBuilder);
-      timestampBuilder.candidate(projectIndexes.size());
-      projectIndexes.add(bestCandidate);
-      projectNames.add(makeMeta.apply(bestCandidate));
 
+    //Determine which timestamp candidates have already been mapped and map the candidates accordingly
+    Timestamps.TimestampsBuilder timestampBuilder;
+    if (input.timestamp.is(Type.UNDEFINED)) {
+      timestampBuilder = Timestamps.builder().type(Type.UNDEFINED);
+    } else {
+      timestampBuilder = Timestamps.builder().type(Type.OR);
+      boolean mappedAny = false;
+      for (Integer timeIdx : input.timestamp.getCandidates()) {
+        int newIdx = projectIndexes.indexOf(timeIdx);
+        if (newIdx >= 0) {
+          timestampBuilder.candidate(newIdx);
+          mappedAny = true;
+          break;
+        }
+      }
+      if (!mappedAny) {
+        //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
+        Integer bestCandidate = input.timestamp.getBestCandidate(relBuilder);
+        timestampBuilder.candidate(projectIndexes.size());
+        projectIndexes.add(bestCandidate);
+        projectNames.add(makeMeta.apply(bestCandidate));
+
+      }
     }
 
     //Make sure we preserve sort orders if they aren't selected
@@ -464,7 +478,6 @@ public class AnnotatedLP implements RelHolder {
     relBuilder.project(projects, projectNames);
     RelNode relNode = relBuilder.build();
 
-    PrimaryKeyMap primaryKey = PrimaryKeyMap.of(chosenPks);
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
         timestampBuilder.build(), updatedSelect,

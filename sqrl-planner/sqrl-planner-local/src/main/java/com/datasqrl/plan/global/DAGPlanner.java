@@ -58,13 +58,17 @@ public class DAGPlanner {
         //If we eliminated stages, we make sure to eliminate all inviable stages
         dag.eliminateInviableStages(pipeline);
       }
+      //Assign stage to table
+      if (node instanceof SqrlDAG.TableNode) {
+        PhysicalTable table = ((SqrlDAG.TableNode) node).getTable();
+        ExecutionStage stage = node.getChosenStage();
+        Preconditions.checkNotNull(stage);
+        table.assignStage(stage); //this stage on the config below
+      }
     }
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
-      ExecutionStage stage = tableNode.getChosenStage();
-      Preconditions.checkNotNull(stage);
       PhysicalTable table = tableNode.getTable();
-      table.assignStage(stage); //this stage on the config below
       SQRLConverter.Config config = table.getBaseConfig().build();
       table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
     });
