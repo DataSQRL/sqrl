@@ -11,6 +11,8 @@ import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.DedupHint;
+import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.hints.TopNHint;
 import com.datasqrl.plan.table.*;
 import com.datasqrl.plan.table.Timestamps.Type;
 import com.datasqrl.plan.util.SelectIndexMap;
@@ -24,6 +26,7 @@ import com.google.common.collect.ContiguousSet;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
@@ -353,127 +356,115 @@ public class AnnotatedLP implements RelHolder {
     AnnotatedLP input = this;
     relBuilder.push(input.relNode);
 
-    HashMap<Integer, Integer> remapping = new HashMap<>();
-    Set<Integer> isMetadata = new HashSet<>();
-    int index = 0;
+    Function<Integer,RelDataTypeField> getField = i -> relBuilder.peek().getRowType().getFieldList().get(i);
+    Function<Integer,String> getFieldName = i -> getField.apply(i).getName();
+
+    List<String> originalFieldNames;
+    NameAdjuster nameAdjuster;
+    if (originalRelNode!=null && SqrlHint.fromRel(originalRelNode, TopNHint.CONSTRUCTOR)
+            .filter(topN -> topN.getType()== TopNHint.Type.DISTINCT_ON).isEmpty()) {
+      //We use the original field names because we may have lost them in processing
+      originalFieldNames = originalRelNode.getRowType().getFieldNames();
+      nameAdjuster = new NameAdjuster(originalFieldNames);
+    } else {
+      originalFieldNames = Collections.nCopies(input.select.getSourceLength(),null);
+      nameAdjuster = new NameAdjuster(input.select.targetsAsList().stream().map(getFieldName)
+              .collect(Collectors.toList()));
+    }
+    Preconditions.checkArgument(originalFieldNames.size()==input.select.getSourceLength());
+
+    Function<Integer,String> makeMeta = i -> nameAdjuster.uniquifyName(Name.hiddenString(getFieldName.apply(i)));
+
+    List<Integer> projectIndexes = new ArrayList<>();
+    List<String> projectNames = new ArrayList<>();
     //Add all the selects first
     for (int i = 0; i < input.select.getSourceLength(); i++) {
-      remapping.put(input.select.map(i), index++);
+      projectIndexes.add(input.select.map(i));
+      projectNames.add(originalFieldNames.get(i));
     }
-    //Add any primary key columns not already added
+    //Add any primary key columns not already added and select the best one in case of duplicates
+    List<Integer> chosenPks = new ArrayList<>();
     for (int i = 0; i < input.primaryKey.getLength(); i++) {
       PrimaryKeyMap.ColumnSet columnSet = input.primaryKey.get(i);
-      Set<Integer> mappedColumns = Sets.intersection(columnSet.getIndexes(), remapping.keySet());
-      if (mappedColumns.isEmpty()) {
-        //Pick smallest column index and append
-        int pkIndex = columnSet.getIndexes().stream().sorted().findFirst().get();
-        isMetadata.add(index);
-        remapping.put(pkIndex, index++);
+      //Find all indexes that map onto pk columns
+      int[] newPkIndexes = IntStream.range(0, projectIndexes.size()).filter(idx -> columnSet.contains(projectIndexes.get(idx))).toArray();
+      List<Integer> oldPkIndexes = Arrays.stream(newPkIndexes).mapToObj(projectIndexes::get).collect(Collectors.toList());
+      if (newPkIndexes.length>1) {
+        errors.warn(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
+                oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
       }
+      if (newPkIndexes.length==0) {
+        //Append pk column
+        oldPkIndexes = columnSet.getIndexes().stream().sorted().collect(Collectors.toList());
+      }
+      assert !oldPkIndexes.isEmpty();
+      //If we have multiple options for pk column, pick the first not-null one
+      int oldChosenPkIdx = oldPkIndexes.stream().filter(idx -> !getField.apply(idx).getType().isNullable()).findFirst()
+              .orElse(oldPkIndexes.get(0));
+      if (getField.apply(oldChosenPkIdx).getType().isNullable()) {
+        errors.warn(PRIMARY_KEY_NULLABLE, "The primary key field(s) [%s] are nullable",
+                oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
+      }
+      int newChosenPkIdx;
+      if (newPkIndexes.length==0) {
+        //Need to append
+        newChosenPkIdx = projectIndexes.size();
+        projectIndexes.add(oldChosenPkIdx);
+        projectNames.add(makeMeta.apply(oldChosenPkIdx));
+      } else {
+        newChosenPkIdx = newPkIndexes[oldPkIndexes.indexOf(oldChosenPkIdx)];
+      }
+      chosenPks.add(newChosenPkIdx);
     }
-
-    int addedPkIndex;
+    final int PK_LITERAL_IDENTIFIER = -10;
     if (input.primaryKey.getLength() == 0) {
       //If we don't have a primary key, we add a static one to resolve uniqueness in the database
-      isMetadata.add(index);
-      addedPkIndex = index++;
-    } else {
-      addedPkIndex = -1;
+      chosenPks = List.of(projectIndexes.size());
+      projectIndexes.add(PK_LITERAL_IDENTIFIER);
+      projectNames.add(ReservedName.SYSTEM_PRIMARY_KEY.getDisplay());
     }
     //Determine which timestamp candidates have already been mapped and map the candidates accordingly
     Timestamps.TimestampsBuilder timestampBuilder = Timestamps.build(Type.OR);
     boolean mappedAny = false;
     for (Integer timeIdx : input.timestamp.getCandidates()) {
-      Integer mappedIndex;
-      if ((mappedIndex = remapping.get(timeIdx))!=null) {
-        timestampBuilder.candidate(mappedIndex);
-        mappedAny = true;
-        break; //We only map the first timestamp if there are multiple
+      int newIdx = projectIndexes.indexOf(timeIdx);
+      if (newIdx>=0) {
+        timestampBuilder.candidate(newIdx);
+        mappedAny=true;
+        break;
       }
     }
     if (!mappedAny) {
       //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
       Integer bestCandidate = input.timestamp.getBestCandidate(relBuilder);
-      int nextIndex = index++;
-      isMetadata.add(nextIndex);
-      remapping.put(bestCandidate, nextIndex);
-      timestampBuilder.candidate(nextIndex);
+      timestampBuilder.candidate(projectIndexes.size());
+      projectIndexes.add(bestCandidate);
+      projectNames.add(makeMeta.apply(bestCandidate));
+
     }
 
     //Make sure we preserve sort orders if they aren't selected
     for (RelFieldCollation fieldcol : input.sort.getCollation().getFieldCollations()) {
-      if (!remapping.containsKey(fieldcol.getFieldIndex())) {
-        isMetadata.add(index);
-        remapping.put(fieldcol.getFieldIndex(), index++);
+      int newIdx = projectIndexes.indexOf(fieldcol.getFieldIndex());
+      if (newIdx < 0) {
+        projectIndexes.add(fieldcol.getFieldIndex());
+        projectNames.add(makeMeta.apply(fieldcol.getFieldIndex()));
       }
     }
 
-    int projectLength = index;
-    RelDataType rowType = relBuilder.peek().getRowType();
-    int inputLength = rowType.getFieldCount();
-    List<RelDataTypeField> fieldList = rowType.getFieldList();
-    Preconditions.checkArgument(remapping.keySet().stream().allMatch(idx -> idx < inputLength)
-            && remapping.size() + (addedPkIndex>=0 ? 1 : 0) == index && projectLength <= inputLength + (addedPkIndex>=0
-            ? 1 : 0), "Selected field counts don't add up");
-    IndexMap remap = IndexMap.of(remapping);
-    SelectIndexMap updatedSelect = input.select.remap(remap);
-    Preconditions.checkArgument(updatedSelect.isIdentity(), "Something went wrong in mapping selected fields: %s", updatedSelect);
+    Preconditions.checkArgument(projectIndexes.size()==projectNames.size());
 
-    List<RexNode> projects = new ArrayList<>(projectLength);
-    List<String> updatedFieldNames = new ArrayList<>(projectLength);
+    List<RexNode> projects = projectIndexes.stream().map(idx ->
+            idx==PK_LITERAL_IDENTIFIER?relBuilder.literal(1):RexInputRef.of(idx, relBuilder.peek().getRowType()))
+            .collect(Collectors.toUnmodifiableList());
 
-    NameAdjuster nameAdjuster = new NameAdjuster(remapping.keySet().stream().map(i -> fieldList.get(i).getName())
-            .collect(Collectors.toUnmodifiableList()));
-    List<IndexMap.Pair> mappings = remapping.entrySet().stream().map(e -> new IndexMap.Pair(e.getKey(), e.getValue())).collect(Collectors.toList());
-    if (addedPkIndex>=0) mappings.add(new IndexMap.Pair(-1,addedPkIndex));
-    mappings.stream().sorted((a, b) -> Integer.compare(a.getTarget(), b.getTarget()))
-            .forEach(p -> {
-              int position = p.getTarget();
-              int reference = p.getSource();
-              if (position==addedPkIndex) {
-                projects.add(position, relBuilder.literal(1));
-                updatedFieldNames.add(position, ReservedName.SYSTEM_PRIMARY_KEY.getDisplay());
-              } else {
-                projects.add(position, RexInputRef.of(reference, rowType));
-                if (isMetadata.contains(position)) {
-                  //Rename field to "hide" it
-                  String name = fieldList.get(reference).getName();
-                  name = nameAdjuster.uniquifyName(Name.hiddenString(name));
-                  updatedFieldNames.add(position, name);
-                } else {
-                  updatedFieldNames.add(position, null); //Preserve name
-                }
-              }
-            });
+    IndexMap remap = IndexMap.of(projectIndexes);
+    SelectIndexMap updatedSelect = SelectIndexMap.identity(input.select.getSourceLength(), input.select.getSourceLength());
 
-
-    relBuilder.project(projects, updatedFieldNames);
+    relBuilder.project(projects, projectNames);
     RelNode relNode = relBuilder.build();
 
-    List<RelDataTypeField> fields = relNode.getRowType().getFieldList();
-    Function<Integer,String> getFieldName = idx -> fields.get(idx).getName();
-
-    PrimaryKeyMap primaryKey;
-    if (addedPkIndex>=0) {
-      primaryKey = PrimaryKeyMap.of(new int[]{addedPkIndex});
-    } else {
-      PrimaryKeyMap remappedPk = input.primaryKey.remap(remap);
-      List<Integer> chosenColumns = remappedPk.asList().stream()
-              .map(col -> {
-                assert col.getIndexes().size()>0;
-                if (col.getIndexes().size()>1) {
-                  errors.warn(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
-                          col.getIndexes().stream().map(getFieldName));
-                }
-                //Let's pick the first non-null version
-                int chosen = col.pickBest(relNode.getRowType());
-                if (fields.get(chosen).getType().isNullable()) {
-                  errors.warn(PRIMARY_KEY_NULLABLE, "The primary key field(s) [%s] are nullable", col.getIndexes().stream().map(getFieldName));
-                }
-                return chosen;
-              }).collect(Collectors.toUnmodifiableList());
-      primaryKey = PrimaryKeyMap.of(chosenColumns);
-    }
+    PrimaryKeyMap primaryKey = PrimaryKeyMap.of(chosenPks);
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
         timestampBuilder.build(), updatedSelect,

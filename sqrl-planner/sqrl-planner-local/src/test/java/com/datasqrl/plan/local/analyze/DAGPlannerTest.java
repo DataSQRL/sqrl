@@ -253,6 +253,7 @@ public class DAGPlannerTest extends AbstractLogicalSQRLIT {
     public void topNTest() {
         ScriptBuilder builder = imports(true);
         builder.add("Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC;");
+        //TODO: @Daniel - the topN hint is coming through wrong - it's on index 2 instead of 0.
         builder.add(
                 "Customer.recentOrders","SELECT o.id, o.time FROM @ TEMPORAL JOIN Orders o WHERE @.customerid = o.customerid ORDER BY o.time DESC LIMIT 10;");
         validateTables(builder);

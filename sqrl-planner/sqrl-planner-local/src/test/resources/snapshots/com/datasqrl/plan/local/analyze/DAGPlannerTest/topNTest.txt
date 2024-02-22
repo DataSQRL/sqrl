@@ -57,17 +57,17 @@ ID:     recentorders$1
 Type:   state
 Stage:  streams
 Inputs: customer$3, orders$2
-Primary Key: time, _uuid0
+Primary Key: time, _uuid
 Timestamp  : time
 Schema:
- - customerid0: BIGINT NOT NULL
+ - __pk3$customerid: BIGINT NOT NULL
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Post Processors:
  - topN: partition=time limit=10 sort=#2: time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
 Plan:
-LogicalProject(customerid0=[$8], id=[$2], time=[$4], _uuid0=[$0])
+LogicalProject(__pk3$customerid=[$8], id=[$2], time=[$4], _uuid=[$0])
   LogicalJoin(condition=[=($8, $3)], joinType=[inner]) hints[TemporalJoinHint options:[4, 6, 2]]
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($7, 1)]) hints[DedupHint]

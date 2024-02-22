@@ -1,7 +1,7 @@
 >>>errors
 [FATAL] At line 2, column 13: Expression 'productid' is not being grouped
 in script:<script> [2:13]:
-IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
 X := SELECT productid, SUM(productid) AS sumid FROM Product GROUP BY name
 ------------^
 

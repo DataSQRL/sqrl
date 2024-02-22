@@ -1,7 +1,7 @@
 >>>errors
 [FATAL] At line 6, column 7: Column 'x' not found in any table
 in script:<script> [6:7]:
-IMPORT time.*;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
 Customer2 := SELECT * FROM Customer
 WHERE x = null;
 ------^

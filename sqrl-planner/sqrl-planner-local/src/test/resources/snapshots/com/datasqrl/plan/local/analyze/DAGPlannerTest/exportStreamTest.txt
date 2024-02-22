@@ -21,16 +21,16 @@ ID:     joinstream$1
 Type:   stream
 Stage:  streams
 Inputs: customer$2, orders$2
-Primary Key: _uuid1, _uuid00
-Timestamp  : __timestamp0
+Primary Key: _uuid, _uuid0
+Timestamp  : __timestamp
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - _uuid1: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - _uuid00: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(id=[$2], name=[$10], _uuid1=[$0], _uuid00=[$6], __timestamp0=[CASE(<($4, $12), $12, $4)])
+LogicalProject(id=[$2], name=[$10], _uuid=[$0], _uuid0=[$6], __timestamp=[CASE(<($4, $12), $12, $4)])
   LogicalJoin(condition=[=($8, $3)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
     LogicalTableScan(table=[[orders$2]])
     LogicalTableScan(table=[[customer$2]])

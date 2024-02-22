@@ -19,16 +19,16 @@ ID:     ordercustomer1$1
 Type:   stream
 Stage:  database
 Inputs: customer$2, orders$2
-Primary Key: _uuid1, _uuid00
-Timestamp  : __timestamp0
+Primary Key: _uuid, _uuid0
+Timestamp  : __timestamp
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - _uuid1: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - _uuid00: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(id=[$2], name=[$10], _uuid1=[$0], _uuid00=[$6], __timestamp0=[CASE(<($1, $7), $7, $1)])
+LogicalProject(id=[$2], name=[$10], _uuid=[$0], _uuid0=[$6], __timestamp=[CASE(<($1, $7), $7, $1)])
   LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
     LogicalTableScan(table=[[orders$2]])
     LogicalTableScan(table=[[customer$2]])
@@ -38,16 +38,16 @@ ID:     ordercustomer2$1
 Type:   stream
 Stage:  database
 Inputs: customer$2, orders$2
-Primary Key: _uuid1, _uuid00
+Primary Key: _uuid, _uuid0
 Timestamp  : timestamp
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - _uuid1: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - _uuid00: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalProject(id=[$2], name=[$10], timestamp=[GREATEST($1, $7)], _uuid1=[$0], _uuid00=[$6])
+LogicalProject(id=[$2], name=[$10], timestamp=[GREATEST($1, $7)], _uuid=[$0], _uuid0=[$6])
   LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
     LogicalTableScan(table=[[orders$2]])
     LogicalTableScan(table=[[customer$2]])
@@ -57,18 +57,18 @@ ID:     ordercustomer3$1
 Type:   stream
 Stage:  database
 Inputs: customer$2, orders$2, product$2
-Primary Key: _uuid2, _uuid00, _uuid10
-Timestamp  : __timestamp0
+Primary Key: _uuid, _uuid0, _uuid1
+Timestamp  : __timestamp
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - _uuid2: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - _uuid00: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - _uuid10: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid1: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(id=[$2], name=[$10], name0=[$15], _uuid2=[$0], _uuid00=[$6], _uuid10=[$12], __timestamp0=[CASE(<($1, $7), CASE(<($7, $13), $13, $7), CASE(<($1, $13), $13, $1))])
+LogicalProject(id=[$2], name=[$10], name0=[$15], _uuid=[$0], _uuid0=[$6], _uuid1=[$12], __timestamp=[CASE(<($1, $7), CASE(<($7, $13), $13, $7), CASE(<($1, $13), $13, $1))])
   LogicalJoin(condition=[=($14, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
     LogicalJoin(condition=[=($3, $8)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STREAM, 1, NONE]]
       LogicalTableScan(table=[[orders$2]])

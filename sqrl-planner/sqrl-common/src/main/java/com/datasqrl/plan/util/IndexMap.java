@@ -15,6 +15,7 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -78,6 +79,15 @@ public interface IndexMap {
       Integer map = mapping.get(idx);
       return map!=null?map:-1;
     };
+  }
+
+  static IndexMap of (final List<Integer> references) {
+    final Map<Integer,Integer> mapping = new HashMap<>();
+    for (int target = 0; target < references.size(); target++) {
+      int source = references.get(target);
+      if (source>=0) mapping.putIfAbsent(source,target);
+    }
+    return of(mapping);
   }
 
   static IndexMap singleton(final int source, final int target) {

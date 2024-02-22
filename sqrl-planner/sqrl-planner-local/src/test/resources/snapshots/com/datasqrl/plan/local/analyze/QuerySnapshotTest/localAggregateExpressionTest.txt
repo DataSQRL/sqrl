@@ -1,7 +1,7 @@
 >>>errors
 [FATAL] Aggregate functions not yet allowed
 in script:<script> [2:18]:
-IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
 Product.total := SUM(productid);
 -----------------^
 

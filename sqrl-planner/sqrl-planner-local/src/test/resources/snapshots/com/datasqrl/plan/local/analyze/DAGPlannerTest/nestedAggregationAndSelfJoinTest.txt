@@ -38,15 +38,15 @@ ID:     entrycount$1
 Type:   stream
 Stage:  streams
 Inputs: orders$2
-Primary Key: _uuid0, _idx0
+Primary Key: _uuid, _idx
 Timestamp  : _time
 Schema:
  - price: DOUBLE
- - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - _idx0: INTEGER NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _idx: INTEGER NOT NULL
  - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(price=[-(*($8, $9), $10)], _uuid0=[$0], _idx0=[$6], _time=[$4])
+LogicalProject(price=[-(*($8, $9), $10)], _uuid=[$0], _idx=[$6], _time=[$4])
   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$2]])
     LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
@@ -97,7 +97,7 @@ Schema:
  - total_num: BIGINT NOT NULL
 Plan:
 LogicalAggregate(group=[{0, 1}], total_price=[SUM($2)], total_num=[SUM($3)]) hints[TumbleAggregationHint options:[1, FUNCTION, 5, 86400000, 0]]
-  LogicalProject(__pk2$customerid=[$8], day=[endOfDay($2)], price=[$3], num=[$4], _uuid0=[$5], time=[$2])
+  LogicalProject(__pk2$customerid=[$8], day=[endOfDay($2)], price=[$3], num=[$4], _uuid=[$5], time=[$2])
     LogicalJoin(condition=[=($1, $8)], joinType=[inner]) hints[TemporalJoinHint options:[2, 1, 2]]
       LogicalTableScan(table=[[ordersinline$1]])
       LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
@@ -109,7 +109,7 @@ ID:     ordersinline$1
 Type:   stream
 Stage:  streams
 Inputs: orders$2, total$1
-Primary Key: _uuid0
+Primary Key: _uuid
 Timestamp  : time
 Schema:
  - id: BIGINT NOT NULL
@@ -117,9 +117,9 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - price: DOUBLE
  - num: BIGINT NOT NULL
- - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalProject(id=[$2], customerid=[$3], time=[$4], price=[$7], num=[$8], _uuid0=[$0])
+LogicalProject(id=[$2], customerid=[$3], time=[$4], price=[$7], num=[$8], _uuid=[$0])
   LogicalJoin(condition=[AND(=($0, $6), =($10, $4))], joinType=[inner]) hints[IntervalJoin]
     LogicalTableScan(table=[[orders$2]])
     LogicalTableScan(table=[[total$1]])

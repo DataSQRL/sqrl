@@ -1,7 +1,7 @@
 >>>errors
 [FATAL] At line 3, column 20: Column 'joinDeclaration' not found in any table
 in script:<script> [3:20]:
-IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
 Product.joinDeclaration := JOIN Product ON @.productid = Product.productid;
 Product2 := SELECT joinDeclaration FROM Product;
 -------------------^

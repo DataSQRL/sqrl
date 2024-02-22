@@ -339,12 +339,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
 
     //Check if this is a topN constraint
-    SelectIndexMap trivialMap = getTrivialMapping(logicalProject, rawInput.select);
+    Pair<SelectIndexMap, Boolean> trivialMapResult = getTrivialMapping(logicalProject, rawInput.select);
     Optional<TopNHint> topNHintOpt = SqrlHint.fromRel(logicalProject, TopNHint.CONSTRUCTOR);
-    Preconditions.checkArgument(topNHintOpt.isEmpty() || trivialMap!=null);
-    if (trivialMap!=null && topNHintOpt.isEmpty()) {
-      return setRelHolder(rawInput.copy().select(trivialMap).build());
-    } else if (trivialMap!=null) {
+    Preconditions.checkArgument(topNHintOpt.isEmpty() || trivialMapResult!=null);
+    if (topNHintOpt.isPresent()) { //implies trivialMap!=null
       TopNHint topNHint = topNHintOpt.get();
 
       RelNode base = logicalProject.getInput();
@@ -369,14 +367,14 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
           .collect(Collectors.toList());
 
       PrimaryKeyMap pk = baseInput.primaryKey;
-      SelectIndexMap select = trivialMap;
+      SelectIndexMap select = trivialMapResult.getKey();
       Timestamps timestamp = baseInput.timestamp;
       RelBuilder relB = makeRelBuilder();
       relB.push(baseInput.relNode);
       boolean isDistinct = false;
       if (topNHint.getType() == TopNHint.Type.SELECT_DISTINCT) {
         List<Integer> distincts = SqrlRexUtil.combineIndexes(partition,
-            trivialMap.targetsAsList());
+            select.targetsAsList());
         pk = PrimaryKeyMap.of(distincts);
         if (partition.isEmpty()) {
           //If there is no partition, we can ignore the sort order plus limit and turn this into a simple deduplication
@@ -424,6 +422,9 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       return setRelHolder(baseInput.copy().relNode(relB.build()).type(resultType)
           .primaryKey(pk).select(select).timestamp(timestamp)
           .topN(topN).sort(SortOrder.EMPTY).build());
+    } else if (trivialMapResult!=null && !trivialMapResult.getRight()) {
+      //Only inline if it doesn't rename
+      return setRelHolder(rawInput.copy().select(trivialMapResult.getKey()).build());
     }
     AnnotatedLP input = rawInput.inlineTopN(makeRelBuilder(), exec);
     //Update index mappings
@@ -523,10 +524,11 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         .streamRoot(input.streamRoot).nowFilter(nowFilter).sort(sort).build());
   }
 
-  private SelectIndexMap getTrivialMapping(LogicalProject project, SelectIndexMap baseMap) {
+  private Pair<SelectIndexMap,Boolean> getTrivialMapping(LogicalProject project, SelectIndexMap baseMap) {
     SelectIndexMap.Builder b = SelectIndexMap.builder(project.getProjects().size());
     List<String> names = project.getRowType().getFieldNames();
     List<String> inputNames = project.getInput().getRowType().getFieldNames();
+    boolean isRenamed = false;
     for (Ord<RexNode> exp : Ord.<RexNode>zip(project.getProjects())) {
       RexNode rex = exp.e;
       if (!(rex instanceof RexInputRef)) {
@@ -535,12 +537,11 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       int index = (((RexInputRef) rex)).getIndex();
       String name = names.get(exp.i);
       if (!name.equals(inputNames.get(index)) && !name.startsWith(ReservedName.SYSTEM_PRIMARY_KEY.getDisplay())) {
-        //This was renamed by the user
-        return null;
+        isRenamed = true;
       }
       b.add(baseMap.map(index));
     }
-    return b.build();
+    return Pair.of(b.build(),isRenamed);
   }
 
   @Override

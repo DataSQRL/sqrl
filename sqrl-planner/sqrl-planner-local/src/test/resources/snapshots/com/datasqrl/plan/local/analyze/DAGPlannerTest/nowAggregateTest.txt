@@ -3,15 +3,15 @@ ID:     orderaugment$1
 Type:   stream
 Stage:  streams
 Inputs: ordernow3$1, orders$2
-Primary Key: _uuid0
+Primary Key: _uuid
 Timestamp  : time
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - order_count: BIGINT NOT NULL
- - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalProject(id=[$2], time=[$4], order_count=[$7], _uuid0=[$0])
+LogicalProject(id=[$2], time=[$4], order_count=[$7], _uuid=[$0])
   LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
     LogicalTableScan(table=[[orders$2]])
     LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]

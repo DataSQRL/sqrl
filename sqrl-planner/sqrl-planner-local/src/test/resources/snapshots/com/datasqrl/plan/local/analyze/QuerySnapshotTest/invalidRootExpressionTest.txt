@@ -1,7 +1,7 @@
 >>>errors
 [FATAL] Cannot assign expression to root
 in script:<script> [2:17]:
-IMPORT ecommerce-data.Product;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
 ProductCount := count(Product);
 ----------------^
 

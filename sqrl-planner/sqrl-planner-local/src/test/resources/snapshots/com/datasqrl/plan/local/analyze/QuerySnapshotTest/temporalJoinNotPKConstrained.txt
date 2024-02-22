@@ -1,7 +1,7 @@
 >>>errors
 [FATAL] Expected join condition to be equality condition on state's primary key.
-in script:<script> [3:1]:
-IMPORT ecommerce-data.*;
+in script:<script> [6:1]:
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
 Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;
 CustomerOrders := SELECT o.id, c.name FROM Orders o TEMPORAL JOIN Customer c ON o.customerid > c.customerid;
 ^

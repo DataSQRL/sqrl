@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -60,6 +61,11 @@ public class CalciteUtil {
   public static boolean hasNestedTable(RelDataType type) {
     if (!type.isStruct()) return false;
     return type.getFieldList().stream().map(RelDataTypeField::getType).anyMatch(CalciteUtil::isNestedTable);
+  }
+
+  public static Function<Integer,String> getFieldName(RelDataType rowType) {
+    final List<String> names = rowType.getFieldNames();
+    return i -> names.get(i);
   }
 
   public static boolean isPrimitiveType(RelDataType t) {

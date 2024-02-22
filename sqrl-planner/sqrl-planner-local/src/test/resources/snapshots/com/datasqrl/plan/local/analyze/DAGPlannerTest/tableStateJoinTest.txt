@@ -39,15 +39,15 @@ Type:   state
 Stage:  streams
 Inputs: customer$3, orders$3
 Primary Key: id
-Timestamp  : __timestamp0
+Timestamp  : __timestamp
 Schema:
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(_uuid=[$0], id=[$2], name=[$11], customerid=[$3], __timestamp0=[CASE(<($1, $8), $8, $1)])
+LogicalProject(_uuid=[$0], id=[$2], name=[$11], customerid=[$3], __timestamp=[CASE(<($1, $8), $8, $1)])
   LogicalJoin(condition=[=($3, $9)], joinType=[inner]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, RIGHT]]
     LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
@@ -62,15 +62,15 @@ Type:   state
 Stage:  streams
 Inputs: customer$3, orders$3
 Primary Key: id
-Timestamp  : __timestamp0
+Timestamp  : __timestamp
 Schema:
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(_uuid=[$0], id=[$2], name=[$11], customerid=[$3], __timestamp0=[CASE(<($1, $8), $8, $1)])
+LogicalProject(_uuid=[$0], id=[$2], name=[$11], customerid=[$3], __timestamp=[CASE(<($1, $8), $8, $1)])
   LogicalJoin(condition=[AND(=($3, $9), =($11, 'Robert'), >($2, 5))], joinType=[inner]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 2, RIGHT]]
     LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
@@ -85,15 +85,15 @@ Type:   state
 Stage:  streams
 Inputs: customer$3, orders$3
 Primary Key: id
-Timestamp  : __timestamp0
+Timestamp  : __timestamp
 Schema:
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE"
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - customerid: BIGINT NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(_uuid=[$7], id=[$2], name=[$11], customerid=[$3], __timestamp0=[CASE(<($1, $8), $8, $1)])
+LogicalProject(_uuid=[$7], id=[$2], name=[$11], customerid=[$3], __timestamp=[CASE(<($1, $8), $8, $1)])
   LogicalJoin(condition=[=($3, $9)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, RIGHT]]
     LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], id=[$2], customerid=[$3], time=[$4], entries=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
@@ -108,14 +108,14 @@ Type:   state
 Stage:  streams
 Inputs: customer$3, orders$3
 Primary Key: id
-Timestamp  : __timestamp0
+Timestamp  : __timestamp
 Schema:
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], __timestamp0=[CASE(<($1, $8), $8, $1)])
+LogicalProject(_uuid=[$0], id=[$2], customerid=[$3], __timestamp=[CASE(<($1, $8), $8, $1)])
   LogicalFilter(condition=[IS NULL($7)])
     LogicalJoin(condition=[=($3, $9)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, RIGHT]]
       LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
@@ -131,16 +131,16 @@ Type:   state
 Stage:  streams
 Inputs: customer$3, orders$3
 Primary Key: _customerid0, ouuid
-Timestamp  : __timestamp0
+Timestamp  : __timestamp
 Schema:
  - ouuid: BIGINT NOT NULL
  - id: BIGINT
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT
  - _customerid0: BIGINT NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(ouuid=[COALESCE($9, 0:BIGINT)], id=[$9], name=[$4], customerid=[$10], _customerid0=[$2], __timestamp0=[CASE(<($1, $8), $8, $1)])
+LogicalProject(ouuid=[COALESCE($9, 0:BIGINT)], id=[$9], name=[$4], customerid=[$10], _customerid0=[$2], __timestamp=[CASE(<($1, $8), $8, $1)])
   LogicalJoin(condition=[=($10, $2)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, LEFT]]
     LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
       LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $2 ORDER BY $1 DESC NULLS LAST)])
@@ -155,14 +155,14 @@ Type:   state
 Stage:  streams
 Inputs: customer$3, orders$3
 Primary Key: customerid
-Timestamp  : __timestamp0
+Timestamp  : __timestamp
 Schema:
  - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(_uuid=[$0], customerid=[$2], name=[$4], __timestamp0=[CASE(<($1, $8), $8, $1)])
+LogicalProject(_uuid=[$0], customerid=[$2], name=[$4], __timestamp=[CASE(<($1, $8), $8, $1)])
   LogicalFilter(condition=[IS NULL($9)])
     LogicalJoin(condition=[=($10, $2)], joinType=[left]) hints[JoinCostHint options:[VERSIONED_STATE, VERSIONED_STATE, 1, LEFT]]
       LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]

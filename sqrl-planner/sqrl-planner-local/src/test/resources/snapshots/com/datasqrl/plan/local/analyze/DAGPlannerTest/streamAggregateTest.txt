@@ -20,13 +20,13 @@ Type:   state
 Stage:  streams
 Inputs: orders$2
 Primary Key: __pk
-Timestamp  : __timestamp0
+Timestamp  : __timestamp
 Schema:
  - order_count: BIGINT NOT NULL
  - __pk: INTEGER NOT NULL
- - __timestamp0: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(order_count=[$0], __pk=[1], __timestamp0=[$1])
+LogicalProject(order_count=[$0], __pk=[1], __timestamp=[$1])
   LogicalAggregate(group=[{}], order_count=[COUNT()], __timestamp=[MAX($4)])
     LogicalTableScan(table=[[orders$2]])
 

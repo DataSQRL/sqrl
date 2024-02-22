@@ -21,13 +21,13 @@ ID:     customercopy$1
 Type:   stream
 Stage:  streams
 Inputs: customer$2
-Primary Key: _uuid0
+Primary Key: _uuid
 Timestamp  : timestamp
 Schema:
  - month: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalProject(month=[endOfMonth(endOfMonth($6))], timestamp=[$6], _uuid0=[$0])
+LogicalProject(month=[endOfMonth(endOfMonth($6))], timestamp=[$6], _uuid=[$0])
   LogicalTableScan(table=[[customer$2]])
 

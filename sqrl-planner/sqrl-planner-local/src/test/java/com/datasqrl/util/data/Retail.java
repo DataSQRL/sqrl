@@ -84,10 +84,10 @@ public class Retail implements TestDataset {
 
   public ScriptBuilder getImports() {
     ScriptBuilder builder = new ScriptBuilder();
-    builder.append("IMPORT ecommerce-data.Customer");
-    builder.append("IMPORT ecommerce-data.Orders");
-    builder.append("IMPORT ecommerce-data.Product");
     builder.append("IMPORT time.*");
+    builder.append("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time");
+    builder.append("IMPORT ecommerce-data.Orders TIMESTAMP time");
+    builder.append("IMPORT ecommerce-data.Product TIMESTAMP _ingest_time");
     return builder;
   }
 

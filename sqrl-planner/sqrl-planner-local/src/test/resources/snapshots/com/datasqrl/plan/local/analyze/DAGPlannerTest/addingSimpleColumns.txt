@@ -3,7 +3,7 @@ ID:     orderentry$1
 Type:   stream
 Stage:  streams
 Inputs: orders$2
-Primary Key: _uuid0, _idx0
+Primary Key: _uuid, _idx
 Timestamp  : time
 Schema:
  - col1: BIGINT NOT NULL
@@ -11,10 +11,10 @@ Schema:
  - productid: BIGINT NOT NULL
  - discount: DOUBLE
  - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
- - _idx0: INTEGER NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _idx: INTEGER NOT NULL
 Plan:
-LogicalProject(col1=[$6], time=[$4], productid=[$8], discount=[$11], _ingest_time=[$1], _uuid0=[$0], _idx0=[$7])
+LogicalProject(col1=[$6], time=[$4], productid=[$8], discount=[$11], _ingest_time=[$1], _uuid=[$0], _idx=[$7])
   LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
     LogicalTableScan(table=[[orders$2]])
     LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
