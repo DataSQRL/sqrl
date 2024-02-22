@@ -166,6 +166,7 @@ public class DAGPlannerTest extends AbstractLogicalSQRLIT {
         builder.add("Product := DISTINCT Product ON productid ORDER BY _ingest_time DESC");
         builder.add("Customer.orders := JOIN Orders ON Orders.customerid = @.customerid");
         builder.add("Orders.entries.product := JOIN Product ON Product.productid = @.productid");
+        //The last join to Product does not get de-correlated
         builder.add("Customer.totals","SELECT p.category as category, sum(e.quantity) as num " +
                 "FROM @.orders o JOIN o.entries e JOIN e.product p WHERE o.time >= now() - INTERVAL 1 DAY GROUP BY category");
         validateTables(builder);
