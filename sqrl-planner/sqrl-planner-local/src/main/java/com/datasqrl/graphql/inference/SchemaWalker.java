@@ -119,6 +119,7 @@ public abstract class SchemaWalker {
         }
 
         visitScalar(type, field, path, rel.get(), relDataTypeField);
+        return;
       }
     }
 
