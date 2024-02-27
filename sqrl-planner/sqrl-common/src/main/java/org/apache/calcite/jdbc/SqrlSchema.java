@@ -10,6 +10,7 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import java.net.URL;
@@ -141,6 +142,22 @@ public class SqrlSchema extends SimpleCalciteSchema {
         .collect(Collectors.toList());
   }
 
+  public List<SqrlTableMacro> getTableFunctions(NamePath path) {
+    return getFunctions(path.getDisplay(), false)
+        .stream().filter(f->f instanceof SqrlTableMacro)
+        .map(f->(SqrlTableMacro)f)
+//        .filter(f->f.getFullPath().equals(path))
+        .collect(Collectors.toList());
+  }
+  public List<SqrlTableMacro> getTableFunctionFullPath(NamePath path) {
+    return getFunctions(getPathToAbsolutePathMap().getOrDefault(path, path).getDisplay(), false)
+        .stream().filter(f->f instanceof SqrlTableMacro)
+        .map(f->(SqrlTableMacro)f)
+//        .filter(f->f.getFullPath().equals(path))
+        .collect(Collectors.toList());
+  }
+
+  @VisibleForTesting
   public SqrlTableMacro getTableFunction(String name) {
     return (SqrlTableMacro)Iterables.getOnlyElement(getFunctions(name, false));
   }

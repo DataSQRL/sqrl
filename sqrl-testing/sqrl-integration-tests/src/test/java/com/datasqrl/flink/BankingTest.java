@@ -30,12 +30,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 @ExtendWith(MiniClusterExtension.class)
 public class BankingTest extends AbstractGraphqlTest {
   CompletableFuture<ExecutionResult> fut;
-  private List<String> events;
 
   @BeforeEach
   void setUp() {
     fut = execute(Banking.INSTANCE);
-    events = new ArrayList<>();
   }
 
   @SneakyThrows
@@ -72,11 +70,11 @@ public class BankingTest extends AbstractGraphqlTest {
     Thread.sleep(1000);
 
     log.debug("count:" + countDownLatch.getCount());
-    countDownLatch.await(60, TimeUnit.SECONDS);
+    countDownLatch.await(10, TimeUnit.SECONDS);
     log.debug("count:" + countDownLatch.getCount());
 
     fut.cancel(true);
-    assertEquals(countDownLatch.getCount(), 0);
     validateEvents();
+    assertEquals(countDownLatch.getCount(), 0);
   }
 }

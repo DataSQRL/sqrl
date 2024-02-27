@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.local.analyze;
 
+import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,49 +14,46 @@ import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.graphql.generate.SchemaGenerator;
-import com.datasqrl.graphql.inference.SchemaBuilder;
-import com.datasqrl.graphql.inference.SchemaInference;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference;
+import com.datasqrl.graphql.inference.GraphqlModelGenerator;
+import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
+import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.ArgumentSet;
 import com.datasqrl.graphql.server.Model.Coords;
-import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.util.ApiQueryBase;
 import com.datasqrl.graphql.util.PagedApiQueryBase;
+import com.datasqrl.plan.global.DAGPlanner;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.schema.type.basic.BigIntType;
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.SnapshotTest;
+import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.data.Retail;
-import com.datasqrl.vector.FlinkVectorType;
-import com.datasqrl.vector.VectorFunctions;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
+import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.rel.RelNode;
-import org.apache.flink.api.common.typeutils.base.BigDecSerializer;
-import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
-import org.apache.flink.table.types.logical.LogicalType;
-import org.apache.flink.table.types.logical.RawType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -110,10 +108,10 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               table.getNameId());
         });
 
-    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
+//    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
 
     SchemaGenerator schemaGenerator = new SchemaGenerator();
-    GraphQLSchema generate = schemaGenerator.generate(sqrlSchemaForInference, true);
+    GraphQLSchema generate = schemaGenerator.generate(framework.getSchema(), true);
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
@@ -124,22 +122,32 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     APISource source = APISource.of(schema);
 
     APIConnectorManagerImpl apiManager = mock(APIConnectorManagerImpl.class);
-    InferredSchema inferredSchema = new SchemaInference(
-        framework,
-        "<>",
-        mock(MockModuleLoader.class),
-        source,
-        sqrlSchemaForInference,
-        framework.getQueryPlanner().getRelBuilder(),
-        apiManager)
-        .accept();
 
-    SchemaBuilder schemaBuilder = new SchemaBuilder(source, apiManager);
+    GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
+        framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
+        new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
 
-    RootGraphqlModel root = inferredSchema.accept(schemaBuilder,
-        null);
+    queryGenerator.walk();
+    queryGenerator.getQueries().forEach(apiManager::addQuery);
 
-    for (Coords c : root.getCoords()) {
+    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
+        apiManager, framework.getSchema().getExports(),
+        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
+        null, pipeline, errors, debugger);
+
+    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+        .plan(dag);
+    APISource apisource = APISource.of(schema);
+
+    GraphqlModelGenerator modelGen = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
+        framework.getSchema(), (new SchemaParser()).parse(apisource.getSchemaDefinition()), apisource,
+        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
+
+    modelGen.walk();
+
+    List<Coords> coords = modelGen.getCoords();
+
+    for (Coords c : coords) {
       if (c instanceof ArgumentLookupCoords) {
         Set<ArgumentSet> matches = ((ArgumentLookupCoords) c).getMatchs();
         for (ArgumentSet set : matches) {

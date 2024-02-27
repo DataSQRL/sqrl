@@ -60,10 +60,10 @@ public class ReplaceGraphqlQueries implements
         planner.convertRelToDialect(Dialect.POSTGRES, template.getRelNode()))
         .getSql();
 
-    return JdbcQuery.builder()
-        .parameters(apiQueryBase.getParameters())
-        .sql(query)
-        .build();
+    return null;//JdbcQuery.builder()
+//        .parameters(apiQueryBase.getParameters())
+//        .sql(query)
+//        .build();
   }
 
   @Override

@@ -11,18 +11,19 @@ import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
 import com.datasqrl.engine.server.GenericJavaServerEngine;
-import com.datasqrl.frontend.ErrorSink;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.inference.AbstractSchemaInferenceModelTest;
-import com.datasqrl.graphql.inference.SchemaInferenceModel.InferredSchema;
+import com.datasqrl.graphql.inference.GraphqlModelGenerator;
+import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
+import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
-import com.datasqrl.plan.local.generate.Debugger;
+import com.datasqrl.plan.queries.APISource;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import graphql.schema.idl.SchemaParser;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
@@ -33,6 +34,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -66,7 +68,7 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
     plan(script);
 
     AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest();
-    Triple<InferredSchema, RootGraphqlModel, APIConnectorManager> modelAndQueries =
+    Triple<Object, RootGraphqlModel, APIConnectorManager> modelAndQueries =
         AbstractSchemaInferenceModelTest.inferSchemaModelQueries(schema, framework, pipeline, errors);
 
     PhysicalDAGPlan dag = DAGPlanner.plan(framework,
@@ -76,12 +78,26 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
     PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
         .plan(dag);
+    APISource source = APISource.of(schema);
 
-    RootGraphqlModel model = modelAndQueries.getMiddle();
-    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(
-        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner());
+    GraphqlModelGenerator queryGenerator = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
+        framework.getSchema(), (new SchemaParser()).parse(source.getSchemaDefinition()), source,
+        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), modelAndQueries.getRight());
 
-    model.accept(replaceGraphqlQueries, null);
+    queryGenerator.walk();
+
+    List<Coords> coords = queryGenerator.getCoords();
+
+    RootGraphqlModel model = RootGraphqlModel.builder()
+        .coords(coords)
+        .schema(StringSchema.builder().schema(source.getSchemaDefinition()).build())
+        .build();
+//
+//    RootGraphqlModel model = modelAndQueries.getMiddle();
+//    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(
+//        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner());
+//
+//    model.accept(replaceGraphqlQueries, null);
 
     snapshot.addContent(
         physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream()

@@ -6,6 +6,7 @@ import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.TestClient;
 import com.datasqrl.util.TestCompiler;
 import com.datasqrl.util.TestExecutor;
+import com.datasqrl.util.data.Banking;
 import com.datasqrl.util.data.UseCaseExample;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -198,10 +199,18 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
     }
   }
 
+  @SneakyThrows
   protected void validateEvents() {
     Collections.sort(events);
-    snapshot.addContent(String.join("\n", events))
-        .createOrValidate();
+    snapshot.addContent(String.join("\n", events));
+    Path path = Banking.INSTANCE.getRootPackageDirectory()
+        .resolve("build")
+        .resolve("deploy")
+        .resolve("server-model.json");
+    String model = Files.readString(path);
+
+    snapshot.addContent(model);
     snapshot.createOrValidate();
+
   }
 }

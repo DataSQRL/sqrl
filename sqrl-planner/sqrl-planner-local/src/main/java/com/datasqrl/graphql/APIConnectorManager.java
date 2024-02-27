@@ -1,8 +1,8 @@
 package com.datasqrl.graphql;
 
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
@@ -25,7 +25,7 @@ public interface APIConnectorManager {
 
   TableSink getMutationSource(APISource source, Name mutationName);
 
-  TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable);
+  TableSource addSubscription(APISubscription subscription, SqrlTableMacro sqrlTable);
 
   void addQuery(APIQuery query);
 
@@ -35,5 +35,5 @@ public interface APIConnectorManager {
 
   List<APIQuery> getQueries();
 
-  Map<SQRLTable, Log> getExports();
+  Map<SqrlTableMacro, Log> getExports();
 }

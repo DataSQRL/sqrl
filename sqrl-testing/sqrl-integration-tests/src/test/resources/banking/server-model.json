@@ -1,6 +1,5 @@
-{"ApplicationAlert":{"id":101,"loan_type_id":9,"customer_id":4,"max_amount":750000,"min_amount":50000,"amount":1}}
 {
-  "coords" : [ {
+  "coords" : [{
     "type" : "args",
     "parentType" : "Query",
     "fieldName" : "ApplicationStatus",
@@ -15,39 +14,18 @@
     } ]
   }, {
     "type" : "args",
-    "parentType" : "Query",
-    "fieldName" : "Applications",
-    "matchs" : [ {
-      "arguments" : [ {
-        "type" : "variable",
-        "type" : "variable",
-        "path" : "id"
-      } ],
-      "query" : {
-        "type" : "JdbcQuery",
-        "type" : "JdbcQuery",
-        "sql" : "SELECT 1 AS \"_pk\", \"id\", \"_uuid\", \"_ingest_time\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\"\nFROM \"applications$3\"\nWHERE \"id\" = $1\nORDER BY 1",
-        "parameters" : [ {
-          "type" : "arg",
-          "type" : "arg",
-          "path" : "id"
-        } ]
-      }
-    } ]
-  }, {
-    "type" : "args",
     "parentType" : "Applications",
-    "fieldName" : "updates",
+    "fieldName" : "loanType",
     "matchs" : [ {
       "arguments" : [ ],
       "query" : {
         "type" : "JdbcQuery",
         "type" : "JdbcQuery",
-        "sql" : "SELECT *\nFROM \"applicationupdates$2\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"_source_time\", \"_uuid\"",
+        "sql" : "SELECT *\nFROM \"loantypes$3\"\nWHERE $1 = \"id\"\nORDER BY \"id\"",
         "parameters" : [ {
           "type" : "source",
           "type" : "source",
-          "key" : "id"
+          "key" : "loan_type_id"
         } ]
       }
     } ]
@@ -71,24 +49,24 @@
   }, {
     "type" : "args",
     "parentType" : "Applications",
-    "fieldName" : "loanType",
+    "fieldName" : "updates",
     "matchs" : [ {
       "arguments" : [ ],
       "query" : {
         "type" : "JdbcQuery",
         "type" : "JdbcQuery",
-        "sql" : "SELECT *\nFROM \"loantypes$3\"\nWHERE $1 = \"id\"\nORDER BY \"id\"",
+        "sql" : "SELECT *\nFROM \"applicationupdates$2\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"_source_time\", \"_uuid\"",
         "parameters" : [ {
           "type" : "source",
           "type" : "source",
-          "key" : "loan_type_id"
+          "key" : "id"
         } ]
       }
     } ]
   }, {
     "type" : "args",
     "parentType" : "Query",
-    "fieldName" : "Customers",
+    "fieldName" : "Applications",
     "matchs" : [ {
       "arguments" : [ {
         "type" : "variable",
@@ -98,7 +76,7 @@
       "query" : {
         "type" : "JdbcQuery",
         "type" : "JdbcQuery",
-        "sql" : "SELECT 1 AS \"_pk\", \"id\", \"_uuid\", \"_ingest_time\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_on\"\nFROM \"customers$3\"\nWHERE \"id\" = $1\nORDER BY 1",
+        "sql" : "SELECT 1 AS \"_pk\", \"id\", \"_uuid\", \"_ingest_time\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"application_date\", \"updated_at\"\nFROM \"applications$3\"\nWHERE \"id\" = $1\nORDER BY 1",
         "parameters" : [ {
           "type" : "arg",
           "type" : "arg",
@@ -151,8 +129,37 @@
   }, {
     "type" : "args",
     "parentType" : "Query",
+    "fieldName" : "Customers",
+    "matchs" : [ {
+      "arguments" : [ {
+        "type" : "variable",
+        "type" : "variable",
+        "path" : "id"
+      } ],
+      "query" : {
+        "type" : "JdbcQuery",
+        "type" : "JdbcQuery",
+        "sql" : "SELECT 1 AS \"_pk\", \"id\", \"_uuid\", \"_ingest_time\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_on\"\nFROM \"customers$3\"\nWHERE \"id\" = $1\nORDER BY 1",
+        "parameters" : [ {
+          "type" : "arg",
+          "type" : "arg",
+          "path" : "id"
+        } ]
+      }
+    } ]
+  }, {
+    "type" : "args",
+    "parentType" : "Query",
     "fieldName" : "LoanTypes",
     "matchs" : [ {
+      "arguments" : [ ],
+      "query" : {
+        "type" : "JdbcQuery",
+        "type" : "JdbcQuery",
+        "sql" : "SELECT *\nFROM \"loantypes$3\"\nORDER BY \"id\"",
+        "parameters" : [ ]
+      }
+    }, {
       "arguments" : [ {
         "type" : "variable",
         "type" : "variable",
@@ -168,14 +175,6 @@
           "path" : "id"
         } ]
       }
-    }, {
-      "arguments" : [ ],
-      "query" : {
-        "type" : "JdbcQuery",
-        "type" : "JdbcQuery",
-        "sql" : "SELECT *\nFROM \"loantypes$3\"\nORDER BY \"id\"",
-        "parameters" : [ ]
-      }
     } ]
   }, {
     "type" : "args",
@@ -190,7 +189,8 @@
         "parameters" : [ ]
       }
     } ]
-  } ],
+  }
+  ],
   "mutations" : [ {
     "fieldName" : "ApplicationUpdates",
     "sinkConfig" : {
@@ -201,7 +201,7 @@
         "connector.name" : "kafka",
         "name" : "kafka",
         "format.name" : "json",
-        "connector.bootstrap..servers" : "localhost:58679",
+        "connector.bootstrap..servers" : "localhost:55744",
         "type" : "source_and_sink",
         "canonicalizer" : "system"
       },
@@ -218,7 +218,7 @@
         "connector.name" : "kafka",
         "name" : "kafka",
         "format.name" : "json",
-        "connector.bootstrap..servers" : "localhost:58679",
+        "connector.bootstrap..servers" : "localhost:55744",
         "type" : "source_and_sink",
         "canonicalizer" : "system"
       },

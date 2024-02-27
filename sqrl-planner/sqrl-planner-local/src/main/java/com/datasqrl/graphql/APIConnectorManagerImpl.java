@@ -1,5 +1,6 @@
 package com.datasqrl.graphql;
 
+import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.NamedRelDataType;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
@@ -8,7 +9,6 @@ import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.inference.SqrlSchemaForInference.SQRLTable;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.loaders.ModuleLoader;
@@ -21,8 +21,9 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.plan.table.TableType;
+import com.datasqrl.schema.RootSqrlTable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +48,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
   private final Map<APISubscription, TableSource> subscriptions = new HashMap<>();
 
-  private final Map<SQRLTable, Log> exports = new HashMap<>();
+  private final Map<SqrlTableMacro, Log> exports = new HashMap<>();
 
   private final List<APIQuery> queries = new ArrayList<>();
 
@@ -100,23 +101,24 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   }
 
   @Override
-  public TableSource addSubscription(APISubscription subscription, SQRLTable sqrlTable) {
-    errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
-    errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType() == TableType.STREAM,
-        "Table %s for subscription %s is not a stream table", sqrlTable.getName(), subscription.getName());
+  public TableSource addSubscription(APISubscription subscription, SqrlTableMacro sqrlTable) {
+//    errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
+//    errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType() == TableType.STREAM,
+//        "Table %s for subscription %s is not a stream table", sqrlTable.getName(), subscription.getName());
     //Check if we already exported it
-    TableSource subscriptionSource;
-    if (exports.containsKey(sqrlTable)) {
-      subscriptionSource = exports.get(sqrlTable).getSource();
-    } else {
+//    TableSource subscriptionSource;
+//    if (exports.containsKey(sqrlTable)) {
+//      subscriptionSource = exports.get(sqrlTable).getSource();
+//    } else {
       //otherwise create new log for it
-      String logId = ((ScriptRelationalTable) sqrlTable.getVt()).getNameId();
-      NamedRelDataType tableSchema = new NamedRelDataType(Name.system(sqrlTable.getName()),
-          ((ScriptRelationalTable) sqrlTable.getVt()).getRowType());
-      Log log = logEngine.get().createLog(logId, tableSchema);
-      exports.put(sqrlTable, log);
-      subscriptionSource = log.getSource();
-    }
+    RootSqrlTable rootSqrlTable = (RootSqrlTable) sqrlTable;
+    QueryRelationalTable table = ((QueryRelationalTable) rootSqrlTable.getInternalTable());
+    String logId = table.getNameId();
+    NamedRelDataType tableSchema = new NamedRelDataType(table.getTableName(),
+        table.getRowType());
+    Log log = logEngine.get().createLog(logId, tableSchema);
+    exports.put(sqrlTable, log);
+    TableSource subscriptionSource = log.getSource();
     subscriptions.put(subscription, subscriptionSource);
     return subscriptionSource;
   }
@@ -133,8 +135,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
   @Override
   public List<Log> getLogs() {
-    List<Log> logs = new ArrayList<>();
-    logs.addAll(exports.values());
+    List<Log> logs = new ArrayList<>(exports.values());
     modules.values().stream()
         .flatMap(logModule -> logModule.entries.values().stream())
         .forEach(logs::add);
