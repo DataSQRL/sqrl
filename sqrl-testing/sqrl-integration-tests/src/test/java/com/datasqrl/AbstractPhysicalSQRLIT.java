@@ -91,7 +91,7 @@ public class AbstractPhysicalSQRLIT extends AbstractLogicalSQRLIT {
       RelBuilder relBuilder = framework.getQueryPlanner().getRelBuilder()
           .scan(vt.getNameId());
       relBuilder = CalciteUtil.projectOutNested(relBuilder);
-      apiManager.addQuery(new APIQuery(tableName, null, relBuilder.build(), null, null, false));// this.parameterHandler));
+      apiManager.addQuery(new APIQuery(tableName, null, relBuilder.build(), null, null, false));
     }
 
     PhysicalDAGPlan dag = DAGPlanner.plan(framework, apiManager, framework.getSchema().getExports(),

@@ -1,5 +1,7 @@
 package com.datasqrl.graphql.inference;
 
+import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.hasVaryingCase;
+
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -45,25 +47,20 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 /**
  * Returns a set of table functions that satisfy a graphql schema
  */
+@Getter
 public class GraphqlModelGenerator extends SchemaWalker {
-  @Getter
-  List<Coords> coords = new ArrayList<>();
-
-  @Getter
-  List<MutationCoords> mutations = new ArrayList<>();
-  @Getter
-  List<SubscriptionCoords> subscriptions = new ArrayList<>();
 
   private final Map<IdentifiedQuery, QueryTemplate> databaseQueries;
   private final QueryPlanner queryPlanner;
+  List<Coords> coords = new ArrayList<>();
+  List<MutationCoords> mutations = new ArrayList<>();
+  List<SubscriptionCoords> subscriptions = new ArrayList<>();
 
-  //  private final GraphqlQueryBuilder graphqlQueryBuilder;
-//  private final Map<IdentifiedQuery, QueryTemplate> queries;
-  public GraphqlModelGenerator(SqlNameMatcher nameMatcher,
-      SqrlSchema schema, TypeDefinitionRegistry registry,
-      APISource source, Map<IdentifiedQuery, QueryTemplate> databaseQueries,
-      QueryPlanner queryPlanner, APIConnectorManager apiManager) {
-    super(nameMatcher, schema,  source, registry, apiManager);
+  public GraphqlModelGenerator(SqlNameMatcher nameMatcher, SqrlSchema schema,
+      TypeDefinitionRegistry registry, APISource source,
+      Map<IdentifiedQuery, QueryTemplate> databaseQueries, QueryPlanner queryPlanner,
+      APIConnectorManager apiManager) {
+    super(nameMatcher, schema, source, registry, apiManager);
     this.databaseQueries = databaseQueries;
     this.queryPlanner = queryPlanner;
   }
@@ -71,10 +68,9 @@ public class GraphqlModelGenerator extends SchemaWalker {
   @Override
   protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
     APISubscription apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
-    source);
+        source);
     SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
-    TableSource tableSource = apiManager.addSubscription(apiSubscription,
-        tableFunction);
+    TableSource tableSource = apiManager.addSubscription(apiSubscription, tableFunction);
 
     Map<String, String> filters = new HashMap<>();
     for (InputValueDefinition input : fieldDefinition.getInputValueDefinitions()) {
@@ -86,11 +82,12 @@ public class GraphqlModelGenerator extends SchemaWalker {
   }
 
   @Override
-  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition, TableSink tableSink) {
+  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
+    TableSink tableSink = apiManager.getMutationSource(source,
+        Name.system(fieldDefinition.getName()));
+
     SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();
     mutations.add(new MutationCoords(fieldDefinition.getName(), config));
-    //Need to add data fetchers for each
-
   }
 
   @Override
@@ -99,36 +96,24 @@ public class GraphqlModelGenerator extends SchemaWalker {
   }
 
   @Override
-  protected Object visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
+  protected void visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       RelDataType relDataType, RelDataTypeField relDataTypeField) {
-
     //todo: walk into structured type to check all prop fetchers
-    if (!field.getName().equals(relDataTypeField.getName())) {
-      FieldLookupCoords build = FieldLookupCoords.builder()
-          .parentType(type.getName())
-          .fieldName(field.getName())
-          .columnName(relDataTypeField.getName())
-          .build();
+
+    if (hasVaryingCase(field, relDataTypeField)) {
+      FieldLookupCoords build = FieldLookupCoords.builder().parentType(type.getName())
+          .fieldName(field.getName()).columnName(relDataTypeField.getName()).build();
       coords.add(build);
     }
 
-//    FieldLookupCoords build = FieldLookupCoords.builder()
-//        .parentType(type.getName())
-//        .fieldName(field.getName())
-//        .columnName(relDataTypeField.getName())
-//        .build();
-//    coords.add(build);
-
-    return null;
   }
 
   @Override
-  protected ArgumentLookupCoords visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition toType,
+  protected void visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition toType,
       FieldDefinition field, NamePath path, Optional<RelDataType> parentRel,
       List<SqrlTableMacro> functions) {
     ArgumentLookupCoords.ArgumentLookupCoordsBuilder coordsBuilder = ArgumentLookupCoords.builder()
-        .parentType(parentType.getName())
-        .fieldName(field.getName());
+        .parentType(parentType.getName()).fieldName(field.getName());
 
     List<Entry<IdentifiedQuery, QueryTemplate>> collect = databaseQueries.entrySet().stream()
         .filter(f -> ((APIQuery) f.getKey()).getNamePath().equals(path))
@@ -148,22 +133,17 @@ public class GraphqlModelGenerator extends SchemaWalker {
         queryBase = new JdbcQuery(queryStr, query.getParameters());
       }
 
-      ArgumentSet set = ArgumentSet.builder()
-          .arguments(query.getGraphqlArguments())
-          .query(queryBase)
-          .build();
+      ArgumentSet set = ArgumentSet.builder().arguments(query.getGraphqlArguments())
+          .query(queryBase).build();
 
       coordsBuilder.match(set);
     }
 
     ArgumentLookupCoords build = coordsBuilder.build();
-    Set<Set<Argument>> collect1 = build.getMatchs().stream()
-        .map(f -> f.getArguments())
+    Set<Set<Argument>> matches = build.getMatchs().stream().map(ArgumentSet::getArguments)
         .collect(Collectors.toSet());
-    Preconditions.checkState(build.getMatchs().size() == collect1.size());
+    Preconditions.checkState(build.getMatchs().size() == matches.size());
 
     coords.add(build);
-
-    return null;
   }
 }

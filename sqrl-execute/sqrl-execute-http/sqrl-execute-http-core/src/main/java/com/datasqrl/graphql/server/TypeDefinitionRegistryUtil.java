@@ -9,10 +9,6 @@ import java.util.regex.Pattern;
 
 public class TypeDefinitionRegistryUtil {
 
-  public static boolean isValidGraphQLName(String name) {
-    return !name.startsWith("__") && Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
-  }
-
   public static Optional<String> getSchemaRootTypeName(Optional<SchemaDefinition> schemaRoot, String schemaRootName) {
     return schemaRoot.flatMap(s->s.getOperationTypeDefinitions().stream()
             .filter(f->f.getName().equals(schemaRootName))

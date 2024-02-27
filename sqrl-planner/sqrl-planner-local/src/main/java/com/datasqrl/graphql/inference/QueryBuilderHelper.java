@@ -37,7 +37,6 @@ public class QueryBuilderHelper {
   private final RexBuilder rexBuilder;
   private final String nameId;
   List<Argument> graphqlArguments = new ArrayList<>();
-  // Parameter handler and operands should be
   List<Pair<RexNode, JdbcParameterHandler>> parameterHandler = new ArrayList<>();
   List<RexNode> extraFilters = new ArrayList<>();
   private boolean limitOffsetFlag = false;
@@ -153,37 +152,12 @@ public class QueryBuilderHelper {
   }
 
   public APIQuery build(NamePath path) {
-
     RelNode rel = relBuilder.build();
 
     RelNode expanded = queryPlanner.expandMacros(rel);
     List<JdbcParameterHandler> parameters = this.parameterHandler.stream()
         .map(Pair::getRight)
         .collect(Collectors.toList());
-    APIQuery query = new APIQuery(nameId, path, expanded, parameters, this.graphqlArguments, limitOffsetFlag);
-//    apiManager.addQuery(query);
-
-
-//    QueryBase queryBase;
-//
-//    if (limitOffsetFlag) {
-//      queryBase = PagedApiQueryBase.builder()
-//          .parameters(handlers)
-//          .relNode(expanded)
-//          .query(query)
-//          .build();
-//    } else {
-//      queryBase = ApiQueryBase.builder()
-//          .parameters(handlers)
-//          .relNode(expanded)
-//          .query(query)
-//          .build();
-//    }
-
-    return query;
-//    return Model.ArgumentSet.builder()
-//        .arguments(this.graphqlArguments)
-//        .query(queryBase)
-//        .build();
+    return new APIQuery(nameId, path, expanded, parameters, this.graphqlArguments, limitOffsetFlag);
   }
 }

@@ -80,29 +80,6 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
       errors.withSchema(source.getName().getDisplay(), source.getSchemaDefinition()).handle(e);
       return null;
     }
-
-
-    //Build queries
-//    SchemaBuilder3 schemaBuilder = new SchemaBuilder3(framework.getCatalogReader().nameMatcher(),
-//        framework.getSchema(), (new SchemaParser()).parse(source.getSchemaDefinition()), source) {
-//
-//      @Override
-//      protected Object visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
-//          RelDataType relDataType, RelDataTypeField relDataTypeField) {
-//        return null;
-//      }
-//
-//      @Override
-//      protected void visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition type,
-//          FieldDefinition field, NamePath path, Optional<RelDataType> rel,
-//          List<SqrlTableMacro> functions) {
-//        System.out.println();
-//      }
-//    };
-//    schemaBuilder.walk();
-
-//    RootGraphqlModel root = schemaBuilder.build(framework.getSchema());//inferredSchema.accept(schemaBuilder, null);
-
     return Triple.of(null, null, apiManager);
   }
 

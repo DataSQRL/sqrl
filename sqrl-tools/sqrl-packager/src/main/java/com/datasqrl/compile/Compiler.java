@@ -4,7 +4,6 @@
 package com.datasqrl.compile;
 
 import com.datasqrl.DefaultFunctions;
-import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -16,7 +15,6 @@ import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanner;
-import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
@@ -30,7 +28,6 @@ import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
-import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.loaders.LoaderUtil;
 import com.datasqrl.loaders.ModuleLoader;
@@ -50,7 +47,6 @@ import com.datasqrl.plan.local.generate.DebuggerConfig;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.serializer.Deserializer;
@@ -59,7 +55,6 @@ import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Preconditions;
-import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaParser;
@@ -179,6 +174,7 @@ public class Compiler {
       queryGenerator.getQueries().forEach(apiManager::addQuery);
       queryGenerator.getSubscriptions().forEach(s->apiManager.addSubscription(
           new APISubscription(s.getAbsolutePath().getFirst(), apiSchema), s));
+
     } else if (pipeline.getStage(Type.DATABASE).isPresent()) {
       AtomicInteger i = new AtomicInteger();
       framework.getSchema().getTableFunctions()
@@ -244,13 +240,6 @@ public class Compiler {
     PhysicalPlanner physicalPlanner = new PhysicalPlanner(framework, errorSink);
     PhysicalPlan physicalPlan = physicalPlanner.plan(dag);
     return physicalPlan;
-  }
-
-  private RootGraphqlModel updateGraphqlPlan(QueryPlanner planner, RootGraphqlModel root,
-      Map<IdentifiedQuery, QueryTemplate> queries) {
-    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(queries, planner);
-    root.accept(replaceGraphqlQueries, null);
-    return root;
   }
 
   @Value

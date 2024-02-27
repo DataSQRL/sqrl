@@ -92,12 +92,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
         .coords(coords)
         .schema(StringSchema.builder().schema(source.getSchemaDefinition()).build())
         .build();
-//
-//    RootGraphqlModel model = modelAndQueries.getMiddle();
-//    ReplaceGraphqlQueries replaceGraphqlQueries = new ReplaceGraphqlQueries(
-//        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner());
-//
-//    model.accept(replaceGraphqlQueries, null);
 
     snapshot.addContent(
         physicalPlan.getPlans(JDBCPhysicalPlan.class).findFirst().get().getDdlStatements().stream()

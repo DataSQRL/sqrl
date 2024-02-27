@@ -42,8 +42,8 @@ public class DAGPreparation {
     getAllPhysicalTables(sqrlSchema).forEach(this::finalizeTimestampOnTable);
 
     //Replace default joins with inner joins for API queries
-    return apiManager.getQueries().stream().map(AnalyzedAPIQuery::new
-    ).collect(Collectors.toList());
+    return apiManager.getQueries().stream()
+        .map(AnalyzedAPIQuery::new).collect(Collectors.toList());
   }
 
   private Stream<PhysicalRelationalTable> getAllPhysicalTables(SqrlSchema sqrlSchema) {

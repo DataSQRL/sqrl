@@ -5,12 +5,12 @@ package com.datasqrl.graphql.generate;
 
 import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isHiddenString;
-import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
-import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getOutputType;
-import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.wrap;
+import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.getInputType;
+import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.getOutputType;
+import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.isValidGraphQLName;
+import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.wrap;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
-import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.isValidGraphQLName;
 import static graphql.schema.GraphQLNonNull.nonNull;
 
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -35,7 +35,6 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -44,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataType;
@@ -60,13 +58,13 @@ public class GraphqlSchemaFactory {
 
   private final List<GraphQLFieldDefinition> queryFields = new ArrayList<>();
   private final List<GraphQLObjectType> objectTypes = new ArrayList<>();
+  private final Set<String> usedNames = new HashSet<>();
   private final SqrlSchema schema;
   private final boolean addArguments;
   // Root path signifying the 'Query' type.
   private final Map<NamePath, List<SqrlTableMacro>> objectPathToTables;
   // The path from root
   private final Map<NamePath, List<SqrlTableMacro>> fieldPathToTables;
-  private Set<String> usedNames = new HashSet<>();
 
   public GraphqlSchemaFactory(SqrlSchema schema, boolean addArguments) {
     this.schema = schema;
@@ -108,7 +106,6 @@ public class GraphqlSchemaFactory {
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
 
     for (SqrlTableMacro rel : relationships) {
-//      if (rel.getFullPath().size() > 1) continue;
       String name = rel.getAbsolutePath().getDisplay();
       if (name.startsWith(HIDDEN_PREFIX) || !isValidGraphQLName(name)) continue;
       GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
@@ -140,17 +137,11 @@ public class GraphqlSchemaFactory {
 
     SqrlTableMacro first = tableMacros.get(0);
     RelDataType rowType = first.getRowType();
-    for (int i = 1; i < tableMacros.size(); i++) {
-      RelDataType type = tableMacros.get(i).getRowType();
-      // Nested have pks
-//      boolean isEqual = rowType.equalsSansFieldNames(type);
-//      Preconditions.checkState(isEqual, "Table macro type mismatch in sqrl schema: %s expected %s",
-//          type, rowType);
-      rowType = type;
-    }
+    //todo: check that all table macros are compatible
+//    for (int i = 1; i < tableMacros.size(); i++) {
+//    }
 
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
-    //relByName
     for (RelDataTypeField field : rowType.getFieldList()) {
       if (!relByName.containsKey(Name.system(field.getName()))) {
         createRelationshipField(field).map(fields::add);
@@ -272,8 +263,7 @@ public class GraphqlSchemaFactory {
       }
     }
 
-    return
-        primaryKeys
+    return primaryKeys
         .stream()
         .filter(f -> getInputType(f.getType()).isPresent())
         .filter(f -> isValidGraphQLName(f.getName()))

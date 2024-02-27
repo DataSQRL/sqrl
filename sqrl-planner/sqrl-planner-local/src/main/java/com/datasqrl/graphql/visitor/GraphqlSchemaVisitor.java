@@ -21,13 +21,6 @@ public abstract class GraphqlSchemaVisitor<R, C> implements
     GraphqlValueVisitor<R, C>,
     GraphqlVariableDefinitionVisitor<R, C> {
 
-  public static <R, C> R accept(GraphqlSchemaVisitor<R, C> visitor, Directive node, C context) {
-    if (node instanceof Directive) {
-      return visitor.visitDirective((Directive) node, context);
-    }
-    throw new RuntimeException("Unknown graphql node");
-  }
-
   public static <R, C> R accept(GraphqlDirectiveVisitor<R, C> visitor, Directive node, C context) {
     if (node instanceof Directive) {
       return visitor.visitDirective((Directive) node, context);

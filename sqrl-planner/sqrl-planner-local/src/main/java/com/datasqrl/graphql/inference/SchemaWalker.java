@@ -42,7 +42,7 @@ public abstract class SchemaWalker {
   APIConnectorManager apiManager;
   protected final Set<ObjectTypeDefinition> seen = new HashSet<>();
 
-  public RootGraphqlModel walk() {
+  public void walk() {
 
     //Builds a graphql model from schema and source.
 
@@ -54,46 +54,29 @@ public abstract class SchemaWalker {
 
     ObjectTypeDefinition queryType = getQueryType(registry);
     Optional<ObjectTypeDefinition> mutationType = getMutationType(registry);
-    mutationType.map(m->walkMutation(m));
+    mutationType.ifPresent(this::walkMutation);
 
     Optional<ObjectTypeDefinition> subscriptionType = getSubscriptionType(registry);
-    subscriptionType.map(m->walkSubscription(m));
+    subscriptionType.ifPresent(this::walkSubscription);
 
     walk(queryType, NamePath.ROOT, Optional.empty());
-
-    return null;
   }
 
-  private Object walkSubscription(ObjectTypeDefinition m) {
+  private void walkSubscription(ObjectTypeDefinition m) {
     for(FieldDefinition fieldDefinition : m.getFieldDefinitions()) {
       walkSubscription(m, fieldDefinition);
     }
-    return null;
   }
 
   protected abstract void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition);
 
-  private Object walkMutation(ObjectTypeDefinition m) {
+  private void walkMutation(ObjectTypeDefinition m) {
     for(FieldDefinition fieldDefinition : m.getFieldDefinitions()) {
-//      validateStructurallyEqualMutation(fieldDefinition, getValidMutationReturnType(fieldDefinition), getValidMutationInput(fieldDefinition),
-//          List.of(ReservedName.SOURCE_TIME.getCanonical()));
-
-      TableSink tableSink = apiManager.getMutationSource(source, Name.system(fieldDefinition.getName()));
-//      checkState(tableSink != null, mutation.getSourceLocation(),
-//          "Could not find mutation source: %s.", fieldDefinition.getName());
-
-      //TODO: validate that tableSink schema matches Input type
-//      SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();
-//      InferredMutation inferredMutation = new InferredMutation(fieldDefinition.getName(), config);
-//      mutations.add(inferredMutation);
-
-      walkMutation(m, fieldDefinition, tableSink);
+      walkMutation(m, fieldDefinition);
     }
-    return null;
   }
 
-  protected abstract void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
-      TableSink tableSink);
+  protected abstract void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition);
 
   private void walk(ObjectTypeDefinition type, NamePath path, Optional<RelDataType> rel) {
     if (seen.contains(type)) {
@@ -106,14 +89,15 @@ public abstract class SchemaWalker {
     }
   }
 
-  private Object walk(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
+  private void walk(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       Optional<RelDataType> rel) {
     //1. Check to see if we have a table function or a reldatatype of this field.
     List<SqrlTableMacro> functions = schema.getTableFunctions(path);
 
+    //Check to see if there exists a relationship on the schema
     if (!functions.isEmpty()) {
-      Object o = visitQuery(type, field, path, rel, functions);
-      return o;
+      visitQuery(type, field, path, rel, functions);
+      return;
     }
 
     //Check to see if it's a scalar on the relation
@@ -128,26 +112,25 @@ public abstract class SchemaWalker {
 
           RelRecordType relRecordType = (RelRecordType) relDataTypeField.getType();
           walk(type1, path, Optional.of(relRecordType));
-          return null;
+          return;
         } else if (relDataTypeField.getType().getComponentType() != null) {
           //array todo
           throw new RuntimeException();
         }
 
-        return visitScalar(type, field, path, rel.get(), relDataTypeField);
+        visitScalar(type, field, path, rel.get(), relDataTypeField);
       }
     }
 
     visitUnknownObject(type, field, path, rel);
 
-    //Is not a scalar or a table function, return
-    return Optional.empty();
+    //Is not a scalar or a table function, do nothing
   }
 
   protected abstract void visitUnknownObject(ObjectTypeDefinition type, FieldDefinition field,
       NamePath path, Optional<RelDataType> rel);
 
-  protected abstract Object visitScalar(ObjectTypeDefinition type, FieldDefinition field,
+  protected abstract void visitScalar(ObjectTypeDefinition type, FieldDefinition field,
       NamePath path, RelDataType relDataType, RelDataTypeField relDataTypeField);
 
   public Object visitQuery(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
@@ -175,7 +158,7 @@ public abstract class SchemaWalker {
     return null;
   }
 
-  protected abstract ArgumentLookupCoords visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition type,
+  protected abstract void visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition type,
       FieldDefinition field, NamePath path, Optional<RelDataType> rel,
       List<SqrlTableMacro> functions);
 }

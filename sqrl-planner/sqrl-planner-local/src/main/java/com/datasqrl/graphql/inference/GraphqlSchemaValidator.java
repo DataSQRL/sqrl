@@ -1,10 +1,7 @@
 package com.datasqrl.graphql.inference;
 
-import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
-import static com.datasqrl.canonicalizer.Name.SYSTEM_HIDDEN_PREFIX;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryTypeName;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getType;
-import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.isValidGraphQLName;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 
@@ -12,28 +9,24 @@ import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.engine.database.inmemory.InMemoryMetadataStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.TypeDefinitionRegistryUtil;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.queries.APISource;
 import com.google.common.collect.Iterables;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
-import graphql.language.ImplementingTypeDefinition;
 import graphql.language.InputObjectTypeDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.ListType;
-import graphql.language.NamedNode;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
-import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.Collection;
 import java.util.HashMap;
@@ -49,7 +42,7 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 
 public class GraphqlSchemaValidator extends SchemaWalker {
 
-  private Map<ObjectTypeDefinition, SqrlTableMacro> visitedObj = new HashMap<>();
+  private final Map<ObjectTypeDefinition, SqrlTableMacro> visitedObj = new HashMap<>();
 
   public GraphqlSchemaValidator(SqlNameMatcher nameMatcher, SqrlSchema schema, APISource source,
       TypeDefinitionRegistry registry, APIConnectorManager apiManager) {
@@ -71,8 +64,7 @@ public class GraphqlSchemaValidator extends SchemaWalker {
   }
 
   @Override
-  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
-      TableSink tableSink) {
+  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
     // Check we've found the mutation
     TableSink mutationSink = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
@@ -252,31 +244,27 @@ public class GraphqlSchemaValidator extends SchemaWalker {
   @Override
   protected void visitUnknownObject(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       Optional<RelDataType> rel) {
-    throw createThrowable(field.getSourceLocation(), "Unknown field at location %s",
-        rel.map(r-> field.getName() + ". Possible scalars are [" +
-                r.getFieldNames().stream()
-                    .filter(TypeDefinitionRegistryUtil::isValidGraphQLName)
-                    .filter(f->!f.startsWith(SYSTEM_HIDDEN_PREFIX))
-                    .collect(Collectors.joining(", ")) + "]")
-            .orElse(field.getName()));
+    throw createThrowable(field.getSourceLocation(), "Unknown field at location %s", rel.map(
+            r -> field.getName() + ". Possible scalars are [" + r.getFieldNames().stream()
+                .filter(GraphqlSchemaUtil::isValidGraphQLName).collect(Collectors.joining(", ")) + "]")
+        .orElse(field.getName()));
   }
 
   @Override
-  protected Object visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
+  protected void visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       RelDataType relDataType, RelDataTypeField relDataTypeField) {
-    return null;
   }
 
   @Override
-  protected ArgumentLookupCoords visitQuery(ObjectTypeDefinition parentType,
-      ObjectTypeDefinition type, FieldDefinition field, NamePath path, Optional<RelDataType> rel,
+  protected void visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition type,
+      FieldDefinition field, NamePath path, Optional<RelDataType> rel,
       List<SqrlTableMacro> functions) {
     checkState(!functions.isEmpty(), field.getSourceLocation(), "Could not find functions");
     checkValidArrayNonNullType(field.getType());
 
 //    if (visitedObj.get(type) != null && !visitedObj.get(type).getIsTypeOf()
 //        .isEmpty()) {
-      //todo readd the check to see if we can share a type
+    //todo readd the check to see if we can share a type
 //      if (!sqrlTable.getIsTypeOf()
 //          .contains(visitedObj.get(objectDefinition).getIsTypeOf().get(0))) {
 //    checkState(visitedObj.get(parentType) == null,
@@ -301,8 +289,6 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 //        "Field(s) [%s] could not be found on type [%s]. Possible fields are: [%s]", String.join(",",
 //            invalidFields.stream().map(FieldDefinition::getName).collect(Collectors.toList())),
 //        typeDef.getName(), String.join(", ", table.tableMacro.getRowType().getFieldNames()));
-
-    return null;
   }
 
 

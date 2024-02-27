@@ -26,15 +26,9 @@ import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
 import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
-import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.Model.ArgumentSet;
-import com.datasqrl.graphql.server.Model.Coords;
-import com.datasqrl.graphql.util.ApiQueryBase;
-import com.datasqrl.graphql.util.PagedApiQueryBase;
 import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
-import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
@@ -49,9 +43,7 @@ import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.SchemaPrinter;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptTable;
@@ -111,8 +103,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               table.getNameId());
         });
 
-//    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
-
     GraphqlSchemaFactory graphqlSchemaFactory = new GraphqlSchemaFactory(framework.getSchema(), true);
     GraphQLSchema generate = graphqlSchemaFactory.generate();
 
@@ -151,22 +141,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
     modelGen.walk();
 
-    List<Coords> coords = modelGen.getCoords();
-
-    for (Coords c : coords) {
-      if (c instanceof ArgumentLookupCoords) {
-        Set<ArgumentSet> matches = ((ArgumentLookupCoords) c).getMatchs();
-        for (ArgumentSet set : matches) {
-          if (set.getQuery() instanceof ApiQueryBase) {
-            addQuery(c.getParentType(), c.getFieldName(), ((ApiQueryBase) set.getQuery()).getQuery());
-          } else if (set.getQuery() instanceof PagedApiQueryBase) {
-            addQuery(c.getParentType(), c.getFieldName(), ((PagedApiQueryBase) set.getQuery()).getQuery());
-          }
-        }
-
-      }
-    }
-
     if (isBlank(schema)) {
       throw new RuntimeException("Could not validate graphql.");
     }
@@ -175,11 +149,6 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
       snapshot.addContent(ErrorPrinter.prettyPrint(errors), "warnings");
     }
     snapshot.createOrValidate();
-  }
-
-  private void addQuery(String parentType, String fieldName, APIQuery query) {
-//    snapshot.addContent(parentType + ":" + fieldName + "\n" +
-//        framework.getQueryPlanner().relToString(Dialect.CALCITE, query.getRelNode()));
   }
 
   @Test

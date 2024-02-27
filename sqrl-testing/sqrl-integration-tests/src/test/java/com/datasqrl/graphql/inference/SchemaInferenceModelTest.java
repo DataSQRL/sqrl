@@ -30,7 +30,6 @@ class SchemaInferenceModelTest extends AbstractSchemaInferenceModelTest {
     Pair<Object, APIConnectorManager> result = inferSchemaAndQueries(
         example.getScript(RetailScriptNames.FULL),
         Path.of("src/test/resources/c360bundle/schema.full.graphqls"));
-//    assertEquals(60, result.getKey().getQuery().getFields().size());
     assertEquals(336, result.getValue().getQueries().size());
   }
 }

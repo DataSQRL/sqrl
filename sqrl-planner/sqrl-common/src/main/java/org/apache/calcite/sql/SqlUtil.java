@@ -679,12 +679,12 @@ public abstract class SqlUtil {
   /**
    * Permutes argument types to correspond to the order of parameter names.
    */
-  //SQRL: Add namematcher so we can
   private static @Nullable List<@Nullable RelDataType> permuteArgTypes(List<String> paramNames,
       List<String> argNames, List<RelDataType> argTypes) {
     return permuteArgTypes(paramNames, argNames, argTypes);
   }
 
+  //SQRL: Add namematcher to find case-insensitive parameters
   private static @Nullable List<@Nullable RelDataType> permuteArgTypes(List<String> paramNames,
       List<String> argNames, List<RelDataType> argTypes, SqlNameMatcher nameMatcher) {
     // Arguments passed by name. Make sure that the function has
@@ -692,7 +692,6 @@ public abstract class SqlUtil {
     Map<Integer, Integer> map = new HashMap<>();
     for (Ord<String> argName : Ord.zip(argNames)) {
       int i = nameMatcher.indexOf(paramNames, argName.e);
-//      int i = paramNames.indexOf(argName.e);
       if (i < 0) {
         return null;
       }

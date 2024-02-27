@@ -1,17 +1,12 @@
 package com.datasqrl.graphql.inference;
 
 import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.SerializedSqrlConfig;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.Model.SubscriptionCoords;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.plan.queries.APISubscription;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.NonNullType;
@@ -20,7 +15,6 @@ import graphql.language.Value;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -31,12 +25,10 @@ import org.apache.calcite.sql.validate.SqlNameMatcher;
 /**
  * Returns a set of table functions that satisfy a graphql schema
  */
+@Getter
 public class GraphqlQueryGenerator extends SchemaWalker {
   private final GraphqlQueryBuilder graphqlQueryBuilder;
-
-  @Getter
   private final List<APIQuery> queries = new ArrayList<>();
-  @Getter
   private final List<SqrlTableMacro> subscriptions = new ArrayList<>();
 
   public GraphqlQueryGenerator(SqlNameMatcher nameMatcher,
@@ -48,20 +40,13 @@ public class GraphqlQueryGenerator extends SchemaWalker {
 
   @Override
   protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
-//    APISubscription apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
-//        source);
     SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
 
     subscriptions.add(tableFunction);
-
-//
-//    SerializedSqrlConfig serialize = tableSource.getConfiguration().getConfig().serialize();
-//    subscriptions.add(new SubscriptionCoords(fieldDefinition.getName(), serialize, Map.of()));
   }
 
   @Override
-  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition, TableSink tableSink) {
-    //add mutation?
+  protected void walkMutation(ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
   }
 
   @Override
@@ -70,13 +55,12 @@ public class GraphqlQueryGenerator extends SchemaWalker {
   }
 
   @Override
-  protected Object visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
+  protected void visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       RelDataType relDataType, RelDataTypeField relDataTypeField) {
-    return null;
   }
 
   @Override
-  protected ArgumentLookupCoords visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition type,
+  protected void visitQuery(ObjectTypeDefinition parentType, ObjectTypeDefinition type,
       FieldDefinition field, NamePath path, Optional<RelDataType> parentRel,
       List<SqrlTableMacro> functions) {
 
@@ -90,8 +74,6 @@ public class GraphqlQueryGenerator extends SchemaWalker {
           parentRel.orElse(null));
       queries.add(query);
     }
-
-    return null;
   }
 
   public static List<List<ArgCombination>> generateCombinations(
