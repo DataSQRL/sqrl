@@ -1,18 +1,15 @@
 package org.apache.calcite.jdbc;
 
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +23,6 @@ import lombok.Getter;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TableFunction;
 
@@ -123,13 +119,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
     plus().add(relationship.getDisplayName(), relationship);
   }
 
-  public static List<SqrlFunctionParameter> getExternalParams(List<FunctionParameter> params) {
-    return params.stream()
-        .map(p -> (SqrlFunctionParameter) p)
-        .filter(p -> !p.isInternal())
-        .collect(Collectors.toList());
-  }
-
   public void addTableMapping(NamePath path, String nameId) {
     this.pathToSysTableMap.put(path, nameId);
   }
@@ -146,14 +135,6 @@ public class SqrlSchema extends SimpleCalciteSchema {
     return getFunctions(path.getDisplay(), false)
         .stream().filter(f->f instanceof SqrlTableMacro)
         .map(f->(SqrlTableMacro)f)
-//        .filter(f->f.getFullPath().equals(path))
-        .collect(Collectors.toList());
-  }
-  public List<SqrlTableMacro> getTableFunctionFullPath(NamePath path) {
-    return getFunctions(getPathToAbsolutePathMap().getOrDefault(path, path).getDisplay(), false)
-        .stream().filter(f->f instanceof SqrlTableMacro)
-        .map(f->(SqrlTableMacro)f)
-//        .filter(f->f.getFullPath().equals(path))
         .collect(Collectors.toList());
   }
 

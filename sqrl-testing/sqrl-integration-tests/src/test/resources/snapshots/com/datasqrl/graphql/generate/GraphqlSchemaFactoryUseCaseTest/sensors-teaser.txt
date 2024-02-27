@@ -14,11 +14,11 @@ type MinReadings {
 }
 
 type Query {
-  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]
-  MinReadings(sensorid: Float, timeMin: DateTime, limit: Int = 10, offset: Int = 0): [MinReadings!]
-  machinegroup(limit: Int = 10, offset: Int = 0): [machinegroup!]
   Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]
+  machinegroup(limit: Int = 10, offset: Int = 0): [machinegroup!]
+  MinReadings(sensorid: Float, timeMin: DateTime, limit: Int = 10, offset: Int = 0): [MinReadings!]
   sensorreading(limit: Int = 10, offset: Int = 0): [sensorreading!]
+  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]
 }
 
 type Sensors {

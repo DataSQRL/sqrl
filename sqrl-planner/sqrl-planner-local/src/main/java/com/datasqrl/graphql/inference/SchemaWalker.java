@@ -3,6 +3,7 @@ package com.datasqrl.graphql.inference;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationType;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryType;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionType;
+import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
@@ -82,7 +83,7 @@ public abstract class SchemaWalker {
 //          "Could not find mutation source: %s.", fieldDefinition.getName());
 
       //TODO: validate that tableSink schema matches Input type
-      SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();
+//      SerializedSqrlConfig config = tableSink.getConfiguration().getConfig().serialize();
 //      InferredMutation inferredMutation = new InferredMutation(fieldDefinition.getName(), config);
 //      mutations.add(inferredMutation);
 
@@ -151,12 +152,16 @@ public abstract class SchemaWalker {
 
   public Object visitQuery(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       Optional<RelDataType> rel, List<SqrlTableMacro> functions) {
-    TypeDefinition type1 = registry.getType(field.getType())
-        .orElseThrow();//Is not a type in the registry (maybe scalar on query type)
+     Optional<TypeDefinition> optType = registry.getType(field.getType());
+     checkState(optType.isPresent(), field.getType().getSourceLocation(), "Could not find object in graphql type registry");
 
     // Let;s check for all the types here.
-    if (type1 instanceof ObjectTypeDefinition) {
-      ObjectTypeDefinition currentType = (ObjectTypeDefinition) type1;
+    checkState(optType.get() instanceof ObjectTypeDefinition,
+        type.getSourceLocation(),
+        "Could not infer non-object type on graphql schema: %s", type.getName());
+    if (optType.get() instanceof ObjectTypeDefinition) {
+
+      ObjectTypeDefinition currentType = (ObjectTypeDefinition) optType.get();
       visitQuery(type, currentType, field, path, rel, functions);
       RelDataType rowType = functions.get(0).getRowType();
       // simple query, no frills

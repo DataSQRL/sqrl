@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
 @Slf4j
-public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
+public class AbstractGraphqlSchemaFactoryTest extends AbstractLogicalSQRLIT {
 
   private Snapshot snapshot;
 
@@ -26,7 +26,7 @@ public class AbstractSchemaGeneratorTest extends AbstractLogicalSQRLIT {
   protected String generateSchema(String sqrlScript, boolean addArguments) {
     plan(sqrlScript);
 
-    GraphQLSchema schema = new SchemaGenerator().generate(framework.getSchema(), addArguments);
+    GraphQLSchema schema = new GraphqlSchemaFactory(framework.getSchema(), addArguments).generate();
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
         .includeDirectives(false);

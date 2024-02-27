@@ -5,8 +5,13 @@ import graphql.language.SchemaDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 public class TypeDefinitionRegistryUtil {
+
+  public static boolean isValidGraphQLName(String name) {
+    return !name.startsWith("__") && Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
+  }
 
   public static Optional<String> getSchemaRootTypeName(Optional<SchemaDefinition> schemaRoot, String schemaRootName) {
     return schemaRoot.flatMap(s->s.getOperationTypeDefinitions().stream()
@@ -45,7 +50,7 @@ public class TypeDefinitionRegistryUtil {
     return getType(registry, ()->getSubscriptionTypeName(registry));
   }
 
-  private static Optional<ObjectTypeDefinition> getType(TypeDefinitionRegistry registry, Supplier<String> supplier) {
+  public static Optional<ObjectTypeDefinition> getType(TypeDefinitionRegistry registry, Supplier<String> supplier) {
     String queryTypeName = supplier.get();
     return registry.getType(queryTypeName)
         .filter(f->f instanceof ObjectTypeDefinition)

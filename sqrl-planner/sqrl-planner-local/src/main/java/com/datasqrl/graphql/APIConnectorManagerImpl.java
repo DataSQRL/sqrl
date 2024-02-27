@@ -21,8 +21,10 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.table.CalciteTableFactory;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
+import com.datasqrl.plan.table.TableType;
 import com.datasqrl.schema.RootSqrlTable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,23 +104,24 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
 
   @Override
   public TableSource addSubscription(APISubscription subscription, SqrlTableMacro sqrlTable) {
-//    errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
-//    errors.checkFatal(((ScriptRelationalTable) sqrlTable.getVt()).getRoot().getType() == TableType.STREAM,
-//        "Table %s for subscription %s is not a stream table", sqrlTable.getName(), subscription.getName());
-    //Check if we already exported it
-//    TableSource subscriptionSource;
-//    if (exports.containsKey(sqrlTable)) {
-//      subscriptionSource = exports.get(sqrlTable).getSource();
-//    } else {
-      //otherwise create new log for it
+    errors.checkFatal(logEngine.isPresent(), "Cannot create subscriptions because no log engine is configured");
     RootSqrlTable rootSqrlTable = (RootSqrlTable) sqrlTable;
-    QueryRelationalTable table = ((QueryRelationalTable) rootSqrlTable.getInternalTable());
-    String logId = table.getNameId();
-    NamedRelDataType tableSchema = new NamedRelDataType(table.getTableName(),
-        table.getRowType());
-    Log log = logEngine.get().createLog(logId, tableSchema);
-    exports.put(sqrlTable, log);
-    TableSource subscriptionSource = log.getSource();
+    PhysicalRelationalTable table = ((PhysicalRelationalTable) rootSqrlTable.getInternalTable());
+    errors.checkFatal(table.getRoot().getType() == TableType.STREAM,
+        "Table %s for subscription %s is not a stream table", table.getTableName(), subscription.getName());
+    //Check if we already exported it
+    TableSource subscriptionSource;
+    if (exports.containsKey(sqrlTable)) {
+      subscriptionSource = exports.get(sqrlTable).getSource();
+    } else {
+      //otherwise create new log for it
+      String logId = table.getNameId();
+      NamedRelDataType tableSchema = new NamedRelDataType(table.getTableName(),
+          table.getRowType());
+      Log log = logEngine.get().createLog(logId, tableSchema);
+      exports.put(sqrlTable, log);
+      subscriptionSource = log.getSource();
+    }
     subscriptions.put(subscription, subscriptionSource);
     return subscriptionSource;
   }

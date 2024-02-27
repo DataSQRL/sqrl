@@ -67,13 +67,11 @@ public class GraphqlQueryGenerator extends SchemaWalker {
   @Override
   protected void visitUnknownObject(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       Optional<RelDataType> rel) {
-    System.out.println();
   }
 
   @Override
   protected Object visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       RelDataType relDataType, RelDataTypeField relDataTypeField) {
-    System.out.println();
     return null;
   }
 

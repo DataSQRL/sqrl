@@ -3,11 +3,14 @@
  */
 package com.datasqrl.graphql.generate;
 
+import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
+import static com.datasqrl.canonicalizer.Name.isHiddenString;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getInputType;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.getOutputType;
 import static com.datasqrl.graphql.generate.SchemaGeneratorUtil.wrap;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
+import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.isValidGraphQLName;
 import static graphql.schema.GraphQLNonNull.nonNull;
 
 import com.datasqrl.calcite.function.SqrlTableMacro;
@@ -18,9 +21,7 @@ import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.table.LogicalNestedTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.Relationship.JoinType;
-import com.google.common.base.Preconditions;
 import graphql.Scalars;
 import graphql.language.IntValue;
 import graphql.schema.GraphQLArgument;
@@ -35,12 +36,14 @@ import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.calcite.jdbc.SqrlSchema;
@@ -53,43 +56,45 @@ import org.apache.commons.collections.ListUtils;
 /**
  * Creates a default graphql schema based on the SQRL schema
  */
-public class SchemaGenerator {
+public class GraphqlSchemaFactory {
 
-  List<GraphQLFieldDefinition> queryFields = new ArrayList<>();
-  List<GraphQLObjectType> objectTypes = new ArrayList<>();
-  private boolean addArguments;
-  Map<NamePath, List<SqrlTableMacro>> tables;
-  private SqrlSchema schema;
+  private final List<GraphQLFieldDefinition> queryFields = new ArrayList<>();
+  private final List<GraphQLObjectType> objectTypes = new ArrayList<>();
+  private final SqrlSchema schema;
+  private final boolean addArguments;
+  // Root path signifying the 'Query' type.
+  private final Map<NamePath, List<SqrlTableMacro>> objectPathToTables;
+  // The path from root
+  private final Map<NamePath, List<SqrlTableMacro>> fieldPathToTables;
+  private Set<String> usedNames = new HashSet<>();
 
-  public static boolean isValidGraphQLName(String name) {
-    return Pattern.matches("[A-Za-z][_0-9A-Za-z]*", name);
-  }
-
-  public GraphQLSchema generate(SqrlSchema schema, boolean addArguments) {
-    this.addArguments = addArguments;
+  public GraphqlSchemaFactory(SqrlSchema schema, boolean addArguments) {
     this.schema = schema;
-
-    Map<NamePath, List<SqrlTableMacro>> relationships = schema.getTableFunctions().stream()
+    this.addArguments = addArguments;
+    this.objectPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(e -> e.getFullPath().popLast(),
             LinkedHashMap::new, Collectors.toList()));
-
-    tables = schema.getTableFunctions().stream()
-        .collect(Collectors.groupingBy(e -> e.getAbsolutePath(),
+    this.fieldPathToTables = schema.getTableFunctions().stream()
+        .collect(Collectors.groupingBy(SqrlTableMacro::getAbsolutePath,
             LinkedHashMap::new, Collectors.toList()));
+  }
 
-    for (Map.Entry<NamePath, List<SqrlTableMacro>> path : tables.entrySet()) {
-      Optional<GraphQLObjectType> graphQLObjectType = generate2(path.getValue(),
-          relationships.getOrDefault(path.getKey(), List.of()));
-      graphQLObjectType.map(o->objectTypes.add(o));
+  public GraphQLSchema generate() {
+    for (Map.Entry<NamePath, List<SqrlTableMacro>> path : fieldPathToTables.entrySet()) {
+      if (path.getKey().getLast().isHidden()) continue;
+
+      Optional<GraphQLObjectType> graphQLObjectType = generateObject(path.getValue(),
+          objectPathToTables.getOrDefault(path.getKey(), List.of()));
+      graphQLObjectType.map(objectTypes::add);
     }
 
-    GraphQLObjectType queryType = createQueryType(relationships.get(NamePath.ROOT));
+    GraphQLObjectType queryType = createQueryType(objectPathToTables.get(NamePath.ROOT));
 
-//    postProcess();
+    postProcess();
 
-//    if (queryFields.isEmpty()) {
-//      throw new RuntimeException("No tables found to build schema");
-//    }
+    if (queryFields.isEmpty()) {
+      throw new RuntimeException("No tables found to build schema");
+    }
 
     return GraphQLSchema.newSchema()
         .query(queryType)
@@ -103,7 +108,9 @@ public class SchemaGenerator {
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
 
     for (SqrlTableMacro rel : relationships) {
-      if (rel.getFullPath().size() > 1) continue; //skip nested hack
+//      if (rel.getFullPath().size() > 1) continue;
+      String name = rel.getAbsolutePath().getDisplay();
+      if (name.startsWith(HIDDEN_PREFIX) || !isValidGraphQLName(name)) continue;
       GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
           .name(rel.getAbsolutePath().getDisplay())
           .type(wrap(createTypeName(rel), rel.getMultiplicity()))
@@ -117,11 +124,15 @@ public class SchemaGenerator {
         .fields(fields)
         .build();
 
+    usedNames.add("Query");
+
+    this.queryFields.addAll(fields);
+
     return objectType;
   }
 
-  private Optional<GraphQLObjectType> generate2(List<SqrlTableMacro> tableMacros, List<SqrlTableMacro> relationships) {
-    //The multiple table macros should all point to the same relnode type
+  private Optional<GraphQLObjectType> generateObject(List<SqrlTableMacro> tableMacros, List<SqrlTableMacro> relationships) {
+    //Todo check: The multiple table macros should all point to the same relnode type
 
     Map<Name, List<SqrlTableMacro>> relByName = relationships.stream()
         .collect(Collectors.groupingBy(g -> g.getFullPath().getLast(),
@@ -131,12 +142,12 @@ public class SchemaGenerator {
     RelDataType rowType = first.getRowType();
     for (int i = 1; i < tableMacros.size(); i++) {
       RelDataType type = tableMacros.get(i).getRowType();
-      boolean isEqual = rowType.equalsSansFieldNames(type);
-      Preconditions.checkState(isEqual, "Table macro type mismatch in sqrl schema: {} expected {}",
-          type, rowType);
+      // Nested have pks
+//      boolean isEqual = rowType.equalsSansFieldNames(type);
+//      Preconditions.checkState(isEqual, "Table macro type mismatch in sqrl schema: %s expected %s",
+//          type, rowType);
       rowType = type;
     }
-    String name = generateObjectName(first.getAbsolutePath());
 
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     //relByName
@@ -154,26 +165,35 @@ public class SchemaGenerator {
       return Optional.empty();
     }
 
+    String name = generateObjectName(first.getAbsolutePath());
     GraphQLObjectType objectType = GraphQLObjectType.newObject()
         .name(name)
         .fields(fields)
         .build();
-
+    usedNames.add(name);
+    queryFields.addAll(fields);
     return Optional.of(objectType);
   }
 
-  //Todo: add uniqueness
+  private String uniquifyName(String name) {
+    while (usedNames.contains(name)) {
+      name = name + "_"; //add suffix
+    }
+    return name;
+  }
+
   private String generateObjectName(NamePath path) {
     if (path.isEmpty()) {
       return "Query";
     }
-    return path.getLast().getDisplay();
+
+    return uniquifyName(path.getLast().getDisplay());
   }
 
   private Optional<GraphQLFieldDefinition> createRelationshipField(List<SqrlTableMacro> value) {
     SqrlTableMacro sqrlTableMacro = value.get(0);
     String name = sqrlTableMacro.getFullPath().getLast().getDisplay();
-    if (!isValidGraphQLName(name)) {
+    if (!isValidGraphQLName(name) || isHiddenString(name)) {
       return Optional.empty();
     }
 
@@ -200,7 +220,7 @@ public class SchemaGenerator {
     } else if (addArguments && parameters.isEmpty()) {
       NamePath toTable = schema.getPathToAbsolutePathMap()
           .get(field.getFullPath());
-      List<SqrlTableMacro> sqrlTableMacros = tables.get(toTable);
+      List<SqrlTableMacro> sqrlTableMacros = fieldPathToTables.get(toTable);
       List<GraphQLArgument> premuted = generatePermuted(sqrlTableMacros.get(0));
       List<GraphQLArgument> limitOffset = generateLimitOffset();
 
@@ -257,12 +277,19 @@ public class SchemaGenerator {
         .stream()
         .filter(f -> getInputType(f.getType()).isPresent())
         .filter(f -> isValidGraphQLName(f.getName()))
+        .filter(this::isVisible)
         .map(f -> GraphQLArgument.newArgument()
             .name(f.getName())
             .type(getInputType(f.getType()).get())
             .build())
         .collect(Collectors.toList());
   }
+
+  private boolean isVisible(RelDataTypeField f) {
+    return !f.getName().startsWith(HIDDEN_PREFIX);
+  }
+
+  //Todo need to adjust PKs
   private boolean isLocalPrimaryKey(Table table, int i) {
     if (table instanceof LogicalNestedTable) {
       LogicalNestedTable nestedTable = (LogicalNestedTable) table;
@@ -281,8 +308,6 @@ public class SchemaGenerator {
     return false;
   }
 
-  Map<NamePath, String> uniqueNameMap = new HashMap<>();
-
   private GraphQLOutputType createTypeName(SqrlTableMacro sqrlTableMacro) {
     return new GraphQLTypeReference(sqrlTableMacro.getAbsolutePath().getLast().getDisplay());
   }
@@ -291,21 +316,10 @@ public class SchemaGenerator {
   private Optional<GraphQLFieldDefinition> createRelationshipField(RelDataTypeField field) {
     return getOutputType(field.getType())
         .filter(f->isValidGraphQLName(field.getName()))
+        .filter(f->isVisible(field))
         .map(t -> GraphQLFieldDefinition.newFieldDefinition()
             .name(field.getName())
             .type(wrap(t, field.getType())).build());
-  }
-
-  private void generate(SqrlTableMacro t) {
-    // 1 group
-    // 2 collesce
-    // 3
-
-    NamePath path = t.getAbsolutePath();
-    //If path is 1, add to Query table
-
-    //If we've seen this path before, look at parameters and adjust nullability
-
   }
 
   public void postProcess() {

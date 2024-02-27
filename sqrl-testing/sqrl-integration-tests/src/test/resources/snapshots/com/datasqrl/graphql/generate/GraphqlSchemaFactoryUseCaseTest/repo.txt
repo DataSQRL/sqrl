@@ -9,8 +9,8 @@ type Package {
 
 type Query {
   Package(name: String, limit: Int = 10, offset: Int = 0): [Package!]
-  TopicPackages(pkgName: String, topicName: String, limit: Int = 10, offset: Int = 0): [TopicPackages!]
   Submission(limit: Int = 10, offset: Int = 0): [Submission!]
+  TopicPackages(pkgName: String, topicName: String, limit: Int = 10, offset: Int = 0): [TopicPackages!]
   TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]
 }
 

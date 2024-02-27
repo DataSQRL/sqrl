@@ -22,11 +22,12 @@ import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
-import com.datasqrl.graphql.generate.SchemaGenerator;
+import com.datasqrl.graphql.generate.GraphqlSchemaFactory;
 import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
 import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
+import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
 import com.datasqrl.graphql.util.ReplaceGraphqlQueries;
@@ -46,6 +47,7 @@ import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.hints.SqrlHintStrategyTable;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.DebuggerConfig;
+import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
@@ -57,6 +59,7 @@ import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Preconditions;
+import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.CompilerResult;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaParser;
@@ -163,6 +166,10 @@ public class Compiler {
       apiSource = Optional.of(apiSchema);
       errors = errors.withSchema(apiSchema.getName().getDisplay(), apiSchema.getSchemaDefinition());
 
+      GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(), apiSchema, (new SchemaParser()).parse(apiSchema.getSchemaDefinition()), apiManager);
+
+      schemaValidator.validate(apiSchema, errors);
 
       GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
           framework.getSchema(),  (new SchemaParser()).parse(apiSchema.getSchemaDefinition()), apiSchema,
@@ -174,37 +181,38 @@ public class Compiler {
           new APISubscription(s.getAbsolutePath().getFirst(), apiSchema), s));
     } else if (pipeline.getStage(Type.DATABASE).isPresent()) {
       AtomicInteger i = new AtomicInteger();
-//      framework.getSchema().getTableFunctions()
-//          .forEach(t->apiManager.addQuery(new APIQuery(
-//              "query" + i.incrementAndGet(),
-//              framework.getQueryPlanner().expandMacros(t.getViewTransform().get()),
-//              this.parameterHandler)));
+      framework.getSchema().getTableFunctions()
+          .forEach(t->apiManager.addQuery(new APIQuery(
+              "query" + i.incrementAndGet(),
+              NamePath.ROOT,
+              framework.getQueryPlanner().expandMacros(t.getViewTransform().get()),
+              List.of(),
+              List.of(), false)));
     }
 
     PhysicalDAGPlan dag = SqrlOptimizeDag.planDag(framework, pipelineFactory.createPipeline(), apiManager, root.orElse(null),
         false,new Debugger(debugger, moduleLoader), errors);
     PhysicalPlan physicalPlan = createPhysicalPlan(dag, errorTableSink, framework);
 
-    GraphqlModelGenerator modelGen = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(), (new SchemaParser()).parse(apiSource.get().getSchemaDefinition()), apiSource.get(),
-        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
-    modelGen.walk();
-    RootGraphqlModel model = RootGraphqlModel.builder()
-        .coords( modelGen.getCoords())
-        .mutations(modelGen.getMutations())
-        .subscriptions(modelGen.getSubscriptions())
-        .schema(StringSchema.builder().schema(apiSource.get().getSchemaDefinition()).build())
-        .build();
-    root = Optional.of(model);
-    //todo remove
-    physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst().get()
-        .setModel(model);
+    if (apiSource.isPresent()) {
+      GraphqlModelGenerator modelGen = new GraphqlModelGenerator(
+          framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(), (new SchemaParser()).parse(apiSource.get().getSchemaDefinition()),
+          apiSource.get(),
+          physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
+      modelGen.walk();
+      RootGraphqlModel model = RootGraphqlModel.builder()
+          .coords(modelGen.getCoords())
+          .mutations(modelGen.getMutations())
+          .subscriptions(modelGen.getSubscriptions())
+          .schema(StringSchema.builder().schema(apiSource.get().getSchemaDefinition()).build())
+          .build();
+      root = Optional.of(model);
+      //todo remove
+      physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst().get()
+          .setModel(model);
+    }
 
-    Path servermodel = buildDir.resolve("server-model.config");
-    Files.deleteIfExists(servermodel);
-    Files.writeString(servermodel,
-        new Deserializer().getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(model),
-        StandardOpenOption.CREATE);
 
     CompilerResult result = new CompilerResult(root, apiSource.map(APISource::getSchemaDefinition), physicalPlan);
 
@@ -222,7 +230,7 @@ public class Compiler {
   @SneakyThrows
   public static String inferGraphQLSchema(SqrlSchema schema,
       boolean addArguments) {
-    GraphQLSchema gqlSchema = new SchemaGenerator().generate(schema, addArguments);
+    GraphQLSchema gqlSchema = new GraphqlSchemaFactory(schema, addArguments).generate();
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)

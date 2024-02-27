@@ -1,7 +1,7 @@
-[FATAL] Could not find Object type [DOESNOTEXIST]
-in script:<schema> [5:11]:
+[FATAL] Could not find object in graphql type registry
+in script:schema [5:11]:
 }
 type Query {
-	orders: DOESNOTEXIST
+  orders: DOESNOTEXIST
 ----------^
 

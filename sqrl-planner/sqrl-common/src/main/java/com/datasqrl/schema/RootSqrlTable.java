@@ -63,6 +63,6 @@ public class RootSqrlTable implements SqrlTableMacro {
 
   @Override
   public JoinType getJoinType() {
-    return JoinType.CHILD; //not a join but makes inference logic easier...
+    return JoinType.NONE;
   }
 }

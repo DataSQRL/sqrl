@@ -21,10 +21,14 @@ public class APIQuery implements IdentifiedQuery {
 
   @Include
   String nameId;
+  // Path from root
   NamePath namePath;
+  // Query
   RelNode relNode;
+  // Where parameters come from
   List<JdbcParameterHandler> parameters;
+  // How arguments are matched
   List<Argument> graphqlArguments;
+  // Has a limit/offset
   boolean isLimitOffset;
-
 }

@@ -21,10 +21,11 @@ import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.graphql.APIConnectorManagerImpl;
-import com.datasqrl.graphql.generate.SchemaGenerator;
+import com.datasqrl.graphql.generate.GraphqlSchemaFactory;
 import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.inference.GraphqlQueryBuilder;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator;
+import com.datasqrl.graphql.inference.GraphqlSchemaValidator;
 import com.datasqrl.graphql.server.Model.ArgumentLookupCoords;
 import com.datasqrl.graphql.server.Model.ArgumentSet;
 import com.datasqrl.graphql.server.Model.Coords;
@@ -95,6 +96,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     } catch (CollectedException e) {
       System.out.println(ErrorPrinter.prettyPrint(errors));
       throw e;
+    } catch (Exception e) {
+      throw errors.handle(e);
     }
     SQRLConverter sqrlConverter = new SQRLConverter(framework.getQueryPlanner().getRelBuilder());
     Stream.concat(framework.getSchema().getFunctionStream(QueryTableFunction.class).map(QueryTableFunction::getQueryTable),
@@ -110,8 +113,8 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
 //    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
 
-    SchemaGenerator schemaGenerator = new SchemaGenerator();
-    GraphQLSchema generate = schemaGenerator.generate(framework.getSchema(), true);
+    GraphqlSchemaFactory graphqlSchemaFactory = new GraphqlSchemaFactory(framework.getSchema(), true);
+    GraphQLSchema generate = graphqlSchemaFactory.generate();
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
         .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
@@ -123,6 +126,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
     APIConnectorManagerImpl apiManager = mock(APIConnectorManagerImpl.class);
 
+    GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework.getCatalogReader().nameMatcher(),
+        framework.getSchema(), source, (new SchemaParser()).parse(source.getSchemaDefinition()), apiManager);
+    schemaValidator.validate(source, errors);
     GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
         framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
         new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
@@ -1025,7 +1031,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
     validateScript(
         "IMPORT ecommerce-data.Product;\n"
             + "Product.nested := SELECT p.* FROM @ JOIN Product p;\n"
-            + "X := SELECT _uuid FROM Product.nested;");
+            + "X := SELECT _uuid AS uuid FROM Product.nested;");
   }
   @Test
   public void distinctSingleColumnTest() {

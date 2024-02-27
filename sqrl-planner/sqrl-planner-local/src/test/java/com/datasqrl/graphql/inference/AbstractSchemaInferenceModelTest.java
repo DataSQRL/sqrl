@@ -55,29 +55,32 @@ public class AbstractSchemaInferenceModelTest extends AbstractLogicalSQRLIT {
       String schemaStr, SqrlFramework framework, ExecutionPipeline pipeline, ErrorCollector errors) {
     APISource source = APISource.of(schemaStr);
     //Inference
-//    SqrlSchemaForInference sqrlSchemaForInference = new SqrlSchemaForInference(framework.getSchema());
+    GraphQLMutationExtraction preAnalysis = new GraphQLMutationExtraction(
+        framework.getTypeFactory(),
+        NameCanonicalizer.SYSTEM);
 
     MockAPIConnectorManager apiManager = new MockAPIConnectorManager(framework, pipeline);
 
-//    SchemaInference inference = new SchemaInference(framework, "<schema>", null,source,
-//        sqrlSchemaForInference,
-//        framework.getQueryPlanner().getRelBuilder(), apiManager);
-//
-//    InferredSchema inferredSchema;
-//    try {
-//      inferredSchema = inference.accept();
-//    } catch (Exception e) {
-//      errors.withSchema("<schema>", schemaStr).handle(e);
-//      return null;
-//    }
+    try {
+      preAnalysis.analyze(source, apiManager);
 
-    GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
-        new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
+      GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(
+          framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(), source, (new SchemaParser()).parse(source.getSchemaDefinition()),
+          apiManager);
+      schemaValidator.validate(source, errors);
 
-    queryGenerator.walk();
-    queryGenerator.getQueries().forEach(apiManager::addQuery);
-    System.out.println();
+      GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
+          framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
+          new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
+
+      queryGenerator.walk();
+      queryGenerator.getQueries().forEach(apiManager::addQuery);
+    } catch (Exception e) {
+      errors.withSchema(source.getName().getDisplay(), source.getSchemaDefinition()).handle(e);
+      return null;
+    }
+
 
     //Build queries
 //    SchemaBuilder3 schemaBuilder = new SchemaBuilder3(framework.getCatalogReader().nameMatcher(),

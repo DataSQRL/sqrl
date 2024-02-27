@@ -25,9 +25,11 @@ import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.google.common.base.Preconditions;
 import graphql.language.FieldDefinition;
+import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -73,9 +75,14 @@ public class GraphqlModelGenerator extends SchemaWalker {
     SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
     TableSource tableSource = apiManager.addSubscription(apiSubscription,
         tableFunction);
-//
+
+    Map<String, String> filters = new HashMap<>();
+    for (InputValueDefinition input : fieldDefinition.getInputValueDefinitions()) {
+      RelDataTypeField field = nameMatcher.field(tableFunction.getRowType(), input.getName());
+      filters.put(input.getName(), field.getName());
+    }
     SerializedSqrlConfig serialize = tableSource.getConfiguration().getConfig().serialize();
-    subscriptions.add(new SubscriptionCoords(fieldDefinition.getName(), serialize, Map.of()));
+    subscriptions.add(new SubscriptionCoords(fieldDefinition.getName(), serialize, filters));
   }
 
   @Override
@@ -89,12 +96,21 @@ public class GraphqlModelGenerator extends SchemaWalker {
   @Override
   protected void visitUnknownObject(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       Optional<RelDataType> rel) {
-    System.out.println();
   }
 
   @Override
   protected Object visitScalar(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       RelDataType relDataType, RelDataTypeField relDataTypeField) {
+
+    //todo: walk into structured type to check all prop fetchers
+    if (!field.getName().equals(relDataTypeField.getName())) {
+      FieldLookupCoords build = FieldLookupCoords.builder()
+          .parentType(type.getName())
+          .fieldName(field.getName())
+          .columnName(relDataTypeField.getName())
+          .build();
+      coords.add(build);
+    }
 
 //    FieldLookupCoords build = FieldLookupCoords.builder()
 //        .parentType(type.getName())

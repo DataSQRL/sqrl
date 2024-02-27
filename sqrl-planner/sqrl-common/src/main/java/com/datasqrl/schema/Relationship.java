@@ -42,6 +42,6 @@ public class Relationship implements SqrlTableMacro {
   }
 
   public enum JoinType {
-    PARENT, CHILD, JOIN
+    NONE, PARENT, CHILD, JOIN
   }
 }

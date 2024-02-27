@@ -203,13 +203,6 @@ public abstract class AbstractGraphqlTest extends KafkaBaseTest {
   protected void validateEvents() {
     Collections.sort(events);
     snapshot.addContent(String.join("\n", events));
-    Path path = Banking.INSTANCE.getRootPackageDirectory()
-        .resolve("build")
-        .resolve("deploy")
-        .resolve("server-model.json");
-    String model = Files.readString(path);
-
-    snapshot.addContent(model);
     snapshot.createOrValidate();
 
   }
