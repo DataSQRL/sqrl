@@ -4,10 +4,8 @@
 package com.datasqrl.plan.util;
 
 import com.datasqrl.function.SqrlTimeTumbleFunction;
-import com.datasqrl.function.StdTimeLibraryImpl;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.base.Preconditions;
 import lombok.Value;
 import org.apache.calcite.rex.*;
@@ -28,16 +26,15 @@ public class TimeTumbleFunctionCall {
   }
 
   public static Optional<TimeTumbleFunctionCall> from(RexNode rexNode, RexBuilder rexBuilder) {
-      if (!(rexNode instanceof RexCall)) {
-          return Optional.empty();
-      }
+    if (!(rexNode instanceof RexCall)) {
+        return Optional.empty();
+    }
     RexCall call = (RexCall) rexNode;
     Optional<SqrlTimeTumbleFunction> fnc = FunctionUtil.getSqrlFunction(call.getOperator())
-        .filter(o -> o instanceof SqrlTimeTumbleFunction)
-        .map(o -> (SqrlTimeTumbleFunction) o);
-      if (fnc.isEmpty()) {
-          return Optional.empty();
-      }
+        .flatMap(FunctionUtil::isTimeTumbleFunction);
+    if (fnc.isEmpty()) {
+        return Optional.empty();
+    }
     SqrlTimeTumbleFunction bucketFct = fnc.get();
     //Validate time bucketing function: First argument is timestamp, all others must be constants
     Preconditions.checkArgument(call.getOperands().size() > 0,

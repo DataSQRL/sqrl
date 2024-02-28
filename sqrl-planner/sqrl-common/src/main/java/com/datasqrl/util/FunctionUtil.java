@@ -1,13 +1,14 @@
 package com.datasqrl.util;
 
-import com.datasqrl.function.SqrlFunction;
+import com.datasqrl.function.FunctionMetadata;
+import com.datasqrl.function.IndexableFunction;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
+import com.datasqrl.function.TimestampPreservingFunction;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.functions.FunctionIdentifier;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 
@@ -36,5 +37,33 @@ public class FunctionUtil {
       return Optional.of(((org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction)operator).getDefinition());
     }
     return Optional.empty();
+  }
+
+  public static Optional<TimestampPreservingFunction> getTimestampPreservingFunction(
+      FunctionDefinition functionDefinition) {
+
+    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
+        .stream()
+        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
+        .filter(f->TimestampPreservingFunction.class.isAssignableFrom(f.getClass()))
+        .map(f->(TimestampPreservingFunction)f)
+        .findFirst();
+  }
+
+  public static Optional<SqrlTimeTumbleFunction> isTimeTumbleFunction(FunctionDefinition functionDefinition) {
+    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
+        .stream()
+        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
+        .filter(f->SqrlTimeTumbleFunction.class.isAssignableFrom(f.getClass()))
+        .map(f->(SqrlTimeTumbleFunction)f)
+        .findFirst();
+  }
+
+  public static Optional<IndexableFunction> isIndexableFunctionMetadata(FunctionDefinition functionDefinition) {
+    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class).stream()
+        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
+        .filter(f->IndexableFunction.class.isAssignableFrom(f.getClass()))
+        .map(f->(IndexableFunction)f)
+        .findFirst();
   }
 }

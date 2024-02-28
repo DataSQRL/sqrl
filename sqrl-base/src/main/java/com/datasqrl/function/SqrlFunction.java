@@ -3,19 +3,17 @@
  */
 package com.datasqrl.function;
 
-import com.datasqrl.canonicalizer.Name;
-
 public interface SqrlFunction {
 
   String getDocumentation();
 
-  default Name getFunctionName() {
+  default String getFunctionName() {
     return getFunctionNameFromClass(this.getClass());
   }
 
-  static Name getFunctionNameFromClass(Class clazz) {
+  static String getFunctionNameFromClass(Class clazz) {
     String fctName = clazz.getSimpleName();
     fctName = Character.toLowerCase(fctName.charAt(0)) + fctName.substring(1);
-    return Name.system(fctName);
+    return fctName;
   }
 }

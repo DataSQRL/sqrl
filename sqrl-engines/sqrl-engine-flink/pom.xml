@@ -113,5 +113,19 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-format-csv</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-secure-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-time-execute</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-text-execute</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

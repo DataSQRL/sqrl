@@ -1,5 +1,5 @@
-import static com.datasqrl.TimeFunctions.EPOCH_TO_TIMESTAMP;
-import static com.datasqrl.TimeFunctions.TIMESTAMP_TO_EPOCH;
+import static com.datasqrl.time.TimeFunctions.EPOCH_TO_TIMESTAMP;
+import static com.datasqrl.time.TimeFunctions.TIMESTAMP_TO_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.datasqrl.FlinkExecutablePlan;

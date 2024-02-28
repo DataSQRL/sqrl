@@ -10,6 +10,7 @@ import com.datasqrl.function.SqrlFunction;
 import com.datasqrl.plan.rules.SqrlRelMdRowCount;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.FunctionUtil;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.SqrlRexUtil;
 import com.google.common.collect.ImmutableSet;
 import lombok.*;
@@ -159,10 +160,10 @@ public class QueryIndexSummary {
     List<Integer> columnIndexes;
     IndexableFunction function;
 
-    @Override
-    public String toString() {
-      return function.getFunctionName().getDisplay() + columnIndexes.toString();
-    }
+//    @Override
+//    public String toString() {
+//      return function.getFunctionName() + columnIndexes.toString();
+//    }
 
   }
 
@@ -195,8 +196,9 @@ public class QueryIndexSummary {
     @Override
     public RexNode visitCall(RexCall call) {
       boolean prior = parentIsArithmetic;
-      Optional<FunctionDefinition> sqrlFunction = FunctionUtil.getSqrlFunction(call.getOperator());
-      if (sqrlFunction.filter(IndexableFunction.class::isInstance).isPresent() && parentIsArithmetic) {
+      Optional<IndexableFunction> sqrlFunction = FunctionUtil.getSqrlFunction(call.getOperator())
+          .flatMap(FunctionUtil::isIndexableFunctionMetadata);
+      if (sqrlFunction.isPresent() && parentIsArithmetic) {
         //This is either a top level predicate or a distance function inside a comparison
         IndexableFunction idxFunction = (IndexableFunction) sqrlFunction.get();
         Optional<IndexableFunctionCall> optCall = resolveIndexFunctionCall(call, idxFunction);

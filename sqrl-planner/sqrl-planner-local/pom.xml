@@ -51,14 +51,6 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-print</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-json-planner</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-vector-planner</artifactId>
-    </dependency>
 
     <!-- Utils -->
     <dependency>
@@ -258,6 +250,14 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-execute-http-vertx</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-text-execute</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-time-execute</artifactId>
     </dependency>
 
   </dependencies>
