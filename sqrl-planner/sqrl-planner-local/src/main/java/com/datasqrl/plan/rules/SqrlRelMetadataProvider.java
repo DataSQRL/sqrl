@@ -5,6 +5,7 @@ package com.datasqrl.plan.rules;
 
 import org.apache.calcite.rel.metadata.*;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 
 public class SqrlRelMetadataProvider extends ChainedRelMetadataProvider {
 

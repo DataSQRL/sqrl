@@ -16,6 +16,7 @@ import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.plan.validate.ScriptPlanner;
 import com.datasqrl.util.DataContextImpl;
 import com.datasqrl.util.SqlNameUtil;
+import com.google.inject.Inject;
 import java.util.Arrays;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -84,7 +85,6 @@ public class QueryPlanner {
   private final SqrlSchema schema;
   private final ConvertletTable convertletTable;
   private final File defaultClassDir;
-  private final AtomicInteger uniqueMacroInt;
   private final HintStrategyTable hintStrategyTable;
   private final RelMetadataProvider metadataProvider;
   private final SqrlFramework framework;
@@ -95,7 +95,6 @@ public class QueryPlanner {
     this.operatorTable = framework.getSqrlOperatorTable();
     this.schema = framework.getSchema();
     this.metadataProvider = framework.getRelMetadataProvider();
-    this.uniqueMacroInt = framework.getUniqueMacroInt();
     this.hintStrategyTable = framework.getHintStrategyTable();
     this.planner = new VolcanoPlanner(null, Contexts.empty());
     planner.addRelTraitDef(ConventionTraitDef.INSTANCE);
@@ -134,20 +133,19 @@ public class QueryPlanner {
   }
 
   /* Plan */
-
-  public void planSqrl(SqrlStatement statement, SqrlTableFactory tableFactory, ModuleLoader moduleLoader,
-      ErrorCollector errors) {
-    SqlNameUtil sqlNameUtil = new SqlNameUtil(framework.getNameCanonicalizer());
-    errors = errors
-        .withSource("")
-        .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
-    ScriptPlanner scriptPlanner = new ScriptPlanner(this.framework,
-        this, moduleLoader, errors, sqlNameUtil, tableFactory);
-    scriptPlanner.validateStatement(statement);
-    if (errors.hasErrors()) {
-      throw new RuntimeException("Could not plan");
-    }
-  }
+//  public void planSqrl(SqrlStatement statement, SqrlTableFactory tableFactory, ModuleLoader moduleLoader,
+//      ErrorCollector errors) {
+//    SqlNameUtil sqlNameUtil = new SqlNameUtil(framework.getNameCanonicalizer());
+//    errors = errors
+//        .withSource("")
+//        .atFile(SqrlAstException.toLocation(statement.getParserPosition()));
+//    ScriptPlanner scriptPlanner = new ScriptPlanner(this.framework,
+//        moduleLoader, errors, tableFactory, sqlNameUtil);
+//    scriptPlanner.validateStatement(statement);
+//    if (errors.hasErrors()) {
+//      throw new RuntimeException("Could not plan");
+//    }
+//  }
 
   public RelNode plan(Dialect dialect, SqlNode query) {
     switch (dialect) {

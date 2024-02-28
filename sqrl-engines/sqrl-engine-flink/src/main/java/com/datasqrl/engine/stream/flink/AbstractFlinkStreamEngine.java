@@ -13,9 +13,11 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
+import com.datasqrl.engine.stream.flink.plan.SqrlToFlinkExecutablePlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -63,14 +65,15 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   }
 
   @Override
-  public FlinkStreamPhysicalPlan plan(PhysicalDAGPlan.StagePlan stagePlan,
-      List<PhysicalDAGPlan.StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
-      TableSink errorSink) {
+  public FlinkStreamPhysicalPlan plan(StagePlan stagePlan,
+      List<StageSink> inputs, ExecutionPipeline pipeline, SqrlFramework framework,
+      TableSink errorSink, ErrorCollector errorCollector) {
     Preconditions.checkArgument(inputs.isEmpty());
     Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
     StreamStagePlan plan = (StreamStagePlan) stagePlan;
-    return new FlinkPhysicalPlanner(
-        framework.getQueryPlanner().getRelBuilder()).createStreamGraph(this.config,
+    return new FlinkPhysicalPlanner(new SqrlToFlinkExecutablePlan(errorSink,
+        framework.getQueryPlanner().getRelBuilder(), errorCollector, framework), framework.getQueryPlanner().getRelBuilder())
+        .createStreamGraph(this.config,
         plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
   }
 

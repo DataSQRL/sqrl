@@ -3,14 +3,17 @@
  */
 package com.datasqrl;
 
-import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
-
+import com.datasqrl.actions.GraphqlPostplanHook;
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlanExecutor;
 import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.database.relational.JDBCPhysicalPlan;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.GenericJavaServerEngine;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -19,9 +22,13 @@ import com.datasqrl.graphql.inference.GraphqlModelGenerator;
 import com.datasqrl.graphql.server.Model.Coords;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.graphql.server.Model.StringSchema;
+import com.datasqrl.plan.global.DAGAssembler;
+import com.datasqrl.plan.global.DAGBuilder;
 import com.datasqrl.plan.global.DAGPlanner;
+import com.datasqrl.plan.global.DAGPreparation;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.schema.idl.SchemaParser;
 import io.vertx.core.Vertx;
@@ -41,6 +48,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,33 +72,25 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
 
   @SneakyThrows
   protected void validateSchemaAndQueries(String script, String schema, Map<String, String> queries) {
-
     plan(script);
-
-    AbstractSchemaInferenceModelTest t = new AbstractSchemaInferenceModelTest();
-    Triple<Object, RootGraphqlModel, APIConnectorManager> modelAndQueries =
-        AbstractSchemaInferenceModelTest.inferSchemaModelQueries(schema, framework, pipeline, errors);
-
-    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
-        modelAndQueries.getRight(), framework.getSchema().getExports(),
-        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
-        modelAndQueries.getMiddle(), pipeline, errors, debugger);
-
-    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+    inferSchemaModelQueries(schema, framework, errors);
+    APIConnectorManager apiManager = injector.getInstance(APIConnectorManager.class);
+    PhysicalDAGPlan dag = injector.getInstance(DAGPlanner.class).plan();
+    PhysicalPlan physicalPlan = injector.getInstance(PhysicalPlanner.class)
         .plan(dag);
-    APISource source = APISource.of(schema);
+    APISource source = new APISourceImpl(Name.system("<schema>"), schema);
 
     GraphqlModelGenerator queryGenerator = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(), (new SchemaParser()).parse(source.getSchemaDefinition()), source,
-        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), modelAndQueries.getRight());
+        framework.getSchema(),
+        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
 
-    queryGenerator.walk();
-
-    List<Coords> coords = queryGenerator.getCoords();
+    queryGenerator.walk(source);
 
     RootGraphqlModel model = RootGraphqlModel.builder()
-        .coords(coords)
         .schema(StringSchema.builder().schema(source.getSchemaDefinition()).build())
+        .coords(queryGenerator.getCoords())
+        .mutations(queryGenerator.getMutations())
+        .subscriptions(queryGenerator.getSubscriptions())
         .build();
 
     snapshot.addContent(
@@ -143,12 +143,6 @@ public class AbstractQuerySQRLIT extends AbstractPhysicalSQRLIT {
       }
     }
     return -1;
-  }
-
-  @SneakyThrows
-  private String prettyPrintObj(Object body) {
-    return mapper.writerWithDefaultPrettyPrinter()
-        .writeValueAsString(body);
   }
 
   @SneakyThrows

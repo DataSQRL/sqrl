@@ -7,7 +7,6 @@ import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.compile.Compiler.CompilerResult;
 import com.datasqrl.config.EngineKeys;
 import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConfig;
@@ -29,7 +28,6 @@ import com.datasqrl.packager.config.DependencyConfig;
 import com.datasqrl.packager.config.ScriptConfiguration;
 import com.datasqrl.packager.postprocess.DockerPostprocessor;
 import com.datasqrl.packager.postprocess.FlinkPostprocessor;
-import com.datasqrl.packager.postprocess.FlinkSqlPostprocessor;
 import com.datasqrl.packager.postprocess.Postprocessor.ProcessorContext;
 import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
@@ -131,7 +129,7 @@ public class Packager {
         .collect(Collectors.toMap(Entry::getKey, v->canonicalizePath(v.getValue())));
     //Files should exist, if error occurs its internal, hence we create root error collector
     addFileToPackageJsonConfig(buildDir, ScriptConfiguration.fromScriptConfig(config),
-        destinationPaths, ErrorCollector.root());
+        destinationPaths, errors);
 
     // Shouldn't be here, move to postprocessor for flink
     String buildFile = FileUtil.readResource("build.gradle");
@@ -234,10 +232,10 @@ public class Packager {
     return targetPath;
   }
 
-  public void postprocess(CompilerResult result, Path targetDir, Optional<Path> mountDirectory,
+  public void postprocess(Path targetDir, Optional<Path> mountDirectory,
       String[] profiles) {
-    List.of(new FlinkSqlPostprocessor(), new DockerPostprocessor(), new FlinkPostprocessor())
-        .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, result, mountDirectory, profiles)));
+    List.of(new DockerPostprocessor(), new FlinkPostprocessor())
+        .forEach(p->p.process(new ProcessorContext(buildDir, targetDir, mountDirectory, profiles)));
   }
 
   @SneakyThrows

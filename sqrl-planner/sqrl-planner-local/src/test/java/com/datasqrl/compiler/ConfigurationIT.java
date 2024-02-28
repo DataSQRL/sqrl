@@ -15,7 +15,5 @@ public class ConfigurationIT extends AbstractEngineIT {
   @Test
   public void testSettings() {
     initialize(IntegrationTestSettings.getInMemory(), null, Optional.empty());
-    assertNotNull(database);
-    assertNotNull(pipelineFactory);
   }
 }

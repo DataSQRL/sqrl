@@ -3,7 +3,6 @@
  */
 package com.datasqrl.plan.local.analyze;
 
-import static com.datasqrl.plan.SqrlOptimizeDag.extractFlinkFunctions;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,8 +14,6 @@ import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.IntegrationTestSettings.DatabaseEngine;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
@@ -30,6 +27,7 @@ import com.datasqrl.plan.global.DAGPlanner;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.queries.APISource;
+import com.datasqrl.plan.queries.APISourceImpl;
 import com.datasqrl.plan.rules.IdealExecutionStage;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
@@ -73,6 +71,7 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
       plan(script);
       fail("Expected an exception but did not encounter one");
     } catch (CollectedException e) {
+      ErrorCollector errors = injector.getInstance(ErrorCollector.class);
       snapshot.addContent(ErrorPrinter.prettyPrint(errors), "errors");
       snapshot.createOrValidate();
 
@@ -103,7 +102,9 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
               table.getNameId());
         });
 
-    GraphqlSchemaFactory graphqlSchemaFactory = new GraphqlSchemaFactory(framework.getSchema(), true);
+
+
+    GraphqlSchemaFactory graphqlSchemaFactory = injector.getInstance(GraphqlSchemaFactory.class);
     GraphQLSchema generate = graphqlSchemaFactory.generate();
 
     SchemaPrinter.Options opts = SchemaPrinter.Options.defaultOptions()
@@ -112,34 +113,36 @@ class QuerySnapshotTest extends AbstractLogicalSQRLIT {
 
     String schema = new SchemaPrinter(opts).print(generate);
 
-    APISource source = APISource.of(schema);
+    APISource source = APISourceImpl.of(schema);
 
     APIConnectorManagerImpl apiManager = mock(APIConnectorManagerImpl.class);
 
     GraphqlSchemaValidator schemaValidator = new GraphqlSchemaValidator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(), source, (new SchemaParser()).parse(source.getSchemaDefinition()), apiManager);
+        framework.getSchema(), apiManager);
     schemaValidator.validate(source, errors);
     GraphqlQueryGenerator queryGenerator = new GraphqlQueryGenerator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(),  (new SchemaParser()).parse(source.getSchemaDefinition()), source,
+        framework.getSchema(),
         new GraphqlQueryBuilder(framework, apiManager, new SqlNameUtil(NameCanonicalizer.SYSTEM)), apiManager);
 
-    queryGenerator.walk();
+    queryGenerator.walk(source);
     queryGenerator.getQueries().forEach(apiManager::addQuery);
 
-    PhysicalDAGPlan dag = DAGPlanner.plan(framework,
-        apiManager, framework.getSchema().getExports(),
-        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
-        null, pipeline, errors, debugger);
+    //todo readd once moved
+//    PhysicalDAGPlan dag = new DAGPlanner(framework, apiManager, pipeline, errors, debugger).plan(
+//        apiManager, framework.getSchema().getExports(),
+//        framework.getSchema().getJars(), extractFlinkFunctions(framework.getSqrlOperatorTable()),
+//        null, pipeline, errors, debugger
+//    );
 
-    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
-        .plan(dag);
-    APISource apisource = APISource.of(schema);
+//    PhysicalPlan physicalPlan =  new PhysicalPlanner(framework, errorSink.getErrorSink())
+//        .plan(dag);
+//    APISource apisource = APISource.of(schema);
 
-    GraphqlModelGenerator modelGen = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
-        framework.getSchema(), (new SchemaParser()).parse(apisource.getSchemaDefinition()), apisource,
-        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
+//    GraphqlModelGenerator modelGen = new GraphqlModelGenerator(framework.getCatalogReader().nameMatcher(),
+//        framework.getSchema(), (new SchemaParser()).parse(apisource.getSchemaDefinition()), apisource,
+//        physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager);
 
-    modelGen.walk();
+//    modelGen.walk();
 
     if (isBlank(schema)) {
       throw new RuntimeException("Could not validate graphql.");

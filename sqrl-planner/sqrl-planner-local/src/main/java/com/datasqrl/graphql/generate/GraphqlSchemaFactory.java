@@ -16,12 +16,15 @@ import static graphql.schema.GraphQLNonNull.nonNull;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.CompilerConfiguration;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.function.SqrlFunctionParameter;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.table.LogicalNestedTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.schema.Multiplicity;
 import com.datasqrl.schema.Relationship.JoinType;
+import com.google.inject.Inject;
 import graphql.Scalars;
 import graphql.language.IntValue;
 import graphql.schema.GraphQLArgument;
@@ -50,6 +53,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.Table;
 import org.apache.commons.collections.ListUtils;
+import scala.annotation.meta.field;
 
 /**
  * Creates a default graphql schema based on the SQRL schema
@@ -62,22 +66,28 @@ public class GraphqlSchemaFactory {
   private final SqrlSchema schema;
   private final boolean addArguments;
   // Root path signifying the 'Query' type.
-  private final Map<NamePath, List<SqrlTableMacro>> objectPathToTables;
+  private Map<NamePath, List<SqrlTableMacro>> objectPathToTables;
   // The path from root
-  private final Map<NamePath, List<SqrlTableMacro>> fieldPathToTables;
+  private Map<NamePath, List<SqrlTableMacro>> fieldPathToTables;
+
+  @Inject
+  public GraphqlSchemaFactory(SqrlSchema schema, SqrlConfig config) {
+    this(schema, CompilerConfiguration.fromConfig(config)
+        .isAddArguments());
+  }
 
   public GraphqlSchemaFactory(SqrlSchema schema, boolean addArguments) {
     this.schema = schema;
     this.addArguments = addArguments;
+  }
+
+  public GraphQLSchema generate() {
     this.objectPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(e -> e.getFullPath().popLast(),
             LinkedHashMap::new, Collectors.toList()));
     this.fieldPathToTables = schema.getTableFunctions().stream()
         .collect(Collectors.groupingBy(SqrlTableMacro::getAbsolutePath,
             LinkedHashMap::new, Collectors.toList()));
-  }
-
-  public GraphQLSchema generate() {
     for (Map.Entry<NamePath, List<SqrlTableMacro>> path : fieldPathToTables.entrySet()) {
       if (path.getKey().getLast().isHidden()) continue;
 

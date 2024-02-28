@@ -9,6 +9,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkSqlQuery;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlSink;
 import com.datasqrl.FlinkExecutablePlan.FlinkSqlTableApiDefinition;
 import com.datasqrl.FlinkEnvironmentBuilder;
+import com.datasqrl.error.ErrorCollector;
 import com.google.common.io.Resources;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,7 @@ public class JarExecutableTest {
             .build())
         .build();
 
-    FlinkEnvironmentBuilder planVisitor = new FlinkEnvironmentBuilder();
+    FlinkEnvironmentBuilder planVisitor = new FlinkEnvironmentBuilder(ErrorCollector.root());
     StatementSet statementSet = executablePlan.accept(planVisitor, null);
     TableResult result = statementSet.execute();
 

@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.datasqrl.AbstractEngineIT;
 import com.datasqrl.IntegrationTestSettings;
 import com.datasqrl.config.PipelineFactory;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.metadata.MetadataStore;
 import com.google.common.collect.ImmutableSet;
 import java.util.Optional;
@@ -32,7 +33,9 @@ public class MetadataStoreTestIT extends AbstractEngineIT {
 
   public void setup(IntegrationTestSettings.DatabaseEngine database) {
     initialize(IntegrationTestSettings.getDatabaseOnly(database), null, Optional.empty());
-    meta = getMetaDataStoreProvider(pipelineFactory.getConfig(), Optional.empty()).openStore();
+    SqrlConfig config = injector.getInstance(SqrlConfig.class);
+    PipelineFactory pipelineFactory = PipelineFactory.fromRootConfig(config);
+    meta = getMetaDataStoreProvider(pipelineFactory.getEngineConfig(), Optional.empty()).openStore();
   }
 
   @AfterEach

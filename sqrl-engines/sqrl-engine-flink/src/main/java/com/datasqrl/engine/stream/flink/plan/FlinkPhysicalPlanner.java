@@ -8,6 +8,7 @@ import com.datasqrl.FlinkExecutablePlan.FlinkBase;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan.Query;
+import com.google.inject.Inject;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -18,9 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor_=@Inject)
 @Slf4j
 public class FlinkPhysicalPlanner {
+  SqrlToFlinkExecutablePlan sqrlToFlinkExecutablePlan;
 
   RelBuilder relBuilder;
 
@@ -31,7 +33,6 @@ public class FlinkPhysicalPlanner {
   public FlinkStreamPhysicalPlan createStreamGraph(
       SqrlConfig config, List<? extends Query> streamQueries, TableSink errorSink, Set<URL> jars,
       Map<String, UserDefinedFunction> udfs) {
-    SqrlToFlinkExecutablePlan sqrlToFlinkExecutablePlan = new SqrlToFlinkExecutablePlan(errorSink,relBuilder);
     FlinkBase flinkBase = sqrlToFlinkExecutablePlan.create(config, streamQueries, udfs, jars);
     return new FlinkStreamPhysicalPlan(new FlinkExecutablePlan(flinkBase));
   }

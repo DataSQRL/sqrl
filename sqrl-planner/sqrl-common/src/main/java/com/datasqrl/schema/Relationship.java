@@ -15,8 +15,8 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 
-@AllArgsConstructor
 @Getter
+@AllArgsConstructor
 public class Relationship implements SqrlTableMacro {
   private final Name name;
   private final NamePath fullPath;
@@ -29,12 +29,12 @@ public class Relationship implements SqrlTableMacro {
 
   @Override
   public RelDataType getRowType(RelDataTypeFactory relDataTypeFactory, List<Object> list) {
-    return viewTransform.get().getRowType();
+    return getRowType();
   }
 
   @Override
   public RelDataType getRowType() {
-    return getRowType(null, null);
+    return viewTransform.get().getRowType();
   }
 
   public String getDisplayName() {

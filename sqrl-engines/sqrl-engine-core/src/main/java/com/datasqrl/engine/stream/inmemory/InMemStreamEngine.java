@@ -11,9 +11,10 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -36,8 +37,9 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
   }
 
   @Override
-  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-                                 ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink) {
+  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+                                 ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink,
+      ErrorCollector errorCollector) {
     throw new UnsupportedOperationException();
   }
 

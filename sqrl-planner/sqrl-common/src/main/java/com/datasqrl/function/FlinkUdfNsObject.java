@@ -41,7 +41,7 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
       return false;
     }
 
-    framework.getSqrlOperatorTable()
+    framework.getSchema()
         .addFunction(name, convertedFunction.get());
 
     jarUrl.ifPresent((url)->framework.getSchema().addJar(url));

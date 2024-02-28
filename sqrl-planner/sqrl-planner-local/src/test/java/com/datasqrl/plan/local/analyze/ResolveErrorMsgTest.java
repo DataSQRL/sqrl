@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.AbstractLogicalSQRLIT;
 import com.datasqrl.IntegrationTestSettings;
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.local.generate.DebuggerConfig;

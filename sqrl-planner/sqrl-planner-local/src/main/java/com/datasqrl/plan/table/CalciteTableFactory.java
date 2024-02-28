@@ -11,26 +11,25 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.datasqrl.schema.UniversalTable;
+import com.google.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
 
 @Getter
+@AllArgsConstructor(onConstructor_=@Inject)
 public class CalciteTableFactory {
 
   private final TableIdFactory tableIdFactory;
   private final TableConverter tableConverter;
 
   public CalciteTableFactory(SqrlFramework framework) {
-    this.tableIdFactory = new TableIdFactory(framework.getTableNameToIdMap());
-    this.tableConverter = new TableConverter(framework.getTypeFactory(), framework.getNameCanonicalizer());
-  }
-  public CalciteTableFactory(TableIdFactory tableIdFactory, TableConverter tableConverter) {
-    this.tableIdFactory = tableIdFactory;
-    this.tableConverter = tableConverter;
+    this(new TableIdFactory(framework.getSchema().getTableNameToIdMap()),
+        new TableConverter(framework.getTypeFactory(), framework.getNameCanonicalizer()));
   }
 
   public ImportedRelationalTableImpl createImportedTable(RelDataType rootType,

@@ -21,7 +21,9 @@ public class ModuleLoaderComposite implements ModuleLoader {
   public Optional<SqrlModule> getModule(NamePath namePath) {
     for (ModuleLoader loader : moduleLoaders) {
       Optional<SqrlModule> module = loader.getModule(namePath);
-      if (module.isPresent()) return module;
+      if (module.isPresent()) {
+        return module;
+      }
     }
     return Optional.empty();
   }

@@ -16,7 +16,8 @@ import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.function.IndexType;
-import com.datasqrl.plan.global.PhysicalDAGPlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
+import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -37,8 +38,9 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
   }
 
   @Override
-  public EnginePhysicalPlan plan(PhysicalDAGPlan.StagePlan plan, List<PhysicalDAGPlan.StageSink> inputs,
-                                 ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink) {
+  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
+                                 ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink,
+      ErrorCollector errorCollector) {
     throw new UnsupportedOperationException();
   }
 

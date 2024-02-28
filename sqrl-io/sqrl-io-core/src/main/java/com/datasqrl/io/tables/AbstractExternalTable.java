@@ -18,7 +18,7 @@ import java.util.List;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString
 @Getter
-public abstract class AbstractExternalTable {
+public abstract class AbstractExternalTable implements ExternalTable {
 
   @NonNull
   protected final DataSystemConnectorSettings connector;

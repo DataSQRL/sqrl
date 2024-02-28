@@ -113,10 +113,6 @@ public class FlinkEnvironmentBuilder implements
     this.errors = errors;
   }
 
-  public FlinkEnvironmentBuilder() {
-    this(ErrorCollector.root());
-  }
-
   @Override
   public StatementSet visitPlan(FlinkExecutablePlan plan, Object context) {
     return plan.getBase().accept(this, null);
@@ -417,7 +413,7 @@ public class FlinkEnvironmentBuilder implements
     errorSideChannels.add(process.getSideOutput(formatErrorTag));
 
     //todo validator may be optional
-    TableSchema schema = factory.create(schemaDefinition);
+    TableSchema schema = factory.create(schemaDefinition, errors);
     //todo: fix flexible schema hard referenced
     SchemaValidator schemaValidator = schema.getValidator(
             tableConfig.getSchemaAdjustmentSettings(),
@@ -541,7 +537,6 @@ public class FlinkEnvironmentBuilder implements
   @Value
   public static class PlanContext {
 
-    ErrorCollector errors = ErrorCollector.root();
     StreamExecutionEnvironment sEnv;
     StreamTableEnvironment tEnv;
 

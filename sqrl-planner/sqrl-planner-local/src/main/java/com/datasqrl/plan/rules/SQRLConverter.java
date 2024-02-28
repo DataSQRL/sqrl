@@ -5,26 +5,29 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.AnalyzedAPIQuery;
 import com.datasqrl.plan.hints.WatermarkHint;
 import com.datasqrl.plan.local.generate.QueryTableFunction;
-import com.datasqrl.plan.table.*;
+import com.datasqrl.plan.table.AddedColumn;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.PhysicalTable;
+import com.datasqrl.plan.table.ProxyImportRelationalTable;
+import com.datasqrl.plan.table.QueryRelationalTable;
 import com.datasqrl.plan.util.SelectIndexMap;
 import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import java.util.List;
+import java.util.function.Consumer;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
 
-import java.util.List;
-import java.util.function.Consumer;
-
-@Value
+@AllArgsConstructor(onConstructor_=@Inject)
+@Getter
 public class SQRLConverter {
 
-  private RelBuilder relBuilder;
-
-  public SQRLConverter(RelBuilder relBuilder) {
-    this.relBuilder = relBuilder;
-  }
+  RelBuilder relBuilder;
 
   public AnnotatedLP convert(final RelNode relNode, Config config, ErrorCollector errors) {
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
