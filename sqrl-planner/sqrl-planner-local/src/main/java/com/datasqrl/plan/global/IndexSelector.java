@@ -8,6 +8,7 @@ import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.OptimizationStage;
 import com.datasqrl.plan.RelStageRunner;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.ArrayUtil;
 import com.datasqrl.util.SqrlRexUtil;
@@ -51,19 +52,19 @@ public class IndexSelector {
   public Map<IndexDefinition, Double> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
     //Prune down to database indexes and remove duplicates
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
-    LinkedHashMultimap<ScriptRelationalTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
+    LinkedHashMultimap<PhysicalRelationalTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
     queryIndexSummaries.forEach(idx -> {
       //TODO: Add up counts so we preserve relative frequency
       callsByTable.put(idx.getTable(), idx);
     });
 
-    for (ScriptRelationalTable table : callsByTable.keySet()) {
+    for (PhysicalRelationalTable table : callsByTable.keySet()) {
       optIndexes.putAll(optimizeIndexes(table, callsByTable.get(table)));
     }
     return optIndexes;
   }
 
-  private Map<IndexDefinition, Double> optimizeIndexes(ScriptRelationalTable table,
+  private Map<IndexDefinition, Double> optimizeIndexes(PhysicalRelationalTable table,
                                                        Set<QueryIndexSummary> queryIndexSummaries) {
     //Check how many unique QueryConjunctions we have on this table
     if (queryIndexSummaries.size()>config.maxIndexColumnSets()) {
@@ -93,20 +94,21 @@ public class IndexSelector {
     }
   }
 
-  private Optional<IndexDefinition> getIndexDefinition(IndexableFunctionCall fcall, ScriptRelationalTable table) {
+  private Optional<IndexDefinition> getIndexDefinition(IndexableFunctionCall fcall, PhysicalRelationalTable table) {
     Optional<IndexType> specialType = config.getPreferredSpecialIndexType(fcall.getFunction()
         .getSupportedIndexes());
     return specialType.map(idxType -> new IndexDefinition(table.getNameId(), fcall.getColumnIndexes(),
         table.getRowType().getFieldNames(), idxType));
   }
 
-  private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(ScriptRelationalTable table,
+  private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(
+      PhysicalRelationalTable table,
       Collection<QueryIndexSummary> indexes) {
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
     //The baseline cost is the cost of doing the lookup with the primary key index
     Map<QueryIndexSummary, Double> currentCost = new HashMap<>();
     IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(),
-        table.getNumPrimaryKeys(), table.getRowType().getFieldNames());
+        table.getPrimaryKey().asList(), table.getRowType().getFieldNames());
     for (QueryIndexSummary idx : indexes) {
       currentCost.put(idx, idx.getCost(pkIdx));
     }
@@ -267,21 +269,21 @@ public class IndexSelector {
             .getPlanner());
         visit(right, 1, node);
       } else if (node instanceof TableScan && parent instanceof Filter) {
-        ScriptRelationalTable table = ((TableScan) node).getTable()
-            .unwrap(ScriptRelationalTable.class);
+        PhysicalRelationalTable table = ((TableScan) node).getTable()
+            .unwrap(PhysicalRelationalTable.class);
         Filter filter = (Filter) parent;
         QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil).map(queryIndexSummaries::add);
       } else if (node instanceof TableScan && parent instanceof Sort) {
-        ScriptRelationalTable table = ((TableScan) node).getTable()
-            .unwrap(ScriptRelationalTable.class);
+        PhysicalRelationalTable table = ((TableScan) node).getTable()
+            .unwrap(PhysicalRelationalTable.class);
         Sort sort = (Sort) parent;
         Optional<Integer> firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {
           QueryIndexSummary.ofSort(table, firstCollationIdx.get()).map(queryIndexSummaries::add);
         }
       } else if (node instanceof Project && parent instanceof Sort && node.getInput(0) instanceof TableScan) {
-        ScriptRelationalTable table = ((TableScan) node.getInput(0)).getTable()
-            .unwrap(ScriptRelationalTable.class);
+        PhysicalRelationalTable table = ((TableScan) node.getInput(0)).getTable()
+            .unwrap(PhysicalRelationalTable.class);
         Sort sort = (Sort) parent;
         Optional<Integer> firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {

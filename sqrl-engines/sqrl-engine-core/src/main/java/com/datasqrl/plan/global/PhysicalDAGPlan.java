@@ -12,10 +12,7 @@ import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -134,9 +131,9 @@ public class PhysicalDAGPlan {
   public static class EngineSink implements WriteSink, StageSink {
 
     final String nameId;
-    final int numPrimaryKeys;
+    final int[] primaryKeys;
     final RelDataType rowType;
-    final int timestampIdx;
+    final OptionalInt timestampIdx;
     final ExecutionStage stage;
 
     @Override

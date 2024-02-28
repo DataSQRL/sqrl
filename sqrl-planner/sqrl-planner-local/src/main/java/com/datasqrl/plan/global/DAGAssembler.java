@@ -1,34 +1,31 @@
 package com.datasqrl.plan.global;
 
-import static com.datasqrl.plan.OptimizationStage.DATABASE_DAG_STITCHING;
-import static com.datasqrl.plan.OptimizationStage.SERVER_DAG_STITCHING;
-import static com.datasqrl.plan.OptimizationStage.STREAM_DAG_STITCHING;
-
 import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.APIConnectorLookup;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
 import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.plan.RelStageRunner;
-import com.datasqrl.plan.hints.TimestampHint;
-import com.datasqrl.plan.local.generate.QueryTableFunction;
-import com.datasqrl.plan.rules.AnnotatedLP;
-import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.AbstractRelationalTable;
-import com.datasqrl.plan.table.LogicalNestedTable;
-import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.PhysicalTable;
 import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.plan.global.SqrlDAG.ExportNode;
+import com.datasqrl.plan.hints.TimestampHint;
 import com.datasqrl.plan.local.generate.Debugger;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
 import com.datasqrl.plan.local.generate.ResolvedExport;
+import com.datasqrl.plan.rules.AnnotatedLP;
+import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.PhysicalTable;
+import com.datasqrl.plan.table.TableType;
+import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.SqrlRexUtil;
-import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -55,8 +52,15 @@ import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
+import static com.datasqrl.plan.OptimizationStage.*;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class DAGAssembler {
@@ -66,6 +70,7 @@ public class DAGAssembler {
   private final Debugger debugger;
   private final ErrorCollector errors;
   private final APIConnectorManager apiManager;
+  private ErrorCollector errors;
 
   public PhysicalDAGPlan assemble(SqrlDAG dag, Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
     //Plan final version of all tables
@@ -110,7 +115,7 @@ public class DAGAssembler {
     //We want to preserve pipeline order in our iteration
     for (ExecutionStage database : Iterables.filter(pipeline.getStages(),queriesByStage::containsKey)) {
       Preconditions.checkArgument(database.getEngine().getType() == Type.DATABASE);
-      List<PhysicalDAGPlan.ReadQuery> readDAG = new ArrayList<>();
+      List<PhysicalDAGPlan.ReadQuery> databaseQueries = new ArrayList<>();
 
       VisitTableScans tableScanVisitor = new VisitTableScans();
       queriesByStage.get(database).stream().sorted(Comparator.comparing(DatabaseQuery::getName))
@@ -118,41 +123,28 @@ public class DAGAssembler {
         RelNode relNode = query.getRelNode(database, sqrlConverter, errors);
         relNode = RelStageRunner.runStage(DATABASE_DAG_STITCHING, relNode, framework.getQueryPlanner().getPlanner());
         tableScanVisitor.findScans(relNode);
-        readDAG.add(new PhysicalDAGPlan.ReadQuery(query.getQueryId(), relNode));
+        databaseQueries.add(new PhysicalDAGPlan.ReadQuery(query.getQueryId(), relNode));
       });
 
       Preconditions.checkArgument(tableScanVisitor.scanFunctions.isEmpty(),
           "Should not encounter table functions in materialized queries");
-      Set<AbstractRelationalTable> materializedTables = tableScanVisitor.scanTables;
-      List<LogicalNestedTable> normalizedTables = StreamUtil.filterByClass(materializedTables,
-              LogicalNestedTable.class).sorted().collect(Collectors.toList());
-      List<PhysicalRelationalTable> denormalizedTables = StreamUtil.filterByClass(materializedTables,
-          PhysicalRelationalTable.class).sorted().collect(Collectors.toList());
+      List<PhysicalRelationalTable> materializedTables = tableScanVisitor.scanTables.stream()
+              .sorted().collect(Collectors.toList());
 
-      //Fill all table sinks
-      //First, all the tables that need to be written to the database in normalized form
-      for (LogicalNestedTable normTable : normalizedTables) {
-        RelNode scanTable = sqrlConverter.getRelBuilder().scan(normTable.getNameId()).build();
-        SQRLConverter.Config.ConfigBuilder configBuilder = normTable.getRoot().getBaseConfig();
-        RelNode processedRelnode = produceWriteTree(scanTable,
-            configBuilder.build(), errors);
-        Preconditions.checkArgument(normTable.getRowType().equals(processedRelnode.getRowType()),
-            "Rowtypes do not match: \n%s \n vs \n%s",
-            normTable.getRowType(), processedRelnode.getRowType());
-        int timestampIndex = normTable.getNumColumns()-1; //timestamp is always at the end
-        streamQueries.add(new PhysicalDAGPlan.WriteQuery(
-            new EngineSink(normTable.getNameId(), normTable.getNumPrimaryKeys(),
-                normTable.getRowType(), timestampIndex, database),
-            processedRelnode));
-      }
       //Second, all tables that need to be written in denormalized form
-      for (PhysicalRelationalTable denormTable : denormalizedTables) {
-        RelNode processedRelnode = produceWriteTree(denormTable.getPlannedRelNode(),
-                denormTable.getTimestamp().getTimestampCandidate().getIndex());
+      for (PhysicalRelationalTable materializedTable : materializedTables) {
+        List<String> nullablePks = CalciteUtil.identifyNullableFields(materializedTable.getRowType(), materializedTable.getPrimaryKey().asList());
+        errors.checkFatal(nullablePks.isEmpty(), PRIMARY_KEY_NULLABLE, "Cannot materialize table [%s] with nullable primary key: %s", materializedTable, nullablePks);
+        errors.checkFatal(materializedTable.getPrimaryKey().isDefined(), ErrorCode.TALBE_NOT_MATERIALIZE,"Table [%s] does not have a primary key and can therefore not be materialized", materializedTable);
+        Preconditions.checkArgument(materializedTable.getTimestamp().size()<=1, "Should not have multiple timestamps at this point");
+        errors.checkFatal(materializedTable.getType()== TableType.STATIC || materializedTable.getTimestamp().size()==1, ErrorCode.TALBE_NOT_MATERIALIZE, "Table [%s] does not have a timestamp and can therefore not be materialized", materializedTable);
+        RelNode processedRelnode = produceWriteTree(materializedTable.getPlannedRelNode(),
+                materializedTable.getTimestamp().getOnlyCandidate());
+        OptionalInt timestampIdx = materializedTable.getType() == TableType.STATIC ? OptionalInt.empty() :
+                OptionalInt.of(materializedTable.getTimestamp().getOnlyCandidate());
         streamQueries.add(new PhysicalDAGPlan.WriteQuery(
-            new EngineSink(denormTable.getNameId(), denormTable.getNumPrimaryKeys(),
-                denormTable.getRowType(),
-                denormTable.getTimestamp().getTimestampCandidate().getIndex(), database),
+            new EngineSink(materializedTable.getNameId(), materializedTable.getPrimaryKey().getPkIndexes(),
+                materializedTable.getRowType(), timestampIdx, database),
             processedRelnode));
       }
 
@@ -160,12 +152,11 @@ public class DAGAssembler {
       //Pick index structures for database tables based on the database queries
       IndexSelector indexSelector = new IndexSelector(framework,
           ((DatabaseEngine) database.getEngine()).getIndexSelectorConfig());
-      Collection<QueryIndexSummary> queryIndexSummaries = readDAG.stream().map(indexSelector::getIndexSelection)
+      Collection<QueryIndexSummary> queryIndexSummaries = databaseQueries.stream().map(indexSelector::getIndexSelection)
           .flatMap(List::stream).collect(Collectors.toList());
-      Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(
-              queryIndexSummaries)
+      Collection<IndexDefinition> indexDefinitions = indexSelector.optimizeIndexes(queryIndexSummaries)
           .keySet();
-      databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, readDAG, indexDefinitions));
+      databasePlans.add(new PhysicalDAGPlan.DatabaseStagePlan(database, databaseQueries, indexDefinitions));
     }
 
     //Add exported tables
@@ -176,8 +167,8 @@ public class DAGAssembler {
           getExportBaseConfig().withStage(exportNode.getChosenStage()), errors);
       //Pick only the selected keys
       RelBuilder relBuilder1 = sqrlConverter.getRelBuilder().push(processedRelnode);
-      relBuilder1.project(export.getRelNode().getRowType().getFieldNames().stream()
-          .map(n -> relBuilder1.field(n)).collect(Collectors.toList()));
+      Preconditions.checkArgument(relBuilder1.peek().getRowType().getFieldCount()>=export.getNumSelects());
+      relBuilder1.project(CalciteUtil.getIdentityRex(relBuilder1, export.getNumSelects()));
       processedRelnode = relBuilder1.build();
       streamQueries.add(new PhysicalDAGPlan.WriteQuery(
           new PhysicalDAGPlan.ExternalSink(exportNode.getUniqueId(), export.getSink()),
@@ -192,7 +183,7 @@ public class DAGAssembler {
         .forEach(table -> {
           Name debugSinkName = table.getTableName().suffix("debug" + debugCounter.incrementAndGet());
           TableSink sink = debugger.getDebugSink(debugSinkName, errors);
-          RelNode expandedRelNode = produceWriteTree(table.getPlannedRelNode(), table.getTimestamp().getTimestampCandidate().getIndex());
+          RelNode expandedRelNode = produceWriteTree(table.getPlannedRelNode(), table.getTimestamp().getOnlyCandidate());
           streamQueries.add(new PhysicalDAGPlan.WriteQuery(
               new PhysicalDAGPlan.ExternalSink(debugSinkName.getCanonical(), sink),
               expandedRelNode));
@@ -229,7 +220,7 @@ public class DAGAssembler {
     AnnotatedLP alp = sqrlConverter.convert(relNode, config, errors);
     RelNode convertedRelNode = alp.getRelNode();
     //Expand to full tree
-    return produceWriteTree(convertedRelNode, alp.getTimestamp().getTimestampCandidate().getIndex());
+    return produceWriteTree(convertedRelNode, alp.getTimestamp().getOnlyCandidate());
   }
 
   private RelNode produceWriteTree(RelNode convertedRelNode, int timestampIndex) {
@@ -247,7 +238,7 @@ public class DAGAssembler {
    */
   private static class VisitTableScans extends RelShuttleImpl {
 
-    final Set<AbstractRelationalTable> scanTables = new HashSet<>();
+    final Set<PhysicalRelationalTable> scanTables = new HashSet<>();
     final Set<QueryTableFunction> scanFunctions = new HashSet<>();
 
     public void findScans(RelNode relNode) {
@@ -257,13 +248,8 @@ public class DAGAssembler {
     @Override
     public RelNode visit(TableScan scan) {
       PhysicalRelationalTable table = scan.getTable().unwrap(PhysicalRelationalTable.class);
-      if (table == null) { //It's a normalized query
-        LogicalNestedTable vtable = scan.getTable().unwrap(LogicalNestedTable.class);
-        Preconditions.checkNotNull(vtable);
-        scanTables.add(vtable);
-      } else {
-        scanTables.add(table);
-      }
+      Preconditions.checkArgument(table!=null, "Encountered unexpected table: %s", scan);
+      scanTables.add(table);
       return super.visit(scan);
     }
 

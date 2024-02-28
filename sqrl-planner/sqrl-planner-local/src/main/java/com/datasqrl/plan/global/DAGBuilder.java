@@ -1,6 +1,6 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
@@ -62,8 +62,8 @@ public class DAGBuilder {
     }
     //2. Add all exports as sinks
     int numExports = 1;
-    List<ExecutionStage> exportStages = pipeline.getStages().stream().filter(s -> s.supports(
-        EngineCapability.EXPORT)).collect(Collectors.toList());
+    List<ExecutionStage> exportStages = pipeline.getStages().stream().filter(s -> s.supportsFeature(
+        EngineFeature.EXPORT)).collect(Collectors.toList());
     errors.checkFatal(!exportStages.isEmpty(), "Configured Pipeline does not include "
         + "any stages that support export: %s",pipeline);
     for (ResolvedExport export : exports) {

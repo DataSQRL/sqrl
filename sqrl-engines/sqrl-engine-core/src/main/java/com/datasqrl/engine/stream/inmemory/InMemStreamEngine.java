@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.stream.inmemory;
 
-import static com.datasqrl.engine.EngineCapability.STANDARD_STREAM;
+import static com.datasqrl.engine.EngineFeature.STANDARD_STREAM;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 @Slf4j
 public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEngine {
@@ -26,6 +27,16 @@ public class InMemStreamEngine extends ExecutionEngine.Base implements StreamEng
   public InMemStreamEngine() {
     super(InMemoryStreamConfiguration.ENGINE_NAME, ExecutionEngine.Type.STREAM, STANDARD_STREAM);
   }
+
+  @Override
+  public boolean supports(FunctionDefinition function) {
+    return true;
+  }
+//
+//  @Override
+//  public JobBuilder createDataMonitor() {
+//    return new JobBuilder();
+//  }
 
   @Override
   public void close() throws IOException {

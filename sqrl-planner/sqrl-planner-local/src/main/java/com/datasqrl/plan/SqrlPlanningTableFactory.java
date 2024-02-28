@@ -6,7 +6,6 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.hints.OptimizerHint;
-import com.datasqrl.plan.local.ScriptTableDefinition;
 import com.datasqrl.plan.local.generate.SqrlTableNamespaceObject;
 import com.datasqrl.plan.rules.AnnotatedLP;
 import com.datasqrl.plan.rules.IdealExecutionStage;
@@ -15,16 +14,13 @@ import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.rules.SQRLConverter.Config;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.plan.util.SelectIndexMap;
-import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -60,10 +56,10 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
         .map(idx -> relFieldNames.get(idx))
         .map(n -> nameUtil.toName(n)).collect(Collectors.toList());
 
-    Map<NamePath, ScriptRelationalTable> scriptTableDefinition = defineTable(names, analyzedLP, fieldNames);
+    PhysicalRelationalTable table = defineTable(names, analyzedLP, fieldNames);
 
     SqrlTableNamespaceObject nsObj = new SqrlTableNamespaceObject(names.getLast(),
-        new ScriptTableDefinition(scriptTableDefinition),
+        table,
         tableFactory, null, parameters, isA, materializeSelf, parameters, relNodeSupplier);
 
     nsObj.apply(Optional.empty(), framework, errors);
@@ -81,27 +77,27 @@ public class SqrlPlanningTableFactory implements SqrlTableFactory {
     return index2Name;
   }
 
-  public Map<NamePath, ScriptRelationalTable> defineTable(NamePath tablePath, LPAnalysis analyzedLP, List<Name> fieldNames) {
+  public PhysicalRelationalTable defineTable(NamePath tablePath, LPAnalysis analyzedLP, List<Name> fieldNames) {
     // Validate the field names with the select map from the analyzed relational node
     validateFieldNames(analyzedLP, fieldNames);
 
     // Create base table from the analyzed LP
-    PhysicalRelationalTable baseTable = tableFactory.createPhysicalRelTable(tablePath.getLast(), analyzedLP);
+    PhysicalRelationalTable baseTable = tableFactory.createPhysicalRelTable(tablePath, analyzedLP);
 
-    // Convert field names to a linked hash map with corresponding indices
-    LinkedHashMap<Integer, Name> index2Name = mapFieldNamesToIndices(analyzedLP, fieldNames);
-
-    // Convert the base table's data type to a universal table
-    UniversalTable rootTable = tableFactory.getTableConverter().convert2TableBuilder(
-        tablePath,
-        baseTable.getRowType(),
-        baseTable.getNumPrimaryKeys(),
-        index2Name
-    );
+//    // Convert field names to a linked hash map with corresponding indices
+//    LinkedHashMap<Integer, Name> index2Name = mapFieldNamesToIndices(analyzedLP, fieldNames);
+//
+//    // Convert the base table's data type to a universal table
+//    UniversalTable rootTable = tableFactory.getTableConverter().convert2TableBuilder(
+//        tablePath,
+//        baseTable.getRowType(),
+//        baseTable.getNumPrimaryKeys(),
+//        index2Name
+//    );
     //Currently, we do NOT preserve the order of the fields as originally defined by the user in the script.
     //This may not be an issue, but if we need to preserve the order, it is probably easiest to re-order the fields
     //of tblDef.getTable() based on the provided list of fieldNames
-    return tableFactory.createScriptTables(rootTable, baseTable);
+    return baseTable;
   }
 
   private void validateFieldNames(LPAnalysis analyzedLP, List<Name> fieldNames) {

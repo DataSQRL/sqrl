@@ -1,6 +1,6 @@
 package com.datasqrl.engine.server;
 
-import static com.datasqrl.engine.EngineCapability.NO_CAPABILITIES;
+import static com.datasqrl.engine.EngineFeature.NO_CAPABILITIES;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.NameCanonicalizer;

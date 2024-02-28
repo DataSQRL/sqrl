@@ -6,6 +6,7 @@ package com.datasqrl.util;
 import com.datasqrl.DefaultFunctions;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.util.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -54,6 +55,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
@@ -64,6 +66,10 @@ public class SqrlRexUtil {
 
   public SqrlRexUtil(RelDataTypeFactory typeFactory) {
     rexBuilder = new FlinkRexBuilder(typeFactory);
+  }
+
+  public SqrlRexUtil(RelBuilder relB) {
+    this(relB.getTypeFactory());
   }
 
   public SqrlRexUtil(RexBuilder rexBuilder) {
@@ -112,8 +118,8 @@ public class SqrlRexUtil {
   private Optional<EqualityCondition> decomposeEqualityCondition(RexNode predicate, int leftSideMaxIdx) {
     if (predicate.isA(SqlKind.EQUALS)) {
       RexCall equality = (RexCall) predicate;
-      Optional<Integer> leftIndex = getInputRefIndex(equality.getOperands().get(0));
-      Optional<Integer> rightIndex = getInputRefIndex(equality.getOperands().get(1));
+      Optional<Integer> leftIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(0));
+      Optional<Integer> rightIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(1));
       if (leftIndex.isPresent() && rightIndex.isPresent()) {
         int leftIdx = Math.min(leftIndex.get(), rightIndex.get());
         int rightIdx = Math.max(leftIndex.get(), rightIndex.get());
@@ -123,6 +129,8 @@ public class SqrlRexUtil {
           return Optional.empty();
         }
       }
+      //Check if the constrained side is constrained by an expression that contains entirely of constants of
+      //input references from the other side.
       RexNode otherSide;
       int constrainedIdx;
       if (leftIndex.isPresent()) {
@@ -264,6 +272,11 @@ public class SqrlRexUtil {
         .collect(Collectors.toList());
   }
 
+  public List<RexNode> getProjection(SelectIndexMap select, RelNode input) {
+    return select.targetsAsList().stream().map(idx -> rexBuilder.makeInputRef(input, idx))
+            .collect(Collectors.toUnmodifiableList());
+  }
+
   public RelBuilder appendColumn(RelBuilder relBuilder, RexNode rexNode, String fieldName) {
     RelNode relNode = relBuilder.peek();
     List<RexNode> rexes = new ArrayList<>(getIdentityProject(relNode));
@@ -393,11 +406,25 @@ public class SqrlRexUtil {
     }
   }
 
-  public RexNode maxOfTwoColumnsNotNull(int col1Idx, int col2Idx, RelNode input) {
-    Preconditions.checkArgument(col1Idx>=0 && col2Idx >= 0 && col1Idx!=col2Idx);
-    RexInputRef col1 = rexBuilder.makeInputRef(input, col1Idx);
-    RexInputRef col2 = rexBuilder.makeInputRef(input, col2Idx);
-    return rexBuilder.makeCall(SqlStdOperatorTable.CASE, rexBuilder.makeCall(SqlStdOperatorTable.LESS_THAN, col1, col2), col2, col1);
+  public RexNode greatestNotNull(List<Integer> colIndexes, RelNode input) {
+    Preconditions.checkArgument(!colIndexes.isEmpty());
+    if (colIndexes.size()==1) {
+      return rexBuilder.makeInputRef(input, colIndexes.get(0));
+    } else { //size >=2
+      int col1Idx = colIndexes.get(0), col2Idx = colIndexes.get(1);
+      Preconditions.checkArgument(col1Idx>=0 && col2Idx >= 0 && col1Idx!=col2Idx);
+      RexInputRef col1 = rexBuilder.makeInputRef(input, col1Idx);
+      RexInputRef col2 = rexBuilder.makeInputRef(input, col2Idx);
+      ArrayList<Integer> remaining = new ArrayList<>(colIndexes.subList(2, colIndexes.size()));
+      if (remaining.isEmpty()) {
+        return rexBuilder.makeCall(SqlStdOperatorTable.CASE, rexBuilder.makeCall(SqlStdOperatorTable.LESS_THAN, col1, col2), col2, col1);
+      } else {
+        return rexBuilder.makeCall(SqlStdOperatorTable.CASE, rexBuilder.makeCall(SqlStdOperatorTable.LESS_THAN, col1, col2),
+            greatestNotNull(ListUtils.union(List.of(col2Idx), remaining), input),
+            greatestNotNull(ListUtils.union(List.of(col1Idx), remaining), input));
+      }
+    }
+
   }
 
   public RexNode makeInputRef(int colIdx, RelBuilder builder) {
@@ -427,6 +454,7 @@ public class SqrlRexUtil {
     }
     return Optional.empty();
   }
+
 
 
 }

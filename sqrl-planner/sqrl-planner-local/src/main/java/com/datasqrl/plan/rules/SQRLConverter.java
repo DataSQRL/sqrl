@@ -36,6 +36,7 @@ public class SQRLConverter {
     RelNode converted = relNode.accept(sqrl2sql);
     AnnotatedLP alp = sqrl2sql.getRelHolder(converted);
     alp = alp.postProcess(relBuilder, relNode, exec, errors);
+    Preconditions.checkArgument(alp.select.isIdentity(),"Invalid select: %s", alp.select);
     return alp;
   }
 
@@ -53,47 +54,45 @@ public class SQRLConverter {
 
   public RelNode convert(PhysicalTable table, Config config,
                          boolean addWatermark, ErrorCollector errors) {
+    RelBuilder builder;
     ExecutionAnalysis exec = ExecutionAnalysis.of(config.getStage());
+    PhysicalRelationalTable physicalTable;
     if (table instanceof ProxyImportRelationalTable) {
-      return convert((ProxyImportRelationalTable) table, exec, addWatermark);
+      physicalTable = (PhysicalRelationalTable)table;
+      builder = relBuilder.scan(((ProxyImportRelationalTable)table).getBaseTable().getNameId());
     } else { //either QueryRelationalTable or QueryTableFunction
       QueryRelationalTable queryTable = (table instanceof QueryTableFunction)
           ?((QueryTableFunction)table).getQueryTable():(QueryRelationalTable) table;
       AnnotatedLP alp = convert(queryTable.getOriginalRelnode(), config, errors);
-      RelBuilder builder = relBuilder.push(alp.getRelNode());
-      addColumns(builder, queryTable.getAddedColumns(), alp.select, exec);
-      return builder.build();
+      builder = relBuilder.push(alp.getRelNode());
+      physicalTable = queryTable;
+      addWatermark = false; //watermarks only apply to imported tables
     }
-  }
-
-  private RelNode convert(ProxyImportRelationalTable table, ExecutionAnalysis exec,
-      boolean addWatermark) {
-    RelBuilder builder = relBuilder.scan(table.getBaseTable().getNameId());
-    addColumns(builder, table.getAddedColumns(), SelectIndexMap.identity(table.getNumColumns(), table.getNumColumns()), exec);
-    RelNode relNode = builder.build();
-    if (addWatermark) {
-      int timestampIdx = table.getTimestamp().getTimestampCandidate().getIndex();
-      Preconditions.checkArgument(timestampIdx < relNode.getRowType().getFieldCount());
-      WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
-      relNode = ((Hintable) relNode).attachHints(List.of(watermarkHint.getHint()));
-    }
-    return relNode;
-  }
-
-  private RelBuilder addColumns(RelBuilder builder, Iterable<AddedColumn> columns,
-                                SelectIndexMap select, ExecutionAnalysis exec) {
-    for (AddedColumn column : columns) {
-      exec.requireRex(column.getBaseExpression());
-      int addedIndex = column.appendTo(builder, select);
+    //Add any additional columns that were added to the table after definition
+    List<AddedColumn> addedCols = physicalTable.getAddedColumns();
+    int baseSelects = physicalTable.getNumSelects() - addedCols.size();
+    SelectIndexMap select = SelectIndexMap.identity(baseSelects,baseSelects);
+    for (int i = 0; i <addedCols.size(); i++) {
+      AddedColumn column = addedCols.get(i);
+      int index = baseSelects+i;
+      exec.requireRex(column.getBaseExpression()); //Make sure the stage supports the column
+      int addedIndex = column.appendTo(builder, index, select);
       select = select.add(addedIndex);
     }
-    return builder;
+    if (addWatermark) { //TODO: remove and handle in connector definition
+      int timestampIdx = table.getTimestamp().getOnlyCandidate();
+      Preconditions.checkArgument(timestampIdx < physicalTable.getNumColumns());
+      WatermarkHint watermarkHint = new WatermarkHint(timestampIdx);
+      watermarkHint.addTo(builder);
+    }
+    return builder.build();
   }
 
   public static final int DEFAULT_SLIDING_WINDOW_PANES = 50;
 
-  @Value
   @Builder(toBuilder = true)
+  @AllArgsConstructor
+  @Getter
   public static class Config {
 
     ExecutionStage stage;

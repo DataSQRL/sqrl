@@ -1,0 +1,112 @@
+=== OrderAugment
+ID:     orderaugment$1
+Type:   stream
+Stage:  streams
+Inputs: ordernow3$1, orders$2
+Primary Key: _uuid
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(id=[$2], time=[$4], order_count=[$7], _uuid=[$0])
+  LogicalJoin(condition=[=($3, $6)], joinType=[inner]) hints[TemporalJoinHint options:[4, 2, 0]]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalFilter(condition=[=($3, 1)]) hints[DedupHint]
+      LogicalProject(customer=[$0], order_count=[$1], _time=[$2], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
+        LogicalTableScan(table=[[ordernow3$1]])
+
+=== OrderNow1
+ID:     ordernow1$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer, bucket
+Timestamp  : bucket
+Schema:
+ - customer: BIGINT NOT NULL
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Post Processors:
+ - now-filter: bucket > now() - 777600000 ms
+Plan:
+LogicalAggregate(group=[{0, 1}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[1, FUNCTION, 3, 86400000, 0]]
+  LogicalProject(customer=[$3], bucket=[endOfDay($4)], _uuid=[$0], time=[$4])
+    LogicalTableScan(table=[[orders$2]])
+
+=== OrderNow2
+ID:     ordernow2$1
+Type:   stream
+Stage:  streams
+Inputs: orders$2
+Primary Key: bucket
+Timestamp  : bucket
+Schema:
+ - bucket: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - order_count: BIGINT NOT NULL
+Post Processors:
+ - now-filter: bucket > now() - 777600000 ms
+Plan:
+LogicalAggregate(group=[{0}], order_count=[COUNT()]) hints[TumbleAggregationHint options:[0, FUNCTION, 2, 86400000, 0]]
+  LogicalProject(bucket=[endOfDay($4)], _uuid=[$0], time=[$4])
+    LogicalTableScan(table=[[orders$2]])
+
+=== OrderNow3
+ID:     ordernow3$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: customer
+Timestamp  : _time
+Schema:
+ - customer: BIGINT NOT NULL
+ - order_count: BIGINT NOT NULL
+ - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: partition=customer limit=1 sort=#2: _time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(customer=[$0], order_count=[$2], _time=[$1])
+  LogicalAggregate(group=[{0, 2}], order_count=[COUNT()]) hints[SlidingAggregationHint options:[2, 691200000, 13824000]]
+    LogicalProject(customer=[$3], _uuid=[$0], time=[$4])
+      LogicalTableScan(table=[[orders$2]])
+
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : time
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+
+=== RecentTotal
+ID:     recenttotal$1
+Type:   state
+Stage:  streams
+Inputs: orders$2
+Primary Key: __pk
+Timestamp  : _time
+Schema:
+ - total: DOUBLE NOT NULL
+ - quantity: BIGINT NOT NULL
+ - __pk: INTEGER NOT NULL
+ - _time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Post Processors:
+ - topN: limit=1 sort=#3: _time TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
+Plan:
+LogicalProject(total=[$1], quantity=[$2], __pk=[1], _time=[$0])
+  LogicalAggregate(group=[{4}], total=[SUM($0)], quantity=[SUM($1)]) hints[SlidingAggregationHint options:[4, 604800000, 12096000]]
+    LogicalProject($f0=[*($9, $8)], quantity=[$8], _uuid=[$0], _idx=[$6], time=[$4])
+      LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{5}])
+        LogicalTableScan(table=[[orders$2]])
+        LogicalTableFunctionScan(invocation=[Orders.entries($cor0.entries)], rowType=[RecordType(INTEGER _idx, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount)], elementType=[class [Ljava.lang.Object;])
+

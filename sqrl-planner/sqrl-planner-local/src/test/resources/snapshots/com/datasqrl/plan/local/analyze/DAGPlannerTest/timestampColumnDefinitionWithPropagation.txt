@@ -1,0 +1,33 @@
+=== Customer
+ID:     customer$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : timestamp
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+  LogicalTableScan(table=[[customer$1]])
+
+=== CustomerCopy
+ID:     customercopy$1
+Type:   stream
+Stage:  streams
+Inputs: customer$2
+Primary Key: _uuid
+Timestamp  : timestamp
+Schema:
+ - month: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(month=[endOfMonth(endOfMonth($6))], timestamp=[$6], _uuid=[$0])
+  LogicalTableScan(table=[[customer$2]])
+

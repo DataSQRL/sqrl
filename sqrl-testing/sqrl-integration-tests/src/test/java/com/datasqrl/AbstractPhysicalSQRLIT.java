@@ -30,7 +30,7 @@ import com.datasqrl.util.FileTestUtil;
 import com.datasqrl.util.ResultSetPrinter;
 import com.datasqrl.util.SnapshotTest;
 import com.datasqrl.util.StreamUtil;
-import com.datasqrl.util.TestRelWriter;
+import com.datasqrl.plan.util.RelWriterWithHints;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import java.nio.file.Path;
@@ -93,6 +93,7 @@ public class AbstractPhysicalSQRLIT extends AbstractSchemaInferenceModelTest {
     }
 
     DAGPlanner dagPlanner = injector.getInstance(DAGPlanner.class);
+    createAPIQueries(queryTables);
     PhysicalDAGPlan dag = dagPlanner.plan();
     addContent(dag);
 
@@ -156,10 +157,10 @@ public class AbstractPhysicalSQRLIT extends AbstractSchemaInferenceModelTest {
 
   private void addContent(PhysicalDAGPlan dag, String... caseNames) {
     dag.getWriteQueries().stream().sorted(Comparator.comparing(wq -> wq.getSink().getName()))
-        .forEach(mq -> snapshot.addContent(TestRelWriter.explain(mq.getRelNode()),
+        .forEach(mq -> snapshot.addContent(RelWriterWithHints.explain(mq.getRelNode()),
         ArrayUtils.addAll(caseNames, mq.getSink().getName(), "lp-stream")));
     dag.getReadQueries().stream().sorted(Comparator.comparing(rq -> rq.getQuery().getNameId()))
-        .forEach(dq -> snapshot.addContent(TestRelWriter.explain(dq.getRelNode()),
+        .forEach(dq -> snapshot.addContent(RelWriterWithHints.explain(dq.getRelNode()),
         ArrayUtils.addAll(caseNames, dq.getQuery().getNameId(), "lp-database")));
   }
 

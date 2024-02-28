@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 /**
  * Describes a physical execution engine and it's capabilities.
@@ -37,7 +38,9 @@ public interface ExecutionEngine {
     public boolean isCompute() { return this != LOG; }
   }
 
-  boolean supports(EngineCapability capability);
+  boolean supports(EngineFeature capability);
+
+  boolean supports(FunctionDefinition function);
 
   Type getType();
 
@@ -62,11 +65,16 @@ public interface ExecutionEngine {
 
     protected final @NonNull String name;
     protected final @NonNull Type type;
-    protected final @NonNull EnumSet<EngineCapability> capabilities;
+    protected final @NonNull EnumSet<EngineFeature> capabilities;
 
     @Override
-    public boolean supports(EngineCapability capability) {
+    public boolean supports(EngineFeature capability) {
       return capabilities.contains(capability);
+    }
+
+    @Override
+    public boolean supports(FunctionDefinition function) {
+      return false;
     }
 
     @Override

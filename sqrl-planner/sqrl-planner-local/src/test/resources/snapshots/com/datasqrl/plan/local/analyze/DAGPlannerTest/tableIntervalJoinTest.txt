@@ -1,0 +1,94 @@
+=== Customer
+ID:     customer$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : timestamp
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(_uuid=[$0], _ingest_time=[$1], customerid=[$2], email=[$3], name=[$4], lastUpdated=[$5], timestamp=[epochToTimestamp($5)]) hints[WatermarkHint options:[6]]
+  LogicalTableScan(table=[[customer$1]])
+
+=== OrderCustomer
+ID:     ordercustomer$1
+Type:   stream
+Stage:  streams
+Inputs: customer$2, orders$2
+Primary Key: _uuid, _uuid0
+Timestamp  : __timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$2], name=[$10], customerid=[$3], _uuid=[$0], _uuid0=[$6], __timestamp=[CASE(<($4, $12), $12, $4)])
+  LogicalJoin(condition=[AND(=($3, $8), >($4, $12), <=($4, +($12, *(86400000:INTERVAL DAY, 31))))], joinType=[inner]) hints[IntervalJoin]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
+
+=== OrderCustomer2
+ID:     ordercustomer2$1
+Type:   stream
+Stage:  streams
+Inputs: customer$2, orders$2
+Primary Key: _uuid, _uuid0
+Timestamp  : __timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$2], name=[$10], customerid=[$3], _uuid=[$0], _uuid0=[$6], __timestamp=[CASE(<($4, $12), $12, $4)])
+  LogicalJoin(condition=[AND(=($3, $8), >($4, $12), <=($4, +($12, *(86400000:INTERVAL DAY, 31))))], joinType=[inner]) hints[IntervalJoin]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
+
+=== OrderCustomer3
+ID:     ordercustomer3$1
+Type:   stream
+Stage:  streams
+Inputs: customer$2, orders$2
+Primary Key: _uuid, _uuid0
+Timestamp  : __timestamp
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT NOT NULL
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _uuid0: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$2], name=[$10], customerid=[$3], _uuid=[$0], _uuid0=[$6], __timestamp=[CASE(<($4, $12), $12, $4)])
+  LogicalJoin(condition=[AND(=($3, $8), >=($4, +($12, *(86400000:INTERVAL DAY, 2))), <=($4, +($12, *(86400000:INTERVAL DAY, 31))))], joinType=[inner]) hints[IntervalJoin]
+    LogicalTableScan(table=[[orders$2]])
+    LogicalTableScan(table=[[customer$2]])
+
+=== Orders
+ID:     orders$2
+Type:   stream
+Stage:  streams
+Primary Key: _uuid
+Timestamp  : time
+Schema:
+ - _uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - entries: RecordType(INTEGER NOT NULL _idx, BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalTableScan(table=[[orders$1]], hints=[[[WatermarkHint inheritPath:[] options:[4]]]]) hints[WatermarkHint options:[4]]
+

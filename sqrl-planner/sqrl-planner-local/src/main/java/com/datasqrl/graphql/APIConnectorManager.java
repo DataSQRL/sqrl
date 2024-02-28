@@ -13,7 +13,7 @@ import com.datasqrl.plan.queries.APISubscription;
 import java.util.List;
 import java.util.Map;
 
-public interface APIConnectorManager {
+public interface APIConnectorManager extends APIConnectorLookup {
 
   /**
    * Adds mutation by connecting it to a table source and sink.
@@ -33,7 +33,6 @@ public interface APIConnectorManager {
 
   ModuleLoader getModuleLoader();
 
-  List<Log> getLogs();
 
   List<APIQuery> getQueries();
 

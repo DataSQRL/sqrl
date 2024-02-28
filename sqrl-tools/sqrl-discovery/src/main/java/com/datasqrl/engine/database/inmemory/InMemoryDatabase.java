@@ -3,7 +3,7 @@
  */
 package com.datasqrl.engine.database.inmemory;
 
-import static com.datasqrl.engine.EngineCapability.STANDARD_DATABASE;
+import static com.datasqrl.engine.EngineFeature.STANDARD_DATABASE;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -12,12 +12,16 @@ import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.plan.global.PhysicalDAGPlan;
+import org.apache.flink.table.functions.FunctionDefinition;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +46,10 @@ public class InMemoryDatabase extends ExecutionEngine.Base implements DatabaseEn
                                  ExecutionPipeline pipeline, SqrlFramework relBuilder, TableSink errorSink,
       ErrorCollector errorCollector) {
     throw new UnsupportedOperationException();
+  }
+
+  public boolean supports(FunctionDefinition function) {
+      return !(function instanceof SqrlTimeTumbleFunction);
   }
 
   @Override

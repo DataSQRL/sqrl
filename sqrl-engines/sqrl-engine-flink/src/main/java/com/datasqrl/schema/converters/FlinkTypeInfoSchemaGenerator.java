@@ -3,28 +3,24 @@
  */
 package com.datasqrl.schema.converters;
 
+import com.datasqrl.schema.SchemaConverter;
 import com.datasqrl.schema.UniversalTable;
+import com.datasqrl.schema.UniversalTable.SchemaConverterUTB;
 import com.datasqrl.util.CalciteUtil;
 import java.util.List;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.api.java.typeutils.MapTypeInfo;
-import org.apache.flink.api.java.typeutils.ObjectArrayTypeInfo;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.utils.TypeConversions;
 
 @Value
-public class FlinkTypeInfoSchemaGenerator implements UniversalTable.SchemaConverter<TypeInformation> {
+public class FlinkTypeInfoSchemaGenerator implements SchemaConverterUTB<TypeInformation>,
+    SchemaConverter<TypeInformation> {
 
   private TypeInformation convertPrimitive(RelDataType datatype) {
     LogicalType logicalType = FlinkTypeFactory.toLogicalType(datatype);
@@ -62,4 +58,8 @@ public class FlinkTypeInfoSchemaGenerator implements UniversalTable.SchemaConver
     return convertRelDataType(table.getType());
   }
 
+  @Override
+  public TypeInformation convertSchema(RelDataType dataType) {
+    return convertRelDataType(dataType);
+  }
 }

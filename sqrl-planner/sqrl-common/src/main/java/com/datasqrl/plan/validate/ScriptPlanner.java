@@ -222,16 +222,17 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
     ModifiableTable table = planner.getCatalogReader().getTableFromPath(export.getTable())
         .unwrap(ModifiableTable.class);
 
-    ResolvedExport resolvedExport = exportTable(table, export.getSink(), planner.getRelBuilder());
+    ResolvedExport resolvedExport = exportTable(table, export.getSink(), planner.getRelBuilder(), true);
     framework.getSchema().add(resolvedExport);
 
     return null;
   }
 
-  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder) {
+  public static ResolvedExport exportTable(ModifiableTable table, TableSink sink, RelBuilder relBuilder, boolean selectedFieldsOnly) {
     RelNode export = relBuilder.scan(table.getNameId())
         .build();
-    return new ResolvedExport(table.getNameId(), export, sink);
+    int numSelects = selectedFieldsOnly?table.getNumSelects():table.getNumColumns();
+    return new ResolvedExport(table.getNameId(), export, numSelects, sink);
   }
 
   @Value
@@ -880,10 +881,12 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
           "Cannot assign timestamp to nested item");
     }
 
+    //Find table
     Optional<RelOptTable> table = resolveModifiableTable(node,
         node.getAlias().map(a -> nameUtil.toNamePath(a.names))
             .orElse(nameUtil.toNamePath(node.getIdentifier().names)));
 
+    //Plan timestamp expression
     RexNode rexNode = table.flatMap(t -> {
           try {
             return Optional.of(framework.getQueryPlanner().planExpression(node.getTimestamp(), t.getRowType()));
@@ -893,19 +896,14 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         }
     ).get();
 
-    List<String> tableName = node.getAlias().orElse(node.getIdentifier()).names;
-    NamePath names = nameUtil.toNamePath(tableName);
-
+    //Add timestamp to table
     int timestampIndex;
-    if (!(rexNode instanceof RexInputRef) && node.getTimestampAlias().isEmpty()) {
-      timestampIndex = addColumn(rexNode, ReservedName.SYSTEM_TIMESTAMP.getCanonical(), table.get());
-    } else if (node.getTimestampAlias().isPresent()) {
-      //otherwise, add new column
-      timestampIndex = addColumn(rexNode, node.getTimestampAlias().get().getSimple(), table.get());
-    } else {
+    if (rexNode instanceof RexInputRef) {
       timestampIndex = ((RexInputRef) rexNode).getIndex();
+    } else {
+      //otherwise, add new column
+      timestampIndex = addColumn(rexNode, node.getTimestampAlias().map(SqlIdentifier::getSimple).orElse(ReservedName.SYSTEM_TIMESTAMP.getCanonical()), table.get());
     }
-
     TimestampAssignableTable timestampAssignableTable = table.get().unwrap(TimestampAssignableTable.class);
     timestampAssignableTable.assignTimestamp(timestampIndex);
 

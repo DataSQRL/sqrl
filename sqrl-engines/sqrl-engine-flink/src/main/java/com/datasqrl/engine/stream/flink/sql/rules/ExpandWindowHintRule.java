@@ -12,14 +12,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.apache.calcite.plan.RelOptRule;
+
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
-import org.apache.calcite.plan.RelRule.Config;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.RelFactories;
-import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
@@ -29,12 +27,10 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.commons.collections.ListUtils;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.immutables.value.Value;
-import org.jetbrains.annotations.Nullable;
 
 public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
     implements TransformationRule {
@@ -74,12 +70,11 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
     RelDataType inputType = input.getRowType();
 
     final int timestampIdx = tumbleHintOpt
-        .map(tumbleHint -> tumbleHint.getTimestampIdx())
+        .map(tumbleHint -> tumbleHint.getWindowFunctionIdx())
         .orElseGet(() -> slideHintOpt.get().getTimestampIdx());
 
     tumbleHintOpt.ifPresentOrElse(
-        tumbleHint -> handleTumbleWindow(timestampIdx, tumbleHint, input, inputType, rexBuilder,
-            relBuilder),
+        tumbleHint -> handleTumbleWindow(timestampIdx, tumbleHint, input,  relBuilder),
         () -> handleSlidingWindow(timestampIdx, slideHintOpt.get(), input, relBuilder));
 
     applyWindowedGroupingAndProjection(relBuilder, rexBuilder, inputType, groupBy,
@@ -128,31 +123,21 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
             .collect(Collectors.toList()), projectNames, true);
   }
 
-  private void handleTumbleWindow(int timestampIdx, TumbleAggregationHint tumbleHint, RelNode input,
-      RelDataType inputType, RexBuilder rexBuilder, RelBuilder relBuilder) {
+  private void handleTumbleWindow(int windowTimestampIdx, TumbleAggregationHint tumbleHint, RelNode input, RelBuilder relBuilder) {
     SqlOperator windowFunction = FlinkSqlOperatorTable.TUMBLE;
+    relBuilder.push(input);
+    long[] windowDef;
     if (tumbleHint.getType() == TumbleAggregationHint.Type.FUNCTION) {
-      //Extract bucketing function from project
-      Preconditions.checkArgument(input instanceof LogicalProject,
-          "Expected projection as input");
-      relBuilder.push(input.getInput(0));
-      List<RexNode> projects = new ArrayList<>(((LogicalProject)input).getProjects());
-      projects.set(timestampIdx,
-          rexBuilder.makeInputRef(input.getInput(0),  tumbleHint.getInputTimestampIdx()));
-      relBuilder.project(projects, inputType.getFieldNames(), true);
-
-      long[] windowDef = new long[]{tumbleHint.getWindowWidthMs(), tumbleHint.getWindowOffsetMs()};
-      makeWindow(relBuilder, windowFunction, timestampIdx, windowDef);
-
+      windowDef = new long[]{tumbleHint.getWindowWidthMs(), tumbleHint.getWindowOffsetMs()};
     } else if (tumbleHint.getType() == TumbleAggregationHint.Type.INSTANT) {
-      relBuilder.push(input);
-      long[] intervalsMs = new long[]{1};
-
-      makeWindow(relBuilder, windowFunction, timestampIdx, intervalsMs);
+      windowDef = new long[]{1};
+      Preconditions.checkArgument(tumbleHint.getInputTimestampIdx()==windowTimestampIdx);
     } else {
       throw new UnsupportedOperationException(
           "Invalid tumble window type: " + tumbleHint.getType());
     }
+    makeWindow(relBuilder, windowFunction, tumbleHint.getInputTimestampIdx(), windowDef);
+
   }
 
   private void handleSlidingWindow(int timestampIdx, SlidingAggregationHint slideHint,
@@ -170,7 +155,7 @@ public class ExpandWindowHintRule extends RelRule<ExpandWindowHintRule.Config>
   }
 
   private RelBuilder makeWindow(RelBuilder relBuilder, SqlOperator operator,
-      int timestampIdx, long... intervalsMs) {
+      int timestampIdx, long[] intervalsMs) {
     Preconditions.checkArgument(intervalsMs != null && intervalsMs.length > 0);
     RexBuilder rexBuilder = getRexBuilder(relBuilder);
     RelNode input = relBuilder.peek();

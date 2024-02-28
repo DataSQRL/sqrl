@@ -1,3 +1,0 @@
->>>orders$2
-LogicalTableScan(table=[[orders$1]])
-

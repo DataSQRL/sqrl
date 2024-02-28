@@ -28,9 +28,9 @@ public class SelectIndexMap implements IndexMap, Serializable {
   final int[] targets;
 
   @Override
-  public int map(int index) {
-    int result = targets[index];
-    return result;
+  public int mapUnsafe(int index) {
+    if (index<0 || index>=targets.length) return -1;
+    return targets[index];
   }
 
   public int getSourceLength() {
@@ -57,6 +57,11 @@ public class SelectIndexMap implements IndexMap, Serializable {
       offset += arrsToCopy[i].length;
     }
     return new SelectIndexMap(combined);
+  }
+
+  public boolean isIdentity() {
+    Preconditions.checkArgument(targets.length>0);
+    return IntStream.range(0,targets.length).allMatch(i -> targets[i]==i);
   }
 
   public SelectIndexMap append(SelectIndexMap add) {

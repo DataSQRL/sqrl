@@ -13,7 +13,7 @@ import com.datasqrl.function.CalciteFunctionNsObject;
 import com.datasqrl.module.FunctionNamespaceObject;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.functions.vector.StdVectorLibraryImpl;
-import com.datasqrl.time.TimeWindowBucketFunction;
+import com.datasqrl.time.TimeTumbleWindowFunction;
 import com.google.common.base.Preconditions;
 import com.theokanning.openai.completion.CompletionChoice;
 import com.theokanning.openai.completion.CompletionRequest;
@@ -126,7 +126,7 @@ public class GenerateFunctionDocumentation {
         if (fObj.getFunction() instanceof SqrlFunction) {
           SqrlFunction function = (SqrlFunction) fObj.getFunction();
           columns[1] = function.getDocumentation();
-          isTimeWindow.accept(function instanceof TimeWindowBucketFunction);
+          isTimeWindow.accept(function instanceof TimeTumbleWindowFunction);
           sqlNameSetter.accept("-");
         } else if (fObj.getFunction() instanceof SqlFunction) {
           String sqlName = ((CalciteFunctionNsObject)fct).getSqlName().toUpperCase();

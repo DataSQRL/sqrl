@@ -96,7 +96,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
           .stateChangeType(stream.getStreamType())
           .meta(stream.getMetaData())
           .unmodifiedChangelog(SqrlRexUtil.isDedupedRelNode(stream, true, false))
-          .schema(new RelNodeToSchemaTransformer().transform(stream, 0))
+          .schema(new RelNodeToSchemaTransformer().transform(stream, null))
           .typeInformation(new RelNodeToTypeInformationTransformer().transform(stream))
           .fromTable(query.getTableName())
           .build());

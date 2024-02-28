@@ -1,9 +1,0 @@
->>>example$1
-LogicalProject(__pk1$_uuid=[$0], example=[$2], _ingest_time=[$1])
-  LogicalFilter(condition=[>($2, 10)])
-    LogicalAggregate(group=[{0, 1}], example=[SUM($2)])
-      LogicalTableScan(table=[[product$2]])
-
->>>product$2
-LogicalTableScan(table=[[product$1]])
-

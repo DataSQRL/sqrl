@@ -2,6 +2,7 @@ package com.datasqrl.plan.table;
 
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -26,10 +27,6 @@ public class AddedColumn {
         this.expression = expression;
     }
 
-    public RelDataType appendTo(@NonNull RelDataType base, @NonNull RelDataTypeFactory factory) {
-        return CalciteUtil.appendField(base, nameId, getDataType(), factory);
-    }
-
     public RelDataType getDataType() {
         return expression.getType();
     }
@@ -43,7 +40,7 @@ public class AddedColumn {
     }
 
 
-    public int appendTo(@NonNull RelBuilder relBuilder, @NonNull IndexMap indexMap) {
+    public int appendTo(@NonNull RelBuilder relBuilder, int atIndex, @NonNull IndexMap indexMap) {
         RelDataType baseType = relBuilder.peek().getRowType();
         int noBaseFields = baseType.getFieldCount();
         List<String> fieldNames = new ArrayList<>(noBaseFields + 1);
@@ -52,9 +49,9 @@ public class AddedColumn {
             fieldNames.add(i, null); //Calcite will infer name
             rexNodes.add(i, RexInputRef.of(i, baseType));
         }
-        fieldNames.add(noBaseFields, nameId);
-        rexNodes.add(indexMap.map(expression, relBuilder.peek().getRowType()));
-
+        fieldNames.add(atIndex, nameId);
+        rexNodes.add(atIndex, indexMap.map(expression, relBuilder.peek().getRowType()));
+        Preconditions.checkArgument(fieldNames.size() + rexNodes.size() == 2*(noBaseFields+1));
         relBuilder.project(rexNodes, fieldNames);
         return noBaseFields;
     }

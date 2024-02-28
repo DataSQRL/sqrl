@@ -24,41 +24,32 @@ import org.apache.calcite.rel.logical.LogicalValues;
 public interface SqrlRelShuttle extends RelShuttle {
 
 
-  RelNode visit(LogicalStream logicalStream);
-
-    /*
-    ====== Rel Nodes are not yet supported =====
-     */
+  /*
+  ====== Rel Nodes with default treatment =====
+   */
 
   @Override
   default RelNode visit(LogicalIntersect logicalIntersect) {
-    throw new UnsupportedOperationException("Not yet supported.");
+    return visit((RelNode)logicalIntersect);
   }
 
   @Override
   default RelNode visit(LogicalMinus logicalMinus) {
-    throw new UnsupportedOperationException("Not yet supported.");
+    return visit((RelNode)logicalMinus);
   }
 
   @Override
-  default RelNode visit(LogicalValues logicalValues) {
-    throw new UnsupportedOperationException("Not yet supported.");
+  default RelNode visit(LogicalCalc logicalCalc) {
+    return visit((RelNode) logicalCalc);
   }
 
-
+  default RelNode visit(LogicalExchange logicalExchange) {
+    return visit((RelNode) logicalExchange);
+  }
 
   @Override
-  default RelNode visit(RelNode relNode) {
-    if (relNode instanceof LogicalStream) {
-      return visit((LogicalStream) relNode);
-    }
-    if (relNode instanceof Snapshot) {
-      return visit((Snapshot) relNode);
-    }
-    if (relNode instanceof TableFunctionScan) {
-      return visit((TableFunctionScan) relNode);
-    }
-    throw new UnsupportedOperationException("Unexpected rel node: " + relNode);
+  default RelNode visit(LogicalMatch logicalMatch) {
+    return visit((RelNode) logicalMatch);
   }
 
 
@@ -67,28 +58,9 @@ public interface SqrlRelShuttle extends RelShuttle {
   */
 
   @Override
-  default RelNode visit(LogicalCorrelate logicalCorrelate) {
-    return visit((RelNode) logicalCorrelate);
-  }
-
-  @Override
-  default RelNode visit(LogicalCalc logicalCalc) {
-    return visit((RelNode) logicalCalc);
-  }
-
-  @Override
-  default RelNode visit(LogicalExchange logicalExchange) {
-    return visit((RelNode) logicalExchange);
-  }
-
-  @Override
   default RelNode visit(LogicalTableModify logicalTableModify) {
-    return visit((RelNode) logicalTableModify);
+    throw new UnsupportedOperationException("Not yet supported.");
   }
 
 
-  @Override
-  default RelNode visit(LogicalMatch logicalMatch) {
-    return visit((RelNode) logicalMatch);
-  }
 }

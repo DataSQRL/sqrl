@@ -2,6 +2,7 @@ package com.datasqrl.util;
 
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexableFunction;
+import com.datasqrl.function.InputPreservingFunction;
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.function.TimestampPreservingFunction;
 import java.lang.reflect.Field;
@@ -50,6 +51,14 @@ public class FunctionUtil {
         .findFirst();
   }
 
+  public static Optional<InputPreservingFunction> isInputPreservingFunction(FunctionDefinition functionDefinition) {
+    return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
+        .stream()
+        .filter(f->f.getMetadataClass().equals(functionDefinition.getClass()))
+        .filter(f->InputPreservingFunction.class.isAssignableFrom(f.getClass()))
+        .map(f->(InputPreservingFunction)f)
+        .findFirst();
+  }
   public static Optional<SqrlTimeTumbleFunction> isTimeTumbleFunction(FunctionDefinition functionDefinition) {
     return ServiceLoaderDiscovery.getAll(FunctionMetadata.class)
         .stream()

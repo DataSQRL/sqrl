@@ -37,12 +37,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+
 import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -419,7 +415,7 @@ public class JsonConversionTest extends AbstractGraphqlTest {
     pgResult = pgResult == null ? "<null>" : pgResult.toString();
 
     CreateTableDDL pg = new PostgresDDLFactory().createTable(
-        new EngineSink("pg", 1, relNode.getRowType(), 0, null));
+        new EngineSink("pg", new int[]{0}, relNode.getRowType(), OptionalInt.of(0), null));
 
     snapshot.addContent((String) pgResult, "Postgres Result");
 

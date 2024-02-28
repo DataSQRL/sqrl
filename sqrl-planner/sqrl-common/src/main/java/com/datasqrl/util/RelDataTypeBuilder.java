@@ -27,6 +27,8 @@ public interface RelDataTypeBuilder {
     return this;
   }
 
+  public int getFieldCount();
+
   public RelDataType build();
 
 }

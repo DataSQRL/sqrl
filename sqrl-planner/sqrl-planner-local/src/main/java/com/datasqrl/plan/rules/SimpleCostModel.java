@@ -4,7 +4,6 @@
 package com.datasqrl.plan.rules;
 
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.ExecutionEngine.Type;
 import com.datasqrl.plan.hints.JoinCostHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
@@ -90,7 +89,7 @@ class SimpleCostModel implements ComputeCost {
             return 100;
           case STATE:
             return 10;
-          case DEDUP_STREAM:
+          case VERSIONED_STATE:
             return 4;
           default:
             throw new UnsupportedOperationException();

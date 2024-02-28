@@ -3,6 +3,7 @@
  */
 package com.datasqrl.plan.table;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
@@ -34,29 +35,33 @@ import org.apache.calcite.util.ImmutableBitSet;
 public abstract class PhysicalRelationalTable extends ScriptRelationalTable implements PhysicalTable {
 
   @NonNull
-  protected final Name tableName;
+  protected final NamePath tablePath;
   @NonNull
   protected final TableType type;
   @NonNull
-  protected final int numPrimaryKeys;
+  protected final PrimaryKey primaryKey;
   @NonNull
-  protected TimestampInference timestamp;
-  @Setter
+  protected Timestamps timestamp;
+
   protected RelNode plannedRelNode;
   @Setter
   protected Optional<ExecutionStage> assignedStage = Optional.empty();
   @NonNull
   protected final TableStatistic tableStatistic;
 
-  public PhysicalRelationalTable( Name rootTableId, @NonNull Name tableName, @NonNull TableType type,
-                                  RelDataType rowType, @NonNull TimestampInference timestamp,
-                                 @NonNull int numPrimaryKeys, @NonNull TableStatistic tableStatistic) {
-    super(rootTableId, rowType);
-    this.tableName = tableName;
+  public PhysicalRelationalTable(Name rootTableId, @NonNull NamePath tablePath, @NonNull TableType type,
+                                  RelDataType rowType, int numSelects, @NonNull Timestamps timestamp,
+                                 @NonNull PrimaryKey primaryKey, @NonNull TableStatistic tableStatistic) {
+    super(rootTableId, rowType, numSelects);
+    this.tablePath = tablePath;
     this.type = type;
     this.timestamp = timestamp;
-    this.numPrimaryKeys = numPrimaryKeys;
+    this.primaryKey = primaryKey;
     this.tableStatistic = tableStatistic;
+  }
+
+  public Name getTableName() {
+    return tablePath.getLast();
   }
 
   /* Additional operators at the root of the relNode logical plan that we want to pull-up as much as possible
@@ -65,6 +70,8 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   public PullupOperator.Container getPullups() {
     return Container.EMPTY;
   }
+
+  public abstract Optional<PhysicalRelationalTable> getStreamRoot();
 
   /**
    *
@@ -83,9 +90,17 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
     this.assignedStage = Optional.of(stage);
   }
 
+  @Override
   public RelNode getPlannedRelNode() {
     Preconditions.checkState(plannedRelNode != null, "Table has not been planned");
     return plannedRelNode;
+  }
+
+  @Override
+  public void setPlannedRelNode(@NonNull RelNode relNode) {
+    Preconditions.checkArgument(relNode.getRowType().equalsSansFieldNames(getRowType()), "Row types do not match");
+    Preconditions.checkArgument(relNode.getRowType().getFieldNames().subList(0,getNumSelects()).equals(getRowType().getFieldNames().subList(0,getNumSelects())), "Names do not match");
+    this.plannedRelNode = relNode;
   }
 
   @Override
@@ -102,7 +117,10 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
     if (tableStatistic.isUnknown()) {
       return Statistics.UNKNOWN;
     }
-    ImmutableBitSet key = ImmutableBitSet.of(ContiguousSet.closedOpen(0, numPrimaryKeys));
-    return Statistics.of(tableStatistic.getRowCount(), List.of(key));
+    ArrayList<ImmutableBitSet> keys = new ArrayList<>();
+    if (primaryKey.isDefined()) {
+      keys.add(ImmutableBitSet.of(primaryKey.asArray()));
+    }
+    return Statistics.of(tableStatistic.getRowCount(), keys);
   }
 }

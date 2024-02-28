@@ -517,13 +517,13 @@ public class SqrlToFlinkExecutablePlan extends RelShuttleImpl {
       tableConfig = engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
       name = engineSink.getNameId();
       schema = new RelNodeToSchemaTransformer()
-          .transform(relNode, engineSink.getNumPrimaryKeys());
+          .transform(relNode, engineSink.getPrimaryKeys());
     } else if (sink instanceof ExternalSink) {
       ExternalSink externalSink = (ExternalSink) sink;
       tableConfig = externalSink.getTableSink().getConfiguration();
       name = externalSink.getName();
       schema = new RelNodeToSchemaTransformer()
-          .transform(relNode, 0);
+          .transform(relNode, null);
     } else {
       throw new RuntimeException("Could not identify write sink type.");
     }

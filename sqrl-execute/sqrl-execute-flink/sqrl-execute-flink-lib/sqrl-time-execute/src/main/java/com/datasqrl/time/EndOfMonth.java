@@ -11,7 +11,7 @@ import java.time.temporal.TemporalAdjusters;
  * Time window function that returns the end of month for the timestamp argument.
  * E.g. endOfMonth(parseTimestamp(2023-03-12T18:23:34.083Z)) returns the timestamp 2023-03-31T23:59:59.999999999Z
  */
-public class EndOfMonth extends TimeWindowBucketFunction {
+public class EndOfMonth extends TimeTumbleWindowFunction {
 
   public EndOfMonth() {
     super(ChronoUnit.MONTHS, ChronoUnit.DAYS);

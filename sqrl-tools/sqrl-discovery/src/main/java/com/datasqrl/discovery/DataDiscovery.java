@@ -7,7 +7,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.discovery.store.MetricStoreProvider;
 import com.datasqrl.discovery.store.TableStatisticsStore;
-import com.datasqrl.engine.EngineCapability;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.LocalFlinkStreamEngineImpl;
@@ -48,7 +48,7 @@ public class DataDiscovery {
     this.errors = errors;
     this.streamEngine = streamEngine;
     this.config = config;
-    Preconditions.checkArgument(streamEngine.supports(EngineCapability.DATA_MONITORING));
+    Preconditions.checkArgument(streamEngine.supports(EngineFeature.DATA_MONITORING));
     this.metadataStoreProvider = metadataStoreProvider;
     streamPreparer = new StreamInputPreparerImpl();
   }

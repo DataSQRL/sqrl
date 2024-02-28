@@ -1,7 +1,7 @@
 >>>errors
 [FATAL] Cannot add column to locked table: Customer
 in script:<script> [3:1]:
-IMPORT ecommerce-data.Customer;
+IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time;
 Customer2 := SELECT * FROM Customer;
 Customer.column := 1
 ^

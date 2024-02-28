@@ -1,17 +1,10 @@
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.EngineCapability;
-import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.ExecutionResult;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import java.util.List;
 import lombok.Value;
-import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.functions.FunctionDefinition;
 
 @Value
 public final class IdealExecutionStage implements ExecutionStage {
@@ -25,7 +18,12 @@ public final class IdealExecutionStage implements ExecutionStage {
   }
 
   @Override
-  public boolean supports(EngineCapability capability) {
+  public boolean supportsFeature(EngineFeature capability) {
+    return true;
+  }
+
+  @Override
+  public boolean supportsFunction(FunctionDefinition function) {
     return true;
   }
 

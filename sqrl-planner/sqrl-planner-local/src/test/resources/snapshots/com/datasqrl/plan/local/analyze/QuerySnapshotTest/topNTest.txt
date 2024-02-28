@@ -1,9 +1,0 @@
->>>nested$1
-LogicalProject(__pk1$_uuid=[$0], _uuid=[$6], _ingest_time=[$7], productid=[$8], name=[$9], description=[$10], category=[$11], __timestamp=[CASE(<($1, $7), $7, $1)])
-  LogicalJoin(condition=[true], joinType=[inner])
-    LogicalTableScan(table=[[product$2]])
-    LogicalTableScan(table=[[product$2]])
-
->>>product$2
-LogicalTableScan(table=[[product$1]])
-

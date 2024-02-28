@@ -1,7 +1,7 @@
 >>>errors
 [FATAL] Could not find table: x
 in script:<script> [6:2]:
-IMPORT time.*;
+IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
 CustomerById(@id: INT) := FROM 
  x WHERE customerid = @id;
 -^

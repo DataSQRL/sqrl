@@ -68,23 +68,22 @@ public class AvroSchemaHandlingTest {
     snapshot.addContent(type.getFullTypeString(), "relType");
     assertFalse(errors.hasErrors(), errors.toString());
 
-    TableConverter tblConverter = new TableConverter(TypeFactory.getTypeFactory(), NameCanonicalizer.SYSTEM);
-    UniversalTable utb = tblConverter.sourceToTable(schema, true, tblName, errors);
     setSystemSettings();
     //Flink Schema
     UniversalTable2FlinkSchema conv1 = new UniversalTable2FlinkSchema();
-    snapshot.addContent(conv1.convertSchema(utb).toString(), "flinkSchema");
+    snapshot.addContent(conv1.convertSchema(type).toString(), "flinkSchema");
 
-    SerializableSchema serializableSchema =  SqrlToFlinkExecutablePlan.convertSchema(utb,
-        "_source_time", null, WaterMarkType.COLUMN_BY_NAME);
-    TableDescriptorSourceFactory sourceFactory = new KafkaTableSourceFactory();
-    TableConfig tableConfig = TableConfig.load(configPath, tblName, errors);
-    FlinkSourceFactoryContext factoryContext = new FlinkSourceFactoryContext(null, name,
-        tableConfig.serialize(),
-        tableConfig.getFormat(), UUID.randomUUID());
-    TableDescriptor descriptor = FlinkEnvironmentBuilder.getTableDescriptor(sourceFactory,
-        factoryContext, serializableSchema);
-    snapshot.addContent(descriptor.toString(), "descriptor");
+    //TODO: Move this to a generic (i.e. not schema format specific) test case
+//    SerializableSchema serializableSchema =  SqrlToFlinkExecutablePlan.convertSchema(utb,
+//        "_source_time", null, WaterMarkType.COLUMN_BY_NAME);
+//    TableDescriptorSourceFactory sourceFactory = new KafkaTableSourceFactory();
+//    TableConfig tableConfig = TableConfig.load(configPath, tblName, errors);
+//    FlinkSourceFactoryContext factoryContext = new FlinkSourceFactoryContext(null, name,
+//        tableConfig.serialize(),
+//        tableConfig.getFormat(), UUID.randomUUID());
+//    TableDescriptor descriptor = FlinkEnvironmentBuilder.getTableDescriptor(sourceFactory,
+//        factoryContext, serializableSchema);
+//    snapshot.addContent(descriptor.toString(), "descriptor");
 
 
     snapshot.createOrValidate();

@@ -76,6 +76,8 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
 
     public abstract String getName();
 
+    public abstract String getId();
+
     public boolean hasViableStage() {
       return stageAnalysis.values().stream().anyMatch(stage -> stage.isSupported());
     }
@@ -138,6 +140,11 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
       return "table " + table.getNameId();
     }
 
+    @Override
+    public String getId() {
+      return table.getNameId();
+    }
+
   }
 
   @Getter
@@ -153,6 +160,11 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     @Override
     public String getName() {
       return "query " + query.getBaseQuery().getNameId();
+    }
+
+    @Override
+    public String getId() {
+      return query.getBaseQuery().getNameId();
     }
 
     @Override
@@ -177,6 +189,11 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     @Override
     public String getName() {
       return "export " + uniqueId;
+    }
+
+    @Override
+    public String getId() {
+      return uniqueId;
     }
 
     @Override

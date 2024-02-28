@@ -6,15 +6,21 @@ package com.datasqrl.plan.global;
 import com.datasqrl.calcite.OperatorTable;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.APIConnectorLookup;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.graphql.server.Model.RootGraphqlModel;
-import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.local.generate.Debugger;
 import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.util.FunctionUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.table.PhysicalTable;
+import com.google.common.base.Preconditions;
+import org.apache.flink.table.functions.UserDefinedFunction;
+
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,14 +47,12 @@ public class DAGPlanner {
   private final DAGAssembler assembler;
   private final DAGBuilder dagBuilder;
   private final DAGPreparation dagPreparation;
-
+  private final SQRLConverter sqrlConverter;
   public SqrlDAG build(Collection<ResolvedExport> exports) {
     //Prepare the inputs
-    Collection<AnalyzedAPIQuery> analyzedQueries = new DAGPreparation(framework.getQueryPlanner().getRelBuilder(),
-        apiManager).prepareInputs(framework.getSchema(), exports);
+    Collection<AnalyzedAPIQuery> analyzedQueries = dagPreparation.prepareInputs(framework.getSchema(), exports);
 
     //Assemble DAG
-    SQRLConverter sqrlConverter = new SQRLConverter(framework.getQueryPlanner().getRelBuilder());
     SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(analyzedQueries, exports);
     for (SqrlDAG.SqrlNode node : dag) {
       if (!node.hasViableStage()) {
@@ -72,7 +76,20 @@ public class DAGPlanner {
         //If we eliminated stages, we make sure to eliminate all inviable stages
         dag.eliminateInviableStages(pipeline);
       }
+      //Assign stage to table
+      if (node instanceof SqrlDAG.TableNode) {
+        PhysicalTable table = ((SqrlDAG.TableNode) node).getTable();
+        ExecutionStage stage = node.getChosenStage();
+        Preconditions.checkNotNull(stage);
+        table.assignStage(stage); //this stage on the config below
+      }
     }
+    //Plan final version of all tables
+    dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
+      PhysicalTable table = tableNode.getTable();
+      SQRLConverter.Config config = table.getBaseConfig().build();
+      table.setPlannedRelNode(sqrlConverter.convert(table, config, errors));
+    });
   }
 
   public PhysicalDAGPlan assemble(SqrlDAG dag,
@@ -81,11 +98,15 @@ public class DAGPlanner {
     return assembler.assemble(dag, jars, udfs);
   }
 
-  public PhysicalDAGPlan plan() {
+  public SqrlDAG planLogical() {
     List<ResolvedExport> exports = framework.getSchema().getExports();
     SqrlDAG dag = build(exports);
     optimize(dag);
-    return assemble(dag, framework.getSchema().getJars(),
+    return dag;
+  }
+
+  public PhysicalDAGPlan plan() {
+    return assemble(planLogical(), framework.getSchema().getJars(),
         extractFlinkFunctions(framework.getSqrlOperatorTable()));
   }
 

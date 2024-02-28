@@ -2,9 +2,7 @@ package com.datasqrl.plan.table;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
-import com.datasqrl.schema.UniversalTable;
 import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,16 +31,4 @@ public class TimestampUtil {
     return Optional.of(getTimestampScore(columnName));
   }
 
-  public static TimestampInference getTimestampInference(UniversalTable tblBuilder) {
-    Preconditions.checkArgument(tblBuilder.getParent().isEmpty(),
-        "Can only be invoked on root table");
-    TimestampInference.ImportBuilder timestamp = TimestampInference.buildImport();
-    tblBuilder.getAllIndexedFields().forEach(indexField -> {
-      if (CalciteUtil.isPrimitiveType(indexField.getType())) {
-        Optional<Integer> score = getTimestampScore(indexField.getName(), indexField.getType());
-        score.ifPresent(s -> timestamp.addImport(indexField.getIndex(), s));
-      }
-    });
-    return timestamp.build();
-  }
 }
