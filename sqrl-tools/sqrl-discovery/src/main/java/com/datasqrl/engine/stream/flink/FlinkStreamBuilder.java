@@ -5,6 +5,7 @@ package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.config.DataStreamSourceFactory;
 import com.datasqrl.config.FlinkSourceFactoryContext;
+import com.datasqrl.discovery.FlinkJobFactory;
 import com.datasqrl.engine.stream.StreamHolder;
 import com.datasqrl.engine.stream.flink.monitor.SaveMetricsSink;
 import com.datasqrl.engine.stream.flink.sql.FlinkConnectorServiceLoader;
@@ -34,7 +35,7 @@ public class FlinkStreamBuilder implements DataMonitor {
   public static final int DEFAULT_PARALLELISM = 16;
   public static final String STATS_NAME_PREFIX = "Stats";
 
-  private final AbstractFlinkStreamEngine engine;
+  private final FlinkJobFactory engine;
   private final StreamExecutionEnvironment environment;
   private final StreamTableEnvironment tableEnvironment;
   private final StreamStatementSet streamStatementSet;
@@ -42,8 +43,7 @@ public class FlinkStreamBuilder implements DataMonitor {
   private final UUID uuid;
   private final int defaultParallelism = DEFAULT_PARALLELISM;
 
-
-  public FlinkStreamBuilder(AbstractFlinkStreamEngine engine, StreamExecutionEnvironment environment) {
+  public FlinkStreamBuilder(FlinkJobFactory engine, StreamExecutionEnvironment environment) {
     this.engine = engine;
     this.environment = environment;
     this.tableEnvironment = StreamTableEnvironment.create(environment);

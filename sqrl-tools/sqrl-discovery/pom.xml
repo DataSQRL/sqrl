@@ -15,19 +15,16 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencies>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-engine-flink</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-schema-flexible</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.esotericsoftware.kryo</groupId>
+      <artifactId>kryo</artifactId>
+    </dependency>
 
     <!-- Test jars -->
     <dependency>
@@ -36,5 +33,26 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-io-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-flink</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-engine-jdbc</artifactId>
+    </dependency>
+
   </dependencies>
 </project>

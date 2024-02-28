@@ -3,6 +3,7 @@
  */
 package com.datasqrl.compiler;
 
+import static com.datasqrl.discovery.DataDiscoveryFactory.getMetaDataStoreProvider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,7 +32,7 @@ public class MetadataStoreTestIT extends AbstractEngineIT {
 
   public void setup(IntegrationTestSettings.DatabaseEngine database) {
     initialize(IntegrationTestSettings.getDatabaseOnly(database), null, Optional.empty());
-    meta = pipelineFactory.getMetaDataStoreProvider(Optional.empty()).openStore();
+    meta = getMetaDataStoreProvider(pipelineFactory.getConfig(), Optional.empty()).openStore();
   }
 
   @AfterEach

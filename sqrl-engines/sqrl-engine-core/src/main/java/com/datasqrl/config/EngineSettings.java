@@ -3,7 +3,6 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.metadata.MetadataStoreProvider;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import lombok.NonNull;
@@ -17,8 +16,7 @@ public class EngineSettings {
 
   @NonNull
   ExecutionPipeline pipeline;
-  @NonNull
-  MetadataStoreProvider metadataStoreProvider;
+
   @NonNull
   StreamEngine stream;
 }

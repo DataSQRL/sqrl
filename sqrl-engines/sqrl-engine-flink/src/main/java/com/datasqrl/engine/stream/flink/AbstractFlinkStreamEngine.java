@@ -13,7 +13,6 @@ import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkPhysicalPlanner;
 import com.datasqrl.engine.stream.flink.plan.FlinkStreamPhysicalPlan;
-import com.datasqrl.engine.stream.monitor.DataMonitor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.global.PhysicalDAGPlan;
@@ -33,12 +32,10 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     StreamEngine {
 
   public static final EnumSet<EngineCapability> FLINK_CAPABILITIES = STANDARD_STREAM;
-  final ExecutionEnvironmentFactory execFactory;
   private final SqrlConfig config;
 
-  public AbstractFlinkStreamEngine(ExecutionEnvironmentFactory execFactory, SqrlConfig config) {
+  public AbstractFlinkStreamEngine(SqrlConfig config) {
     super(FlinkEngineFactory.ENGINE_NAME, Type.STREAM, FLINK_CAPABILITIES);
-    this.execFactory = execFactory;
     this.config = config;
   }
 
@@ -75,13 +72,6 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
     return new FlinkPhysicalPlanner(
         framework.getQueryPlanner().getRelBuilder()).createStreamGraph(this.config,
         plan.getQueries(), errorSink, plan.getJars(), plan.getUdfs());
-  }
-
-  public abstract FlinkStreamBuilder createJob();
-
-  @Override
-  public DataMonitor createDataMonitor() {
-    return createJob();
   }
 
   @Override
