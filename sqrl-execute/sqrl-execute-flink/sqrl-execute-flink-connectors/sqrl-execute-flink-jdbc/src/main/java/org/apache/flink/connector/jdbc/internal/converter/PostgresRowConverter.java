@@ -79,7 +79,7 @@ public class PostgresRowConverter extends BaseJdbcRowConverter {
     @Override
     public JdbcDeserializationConverter createInternalConverter(LogicalType type) {
         if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
-            return (JdbcDeserializationConverter)sqrlSerializers.get(type.getDefaultConversion())
+            return sqrlSerializers.get(type.getDefaultConversion())
                 .getDeserializerConverter().create();
         } else {
             return super.createInternalConverter(type);
@@ -100,7 +100,7 @@ public class PostgresRowConverter extends BaseJdbcRowConverter {
     protected JdbcSerializationConverter createExternalConverter(LogicalType type) {
         if (sqrlSerializers.containsKey(type.getDefaultConversion())) {
             return sqrlSerializers.get(type.getDefaultConversion())
-                .getSerializerConverter()
+                .getSerializerConverter(type)
                 .create();
         } else {
             return super.createExternalConverter(type);
