@@ -1,0 +1,16 @@
+{
+  "format" : {
+    "name" : "csv",
+    "header" : [ "productid", "name", "description", "category" ],
+    "delimiter" : ","
+  },
+  "schema" : "flexible",
+  "identifier" : "product",
+  "type" : "source",
+  "connector" : {
+    "name" : "file",
+    "directoryURI" : "/Users/henneberger/sqrl/sqrl-examples/retail/data",
+    "monitorIntervalMs" : "0"
+  },
+  "canonicalizer" : "system"
+}

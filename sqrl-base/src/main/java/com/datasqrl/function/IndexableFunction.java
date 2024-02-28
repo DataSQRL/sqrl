@@ -1,11 +1,8 @@
 package com.datasqrl.function;
 
-import com.datasqrl.function.IndexType;
-import com.datasqrl.function.SqrlFunction;
 import java.util.EnumSet;
-import java.util.function.Predicate;
 
-public interface IndexableFunction extends SqrlFunction {
+public interface IndexableFunction extends FunctionMetadata {
 
   OperandSelector getOperandSelector();
 

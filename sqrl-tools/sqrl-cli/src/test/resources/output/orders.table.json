@@ -1,0 +1,14 @@
+{
+  "format" : {
+    "name" : "json"
+  },
+  "schema" : "flexible",
+  "identifier" : "orders",
+  "type" : "source",
+  "connector" : {
+    "name" : "file",
+    "directoryURI" : "/Users/henneberger/sqrl/sqrl-examples/retail/data",
+    "monitorIntervalMs" : "0"
+  },
+  "canonicalizer" : "system"
+}

@@ -17,48 +17,13 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-cli</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-runtime-web</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-format-json</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-format-csv</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-planner-schema-flexible</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-schema-flexible</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-planner-schema-avro</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-schema-avro</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-io-schema-avro</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-discovery</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -66,63 +31,6 @@
       <artifactId>sqrl-cli</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-inmem</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-jdbc</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-file</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-kafka</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-flink-print</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-packager</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-execute-http-vertx</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-cli</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-json-execute</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-json-planner</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
     </dependency>
 
     <dependency>
@@ -160,10 +68,6 @@
     </dependency>
 
     <!-- Kafka -->
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
@@ -216,6 +120,16 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-test-utils</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.theokanning.openai-gpt3-java</groupId>
+      <artifactId>api</artifactId>
+      <version>0.18.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.theokanning.openai-gpt3-java</groupId>
+      <artifactId>service</artifactId>
     </dependency>
   </dependencies>
 </project>

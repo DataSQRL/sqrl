@@ -20,6 +20,10 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-io-jdbc</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-execute-flink-function</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.flink</groupId>

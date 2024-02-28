@@ -1,5 +1,7 @@
 package com.datasqrl.loaders;
 
+import static com.datasqrl.function.SqrlFunction.getFunctionNameFromClass;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
@@ -137,7 +139,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
     UserDefinedFunction udf = (UserDefinedFunction) functionClass.getDeclaredConstructor().newInstance();
 
     // Return a namespace object containing the created function
-    return List.of(new FlinkUdfNsObject(Name.system(udf.getClass().getSimpleName()), udf, Optional.of(jarUrl)));
+    return List.of(new FlinkUdfNsObject(getFunctionNameFromClass(udf.getClass()), udf, Optional.of(jarUrl)));
   }
 
   @SneakyThrows
